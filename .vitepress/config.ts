@@ -20,6 +20,7 @@ function customContainer(name: string, label: string) {
 }
 
 export default defineConfig({
+  base: '/math-notebook/',
   title: 'Matematik Defteri',
   description: 'Açık kaynak kapsamlı matematik ders notları',
   cleanUrls: true,
