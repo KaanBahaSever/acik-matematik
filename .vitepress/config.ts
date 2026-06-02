@@ -23,6 +23,7 @@ export default defineConfig({
   title: 'Matematik Defteri',
   description: 'Açık kaynak kapsamlı matematik ders notları',
   cleanUrls: true,
+  ignoreDeadLinks: true,
   locales: {
     root: {
       label: 'Türkçe',
