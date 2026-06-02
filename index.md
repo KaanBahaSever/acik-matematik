@@ -1,31 +1,37 @@
-# Matematik Defteri
+---
+layout: home
 
-Açık kaynak kapsamlı matematik ders notları.
+hero:
+  name: "Matematik Notları"
+  text: "Kaan Baha Sever"
+  tagline: "Lisans matematik derslerimden derlediğim; temiz, açık kaynaklı ve reklamsız Türkçe not arşivi."
+  actions:
+    - theme: brand
+      text: 🚀 Notları İncele
+      link: /dersler/
+    - theme: alt
+      text: 🤝 GitHub'da Katkıda Bulun
+      link: https://github.com/KaanBahaSever/math-notebook
 
-## Özel Konteyner Örnekleri
+features:
+  - title: "📖 Açık ve Yalın"
+    details: "Karmaşık el yazılarından kurtulmuş, MathJax ile pürüzsüz dizilmiş ve tamamen Türkçe kaynak."
+  - title: "✏️ Birlikte Geliştirelim"
+    details: "Eksik bir ispat veya hatalı bir işlem mi gördün? Açık kaynak felsefesiyle hemen katkıda bulunabilirsin."
+  - title: "🧠 Derinlemesine"
+    details: "Sadece formül ezberlemek yerine; teoremlerin mantığını, yorumlarını ve adım adım ispatlarını keşfet."
+---
 
-::: theorem Cauchy Yakınsaklık Kriteri
-Bir dizi, her \(\varepsilon > 0\) için yeterince büyük indekslerden sonra terimleri birbirine yakınsa Cauchy dizisidir.
-:::
+<br>
 
-::: formula Euler Özdeşliği
-\[
- e^{i\pi} + 1 = 0
-\]
-:::
+<div style="text-align: center; max-width: 700px; margin: 0 auto; padding: 20px;">
 
-::: example
-Bu blok örnekler için kullanılır.
-:::
+## Merhaba! 👋
 
-## GeoGebra/Desmos Gömme Örneği
+İstanbul Üniversitesi'nde Matematik eğitimim boyunca öğrendiklerimi, kendi yorumlarımı da katarak temize çekiyor ve burada paylaşıyorum. 
 
-Aşağıdaki iframe doğrudan markdown içine eklenebilir:
+Amacım, Türkçe matematik literatüründeki dağınık ve okunması zor kaynak problemini çözüp, hepimiz için tertemiz bir dijital arşiv oluşturmak. Umarım bu notlar vizelerine, finallerine veya salt matematik merakına güzel bir katkı sağlar! 
 
-<iframe
-  src="https://www.desmos.com/calculator"
-  width="100%"
-  height="480"
-  style="border:1px solid #ccc"
-  allowfullscreen
-></iframe>
+Birlikte büyütmek dileğiyle... 💚
+
+</div>
