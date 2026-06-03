@@ -1,4 +1,4 @@
-# math-notebook
+# acik-matematik
 
 Open-source, interactive mathematics lecture notes for undergraduate level in Turkish.
 
