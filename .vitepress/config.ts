@@ -44,6 +44,12 @@ export default defineConfig({
       description: 'Open-source comprehensive mathematics lecture notes'
     } */
   },
+  head: [
+    ['link', { rel: 'icon', href: 'https://fav.farm/🌿' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'true' }],
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:wght@300;700&display=swap' }]
+  ],
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/KaanBahaSever/math-notebook' }],
     i18nRouting: true,
