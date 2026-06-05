@@ -1,14 +1,48 @@
-# Dersler
+---
+aside: false
+---
 
-Aşağıdaki matematik derslerinden birini seçerek ilgili notlara ulaşabilirsiniz.
+# Ders Kataloğu
 
-- [Analiz](/dersler/analiz/)
-- [Kompleks Analiz](/dersler/kompleks-analiz/)
-- [Diferansiyel Denklemler](/dersler/diferansiyel-denklemler/)
-- [Soyut Cebir](/dersler/soyut-cebir/)
-- [Sayılar Teorisi](/dersler/sayilar-teorisi/)
-- [Topoloji](/dersler/topoloji/)
-- [Diferansiyel Geometri](/dersler/diferansiyel-geometri/)
-- [Lineer Cebir](/dersler/lineer-cebir/)
-- [Kriptografi](/dersler/kriptografi/)
-- [Raslantı Süreçler](/dersler/raslanti-surecler/)
+Aşağıdaki matematik derslerinden birini seçerek ilgili notlara ulaşabilirsiniz. Aradığınız içeriği daha rahat bulabilmeniz için dersler ana bilim dallarına göre sınıflandırılmıştır.
+
+---
+<div class="course-catalog">
+
+### 🏛️ Temeller ve Cebir
+Matematiğin mantıksal inşası, sayılar teorisi ve soyut cebirsel yapılar.
+* [Matematiğin Temelleri ve Mantık](/dersler/matematigin-temelleri/)
+* [Sayılar Teorisi](/dersler/sayilar-teorisi/)
+* [Lineer Cebir](/dersler/lineer-cebir/)
+* [Soyut Cebir](/dersler/soyut-cebir/)
+
+### 🌊 Analiz (Kalkülüs) Teorisi
+Limit, süreklilik, türev ve integral kavramlarının çok boyutlu ve kompleks uzaylardaki incelemesi.
+* [Analiz](/dersler/analiz/)
+* [İntegral Calculus](/dersler/integral-calculus/)
+* [Reel Analiz](/dersler/reel-analiz/)
+* [Kompleks Analiz](/dersler/kompleks-analiz/)
+* [Fonksiyonel Analiz](/dersler/fonksiyonel-analiz/)
+* [Konveks Analiz](/dersler/konveks-analiz/)
+
+### 🌌 Geometri ve Diferansiyel Denklemler
+Uzayların topolojik özellikleri, eğriler/yüzeyler ve değişim oranlarını modelleyen denklemler.
+* [Diferansiyel Denklemler](/dersler/diferansiyel-denklemler/)
+* [Kısmi Diferansiyel Denklemler](/dersler/kismi-diferansiyel-denklemler/)
+* [Diferansiyel Geometri](/dersler/diferansiyel-geometri/)
+* [Topoloji](/dersler/topoloji/)
+
+### 🎲 Olasılık ve İstatistik
+Belirsizliklerin, rassal değişkenlerin ve veri dağılımlarının matematiksel modellenmesi.
+* [Olasılık Teorisi](/dersler/olasilik-teorisi/)
+* [Matematiksel İstatistik](/dersler/matematiksel-istatistik/)
+* [Raslantı Süreçleri](/dersler/raslanti-surecleri/)
+
+### ⚙️ Uygulamalı Matematik
+Algoritmalar, şifreleme, finansal modellemeler ve sayısal yaklaşımlar.
+* [Kriptografi](/dersler/kriptografi/)
+* [Nümerik Analiz](/dersler/numerik-analiz/)
+* [Lineer Programlama](/dersler/linear-programlama/)
+* [Temel Finans Matematiği](/dersler/finans-matematigi/)
+
+</div>
