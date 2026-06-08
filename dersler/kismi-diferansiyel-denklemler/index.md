@@ -10,6 +10,7 @@ aside: false
 
 Bu bölümde, çok değişkenli fonksiyonların değişim oranlarını modelleyen kısmi diferansiyel denklemlerin (KDD) analitik yapılarını inceliyoruz. Temel sınıflandırma prensiplerinden başlayarak karakteristik eğriler metoduna, oradan da fiziksel dünyanın temelini oluşturan dalga, ısı ve Laplace denklemlerinin çözümlerine uzanıyoruz.
 
+::: info Kısmi Diferansiyel Denklemler Ders İçeriği
 ### 1. Temeller ve Sınıflandırma
 * [Adi Diferansiyel (ODE) Sistemlerinden KDD'ye Geçiş](/dersler/kismi-diferansiyel-denklemler/temeller/ode-kdd-gecis)
 * [KDD'lerin Sınıflandırılması (Lineer, Kuazi-Lineer, Nonlineer)](/dersler/kismi-diferansiyel-denklemler/temeller/siniflandirma)
@@ -30,3 +31,4 @@ Bu bölümde, çok değişkenli fonksiyonların değişim oranlarını modelleye
 * [Eliptik Denklemler ve Laplace Denklemi](/dersler/kismi-diferansiyel-denklemler/modeller/eliptik-laplace)
 * [Hiperbolik Denklemler ve Dalga Denklemi](/dersler/kismi-diferansiyel-denklemler/modeller/hiperbolik-dalga)
 * [Parabolik Denklemler ve Özel Örnekler (Isı Denklemi)](/dersler/kismi-diferansiyel-denklemler/modeller/parabolik-isi)
+:::

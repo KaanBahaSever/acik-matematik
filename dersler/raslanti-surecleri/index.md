@@ -10,6 +10,7 @@ aside: false
 
 Bu bölümde, belirsizlik içeren dinamik sistemlerin olasılıksal modellerini inceliyoruz. Stokastik temellerden başlayarak, sistemlerin zaman içindeki durum geçişlerini, veri tabanlı gelecek tahminlerini ve stratejik karar alma mekanizmalarını ele alıyoruz.
 
+::: info Raslantı Süreçleri Ders İçeriği
 ### 1. Stokastik Temeller
 * [Olasılık Notasyonu](/dersler/raslanti-surecleri/temeller/notasyon)
 * [Stokastik Süreç Kavramı](/dersler/raslanti-surecleri/temeller/stokastik-kavrami)
@@ -42,3 +43,4 @@ Bu bölümde, belirsizlik içeren dinamik sistemlerin olasılıksal modellerini 
 ### 5. İleri Karar Modelleri
 * [Oyun Teorisi](/dersler/raslanti-surecleri/karar/oyun-teorisi)
 * [Stratejik Karar Alma](/dersler/raslanti-surecleri/karar/stratejik-kararlar)
+:::

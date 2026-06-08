@@ -85,6 +85,7 @@ Bu bölümde, noktasal yakınsaklıktan düzgün yakınsaklığa geçiş yaparak
 <br>
 
 # 🌌 Analiz 4: Çok Değişkenli Analiz
+<hr>
 
 Bu bölümde, tek değişkenli analiz kavramlarını n-boyutlu Öklid uzayına taşıyoruz. $\mathbb{R}^n$ uzayının topolojik yapısından başlayarak, çok değişkenli fonksiyonlarda limit, süreklilik, kısmi türevler ve optimizasyon problemlerini inceliyoruz.
 
