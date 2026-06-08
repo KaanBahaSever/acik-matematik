@@ -45,6 +45,7 @@ Algoritmalar, şifreleme, finansal modellemeler ve sayısal yaklaşımlar.
 * [Kriptografi](/dersler/kriptografi/)
 * [Kodlama Teorisi](/dersler/kodlama-teorisi/)
 * [Bilgisayarda Matematik Uygulamaları](/dersler/bilgisayarda-matematik-uygulamalari/)
+* [Python ile Bilimsel Hesaplama](/dersler/python-ile-bilimsel-hesaplama/)
 * [Nümerik Analiz](/dersler/numerik-analiz/)
 * [Lineer Programlama](/dersler/lineer-programlama/)
 * [Temel Finans Matematiği](/dersler/finans-matematigi/)
