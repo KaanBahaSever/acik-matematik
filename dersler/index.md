@@ -24,9 +24,11 @@ Limit, süreklilik, türev ve integral kavramlarının çok boyutlu ve kompleks 
 * [Kompleks Analiz](/dersler/kompleks-analiz/)
 * [Fonksiyonel Analiz](/dersler/fonksiyonel-analiz/)
 * [Konveks Analiz](/dersler/konveks-analiz/)
+* [İleri Analiz](/dersler/ileri-analiz/)
 
 ### 🌌 Geometri ve Diferansiyel Denklemler
 Uzayların topolojik özellikleri, eğriler/yüzeyler ve değişim oranlarını modelleyen denklemler.
+* [Analitik Geometri](/dersler/analitik-geometri/)
 * [Diferansiyel Denklemler](/dersler/diferansiyel-denklemler/)
 * [Kısmi Diferansiyel Denklemler](/dersler/kismi-diferansiyel-denklemler/)
 * [Diferansiyel Geometri](/dersler/diferansiyel-geometri/)
@@ -41,8 +43,10 @@ Belirsizliklerin, rassal değişkenlerin ve veri dağılımlarının matematikse
 ### ⚙️ Uygulamalı Matematik
 Algoritmalar, şifreleme, finansal modellemeler ve sayısal yaklaşımlar.
 * [Kriptografi](/dersler/kriptografi/)
+* [Kodlama Teorisi](/dersler/kodlama-teorisi/)
+* [Bilgisayarda Matematik Uygulamaları](/dersler/bilgisayarda-matematik-uygulamalari/)
 * [Nümerik Analiz](/dersler/numerik-analiz/)
-* [Lineer Programlama](/dersler/linear-programlama/)
+* [Lineer Programlama](/dersler/lineer-programlama/)
 * [Temel Finans Matematiği](/dersler/finans-matematigi/)
 
 </div>
