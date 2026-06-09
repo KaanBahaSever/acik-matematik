@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Ters Laplace

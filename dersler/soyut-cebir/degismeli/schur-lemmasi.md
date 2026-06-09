@@ -1,5 +1,5 @@
 ﻿---
-aside: false
+
 ---
 
 # Schur LemmasÄ±

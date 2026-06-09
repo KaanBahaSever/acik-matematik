@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Sifirlar Kutuplar

@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 [Ana Sayfa](/) ⇋ [Ders Kataloğu](/dersler/) ⇋ **Diferansiyel Denklemler**

@@ -1,5 +1,5 @@
 ﻿---
-aside: false
+
 ---
 
 # Oyun Teorisi

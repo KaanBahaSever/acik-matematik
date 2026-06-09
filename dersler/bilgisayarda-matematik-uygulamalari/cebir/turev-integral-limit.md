@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Turev Integral Limit

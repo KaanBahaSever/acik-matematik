@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Sembolik Sayisal Donusumler

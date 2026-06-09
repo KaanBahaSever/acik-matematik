@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Kosullar Yerine Koyma

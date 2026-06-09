@@ -1,5 +1,5 @@
 ﻿---
-aside: false
+
 ---
 
 # Sezar Åžifreleme

@@ -45,7 +45,7 @@ export default defineConfig({
     } */
   },
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: './favicon2.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/acik-matematik/favicon2.svg' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'true' }],
     ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:wght@300;700&display=swap' }]
@@ -53,7 +53,11 @@ export default defineConfig({
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/KaanBahaSever/math-notebook' }],
     i18nRouting: true,
-    aside: false
+    aside: false,
+    footer: {
+      message: 'Akademik amaçlarla tasarlanmış açık kaynaklı eğitim arşivi.',
+      copyright: 'Copyright © 2026 | Tüm Hakları Saklıdır'
+    }
   },
   markdown: {
     html: true,
