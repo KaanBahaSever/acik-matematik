@@ -29,7 +29,7 @@ Bu bölümde, matematiğin üzerine inşa edildiği evrensel dili ve aksiyomatik
     * [Varlık ve Teklik İspatları](/dersler/matematigin-temelleri/ispatlar/varlik-teklik)
 
 * **3. Kümeler Teorisi**
-* [Küme Kavramı ve Alt Kümeler](/dersler/matematigin-temelleri/kumeler/kavram-altkumeler)
+    * [Küme Kavramı ve Alt Kümeler](/dersler/matematigin-temelleri/kumeler/kavram-altkumeler)
     * [Küme Aileleri](/dersler/matematigin-temelleri/kumeler/kume-aileleri)
     * [Kümelerde İşlemler](/dersler/matematigin-temelleri/kumeler/islemler)
     * [Kartezyen Çarpım](/dersler/matematigin-temelleri/kumeler/kartezyen-carpim)
