@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Cok Degiskenli Fonksiyonlar

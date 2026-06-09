@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Limit Sureklilik

@@ -1,5 +1,5 @@
 ---
-aside: false
+
 ---
 
 # Seriler Kuvvet Serileri

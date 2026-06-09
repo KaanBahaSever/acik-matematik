@@ -1,12 +1,12 @@
 ---
-aside: false
+
 ---
 
 [Ana Sayfa](/) ⇋ [Ders Kataloğu](/dersler/) ⇋ **Kodlama Teorisi**
 
 <br>
 
-# 🔐 Kodlama Teorisi
+# 📡 Kodlama Teorisi
 <hr>
 
 Gürültülü ve hatalı iletişim kanalları üzerinden gönderilen verilerin korunması amacıyla; sonlu cisimler (Galois Fields), halkalar ve lineer cebir altyapısını kullanarak hata saptayan ve düzelten (Error-Correcting Codes) matematiksel blokların tasarımını, dekodlama algoritmalarını ve kod sınırlarını inceleyen ileri düzey uygulamalı matematik notları.

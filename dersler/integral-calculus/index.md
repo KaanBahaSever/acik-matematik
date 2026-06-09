@@ -1,12 +1,12 @@
 ---
-aside: false
+
 ---
 
 [Ana Sayfa](/) ⇋ [Ders Kataloğu](/dersler/) ⇋ **İntegral Calculus**
 
 <br>
 
-# 🌊 İntegral Calculus
+# 🎢 İntegral Calculus
 <hr>
 
 Tek boyutlu integrallerin sınırlarını aşarak; çok katlı uzaylarda hacim hesaplamalarını, vektör alanlarının geometrisini, yüzeyler üzerindeki akı (flux) değişimlerini ve elektromanyetizmanın da temelini oluşturan vektör analizinin büyük teoremlerini (Green, Gauss, Stokes) inceleyen ileri analiz notları.

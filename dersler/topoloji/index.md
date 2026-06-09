@@ -1,12 +1,12 @@
 ---
-aside: false
+
 ---
 
 [Ana Sayfa](/) ⇋ [Ders Kataloğu](/dersler/) ⇋ **Topoloji**
 
 <br>
 
-# 🎈 Topoloji
+# 🥨 Topoloji
 
 
 Bu bölümde, geometrik objelerin ve uzayların sürekli deformasyonlar altındaki değişmez özelliklerini inceliyoruz. Temel geometrik sezgilerden başlayarak, ayırma aksiyomlarına, kompaktlığa ve metrik uzayların doğasına kadar matematiğin en soyut yapı taşlarını ele alıyoruz.
