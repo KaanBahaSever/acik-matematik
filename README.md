@@ -1,5 +1,5 @@
 # acik-matematik
-Açık Matematik, Lisans düzeyinde matematik dersleri için hazırlanmış, açık kaynaklı bir not defteri projesidir. Bu proje, öğrencilerin ve öğretmenlerin matematik konularını daha iyi anlamalarına yardımcı olmak amacıyla hazırlanmıştır. İçerik, çeşitli matematik konularını kapsar ve her konu için örnekler, açıklamalar ve uygulamalar içerir.
+Açık Matematik, Lisans düzeyinde matematik dersleri için hazırlanmış, açık kaynaklı bir not defteri projesidir. Bu proje, matematik konularının daha iyi anlaşılmasına yardımcı olmak amacıyla hazırlanmıştır. İçerik, çeşitli matematik konularını kapsar ve her konu için örnekler, açıklamalar ve uygulamalar içerir.
 
 ## Kurulum
 
