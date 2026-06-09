@@ -1,0 +1,6 @@
+﻿---
+aside: false
+---
+
+# DoÄŸruluk TablolarÄ±
+
