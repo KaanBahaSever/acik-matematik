@@ -1,0 +1,6 @@
+﻿---
+aside: false
+---
+
+# Karakteristik Polinom
+

@@ -15,6 +15,7 @@ Matematiğin mantıksal inşası, sayılar teorisi ve soyut cebirsel yapılar.
 * [Sayılar Teorisi](/dersler/sayilar-teorisi/)
 * [Lineer Cebir](/dersler/lineer-cebir/)
 * [Soyut Cebir](/dersler/soyut-cebir/)
+* [Eliptik Eğriler](/dersler/eliptik-egriler/)
 
 ### 🌊 Analiz (Kalkülüs) Teorisi
 Limit, süreklilik, türev ve integral kavramlarının çok boyutlu ve kompleks uzaylardaki incelemesi.
