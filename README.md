@@ -1,18 +1,10 @@
 # acik-matematik
-
-Open-source, interactive mathematics lecture notes for undergraduate level in Turkish.
+Açık Matematik, Lisans düzeyinde matematik dersleri için hazırlanmış, açık kaynaklı bir not defteri projesidir. Bu proje, öğrencilerin ve öğretmenlerin matematik konularını daha iyi anlamalarına yardımcı olmak amacıyla hazırlanmıştır. İçerik, çeşitli matematik konularını kapsar ve her konu için örnekler, açıklamalar ve uygulamalar içerir.
 
 ## Kurulum
 
 ```bash
 npm install
-```
-
-## VitePress + MathJax Kurulum Komutları
-
-```bash
-npm init -y
-npm install -D vitepress markdown-it-mathjax3 markdown-it-container
 ```
 
 ## Çalıştırma
