@@ -6,52 +6,50 @@ aside: false
 
 <br>
 
-# Diferansiyel Geometri 1: Eğriler ve Çatı Alanları
-<hr>
-Öklidyen uzayın temellerinden başlayarak, diferansiyel formların inşasını, Frenet-Serret vektörlerini, çatı alanlarını ve uzaydaki eğrilerin izometrik dönüşümlerini ele alır.
+# 🌀 Diferansiyel Geometri
 
+Barrett O'Neill'in modern yaklaşımıyla hazırlanan bu derste; klasik tensör hesaplamalarından ziyade diferansiyel formlar ve çatı alanları (frame fields) kullanılarak, Öklidyen uzaydaki eğrilerin teorisinden yüzeylerin küresel (global) Riemann geometrisine uzanan kusursuz bir analitik yolculuğa çıkıyoruz.
+
+## Diferansiyel Geometri 1: Eğriler, 1-Formlar ve Bağlantılar
+Öklidyen uzayda kalkülüsün temellerini atarak, 1-formlar ve diferansiyel formların inşasını, Frenet formüllerini, bağlantı (connection) formlarını ve uzaydaki izometrik dönüşümleri inceler.
+<hr>
 
 ::: info
-* **1. Öklidyen Uzay ve Diferansiyel Formlar**
-  * [Öklidyen Uzay, Teğet Vektör ve Yönlü Türev](/dersler/diferansiyel-geometri/1/oklidyen-uzay-teget)
-  * [1-Formlar, 2-Formlar ve Temel Özellikleri](/dersler/diferansiyel-geometri/1/1-form-2-form)
-  * [Wedge Product (Dış Çarpım) ve Dış Türev](/dersler/diferansiyel-geometri/1/wedge-product-dis-turev)
-  * [Teğet Dönüşümü (Tangent Map / Differential)](/dersler/diferansiyel-geometri/1/teget-donusumu)
-* **2. Eğriler Teorisi ve Çatı Alanları**
-  * [Uzayda Eğriler ve Hız Vektörleri](/dersler/diferansiyel-geometri/1/uzayda-egriler)
-  * [Frenet-Serret Denklemleri ve Çatısı](/dersler/diferansiyel-geometri/1/frenet-serret)
-  * [Keyfi Hızlı Eğriler (Arbitrary Speed Curves)](/dersler/diferansiyel-geometri/1/keyfi-hizli-egriler)
-* **3. Kovaryant Türev ve Yapı Denklemleri**
-  * [Kovaryant Türev](/dersler/diferansiyel-geometri/1/kovaryant-turev)
-  * [Çatı Alanları (Frame Fields)](/dersler/diferansiyel-geometri/1/cati-alanlari)
-  * [Bağlantı Formları (Connection)](/dersler/diferansiyel-geometri/1/baglanti)
-  * [Cartan Yapı Denklemleri](/dersler/diferansiyel-geometri/1/cartan-yapi)
-* **4. İzometri ve Yönlendirme**
-  * [Öklidyen Uzayda İzometri (Isometry)](/dersler/diferansiyel-geometri/1/izometri)
-  * [Yön ve Yönlendirme (Orientation)](/dersler/diferansiyel-geometri/1/yon)
-  * [Eğrilerin Kongrüansı (Congruence)](/dersler/diferansiyel-geometri/1/kongruans)
+* **1. Öklidyen Uzayda Kalkülüs (Calculus on Euclidean Space)**
+  * [Öklidyen Uzay, Teğet Vektörler ve Yönlü Türevler](/dersler/diferansiyel-geometri/1/oklidyen-uzay-teget-yonlu-turev)
+  * [$\mathbb{R}^3$'te Eğriler ve Dönüşümler (Mappings)](/dersler/diferansiyel-geometri/1/uzayda-egriler-donusumler)
+  * [1-Formlar ve Diferansiyel Formlar](/dersler/diferansiyel-geometri/1/1-formlar-diferansiyel-formlar)
+* **2. Çatı Alanları (Frame Fields)**
+  * [İç Çarpım, Eğriler ve Frenet Formülleri](/dersler/diferansiyel-geometri/1/ic-carpim-frenet-formulleri)
+  * [Keyfi Hızlı Eğriler ve Kovaryant Türev (Covariant Derivative)](/dersler/diferansiyel-geometri/1/keyfi-hizli-egriler-kovaryant-turev)
+  * [Çatı Alanları, Bağlantı (Connection) Formları ve Cartan Yapı Denklemleri](/dersler/diferansiyel-geometri/1/cati-alanlari-yapi-denklemleri)
+* **3. Öklidyen Geometri (Euclidean Geometry)**
+  * [$\mathbb{R}^3$'ün İzometrileri ve Bir İzometrinin Teğet Dönüşümü](/dersler/diferansiyel-geometri/1/izometriler-teget-donusumu)
+  * [Yönlendirme (Orientation) ve Öklidyen Geometrinin Doğası](/dersler/diferansiyel-geometri/1/yonlendirme-oklidyen-geometri)
+  * [Eğrilerin Kongrüansı (Congruence of Curves)](/dersler/diferansiyel-geometri/1/egrilerin-kongruansi)
 :::
 
-# Diferansiyel Geometri 2: Yüzeyler, Temel Formlar ve Eğrilik
+## Diferansiyel Geometri 2: Yüzeyler ve Riemann Geometrisi
+Yüzeyler üzerindeki form entegrasyonlarından başlayarak, Şekil Operatörü (Shape Operator) ile eğrilik hesaplamalarını, yüzeylerin içsel geometrisini ve nihayetinde Gauss-Bonnet gibi muazzam global teoremleri ele alır.
 <hr>
-Parametrik yamalardan yüzey inşasına, birinci ve ikinci temel formlar ile eğrilik hesaplarına, oradan da modern diferansiyel geometrinin kalbi olan içsel (intrinsic) geometriye ve jeodeziklere uzanır.
 
 ::: info
-* **1. Uzayda Yüzeyler ve Yamalar**
-  * [İki Değişkenli Vektörel Fonksiyonlar](/dersler/diferansiyel-geometri/2/vektorel-fonksiyonlar)
-  * [Uzayda Yüzey Kavramı ve Topolojik Özellikler](/dersler/diferansiyel-geometri/2/yuzey-kavrami)
-  * [Koordinat Yamaları ve Monge Yamaları](/dersler/diferansiyel-geometri/2/yamalar)
-* **2. Temel Formlar ve Yüzey Noktaları**
-  * [Teğet Düzlem ve Birinci Temel Form (Metric)](/dersler/diferansiyel-geometri/2/birinci-temel-form)
-  * [İkinci Temel Form ve Yüzey Noktalarının Tipleri](/dersler/diferansiyel-geometri/2/ikinci-temel-form)
-  * [Dupin Göstergesi (Indicatrix)](/dersler/diferansiyel-geometri/2/dupin-gostergesi)
-* **3. Eğrilik (Curvature) Teorisi**
-  * [Normal Eğrilik](/dersler/diferansiyel-geometri/2/normal-egrilik)
-  * [Gauss Eğriliği ve Ortalama Eğrilik](/dersler/diferansiyel-geometri/2/gauss-ortalama)
-  * [Asli Eğrilikler, Koordinat ve Eğrilik Çizgileri](/dersler/diferansiyel-geometri/2/egrilik-cizgileri)
-  * [Rodrigues Formülü ve Asimptotik Çizgiler](/dersler/diferansiyel-geometri/2/rodrigues-asimptotik)
-* **4. İçsel Geometri ve Jeodezikler**
-  * [Gauss-Weingarten Formülleri](/dersler/diferansiyel-geometri/2/gauss-weingarten)
-  * [Yüzeylerin İçsel (Intrinsic) Geometrisi](/dersler/diferansiyel-geometri/2/icsel-geometri)
-  * [Jeodezik Eğriler ve Jeodezik Eğrilik](/dersler/diferansiyel-geometri/2/jeodezikler)
+* **4. Yüzeyler Üzerinde Kalkülüs (Calculus on a Surface)**
+  * [$\mathbb{R}^3$'te Yüzeyler, Yama (Patch) Hesaplamaları ve Teğet Vektörler](/dersler/diferansiyel-geometri/2/yuzeyler-yama-teget)
+  * [Yüzey Üzerinde Diferansiyel Formlar, Dönüşümler ve İntegrasyon](/dersler/diferansiyel-geometri/2/yuzeyde-formlar-integrasyon)
+  * [Yüzeylerin Topolojik Özellikleri ve Manifoldlar](/dersler/diferansiyel-geometri/2/topolojik-ozellikler-manifoldlar)
+* **5. Şekil Operatörleri (Shape Operators)**
+  * [Şekil Operatörü ($S$), Normal Eğrilik ve Gauss Eğriliği](/dersler/diferansiyel-geometri/2/sekil-operatoru-gauss-egriligi)
+  * [Hesaplama Teknikleri ve Kapalı (Implicit) Durumlar](/dersler/diferansiyel-geometri/2/hesaplama-teknikleri-kapali-durumlar)
+  * [Yüzeydeki Özel Eğriler ve Dönel Yüzeyler (Surfaces of Revolution)](/dersler/diferansiyel-geometri/2/ozel-egriler-donel-yuzeyler)
+* **6. $\mathbb{R}^3$'te Yüzeylerin Geometrisi**
+  * [Temel Denklemler ve Form Hesaplamaları](/dersler/diferansiyel-geometri/2/temel-denklemler-formlar)
+  * [$\mathbb{R}^3$'te Yüzeylerin İçsel (Intrinsic) Geometrisi ve Global Teoremler](/dersler/diferansiyel-geometri/2/icsel-geometri-global-teoremler)
+  * [Ortogonal Koordinatlar, Toplam Eğrilik ve Yüzeylerin Kongrüansı](/dersler/diferansiyel-geometri/2/ortogonal-koordinatlar-kongruans)
+* **7. Riemann Geometrisi ve Gauss-Bonnet Teoremi**
+  * [Geometrik Yüzeyler, Jeodezikler ve Clairaut Parametrizasyonları](/dersler/diferansiyel-geometri/2/geometrik-yuzeyler-jeodezikler)
+  * [Gauss-Bonnet Teoremi ve Geometrik Uygulamaları](/dersler/diferansiyel-geometri/2/gauss-bonnet-teoremi)
+* **8. Yüzeylerin Küresel (Global) Yapısı**
+  * [Jeodeziklerin Uzunluk Minimizasyonu Özellikleri ve Tam (Complete) Yüzeyler](/dersler/diferansiyel-geometri/2/uzunluk-minimizasyonu-tam-yuzeyler)
+  * [Sabit Eğrilikli Yüzeyler, Bonnet ve Hadamard Teoremleri](/dersler/diferansiyel-geometri/2/sabit-egrilikli-bonnet-hadamard)
 :::
