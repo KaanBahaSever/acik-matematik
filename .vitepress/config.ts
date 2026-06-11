@@ -67,7 +67,7 @@ export default defineConfig({
 
     socialLinks: [{ icon: 'github', link: 'https://github.com/KaanBahaSever/math-notebook' }],
     i18nRouting: true,
-    aside: false,
+    /* aside: false, */
     docFooter: {
       prev: 'Önceki Konu',
       next: 'Sonraki Konu'
@@ -997,7 +997,7 @@ export default defineConfig({
               items: [
                 { text: 'Giriş', link: '/dersler/kriptografi/giris/terminoloji' },
                 { text: 'Kerckhoffs Prensibi', link: '/dersler/kriptografi/giris/kerckhoffs' },
-                { text: 'Matematiksel Gösterim ve Notasyon', link: '/dersler/kriptografi/giris/matematiksel-temeller' }, 
+                { text: 'Matematiksel Temeller ve Notasyon', link: '/dersler/kriptografi/giris/matematiksel-temeller' },
               ]
             },
             {
@@ -1604,7 +1604,7 @@ export default defineConfig({
           items: [
             { text: 'Genel Bakış', link: '/dersler/sayilar-teorisi/' },
             {
-              text: '1. Bölüm (Temel Kavramlar)',
+              text: 'Sayılar Teorisi I (Temel Kavramlar)',
               collapsed: true,
               items: [
                 { text: 'Bölünebilme', link: '/dersler/sayilar-teorisi/1/bolunebilme' },
@@ -1626,22 +1626,52 @@ export default defineConfig({
               ]
             },
             {
-              text: '2. Bölüm (İleri Kavramlar ve Rezidüler)',
+              text: 'Sayılar Teorisi II (İleri Kavramlar ve Rezidüler)',
               collapsed: true,
               items: [
-                { text: 'Yüksek Mertebeden Denklemler', link: '/dersler/sayilar-teorisi/2/yuksek-mertebe' },
-                { text: 'Lineer Olmayan Denklemler', link: '/dersler/sayilar-teorisi/2/lineer-olmayan' },
-                { text: 'Özel Denklemler', link: '/dersler/sayilar-teorisi/2/ozel-denklemler' },
-                { text: 'Aritmetiğin Esas Teoremi', link: '/dersler/sayilar-teorisi/2/esas-teorem' },
-                { text: 'Hensel Lemması', link: '/dersler/sayilar-teorisi/2/hensel-lemmasi' },
-                { text: 'Primitif Kökler (İlkel Kökler)', link: '/dersler/sayilar-teorisi/2/primitif-kokler' },
-                { text: 'İndeks Kavramı', link: '/dersler/sayilar-teorisi/2/indeks' },
-                { text: 'Rezidü Kavramı', link: '/dersler/sayilar-teorisi/2/rezidu-kavrami' },
-                { text: 'N. Kuvvet Rezidü', link: '/dersler/sayilar-teorisi/2/n-kuvvet-rezidu' },
-                { text: 'Legendre Sembolü', link: '/dersler/sayilar-teorisi/2/legendre-sembolu' },
-                { text: 'Gauss Lemması', link: '/dersler/sayilar-teorisi/2/gauss-lemmasi' },
-                { text: 'Kuadratik Resiprosite (İkinci Dereceden Karşılıklılık)', link: '/dersler/sayilar-teorisi/2/kuadratik-resiprosite' },
-                { text: 'Jacobi Sembolü', link: '/dersler/sayilar-teorisi/2/jacobi-sembolu' }
+                {
+                  text: '1. İleri Kongrüanslar ve Kök Taşıma',
+                  collapsed: true,
+                  items: [
+                    { text: 'Yüksek Mertebeden Kongrüanslar', link: '/dersler/sayilar-teorisi/2/yuksek-mertebe' },
+                    { text: 'Hensel Lemması', link: '/dersler/sayilar-teorisi/2/hensel-lemmasi' },
+                    { text: 'n. Kuvvetten Rezidüler', link: '/dersler/sayilar-teorisi/2/n-kuvvet-rezidu' }
+                  ]
+                },
+                {
+                  text: '2. Kuadratik (İkinci Dereceden) Rezidüler',
+                  collapsed: true,
+                  items: [
+                    { text: 'Kuadratik Rezidü Kavramı', link: '/dersler/sayilar-teorisi/2/rezidu-kavrami' },
+                    { text: 'Legendre Sembolü', link: '/dersler/sayilar-teorisi/2/legendre-sembolu' },
+                    { text: 'Gauss Lemması', link: '/dersler/sayilar-teorisi/2/gauss-lemmasi' },
+                    { text: 'Kuadratik Kalanlar İçin Esas Teorem', link: '/dersler/sayilar-teorisi/2/esas-teorem' }
+                  ]
+                },
+                {
+                  text: '3. Kuadratik Resiprosite ve Semboller',
+                  collapsed: true,
+                  items: [
+                    { text: 'Kuadratik Resiprosite Teoremi', link: '/dersler/sayilar-teorisi/2/kuadratik-resiprosite' },
+                    { text: 'Jacobi Sembolü', link: '/dersler/sayilar-teorisi/2/jacobi-sembolu' }
+                  ]
+                },
+                {
+                  text: '4. Primitif Kökler ve İndeks',
+                  collapsed: true,
+                  items: [
+                    { text: 'Primitif (İlkel) Kökler', link: '/dersler/sayilar-teorisi/2/primitif-kokler' },
+                    { text: 'İndeks Aritmetiği ve Uygulamaları', link: '/dersler/sayilar-teorisi/2/indeks' }
+                  ]
+                },
+                {
+                  text: '5. Diofant Denklemleri',
+                  collapsed: true,
+                  items: [
+                    { text: 'Lineer Olmayan Diofant Denklemleri', link: '/dersler/sayilar-teorisi/2/lineer-olmayan' },
+                    { text: 'Özel Denklemler (Pisagor, Pell)', link: '/dersler/sayilar-teorisi/2/ozel-denklemler' }
+                  ]
+                }
               ]
             }
           ]

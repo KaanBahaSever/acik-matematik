@@ -11,7 +11,7 @@
 Temel bölünebilme kurallarından asal sayıların doğasına ve klasik modüler aritmetiğe kadar tam sayıların temel yapı taşlarını inceler.
 
 
-::: info
+::: info Ders İçeriği
 * **1. Bölünebilme ve Asal Sayılar**
   * [Bölünebilme Kuralları ve Temel Kavramlar](/dersler/sayilar-teorisi/1/bolunebilme)
   * [Asal Sayılar ve Özellikleri](/dersler/sayilar-teorisi/1/asal-sayilar)
@@ -40,7 +40,7 @@ Temel bölünebilme kurallarından asal sayıların doğasına ve klasik modüle
 Modern kriptografinin altyapısını oluşturan ileri kongrüanslar, kuadratik kalanlar ve primitif kökler gibi daha derin analitik yapıları ele alır.
 
 
-::: info
+::: info Ders İçeriği
 * **1. İleri Kongrüanslar ve Kök Taşıma**
   * [Yüksek Mertebeden Kongrüanslar](/dersler/sayilar-teorisi/2/yuksek-mertebe)
   * [Hensel Lemması](/dersler/sayilar-teorisi/2/hensel-lemmasi)
@@ -50,7 +50,7 @@ Modern kriptografinin altyapısını oluşturan ileri kongrüanslar, kuadratik k
   * [Legendre Sembolü](/dersler/sayilar-teorisi/2/legendre-sembolu)
   * [Gauss Lemması](/dersler/sayilar-teorisi/2/gauss-lemmasi)
   * [Kuadratik Kalanlar İçin Esas Teorem](/dersler/sayilar-teorisi/2/esas-teorem)
-* **3. Karşılıklılık ve Semboller**
+* **3. Kuadratik Resiprosite ve Semboller**
   * [Kuadratik Resiprosite (Karşılıklılık) Teoremi](/dersler/sayilar-teorisi/2/kuadratik-resiprosite)
   * [Jacobi Sembolü](/dersler/sayilar-teorisi/2/jacobi-sembolu)
 * **4. Primitif Kökler ve İndeks (Ayrık Logaritma)**
