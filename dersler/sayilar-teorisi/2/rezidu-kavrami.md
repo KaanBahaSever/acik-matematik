@@ -1,6 +1,3 @@
-﻿---
+﻿# Kuadratik Rezidü Kavramı
 
----
-
-# Kuadratik RezidÃ¼ KavramÄ±
 
