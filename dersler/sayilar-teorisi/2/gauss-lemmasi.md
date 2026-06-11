@@ -1,6 +1,1 @@
-﻿---
-
----
-
-# Gauss LemmasÄ±
-
+﻿# Gauss Lemması
