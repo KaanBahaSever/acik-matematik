@@ -1645,7 +1645,6 @@ export default defineConfig({
                     { text: 'Kuadratik Rezidü Kavramı', link: '/dersler/sayilar-teorisi/2/rezidu-kavrami' },
                     { text: 'Legendre Sembolü', link: '/dersler/sayilar-teorisi/2/legendre-sembolu' },
                     { text: 'Gauss Lemması', link: '/dersler/sayilar-teorisi/2/gauss-lemmasi' },
-                    { text: 'Kuadratik Kalanlar İçin Esas Teorem', link: '/dersler/sayilar-teorisi/2/esas-teorem' }
                   ]
                 },
                 {
@@ -1657,19 +1656,10 @@ export default defineConfig({
                   ]
                 },
                 {
-                  text: '4. Primitif Kökler ve İndeks',
+                  text: '4. Diofant Denklemleri',
                   collapsed: true,
                   items: [
-                    { text: 'Primitif (İlkel) Kökler', link: '/dersler/sayilar-teorisi/2/primitif-kokler' },
-                    { text: 'İndeks Aritmetiği ve Uygulamaları', link: '/dersler/sayilar-teorisi/2/indeks' }
-                  ]
-                },
-                {
-                  text: '5. Diofant Denklemleri',
-                  collapsed: true,
-                  items: [
-                    { text: 'Lineer Olmayan Diofant Denklemleri', link: '/dersler/sayilar-teorisi/2/lineer-olmayan' },
-                    { text: 'Özel Denklemler (Pisagor, Pell)', link: '/dersler/sayilar-teorisi/2/ozel-denklemler' }
+                    { text: 'Doğrusal Diofant Denklemleri', link: '/dersler/sayilar-teorisi/2/lineer-olmayan' },
                   ]
                 }
               ]

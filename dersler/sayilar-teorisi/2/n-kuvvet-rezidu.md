@@ -530,9 +530,11 @@ $$y_k = y_0 + k \cdot \frac{p-1}{d} \quad \text{, ($k = 0, 1, 2, \dots, d-1$)}$$
 <div class="math-block example">
   <div class="math-block-title">
 
-  Örnek: $x^{20} \equiv 13 \pmod{17}$ Denkleminin Çözümü
+  Örnek: $x^{20} \equiv 13 \pmod{17}$ denkleminin çözümü var mı, varsa çözümleri nelerdir?
 
   </div>
+
+  ::: details 💡 Çözümü Göster / Gizle
 
   Bu yüksek mertebeli kongrüansın çözümü olup olmadığını ve varsa çözüm kümesini teorem yardımıyla bulalım.
   Verilenler: $p = 17$, $a = 13$, $n = 20$. Açıkça $\gcd(13, 17) = 1$'dir.
@@ -587,4 +589,6 @@ $$y_k = y_0 + k \cdot \frac{p-1}{d} \quad \text{, ($k = 0, 1, 2, \dots, d-1$)}$$
   $$
 
   Sonuç olarak, $x^{20} \equiv 13 \pmod{17}$ denkleminin dört farklı çözümü vardır: **$x \in \{3, 5, 14, 12\}$**.
+  :::
+
 </div>

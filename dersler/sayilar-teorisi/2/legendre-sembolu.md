@@ -17,13 +17,14 @@ Bu durumu matematiksel olarak çok daha kompakt ve işlevsel bir forma sokan gö
 
   </div>
 
-  $p$ bir tek asal sayı ve $a$, $p$ ile aralarında asal bir tam sayı olsun ($\gcd(a, p) = 1$). 
-  $a$'nın modülo $p$'ye göre kuadratik karakterini (KR veya KNR olma durumunu) belirten **Legendre Sembolü**, $\left( \frac{a}{p} \right)$ ile gösterilir ve şu şekilde tanımlanır:
+  $p$ bir tek asal sayı ve $a$ herhangi bir tam sayı olsun. 
+  $a$'nın modülo $p$'ye göre kuadratik karakterini belirten **Legendre Sembolü**, $\left( \frac{a}{p} \right)$ ile gösterilir ve şu şekilde tanımlanır:
 
   $$
   \left( \frac{a}{p} \right) = \begin{cases} 
-  \hfill 1, & a \text{ mod } p \text{'de KR ise} \\ 
-  -1, & a \text{ mod } p \text{'de KNR ise} 
+  \hfill 1, & a \text{ mod } p \text{'de Kuadratik Rezidü ise} \\ 
+  -1, & a \text{ mod } p \text{'de Kuadratik Non-Rezidü ise} \\
+  \hfill 0, & p \mid a \text{ ise}
   \end{cases}
   $$
 </div>
