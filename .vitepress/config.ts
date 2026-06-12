@@ -1,5 +1,7 @@
 ﻿import { defineConfig } from 'vitepress'
 import container from 'markdown-it-container'
+import MarkdownItMathJaX3PRO from 'markdown-it-mathjax3-pro'
+
 
 function customContainer(name: string, label: string) {
   return [
@@ -1815,11 +1817,27 @@ export default defineConfig({
   },
   markdown: {
     html: true,
-    math: true,
+    math: false,
     config: (md) => {
       md.use(...customContainer('theorem', 'Teorem'))
       md.use(...customContainer('formula', 'Formül'))
       md.use(...customContainer('example', 'Örnek'))
+
+
+      md.use(MarkdownItMathJaX3PRO, {
+        tex: {
+          inlineMath: [['$', '$']],
+          macros: {
+            notimplies: "\\mathrel{\\llap{\\not}⟹}",
+          }
+        },
+        chtml: {
+          scale: 1.07,
+          fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'
+        }
+        // svg yerine chtml objesi verince cHTML render eder
+      })
+
     }
   }
 })
