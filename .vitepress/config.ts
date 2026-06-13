@@ -22,7 +22,7 @@ function customContainer(name: string, label: string) {
 }
 
 export default defineConfig({
-  base: '/acik-matematik/',
+  base: '/',
   title: '🌿 Açık Matematik',
   description: 'Açık kaynak kapsamlı matematik ders notları',
   cleanUrls: true,
@@ -47,7 +47,7 @@ export default defineConfig({
     } */
   },
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/acik-matematik/favicon2.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon2.svg' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'true' }],
     ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:wght@300;700&display=swap' }]
@@ -1007,12 +1007,12 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { text: 'Skytale', link: '/dersler/kriptografi/klasik/skytale' },
-                { text: 'Sezar Şifresi', link: '/dersler/kriptografi/klasik/sezar' },
-                { text: 'Affine Şifresi', link: '/dersler/kriptografi/klasik/affine' },
-                { text: 'Bacon Şifresi', link: '/dersler/kriptografi/klasik/bacon' },
-                { text: 'Playfair Şifresi', link: '/dersler/kriptografi/klasik/playfair' },
-                { text: 'Vigenère Şifresi', link: '/dersler/kriptografi/klasik/vigenere' },
-                { text: 'Hill Şifresi', link: '/dersler/kriptografi/klasik/hill' }
+                { text: 'Sezar Şifresi', link: '/dersler/kriptografi/klasik/sezar-sifreleme' },
+                { text: 'Affine Şifresi', link: '/dersler/kriptografi/klasik/affine-sifreleme' },
+                { text: 'Bacon Şifresi', link: '/dersler/kriptografi/klasik/bacon-sifreleme' },
+                { text: 'Playfair Şifresi', link: '/dersler/kriptografi/klasik/playfair-sifreleme' },
+                { text: 'Vigenère Şifresi', link: '/dersler/kriptografi/klasik/vigenere-sifreleme' },
+                { text: 'Hill Şifresi', link: '/dersler/kriptografi/klasik/hill-sifreleme' }
               ]
             },
             {

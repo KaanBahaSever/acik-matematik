@@ -22,14 +22,14 @@ Bu bölümde, bilginin gizlenmesi ve bu gizliliğin kırılması üzerine inşa 
 
 * **Klasik Şifreleme II: Yerine Koyma (Substitution)**
     * Monoalfabetik Şifreler
-        * [Sezar Şifreleme](/dersler/kriptografi/klasik/sezar)
-        * [Affine Şifreleme](/dersler/kriptografi/klasik/affine)
-        * [Bacon Şifreleme (Binary Sistemin Atası)](/dersler/kriptografi/klasik/bacon)
+        * [Sezar Şifreleme](/dersler/kriptografi/klasik/sezar-sifreleme)
+        * [Affine Şifreleme](/dersler/kriptografi/klasik/affine-sifreleme)
+        * [Bacon Şifreleme (Binary Sistemin Atası)](/dersler/kriptografi/klasik/bacon-sifreleme)
     * Poligrafik Şifreler
         * [Playfair Şifreleme](/dersler/kriptografi/klasik/playfair)
-        * [Hill Şifreleme ve Lineer Cebir Uygulaması](/dersler/kriptografi/klasik/hill)
+        * [Hill Şifreleme ve Lineer Cebir Uygulaması](/dersler/kriptografi/klasik/hill-sifreleme)
     * Polialfabetik Şifreler
-        * [Vigenère Şifreleme](/dersler/kriptografi/klasik/vigenere)
+        * [Vigenère Şifreleme](/dersler/kriptografi/klasik/vigenere-sifreleme)
 
 * **Modern Kriptografiye Geçiş**
     * [Claude Shannon Prensipleri](/dersler/kriptografi/modern-gecis/shannon)
