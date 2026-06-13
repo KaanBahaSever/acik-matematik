@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Affine Åžifreleme
-
