@@ -1,43 +1,41 @@
----
-
----
-
 [Ana Sayfa](/) ⇋ [Ders Notları](/dersler/) ⇋ **Kriptografi**
 
 <br>
 
 # 🔐  Kriptografi
 
-Bu bölümde, bilginin gizlenmesi ve bu gizliliğin kırılması üzerine inşa edilen matematiksel temelleri inceliyoruz. Antik Yunan'daki basit yer değiştirme algoritmalarından, modern asimetrik şifrelemeye ve asal sayıların gücüne uzanan tam kapsamlı bir yolculuk.
+Bu bölümde, bilginin gizlenmesi ve bu gizliliğin kırılması üzerine inşa edilen matematiksel temelleri inceliyoruz. Antik Yunan'daki basit fiziksel algoritmalardan, modern asimetrik şifrelemeye ve asal sayıların gücüne uzanan tam kapsamlı bir yolculuk.
 
 ::: info Ders İçeriği
 
 * **Kriptografiye Giriş ve Temel Kavramlar**
-    * [Kripografiye Giriş](/dersler/kriptografi/giris/terminoloji)
-    * [Kerckhoffs Prensibi](/dersler/kriptografi/giris/kerckhoffs)
-    * [Matematiksel Gösterim ve Notasyon](/dersler/kriptografi/giris/matematiksel-temeller)
+    * [Kriptografiye Giriş](/dersler/kriptografi/kriptografiye-giris/terminoloji)
+    * [Kerckhoffs Prensibi](/dersler/kriptografi/kriptografiye-giris/kerckhoffs-prensibi)
+    * [Matematiksel Gösterim ve Temeller](/dersler/kriptografi/kriptografiye-giris/matematiksel-temeller)
 
-* **Klasik Şifreleme I: Yer Değiştirme (Transposition)**
-    * [Skytale Şifresi ve Matris Transpozesi](/kriptografi/klasik/skytale)
+* **Klasik Şifreleme I: Fiziksel ve Algoritmik Yaklaşımlar**
+    * [Skytale Şifresi ve Silindir Mantığı](/dersler/kriptografi/klasik-kriptografi/skytale)
+    * [Zigzag (Rail Fence) ve Rota (Route) Şifrelemesi](/dersler/kriptografi/klasik-kriptografi/zigzag-rota)
+    * [Bacon Şifreleme (5-Bit Mantığı ve İkili Sisteme İlk Bakış)](/dersler/kriptografi/klasik-kriptografi/bacon-sifreleme)
 
-* **Klasik Şifreleme II: Yerine Koyma (Substitution)**
+* **Klasik Şifreleme II: Matematiksel Yerine Koyma (Substitution)**
+    * [Formal Tanım](/dersler/kriptografi/klasik-kriptografi/formal-tanim)
     * Monoalfabetik Şifreler
-        * [Sezar Şifreleme](/dersler/kriptografi/klasik/sezar-sifreleme)
-        * [Affine Şifreleme](/dersler/kriptografi/klasik/affine-sifreleme)
-        * [Bacon Şifreleme (Binary Sistemin Atası)](/dersler/kriptografi/klasik/bacon-sifreleme)
+        * [Sezar Şifreleme](/dersler/kriptografi/klasik-kriptografi/sezar-sifreleme)
+        * [Affine Şifreleme](/dersler/kriptografi/klasik-kriptografi/affine-sifreleme)
     * Poligrafik Şifreler
-        * [Playfair Şifreleme](/dersler/kriptografi/klasik/playfair)
-        * [Hill Şifreleme ve Lineer Cebir Uygulaması](/dersler/kriptografi/klasik/hill-sifreleme)
+        * [Playfair Şifreleme](/dersler/kriptografi/klasik-kriptografi/playfair)
+        * [Hill Şifreleme](/dersler/kriptografi/klasik-kriptografi/hill-sifreleme)
     * Polialfabetik Şifreler
-        * [Vigenère Şifreleme](/dersler/kriptografi/klasik/vigenere-sifreleme)
+        * [Vigenère Şifreleme ve Kasiski İncelemesi](/dersler/kriptografi/klasik-kriptografi/vigenere-sifreleme)
 
-* **Modern Kriptografiye Geçiş**
-    * [Claude Shannon Prensipleri](/dersler/kriptografi/modern-gecis/shannon)
-    * [XOR Mantığı ve Matematiksel Temeli](/dersler/kriptografi/modern-gecis/xor)
-    * [One-Time Pad (OTP)](/dersler/kriptografi/modern-gecis/one-time-pad)
+* **Modern Kriptografiye Geçiş: İkili Sistem ve Mükemmel Gizlilik**
+    * [İkili Sistem (Binary), Boolean Cebri ve XOR Mantığı](/dersler/kriptografi/modern-gecis/binary-xor)
+    * [Claude Shannon Prensipleri (Confusion & Diffusion)](/dersler/kriptografi/modern-gecis/shannon)
+    * [Vernam Şifresi ve One-Time Pad (Kırılamazlık İspatı)](/dersler/kriptografi/modern-gecis/one-time-pad)
 
 * **Modern Simetrik Şifreleme I: Akan Şifreler (Stream Ciphers)**
-    * [Akan Şifre Mantığı ve Pseudorandom Sayılar](/dersler/kriptografi/simetrik/akan-sifreler/giris)
+    * [Akan Şifre Mantığı ve Pseudorandom Sayı Üreteçleri (PRNG)](/dersler/kriptografi/simetrik/akan-sifreler/giris)
     * [Doğrusal Geri Beslemeli Kaydırmalı Kaydediciler (LFSR)](/dersler/kriptografi/simetrik/akan-sifreler/lfsr)
     * [RC4 Algoritması](/dersler/kriptografi/simetrik/akan-sifreler/rc4)
 
@@ -51,6 +49,6 @@ Bu bölümde, bilginin gizlenmesi ve bu gizliliğin kırılması üzerine inşa 
     * [RSA (Rivest-Shamir-Adleman) Algoritması](/dersler/kriptografi/asimetrik/rsa)
 
 * **Bütünlük ve Kimlik Doğrulama**
-    * [Özet (Hash) Fonksiyonları](/dersler/kriptografi/hash/giris) (MD5, SHA-256)
+    * [Özet (Hash) Fonksiyonları](/dersler/kriptografi/hash/giris)
     * [Dijital İmzalar](/dersler/kriptografi/hash/dijital-imza) (RSA'nın Ters Çalıştırılması)
 :::
