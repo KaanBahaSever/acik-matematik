@@ -76,7 +76,7 @@ $$a \cdot c \equiv b \cdot c \pmod n \implies a \equiv b \pmod n$$
 
 ::: danger 🚫 Dikkat: Üslerde Sadeleştirme Yapılamaz!
 Tabanlardaki sayılar aralarında asallık kuralına göre sadeleşebilse de, **üsler doğrudan sadeleştirilemez**. Yani:
-$$x^a \equiv x^b \pmod n  \notimplies a \equiv b \pmod n$$
+$$x^a \equiv x^b \pmod n  \centernot\implies a \equiv b \pmod n$$
 Modüler aritmetikte üsleri birbirine eşitlemek, indirgemek veya sadeleştirmek için modül $n$'ye göre değil; her zaman Euler-Fermat Teoremi gereği **$\phi(n)$'e göre** işlem yapılması matematiksel olarak zorunludur.
 :::
 

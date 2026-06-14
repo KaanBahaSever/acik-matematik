@@ -1,0 +1,2 @@
+﻿# Claude Shannon Prensipleri
+

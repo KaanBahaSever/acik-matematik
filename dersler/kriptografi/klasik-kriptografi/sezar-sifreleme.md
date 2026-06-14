@@ -1,2 +1,0 @@
-﻿# Sezar Şifreleme
-

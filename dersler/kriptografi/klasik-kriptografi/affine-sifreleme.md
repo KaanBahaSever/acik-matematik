@@ -1,2 +1,0 @@
-﻿# Affine Şifreleme
-
