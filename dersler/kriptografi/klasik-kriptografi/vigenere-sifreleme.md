@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# VigenÃ¨re Åžifreleme
-

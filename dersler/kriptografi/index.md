@@ -14,20 +14,19 @@ Bu bölümde, bilginin gizlenmesi ve bu gizliliğin kırılması üzerine inşa 
     * [Matematiksel Gösterim ve Temeller](/dersler/kriptografi/kriptografiye-giris/matematiksel-temeller)
 
 * **Klasik Şifreleme I: Fiziksel ve Algoritmik Yaklaşımlar**
-    * [Skytale Şifresi ve Silindir Mantığı](/dersler/kriptografi/klasik-kriptografi/skytale)
-    * [Zigzag (Rail Fence) ve Rota (Route) Şifrelemesi](/dersler/kriptografi/klasik-kriptografi/zigzag-rota)
-    * [Bacon Şifreleme (5-Bit Mantığı ve İkili Sisteme İlk Bakış)](/dersler/kriptografi/klasik-kriptografi/bacon-sifreleme)
+    * [Skytale Şifresi ve Silindir Mantığı](/dersler/kriptografi/klasik-kriptografi-1/skytale)
+    * [Zigzag (Rail Fence) ve Rota (Route) Şifrelemesi](/dersler/kriptografi/klasik-kriptografi-1/zigzag-rota)
+    * [Bacon Şifreleme (5-Bit Mantığı ve İkili Sisteme İlk Bakış)](/dersler/kriptografi/klasik-kriptografi-1/bacon-sifreleme)
 
 * **Klasik Şifreleme II: Matematiksel Yerine Koyma (Substitution)**
-    * [Formal Tanım](/dersler/kriptografi/klasik-kriptografi/formal-tanim)
+    * [Formal Tanım](/dersler/kriptografi/klasik-kriptografi-2/formal-tanim)
     * Monoalfabetik Şifreler
-        * [Sezar Şifreleme](/dersler/kriptografi/klasik-kriptografi/sezar-sifreleme)
-        * [Affine Şifreleme](/dersler/kriptografi/klasik-kriptografi/affine-sifreleme)
+        * [Sezar Şifreleme](/dersler/kriptografi/klasik-kriptografi-2/sezar-sifreleme)
+        * [Affine Şifreleme](/dersler/kriptografi/klasik-kriptografi-2/affine-sifreleme)
     * Poligrafik Şifreler
-        * [Playfair Şifreleme](/dersler/kriptografi/klasik-kriptografi/playfair)
-        * [Hill Şifreleme](/dersler/kriptografi/klasik-kriptografi/hill-sifreleme)
+        * [Hill Şifreleme](/dersler/kriptografi/klasik-kriptografi-2/hill-sifreleme)
     * Polialfabetik Şifreler
-        * [Vigenère Şifreleme ve Kasiski İncelemesi](/dersler/kriptografi/klasik-kriptografi/vigenere-sifreleme)
+        * [Vigenère Şifreleme ve Kasiski İncelemesi](/dersler/kriptografi/klasik-kriptografi-2/vigenere-sifreleme)
 
 * **Modern Kriptografiye Geçiş: İkili Sistem ve Mükemmel Gizlilik**
     * [İkili Sistem (Binary), Boolean Cebri ve XOR Mantığı](/dersler/kriptografi/modern-gecis/binary-xor)

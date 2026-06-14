@@ -53,13 +53,10 @@ export default defineConfig({
   themeConfig: {
     outline: {
       label: 'Bu Sayfada',
-      level: [2, 3] // H2 ve H3 başlıklarını sağ menüde gösterir (Akademik notlar için idealdir)
+      level: [2, 3]
     },
 
-    // 2. YUKARI DÖN BUTONU ("Return to top") ÇEVİRİSİ
     returnToTopLabel: 'Başa Dön',
-
-    // 3. MOBİL MENÜ VE TEMA BUTONLARI ÇEVİRİLERİ (Ekstra jiletlik katar)
     sidebarMenuLabel: 'Menü',
     darkModeSwitchLabel: 'Görünüm',
     lightModeSwitchTitle: 'Açık Tema Geç',
@@ -997,29 +994,36 @@ export default defineConfig({
               items: [
                 { text: 'Giriş', link: '/dersler/kriptografi/kriptografiye-giris/terminoloji' },
                 { text: 'Kerckhoffs Prensibi', link: '/dersler/kriptografi/kriptografiye-giris/kerckhoffs-prensibi' },
-                { text: 'Matematiksel Temeller ve Notasyon', link: '/dersler/kriptografi/kriptografiye-giris/matematiksel-temeller' },
+                { text: 'Matematiksel Temeller', link: '/dersler/kriptografi/kriptografiye-giris/matematiksel-temeller' }
               ]
             },
             {
-              text: 'Klasik Şifreler',
+              text: 'Klasik Şifreleme I',
               collapsed: true,
               items: [
-                { text: 'Skytale', link: '/dersler/kriptografi/klasik/skytale' },
-                { text: 'Sezar Şifresi', link: '/dersler/kriptografi/klasik/sezar-sifreleme' },
-                { text: 'Affine Şifresi', link: '/dersler/kriptografi/klasik/affine-sifreleme' },
-                { text: 'Bacon Şifresi', link: '/dersler/kriptografi/klasik/bacon-sifreleme' },
-                { text: 'Playfair Şifresi', link: '/dersler/kriptografi/klasik/playfair-sifreleme' },
-                { text: 'Vigenère Şifresi', link: '/dersler/kriptografi/klasik/vigenere-sifreleme' },
-                { text: 'Hill Şifresi', link: '/dersler/kriptografi/klasik/hill-sifreleme' }
+                { text: 'Skytale Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-1/skytale' },
+                { text: 'Zigzag ve Rota', link: '/dersler/kriptografi/klasik-kriptografi-1/zigzag-rota' },
+                { text: 'Bacon Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-1/bacon-sifreleme' }
+              ]
+            },
+            {
+              text: 'Klasik Şifreleme II',
+              collapsed: true,
+              items: [
+                { text: 'Formal Tanım', link: '/dersler/kriptografi/klasik-kriptografi-2/formal-tanim' },
+                { text: 'Sezar Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/sezar-sifreleme' },
+                { text: 'Affine Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/affine-sifreleme' },
+                { text: 'Hill Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/hill-sifreleme' },
+                { text: 'Vigenère Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/vigenere-sifreleme' }
               ]
             },
             {
               text: 'Modern Döneme Geçiş',
               collapsed: true,
               items: [
-                { text: 'One-Time Pad', link: '/dersler/kriptografi/modern-gecis/one-time-pad' },
-                { text: 'Shannon Maksimi', link: '/dersler/kriptografi/modern-gecis/shannon' },
-                { text: 'XOR İşlemi', link: '/dersler/kriptografi/modern-gecis/xor' }
+                { text: 'İkili Sistem ve XOR', link: '/dersler/kriptografi/modern-gecis/binary-xor' },
+                { text: 'Claude Shannon Prensipleri', link: '/dersler/kriptografi/modern-gecis/claude-shannon-prensipleri' },
+                { text: 'One-Time Pad', link: '/dersler/kriptografi/modern-gecis/one-time-pad' }
               ]
             },
             {
@@ -1055,10 +1059,11 @@ export default defineConfig({
               ]
             },
             {
-              text: 'Hash ve Doğrulama',
+              text: 'Bütünlük ve Doğrulama',
               collapsed: true,
               items: [
-                { text: 'Hash Fonksiyonlarına Giriş', link: '/dersler/kriptografi/hash/giris' },
+                { text: 'Hash Fonksiyonları', link: '/dersler/kriptografi/hash/giris' },
+                { text: 'SHA-3 ve Keccak', link: '/dersler/kriptografi/hash/sha3-keccak' },
                 { text: 'Dijital İmza', link: '/dersler/kriptografi/hash/dijital-imza' }
               ]
             }
