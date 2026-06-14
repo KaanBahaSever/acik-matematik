@@ -1,7 +1,5 @@
 ﻿import { defineConfig } from 'vitepress'
 import container from 'markdown-it-container'
-import MarkdownItMathJaX3PRO from 'markdown-it-mathjax3-pro'
-
 
 function customContainer(name: string, label: string) {
   return [
@@ -997,9 +995,9 @@ export default defineConfig({
               text: 'Kriptografiye Giriş',
               collapsed: true,
               items: [
-                { text: 'Giriş', link: '/dersler/kriptografi/giris/terminoloji' },
-                { text: 'Kerckhoffs Prensibi', link: '/dersler/kriptografi/giris/kerckhoffs' },
-                { text: 'Matematiksel Temeller ve Notasyon', link: '/dersler/kriptografi/giris/matematiksel-temeller' },
+                { text: 'Giriş', link: '/dersler/kriptografi/kriptografiye-giris/terminoloji' },
+                { text: 'Kerckhoffs Prensibi', link: '/dersler/kriptografi/kriptografiye-giris/kerckhoffs-prensibi' },
+                { text: 'Matematiksel Temeller ve Notasyon', link: '/dersler/kriptografi/kriptografiye-giris/matematiksel-temeller' },
               ]
             },
             {
@@ -1817,27 +1815,11 @@ export default defineConfig({
   },
   markdown: {
     html: true,
-    math: false,
+    math: true,
     config: (md) => {
       md.use(...customContainer('theorem', 'Teorem'))
       md.use(...customContainer('formula', 'Formül'))
       md.use(...customContainer('example', 'Örnek'))
-
-
-      md.use(MarkdownItMathJaX3PRO, {
-        tex: {
-          inlineMath: [['$', '$']],
-          macros: {
-            notimplies: "\\mathrel{\\llap{\\not}⟹}",
-          }
-        },
-        chtml: {
-          scale: 1.07,
-          fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'
-        }
-        // svg yerine chtml objesi verince cHTML render eder
-      })
-
     }
   }
 })
