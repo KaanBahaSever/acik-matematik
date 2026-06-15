@@ -1014,7 +1014,8 @@ export default defineConfig({
                 { text: 'Sezar Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/sezar-sifreleme' },
                 { text: 'Affine Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/affine-sifreleme' },
                 { text: 'Hill Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/hill-sifreleme' },
-                { text: 'Vigenère Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/vigenere-sifreleme' }
+                { text: 'Vigenère Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/vigenere-sifreleme' },
+                { text: 'Yerine Koyma (Substitution) Şifresi', link: '/dersler/kriptografi/klasik-kriptografi-2/yerine-koyma-sifresi' }
               ]
             },
             {
@@ -1032,12 +1033,7 @@ export default defineConfig({
               items: [
                 {
                   text: 'Akan Şifreler',
-                  collapsed: true,
-                  items: [
-                    { text: 'Akan Şifrelere Giriş', link: '/dersler/kriptografi/simetrik/akan-sifreler/giris' },
-                    { text: 'LFSR', link: '/dersler/kriptografi/simetrik/akan-sifreler/lfsr' },
-                    { text: 'RC4 Algoritması', link: '/dersler/kriptografi/simetrik/akan-sifreler/rc4' }
-                  ]
+                  link: '/dersler/kriptografi/simetrik/akan-sifreler'
                 },
                 {
                   text: 'Blok Şifreler',
