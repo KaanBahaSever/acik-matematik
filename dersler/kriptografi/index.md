@@ -23,6 +23,7 @@ Bu bölümde, bilginin gizlenmesi ve bu gizliliğin kırılması üzerine inşa 
     * Monoalfabetik Şifreler
         * [Sezar Şifreleme](/dersler/kriptografi/klasik-kriptografi-2/sezar-sifreleme)
         * [Affine Şifreleme](/dersler/kriptografi/klasik-kriptografi-2/affine-sifreleme)
+        * [Yerine Koyma (Substitution) Şifrelemesi](/dersler/kriptografi/klasik-kriptografi-2/yerine-koyma-sifresi)
     * Poligrafik Şifreler
         * [Hill Şifreleme](/dersler/kriptografi/klasik-kriptografi-2/hill-sifreleme)
     * Polialfabetik Şifreler
@@ -34,9 +35,7 @@ Bu bölümde, bilginin gizlenmesi ve bu gizliliğin kırılması üzerine inşa 
     * [Vernam Şifresi ve One-Time Pad (Kırılamazlık İspatı)](/dersler/kriptografi/modern-gecis/one-time-pad)
 
 * **Modern Simetrik Şifreleme I: Akan Şifreler (Stream Ciphers)**
-    * [Akan Şifre Mantığı ve Pseudorandom Sayı Üreteçleri (PRNG)](/dersler/kriptografi/simetrik/akan-sifreler/giris)
-    * [Doğrusal Geri Beslemeli Kaydırmalı Kaydediciler (LFSR)](/dersler/kriptografi/simetrik/akan-sifreler/lfsr)
-    * [RC4 Algoritması](/dersler/kriptografi/simetrik/akan-sifreler/rc4)
+    * [Akan Şifre Mantığı ve Pseudorandom Sayı Üreteçleri (PRNG) (LFSR)](/dersler/kriptografi/simetrik/akan-sifreler/akan-sifreler)
 
 * **Modern Simetrik Şifreleme II: Blok Şifreler (Block Ciphers)**
     * [DES (Data Encryption Standard) ve Feistel Ağı](/dersler/kriptografi/simetrik/blok-sifreler/des)

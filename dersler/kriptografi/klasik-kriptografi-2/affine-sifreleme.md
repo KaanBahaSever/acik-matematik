@@ -1,4 +1,9 @@
-﻿# Affine (Afin) Şifreleme
+﻿<script setup>
+/* Klasör yolunu, md dosyasının ve .vitepress klasörünün konumuna göre ayarlayabilirsin */
+import AffineCalculator from '/.vitepress/components/AffineCalculator.vue'
+</script>
+
+# Affine (Afin) Şifreleme
 
 Sezar şifrelemesi, harfleri sadece sabit bir miktar kaydırarak (toplama işlemiyle) gizler. Affine (Afin) şifreleme ise bu mantığı bir adım ileri taşıyarak, modüler aritmetik üzerinde hem **çarpma** hem de **toplama** işlemini aynı anda kullanan doğrusal (lineer) bir yerine koyma algoritmasıdır.
 
@@ -107,3 +112,11 @@ $$b \equiv -18 \equiv 8 \pmod{26}$$
 
 **Sonuç:** Düşmanın kullandığı anahtar $k = (5, 8)$ ikilisidir. *(Örnek 1'deki anahtarı bulmuş olduk!)*
 :::
+
+## 🕹️ İnteraktif Afin Hesaplayıcı
+
+$e_k(x) \equiv a \cdot x + b \pmod{26}$ denkleminin pratikte nasıl çalıştığını aşağıdaki araçla test edebilirsiniz. 
+
+Dikkat ederseniz, fonksiyonun 1-1 (birebir) olma şartını korumak için **"Çarpan (a)"** menüsünde yalnızca 26 ile aralarında asal olan o 12 geçerli anahtar yer almaktadır. Yanlarında modüler terslerinin de ($a^{-1}$) hesaplandığını görebilirsiniz.
+
+<AffineCalculator />
