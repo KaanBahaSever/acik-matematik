@@ -18,7 +18,6 @@ Algoritmanın kalbindeki anahtar yapısı ise kriptografi tarihindeki en ilginç
 * **Girdi Anahtarı:** DES algoritmasına dışarıdan verilen orijinal anahtar **64 bittir**.
 * **Efektif (Gerçek) Anahtar Boyutu:** Orijinal 64 bitlik anahtarın her 8. biti (8, 16, 24... 64) bir **Eşlik Biti (Parity Bit)** olarak hata kontrolü amacıyla kullanılır ve şifreleme işlemine dahil edilmez. Bu yüzden DES'in gerçek kriptografik gücü **56 bit** ile sınırlıdır.
 
-
 ## DES Anahtar Üretim Algoritması (Key Schedule)
 
 DES algoritması, her biri 64 bitlik veri bloklarını şifrelemek için tam 16 döngü (round) kullanır. Şifrelemenin güvenli olabilmesi için bu 16 döngünün her birine, orijinal anahtardan türetilmiş **farklı ve benzersiz 48 bitlik alt anahtarlar ($K_1, K_2, \dots, K_{16}$)** verilmesi gerekir.
@@ -31,8 +30,7 @@ $$K = b_1, b_2, b_3, \dots, b_{63}, b_{64}$$
 
 Sisteme giren orijinal kök anahtar ($K$), 64 bitten oluşur. Ancak algoritma bu anahtarın her 8. bitini (8, 16, 24, 32, 40, 48, 56, 64) bir iletişim kontrolü olan **Eşlik Biti (Parity Bit)** olarak görür. 
 
-<!-- center a div -->
-<div style="display: flex; justify-content: center; margin: 0px 0;">
+<div style="display: flex; justify-content: center; margin: 0px 0px;">
 
 <table>
   <tr><td>57</td><td>49</td><td>41</td><td>33</td><td>25</td><td>17</td><td>9</td></tr>
@@ -45,22 +43,36 @@ Sisteme giren orijinal kök anahtar ($K$), 64 bitten oluşur. Ancak algoritma bu
   <tr><td>21</td><td>13</td><td>5</td><td>28</td><td>20</td><td>12</td><td>4</td></tr>
 </table>
 </div>
-<center style="font-size: 0.85em; color: #666; margin-top: -10px;"> PC-1 Tablosu (56-bit Seçim): </center>
+<center style="font-size: 0.85em; color: var(--vp-c-text-2); margin-top: -10px;"> PC-1 Tablosu (56-bit Seçim) </center>
+<br>
 
-Anahtar dizisi `PC-1 (Permuted Choice 1)` matrisinden geçirilir. Bu matrisin içinde eşlik bitlerinin indeksleri bulunmaz; bu sayede 8 adet eşlik biti otomatik olarak çöpe atılır. Kalan **56 bit**, matrisin üst yarısı ($C_0$) ve alt yarısı ($D_0$) olacak şekilde doğrudan karıştırılarak ikiye bölünür:
+Anahtar dizisi `PC-1 (Permuted Choice 1)` matrisinden geçirilir. Bu matrisin içinde eşlik bitlerinin indeksleri bulunmaz; bu sayede 8 adet eşlik biti otomatik olarak çöpe atılır. 
+
+**Tablonun Uygulanma Mantığı:**
+Bu işlemi, önceki konularda işlediğimiz **Ayrık Permütasyon Fonksiyonu ($\pi$)** mantığıyla düşünmeliyiz. Orijinal 64-bitlik anahtar dizimizin bitlerini $b$, oluşacak yeni 56-bitlik dizinin bitlerini $b'$ olarak tanımlayalım. PC-1 tablosu aslında bizim $\pi$ permütasyon anahtarımızdır ve bitlerin konum indeksleri ($\tau$) üzerinde çalışır.
+
+Matematiksel olarak bu permütasyon işlemi şu şekilde ifade edilir:
+$$b'_\tau = b_{\pi(\tau)}, \quad \tau \in \{1, 2, \dots, 56\}$$
+
+*Örneğin tablonun ilk elemanlarına göre:*
+* $$\pi(1) = 57 \implies k'_1 = k_{57}$$
+* $$\pi(2) = 49 \implies k'_2 = k_{49}$$
+* $$\dots$$
+
+Elde edilen bu **56 bit**, matrisin üst yarısı ($C_0$) ve alt yarısı ($D_0$) olacak şekilde doğrudan karıştırılarak ikiye bölünür.
 
 Matematiksel olarak bu ayrışma şöyledir:
 $$
 \begin{aligned}
-K_{64} &\xrightarrow{\text{PC-1 Uygulanır}} K_{56} \\
+K_{64} &\xrightarrow{\pi \text{ permütasyonu uygulanır}} K_{56} \\
 \end{aligned}
 $$
 
-Sonra bu 56 bitlik anahtar ikiye bölünür:
+Sonra bu 56 bitlik yeni anahtar ($K_{56}$) ortadan ikiye bölünür:
 
 $$
 \begin{aligned}
-K_{56} &= \underbrace{b_{57}, b_{49}, \dots, b_{36}}_{C_0 \text{ (28 bit)}} \ \ \underbrace{b_{63}, b_{55}, \dots, b_{4}}_{D_0 \text{ (28 bit)}}
+K_{56} &= \underbrace{b_{57}, b_{49}, \dots, b_{36}}_{C_0 \text{ (Sol Yarı - 28 bit)}} \ \ \underbrace{b_{63}, b_{55}, \dots, b_{4}}_{D_0 \text{ (Sağ Yarı - 28 bit)}}
 \end{aligned}
 $$
 
