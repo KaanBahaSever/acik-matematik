@@ -1,6 +1,1 @@
-﻿---
-
----
-
-# AES (Advanced Encryption Standard) ve SPN YapÄ±sÄ±
-
+﻿# AES (Advanced Encryption Standard) ve SPN Yapısı
