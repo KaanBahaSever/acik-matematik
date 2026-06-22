@@ -1,5 +1,5 @@
 ---
-
+aside: false
 ---
 
 [Ana Sayfa](/) ⇋ [Ders Kataloğu](/dersler/) ⇋ **Kısmi Diferansiyel Denklemler**
@@ -12,18 +12,20 @@ Bu bölümde, çok değişkenli fonksiyonların değişim oranlarını modelleye
 
 ::: info Kısmi Diferansiyel Denklemler Ders İçeriği
 ### 1. Temeller ve Sınıflandırma
-* [Adi Diferansiyel (ODE) Sistemlerinden KDD'ye Geçiş](/dersler/kismi-diferansiyel-denklemler/temeller/ode-kdd-gecis)
-* [KDD'lerin Sınıflandırılması (Lineer, Kuazi-Lineer, Nonlineer)](/dersler/kismi-diferansiyel-denklemler/temeller/siniflandirma)
-* [Birinci Mertebeden Lineer ve Nonlineer Denklemler](/dersler/kismi-diferansiyel-denklemler/temeller/birinci-mertebe)
-* [Cauchy Problemi ve Başlangıç Değer Şartları](/dersler/kismi-diferansiyel-denklemler/temeller/cauchy-problemi)
+* [KDD'lerin Sınıflandırılması (Lineer, Kuazi-Lineer, Yarı-Lineer, Nonlineer)](/dersler/kismi-diferansiyel-denklemler/temeller/siniflandirma)
+* [Başlangıç/Sınır Şartları (Dirichlet, Neumann, Robin) ve İyi Konulmuş Problemler](/dersler/kismi-diferansiyel-denklemler/temeller/sinir-sartlari)
+* [Doğrudan İntegrasyon Metodu ve ODE Yaklaşımı](/dersler/kismi-diferansiyel-denklemler/temeller/dogrudan-integrasyon)
 
-### 2. Birinci Mertebeden Çözüm Metotları
-* [Cauchy Karakteristik Metodu](/dersler/kismi-diferansiyel-denklemler/cozum-metotlari/cauchy-karakteristik)
-* [Charpit Metodu](/dersler/kismi-diferansiyel-denklemler/cozum-metotlari/charpit)
+### 2. Birinci Mertebeden Denklemler ve Çözüm Metotları
+* [Lineer ve Kuazi-Lineer Denklemler İçin Lagrange Metodu](/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/lagrange-metodu)
+* [Birinci Mertebe Denklemlerde Cauchy Problemi](/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/cauchy-problemi)
+* [Tam, Genel ve Tekil (Singular) İntegraller](/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/tam-genel-tekil-integraller)
+* [Uyumlu (Compatible) Sistemler](/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/uyumlu-sistemler)
+* [Charpit Metodu ve Özel Durumlar (Clairaut, Ayrılabilir Denklemler)](/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/charpit)
 
 ### 3. İkinci Mertebeden Denklemler
-* [İkinci Mertebe Denklemlerin Tip Sınıflandırması](/dersler/kismi-diferansiyel-denklemler/ikinci-mertebe/tip-siniflandirmasi)
-* [Sabit Katsayılı Lineer Denklemler](/dersler/kismi-diferansiyel-denklemler/ikinci-mertebe/sabit-katsayili)
+* [İkinci Mertebe Denklemlerin Tip Sınıflandırması (Eliptik, Parabolik, Hiperbolik)](/dersler/kismi-diferansiyel-denklemler/ikinci-mertebe/tip-siniflandirmasi)
+* [Sabit Katsayılı Lineer Denklemler ve Lineer Operatörler](/dersler/kismi-diferansiyel-denklemler/ikinci-mertebe/sabit-katsayili)
 * [Değişken Katsayılı Lineer Denklemler](/dersler/kismi-diferansiyel-denklemler/ikinci-mertebe/degisken-katsayili)
 
 ### 4. Klasik Fiziksel Modeller
