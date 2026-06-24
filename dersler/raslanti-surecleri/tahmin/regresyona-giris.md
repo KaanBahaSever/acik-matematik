@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Regresyon Modellerine GiriÅŸ
-

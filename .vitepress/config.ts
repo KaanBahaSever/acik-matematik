@@ -731,25 +731,27 @@ export default defineConfig({
           items: [
             { text: 'Genel Bakış', link: '/dersler/kismi-diferansiyel-denklemler/' },
             {
-              text: 'Temeller',
+              text: 'Temeller ve Sınıflandırma',
               collapsed: true,
               items: [
-                { text: 'ODE\'den KDD\'ye Geçiş', link: '/dersler/kismi-diferansiyel-denklemler/temeller/ode-kdd-gecis' },
                 { text: 'Sınıflandırma', link: '/dersler/kismi-diferansiyel-denklemler/temeller/siniflandirma' },
-                { text: 'Birinci Mertebe Denklemler', link: '/dersler/kismi-diferansiyel-denklemler/temeller/birinci-mertebe' },
-                { text: 'Cauchy Problemi', link: '/dersler/kismi-diferansiyel-denklemler/temeller/cauchy-problemi' }
+                { text: 'Başlangıç ve Sınır Şartları', link: '/dersler/kismi-diferansiyel-denklemler/temeller/sinir-sartlari' },
+                { text: 'Doğrudan İntegrasyon Metodu', link: '/dersler/kismi-diferansiyel-denklemler/temeller/dogrudan-integrasyon' }
               ]
             },
             {
-              text: 'Çözüm Metotları',
+              text: '1. Mertebe Denklemler ve Çözümler',
               collapsed: true,
               items: [
-                { text: 'Cauchy Karakteristik Yöntemi', link: '/dersler/kismi-diferansiyel-denklemler/cozum-metotlari/cauchy-karakteristik' },
-                { text: 'Charpit Metodu', link: '/dersler/kismi-diferansiyel-denklemler/cozum-metotlari/charpit' }
+                { text: 'Lagrange Metodu', link: '/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/lagrange-metodu' },
+                { text: 'Cauchy Problemi', link: '/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/cauchy-problemi' },
+                { text: 'Tam, Genel ve Tekil İntegraller', link: '/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/tam-genel-tekil-integraller' },
+                { text: 'Uyumlu Sistemler', link: '/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/uyumlu-sistemler' },
+                { text: 'Charpit Metodu', link: '/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/charpit' }
               ]
             },
             {
-              text: 'İkinci Mertebe Denklemler',
+              text: '2. Mertebe Denklemler',
               collapsed: true,
               items: [
                 { text: 'Tip Sınıflandırması', link: '/dersler/kismi-diferansiyel-denklemler/ikinci-mertebe/tip-siniflandirmasi' },
@@ -758,13 +760,13 @@ export default defineConfig({
               ]
             },
             {
-              text: 'Modeller ve Uygulamalar',
+              text: 'Klasik Fiziksel Modeller',
               collapsed: true,
               items: [
-                { text: 'Değişkenlerine Ayırma Yöntemi', link: '/dersler/kismi-diferansiyel-denklemler/modeller/degiskenlerine-ayirma' },
-                { text: 'Parabolik ve Isı Denklemi', link: '/dersler/kismi-diferansiyel-denklemler/modeller/parabolik-isi' },
+                { text: 'Değişkenlerine Ayırma Metodu', link: '/dersler/kismi-diferansiyel-denklemler/modeller/degiskenlerine-ayirma' },
+                { text: 'Eliptik ve Laplace Denklemleri', link: '/dersler/kismi-diferansiyel-denklemler/modeller/eliptik-laplace' },
                 { text: 'Hiperbolik ve Dalga Denklemi', link: '/dersler/kismi-diferansiyel-denklemler/modeller/hiperbolik-dalga' },
-                { text: 'Eliptik ve Laplace Denklemleri', link: '/dersler/kismi-diferansiyel-denklemler/modeller/eliptik-laplace' }
+                { text: 'Parabolik ve Isı Denklemi', link: '/dersler/kismi-diferansiyel-denklemler/modeller/parabolik-isi' }
               ]
             }
           ]
@@ -1502,56 +1504,50 @@ export default defineConfig({
           items: [
             { text: 'Genel Bakış', link: '/dersler/raslanti-surecleri/' },
             {
-              text: 'Temeller',
+              text: '1. Stokastik Süreçler ve Temeller',
               collapsed: true,
               items: [
-                { text: 'Stokastik Kavramı', link: '/dersler/raslanti-surecleri/temeller/stokastik-kavrami' },
-                { text: 'Notasyon', link: '/dersler/raslanti-surecleri/temeller/notasyon' },
-                { text: 'Sınıflandırma', link: '/dersler/raslanti-surecleri/temeller/siniflandirma' },
-                { text: 'Poisson Süreçleri', link: '/dersler/raslanti-surecleri/temeller/poisson' },
-                { text: 'Varış Süreçleri', link: '/dersler/raslanti-surecleri/temeller/varis-surecleri' }
+                { text: 'Olasılık Notasyonu ve Temeller', link: '/dersler/raslanti-surecleri/1-temeller/olasilik-notasyonu' },
+                { text: 'Stokastik Süreç Kavramı', link: '/dersler/raslanti-surecleri/1-temeller/stokastik-surec-kavrami' },
+                { text: 'Ortak Kümülatif ve Erlang', link: '/dersler/raslanti-surecleri/1-temeller/ortak-kumulatif-erlang' },
+                { text: 'Varış Sayma ve Poisson', link: '/dersler/raslanti-surecleri/1-temeller/varis-sayma-poisson' }
               ]
             },
             {
-              text: 'Markov Zincirleri',
+              text: '2. Markov Zincirleri',
               collapsed: true,
               items: [
-                { text: 'Geçiş Matrisleri', link: '/dersler/raslanti-surecleri/markov/gecis-matrisleri' },
-                { text: 'Chapman-Kolmogorov Denklemleri', link: '/dersler/raslanti-surecleri/markov/chapman-kolmogorov' },
-                { text: 'Kesikli Zaman', link: '/dersler/raslanti-surecleri/markov/kesikli-zaman' },
-                { text: 'Sürekli Zaman', link: '/dersler/raslanti-surecleri/markov/surekli-zaman' },
-                { text: 'Yutucu Durumlar', link: '/dersler/raslanti-surecleri/markov/yutucu-durumlar' }
+                { text: 'Giriş ve Geçiş Matrisleri', link: '/dersler/raslanti-surecleri/2-markov-zincirleri/gecis-olasilik-matrisleri' },
+                { text: 'Chapman-Kolmogorov', link: '/dersler/raslanti-surecleri/2-markov-zincirleri/chapman-kolmogorov' },
+                { text: 'Durum Sınıflandırması', link: '/dersler/raslanti-surecleri/2-markov-zincirleri/durum-siniflandirmasi' },
+                { text: 'Regüler ve Daimi Durum', link: '/dersler/raslanti-surecleri/2-markov-zincirleri/reguler-matrisler-daimi-durum' },
+                { text: 'Yutucu Matrisler ve Olasılıklar', link: '/dersler/raslanti-surecleri/2-markov-zincirleri/yutucu-durumlar' }
               ]
             },
             {
-              text: 'Kuyruk Modelleri',
+              text: '3. Regresyon ve Veri Modelleme',
               collapsed: true,
               items: [
-                { text: 'Giriş', link: '/dersler/raslanti-surecleri/kuyruk/giris' },
-                { text: 'Modeller', link: '/dersler/raslanti-surecleri/kuyruk/modeller' },
-                { text: 'Little Kanunu', link: '/dersler/raslanti-surecleri/kuyruk/little-kanunu' }
+                { text: 'Basit Lineer Regresyon', link: '/dersler/raslanti-surecleri/3-tahmin/basit-lineer-regresyon' },
+                { text: 'Dönüştürülebilir Modeller', link: '/dersler/raslanti-surecleri/3-tahmin/donusturulebilir-modeller' }
               ]
             },
             {
-              text: 'Tahmin ve Analiz',
+              text: '4. Zaman Serileri ve Tahmin',
               collapsed: true,
               items: [
-                { text: 'Zaman Serileri', link: '/dersler/raslanti-surecleri/tahmin/zaman-serileri' },
-                { text: 'Regresyona Giriş', link: '/dersler/raslanti-surecleri/tahmin/regresyona-giris' },
-                { text: 'Lineer Regresyon', link: '/dersler/raslanti-surecleri/tahmin/lineer-regresyon' },
-                { text: 'Hata Analizi', link: '/dersler/raslanti-surecleri/tahmin/hata-analizi' },
-                { text: 'Dönüştürülebilir Denklemler', link: '/dersler/raslanti-surecleri/tahmin/donusturulebilir-denklemler' },
-                { text: 'Eksponansiyel Düzleştirme', link: '/dersler/raslanti-surecleri/tahmin/eksponansiyel' },
-                { text: 'Hareketli Mevsimsellik', link: '/dersler/raslanti-surecleri/tahmin/hareketli-mevsimsellik' },
-                { text: 'Holt-Winters Yöntemi', link: '/dersler/raslanti-surecleri/tahmin/holt-winter' }
+                { text: 'Otokorelasyon ve Hatalar', link: '/dersler/raslanti-surecleri/4-zaman-serileri/otokorelasyon-ve-hatalar' },
+                { text: 'Tabii Model, Trend ve Mevsimsellik', link: '/dersler/raslanti-surecleri/4-zaman-serileri/tabii-model-trend-mevsimsellik' },
+                { text: 'Hareketli Ortalamalar', link: '/dersler/raslanti-surecleri/4-zaman-serileri/hareketli-ortalamalar' }
               ]
             },
             {
-              text: 'Karar Teorisi',
+              text: '5. Karar Modelleri ve Oyun Teorisi',
               collapsed: true,
               items: [
-                { text: 'Stratejik Kararlar', link: '/dersler/raslanti-surecleri/karar/stratejik-kararlar' },
-                { text: 'Oyun Teorisi', link: '/dersler/raslanti-surecleri/karar/oyun-teorisi' }
+                { text: 'Oyun Teorisine Giriş', link: '/dersler/raslanti-surecleri/5-karar-modelleri/oyun-teorisine-giris' },
+                { text: 'Maximin ve Minimax', link: '/dersler/raslanti-surecleri/5-karar-modelleri/saf-stratejiler-maximin-minimax' },
+                { text: 'Karma Stratejiler', link: '/dersler/raslanti-surecleri/5-karar-modelleri/karma-stratejiler-grafik-cozum' }
               ]
             }
           ]

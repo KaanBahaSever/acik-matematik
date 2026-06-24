@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Yutucu Durumlar (Absorbing States)
-

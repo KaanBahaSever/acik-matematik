@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Eksponansiyel DÃ¼zleÅŸtirme
-

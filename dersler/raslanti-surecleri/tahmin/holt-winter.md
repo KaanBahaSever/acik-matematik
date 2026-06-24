@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Holt ve Winter Modelleri
-

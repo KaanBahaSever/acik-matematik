@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Zaman Serileri ve Otokorelasyon
-
