@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Hareketli Ortalamalar ve Mevsimsellik
-

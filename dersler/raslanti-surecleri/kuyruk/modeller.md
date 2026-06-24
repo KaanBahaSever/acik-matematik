@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Temel Bekleme Modelleri
-

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Little Kanunu
-
