@@ -14,11 +14,8 @@ Eğer $p$ yeterince büyük seçilirse (modern standartlarda en az 2048 bit), $a
 
 ---
 
-## 🔑 Algoritmanın Adımları
+## 🔑 Anahtar Üretim Süreci (Key Generation)
 
-ElGamal sistemi üç aşamada yürütülür: **Anahtar Üretimi**, **Şifreleme** ve **Deşifreleme**.
-
-### 1. Anahtar Üretim Süreci (Key Generation)
 Mesaj alıcısı, kendisine ait açık ve gizli anahtar çiftini kurgulamak için şu adımları izler:
 
 1. Çok büyük bir $p$ asal sayısı seçilir.
@@ -41,7 +38,9 @@ Mesaj alıcısı, kendisine ait açık ve gizli anahtar çiftini kurgulamak içi
 
   </div>
   
-  Gönderici, iletmek istediği açık metni $m \in \mathbb{Z}_p$ şartını sağlayan sayısal bir mesaja dönüştürür.
+  Gönderici, iletmek istediği açık metni $m \in \mathbb{Z}_p$ şartını sağlayan sayısal bir mesaja dönüştürür. Burada:
+  * **$g$:** $\mathbb{Z}_p^*$ grubunun kamusal **üreteci (generator)**,
+  * **$y$:** Alıcının gizli anahtarına ($a$) karşılık gelen ve $y \equiv g^a \pmod p$ şeklinde hesaplanan kamusal **açık anahtarıdır (public key)**.
   
   **Şifreleme fonksiyonu** $e_{(p,g,y)}$, şifreleme sürecine **rastgelesellik** katmak amacıyla her mesaj için $1 < k < p-1$ aralığında, $\operatorname{gcd}(k, p-1) = 1$ şartını sağlayan geçici (ephemeral) bir $k$ tamsayısı seçer. Şifreli metin bir sayı çiftinden ($(c_1, c_2)$) oluşur:
   
