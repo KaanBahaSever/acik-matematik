@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: "Matematik Notları"
-  text: "Kaan Baha Sever"
+  text: ""
   tagline: "Lisans matematik derslerimden derlediğim; temiz, açık kaynaklı ve reklamsız Türkçe not arşivi."
   actions:
     - theme: brand
