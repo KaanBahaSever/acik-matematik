@@ -1052,8 +1052,9 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { text: 'Asimetrik Şifrelemeye Giriş', link: '/dersler/kriptografi/asimetrik/giris' },
-                { text: 'Diffie-Hellman', link: '/dersler/kriptografi/asimetrik/diffie-hellman' },
-                { text: 'RSA Algoritması', link: '/dersler/kriptografi/asimetrik/rsa' }
+                { text: 'RSA Algoritması', link: '/dersler/kriptografi/asimetrik/rsa' },
+                { text: 'El Gamal Algoritması', link: '/dersler/kriptografi/asimetrik/el-gamal' },
+                { text: 'Diffie-Hellman Anahtar Değişimi', link: '/dersler/kriptografi/asimetrik/diffie-hellman' },
               ]
             },
             {
@@ -1061,7 +1062,6 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { text: 'Hash Fonksiyonları', link: '/dersler/kriptografi/hash/giris' },
-                { text: 'SHA-3 ve Keccak', link: '/dersler/kriptografi/hash/sha3-keccak' },
                 { text: 'Dijital İmza', link: '/dersler/kriptografi/hash/dijital-imza' }
               ]
             }
