@@ -1,4 +1,9 @@
-﻿# Akan Şifreleme (Stream Ciphers)
+﻿---
+title: Akan Şifreler
+description: Stream cipher yaklaşımını, anahtar akışı üretimini ve modern simetrik şifrelemedeki kullanımını özetler.
+---
+
+# Akan Şifreleme (Stream Ciphers)
 
 One-Time Pad (OTP) sisteminin mükemmel gizlilik sunduğunu, ancak mesajla aynı boyutta rastgele bir anahtara ihtiyaç duyduğu için pratik (Anahtar Dağıtım Problemi) olmadığını gördük. Akan şifreler (Stream Ciphers), OTP'nin bu XOR tabanlı şifreleme mantığını taklit eden, ancak çok daha kısa ve yönetilebilir bir kök anahtar (seed key) kullanarak pratik hale getirilmiş modern sistemlerdir.
 

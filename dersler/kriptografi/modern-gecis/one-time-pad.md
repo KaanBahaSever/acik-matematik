@@ -1,4 +1,9 @@
-﻿# One-Time Pad (OTP) ve Vernam Şifresi
+﻿---
+title: One-Time Pad ve Vernam Şifresi
+description: Tam gizlilik sağlayan One-Time Pad yaklaşımını, Vernam şifresi ve tek kullanımlık anahtar mantığıyla ele alır.
+---
+
+# One-Time Pad (OTP) ve Vernam Şifresi
 
 Kriptografi tarihindeki tüm algoritmalar (Sezar, Vigenère, Enigma, hatta günümüzdeki RSA ve AES) yeterli zaman ve işlem gücü verildiğinde teorik olarak kırılabilir. Kırılamayacağı matematiksel olarak ispatlanmış, evrendeki **tek** şifreleme sistemi **One-Time Pad (Tek Kullanımlık Şerit)** algoritmasıdır.
 

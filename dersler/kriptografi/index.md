@@ -1,3 +1,8 @@
+---
+title: Kriptografi Dersleri | Açık Matematik
+description: Klasik, modern, simetrik, asimetrik ve hash tabanlı kriptografi konularını kapsayan Açık Matematik ders notları.
+---
+
 [Ana Sayfa](/) ⇋ [Ders Notları](/dersler/) ⇋ **Kriptografi**
 
 <br>

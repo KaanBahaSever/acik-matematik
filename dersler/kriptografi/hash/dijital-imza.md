@@ -1,4 +1,9 @@
-﻿# Dijital İmzalar ve RSA İmza Şeması
+﻿---
+title: Dijital İmzalar ve RSA İmza Şeması
+description: Hash fonksiyonları ve açık anahtar kriptografisini kullanarak dijital imza oluşturma ve doğrulama sürecini açıklar.
+---
+
+# Dijital İmzalar ve RSA İmza Şeması
 
 Asimetrik şifreleme ile verinin "gizliliğini" (confidentiality) sağlamayı, kriptografik özet (hash) fonksiyonlarıyla da verinin "bütünlüğünü" (integrity) korumayı öğrendik. Ancak dijital dünyada çözülmesi gereken çok büyük bir problem daha vardır: **Kimlik Doğrulama (Authentication)** ve **İnkar Edememezlik (Non-repudiation)**. 
 

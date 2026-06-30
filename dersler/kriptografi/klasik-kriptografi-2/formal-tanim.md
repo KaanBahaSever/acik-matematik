@@ -1,3 +1,8 @@
+---
+title: Kriptosistemin Formal Tanımı
+description: Kriptosistemi açık metin, şifreli metin, anahtar uzayı ve şifreleme fonksiyonlarıyla birlikte biçimsel olarak tanımlar.
+---
+
 # Kriptosistemin Formal Tanımı
 
 Matematiksel şifreleme algoritmalarına (Sezar, Affine, Hill vb.) geçmeden önce, bir şifreleme sisteminin evrensel anatomisini tanımlamamız gerekir. Tüm modern ve klasik kriptosistemler matematiksel olarak **5 bileşenli bir yapı** ile ifade edilir.

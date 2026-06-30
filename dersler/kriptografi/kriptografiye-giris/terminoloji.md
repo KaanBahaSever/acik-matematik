@@ -1,4 +1,9 @@
-﻿# 🔐 Kriptografiye Giriş ve Tarihsel Serüven
+﻿---
+title: Kriptografi Terminolojisi ve Temel Kavramlar
+description: Kriptografiye girişte kullanılan temel terimleri, tarihsel bağlamı ve başlangıç seviyesindeki kavramları derli toplu sunar.
+---
+
+# 🔐 Kriptografiye Giriş ve Tarihsel Serüven
 
 Etimolojik olarak Yunanca *kryptós* (gizli) ve *graphein* (yazmak) kelimelerinin birleşiminden doğan bu alana akademik dünyada üst başlık olarak **Kriptoloji** adı verilir. **Kriptoloji**, temelde birbirine zıt iki alt daldan oluşan geniş bir bilimdir: Bir yanda bilgiyi matematiksel algoritmalarla şifreleyip gizleme sanatı olan **Kriptografi**; diğer yanda ise bu şifreli metinleri anahtar olmadan kırma ve analiz etme bilimi olan **Kriptanaliz** bulunur. Yani kriptografi kalkanı inşa ederken, kriptanaliz o kalkanı delmeye çalışır.
 

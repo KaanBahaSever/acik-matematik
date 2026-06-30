@@ -1,4 +1,9 @@
-﻿# Kriptografide Matematiksel Temeller ve Notasyon
+﻿---
+title: Kriptografide Matematiksel Temeller
+description: Modüler aritmetik, asal sayılar ve notasyon gibi kriptografi için gerekli matematiksel altyapıyı özetler.
+---
+
+# Kriptografide Matematiksel Temeller ve Notasyon
 
 Modern kriptografi, güvenliğini karmaşık metin karıştırma oyunlarından değil; **Sayılar Teorisi** ve **Soyut Cebir**'in sarsılmaz kurallarından alır. Şifreleme algoritmalarının (özellikle RSA, Diffie-Hellman ve Eliptik Eğri gibi asimetrik sistemlerin) temelinde yatan en önemli matematiksel yapılar aşağıda özetlenmiştir.
 

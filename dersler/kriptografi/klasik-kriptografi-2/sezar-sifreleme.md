@@ -1,4 +1,9 @@
-﻿<script setup>
+﻿---
+title: Sezar Şifreleme
+description: Alfabe kaydırmasına dayalı klasik Sezar şifresinin matematiksel modelini, anahtar uzayını ve kırılma nedenlerini anlatır.
+---
+
+<script setup>
 /* Klasör yolunu, md dosyasının ve .vitepress klasörünün konumuna göre ayarlayabilirsin */
 import CeaserCalculator from '/.vitepress/components/CeaserCalculator.vue'
 </script>

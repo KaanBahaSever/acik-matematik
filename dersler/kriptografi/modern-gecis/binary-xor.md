@@ -1,4 +1,9 @@
-﻿# İkili Sistem (Binary) ve XOR Mantığı
+﻿---
+title: İkili Sistem, Boolean Cebri ve XOR Mantığı
+description: Kriptografide kullanılan ikili gösterim, Boolean cebri ve XOR işleminin temel kurallarını açıklar.
+---
+
+# İkili Sistem (Binary) ve XOR Mantığı
 
 Klasik kriptografide şifreleme işlemleri harfler ve alfabenin boyutu (Mod 26) üzerinden yapılıyordu. Ancak 20. yüzyılın ortalarında bilgisayarların icadıyla kriptografi kağıt-kalemden çıkıp işlemcilere taşındı. 
 

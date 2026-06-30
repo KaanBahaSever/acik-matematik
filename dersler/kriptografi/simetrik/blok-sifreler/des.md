@@ -1,4 +1,9 @@
-﻿# DES - Data Encryption Standard ve Feistel Ağı
+﻿---
+title: DES ve Feistel Ağı
+description: DES algoritmasının Feistel ağını, tur dönüşümlerini ve tarihsel önemini adım adım anlatır.
+---
+
+# DES - Data Encryption Standard ve Feistel Ağı
 
 DES, modern kriptografinin dönüm noktasıdır. 1970'lerde IBM tarafından "Lucifer" projesi adıyla geliştirilen ve 1977'de Amerikan Ulusal Standartlar Bürosu (NBS, günümüzdeki NIST) tarafından federal bir standart olarak kabul edilen simetrik (gizli) anahtarlı bir blok şifreleme algoritmasıdır. 
 
