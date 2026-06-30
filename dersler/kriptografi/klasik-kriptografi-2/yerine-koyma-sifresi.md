@@ -49,6 +49,8 @@ Simetrik grupların bu soyut matematiksel yapısı, klasik kriptolojide **yerine
 
 Şifreleme adımlarının güvenli, benzersiz ve tamamen geri döndürülebilir (deşifre edilebilir) olabilmesi için seçilen fonksiyonun dönüştürülebilir bir yapıya, yani simetrik grubun bir elemanına karşılık gelmesi şarttır. Eğer fonksiyon birebir ve örten olmazsa, birden fazla harf aynı şifreli karaktere eşleneceği için geriye dönük benzersiz bir deşifre anahtarı ($\pi^{-1}$) üretilemez. Şimdi bu soyut cebirsel modeli formel bir kriptosistem anatomisine dökelim.
 
+## Yerine Koyma (Substitution) Şifrelemesinin Formal Tanımı
+
 <div class="math-block definition">
   <div class="math-block-title">
 
