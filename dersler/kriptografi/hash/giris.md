@@ -1,6 +1,6 @@
 ﻿# Kriptografik Özet (Hash) Fonksiyonlarına Giriş
 
-Asimetrik ve simetrik şifreleme algoritmaları verinin "gizliliğini" (confidentiality) sağlarken, dijital dünyada mesajların yolda değiştirilmediğinden (bütünlük - integrity) ve gönderenin gerçekten iddia ettiği kişi olduğundan (kimlik doğrulama - authentication) emin olmamız gerekir. İşte bu noktada modern kriptografinin "İsviçre çakısı" olarak bilinen **Kriptografik Özet (Hash) Fonksiyonları** devreye girer.
+Asimetrik ve simetrik şifreleme algoritmaları verinin **gizliliğini (confidentiality)** sağlarken, dijital dünyada mesajların yolda değiştirilmediğinden (**bütünlük - integrity**) ve gönderenin gerçekten iddia ettiği kişi olduğundan (**kimlik doğrulama - authentication**) emin olmamız gerekir. İşte bu noktada modern kriptografinin "İsviçre çakısı" olarak bilinen **Kriptografik Özet (Hash) Fonksiyonları** devreye girer.
 
 ::: info 📌 Kısa Tarihçe
 Hash fonksiyonu kavramı ilk olarak 1950'lerde **Hans Peter Luhn** tarafından veritabanlarında metinleri hızlıca aramak ve sınıflandırmak amacıyla bir bilgisayar algoritması olarak ortaya atıldı. 1976'da Diffie ve Hellman'ın asimetrik şifrelemeyi icadıyla birlikte dijital imzalarda kullanılmak üzere kriptografik bir boyut kazandı. Ancak modern kriptografik hash fonksiyonlarının (MD5, SHA serisi) matematiksel bel kemiğini, 1979 ve 1989 yıllarında birbirinden bağımsız olarak çalışan **Ralph Merkle** ve **Ivan Damgård**'ın kurduğu mimari oluşturmuştur.
@@ -24,8 +24,8 @@ Hash fonksiyonu kavramı ilk olarak 1950'lerde **Hans Peter Luhn** tarafından v
   Tanım: Kriptografik Özet (Hash) Fonksiyonu
 
   </div>
-  
-  Bir kriptografik hash fonksiyonu $H$, rastgele ve sonsuz uzunlukta olabilen herhangi bir $m \in \{0, 1\}^*$ mesajını girdi olarak alıp, sabit ve önceden belirlenmiş $n$ uzunluğunda (örneğin 256 bit) bir $h \in \{0, 1\}^n$ özet (hash) değerine dönüştüren deterministik bir fonksiyondur:
+
+  Bir kriptografik hash fonksiyonu $H$, rastgele ve sonsuz uzunlukta olabilen herhangi bir $m \in \{0, 1\}^*$ mesajını girdi olarak alıp, sabit ve önceden belirlenmiş $n$ uzunluğunda (örneğin 256 bit) bir $h \in \{0, 1\}^n$ özet (hash) değerine dönüştüren **deterministik** bir fonksiyondur:
   $$H: \{0, 1\}^* \to \{0, 1\}^n$$
   $$h = H(m)$$
   
@@ -45,14 +45,14 @@ Hash fonksiyonu kavramı ilk olarak 1950'lerde **Hans Peter Luhn** tarafından v
 <div class="math-block example">
   <div class="math-block-title">
 
-  Örnek 1: Basit Hash Fonksiyonu ve Girdi (Ters Görüntü) Bulma
-
-  </div>
+  Örnek: Basit Hash Fonksiyonu ve Girdi (Ters Görüntü) Bulma
 
   $H: \mathbb{Z} \to \mathbb{Z}_{11}$ şeklinde tanımlanan ve kuralı $H(x) \equiv (4x + 5) \pmod{11}$ olan temel bir hash fonksiyonu verilmiştir. 
   
   **a)** Bu fonksiyon için hash özeti $H(x) = 2$ olan bir girdi (ters görüntü) bulunuz.
   **b)** Bulduğunuz bu girdi ile çakışan (aynı hash değerini veren) farklı bir girdi daha bularak bir çakışma (collision) çifti oluşturunuz.
+
+  </div>
 
   ::: details 💡 Çözümü Göster / Gizle
   **a) Ters Görüntü (Pre-image) Bulma:**
@@ -94,19 +94,27 @@ Hash fonksiyonu kavramı ilk olarak 1950'lerde **Hans Peter Luhn** tarafından v
 Matematikçiler, "sonsuz uzunluktaki bir veriyi, sabit uzunlukta güvenli bir çıktıya dönüştüren bir fonksiyonu tek seferde nasıl yazarız?" sorusuyla karşılaştılar. Merkle ve Damgård, bu sorunu harika bir **zincirleme** mantığıyla çözdü. Günümüzde MD5, SHA-1 ve SHA-2 ailelerinin kullandığı bu mimari, süreci küçük bloklara böler.
 
 **İşleyiş Mantığı:**
-1. **Doldurma (Padding):** Gelen sonsuz mesaj, önce önceden belirlenmiş blok boyutunun tam katı olacak şekilde sonuna anlamsız veriler eklenerek tamamlanır. Mimarinin güvenliğinin kanıtı için en sona eklenen blok içine mesajın orijinal uzunluğu da yazılır (Buna *Merkle-Damgård Strengthening* denir).
-2. **Sıkıştırma Fonksiyonu (Compression Function):** Mimari, sonsuz veriyi değil, sadece sabit $b$ uzunluğunda mesaj bloğu ile bir önceki adımdan gelen sabit $n$ uzunluğundaki durumu alıp yine $n$ uzunluğunda çıktı üreten tek yönlü bir $\tilde{H}$ veya $f$ fonksiyonu kullanır.
-3. **Zincirleme (Chaining):** Sisteme başlangıç için sabit bir **Başlangıç Vektörü (IV - Initialization Vector)** olan $h_0$ (veya $h_1$) verilir. Mesaj bloklara ayrılır ve her blok sırayla sıkıştırma fonksiyonundan geçirilerek bir sonraki adımı besler. Zincirin en sonundaki iterasyon değeri, ana fonksiyonun Hash değeri olur.
+1. **Doldurma (Padding):** Gelen sonsuz mesaj, önce önceden belirlenmiş blok boyutunun tam katı olacak şekilde sonuna anlamsız veriler eklenerek tamamlanır. Ayrıca güvenlik gereği, eklenen bu dolgunun en sonuna mesajın orijinal uzunluğu da yazılır (Buna *Merkle-Damgård Strengthening* denir).
+2. **Sıkıştırma Fonksiyonu (Compression Function):** Mimari, koca bir veriyi tek seferde yutmaya çalışmaz. Bunun yerine sadece belirli uzunlukta bir mesaj bloğu ve bir önceki adımın sonucunu alıp sabit uzunlukta çıktı üreten küçük bir $f$ fonksiyonu kullanır.
+3. **Zincirleme (Chaining):** Sisteme başlangıç için sabit bir **Başlangıç Vektörü (IV - Initialization Vector)** olan $h_0$ verilir. Mesaj bloklara ayrılır ve tıpkı bir döngü gibi her blok sırayla sıkıştırma fonksiyonundan geçirilir.
 
-<div class="math-block theorem">
-  <div class="math-block-title">
+### 🔍 Ekstra Açıklama: Zincirleme Hesaplama Gerçekte Nasıl Çalışır?
 
-  Teorem: Merkle-Damgård Güvenlik İndirgemesi
+Bu sistemi bir **bayrak yarışı** gibi düşünebilirsiniz. Elimizde uzun bir mesaj var ve biz bunu $m_1$, $m_2$ ve $m_3$ adında üç parçaya (bloğa) böldük. Yarış şu şekilde ilerler:
 
-  </div>
-  
-  Eğer içeride kullanılan blok bazlı sıkıştırma fonksiyonu **çakışmaya dayanıklı (collision-resistant)** ise, Merkle-Damgård yapısıyla kurulan ve her uzunluktaki mesajı işleyebilen ana $H$ özet fonksiyonu da matematiksel olarak **çakışmaya dayanıklıdır.**
-</div>
+* **Isınma (Başlangıç):** Yarışa başlamadan önce elimizde sistemin belirlediği sabit bir değer (Başlangıç Vektörü, $h_0$) vardır.
+* **1. Aşama:** Fonksiyon, ilk mesaj parçası olan $m_1$'i ve başlangıç değerimiz olan $h_0$'ı alır. Bu ikisini karıştırır (sıkıştırır) ve yeni bir değer olan $h_1$'i üretir. 
+  * *Matematiksel karşılığı:* $f(h_0, m_1) \to h_1$
+* **2. Aşama:** Artık yeni bayrak $h_1$'dir. Fonksiyon sıradaki mesaj bloğunu ($m_2$) alır ve onu bir önceki adımın sonucu olan $h_1$ ile karıştırarak $h_2$'yi üretir.
+  * *Matematiksel karşılığı:* $f(h_1, m_2) \to h_2$
+* **3. Aşama (Bitiş):** Son mesaj bloğumuz $m_3$, bir önceki adımın sonucu olan $h_2$ ile karıştırılır. Başka blok kalmadığı için ortaya çıkan $h_3$ değeri yarışı bitirir.
+  * *Matematiksel karşılığı:* $f(h_2, m_3) \to h_3$
+
+**Sonuç:** Zincirin en sonundaki adımda elde ettiğimiz $h_3$ değeri, tüm mesajın nihai Hash (özet) değeridir. Yani önceki her harf/blok, kendinden sonraki tüm hesaplamayı kelebek etkisi gibi değiştirmiştir.
+
+::: info 📌 Ufak Bir Not: Merkle-Damgård Güvenliği
+Eğer sistemin tam kalbinde çalışan bu ufak blok bazlı sıkıştırma fonksiyonu ($f$) **çakışmaya dayanıklı (collision-resistant)** ise, bu zincirleme mimariyle kurulan devasa ana özet fonksiyonu da matematiksel olarak **çakışmaya dayanıklı** kabul edilir.
+:::
 
 ---
 
@@ -115,18 +123,16 @@ Matematikçiler, "sonsuz uzunluktaki bir veriyi, sabit uzunlukta güvenli bir ç
 <div class="math-block example">
   <div class="math-block-title">
 
-  Örnek 2: Bit Düzeyinde Sıkıştırma ve Merkle-Damgård Zincirlemesi
-
-  </div>
+  Örnek: Bit Düzeyinde Sıkıştırma ve Merkle-Damgård Zincirlemesi
 
   $\tilde{H} : \{0,1\}^3 \to \{0,1\}^2$ şeklinde tanımlanan bir sıkıştırma fonksiyonu verilmiştir. 
   
   Bu fonksiyonun çıktı kuralı şu şekildedir: **İlk bit**, girdideki bitlerin toplamının (mod 2) değerini (parite); **ikinci bit** ise girdinin ortasındaki (ikinci) biti temsil eder.
 
-  <div style="display: flex; justify-content: center; margin: 15px 0;">
+  <div style="display: flex; justify-content: center;">
   
   | $x$ (Girdi) | $\tilde{H}(x)$ (Çıktı) |
-  |:---:|:---:|
+  | :---: | :---: |
   | $000$ | $00$ |
   | $001$ | $10$ |
   | $010$ | $11$ |
@@ -141,6 +147,8 @@ Matematikçiler, "sonsuz uzunluktaki bir veriyi, sabit uzunlukta güvenli bir ç
   **a)** $\tilde{H}$ sıkıştırma fonksiyonu için bir çakışma (collision) çifti bulunuz.
   **b)** Başlatma vektörü (IV) $h_1 = 00$ olan ve $\tilde{H}$ kullanılarak Merkle-Damgård yapısı ile oluşturulan genel $H$ hash fonksiyonu için **$H(1101)$** değerini hesaplayınız.
   **c)** $H(1101)$ ile çakışan, farklı uzunlukta bir girdi bulunuz.
+
+  </div>
 
   ::: details 💡 Çözümü Göster / Gizle
   **a) Çakışma Analizi (Sıkıştırma Fonksiyonu için):**
@@ -176,13 +184,11 @@ Matematikçiler, "sonsuz uzunluktaki bir veriyi, sabit uzunlukta güvenli bir ç
 <div class="math-block example">
   <div class="math-block-title">
 
-  Örnek 3: Metin Tabanlı Merkle-Damgård Zincirlemesi
-
-  </div>
+  Örnek: Metin Tabanlı Merkle-Damgård Zincirlemesi
 
   Kendi tasarımımız olan ve Merkle-Damgård mimarisini kullanan $H$ özet fonksiyonu ile $m = \text{"MATH"}$ mesajının hash değerini, yani $H(\text{MATH})$ sonucunu bulunuz.
   
-  <b>Sistem Kuralları ve $H$ Fonksiyonunun Tanımı:</b>
+  **Sistem Kuralları ve $H$ Fonksiyonunun Tanımı:**
   * $H$ fonksiyonu, gelen $m$ mesajını 1 harflik bloklara bölerek işler. Dolayısıyla 4 harfli $m = \text{"MATH"}$ girdisi için $m_1=M, m_2=A, m_3=T, m_4=H$ olmak üzere zincirleme mimari gereği $4$ iterasyon gereklidir.
   * Harflerin sayısal değerleri 0-25 tablosuna göredir (A=0, M=12, T=19, H=7).
   * Sistemin Başlangıç Vektörü (IV) $h_0 = 5$ olarak sabitlenmiştir.
@@ -191,13 +197,15 @@ Matematikçiler, "sonsuz uzunluktaki bir veriyi, sabit uzunlukta güvenli bir ç
   * Buna göre genel hash fonksiyonumuz $H(m)$, Merkle-Damgård'ın birbirini çağıran zincirleme yapısı gereği şu formülle tanımlanır:
     $$H(m) = f(f(f(f(h_0, m_1), m_2), m_3), m_4) = h_4$$
 
+  </div>
+
   ::: details 💡 Çözümü Göster / Gizle
   İstenen $H(\text{MATH})$ değerini bulmak için $H$ fonksiyonunun iç yapısındaki $f$ sıkıştırma adımını sırasıyla 4 kez (her bir blok için) uygulayacağız. Başlangıç durumumuz $h_0 = 5$'tir.
 
   **1. İterasyon ($m_1 = M \implies 12$):**
   $$h_1 = f(h_0, m_1) \implies h_1 \equiv (5 \cdot 3 + 12) \pmod{26}$$
   $$h_1 = 15 + 12 = 27$$
-  $27 \equiv 1 \pmod{26} \implies h_1 = 1$
+  $$27 \equiv 1 \pmod{26} \implies h_1 = 1$$
 
   **2. İterasyon ($m_2 = A \implies 0$):**
   Bir önceki adımın zincir çıktısı olan $h_1 = 1$ kullanılarak fonksiyon tekrar çalıştırılır.
@@ -208,7 +216,7 @@ Matematikçiler, "sonsuz uzunluktaki bir veriyi, sabit uzunlukta güvenli bir ç
   Bir önceki çıktımız olan $h_2 = 3$ devreye girer.
   $$h_3 = f(h_2, m_3) \implies h_3 \equiv (3 \cdot 3 + 19) \pmod{26}$$
   $$h_3 = 9 + 19 = 28$$
-  $28 \equiv 2 \pmod{26} \implies h_3 = 2$
+  $$28 \equiv 2 \pmod{26} \implies h_3 = 2$$
 
   **4. İterasyon ($m_4 = H \implies 7$):**
   Son mesaj bloğumuz olan H harfi, $h_3 = 2$ değeriyle birlikte işlenir.
