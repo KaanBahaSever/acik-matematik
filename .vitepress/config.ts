@@ -1026,7 +1026,7 @@ export default defineConfig({
               items: [
                 { text: 'İkili Sistem ve XOR', link: '/dersler/kriptografi/modern-gecis/binary-xor' },
                 { text: 'Claude Shannon Prensipleri', link: '/dersler/kriptografi/modern-gecis/claude-shannon-prensipleri' },
-                { text: 'One-Time Pad', link: '/dersler/kriptografi/modern-gecis/one-time-pad' }
+                { text: 'Vernam Şifresi ve OTP', link: '/dersler/kriptografi/modern-gecis/one-time-pad' }
               ]
             },
             {
