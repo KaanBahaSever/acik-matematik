@@ -1,4 +1,10 @@
-﻿# Asimetrik Şifreleme ve Açık Anahtar Kriptografisine Giriş
+﻿---
+title: Asimetrik Şifreleme ve Açık Anahtar Kriptografisi
+description: Açık anahtar kriptografisinin temel fikrini, gizli-açık anahtar yapısını ve asimetrik şifrelemenin kullanım alanlarını özetler.
+
+---
+
+# Asimetrik Şifreleme ve Açık Anahtar Kriptografisine Giriş
 
 Klasik kriptografi sistemlerinde (Sezar, Affine, Hill vb.) şifreleme ve deşifreleme işlemleri için aynı anahtar ya da birbirine doğrudan dönüştürülebilen simetrik anahtarlar kullanılır. Bu durum modern ağ yapılarında ciddi bir **Anahtar Dağıtım Problemi (Key Distribution Problem)** doğurur; çünkü güvenli iletişim kurmak isteyen iki tarafın öncelikle güvenli olmayan bir kanal üzerinden gizli anahtarı birbirine iletmesi gerekir. 
 

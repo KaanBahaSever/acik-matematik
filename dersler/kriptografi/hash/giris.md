@@ -1,4 +1,9 @@
-﻿# Kriptografik Özet (Hash) Fonksiyonlarına Giriş
+﻿---
+title: Kriptografik Özet Fonksiyonlarına Giriş
+description: Tek yönlülük, çakışma direnci ve bütünlük denetimi açısından hash fonksiyonlarının temel özelliklerini özetler.
+---
+
+# Kriptografik Özet (Hash) Fonksiyonlarına Giriş
 
 Asimetrik ve simetrik şifreleme algoritmaları verinin **gizliliğini (confidentiality)** sağlarken, dijital dünyada mesajların yolda değiştirilmediğinden (**bütünlük - integrity**) ve gönderenin gerçekten iddia ettiği kişi olduğundan (**kimlik doğrulama - authentication**) emin olmamız gerekir. İşte bu noktada modern kriptografinin "İsviçre çakısı" olarak bilinen **Kriptografik Özet (Hash) Fonksiyonları** devreye girer.
 

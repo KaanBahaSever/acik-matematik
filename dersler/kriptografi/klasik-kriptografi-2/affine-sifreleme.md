@@ -1,4 +1,9 @@
-﻿<script setup>
+﻿---
+title: Affine Şifreleme
+description: Doğrusal dönüşüm ve modüler aritmetiğe dayanan affine şifrelemenin çalışma prensibini örneklerle açıklar.
+---
+
+<script setup>
 /* Klasör yolunu, md dosyasının ve .vitepress klasörünün konumuna göre ayarlayabilirsin */
 import AffineCalculator from '/.vitepress/components/AffineCalculator.vue'
 </script>

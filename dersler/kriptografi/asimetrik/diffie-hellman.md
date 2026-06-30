@@ -1,4 +1,9 @@
-﻿# Diffie-Hellman Anahtar Değişimi ve Matematiksel Temelleri
+﻿---
+title: Diffie-Hellman Anahtar Değişimi
+description: İki tarafın güvenli olmayan bir kanal üzerinden ortak gizli anahtar üretmesini sağlayan Diffie-Hellman protokolünü açıklar.
+---
+
+# Diffie-Hellman Anahtar Değişimi ve Matematiksel Temelleri
 
 Asimetrik kriptografinin doğuşunu simgeleyen **Diffie-Hellman Anahtar Değişimi (Diffie-Hellman Key Exchange)**, 1976 yılında Whitfield Diffie ve Martin Hellman tarafından yayınlanmıştır. Bu protokol, iki tarafın (geleneksel olarak Alice ve Bob) güvenli olmayan ve herkes tarafından dinlenebilen bir iletişim kanalı üzerinden, önceden hiçbir gizli bilgi paylaşımında bulunmadan **ortak bir gizli anahtar (shared secret)** oluşturmasını sağlar. 
 

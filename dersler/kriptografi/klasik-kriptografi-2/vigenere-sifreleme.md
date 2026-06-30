@@ -1,4 +1,9 @@
-﻿# Vigenère Şifreleme
+﻿---
+title: Vigenère Şifreleme
+description: Polialfabetik yer değiştirme mantığıyla çalışan Vigenère şifresini ve Kasiski analizinin temel fikrini anlatır.
+---
+
+# Vigenère Şifreleme
 
 **Monoalfabetik şifrelerin** (Sezar, Afin) en zayıf noktası, dildeki harf frekanslarını (örneğin İngilizcedeki 'E' harfinin diğerlerinden çok daha sık geçmesini) aynen korumasıdır. 16. yüzyılda Giovan Battista Bellaso tarafından tasarlanan ve Blaise de Vigenère'in adıyla anılan bu sistem, **Polialfabetik (Çoklu Alfabe)** yapısıyla bu istatistiksel zafiyeti çözer. 
 

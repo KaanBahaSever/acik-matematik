@@ -1,4 +1,9 @@
-﻿# Claude Shannon Prensipleri
+﻿---
+title: Claude Shannon Prensipleri ve Modern Kriptografi
+description: Shannon'un confusion ve diffusion ilkelerini, modern şifreleme tasarımındaki etkileriyle birlikte anlatır.
+---
+
+# Claude Shannon Prensipleri
 
 Klasik şifrelerin (Sezar, Afin, Vigenère) tamamı sonunda kriptanalistlere boyun eğmiştir çünkü metnin içindeki dilden kaynaklı istatistiksel izleri (örneğin İngilizcedeki 'E' harfi sıklığını) tam olarak yok edememişlerdir. 
 

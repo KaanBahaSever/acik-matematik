@@ -1,4 +1,9 @@
-﻿# RSA Kriptosistemi ve Matematiksel Altyapısı
+﻿---
+title: RSA Şifreleme Algoritması
+description: RSA'nın anahtar üretimi, şifreleme ve deşifreleme adımlarını; asal çarpanlara ayırma probleminin rolüyle birlikte anlatan ders notu.
+---
+
+# RSA Şifreleme Algoritması
 
 Asimetrik şifrelemenin teorik altyapısını inceledikten sonra, bu paradigmanın dünyadaki ilk ve en yaygın uygulaması olan **RSA (Rivest-Shamir-Adleman)** algoritmasını ele alacağız. RSA'in güvenliği, sayı teorisinin en temel ve çözülmesi zor problemlerinden biri olan **Büyük Sayıların Asal Çarpanlara Ayırılması (Integer Factorization Problem)** ilkesine dayanır. Bilgisayarlar için iki büyük asal sayıyı çarpmak (ileri yön) saliseler alırken, çarpım sonucundan hareketle orijinal asal çarpanları bulmak (geri yön) günümüz işlemcileriyle milyarlarca yıl sürebilir.
 

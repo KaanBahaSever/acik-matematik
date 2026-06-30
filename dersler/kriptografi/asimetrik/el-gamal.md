@@ -1,3 +1,8 @@
+---
+title: ElGamal Kriptosistemi
+description: Ayrık logaritma problemine dayanan ElGamal şifreleme sisteminin anahtar üretimi, şifreleme ve çözme adımlarını anlatır.
+---
+
 # ElGamal Kriptosistemi ve Ayrık Logaritma Problemi
 
 RSA algoritmasının çarpanlara ayırma zorluğuna dayanan yapısını inceledikten sonra, asimetrik kriptografinin bir diğer devasa sütunu olan **ElGamal Kriptosistemini** ele alacağız. 1985 yılında Taher ElGamal tarafından geliştirilen bu algoritma, gücünü soyut cebir ve sayı teorisinin en güvenilir problemlerinden biri kabul edilen **Ayrık Logaritma Probleminden (Discrete Logarithm Problem - DLP)** alır. 

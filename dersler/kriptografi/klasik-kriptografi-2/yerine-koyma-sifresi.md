@@ -1,3 +1,8 @@
+---
+title: Yerine Koyma Şifrelemesi
+description: Alfabe permütasyonlarına dayalı yerine koyma şifrelemesinin matematiksel tanımını ve kullanım mantığını açıklar.
+---
+
 # Alfabe Permütasyonu (Yerine Koyma) Şifrelemesi
 
 Soyut cebirsel perspektiften bakıldığında, klasik şifreleme yöntemlerinin büyük bir kısmı alfabe kümesinin kendi üzerindeki birebir ve örten dönüşümleriyle, yani permütasyonlarıyla ifade edilir. Kriptografi literatüründe **Monoalfabetik Yerine Koyma Şifresi** olarak da bilinen bu yapı, matematiksel olarak tamamen bir **simetrik grup ($S_n$)** işlemidir.

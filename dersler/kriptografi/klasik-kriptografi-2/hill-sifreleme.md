@@ -1,4 +1,9 @@
-﻿# Hill Şifreleme
+﻿---
+title: Hill Şifreleme
+description: Matris çarpımına dayanan Hill şifreleme sisteminin anahtar yapısını, blok mantığını ve deşifreleme sürecini açıklar.
+---
+
+# Hill Şifreleme
 
 Klasik şifreleme sistemlerinin istatistiksel frekans analizine yenik düşmesini engellemek için tasarlanan Hill Şifrelemesi, kriptografiye **Lineer Cebiri (Matrisleri)** sokan ilk büyük devrimdir. 
 
