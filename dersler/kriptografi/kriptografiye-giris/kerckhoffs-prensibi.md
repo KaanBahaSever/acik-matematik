@@ -3,7 +3,7 @@ title: Kerckhoffs Prensibi
 description: Bir kriptosistemin güvenliğinin algoritma gizliliğine değil, yalnızca anahtar gizliliğine dayanması gerektiğini açıklar.
 ---
 
-# 🏛️ Kriptografinin Altın Kuralı: Kerckhoffs Prensibi
+# Kerckhoffs Prensibi
 
 19.yüzyılda telgrafın icadı, askeri iletişimi radikal bir şekilde hızlandırdı ancak aynı zamanda mesajların düşman tarafından yakalanma riskini de devasa ölçüde artırdı. Savaş alanında taşıması zor olan ve ele geçirildiğinde tüm sistemi çökerten "gizli kod kitaplarına" bir alternatif gerekiyordu. 
 
