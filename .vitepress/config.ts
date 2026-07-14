@@ -70,8 +70,8 @@ export default defineConfig({
       next: 'Sonraki Konu'
     },
     footer: {
-      message: 'Akademik amaçlarla tasarlanmış açık kaynaklı eğitim arşivi.',
-      copyright: 'Copyright © 2026 | Tüm Hakları Saklıdır'
+      message: 'Akademik amaçlarla tasarlanmış açık kaynaklı eğitim arşivi. Bu sitedeki tüm ders notları ve içerikler CC BY-NC-SA 4.0 Lisansı ile korunmaktadır.',
+      copyright: 'Copyright © 2026 | Ticari amaçla kullanılamaz'
     },
     sidebar: {
       '/dersler/analitik-geometri/': [
@@ -731,7 +731,7 @@ export default defineConfig({
           items: [
             { text: 'Genel Bakış', link: '/dersler/kismi-diferansiyel-denklemler/' },
             {
-              text: 'Temeller ve Sınıflandırma',
+              text: '1. Temeller ve Sınıflandırma',
               collapsed: true,
               items: [
                 { text: 'Sınıflandırma', link: '/dersler/kismi-diferansiyel-denklemler/temeller/siniflandirma' },
@@ -740,7 +740,7 @@ export default defineConfig({
               ]
             },
             {
-              text: '1. Mertebe Denklemler ve Çözümler',
+              text: '2. Mertebe Denklemler ve Çözümler',
               collapsed: true,
               items: [
                 { text: 'Lagrange Metodu', link: '/dersler/kismi-diferansiyel-denklemler/birinci-mertebe/lagrange-metodu' },

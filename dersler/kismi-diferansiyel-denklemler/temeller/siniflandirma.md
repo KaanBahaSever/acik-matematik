@@ -79,14 +79,12 @@ Denklemlerin süperpozisyon ilkesine uyup uymadığını anlamak ve genel çöz�
 
 <div class="math-block definition">
   <div class="math-block-title">
-
-  Tanım: Homojenlik
-
+    Tanım: Homojenlik
   </div>
 
-  Bir kısmi diferansiyel denklemdeki tüm terimler tek tek incelendiğinde; **her bir terimin içinde** bağımlı değişkenin ($u$) kendisi veya onun kısmi türevlerinden ($u_x, u_{xx}, u_y, \dots$) en az biri çarpan olarak bulunuyorsa, bu denklem **homojen** (homogeneous) bir denklemdir.
+  Bir kısmi diferansiyel denklemde, tüm terimler bağımlı değişkeni ($u$) veya onun en az bir kısmi türevini ($u_x, u_{xx}, u_y, \dots$) içeriyorsa bu denklem **homojen** (homogeneous) bir denklemdir.
 
-  Eğer denklemde, içinde hiçbir şekilde bağımlı değişken veya türevi geçmeyen, sadece bağımsız değişkenlerden ($x, y, t, \dots$) veya sabit sayılardan oluşan "yalnız" bir terim varsa, bu denklem **homojen olmayan** (nonhomogeneous) bir denklemdir.
+  Eğer denklemde $u$ veya türevlerini içermeyen; sadece bağımsız değişkenlerden ($x, y, t, \dots$) ya da sabit sayılardan oluşan yalın bir terim varsa, bu denklem **homojen olmayan** (nonhomogeneous) bir denklemdir.
 
 </div>
 
