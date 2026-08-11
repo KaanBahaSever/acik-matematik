@@ -1,0 +1,56 @@
+---
+title: "Claude Shannon Prensipleri: Karışıklık ve Yayılma"
+description: "Shannon'un confusion (karışıklık) ve diffusion (yayılma) ilkelerini, çığ etkisini, çarpım şifrelerini ve SPN mimarisini klasik şifrelerin analiziyle birlikte anlatır."
+---
+
+Klasik şifrelerin (Sezar, afin, Vigenère) tamamı sonunda kriptanalistlere boyun eğmiştir; çünkü metnin içindeki dilden kaynaklı istatistiksel izleri —örneğin İngilizcede `E` harfinin sıklığını— tam olarak yok edememişlerdir.
+
+1949'da bilgi kuramının kurucusu **Claude Shannon**, bir şifreleme sisteminin istatistiksel analizleri tamamen işe yaramaz hâle getirebilmesi için iki temel prensip tanımlamıştır: **karışıklık (confusion)** ve **yayılma (diffusion)**. Modern sistemlerin kalbini oluşturan bu iki kavramı anlamak, dijital kriptografiyi anlamak demektir.
+
+## 1. Karışıklık (Confusion)
+
+Karışıklık prensibinin tek bir amacı vardır: **şifreli metin ile anahtar arasındaki ilişkiyi olabildiğince karmaşık ve çözülemez hâle getirmek.**
+
+Düşman şifreli metin üzerinde istatistiksel bir analiz yaptığında, kullanılan anahtar hakkında en ufak bir ipucu bile elde edememelidir. Anahtarın tek bir biti bile şifreli metnin karakterini tamamen değiştirmelidir.
+
+**Nasıl sağlanır?** Karışıklık genellikle **yerine koyma (substitution)** işlemleriyle sağlanır. Klasik dönemdeki Sezar ve afin şifreleri çok basit karışıklık örnekleridir. Modern şifrelerde (örneğin AES'te) bu işlem karmaşık, doğrusal olmayan **S-kutuları (substitution boxes)** ile gerçekleştirilir.
+
+## 2. Yayılma (Diffusion)
+
+Yayılma prensibinin amacı ise şudur: **açık metnin istatistiksel yapısını, şifreli metnin tamamına yayarak yok etmek.**
+
+Açık metindeki tek bir harf veya bit değiştiğinde, şifreli metindeki *birçok* harf veya bit değişmelidir. Böylece açık metindeki dilden kaynaklı kalıplar (tekrar eden heceler, sık kullanılan harfler) şifreli metnin içinde eriyip kaybolur.
+
+**Nasıl sağlanır?** Yayılma genellikle **yer değiştirme (permütasyon / transpozisyon)** işlemleriyle sağlanır. Klasik dönemde Hill şifrelemesi, matris çarpımı sayesinde güçlü bir yayılma örneğidir. Modern şifrelerde bu işlem **P-kutuları (permutation boxes)** veya karmaşık bit kaydırmalarıyla yapılır.
+
+::: {.callout-tip title="🏔️ Kriptografinin kutsal kâsesi: çığ etkisi (avalanche effect)"}
+Yayılma prensibinin ne kadar başarılı çalıştığı **çığ etkisi** ile ölçülür.
+
+Açık metinde veya anahtarda **yalnızca 1 bitlik** ufak bir değişiklik yaptığınızda şifreli metnin bitlerinin yaklaşık **%50'si** rastgele biçimde değişiyorsa, o sistemde güçlü bir çığ etkisi var demektir.
+
+Dağın tepesinden yuvarlanan tek bir kar topunun (1 bit) aşağı indiğinde devasa bir çığa (metnin yarısının değişmesine) dönüşmesi gibi düşünülebilir. Modern AES ve SHA-256 algoritmaları güçlü bir çığ etkisine sahiptir.
+:::
+
+## 🧩 Çarpım Şifreleri ve SPN Yapısı
+
+Shannon, yalnızca karışıklık ya da yalnızca yayılma kullanmanın tek başına yeterli güvenliği sağlamadığını fark etti. Çözüm olarak bu iki işlemi art arda, defalarca tekrar eden bir yapı önerdi. Bu birleşik yapılara **çarpım şifreleri (product ciphers)** denir.
+
+Modern şifreleme standartlarının temelini oluşturan **SPN (Substitution-Permutation Network)** mimarisi bu fikirden doğmuştur. Veri bloğu sisteme girdiğinde:
+
+1. **S-kutusu (karışıklık):** Veri bitleri kendi içinde başka bitlerle değiştirilir.
+2. **P-kutusu (yayılma):** Değişen bu bitlerin sıralamaları karıştırılarak tüm bloğa dağıtılır.
+3. Bu döngü (raund) aynı veri üzerinde 10, 12 veya 16 kez tekrar edilerek mesaj çözülemez bir yapıya dönüştürülür.
+
+## 📊 Klasik Şifrelerin Shannon Analizi
+
+Bugüne kadar öğrendiğimiz klasik şifrelerin Shannon prensipleri açısından durumunu bir tabloyla özetleyelim:
+
+| Algoritma | Karışıklık | Yayılma | Genel güvenlik analizi |
+| :--- | :---: | :---: | :--- |
+| **Sezar şifresi** | Var (çok zayıf) | Yok | İstatistiksel frekansları korur, saniyeler içinde kırılır. |
+| **Afin şifreleme** | Var (orta) | Yok | Tek harf tek harfe dönüştüğü için frekans analiziyle kırılır. |
+| **Vigenère şifresi** | Var (çoklu) | Yok | Çığ etkisi yoktur; Kasiski metoduyla anahtar uzunluğu bulunup kırılır. |
+| **Hill şifrelemesi** | Yok | **Var (güçlü)** | Matris çarpımıyla harfler birbirine yayıldığı için dönemine göre devrimseldir. |
+| **Modern AES** | **Mükemmel** | **Mükemmel** | S ve P kutularını defalarca tekrarlayarak yüksek güvenlik sağlar. |
+
+: Klasik şifrelerin Shannon prensipleri açısından karşılaştırması {#tbl-shannon-analiz}

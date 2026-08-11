@@ -1,0 +1,125 @@
+---
+title: "Otokorelasyon ve Tahmin Hatalarının Ölçülmesi"
+description: "Zaman serilerinde otokorelasyon katsayısı ile MAD, MSE, MPE ve MAPE hata ölçütlerinin tanımları ve tablo yöntemiyle çözümlü uygulaması."
+---
+
+Zaman serisi analizlerinde, elimizdeki verinin geçmiş değerlerden ne kadar etkilendiğini anlamak ve kurduğumuz tahmin modellerinin ne kadar başarılı olduğunu ölçmek zorundayız. Bu bölümde verinin kendi geçmişiyle ilişkisini ölçen **otokorelasyon** kavramını ve model performansını test ettiğimiz **hata ölçütlerini** inceleyeceğiz.
+
+## 1. Otokorelasyon Kavramı
+
+Bir değişkenin farklı bir değişkene göre değil, **kendi geçmiş (gecikmeli) değerlerine göre** gösterdiği ilişkiye **otokorelasyon** denir. Örneğin "dünkü hava sıcaklığı bugünkü sıcaklığı etkiliyor mu?" veya "geçen ayki satışlar bu ayki satışların bir göstergesi mi?" sorularının matematiksel cevabını bu yöntemle ararız.
+
+::: {#def-otokorelasyon name="$k$. Dereceden Otokorelasyon Katsayısı"}
+$Y_0, Y_1, \dots, Y_n$ şeklinde sıfırdan başlayan bir zaman serisinde, $t$ zamanındaki değer ile $k$ periyot önceki gecikmeli değer arasındaki doğrusal ilişkinin yönünü ve gücünü ölçen katsayıdır; $-1$ ile $+1$ arasında değer alır:
+
+$$r_k = \frac{\sum_{t=k}^{n} (Y_t - \bar{Y})(Y_{t-k} - \bar{Y})}{\sum_{t=0}^{n} (Y_t - \bar{Y})^2}$$
+
+Burada $n$ serideki son zaman indeksini (toplam veri sayısı $n+1$'dir), $k$ gecikme periyodunu, $\bar{Y}$ ise serinin aritmetik ortalamasını ifade eder.
+:::
+
+::: {.callout-note title="📌 İndis kuralı ve başlangıç noktası"}
+Zaman serisi $t = 0$'dan başladığı için, gecikmeli terim $Y_{t-k}$'nın tanımlı olabilmesi adına paydaki toplam işlemi mutlaka **$t = k$**'dan başlamalıdır; çünkü $t - k \geq 0 \implies t \geq k$'dır.
+
+Paydadaki toplam ise serinin tamamı üzerinden, yani $t = 0$'dan $t = n$'e kadar alınır.
+:::
+
+## 2. Tahmin Hatalarının Ölçülmesi
+
+Bir tahmin modeli kurduğumuzda, modelin ürettiği beklenen değerler ile gözlenen gerçek değerler arasındaki farka **tahmin hatası** denir:
+
+$$e_t = Y_t - \hat{Y}_t$$
+
+Modelin performansını değerlendirmek için, pozitif ve negatif hataların birbirini sıfırlamasını engelleyen dört temel ölçüt kullanılır. Seri $t = 0$'dan $t = n$'e kadar olduğundan toplam veri sayısı $n+1$'dir.
+
+::: {#def-mad name="MAD — Ortalama Mutlak Sapma"}
+Hataların mutlak değerlerinin ortalamasıdır. Hataların yönünü göz ardı ederek hedeften ortalama ne kadar saptığımızı gösterir:
+
+$$\mathrm{MAD} = \frac{\sum_{t=0}^{n} |e_t|}{n+1}$$
+:::
+
+::: {#def-mse name="MSE — Ortalama Kareli Hata"}
+Hataların karelerinin ortalamasıdır. Büyük hataların karesini alarak onları daha ağır cezalandırdığı için, modeldeki aşırı sapmaları tespit etmede etkilidir:
+
+$$\mathrm{MSE} = \frac{\sum_{t=0}^{n} e_t^2}{n+1}$$
+:::
+
+::: {#def-mpe name="MPE — Ortalama Yüzde Hata"}
+Hataların gerçek değere oranlarının ortalamasıdır. Mutlak değer kullanılmadığı için modelin sürekli fazla mı yoksa eksik mi tahmin yaptığını (yanlılığını) gösterir:
+
+$$\mathrm{MPE} = \frac{\sum_{t=0}^{n} \left(\dfrac{e_t}{Y_t}\right)}{n+1}$$
+:::
+
+::: {#def-mape name="MAPE — Ortalama Mutlak Yüzde Hata"}
+Mutlak hataların gerçek değerlere oranının ortalamasıdır. Sonucu yüzde olarak verdiği için yorumlanması en kolay ölçüttür:
+
+$$\mathrm{MAPE} = \frac{\sum_{t=0}^{n} \left| \dfrac{e_t}{Y_t} \right|}{n+1}$$
+:::
+
+## ⚙️ Adım Adım Çözüm Algoritması
+
+1. **Ortalamayı bulun.** Otokorelasyon için tüm $Y_t$ değerlerinin aritmetik ortalamasını hesaplayın.
+2. **Sütunları hazırlayın.** Hatalar için $e_t$, $|e_t|$, $e_t^2$, $e_t / Y_t$ ve $|e_t| / Y_t$ sütunlarını hesaplayıp tabloya yazın.
+3. **Gecikmeli seriyi kaydırın.** Otokorelasyon hesabı için $Y_t$ değerlerini istenen $k$ periyodu kadar kaydırarak $Y_{t-k}$ sütununu oluşturun.
+4. **Formülleri uygulayın.** Sütun toplamlarını ilgili formüllerde yerine koyun.
+
+## 📝 Çözümlü Uygulama
+
+:::: {#exm-otokorelasyon-hatalar}
+Bir zaman serisine ait gerçekleşen değerler ($Y_t$) ve bir tahmin modeliyle elde edilen beklenen değerler ($\hat{Y}_t$) aşağıda verilmiştir. İndisin $t = 0$'dan başladığını kabul ederek bu veri seti için birinci dereceden otokorelasyon katsayısını ve dört temel hata ölçütünü hesaplayınız.
+
+| $t$ | $0$ | $1$ | $2$ | $3$ | $4$ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| $Y_t$ | $10$ | $12$ | $15$ | $14$ | $17$ |
+| $\hat{Y}_t$ | $11$ | $11$ | $14$ | $16$ | $16$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Hata değerlerinin tablolaştırılması.**
+
+Veriler $t = 0, \dots, 4$ aralığındadır; yani $n = 4$ ve toplam veri sayısı $n + 1 = 5$'tir. Hataları $e_t = Y_t - \hat{Y}_t$ ile hesaplıyoruz (oranlar virgülden sonra dört basamağa yuvarlanmıştır):
+
+| $t$ | $Y_t$ | $\hat{Y}_t$ | $e_t$ | $\lvert e_t \rvert$ | $e_t^2$ | $e_t / Y_t$ | $\lvert e_t \rvert / Y_t$ |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| $0$ | $10$ | $11$ | $-1$ | $1$ | $1$ | $-0{,}1000$ | $0{,}1000$ |
+| $1$ | $12$ | $11$ | $1$ | $1$ | $1$ | $0{,}0833$ | $0{,}0833$ |
+| $2$ | $15$ | $14$ | $1$ | $1$ | $1$ | $0{,}0667$ | $0{,}0667$ |
+| $3$ | $14$ | $16$ | $-2$ | $2$ | $4$ | $-0{,}1429$ | $0{,}1429$ |
+| $4$ | $17$ | $16$ | $1$ | $1$ | $1$ | $0{,}0588$ | $0{,}0588$ |
+| $\boldsymbol{\sum}$ | | | $\mathbf{0}$ | $\mathbf{6}$ | $\mathbf{8}$ | $\mathbf{-0{,}0341}$ | $\mathbf{0{,}4517}$ |
+
+**2. Hata ölçütlerinin hesaplanması.**
+
+$$
+\begin{aligned}
+\mathrm{MAD} &= \frac{6}{5} = 1{,}2 \\
+\mathrm{MSE} &= \frac{8}{5} = 1{,}6 \\
+\mathrm{MPE} &= \frac{-0{,}0341}{5} = -0{,}0068 \quad (\approx -\%0{,}68) \\
+\mathrm{MAPE} &= \frac{0{,}4517}{5} = 0{,}0903 \quad (\approx \%9{,}03)
+\end{aligned}
+$$
+
+**3. Birinci dereceden otokorelasyon hesabı.**
+
+Önce gerçek değerlerin ortalamasını bulalım:
+
+$$\bar{Y} = \frac{10 + 12 + 15 + 14 + 17}{5} = \frac{68}{5} = 13{,}6$$
+
+$k = 1$ olduğu için gecikmeli çarpım işlemine $t = 1$'den başlıyoruz:
+
+| $t$ | $Y_t$ | $Y_t - \bar{Y}$ | $(Y_t - \bar{Y})^2$ | $(Y_t - \bar{Y})(Y_{t-1} - \bar{Y})$ |
+| :---: | :---: | :---: | :---: | :---: |
+| $0$ | $10$ | $-3{,}6$ | $12{,}96$ | — |
+| $1$ | $12$ | $-1{,}6$ | $2{,}56$ | $(-1{,}6)(-3{,}6) = 5{,}76$ |
+| $2$ | $15$ | $1{,}4$ | $1{,}96$ | $(1{,}4)(-1{,}6) = -2{,}24$ |
+| $3$ | $14$ | $0{,}4$ | $0{,}16$ | $(0{,}4)(1{,}4) = 0{,}56$ |
+| $4$ | $17$ | $3{,}4$ | $11{,}56$ | $(3{,}4)(0{,}4) = 1{,}36$ |
+| $\boldsymbol{\sum}$ | $\mathbf{68}$ | $\mathbf{0}$ | $\mathbf{29{,}2}$ | $\mathbf{5{,}44}$ |
+
+Toplamları formülde yerine koyarsak:
+
+$$r_1 = \frac{\sum_{t=1}^{4} (Y_t - 13{,}6)(Y_{t-1} - 13{,}6)}{\sum_{t=0}^{4} (Y_t - 13{,}6)^2} = \frac{5{,}44}{29{,}2} \approx 0{,}1863$$
+
+**Yorum:** Zaman serisinde çok zayıf düzeyde pozitif bir otokorelasyon vardır; bir önceki periyodun gelecek üzerindeki doğrusal etkisi oldukça düşüktür.
+
+[$\boxtimes$]{.qed}
+:::
+::::

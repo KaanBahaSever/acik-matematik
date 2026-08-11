@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Uzayda Ã–zel EÄŸriler
-

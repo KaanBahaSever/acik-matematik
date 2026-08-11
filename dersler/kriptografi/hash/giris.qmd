@@ -1,0 +1,204 @@
+---
+title: "Kriptografik Özet (Hash) Fonksiyonlarına Giriş"
+description: "Hash fonksiyonlarının matematiksel tanımı, üç direnç kriteri, Merkle-Damgård mimarisi ve çakışma/ön-görüntü kavramlarını çözümlü örneklerle açıklar."
+---
+
+Asimetrik ve simetrik şifreleme algoritmaları verinin **gizliliğini (confidentiality)** sağlarken; dijital dünyada mesajların yolda değiştirilmediğinden (**bütünlük — integrity**) ve gönderenin gerçekten iddia ettiği kişi olduğundan (**kimlik doğrulama — authentication**) da emin olmamız gerekir. İşte bu noktada modern kriptografinin "İsviçre çakısı" sayılan **kriptografik özet (hash) fonksiyonları** devreye girer.
+
+::: {.callout-note title="📌 Kısa tarihçe"}
+Hash fonksiyonu kavramı ilk olarak 1950'lerde **Hans Peter Luhn** tarafından veritabanlarında metinleri hızlıca aramak ve sınıflandırmak amacıyla ortaya atıldı. 1976'da Diffie ve Hellman'ın asimetrik şifrelemeyi icadıyla birlikte dijital imzalarda kullanılmak üzere kriptografik bir boyut kazandı.
+
+Modern kriptografik hash fonksiyonlarının (MD5, SHA ailesi) matematiksel bel kemiğini ise, 1979 ve 1989 yıllarında birbirinden bağımsız çalışan **Ralph Merkle** ve **Ivan Damgård**'ın kurduğu mimari oluşturmuştur.
+:::
+
+## 🌍 Nerede ve Nasıl Kullanılır?
+
+Özet fonksiyonları şifreleme **yapmaz** (geri döndürülemezler); bunun yerine verinin benzersiz bir "dijital parmak izini" çıkarırlar:
+
+* **Parola saklama.** Şifreleriniz veritabanlarında düz metin olarak değil, hash değerleri olarak saklanır. Veritabanı çalınsa bile hash'ten orijinal şifreye dönülemez.
+* **Dosya bütünlüğü (checksum).** İndirdiğiniz bir dosyanın eksik veya değiştirilmiş olup olmadığını anlamak için dosyanın hash değeri, yayıncının ilan ettiği değerle karşılaştırılır.
+* **Dijital imzalar.** Devasa bir PDF dosyasını RSA ile imzalamak çok uzun sürer; bunun yerine dosyanın kısa hash'i alınır ve yalnızca bu özet imzalanır.
+* **Blokzincir.** Bitcoin ve Ethereum gibi ağlarda blokları birbirine kriptografik olarak bağlamak ve madencilik (proof of work) yapmak için yoğun biçimde SHA-256 kullanılır.
+
+## 🔒 Matematiksel Tanım ve Güvenlik Kriterleri
+
+::: {#def-hash-fonksiyonu name="Kriptografik Özet (Hash) Fonksiyonu"}
+Bir kriptografik hash fonksiyonu $H$; rastgele ve sonsuz uzunlukta olabilen herhangi bir $m \in \{0, 1\}^{*}$ mesajını girdi olarak alıp, sabit ve önceden belirlenmiş $n$ uzunluğunda (örneğin 256 bit) bir $h \in \{0, 1\}^n$ özet değerine dönüştüren **deterministik** bir fonksiyondur:
+
+$$H: \{0, 1\}^{*} \to \{0, 1\}^n, \qquad h = H(m)$$
+
+Bu fonksiyonun kriptografik olarak güvenli kabul edilebilmesi için şu üç **direnç (resistance)** şartını sağlaması zorunludur:
+
+1. **Ön-görüntü direnci (pre-image resistance / tek yönlülük):** Yalnızca $h$ özet değeri biliniyorken, $H(m) = h$ şartını sağlayan orijinal $m$ mesajını bulmak bilgisayarsal olarak imkânsız olmalıdır.
+2. **İkinci ön-görüntü direnci (second pre-image resistance):** Belirli bir $m_1$ mesajı elimizdeyken, aynı özeti üreten farklı bir $m_2 \neq m_1$ mesajı bulmak bilgisayarsal olarak imkânsız olmalıdır.
+3. **Çakışma direnci (collision resistance):** Özet değerleri aynı olan *herhangi* iki farklı mesaj ($m_1 \neq m_2$ ve $H(m_1) = H(m_2)$) bulmak bilgisayarsal olarak imkânsız olmalıdır.
+:::
+
+::: {.callout-note title="📌 Çakışmalar zaten vardır"}
+Güvercin yuvası (pigeonhole) ilkesi gereği, sonsuz sayıda girdiyi sonlu sayıda çıktıya eşleyen bir fonksiyonda çakışmalar **matematiksel olarak kaçınılmazdır**. Kriptografik iddia, çakışmaların *var olmadığı* değil; **bulunmalarının** pratikte imkânsız olduğudur.
+:::
+
+## 📝 Çözümlü Uygulama: Basit Bir Hash Fonksiyonu
+
+Ön-görüntü ve çakışma kavramlarını anlayabilmek için modüler aritmetiğe dayanan çok basit bir hash fonksiyonu tanımlayalım. Gerçek dünyada ters görüntü bulmak imkânsız olsa da, bu basit örnekte matematiğin nasıl işlediğini görebiliriz.
+
+:::: {#exm-basit-hash}
+$H: \mathbb{Z} \to \mathbb{Z}_{11}$ şeklinde tanımlanan ve kuralı $H(x) \equiv (4x + 5) \pmod{11}$ olan temel bir hash fonksiyonu verilmiştir.
+
+**a)** Bu fonksiyon için özeti $H(x) = 2$ olan bir girdi (ters görüntü) bulunuz.
+
+**b)** Bulduğunuz bu girdiyle çakışan, farklı bir girdi daha bularak bir çakışma çifti oluşturunuz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**a) Ön-görüntü bulma.**
+
+$H(x) \equiv 2 \pmod{11}$ şartını sağlayan bir $x$ değeri arıyoruz:
+
+$$4x + 5 \equiv 2 \pmod{11}$$
+
+Her iki taraftan $5$ çıkaralım:
+
+$$4x \equiv 2 - 5 \equiv -3 \pmod{11}$$
+
+Negatif sayıyı mod $11$'de pozitif dengiyle değiştirelim ($-3 + 11 = 8$):
+
+$$4x \equiv 8 \pmod{11}$$
+
+$\gcd(4, 11) = 1$ olduğundan her iki tarafı $4$'e sadeleştirebiliriz:
+
+$$x \equiv 2 \pmod{11}$$
+
+Böylece $H(x) = 2$ sonucunu veren girdilerden birinin $x = 2$ olduğunu bulduk. Sağlaması: $4(2) + 5 = 13 \equiv 2 \pmod{11}$ ✓
+
+**b) Çakışma çifti oluşturma.**
+
+Modüler aritmetiğin doğası gereği, girdiye modülün tam katlarını eklediğimizde sonuç değişmez. $x = 2$ için özet $2$ ise, $x = 2 + 11 = 13$ girdisi için de özet aynı çıkmalıdır. Sağlayalım:
+
+$$H(13) = 4(13) + 5 = 57 = (11 \cdot 5) + 2 \equiv 2 \pmod{11}$$
+
+**Sonuç:** $H(2) = 2$ ve $H(13) = 2$ bulunmuştur. $2 \neq 13$ olmasına rağmen aynı özeti ürettikleri için $\{2, 13\}$ kümesi bu fonksiyon için bir **çakışma çiftidir**.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 🏗️ Merkle-Damgård Mimarisinin Anatomisi
+
+Matematikçiler şu soruyla karşılaştılar: *"Sonsuz uzunluktaki bir veriyi, sabit uzunlukta güvenli bir çıktıya dönüştüren bir fonksiyonu tek seferde nasıl yazarız?"*
+
+Merkle ve Damgård bu sorunu bir **zincirleme** mantığıyla çözdü. Günümüzde MD5, SHA-1 ve SHA-2 ailelerinin kullandığı bu mimari süreci küçük bloklara böler:
+
+1. **Doldurma (padding).** Gelen mesaj, önce blok boyutunun tam katı olacak şekilde sonuna ek veri getirilerek tamamlanır. Ayrıca güvenlik gereği eklenen dolgunun sonuna mesajın orijinal uzunluğu da yazılır — buna *Merkle-Damgård güçlendirmesi* denir.
+2. **Sıkıştırma fonksiyonu.** Mimari, koca bir veriyi tek seferde yutmaya çalışmaz; yalnızca belirli uzunlukta bir mesaj bloğu ve bir önceki adımın sonucunu alıp sabit uzunlukta çıktı üreten küçük bir $f$ fonksiyonu kullanır.
+3. **Zincirleme (chaining).** Sisteme sabit bir **başlangıç vektörü (IV)** verilir. Mesaj bloklara ayrılır ve her blok sırayla sıkıştırma fonksiyonundan geçirilir.
+
+### 🔍 Zincirleme Hesaplama Gerçekte Nasıl Çalışır?
+
+Bu sistemi bir **bayrak yarışı** gibi düşünebilirsiniz. Elimizde uzun bir mesaj var ve bunu $m_1$, $m_2$, $m_3$ olmak üzere üç bloğa böldük:
+
+* **Başlangıç.** Yarışa başlamadan önce elimizde sistemin belirlediği sabit bir değer, başlangıç vektörü $h_0$ vardır.
+* **1. aşama.** Fonksiyon, ilk mesaj parçası $m_1$ ile $h_0$'ı alır, karıştırır ve $h_1$'i üretir: $f(h_0, m_1) \to h_1$
+* **2. aşama.** Artık yeni bayrak $h_1$'dir. Fonksiyon sıradaki bloğu bir önceki sonuçla karıştırır: $f(h_1, m_2) \to h_2$
+* **3. aşama.** Son blok da önceki sonuçla karıştırılır: $f(h_2, m_3) \to h_3$
+
+**Sonuç:** Zincirin sonundaki $h_3$ değeri, tüm mesajın nihai özet değeridir. Böylece her blok, kendinden sonraki tüm hesaplamayı kelebek etkisi gibi değiştirir.
+
+::: {.callout-note title="📌 Merkle-Damgård güvenliği"}
+Sistemin kalbinde çalışan blok bazlı sıkıştırma fonksiyonu $f$ **çakışmaya dayanıklı** ise, bu zincirleme mimariyle kurulan devasa ana özet fonksiyonu da matematiksel olarak çakışmaya dayanıklı kabul edilir. Merkle-Damgård teoreminin özü budur: güvenlik, küçük bileşenden bütüne taşınır.
+:::
+
+## 📝 Çözümlü Uygulamalar: Merkle-Damgård Yapısı
+
+:::: {#exm-bit-duzeyi-md}
+$\tilde{H} : \{0,1\}^3 \to \{0,1\}^2$ şeklinde tanımlanan bir sıkıştırma fonksiyonu verilmiştir. Çıktı kuralı şudur: **ilk bit**, girdideki bitlerin toplamının mod $2$ değerini (pariteyi); **ikinci bit** ise girdinin ortasındaki biti temsil eder.
+
+| $x$ (girdi) | $\tilde{H}(x)$ (çıktı) |
+| :---: | :---: |
+| $000$ | $00$ |
+| $001$ | $10$ |
+| $010$ | $11$ |
+| $011$ | $01$ |
+| $100$ | $10$ |
+| $101$ | $00$ |
+| $110$ | $01$ |
+| $111$ | $11$ |
+
+**a)** $\tilde{H}$ sıkıştırma fonksiyonu için bir çakışma çifti bulunuz.
+
+**b)** Başlangıç vektörü $h_1 = 00$ olan ve $\tilde{H}$ kullanılarak Merkle-Damgård yapısıyla oluşturulan genel $H$ fonksiyonu için $H(1101)$ değerini hesaplayınız.
+
+**c)** $H(1101)$ ile çakışan, farklı uzunlukta bir girdi bulunuz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**a) Sıkıştırma fonksiyonu için çakışma.**
+
+Çakışma, $\tilde{H}(x) = \tilde{H}(x')$ ve $x \neq x'$ durumunda gerçekleşir. Tablo incelendiğinde birden fazla çakışma görülür:
+
+* $\tilde{H}(001) = 10$ ve $\tilde{H}(100) = 10 \implies \{001, 100\}$ bir çakışmadır.
+* $\tilde{H}(010) = 11$ ve $\tilde{H}(111) = 11 \implies \{010, 111\}$ bir çakışmadır.
+
+**b) Merkle-Damgård hesaplaması.**
+
+Sıkıştırma fonksiyonumuz $3$ bit girdi alıp $2$ bit çıktı verir. Her iterasyonda bir önceki adımın $2$ bitlik çıktısı ile mesajın sıradaki $1$ biti birleştirilir (concatenation, $\parallel$).
+
+Girdi mesajımız $x = x_1x_2x_3x_4 = 1101$ için adımlar:
+
+1. **Başlangıç:** $h_1 = 00$
+2. $x_1 = 1$ işlenir: $h_2 = \tilde{H}(00 \parallel 1) = \tilde{H}(001) = 10$
+3. $x_2 = 1$ işlenir: $h_3 = \tilde{H}(10 \parallel 1) = \tilde{H}(101) = 00$
+4. $x_3 = 0$ işlenir: $h_4 = \tilde{H}(00 \parallel 0) = \tilde{H}(000) = 00$
+5. $x_4 = 1$ işlenir: $h_5 = \tilde{H}(00 \parallel 1) = \tilde{H}(001) = 10$
+
+**Nihai sonuç:** $H(1101) = 10$.
+
+**c) Ana fonksiyon için çakışma bulma.**
+
+Hesaplama sürecindeki ara değerlere bakıldığında, 2. adımda elde edilen $h_2 = 10$ dikkat çekicidir. Bu ara değer, aslında yalnızca $x = 1$ (tek bitlik) girdisinin özetidir:
+
+$$H(1) = \tilde{H}(00 \parallel 1) = \tilde{H}(001) = 10$$
+
+Böylece $H(1) = 10$ ve $H(1101) = 10$ olduğu saptanmıştır. $1 \neq 1101$ olmasına ve farklı uzunlukta olmalarına rağmen aynı sonucu verdiklerinden, $\{1, 1101\}$ çifti genel $H$ fonksiyonu için bir çakışma teşkil eder.
+
+Bu örnek, dolgu adımına mesaj uzunluğunun neden yazıldığını da gösterir: Merkle-Damgård güçlendirmesi olmadan, farklı uzunluktaki mesajlar bu şekilde kolayca çakıştırılabilir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+:::: {#exm-metin-md}
+Merkle-Damgård mimarisini kullanan kendi tasarımımız olan $H$ özet fonksiyonu ile $m = \texttt{MATH}$ mesajının özet değerini, yani $H(\texttt{MATH})$ sonucunu bulunuz.
+
+**Sistem kuralları:**
+
+* $H$ fonksiyonu mesajı 1 harflik bloklara böler; dolayısıyla 4 harfli girdi için $m_1 = M$, $m_2 = A$, $m_3 = T$, $m_4 = H$ olmak üzere $4$ iterasyon gereklidir.
+* Harflerin sayısal değerleri 0–25 tablosuna göredir ($A = 0$, $M = 12$, $T = 19$, $H = 7$).
+* Başlangıç vektörü $h_0 = 5$ olarak sabitlenmiştir.
+* Sıkıştırma fonksiyonu $f$, bir önceki durumu yeni mesaj bloğuyla şu formülle birleştirir:
+  $$f(h_{i-1}, m_i) = (h_{i-1} \cdot 3 + m_i) \pmod{26}$$
+* Genel özet fonksiyonumuz zincirleme yapı gereği şöyle tanımlanır:
+  $$H(m) = f\big(f(f(f(h_0, m_1), m_2), m_3), m_4\big) = h_4$$
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+$f$ sıkıştırma adımını sırayla dört kez uygulayacağız. Başlangıç durumumuz $h_0 = 5$'tir.
+
+**1. iterasyon ($m_1 = M \implies 12$):**
+$$h_1 \equiv (5 \cdot 3 + 12) = 27 \equiv 1 \pmod{26}$$
+
+**2. iterasyon ($m_2 = A \implies 0$):** Bir önceki zincir çıktısı $h_1 = 1$ kullanılır.
+$$h_2 \equiv (1 \cdot 3 + 0) = 3 \pmod{26}$$
+
+**3. iterasyon ($m_3 = T \implies 19$):**
+$$h_3 \equiv (3 \cdot 3 + 19) = 28 \equiv 2 \pmod{26}$$
+
+**4. iterasyon ($m_4 = H \implies 7$):**
+$$h_4 \equiv (2 \cdot 3 + 7) = 13 \pmod{26}$$
+
+**Sonuç:** Tüm bloklar zincirleme kuralla işlendiği için son iterasyon değeri bütün mesajın özetine eşittir:
+
+$$H(\texttt{MATH}) = h_4 = 13$$
+
+Tabloya göre $13$ sayısının karşılığı **N** harfidir. Böylece `MATH` kelimesinin bu sistemdeki nihai özet değeri `N` olarak hesaplanmıştır.
+
+[$\boxtimes$]{.qed}
+:::
+::::

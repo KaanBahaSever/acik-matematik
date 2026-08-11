@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# OlasÄ±lÄ±k Notasyonu
-

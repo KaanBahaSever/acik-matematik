@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Tahvillerin (Bonds) Matematiksel DeÄŸerlemesi
-

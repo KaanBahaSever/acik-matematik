@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Kesikli (Discrete) Rastgele DeÄŸiÅŸkenler
-

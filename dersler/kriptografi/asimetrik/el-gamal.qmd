@@ -1,0 +1,149 @@
+---
+title: "ElGamal Kriptosistemi ve Ayrık Logaritma Problemi"
+description: "Ayrık logaritma problemine dayanan ElGamal şifreleme sisteminin anahtar üretimi, şifreleme ve deşifreleme adımları, doğruluk ispatı, olasılıksal şifreleme özelliği ve çözümlü uygulama."
+---
+
+RSA'nın çarpanlara ayırma zorluğuna dayanan yapısını inceledikten sonra, asimetrik kriptografinin diğer büyük sütunu olan **ElGamal kriptosistemini** ele alacağız. 1985 yılında Taher ElGamal tarafından geliştirilen bu algoritma, gücünü **ayrık logaritma probleminden (Discrete Logarithm Problem — DLP)** alır.
+
+ElGamal, Diffie-Hellman anahtar değişim protokolünün şifreleme ve deşifreleme yapabilecek şekilde genişletilmiş bir modifikasyonudur. Günümüzde yaygın olarak kullanılan eliptik eğri kriptografisinin (ECC) de temel mantıksal şemasını oluşturur.
+
+::: {.callout-note title="📌 Ön bilgi: ayrık logaritma problemi (DLP)"}
+Bir $p$ asal sayısı ve $\mathbb{Z}_p^{*}$ çarpımsal grubunun bir $g$ **üreteci** verildiğinde,
+
+$$y \equiv g^a \pmod p$$
+
+eşitliğini sağlayan $a$ üssünü bulma işlemine **ayrık logaritma problemi** denir.
+
+$p$ yeterince büyük seçilirse (modern standartlarda en az 2048 bit), $a$ ve $g$ değerlerinden $y$'yi hesaplamak polinom zamanda çok kolayken; $y$ ve $g$ değerlerinden hareketle gizli $a$'yı bulmak pratikte imkânsızdır.
+:::
+
+## 🔑 Anahtar Üretim Süreci
+
+Mesaj alıcısı, kendi açık ve gizli anahtar çiftini kurgulamak için şu adımları izler:
+
+1. Çok büyük bir $p$ asal sayısı seçilir.
+2. $\mathbb{Z}_p^{*}$ grubuna ait bir $g$ **üreteci** belirlenir; $g$'nin kuvvetleri mod $p$'de gruptaki tüm elemanları üretmelidir.
+3. $1 < a < p-1$ aralığında rastgele bir **gizli anahtar** $a$ seçilir.
+4. Bu gizli anahtara karşılık gelen kamusal değer hesaplanır:
+   $$y \equiv g^a \pmod p$$
+
+Sonuçta:
+
+* **Açık anahtar:** $(p, g, y)$ üçlüsüdür; herkesin erişimine açılır.
+* **Gizli anahtar:** Yalnızca alıcıda saklanan $a$ tam sayısıdır.
+
+## 🔒 Fonksiyonların Tanımı ve Doğruluk İspatı
+
+::: {#def-elgamal-fonksiyonlari name="ElGamal Şifreleme ve Deşifreleme Fonksiyonları"}
+Gönderici, iletmek istediği açık metni $m \in \mathbb{Z}_p^{*}$ olacak şekilde sayısal bir mesaja dönüştürür. Burada $g$, $\mathbb{Z}_p^{*}$ grubunun kamusal üreteci; $y \equiv g^a \pmod p$ ise alıcının açık anahtarıdır.
+
+**Şifreleme fonksiyonu**, sürece rastgelelik katmak amacıyla her mesaj için $1 \le k \le p-2$ aralığında geçici (ephemeral) bir $k$ tam sayısı seçer. Şifreli metin bir sayı çiftinden oluşur:
+
+$$
+\begin{aligned}
+c_1 &\equiv g^k \pmod p \\
+c_2 &\equiv m \cdot y^k \pmod p
+\end{aligned}
+$$
+
+Alıcı, kendisine ulaşan $(c_1, c_2)$ çiftini gizli anahtarını kullanan **deşifreleme fonksiyonu** ile çözer:
+
+$$d_a(c_1, c_2) \equiv c_2 \cdot \big(c_1^{\,a}\big)^{-1} \pmod p$$
+:::
+
+::: {.callout-warning title="⚠️ Sık karşılaşılan bir karışıklık: $k$ üzerindeki koşul"}
+Bazı kaynaklarda ElGamal şifrelemesi için $\gcd(k, p-1) = 1$ koşulu verilir. Bu koşul aslında **ElGamal imza şemasına** aittir; orada $k$'nin mod $p-1$'de tersinin alınması gerektiği için zorunludur.
+
+**Şifrelemede** ise böyle bir kısıt yoktur: $1 \le k \le p-2$ aralığındaki her $k$ değeri çalışır; nitekim aşağıdaki çözümlü örnekte $k = 4$ ve $p - 1 = 10$ olmasına ($\gcd(4,10) = 2 \neq 1$) rağmen algoritma kusursuz sonuç vermektedir.
+
+Asıl kritik kural şudur: **aynı $k$ değeri iki farklı mesaj için asla yeniden kullanılmamalıdır.** Aksi hâlde $c_2 / c_2'= m/m'$ elde edilir ve mesajlardan biri bilindiğinde diğeri de çözülür — bu, one-time pad'deki iki kez kullanılan şerit zafiyetinin ElGamal'deki karşılığıdır.
+:::
+
+:::: {#thm-elgamal-dogrulugu name="ElGamal Algoritmasının Doğruluğu"}
+Her $m \in \mathbb{Z}_p^{*}$ açık metni ve rastgele seçilen her $k$ geçici anahtarı için, deşifreleme fonksiyonu orijinal mesajı hatasız biçimde geri döndürür.
+
+::: {.callout-note collapse="true" title="İspat"}
+Deşifreleme fonksiyonunun tanımından yola çıkarak $c_1$ ve $c_2$ bileşenlerini yerlerine koyalım. Şifreleme adımından $c_1 \equiv g^k$ ve $c_2 \equiv m \cdot y^k$ olduğunu; açık anahtar tanımından ise $y \equiv g^a \pmod p$ eşitliğini biliyoruz:
+
+$$
+\begin{aligned}
+c_2 \cdot \big(c_1^{\,a}\big)^{-1}
+&\equiv \big(m \cdot y^k\big) \cdot \big((g^k)^a\big)^{-1} \pmod p \\
+&\equiv \big(m \cdot (g^a)^k\big) \cdot \big(g^{ka}\big)^{-1} \pmod p \\
+&\equiv m \cdot g^{ak} \cdot g^{-ak} \pmod p \\
+&\equiv m \cdot g^{0} \pmod p \\
+&\equiv m \cdot 1 \equiv m \pmod p
+\end{aligned}
+$$
+
+Burada $g^{ak}$ ifadesi, şifreleme sırasında oluşturulan **ortak gizli bilgidir**. Deşifreleme esnasında alıcı bu değeri $c_1^{\,a}$ işlemiyle yeniden üretir ve çarpımsal tersini alarak sistemden sadeleştirir. Böylece deşifrelemenin doğruluğu kanıtlanmış olur.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+::: {.callout-note title="📌 Olasılıksal şifreleme (probabilistic encryption)"}
+RSA'da aynı $m$ mesajı aynı açık anahtarla şifrelendiğinde her zaman aynı $c$ şifreli metnini üretir; bu **deterministik** yapı, saldırganın olası mesajları tek tek şifreleyip karşılaştırmasına olanak tanır.
+
+ElGamal'de ise şifrelemeye dâhil olan geçici $k$ parametresi sayesinde, aynı mesaj aynı anahtarla defalarca şifrelense bile **her seferinde tamamen farklı bir $(c_1, c_2)$ çifti** üretilir. Bu özellik ElGamal'i semantik güvenlik açısından çok daha güçlü kılar.
+
+Bunun bedeli ise **veri genişlemesidir (message expansion)**: şifreli metin, açık metnin iki katı uzunluğundadır.
+:::
+
+## 📝 Çözümlü Uygulama
+
+:::: {#exm-elgamal-uygulama}
+Bir ElGamal kurgusunda kamusal parametreler $p = 11$ ve üreteç $g = 2$ olarak seçilmiştir. Alıcının gizli anahtarı $a = 3$ olduğuna göre açık anahtarı hesaplayınız. Ardından göndericinin $k = 4$ geçici anahtarını kullanarak şifrelediği $m = 5$ açık metnine ait $(c_1, c_2)$ çiftini bulunuz ve bu şifreli metni deşifre ediniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Anahtar üretim aşaması.**
+
+Verilenler: $p = 11$, $g = 2$, $a = 3$. Kamusal değer:
+
+$$y \equiv g^a \pmod p \implies y \equiv 2^3 = 8 \pmod{11}$$
+
+* **Açık anahtar:** $(p, g, y) = (11, 2, 8)$
+* **Gizli anahtar:** $a = 3$
+
+**2. Şifreleme aşaması.** Gönderici $m = 5$ mesajını ve $k = 4$ değerini kullanır.
+
+*$c_1$ bileşeni:*
+$$c_1 \equiv g^k \pmod p \implies c_1 \equiv 2^4 = 16 \equiv 5 \pmod{11}$$
+
+*$c_2$ bileşeni:*
+$$c_2 \equiv m \cdot y^k \pmod p \implies c_2 \equiv 5 \cdot 8^4 \pmod{11}$$
+
+$8$'in kuvvetlerini mod $11$ altında indirgeyelim:
+
+$$
+\begin{aligned}
+8^1 &\equiv 8 \pmod{11} \\
+8^2 &= 64 \equiv 9 \equiv -2 \pmod{11} \\
+8^4 &\equiv (-2)^2 = 4 \pmod{11}
+\end{aligned}
+$$
+
+O hâlde:
+$$c_2 \equiv 5 \cdot 4 = 20 \equiv 9 \pmod{11}$$
+
+**Şifreli metin çifti:** $(c_1, c_2) = (5, 9)$.
+
+**3. Deşifreleme aşaması.** Alıcı $(5, 9)$ çiftini alır ve gizli anahtarı $a = 3$ ile çözer:
+
+$$m \equiv c_2 \cdot \big(c_1^{\,a}\big)^{-1} \pmod p$$
+
+*Adım A — ortak gizli bilgiyi hesapla:*
+$$c_1^{\,a} \equiv 5^3 = 125 \pmod{11}$$
+$11 \cdot 11 = 121$ olduğundan $125 - 121 = 4$, yani $c_1^{\,a} \equiv 4 \pmod{11}$.
+
+*Adım B — çarpımsal tersi bul:* $4 \cdot x \equiv 1 \pmod{11}$ şartını sağlayan $x$ değerini arıyoruz. $4 \cdot 3 = 12 \equiv 1 \pmod{11}$ olduğundan $4^{-1} \equiv 3 \pmod{11}$.
+
+*Adım C — mesajı çöz:*
+$$m \equiv 9 \cdot 3 = 27 \pmod{11}$$
+$11 \cdot 2 = 22$ olduğundan $27 - 22 = 5$, yani $m = 5$.
+
+**Sonuç:** ElGamal kriptosistemi başarıyla çalışmış ve orijinal açık metin olan $m = 5$ değerine kayıpsız biçimde geri dönülmüştür.
+
+[$\boxtimes$]{.qed}
+:::
+::::

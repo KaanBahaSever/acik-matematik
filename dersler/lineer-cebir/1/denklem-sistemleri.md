@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Lineer Denklem Sistemlerinin Kurulumu
-

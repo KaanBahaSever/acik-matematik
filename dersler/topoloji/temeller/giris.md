@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Topolojiye GiriÅŸ: AmacÄ±mÄ±z ve Temel Motivasyon
-

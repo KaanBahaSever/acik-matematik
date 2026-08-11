@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Uzayda Stokes Teoremi
-

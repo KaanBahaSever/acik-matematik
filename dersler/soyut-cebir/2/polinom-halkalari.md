@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Polinom HalkalarÄ±
-

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# DeÄŸiÅŸkenlerine AyrÄ±labilen Denklemler
-

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# ParÃ§alanÄ±ÅŸ Cisimleri
-

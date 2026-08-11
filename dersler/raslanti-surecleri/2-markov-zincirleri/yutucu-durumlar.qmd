@@ -1,0 +1,198 @@
+---
+title: "Yutucu Matrisler ve Yutulma Olasılıkları"
+description: "Yutucu Markov zincirleri, kanonik form, temel matris N = (I-Q)^{-1} ve yutulma olasılıkları matrisi B = NR ile çözümlü uygulama."
+---
+
+Bir Markov zincirinde, regüler sistemlerin aksine "nereden başlarsan başla dengeye ulaşırsın" mantığı her zaman geçerli değildir. Bazı durumlara girildiğinde sistem bir daha asla o durumdan çıkamaz. Bu tür geri dönüşü olmayan durumlara sahip zincirlere **yutucu Markov zincirleri** denir.
+
+::: {#def-yutucu-zincir name="Yutucu Durum ve Yutucu Zincir"}
+Bir Markov zincirinde $i$ durumundan çıkış olasılığı sıfırsa (yani $P_{ii} = 1$ ve $j \neq i$ için $P_{ij} = 0$), bu $i$ durumuna **yutucu durum (absorbing state)** denir.
+
+Bir Markov zincirinin yutucu zincir olabilmesi için şu **iki şartı** aynı anda sağlaması gerekir:
+
+1. En az bir yutucu duruma sahip olmalıdır.
+2. Yutucu olmayan her bir durumdan (geçici durumlardan) eninde sonunda bir yutucu duruma ulaşmak mümkün olmalıdır.
+:::
+
+## 1. Kanonik Form
+
+Yutucu bir Markov matrisinin geleceğini analiz etmek için matrisi belirli bir hiyerarşiye göre yeniden düzenlememiz gerekir. Tüm **geçici (transient)** durumları matrisin üstüne ve soluna, tüm **yutucu (absorbing)** durumları ise altına ve sağına taşıyarak elde ettiğimiz yapıya **kanonik form** denir.
+
+::: {#thm-kanonik-form name="Kanonik Formun Yapısı"}
+Kanonik forma getirilmiş bir $P$ geçiş olasılık matrisi dört alt matrise bölünür:
+
+$$
+P_{\text{kanonik}} = \left[ \begin{array}{c|c}
+Q & R \\
+\hline
+0 & I
+\end{array} \right]
+$$
+
+Bu blokların anlamları şunlardır:
+
+* $Q$ **(geçici $\to$ geçici):** Geçici durumlardan yine geçici durumlara olan geçiş olasılıklarını barındıran kare alt matris.
+* $R$ **(geçici $\to$ yutucu):** Geçici durumlardan yutucu durumlara doğrudan geçiş olasılıklarını barındıran alt matris.
+* $0$ **(yutucu $\to$ geçici):** Yutucu bir durumdan tekrar geçici bir duruma dönmek imkânsız olduğundan bu blok tamamen sıfırlardan oluşur.
+* $I$ **(yutucu $\to$ yutucu):** Yutucu duruma giren orada kalacağı için bu blok bir birim matristir.
+:::
+
+::: {.callout-note title="📌 Matris nasıl yeniden sıralanır?"}
+Bir matrisi kanonik forma sokarken rastgele yer değiştirme yapamayız. Bir $i$ durumunu $j$ durumuyla yer değiştireceksek; **önce $i$. satır ile $j$. satırı, ardından $i$. sütun ile $j$. sütunu** birlikte yer değiştirmeliyiz.
+
+Yani durum isimleri matrisin hem üst (sütun) hem de sol (satır) kenarında mutlaka aynı sırayla okunmalıdır.
+:::
+
+## 2. Temel Matris ve Yutulma Olasılıkları
+
+Matrisi kanonik forma getirdikten sonra, karmaşık lineer denklem sistemleri yerine doğrudan **temel matris** kullanılır.
+
+::: {#thm-temel-matris name="Temel Matris $N$ ve Yutulma Matrisi $B$"}
+**1. Temel matris.** Sistemin yutulmadan önce geçici durumlarda ortalama kaç adım geçireceğini gösterir:
+
+$$N = (I - Q)^{-1}$$
+
+Buradaki $I$, $Q$ ile aynı boyutta birim matristir.
+
+**2. Yutulma olasılıkları.** Herhangi bir geçici durumdan başlayan sürecin nihai olarak hangi yutucu durumda sonlanacağının olasılıklarını verir:
+
+$$B = N \cdot R$$
+
+Bu $B$ matrisinin **satırları başlangıç (geçici) durumlarını**, **sütunları bitiş (yutucu) durumlarını** temsil eder.
+:::
+
+## ⚙️ Adım Adım Çözüm Algoritması
+
+1. **Durumları sınıflandır.** Hangi durumların geçici, hangilerinin yutucu olduğunu tespit et.
+2. **Kanonik formu kur.** Satır ve sütunları önce geçici, sonra yutucu gelecek şekilde eş zamanlı yeniden sıralayarak $Q$ ve $R$ alt matrislerini elde et.
+3. **Temel matrisi bul.** Önce $(I - Q)$ farkını hesapla, ardından tersini alarak $N$ matrisini bul.
+4. **Çarpımı gerçekleştir.** $B = N \cdot R$ çarpımıyla tüm yutulma olasılıklarını tek bir matriste elde et.
+
+## 📝 Çözümlü Uygulama
+
+:::: {#exm-yutucu-6x6}
+Durum uzayı $M = \{1, 2, 3, 4, 5, 6\}$ olan bir Markov zincirine ait geçiş olasılık matrisi aşağıda verilmiştir. Sürecin **3 durumunda başlayıp 2 durumunda yutulma** olasılığını bulunuz.
+
+$$
+P = \begin{bmatrix}
+0 & 0{,}5 & 0 & 0{,}4 & 0{,}1 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 \\
+0{,}2 & 0 & 0{,}4 & 0{,}3 & 0 & 0{,}1 \\
+0 & 0{,}9 & 0 & 0 & 0{,}1 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Durumların sınıflandırılması.**
+
+Matrisin köşegenine baktığımızda $2$, $5$ ve $6$ numaralı satırların yalnızca kendi üzerlerine geçiş yaptığını, diğer girdilerinin sıfır olduğunu görüyoruz:
+
+* Geçici durumlar: $\{1, 3, 4\}$
+* Yutucu durumlar: $\{2, 5, 6\}$
+
+**2. Kanonik formun oluşturulması.**
+
+Satır ve sütun sırasını önce $\{1, 3, 4\}$, sonra $\{2, 5, 6\}$ gelecek şekilde yeniden dizelim:
+
+$$
+P_{\text{kanonik}} =
+\begin{array}{c|ccc|ccc}
+ & \mathbf{1} & \mathbf{3} & \mathbf{4} & \mathbf{2} & \mathbf{5} & \mathbf{6} \\
+\hline
+\mathbf{1} & 0 & 0 & 0{,}4 & 0{,}5 & 0{,}1 & 0 \\
+\mathbf{3} & 0{,}2 & 0{,}4 & 0{,}3 & 0 & 0 & 0{,}1 \\
+\mathbf{4} & 0 & 0 & 0 & 0{,}9 & 0{,}1 & 0 \\
+\hline
+\mathbf{2} & 0 & 0 & 0 & 1 & 0 & 0 \\
+\mathbf{5} & 0 & 0 & 0 & 0 & 1 & 0 \\
+\mathbf{6} & 0 & 0 & 0 & 0 & 0 & 1
+\end{array}
+$$
+
+Sol üst blok $Q$, sağ üst blok $R$'dir:
+
+$$
+Q =
+\begin{array}{c|ccc}
+ & \mathbf{1} & \mathbf{3} & \mathbf{4} \\
+\hline
+\mathbf{1} & 0 & 0 & 0{,}4 \\
+\mathbf{3} & 0{,}2 & 0{,}4 & 0{,}3 \\
+\mathbf{4} & 0 & 0 & 0
+\end{array}
+\qquad
+R =
+\begin{array}{c|ccc}
+ & \mathbf{2} & \mathbf{5} & \mathbf{6} \\
+\hline
+\mathbf{1} & 0{,}5 & 0{,}1 & 0 \\
+\mathbf{3} & 0 & 0 & 0{,}1 \\
+\mathbf{4} & 0{,}9 & 0{,}1 & 0
+\end{array}
+$$
+
+**3. Temel matrisin bulunması.**
+
+Önce $(I - Q)$ farkını hesaplayalım:
+
+$$
+I - Q =
+\begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}
+-
+\begin{bmatrix} 0 & 0 & 0{,}4 \\ 0{,}2 & 0{,}4 & 0{,}3 \\ 0 & 0 & 0 \end{bmatrix}
+=
+\begin{bmatrix} 1 & 0 & -0{,}4 \\ -0{,}2 & 0{,}6 & -0{,}3 \\ 0 & 0 & 1 \end{bmatrix}
+$$
+
+Bu matrisin tersini alarak temel matrisi elde ederiz:
+
+$$
+N = (I - Q)^{-1} =
+\begin{bmatrix}
+1 & 0 & \tfrac{2}{5} \\[0.3em]
+\tfrac{1}{3} & \tfrac{5}{3} & \tfrac{19}{30} \\[0.3em]
+0 & 0 & 1
+\end{bmatrix}
+$$
+
+**4. Yutulma olasılıklarının hesaplanması.**
+
+$B = N \cdot R$ çarpımını gerçekleştiriyoruz; satırlar başlangıç, sütunlar bitiş durumlarını temsil eder:
+
+$$
+B =
+\begin{bmatrix}
+1 & 0 & \tfrac{2}{5} \\[0.3em]
+\tfrac{1}{3} & \tfrac{5}{3} & \tfrac{19}{30} \\[0.3em]
+0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+0{,}5 & 0{,}1 & 0 \\
+0 & 0 & 0{,}1 \\
+0{,}9 & 0{,}1 & 0
+\end{bmatrix}
+=
+\begin{array}{c|ccc}
+ & \mathbf{2} & \mathbf{5} & \mathbf{6} \\
+\hline
+\mathbf{1} & 0{,}86 & 0{,}14 & 0 \\
+\mathbf{3} & \tfrac{221}{300} & \tfrac{29}{300} & \tfrac{50}{300} \\[0.3em]
+\mathbf{4} & 0{,}9 & 0{,}1 & 0
+\end{array}
+$$
+
+**Sonuç:** Soru, $3$ durumunda başlayıp $2$ durumunda yutulma olasılığını istiyor. $B$ matrisinde $\mathbf{3}$ numaralı satır ile $\mathbf{2}$ numaralı sütunun kesişimine bakarız:
+
+$$P(3 \to 2) = \frac{221}{300} \approx 0{,}7367$$
+
+*Öz kontrol:* $B$ matrisinin her satırının toplamı $1$ olmalıdır — süreç eninde sonunda mutlaka bir yutucu durumda son bulur. Üçüncü satır için
+
+$$\frac{221}{300} + \frac{29}{300} + \frac{50}{300} = \frac{300}{300} = 1$$
+
+sağlandığından işlemlerimiz doğrudur.
+
+[$\boxtimes$]{.qed}
+:::
+::::

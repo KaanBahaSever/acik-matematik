@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Stratejik Karar Alma
-

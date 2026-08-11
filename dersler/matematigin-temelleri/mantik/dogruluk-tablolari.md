@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# DoÄŸruluk TablolarÄ±
-

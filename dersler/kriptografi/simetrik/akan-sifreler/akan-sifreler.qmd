@@ -1,0 +1,128 @@
+---
+title: "Akan Şifreler ve Anahtar Akışı Üreteçleri (LCG, LFSR)"
+description: "Akan şifrelerin (stream cipher) formal tanımı, LCG ve LFSR tabanlı anahtar akışı üreteçleri, periyot zafiyeti ve çözümlü şifreleme uygulaması."
+---
+
+One-Time Pad'in kusursuz gizlilik sunduğunu, ancak mesajla aynı boyutta rastgele bir anahtara ihtiyaç duyduğu için anahtar dağıtım problemi nedeniyle pratik olmadığını gördük.
+
+**Akan şifreler (stream ciphers)**, OTP'nin XOR tabanlı şifreleme mantığını taklit eden; ancak çok daha kısa ve yönetilebilir bir **kök anahtar (seed key)** kullanarak bunu uygulanabilir hâle getiren modern sistemlerdir.
+
+Temel felsefesi şudur: gönderici ve alıcı kısa bir kök anahtarı paylaşır. Her iki taraftaki şifreleme birimi, bu kısa anahtarı kullanarak matematiksel bir algoritmayla **sözde rastgele (pseudo-random)** ve çok uzun bir **anahtar akışı (keystream)** üretir. Ardından bu akış, tıpkı One-Time Pad'de olduğu gibi açık metinle XOR'lanır.
+
+## Sistemin Formal Tanımı
+
+Akan şifrelemede işlemler bit dizileri üzerinde eşzamanlı olarak gerçekleşir.
+
+::: {#def-akan-sifre name="Akan Şifreleme Sistemi"}
+* **Açık metin ($\mathcal{P}$):** İkili formdaki açık metin bitlerinin dizisi, $x = x_1, x_2, \dots$
+* **Şifreli metin ($\mathcal{C}$):** İkili formdaki şifreli metin bitlerinin dizisi, $y = y_1, y_2, \dots$
+* **Anahtar uzayı ($\mathcal{K}$):** Belirli ve sabit uzunluktaki kök anahtarların kümesi.
+* **Anahtar akışı üreteci:** $K \in \mathcal{K}$ kök anahtarını alarak $z_1, z_2, \dots$ şeklinde açık metin uzunluğunda sözde rastgele bir dizi üreten **deterministik** fonksiyondur.
+* **Şifreleme fonksiyonu ($\mathcal{E}$):** Açık metnin her $\tau$. biti, anahtar akışının ilgili $\tau$. bitiyle XOR'lanır:
+  $$e_{z_\tau}(x_\tau) \equiv x_\tau \oplus z_\tau \pmod 2$$
+* **Deşifreleme fonksiyonu ($\mathcal{D}$):** Şifreli metnin her $\tau$. biti, aynı şekilde üretilmiş anahtar akışıyla tekrar XOR'lanır:
+  $$d_{z_\tau}(y_\tau) \equiv y_\tau \oplus z_\tau \pmod 2$$
+:::
+
+## ⚙️ Anahtar Akışı Nasıl Üretilir?
+
+Akan şifrelerin kalbi anahtar akışı üretecidir. Üretilen dizi dışarıdan bakan bir düşman için tamamen rastgele görünmelidir; oysa aslında matematiksel bir formüle dayanan deterministik bir yapıdır. Bu diziler tarihsel olarak sayılar teorisi ve lineer cebir tabanlı fonksiyonlarla üretilmiştir.
+
+### 1. Doğrusal Eşlenik Üreteci (Linear Congruential Generator — LCG)
+
+Kriptografik olarak güçlü olmasa da, sözde rastgele sayı üretiminin temel mantığını anlamak için en iyi örnektir; doğrudan modüler aritmetiğe dayanır.
+
+Bir $S_0$ başlangıç değeri (kök anahtar) belirlenir ve her $\tau$ adımında yeni durum şu doğrusal bağıntıyla hesaplanır:
+
+$$S_{\tau} \equiv (a \cdot S_{\tau-1} + c) \pmod m$$
+
+Burada $a$ çarpan, $c$ artış miktarı, $m$ ise modüldür. Elde edilen $S_\tau$ sayısının kendisi doğrudan kullanılabileceği gibi, ikili sisteme indirgemek için mod $2$'si alınarak $z_\tau$ anahtar biti elde edilebilir:
+
+$$z_{\tau} \equiv S_{\tau} \pmod 2$$
+
+Bu yöntem çok basittir; ancak periyodu $m$ değerine ve seçilen katsayıların aralarında asallık durumlarına sıkı sıkıya bağlıdır.
+
+### 2. Doğrusal Geri Beslemeli Kaydırmalı Yazmaç (LFSR)
+
+LFSR, LCG'nin $\mathbb{Z}_2$ cismine uyarlanmış, donanım üzerinde çok daha hızlı çalışan lineer cebirsel versiyonudur. Sisteme $L$ uzunluğunda bir bit dizisi (başlangıç durumu) verilir.
+
+Her $\tau$ zaman adımında mevcut bitler bir sağa kaydırılır. En sağdan düşen bit, **anahtar akışı bitimiz $z_\tau$** olur. Boşalan en sol haneye ise, içerideki belirli bitlerin XOR'lanmasıyla elde edilen yeni bir bit yazılır.
+
+$\tau > L$ adımları için üretilen bitin genel doğrusal tekrar bağıntısı şöyledir:
+
+$$z_{\tau} \equiv c_1 z_{\tau-1} + c_2 z_{\tau-2} + \dots + c_L z_{\tau-L} \pmod 2$$
+
+Buradaki $c_i \in \{0, 1\}$ katsayıları, hangi indekslerdeki bitlerin geri beslemeye dâhil edileceğini belirler. Uygun bir **primitif polinom** seçildiğinde $L$ boyutlu bir LFSR, kendini tekrar etmeden önce tam $2^L - 1$ adet rastgele görünümlü bit üretebilir.
+
+Ancak sistem tamamen lineer olduğu için **Berlekamp-Massey algoritmasıyla** kolayca çözülür: yalnızca $2L$ bitlik bir anahtar akışı parçası, tüm üreteci geri çıkarmaya yeter. Bu yüzden modern sistemlerde birden fazla LFSR, doğrusal olmayan fonksiyonlarla harmanlanarak kullanılır.
+
+## 🔄 Anahtar Periyodu ve Döngü Tehlikesi
+
+Akan şifreler, ürettikleri anahtar akışının kalitesi ölçüsünde güvenlidir. Ancak hiçbir sözde rastgele üreteç sonsuza kadar birbirinden farklı değerler üretemez; dizi belirli bir adımdan sonra mutlaka başa döner ve **kendini tekrar etmeye** başlar.
+
+Anahtar dizisinin kendini tekrar edene kadar ürettiği benzersiz değer adedine **periyot (period)** denir.
+
+::: {.callout-warning title="⚠️ Periyot kısalığı zafiyeti"}
+Şifrelenecek mesajın uzunluğu üretecin periyodundan uzunsa, aynı anahtar akışı mesajın ilerleyen kısımlarında **ikinci kez** kullanılmış olur. Bu da One-Time Pad'de gördüğümüz ölümcül **two-time pad** zafiyetini tetikler ve şifre kolayca kırılır.
+
+* **LCG üreteçleri** için ulaşılabilecek maksimum periyot, modül değeri kadardır ($m$).
+* **LFSR üreteçleri** için ulaşılabilecek maksimum periyot $2^L - 1$'dir ($L$: yazmaçtaki bit sayısı).
+
+Modern akan şifreler (örneğin ChaCha20), mesaj ne kadar uzun olursa olsun pratikte asla döngüye girmeyecek kadar büyük periyotlara sahip olacak şekilde tasarlanır.
+:::
+
+## ⚡ Akan Şifrelerin Öne Çıkan Özellikleri
+
+1. **Hız ve donanım verimliliği.** Akan şifreler veriyi bit bit veya bayt bayt işledikleri için verinin tamamının belleğe yüklenmesini beklemezler; donanım üzerinde çok hızlı çalışırlar. Bu özellik onları canlı video yayınları, Bluetooth ve kablosuz iletişim için vazgeçilmez kılar.
+2. **Hata yayılımı yoktur (no error propagation).** İletişim hattındaki gürültü nedeniyle şifreli metindeki tek bir bit bozulursa, alıcı tarafta deşifre edilen açık metinde yalnızca ona karşılık gelen tek bit hatalı çıkar; hata sonraki bitlere yayılmaz. Blok şifrelerde ise tek bir bit hatası çoğu kipte bloğun tamamını bozar.
+3. **Senkronizasyon zorunluluğu.** Buna karşılık, taraflar anahtar akışında aynı konumda olmak zorundadır. İletimde bir bit tamamen kaybolursa akış kayar ve sonraki tüm veri anlamsızlaşır.
+
+## 📝 Çözümlü Uygulama
+
+Aşağıdaki örnekte açık metnimiz doğrudan 8 bitlik (1 baytlık) ikili bloklar hâlinde verilmiştir. Anahtar akışını üretmek için — bayt sınırını korumak adına — $m = 256$ olan bir LCG üreteci kullanılmıştır.
+
+:::: {#exm-lcg-akan-sifreleme}
+$x = [10101010,\ 11110000]$ ikili açık metnini, LCG ($S_0 = 10$, $a = 5$, $c = 7$, $m = 256$) üreteci ve XOR işlemiyle şifreleyiniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Şifreleme fonksiyonumuz $e(x_\tau) \equiv x_\tau \oplus S_\tau$, anahtar akışı üretimimiz ise $S_\tau \equiv (a S_{\tau-1} + c) \pmod{256}$ şeklindedir.
+
+Açık metin bloklarımız: $x_1 = 10101010_2$ ve $x_2 = 11110000_2$.
+
+**1. adım — ilk bloğun şifrelenmesi.** Önce birinci anahtar akışı değerini onluk tabanda hesaplayalım:
+
+$$S_1 \equiv (5 \cdot 10 + 7) \pmod{256} = 57_{10}$$
+
+$57$ sayısını ikili sisteme çevirelim: $S_1 = 00111001_2$. Şimdi bitwise XOR uygulayalım:
+
+```
+x₁ :  1 0 1 0 1 0 1 0
+S₁ :  0 0 1 1 1 0 0 1
+      ─────────────────
+y₁ :  1 0 0 1 0 0 1 1
+```
+
+İlk şifreli blok: $y_1 = 10010011_2$.
+
+**2. adım — ikinci bloğun şifrelenmesi.** Sistemin kalbi burasıdır: yeni anahtar, bir önceki duruma ($S_1 = 57$) bağlı olarak güncellenir.
+
+$$S_2 \equiv (5 \cdot 57 + 7) \pmod{256} \equiv 292 \pmod{256} = 36_{10}$$
+
+$36$ sayısını ikili sisteme çevirelim: $S_2 = 00100100_2$.
+
+```
+x₂ :  1 1 1 1 0 0 0 0
+S₂ :  0 0 1 0 0 1 0 0
+      ─────────────────
+y₂ :  1 1 0 1 0 1 0 0
+```
+
+İkinci şifreli blok: $y_2 = 11010100_2$.
+
+**Sonuç:** Açık metin blokları bu LCG tabanlı akan şifreleme sistemiyle $[10010011,\ 11010100]$ şifreli dizisine dönüştürülmüştür.
+
+Dikkat edilmesi gereken nokta: her blok **farklı** bir anahtar değeriyle şifrelenmiştir. Aynı $S$ değeri iki blokta tekrarlansaydı, two-time pad zafiyeti doğardı.
+
+[$\boxtimes$]{.qed}
+:::
+::::

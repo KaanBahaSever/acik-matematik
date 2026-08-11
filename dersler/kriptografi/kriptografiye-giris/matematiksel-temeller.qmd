@@ -1,0 +1,159 @@
+---
+title: "Kriptografide Matematiksel Temeller ve Notasyon"
+description: "Modüler aritmetik, Z_n kümeleri, çarpımsal ters, Euler phi fonksiyonu ile Fermat, Euler ve Wilson teoremleri gibi kriptografinin dayandığı matematiksel altyapıyı özetler."
+---
+
+Modern kriptografi, güvenliğini karmaşık metin karıştırma oyunlarından değil; **Sayılar Teorisi** ve **Soyut Cebir**'in sarsılmaz kurallarından alır. Şifreleme algoritmalarının (özellikle RSA, Diffie-Hellman ve eliptik eğri tabanlı asimetrik sistemlerin) temelinde yatan matematiksel yapılar aşağıda özetlenmiştir.
+
+::: {.callout-note title="📝 EBOB ve EKOK Notasyon Anlaşması"}
+Uluslararası literatüre sadık kalmak adına, notlarımızda Türkçe kısaltmalar (EBOB/EKOK) yerine küresel kriptografi kaynaklarında kullanılan standart matematiksel fonksiyonlar tercih edilecektir:
+
+* $\operatorname{gcd}(a, b)$ **(Greatest Common Divisor):** $a$ ve $b$ sayılarının **en büyük ortak bölenini** ifade eder.
+* $\operatorname{lcm}(a, b)$ **(Least Common Multiple):** $a$ ve $b$ sayılarının **en küçük ortak katını** ifade eder.
+
+> **Altın Notasyon: Aralarında Asallık**
+>
+> Notlarımız boyunca karşılaşacağımız en kritik gösterim şudur:
+>
+> $$\operatorname{gcd}(a, b) = 1 \iff a \text{ ve } b \text{ sayıları aralarında asaldır.}$$
+>
+> Bu sade gösterim; modüler aritmetikte sadeleştirme yapılabilirliğinin, $\mathbb{Z}_n$ içinde çarpımsal tersin var olmasının ve Euler phi ($\phi$) fonksiyonunun hesaplanmasının yegâne matematiksel şartıdır.
+:::
+
+## Modüler Aritmetik ve $\mathbb{Z}_n$ Kümeleri
+
+Kriptografide sonsuz sayılarla işlem yapmak bilgisayarlar için pratik (veya güvenli) değildir. Bu nedenle işlemler, sayılar belirli bir $n$ modülüne ulaştığında başa saran dairesel bir sistem üzerinde, yani **modüler aritmetik** kullanılarak yapılır.
+
+::: {#def-modiler-denklik name="Modüler Denklik (Kongrüans)"}
+$a$, $b$ ve $n$ tam sayılar ($n > 0$) olmak üzere; eğer $n$ sayısı $(a - b)$ farkını tam bölüyorsa, "$a$ ve $b$ sayıları modülo $n$'de birbirine denktir" denir ve şu şekilde gösterilir:
+$$a \equiv b \pmod n$$
+:::
+
+### Modüler Aritmetiğin Temel Özellikleri
+
+$a, b, c, d$ birer tam sayı ve $n > 0$ bir modül olsun. Cebirsel işlemler, alt alta yazılan denkliklerin taraf tarafa işleme sokulmasıyla çok daha net görülebilir.
+
+* **Toplama ve çıkarma:** Aynı modüle sahip denklikler alt alta toplanabilir veya çıkarılabilir. Modül aynen korunur:
+  $$\left.
+  \begin{aligned}
+  a \equiv b \pmod n \\
+  c \equiv d \pmod n
+  \end{aligned}
+  \right\} \implies a \pm c \equiv b \pm d \pmod n$$
+
+* **Her iki tarafa aynı sayıyı ekleme ve çıkarma:** Klasik cebirde olduğu gibi, modüler aritmetikte de bir denkliğin her iki tarafına aynı sayıyı ekleyebilir veya çıkarabilirsiniz. Modül yine sabit kalır:
+  $$a \equiv b \pmod n \iff a \pm c \equiv b \pm c \pmod n$$
+
+* **Sabit bir skalerle çarpma:** Bir denkliğin her iki tarafını aynı $k$ tam sayısıyla çarpabilirsiniz; modül sabit kalır. Aslında bu özellik, $a \equiv b \pmod n$ ile $k \equiv k \pmod n$ denkliklerinin taraf tarafa çarpımından elde edilir:
+  $$a \equiv b \pmod n \implies k \cdot a \equiv k \cdot b \pmod n$$
+
+* **Taraf tarafa çarpma:** Aynı modüle sahip iki farklı denkliğin sol tarafları kendi arasında, sağ tarafları kendi arasında çarpılabilir. Modül yine sabit kalır:
+  $$\left.
+  \begin{aligned}
+  a \equiv b \pmod n \\
+  c \equiv d \pmod n
+  \end{aligned}
+  \right\} \implies a \cdot c \equiv b \cdot d \pmod n$$
+
+* **Üs alma:** Taraf tarafa çarpma kuralının doğal bir sonucu olarak ($c = a$ ve $d = b$ alınıp $k$ defa çarpıldığında), bir denkliğin her iki tarafının aynı $k \geq 1$ pozitif tam sayı kuvveti alınabilir:
+  $$a \equiv b \pmod n \implies a^k \equiv b^k \pmod n$$
+
+* **Denkliği genişletme (modülü de çarpmak):** Tüm denkliği bir $k > 0$ tam sayısıyla çarparak genişletiyorsanız, çözüm kümesinin bozulmaması için **modülü de aynı $k$ sayısıyla çarpmak zorundasınız.** Sadece tarafları çarpıp modülü sabit bırakmak denklemi tamamen değiştirir:
+  $$a \equiv b \pmod n \iff a \cdot k \equiv b \cdot k \pmod{n \cdot k}$$
+
+::: {.callout-warning title="⚠️ Tehlikeli sular: bölme ve sadeleştirme kuralı"}
+Modüler aritmetikte doğrudan "bölme" işlemi yoktur ve klasik cebirdeki gibi her iki tarafı aynı sayıya bölerek sadeleştirme yapmak çok sık yapılan ölümcül bir hatadır.
+
+Çarpım durumundaki bir $c$ tam sayısını her iki taraftan sadeleştirmek istiyorsak, modülün de $c$ ile olan en büyük ortak bölenine bölünmesi zorunludur:
+
+$$a \cdot c \equiv b \cdot c \pmod n \iff a \equiv b \pmod{\frac{n}{\operatorname{gcd}(c,\,n)}}$$
+
+**Kriptografide en sık kullanılan özel durum:** Eğer sadeleştireceğimiz $c$ sayısı ile modül $n$ **aralarında asal** ise ($\operatorname{gcd}(c, n) = 1$), $\tfrac{n}{1} = n$ olacağından modül değişmeden doğrudan sadeleştirme yapılabilir:
+$$a \cdot c \equiv b \cdot c \pmod n \implies a \equiv b \pmod n$$
+:::
+
+::: {.callout-important title="🚫 Dikkat: üslerde sadeleştirme yapılamaz"}
+Tabandaki sayılar aralarında asallık kuralına göre sadeleşebilse de, **üsler doğrudan sadeleştirilemez**. Yani:
+$$x^a \equiv x^b \pmod n \;\nRightarrow\; a \equiv b \pmod n$$
+
+Modüler aritmetikte üsleri birbirine eşitlemek, indirgemek veya sadeleştirmek için modül $n$'ye göre değil; Euler-Fermat teoremi gereği **$\phi(n)$'e göre** işlem yapmak zorunludur.
+:::
+
+### $\mathbb{Z}_n$ Kümeleri ve Çarpımsal Ters
+
+Tüm bu modüler işlemlerin yapıldığı kalanlar kümesine $\mathbb{Z}_n$ denir.
+
+::: {#def-zn-kumesi name="$\\mathbb{Z}_n$ Kümesi"}
+$n$ pozitif bir tam sayı olmak üzere, modülo $n$'de kalanların oluşturduğu tam sayılar kümesi
+$$\mathbb{Z}_n = \{0, 1, 2, \dots, n-1\}$$
+şeklinde gösterilir.
+:::
+
+Modüler aritmetikte doğrudan "bölme" işlemi olmadığı için, denklemleri çözmek adına **çarpımsal ters** (multiplicative inverse) kavramı devreye girer. Bir sayıya bölmek yerine, o sayının çarpımsal tersiyle çarparız.
+
+::: {#def-carpimsal-ters name="Çarpımsal Ters (Multiplicative Inverse)"}
+$a \in \mathbb{Z}_n$ olmak üzere, eğer
+$$a \cdot x \equiv 1 \pmod n$$
+denkliğini sağlayan bir $x$ tam sayısı varsa, bu $x$ sayısına $a$'nın modülo $n$'deki çarpımsal tersi denir ve $a^{-1} \pmod n$ şeklinde gösterilir.
+:::
+
+Kriptografik açıdan bu terslerin bulunabilmesi çok kritiktir. $\mathbb{Z}_n$ içinde bir $a$ elemanının çarpımsal tersinin var olması için **gerek ve yeter şart $\operatorname{gcd}(a, n) = 1$ olmasıdır**. Bu ters elemanlar pratikte genişletilmiş Öklid algoritması kullanılarak çok hızlı biçimde hesaplanır.
+
+::: {.callout-tip title="💡 Neden asal sayılar?"}
+Eğer $n$ sayısı bir $p$ **asal sayısı** olarak seçilirse, $\mathbb{Z}_p$ içinde sıfır hariç *her elemanın* $p$ ile aralarında asal olacağı garanti edilir; yani sıfır hariç her elemanın bir çarpımsal tersi olur. Bu durum $\mathbb{Z}_p$'yi sadece bir halka olmaktan çıkarıp bir **cisim (field)** yapar. Bu yapı, AES gibi modern algoritmaların bel kemiğidir.
+:::
+
+## Euler'in Phi ($\phi$) Fonksiyonu
+
+Kriptografinin, özellikle de RSA algoritmasının en büyük kahramanlarından biri **Euler'in totient (phi) fonksiyonudur**.
+
+::: {#def-euler-phi name="Euler Phi Fonksiyonu $\\phi(n)$"}
+Bir $n$ pozitif tam sayısı için, $1 \leq a \leq n$ aralığında bulunan ve $n$ ile **aralarında asal** olan tam sayıların adedini veren fonksiyondur.
+:::
+
+### $\phi(n)$ Fonksiyonunun Özellikleri
+
+Hesaplama yaparken bu fonksiyonun sahip olduğu çarpımsal özellikler hayat kurtarır.
+
+1. **Asal sayı kuralı.** Eğer $p$ bir asal sayı ise, kendisinden küçük tüm pozitif tam sayılarla aralarında asal olacağından:
+   $$\phi(p) = p - 1$$
+
+2. **Asal kuvvet kuralı.** Eğer $p$ asal ve $k \geq 1$ tam sayı ise:
+   $$\phi(p^k) = p^k - p^{k-1}$$
+
+3. **Çarpımsallık kuralı.** Eğer $m$ ve $n$ aralarında asal ise ($\operatorname{gcd}(m,n) = 1$):
+   $$\phi(m \cdot n) = \phi(m) \cdot \phi(n)$$
+
+4. **Genel formül.** Herhangi bir $n$ sayısının asal çarpanlarına ayrılmış hâli $n = p_1^{k_1} p_2^{k_2} \dots p_r^{k_r}$ ise:
+   $$\phi(n) = n \left(1 - \frac{1}{p_1}\right) \left(1 - \frac{1}{p_2}\right) \cdots \left(1 - \frac{1}{p_r}\right)$$
+
+## Euler ve Fermat Teoremleri
+
+Şifreleme sırasında veriyi çok büyük üslere çıkardığımızda, modüler aritmetikte bu üsleri küçültmek ve işlemi bilgisayarlar için çözülebilir kılmak adına bu iki teorem kullanılır.
+
+::: {#thm-fermat-kucuk name="Fermat'nın Küçük Teoremi"}
+Eğer $p$ bir asal sayı ve $a$, $p$ ile bölünemeyen bir tam sayı ise ($\operatorname{gcd}(a, p) = 1$):
+$$a^{p-1} \equiv 1 \pmod p$$
+:::
+
+Fermat'nın küçük teoremi yalnızca asal modüller için geçerlidir. İsviçreli matematikçi Leonhard Euler bu teoremi **asal olmayan modüller** için genişletmiş ve literatüre RSA algoritmasının anahtar üretim iskeletini kazandırmıştır:
+
+::: {#thm-euler-fermat name="Euler-Fermat Teoremi"}
+Eğer $a$ ve $n$ **aralarında asal** iki tam sayı ise ($\operatorname{gcd}(a, n) = 1$):
+$$a^{\phi(n)} \equiv 1 \pmod n$$
+:::
+
+::: {.callout-warning title="⚠️ Şifre kırmanın zorluğu"}
+RSA sisteminde $n = p \cdot q$ şeklinde devasa iki asal sayının çarpımı herkese açık olarak verilir. Sistemin güvenli olmasının sebebi, $n$ bilinmesine rağmen **$p$ ve $q$ çarpanları bilinmeden $\phi(n)$ değerinin hesaplanamamasıdır**. Yeterince büyük kuantum bilgisayarlarda çalışacak Shor algoritması gibi hızlı bir asal çarpanlara ayırma yöntemi pratikleşirse, bu teoremlerin dayandığı hesaplama zorluğu ortadan kalkar ve RSA kırılır.
+:::
+
+## Wilson Teoremi
+
+Asal sayıları tespit etmek (primality test) veya teorik analizler yapmak için kullanılan güçlü bir başka teorem şudur:
+
+::: {#thm-wilson name="Wilson Teoremi"}
+Bir $p \geq 2$ tam sayısının **asal sayı** olması için gerek ve yeter şart:
+$$(p-1)! \equiv -1 \pmod p$$
+:::
+
+Faktöriyel, sayılar büyüdükçe çok hızlı biçimde büyüdüğü için Wilson teoremi pratikte devasa kriptografik asalların testinde kullanılamayacak kadar yavaştır. Bunun yerine genellikle Miller-Rabin gibi olasılıksal asallık testleri tercih edilir.

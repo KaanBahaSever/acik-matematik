@@ -1,0 +1,462 @@
+---
+title: "$n$. Kuvvet Rezidüler ve Mertebe (Eksponent) Kavramı"
+description: "n. kuvvet rezidü tanımı, mertebe kavramı ve phi ile ilişkisi, primitif kökler, indeks (ayrık logaritma) ve n. kuvvetten kongrüansların çözüm algoritması."
+---
+
+Yüksek mertebeden kongrüansların çözüm stratejilerine geçmeden önce, modüler yapılardaki çözülebilirliği ve döngüsel periyotları inceleyeceğimiz temel kavramları kuruyoruz.
+
+## 1. $n$. Kuvvet Rezidü Kavramı
+
+Bir sayının belirli bir modüle göre tam kuvvetinin alınıp alınamayacağını ifade eden yapıya "rezidü (kalan)" denir.
+
+::: {#def-n-kuvvet-rezidu name="$n$. Kuvvet Rezidü"}
+$n$ pozitif bir tam sayı ve $m \geq 2$ bir modül olsun. Eğer
+
+$$x^n \equiv a \pmod m$$
+
+kongrüansının bir $x$ çözümü varsa, $a$ sayısına modülo $m$'ye göre bir **$n$. kuvvet rezidüsü** denir.
+:::
+
+::: {#exm-rezidu-kavrami name="Rezidü Kavramı"}
+$x^3 \equiv 2 \pmod 5$ denklemini inceleyelim. $x \equiv 3 \pmod 5$ denediğimizde:
+
+$$3^3 = 27 \equiv 2 \pmod 5$$
+
+Denklem sağlandığı için **$2$ sayısı, modülo $5$'e göre bir 3. kuvvet rezidüsüdür.**
+:::
+
+Rezidüler bize bir denklemin kökü olup olmadığını söyler. Ancak modüler aritmetikteki asıl sihir, bir sayının kuvvetlerini almaya devam ettiğimizde ortaya çıkan döngüselliktir: sayılar sonsuza kadar büyümez, modüle ulaştığında başa sarar. Bu "başa sarma" noktasını ölçmek için yeni bir kavrama ihtiyacımız var.
+
+## 2. Mertebe (Eksponent) Nedir?
+
+Euler-Fermat teoreminden biliyoruz ki $\gcd(a, m) = 1$ ise $a^{\phi(m)} \equiv 1 \pmod m$'dir. Yani $a$'nın kuvvetlerini almaya devam ettiğimizde *eninde sonunda* sonucu $1$ yapan bir üs karşımıza çıkar. Peki döngüyü tamamlayıp $1$ sonucunu veren **en küçük** üs hangisidir?
+
+::: {#def-mertebe name="Mertebe (Eksponent)"}
+$m \geq 2$ bir tam sayı ve $\gcd(a, m) = 1$ olsun.
+
+$$a^x \equiv 1 \pmod m$$
+
+koşulunu sağlayan **en küçük pozitif $x$ tam sayısına**, $a$'nın modülo $m$'ye göre **mertebesi** denir ve $\operatorname{ord}_m(a)$ ile gösterilir.
+:::
+
+## 3. Mertebe ve Euler Phi İlişkisi
+
+Bir sayının modüler döngü uzunluğu rastgele bir değer değildir; o modülün Euler phi değeriyle kusursuz bir bölünme ilişkisi içindedir.
+
+:::: {#thm-mertebe-boler name="Mertebe $\\phi(m)$'i Böler"}
+$m \geq 2$ bir tam sayı, $\gcd(a, m) = 1$ ve $a$'nın modülo $m$'ye göre mertebesi $h$ olsun. Bu durumda $h$, $\phi(m)$'i tam böler:
+
+$$h \mid \phi(m)$$
+
+::: {.callout-note collapse="true" title="İspat"}
+Bu teoremi ispatlamak için **bölme algoritmasını** kullanacağız. $\phi(m)$ sayısını $h$'ye bölelim; bölüm $q$ ve kalan $r$ olmak üzere:
+
+$$\phi(m) = qh + r, \qquad 0 \leq r < h$$
+
+Euler-Fermat teoremi gereği $\gcd(a, m) = 1$ olduğundan $a^{\phi(m)} \equiv 1 \pmod m$'dir. $\phi(m)$ yerine yukarıdaki eşitliği yazalım:
+
+$$a^{qh + r} \equiv 1 \pmod m \implies (a^h)^q \cdot a^r \equiv 1 \pmod m$$
+
+Mertebe tanımı gereği $a^h \equiv 1 \pmod m$'dir; yerine koyalım:
+
+$$1^q \cdot a^r \equiv 1 \pmod m \implies a^r \equiv 1 \pmod m$$
+
+**Kritik adım.** Elimizde $a^r \equiv 1 \pmod m$ şartını sağlayan bir $r$ kaldı ve bölme algoritması gereği $0 \leq r < h$'dir. Fakat $h$'yi, bu şartı sağlayan **en küçük pozitif** tam sayı olarak tanımlamıştık. Eğer $r > 0$ olsaydı, $h$'den küçük pozitif bir sayı bu şartı sağlamış olurdu — mertebe tanımıyla çelişki.
+
+Çelişkiden kaçınmanın tek yolu $r = 0$ olmasıdır. Bölme denklemine dönersek:
+
+$$\phi(m) = qh \implies h \mid \phi(m)$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {#exm-mertebe-bolme name="Mertebenin $\\phi(m)$'i Bölmesi"}
+$m = 7$ ve $a = 2$ olsun; $\gcd(2, 7) = 1$ ve $\phi(7) = 6$'dır.
+
+$2$'nin modülo $7$'ye göre mertebesini bulmak için kuvvetlerini sırasıyla alalım:
+
+$$
+\begin{aligned}
+2^1 &\equiv 2 \pmod 7 \\
+2^2 &\equiv 4 \pmod 7 \\
+2^3 &= 8 \equiv 1 \pmod 7
+\end{aligned}
+$$
+
+Sonucu $1$ yapan en küçük pozitif üs $3$ olduğundan $\operatorname{ord}_7(2) = 3$'tür. Teoremin ifade ettiği üzere $3 \mid 6$, yani mertebe gerçekten $\phi(7)$'yi böler.
+:::
+
+## 4. Üslerin Denkliği ve Periyodiklik
+
+İki farklı kuvvetin modüler sistemde aynı kalanı vermesi tesadüf değildir; üsler arasındaki fark doğrudan mertebeyle bağlantılıdır.
+
+:::: {#prp-uslerin-denkligi name="Üslerin Denkliği ve Mertebe İlişkisi"}
+$m \geq 2$ bir tam sayı, $\gcd(a, m) = 1$ ve $a$'nın mertebesi $h$ olsun. $j, k \geq 0$ tam sayıları için:
+
+$$a^j \equiv a^k \pmod m \implies h \mid (j - k)$$
+
+::: {.callout-note collapse="true" title="İspat"}
+Genelliği bozmadan $j \geq k$ olduğunu kabul edebiliriz. Başlangıç denkliğimiz:
+
+$$a^j \equiv a^k \pmod m$$
+
+$\gcd(a, m) = 1$ olduğundan $a$'nın her pozitif kuvveti de $m$ ile aralarında asaldır; bu sayede her iki tarafı güvenle $a^k$'ya bölebiliriz:
+
+$$a^{j-k} \equiv 1 \pmod m$$
+
+Şimdi bölme algoritmasını tekrar kullanalım: $(j-k)$ tam sayısını $h$'ye bölelim.
+
+$$j - k = qh + r, \qquad 0 \leq r < h$$
+
+Bu eşitliği denklemde yerine yazalım:
+
+$$(a^h)^q \cdot a^r \equiv 1 \pmod m$$
+
+Mertebe tanımı gereği $a^h \equiv 1$ olduğundan $a^r \equiv 1 \pmod m$ elde ederiz. Yine aynı çelişki argümanına ulaştık: $0 \leq r < h$ iken $h$ bu denkliği sağlayan en küçük pozitif tam sayıydı. O hâlde $r = 0$ olmalıdır:
+
+$$j - k = qh \implies h \mid (j-k)$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {#exm-usler-denklik name="Üslerin Denkliği ve Mertebe İlişkisi"}
+Bir önceki örnekten devam edelim: $m = 7$, $a = 2$ ve $h = 3$'tür. Üsler olarak $j = 8$ ve $k = 2$ seçelim:
+
+$$
+\begin{aligned}
+2^8 &= 256 \equiv 4 \pmod 7 \\
+2^2 &= 4 \equiv 4 \pmod 7
+\end{aligned}
+$$
+
+Görüldüğü üzere $2^8 \equiv 2^2 \pmod 7$ sağlanmaktadır. Önermeye göre mertebemiz $h = 3$, üslerin farkı olan $8 - 2 = 6$ sayısını tam bölmelidir; gerçekten de $3 \mid 6$'dır.
+:::
+
+## 5. Bir Kuvvetin Mertebesini Hesaplama
+
+Bir tabanın mertebesini biliyorsanız, o tabandan türetilmiş herhangi bir kuvvetin mertebesini de tek bir formülle bulabilirsiniz.
+
+:::: {#thm-kuvvetin-mertebesi name="Bir Kuvvetin Mertebesi"}
+$m \geq 2$ bir tam sayı, $\gcd(a, m) = 1$, $k \in \mathbb{Z}^{+}$ ve $a$'nın modülo $m$'ye göre mertebesi $h$ olsun. Bu durumda $a^k$ tam sayısının mertebesi:
+
+$$\operatorname{ord}_m(a^k) = \frac{h}{\gcd(h, k)}$$
+
+::: {.callout-note collapse="true" title="İspat"}
+$\gcd(a, m) = 1$ olduğundan $\gcd(a^k, m) = 1$'dir. $a^k$'nın mertebesi $t$ olsun; tanım gereği:
+
+$$(a^k)^t = a^{kt} \equiv 1 \pmod m$$
+
+Bir önceki önermeden biliyoruz ki bir kuvvet $1$'e denkse tabanın mertebesi o kuvveti tam böler:
+
+$$h \mid kt$$
+
+Her iki tarafı $\gcd(h, k)$ değerine bölelim:
+
+$$\frac{h}{\gcd(h, k)} \;\Bigg|\; \left( \frac{k}{\gcd(h, k)} \cdot t \right)$$
+
+Bir sayıyı en büyük ortak bölenine böldüğümüzde elde edilen bölümler daima aralarında asaldır:
+
+$$\gcd\left( \frac{h}{\gcd(h, k)}, \; \frac{k}{\gcd(h, k)} \right) = 1$$
+
+**Öklid lemması** gereği, bir tam sayı bir çarpımı bölüyorsa ve çarpanlardan biriyle aralarında asalsa, diğer çarpanı bölmek zorundadır:
+
+$$\frac{h}{\gcd(h, k)} \;\Bigg|\; t \tag{$*$}$$
+
+Öte yandan $a^k$'nın $\tfrac{h}{\gcd(h,k)}$. kuvvetini alalım:
+
+$$(a^k)^{\frac{h}{\gcd(h, k)}} = a^{\frac{kh}{\gcd(h, k)}} = (a^h)^{\frac{k}{\gcd(h, k)}} \equiv 1^{\frac{k}{\gcd(h, k)}} \equiv 1 \pmod m$$
+
+Mertebenin tanımı gereği $t$, $1$ sonucunu veren her kuvveti tam bölmek zorundadır:
+
+$$t \;\Bigg|\; \frac{h}{\gcd(h, k)} \tag{$**$}$$
+
+Hem $t$ hem de $\tfrac{h}{\gcd(h,k)}$ pozitif tam sayı olduğundan, $(*)$ ve $(**)$'ın aynı anda sağlanabilmesi için bu iki ifadenin eşit olması zorunludur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {#exm-kuvvetin-mertebesi name="Bir Kuvvetin Mertebesini Bulma"}
+$m = 11$ ve $a = 2$ olsun; $\gcd(2, 11) = 1$'dir.
+
+Hesaplandığında $2^{10} \equiv 1 \pmod{11}$ olduğu ve daha küçük bir kuvvette $1$ sonucuna ulaşılamadığı görülür; yani $\operatorname{ord}_{11}(2) = 10$'dur.
+
+Şimdi $k = 4$. kuvvet olan $2^4 \equiv 16 \equiv 5 \pmod{11}$ sayısının mertebesini arayalım:
+
+$$\frac{h}{\gcd(h, k)} = \frac{10}{\gcd(10, 4)} = \frac{10}{2} = 5$$
+
+Sağlaması için $5$'in modülo $11$'deki kuvvetlerine bakalım:
+
+$$
+\begin{aligned}
+5^1 &\equiv 5 \pmod{11} \\
+5^2 &= 25 \equiv 3 \pmod{11} \\
+5^3 &\equiv 15 \equiv 4 \pmod{11} \\
+5^4 &\equiv 20 \equiv 9 \pmod{11} \\
+5^5 &\equiv 45 \equiv 1 \pmod{11}
+\end{aligned}
+$$
+
+Görüldüğü üzere $2^4$'ün mertebesi gerçekten de formülün verdiği gibi tam olarak $5$'tir.
+:::
+
+## 6. Primitif (İlkel) Kök Kavramı
+
+::: {#def-primitif-kok name="Primitif Kök"}
+$m \geq 2$ bir tam sayı ve $\gcd(a, m) = 1$ olsun. Eğer $a$'nın modülo $m$'ye göre mertebesi tam olarak $\phi(m)$ ise, $a$'ya modülo $m$'ye göre bir **primitif kök (ilkel kök)** denir.
+:::
+
+Her modülün bir primitif kökü olmak zorunda değildir. Hangi modüllerin primitif kök barındırdığı kesin olarak sınıflandırılmıştır.
+
+::: {#thm-primitif-varlik name="Primitif Köklerin Varlığı"}
+$m \geq 2$ bir tam sayı olsun. Modülo $m$'ye göre bir primitif kökün var olabilmesi için gerek ve yeter şart $m$'nin şu formlardan birinde olmasıdır:
+
+$$m \in \{2,\; 4,\; p^n,\; 2p^n\}$$
+
+Burada $p$ herhangi bir tek asal, $n$ ise herhangi bir pozitif tam sayıdır. $m$'nin başka hiçbir değeri için modülo $m$'ye göre primitif kök yoktur.
+:::
+
+::: {#exm-primitif-varlik-yokluk name="Primitif Kökün Varlığı ve Yokluğu"}
+**1. Primitif kökü olan bir modül ($m = 7$).** $7$ asaldır, yani $p^1$ formuna uyar ve $\phi(7) = 6$'dır. $a = 3$ bir primitif kök müdür?
+
+$$
+\begin{aligned}
+3^1 &\equiv 3, \quad 3^2 \equiv 2, \quad 3^3 \equiv 6 \pmod 7 \\
+3^4 &\equiv 4, \quad 3^5 \equiv 5, \quad 3^6 \equiv 1 \pmod 7
+\end{aligned}
+$$
+
+$1$ sonucunu veren en küçük pozitif üs $6$'dır; yani $3$'ün mertebesi tam olarak $\phi(7) = 6$'ya eşittir. Dolayısıyla **$3$, modülo $7$'ye göre bir primitif köktür.**
+
+**2. Primitif kökü olmayan bir modül ($m = 8$).** $8 = 2^3$ olduğundan varlık teoreminin izin verdiği kümelerden hiçbirine uymaz. $\phi(8) = 4$'tür ve $8$ ile aralarında asal sayılar $\{1, 3, 5, 7\}$'dir:
+
+$$
+\begin{aligned}
+1^1 &\equiv 1 \pmod 8 \\
+3^2 &= 9 \equiv 1 \pmod 8 \\
+5^2 &= 25 \equiv 1 \pmod 8 \\
+7^2 &= 49 \equiv 1 \pmod 8
+\end{aligned}
+$$
+
+Hiçbir elemanın mertebesi $\phi(8) = 4$'e ulaşamaz; maksimum mertebe $2$'de kalır. Bu nedenle **modülo $8$'in hiçbir primitif kökü yoktur.**
+:::
+
+Elimizde bir primitif kök varsa, bu kök o modüldeki bütün çarpımsal yapıyı tek başına üretebilir.
+
+:::: {#thm-primitif-ozellikler name="Primitif Köklerin Özellikleri"}
+$a$, modülo $m$'ye göre bir primitif kök olsun. Bu durumda:
+
+1. Her $j, k \geq 0$ tam sayısı için: $a^j \equiv a^k \pmod m \iff j \equiv k \pmod{\phi(m)}$
+2. Her $j \geq 0$ tam sayısı için: $a^j \equiv 1 \pmod m \iff \phi(m) \mid j$
+3. $a, a^2, a^3, \dots, a^{\phi(m)}$ tam sayıları, modülo $m$'ye göre bir **asal kalanlar sistemi** oluşturur.
+
+::: {.callout-note collapse="true" title="İspat"}
+**1) Birinci özellik.**
+
+*Gereklilik ($\implies$).* $a^j \equiv a^k \pmod m$ olsun. $a$ primitif kök olduğundan mertebesi $\phi(m)$'dir. Üslerin denkliği önermesinden, mertebe üslerin farkını böler:
+
+$$\phi(m) \mid (j - k) \implies j \equiv k \pmod{\phi(m)}$$
+
+*Yeterlilik ($\impliedby$).* $j \equiv k \pmod{\phi(m)}$ olsun; bu durumda $j = k + r\phi(m)$ olacak şekilde bir $r \geq 0$ tam sayısı vardır:
+
+$$a^j = a^{k + r\phi(m)} = a^k \cdot \big(a^{\phi(m)}\big)^r \equiv a^k \cdot 1^r \equiv a^k \pmod m$$
+
+**2) İkinci özellik.** Birinci ispatta $k = 0$ alırsak, $a^0 = 1$ olduğundan:
+
+$$a^j \equiv 1 \pmod m \iff j \equiv 0 \pmod{\phi(m)} \iff \phi(m) \mid j$$
+
+**3) Üçüncü özellik.** $\gcd(a, m) = 1$ olduğundan $a$'nın tüm pozitif kuvvetleri de $m$ ile aralarında asaldır ve bu kümenin eleman sayısı tam olarak $\phi(m)$'dir.
+
+Geriye bu elemanlardan hiçbir ikisinin birbirine denk olmadığını göstermek kalıyor. Aksini varsayalım: $1 \leq j, k \leq \phi(m)$ için $a^j \equiv a^k \pmod m$ olsun. Birinci özellik gereği $\phi(m) \mid (j-k)$ olmalıdır. Ancak $j$ ve $k$ her ikisi de $1$ ile $\phi(m)$ arasında olduğundan $|j - k| < \phi(m)$'dir. $\phi(m)$'den küçük olup $\phi(m)$'e tam bölünen tek sayı $0$'dır; dolayısıyla $j = k$ olmak zorundadır.
+
+Sonuç olarak $j \neq k$ iken $a^j \not\equiv a^k$'dir. Bu kümedeki elemanlar birbirinden farklı ve hepsi $m$ ile aralarında asal olduğundan bir **asal kalanlar sistemi** oluştururlar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {#exm-asal-kalanlar-uretimi name="Asal Kalanlar Sisteminin Üretilmesi"}
+$m = 7$ modülünün primitif kökü olan $a = 3$ sayısını kullanalım. Teoremin üçüncü maddesine göre $3$'ün $\phi(7) = 6$'ya kadar olan kuvvetleri tüm asal kalanlar sistemini üretmelidir:
+
+$$
+\begin{aligned}
+3^1 &\equiv 3, \quad 3^2 \equiv 2, \quad 3^3 \equiv 6 \pmod 7 \\
+3^4 &\equiv 4, \quad 3^5 \equiv 5, \quad 3^6 \equiv 1 \pmod 7
+\end{aligned}
+$$
+
+Elde ettiğimiz küme $\{3, 2, 6, 4, 5, 1\}$'dir. Görüldüğü gibi primitif kök olan $3$, modülo $7$'de sıfır hariç tüm sayıları **eksiksiz biçimde** üretmiştir; hiçbir değer kendini tekrar etmeden tüm kümeyi taramıştır.
+:::
+
+## 7. İndeks Kavramı (Ayrık Logaritma)
+
+Klasik cebirde logaritma bir üssü bulmamızı sağlar; modüler aritmetikte de **indeks** aynı görevi üstlenir.
+
+::: {#def-indeks name="İndeks (Ayrık Logaritma)"}
+$a$, modülo $m$'ye göre bir primitif kök ve $b$, $\gcd(b, m) = 1$ koşulunu sağlayan herhangi bir tam sayı olsun.
+
+$$a^j \equiv b \pmod m$$
+
+koşulunu sağlayan ve $1 \leq j \leq \phi(m)$ aralığında bulunan yegâne $j$ doğal sayısına, **$b$'nin $a$ primitif köküne göre indeksi** denir ve $\operatorname{ind}_a(b)$ ile gösterilir.
+:::
+
+::: {#exm-indeks-hesaplama name="İndeks (Ayrık Logaritma) Hesaplama"}
+Modülümüz $m = 7$ ve primitif kökümüz $a = 3$ olsun. $b = 4$ sayısının indeksini arıyoruz; $\gcd(4, 7) = 1$'dir.
+
+Sorduğumuz soru şudur: *"$3$'ün modülo $7$'de kaçıncı kuvveti $4$'e denktir?"*
+
+$$3^j \equiv 4 \pmod 7$$
+
+Yukarıda ürettiğimiz asal kalanlar tablosuna bakarsak $3^4 \equiv 4 \pmod 7$ olduğunu görürüz. Dolayısıyla:
+
+$$\operatorname{ind}_3(4) = 4$$
+:::
+
+## 8. $n$. Kuvvetten Kongrüansların Çözülebilirliği
+
+Bir $x^n \equiv a \pmod m$ denkleminin çözümünün olup olmadığını deneme yanılmayla bulmak, modül büyüdükçe imkânsızlaşır. Ancak modül bir asal sayı ise, primitif kökler ve indeksler sayesinde çözülebilirliği tek bir hesaplamayla test edebiliriz.
+
+:::: {#thm-n-kuvvet-kongruans name="$n$. Kuvvetten Kongrüanslar (Euler Kriteri Genellemesi)"}
+$p$ bir asal sayı, $n$ pozitif bir tam sayı ve $\gcd(a, p) = 1$ olsun. $x^n \equiv a \pmod p$ kongrüansı için şu iki durum geçerlidir:
+
+1. Eğer $a^{(p-1)/\gcd(n,\, p-1)} \not\equiv 1 \pmod p$ ise, kongrüansın **hiçbir çözümü yoktur**.
+2. Eğer $a^{(p-1)/\gcd(n,\, p-1)} \equiv 1 \pmod p$ ise, kongrüansın **çözümü vardır** ve modülo $p$'deki çözüm sayısı tam olarak $\gcd(n, p-1)$ tanedir.
+
+::: {.callout-note collapse="true" title="İspat"}
+**1. kısım — çözümsüzlük.** Aksini varsayalım ve denklemin bir $u$ çözümü olduğunu kabul edelim: $u^n \equiv a \pmod p$. Denkliğin her iki tarafının $\tfrac{p-1}{\gcd(n, p-1)}$. kuvvetini alalım:
+
+$$a^{\frac{p-1}{\gcd(n, p-1)}} \equiv (u^n)^{\frac{p-1}{\gcd(n, p-1)}} \equiv \big(u^{p-1}\big)^{\frac{n}{\gcd(n, p-1)}} \pmod p$$
+
+$\gcd(a, p) = 1$ olduğundan $u$ da $p$ ile aralarında asaldır; Fermat'nın küçük teoremi gereği $u^{p-1} \equiv 1 \pmod p$'dir:
+
+$$a^{\frac{p-1}{\gcd(n, p-1)}} \equiv 1 \pmod p$$
+
+O hâlde ifade $1$'e denk değilse, "bir $u$ çözümü vardır" varsayımımız çöker; yani **çözüm yoktur**.
+
+**2. kısım — çözümün varlığı ve sayısı.** $a^{(p-1)/\gcd(n, p-1)} \equiv 1 \pmod p$ olduğunu kabul edelim. $g$, modülo $p$'ye göre bir primitif kök ve $a$'nın indeksi $j$ olsun: $g^j \equiv a \pmod p$. Kabulümüze yerleştirirsek:
+
+$$g^{\frac{j(p-1)}{\gcd(n, p-1)}} \equiv 1 \pmod p$$
+
+$g$ primitif kök olduğundan mertebesi $p-1$'dir. "Bir kuvvet $1$'e denkse tabanın mertebesi o üssü böler" kuralı gereği:
+
+$$(p-1) \;\Bigg|\; \frac{j(p-1)}{\gcd(n, p-1)}$$
+
+Sadeleştirdiğimizde $\tfrac{j}{\gcd(n, p-1)}$ ifadesinin tam sayı olması gerektiği ortaya çıkar:
+
+$$\gcd(n, p-1) \mid j \tag{$*$}$$
+
+Öte yandan aradığımız $x$ çözümü de $p$ ile aralarında asal olacağından $x \equiv g^y \pmod p$ formatında yazılabilir. Denklemimize dönersek:
+
+$$(g^y)^n \equiv g^j \pmod p \implies g^{yn} \equiv g^j \pmod p$$
+
+Primitif köklerin üs denkliği özelliğinden, üsleri modülo $p-1$'de eşitleriz:
+
+$$ny \equiv j \pmod{p-1}$$
+
+Bu, bilinmeyeni $y$ olan bir **lineer kongrüanstır**. Lineer kongrüans teorisinden biliyoruz ki $Ay \equiv B \pmod M$ denkleminin çözümü olması için gerek ve yeter şart $\gcd(A, M) \mid B$ olmasıdır ve çözüm sayısı $\gcd(A, M)$ kadardır.
+
+Bizim denklemimizde $A = n$, $M = p-1$, $B = j$'dir ve $(*)$ adımında $\gcd(n, p-1) \mid j$ olduğunu kanıtlamıştık. Bu nedenle modülo $p-1$'de $y$ için tam olarak $\gcd(n, p-1)$ tane çözüm vardır; bu çözümler de $x \equiv g^{y_i} \pmod p$ şeklinde ana denklemin köklerini üretir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="📌 Hatırlatma: lineer kongrüans çözümleri"}
+Birinci dereceden $ax \equiv b \pmod m$ şeklindeki denklemlerin çözülebilir olması için $\gcd(a, m) \mid b$ şartı sağlanmalıdır. Bu şart sağlanıyorsa denklemin modülo $m$'de tam olarak $\gcd(a, m)$ adet farklı çözümü vardır.
+:::
+
+## ⚙️ Adım Adım Çözüm Algoritması
+
+Yüksek mertebeden bir modüler denklemi çözmek için, problemi karmaşık kuvvetlerden kurtarıp birinci dereceden kongrüansa indirgeyen şu altı adımlı algoritma uygulanır.
+
+1. **Çözülebilirlik kontrolü.** $d = \gcd(n, p-1)$ hesaplayın ve $a^{(p-1)/d} \equiv 1 \pmod p$ şartını test edin. Sonuç $1$'e denk değilse denklem çözümsüzdür. Denkse, modülo $p$'de tam olarak $d$ adet farklı çözüm olduğu garantilenir.
+2. **Primitif kök seçimi.** Modülo $p$'ye göre mertebesi tam olarak $p-1$ olan bir $g$ primitif kökü tespit edin.
+3. **İndeks bulma.** $g^j \equiv a \pmod p$ eşitliğini sağlayan $j$ üssünü hesaplayın. Aranan kökü de $x \equiv g^y \pmod p$ şeklinde tanımlayın.
+4. **Lineer kongrüansa çevirme.** Denklemi $(g^y)^n \equiv g^j$ olarak yazıp üsleri modülo $p-1$'de eşitleyin:
+   $$ny \equiv j \pmod{p-1}$$
+5. **Çözüm kümesini üretme.** Denklemin sağını, solunu ve modülünü $d$'ye bölerek sadeleştirin, temel $y_0$ çözümünü bulun ve diğer kökleri şu formülle elde edin:
+   $$y_k = y_0 + k \cdot \frac{p-1}{d}, \qquad k = 0, 1, \dots, d-1$$
+6. **Orijinal köklere dönüş.** Bulduğunuz tüm $y_k$ üslerini $x \equiv g^{y_k} \pmod p$ denkleminde yerine koyun.
+
+:::: {#exm-x20-mod17}
+$x^{20} \equiv 13 \pmod{17}$ denkleminin çözümü var mıdır; varsa çözümleri nelerdir?
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Verilenler: $p = 17$, $a = 13$, $n = 20$ ve $\gcd(13, 17) = 1$'dir.
+
+**1. adım — çözülebilirlik testi.**
+
+$d = \gcd(20, 16) = 4$'tür. Test kuvvetimizi hesaplayalım:
+
+$$a^{\frac{p-1}{d}} = 13^{\frac{16}{4}} = 13^4 \pmod{17}$$
+
+Modüler indirgeme yapalım:
+
+$$13 \equiv -4 \pmod{17} \implies 13^2 \equiv 16 \equiv -1 \pmod{17} \implies 13^4 \equiv (-1)^2 \equiv 1 \pmod{17}$$
+
+Sonuç $1$ çıktığı için **çözüm vardır ve çözüm sayısı $d = 4$ tanedir**.
+
+**2. adım — primitif kök bulma.**
+
+$\phi(17) = 16$'dır; mertebesi $16$ olan bir sayı arıyoruz. $g = 3$ deneyelim. Mertebe $16$'yı bölmek zorunda olduğundan yalnızca $1, 2, 4, 8, 16$ kuvvetlerini kontrol etmek yeterlidir:
+
+$$
+\begin{aligned}
+3^1 &= 3, \qquad 3^2 = 9 \\
+3^4 &= 81 \equiv 13 \equiv -4 \pmod{17} \\
+3^8 &\equiv (-4)^2 = 16 \equiv -1 \pmod{17} \\
+3^{16} &\equiv (-1)^2 = 1 \pmod{17}
+\end{aligned}
+$$
+
+Sonucu $1$ yapan en küçük üs $16$ olduğundan **$g = 3$, modülo $17$'nin bir primitif köküdür**.
+
+**3. adım — indeks hesaplama ve lineer denkleme geçiş.**
+
+$13$'ün $3$ primitif köküne göre indeksini arıyoruz. Yukarıdaki hesaplamada $3^4 \equiv 13 \pmod{17}$ bulmuştuk; yani $j = 4$'tür.
+
+Bilinmeyeni $x \equiv 3^y \pmod{17}$ olarak ifade edersek:
+
+$$(3^y)^{20} \equiv 3^4 \pmod{17} \implies 3^{20y} \equiv 3^4 \pmod{17}$$
+
+Primitif kök kuralı gereği üsleri modülo $16$'da eşitleriz:
+
+$$20y \equiv 4 \pmod{16}$$
+
+**4. adım — çözümleri elde etme.**
+
+$20 \equiv 4 \pmod{16}$ olduğundan denklem şu hâle gelir:
+
+$$4y \equiv 4 \pmod{16}$$
+
+Her iki tarafı ve modülü $\gcd(4, 16) = 4$'e bölelim:
+
+$$y \equiv 1 \pmod 4 \iff y = 1 + 4t$$
+
+$t = 0, 1, 2, 3$ vererek modülo $16$'daki dört çözümü buluruz:
+
+$$y \in \{1,\; 5,\; 9,\; 13\}$$
+
+Bu üsleri $x \equiv 3^y \pmod{17}$ formatına yerleştirelim:
+
+$$
+\begin{aligned}
+x_1 &\equiv 3^1 \equiv 3 \pmod{17} \\
+x_2 &\equiv 3^5 = 3^4 \cdot 3 \equiv 13 \cdot 3 = 39 \equiv 5 \pmod{17} \\
+x_3 &\equiv 3^9 = 3^8 \cdot 3 \equiv 16 \cdot 3 \equiv (-1) \cdot 3 \equiv 14 \pmod{17} \\
+x_4 &\equiv 3^{13} = (3^4)^3 \cdot 3 \equiv (-4)^3 \cdot 3 = -64 \cdot 3 \equiv 4 \cdot 3 = 12 \pmod{17}
+\end{aligned}
+$$
+
+**Sonuç:** $x^{20} \equiv 13 \pmod{17}$ denkleminin dört farklı çözümü vardır:
+
+$$x \in \{3,\; 5,\; 12,\; 14\}$$
+
+*Sağlama:* $3^{20} = 3^{16} \cdot 3^4 \equiv 1 \cdot 13 = 13 \pmod{17}$ ✓
+
+[$\blacksquare$]{.qed}
+:::
+::::

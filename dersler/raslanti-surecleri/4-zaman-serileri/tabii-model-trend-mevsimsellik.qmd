@@ -1,0 +1,178 @@
+---
+title: "Tabii Model, Trend ve Mevsimsellik Analizi"
+description: "Naive (tabii) tahmin modelinin dört hâli: sabit seri, trendli seri, mevsimsel seri ve hem trend hem mevsimsellik içeren seriler için formüller ve çözümlü örnekler."
+---
+
+Zaman serisi, belirli aralıklarla gözlemlenen ve kronolojik olarak sıralanmış veriler dizisidir. Geleceği tahmin etmek için karmaşık istatistiksel modellere geçmeden önce başvurulan en temel yaklaşım **tabii model (naive model)** yaklaşımıdır.
+
+Tabii model, gelecekteki değerin doğrudan geçmişteki son duruma veya belirli bir örüntüye eşit olacağını varsayar. Bu modeli kurarken serinin içinde **trend (sürekli eğilim)** veya **mevsimsellik (periyodik dalgalanma)** olup olmadığı mutlaka analiz edilmelidir.
+
+## 1. Trend ve Mevsimsellik Yoksa (Sabit Model)
+
+Zaman serisinde belirgin bir artış/azalış veya periyodik dalgalanma yoksa, bir sonraki periyodun tahmini değeri gerçekleşen son periyodun değerine eşittir.
+
+::: {#def-sabit-tabii-model name="Sabit Tabii Model"}
+Zaman serisinde trend ve mevsimsellik gözlenmediğinde tahmini değer, bir önceki gerçek değere eşittir:
+
+$$\hat{Y}_{t+1} = Y_t$$
+:::
+
+:::: {#exm-sabit-tabii}
+Aşağıda verilen zaman serisinde trend ve mevsimsellik bulunmamaktadır. Tabii model kullanarak tahmini değerleri hesaplayınız.
+
+| $t$ | $1$ | $2$ | $3$ | $4$ | $5$ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| $Y_t$ | $10$ | $15$ | $14$ | $13$ | $14$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Modelimiz $\hat{Y}_{t+1} = Y_t$ olduğundan her tahmin, kendisinden bir önceki gerçek değere eşit olacaktır. İlk periyot için geçmiş veri olmadığından tahmin yapılamaz.
+
+| $t$ | $Y_t$ | $\hat{Y}_t$ |
+| :---: | :---: | :---: |
+| $1$ | $10$ | — |
+| $2$ | $15$ | $10$ |
+| $3$ | $14$ | $15$ |
+| $4$ | $13$ | $14$ |
+| $5$ | $14$ | $13$ |
+| $6$ | — | $\mathbf{14}$ |
+
+Son satır, gelecek periyot için yapılan tahmindir: $\hat{Y}_6 = Y_5 = 14$.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 2. Sadece Trend Varsa
+
+Zaman serisinde istikrarlı bir büyüme ya da küçülme varsa buna **trend** denir. Sabit model bu durumda yetersiz kalır; çünkü sürekli artan bir seride gelecekteki değerin dünkü değere eşit olmasını beklemek bizi daima eksik tahmine götürür.
+
+::: {#def-trend-tabii-model name="Trend İçeren Tabii Model"}
+Trend içeren bir seride tahmini değer; son gerçekleşen değere, son iki periyot arasındaki **değişim miktarının** eklenmesiyle bulunur:
+
+$$\hat{Y}_{t+1} = Y_t + (Y_t - Y_{t-1})$$
+:::
+
+:::: {#exm-trend-tabii}
+Aşağıda verilen ve istikrarlı bir artış sergileyen veri kümesi için tahmini değerleri bulunuz.
+
+| $t$ | $1$ | $2$ | $3$ | $4$ | $5$ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| $Y_t$ | $6$ | $8$ | $11$ | $13$ | $15$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Tahmin yapabilmek için geriye dönük en az iki gerçek değere ihtiyacımız olduğundan hesaplamalar $t = 3$'ten başlar:
+
+$$
+\begin{aligned}
+\hat{Y}_3 &= Y_2 + (Y_2 - Y_1) = 8 + (8-6) = 10 \\
+\hat{Y}_4 &= Y_3 + (Y_3 - Y_2) = 11 + (11-8) = 14 \\
+\hat{Y}_5 &= Y_4 + (Y_4 - Y_3) = 13 + (13-11) = 15 \\
+\hat{Y}_6 &= Y_5 + (Y_5 - Y_4) = 15 + (15-13) = 17
+\end{aligned}
+$$
+
+| $t$ | $Y_t$ | $\hat{Y}_t$ |
+| :---: | :---: | :---: |
+| $1$ | $6$ | — |
+| $2$ | $8$ | — |
+| $3$ | $11$ | $10$ |
+| $4$ | $13$ | $14$ |
+| $5$ | $15$ | $15$ |
+| $6$ | — | $\mathbf{17}$ |
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 3. Sadece Mevsimsellik Varsa
+
+Zaman serisinde belirli periyotlarla düzenli bir dalgalanma varsa buna **mevsimsellik** denir. Mevsimselliği tespit etmek için verilerin en az birkaç devir boyunca karşılaştırılması gerekir.
+
+Mevsimsel serilerde tahmini değer, bir önceki periyoda değil **tam bir devir önceki aynı periyoda** ait değere eşit alınır. Veriler dört çeyreklik ($s = 4$) dönemler hâlinde veriliyorsa:
+
+$$\hat{Y}_{t+1} = Y_{t-3}$$
+
+Yani sonraki tahmin, mevcut $t$'den üç periyot geriye gidilerek —tam dört periyot önceki aynı döneme— eşitlenir.
+
+:::: {#exm-mevsimsel-tabii}
+Aşağıda bir işletmenin iki yıllık çeyreklik ($s = 4$) veri seti verilmiştir. Verilerde belirgin bir büyüme yoktur, ancak her yılın aynı çeyreklerinde benzer satış dalgalanmaları yaşanmaktadır. Tabii model kullanarak 3. yılın tüm çeyrekleri için tahmini değerleri bulunuz.
+
+| Yıl | 1. çeyrek | 2. çeyrek | 3. çeyrek | 4. çeyrek |
+| :--- | :---: | :---: | :---: | :---: |
+| **1. yıl** | $10\ (Y_1)$ | $50\ (Y_2)$ | $40\ (Y_3)$ | $15\ (Y_4)$ |
+| **2. yıl** | $10\ (Y_5)$ | $50\ (Y_6)$ | $40\ (Y_7)$ | $15\ (Y_8)$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Yalnızca mevsimsellik olduğu için her çeyreğin tahmini değeri, tam bir yıl (dört periyot) önceki aynı çeyreğin değerine eşit olacaktır:
+
+$$
+\begin{aligned}
+\hat{Y}_9 &= Y_5 = 10 &&\text{(3. yıl 1. çeyrek)} \\
+\hat{Y}_{10} &= Y_6 = 50 &&\text{(3. yıl 2. çeyrek)} \\
+\hat{Y}_{11} &= Y_7 = 40 &&\text{(3. yıl 3. çeyrek)} \\
+\hat{Y}_{12} &= Y_8 = 15 &&\text{(3. yıl 4. çeyrek)}
+\end{aligned}
+$$
+
+| $t$ (3. yıl) | Gerçekleşen $Y_t$ | Tahmin $\hat{Y}_t$ |
+| :---: | :---: | :---: |
+| $9$ (1. çeyrek) | — | $10$ |
+| $10$ (2. çeyrek) | — | $50$ |
+| $11$ (3. çeyrek) | — | $40$ |
+| $12$ (4. çeyrek) | — | $15$ |
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 4. Hem Trend Hem Mevsimsellik Varsa
+
+Zaman serisi hem periyodik dalgalanma gösteriyor hem de genel bir artış eğiliminde ilerliyorsa, her iki etkiyi de formüle aynı anda dâhil etmemiz gerekir.
+
+::: {#def-trend-mevsim-tabii name="Trend ve Mevsimsellik İçeren Tabii Model"}
+Bu modelde tahmini değer; **tam bir devir önceki aynı dönemin** değerine, son devir boyunca gerçekleşen **ortalama periyot trendinin** eklenmesiyle bulunur. Dönem sayısı $s = 4$ varsayımıyla uzun formül:
+
+$$\hat{Y}_{t+1} = Y_{t-3} + \frac{(Y_t - Y_{t-1}) + (Y_{t-1} - Y_{t-2}) + (Y_{t-2} - Y_{t-3}) + (Y_{t-3} - Y_{t-4})}{4}$$
+
+Paydaki ara terimler birbirini götürdüğünden (teleskopik toplam) formül şu sade hâline dönüşür:
+
+$$\hat{Y}_{t+1} = Y_{t-3} + \frac{Y_t - Y_{t-4}}{4}$$
+:::
+
+::: {.callout-note title="📌 Formülün mantığı ve sadeleşmesi"}
+Paydaki uzun toplam, ardışık periyotlar arasındaki değişim miktarlarının toplanmasıdır. Ara değerler birbirini sıfırladığı için geriye yalnızca **son gerçekleşen değer ile tam bir devir önceki değer arasındaki net fark** kalır.
+
+Bu net fark, periyot sayısına bölünerek ortalama büyüme adımı bulunur ve geçmişteki mevsimsel ana değere eklenerek tahmin yapılır.
+:::
+
+:::: {#exm-trend-mevsim-tabii}
+Aşağıdaki tabloda üç yıla ait çeyreklik ($s = 4$) veriler sırasıyla verilmiştir. Verilerde hem mevsimsellik hem de yıllar geçtikçe sürekli bir artış görülmektedir. Buna göre 2003 yılının ilk periyodu ($t = 13$) için tahmini değeri bulunuz.
+
+| Yıl | 1. çeyrek | 2. çeyrek | 3. çeyrek | 4. çeyrek |
+| :--- | :---: | :---: | :---: | :---: |
+| **2000** | $10\ (Y_1)$ | $20\ (Y_2)$ | $15\ (Y_3)$ | $17\ (Y_4)$ |
+| **2001** | $18\ (Y_5)$ | $29\ (Y_6)$ | $21\ (Y_7)$ | $22\ (Y_8)$ |
+| **2002** | $25\ (Y_9)$ | $30\ (Y_{10})$ | $33\ (Y_{11})$ | $34\ (Y_{12})$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Bizden istenen $t = 13$ tahminidir. Formülde $\hat{Y}_{t+1}$ ifadesi bulunduğundan, $t + 1 = 13$ için formülü $t = 12$ referansına göre kurmalıyız.
+
+Sadeleştirilmiş formülü kullanalım:
+
+$$\hat{Y}_{13} = Y_{9} + \frac{Y_{12} - Y_{8}}{4}$$
+
+Buradaki $Y_9$ değeri, tam bir yıl önceki (2002) birinci çeyrek değeridir. Tablodan gerekli değerleri alalım: $Y_{12} = 34$, $Y_9 = 25$, $Y_8 = 22$.
+
+$$
+\begin{aligned}
+\hat{Y}_{13} &= 25 + \frac{34 - 22}{4} \\[0.4em]
+&= 25 + \frac{12}{4} \\[0.4em]
+&= 25 + 3 = 28
+\end{aligned}
+$$
+
+**Sonuç:** Uzun uzun ara farkları hesaplamaya gerek kalmadan, doğrudan sadeleşmiş formül üzerinden 2003 yılının ilk çeyreği için tabii model tahmini $\hat{Y}_{13} = 28$ olarak bulunmuştur.
+
+[$\boxtimes$]{.qed}
+:::
+::::

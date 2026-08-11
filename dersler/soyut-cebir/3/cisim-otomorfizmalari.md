@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Cisim OtomorfizmalarÄ±
-

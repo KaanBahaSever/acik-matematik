@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Hiperbolik (Kesirli / Fractional) Programlama
-

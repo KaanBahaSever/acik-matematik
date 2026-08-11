@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# ModÃ¼l HomomorfizmalarÄ±
-

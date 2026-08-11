@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Sylow Teoremleri ve UygulamalarÄ±
-

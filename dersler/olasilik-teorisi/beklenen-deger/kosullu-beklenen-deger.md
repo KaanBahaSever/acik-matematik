@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# KoÅŸullu Beklenen DeÄŸer
-

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Sonlu Cisimler (Finite Fields)
-

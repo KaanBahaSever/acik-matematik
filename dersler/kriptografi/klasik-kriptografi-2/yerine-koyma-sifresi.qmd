@@ -1,0 +1,139 @@
+---
+title: "Alfabe Permütasyonu (Yerine Koyma) Şifrelemesi"
+description: "Yerine koyma şifrelemesini simetrik grup S_26 üzerinden tanımlar; döngü gösterimi, sabit eleman kuralı, anahtar uzayı ve frekans analizi zafiyetini çözümlü örneklerle işler."
+---
+
+Soyut cebirsel perspektiften bakıldığında, klasik şifreleme yöntemlerinin büyük bir kısmı alfabe kümesinin kendi üzerindeki birebir ve örten dönüşümleriyle, yani permütasyonlarıyla ifade edilir. Kriptografi literatüründe **monoalfabetik yerine koyma şifresi** olarak bilinen bu yapı, matematiksel olarak tamamen bir **simetrik grup ($S_n$)** işlemidir.
+
+Bu sistemde harflerin metin içindeki konumları sabit kalır; ancak her karakterin alfabedeki sayısal değeri bir $\pi$ permütasyon fonksiyonuna sokularak karakterin kimliği değiştirilir.
+
+::: {#def-simetrik-grup name="Simetrik Grup ($S_n$)"}
+Boş olmayan bir $A$ kümesinin kendi üzerine tanımlı tüm **birebir ve örten** fonksiyonlarının (permütasyonlarının) bileşke işlemi ($\circ$) altında oluşturduğu gruba **simetrik grup** denir ve $\operatorname{Sym}(A)$ ile gösterilir.
+
+Eğer $A$ kümesi $n$ elemanlı sonlu bir küme ise (örneğin $A = \{0, 1, 2, \dots, n-1\}$), bu grup $S_n$ sembolüyle ifade edilir. Grubun mertebesi, elemanların tüm olası dizilimlerinin sayısına eşittir:
+
+$$|S_n| = n!$$
+:::
+
+Simetrik gruplar, sonlu bir kümenin elemanlarının tüm olası yeniden dizilimlerini tek bir cebirsel çatı altında toplar. Kriptografik açıdan bu grup, bir alfabedeki harflerin yerini değiştirmek için kullanılabilecek tüm **geçerli ve kapalı** eşleme kurallarının kümesidir. Küme büyüdükçe olası dizilimlerin sayısı faktöriyel hızında artarak devasa bir kombinatoryal uzay meydana getirir.
+
+Şimdi küçük bir örnekle simetrik grubun soyut yapısını somutlaştırıp, iki satırlı matris gösterimiyle permütasyon fonksiyonlarını inceleyelim.
+
+::: {#exm-s6-gosterim name="Simetrik Grup $S_6$ ve İki Satırlı Matris Gösterimi"}
+Kümemiz $A = \{0, 1, 2, 3, 4, 5\}$ olsun. Bu küme üzerindeki tüm permütasyonlar $S_6$ grubunu oluşturur ve grubun eleman sayısı $|S_6| = 6! = 720$'dir. Bu gruptan bir $\pi$ elemanını ayrık döngü formunda şöyle tanımlayalım:
+
+$$\pi = (0\ 3\ 5)(1\ 4)(2)$$
+
+Permütasyonun elemanları nasıl eşlediğini sistematik görmek için **iki satırlı matris gösterimi** kullanılabilir. Üst satıra kümenin orijinal elemanları sıralı yazılır, alt satıra bu elemanların $\pi$ altındaki görüntüleri yerleştirilir:
+
+$$\pi = \begin{pmatrix} 0 & 1 & 2 & 3 & 4 & 5 \\ 3 & 4 & 2 & 5 & 1 & 0 \end{pmatrix}$$
+
+Hem matris gösterimi hem de döngü tanımı üzerinden fonksiyonun değerleri şöyle elde edilir:
+
+* $\pi(0) = 3$ — matriste altındaki değer $3$; döngüde $0$'dan hemen sonra $3$ gelir.
+* $\pi(1) = 4$ — matriste altındaki değer $4$; döngüde $1$'den hemen sonra $4$ gelir.
+* $\pi(2) = 2$ — tek elemanlı bir döngü olduğu için fonksiyon altında sabittir.
+* $\pi(3) = 5$ — döngüde $3$'ten hemen sonra $5$ gelir.
+* $\pi(4) = 1$ — $(1\ 4)$ döngüsünün sonundan başa dönülür.
+* $\pi(5) = 0$ — $(0\ 3\ 5)$ döngüsünün sonundan başa dönülür.
+:::
+
+Simetrik grupların bu soyut yapısı, klasik kriptolojide **yerine koyma (substitution)** şifrelerinin temel direğidir. Alfabedeki her harfi sayısal bir indeksle eşleştirdiğimizde, bir metni şifrelemek aslında alfabenin elemanlarını rastgele seçilmiş bir $\pi$ permütasyonuyla karıştırmaktan ibarettir.
+
+Şifrelemenin benzersiz ve tamamen geri döndürülebilir olabilmesi için seçilen fonksiyonun simetrik grubun bir elemanı olması şarttır. Fonksiyon birebir ve örten olmazsa birden fazla harf aynı şifreli karaktere eşleneceği için geriye dönük benzersiz bir deşifre anahtarı ($\pi^{-1}$) üretilemez.
+
+## Yerine Koyma Şifrelemesinin Formal Tanımı
+
+::: {#def-permutasyon-kriptosistem name="Alfabe Permütasyonu Kriptosistemi"}
+İngiliz alfabesi üzerinde ($\mathbb{Z}_{26}$) çalıştığımızı varsayarsak, beş bileşenli kriptosistem anatomisi şöyle tanımlanır:
+
+* **Açık metin ($\mathcal{P}$):** Elemanları $\mathbb{Z}_{26} = \{0, 1, 2, \dots, 25\}$ kümesinden seçilen karakter dizileri.
+* **Şifreli metin ($\mathcal{C}$):** Elemanları $\mathbb{Z}_{26}$ kümesinden seçilen karakter dizileri.
+* **Anahtar uzayı ($\mathcal{K}$):** $\mathbb{Z}_{26}$ kümesi üzerindeki tüm olası permütasyonların oluşturduğu **simetrik grup $S_{26}$**.
+* **Şifreleme fonksiyonu ($\mathcal{E}$):** Açık metindeki $\tau$. karakterin sayısal değeri $x_\tau$, seçilen $\pi$ permütasyonuna girdi olarak verilir:
+  $$e_{\pi}(x_\tau) = \pi(x_\tau)$$
+* **Deşifreleme fonksiyonu ($\mathcal{D}$):** Şifreli değeri çözmek için permütasyonun tersi kullanılır:
+  $$d_{\pi}(y_\tau) = \pi^{-1}(y_\tau)$$
+:::
+
+## Anahtar Uzayı ve Güvenlik Analizi
+
+Permütasyon tabanlı bu şifrenin anahtar uzayı, $S_{26}$ simetrik grubunun mertebesine eşittir:
+
+$$|S_{26}| = 26! \approx 4{,}03 \times 10^{26}$$
+
+Bu değer, modern AES-128 şifrelemesindeki anahtar sayısına ($2^{128} \approx 3{,}4 \times 10^{38}$) kıyasla küçük kalsa da, klasik dönemin kaba kuvvet saldırıları için aşılamaz bir büyüklüktü.
+
+Ancak sistem, harflerin kimliğini **statik** biçimde değiştirdiği için doğal dilin istatistiksel yapısını gizleyemez: bir metindeki `E` harfinin frekansı neyse, şifreli karşılığının frekansı da aynı kalır. Bu yüzden devasa anahtar uzayına rağmen **frekans analiziyle** çok kısa sürede kırılır. Anahtar uzayının büyüklüğünün tek başına güvenlik anlamına gelmediğinin en çarpıcı örneğidir.
+
+## Döngü Gösterimi ve Sabit Elemanlar Kuralı
+
+Soyut cebirde permütasyonlar genellikle hantal matris gösterimleri yerine **ayrık döngülerin çarpımı** şeklinde yazılır. Bu notasyonda işlem yaparken unutulmaması gereken en hayati kural şudur:
+
+::: {.callout-note title="📌 Sabit eleman kuralı"}
+Eğer $\mathbb{Z}_{26}$'nın bir elemanı, tanımlanan permütasyon döngüleri içinde hiç yer almıyorsa, o eleman permütasyon altında sabit kalır ve **kendisine eşlenir**: $\pi(x) = x$.
+:::
+
+Aşağıdaki örneklerde alfabenin bir kısmını kapsayan bir permütasyon anahtarı tanımlanmış, bazı sayılar döngülere bilerek dâhil edilmeyerek bu kuralın nasıl çalıştığı gösterilmiştir.
+
+## 📝 Çözümlü Uygulamalar
+
+:::: {#exm-permutasyon-sifrele}
+$\mathbb{Z}_{26}$ alfabesi üzerinde tanımlı $\pi \in S_{26}$ permütasyon anahtarı ayrık döngüler formunda aşağıda verilmiştir. Bu anahtarı kullanarak `MATHS` açık metnini şifreleyiniz.
+
+$$\pi = (0\ 12\ 2\ 19)(1\ 5\ 8\ 20\ 24)(3\ 14\ 17)(4\ 7\ 11\ 22)$$
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Öncelikle `MATHS` açık metnindeki harflerin sayısal karşılıklarını bulalım:
+
+**M** $\to 12$, **A** $\to 0$, **T** $\to 19$, **H** $\to 7$, **S** $\to 18$.
+
+Şimdi şifreleme fonksiyonunu ($y_\tau = \pi(x_\tau)$) her değer için uygulayıp döngüdeki haritayı takip edelim:
+
+1. $(0\ 12\ 2\ 19)$ döngüsünde $12$'den sonra $2$ gelir:
+   $$\pi(12) = 2 \implies \textbf{C}$$
+2. Aynı döngüde $0$'dan sonra $12$ gelir:
+   $$\pi(0) = 12 \implies \textbf{M}$$
+3. Döngünün son elemanı her zaman ilk elemana döner:
+   $$\pi(19) = 0 \implies \textbf{A}$$
+4. $(4\ 7\ 11\ 22)$ döngüsünde $7$'den sonra $11$ gelir:
+   $$\pi(7) = 11 \implies \textbf{L}$$
+5. $18$ sayısı tanımlanan hiçbir döngüde yer **almamaktadır**; sabit eleman kuralı gereği kendisine eşlenir:
+   $$\pi(18) = 18 \implies \textbf{S}$$
+
+**Sonuç:** `MATHS` açık metni, $\pi$ fonksiyonu altında `CMALS` olarak şifrelenir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+:::: {#exm-permutasyon-desifre}
+Aynı $\pi = (0\ 12\ 2\ 19)(1\ 5\ 8\ 20\ 24)(3\ 14\ 17)(4\ 7\ 11\ 22)$ permütasyon anahtarı kullanılarak şifrelenmiş olan `CMALS` kapalı metnini deşifre ediniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Deşifreleme için permütasyonun tersini almalıyız. Döngü notasyonunda bir permütasyonun tersi, her döngünün elemanlarını **sondan başa doğru** yazmakla elde edilir:
+
+$$\pi^{-1} = (19\ 2\ 12\ 0)(24\ 20\ 8\ 5\ 1)(17\ 14\ 3)(22\ 11\ 7\ 4)$$
+
+> **Not:** Döngü içinde yer almayan elemanlar ters permütasyonda da sabit kalır.
+
+Şifreli metnimiz `CMALS` harflerinin sayısal değerleri: **C** $\to 2$, **M** $\to 12$, **A** $\to 0$, **L** $\to 11$, **S** $\to 18$.
+
+Ters haritayı takip edelim:
+
+1. $(19\ 2\ 12\ 0)$ döngüsünde $2$'den sonra $12$ gelir:
+   $$\pi^{-1}(2) = 12 \implies \textbf{M}$$
+2. Aynı döngüde $12$'den sonra $0$ gelir:
+   $$\pi^{-1}(12) = 0 \implies \textbf{A}$$
+3. Döngünün sonundan başına döneriz:
+   $$\pi^{-1}(0) = 19 \implies \textbf{T}$$
+4. $(22\ 11\ 7\ 4)$ döngüsünde $11$'den sonra $7$ gelir:
+   $$\pi^{-1}(11) = 7 \implies \textbf{H}$$
+5. $18$ sayısı ters döngülerde de yoktur, kendine eşlenir:
+   $$\pi^{-1}(18) = 18 \implies \textbf{S}$$
+
+**Sonuç:** Deşifreleme işlemi kusursuz çalışmış ve orijinal `MATHS` kelimesine ulaşılmıştır.
+
+[$\boxtimes$]{.qed}
+:::
+::::

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# SayÄ± Sistemlerinin Ä°nÅŸasÄ±
-
