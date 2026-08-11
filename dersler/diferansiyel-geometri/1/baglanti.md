@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# BaÄŸlantÄ± FormlarÄ± (Connection)
-

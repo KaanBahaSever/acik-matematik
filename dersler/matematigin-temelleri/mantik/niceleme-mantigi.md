@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Niceleme MantÄ±ÄŸÄ± (Quantifiers)
-

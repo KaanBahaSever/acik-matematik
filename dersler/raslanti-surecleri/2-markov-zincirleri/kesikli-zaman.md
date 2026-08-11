@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Kesikli ZamanlÄ± Markov Zincirleri
-

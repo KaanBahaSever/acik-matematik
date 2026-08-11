@@ -1,0 +1,108 @@
+---
+title: "İkili Sistem, Boolean Cebri ve XOR Mantığı"
+description: "Modern kriptografinin çalıştığı ikili gösterimi, Boolean cebrini ve XOR işleminin kriptografiyi mümkün kılan dört cebirsel özelliğini çözümlü örneklerle açıklar."
+---
+
+Klasik kriptografide şifreleme işlemleri harfler ve alfabenin boyutu (mod 26) üzerinden yapılıyordu. Ancak 20. yüzyılın ortalarında bilgisayarların icadıyla kriptografi kâğıt kalemden çıkıp işlemcilere taşındı.
+
+Modern kriptografide şifrelenen şey `A` harfi değil; o harfi veya herhangi bir veriyi (resim, ses, video) temsil eden **0 ve 1'lerden oluşan bit dizileridir**.
+
+## İkili Sistem (Base-2) ve Boolean Cebri
+
+Bilgisayarların temel yapı taşı olan transistörler yalnızca iki durumu ayırt edebilir: elektrik var (1) veya elektrik yok (0). Bu yüzden modern şifreleme sistemleri $\mathbb{Z}_{26}$ yerine $\mathbb{Z}_2 = \{0, 1\}$ cismi üzerinde çalışır.
+
+19. yüzyılda İngiliz matematikçi George Boole tarafından geliştirilen **Boolean cebri**, yalnızca *doğru (1)* ve *yanlış (0)* değerleriyle yapılan mantıksal işlemleri tanımlar. Kriptografide en sık kullandığımız üç temel mantık kapısı şunlardır:
+
+* **AND (VE):** Yalnızca her iki girdi de 1 ise sonuç 1'dir; çarpma işlemine benzer.
+* **OR (VEYA):** Girdilerden en az biri 1 ise sonuç 1'dir.
+* **NOT (DEĞİL):** Girdiyi tersine çevirir (1 ise 0, 0 ise 1 yapar).
+
+Ancak modern kriptografinin asıl kahramanı bu üçü değil, özel bir mantık kapısı olan **XOR**'dur.
+
+## XOR İşlemi (Exclusive OR)
+
+XOR (dışlayıcı VEYA), "yalnızca biri doğruysa doğrudur, ikisi aynıysa yanlıştır" mantığıyla çalışır ve kriptografide $\oplus$ sembolüyle gösterilir.
+
+Matematiksel olarak XOR işlemi, aslında **mod 2'de toplama işleminden** başka bir şey değildir:
+
+$$A \oplus B \equiv A + B \pmod 2$$
+
+Farklı bitler $1$, aynı bitler $0$ sonucunu verir:
+
+| $A$ (açık metin biti) | $B$ (anahtar biti) | $A \oplus B$ (şifreli bit) |
+|:---:|:---:|:---:|
+| $0$ | $0$ | $0$ |
+| $0$ | $1$ | $1$ |
+| $1$ | $0$ | $1$ |
+| $1$ | $1$ | $0$ |
+
+: XOR doğruluk tablosu {#tbl-xor}
+
+## Neden Kriptografinin Kalbinde XOR Var?
+
+"Neden AES veya OTP gibi sistemler veriyi şifrelemek için toplama, çıkarma veya AND kullanmıyor da XOR kullanıyor?" sorusunun cevabı, XOR'un şu dört cebirsel özelliğidir:
+
+1. **Birim eleman özelliği (identity):** Bir biti $0$ ile XOR'lamak onu değiştirmez.
+   $$A \oplus 0 = A$$
+2. **Kendi kendini yok etme (nilpotent özellik):** Bir biti kendisiyle XOR'larsanız sonuç daima $0$ olur — sihir buradadır.
+   $$A \oplus A = 0$$
+3. **Değişme özelliği (commutative):** Sıranın önemi yoktur.
+   $$A \oplus B = B \oplus A$$
+4. **Birleşme özelliği (associative):** İşlem önceliğinin önemi yoktur.
+   $$A \oplus (B \oplus C) = (A \oplus B) \oplus C$$
+
+::: {.callout-tip title="🔑 Mükemmel geri dönüşebilirlik (şifre çözme ispatı)"}
+XOR'un nilpotent özelliği, kriptografide **aynı fonksiyonun hem şifreleme hem de deşifreleme yapabilmesini** sağlar.
+
+Açık metin ($P$) ve anahtar ($K$) bitlerini XOR'layarak şifreli metni ($C$) elde ettiğimizi varsayalım:
+
+$$C = P \oplus K$$
+
+Şimdi bu şifreli metni tekrar aynı anahtarla XOR'layalım. Birleşme ve yok etme özelliklerini kullanarak orijinal metne nasıl döndüğümüzü izleyin:
+
+$$C \oplus K = (P \oplus K) \oplus K = P \oplus (K \oplus K)$$
+
+$K \oplus K = 0$ olduğundan denklem şu hâle gelir:
+
+$$C \oplus K = P \oplus 0 = P$$
+
+Yani şifrelerken de çözerken de **aynı matematiksel işlemi** yaparız. Bu, donanım (çip) tasarımında devasa bir maliyet ve hız tasarrufu sağlar.
+:::
+
+## 📝 Çözümlü Uygulamalar
+
+Modern sistemlerde XOR işlemi tek bir bit yerine, uzun bit dizileri (baytlar veya bloklar) üzerinde **karşılıklı (bitwise)** olarak uygulanır.
+
+:::: {#exm-bitwise-xor}
+8 bitlik (1 bayt) $P = 10110100$ açık metnini, $K = 01101011$ anahtarını kullanarak XOR ile şifreleyiniz. Ardından bulduğunuz sonucu tekrar aynı anahtarla XOR'layarak deşifre ediniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Bitleri alt alta yazarak sütun sütun XOR'layalım: aynıysa $0$, farklıysa $1$.
+
+**1. aşama — şifreleme ($C = P \oplus K$):**
+
+```
+P :  1 0 1 1 0 1 0 0
+K :  0 1 1 0 1 0 1 1
+     ─────────────────
+C :  1 1 0 1 1 1 1 1
+```
+
+Şifreli metin: `11011111`
+
+**2. aşama — deşifreleme ($P = C \oplus K$):**
+
+```
+C :  1 1 0 1 1 1 1 1
+K :  0 1 1 0 1 0 1 1
+     ─────────────────
+P :  1 0 1 1 0 1 0 0
+```
+
+Orijinal metin: `10110100`
+
+Görüldüğü gibi, aynı anahtarla ikinci kez XOR'landığında başlangıç noktasına kusursuz biçimde geri dönülmüştür.
+
+[$\boxtimes$]{.qed}
+:::
+::::

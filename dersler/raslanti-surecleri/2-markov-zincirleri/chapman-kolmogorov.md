@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Chapman-Kolmogorov EÅŸitlikleri
-

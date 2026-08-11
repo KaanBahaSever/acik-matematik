@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Koniklerin Kutupsal Denklemleri
-

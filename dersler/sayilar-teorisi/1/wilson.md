@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Wilson Teoremi
-

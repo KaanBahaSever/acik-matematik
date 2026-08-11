@@ -1,0 +1,151 @@
+---
+title: "Dijital İmzalar ve RSA İmza Şeması"
+description: "Kimlik doğrulama ve inkâr edememezlik problemini çözen dijital imzaların formal tanımı, hash-and-sign paradigması, RSA imza şeması, doğruluk ispatı ve çözümlü uygulama."
+---
+
+Asimetrik şifrelemeyle verinin **gizliliğini**, kriptografik özet fonksiyonlarıyla da verinin **bütünlüğünü** korumayı öğrendik. Ancak dijital dünyada çözülmesi gereken büyük bir problem daha vardır: **kimlik doğrulama (authentication)** ve **inkâr edememezlik (non-repudiation)**.
+
+İnternet üzerinden gelen bir e-postanın veya banka talimatının *gerçekten* iddia edilen kişi tarafından gönderildiğini ve gönderenin sonradan "bunu ben yapmadım" diyemeyeceğini nasıl garanti edebiliriz? İşte bu noktada, asimetrik şifreleme mantığının tam ters yönünde çalışan **dijital imzalar** devreye girer.
+
+::: {.callout-note title="📌 Paradigma değişimi: şifreleme ve imzalama"}
+Asimetrik sistemlerde anahtar kullanım yönü amaca göre tamamen değişir:
+
+* **Gizlilik (şifreleme) amacıyla:** Mesaj, *alıcının* **açık anahtarıyla** şifrelenir; yalnızca *alıcının* **gizli anahtarıyla** çözülebilir. Yani herkes mesaj gönderebilir, yalnızca alıcı okuyabilir.
+* **Kimlik doğrulama (imzalama) amacıyla:** Mesaj, *göndericinin* **gizli anahtarıyla** imzalanır; herkes *göndericinin* **açık anahtarıyla** bu imzayı doğrulayabilir. Yani yalnızca sahibi imza atabilir, herkes doğruluğunu teyit edebilir.
+:::
+
+## 🔒 Dijital İmzanın Formal Tanımı
+
+::: {#def-imza-semasi name="Dijital İmza Şeması"}
+Bir dijital imza şeması; mesaj uzayı $\mathcal{M}$, imza uzayı $\mathcal{S}$ ve anahtar uzayı $\mathcal{K}$ olmak üzere şu üç algoritmadan oluşur:
+
+1. **Anahtar üretimi (KeyGen):** Göndericiye ait bir $(pk, sk)$ anahtar çifti üretir. Burada $pk$ herkesin bildiği açık anahtar, $sk$ ise yalnızca göndericinin bildiği gizli anahtardır.
+2. **İmza oluşturma (Sign):** Göndericinin gizli anahtarı ve $m \in \mathcal{M}$ mesajı girdi olarak alınır, $s \in \mathcal{S}$ dijital imzası üretilir:
+   $$s = \operatorname{Sign}_{sk}(m)$$
+3. **İmza doğrulama (Verify):** Göndericinin açık anahtarı, $m$ mesajı ve $s$ imzası girdi olarak alınır. İmza gerçekten bu mesaj için ve bu gizli anahtarla üretilmişse **geçerli**, aksi hâlde **geçersiz** çıktısı üretilir:
+   $$\operatorname{Verify}_{pk}(m, s) \in \{\text{Geçerli}, \text{Geçersiz}\}$$
+:::
+
+## 🏗️ Hash-and-Sign Paradigması
+
+Teorik olarak koca bir dosyayı doğrudan asimetrik anahtarla imzalayabilirsiniz. Ancak büyük sayılarla üs alma işlemleri son derece yavaştır; 2 GB'lık bir video dosyasını doğrudan RSA ile imzalamak pratikte kullanılamaz sürelere yayılır.
+
+Ayrıca doğrudan mesajı imzalamak, **varoluşsal sahtecilik (existential forgery)** adı verilen saldırılara kapı aralar: ham RSA imzası çarpımsal olarak homomorfiktir, yani $s_1 \cdot s_2$ değeri $m_1 \cdot m_2$ mesajının geçerli imzası olur. Bu nedenle modern kriptografide **asla doğrudan mesaj imzalanmaz**.
+
+::: {.callout-tip title="💡 Altın kural: önce özetle, sonra imzala"}
+Dijital imza atılmadan önce mesajın, çakışmaya dayanıklı bir $H$ hash fonksiyonuyla (örneğin SHA-256) özeti çıkarılır. Ardından gizli anahtarla yalnızca bu **küçük özet değeri** imzalanır:
+
+$$s = \operatorname{Sign}_{sk}\big(H(m)\big)$$
+
+Alıcı da mesajın özetini kendisi hesaplar ve imzadan çıkan değerle karşılaştırır. Dosya ne kadar büyük olursa olsun, imzalama daima sabit boyutlu (örneğin 256 bit) bir sayı üzerinden çok hızlı biçimde gerçekleşir.
+:::
+
+## 🔑 RSA Dijital İmza Algoritması
+
+En yaygın bilinen ve kök sertifikalarda hâlâ kullanılan imza yöntemi RSA tabanlıdır. Matematiksel altyapısı, daha önce öğrendiğimiz RSA şifrelemesiyle aynı asalları ve totient kurallarını kullanır.
+
+::: {#def-rsa-imza name="RSA İmza Şeması"}
+**1. Anahtar üretimi.** İki büyük asal $p$ ve $q$ seçilir; $n = p \cdot q$ ve $\phi(n) = (p-1)(q-1)$ hesaplanır. $\gcd(a, \phi(n)) = 1$ olacak şekilde açık üs $a$ seçilir ve $a \cdot d \equiv 1 \pmod{\phi(n)}$ denkliğini sağlayan gizli üs $d$ bulunur.
+
+* Açık anahtar (doğrulama için): $(a, n)$
+* Gizli anahtar (imzalama için): $(d, n)$
+
+**2. İmza oluşturma (gönderici).** Gönderici mesajın özetini $h = H(m)$ olarak çıkarır ve kendi **gizli anahtarıyla** imzalar:
+$$s \equiv h^d \pmod n$$
+Oluşan $(m, s)$ çifti alıcıya gönderilir.
+
+**3. İmza doğrulama (alıcı).** Alıcı gelen imzayı göndericinin **açık anahtarıyla** çözerek özet değerine ulaşmaya çalışır:
+$$h' \equiv s^a \pmod n$$
+Alıcı aynı zamanda gelen mesajın özetini kendisi de hesaplar. Eğer $h' = H(m)$ ise imza geçerlidir: belge değiştirilmemiştir ve gizli anahtarın sahibi tarafından imzalanmıştır.
+:::
+
+:::: {#thm-rsa-imza-dogrulugu name="RSA İmzasının Doğruluğu"}
+Doğrulama adımındaki $s^a \pmod n$ işleminin sonucu her zaman orijinal mesajın özeti olan $H(m)$ değerine denktir.
+
+::: {.callout-note collapse="true" title="İspat"}
+İmza oluşturma denkleminden $s \equiv H(m)^d \pmod n$ olduğunu biliyoruz. Doğrulama fonksiyonunda $s$ yerine bu eşdeğerini koyalım:
+
+$$s^a \equiv \big(H(m)^d\big)^a \equiv H(m)^{d \cdot a} \pmod n$$
+
+Anahtar üretim adımından $a \cdot d \equiv 1 \pmod{\phi(n)}$ olduğunu ve çarpmanın değişme özelliği gereği $d \cdot a = a \cdot d$ olduğunu biliyoruz.
+
+RSA şifrelemesinin doğruluk ispatında Fermat'nın küçük teoremi ve Çin kalan teoremi yardımıyla gösterdiğimiz kural burada da birebir geçerlidir:
+
+$$H(m)^{a \cdot d} \equiv H(m) \pmod n$$
+
+Böylece $s^a \equiv H(m) \pmod n$ eşitliği sağlanır ve imzanın doğru biçimde eşleştiği kanıtlanmış olur.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 📝 Çözümlü Uygulama: Sayısal RSA İmzası
+
+:::: {#exm-rsa-imza}
+Bir kullanıcının RSA anahtar çifti için başlangıç asalları $p = 5$ ve $q = 11$, açık üs değeri ise $a = 3$ olarak belirlenmiştir. Bu kullanıcı, özet değeri $H(m) = 14$ olarak hesaplanan bir PDF dosyasını imzalayacaktır.
+
+Gerekli anahtarları oluşturunuz, dosyanın dijital imzasını hesaplayınız ve alıcı tarafında bu imzanın nasıl doğrulandığını gösteriniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Anahtar üretimi.**
+
+* Modül: $n = 5 \cdot 11 = 55$
+* Euler totient: $\phi(n) = (5-1)(11-1) = 4 \cdot 10 = 40$
+* Açık üs $a = 3$ verilmiş; $\gcd(3, 40) = 1$ şartı sağlanıyor.
+* Gizli üs, $3d \equiv 1 \pmod{40}$:
+  $$3 \cdot 27 = 81 = (40 \cdot 2) + 1 \equiv 1 \pmod{40} \implies d = 27$$
+
+Buradan: **açık anahtar** $(3, 55)$, **gizli anahtar** $(27, 55)$.
+
+**2. İmza oluşturma (gönderici adımı).**
+
+Gönderici özet değerini yalnızca kendisinin bildiği $d = 27$ ile imzalar:
+
+$$s \equiv 14^{27} \pmod{55}$$
+
+Ardışık kare alma yöntemiyle hesabı küçültelim:
+
+$$
+\begin{aligned}
+14^1 &\equiv 14 \pmod{55} \\
+14^2 &= 196 = (55 \cdot 3) + 31 \equiv 31 \pmod{55} \\
+14^4 &\equiv 31^2 = 961 = (55 \cdot 17) + 26 \equiv 26 \pmod{55} \\
+14^8 &\equiv 26^2 = 676 = (55 \cdot 12) + 16 \equiv 16 \pmod{55} \\
+14^{16} &\equiv 16^2 = 256 = (55 \cdot 4) + 36 \equiv 36 \pmod{55}
+\end{aligned}
+$$
+
+Üssü parçalayalım: $27 = 16 + 8 + 2 + 1$, dolayısıyla
+
+$$14^{27} = 14^{16} \cdot 14^{8} \cdot 14^{2} \cdot 14^{1} \equiv 36 \cdot 16 \cdot 31 \cdot 14 \pmod{55}$$
+
+Parçalı çarpalım:
+
+$$36 \cdot 16 = 576 = (55 \cdot 10) + 26 \equiv 26 \pmod{55}$$
+$$31 \cdot 14 = 434 = (55 \cdot 7) + 49 \equiv 49 \equiv -6 \pmod{55}$$
+
+Son çarpım:
+
+$$26 \cdot (-6) = -156$$
+
+$-156$'nın mod $55$ altındaki pozitif denkini bulalım ($55 \cdot 3 = 165$):
+
+$$-156 + 165 = 9 \implies s = 9$$
+
+**Oluşturulan dijital imza:** $s = 9$.
+
+**3. İmza doğrulama (alıcı adımı).**
+
+Alıcı dosyayı ve $s = 9$ imzasını alır; göndericinin açık anahtarı $(a, n) = (3, 55)$ ile imzayı açar:
+
+$$h' \equiv s^a \pmod n \implies h' \equiv 9^3 = 729 \pmod{55}$$
+
+$55 \cdot 13 = 715$ olduğundan:
+
+$$729 - 715 = 14 \implies h' = 14$$
+
+**Sonuç:** Alıcının imzadan çıkardığı değer ($h' = 14$), dosyanın orijinal özet değeriyle ($H(m) = 14$) birebir eşleşmiştir. İmza geçerlidir: belge yolda değiştirilmemiştir ve yalnızca $d = 27$ gizli anahtarına sahip kişi tarafından oluşturulabilir.
+
+[$\boxtimes$]{.qed}
+:::
+::::

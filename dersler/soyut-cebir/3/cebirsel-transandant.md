@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Cebirsel ve Transandant GeniÅŸlemeler
-

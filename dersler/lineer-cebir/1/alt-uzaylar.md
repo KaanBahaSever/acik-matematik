@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Alt VektÃ¶r UzaylarÄ±
-

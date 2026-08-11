@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Marjinal DaÄŸÄ±lÄ±mlar
-

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Matrislerin KÃ¶ÅŸegenleÅŸtirilmesi (Diagonalization)
-

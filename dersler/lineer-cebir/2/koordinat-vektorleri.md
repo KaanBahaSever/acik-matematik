@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Koordinat VektÃ¶rleri
-

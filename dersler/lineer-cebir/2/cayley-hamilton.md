@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Cayley-Hamilton Teoremi
-

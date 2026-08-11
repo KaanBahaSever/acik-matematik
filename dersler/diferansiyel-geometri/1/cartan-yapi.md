@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Cartan YapÄ± Denklemleri
-

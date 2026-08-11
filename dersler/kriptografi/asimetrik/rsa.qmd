@@ -1,0 +1,168 @@
+---
+title: "RSA (Rivest-Shamir-Adleman) Algoritması"
+description: "RSA'nın anahtar üretimi, şifreleme ve deşifreleme fonksiyonları; Fermat'nın küçük teoremi ve Çin kalan teoremine dayanan doğruluk ispatı ve çözümlü uygulama."
+---
+
+Asimetrik şifrelemenin teorik altyapısını inceledikten sonra, bu paradigmanın dünyadaki ilk ve en yaygın uygulaması olan **RSA** algoritmasını ele alacağız.
+
+RSA'nın güvenliği, sayılar teorisinin en temel zor problemlerinden biri olan **büyük sayıların asal çarpanlarına ayrılması (integer factorization problem)** ilkesine dayanır: bilgisayarlar için iki büyük asal sayıyı çarpmak (ileri yön) saliseler alırken, çarpım sonucundan hareketle orijinal asal çarpanları bulmak (geri yön) günümüz işlemcileriyle astronomik süreler alabilir.
+
+::: {.callout-note title="📌 Gerekli matematiksel ön bilgiler"}
+RSA adımlarını tam olarak kavrayabilmek için şu iki kavramın hatırlanması hayati önem taşır:
+
+1. **Euler totient fonksiyonu $\phi(n)$:** Bir $n$ pozitif tam sayısı için, $n$ ile aralarında asal olan pozitif tam sayıların adedidir. $p$ ve $q$ iki farklı asal sayı ise, fonksiyonun çarpımsallık özelliği gereği $\phi(p \cdot q) = (p-1)(q-1)$ olur.
+2. **Modüler çarpımsal ters:** $a \cdot d \equiv 1 \pmod{\phi(n)}$ denkliğini sağlayan $d$ değeridir. Bu değer **genişletilmiş Öklid algoritması** kullanılarak polinom zamanda hızlıca hesaplanır.
+:::
+
+## 🔑 Anahtar Üretim Süreci (Key Generation)
+
+Şifreli mesajı alacak taraf, kendi anahtar çiftini oluşturmak için şu adımları uygular:
+
+1. Birbirinden bağımsız, rastgele ve çok büyük iki asal sayı $p$ ve $q$ seçilir.
+2. Bu iki asalın çarpımı olan **kamusal modül** hesaplanır:
+   $$n = p \cdot q$$
+3. Bu modüle ait Euler totient değeri hesaplanır:
+   $$\phi(n) = (p-1)(q-1)$$
+4. $1 < a < \phi(n)$ aralığında, $\phi(n)$ ile aralarında asal olan bir **açık üs (encryption exponent)** seçilir:
+   $$\gcd\big(a, \phi(n)\big) = 1$$
+5. Seçilen $a$ değerinin mod $\phi(n)$ altındaki çarpımsal tersi olan **gizli üs (decryption exponent)** hesaplanır:
+   $$a \cdot d \equiv 1 \pmod{\phi(n)}$$
+
+Sonuçta:
+
+* **Açık anahtar ($pk$):** $(a, n)$ çiftidir; herkesin erişebileceği şekilde ilan edilir.
+* **Gizli anahtar ($sk$):** $(d, n)$ çiftidir; alıcı tarafından kesinlikle gizli tutulur.
+
+$p$, $q$ ve $\phi(n)$ değerleri de süreç sonunda güvenli biçimde imha edilmelidir — çünkü bunlardan herhangi biri gizli anahtarı doğrudan ele verir.
+
+::: {.callout-tip title="💡 Alternatif: Carmichael totient fonksiyonu"}
+Teorik anlatımlarda kolay anlaşılması açısından genellikle Euler totient fonksiyonu tercih edilir. Ancak gerçek uygulamalarda ve modern **PKCS#1** standartlarında anahtar üretimi sıklıkla **Carmichael totient fonksiyonu** ile yapılır:
+
+$$\lambda(n) = \operatorname{lcm}(p-1,\, q-1)$$
+
+$\lambda(n)$ değeri $\phi(n)$'e eşit veya ondan küçük bir çalışma alanı sunduğu için, modüler tersi alındığında bilgisayarsal olarak daha küçük ve dolayısıyla daha hızlı işlenen bir gizli anahtar üretilmesini sağlar. Algoritmanın şifreleme, deşifreleme ve genel matematiksel mantığı bu değişiklikten etkilenmez.
+:::
+
+## 🔒 Fonksiyonların Tanımı ve Doğruluk İspatı
+
+::: {#def-rsa-fonksiyonlari name="RSA Şifreleme ve Deşifreleme Fonksiyonları"}
+Gönderici, iletmek istediği açık metni $0 \le m < n$ şartını sağlayan bir $m \in \mathbb{Z}_n$ sayısına dönüştürür.
+
+**Şifreleme fonksiyonu**, alıcının açık anahtarı $pk = (a, n)$ ile şifreli metni üretir:
+$$c \equiv e_{pk}(m) \equiv m^a \pmod n$$
+
+Alıcı, güvenli olmayan kanaldan gelen $c$ metnini **deşifreleme fonksiyonu** ve gizli anahtarı $sk = (d, n)$ ile çözer:
+$$m \equiv d_{sk}(c) \equiv c^d \pmod n$$
+:::
+
+:::: {#thm-rsa-dogrulugu name="RSA Algoritmasının Doğruluğu"}
+Her $m \in \mathbb{Z}_n$ açık metni için, şifreleme ve ardından deşifreleme işlemleri uygulandığında orijinal mesaj hatasız biçimde elde edilir:
+
+$$(m^a)^d \equiv m^{ad} \equiv m \pmod n$$
+
+::: {.callout-note collapse="true" title="İspat"}
+Anahtar üretim adımından $a \cdot d \equiv 1 \pmod{\phi(n)}$ şartının geçerli olduğunu biliyoruz. Modüler denklik tanımı gereği bu, bir $k \in \mathbb{Z}$ tam sayısı için şu anlama gelir:
+
+$$ad = k \cdot \phi(n) + 1$$
+
+Bu durumda deşifreleme çıktısını üs kurallarıyla açalım:
+
+$$m^{ad} = m^{k \phi(n) + 1} = m \cdot \big(m^{\phi(n)}\big)^k$$
+
+Bu ifadenin mod $n$ altındaki denkliğini ispatlamak için **Çin kalan teoremi** gereği, ifadenin hem mod $p$ hem de mod $q$ altında $m$'ye denk olduğunu göstermek yeterlidir. İspatı mod $p$ için yapalım; mod $q$ için tamamen simetriktir.
+
+**Durum 1 — $\gcd(m, p) = 1$ ise.** Fermat'nın küçük teoremi uyarınca $m^{p-1} \equiv 1 \pmod p$ olur. $\phi(n) = (p-1)(q-1)$ eşitliğini yerine koyarsak:
+
+$$m^{ad} \equiv m \cdot \Big(m^{(p-1)(q-1)}\Big)^k \equiv m \cdot \Big(\big(m^{p-1}\big)^{q-1}\Big)^k \equiv m \cdot \big(1^{q-1}\big)^k \equiv m \pmod p$$
+
+**Durum 2 — $\gcd(m, p) \neq 1$ ise.** $p$ asal olduğundan $m$ sayısı $p$'nin tam katı olmak zorundadır, yani $m \equiv 0 \pmod p$. Sıfırın her pozitif kuvveti sıfır olacağından:
+
+$$m^{ad} \equiv 0^{ad} \equiv 0 \equiv m \pmod p$$
+
+Her iki durumda da $m^{ad} \equiv m \pmod p$ elde edilir. Aynı adımlar mod $q$ için uygulandığında $m^{ad} \equiv m \pmod q$ bulunur.
+
+$p$ ve $q$ farklı asallar olduğundan aralarında asaldır; $(m^{ad} - m)$ farkı hem $p$'ye hem $q$'ya bölünüyorsa çarpımlarına da bölünmek zorundadır:
+
+$$m^{ad} \equiv m \pmod{p \cdot q} \implies m^{ad} \equiv m \pmod n$$
+
+Böylece deşifreleme fonksiyonunun şifreli metni her koşulda orijinal açık metne dönüştürdüğü kanıtlanmış olur.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 📝 Çözümlü Uygulama
+
+:::: {#exm-rsa-uygulama}
+Bir RSA kurgusunda başlangıç asalları $p = 7$ ve $q = 11$ olarak seçilmiştir. Açık üs değeri $a = 7$ olduğuna göre anahtar çiftlerini hesaplayınız; ardından $m = 9$ açık metnini şifreleyip deşifre ediniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Anahtar üretimi.**
+
+* Kamusal modül: $n = 7 \cdot 11 = 77$
+* Totient değeri: $\phi(n) = (7-1)(11-1) = 6 \cdot 10 = 60$
+* Seçilen $a = 7$ değerinin $\phi(n) = 60$ ile aralarında asal olduğu doğrulanır: $\gcd(7, 60) = 1$.
+* Gizli üs hesabı, $7d \equiv 1 \pmod{60}$:
+  $$7 \cdot 43 = 301 = (60 \cdot 5) + 1 \equiv 1 \pmod{60} \implies d = 43$$
+
+Buradan anahtarlar: **açık anahtar** $pk = (7, 77)$, **gizli anahtar** $sk = (43, 77)$.
+
+**2. Şifreleme süreci.** Gönderici $m = 9$ mesajını şifreler:
+
+$$c \equiv m^a \pmod n \implies c \equiv 9^7 \pmod{77}$$
+
+Hesabı kolaylaştırmak için üssü parçalayalım:
+
+$$
+\begin{aligned}
+9^1 &\equiv 9 \pmod{77} \\
+9^2 &= 81 \equiv 4 \pmod{77} \\
+9^4 &\equiv 4^2 = 16 \pmod{77}
+\end{aligned}
+$$
+
+$9^7 = 9^4 \cdot 9^2 \cdot 9^1$ olduğundan:
+
+$$c \equiv 16 \cdot 4 \cdot 9 = 576 \pmod{77}$$
+
+$77 \cdot 7 = 539$ olduğundan $576 - 539 = 37$, yani $c = 37$.
+
+**3. Deşifreleme süreci.** Alıcı gelen $c = 37$ şifreli metnini gizli anahtarıyla çözer:
+
+$$m \equiv c^d \pmod n \implies m \equiv 37^{43} \pmod{77}$$
+
+Ardışık kare alma (square-and-multiply) yöntemiyle üsleri indirgeyelim:
+
+$$
+\begin{aligned}
+37^1 &\equiv 37 \pmod{77} \\
+37^2 &= 1369 = (77 \cdot 17) + 60 \equiv 60 \equiv -17 \pmod{77} \\
+37^4 &\equiv (-17)^2 = 289 = (77 \cdot 3) + 58 \equiv 58 \equiv -19 \pmod{77} \\
+37^8 &\equiv (-19)^2 = 361 = (77 \cdot 4) + 53 \equiv 53 \pmod{77} \\
+37^{16} &\equiv 53^2 = 2809 = (77 \cdot 36) + 37 \equiv 37 \pmod{77} \\
+37^{32} &\equiv 37^2 \equiv 60 \pmod{77}
+\end{aligned}
+$$
+
+$43$ sayısının ikilik açılımı $43 = 32 + 8 + 2 + 1$ olduğundan:
+
+$$37^{43} = 37^{32} \cdot 37^{8} \cdot 37^{2} \cdot 37^{1} \equiv 60 \cdot 53 \cdot 60 \cdot 37 \pmod{77}$$
+
+İşlemi kolaylaştırmak için $60 \equiv -17$ denkliğini kullanalım ve terimleri ikişer gruplayalım:
+
+$$(-17) \cdot (-17) = 289 \equiv 58 \equiv -19 \pmod{77}$$
+$$53 \cdot 37 = 1961 = (77 \cdot 25) + 36 \equiv 36 \pmod{77}$$
+
+Bu iki sonucu çarpalım:
+
+$$(-19) \cdot 36 = -684$$
+
+$-684$ sayısının pozitif denkini bulalım ($77 \cdot 9 = 693$):
+
+$$-684 + 693 = 9$$
+
+**Sonuç:** Deşifreleme tamamlanmış ve orijinal açık metin olan $m = 9$ değerine başarıyla geri dönülmüştür.
+
+[$\boxtimes$]{.qed}
+:::
+::::

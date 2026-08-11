@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# MantÄ±ksal Denklik
-

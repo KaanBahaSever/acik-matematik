@@ -1,0 +1,139 @@
+---
+title: "Lineer Hâle Dönüştürülebilir Modeller"
+description: "Üstel, üslü ve rasyonel regresyon modellerinin logaritma veya ters alma yoluyla doğrusallaştırılması ve en küçük karelerle çözümlü uygulama."
+---
+
+Regresyon analizinde bağımlı ($Y$) ve bağımsız ($X$) değişkenler arasındaki ilişki her zaman $Y = \beta_0 + \beta_1 X$ gibi düz bir doğru şeklinde olmak zorunda değildir. Bazen veriler bir eğri çizerek üstel, logaritmik veya üslü biçimde artış ya da azalış gösterir.
+
+Eğrisel bir ilişkiye en küçük kareler yöntemini doğrudan uygulamaya kalkarsak, çözümü çok zor denklem sistemleriyle karşılaşırız. Bunun yerine şu matematiksel hileyi yaparız: **orijinal denklemi logaritma veya ters alma gibi işlemlerle doğrusal bir formata dönüştürürüz.**
+
+::: {.callout-note title="📌 Dönüşümün temel mantığı"}
+Eğrisel bir modeli çözebilmek için değişkenleri yeni birer isme (örneğin $Y^{*}$ ve $X^{*}$) atayarak modeli $Y^{*} = A + B X^{*}$ formatına getiririz. Denklem artık doğrusal olduğundan, standart regresyon işlemlerini bu **yıldızlı değişkenler** üzerinden rahatça uygulayabiliriz. İşlem bitince ters dönüşüm yaparak orijinal katsayılara döneriz.
+:::
+
+## Sık Kullanılan Matematiksel Dönüşümler
+
+### 1. Üstel (Exponential) Model
+
+Verilerin başlangıçta yavaş, sonra hızlanarak arttığı durumlarda kullanılır. Doğrusallaştırmak için her iki tarafın doğal logaritması alınır.
+
+::: {.callout-tip title="🟢 Modelin doğrusallaştırılması"}
+**Genel denklem:**
+$$Y = c \cdot e^{aX}$$
+
+**Dönüşüm adımları:**
+$$\ln(Y) = \ln\!\left(c \cdot e^{aX}\right) = \ln(c) + \ln\!\left(e^{aX}\right) = \ln(c) + aX$$
+
+**Lineer format:** $Y^{*} = \ln(Y)$ ve $c^{*} = \ln(c)$ dersek denklem bilinen doğrusal formata dönüşür:
+$$Y^{*} = c^{*} + aX$$
+:::
+
+### 2. Üslü (Power) Model
+
+Bağımsız değişkenin üs olarak değil taban olarak yer aldığı modeldir. Doğrusallaştırmak için her iki tarafın logaritması alınır.
+
+::: {.callout-tip title="🟢 Modelin doğrusallaştırılması"}
+**Genel denklem:**
+$$Y = a_1 \cdot X^{a_2}$$
+
+**Dönüşüm adımları:**
+$$\log(Y) = \log\!\left(a_1 X^{a_2}\right) = \log(a_1) + a_2 \log(X)$$
+
+**Lineer format:** $Y^{*} = \log(Y)$, $a_1^{*} = \log(a_1)$ ve $X^{*} = \log(X)$ dersek model doğrusallaşır:
+$$Y^{*} = a_1^{*} + a_2 X^{*}$$
+
+Dikkat: bu modelde yalnızca $Y$ değil, **$X$ de dönüştürülür**.
+:::
+
+### 3. Rasyonel (Ters) Model
+
+Bağımlı ve bağımsız değişkenlerin bir oran ilişkisi içinde olduğu modeldir. Doğrusallaştırmak için eşitliğin her iki tarafının çarpmaya göre tersi alınır.
+
+::: {.callout-tip title="🟢 Modelin doğrusallaştırılması"}
+**Genel denklem:**
+$$Y = \frac{a_1 X}{b_1 + X}$$
+
+**Dönüşüm adımları:**
+$$\frac{1}{Y} = \frac{b_1 + X}{a_1 X} = \frac{b_1}{a_1 X} + \frac{X}{a_1 X} = \left(\frac{b_1}{a_1}\right)\frac{1}{X} + \frac{1}{a_1}$$
+
+**Lineer format:** $Y^{*} = \tfrac{1}{Y}$ ve $X^{*} = \tfrac{1}{X}$ dersek denklem doğrusallaşır:
+$$Y^{*} = C X^{*} + D, \qquad C = \frac{b_1}{a_1}, \quad D = \frac{1}{a_1}$$
+:::
+
+## ⚙️ Adım Adım Çözüm Algoritması
+
+1. **Modeli dönüştür.** Verilen modeli logaritma veya ters alma işlemiyle $Y^{*} = c^{*} + a X^{*}$ formatına getir.
+2. **Tabloyu güncelle.** Orijinal değerleri değil, dönüştürülmüş yıldızlı değerleri hesaplayarak yeni bir tablo oluştur.
+3. **Normal denklemleri yaz.** Yıldızlı değişkenlere göre Gauss normal denklemlerini kur.
+4. **Denklemi çöz.** Tablodaki toplamları yerine koyup bilinmeyen katsayıları bul.
+5. **Orijinal formata dön.** Bulduğun geçici katsayıları ters işlemle asıl sabitlere çevir ve modeli yaz.
+
+## 📝 Çözümlü Uygulama
+
+:::: {#exm-ustel-regresyon}
+Aşağıdaki verilere en uygun $\hat{Y} = c \cdot e^{aX}$ üstel regresyon eğrisini, en küçük kareler yöntemiyle uydurunuz.
+
+| $X$ | $0$ | $1$ | $2$ | $3$ | $4$ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| $Y$ | $1{,}5$ | $2{,}5$ | $3{,}5$ | $5{,}0$ | $7{,}5$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Modelin lineerleştirilmesi.**
+
+$Y = c e^{aX}$ denkleminin her iki tarafının doğal logaritmasını alıyoruz:
+
+$$\ln(Y) = \ln(c) + aX \implies Y^{*} = c^{*} + aX$$
+
+**2. Tablonun oluşturulması ($n = 5$).**
+
+Hesaplamalarda $Y$ yerine dönüştürülmüş değişken $Y^{*} = \ln(Y)$ kullanılacaktır. Değerler virgülden sonra beş basamağa yuvarlanmıştır.
+
+| $X_i$ | $Y_i$ | $Y^{*}_i = \ln(Y_i)$ | $X_i^2$ | $X_i Y^{*}_i$ |
+| :---: | :---: | :---: | :---: | :---: |
+| $0$ | $1{,}5$ | $0{,}40547$ | $0$ | $0{,}00000$ |
+| $1$ | $2{,}5$ | $0{,}91629$ | $1$ | $0{,}91629$ |
+| $2$ | $3{,}5$ | $1{,}25276$ | $4$ | $2{,}50552$ |
+| $3$ | $5{,}0$ | $1{,}60944$ | $9$ | $4{,}82832$ |
+| $4$ | $7{,}5$ | $2{,}01490$ | $16$ | $8{,}05960$ |
+| **Toplam** | | $\mathbf{6{,}19886}$ | $\mathbf{30}$ | $\mathbf{16{,}30973}$ |
+
+Ayrıca $\sum X_i = 10$'dur.
+
+**3. Gauss normal denklemlerinin kurulması.**
+
+Doğrusal formumuz $Y^{*} = c^{*} + aX$ için normal denklemler:
+
+$$6{,}19886 = 5c^{*} + 10a \tag{1}$$
+$$16{,}30973 = 10c^{*} + 30a \tag{2}$$
+
+**4. Denklemin çözülmesi.**
+
+$c^{*}$ terimlerini yok etmek için birinci denklemi $-2$ ile çarpıp ikinciye ekleyelim:
+
+$$-12{,}39772 = -10c^{*} - 20a$$
+
+Taraf tarafa topladığımızda:
+
+$$3{,}91201 = 10a \implies a = 0{,}39120$$
+
+Bulduğumuz $a$ değerini birinci denklemde yerine koyalım:
+
+$$6{,}19886 = 5c^{*} + 3{,}91201 \implies 5c^{*} = 2{,}28685 \implies c^{*} = 0{,}45737$$
+
+**5. Orijinal katsayıya dönüş.**
+
+$c^{*} = \ln(c)$ olduğundan, $c$'yi bulmak için ters işlem uygularız:
+
+$$c = e^{c^{*}} = e^{0{,}45737} \approx 1{,}5799$$
+
+**Sonuç:** Elde ettiğimiz değerleri orijinal üstel denklemde yerine koyarsak regresyon modelimiz
+
+$$\hat{Y} = 1{,}5799 \cdot e^{0{,}3912 X}$$
+
+olur.
+
+*Kontrol:* $X = 4$ için $\hat{Y} = 1{,}5799 \cdot e^{1{,}5648} \approx 1{,}5799 \cdot 4{,}782 \approx 7{,}56$ — gözlenen $7{,}5$ değerine oldukça yakındır.
+
+[$\boxtimes$]{.qed}
+:::
+::::

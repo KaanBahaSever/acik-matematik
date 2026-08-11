@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Kovaryant TÃ¼rev
-

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Normal Alt Gruplar
-

@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Dupin GÃ¶stergesi (Indicatrix)
-

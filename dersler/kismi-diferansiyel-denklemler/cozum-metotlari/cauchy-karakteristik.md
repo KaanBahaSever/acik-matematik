@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Cauchy Karakteristik Metodu
-

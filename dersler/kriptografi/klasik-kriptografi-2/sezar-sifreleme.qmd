@@ -1,0 +1,169 @@
+---
+title: "Sezar Şifrelemesi (Caesar Cipher)"
+description: "Alfabe kaydırmasına dayalı klasik Sezar şifresinin matematiksel modelini, anahtar uzayını, kaba kuvvet saldırısına karşı zafiyetini ve çözümlü uygulamalarını anlatır."
+---
+
+Klasik kriptografinin en bilinen ve tarihsel olarak en eski algoritmalarından biri olan Sezar şifrelemesi, adını onu generalleriyle gizli mesajlaşmak için kullanan Romalı komutan Julius Sezar'dan alır. Orijinal kullanımında Sezar, alfabedeki her harfi daima **üç harf ileri** kaydırarak mesajlarını gizlemiştir.
+
+Günümüzde "Sezar şifresi" terimi, sadece üç birimlik kaydırmayı değil; harflerin alfabe üzerinde belirli ve sabit bir sayı kadar ileri veya geri kaydırıldığı **genelleştirilmiş kaydırma şifrelerini (shift ciphers)** ifade etmek için kullanılır.
+
+## Sistemin Formal Tanımı
+
+::: {#def-sezar-model name="Sezar Şifrelemesinin Matematiksel Modeli"}
+Bir önceki bölümde tanımladığımız beş bileşenli kriptosistem anatomisini $(\mathcal{P}, \mathcal{C}, \mathcal{K}, \mathcal{E}, \mathcal{D})$, İngiliz alfabesi kullanarak mod 26 üzerinde Sezar algoritmasına uyarlarsak şu yapıyı elde ederiz:
+
+* **Açık metin ($\mathcal{P}$):** $\mathbb{Z}_{26} = \{0, 1, 2, \dots, 25\}$
+* **Şifreli metin ($\mathcal{C}$):** $\mathbb{Z}_{26} = \{0, 1, 2, \dots, 25\}$
+* **Anahtar uzayı ($\mathcal{K}$):** $\mathbb{Z}_{26}$ — kullanılabilecek kaydırma miktarları.
+* **Şifreleme fonksiyonu ($\mathcal{E}$):** Her $k \in \mathcal{K}$ ve $x \in \mathcal{P}$ için şifreleme, açık metin karakterine anahtar değerinin eklenmesiyle yapılır:
+  $$e_k(x) \equiv x + k \pmod{26}$$
+* **Deşifreleme fonksiyonu ($\mathcal{D}$):** Her $y \in \mathcal{C}$ için açma işlemi, şifreli karakterden anahtar değerinin çıkarılmasıyla yapılır:
+  $$d_k(y) \equiv y - k \pmod{26}$$
+:::
+
+## 🔑 Anahtar Uzayının Boyutu ve Güvenlik Zafiyeti
+
+Sezar şifrelemesinde anahtar uzayının büyüklüğü **doğrudan seçilen alfabenin boyutuna bağlıdır**. Şifreleme uzayımız 26 harfli İngiliz alfabesiyle sınırlandırıldığı için, harfleri kaydırabileceğimiz farklı miktar sayısı da $26$'dır.
+
+::: {.callout-note title="📌 Toplam anahtar uzayı"}
+İngiliz alfabesi ($m = 26$) için Sezar şifrelemesinin anahtar uzayı:
+$$|\mathcal{K}| = 26$$
+
+Ancak $k = 0$ durumu metni hiç değiştirmeyeceği için, etkili şifreleme yapan anahtar sayısı **$25$**'tir.
+:::
+
+**Bu neden kritik bir sorundur?** Kerckhoffs prensibini hatırlayalım: düşmanın şifreleme algoritmasını (her harfe $x + k \pmod{26}$ uygulandığını) bildiği kabul edilir; sistemin güvenliği yalnızca $k$ anahtarının gizliliğine dayanmalıdır. Fakat olası yalnızca $25$ anahtar bulunduğundan, düşman şifreli bir metni ele geçirdiğinde hiçbir zekice matematiğe başvurmadan **kaba kuvvet saldırısı (brute force attack)** ile tüm ihtimalleri deneyebilir. Bir insan bile kâğıt kalemle birkaç dakikada $25$ kaydırmanın tamamını test edip anlamlı metni bulabilir.
+
+Modern kriptografide güvenli kabul edilen sistemlerin anahtar uzayı (örneğin AES-256'da $2^{256}$) astronomik seviyededir. Sezar'ın alfabe boyutuna bağımlı $25$'lik anahtar uzayı ise modern standartlarda "yok" hükmündedir.
+
+## 📝 Çözümlü Uygulamalar
+
+Aşağıdaki örneklerde, bir önceki bölümdeki harf–sayı dönüşüm tablosunu referans alacağız. Çözümlere bakmadan önce tabloyu kullanarak denklemleri kendiniz kurmayı deneyin.
+
+:::: {#exm-sezar-sifrele}
+Açık metni `MATH` olan bir mesajı, $k = 7$ anahtarını kullanarak Sezar şifrelemesi ile şifreleyiniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Algoritmamız: $e_7(x) \equiv x + 7 \pmod{26}$.
+
+Her bir harfi sırayla tablodan sayısal karşılığına çevirip denklemde yerine koyalım:
+
+1. **M** $\to 12 \implies 12 + 7 = 19 \implies$ **T**
+2. **A** $\to 0 \implies 0 + 7 = 7 \implies$ **H**
+3. **T** $\to 19 \implies 19 + 7 = 26 \equiv 0 \pmod{26} \implies$ **A** *(modüler döngü burada devreye girdi)*
+4. **H** $\to 7 \implies 7 + 7 = 14 \implies$ **O**
+
+**Sonuç:** `MATH` kelimesi, $k = 7$ anahtarıyla `THAO` olarak şifrelenir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+:::: {#exm-sezar-desifre}
+$k = 5$ anahtarı ile şifrelenmiş olan `GTD` kapalı metnini deşifre ediniz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Algoritmamız: $d_5(y) \equiv y - 5 \pmod{26}$.
+
+1. **G** $\to 6 \implies 6 - 5 = 1 \implies$ **B**
+2. **T** $\to 19 \implies 19 - 5 = 14 \implies$ **O**
+3. **D** $\to 3 \implies 3 - 5 = -2$. Eksi bir sonuç bulduğumuzda, pozitif denki bulana kadar modülü ekleriz:
+   $$-2 \equiv -2 + 26 \equiv 24 \pmod{26} \implies \textbf{Y}$$
+
+**Sonuç:** Şifreli `GTD` metninin açık hâli `BOY` kelimesidir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+:::: {#exm-sezar-anahtar-bulma}
+Düşman haberleşme hattından `WKLV` şifreli metnini ele geçirdiniz. Bunun aslında İngilizce `THIS` kelimesi olduğu bilindiğine göre, kullanılan Sezar anahtarını ($k$) cebirsel olarak bulunuz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Şifreleme kuralının $e_k(x) \equiv y \pmod{26}$ olduğunu biliyoruz. İlk harf olan **T** (açık metin) ile **W** (şifreli metin) arasındaki denklemi kurarak doğrudan çözüme ulaşabiliriz.
+
+Tabloya göre:
+
+* **T** $\to 19$ (açık metin, $x$)
+* **W** $\to 22$ (şifreli metin, $y$)
+
+Denklemi kuralım:
+$$19 + k \equiv 22 \pmod{26}$$
+$$k \equiv 22 - 19 \pmod{26}$$
+$$k \equiv 3 \pmod{26}$$
+
+**Doğrulama.** Bulduğumuz $k = 3$ anahtarının diğer harfler için de çalışıp çalışmadığını test edelim:
+
+* **H** $(7) + 3 = 10 \implies$ **K** ✓
+* **I** $(8) + 3 = 11 \implies$ **L** ✓
+* **S** $(18) + 3 = 21 \implies$ **V** ✓
+
+**Sonuç:** Düşmanın kullandığı anahtar $k = 3$'tür — yani orijinal Julius Sezar anahtarı.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 🕹️ İnteraktif Sezar Hesaplayıcı
+
+Yukarıda öğrendiğimiz şifreleme ve deşifreleme fonksiyonlarının ($x \pm k \pmod{26}$) gerçek zamanlı olarak nasıl çalıştığını görmek için aşağıdaki aracı kullanabilirsiniz. Farklı mesajlar yazıp anahtar ($k$) değerini kaydırarak metnin şifreli uzayda nasıl evrildiğini test edin.
+
+```{=html}
+<div class="hesaplayici" id="sezar-hesaplayici">
+  <h4>🧮 Canlı Sezar Hesaplayıcı</h4>
+
+  <label>
+    <span>İşlem türü</span>
+    <select data-rol="mod">
+      <option value="sifrele">🔒 Şifrele (encrypt)</option>
+      <option value="desifrele">🔓 Deşifrele (decrypt)</option>
+    </select>
+  </label>
+
+  <label>
+    <span>Anahtar (k = <b data-rol="k-etiket">3</b>)</span>
+    <input type="range" data-rol="k" min="0" max="25" value="3">
+  </label>
+
+  <label>
+    <span>Mesaj</span>
+    <input type="text" data-rol="girdi" value="MATH" placeholder="Şifrelenecek veya çözülecek mesaj...">
+  </label>
+
+  <label>
+    <span>Sonuç</span>
+    <output data-rol="cikti"></output>
+  </label>
+
+  <p class="hesap-not">
+    Yalnızca A–Z harfleri işleme alınır; rakamlar, boşluklar ve noktalama işaretleri
+    olduğu gibi aktarılır.
+  </p>
+</div>
+
+<script>
+(function () {
+  const kutu = document.getElementById("sezar-hesaplayici");
+  const al = (rol) => kutu.querySelector('[data-rol="' + rol + '"]');
+  const mod = al("mod"), k = al("k"), kEtiket = al("k-etiket");
+  const girdi = al("girdi"), cikti = al("cikti");
+
+  function hesapla() {
+    const kaydir = Number(k.value);
+    const yon = mod.value === "sifrele" ? kaydir : -kaydir;
+    kEtiket.textContent = kaydir;
+
+    cikti.textContent = girdi.value.toUpperCase().replace(/[A-Z]/g, (harf) => {
+      const x = harf.charCodeAt(0) - 65;
+      return String.fromCharCode(((x + yon) % 26 + 26) % 26 + 65);
+    });
+  }
+
+  [mod, k, girdi].forEach((el) => {
+    el.addEventListener("input", hesapla);
+    el.addEventListener("change", hesapla);
+  });
+  hesapla();
+})();
+</script>
+```

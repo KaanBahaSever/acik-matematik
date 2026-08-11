@@ -1,0 +1,90 @@
+---
+title: "Vernam Şifresi ve One-Time Pad (Kırılamazlık İspatı)"
+description: "Tam gizlilik sağlayan One-Time Pad algoritmasını, Shannon'un kusursuz gizlilik ilkesini, üç altın kuralını, two-time pad zafiyetini ve anahtar dağıtım problemini ele alır."
+---
+
+Kriptografi tarihindeki tüm algoritmalar (Sezar, Vigenère, Enigma, hatta günümüzdeki RSA ve AES) yeterli zaman ve işlem gücü verildiğinde teorik olarak kırılabilir. Kırılamayacağı matematiksel olarak ispatlanmış **tek** şifreleme sistemi ise **One-Time Pad (tek kullanımlık şerit)** algoritmasıdır.
+
+Temeli, 1917'de Gilbert Vernam'ın icat ettiği ikili toplama işlemine (**XOR**) dayanır.
+
+::: {#def-otp name="One-Time Pad (Vernam Şifresi) Kriptosistemi"}
+Modern One-Time Pad, alfabe harfleri yerine doğrudan bit dizileri üzerinde işlem yapar. Mesaj uzunluğunun $n$ bit olduğunu varsayarsak, beş bileşenli kriptosistem anatomisi şöyle tanımlanır:
+
+* **Açık metin ($\mathcal{P}$):** Uzunluğu $n$ olan tüm olası bit dizilerinin kümesi, $\{0, 1\}^n$.
+* **Şifreli metin ($\mathcal{C}$):** Uzunluğu $n$ olan tüm olası bit dizilerinin kümesi, $\{0, 1\}^n$.
+* **Anahtar uzayı ($\mathcal{K}$):** Uzunluğu $n$ olan tüm olası bit dizilerinin kümesi, $\{0, 1\}^n$.
+* **Şifreleme fonksiyonu ($\mathcal{E}$):** Açık metin vektörü ile anahtar vektörünün karşılıklı XOR'lanmasıdır:
+  $$e_K(x) \equiv x \oplus K \pmod 2$$
+* **Deşifreleme fonksiyonu ($\mathcal{D}$):** Şifreli metnin aynı anahtarla tekrar XOR'lanmasıdır — XOR'un nilpotent, yani kendisinin tersi olma özelliği gereği:
+  $$d_K(y) \equiv y \oplus K \pmod 2$$
+:::
+
+:::: {#thm-kusursuz-gizlilik name="Shannon'un Kusursuz Gizlilik (Perfect Secrecy) İlkesi"}
+Claude Shannon, 1949 yılında bir sistemin kusursuz gizliliğe sahip olabilmesi için şu şartı sağlaması gerektiğini matematiksel olarak ispatlamıştır:
+
+$$P(x \mid y) = P(x)$$
+
+Yani şifreli metni ($y$) ele geçiren bir düşmanın, orijinal mesajın ($x$) ne olduğuna dair yapacağı olasılık hesabı, şifreli metni hiç görmeden yapacağı tahminle **birebir aynı olmalıdır**. Şifreli metin, orijinal metin hakkında **sıfır** bilgi verir.
+
+::: {.callout-note collapse="true" title="İspat (One-Time Pad için)"}
+One-Time Pad bu şartı sağlar; çünkü her $x$ açık metni ve her $y$ şifreli metni için $x \oplus K = y$ eşitliğini sağlayan **benzersiz ve tek bir $K$ anahtarı** mutlaka vardır (nitekim $K = x \oplus y$).
+
+Anahtar tamamen rastgele ve düzgün dağılımlı seçildiğinden, şifreli metnin altından "SALDIR" kelimesinin çıkma ihtimali ile "BEKLE" kelimesinin çıkma ihtimali matematiksel olarak tamamen eşittir. Düşman sonsuz işlem gücüne sahip olsa bile doğru mesajı ayırt edemez; çünkü ortada analiz edilecek istatistiksel bir iz yoktur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## One-Time Pad'in Üç Altın Kuralı
+
+Bu sistemin kusursuz olabilmesi için aşağıdaki üç kuralın **istisnasız** uygulanması gerekir; biri bile ihlal edilirse sistem çöker.
+
+1. **Tam rastgelelik (true randomness):** Anahtar, hiçbir algoritmik kurala bağlı olmayan, fiziksel olaylardan (radyoaktif bozunma, atmosferik gürültü vb.) elde edilmiş gerçek rastgele bitlerden oluşmalıdır. Bilgisayarların ürettiği sözde rastgele (pseudo-random) sayılar kesinlikle kullanılamaz.
+2. **Uzunluk şartı:** Anahtarın uzunluğu, şifrelenecek açık metnin uzunluğuna **eşit veya ondan büyük** olmalıdır: $|K| \ge |x|$.
+3. **Tek kullanımlık (never reuse):** Bir anahtar şeridi yalnızca bir mesaj için kullanılmalı, ardından fiziksel veya dijital olarak **imha edilmelidir**.
+
+:::: {#exm-two-time-pad name="İki Kez Kullanılan Şerit (Two-Time Pad) Zafiyeti"}
+Üçüncü kural ihlal edilip aynı $K$ anahtarı ile iki farklı mesaj ($x_1$ ve $x_2$) şifrelenirse, düşman bu durumu matematiksel olarak nasıl istismar eder?
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Aynı $K$ anahtarı kullanıldığında üretilen şifreli metinler şunlardır:
+
+$$
+\begin{aligned}
+y_1 &= x_1 \oplus K \\
+y_2 &= x_2 \oplus K
+\end{aligned}
+$$
+
+Düşman hattı dinleyip bu iki şifreli metni ele geçirir ve bunları birbiriyle XOR'larsa, XOR'un değişme ve birleşme özellikleri ile $K \oplus K = 0$ kuralı gereği anahtarlar birbirini yok eder:
+
+$$
+\begin{aligned}
+y_1 \oplus y_2 &= (x_1 \oplus K) \oplus (x_2 \oplus K) \\
+&= x_1 \oplus x_2 \oplus (K \oplus K) \\
+&= x_1 \oplus x_2 \oplus 0 \\
+&= x_1 \oplus x_2
+\end{aligned}
+$$
+
+**Sonuç:** Düşmanın elinde artık anahtardan tamamen arındırılmış, doğrudan iki orijinal mesajın birbirine XOR'lanmış hâli vardır. Doğal dil analizleriyle bu iki metin birbirinden ayrıştırılıp okunabilir. Tarihteki ünlü **Venona Projesi**'nde Sovyet şifrelerinin kırılma sebebi tam olarak anahtar şeritlerinin yeniden kullanılmasıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Madem Kusursuz, Neden Her Yerde Kullanmıyoruz?
+
+Akla gelen ilk soru şudur: *"Eğer One-Time Pad kırılamıyorsa, neden bankalar, mesajlaşma uygulamaları veya ordular sürekli AES ve RSA gibi teorik olarak kırılabilir algoritmalar kullanıyor?"*
+
+Cevap, kriptografinin en büyük açmazı olan **anahtar dağıtım probleminde (key distribution problem)** gizlidir.
+
+One-Time Pad'in ikinci kuralı, anahtarın en az mesaj kadar uzun olmasını gerektirir. Arkadaşınıza 10 GB'lık bir video dosyasını OTP ile şifreleyerek göndermek isterseniz, ona öncesinde **tamamen rastgele üretilmiş 10 GB'lık bir anahtar dosyasını** mutlak güvenli bir yolla (örneğin bir flash belleği kuryeyle) ulaştırmanız gerekir.
+
+::: {.callout-important title="🔁 Paradoks"}
+Eğer 10 GB'lık bir veriyi düşmanın eline geçmeden karşı tarafa ulaştırabilecek kadar güvenli bir kanalınız zaten varsa, neden o kanaldan anahtarı göndermek yerine *doğrudan şifrelemek istediğiniz videoyu* göndermiyorsunuz?
+:::
+
+İşte bu pratik imkânsızlık yüzünden One-Time Pad gündelik hayatta kullanılamaz; yalnızca Soğuk Savaş dönemindeki Moskova–Washington "kırmızı telefon" hattı gibi çok yüksek güvenlikli ve düşük veri hacimli askerî/diplomatik haberleşmelerde kullanılabilmiştir.
+
+Bu problem, kriptografinin bir sonraki büyük devrimini —**asimetrik (açık anahtarlı) kriptografiyi**— doğuran temel motivasyondur.

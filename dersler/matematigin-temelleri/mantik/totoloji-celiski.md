@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Totoloji ve Ã‡eliÅŸki
-

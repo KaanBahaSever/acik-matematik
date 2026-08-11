@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Halka HomomorfizmalarÄ±
-

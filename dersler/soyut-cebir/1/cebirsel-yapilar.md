@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Cebirsel YapÄ±lara GiriÅŸ
-

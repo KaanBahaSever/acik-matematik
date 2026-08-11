@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# EBOB ve EKOK KavramlarÄ±
-

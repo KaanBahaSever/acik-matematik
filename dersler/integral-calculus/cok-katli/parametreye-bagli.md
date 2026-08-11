@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Parametreye BaÄŸlÄ± Ä°ntegraller
-

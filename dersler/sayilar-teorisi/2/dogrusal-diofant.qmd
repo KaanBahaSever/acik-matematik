@@ -1,0 +1,202 @@
+---
+title: "Doğrusal (Lineer) Diofant Denklemleri"
+description: "ax + by = c biçimindeki doğrusal Diofant denklemlerinin çözülebilirlik şartı, genel çözüm teoremi ve genişletilmiş Öklid algoritmasıyla çözümlü örnekler."
+---
+
+Sayılar teorisinde katsayıları ve aranan çözümleri yalnızca **tam sayılar** olan denklemlere Diofant denklemleri denir. Bu bölümde yüksek dereceli karmaşık yapılar yerine, modüler aritmetik ve Öklid algoritmasıyla doğrudan bağlantılı olan birinci dereceden denklemleri inceleyeceğiz.
+
+## 1. Tanım ve Çözülebilirlik Şartı
+
+::: {#def-diofant name="Birinci Dereceden İki Bilinmeyenli Diofant Denklemi"}
+$a, b, c \in \mathbb{Z} \setminus \{0\}$ olmak üzere,
+
+$$ax + by = c$$
+
+şeklinde ifade edilen ve yalnızca tam sayılı $x$ ve $y$ çözümleri aranan denklemlere **birinci dereceden iki bilinmeyenli Diofant denklemi** denir.
+:::
+
+Bu denklemleri çözmek, daha önce öğrendiğimiz lineer kongrüansları çözmekle birebir aynı şeydir; çünkü
+
+$$ax + by = c \iff ax \equiv c \pmod b$$
+
+denkliği vardır. Dolayısıyla $ax + by = c$ denklemini çözme problemi, $ax \equiv c \pmod b$ kongrüansını çözme problemine denktir.
+
+::: {.callout-note title="💡 Çözülebilirlik ve sadeleştirme kuralı"}
+1. **Çözülebilirlik şartı.** Bir $ax + by = c$ Diofant denkleminin tam sayılı çözümünün olabilmesi için gerek ve yeter koşul $\gcd(a, b) \mid c$ olmasıdır.
+2. **Sadeleştirme.** Bu şart sağlanıyorsa, işlemleri kolaylaştırmak adına denklemin her iki tarafını ortak bölene böleriz:
+   $$\frac{a}{\gcd(a,b)}x + \frac{b}{\gcd(a,b)}y = \frac{c}{\gcd(a,b)}$$
+3. Bu sadeleştirme sonucunda yeni katsayılar daima aralarında asal olur. Bu yüzden Diofant denklemlerini incelerken genel olarak $\gcd(a, b) = 1$ olan sadeleştirilmiş formlar üzerinde çalışmak yeterlidir.
+:::
+
+## 2. Genel Çözüm Teoremi
+
+Elimizde denklemi sağlayan tek bir başlangıç çözümü varsa, bu çözümü kullanarak sonsuz sayıdaki diğer tüm çözümleri nasıl bulacağımızı aşağıdaki teorem söyler.
+
+:::: {#thm-diofant-genel-cozum name="Diofant Denkleminin Genel Çözümü"}
+$a, b, c \in \mathbb{Z} \setminus \{0\}$ ve $\gcd(a, b) = 1$ olsun. $ax + by = c$ Diofant denkleminin bir tam sayılı özel çözümü $(x_0, y_0)$ ise, denklemin **bütün** tam sayılı çözümleri $t \in \mathbb{Z}$ olmak üzere şöyledir:
+
+$$x = x_0 + b t, \qquad y = y_0 - a t$$
+
+::: {.callout-note collapse="true" title="İspat"}
+$(x, y)$, $ax + by = c$ denkleminin herhangi bir tam sayılı çözümü olsun. $(x_0, y_0)$ da özel bir çözüm olduğundan $ax_0 + by_0 = c$'dir. Bu iki denklemi taraf tarafa çıkaralım:
+
+$$a(x - x_0) + b(y - y_0) = 0$$
+
+Terimlerden birini karşıya atalım:
+
+$$a(x - x_0) = -b(y - y_0)$$
+
+Bu eşitlikten $b$ sayısının sol tarafı, yani $a(x - x_0)$ çarpımını tam böldüğünü anlıyoruz:
+
+$$b \mid a(x - x_0)$$
+
+Teoremin başında $\gcd(a, b) = 1$ kabul etmiştik. Öklid lemması gereği, $b$ bir çarpımı bölüyorsa ve çarpanlardan biriyle ($a$) aralarında asalsa, diğer çarpanı bölmek zorundadır:
+
+$$b \mid (x - x_0) \implies x - x_0 = bt \quad (t \in \mathbb{Z}) \implies x = x_0 + bt$$
+
+Şimdi $(x - x_0) = bt$ ifadesini asıl denklemde yerine yazalım:
+
+$$a(bt) + b(y - y_0) = 0$$
+
+Her iki tarafı $b \neq 0$'a bölersek:
+
+$$at + y - y_0 = 0 \implies y = y_0 - at$$
+
+Tersine, bulduğumuz $x = x_0 + bt$ ve $y = y_0 - at$ tam sayıları denklemde yerine konulduğunda denklemi her zaman sağlar; dolayısıyla tüm çözümleri bulmuş oluruz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## 3. Genişletilmiş Öklid Algoritmasıyla Çözümlü Örnekler
+
+Katsayılar küçükse deneme yanılmayla bir $(x_0, y_0)$ bulunabilir. Ancak katsayılar büyükse, **genişletilmiş Öklid algoritması** kullanarak en büyük ortak böleni geriye doğru açar ve ilk çözümü algoritmik olarak buluruz.
+
+:::: {#exm-diofant-cozumsuz}
+$30x + 66y = 41$ Diofant denkleminin çözümünü araştırınız.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Çözülebilirlik şartını kontrol edelim: $\gcd(a, b) \mid c$ olmalıdır.
+
+$$\gcd(30, 66) = 6$$
+
+Ancak $6$ sayısı $41$'i tam bölmez ($6 \nmid 41$). Bu nedenle verilen Diofant denklemi **çözümsüzdür**; hiçbir tam sayı çözümü yoktur.
+
+Sezgisel olarak: sol taraftaki her terim $6$'nın katı olduğundan toplam da daima $6$'nın katı olmak zorundadır, oysa $41$ değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-diofant-291}
+$291x + 549y = 54$ Diofant denkleminin tüm tam sayı çözümlerini bulunuz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Çözülebilirlik ve sadeleştirme.**
+
+$\gcd(291, 549) = 3$ ve $3 \mid 54$ olduğundan denklemin sonsuz çözümü vardır. Her iki tarafı $3$'e bölelim:
+
+$$97x + 183y = 18$$
+
+Artık aralarında asal olan $97$ ve $183$ ile çalışacağız.
+
+**2. Öklid algoritması.**
+
+$$
+\begin{aligned}
+183 &= 1 \cdot 97 + 86 &&\implies 86 = 183 - 97 \\
+97 &= 1 \cdot 86 + 11 &&\implies 11 = 97 - 86 \\
+86 &= 7 \cdot 11 + 9 &&\implies 9 = 86 - 7 \cdot 11
+\end{aligned}
+$$
+
+Algoritmayı $1$ kalanına kadar indirmeye gerek yoktur: $9$ sayısı, aradığımız $18$'in tam yarısıdır. İşlemi burada kesip $9$'u yalnız bırakıyoruz.
+
+**3. Geriye doğru yerine koyma.**
+
+$$
+\begin{aligned}
+9 &= 86 - 7 \cdot 11 \\
+  &= 86 - 7 (97 - 86) \\
+  &= 8 \cdot 86 - 7 \cdot 97 \\
+  &= 8 (183 - 97) - 7 \cdot 97 \\
+  &= 8 \cdot 183 - 15 \cdot 97
+\end{aligned}
+$$
+
+Doğrusal birleşimimizi bulduk: $97 \cdot (-15) + 183 \cdot 8 = 9$. *(Sağlama: $-1455 + 1464 = 9$ ✓)*
+
+**4. Hedef denkleme ulaşma.**
+
+Sadeleşmiş denklemimizin sağ tarafı $9$ değil $18$'di; eşitliğin her iki tarafını $2$ ile çarpalım:
+
+$$97 \cdot (-30) + 183 \cdot 16 = 18$$
+
+*(Sağlama: $-2910 + 2928 = 18$ ✓)* O hâlde özel çözümümüz:
+
+$$x_0 = -30, \qquad y_0 = 16$$
+
+**5. Genel çözüm.**
+
+Sadeleşmiş denklemde $a = 97$ ve $b = 183$ olduğundan:
+
+$$x = -30 + 183t, \qquad y = 16 - 97t \qquad (t \in \mathbb{Z})$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-diofant-312}
+$312x + 51y = 9$ Diofant denklemini çözünüz.
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+**1. Sadeleştirme.** $\gcd(312, 51) = 3$ ve $3 \mid 9$ olduğundan çözüm vardır. Üçe bölelim:
+
+$$104x + 17y = 3$$
+
+**2. Öklid algoritması ($104$ ve $17$ için).**
+
+$$
+\begin{aligned}
+104 &= 6 \cdot 17 + 2 \\
+17 &= 8 \cdot 2 + 1 \\
+2 &= 2 \cdot 1 + 0
+\end{aligned}
+$$
+
+**3. Geriye dönüş.**
+
+$$
+\begin{aligned}
+1 &= 17 - 8 \cdot 2 \\
+  &= 17 - 8(104 - 6 \cdot 17) \\
+  &= 17 - 8 \cdot 104 + 48 \cdot 17 \\
+  &= 104 \cdot (-8) + 17 \cdot 49
+\end{aligned}
+$$
+
+*(Sağlama: $-832 + 833 = 1$ ✓)*
+
+**4. Hedef denkleme genişletme.** Denklemin sağ tarafı $3$ olduğu için eşitliğin iki tarafını $3$ ile çarpalım:
+
+$$3 = 104 \cdot (-24) + 17 \cdot 147$$
+
+*(Sağlama: $-2496 + 2499 = 3$ ✓)* Buradan özel çözüm: $x_0 = -24$, $y_0 = 147$.
+
+**5. Genel çözüm.** $a = 104$ ve $b = 17$ kullanılarak:
+
+$$x = -24 + 17t, \qquad y = 147 - 104t \qquad (t \in \mathbb{Z})$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## 4. Çalışma Problemleri
+
+::: {#exr-diofant name="Diofant Denklemleri"}
+Aşağıdaki Diofant denklemlerinin bütün tam sayılı çözümlerini bulunuz. Önce çözülebilirlik şartı olan $\gcd(a,b) \mid c$ kuralını kontrol etmeyi unutmayın.
+
+**a)** $3x + 5y = 1$ &nbsp;&nbsp; **b)** $5x + 3y = 52$ &nbsp;&nbsp; **c)** $40x + 63y = 521$ &nbsp;&nbsp; **d)** $330x + 175y = 50$
+
+**e)** $15x - 7y = 111$ &nbsp;&nbsp; **f)** $12x + 501y = 1$ &nbsp;&nbsp; **g)** $10x - 7y = 17$ &nbsp;&nbsp; **h)** $15x + 11y = 1$
+:::

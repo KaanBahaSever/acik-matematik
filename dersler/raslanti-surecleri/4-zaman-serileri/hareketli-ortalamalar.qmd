@@ -1,0 +1,137 @@
+---
+title: "Hareketli Ortalamalar Metodu (Tek ve İki Katlı)"
+description: "Zaman serilerinde gürültüyü yumuşatan tek katlı ve trend içeren serilerde kullanılan iki katlı hareketli ortalamalar yöntemi ile çözümlü uygulamalar."
+---
+
+Zaman serilerinde veriler bazen rastgele ve anlık dalgalanmalar (gürültü) gösterir. Bu anlık zıplama ve düşüşleri yumuşatıp serinin asıl gidişatını görmek için **hareketli ortalamalar metodu** kullanılır. Yöntemin temel mantığı, geçmişteki belirli sayıda periyodun ortalamasını alarak geleceği tahmin etmektir.
+
+Zaman serisinde trend (istikrarlı büyüme veya küçülme) olup olmamasına göre yöntem ikiye ayrılır: **tek katlı** ve **iki katlı** hareketli ortalamalar.
+
+## 1. Tek Katlı Hareketli Ortalamalar (Trend Yoksa)
+
+Verilerde zamanla sürekli artan veya azalan bir trend yoksa, geçmiş $n$ dönemin basit aritmetik ortalaması alınarak bir sonraki periyot tahmin edilir. Zaman ilerledikçe en eski veri hesaplamadan çıkarılır ve en yeni veri dâhil edilir; bu yüzden ortalama "hareket eder".
+
+::: {#def-tek-katli-hom name="Tek Katlı Hareketli Ortalama"}
+$n$ periyotluk tek katlı hareketli ortalama, $t$ zamanı dâhil olmak üzere geçmiş $n$ adet gerçek değerin ortalamasıdır:
+
+$$\mu_t = \frac{Y_t + Y_{t-1} + Y_{t-2} + \dots + Y_{t-n+1}}{n}$$
+
+Bir sonraki periyodun tahmini değeri bu ortalamaya eşittir:
+
+$$\hat{Y}_{t+1} = \mu_t$$
+
+Burada $n$, hareketli ortalamanın hesaplanacağı geçmiş periyot sayısını ifade eder.
+:::
+
+::: {.callout-warning title="📌 Formül hatasına dikkat: indis kuralı"}
+Bazı kaynaklarda formülün pay kısmında $Y_{t+1}$ (gelecek zaman) ifadesinin yer aldığı hatalı yazımlar görülebilir. Bir model, geleceği tahmin etmek için gelecekteki veriyi kullanamaz.
+
+Doğru hesaplama, içinde bulunduğumuz $t$ anından geriye doğru giderek tam $n$ adet terimi toplamaktır.
+:::
+
+:::: {#exm-tek-katli-hom}
+Aşağıdaki zaman serisi için üç aylık ($n = 3$) tek katlı hareketli ortalamaları hesaplayarak 6. ay için tahmini değeri bulunuz.
+
+| $t$ (ay) | $1$ | $2$ | $3$ | $4$ | $5$ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| $Y_t$ | $12$ | $15$ | $18$ | $14$ | $16$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Periyot sayımız $n = 3$ olduğu için ortalama almaya ancak 3. aydan itibaren başlayabiliriz:
+
+$$
+\begin{aligned}
+\mu_3 &= \frac{12 + 15 + 18}{3} = 15{,}00 &&\implies \hat{Y}_4 = 15{,}00 \\
+\mu_4 &= \frac{15 + 18 + 14}{3} \approx 15{,}67 &&\implies \hat{Y}_5 = 15{,}67 \\
+\mu_5 &= \frac{18 + 14 + 16}{3} = 16{,}00 &&\implies \hat{Y}_6 = 16{,}00
+\end{aligned}
+$$
+
+Tablo hâlinde:
+
+| $t$ | $Y_t$ | $\mu_t$ (hareketli ortalama) | $\hat{Y}_t$ (tahmin) |
+| :---: | :---: | :---: | :---: |
+| $1$ | $12$ | — | — |
+| $2$ | $15$ | — | — |
+| $3$ | $18$ | $15{,}00$ | — |
+| $4$ | $14$ | $15{,}67$ | $15{,}00$ |
+| $5$ | $16$ | $16{,}00$ | $15{,}67$ |
+| $6$ | — | — | $\mathbf{16{,}00}$ |
+
+**Sonuç:** 5. aydaki ortalamayı kullanarak 6. ayın tahmini değerini $\hat{Y}_6 = 16{,}00$ olarak buluruz.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## 2. İki Katlı Hareketli Ortalamalar (Trend Varsa)
+
+Verilerde sürekli bir artış veya azalış varken tek katlı ortalama kullanırsak, tahminlerimiz her zaman gerçek değerlerin gerisinde kalır. Trendi yakalamak için **hareketli ortalamanın da hareketli ortalamasını** alır ve bunu doğrusal bir denkleme çeviririz.
+
+::: {#def-iki-katli-hom name="İki Katlı Hareketli Ortalama Formülleri"}
+İki katlı metot uygulanırken dört aşamalı bir model kurulur.
+
+**1. Birinci ortalama.** Standart tek katlı ortalamadır:
+$$\mu_t = \frac{Y_t + Y_{t-1} + \dots + Y_{t-n+1}}{n}$$
+
+**2. İkinci ortalama.** Birinci ortalamaların kendi içindeki ortalamasıdır:
+$$\mu'_t = \frac{\mu_t + \mu_{t-1} + \dots + \mu_{t-n+1}}{n}$$
+
+**3. Düzeltme katsayıları.** Gecikmeyi telafi eden doğru denkleminin bileşenleridir:
+$$a_t = 2\mu_t - \mu'_t, \qquad b_t = \frac{2}{n-1}\left(\mu_t - \mu'_t\right)$$
+
+**4. Tahmin denklemi.** $t$ anında dururken $p$ periyot sonrası için:
+$$\hat{Y}_{t+p} = a_t + p \cdot b_t$$
+
+Burada $n$ hareketli ortalama periyodunu, $p$ ise kaç periyot sonrasının tahmin edileceğini ifade eder.
+:::
+
+:::: {#exm-iki-katli-hom}
+Aşağıda belirgin bir yükseliş trendi gösteren veriler için üç aylık ($n = 3$) hareketli ortalama periyodu kullanarak 6. ve 7. aylar için tahmini değerleri hesaplayınız.
+
+| $t$ | $1$ | $2$ | $3$ | $4$ | $5$ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| $Y_t$ | $10$ | $14$ | $21$ | $29$ | $34$ |
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Tahmin yapabilmek için en son an olan $t = 5$ periyodu için düzeltme katsayılarını bulmamız gerekir.
+
+**1. Birinci ortalamalar.** $n = 3$ ile $t = 3$'ten itibaren hesaplanır:
+
+$$\mu_3 = \frac{10+14+21}{3} = 15{,}00, \quad \mu_4 = \frac{14+21+29}{3} \approx 21{,}33, \quad \mu_5 = \frac{21+29+34}{3} = 28{,}00$$
+
+**2. İkinci ortalama.** Elimizde üç adet $\mu_t$ biriktiğinde, yani $t = 5$ anında hesaplanabilir:
+
+$$\mu'_5 = \frac{15{,}00 + 21{,}33 + 28{,}00}{3} \approx 21{,}44$$
+
+Tablo hâlinde:
+
+| $t$ | $Y_t$ | $\mu_t$ | $\mu'_t$ | $a_t$ | $b_t$ |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| $1$ | $10$ | — | — | — | — |
+| $2$ | $14$ | — | — | — | — |
+| $3$ | $21$ | $15{,}00$ | — | — | — |
+| $4$ | $29$ | $21{,}33$ | — | — | — |
+| $5$ | $34$ | $28{,}00$ | $21{,}44$ | $\mathbf{34{,}56}$ | $\mathbf{6{,}56}$ |
+
+**3. Düzeltme katsayılarının hesaplanması.**
+
+$$
+\begin{aligned}
+a_5 &= 2\mu_5 - \mu'_5 = 2(28) - 21{,}44 = 34{,}56 \\
+b_5 &= \frac{2}{n-1}\left(\mu_5 - \mu'_5\right) = \frac{2}{2}(28 - 21{,}44) = 6{,}56
+\end{aligned}
+$$
+
+**4. Gelecek periyotların tahmini.**
+
+Tahmin denklemimiz $\hat{Y}_{5+p} = 34{,}56 + p \cdot 6{,}56$ olarak şekillendi:
+
+* **6. ay** ($p = 1$): $\hat{Y}_6 = 34{,}56 + 6{,}56 = 41{,}12$
+* **7. ay** ($p = 2$): $\hat{Y}_7 = 34{,}56 + 2(6{,}56) = 47{,}68$
+
+Dikkat ederseniz trend eğilimi korunmuş ve gelecek aylardaki tahminler düzenli biçimde artmaya devam etmiştir. Tek katlı yöntem kullanılsaydı 6. ay tahmini $28{,}00$ olacak, yani gerçek eğilimin epey gerisinde kalacaktı.
+
+[$\boxtimes$]{.qed}
+:::
+::::

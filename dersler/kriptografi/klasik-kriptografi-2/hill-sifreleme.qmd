@@ -1,0 +1,137 @@
+---
+title: "Hill Şifrelemesi"
+description: "Matris çarpımına dayanan Hill şifrelemesinin anahtar yapısını, determinant koşulunu, blok mantığını ve ters matrisle deşifreleme sürecini çözümlü örneklerle açıklar."
+---
+
+Klasik şifreleme sistemlerinin istatistiksel frekans analizine yenik düşmesini engellemek için tasarlanan Hill şifrelemesi, kriptografiye **lineer cebiri (matrisleri)** sokan ilk büyük devrimdir.
+
+Bu sistemde harfler tek başına değil, belirlenen bir $n$ uzunluğundaki **sütun vektörleri** hâlinde gruplanarak bir anahtar matrisiyle çarpılır. Böylece bir harfin şifreli karşılığı, yanındaki harflere de bağlı hâle gelir; tek harflik frekans analizi işe yaramaz olur.
+
+## Sistemin Formal Tanımı
+
+Hill sisteminde işlemler $n$ boyutlu vektörler ve $n \times n$ boyutlu kare matrisler üzerinden yürütülür. Notlarımızda kolaylık olması adına $n = 2$, yani $2 \times 2$ matrisler kullanacağız.
+
+::: {#def-hill-model name="Hill Şifrelemesinin Matematiksel Modeli"}
+* **Açık metin ($\mathcal{P}$):** Elemanları $\mathbb{Z}_{26}$'dan alınan $n$ boyutlu sütun vektörlerinin kümesi.
+* **Şifreli metin ($\mathcal{C}$):** Elemanları $\mathbb{Z}_{26}$'dan alınan $n$ boyutlu sütun vektörlerinin kümesi.
+* **Anahtar uzayı ($\mathcal{K}$):** Elemanları $\mathbb{Z}_{26}$'da olan ve mod $26$'ya göre tersi alınabilen tüm $n \times n$ boyutlu kare matrisler.
+* **Şifreleme fonksiyonu ($\mathcal{E}$):** Her $K \in \mathcal{K}$ anahtar matrisi ve $\mathbf{x} \in \mathcal{P}$ açık metin vektörü için:
+  $$e_K(\mathbf{x}) \equiv K \cdot \mathbf{x} \pmod{26}$$
+* **Deşifreleme fonksiyonu ($\mathcal{D}$):** Her $\mathbf{y} \in \mathcal{C}$ şifreli metin vektörü için:
+  $$d_K(\mathbf{y}) \equiv K^{-1} \cdot \mathbf{y} \pmod{26}$$
+:::
+
+## ⚠️ Anahtar Seçme Koşulu: Determinant ve Ters Matris
+
+Afin şifrelemesinde anahtarın birebir olabilmesi için $a$ değerinin $26$ ile aralarında asal olmasını istemiştik. Hill şifrelemesinde ise anahtar matrisin **tersinin var olması** şarttır.
+
+Bir $2 \times 2$ matrisin tersi şu formülle bulunur:
+
+$$K^{-1} \equiv \big(\det K\big)^{-1} \cdot \operatorname{adj}(K) \pmod{26}$$
+
+Bu formülün mod $26$'da çalışabilmesi için $\det(K)$ değerinin mod $26$'da çarpımsal bir tersinin olması gerekir.
+
+::: {.callout-note title="📌 Geçerli bir Hill anahtarı için altın kural"}
+Bir $K$ matrisinin Hill şifrelemesinde anahtar olarak kullanılabilmesi için determinantının $26$ ile aralarında asal olması **zorunludur**:
+
+$$\gcd\big(\det(K),\, 26\big) = 1$$
+
+$26 = 2 \cdot 13$ olduğundan bu, pratikte şu demektir: determinantın mod $26$'daki değeri ne **$2$ ile** ne de **$13$ ile** bölünebilmelidir. Determinant bu kurala uymuyorsa ters matris hesaplanamaz ve şifrelenen metin bir daha asla geri açılamaz.
+:::
+
+::: {.callout-note title="📌 Dolgu (padding) kuralı"}
+Şifrelenecek mesajın harf sayısı, vektör boyutu $n$'in tam katı değilse, mesajın sonuna anlamsız harfler (genellikle `X` veya `Z`) eklenerek son blok tamamlanır.
+:::
+
+## 📝 Çözümlü Uygulamalar
+
+Aşağıdaki örneklerde işlemleri harf–sayı dönüşüm tablosunu kullanarak yapınız. Vektör boyutumuz $n = 2$'dir.
+
+:::: {#exm-hill-sifrele}
+Açık metni `HELP` olan mesajı, aşağıdaki $K$ anahtar matrisiyle şifreleyiniz.
+
+$$K = \begin{pmatrix} 3 & 3 \\ 2 & 5 \end{pmatrix}$$
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Öncelikle anahtarın geçerli olup olmadığını determinantla kontrol edelim:
+
+$$\det(K) = (3 \cdot 5) - (3 \cdot 2) = 15 - 6 = 9$$
+
+$\gcd(9, 26) = 1$ olduğu için bu geçerli bir anahtardır.
+
+Metnimiz `HELP`, ikişerli bloklara ayrılır: **HE** ve **LP**.
+
+**1. blok: HE $(7, 4)$**
+
+$$\begin{pmatrix} 3 & 3 \\ 2 & 5 \end{pmatrix} \begin{pmatrix} 7 \\ 4 \end{pmatrix} = \begin{pmatrix} 3(7) + 3(4) \\ 2(7) + 5(4) \end{pmatrix} = \begin{pmatrix} 21 + 12 \\ 14 + 20 \end{pmatrix} = \begin{pmatrix} 33 \\ 34 \end{pmatrix}$$
+
+Mod $26$'ya göre denklerini alalım:
+
+$$\begin{pmatrix} 33 \\ 34 \end{pmatrix} \equiv \begin{pmatrix} 7 \\ 8 \end{pmatrix} \pmod{26}$$
+
+Tabloya göre $7 =$ **H**, $8 =$ **I**. İlk şifreli blok: **HI**.
+
+**2. blok: LP $(11, 15)$**
+
+$$\begin{pmatrix} 3 & 3 \\ 2 & 5 \end{pmatrix} \begin{pmatrix} 11 \\ 15 \end{pmatrix} = \begin{pmatrix} 33 + 45 \\ 22 + 75 \end{pmatrix} = \begin{pmatrix} 78 \\ 97 \end{pmatrix}$$
+
+Mod $26$'ya göre: $78 = 26 \cdot 3 + 0 \equiv 0$ ve $97 = 26 \cdot 3 + 19 \equiv 19$, yani
+
+$$\begin{pmatrix} 78 \\ 97 \end{pmatrix} \equiv \begin{pmatrix} 0 \\ 19 \end{pmatrix} \pmod{26}$$
+
+Tabloya göre $0 =$ **A**, $19 =$ **T**. İkinci şifreli blok: **AT**.
+
+**Sonuç:** `HELP` kelimesi Hill şifrelemesiyle `HIAT` olarak şifrelenir.
+
+Dikkat edin: açık metindeki `E` ve `L` tamamen farklı harflere dönüşürken, aralarındaki istatistiksel bağ matris çarpımının içinde erimiştir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+:::: {#exm-hill-desifre}
+Şifreli `HIAT` metnini, aynı $K$ anahtar matrisini kullanarak deşifre ediniz.
+
+$$K = \begin{pmatrix} 3 & 3 \\ 2 & 5 \end{pmatrix}$$
+
+::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+Deşifreleme için $d_K(\mathbf{y}) \equiv K^{-1} \cdot \mathbf{y} \pmod{26}$ formülünü kullanacağız. Önce $K^{-1}$ ters matrisini bulmalıyız.
+
+**1. adım — determinantın tersi.** $\det(K) = 9$ bulmuştuk. $9$'un mod $26$'daki çarpımsal tersini arıyoruz:
+
+$$9x \equiv 1 \pmod{26} \implies x = 3 \quad (\text{çünkü } 9 \cdot 3 = 27 \equiv 1)$$
+
+**2. adım — ek (adjoint) matris.** $2 \times 2$ boyutlu bir $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$ matrisinin ek matrisi $\begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$'dır:
+
+$$\operatorname{adj}(K) = \begin{pmatrix} 5 & -3 \\ -2 & 3 \end{pmatrix}$$
+
+**3. adım — ters matrisi oluşturmak.**
+
+$$K^{-1} \equiv 3 \cdot \begin{pmatrix} 5 & -3 \\ -2 & 3 \end{pmatrix} = \begin{pmatrix} 15 & -9 \\ -6 & 9 \end{pmatrix} \pmod{26}$$
+
+Negatif değerleri mod $26$'da pozitife çevirelim ($-9 \equiv 17$, $-6 \equiv 20$):
+
+$$K^{-1} \equiv \begin{pmatrix} 15 & 17 \\ 20 & 9 \end{pmatrix} \pmod{26}$$
+
+Sağlama için $K \cdot K^{-1}$ çarpımına bakabiliriz:
+$$\begin{pmatrix} 3 & 3 \\ 2 & 5 \end{pmatrix}\begin{pmatrix} 15 & 17 \\ 20 & 9 \end{pmatrix} = \begin{pmatrix} 105 & 78 \\ 130 & 79 \end{pmatrix} \equiv \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} \pmod{26}$$
+
+**4. adım — şifreli blokları ters matrisle çarpmak.**
+
+*1. blok: HI $(7, 8)$*
+
+$$\begin{pmatrix} 15 & 17 \\ 20 & 9 \end{pmatrix} \begin{pmatrix} 7 \\ 8 \end{pmatrix} = \begin{pmatrix} 105 + 136 \\ 140 + 72 \end{pmatrix} = \begin{pmatrix} 241 \\ 212 \end{pmatrix} \equiv \begin{pmatrix} 7 \\ 4 \end{pmatrix} \pmod{26}$$
+
+$7 \implies$ **H**, $4 \implies$ **E**.
+
+*2. blok: AT $(0, 19)$*
+
+$$\begin{pmatrix} 15 & 17 \\ 20 & 9 \end{pmatrix} \begin{pmatrix} 0 \\ 19 \end{pmatrix} = \begin{pmatrix} 0 + 323 \\ 0 + 171 \end{pmatrix} = \begin{pmatrix} 323 \\ 171 \end{pmatrix} \equiv \begin{pmatrix} 11 \\ 15 \end{pmatrix} \pmod{26}$$
+
+$11 \implies$ **L**, $15 \implies$ **P**.
+
+**Sonuç:** Matris çarpımları ve mod $26$ kuralları bizi tekrar orijinal `HELP` mesajına ulaştırdı.
+
+[$\boxtimes$]{.qed}
+:::
+::::

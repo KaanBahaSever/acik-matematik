@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Nilradikal ve Jacobson Radikali
-

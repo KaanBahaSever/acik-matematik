@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Alt Cebirsel YapÄ±lar
-

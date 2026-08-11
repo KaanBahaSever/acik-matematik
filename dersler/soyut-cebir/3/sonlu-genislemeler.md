@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Sonlu Cebirsel GeniÅŸlemeler
-

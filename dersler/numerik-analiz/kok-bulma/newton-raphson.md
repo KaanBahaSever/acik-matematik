@@ -1,6 +1,0 @@
-﻿---
-
----
-
-# Newton-Raphson Metodu
-
