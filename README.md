@@ -110,6 +110,34 @@ Depo ayarlarından şu değerlerin tanımlanması gerekir:
 | Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare hesap kimliği |
 | Variable | `CLOUDFLARE_PROJECT_NAME` | (İsteğe bağlı) Pages proje adı — varsayılan: `acik-matematik` |
 
+## 📚 Birden Fazla Alt Derse Bölünen Kurslar
+
+Bazı dersler dönemlere ayrılır (Cebir 1 / 2 / 3, Analiz 1–4, Sayılar Teorisi 1–2 gibi). Bunlar **ayrı kitaplar değil, tek kitabın parçaları** olarak kurgulanır:
+
+```yaml
+book:
+  chapters:
+    - file: index.qmd            # Müfredat ve giriş
+
+    - part: "Cebir 1 — Grup Teorisi"
+      chapters:
+        - 1/gruplar.qmd
+        - 1/alt-devresel-gruplar.qmd
+
+    - part: "Cebir 2 — Halkalar ve İdealler"
+      chapters:
+        - 2/halka-alt-halka.qmd
+```
+
+**Numaralandırma nasıl çalışır?** Quarto bölümleri kitap boyunca kesintisiz numaralandırır (1, 2, 3, …); numaralandırma her `part` başında sıfırlanmaz ve Quarto bunu değiştirmeye izin vermez. Bu davranış bilinçli olarak korunmuştur, çünkü:
+
+- Çapraz referanslar (`Tanım 3.1`, `@thm-euler-fermat`) bölüm numarasını kullanır; numaralandırma sıfırlanırsa aynı numara kitapta birden fazla kez görünür ve bağlantılar belirsizleşir.
+- Basılı ders kitaplarında da "kısım" başlıkları bölüm sayacını sıfırlamaz.
+
+Alt dersler arasındaki ayrım numarayla değil, **sol menüdeki grup başlıklarıyla** yapılır: her `part`, üstünde ince bir ayraç çizgisi olan kalın bir başlık olarak görünür ve kendi bölümlerini içine alır.
+
+**İçindekiler tarafında** ise alt dersler, kitabın `index.qmd` sayfasında ikinci düzey başlıklarla (`##`) ayrılır — böylece müfredat sayfası da sol menüyle aynı gruplamayı yansıtır. Örnek için [dersler/sayilar-teorisi/index.qmd](dersler/sayilar-teorisi/index.qmd) dosyasına bakabilirsiniz.
+
 ## ✍️ İçerik Yazım Standartları
 
 Notlar yazılırken Quarto'nun yerleşik akademik ortamları kullanılır:
@@ -122,7 +150,7 @@ Tanım metni burada.
 :::: {#exm-ornek-soru}
 Soru metni burada.
 
-::: {.callout-note collapse="true" title="💡 Çözümü göster / gizle"}
+::: {.cozum}
 Çözüm adımları…
 
 [$\blacksquare$]{.qed}
@@ -133,10 +161,12 @@ Soru metni burada.
 Dikkat edilecek noktalar:
 
 - **Kimlik önekleri:** `#def-` (tanım), `#thm-` (teorem), `#lem-` (lemma), `#cor-` (sonuç), `#prp-` (önerme), `#exm-` (örnek), `#exr-` (alıştırma).
+- **Çözüm ve ispat blokları:** `::: {.cozum}` ve `::: {.ispat}` kullanılır. [scripts/katlanir.lua](scripts/katlanir.lua) bunları tarayıcının kendi `<details>` öğesine çevirir; okuyucu başlığa tıklayınca açılır. Özel başlık için `::: {.cozum baslik="Alternatif çözüm"}`, varsayılan açık gelmesi için `acik="true"` yazılabilir.
 - **İç içe bloklar:** Dış blok, iç bloktan bir fazla iki nokta üst üste alır (`::::` dışta, `:::` içte).
 - **İspat sonu işareti:** `[$\blacksquare$]{.qed}` veya `[$\boxtimes$]{.qed}`.
 - **Matematik:** Satır içi `$…$`, blok `$$…$$`. MathJax'te bulunmayan komutlardan (`\centernot` gibi) kaçının.
 - **Ondalık ayırıcı:** Türkçe metinde virgül — matematik modunda `$0{,}6$` biçiminde yazılır.
+- **Callout başlıkları:** Emoji yazabilirsiniz; filtre çıktıda otomatik temizler. Bölüm başlıklarındaki emojilere dokunulmaz.
 
 ## 🤝 Katkıda Bulunma
 
