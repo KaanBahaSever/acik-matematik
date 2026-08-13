@@ -181,6 +181,10 @@ html[data-theme="dark"] {
 .theorem.definition .theorem-title::before,
 .theorem.algorithm .theorem-title::before {
   content: "≡";
+  /* ≡ glifi ▲ ve ▷ işaretlerinden optik olarak daha küçük duruyordu;
+     diğerleriyle aynı ağırlıkta görünmesi için bir tık büyütüldü. */
+  font-size: 1.25em;
+  font-weight: 600;
 }
 
 /* C. Pratik ve Örnekler — noktalı çizgi | sembol: ▷ */
@@ -228,13 +232,123 @@ html[data-theme="dark"] {
   content: "✎";
 }
 
-/* not last child */
-ul li:not(:last-child){
+/* Liste öğeleri arasında nefes payı */
+ul li:not(:last-child) {
   margin-bottom: 0.5em;
 }
 
-ul{
+/* Alttaki boşluk YALNIZCA kutu içindeki listelerde kaldırılır.
+   Genel metinde kaldırılırsa, listeden sonra gelen paragraf listeye
+   yapışıyor ve müfredat sayfalarındaki grup başlıkları yamuk duruyordu. */
+.theorem ul:last-child,
+.theorem ol:last-child,
+.callout-body ul:last-child,
+.callout-body ol:last-child,
+.katlanir-govde ul:last-child,
+.katlanir-govde ol:last-child {
   margin-bottom: 0;
+}
+
+/* Müfredat sayfalarındaki grup başlıkları: tek başına kalın bir paragraf.
+   Kendinden önceki listeden ayrılsın diye üstten boşluk alır. */
+#quarto-document-content p:has(> strong:only-child) {
+  margin-top: 1.9em;
+  margin-bottom: 0.5em;
+}
+
+#quarto-document-content p:has(> strong:only-child):first-child {
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   3b. KATLANABİLİR ÇÖZÜM / İSPAT BLOKLARI
+   --------------------------------------------------------------------------
+   scripts/katlanir.lua bu blokları <details> öğesine çeviriyor.
+   Bilinçli olarak "kutusuz" tasarlandı: teorem/örnek kutusunun içinde
+   yer aldıkları için ikinci bir çerçeve mobilde çift girinti yaratıyordu.
+   Burada yalnızca ince bir ayraç ve tıklanabilir bir başlık var.
+   ========================================================================== */
+.katlanir {
+  margin: 1em 0 0 0;
+  border-top: 1px solid var(--bs-border-color, #ddd8ce);
+  padding-top: 0.6em;
+}
+
+.katlanir-baslik {
+  cursor: pointer;
+  list-style: none;          /* varsayılan ▶ üçgenini gizle */
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  font-weight: 600;
+  font-size: 0.95em;
+  color: var(--color-practice);
+  user-select: none;
+  padding: 0.15em 0;
+}
+
+/* Safari/Chrome'un kendi işaretçisini kaldır */
+.katlanir-baslik::-webkit-details-marker {
+  display: none;
+}
+
+/* Kendi açılır kapanır okumuz */
+.katlanir-baslik::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform 0.15s ease;
+  font-size: 0.9em;
+}
+
+.katlanir[open] > .katlanir-baslik::before {
+  transform: rotate(90deg);
+}
+
+.katlanir-baslik:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.katlanir-govde {
+  padding-top: 0.5em;
+}
+
+.katlanir-govde > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   3c. İÇERİK BAĞLANTILARI
+   --------------------------------------------------------------------------
+   Bootstrap'in parlak mavi + altı çizili bağlantıları ders metninde
+   dikkat dağıtıyordu. Metin içinde sade, tema rengiyle uyumlu bir
+   vurgulama kullanılıyor.
+   ========================================================================== */
+#quarto-document-content a:not(.btn):not(.katalog-donus):not(.quarto-navigation-tool),
+.callout-body a:not(.btn) {
+  color: var(--color-base);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(13, 110, 106, 0.35);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+#quarto-document-content a:not(.btn):not(.katalog-donus):hover,
+#quarto-document-content a:not(.btn):not(.katalog-donus):focus-visible {
+  color: var(--color-practice);
+  border-bottom-color: currentColor;
+  text-decoration: none;
+}
+
+/* Başlık bağlantı çıpaları, dipnotlar ve crossref'ler çizgisiz kalsın */
+#quarto-document-content a.quarto-xref,
+#quarto-document-content a.footnote-ref,
+#quarto-document-content h1 a,
+#quarto-document-content h2 a,
+#quarto-document-content h3 a,
+#quarto-document-content h4 a,
+#quarto-document-content .toc-actions a,
+#quarto-document-content .anchorjs-link {
+  border-bottom: none;
 }
 
 /* ==========================================================================
@@ -574,4 +688,162 @@ body:not(.quarto-dark) .navbar .navbar-toggler-icon {
 
 .navbar .navbar-toggler {
   border-color: var(--bs-border-color, #d9d5cd);
+}
+/* ==========================================================================
+   10. MOBİL DÜZEN
+   --------------------------------------------------------------------------
+   Ana sorun: uzun görüntü formülleri, geniş tablolar ve kod blokları
+   sayfayı viewport'tan geniş hale getiriyordu. Sayfa genişleyince tüm
+   metin ekranın dışına taşıyor, satırlar kırpılmış gibi görünüyordu.
+   Çözüm: taşabilecek her öğeyi kendi içinde kaydırılabilir yapmak.
+   ========================================================================== */
+
+/* Not: body'ye overflow-x:hidden VERİLMEZ. Verildiğinde ekrandan geniş
+   formüller kaydırılamadan kırpılıyor ve içerik okunamaz hale geliyor.
+   Bunun yerine taşabilecek her öğe kendi içinde kaydırılabilir yapılır. */
+html,
+body {
+  max-width: 100%;
+}
+
+/* Görüntü (display) formülleri kendi içinde kaysın */
+mjx-container[display="true"],
+.MathJax_Display,
+.math.display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding-bottom: 0.25em;   /* kaydırma çubuğu formülü kesmesin */
+}
+
+/* MathJax, görüntü formüllerine min-width veriyor; bu değer kapsayıcıyı
+   ekrandan geniş yapıp TÜM sayfayı yatayda esnetiyordu. Asıl mobil taşma
+   sebebi buydu. */
+mjx-container[display="true"] {
+  min-width: 0 !important;
+}
+
+mjx-container[display="true"] > svg,
+mjx-container[display="true"] > mjx-math {
+  min-width: 0 !important;
+}
+
+/* Satır içi formüller satır sonunda kırılabilsin */
+mjx-container:not([display="true"]) {
+  max-width: 100%;
+}
+
+/* Tablolar ve kod blokları da kendi içinde kaysın */
+#quarto-document-content table {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+#quarto-document-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Uzun kelimeler ve adresler satırı taşırmasın */
+#quarto-document-content,
+.sidebar-item-text,
+.katlanir-baslik {
+  overflow-wrap: break-word;
+}
+
+/* Uzun bölüm başlıkları taşmasın */
+#quarto-document-content h1,
+#quarto-document-content h2,
+#quarto-document-content h3,
+#title-block-header h1 {
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+@media (max-width: 991.98px) {
+  /* Geniş ekran için tanımlanan sabit genişlikler mobilde geçersiz */
+  #quarto-document-content {
+    max-width: 100%;
+  }
+
+  /* Sol menüdeki uzun ders/bölüm adları kutudan taşıyordu */
+  #quarto-sidebar .sidebar-item-text,
+  #quarto-sidebar .chapter-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Numaralandırılmış ve madde işaretli listelerin girintisi mobilde
+     içeriği ekranın ortasına itiyordu; asgari girintiye çekildi. */
+  #quarto-document-content ol,
+  #quarto-document-content ul {
+    padding-left: 1.35em;
+  }
+
+  /* Kutu içindeki listeler daha da dar olmalı */
+  .theorem ol,
+  .theorem ul,
+  .callout-body ol,
+  .callout-body ul,
+  .katlanir-govde ol,
+  .katlanir-govde ul {
+    padding-left: 1.1em;
+  }
+
+  /* Teorem/örnek kutularının iç boşluğu mobilde küçültülür */
+  .theorem,
+  .remark {
+    padding: 0.85em 0.9em;
+    margin: 1.2em 0;
+  }
+
+  /* Bölüm başlıklarını biraz küçült, uzun başlıklar 4 satıra yayılmasın */
+  #quarto-document-content h1,
+  #title-block-header h1 {
+    font-size: 1.6rem;
+    line-height: 1.25;
+  }
+
+  #quarto-document-content h2 {
+    font-size: 1.3rem;
+  }
+
+  /* Gövde tipografisi mobilde bir tık küçük daha rahat okunuyor */
+  body {
+    font-size: 0.97rem;
+  }
+}
+
+/* ==========================================================================
+   11. ÇOK BÖLÜMLÜ DERSLER (Cebir 1 / 2 / 3 gibi)
+   --------------------------------------------------------------------------
+   Bir ders birden fazla alt derse ayrıldığında her alt ders _quarto.yml
+   içinde bir "part" olur. Sol menüde bu grup başlıkları, normal bölüm
+   satırlarından açıkça ayrılsın diye belirginleştirildi.
+   ========================================================================== */
+#quarto-sidebar .sidebar-item-section > .sidebar-item-container .menu-text {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+#quarto-sidebar .sidebar-item-section > .sidebar-item-container {
+  margin-top: 0.7em;
+  padding-top: 0.7em;
+  border-top: 1px solid var(--bs-border-color, #e6e2da);
+}
+
+/* İlk grup başlığının üstünde gereksiz çizgi olmasın */
+#quarto-sidebar .sidebar-item-section:first-of-type > .sidebar-item-container {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Grup içindeki bölümler biraz içeride ve daha sakin dursun */
+#quarto-sidebar .sidebar-item-section .sidebar-item .sidebar-item-text {
+  font-weight: 400;
 }

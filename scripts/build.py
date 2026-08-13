@@ -80,6 +80,26 @@ def books() -> list[Path]:
     return sorted(p.parent for p in DERSLER.glob("*/_quarto.yml"))
 
 
+def paylasilan_varliklar() -> None:
+    """styles/ ve assets/ dizinlerini _site altına tazeler.
+
+    Ders kitapları bu dosyalara _site kökünden (../../../styles/global.css
+    gibi) bağlanıyor; dosyalar proje dizinlerinin dışında kaldığı için
+    Quarto bunları kitap çıktısına kopyalamıyor. Normalde portal derlemesi
+    hallediyor; ancak tek ders derlerken portal çalışmadığından stiller
+    eski kalıyordu.
+    """
+    for ad in ("styles", "assets"):
+        kaynak = ROOT / ad
+        if not kaynak.is_dir():
+            continue
+        hedef = SITE / ad
+        if hedef.exists():
+            shutil.rmtree(hedef)
+        hedef.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(kaynak, hedef)
+
+
 def publish(book: Path) -> None:
     """Derlenmiş kitabı dersler/<ders>/_book/ dizininden _site altına taşır."""
     built = book / "_book"
@@ -103,6 +123,7 @@ def main() -> None:
             sys.exit(f"HATA: '{only}' diye bir ders projesi yok.")
         render(target, f"ders: {only}")
         publish(target)
+        paylasilan_varliklar()
     else:
         # 1) Portal sayfaları — bu adım _site dizinini temizler
         render(ROOT, "portal (ana sayfa + ders kataloğu)")
