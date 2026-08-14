@@ -1,0 +1,357 @@
+---
+title: "Asal Kuvvet Modüllerde Kök Yükseltme"
+description: "Polinomlar için Taylor açılımı, bir kongrüansın modülo p çözümlerinin modülo p² ve daha yüksek kuvvetlere taşınması, Hensel lemması ve çözümlü uygulamalar."
+---
+
+Bir önceki bölümde $f(x) \equiv 0 \pmod m$ kongrüansını çözme problemini, $p$ asal ve $s \geq 1$ olmak üzere
+
+$$f(x) \equiv 0 \pmod{p^s}$$
+
+biçimindeki kongrüanslara indirgemiştik. Şimdi bu kongrüansın nasıl çözüleceğini göreceğiz.
+
+Yöntemin çıkış noktası basit bir gözlemdir: $u$ tam sayısı $f(x) \equiv 0 \pmod{p^s}$ kongrüansının bir çözümü ise, $p \mid p^s$ olduğundan $f(u) \equiv 0 \pmod p$ de sağlanır. Yani
+
+::: {.callout-important title="Temel gözlem"}
+$f(x) \equiv 0 \pmod{p^s}$ kongrüansının **her** çözümü, aynı zamanda $f(x) \equiv 0 \pmod{p}$ kongrüansının da bir çözümüdür.
+:::
+
+Demek ki modülo $p^s$ çözümlerini, modülo $p$ çözümlerinin arasında aramamız yeterlidir. Bu yüzden $f(x) \equiv 0 \pmod p$ kongrüansından yola çıkıp
+
+$$f(x) \equiv 0 \pmod{p^2}, \qquad f(x) \equiv 0 \pmod{p^3}, \qquad \dots$$
+
+kongrüanslarını modül $p^s$ olana dek **basamak basamak** çözeriz. Her basamakta bir önceki basamağın çözümlerini "yükseltmeye" çalışırız. Bu tekniğe **kök yükseltme (kök taşıma)** denir.
+
+## Analizden Hatırlatmalar
+
+Yükseltme adımının kalbinde, polinomların sonlu Taylor açılımı yatar. Bu açılımın burada kullanılabilmesi için katsayıların tam sayı olması gerekir; aşağıdaki üç hatırlatma tam olarak bunu güvenceye alır.
+
+::: {#thm-binom name="Binom Teoremi"}
+$n$ bir pozitif tam sayı olsun. Bu durumda her $a$ ve $b$ için
+
+$$(a+b)^n = \binom{n}{0}a^n + \binom{n}{1}a^{n-1}b + \binom{n}{2}a^{n-2}b^2 + \cdots + \binom{n}{n}b^n$$
+
+olur. Burada $0 \leq k \leq n$ olmak üzere **binom katsayıları**
+
+$$\binom{n}{k} = \frac{n(n-1)\cdots(n-k+1)}{1 \cdot 2 \cdots k} = \frac{n!}{k!\,(n-k)!} = \binom{n}{n-k}$$
+
+biçiminde tanımlanır ve **tam sayıdır**.
+:::
+
+::: {.callout-note title="Kuvvet fonksiyonunun türevleri"}
+$p$ bir pozitif tam sayı ve $f(x) = x^p$ olsun. O hâlde
+
+$$f'(x) = p x^{p-1}, \qquad f''(x) = p(p-1)x^{p-2}, \qquad \dots$$
+
+ve genel olarak $0 < n \leq p$ için
+
+$$f^{(n)}(x) = p(p-1)\cdots(p-n+1)\, x^{p-n}$$
+
+olur. Her iki tarafı $n!$'e bölersek
+
+$$\frac{f^{(n)}(x)}{n!} = \binom{p}{n} x^{p-n}, \qquad 0 \leq n \leq p$$
+
+elde edilir (eşitlik $n = 0$ için de doğrudur). Özel olarak $f^{(p)}(x) = p!$ ve $n > p$ için $f^{(n)}(x) = 0$'dır.
+:::
+
+Buradan, tam katsayılı bir polinomun türevleri hakkında kilit sonucu okuyabiliriz.
+
+::: {#lem-turev-tam-katsayili name="Bölünmüş Türevler Tam Katsayılıdır"}
+$g(x) = a_p x^p + a_{p-1}x^{p-1} + \cdots + a_1 x + a_0$ tam katsayılı bir polinom olsun ($a_p \neq 0$). Bu durumda her $0 \leq n \leq p$ tam sayısı için
+
+$$\frac{g^{(n)}(x)}{n!} = a_p \binom{p}{n} x^{p-n} + a_{p-1}\binom{p-1}{n}x^{p-1-n} + \cdots + a_n \binom{n}{n}$$
+
+olur; yani $\dfrac{g^{(n)}(x)}{n!}$, $(p-n)$. dereceden **tam katsayılı** bir polinomdur. Ayrıca $n > p$ için $g^{(n)}(x) = 0$'dır.
+:::
+
+::: {.callout-tip title="Neden önemli?"}
+$\dfrac{g^{(n)}(x)}{n!}$ tam katsayılı olduğu için, her $a$ tam sayısında aldığı değer de tam sayıdır:
+
+$$\frac{g^{(n)}(a)}{n!} \in \mathbb{Z}$$
+
+Taylor açılımının terimlerini modülo $p^k$ incelerken tam da bu kullanılacak.
+:::
+
+:::: {#thm-taylor name="Taylor Teoremi (Polinomlar İçin)"}
+$p$ bir pozitif tam sayı ve $g(x) = a_p x^p + \cdots + a_1 x + a_0$ tam katsayılı bir polinom olsun. $x_0$ ve $h$ herhangi iki sayı olmak üzere
+
+$$g(x_0 + h) = g(x_0) + \frac{g'(x_0)}{1!}h + \frac{g''(x_0)}{2!}h^2 + \cdots + \frac{g^{(p)}(x_0)}{p!}h^p$$
+
+eşitliği geçerlidir. Polinomlarda açılım **sonludur**: kalan terim yoktur.
+
+::: {.ispat}
+$g(x_0 + h)$ ifadesindeki $(x_0+h)$ kuvvetlerini Binom Teoremi'ne göre açalım:
+
+$$
+\begin{aligned}
+g(x_0+h) = \; & a_p x_0^p + \binom{p}{1}a_p x_0^{p-1}h + \binom{p}{2}a_p x_0^{p-2}h^2 + \cdots + a_p h^p \\
++ \; & a_{p-1}x_0^{p-1} + \binom{p-1}{1}a_{p-1}x_0^{p-2}h + \cdots + a_{p-1}h^{p-1} \\
++ \; & \;\;\vdots \\
++ \; & a_1 x_0 + a_1 h \\
++ \; & a_0
+\end{aligned}
+$$
+
+Şimdi bu ifadeyi $h$'nin kuvvetlerine göre yeniden düzenleyelim. $h^k$ ile çarpılan terimlerin toplamı
+
+$$\left[ \binom{p}{k}a_p x_0^{p-k} + \binom{p-1}{k}a_{p-1}x_0^{p-1-k} + \cdots + \binom{k+1}{k}a_{k+1}x_0 + \binom{k}{k}a_k \right] h^k$$
+
+olur. Köşeli parantezin içi, @lem-turev-tam-katsayili gereği tam olarak $\dfrac{g^{(k)}(x_0)}{k!}$ ifadesidir. O hâlde
+
+$$g(x_0+h) = \sum_{k=0}^{p} \frac{g^{(k)}(x_0)}{k!}h^k$$
+
+bulunur. Son olarak $n > p$ için $g^{(n)}(x_0) = 0$ olduğundan, toplama istenildiği kadar sıfır terim eklenebilir; açılımın değeri değişmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Modülo $p$'den Modülo $p^2$'ye
+
+Önce en küçük adımı ayrıntısıyla inceleyelim: elimizde $f(x) \equiv 0 \pmod p$ kongrüansının çözümleri var; bunları modülo $p^2$'ye taşımak istiyoruz.
+
+$f(x) \equiv 0 \pmod p$ kongrüansı için iki durum söz konusudur.
+
+**1. durum.** Kongrüans çözümsüzdür. Bu durumda $f(x) \equiv 0 \pmod{p^s}$ kongrüansı da çözümsüzdür (temel gözlem).
+
+**2. durum.** Kongrüans çözülebilirdir; çözümleri
+
+$$x \equiv a_1, \quad x \equiv a_2, \quad \dots, \quad x \equiv a_t \pmod p$$
+
+olsun. $f(x) \equiv 0 \pmod{p^2}$ kongrüansının çözümlerini bu $t$ tane sınıfın içinde arayacağız.
+
+Bir $j \in \{1, \dots, t\}$ sabitleyip $x \equiv a_j \pmod p$ koşulunu sağlayan çözümleri arayalım. Bu koşul
+
+$$x \equiv a_j \pmod p \iff x = a_j + py, \qquad y \in \mathbb{Z}$$
+
+demektir. O hâlde
+
+$$f(x) \equiv 0 \pmod{p^2} \iff f(a_j + py) \equiv 0 \pmod{p^2}$$
+
+olur. Şimdi $f(a_j + py)$ ifadesini @thm-taylor ile açalım:
+
+$$f(a_j + py) = f(a_j) + \frac{f'(a_j)}{1!}(py) + \underbrace{\frac{f''(a_j)}{2!}}_{\in \mathbb{Z}}(py)^2 + \cdots + \underbrace{\frac{f^{(n)}(a_j)}{n!}}_{\in \mathbb{Z}}(py)^n$$
+
+Üçüncü terimden itibaren her terim $p^2$ ile bölünür ve katsayıları tam sayıdır; dolayısıyla modülo $p^2$'de düşerler:
+
+$$f(a_j + py) \equiv 0 \pmod{p^2} \iff f(a_j) + f'(a_j)\,py \equiv 0 \pmod{p^2}$$
+
+$a_j$ modülo $p$'de bir çözüm olduğundan $p \mid f(a_j)$, yani $\dfrac{f(a_j)}{p} \in \mathbb{Z}$'dir. Her iki tarafı ve modülü $p$'ye bölebiliriz:
+
+$$ax \equiv ay \pmod m \iff x \equiv y \left(\bmod \; \frac{m}{(a,m)}\right)$$
+
+kuralı gereği
+
+$$\boxed{\;\frac{f(a_j)}{p} + f'(a_j)\,y \equiv 0 \pmod p\;}$$
+
+elde edilir. Bu, $y$ bilinmeyenine göre **birinci dereceden** bir kongrüanstır; onu çözmeyi zaten biliyoruz.
+
+## Genel Yükseltme Adımı
+
+Yukarıdaki hesabın $p \to p^2$ geçişine özel hiçbir yanı yoktur. $\alpha \geq 1$ olmak üzere $p^\alpha \to p^{\alpha+1}$ geçişi de aynı biçimde yürür: $x = b + y p^\alpha$ yazıldığında Taylor açılımının üçüncü terimi $p^{2\alpha}$ ile bölünür ve $\alpha \geq 1$ için
+
+$$2\alpha \geq \alpha + 1$$
+
+olduğundan bu terim modülo $p^{\alpha+1}$'de yok olur. Bu gözlemi bir teorem olarak toplayalım.
+
+:::: {#thm-yukseltme name="Yükseltme Lemması"}
+$f(x)$ tam katsayılı bir polinom, $p$ bir asal sayı ve $\alpha \geq 1$ bir tam sayı olsun. $b$ tam sayısı
+
+$$f(b) \equiv 0 \pmod{p^\alpha}$$
+
+kongrüansının bir çözümü olsun. Bu durumda $f(x) \equiv 0 \pmod{p^{\alpha+1}}$ kongrüansının $x \equiv b \pmod{p^\alpha}$ koşulunu sağlayan çözümleri, tam olarak
+
+$$x \equiv b + y\,p^\alpha \pmod{p^{\alpha+1}}$$
+
+biçimindeki sayılardır; burada $y$,
+
+$$\frac{f(b)}{p^\alpha} + f'(b)\,y \equiv 0 \pmod p \tag{$\ast$}$$
+
+lineer kongrüansının çözümleridir.
+
+::: {.ispat}
+$x \equiv b \pmod{p^\alpha}$ koşulu $x = b + y p^\alpha$ ($y \in \mathbb{Z}$) demektir. @thm-taylor ile
+
+$$f(b + yp^\alpha) = f(b) + f'(b)\,y p^\alpha + \frac{f''(b)}{2!}(yp^\alpha)^2 + \cdots + \frac{f^{(n)}(b)}{n!}(yp^\alpha)^n$$
+
+yazılır. @lem-turev-tam-katsayili gereği tüm $\dfrac{f^{(k)}(b)}{k!}$ katsayıları tam sayıdır. Üçüncü terimden itibaren her terim $p^{2\alpha}$ ile bölünür ve $2\alpha \geq \alpha+1$ olduğundan bu terimler modülo $p^{\alpha+1}$'de sıfırdır. Böylece
+
+$$f(b+yp^\alpha) \equiv 0 \pmod{p^{\alpha+1}} \iff f(b) + f'(b)\,y\,p^\alpha \equiv 0 \pmod{p^{\alpha+1}}$$
+
+olur. $f(b) \equiv 0 \pmod{p^\alpha}$ olduğundan $\dfrac{f(b)}{p^\alpha} \in \mathbb{Z}$'dir ve
+
+$$ax \equiv ay \pmod m \iff x \equiv y \left(\bmod \; \frac{m}{(a,m)}\right)$$
+
+kuralı $a = p^\alpha$, $m = p^{\alpha+1}$ ile uygulanırsa $(\ast)$ elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+$(\ast)$ kongrüansı $y$'ye göre lineer olduğundan, çözüm sayısı $f'(b)$ ile $p$'nin ortak bölenine bağlıdır. Üç seçenek vardır.
+
+::: {#thm-uc-durum name="Yükseltmenin Üç Hâli"}
+@thm-yukseltme'nin varsayımları altında:
+
+**i)** $\big(f'(b),\, p\big) = 1$, yani $p \nmid f'(b)$ ise: $(\ast)$ kongrüansının **bir tek** $y \equiv y_0 \pmod p$ çözümü vardır. Dolayısıyla $f(x) \equiv 0 \pmod{p^{\alpha+1}}$ kongrüansının, $x \equiv b \pmod{p^\alpha}$ koşulunu sağlayan **bir tek** çözümü vardır:
+
+$$x \equiv b + p^\alpha y_0 \pmod{p^{\alpha+1}}$$
+
+**ii)** $p \mid f'(b)$ ve $\dfrac{f(b)}{p^\alpha} \not\equiv 0 \pmod p$ ise: $(\ast)$ kongrüansını sağlayan hiçbir $y$ tam sayısı yoktur. Dolayısıyla $x \equiv b \pmod{p^\alpha}$ koşulunu sağlayan **hiçbir** çözüm yoktur; kök bu basamakta **ölür**.
+
+**iii)** $p \mid f'(b)$ ve $\dfrac{f(b)}{p^\alpha} \equiv 0 \pmod p$ ise: $(\ast)$ kongrüansı $0 \equiv 0$ hâline gelir ve $y \equiv 0, 1, \dots, p-1 \pmod p$ değerlerinin hepsi çözümdür. Dolayısıyla **tam $p$ tane** çözüm doğar:
+
+$$x \equiv b, \quad b + p^\alpha, \quad b + 2p^\alpha, \quad \dots, \quad b + (p-1)p^\alpha \pmod{p^{\alpha+1}}$$
+:::
+
+(i) hâli, klasik olarak **Hensel lemması** adıyla anılır: türevin modülo $p$'de sıfırdan farklı olduğu (yani **basit**, tekrarlı olmayan) bir kök, her basamakta tek türlü ve kesintisiz biçimde yükselir.
+
+::: {.callout-note title="Hensel lemması"}
+$f(a) \equiv 0 \pmod p$ ve $p \nmid f'(a)$ olsun. Bu durumda her $s \geq 1$ için $f(x) \equiv 0 \pmod{p^s}$ kongrüansının $x \equiv a \pmod p$ koşulunu sağlayan **bir tek** çözümü vardır.
+
+Nedeni basittir: yükseltilen kök her adımda $b \equiv a \pmod p$ kaldığından $f'(b) \equiv f'(a) \not\equiv 0 \pmod p$ olur; yani (i) hâli sonsuza kadar korunur.
+:::
+
+## Çözüm Algoritması
+
+$f(x) \equiv 0 \pmod{p^s}$ kongrüansını çözmek için:
+
+1. $f(x) \equiv 0 \pmod p$ kongrüansını, modülo $p$'ye göre bir tam kalanlar sistemini deneyerek çözün. Çözüm yoksa durun: asıl kongrüans da çözümsüzdür.
+2. $f'(x)$ türevini hesaplayın.
+3. $\alpha = 1$ ile başlayın. Elinizdeki her $b$ çözümü için $\dfrac{f(b)}{p^\alpha} + f'(b)y \equiv 0 \pmod p$ kongrüansını çözün; @thm-uc-durum'a göre bu $b$'den $0$, $1$ veya $p$ tane yeni çözüm doğar.
+4. $\alpha$'yı bir artırıp 3. adımı tekrarlayın; $\alpha = s-1$ basamağı bitince modülo $p^s$ çözümlerinin tamamı elde edilmiş olur.
+
+## Çözümlü Uygulamalar
+
+:::: {#exm-hensel-125}
+$x^3 - 3x^2 + 27 \equiv 0 \pmod{5^3}$ kongrüansının çözümlerini araştırınız.
+
+::: {.cozum}
+$f(x) = x^3 - 3x^2 + 27$ ve $f'(x) = 3x^2 - 6x$ olsun.
+
+**1. basamak: modülo $5$.** $0, \pm 1, \pm 2$ sayıları modülo $5$'e göre bir tam kalanlar sistemidir.
+
+| $x$ | $0$ | $1$ | $-1$ | $2$ | $-2$ |
+| :-- | :--: | :--: | :--: | :--: | :--: |
+| $f(x)$ | $27$ | $25$ | $23$ | $23$ | $7$ |
+| $f(x) \bmod 5$ | $2$ | $0$ | $3$ | $3$ | $2$ |
+
+Yalnızca $f(1) \equiv 0 \pmod 5$ olduğundan kongrüansın bir tek çözümü vardır: $x \equiv 1 \pmod 5$.
+
+**2. basamak: modülo $5^2$.** $\alpha = 1$ ve $b = 1$ için
+
+$$\frac{f(1)}{5} + f'(1)\,y \equiv 0 \pmod 5$$
+
+kongrüansını çözelim. $f(1) = 1 - 3 + 27 = 25$ ve $f'(1) = 3 - 6 = -3$ olduğundan
+
+$$5 - 3y \equiv 0 \pmod 5 \iff -3y \equiv 0 \pmod 5$$
+
+olur. $(-3, 5) = 1$ olduğundan bir tek çözüm vardır: $y \equiv 0 \pmod 5$. O hâlde
+
+$$x \equiv 1 + 5 \cdot 0 = 1 \pmod{5^2}$$
+
+**3. basamak: modülo $5^3$.** Şimdi $\alpha = 2$ ve $b = 1$ için
+
+$$\frac{f(1)}{5^2} + f'(1)\,y \equiv 0 \pmod 5$$
+
+kongrüansını çözelim. $\dfrac{25}{25} = 1$ olduğundan
+
+$$1 - 3y \equiv 0 \pmod 5 \iff 2y \equiv 1 \pmod 5 \iff 2y \equiv 6 \pmod 5 \iff y \equiv 3 \cdot 2 \equiv 2 \pmod 5$$
+
+*(Ara adım: $(2,5) = 1$ olduğundan sadeleştirme yapılabilir.)* Buradan
+
+$$x \equiv 1 + 5^2 \cdot 2 = 51 \pmod{5^3}$$
+
+**Sonuç.** Kongrüansın bir tek çözümü vardır: $x \equiv 51 \pmod{125}$.
+
+*(Sağlama: $51^3 - 3 \cdot 51^2 + 27 = 132651 - 7803 + 27 = 124875 = 125 \cdot 999$.)*
+
+Dikkat edilirse $p = 5 \nmid f'(1) = -3$ olduğundan bu, Hensel lemmasının tipik bir uygulamasıdır: kök her basamakta tek türlü yükselmiştir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-hensel-9}
+$x^3 + x + 1 \equiv 0 \pmod{3^2}$ kongrüansını çözünüz.
+
+::: {.cozum}
+$f(x) = x^3 + x + 1$ ve $f'(x) = 3x^2 + 1$ olsun.
+
+**1. basamak: modülo $3$.** $0, \pm 1$ sayıları modülo $3$'e göre bir tam kalanlar sistemidir. $f(0) = 1 \not\equiv 0$, $f(-1) = -1 \not\equiv 0$ ve $f(1) = 3 \equiv 0 \pmod 3$ olduğundan bir tek çözüm vardır: $x \equiv 1 \pmod 3$.
+
+**2. basamak: modülo $3^2$.** $f(1) = 3$ ve $f'(1) = 4$ olduğundan
+
+$$\frac{f(1)}{3} + f'(1)\,y \equiv 0 \pmod 3 \iff 1 + 4y \equiv 0 \pmod 3$$
+
+olur. $(4,3) = 1$ olduğundan bir tek çözüm vardır: $4y \equiv -1$, yani $y \equiv -1 \pmod 3$.
+
+**Sonuç.** $x^3 + x + 1 \equiv 0 \pmod{3^2}$ kongrüansının bir tek çözümü vardır:
+
+$$x \equiv 1 + 3 \cdot (-1) = -2 \equiv 7 \pmod 9$$
+
+*(Sağlama: $7^3 + 7 + 1 = 351 = 9 \cdot 39$.)*
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-hensel-49}
+$x^3 + x - 19 \equiv 0 \pmod{7^2}$ kongrüansını çözünüz.
+
+::: {.cozum}
+$f(x) = x^3 + x - 19$ ve $f'(x) = 3x^2 + 1$ olsun.
+
+**1. basamak: modülo $7$.** $0, \pm 1, \pm 2, \pm 3$ sayıları modülo $7$'ye göre bir tam kalanlar sistemidir.
+
+| $x$ | $0$ | $1$ | $-1$ | $2$ | $-2$ | $3$ | $-3$ |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| $f(x)$ | $-19$ | $-17$ | $-21$ | $-9$ | $-29$ | $11$ | $-49$ |
+| $f(x) \bmod 7$ | $2$ | $4$ | $0$ | $5$ | $6$ | $4$ | $0$ |
+
+O hâlde $f(x) \equiv 0 \pmod 7$ kongrüansının **iki** çözümü vardır: $x \equiv -1$ ve $x \equiv -3 \pmod 7$. Her ikisini ayrı ayrı yükseltelim.
+
+**i) $a_1 = -1$ için.** $f(-1) = -21$ ve $f'(-1) = 4$ olduğundan
+
+$$\frac{f(-1)}{7} + f'(-1)\,y \equiv 0 \pmod 7 \iff -3 + 4y \equiv 0 \pmod 7$$
+
+olur. $(4,7) = 1$ olduğundan bir tek çözüm vardır:
+
+$$4y \equiv 3 \equiv 24 \pmod 7 \iff y \equiv 6 \equiv -1 \pmod 7$$
+
+Buradan $x \equiv -1 + 7 \cdot (-1) = -8 \equiv 41 \pmod{7^2}$ bulunur. *(Bu, (i) hâli: kök tek türlü yükseldi.)*
+
+**ii) $a_2 = -3$ için.** $f(-3) = -27 - 3 - 19 = -49$ ve $f'(-3) = 28$ olduğundan
+
+$$\frac{f(-3)}{7} + f'(-3)\,y \equiv 0 \pmod 7 \iff -7 + 28y \equiv 0 \pmod 7$$
+
+olur. Burada $7 \mid 28 = f'(-3)$ ve $\dfrac{f(-3)}{7} = -7 \equiv 0 \pmod 7$'dir; yani @thm-uc-durum'un (iii) hâlindeyiz. Kongrüans her $y$ için sağlanır ve **tam $7$ tane** çözüm doğar: $y \equiv 0, 1, \dots, 6 \pmod 7$. Bunlara karşılık gelen $x \equiv -3 + 7y \pmod{7^2}$ çözümleri:
+
+| $y$ | $0$ | $1$ | $2$ | $3$ | $4$ | $5$ | $6$ |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| $x \bmod 49$ | $46$ | $4$ | $11$ | $18$ | $25$ | $32$ | $39$ |
+
+**Sonuç.** $x^3 + x - 19 \equiv 0 \pmod{7^2}$ kongrüansının **sekiz** çözümü vardır:
+
+$$x \equiv 4, \; 11, \; 18, \; 25, \; 32, \; 39, \; 41, \; 46 \pmod{49}$$
+
+*(Sağlama örneği: $4^3 + 4 - 19 = 49$; $11^3 + 11 - 19 = 1323 = 49 \cdot 27$; $41^3 + 41 - 19 = 68943 = 49 \cdot 1407$.)*
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Çözüm sayısı derecenin üstüne çıkabilir"}
+Son örnekte kongrüansın derecesi $3$ olmasına rağmen modülo $49$'da **sekiz** çözüm çıktı. Bu bir çelişki değildir: çözüm sayısının dereceyi aşamaması yalnızca **asal** modüller için geçerlidir. Bu sonucu bir sonraki bölümde ispatlayacağız.
+:::
+
+## Problemler
+
+::: {#exr-kok-yukseltme name="Asal Kuvvet Modülleri"}
+Aşağıdaki kongrüansları çözünüz.
+
+**a)** $x^5 + x^4 + 1 \equiv 0 \pmod{3^3}$ &nbsp;&nbsp;&nbsp; **b)** $x^3 + x + 57 \equiv 0 \pmod{5^3}$
+
+**c)** $x^3 + x^2 - 5 \equiv 0 \pmod{7^3}$ &nbsp;&nbsp;&nbsp; **d)** $x^3 + 10x^2 + x + 2 \equiv 0 \pmod{3^3}$
+
+*İpucu:* Her şıkta önce modülo $p$ çözümlerini bulun, sonra yükseltme adımını basamak basamak uygulayın. Türevin modülo $p$'de sıfır olduğu basamaklara özellikle dikkat edin: orada kök ya ölür ya da $p$ kola ayrılır.
+:::
