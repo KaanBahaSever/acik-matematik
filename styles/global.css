@@ -88,6 +88,11 @@ body:not(.quarto-dark), body:not(.quarto-dark) #quarto-sidebar {
   --color-base:     #0D6E6A;  /* Tanım, Algoritma */
   --color-practice: #9C3F1E;  /* Örnek, Egzersiz — [TWEAK] eski: #B24A24, daha derin/kiremit */
   --color-remark:   #5C5346;  /* Not — [TWEAK] eski: #736B60, kontrast payı için koyulaştırıldı */
+
+  /* Müfredat sayfası: dış panel ile iç konu kartları farklı zeminlerde durur */
+  --mufredat-panel:       #EAF1EF;
+  --mufredat-panel-kenar: #CBDCD7;
+  --mufredat-kart:        #FFFFFF;
 }
 
 /* Koyu Tema Aktif Olduğunda (Quarto dark mode) */
@@ -100,6 +105,10 @@ html[data-theme="dark"] {
   --color-base:     #4DB6AC;
   --color-practice: #E8A088;  /* [TWEAK] eski: #FFAB91, doygunluk kısıldı, diğer pastellerle uyum */
   --color-remark:   #A89F91;
+
+  --mufredat-panel:       #16191A;
+  --mufredat-panel-kenar: #2C3131;
+  --mufredat-kart:        #23211F;
 }
 
 /* ==========================================================================
@@ -249,14 +258,16 @@ ul li:not(:last-child) {
   margin-bottom: 0;
 }
 
-/* Müfredat sayfalarındaki grup başlıkları: tek başına kalın bir paragraf.
-   Kendinden önceki listeden ayrılsın diye üstten boşluk alır. */
-#quarto-document-content p:has(> strong:only-child) {
+/* Müfredat sayfalarındaki grup başlıkları: tek başına kalın bir paragraf ve
+   HEMEN ARDINDAN gelen bir liste. ":has(+ ul)" koşulu şart: ders metinlerinde
+   de tek başına kalın paragraflar ("2. durum." gibi) geçiyor ve bunların
+   müfredat etiketi gibi renklenmemesi gerekiyor. */
+#quarto-document-content p:has(> strong:only-child):has(+ ul) {
   margin-top: 1.9em;
   margin-bottom: 0.5em;
 }
 
-#quarto-document-content p:has(> strong:only-child):first-child {
+#quarto-document-content p:has(> strong:only-child):has(+ ul):first-child {
   margin-top: 0;
 }
 
@@ -292,16 +303,12 @@ ul li:not(:last-child) {
   display: none;
 }
 
-/* Kendi açılır kapanır okumuz */
+/* Kendi açılır kapanır işaretimiz. Sembolün kendisi ve döndürme açısı,
+   blok türüne göre bölüm 13'te belirleniyor. */
 .katlanir-baslik::before {
-  content: "▸";
   display: inline-block;
   transition: transform 0.15s ease;
   font-size: 0.9em;
-}
-
-.katlanir[open] > .katlanir-baslik::before {
-  transform: rotate(90deg);
 }
 
 .katlanir-baslik:hover {
@@ -900,7 +907,7 @@ mjx-container:not([display="true"]) {
 }
 
 #quarto-document-content li:has(> strong):has(> ul) > strong,
-#quarto-document-content p:has(> strong:only-child) > strong {
+#quarto-document-content p:has(> strong:only-child):has(+ ul) > strong {
   display: block;
   color: var(--color-base);
   font-weight: 600;
@@ -942,7 +949,7 @@ mjx-container:not([display="true"]) {
 
 /* Grup etiketinin kendi üst boşluğu (B biçimi) bölüm 3'te tanımlı;
    burada yalnızca alt çizgiyle uyumlu alt boşluk veriliyor. */
-#quarto-document-content p:has(> strong:only-child) {
+#quarto-document-content p:has(> strong:only-child):has(+ ul) {
   margin-bottom: 0.2em;
 }
 
@@ -990,8 +997,8 @@ mjx-container:not([display="true"]) {
 }
 
 /* Paragraf biçimindeki (B) grup etiketi başlığın hemen ardındaysa */
-#quarto-document-content h2 + p:has(> strong:only-child),
-#quarto-document-content h3 + p:has(> strong:only-child) {
+#quarto-document-content h2 + p:has(> strong:only-child):has(+ ul),
+#quarto-document-content h3 + p:has(> strong:only-child):has(+ ul) {
   margin-top: 1.6em;
 }
 
@@ -1009,17 +1016,34 @@ mjx-container:not([display="true"]) {
   color: var(--color-practice);
 }
 
-/* --- 3) İspat/Çözüm üçgeni: 90° döndürülmüş ve kutusunun rengiyle uyumlu ---
-   İspat blokları teorem kutusunun, çözümler örnek kutusunun içinde yer alır;
-   başlık rengi bulunduğu kutunun başlık rengiyle aynı olsun. */
+/* --- 3) İspat/Çözüm işaretleri: bulundukları kutunun sembolüyle aynı ---
+   İspat blokları teorem kutusunun, çözümler örnek kutusunun içinde yer alır.
+   Kapalıyken kutu başlığındaki sembolün aynısı görünür; tıklanınca sembol
+   aşağıyı gösterecek biçimde döner.
+
+     İspat  : ▲  (teoremle aynı)  → açıkken ▼  (180°)
+     Çözüm  : ▷  (örnekle aynı)   → açıkken ▽  (90°)
+
+   Blok türü scripts/katlanir.lua tarafından .katlanir--ispat / .katlanir--cozum
+   sınıfı olarak yazılır. */
 .katlanir-baslik::before {
-  transform: rotate(90deg);          /* kapalıyken aşağı bakar */
+  content: "▲";
+  transform: none;
 }
 
 .katlanir[open] > .katlanir-baslik::before {
-  transform: rotate(-90deg);         /* açıkken yukarı bakar */
+  transform: rotate(180deg);
 }
 
+.katlanir--cozum > .katlanir-baslik::before {
+  content: "▷";
+}
+
+.katlanir--cozum[open] > .katlanir-baslik::before {
+  transform: rotate(90deg);
+}
+
+/* Başlık rengi bulunduğu kutunun başlık rengiyle aynı olsun. */
 .theorem .katlanir-baslik {
   color: var(--color-theory);
 }
@@ -1071,7 +1095,7 @@ mjx-container:not([display="true"]) {
 
 /* --- Grup etiketi: kutunun üstünde, alt çizgisiz --- */
 #quarto-document-content li:has(> strong):has(> ul) > strong,
-#quarto-document-content p:has(> strong:only-child) > strong {
+#quarto-document-content p:has(> strong:only-child):has(+ ul) > strong {
   display: block;
   color: var(--color-base);
   font-weight: 650;
@@ -1085,7 +1109,10 @@ mjx-container:not([display="true"]) {
 /* --- Konu kutusu --- */
 #quarto-document-content li:has(> strong):has(> ul) > ul,
 #quarto-document-content p:has(> strong:only-child) + ul {
-  background-color: var(--academic-bg);
+  /* A biçiminde bu liste ikinci seviyede olduğu için tarayıcı ○ işaretçisi
+     verir; iki biçim aynı görünsün diye • sabitleniyor. */
+  list-style-type: disc;
+  background-color: var(--mufredat-kart);
   border-left: 3px solid var(--color-base);
   border-radius: 0 8px 8px 0;
   padding: 0.9em 1.1em 0.9em 2.1em;
@@ -1115,7 +1142,7 @@ mjx-container:not([display="true"]) {
   margin-top: 1.7em;
 }
 
-#quarto-document-content p:has(> strong:only-child) {
+#quarto-document-content p:has(> strong:only-child):has(+ ul) {
   margin-top: 1.7em;
   margin-bottom: 0;
 }
@@ -1157,4 +1184,134 @@ mjx-container:not([display="true"]) {
   font-weight: 700;
   font-size: 1em;
   margin-bottom: 0;
+}
+
+/* ==========================================================================
+   15. DENKLEM BOŞLUKLARI
+   --------------------------------------------------------------------------
+   Satır aralığının kendisi _kitap-ortak.yml içindeki `linestretch` ile
+   veriliyor. Burada yalnızca görüntü (display) formüllerinin çevresindeki
+   dikey boşluk ayarlanıyor: MathJax'in varsayılan 1em'lik payı, bir teorem/
+   tanım/örnek başlığının hemen ardından gelen formülü başlığa yapıştırıyordu.
+
+   Formül kendi <p>'sinin tek çocuğu olduğu için üst/alt paylar paragrafla
+   birleşir (margin collapsing); tek noktadan ayar yapmak yeterli.
+   ========================================================================== */
+mjx-container[display="true"],
+.math.display {
+  margin-top: 1.5em !important;
+  margin-bottom: 1.5em !important;
+}
+
+/* Kutunun ilk satırı formülse yukarıda fazladan boşluk oluşmasın */
+.theorem > p:first-child > mjx-container[display="true"],
+.callout-body > p:first-child > mjx-container[display="true"],
+.katlanir-govde > p:first-child > mjx-container[display="true"] {
+  margin-top: 0.2em !important;
+}
+
+/* Tablo hücrelerinde ve liste maddelerinde formül payı daha küçük olmalı */
+#quarto-document-content td mjx-container[display="true"],
+#quarto-document-content li > p:only-child > mjx-container[display="true"] {
+  margin-top: 0.6em !important;
+  margin-bottom: 0.6em !important;
+}
+
+/* Bölüm başlığından hemen sonra gelen formül de nefes alsın */
+#quarto-document-content h2 + p,
+#quarto-document-content h3 + p,
+#quarto-document-content h4 + p {
+  margin-top: 0.9em;
+}
+
+/* ==========================================================================
+   16. MÜFREDAT PANELİ
+   --------------------------------------------------------------------------
+   Ders kitaplarının index.qmd sayfalarında her "## …" bölümü, içindeki tüm
+   konu kartlarını taşıyan TEK bir dış kutuya dönüşür. Dış panel ile iç
+   kartların zemini bilinçli olarak farklı: kartlar panelin üzerinde durur.
+
+   Panel, bölümün yapısından tanınır: içinde ya "kalın paragraf + liste"
+   (B biçimi) ya da "kalın madde + alt liste" (A biçimi) bulunur. Böylece
+   27 ders dosyasına dokunmadan yalnızca müfredat bölümleri seçilir.
+
+   DİKKAT: CSS kuralı gereği bir :has() içine başka bir :has() yazılamaz.
+   Bu yüzden koşullar yan yana iki :has() olarak ifade ediliyor.
+   ========================================================================== */
+#quarto-document-content section:is(
+  :has(> p > strong:only-child):has(> ul),
+  :has(> ul > li > strong):has(> ul > li > ul)
+) {
+  background-color: var(--mufredat-panel);
+  border: 1px solid var(--mufredat-panel-kenar);
+  border-radius: 12px;
+  padding: 1.3rem 1.6rem 1.6rem 1.6rem;
+  margin: 2.2rem 0;
+}
+
+/* Panelin kendi başlığı: üstte, ince bir ayraçla.
+   Bazı derslerde bu başlık h2, bazılarında h3 olarak yazılmış. */
+#quarto-document-content section:is(
+  :has(> p > strong:only-child):has(> ul),
+  :has(> ul > li > strong):has(> ul > li > ul)
+) > :is(h2, h3) {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--mufredat-panel-kenar);
+  font-size: 1.3rem;
+}
+
+/* Panel içindeki ilk grup, başlığın ayracından sonra nefes alsın */
+#quarto-document-content section:is(
+  :has(> p > strong:only-child):has(> ul),
+  :has(> ul > li > strong):has(> ul > li > ul)
+) > :is(h2, h3) + p:has(> strong:only-child),
+#quarto-document-content section:is(
+  :has(> p > strong:only-child):has(> ul),
+  :has(> ul > li > strong):has(> ul > li > ul)
+) > :is(h2, h3) + ul > li:has(> strong):has(> ul):first-child {
+  margin-top: 1.5rem;
+}
+
+/* A biçiminde dış liste, panelin kendisi gibi davranır: girinti ve
+   madde işareti taşımaz. */
+#quarto-document-content section:is(
+  :has(> p > strong:only-child):has(> ul),
+  :has(> ul > li > strong):has(> ul > li > ul)
+) > ul:has(> li:has(> strong):has(> ul)) {
+  padding-left: 0;
+  list-style: none;
+  margin-bottom: 0;
+}
+
+/* Panelin son öğesinin alt boşluğu, panelin iç payıyla çakışmasın */
+#quarto-document-content section:is(
+  :has(> p > strong:only-child):has(> ul),
+  :has(> ul > li > strong):has(> ul > li > ul)
+) > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Panel mobilde daha dar bir iç pay alsın */
+@media (max-width: 575.98px) {
+  #quarto-document-content section:is(
+    :has(> p > strong:only-child):has(> ul),
+    :has(> ul > li > strong):has(> ul > li > ul)
+  ) {
+    padding: 1rem 0.9rem 1.1rem 0.9rem;
+    border-radius: 10px;
+  }
+
+  #quarto-document-content li:has(> strong):has(> ul) > ul,
+  #quarto-document-content p:has(> strong:only-child) + ul {
+    padding: 0.8em 0.7em 0.8em 1.6em;
+  }
+}
+
+/* --- Sayfa başlığı ile içerik arasında nefes payı ---
+   Quarto'nun kendi kuralı (#title-block-header.quarto-title-block.default)
+   tek id'li bir seçiciden daha özgül; kapsayıcı id'yi de yazarak geçiyoruz. */
+#quarto-document-content > #title-block-header {
+  margin-bottom: 2.4rem;
 }

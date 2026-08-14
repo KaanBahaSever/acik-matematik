@@ -89,20 +89,23 @@ local function html_kacis(metin)
 end
 
 -- Katlanabilir bloğun başlığı "Çözüm" mü "İspat" mı? Değilse nil.
+-- İkinci dönüş değeri blok türüdür; CSS'te açılır kapanır üçgenin yönünü
+-- belirlemek için kullanılır (Çözüm örnekle, İspat teoremle aynı sembolü alır).
 local function katlanir_basligi(baslik_metni)
   local kucuk = pandoc.text.lower(baslik_metni)
-  if kucuk:find("^çözüm") then return "Çözüm" end
+  if kucuk:find("^çözüm") then return "Çözüm", "cozum" end
   if kucuk:find("^ispat") or kucuk:find("^i̇spat") then
     -- "İspat: bu formüller nereden geliyor?" gibi açıklamalı başlıkları koru
-    return baslik_metni
+    return baslik_metni, "ispat"
   end
   return nil
 end
 
 -- <details> bloğu üret
-local function detay_bloklari(baslik, icerik)
+local function detay_bloklari(baslik, icerik, tur)
+  local sinif = "katlanir katlanir--" .. (tur or "ispat")
   local ac = pandoc.RawBlock("html",
-    '<details class="katlanir">' ..
+    '<details class="' .. sinif .. '">' ..
     '<summary class="katlanir-baslik">' .. html_kacis(baslik) .. '</summary>' ..
     '<div class="katlanir-govde">')
   local kapa = pandoc.RawBlock("html", '</div></details>')
@@ -127,9 +130,9 @@ function Callout(el)
 
   -- 1) Katlanabilir Çözüm / İspat blokları -> <details>
   if el.collapse then
-    local katlanir = katlanir_basligi(temiz_baslik)
+    local katlanir, tur = katlanir_basligi(temiz_baslik)
     if katlanir then
-      return detay_bloklari(katlanir, el.content)
+      return detay_bloklari(katlanir, el.content, tur)
     end
   end
 
@@ -152,15 +155,17 @@ end
 -- Yeni içerik yazarken callout kullanmadan doğrudan bu sınıflar tercih
 -- edilebilir:  ::: {.cozum}  …  :::
 function Div(el)
-  local baslik
+  local baslik, tur
   if el.classes:includes("cozum") then
     baslik = el.attributes["baslik"] or "Çözüm"
+    tur = "cozum"
   elseif el.classes:includes("ispat") then
     baslik = el.attributes["baslik"] or "İspat"
+    tur = "ispat"
   end
 
   if baslik then
-    return detay_bloklari(baslik, el.content)
+    return detay_bloklari(baslik, el.content, tur)
   end
   return nil
 end
