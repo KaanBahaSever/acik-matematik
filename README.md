@@ -1,4 +1,4 @@
-# 📐 Açık Matematik
+# 🌿 Açık Matematik
 
 Lisans matematik derslerinden derlenmiş; karmaşık el yazılarından arındırılmış, pürüzsüz dizgiye sahip (LaTeX/MathJax), tamamen açık kaynaklı ve reklamsız Türkçe not arşivi.
 
