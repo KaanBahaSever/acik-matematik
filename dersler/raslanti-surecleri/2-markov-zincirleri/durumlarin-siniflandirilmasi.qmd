@@ -1,0 +1,184 @@
+---
+title: "Durumların Sınıflandırılması ve İndirgeme"
+description: "Geçici, tekrar eden ve yutucu durumlar, indirgenemez Markov zincirleri, geçiş diyagramı çizimi ve geçiş matrisinin tekrar eden durumlara indirgenmesi."
+---
+
+Bir Markov zincirinin uzun dönemli davranışını anlamak için önce durumların **nasıl davrandığını** ayırt etmek gerekir: hangilerine bir daha dönülmez, hangilerinde sonsuza kadar dolaşılır, hangilerinden hiç çıkılmaz?
+
+## Durum Tipleri
+
+::: {#def-gecici name="Geçici Durum"}
+Sürecin bir kere kendisinden çıktığı zaman tekrar dönülemediği durumlara **geçici durum** denir. Geçici durumların kümesi $T$ ile gösterilir.
+:::
+
+::: {#def-tekrar-eden name="Tekrar Eden Durum"}
+Sürecin kendisinden çıkıldıktan sonra tekrar dönülebildiği durumlara **tekrar eden durum** denir. Tekrar eden durumların kümesi $R$ ile gösterilir.
+:::
+
+::: {#def-yutucu name="Yutucu Durum"}
+Sürece bir kere girildiğinde tekrar çıkılmayan durumlara **yutucu durum** denir.
+
+Yutucu durum aynı zamanda bir tekrar eden durumdur; ancak hep kendisini tekrar eder. Yani **tek elemanlı, tekrar eden bir durumdur**.
+:::
+
+::: {.callout-tip title="Yutucu durumu matriste görmek"}
+$i$ durumunun yutucu olması, tam olarak $p_{ii} = 1$ demektir. Satır toplamı $1$ olduğundan o satırdaki diğer bütün elemanlar sıfırlanır:
+
+$$\text{$i$ yutucu} \iff p_{ii} = 1 \iff \text{esas köşegen üzerinde $1$ var}$$
+
+Bu yüzden geçiş matrisine bakarken ilk iş esas köşegeni taramaktır.
+:::
+
+::: {#def-indirgenemez name="İndirgenemez Markov Zinciri"}
+Bir Markov zincirinde herhangi bir alt durum kümesi tek başına bir Markov zinciri oluşturamıyorsa, zincire **indirgenemez Markov zinciri** denir.
+
+Buna karşılık $T \neq \varnothing$ ise, yani zincirde en az bir geçici durum varsa, zincir **kesinlikle indirgenebilir**.
+:::
+
+## Sınıflandırma Örneği
+
+:::: {#exm-siniflandirma-4 name="Dört Durumlu Zincir"}
+$S = \{1, 2, 3, 4\}$ olmak üzere geçiş matrisi
+
+$$P = \begin{pmatrix}
+0{,}2 & 0{,}8 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0{,}5 & 0{,}4 & 0{,}1 \\
+0 & 1 & 0 & 0
+\end{pmatrix}$$
+
+olan zincirin geçiş diyagramını çiziniz ve durumları sınıflandırınız.
+
+::: {.cozum}
+**Geçiş diyagramı.** Matristeki sıfırdan farklı her $p_{ij}$ elemanı, $i$ durumundan $j$ durumuna bir ok demektir:
+
+| Durum | Gittiği durumlar |
+| :--: | :-- |
+| $1$ | $1$ (kendine, $0{,}2$), $\;2$ ($0{,}8$) |
+| $2$ | $3$ ($1$) |
+| $3$ | $2$ ($0{,}5$), $\;3$ (kendine, $0{,}4$), $\;4$ ($0{,}1$) |
+| $4$ | $2$ ($1$) |
+
+**Sınıflandırma.** Sorunun "durumları sınıflandırınız" ifadesi, $T$ ve $R$ kümelerinin elemanlarını bulmak demektir.
+
+* **Durum $1$:** $1$ numaralı **sütuna** bakalım. Yalnızca $p_{11} = 0{,}2$ sıfırdan farklıdır; başka hiçbir durumdan $1$'e ok gelmez. Süreç bir kez $1$'den çıkıp $2$'ye geçtiğinde ($0{,}8$ olasılıkla) bir daha $1$'e dönemez. O hâlde $1$ **geçicidir**.
+
+* **Durumlar $2, 3, 4$:** $2 \to 3 \to 2$ ve $2 \to 3 \to 4 \to 2$ çevrimleri vardır; bu üç durumdan çıkıldıktan sonra hepsine geri dönülebilir. O hâlde üçü de **tekrar edendir**.
+
+$$T = \{1\}, \qquad R = \{2, 3, 4\}$$
+
+[$\blacksquare$]{.qed}
+:::
+
+::: {.callout-note title="Aynı matrisin yutucu varyantı"}
+Yukarıdaki matriste ikinci satır $(0,\,1,\,0,\,0)$ olsaydı:
+
+$$P = \begin{pmatrix}
+0{,}2 & 0{,}8 & 0 & 0 \\
+0 & \mathbf{1} & 0 & 0 \\
+0 & 0{,}5 & 0{,}4 & 0{,}1 \\
+0 & 1 & 0 & 0
+\end{pmatrix}$$
+
+esas köşegen üzerinde $1$ bulunduğundan $2$ durumu **yutucu** olurdu: sürece bir kez $2$'ye girildiğinde sonsuza kadar orada kalınır.
+:::
+::::
+
+## Geçiş Matrisinin İndirgenmesi
+
+Zincirde geçici durumlar varsa, uzun dönemde süreç eninde sonunda onları terk eder ve yalnızca tekrar eden durumlar arasında dolaşır. Bu yüzden uzun dönem analizinde geçici durumlar atılabilir.
+
+::: {#def-indirgenmis-matris name="İndirgenmiş Matris"}
+$T \neq \varnothing$ olan bir zincirde, geçici durumlara karşılık gelen **satır ve sütunlar** geçiş matrisinden silinir. Geriye kalan matrise **indirgenmiş matris** denir ve $P_R$ ile gösterilir.
+:::
+
+:::: {#exm-indirgeme-4 name="Dört Durumlu Zincirin İndirgenmesi"}
+@exm-siniflandirma-4'teki zinciri indirgeyiniz.
+
+::: {.cozum}
+$T = \{1\}$ olduğundan $1$. satır ve $1$. sütun silinir. Geriye $2, 3, 4$ durumlarına karşılık gelen $3 \times 3$'lük matris kalır:
+
+$$P_R = \begin{pmatrix}
+0 & 1 & 0 \\
+0{,}5 & 0{,}4 & 0{,}1 \\
+1 & 0 & 0
+\end{pmatrix}$$
+
+$4 \times 4$'lük matrisi $3 \times 3$'lüğe indirdik. Silme işleminin doğru yapıldığının en hızlı kontrolü, kalan matrisin de bir SSM olmasıdır: satır toplamları sırasıyla $1$, $1$ ve $1$'dir. ✓
+
+[$\blacksquare$]{.qed}
+:::
+
+::: {.callout-important title="Silme işleminde satır ve sütun birlikte gider"}
+Yalnızca satırı silmek yetmez; aynı numaralı sütun da silinmelidir. Aksi hâlde matris kare olmaktan çıkar ve satır toplamları $1$ vermez.
+
+Bu işlem ancak silinen durumlar **geçici** olduğunda anlamlıdır: tekrar eden durumlardan geçicilere hiç ok gitmediği için, silinen sütunlarda kalan satırlar zaten sıfırdır.
+:::
+::::
+
+:::: {#exm-siniflandirma-5 name="Beş Durumlu Zincir"}
+$S = \{1, 2, 3, 4, 5\}$ olmak üzere
+
+$$P = \begin{pmatrix}
+0{,}1 & 0{,}5 & 0{,}1 & 0{,}1 & 0{,}2 \\
+0 & 0{,}8 & 0 & 0 & 0{,}2 \\
+0 & 0 & 0{,}3 & 0 & 0{,}7 \\
+0 & 0 & 1 & 0 & 0 \\
+0 & 0{,}5 & 0 & 0 & 0{,}5
+\end{pmatrix}$$
+
+zincirinin durumlarını sınıflandırıp indirgenmiş matrisini bulunuz.
+
+::: {.cozum}
+**Yutucu durum var mı?** Esas köşegende $1$ yoktur, dolayısıyla yutucu durum yoktur.
+
+**Geçiş diyagramı.**
+
+| Durum | Gittiği durumlar |
+| :--: | :-- |
+| $1$ | $1, 2, 3, 4, 5$ |
+| $2$ | $2, 5$ |
+| $3$ | $3, 5$ |
+| $4$ | $3$ |
+| $5$ | $2, 5$ |
+
+**Sınıflandırma.** Her durum için "çıkınca geri dönebiliyor muyum?" sorusunu soralım.
+
+* **Durum $1$:** $1$. sütunda $p_{11}$ dışında sıfırdan farklı eleman yoktur; hiçbir durumdan $1$'e dönülemez. **Geçici.**
+* **Durum $3$:** $3 \to 5$ geçişi vardır ve $5$'ten yalnızca $2$ ve $5$'e gidilir. $3$'e dönüş yalnızca $4$'ten mümkündür, $4$'e ise yalnızca $1$'den gelinir; $1$ de geçicidir. O hâlde $3$'ten çıkıldıktan sonra geri dönülemez. **Geçici.**
+* **Durum $4$:** $4$. sütunda yalnızca $p_{14} = 0{,}1$ vardır. $4$'ten çıkılınca $3$'e gidilir ve $4$'e bir daha dönülemez. **Geçici.**
+* **Durumlar $2$ ve $5$:** $2 \to 5 \to 2$ çevrimi vardır; ikisi de **tekrar edendir**.
+
+$$T = \{1, 3, 4\}, \qquad R = \{2, 5\}$$
+
+**İndirgeme.** $T \neq \varnothing$ olduğundan zincir indirgenebilir. $1$, $3$ ve $4$ numaralı satır ve sütunlar silinip $2$ ile $5$ numaralı satır ve sütunlar bırakılır:
+
+$$P_R = \begin{pmatrix}
+p_{22} & p_{25} \\
+p_{52} & p_{55}
+\end{pmatrix}
+= \begin{pmatrix}
+0{,}8 & 0{,}2 \\
+0{,}5 & 0{,}5
+\end{pmatrix}$$
+
+Satır toplamları $1$'dir; $P_R$ geçerli bir SSM'dir. ✓
+
+[$\blacksquare$]{.qed}
+:::
+
+::: {.callout-warning title="Kaynak nottaki iki hata"}
+**1.** Kaynak notta $P$'nin ikinci satırı $(0,\; 0{,}3,\; 0,\; 0,\; 0{,}2)$ olarak yazılmıştır; bu satırın toplamı $0{,}5 \neq 1$'dir, yani matris SSM değildir. $p_{22}$ elemanı **$0{,}8$** olmalıdır — nitekim nottaki indirgenmiş matrisin ilk satırı da $(0{,}8;\ 0{,}2)$ olarak verilmiştir.
+
+**2.** İndirgenmiş matrisin ikinci satırı $(0{,}2;\ 0{,}2)$ olarak yazılmıştır. Bu satır $5$ durumundan gelmektedir ve $P$'nin beşinci satırı $(0,\; 0{,}5,\; 0,\; 0,\; 0{,}5)$ olduğundan doğrusu **$(0{,}5;\ 0{,}5)$**'tir. Nottaki hâlin satır toplamı $0{,}4$ çıkıyor, ki bu bir SSM için mümkün değildir.
+:::
+::::
+
+::: {.callout-tip title="Sınıflandırmada pratik yöntem"}
+Bir durumun geçici mi tekrar eden mi olduğunu anlamanın en hızlı yolu **sütuna bakmaktır**:
+
+* $j$ sütununda, $j$ durumuna ulaşılabilen durumların hepsi görünür.
+* $j$'ye yalnızca kendisinden ve geçici durumlardan ok geliyorsa, $j$ de geçicidir.
+
+Diyagram çizmeden önce bu taramayı yapmak, çoğu soruda yeterli olur.
+:::
