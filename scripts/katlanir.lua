@@ -169,3 +169,99 @@ function Div(el)
   end
   return nil
 end
+
+-- ------------------------------------------------------------- Müfredat kutusu
+
+--[[
+  Ders kitaplarının index.qmd sayfalarındaki "Ders İçeriği" listeleri iki
+  farklı biçimde yazılmış:
+
+    A)  * **Grup adı**              B)  **Grup adı**
+          * konu                        * konu
+          * konu                        * konu
+
+  Aşağıdaki kod her ikisini de B biçimine indirger ve ardışık grupların
+  tamamını tek bir <div class="mufredat"> içine alır. Böylece CSS tarafında
+  yapı tahmin etmeye (:has() zincirleri) gerek kalmaz ve müfredat kutusu
+  bölüm başlığının ALTINDA, başlığı içine almadan çizilebilir.
+
+  Yalnızca index.qmd sayfalarında çalışır; ders metinlerindeki kalın
+  paragraf + liste dizilerine dokunmaz.
+]]
+
+-- Quarto, pandoc'a geçici bir .md dosyası verdiği için PANDOC_STATE üzerinden
+-- asıl kaynağa ulaşılamaz; Quarto'nun kendi API'si özgün yolu tutuyor.
+local function mufredat_sayfasi_mi()
+  local yol = quarto and quarto.doc and quarto.doc.input_file
+  if not yol then return false end
+  return yol:match("[/\\]index%.qmd$") ~= nil
+end
+
+-- Tek çocuğu Strong olan bir Para/Plain mı?
+local function etiket_mi(blok)
+  return blok ~= nil
+    and (blok.t == "Para" or blok.t == "Plain")
+    and #blok.content == 1
+    and blok.content[1].t == "Strong"
+end
+
+-- A biçimi: her maddesi "**Grup**" + alt liste olan bir madde listesi
+local function grup_listesi_mi(blok)
+  if blok == nil or blok.t ~= "BulletList" or #blok.content == 0 then
+    return false
+  end
+  for _, madde in ipairs(blok.content) do
+    if #madde < 2 or not etiket_mi(madde[1]) then return false end
+    if madde[2].t ~= "BulletList" then return false end
+  end
+  return true
+end
+
+-- A biçimini B biçimine çevir: Para(Strong) + BulletList çiftleri
+local function grup_listesini_duzlestir(blok)
+  local sonuc = pandoc.List({})
+  for _, madde in ipairs(blok.content) do
+    sonuc:insert(pandoc.Para(madde[1].content))
+    for i = 2, #madde do
+      sonuc:insert(madde[i])
+    end
+  end
+  return sonuc
+end
+
+function Pandoc(doc)
+  if not mufredat_sayfasi_mi() then return nil end
+
+  local bloklar = doc.blocks
+  local yeni = pandoc.List({})
+  local i = 1
+
+  while i <= #bloklar do
+    local kutu = pandoc.List({})
+
+    -- Ardışık müfredat gruplarını topla
+    while true do
+      if grup_listesi_mi(bloklar[i]) then
+        kutu:extend(grup_listesini_duzlestir(bloklar[i]))
+        i = i + 1
+      elseif etiket_mi(bloklar[i]) and bloklar[i + 1] ~= nil
+             and bloklar[i + 1].t == "BulletList" then
+        kutu:insert(pandoc.Para(bloklar[i].content))
+        kutu:insert(bloklar[i + 1])
+        i = i + 2
+      else
+        break
+      end
+    end
+
+    if #kutu > 0 then
+      yeni:insert(pandoc.Div(kutu, pandoc.Attr("", { "mufredat" })))
+    else
+      yeni:insert(bloklar[i])
+      i = i + 1
+    end
+  end
+
+  doc.blocks = yeni
+  return doc
+end
