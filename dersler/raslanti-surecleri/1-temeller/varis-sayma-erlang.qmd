@@ -1,0 +1,126 @@
+---
+title: "Varış Sayma Süreci ve Erlang Dağılımı"
+description: "Olaylar arası süreler, n. varışa kadar geçen süre, t anına kadarki varış sayısı, ileri rekürans süresi ve Erlang dağılımı; sayma süreci ile varış zamanları arasındaki temel ilişki."
+---
+
+Bir sistemde **aynı türden olaylar** arka arkaya meydana geliyor olsun: bir kavşakta kazalar, bir acil serviste hastalar, bir santralde gelen çağrılar. Bu tür süreçlerde iki farklı bakış açısı vardır ve bunlar birbirinin ikizidir:
+
+* **Zamana bakmak:** $n$. olayın gerçekleşmesi ne kadar sürer?
+* **Saymaya bakmak:** $t$ anına kadar kaç olay gerçekleşir?
+
+Bu bölümde her iki bakışın notasyonunu kurup aralarındaki köprüyü atacağız.
+
+## Temel Büyüklükler
+
+::: {#def-varis-buyuklukleri name="Varış Süreci Büyüklükleri"}
+Arka arkaya meydana gelen aynı tür olaylar arasındaki zaman boşlukları $G_1, G_2, \dots$ olsun. Burada $G_i$, $(i-1)$. olay ile $i$. olay arasında geçen süredir.
+
+* $T_n$ : $n$. olay oluncaya kadar geçen **toplam süredir**:
+  $$T_n = G_1 + G_2 + \cdots + G_n$$
+  $\{T_n \mid n = 0, 1, 2, \dots\}$ sürecine **varış zamanları süreci** denir. Anlaşma gereği $T_0 = 0$'dır; bunun anlamı "henüz hiçbir olay olmamıştır".
+
+* $Y_t$ : $t$ anı dâhil olmak üzere $t$ zamanına kadar gerçekleşen **olay sayısıdır**. $\{Y_t \mid t \geq 0\}$ sürecine **varış sayma süreci** denir.
+
+* $R_a$ : $a$ zamanından sonra **ilk olayın** olmasına kadar geçen süredir; **ileri rekürans süresi** olarak adlandırılır.
+:::
+
+::: {.callout-note title="Zaman boşlukları neden rasgeledir?"}
+$G_i$ süreleri genel olarak zamana göre kararlıdır: bir kaza olduktan sonra diğer kazanın ne zaman olacağı belli değildir, ama bekleme süresinin **dağılımı** değişmez.
+:::
+
+Sayma sürecinin farkları da sık kullanılır: $a \geq 0$ verilsin. $a$ ile $a + \Delta a$ zamanları arasında gerçekleşen olay sayısı
+
+$$Y_{a + \Delta a} - Y_a = Y_{\Delta a}$$
+
+biçiminde yazılır. Yani sayma süreci **durağan artışlıdır**: bir aralıktaki olay sayısının dağılımı, aralığın nerede başladığına değil yalnızca **uzunluğuna** bağlıdır.
+
+::: {#exm-fark-notasyonu name="Fark Notasyonu"}
+Bir kavşakta kazalar olsun. $T_5 = 4$ ise, **5. kaza olana kadar** $4$ birim zaman geçmiştir.
+
+$$Y_5 - Y_3 = Y_2$$
+
+ifadesi ise "3. ve 5. zaman birimleri arasında olan kaza sayısı" demektir; bu da $2$ birimlik bir aralıktaki kaza sayısıyla aynı dağılıma sahiptir.
+:::
+
+::: {#exm-ileri-olasilik name="Sözelden Notasyona"}
+"Bir $a$ zamanından $24$ birim zaman sonraya kadar olan olayların sayısının $30$'dan fazla olması" olayı
+
+$$\Pr\{\, Y_{a+24} - Y_a > 30 \,\}$$
+
+biçiminde ifade edilir.
+:::
+
+## Erlang Dağılımı
+
+Sürekli zamanlı varış süreçlerinde $G_i$ zaman boşlukları tipik olarak **üstel dağılımlıdır**. O hâlde $T_n$, $n$ tane bağımsız üstel değişkenin toplamıdır.
+
+::: {#thm-erlang name="Üstellerin Toplamı Erlang'dır"}
+$G_1, \dots, G_n$ bağımsız ve her biri $\lambda$ parametreli üstel dağılıma sahip olsun. Bu durumda
+
+$$T_n = G_1 + \cdots + G_n$$
+
+toplamı, $\lambda$ parametreli **$n$ denemeli Erlang dağılımına** sahiptir. Kümülatif dağılım fonksiyonu ve olasılık yoğunluk fonksiyonu $a \geq 0$ için
+
+$$F_{T_n}(a) = 1 - \sum_{j=0}^{n-1} \frac{e^{-\lambda a}\,(\lambda a)^j}{j!}$$
+
+$$f_{T_n}(a) = \frac{\lambda\,(\lambda a)^{n-1} e^{-\lambda a}}{(n-1)!}$$
+
+biçimindedir.
+:::
+
+::: {.callout-warning title="Yoğunluk fonksiyonundaki katsayı"}
+Kaynak notta yoğunluk fonksiyonu $\dfrac{\lambda a\,(\lambda a)^{n-1} e^{-\lambda a}}{(n-1)!}$ olarak yazılmıştır; baştaki çarpan **$\lambda a$ değil $\lambda$** olmalıdır.
+
+Doğrusu, kümülatif dağılımın türevi alınarak görülebilir:
+
+$$\frac{d}{da} F_{T_n}(a) = \lambda e^{-\lambda a}\left[\sum_{j=0}^{n-1} \frac{(\lambda a)^j}{j!} - \sum_{k=0}^{n-2} \frac{(\lambda a)^k}{k!}\right] = \frac{\lambda (\lambda a)^{n-1} e^{-\lambda a}}{(n-1)!}$$
+
+Fazladan bir $a$ çarpanı olsaydı yoğunluğun integrali $1$ etmezdi.
+:::
+
+::: {.callout-note title="Özel hâl"}
+$n = 1$ için Erlang, üstel dağılıma indirgenir:
+
+$$f_{T_1}(a) = \lambda e^{-\lambda a}, \qquad F_{T_1}(a) = 1 - e^{-\lambda a}$$
+
+Ayrıca üstel dağılımın beklenen değeri $E(G_i) = \dfrac{1}{\lambda}$'dır; buradan $E(T_n) = \dfrac{n}{\lambda}$ bulunur.
+:::
+
+## Sayma ile Zaman Arasındaki Köprü
+
+Şimdi bölümün en önemli ilişkisine geldik. $T_n$ ile $Y_t$ aynı sürecin iki farklı okumasıdır ve birbirine şu denklikle bağlanır.
+
+:::: {#thm-koprü name="Sayma–Zaman Denkliği"}
+Her $n \geq 1$ ve $t \geq 0$ için
+
+$$\{\, T_n \leq t \,\} \iff \{\, Y_t \geq n \,\}$$
+
+olayları **aynıdır**.
+
+::: {.ispat}
+$T_n \leq t$ demek, $n$. olayın en geç $t$ anında gerçekleşmiş olması demektir. O hâlde $t$ anına kadar en az $n$ olay gerçekleşmiştir; yani $Y_t \geq n$'dir.
+
+Tersine $Y_t \geq n$ ise, $t$ anına kadar en az $n$ olay olmuştur; özel olarak $n$. olay $t$'den önce (ya da tam $t$'de) gerçekleşmiştir, yani $T_n \leq t$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu denklik pratikte çok işe yarar: **dağılımı bilinmeyen bir büyüklüğü, dağılımı bilinen diğerine çevirmeyi** sağlar. Örneğin $T_n$'in Erlang dağılımı doğrudan hesaplanması zor bir ifadedir; ama sayma tarafına geçilirse hesap Poisson olasılıklarına indirgenir:
+
+$$\Pr\{T_n \leq t\} = \Pr\{Y_t \geq n\} = 1 - \sum_{j=0}^{n-1} \frac{e^{-\lambda t} (\lambda t)^j}{j!}$$
+
+::: {.callout-tip title="Sayma tarafındaki üç temel ifade"}
+$$\Pr\{Y_t < n\} = \sum_{j=0}^{n-1} \frac{e^{-\lambda t} (\lambda t)^j}{j!}, \qquad
+\Pr\{Y_t \leq n\} = \sum_{j=0}^{n} \frac{e^{-\lambda t} (\lambda t)^j}{j!}$$
+
+İkisinin farkı, tek bir terimi yalıtır:
+
+$$\Pr\{Y_t = n\} = \Pr\{Y_t \leq n\} - \Pr\{Y_t < n\} = \frac{e^{-\lambda t} (\lambda t)^n}{n!}$$
+
+Ayrıca tümleyen kuralı her zaman geçerlidir:
+
+$$\Pr\{Y_t \geq n\} + \Pr\{Y_t < n\} = 1$$
+:::
+
+Son eşitlik, $\{Y_t \mid t \geq 0\}$ sürecinin her $t$ için **$\lambda t$ ortalamalı Poisson dağılımına** sahip olduğunu söyler. İşte bu yüzden bu sürece Poisson süreci denir; bir sonraki bölümün konusu odur.
