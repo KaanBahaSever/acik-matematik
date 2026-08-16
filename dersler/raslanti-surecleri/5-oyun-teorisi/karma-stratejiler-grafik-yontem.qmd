@@ -1,0 +1,214 @@
+---
+title: "Karma Stratejiler ve Grafik Çözüm Yöntemi"
+description: "Maximin ve minimax değerlerinin eşit olmadığı oyunlarda karma strateji, beklenen değer doğrularının E_j(A) = (a_1j - a_2j)x_1 + a_2j formülüyle kurulması ve grafik yöntemle optimum çözümün bulunması."
+---
+
+## Ne Zaman Karma Strateji?
+
+Karma stratejili oyunların belirgin özelliği, **maximin ve minimax değerlerinin eşit olmamasıdır**:
+
+$$\underline{v} \neq \overline{v}$$
+
+Bu durumda eyer noktası yoktur ve oyuncular tek bir stratejide karar kılamaz; stratejilerini belirli olasılıklarla karıştırırlar. Grafik yöntem, böyle problemler için bir çözüm yöntemidir.
+
+::: {#def-grafik-uygulanabilirlik name="Grafik Yöntemin Uygulanabilirliği"}
+Ödemeler matrisi $(m \times 2)$ veya $(2 \times n)$ boyutlarından birini taşıyorsa oyun grafik yöntem ile çözülebilir.
+
+Diğer bir deyişle **satır veya sütunları temsil eden oyunculardan birinin ikiden fazla stratejisi olmamalıdır**.
+:::
+
+## Yöntemin Kurulması
+
+İki stratejisi olan oyuncunun A olduğunu, yani ödemeler matrisinin $2 \times n$ boyutlu olduğunu kabul edelim:
+
+$$A = \begin{pmatrix}
+a_{11} & a_{12} & \cdots & a_{1n} \\
+a_{21} & a_{22} & \cdots & a_{2n}
+\end{pmatrix}$$
+
+**Yatay eksen.** Koordinat sisteminin yatay ekseni, iki stratejiye sahip oyuncunun birinci stratejisinin gerçekleşme olasılığını gösterir:
+
+$$x_1, \qquad 0 \leq x_1 \leq 1$$
+
+İkinci stratejisinin olasılık değeri ise bu durumda
+
+$$x_2 = 1 - x_1$$
+
+olur.
+
+**Beklenen değer doğruları.** Daha sonra A oyuncusunun, B oyuncusunun $Y_j$ stratejileri karşısındaki beklenen değerleri $E_j(A)$ hesaplanır.
+
+::: {#thm-beklenen-deger-dogrusu name="Beklenen Değer Doğrusu"}
+B oyuncusunun $j$. stratejisine karşı A oyuncusunun beklenen değeri
+
+$$E_j(A) = a_{1j}\,x_1 + a_{2j}\,x_2 = a_{1j}\,x_1 + a_{2j}(1 - x_1)$$
+
+olur. Düzenlenirse $x_1$'e göre **birinci dereceden** bir denklem elde edilir:
+
+$$\boxed{\;E_j(A) = (a_{1j} - a_{2j})\,x_1 + a_{2j}\;}$$
+:::
+
+**Grafiğin çizilmesi.** Elde edilen doğru denklemleri grafiğe işlenir. Koordinat sisteminin düşey ekseni beklenen değerleri gösterir ve **iki düşey eksen** vardır:
+
+$$x_1 = 0 \qquad \text{ve} \qquad x_1 = 1$$
+
+Her doğruyu çizmek için bu iki eksendeki değerlerini hesaplamak yeterlidir: $E_j(A)$ doğrusu $x_1 = 0$ ekseninde $a_{2j}$, $x_1 = 1$ ekseninde ise $a_{1j}$ değerini alır.
+
+::: {#def-optimum-nokta name="Optimum Çözüm"}
+Koordinat sistemindeki mümkün çözüm noktaları, doğruların kesiştiği noktalarda gerçekleşir.
+
+A oyuncusunun hareket ettiği göz önüne alındığında, mümkün noktalardan optimum olanı **maximin yöntemine göre**, yani **minimumların maksimumunda** gerçekleşenidir.
+:::
+
+::: {.callout-tip title="Alt zarf"}
+Her $x_1$ değeri için A oyuncusunun garantileyebileceği kazanç, o noktadaki doğruların **en küçüğüdür**. Bütün $x_1$ değerleri için bu minimumları birleştiren kırık çizgiye **alt zarf** denir.
+
+Grafik yöntem, kısaca bu alt zarfın **en yüksek noktasını** aramaktır. O nokta daima iki doğrunun kesişimidir: biri artan, diğeri azalan.
+:::
+
+## Çözümlü Uygulama
+
+:::: {#exm-grafik-yontem name="Grafik Yöntemle Karma Strateji"}
+Ödemeler matrisi
+
+$$
+\begin{array}{c|cccc}
+ & B_1 & B_2 & B_3 & B_4 \\ \hline
+A_1 & 5 & 3 & 1 & 1 \\
+A_2 & 1 & 1 & 3 & 2
+\end{array}
+$$
+
+olan oyunu çözünüz.
+
+::: {.cozum}
+**1. Oyunun tipini belirleyelim.**
+
+| Satır | Satır minimumu |
+| :--: | :--: |
+| $A_1$ | $1$ |
+| $A_2$ | $1$ |
+
+$$\underline{v} = \max\{1,\; 1\} = 1$$
+
+| Sütun | $B_1$ | $B_2$ | $B_3$ | $B_4$ |
+| :-- | :--: | :--: | :--: | :--: |
+| Sütun maksimumu | $5$ | $3$ | $3$ | $2$ |
+
+$$\overline{v} = \min\{5,\; 3,\; 3,\; 2\} = 2$$
+
+$\underline{v} = 1 \neq 2 = \overline{v}$ olduğundan sonuçlar farklıdır; oyun **karma stratejilidir**. A oyuncusunun iki stratejisi olduğu için grafik yöntem uygulanabilir.
+
+**2. Beklenen değer doğrularını kuralım.**
+
+$E_j(A) = (a_{1j} - a_{2j})x_1 + a_{2j}$ formülünü her sütuna uygulayalım:
+
+$$
+\begin{aligned}
+E_1(A) &= (5 - 1)x_1 + 1 = 4x_1 + 1 \\
+E_2(A) &= (3 - 1)x_1 + 1 = 2x_1 + 1 \\
+E_3(A) &= (1 - 3)x_1 + 3 = 3 - 2x_1 \\
+E_4(A) &= (1 - 2)x_1 + 2 = 2 - x_1
+\end{aligned}
+$$
+
+**3. Doğruların düşey eksenleri kestiği noktaları bulalım.**
+
+| | $x_1 = 0$ | $x_1 = 1$ |
+| :-- | :--: | :--: |
+| $E_1(A)$ | $1$ | $5$ |
+| $E_2(A)$ | $1$ | $3$ |
+| $E_3(A)$ | $3$ | $1$ |
+| $E_4(A)$ | $2$ | $1$ |
+
+**4. Grafiği çizelim.**
+
+```{=html}
+<figure class="oyun-grafik">
+<svg viewBox="0 0 520 340" role="img" aria-label="Beklenen değer doğrularının grafiği ve alt zarfın maksimum noktası">
+  <g stroke="var(--academic-text)" stroke-width="1.2" opacity="0.35">
+    <line x1="70" y1="30" x2="70" y2="300"/>
+    <line x1="450" y1="30" x2="450" y2="300"/>
+    <line x1="55" y1="290" x2="470" y2="290"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="12" opacity="0.75">
+    <text x="52" y="245" text-anchor="end">1</text>
+    <text x="52" y="195" text-anchor="end">2</text>
+    <text x="52" y="145" text-anchor="end">3</text>
+    <text x="52" y="95"  text-anchor="end">4</text>
+    <text x="52" y="45"  text-anchor="end">5</text>
+    <text x="464" y="245">1</text>
+    <text x="464" y="195">2</text>
+    <text x="464" y="145">3</text>
+    <text x="464" y="95">4</text>
+    <text x="464" y="45">5</text>
+    <text x="70" y="310" text-anchor="middle">0</text>
+    <text x="450" y="310" text-anchor="middle">1</text>
+    <text x="478" y="294" font-style="italic">x₁</text>
+  </g>
+  <!-- alt zarf: E2 uzerinden optimuma, sonra E4 uzerinden -->
+  <path d="M 70,240 L 196.7,206.7 L 450,240" fill="none"
+        stroke="var(--color-practice)" stroke-width="7" opacity="0.20" stroke-linejoin="round"/>
+  <!-- beklenen deger dogrulari -->
+  <g fill="none" stroke-width="1.8">
+    <line x1="70" y1="240" x2="450" y2="40"  stroke="var(--color-theory)"/>
+    <line x1="70" y1="240" x2="450" y2="140" stroke="var(--color-practice)"/>
+    <line x1="70" y1="140" x2="450" y2="240" stroke="var(--color-base)"/>
+    <line x1="70" y1="190" x2="450" y2="240" stroke="var(--color-remark)"/>
+  </g>
+  <g font-size="12" font-style="italic">
+    <text x="330" y="95"  fill="var(--color-theory)">E₁(A)</text>
+    <text x="352" y="163" fill="var(--color-practice)">E₂(A)</text>
+    <text x="215" y="170" fill="var(--color-base)">E₃(A)</text>
+    <text x="330" y="241" fill="var(--color-remark)">E₄(A)</text>
+  </g>
+  <!-- optimum nokta -->
+  <line x1="196.7" y1="206.7" x2="196.7" y2="290" stroke="var(--academic-text)"
+        stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>
+  <circle cx="196.7" cy="206.7" r="4.5" fill="var(--color-practice)"/>
+  <text x="206" y="200" font-size="12" fill="var(--color-practice)" font-weight="600">G</text>
+  <text x="196.7" y="310" font-size="12" fill="var(--academic-text)" text-anchor="middle">⅓</text>
+</svg>
+<figcaption>Beklenen değer doğruları ve alt zarf. Optimum, alt zarfın en yüksek noktası olan
+<em>G</em>'de — yani <em>E</em><sub>2</sub>(<em>A</em>) ile <em>E</em><sub>4</sub>(<em>A</em>)'nın
+kesişiminde — gerçekleşir.</figcaption>
+</figure>
+```
+
+**5. Optimum noktayı belirleyelim.**
+
+Şekilden görüleceği üzere beklenen değer doğruları altı yerde kesişmektedir. A oyuncusu için en iyi strateji maximin yöntemine göre seçileceğinden, optimum nokta alt zarfın en yüksek noktasıdır ve bu nokta $E_2(A)$ ile $E_4(A)$ doğrularından belirlenir.
+
+$$E_2(A) = E_4(A)$$
+
+$$2x_1 + 1 = 2 - x_1 \implies 3x_1 = 1 \implies x_1 = \frac{1}{3}$$
+
+**6. Oyunun değerini bulalım.**
+
+A oyuncusunun beklenen değeri, kesişen iki doğrudan biri yardımıyla belirlenir:
+
+$$E_2(A) = 2 \cdot \frac{1}{3} + 1 = \frac{5}{3}, \qquad E_4(A) = 2 - \frac{1}{3} = \frac{5}{3}$$
+
+**Sonuç.** A oyuncusu birinci stratejisini $\tfrac13$, ikinci stratejisini $\tfrac23$ olasılıkla oynamalıdır:
+
+$$x_1 = \frac13, \qquad x_2 = 1 - \frac13 = \frac23$$
+
+Oyunun değeri $v = \dfrac53$'tür.
+
+[$\blacksquare$]{.qed}
+:::
+
+::: {.callout-note title="Sağlama"}
+Bulunan değer $\underline{v} = 1$ ile $\overline{v} = 2$ arasında kalmalıdır:
+
+$$1 \leq \frac53 \leq 2 \;\checkmark$$
+
+Karma stratejili her oyunun değeri bu iki sınır arasındadır. Bu aralığın dışına çıkan bir sonuç, doğrulardan birinin yanlış kurulduğunu gösterir.
+:::
+::::
+
+::: {.callout-important title="Hangi iki doğru kesişir?"}
+Alt zarfın tepe noktasında daima **artan bir doğru ile azalan bir doğru** buluşur. Bu örnekte $E_2(A) = 2x_1 + 1$ artan, $E_4(A) = 2 - x_1$ azalandır.
+
+Bu yüzden bütün kesişim noktalarını hesaplamaya gerek yoktur: $x_1 = 0$ ve $x_1 = 1$ eksenlerindeki en küçük değerleri veren doğrulardan başlayıp alt zarfı takip etmek yeterlidir.
+:::
