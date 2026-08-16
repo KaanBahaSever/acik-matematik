@@ -1,0 +1,247 @@
+---
+title: "Regüler Matrisler ve Daimi Durum Olasılıkları"
+description: "Regüler Markov zincirlerinde P^n matrisinin yakınsaması, daimi durum (sabit dağılım) vektörü pi, denge denklemlerinin kurulması ve 2x2 regüler matrisin spektral ayrışımla genel çözümü."
+---
+
+[Olasılık dağılımı](olasilik-dagilimi-chapman-kolmogorov.qmd) bölümünde basit hava modelini adım adım ilerletmiş ve dağılımın giderek sabit bir vektöre yaklaştığını görmüştük. Bu bölümde bu gözlemin ne zaman geçerli olduğunu ve limit vektörünün nasıl bulunduğunu inceleyeceğiz.
+
+## Yakınsama Teoremi
+
+::: {#thm-yakinsama name="Regüler Zincirlerin Yakınsaması"}
+$\{X_n \mid n \geq 0\}$, geçiş olasılık matrisi $P$ olan **regüler**, homojen ve sonlu durumlu bir Markov zinciri olsun. Bu durumda
+
+$$\lim_{n \to \infty} P^{\,n} = B$$
+
+limiti vardır. Burada $B$; **satırları özdeş** olan ve her satırı zincirin $\pi$ sabit dağılımına eşit olan bir matristir:
+
+$$B = \begin{pmatrix}
+\pi_1 & \pi_2 & \cdots & \pi_m \\
+\pi_1 & \pi_2 & \cdots & \pi_m \\
+\vdots & \vdots & & \vdots \\
+\pi_1 & \pi_2 & \cdots & \pi_m
+\end{pmatrix}$$
+:::
+
+::: {.callout-important title="Satırların özdeş olması ne anlama gelir?"}
+$B$'nin $i$. satırı, "$i$ durumundan başlayıp çok uzun süre sonra nerede olacağım?" sorusunun cevabıdır. Bütün satırlar aynı olduğuna göre bu cevap **başlangıç durumundan bağımsızdır**.
+
+Regüler bir zincir, yeterince uzun çalıştırıldığında nereden başladığını unutur.
+:::
+
+::: {.callout-warning title="Regülerlik şart"}
+Teorem yalnızca regüler zincirler için geçerlidir. [Yutucu zincirlerde](yutucu-durumlar.qmd) sonuç tam tersidir: sürecin nerede sonlanacağı **tamamen nereden başladığına** bağlıdır ve $B = NR$ matrisinin satırları birbirinden farklıdır.
+
+Regülerliğin nasıl kontrol edileceğini @def-reguler ve onu izleyen örnekte görmüştük: esas köşegeninde $1$ bulunan bir matris hiçbir zaman regüler olamaz.
+:::
+
+## Daimi Durum Olasılıkları
+
+::: {#def-daimi-durum name="Daimi Durum Olasılığı"}
+Tekrar eden durumlar üzerinde tanımlı
+
+$$\pi' = (\pi_1,\; \pi_2,\; \dots,\; \pi_m), \qquad \pi_j \geq 0$$
+
+vektörüne, aşağıdaki iki koşulu birlikte sağlıyorsa **daimi durum olasılığı** (sabit dağılım) denir:
+
+$$\pi' = \pi' P \qquad \text{ve} \qquad \pi' \cdot \mathbf{1} = 1$$
+
+Burada $\mathbf{1}$, bütün bileşenleri $1$ olan sütun vektörüdür; ikinci koşul $\pi_1 + \pi_2 + \cdots + \pi_m = 1$ demektir.
+:::
+
+::: {.callout-note title="İki koşul da gerekli"}
+İlk koşul $\pi'$'nün bir **denge** vektörü olmasını sağlar: dağılım bir adım ilerletildiğinde değişmez. Ancak $\pi' = \pi'P$ denklem sistemi tek başına çözümü belirlemez, çünkü $P$'nin satır toplamları $1$ olduğundan denklemlerden **biri diğerlerinin sonucudur**.
+
+Bu yüzden denklemlerden birini atıp yerine $\sum \pi_j = 1$ normalizasyon koşulunu koymak zorundayız. Çözümü belirleyen ikinci koşul budur.
+:::
+
+::: {.callout-tip title="Bilinmeyen sayısını azaltmak"}
+$m$ durumlu bir zincirde $\pi$ vektörünü
+
+$$\pi' = (\pi_1,\; \pi_2,\; \dots,\; \pi_{m-1},\; 1 - \pi_1 - \pi_2 - \cdots - \pi_{m-1})$$
+
+biçiminde yazarsanız normalizasyon koşulunu baştan sağlamış olur, bir bilinmeyenden kurtulursunuz. $3 \times 3$ ve daha büyük matrislerde bu kısayol işi belirgin biçimde hafifletir.
+:::
+
+## Çözüm Adımları
+
+1. **Zincirin regüler olduğunu doğrula.** Geçici durum varsa önce zinciri indirge; daimi durum olasılıkları yalnızca tekrar eden durumlar üzerinde tanımlıdır.
+2. **Denge denklemlerini kur.** $\pi' P = \pi'$ çarpımını açarak her sütun için bir denklem yaz.
+3. **Bir denklemi at, normalizasyonu ekle.** Denklemlerden biri gereksizdir; yerine $\sum \pi_j = 1$ koşulunu koy.
+4. **Sistemi çöz.** Elde edilen $\pi$ vektörü hem sabit dağılım hem de $\lim P^n$ matrisinin ortak satırıdır.
+
+## Çözümlü Uygulamalar
+
+:::: {#exm-hava-daimi name="Basit Hava Modeli"}
+Yağmurlu ($0$) ve güneşli ($1$) günlerden oluşan basit hava modelinin geçiş matrisi
+
+$$P = \begin{pmatrix} 0{,}5 & 0{,}5 \\ 0{,}1 & 0{,}9 \end{pmatrix}$$
+
+olarak verilsin. Bu model için daimi durum olasılıklarını bulunuz.
+
+::: {.cozum}
+**1. Regülerlik.** Matrisin esas köşegeninde $1$ yoktur ve bütün elemanları zaten pozitiftir; $P$ regülerdir. Ayrıca $T = \varnothing$, $R = \{0, 1\}$ olduğundan indirgemeye gerek yoktur.
+
+**2. Denge denklemleri.** $\pi' = (\pi_0,\; \pi_1)$ diyelim:
+
+$$(\pi_0,\; \pi_1) = (\pi_0,\; \pi_1) \begin{pmatrix} 0{,}5 & 0{,}5 \\ 0{,}1 & 0{,}9 \end{pmatrix}$$
+
+Sütun sütun açalım:
+
+$$
+\begin{aligned}
+0{,}5\,\pi_0 + 0{,}1\,\pi_1 &= \pi_0 \\
+0{,}5\,\pi_0 + 0{,}9\,\pi_1 &= \pi_1
+\end{aligned}
+$$
+
+**3. Sadeleştirme ve normalizasyon.** Birinci denklemden
+
+$$0{,}1\,\pi_1 = 0{,}5\,\pi_0 \implies \pi_1 = 5\,\pi_0$$
+
+*(İkinci denklem de aynı bağıntıyı verir; beklendiği gibi gereksizdir.)* Şimdi normalizasyon koşulunu kullanalım:
+
+$$\pi_0 + \pi_1 = 1 \implies \pi_0 + 5\pi_0 = 1 \implies 6\pi_0 = 1$$
+
+**Sonuç.**
+
+$$\pi' = \left(\frac16,\; \frac56\right)$$
+
+Uzun vadede günlerin $\tfrac16$'sı yağmurlu, $\tfrac56$'sı güneşli olur. Aynı zamanda
+
+$$\lim_{n \to \infty} P^{\,n} = \begin{pmatrix} 1/6 & 5/6 \\ 1/6 & 5/6 \end{pmatrix}$$
+
+olur — bugünün havası ne olursa olsun.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-indirgeme-daimi name="Önce İndirge, Sonra Çöz"}
+[Durumların sınıflandırılması](durumlarin-siniflandirilmasi.qmd) bölümündeki beş durumlu zincirin daimi durum olasılıklarını bulunuz. Orada $T = \{1, 3, 4\}$, $R = \{2, 5\}$ bulunmuş ve indirgenmiş matris
+
+$$P_R = \begin{pmatrix} 0{,}8 & 0{,}2 \\ 0{,}5 & 0{,}5 \end{pmatrix}$$
+
+olarak elde edilmişti.
+
+::: {.cozum}
+Daimi durum olasılıkları yalnızca tekrar eden durumlar üzerinde tanımlı olduğundan hesabı $P_R$ üzerinde yapıyoruz. $\pi' = (\pi_2,\; \pi_5)$ olsun:
+
+$$(\pi_2,\; \pi_5) = (\pi_2,\; \pi_5)\begin{pmatrix} 0{,}8 & 0{,}2 \\ 0{,}5 & 0{,}5 \end{pmatrix}$$
+
+Birinci sütundan:
+
+$$0{,}8\,\pi_2 + 0{,}5\,\pi_5 = \pi_2 \implies 0{,}5\,\pi_5 = 0{,}2\,\pi_2 \implies \pi_5 = \frac{2}{5}\,\pi_2$$
+
+Normalizasyon:
+
+$$\pi_2 + \pi_5 = 1 \implies \pi_2\left(1 + \frac25\right) = 1 \implies \frac{7}{5}\,\pi_2 = 1$$
+
+**Sonuç.**
+
+$$\pi' = \left(\frac57,\; \frac27\right)$$
+
+Geçici durumların ($1$, $3$ ve $4$) uzun vadeli olasılıkları sıfırdır; süreç eninde sonunda $\{2, 5\}$ kümesine yerleşir ve zamanının $\tfrac57$'sini $2$'de, $\tfrac27$'sini $5$'te geçirir.
+
+[$\blacksquare$]{.qed}
+:::
+
+::: {.callout-note title="İndirgemeyi atlarsanız"}
+Denge denklemlerini indirgenmemiş $5 \times 5$ matris üzerinde kurarsanız da doğru sonuca ulaşırsınız; sistem $\pi_1 = \pi_3 = \pi_4 = 0$ sonucunu kendiliğinden verir. Ancak bu, gereksiz üç bilinmeyenle uğraşmak demektir. İndirgeme tam olarak bu yükü ortadan kaldırır.
+:::
+::::
+
+## Genel $2 \times 2$ Regüler Matris
+
+Aşağıdaki örnek, iki durumlu bütün regüler zincirleri tek seferde çözer ve $P^n$'in yakınsama sebebini açıkça gösterir.
+
+:::: {#exm-genel-2x2 name="Genel Çözüm"}
+$$P = \begin{pmatrix} 1 - \alpha & \alpha \\ \beta & 1 - \beta \end{pmatrix}, \qquad 0 < \alpha < 1, \quad 0 < \beta < 1$$
+
+regüler stokastik süreç matrisi için
+
+**a)** daimi durum olasılıklarını, &nbsp;&nbsp; **b)** $P^{\,n}$ matrisini, &nbsp;&nbsp; **c)** $\displaystyle\lim_{n \to \infty} P^{\,n}$ limitini bulunuz.
+
+::: {.cozum}
+**a) Daimi durum olasılıkları.** $\pi' = (\pi_1,\; \pi_2)$ olsun. Birinci sütundan:
+
+$$(1-\alpha)\pi_1 + \beta\,\pi_2 = \pi_1 \implies \beta\,\pi_2 = \alpha\,\pi_1 \implies \pi_1 = \frac{\beta}{\alpha}\,\pi_2$$
+
+Normalizasyon $\pi_1 + \pi_2 = 1$ ile:
+
+$$\frac{\beta}{\alpha}\pi_2 + \pi_2 = 1 \implies \pi_2 \cdot \frac{\alpha + \beta}{\alpha} = 1$$
+
+$$\boxed{\;\pi' = \left(\frac{\beta}{\alpha + \beta},\;\; \frac{\alpha}{\alpha + \beta}\right)\;}$$
+
+**b) $P^{\,n}$ matrisi.** Spektral ayrışımı kullanacağız:
+
+$$P^{\,n} = \lambda_1^{\,n} E_1 + \lambda_2^{\,n} E_2, \qquad
+E_1 = \frac{1}{\lambda_1 - \lambda_2}\left[P - \lambda_2 I\right], \qquad
+E_2 = \frac{1}{\lambda_2 - \lambda_1}\left[P - \lambda_1 I\right]$$
+
+*Öz değerler.* Karakteristik denklemi kuralım:
+
+$$|\lambda I - P| = \begin{vmatrix} \lambda - (1-\alpha) & -\alpha \\ -\beta & \lambda - (1-\beta) \end{vmatrix} = 0$$
+
+Determinantı açıp düzenlersek
+
+$$\lambda^2 - (2 - \alpha - \beta)\lambda + (1 - \alpha - \beta) = 0 \iff (\lambda - 1)\big(\lambda - (1 - \alpha - \beta)\big) = 0$$
+
+bulunur. O hâlde öz değerler
+
+$$\lambda_1 = 1, \qquad \lambda_2 = 1 - \alpha - \beta$$
+
+*Spektral izdüşümler.* $\lambda_1 - \lambda_2 = \alpha + \beta$ olduğundan:
+
+$$E_1 = \frac{1}{\alpha+\beta}\left[P - (1-\alpha-\beta)I\right] = \frac{1}{\alpha+\beta}\begin{pmatrix} \beta & \alpha \\ \beta & \alpha \end{pmatrix}$$
+
+$$E_2 = \frac{1}{-(\alpha+\beta)}\left[P - I\right] = \frac{1}{\alpha+\beta}\begin{pmatrix} \alpha & -\alpha \\ -\beta & \beta \end{pmatrix}$$
+
+*Sonuç.* $\lambda_1^{\,n} = 1$ olduğundan
+
+$$P^{\,n} = \frac{1}{\alpha+\beta}\left[ \begin{pmatrix} \beta & \alpha \\ \beta & \alpha \end{pmatrix} + (1-\alpha-\beta)^{\,n} \begin{pmatrix} \alpha & -\alpha \\ -\beta & \beta \end{pmatrix} \right]$$
+
+**c) Limit.** $0 < \alpha < 1$ ve $0 < \beta < 1$ iken
+
+$$|1 - \alpha - \beta| < 1 \implies \lim_{n \to \infty} (1-\alpha-\beta)^{\,n} = 0$$
+
+olur. O hâlde ikinci terim yok olur ve geriye yalnızca $E_1$ kalır:
+
+$$\lim_{n \to \infty} P^{\,n} = E_1 = \frac{1}{\alpha+\beta}\begin{pmatrix} \beta & \alpha \\ \beta & \alpha \end{pmatrix}
+= \begin{pmatrix} \dfrac{\beta}{\alpha+\beta} & \dfrac{\alpha}{\alpha+\beta} \\[0.6em] \dfrac{\beta}{\alpha+\beta} & \dfrac{\alpha}{\alpha+\beta} \end{pmatrix}$$
+
+Limit matrisinin iki satırı da (a) şıkkında bulunan $\pi'$ vektörüne eşittir — @thm-yakinsama'nın tam olarak söylediği budur.
+
+[$\blacksquare$]{.qed}
+:::
+
+::: {.callout-tip title="Yakınsama hızı"}
+$P^n$'in $\pi$'ye yaklaşma hızını belirleyen büyüklük $|\lambda_2| = |1-\alpha-\beta|$'dır. $\alpha + \beta$ toplamı $1$'e yaklaştıkça $\lambda_2$ sıfıra yaklaşır ve zincir dengeye **çok hızlı** oturur; $\alpha + \beta$ küçüldükçe yakınsama yavaşlar.
+
+Uç durumlar bu yüzden regüler değildir: $\alpha = \beta = 0$ için $P = I$ ve $\lambda_2 = 1$ olur (hiç yakınsama yok), $\alpha = \beta = 1$ için $\lambda_2 = -1$ olur (süreç iki durum arasında sonsuza dek salınır).
+:::
+::::
+
+::: {.callout-note title="Sağlama alışkanlığı"}
+Bulduğunuz $\pi$ vektörünü mutlaka denetleyin:
+
+1. Bütün bileşenler $0$ ile $1$ arasında olmalı.
+2. Toplamları $1$ etmeli.
+3. $\pi' P$ çarpımı tekrar $\pi'$ vermeli.
+
+Üçüncü kontrol, denge denklemlerini kurarken satır–sütun karıştırmadığınızı da doğrular.
+:::
+
+## Regüler ve Yutucu Zincirlerin Karşılaştırması
+
+Markov zincirlerinin uzun dönem davranışı iki uçta toplanır. Aşağıdaki tablo bu iki dünyanın ayrımını özetler.
+
+| | **Regüler zincir** | **Yutucu zincir** |
+| :-- | :-- | :-- |
+| Koşul | Bir $n$ için $P^n$'in tüm elemanları pozitif | En az bir yutucu durum var ve her geçici durumdan ona ulaşılabiliyor |
+| Uzun dönem | Süreç dolaşmaya devam eder | Süreç bir yutucu durumda durur |
+| Limit matrisi | $\lim P^n = B$, satırları **özdeş** | $B = NR$, satırları **farklı** |
+| Başlangıcın etkisi | Yok — nereden başlanırsa başlansın aynı $\pi$ | Belirleyici — hangi yutucuda durulacağını başlangıç belirler |
+| Aranan büyüklük | Daimi durum vektörü $\pi$ | Yutulma olasılıkları ve ortalama adım sayısı $N$ |
+| Yöntem | $\pi' = \pi' P$, $\sum \pi_j = 1$ | Kanonik form, $N = (I-Q)^{-1}$, $B = NR$ |
+
+Ayrıntılar için [yutucu matrisler ve yutulma olasılıkları](yutucu-durumlar.qmd) bölümüne bakınız.
