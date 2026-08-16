@@ -43,10 +43,10 @@ random.seed(7)
 
 
 def panel(x0, veriler, baslik, renk):
-    q = Plot(x0, 30, 128, 118, (-0.15, 1.15), (-0.15, 1.15))
+    q = Plot(x0, 42, 148, 172, (-0.15, 1.15), (-0.15, 1.15))
     q.eksen([], [])
-    q.nokta(veriler, renk, 3.1)
-    q.yazi_px(x0 + 64, 20, baslik, TXT, 12, "middle", True)
+    q.nokta(veriler, renk, 4.2)
+    q.yazi_px(x0 + 74, 26, baslik, TXT, 15, "middle", True)
     return q
 
 
@@ -55,12 +55,13 @@ xs = [i / (n - 1) for i in range(n)]
 poz = [(x, min(1, max(0, x + random.gauss(0, 0.09)))) for x in xs]
 sif = [(x, random.random()) for x in xs]
 neg = [(x, min(1, max(0, 1 - x + random.gauss(0, 0.09)))) for x in xs]
-pA = panel(40, poz, "r &#8776; +0,95", PRA)
-pB = panel(196, sif, "r &#8776; 0", REM)
-pC = panel(352, neg, "r &#8776; &#8722;0,95", BAS)
-CIK["B"] = figur(500, 172, [pA, pB, pC],
+pA = panel(26, poz, "r &#8776; +0,95", PRA)
+pB = panel(202, sif, "r &#8776; 0", REM)
+pC = panel(378, neg, "r &#8776; &#8722;0,95", BAS)
+CIK["B"] = figur(552, 236, [pA, pB, pC],
                  "Korelasyon katsay&#305;s&#305;n&#305;n i&#351;areti ili&#351;kinin <strong>y&#246;n&#252;n&#252;</strong>, mutlak de&#287;eri "
                  "<strong>&#351;iddetini</strong> verir. Ortadaki da&#287;&#305;l&#305;mda do&#287;rusal bir e&#287;ilim yoktur.",
+                 sinif="ders-grafik ders-grafik-genis",
                  aria="Pozitif, sifir ve negatif korelasyon ornekleri")
 
 # ------------------------------------------------------- C: donusturulebilir
