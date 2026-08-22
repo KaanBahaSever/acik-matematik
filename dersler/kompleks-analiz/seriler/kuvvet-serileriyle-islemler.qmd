@@ -1,0 +1,249 @@
+---
+title: "Kuvvet Serileriyle İşlemler"
+pagetitle: "Kuvvet Serileriyle İşlemler"
+description: "Kuvvet serilerinin terim terime integrasyonu ve türetilmesi, toplamın analitikliği, Taylor ve Laurent temsillerinin tekliği, serilerin Cauchy çarpımı ve bölümü; çözümlü örnekler."
+---
+
+Serilerle çalışırken en çok ihtiyaç duyulan haklar şunlardır: terim terime integralleyebilmek, türetebilmek, çarpıp bölebilmek. [Düzgün yakınsaklık](kuvvet-serilerinin-yakinsakligi.qmd) bu hakların hepsini verir — ve bir bonus daha: bir fonksiyonun belirli bir bölgedeki seri temsili **tektir**.
+
+## Terim Terime İntegrasyon
+
+::: {#thm-terim-integrasyon name="Terim Terime İntegrasyon"}
+$C$, kuvvet serisi
+
+$$S(z) = \sum_{n=0}^{\infty} a_n (z - z_0)^n \tag{1}$$
+
+serisinin yakınsaklık çemberinin içinde herhangi bir çevre ve $g$, $C$ üzerinde sürekli herhangi bir fonksiyon olsun. Serinin her terimi $g(z)$ ile çarpılarak oluşan seri, $C$ üzerinde terim terime integrallenebilir:
+
+$$\int_C g(z)\,S(z)\,dz = \sum_{n=0}^{\infty} a_n \int_C g(z)\,(z - z_0)^n\,dz \tag{2}$$
+
+::: {.ispat}
+$g$ ve $S$, $C$ üzerinde süreklidir. $\rho_N$, serinin $N$ terimden sonraki kalanı olmak üzere
+
+$$g(z) S(z) = \sum_{n=0}^{N-1} a_n\, g(z)(z - z_0)^n + g(z)\rho_N(z)$$
+
+yazılabilir; sonlu toplamın terimleri $C$ üzerinde sürekli olduğundan integralleri vardır ve
+
+$$\int_C g(z)S(z)\,dz = \sum_{n=0}^{N-1} a_n \int_C g(z)(z - z_0)^n dz + \int_C g(z)\rho_N(z)\,dz \tag{3}$$
+
+$M$, $|g(z)|$'nin $C$ üzerindeki maksimumu ve $L$, $C$'nin uzunluğu olsun. [Düzgün yakınsaklık](kuvvet-serilerinin-yakinsakligi.qmd) gereği her $\varepsilon > 0$ için, $C$ üzerindeki tüm $z$ noktalarında
+
+$$N > N_\varepsilon \implies \big|\rho_N(z)\big| < \varepsilon$$
+
+sağlayan ve $z$'den bağımsız bir $N_\varepsilon$ vardır. [ML eşitsizliğiyle](../integraller/ust-sinirlar.qmd)
+
+$$N > N_\varepsilon \implies \left| \int_C g(z)\rho_N(z)\,dz \right| < M\varepsilon L$$
+
+yani son integral $N \to \infty$ iken sıfıra gider. $(3)$ ifadesinde limit alınırsa $(2)$ elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#thm-toplam-analitik name="Toplam Analitiktir"}
+Bir kuvvet serisinin toplamı $S(z)$, yakınsaklık çemberinin içindeki her noktada **analitiktir**.
+
+::: {.ispat}
+$g(z) = 1$ alınsın ve $C$, yakınsaklık çemberinin içinde kalan herhangi bir kapalı çevre olsun. $(z - z_0)^n$ fonksiyonları tam olduğundan
+
+$$\int_C (z - z_0)^n\,dz = 0 \qquad (n = 0, 1, 2, \dots)$$
+
+ve @thm-terim-integrasyon gereği her böyle çevre için $\displaystyle\int_C S(z)\,dz = 0$'dır. $S$ ayrıca [süreklidir](kuvvet-serilerinin-yakinsakligi.qmd); [Morera teoremi](../cauchy-teoremleri/cauchy-integral-formulu.qmd) gereği $S$, bu domende analitiktir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-analitiklik-seri name="Analitikliğin Serilerle Saptanması"}
+$$f(z) = \begin{cases} \dfrac{e^z - 1}{z}, & z \neq 0 \\[2mm] 1, & z = 0 \end{cases}$$
+
+fonksiyonunun tam olduğunu gösteriniz.
+
+::: {.cozum}
+[Üstel fonksiyonun Maclaurin açılımı](taylor-serileri.qmd) her $z$ için
+
+$$e^z - 1 = \sum_{n=1}^{\infty} \frac{z^n}{n!}$$
+
+verir. İki taraf $z$'ye bölünürse, $z \neq 0$ için
+
+$$f(z) = \sum_{n=1}^{\infty} \frac{z^{n-1}}{n!} = 1 + \frac{z}{2!} + \frac{z^2}{3!} + \frac{z^3}{4!} + \cdots \tag{4}$$
+
+Sağdaki seri $z = 0$'da da yakınsar ve değeri $1 = f(0)$'dır; yani $(4)$ temsili **her** $z$ için geçerlidir. @thm-toplam-analitik gereği $f$ tamdır.
+
+Bonus olarak, sürekliliğinden bir limit okunur:
+
+$$\lim_{z \to 0} \frac{e^z - 1}{z} = f(0) = 1$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Terim Terime Türetme
+
+::: {#thm-terim-turev name="Terim Terime Türetme"}
+Kuvvet serisi $(1)$, yakınsaklık çemberinin içindeki her noktada terim terime türetilebilir:
+
+$$S'(z) = \sum_{n=1}^{\infty} n\,a_n (z - z_0)^{n-1} \tag{5}$$
+
+::: {.ispat}
+$z$, yakınsaklık çemberinin içinde bir nokta; $C$, bu çemberin içinde kalan ve $z$'yi çevreleyen pozitif yönlü basit kapalı bir çevre olsun. $C$ üzerindeki her $s$ noktasında
+
+$$g(s) = \frac{1}{2\pi i}\cdot\frac{1}{(s - z)^2}$$
+
+tanımlayalım; $g$, $C$ üzerinde süreklidir. @thm-terim-integrasyon uygulanırsa
+
+$$\int_C g(s)S(s)\,ds = \sum_{n=0}^{\infty} a_n \int_C g(s)(s - z_0)^n\,ds \tag{6}$$
+
+$S$, $C$'nin içinde ve üzerinde analitik olduğundan [genişletilmiş Cauchy integral formülü](../cauchy-teoremleri/cauchy-integral-formulu.qmd) sol tarafı verir:
+
+$$\int_C g(s)S(s)\,ds = \frac{1}{2\pi i}\int_C \frac{S(s)\,ds}{(s - z)^2} = S'(z)$$
+
+Aynı formül sağdaki her integrale de uygulanır:
+
+$$\int_C g(s)(s - z_0)^n ds = \frac{1}{2\pi i}\int_C \frac{(s - z_0)^n}{(s - z)^2}\,ds = \frac{d}{dz}(z - z_0)^n$$
+
+$(6)$ böylece
+
+$$S'(z) = \sum_{n=0}^{\infty} a_n\,\frac{d}{dz}(z - z_0)^n$$
+
+biçimine iner; bu da $(5)$ ile aynıdır.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-turev-seri name="Türetmeyle Yeni Açılım"}
+[Taylor bölümünde](taylor-serileri.qmd)
+
+$$\frac{1}{z} = \sum_{n=0}^{\infty} (-1)^n (z - 1)^n \qquad \big(|z - 1| < 1\big)$$
+
+açılımını bulmuştuk. İki tarafı türetelim:
+
+$$-\frac{1}{z^2} = \sum_{n=1}^{\infty} (-1)^n\,n\,(z-1)^{n-1} \qquad \big(|z-1| < 1\big)$$
+
+İşaret düzenlenip indis kaydırılırsa
+
+$$\frac{1}{z^2} = \sum_{n=0}^{\infty} (-1)^n (n+1)(z - 1)^n \qquad \big(|z - 1| < 1\big)$$
+
+Yeni bir Taylor hesabı yapmadan ikinci bir açılım elde edildi.
+:::
+
+## Temsillerin Tekliği
+
+::: {#thm-taylor-teklik name="Taylor Temsilinin Tekliği"}
+Bir $\displaystyle\sum_{n=0}^{\infty} a_n (z - z_0)^n$ serisi, $|z - z_0| = R$ çemberinin içindeki tüm noktalarda $f(z)$'ye yakınsıyorsa, bu seri **zorunlu olarak** $f$'nin $z_0$ civarındaki Taylor serisidir.
+
+::: {.ispat}
+Hipotez, $|z - z_0| < R$ diskinde
+
+$$f(z) = \sum_{k=0}^{\infty} a_k (z - z_0)^k$$
+
+demektir (toplam indisini $k$ ile gösterdik). $n$ sabit bir tam sayı olmak üzere
+
+$$g(z) = \frac{1}{2\pi i}\cdot\frac{1}{(z - z_0)^{n+1}}$$
+
+alalım ve $C$, $z_0$ merkezli, yarıçapı $R$'den küçük bir çember olsun. @thm-terim-integrasyon ile
+
+$$\int_C g(z)f(z)\,dz = \sum_{k=0}^{\infty} a_k \int_C g(z)(z - z_0)^k\,dz \tag{7}$$
+
+Sol taraf, genişletilmiş Cauchy integral formülüyle
+
+$$\int_C g(z)f(z)\,dz = \frac{1}{2\pi i}\int_C \frac{f(z)\,dz}{(z - z_0)^{n+1}} = \frac{f^{(n)}(z_0)}{n!}$$
+
+Sağ taraftaki integraller ise [temel integrallerle](../cauchy-teoremleri/cauchy-integral-formulu.qmd) hesaplanır:
+
+$$\int_C g(z)(z - z_0)^k\,dz = \frac{1}{2\pi i}\int_C \frac{dz}{(z - z_0)^{n - k + 1}} = \begin{cases} 0, & k \neq n \\ 1, & k = n \end{cases}$$
+
+Böylece $(7)$'nin sağ tarafı tek bir terime, $a_n$'e iner ve
+
+$$a_n = \frac{f^{(n)}(z_0)}{n!}$$
+
+çıkar — tam olarak Taylor katsayısı.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#thm-laurent-teklik name="Laurent Temsilinin Tekliği"}
+Bir $\displaystyle\sum_{n=-\infty}^{\infty} c_n (z - z_0)^n$ serisi, $z_0$ merkezli bir halka domenindeki tüm noktalarda $f(z)$'ye yakınsıyorsa, bu seri $f$'nin o domendeki Laurent serisidir.
+:::
+
+Kanıt, @thm-taylor-teklik ile aynı yolu izler; tek fark, terim terime integrasyon teoreminin negatif kuvvetleri de içeren serilere uygulanmasıdır (bu, $w = 1/(z - z_0)$ dönüşümüyle gerekçelendirilir) ve sonuçta
+
+$$c_n = \frac{1}{2\pi i}\int_C \frac{f(z)\,dz}{(z - z_0)^{n+1}} \qquad (n = 0, \pm 1, \pm 2, \dots)$$
+
+[Laurent teoremindeki](laurent-serileri.qmd) katsayı formülü elde edilir.
+
+::: {.callout-tip title="Teklik neden bu kadar işe yarar?"}
+Teklik teoremleri, bir açılımı **nasıl** bulduğumuzun önemsiz olduğunu söyler: geometrik seriden türetin, terim terime türetin, iki seriyi çarpın — bulduğunuz sonuç Taylor/Laurent serisinin ta kendisidir. Bu yüzden pratikte katsayı integrallerini hesaplamak yerine bilinen açılımlar cebirsel olarak işlenir; [rezidü hesapları](../rezidu/ayrik-tekil-noktalar-ve-rezidu.qmd) tamamen bu kolaylık üzerine kuruludur.
+:::
+
+## Çarpım ve Bölüm
+
+$f$ ve $g$, $|z - z_0| < R$ diskinde yakınsayan iki kuvvet serisinin toplamları olsun. Her ikisi de analitik olduğundan çarpımları da analitiktir ve aynı diskte geçerli bir Taylor açılımına sahiptir:
+
+$$f(z)g(z) = \sum_{n=0}^{\infty} c_n (z - z_0)^n \qquad \big(|z - z_0| < R\big)$$
+
+Katsayılar, çarpımın türevleri için Leibniz kuralından okunur:
+
+$$c_n = \sum_{k=0}^{n} \frac{f^{(k)}(z_0)}{k!}\cdot\frac{g^{(n-k)}(z_0)}{(n-k)!} = \sum_{k=0}^{n} a_k\, b_{n-k}$$
+
+Bu formül, iki seriyi **biçimsel olarak terim terime çarpıp** benzer kuvvetleri toplamakla aynı sonucu verir; elde edilen seriye iki serinin **Cauchy çarpımı** denir.
+
+::: {#exm-seri-carpimi name="Serilerin Çarpımı"}
+$\dfrac{e^z}{1 + z}$ fonksiyonunun Maclaurin serisinin ilk terimlerini bulunuz.
+
+::: {.cozum}
+Tekil nokta $z = -1$ olduğundan açılım $|z| < 1$ diskinde geçerlidir. İki bilinen seriyi çarpalım:
+
+$$\frac{e^z}{1+z} = \left(1 + z + \frac{1}{2}z^2 + \frac{1}{6}z^3 + \cdots\right)\left(1 - z + z^2 - z^3 + \cdots\right)$$
+
+Benzer kuvvetler alt alta toplanırsa:
+
+$$\frac{e^z}{1 + z} = 1 + \frac{1}{2}z^2 - \frac{1}{3}z^3 + \cdots \qquad (|z| < 1)$$
+
+($z$'nin birinci kuvveti sadeleşir: $1\cdot(-1) + 1\cdot 1 = 0$.)
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+Bölme de aynı mantıkla yürür: $g(z) \neq 0$ olduğu bir diskte $f/g$ analitiktir, dolayısıyla Taylor serisine sahiptir ve katsayıları **seri bölmesiyle** bulunur.
+
+::: {#exm-bolum name="Seri Bölmesiyle Laurent Açılımı"}
+$\dfrac{1}{z^2 \sinh z}$ fonksiyonunun $0 < |z| < \pi$ delinmiş diskindeki Laurent serisinin ilk üç sıfırdan farklı terimini bulunuz.
+
+::: {.cozum}
+$\sinh z$'nin sıfırları $z = n\pi i$ olduğundan ([hiperbolik fonksiyonlar](../elemanter-fonksiyonlar/hiperbolik-fonksiyonlar.qmd)), orijine en yakın sıfırlar $\pm \pi i$'dir; delinmiş diskin yarıçapı $\pi$ olur.
+
+[Maclaurin açılımıyla](taylor-serileri.qmd) $\sinh z = z + \dfrac{z^3}{3!} + \dfrac{z^5}{5!} + \cdots$ olduğundan
+
+$$\frac{1}{z^2 \sinh z} = \frac{1}{z^3}\left(\frac{1}{1 + \dfrac{z^2}{3!} + \dfrac{z^4}{5!} + \cdots}\right)$$
+
+Parantez içindeki bölümü seri bölmesiyle açalım: $1$'i, paydadaki seriye bölmek
+
+$$\frac{1}{1 + \dfrac{z^2}{3!} + \dfrac{z^4}{5!} + \cdots} = 1 - \frac{1}{3!}z^2 + \left[\frac{1}{(3!)^2} - \frac{1}{5!}\right]z^4 + \cdots = 1 - \frac{1}{6}z^2 + \frac{7}{360}z^4 + \cdots$$
+
+verir ($|z| < \pi$). Katsayı kontrolü: $\dfrac{1}{36} - \dfrac{1}{120} = \dfrac{10 - 3}{360} = \dfrac{7}{360}$.
+
+$1/z^3$ ile çarpılırsa aranan Laurent serisi çıkar:
+
+$$\frac{1}{z^2\sinh z} = \frac{1}{z^3} - \frac{1}{6}\cdot\frac{1}{z} + \frac{7}{360}z + \cdots \qquad (0 < |z| < \pi)$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Alıştırma
+
+::: {#exr-islemler name="Seri İşlemleri Alıştırmaları"}
+a) $\dfrac{z}{(z^2+1)^2}$ fonksiyonunun Maclaurin serisini, $\dfrac{1}{1+z^2}$ açılımını türeterek bulunuz.
+
+b) $\dfrac{\sinh z}{z}$ fonksiyonunun $z = 0$'da $1$ değeriyle tanımlandığında tam olduğunu gösteriniz.
+
+c) $\dfrac{1}{z\sin z}$ fonksiyonunun $0 < |z| < \pi$ halkasındaki Laurent serisinin ilk iki sıfırdan farklı terimini bulunuz.
+
+*Yanıtlar:* a) $\displaystyle\sum_{n=0}^{\infty} (-1)^n (n+1)\,z^{2n+1}$; c) $\dfrac{1}{z^2} + \dfrac{1}{6} + \cdots$
+:::
+
+Seriler kısmı tamamlandı. Şimdi Laurent açılımının en güçlü uygulamasına geçiyoruz: negatif kuvvetlerin ilk katsayısı, tek başına bir integral hesaplama makinesidir — [ayrık tekil noktalar ve rezidü](../rezidu/ayrik-tekil-noktalar-ve-rezidu.qmd).
