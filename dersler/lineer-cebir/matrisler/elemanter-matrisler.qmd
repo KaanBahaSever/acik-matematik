@@ -1,0 +1,340 @@
+---
+title: "Elemanter Matrisler ve Ters Hesabı"
+pagetitle: "Elemanter Matrisler ve Ters Hesabı"
+description: "Elemanter satır matrisleri, satır işlemlerinin çarpma olarak yazılması, satır eşdeğerliğin regüler matrisle çarpım biçimi, regülerlik ölçütü, blok matrisler ve Gauss-Jordan yöntemiyle ters matris hesabı."
+---
+
+Elemanter satır işlemleri şimdiye kadar "matris üzerinde yapılan hamleler" olarak kaldı. Bu bölümde her hamlenin aslında uygun bir matrisle **soldan çarpmak** olduğunu göreceğiz. Bu tek gözlem, satır işlemlerini matris cebirinin içine taşır ve arkasından iki büyük sonuç gelir: bir matrisin ne zaman regüler olduğunun ölçütü ve tersini hesaplayan sistemli yöntem.
+
+## Elemanter Satır Matrisleri
+
+::: {#def-elemanter-matris name="Elemanter Satır Matrisi"}
+$I_m$ $K$-birim matrisine yalnız bir tane [elemanter satır işlemi](merdiven-matrisler.qmd) uygulanarak elde edilen $m$-inci mertebeden kare $K$-matrise **elemanter satır matrisi** denir ve $\widehat{E}$ ile gösterilir:
+
+$$e(I_m) =: \widehat{E}, \qquad e_1(I_m) =: \widehat{E}_1, \qquad e_2(I_m) =: \widehat{E}_2, \qquad e_3(I_m) =: \widehat{E}_3$$
+
+Bundan sonra "elemanter matris" dendiğinde elemanter satır matrisi anlaşılacaktır.
+:::
+
+$I_3$ üzerinde üç işlemin karşılığı:
+
+$$e_1: R_2 \leftrightarrow R_3 \implies \widehat{E}_1 = \begin{pmatrix} 1 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & 1 & 0\end{pmatrix}, \qquad
+e_2: R_3 \to -6R_3 \implies \widehat{E}_2 = \begin{pmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & -6\end{pmatrix}$$
+
+$$e_3: R_2 \to -3R_1 + R_2 \implies \widehat{E}_3 = \begin{pmatrix} 1 & 0 & 0 \\ -3 & 1 & 0 \\ 0 & 0 & 1\end{pmatrix}$$
+
+## Satır İşlemi Bir Çarpımdır
+
+::: {#thm-islem-carpim name="Elemanter İşlem Elemanter Matrisle Çarpımdır"}
+$e$ herhangi bir elemanter satır işlemi, $\widehat{E} = e(I_m)$ buna karşılık gelen elemanter satır matrisi ve $A$ bir $A_{(m,n)}$ $K$-matris olsun. O hâlde
+
+$$e(A) = \widehat{E}A$$
+
+::: {.ispat}
+İspatın tamamı, çarpımın satırlarına ilişkin şu kurala dayanır: $\widehat{E}A$ matrisinin $i$-inci satırı, ($\widehat{E}$'nin $i$-inci satırı) $\cdot\, A$ çarpımına eşittir. Ayrıca $I_m A = A$'dır.
+
+**1. $e = e_1$ ($R_i \leftrightarrow R_j$).** $\widehat{E}_1$'in $i$-inci satırı, $I_m$'nin $j$-inci satırıdır. Dolayısıyla
+
+$$\begin{aligned}
+\widehat{E}_1 A \text{'nın } i\text{-inci satırı} &= \big(I_m \text{'nin } j\text{-inci satırı}\big)A\\[1mm]
+&= (I_m A)\text{'nın } j\text{-inci satırı} = A\text{'nın } j\text{-inci satırı}
+\end{aligned}$$
+
+Bu ise tam olarak $e_1(A)$'nın $i$-inci satırıdır. Aynı hesap $j$-inci satır için, ve $t \neq i, j$ olan bütün $t$ satırları için (o satırlarda $\widehat{E}_1$ ile $I_m$ çakıştığından) tekrarlanır. Bütün satırlar çakıştığından $e_1(A) = \widehat{E}_1 A$'dır.
+
+**2. $e = e_2$ ($R_i \to kR_i$, $k \neq 0_K$).** $\widehat{E}_2$'nin $i$-inci satırı, $I_m$'nin $i$-inci satırının $k$ katıdır:
+
+$$\widehat{E}_2 A\text{'nın } i\text{-inci satırı} = k\big(I_m\text{'nin } i\text{-inci satırı}\big)A = k\big(A\text{'nın } i\text{-inci satırı}\big)$$
+
+Diğer satırlar değişmez; sonuç $e_2(A)$'dır.
+
+**3. $e = e_3$ ($R_i \to kR_j + R_i$).** $\widehat{E}_3$'ün $i$-inci satırı, $I_m$'nin $j$-inci satırının $k$ katı ile $i$-inci satırının toplamıdır:
+
+$$\widehat{E}_3 A\text{'nın } i\text{-inci satırı} = k\big(A\text{'nın } j\text{-inci satırı}\big) + \big(A\text{'nın } i\text{-inci satırı}\big)$$
+
+Bu da $e_3(A)$'nın $i$-inci satırıdır; diğer satırlar değişmez.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#thm-elemanter-reguler name="Elemanter Matrisler Regülerdir"}
+Elemanter satır matrisleri regülerdir ve elemanter satır matrislerinin tersleri de elemanter satır matrisleridir.
+
+::: {.ispat}
+Her elemanter işlemin, aynı türden bir elemanter işlemle geri alınabildiğini kullanacağız.
+
+**1. $e_1: R_i \leftrightarrow R_j$.** Aynı yer değiştirme iki kez uygulanırsa matris değişmez:
+
+$$I_m = e_1\big(\widehat{E}_1\big) = e_1(I_m)\widehat{E}_1 = \widehat{E}_1\widehat{E}_1$$
+
+Demek ki $\widehat{E}_1$ kendi tersidir.
+
+**2. $e_2: R_i \to kR_i$ $(k \neq 0_K)$.** Bunun geri alınışı $e_2': R_i \to \dfrac{1}{k}R_i$'dir; $K$ bir cisim olduğundan $k^{-1} \in K \setminus \{0_K\}$'dır. $\widehat{E}_2' = e_2'(I_m)$ olmak üzere
+
+$$I_m = e_2'\big(\widehat{E}_2\big) = \widehat{E}_2'\widehat{E}_2, \qquad I_m = e_2\big(\widehat{E}_2'\big) = \widehat{E}_2\widehat{E}_2'$$
+
+yani $\widehat{E}_2' $, $\widehat{E}_2$'nin tersidir ve kendisi de elemanterdir.
+
+**3. $e_3: R_i \to kR_j + R_i$.** Geri alınışı $e_3': R_i \to -kR_j + R_i$'dir ve aynı hesapla $\widehat{E}_3'\widehat{E}_3 = \widehat{E}_3\widehat{E}_3' = I_m$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+$I_3$ üzerinde somut olarak: $R_1 \leftrightarrow R_2$ matrisinin tersi kendisidir; $R_3 \to \frac{1}{2}R_3$ matrisinin tersi $R_3 \to 2R_3$ matrisidir; $R_2 \to 5R_3 + R_2$ matrisinin tersi $R_2 \to -5R_3 + R_2$ matrisidir.
+
+## Satır Eşdeğerliğin Cebirsel Karşılığı
+
+::: {#thm-satir-esdeger-carpim name="Satır Eşdeğerlik ve Regüler Çarpan"}
+$A_{(m,n)}$ ve $B_{(m,n)}$ $K$-matrisler olsun. $A$'nın $B$'ye satır eşdeğer olması için gerek ve yeter koşul, bir takım elemanter satır matrislerinin çarpımı olan regüler bir $P$ matrisiyle
+
+$$B = PA$$
+
+yazılabilmesidir.
+
+::: {.ispat}
+**Gereklik.** $A \overset{\text{satır}}{\sim} B$ olsun; $A$'yı $B$'ye dönüştüren elemanter satır işlemleri sırasıyla $e^{(1)}, e^{(2)}, \dots, e^{(p)}$ olsun:
+
+$$e^{(p)}\Big(\cdots\big(e^{(2)}\big(e^{(1)}(A)\big)\big)\cdots\Big) = B$$
+
+Her adımda önceki teoremi uygularsak, $\widehat{E}^{(i)} = e^{(i)}(I_m)$ olmak üzere
+
+$$\widehat{E}^{(p)}\cdots \widehat{E}^{(2)}\widehat{E}^{(1)}A = B$$
+
+elde edilir; ara adımlarda matris çarpımının asosyatifliği kullanılmıştır. $P = \widehat{E}^{(p)}\cdots\widehat{E}^{(1)}$ dersek $PA = B$ olur. Elemanter matrisler regüler ve regüler matrislerin çarpımı regüler olduğundan $P$ regülerdir ve tanımı gereği elemanter matrislerin çarpımı biçimindedir.
+
+**Yeterlik.** $B = \big(\widehat{E}^{(t)}\cdots\widehat{E}^{(2)}\widehat{E}^{(1)}\big)A$ olacak biçimde elemanter matrisler var olsun. Asosyatiflikle
+
+$$B = \widehat{E}^{(t)}\Big(\cdots\big(\widehat{E}^{(2)}\big(\widehat{E}^{(1)}A\big)\big)\cdots\Big) = e^{(t)}\Big(\cdots\big(e^{(2)}\big(e^{(1)}(A)\big)\big)\cdots\Big)$$
+
+yazılır; yani $B$, $A$'dan sonlu sayıda elemanter satır işlemiyle elde edilmiştir: $A \overset{\text{satır}}{\sim} B$.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Regülerliğin Ölçütü
+
+::: {#thm-regulerlik-olcutu name="Regülerlik Ölçütü"}
+Bir $A_{(n,n)}$ $K$-matrisinin regüler olması için gerek ve yeter koşul
+
+$$A \overset{\text{satır}}{\sim} I_n$$
+
+olmasıdır.
+
+::: {.ispat}
+**Yeterlik.** $A \overset{\text{satır}}{\sim} I_n$ olsun. Önceki teoreme göre $PA = I_n$ olacak regüler bir $P$ vardır. O hâlde
+
+$$A = I_n A = \big(P^{-1}P\big)A = P^{-1}(PA) = P^{-1}I_n = P^{-1}$$
+
+$P$ regüler olduğundan $P^{-1}$ de regülerdir; yani $A = P^{-1}$ regülerdir ve
+
+$$A^{-1} = \big(P^{-1}\big)^{-1} = P$$
+
+**Gereklik.** $A$ regüler olsun. O hâlde $A \neq O_{(n,n)}$'dir ve sıfır matristen farklı her matris bir tek satır indirgenmiş merdiven matrise satır eşdeğer olduğundan $A \overset{\text{satır}}{\sim} B$ olacak bir $B$ vardır. Önceki teoremden $B = PA$ biçimindedir; iki regüler matrisin çarpımı regüler olduğundan $B$ regülerdir.
+
+Şimdi $B = I_n$ olduğunu gösterelim. $B \neq I_n$ olsaydı, $B$ satır indirgenmiş bir merdiven matris olduğundan son satırı tamamen $0_K$'lardan ibaret olurdu. $B$ regüler olduğundan $B^{-1}$ vardır ve
+
+$$BB^{-1} \text{ matrisinin son satırı} = \big(B\text{'nin son satırı}\big)B^{-1} = \begin{pmatrix} 0_K & \cdots & 0_K\end{pmatrix}$$
+
+olurdu. Oysa $BB^{-1} = I_n$'nin son satırında $1_K \neq 0_K$ bulunur — çelişki. Demek ki $B = I_n$, yani $A \overset{\text{satır}}{\sim} I_n$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {.callout-tip title="İspattan çıkan üç sonuç"}
+**1.** $n$-inci mertebeden kare matrisler için $AB = I_n \iff BA = I_n$'dir; dolayısıyla $AB = I_n$ ise doğrudan $B = A^{-1}$ (ve $A = B^{-1}$) denebilir — iki sırayı da denetlemeye gerek yoktur.
+
+**2.** $A^{-1}$ matrisi, $A$'yı $I_n$'e dönüştüren elemanter satır matrislerinin çarpımıdır.
+
+**3.** Herhangi bir satırı veya herhangi bir sütunu tamamen $0_K$'lardan oluşan bir kare matrisin tersi yoktur, çünkü böyle bir matris $I_n$'e satır eşdeğer olamaz. Daha genel olarak, $A$ regüler değilse bir satırı tamamen $0_K$'lardan oluşan bir matrise satır eşdeğerdir.
+:::
+
+## Blok Matrisler
+
+Yatay ve düşey çizgiler kullanarak bir $A_{(m,n)}$ $K$-matrisi **blok** adı verilen alt matrislere ayrılabilir; bloklara ayrılmış bir matrise **blok matris** denir. Aynı matris farklı biçimlerde bloklara ayrılabilir:
+
+$$\begin{pmatrix} 1 & -2 & 0 & 1 & 3 \\ 2 & 3 & 5 & 7 & -2 \\ 3 & 1 & 4 & 5 & 9\end{pmatrix}
+= \left(\begin{array}{cc|ccc} 1 & -2 & 0 & 1 & 3 \\ 2 & 3 & 5 & 7 & -2 \\ \hline 3 & 1 & 4 & 5 & 9\end{array}\right)
+= \left(\begin{array}{ccc|cc} 1 & -2 & 0 & 1 & 3 \\ \hline 2 & 3 & 5 & 7 & -2 \\ \hline 3 & 1 & 4 & 5 & 9\end{array}\right)$$
+
+Bloklarla işlemler, bileşenlerle işlemlerin birebir kopyasıdır. $A = (A_{ij})$ blok matrisi ve $k \in K$ için $kA = (kA_{ij})$'dir. $A = (A_{ij})$ ile $B = (B_{ij})$ **aynı tipte** bloklara ayrılmışsa $A + B = (A_{ij} + B_{ij})$'dir. $U = (U_{ik})$ ve $V = (V_{kj})$ blok matrislerinde $U_{ik}$ blokunun sütun sayısı $V_{kj}$ blokunun satır sayısına eşitse
+
+$$W_{ij} = U_{i1}V_{1j} + U_{i2}V_{2j} + \cdots + U_{ip}V_{pj} \implies UV = \big(W_{ij}\big)$$
+
+olur — yani bloklar sanki birer bileşenmiş gibi çarpılır.
+
+## Tersin Hesaplanması
+
+::: {#thm-ters-hesabi name="Gauss-Jordan Yöntemiyle Ters"}
+$A_{(n,n)}$ regüler bir $K$-matris olmak üzere, $n \times 2n$ tipindeki blok matris için
+
+$$\big(A \mid I_n\big) \overset{\text{satır}}{\sim} \big(I_n \mid P\big) \implies P = A^{-1}$$
+
+::: {.ispat}
+$\big(A \mid I_n\big) \overset{\text{satır}}{\sim} \big(I_n \mid P\big)$ olsun; yani
+
+$$e^{(p)}\Big(\cdots\big(e^{(1)}\big(\big(A \mid I_n\big)\big)\big)\cdots\Big) = \big(I_n \mid P\big)$$
+
+olacak elemanter satır işlemleri vardır. Satır işlemleri iki bloka da aynı anda uygulandığından bu tek eşitlik iki eşitliğe ayrılır:
+
+$$e^{(p)}\Big(\cdots\big(e^{(1)}(A)\big)\cdots\Big) = I_n, \qquad e^{(p)}\Big(\cdots\big(e^{(1)}(I_n)\big)\cdots\Big) = P$$
+
+$\widehat{E}^{(i)} = e^{(i)}(I_n)$ dersek bunlar
+
+$$\widehat{E}^{(p)}\cdots\widehat{E}^{(1)}A = I_n, \qquad \widehat{E}^{(p)}\cdots\widehat{E}^{(1)}I_n = \widehat{E}^{(p)}\cdots\widehat{E}^{(1)} = P$$
+
+biçimini alır. Birincisinden $A^{-1} = \widehat{E}^{(p)}\cdots\widehat{E}^{(1)}$, ikincisinden ise bu çarpımın $P$ olduğu okunur; dolayısıyla $A^{-1} = P$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-ters-hesap name="Bir Tersin Hesaplanması"}
+$A = \begin{pmatrix} 1 & 0 & 2 \\ 2 & -1 & 3 \\ 4 & 1 & 8\end{pmatrix}$ $\mathbb{R}$-matrisinin tersini bulunuz.
+
+::: {.cozum}
+$\big(A \mid I_3\big)$ blok matrisini yazıp sol bloku $I_3$ yapmaya çalışalım:
+
+$$\left(\begin{array}{ccc|ccc} 1 & 0 & 2 & 1 & 0 & 0 \\ 2 & -1 & 3 & 0 & 1 & 0 \\ 4 & 1 & 8 & 0 & 0 & 1\end{array}\right)
+\overset{\substack{R_2 \to -2R_1 + R_2 \\ R_3 \to -4R_1 + R_3}}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 2 & 1 & 0 & 0 \\ 0 & -1 & -1 & -2 & 1 & 0 \\ 0 & 1 & 0 & -4 & 0 & 1\end{array}\right)$$
+
+$$\overset{R_2 \to -R_2}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 2 & 1 & 0 & 0 \\ 0 & 1 & 1 & 2 & -1 & 0 \\ 0 & 1 & 0 & -4 & 0 & 1\end{array}\right)
+\overset{R_3 \to -R_2 + R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 2 & 1 & 0 & 0 \\ 0 & 1 & 1 & 2 & -1 & 0 \\ 0 & 0 & -1 & -6 & 1 & 1\end{array}\right)$$
+
+$$\overset{R_3 \to -R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 2 & 1 & 0 & 0 \\ 0 & 1 & 1 & 2 & -1 & 0 \\ 0 & 0 & 1 & 6 & -1 & -1\end{array}\right)
+\overset{\substack{R_2 \to -R_3 + R_2 \\ R_1 \to -2R_3 + R_1}}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 0 & -11 & 2 & 2 \\ 0 & 1 & 0 & -4 & 0 & 1 \\ 0 & 0 & 1 & 6 & -1 & -1\end{array}\right)$$
+
+Sol blok $I_3$ olduğuna göre sağ blok aranan terstir:
+
+$$A^{-1} = \begin{pmatrix} -11 & 2 & 2 \\ -4 & 0 & 1 \\ 6 & -1 & -1\end{pmatrix}$$
+
+Sağlama olarak $AA^{-1}$'in birinci satırını hesaplayalım: $\begin{pmatrix} 1 & 0 & 2\end{pmatrix}$ satırı ile sırasıyla sütunlar çarpıldığında $-11 + 12 = 1$, $2 - 2 = 0$, $2 - 2 = 0$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-singuler name="Singüler Bir Matris"}
+$A = \begin{pmatrix} 1 & 0 & 3 \\ 2 & -1 & 0 \\ -1 & 2 & 9\end{pmatrix}$ matrisinin singüler olduğunu gösteriniz.
+
+::: {.cozum}
+Regülerlik ölçütü gereği $A$'nın satır kanonik şeklinin $I_3$ olup olmadığına bakmak yeterlidir:
+
+$$\overset{\substack{R_2 \to -2R_1 + R_2 \\ R_3 \to R_1 + R_3}}{\sim}
+\begin{pmatrix} 1 & 0 & 3 \\ 0 & -1 & -6 \\ 0 & 2 & 12\end{pmatrix}
+\overset{R_2 \to -R_2}{\sim}
+\begin{pmatrix} 1 & 0 & 3 \\ 0 & 1 & 6 \\ 0 & 2 & 12\end{pmatrix}
+\overset{R_3 \to -2R_2 + R_3}{\sim}
+\begin{pmatrix} 1 & 0 & 3 \\ 0 & 1 & 6 \\ 0 & 0 & 0\end{pmatrix}$$
+
+Elde edilen $B$ matrisi, $A$'nın satır indirgenmiş merdiven şeklidir ve $B \neq I_3$'tür. Satır kanonik şekil tek türlü belirli olduğundan $A \overset{\text{satır}}{\sim} I_3$ olamaz; dolayısıyla $A$ singülerdir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Alıştırma
+
+::: {#exr-elemanter name="Ters Hesabı ve Regülerlik"}
+a) $A = \begin{pmatrix} -1 & 2 & -3 \\ 2 & 1 & 0 \\ 4 & -2 & 5\end{pmatrix}$ matrisinin tersini bulunuz.
+
+b) $B = \begin{pmatrix} 2 & 1 & -1 \\ 0 & 2 & 1 \\ 5 & 2 & -3\end{pmatrix}$ matrisinin tersini bulunuz.
+
+c) Bir $A_{(n,n)}$ matrisinin tersinin olması için gerek ve yeter koşulun, $A$'nın bir takım elemanter satır matrislerinin çarpımı biçiminde yazılabilmesi olduğunu gösteriniz.
+
+::: {.cozum}
+**a)** $\big(A \mid I_3\big)$ üzerinde çalışalım. Önce birinci satırı $-1$ ile çarparak köşeye $1$ getirelim:
+
+$$\left(\begin{array}{ccc|ccc} -1 & 2 & -3 & 1 & 0 & 0 \\ 2 & 1 & 0 & 0 & 1 & 0 \\ 4 & -2 & 5 & 0 & 0 & 1\end{array}\right)
+\overset{R_1 \to -R_1}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & -2 & 3 & -1 & 0 & 0 \\ 2 & 1 & 0 & 0 & 1 & 0 \\ 4 & -2 & 5 & 0 & 0 & 1\end{array}\right)$$
+
+Birinci sütunun altını temizleyelim:
+
+$$\overset{\substack{R_2 \to -2R_1 + R_2 \\ R_3 \to -4R_1 + R_3}}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & -2 & 3 & -1 & 0 & 0 \\ 0 & 5 & -6 & 2 & 1 & 0 \\ 0 & 6 & -7 & 4 & 0 & 1\end{array}\right)
+\overset{R_3 \to -R_2 + R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & -2 & 3 & -1 & 0 & 0 \\ 0 & 5 & -6 & 2 & 1 & 0 \\ 0 & 1 & -1 & 2 & -1 & 1\end{array}\right)$$
+
+Üçüncü satırda $1$ belirdiğine göre onu ikinci sıraya alalım:
+
+$$\overset{R_2 \leftrightarrow R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & -2 & 3 & -1 & 0 & 0 \\ 0 & 1 & -1 & 2 & -1 & 1 \\ 0 & 5 & -6 & 2 & 1 & 0\end{array}\right)
+\overset{R_3 \to -5R_2 + R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & -2 & 3 & -1 & 0 & 0 \\ 0 & 1 & -1 & 2 & -1 & 1 \\ 0 & 0 & -1 & -8 & 6 & -5\end{array}\right)$$
+
+$$\overset{R_3 \to -R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & -2 & 3 & -1 & 0 & 0 \\ 0 & 1 & -1 & 2 & -1 & 1 \\ 0 & 0 & 1 & 8 & -6 & 5\end{array}\right)
+\overset{\substack{R_2 \to R_3 + R_2 \\ R_1 \to -3R_3 + R_1}}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & -2 & 0 & -25 & 18 & -15 \\ 0 & 1 & 0 & 10 & -7 & 6 \\ 0 & 0 & 1 & 8 & -6 & 5\end{array}\right)$$
+
+Son olarak ikinci sütunu temizleyelim:
+
+$$\overset{R_1 \to 2R_2 + R_1}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 0 & -5 & 4 & -3 \\ 0 & 1 & 0 & 10 & -7 & 6 \\ 0 & 0 & 1 & 8 & -6 & 5\end{array}\right)$$
+
+Demek ki
+
+$$A^{-1} = \begin{pmatrix} -5 & 4 & -3 \\ 10 & -7 & 6 \\ 8 & -6 & 5\end{pmatrix}$$
+
+Sağlama: $AA^{-1}$'in birinci satırı $\begin{pmatrix} 5 + 20 - 24 & -4 - 14 + 18 & 3 + 12 - 15\end{pmatrix} = \begin{pmatrix} 1 & 0 & 0\end{pmatrix}$.
+
+**b)** Aynı yöntemi uygulayalım:
+
+$$\left(\begin{array}{ccc|ccc} 2 & 1 & -1 & 1 & 0 & 0 \\ 0 & 2 & 1 & 0 & 1 & 0 \\ 5 & 2 & -3 & 0 & 0 & 1\end{array}\right)
+\overset{R_1 \to \frac{1}{2}R_1}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & \frac{1}{2} & -\frac{1}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 2 & 1 & 0 & 1 & 0 \\ 5 & 2 & -3 & 0 & 0 & 1\end{array}\right)$$
+
+$$\overset{R_3 \to -5R_1 + R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & \frac{1}{2} & -\frac{1}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 2 & 1 & 0 & 1 & 0 \\ 0 & -\frac{1}{2} & -\frac{1}{2} & -\frac{5}{2} & 0 & 1\end{array}\right)
+\overset{R_2 \to \frac{1}{2}R_2}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & \frac{1}{2} & -\frac{1}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 1 & \frac{1}{2} & 0 & \frac{1}{2} & 0 \\ 0 & -\frac{1}{2} & -\frac{1}{2} & -\frac{5}{2} & 0 & 1\end{array}\right)$$
+
+$$\overset{R_3 \to \frac{1}{2}R_2 + R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & \frac{1}{2} & -\frac{1}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 1 & \frac{1}{2} & 0 & \frac{1}{2} & 0 \\ 0 & 0 & -\frac{1}{4} & -\frac{5}{2} & \frac{1}{4} & 1\end{array}\right)
+\overset{R_3 \to -4R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & \frac{1}{2} & -\frac{1}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 1 & \frac{1}{2} & 0 & \frac{1}{2} & 0 \\ 0 & 0 & 1 & 10 & -1 & -4\end{array}\right)$$
+
+Üçüncü sütunu temizleyelim:
+
+$$\overset{\substack{R_2 \to -\frac{1}{2}R_3 + R_2 \\ R_1 \to \frac{1}{2}R_3 + R_1}}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & \frac{1}{2} & 0 & \frac{11}{2} & -\frac{1}{2} & -2 \\ 0 & 1 & 0 & -5 & 1 & 2 \\ 0 & 0 & 1 & 10 & -1 & -4\end{array}\right)$$
+
+$$\overset{R_1 \to -\frac{1}{2}R_2 + R_1}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 0 & 8 & -1 & -3 \\ 0 & 1 & 0 & -5 & 1 & 2 \\ 0 & 0 & 1 & 10 & -1 & -4\end{array}\right)$$
+
+Yani
+
+$$B^{-1} = \begin{pmatrix} 8 & -1 & -3 \\ -5 & 1 & 2 \\ 10 & -1 & -4\end{pmatrix}$$
+
+Sağlama: $BB^{-1}$'in birinci satırı $\begin{pmatrix} 16 - 5 - 10 & -2 + 1 + 1 & -6 + 2 + 4\end{pmatrix} = \begin{pmatrix} 1 & 0 & 0\end{pmatrix}$.
+
+**c)** **Gereklik.** $A$ regüler olsun. Regülerlik ölçütüne göre $A \overset{\text{satır}}{\sim} I_n$'dir; dolayısıyla elemanter matrislerin çarpımı olan bir $P$ ile $PA = I_n$ yazılır. Buradan
+
+$$A = P^{-1}$$
+
+bulunur. $P = \widehat{E}^{(p)}\cdots\widehat{E}^{(1)}$ ise çarpımın tersi kuralıyla
+
+$$A = P^{-1} = \big(\widehat{E}^{(1)}\big)^{-1}\cdots\big(\widehat{E}^{(p)}\big)^{-1}$$
+
+olur. Elemanter matrislerin tersleri de elemanter olduğundan $A$, elemanter matrislerin bir çarpımıdır.
+
+**Yeterlik.** $A = \widehat{E}^{(1)}\widehat{E}^{(2)}\cdots\widehat{E}^{(p)}$ olsun. Her elemanter matris regülerdir ve regüler matrislerin çarpımı regülerdir; nitekim
+
+$$A^{-1} = \big(\widehat{E}^{(p)}\big)^{-1}\cdots\big(\widehat{E}^{(1)}\big)^{-1}$$
+
+matrisi $A$'nın tersidir. Demek ki $A$'nın tersi vardır.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+Matris makinesi hazır. Şimdi onu asıl işinde kullanacağız: bilinmeyenleri bulmak. Sıradaki bölümde lineer denklemleri ve sistemlerini kurup çözüm kümesinin yapısını inceliyoruz: [lineer denklemler ve sistemleri](../denklem-sistemleri/lineer-denklemler.qmd).
