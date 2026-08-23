@@ -1,0 +1,538 @@
+---
+title: "Koordinat ve Taban Problemleri"
+pagetitle: "Koordinat ve Taban Problemleri"
+description: "Sınav tipi taban değiştirme soruları: bir vektörün verilen tabandaki koordinatları, iki taban arasındaki geçiş matrisinin pratik hesabı, koordinatların bir tabandan diğerine dönüştürülmesi ve operatör matrisinin yeni tabanda yazılması."
+---
+
+Önceki bölümde geçiş matrisini tanımlayıp iki temel formülü ispatladık. Bu bölümde bunları sınavda karşılaşacağınız biçimde çalıştırıyoruz: verilen bir tabana göre koordinat bulmak, iki taban arasındaki geçiş matrisini kısa yoldan hesaplamak, koordinatları bir tabandan diğerine taşımak ve bir operatörün matrisini yeni bir tabanda yazmak.
+
+::: {.callout-note appearance="simple"}
+Bazı kaynaklarda ve derslerde **taban** yerine **baz** denir; ikisi aynı şeydir. Bu notlarda "taban" terimini kullanacağız. Aynı şekilde "geçiş matrisi" yerine kimi kaynaklarda "baz değişim matrisi" ya da "taban dönüşüm matrisi" adları geçer.
+:::
+
+## Bir Vektörün Koordinatlarını Bulmak
+
+Her şey buna dayanır: $f = \{f_1, \dots, f_n\}$ bir taban ve $v$ bir vektörse, $[v]_f$'yi bulmak
+
+$$v = x_1 f_1 + x_2 f_2 + \cdots + x_n f_n$$
+
+denklemini $x_1, \dots, x_n$ için çözmektir. Bu bir lineer denklem sistemidir ve $f$ bir taban olduğundan **tek çözümü** vardır.
+
+::: {.callout-tip title="Üç adımda koordinat"}
+1. $v = x_1 f_1 + \cdots + x_n f_n$ yazın ve bileşenleri eşitleyerek sistemi kurun.
+2. Sistemi çözün — genişletilmiş matris $\big(f_1\ f_2\ \cdots\ f_n \mid v\big)$'yi satır kanonik şekle indirgemek en hızlısıdır; burada $f_j$'ler **sütun** olarak yazılır.
+3. Çıkan $(x_1, \dots, x_n)$ değerlerini **sütun** olarak yazın: $[v]_f = (x_1, \dots, x_n)^{t}$.
+:::
+
+::: {#exm-koordinat-bulma name="Verilen Tabana Göre Koordinatlar"}
+$\mathbb{R}^{3}$'te $f_1 = (1,1,0)$, $f_2 = (0,1,1)$, $f_3 = (1,0,1)$ olmak üzere $f = \{f_1,f_2,f_3\}$ bir tabandır. $v = (3,5,4)$ vektörünün $f$ tabanına göre koordinatlarını bulunuz.
+
+::: {.cozum}
+$x, y, z \in \mathbb{R}$ olmak üzere
+
+$$v = x f_1 + y f_2 + z f_3 = x(1,1,0) + y(0,1,1) + z(1,0,1) = (x + z,\ x + y,\ y + z)$$
+
+Bileşenleri eşitleyelim:
+
+$$x + z = 3, \qquad x + y = 5, \qquad y + z = 4$$
+
+Üç denklemi toplarsak $2(x+y+z) = 12$, yani $x + y + z = 6$ bulunur. Şimdi her denklemi bu toplamdan çıkaralım:
+
+$$y = 6 - 3 = 3, \qquad z = 6 - 5 = 1, \qquad x = 6 - 4 = 2$$
+
+**Kontrol.** $2(1,1,0) + 3(0,1,1) + 1(1,0,1) = (2+1,\ 2+3,\ 3+1) = (3,5,4)$ ✔
+
+$$[v]_f = \begin{pmatrix} 2 \\ 3 \\ 1 \end{pmatrix}$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {.callout-warning title="Sıraya dikkat"}
+Koordinatlar taban vektörlerinin **sırasına** bağlıdır. Aynı kümeyi $\{f_3, f_1, f_2\}$ sırasıyla alsaydık aynı vektörün koordinatları $(1, 2, 3)^{t}$ olurdu. Bu yüzden taban bir küme değil, **sıralı** bir listedir; soruda verilen sırayı bozmayın.
+:::
+
+## Geçiş Matrisini Kısa Yoldan Hesaplamak
+
+$\mathbb{R}^{n}$'de tabanlardan biri standart taban değilse, geçiş matrisini tanımdan hesaplamak her bir $f_j$ için ayrı bir denklem sistemi çözmek demektir. Bunun yerine tek bir matris çarpımı yeter.
+
+::: {#thm-gecis-hesabi name="Geçiş Matrisinin Çarpanlara Ayrılması"}
+$e = \{e_1, \dots, e_n\}$ ve $f = \{f_1, \dots, f_n\}$, $K^{n}$'in iki tabanı olsun. $M_e$ ile sütunları $e_1, \dots, e_n$ olan matrisi, $M_f$ ile sütunları $f_1, \dots, f_n$ olan matrisi gösterelim. Bu durumda $e$ tabanından $f$ tabanına geçiş matrisi
+
+$$P = M_e^{-1} \cdot M_f$$
+
+::: {.ispat}
+$s$ ile $K^{n}$'in standart tabanını gösterelim. Sütunları $e_j$ olan $M_e$ matrisi, tanım gereği $s$ tabanından $e$ tabanına geçiş matrisidir; benzer biçimde $M_f$ de $s$'den $f$'ye geçiş matrisidir. [Koordinat vektörlerinin dönüşümü](taban-degistirme.qmd) teoremi gereği her $v \in K^{n}$ için
+
+$$M_e \cdot [v]_e = [v]_s \qquad \text{ve} \qquad M_f \cdot [v]_f = [v]_s$$
+
+Sağ taraflar aynı olduğundan
+
+$$M_e \cdot [v]_e = M_f \cdot [v]_f$$
+
+$M_e$ regüler olduğundan her iki tarafı soldan $M_e^{-1}$ ile çarpalım:
+
+$$[v]_e = M_e^{-1} M_f \cdot [v]_f$$
+
+Öte yandan aynı teorem, $e$'den $f$'ye geçiş matrisi $P$ için $P \cdot [v]_f = [v]_e$ olduğunu söylüyordu. Demek ki her $v$ için
+
+$$\big(M_e^{-1} M_f\big) \cdot [v]_f = P \cdot [v]_f$$
+
+$v \mapsto [v]_f$ dönüşümü $K^{n}$ üzerine örten olduğundan bu eşitlik her sütun matris için geçerlidir; sırayla standart taban sütunları alınırsa iki matrisin bütün sütunlarının aynı olduğu görülür:
+
+$$P = M_e^{-1} M_f$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {.callout-tip title="Formülü akılda tutmak"}
+Sağdaki matris **varılan** tabanı, soldaki tersi alınan matris **çıkılan** tabanı taşır. Özel olarak $e$ standart taban ise $M_e = I_n$ olur ve $P = M_f$ çıkar — yani bilinen kural: *sütunlar hedef tabanın vektörleridir.*
+:::
+
+Aynı fikir ikiden çok tabana da genişler.
+
+::: {#thm-zincir-gecis name="Geçişlerin Zincirlenmesi"}
+$e$, $f$ ve $g$, $V$'nin üç tabanı; $P_1$ $e$'den $f$'ye, $P_2$ ise $f$'den $g$'ye geçiş matrisi olsun. Bu durumda $e$'den $g$'ye geçiş matrisi
+
+$$P_1 \cdot P_2$$
+
+çarpımıdır.
+
+::: {.ispat}
+[Koordinat vektörlerinin dönüşümü](taban-degistirme.qmd) teoremi gereği her $v \in V$ için
+
+$$P_1 \cdot [v]_f = [v]_e \qquad \text{ve} \qquad P_2 \cdot [v]_g = [v]_f$$
+
+İkinciyi birincide yerine koyalım:
+
+$$\big(P_1 P_2\big) \cdot [v]_g = P_1\big(P_2 [v]_g\big) = P_1 \cdot [v]_f = [v]_e$$
+
+Demek ki $P_1P_2$ matrisi, her $v \in V$ için $g$ koordinatlarını $e$ koordinatlarına çeviriyor. Burada $v$ olarak sırayla $g_1, \dots, g_n$ alalım: $[g_j]_g$ tam olarak $K^{n}$'in $j$. standart taban sütunu olduğundan sol taraf $P_1P_2$'nin $j$. sütununu verir. Öyleyse $P_1P_2$'nin $j$. sütunu $[g_j]_e$'dir; [geçiş matrisi tanımı](taban-degistirme.qmd) gereği bu, $e$'den $g$'ye geçiş matrisidir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {.callout-note appearance="simple"}
+Burada $g = e$ alınırsa $P_1P_2 = I_n$ çıkar, yani $P_2 = P_1^{-1}$: "$f$'den $e$'ye geçiş matrisi $P^{-1}$'dir" kuralı bu genel sonucun özel hâlidir. Zincir kuralı, üç veya daha çok taban içeren sorularda ara adımları tek tek hesaplamak yerine matrisleri çarpmayı sağlar.
+:::
+
+::: {#exm-iki-taban-r2 name="İkisi de Standart Olmayan İki Taban"}
+$\mathbb{R}^{2}$'de $e_1 = (1,2)$, $e_2 = (2,3)$ ve $f_1 = (1,3)$, $f_2 = (1,4)$ olsun. $e$ tabanından $f$ tabanına geçiş matrisini bulunuz.
+
+::: {.cozum}
+Sütunları taban vektörleri olan matrisleri yazalım:
+
+$$M_e = \begin{pmatrix} 1 & 2 \\ 2 & 3 \end{pmatrix}, \qquad
+M_f = \begin{pmatrix} 1 & 1 \\ 3 & 4 \end{pmatrix}$$
+
+$M_e^{-1}$'i [Gauss-Jordan yöntemiyle](../matrisler/elemanter-matrisler.qmd), yani $\big(M_e \mid I_2\big)$ blok matrisini indirgeyerek bulalım:
+
+$$\left(\begin{array}{cc|cc} 1 & 2 & 1 & 0\\ 2 & 3 & 0 & 1\end{array}\right)
+\overset{R_2 \to -2R_1 + R_2}{\sim}
+\left(\begin{array}{cc|cc} 1 & 2 & 1 & 0\\ 0 & -1 & -2 & 1\end{array}\right)$$
+
+$$\overset{R_2 \to -R_2}{\sim}
+\left(\begin{array}{cc|cc} 1 & 2 & 1 & 0\\ 0 & 1 & 2 & -1\end{array}\right)
+\overset{R_1 \to -2R_2 + R_1}{\sim}
+\left(\begin{array}{cc|cc} 1 & 0 & -3 & 2\\ 0 & 1 & 2 & -1\end{array}\right)$$
+
+$$M_e^{-1} = \begin{pmatrix} -3 & 2 \\ 2 & -1 \end{pmatrix}$$
+
+Öyleyse
+
+$$P = M_e^{-1} M_f = \begin{pmatrix} -3 & 2 \\ 2 & -1 \end{pmatrix}\begin{pmatrix} 1 & 1 \\ 3 & 4 \end{pmatrix}
+= \begin{pmatrix} -3 + 6 & -3 + 8 \\ 2 - 3 & 2 - 4 \end{pmatrix}
+= \begin{pmatrix} 3 & 5 \\ -1 & -2 \end{pmatrix}$$
+
+**Kontrol.** $P$'nin sütunları $f_j$'nin $e$ tabanındaki koordinatları olmalıydı:
+
+$$3e_1 - e_2 = 3(1,2) - (2,3) = (1,3) = f_1 \ ✔$$
+$$5e_1 - 2e_2 = 5(1,2) - 2(2,3) = (1,4) = f_2 \ ✔$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-gauss-jordan-gecis name="Gauss-Jordan ile Geçiş Matrisi"}
+$\mathbb{R}^{3}$'te $e_1 = (1,0,0)$, $e_2 = (1,1,0)$, $e_3 = (1,1,1)$ ve $f_1 = (1,1,1)$, $f_2 = (0,1,1)$, $f_3 = (0,0,1)$ olsun. $e$'den $f$'ye geçiş matrisi $P$'yi bulunuz.
+
+::: {.cozum}
+$P = M_e^{-1} M_f$ olduğuna göre, $M_e^{-1}$'i ayrıca hesaplamak yerine $\big(M_e \mid M_f\big)$ blok matrisini satır kanonik şekle indirgeyebiliriz; sol blok $I_3$ olduğunda sağ blok $P$'yi verir:
+
+$$\big(M_e \mid M_f\big) \ \sim\ \big(I_3 \mid M_e^{-1}M_f\big) = \big(I_3 \mid P\big)$$
+
+Matrisleri kuralım (sütunlar taban vektörleridir):
+
+$$\big(M_e \mid M_f\big) = \left(\begin{array}{ccc|ccc}
+1 & 1 & 1 & 1 & 0 & 0\\
+0 & 1 & 1 & 1 & 1 & 0\\
+0 & 0 & 1 & 1 & 1 & 1
+\end{array}\right)$$
+
+Sol blok zaten üst üçgen; yukarı doğru temizleyelim.
+
+$R_2 \to R_2 - R_3$ ve $R_1 \to R_1 - R_3$:
+
+$$\sim \left(\begin{array}{ccc|ccc}
+1 & 1 & 0 & 0 & -1 & -1\\
+0 & 1 & 0 & 0 & 0 & -1\\
+0 & 0 & 1 & 1 & 1 & 1
+\end{array}\right)$$
+
+$R_1 \to R_1 - R_2$:
+
+$$\sim \left(\begin{array}{ccc|ccc}
+1 & 0 & 0 & 0 & -1 & 0\\
+0 & 1 & 0 & 0 & 0 & -1\\
+0 & 0 & 1 & 1 & 1 & 1
+\end{array}\right)$$
+
+Sol blok birim matris oldu; sağ blok aradığımız matristir:
+
+$$P = \begin{pmatrix} 0 & -1 & 0 \\ 0 & 0 & -1 \\ 1 & 1 & 1 \end{pmatrix}$$
+
+**Kontrol.** $P$'nin birinci sütunu $(0,0,1)^{t}$, yani $f_1 = 0e_1 + 0e_2 + 1e_3 = (1,1,1)$ ✔. İkinci sütun $(-1,0,1)^{t}$, yani
+
+$$-e_1 + e_3 = -(1,0,0) + (1,1,1) = (0,1,1) = f_2 \ ✔$$
+
+Üçüncü sütun $(0,-1,1)^{t}$, yani $-e_2 + e_3 = -(1,1,0) + (1,1,1) = (0,0,1) = f_3$ ✔
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Koordinatları Bir Tabandan Diğerine Taşımak
+
+Sınavların en sık sorusu budur: bir vektörün bir tabandaki koordinatları verilir, başka bir tabandaki koordinatları istenir.
+
+::: {.callout-tip title="Hangi formül?"}
+$P$, $e$'den $f$'ye geçiş matrisi olmak üzere
+
+$$\boxed{\ P \cdot [v]_f = [v]_e \qquad \Longleftrightarrow \qquad [v]_f = P^{-1} \cdot [v]_e\ }$$
+
+Yönü karıştırmamak için şu cümleyi hatırlayın: **$P$, $f$ koordinatlarını $e$ koordinatlarına çevirir.** ($P$'nin sütunları $f$'nin vektörlerinin $e$'deki koordinatları olduğundan bu doğaldır.)
+:::
+
+::: {#exm-koordinat-donusumu name="Koordinat Dönüşümü Sorusu"}
+$\mathbb{R}^{3}$'te $e_1 = (1,0,0)$, $e_2 = (1,1,0)$, $e_3 = (1,1,1)$ ve $f_1 = (1,1,1)$, $f_2 = (0,1,1)$, $f_3 = (0,0,1)$ tabanları veriliyor. Bir $v$ vektörünün $e$ tabanındaki koordinatları
+
+$$[v]_e = \begin{pmatrix} 2 \\ -1 \\ 3 \end{pmatrix}$$
+
+olduğuna göre $[v]_f$'yi bulunuz.
+
+::: {.cozum}
+**Birinci yol: doğrudan hesap.** Önce $v$'yi bulalım:
+
+$$
+\begin{aligned}
+v &= 2e_1 - e_2 + 3e_3 = 2(1,0,0) - (1,1,0) + 3(1,1,1)\\[1mm]
+&= (2 - 1 + 3,\ -1 + 3,\ 3) = (4,2,3)
+\end{aligned}
+$$
+
+Şimdi $v$'yi $f$ cinsinden yazalım:
+
+$$v = a f_1 + b f_2 + c f_3 = a(1,1,1) + b(0,1,1) + c(0,0,1) = (a,\ a+b,\ a+b+c)$$
+
+Bileşenleri eşitleyelim: $a = 4$, $a + b = 2$ yani $b = -2$, $a + b + c = 3$ yani $c = 1$. Öyleyse
+
+$$[v]_f = \begin{pmatrix} 4 \\ -2 \\ 1 \end{pmatrix}$$
+
+**İkinci yol: geçiş matrisiyle.** Bir önceki örnekte $P = \begin{pmatrix} 0 & -1 & 0 \\ 0 & 0 & -1 \\ 1 & 1 & 1 \end{pmatrix}$ bulunmuştu. Formül $[v]_f = P^{-1}[v]_e$ olduğuna göre $P^{-1}$'e ihtiyacımız var; onu da ters yöndeki geçiş matrisi olarak, yani $P^{-1} = M_f^{-1}M_e$ ile hesaplayabiliriz. Daha kısası, $P^{-1}$'in sütunlarının $e_j$'lerin $f$ tabanındaki koordinatları olduğunu kullanmaktır:
+
+$$e_1 = (1,0,0) = f_1 - f_2 \quad\Longrightarrow\quad (1,-1,0)^{t}$$
+$$e_2 = (1,1,0) = f_1 - f_3 \quad\Longrightarrow\quad (1,0,-1)^{t}$$
+$$e_3 = (1,1,1) = f_1 \quad\Longrightarrow\quad (1,0,0)^{t}$$
+
+$$P^{-1} = \begin{pmatrix} 1 & 1 & 1 \\ -1 & 0 & 0 \\ 0 & -1 & 0 \end{pmatrix}$$
+
+Şimdi çarpalım:
+
+$$P^{-1}[v]_e = \begin{pmatrix} 1 & 1 & 1 \\ -1 & 0 & 0 \\ 0 & -1 & 0 \end{pmatrix}
+\begin{pmatrix} 2 \\ -1 \\ 3 \end{pmatrix}
+= \begin{pmatrix} 2 - 1 + 3 \\ -2 \\ 1 \end{pmatrix}
+= \begin{pmatrix} 4 \\ -2 \\ 1 \end{pmatrix}$$
+
+İki yol aynı sonucu verdi.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {.callout-note appearance="simple"}
+İkinci yol tek bir vektör için birincisinden uzun görünebilir; ama aynı taban çiftiyle **birden çok** vektör sorulduğunda $P^{-1}$ bir kez hesaplanır ve her vektör için yalnızca bir matris çarpımı kalır. Sınavda "aşağıdaki vektörlerin $f$ tabanındaki koordinatlarını bulunuz" biçiminde çok şıklı bir soru geldiğinde ikinci yol çok daha hızlıdır.
+:::
+
+## Operatörün Matrisini Yeni Tabanda Yazmak
+
+::: {#exm-operator-yeni-taban name="Operatör Matrisinin Taban Değişimi"}
+$T : \mathbb{R}^{2} \to \mathbb{R}^{2}$ operatörü $T(x,y) = (2x + 3y,\ x - y)$ biçiminde tanımlanıyor. $f_1 = (1,1)$, $f_2 = (1,2)$ olmak üzere $[T]_f$ matrisini
+
+a) benzerlik bağıntısıyla,
+b) doğrudan tanımdan
+
+hesaplayıp karşılaştırınız.
+
+::: {.cozum}
+**a) Benzerlik bağıntısıyla.** Standart taban $e$ için katsayı tablosu doğrudan okunur:
+
+$$[T]_e = \begin{pmatrix} 2 & 3 \\ 1 & -1 \end{pmatrix}$$
+
+$e$ standart taban olduğundan $e$'den $f$'ye geçiş matrisi, sütunları $f_j$ olan matristir:
+
+$$P = \begin{pmatrix} 1 & 1 \\ 1 & 2 \end{pmatrix}$$
+
+Tersini yine blok indirgemeyle bulalım:
+
+$$\left(\begin{array}{cc|cc} 1 & 1 & 1 & 0\\ 1 & 2 & 0 & 1\end{array}\right)
+\overset{R_2 \to -R_1 + R_2}{\sim}
+\left(\begin{array}{cc|cc} 1 & 1 & 1 & 0\\ 0 & 1 & -1 & 1\end{array}\right)
+\overset{R_1 \to -R_2 + R_1}{\sim}
+\left(\begin{array}{cc|cc} 1 & 0 & 2 & -1\\ 0 & 1 & -1 & 1\end{array}\right)$$
+
+$$P^{-1} = \begin{pmatrix} 2 & -1 \\ -1 & 1 \end{pmatrix}$$
+
+Şimdi $[T]_f = P^{-1}[T]_e P$ çarpımını soldan sağa yapalım:
+
+$$P^{-1}[T]_e = \begin{pmatrix} 2 & -1 \\ -1 & 1 \end{pmatrix}\begin{pmatrix} 2 & 3 \\ 1 & -1 \end{pmatrix}
+= \begin{pmatrix} 4 - 1 & 6 + 1 \\ -2 + 1 & -3 - 1 \end{pmatrix}
+= \begin{pmatrix} 3 & 7 \\ -1 & -4 \end{pmatrix}$$
+
+$$\big(P^{-1}[T]_e\big)P = \begin{pmatrix} 3 & 7 \\ -1 & -4 \end{pmatrix}\begin{pmatrix} 1 & 1 \\ 1 & 2 \end{pmatrix}
+= \begin{pmatrix} 3 + 7 & 3 + 14 \\ -1 - 4 & -1 - 8 \end{pmatrix}
+= \begin{pmatrix} 10 & 17 \\ -5 & -9 \end{pmatrix}$$
+
+**b) Doğrudan tanımdan.** Taban vektörlerinin görüntülerini yine $f$ cinsinden yazalım:
+
+$$T(f_1) = T(1,1) = (2 + 3,\ 1 - 1) = (5,0)$$
+
+$(5,0) = a(1,1) + b(1,2) = (a+b,\ a+2b)$ denkleminden $a + b = 5$ ve $a + 2b = 0$; çıkarma ile $b = -5$, buradan $a = 10$:
+
+$$T(f_1) = 10 f_1 - 5 f_2$$
+
+$$T(f_2) = T(1,2) = (2 + 6,\ 1 - 2) = (8,-1)$$
+
+$a + b = 8$, $a + 2b = -1$ denklemlerinden $b = -9$, $a = 17$:
+
+$$T(f_2) = 17 f_1 - 9 f_2$$
+
+Sütunları bu koordinatlardan kurarak
+
+$$[T]_f = \begin{pmatrix} 10 & 17 \\ -5 & -9 \end{pmatrix}$$
+
+İki yol aynı matrisi verdi.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-ters-yon name="Ters Yön: Yeni Tabandan Standart Tabana"}
+Bir $T : \mathbb{R}^{2} \to \mathbb{R}^{2}$ operatörünün $f_1 = (1,1)$, $f_2 = (1,2)$ tabanındaki matrisi
+
+$$[T]_f = \begin{pmatrix} 10 & 17 \\ -5 & -9 \end{pmatrix}$$
+
+olarak veriliyor. $T$'nin standart tabandaki matrisini ve $T(x,y)$ kuralını bulunuz.
+
+::: {.cozum}
+$[T]_f = P^{-1}[T]_e P$ eşitliğini $[T]_e$ için çözelim: her iki tarafı soldan $P$, sağdan $P^{-1}$ ile çarparsak
+
+$$[T]_e = P\,[T]_f\,P^{-1}$$
+
+$P = \begin{pmatrix} 1 & 1 \\ 1 & 2\end{pmatrix}$ ve $P^{-1} = \begin{pmatrix} 2 & -1 \\ -1 & 1\end{pmatrix}$ ile:
+
+$$P\,[T]_f = \begin{pmatrix} 1 & 1 \\ 1 & 2 \end{pmatrix}\begin{pmatrix} 10 & 17 \\ -5 & -9 \end{pmatrix}
+= \begin{pmatrix} 10 - 5 & 17 - 9 \\ 10 - 10 & 17 - 18 \end{pmatrix}
+= \begin{pmatrix} 5 & 8 \\ 0 & -1 \end{pmatrix}$$
+
+$$\big(P[T]_f\big)P^{-1} = \begin{pmatrix} 5 & 8 \\ 0 & -1 \end{pmatrix}\begin{pmatrix} 2 & -1 \\ -1 & 1 \end{pmatrix}
+= \begin{pmatrix} 10 - 8 & -5 + 8 \\ 0 + 1 & 0 - 1 \end{pmatrix}
+= \begin{pmatrix} 2 & 3 \\ 1 & -1 \end{pmatrix}$$
+
+Standart tabandaki matris katsayı tablosunun kendisi olduğundan
+
+$$T(x,y) = (2x + 3y,\ x - y)$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {.callout-warning title="En sık yapılan hata"}
+$[T]_f = P^{-1}[T]_e P$ ile $[T]_e = P[T]_f P^{-1}$ formüllerini karıştırmak. Şu kontrolü yapın: $P$, $e$'den $f$'ye geçiş matrisidir ve $P\cdot[v]_f = [v]_e$ eşitliğini sağlar — yani $P$ soldan uygulandığında **$f$ koordinatlarını $e$'ye** taşır. O hâlde $f$ tabanındaki matrisi elde etmek için, önce $P$ ile $f$'den $e$'ye geçilir, $[T]_e$ uygulanır, sonra $P^{-1}$ ile $e$'den $f$'ye dönülür; sağdan sola okunan bu sıra tam olarak $P^{-1}[T]_e P$'dir. Emin değilseniz sonucu bir taban vektöründe sınayın: $[T]_f$'nin birinci sütunu $T(f_1)$'in $f$ koordinatlarını vermelidir.
+:::
+
+## $\mathbb{R}^{n}$ Dışında: Polinom Uzayı
+
+Taban değiştirme yalnızca $\mathbb{R}^{n}$'e özgü değildir; koordinat vektörü tanımlanabilen her sonlu boyutlu uzayda aynı şekilde çalışır.
+
+::: {#exm-polinom-taban name="Polinom Uzayında Taban Değiştirme"}
+Derecesi en çok $2$ olan reel polinomların uzayı $P_2(\mathbb{R})$'de
+
+$$e = \{1,\ x,\ x^{2}\}, \qquad f = \{1,\ x-1,\ (x-1)^{2}\}$$
+
+tabanları veriliyor.
+
+a) $e$'den $f$'ye geçiş matrisi $P$'yi bulunuz.
+b) $p(x) = 2x^{2} - 5x + 3$ polinomunun $f$ tabanındaki koordinatlarını bulunuz.
+
+::: {.cozum}
+**a)** $P$'nin sütunları, $f$'nin vektörlerinin $e$ tabanındaki koordinatlarıdır. $e$ tabanında bir polinomun koordinatları katsayılarıdır (sabit, $x$'in katsayısı, $x^{2}$'nin katsayısı sırasıyla):
+
+$$f_1 = 1 = 1 + 0\cdot x + 0 \cdot x^{2} \quad\Longrightarrow\quad (1,\ 0,\ 0)^{t}$$
+$$f_2 = x - 1 = -1 + 1 \cdot x + 0 \cdot x^{2} \quad\Longrightarrow\quad (-1,\ 1,\ 0)^{t}$$
+$$f_3 = (x-1)^{2} = x^{2} - 2x + 1 = 1 - 2x + x^{2} \quad\Longrightarrow\quad (1,\ -2,\ 1)^{t}$$
+
+$$P = \begin{pmatrix} 1 & -1 & 1 \\ 0 & 1 & -2 \\ 0 & 0 & 1 \end{pmatrix}$$
+
+**b)** $a, b, c \in \mathbb{R}$ olmak üzere
+
+$$p(x) = a + b(x-1) + c(x-1)^{2}$$
+
+yazalım ve sağ tarafı düzenleyelim:
+
+$$a + b(x-1) + c(x^{2} - 2x + 1) = c\,x^{2} + (b - 2c)\,x + (a - b + c)$$
+
+$p(x) = 2x^{2} - 5x + 3$ ile katsayıları eşitleyelim:
+
+$$c = 2, \qquad b - 2c = -5, \qquad a - b + c = 3$$
+
+İkinciden $b = -5 + 4 = -1$; üçüncüden $a = 3 + b - c = 3 - 1 - 2 = 0$. Öyleyse
+
+$$[p]_f = \begin{pmatrix} 0 \\ -1 \\ 2 \end{pmatrix}$$
+
+**Kontrol.** $[p]_e = (3,\ -5,\ 2)^{t}$ olduğuna göre $P[p]_f = [p]_e$ olmalı:
+
+$$P\,[p]_f = \begin{pmatrix} 1 & -1 & 1 \\ 0 & 1 & -2 \\ 0 & 0 & 1 \end{pmatrix}
+\begin{pmatrix} 0 \\ -1 \\ 2 \end{pmatrix}
+= \begin{pmatrix} 0 + 1 + 2 \\ -1 - 4 \\ 2 \end{pmatrix}
+= \begin{pmatrix} 3 \\ -5 \\ 2 \end{pmatrix} = [p]_e \ ✔$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {.callout-note appearance="simple"}
+(b) şıkkının yaptığı iş aslında $p(x)$'i $x = 1$ noktası etrafında yeniden yazmaktır: $p(x) = -(x-1) + 2(x-1)^{2}$. Taban değiştirmenin somut bir anlamı budur — aynı nesneyi başka bir "ölçü takımıyla" ifade etmek.
+:::
+
+## Alıştırma
+
+::: {#exr-koordinat-taban name="Sınav Tipi Karma Sorular"}
+1. $\mathbb{R}^{2}$'de $f_1 = (2,1)$, $f_2 = (1,1)$ olsun. $v = (5,3)$ vektörünün $f$ tabanındaki koordinatlarını bulunuz.
+2. $\mathbb{R}^{2}$'de $e_1 = (1,1)$, $e_2 = (1,-1)$ ve $f_1 = (2,1)$, $f_2 = (1,1)$ tabanları veriliyor. $e$'den $f$'ye geçiş matrisi $P$'yi bulunuz. $[v]_e = (3, 1)^{t}$ ise $[v]_f$ nedir?
+3. $T : \mathbb{R}^{2} \to \mathbb{R}^{2}$, $T(x,y) = (x + 2y,\ 3x)$ operatörünün $f_1 = (1,1)$, $f_2 = (2,1)$ tabanındaki matrisini bulunuz.
+4. $P_2(\mathbb{R})$'de $f = \{1,\ x+1,\ (x+1)^{2}\}$ tabanına göre $p(x) = x^{2} + 4x + 1$ polinomunun koordinatlarını bulunuz.
+5. $2$. mertebeden reel kare matrislerin uzayı $M_2(\mathbb{R})$'de
+
+$$f_1 = \begin{pmatrix} 1 & 0 \\ 0 & 0\end{pmatrix},\quad
+f_2 = \begin{pmatrix} 1 & 1 \\ 0 & 0\end{pmatrix},\quad
+f_3 = \begin{pmatrix} 1 & 1 \\ 1 & 0\end{pmatrix},\quad
+f_4 = \begin{pmatrix} 1 & 1 \\ 1 & 1\end{pmatrix}$$
+
+   bir tabandır. $A = \begin{pmatrix} 1 & 2 \\ 3 & 4\end{pmatrix}$ matrisinin bu tabana göre koordinatlarını bulunuz.
+
+::: {.cozum}
+**1.** $x f_1 + y f_2 = (2x + y,\ x + y) = (5,3)$ denkleminden
+
+$$2x + y = 5, \qquad x + y = 3$$
+
+Birinciden ikinciyi çıkarırsak $x = 2$, buradan $y = 1$:
+
+$$[v]_f = \begin{pmatrix} 2 \\ 1 \end{pmatrix}$$
+
+**Kontrol.** $2(2,1) + (1,1) = (5,3)$ ✔
+
+**2.** Sütunları taban vektörleri olan matrisler:
+
+$$M_e = \begin{pmatrix} 1 & 1 \\ 1 & -1 \end{pmatrix}, \qquad
+M_f = \begin{pmatrix} 2 & 1 \\ 1 & 1 \end{pmatrix}$$
+
+$M_e^{-1}$'i blok indirgemeyle bulalım:
+
+$$\left(\begin{array}{cc|cc} 1 & 1 & 1 & 0\\ 1 & -1 & 0 & 1\end{array}\right)
+\overset{R_2 \to -R_1 + R_2}{\sim}
+\left(\begin{array}{cc|cc} 1 & 1 & 1 & 0\\ 0 & -2 & -1 & 1\end{array}\right)$$
+
+$$\overset{R_2 \to -\frac{1}{2}R_2}{\sim}
+\left(\begin{array}{cc|cc} 1 & 1 & 1 & 0\\ 0 & 1 & \tfrac{1}{2} & -\tfrac{1}{2}\end{array}\right)
+\overset{R_1 \to -R_2 + R_1}{\sim}
+\left(\begin{array}{cc|cc} 1 & 0 & \tfrac{1}{2} & \tfrac{1}{2}\\ 0 & 1 & \tfrac{1}{2} & -\tfrac{1}{2}\end{array}\right)$$
+
+$$M_e^{-1} = \begin{pmatrix} \tfrac{1}{2} & \tfrac{1}{2} \\[1mm] \tfrac{1}{2} & -\tfrac{1}{2} \end{pmatrix}$$
+
+$$P = M_e^{-1}M_f = \begin{pmatrix} \tfrac{1}{2} & \tfrac{1}{2} \\[1mm] \tfrac{1}{2} & -\tfrac{1}{2} \end{pmatrix}
+\begin{pmatrix} 2 & 1 \\ 1 & 1 \end{pmatrix}
+= \begin{pmatrix} \tfrac{3}{2} & 1 \\[1mm] \tfrac{1}{2} & 0 \end{pmatrix}$$
+
+**Kontrol.** $P$'nin birinci sütunu $f_1$'in $e$'deki koordinatları olmalı:
+
+$$\tfrac{3}{2}e_1 + \tfrac{1}{2}e_2 = \tfrac{3}{2}(1,1) + \tfrac{1}{2}(1,-1) = (2,1) = f_1 \ ✔$$
+
+$[v]_f$ için önce $v$'yi bulmak en kısası: $v = 3e_1 + e_2 = 3(1,1) + (1,-1) = (4,2)$. Şimdi
+
+$$(4,2) = x(2,1) + y(1,1) = (2x + y,\ x + y) \quad\Longrightarrow\quad 2x + y = 4,\ \ x + y = 2$$
+
+Buradan $x = 2$, $y = 0$:
+
+$$[v]_f = \begin{pmatrix} 2 \\ 0 \end{pmatrix}$$
+
+Aynı sonucu $P^{-1}[v]_e$ ile de alabilirdiniz.
+
+**3.** Doğrudan tanımdan gidelim.
+
+$$T(f_1) = T(1,1) = (1 + 2,\ 3) = (3,3)$$
+
+$(3,3) = a(1,1) + b(2,1) = (a + 2b,\ a + b)$ denkleminden $a + 2b = 3$, $a + b = 3$; çıkarma ile $b = 0$, $a = 3$:
+
+$$T(f_1) = 3f_1 + 0f_2$$
+
+$$T(f_2) = T(2,1) = (2 + 2,\ 6) = (4,6)$$
+
+$a + 2b = 4$, $a + b = 6$ denklemlerinden $b = -2$, $a = 8$:
+
+$$T(f_2) = 8f_1 - 2f_2$$
+
+$$[T]_f = \begin{pmatrix} 3 & 8 \\ 0 & -2 \end{pmatrix}$$
+
+**4.** $p(x) = a + b(x+1) + c(x+1)^{2}$ yazalım:
+
+$$a + b(x+1) + c(x^{2} + 2x + 1) = c\,x^{2} + (b + 2c)\,x + (a + b + c)$$
+
+$p(x) = x^{2} + 4x + 1$ ile eşitleyelim:
+
+$$c = 1, \qquad b + 2c = 4, \qquad a + b + c = 1$$
+
+İkinciden $b = 2$; üçüncüden $a = 1 - b - c = 1 - 2 - 1 = -2$:
+
+$$[p]_f = \begin{pmatrix} -2 \\ 2 \\ 1 \end{pmatrix}$$
+
+**Kontrol.** $-2 + 2(x+1) + (x+1)^{2} = -2 + 2x + 2 + x^{2} + 2x + 1 = x^{2} + 4x + 1$ ✔
+
+**5.** $a, b, c, d \in \mathbb{R}$ olmak üzere $A = a f_1 + b f_2 + c f_3 + d f_4$ yazalım ve sağ tarafı toplayalım:
+
+$$a f_1 + b f_2 + c f_3 + d f_4
+= \begin{pmatrix} a + b + c + d & b + c + d \\ c + d & d \end{pmatrix}$$
+
+Bunu $A$ ile karşılaştıralım:
+
+$$\begin{pmatrix} a + b + c + d & b + c + d \\ c + d & d \end{pmatrix}
+= \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$$
+
+Sağ alttan başlayarak geriye doğru çözelim:
+
+$$d = 4, \qquad c + d = 3 \implies c = -1, \qquad b + c + d = 2 \implies b = -1$$
+
+$$a + b + c + d = 1 \implies a = 1 - (-1) - (-1) - 4 = -1$$
+
+$$[A]_f = \begin{pmatrix} -1 \\ -1 \\ -1 \\ 4 \end{pmatrix}$$
+
+**Kontrol.**
+
+$$-f_1 - f_2 - f_3 + 4f_4
+= \begin{pmatrix} -1-1-1+4 & 0-1-1+4 \\ 0+0-1+4 & 0+0+0+4 \end{pmatrix}
+= \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \ ✔$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
