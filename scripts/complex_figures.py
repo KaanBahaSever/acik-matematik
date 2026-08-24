@@ -3,13 +3,15 @@
 Generates the SVG figures used in the "Kompleks Analiz" (Complex Analysis)
 chapters.
 
-The figures are NOT produced at build time: run this script and paste the
-resulting markup straight into the .qmd files. Building the books therefore
-needs neither Python nor Jupyter; CI runs Quarto alone.
+The figures are NOT produced at build time: run this script, then
+scripts/center_figures.py (which measures each drawing and centers it in its
+viewBox), and paste the resulting markup into the .qmd files — always OUTSIDE
+definition/theorem boxes. Building the books therefore needs neither Python
+nor Jupyter; CI runs Quarto alone.
 
 The captions are Turkish on purpose — they are the text shown on the site.
 
-Usage:   python scripts/complex_figures.py
+Usage:   python scripts/complex_figures.py && python scripts/center_figures.py
 Output:  scripts/_figures/complex-<name>.md
 """
 import io
@@ -67,30 +69,47 @@ OUT["vektor-toplam-fark"] = figure(
     "Bu y&#252;zden |<em>z</em><sub>1</sub> &#8722; <em>z</em><sub>2</sub>| iki nokta aras&#305;ndaki uzakl&#305;kt&#305;r.",
     css_class=WIDE, aria="Kompleks sayilarin toplami ve farki icin vektor cizimi")
 
-# ---- V2: modulus as a length, conjugate as a reflection
+# ---- V2a: modulus = the length of the vector (right triangle)
 z = (3.0, 2.0)
+p = cplane(40, 24, 320, (-0.7, 4.3), (-0.6, 2.7))
+p.origin_axes()
+p.polygon([(0, 0), (z[0], 0), z], THEORY, 0.10)
+p.line([(0, 0), (z[0], 0)], PRACTICE, 1.4, "5 4", 0.85)
+p.line([(z[0], 0), z], PRACTICE, 1.4, "5 4", 0.85)
+s = 0.16   # right-angle mark at (3, 0)
+p.line([(z[0] - s, 0), (z[0] - s, s), (z[0], s)], PRACTICE, 1.1, None, 0.8)
+p.arrow((0, 0), z, THEORY, 2.3)
+dot(p, z, THEORY, 4.2)
+p.label(*z, "z = 3 + 2i", 9, -4, THEORY, 12.5, "start", True)
+p.label(1.5, 0, "x = 3", 0, 17, PRACTICE, 11.5, "middle", False, True)
+p.label(z[0], 1.0, "y = 2", 9, 4, PRACTICE, 11.5, "start", False, True)
+p.label(1.35, 1.05, "|z| = &#8730;13 " + APPROX + " 3,61", -7, -7, THEORY, 12, "end", True, True)
+OUT["modul-uzunluk"] = figure(
+    400, 260, [p],
+    "Mod&#252;l, <em>z</em> vekt&#246;r&#252;n&#252;n boyudur: bile&#351;enleri <em>x</em> ve <em>y</em> olan dik &#252;&#231;genin "
+    "hipoten&#252;s&#252;. Pisagor teoremi tan&#305;mdaki form&#252;l&#252; verir: |<em>z</em>| = &#8730;(<em>x</em>&#178; + <em>y</em>&#178;), "
+    "&#246;rnekte |3 + 2<em>i</em>| = &#8730;(9 + 4) = &#8730;13.",
+    aria="Modul: z vektorunun boyu, dik ucgenin hipotenusu")
+
+# ---- V2b: conjugate as a reflection across the real axis
 p = cplane(40, 24, 300, (-0.9, 4.4), (-2.9, 2.9))
 p.origin_axes(yticks=(-2, -1, 1, 2))
-p.polygon([(0, 0), (z[0], 0), z], THEORY, 0.10)
-p.line([(z[0], 0), z], THEORY, 1.3, "5 4", 0.7)
-p.line([(0, 0), (z[0], 0)], THEORY, 1.3, "5 4", 0.7)
 p.arrow((0, 0), z, THEORY, 2.2)
 p.arrow((0, 0), (z[0], -z[1]), PRACTICE, 2.0)
-p.line([z, (z[0], -z[1])], REMARK, 1.1, "3 3", 0.7)
+p.line([z, (z[0], -z[1])], REMARK, 1.2, "3 3", 0.75)
 dot(p, z, THEORY)
 dot(p, (z[0], -z[1]), PRACTICE)
+dot(p, (z[0], 0), REMARK, 2.6)
 p.label(*z, "z = 3 + 2i", 9, 4, THEORY, 12.5, "start", True)
 p.label(z[0], -z[1], BAR_Z + " = 3 " + MINUS + " 2i", 9, 5, PRACTICE, 12.5, "start", True)
 p.label(1.5, 1.0, "|z| = &#8730;13", -6, -8, THEORY, 12, "end", False, True)
 p.label(1.5, -1.0, "|" + BAR_Z + "| = &#8730;13", -6, 14, PRACTICE, 12, "end", False, True)
-p.label(z[0], 1.0, "y = 2", 8, 4, TEXT, 11, "start", False, True)
-p.label(1.5, 0, "x = 3", 0, 15, TEXT, 11, "middle", False, True)
 OUT["modul-eslenik"] = figure(
     380, 372, [p],
-    "Mod&#252;l, <em>z</em> vekt&#246;r&#252;n&#252;n boyudur: dik &#252;&#231;genin hipoten&#252;s&#252; "
-    "&#8730;(<em>x</em>&#178; + <em>y</em>&#178;). E&#351;lenik <em>z&#773;</em>, <em>z</em>'nin reel eksene g&#246;re "
-    "yans&#305;mas&#305;d&#305;r; yans&#305;ma boyu de&#287;i&#351;tirmedi&#287;inden |<em>z&#773;</em>| = |<em>z</em>| olur.",
-    aria="Modul ve eslenik: dik ucgen ve reel eksene gore yansima")
+    "E&#351;lenik <em>z&#773;</em>, <em>z</em>'nin reel eksene g&#246;re yans&#305;mas&#305;d&#305;r: reel k&#305;s&#305;m ayn&#305; "
+    "kal&#305;r, sanal k&#305;sm&#305;n i&#351;areti de&#287;i&#351;ir. Yans&#305;ma boyu de&#287;i&#351;tirmedi&#287;inden "
+    "|<em>z&#773;</em>| = |<em>z</em>| olur.",
+    aria="Eslenik: reel eksene gore yansima, modul degismez")
 
 # ---- V3: |z - z0| = R is a circle
 z0, R = (1.0, -3.0), 2.0
@@ -447,6 +466,34 @@ OUT["arg-sayi-dogrusu"] = figure(
     "(&#8722;&#960;, &#960;] penceresi bu noktalardan tam birini yakalar; yakalanan nokta Arg <em>z</em>'dir. "
     "Pencerenin sol ucu a&#231;&#305;k (&#8722;&#960; d&#305;&#351;ar&#305;da), sa&#287; ucu kapal&#305;d&#305;r (&#960; i&#231;eride).",
     aria="Arguman kumesi sayi dogrusunda ve esas arguman penceresi")
+
+# ====================================================== rezidü: tekil nokta türleri
+# ---- the three types at a glance: which Laurent coefficients are nonzero
+p = Plot(146, 46, 350, 168, (-5.9, 2.9), (-0.35, 3.15))
+p.polygon([(-5.9, -0.35), (-0.5, -0.35), (-0.5, 3.15), (-5.9, 3.15)], PRACTICE, 0.07)
+p.add(f'<line x1="{p.X(-0.5):.1f}" y1="{p.y0:.1f}" x2="{p.X(-0.5):.1f}" y2="{p.y0+p.h:.1f}" stroke="{TEXT}" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>')
+rows = [(2.5, "kald&#305;r&#305;labilir", []),
+        (1.5, "m = 2 kutup", [-1, -2]),
+        (0.5, "esasl&#305;", [-1, -2, -3, -4, -5])]
+for y, label, neg in rows:
+    p.text_px(138, p.Y(y) + 4, label, TEXT, 11.5, "end", True)
+    p.line([(-5.7, y - 0.5), (2.7, y - 0.5)], TEXT, 0.7, None, 0.15) if y > 0.5 else None
+    p.points([(n, y) for n in range(0, 3)], THEORY, 3.6)
+    p.points([(n, y) for n in neg], PRACTICE, 3.6)
+for n in range(-5, 3):
+    p.text_px(p.X(n), p.y0 + p.h + 16, str(n), TEXT, 10.5, "middle")
+p.text_px(p.X(-1.5), p.y0 + p.h + 32, "kuvvet: (z " + MINUS + " z" + SUB0 + ")&#8319;", TEXT, 10.5, "middle", False, True)
+p.text_px(p.X(-3.2), p.y0 - 10, "esas k&#305;s&#305;m (n &lt; 0)", PRACTICE, 11, "middle", True)
+p.text_px(p.X(1.2), p.y0 - 10, "analitik k&#305;s&#305;m", THEORY, 11, "middle", True)
+p.text_px(p.X(-5.7), p.Y(0.5) + 4, "&#8230;", PRACTICE, 13, "end", True)
+p.text_px(p.X(-2), p.Y(1.5) - 12, "b&#8322; &#8800; 0, sonras&#305; yok", PRACTICE, 10, "middle", False, True)
+OUT["uc-tip"] = figure(
+    520, 258, [p],
+    "&#220;&#231; tekillik tipi, tek bak&#305;&#351;ta: her sat&#305;r bir Laurent a&#231;&#305;l&#305;m&#305;d&#305;r, dolu noktalar "
+    "s&#305;f&#305;rdan farkl&#305; katsay&#305;lar&#305; g&#246;sterir. Fark yaln&#305;zca <strong>esas k&#305;s&#305;mdaki</strong> "
+    "(negatif kuvvetli) terim say&#305;s&#305;ndad&#305;r: hi&#231; yoksa kald&#305;r&#305;labilir, sonluysa kutup, "
+    "sonsuzsa esasl&#305; tekil nokta.",
+    css_class=WIDE, aria="Uc tekillik tipinin Laurent katsayilariyla karsilastirilmasi")
 
 # ############################################################################
 # PART: Analitik Fonksiyonlar
