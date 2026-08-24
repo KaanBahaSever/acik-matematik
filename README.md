@@ -22,7 +22,11 @@ Bu sayede devasa müfredat birbirine karışmaz ve her ders kendi izolasyonunda 
 ├── 📂 assets/                   # Favicon ve statik dosyalar
 │
 ├── 📂 scripts/
-│   └── 📄 build.py              # Portalı + tüm kitapları derleyip _site'a toplar
+│   ├── 📄 build.py              # Portalı + tüm kitapları derleyip _site'a toplar
+│   ├── 📄 collapsible.lua       # Pandoc filtresi: çözüm/ispat blokları, emoji temizliği, müfredat kutusu
+│   ├── 📄 svg_plot.py           # Tema uyumlu, bağımlılıksız SVG çizim yardımcısı
+│   ├── 📄 stochastic_figures.py # Raslantı Süreçleri grafiklerini üretir (çıktı .qmd'ye elle gömülür)
+│   └── 📄 complex_figures.py    # Kompleks Analiz grafiklerini üretir
 │
 ├── 📂 .github/workflows/
 │   └── 📄 deploy.yml            # CI/CD: derle → Cloudflare Pages'e yayınla
@@ -161,12 +165,13 @@ Soru metni burada.
 Dikkat edilecek noktalar:
 
 - **Kimlik önekleri:** `#def-` (tanım), `#thm-` (teorem), `#lem-` (lemma), `#cor-` (sonuç), `#prp-` (önerme), `#exm-` (örnek), `#exr-` (alıştırma).
-- **Çözüm ve ispat blokları:** `::: {.cozum}` ve `::: {.ispat}` kullanılır. [scripts/katlanir.lua](scripts/katlanir.lua) bunları tarayıcının kendi `<details>` öğesine çevirir; okuyucu başlığa tıklayınca açılır. Özel başlık için `::: {.cozum baslik="Alternatif çözüm"}`, varsayılan açık gelmesi için `acik="true"` yazılabilir.
+- **Çözüm ve ispat blokları:** `::: {.cozum}` ve `::: {.ispat}` kullanılır. [scripts/collapsible.lua](scripts/collapsible.lua) bunları tarayıcının kendi `<details>` öğesine çevirir; okuyucu başlığa tıklayınca açılır. Özel başlık için `::: {.cozum baslik="Alternatif çözüm"}`, varsayılan açık gelmesi için `acik="true"` yazılabilir.
 - **İç içe bloklar:** Dış blok, iç bloktan bir fazla iki nokta üst üste alır (`::::` dışta, `:::` içte).
 - **İspat sonu işareti:** `[$\blacksquare$]{.qed}` veya `[$\boxtimes$]{.qed}`.
 - **Matematik:** Satır içi `$…$`, blok `$$…$$`. MathJax'te bulunmayan komutlardan (`\centernot` gibi) kaçının.
 - **Ondalık ayırıcı:** Türkçe metinde virgül — matematik modunda `$0{,}6$` biçiminde yazılır.
 - **Callout başlıkları:** Emoji yazabilirsiniz; filtre çıktıda otomatik temizler. Bölüm başlıklarındaki emojilere dokunulmaz.
+- **Grafikler:** Çizimler derleme sırasında üretilmez. `scripts/svg_plot.py` yardımcısıyla yazılmış üretici betikler (`scripts/complex_figures.py`, `scripts/stochastic_figures.py`) çalıştırılır, çıktı `scripts/_figures/*.md` dosyalarına yazılır ve ilgili `.qmd` dosyasına elle yapıştırılır. SVG'ler tema renklerini CSS değişkenlerinden (`--color-theory` vb.) aldığı için açık ve koyu temada doğru görünür.
 
 ## 🤝 Katkıda Bulunma
 

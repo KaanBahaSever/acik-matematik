@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-Açık Matematik — tüm siteyi derler.
+Açık Matematik — builds the whole site.
 
-Yapı:
-  * Kök proje (type: website)  -> ana sayfa + ders kataloğu  ->  _site/
-  * dersler/<ders>/            -> her biri bağımsız Quarto "book" projesi
-                                  -> dersler/<ders>/_book/  -> _site/dersler/<ders>/
+Layout:
+  * Root project (type: website)  -> home page + course catalog  ->  _site/
+  * dersler/<course>/             -> each one an independent Quarto "book"
+                                     -> dersler/<course>/_book/
+                                     -> _site/dersler/<course>/
 
-Her kitap önce kendi _book/ dizinine derlenir, sonra _site altına kopyalanır.
-Kitapları doğrudan _site içine yazdırmak Quarto'nun proje dışı dizinleri
-temizlemeyi reddetmesine ve eski dosyaların birikmesine yol açıyordu.
+Every book is first rendered into its own _book/ directory and then copied
+under _site. Rendering the books straight into _site made Quarto refuse to
+clean directories outside the project and let stale files pile up.
 
-Sıralama önemlidir: kök proje derlenirken _site temizlendiği için,
-ders kitapları kök projeden SONRA derlenip kopyalanır.
+Order matters: rendering the root project wipes _site, so the course books
+are rendered and copied AFTER the root project.
 
-Kullanım:
-    python scripts/build.py             # her şeyi derle
-    python scripts/build.py kriptografi # yalnızca bir dersi derle
+Usage:
+    python scripts/build.py              # build everything
+    python scripts/build.py kriptografi  # build a single course only
 """
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import sys
@@ -28,14 +28,14 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DERSLER = ROOT / "dersler"
+COURSES = ROOT / "dersler"
 SITE = ROOT / "_site"
 
-# Windows konsolu varsayılan olarak cp1252 kullanıyor; ders adlarındaki
-# Türkçe karakterler bu kod sayfasında yazdırılamıyor.
-for akis in (sys.stdout, sys.stderr):
+# The Windows console defaults to cp1252, which cannot print the Turkish
+# characters that appear in course names.
+for stream in (sys.stdout, sys.stderr):
     try:
-        akis.reconfigure(encoding="utf-8")
+        stream.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):
         pass
 
@@ -43,12 +43,12 @@ for akis in (sys.stdout, sys.stderr):
 def quarto() -> str:
     exe = shutil.which("quarto")
     if not exe:
-        sys.exit("HATA: 'quarto' PATH üzerinde bulunamadı. https://quarto.org/docs/get-started/")
+        sys.exit("ERROR: 'quarto' not found on PATH. https://quarto.org/docs/get-started/")
     return exe
 
 
 def render(target: Path, label: str) -> float:
-    """Verilen dizindeki Quarto projesini derler, geçen süreyi döndürür."""
+    """Render the Quarto project in `target`; return the elapsed seconds."""
     print(f"\n\033[1m>> {label}\033[0m")
     started = time.time()
     result = subprocess.run(
@@ -64,53 +64,53 @@ def render(target: Path, label: str) -> float:
     if result.returncode != 0:
         print(result.stdout)
         print(result.stderr, file=sys.stderr)
-        sys.exit(f"HATA: '{label}' derlenemedi (çıkış kodu {result.returncode}).")
+        sys.exit(f"ERROR: '{label}' failed to render (exit code {result.returncode}).")
 
-    # Quarto uyarıları gözden kaçmasın
+    # Surface Quarto warnings so they are not missed
     for line in (result.stdout + result.stderr).splitlines():
         if "WARN" in line or "ERROR" in line:
             print(f"   ! {line.strip()}")
 
-    print(f"   tamam ({elapsed:.1f} sn)")
+    print(f"   done ({elapsed:.1f} s)")
     return elapsed
 
 
 def books() -> list[Path]:
-    """dersler/ altındaki tüm kitap projelerini alfabetik olarak listeler."""
-    return sorted(p.parent for p in DERSLER.glob("*/_quarto.yml"))
+    """All book projects under dersler/, in alphabetical order."""
+    return sorted(p.parent for p in COURSES.glob("*/_quarto.yml"))
 
 
-def paylasilan_varliklar() -> None:
-    """styles/ ve assets/ dizinlerini _site altına tazeler.
+def sync_shared_assets() -> None:
+    """Refresh the styles/ and assets/ directories under _site.
 
-    Ders kitapları bu dosyalara _site kökünden (../../../styles/global.css
-    gibi) bağlanıyor; dosyalar proje dizinlerinin dışında kaldığı için
-    Quarto bunları kitap çıktısına kopyalamıyor. Normalde portal derlemesi
-    hallediyor; ancak tek ders derlerken portal çalışmadığından stiller
-    eski kalıyordu.
+    The course books link to these files from the _site root
+    (../../../styles/global.css and so on). Because the files live outside
+    the book project directories, Quarto does not copy them into the book
+    output. Normally the portal build takes care of it, but when a single
+    course is built the portal is not rendered and the styles went stale.
     """
-    for ad in ("styles", "assets"):
-        kaynak = ROOT / ad
-        if not kaynak.is_dir():
+    for name in ("styles", "assets"):
+        source = ROOT / name
+        if not source.is_dir():
             continue
-        hedef = SITE / ad
-        if hedef.exists():
-            shutil.rmtree(hedef)
-        hedef.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(kaynak, hedef)
+        target = SITE / name
+        if target.exists():
+            shutil.rmtree(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, target)
 
 
 def publish(book: Path) -> None:
-    """Derlenmiş kitabı dersler/<ders>/_book/ dizininden _site altına taşır."""
+    """Move the rendered book from dersler/<course>/_book/ under _site."""
     built = book / "_book"
     if not built.is_dir():
-        sys.exit(f"HATA: '{book.name}' için _book dizini oluşmadı.")
+        sys.exit(f"ERROR: no _book directory was produced for '{book.name}'.")
 
-    hedef = SITE / "dersler" / book.name
-    if hedef.exists():
-        shutil.rmtree(hedef)
-    hedef.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(built, hedef)
+    target = SITE / "dersler" / book.name
+    if target.exists():
+        shutil.rmtree(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(built, target)
 
 
 def main() -> None:
@@ -118,26 +118,26 @@ def main() -> None:
     started = time.time()
 
     if only:
-        target = DERSLER / only
+        target = COURSES / only
         if not (target / "_quarto.yml").exists():
-            sys.exit(f"HATA: '{only}' diye bir ders projesi yok.")
-        render(target, f"ders: {only}")
+            sys.exit(f"ERROR: there is no course project named '{only}'.")
+        render(target, f"course: {only}")
         publish(target)
-        paylasilan_varliklar()
+        sync_shared_assets()
     else:
-        # 1) Portal sayfaları — bu adım _site dizinini temizler
-        render(ROOT, "portal (ana sayfa + ders kataloğu)")
+        # 1) Portal pages — this step wipes the _site directory
+        render(ROOT, "portal (home page + course catalog)")
 
-        # 2) Ders kitapları — çıktıları _site/dersler/<ders>/ altına yazılır
+        # 2) Course books — output goes under _site/dersler/<course>/
         found = books()
         if not found:
-            print("   ! dersler/ altında hiç kitap projesi bulunamadı")
+            print("   ! no book projects found under dersler/")
         for book in found:
-            render(book, f"ders: {book.name}")
+            render(book, f"course: {book.name}")
             publish(book)
 
     pages = len(list(SITE.rglob("*.html"))) if SITE.exists() else 0
-    print(f"\n\033[1mBitti.\033[0m {pages} HTML sayfa, {time.time() - started:.1f} sn -> {SITE}")
+    print(f"\n\033[1mDone.\033[0m {pages} HTML pages, {time.time() - started:.1f} s -> {SITE}")
 
 
 if __name__ == "__main__":
