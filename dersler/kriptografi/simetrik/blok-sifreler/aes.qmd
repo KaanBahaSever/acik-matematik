@@ -1,16 +1,526 @@
 ---
-title: "AES"
-pagetitle: "AES"
-number-sections: false
+title: "AES (Advanced Encryption Standard) ve SPN Yapısı"
+pagetitle: "AES (Advanced Encryption Standard) ve SPN Yapısı"
+description: "AES'in durum matrisini, SubBytes, ShiftRows, MixColumns ve AddRoundKey adımlarını, sürüm tablosunu, anahtar genişletmeyi, şifre çözmeyi ve algoritmanın güncel güvenlik durumunu anlatır."
 ---
 
-Bu sayfa AES algoritmasının temel yapısını tanıtır.
+[DES bölümünde](des.qmd) gördüğümüz tablo açıktı: 56 bitlik efektif anahtar, 1990'ların sonunda kaba kuvvet saldırılarına günler hatta saatler içinde yenik düşüyordu. Geçici çare olan 3DES ise güvenliği kurtarsa da üç kat şifreleme yükü nedeniyle yavaştı. Dijital çağın yeni bir standarda ihtiyacı vardı.
 
-## Amaç
+## DES'ten AES'e: Açık Bir Yarışma
 
-- SPN yapısını görmek
-- Güncel blok şifre tasarımını anlamak
+1997'de NIST (Amerikan Ulusal Standartlar ve Teknoloji Enstitüsü) tarihinin en önemli kararlarından birini verdi: yeni standardı kapalı kapılar ardında değil, **herkese açık bir yarışmayla** seçecekti. Dünyanın dört bir yanından gelen **15 aday algoritma** 1998'de duyuruldu; üç yıl boyunca uluslararası kriptografi topluluğu bu adayları kırmak için yarıştı. Ekim 2000'de kazanan ilan edildi: Belçikalı kriptograflar **Joan Daemen** ve **Vincent Rijmen**'in tasarladığı **Rijndael** algoritması. Algoritma, Kasım 2001'de **FIPS-197** belgesiyle resmî standart hâline geldi ve o günden beri **AES (Advanced Encryption Standard)** adıyla anılıyor.
 
-## Notlar
+::: {.callout-note title="🏆 Açıklık bir zayıflık değil, güçtür"}
+Bu yarışma, [Kerckhoffs prensibinin](../../kriptografiye-giris/kerckhoffs-prensibi.qmd) eylemdeki hâlidir: algoritmanın her satırı yıllarca dünyanın en iyi kriptanalistlerinin saldırısına açık tutulmuş, güvenlik yalnızca **anahtarın gizliliğine** emanet edilmiştir. DES'in S-kutularının gizemli tasarım kriterlerinin yarattığı "arka kapı mı var?" kuşkusunun tam tersi bir yaklaşımdır bu.
+:::
 
-Bu bölüm daha sonra S-box, MixColumns ve anahtar genişletme ile tamamlanacaktır.
+Mimari açıdan AES, DES'ten köklü biçimde ayrılır. DES bir **Feistel ağıydı**: her döngüde bloğun yalnızca yarısı işlenir, bu sayede çekirdek fonksiyon tersinir olmasa bile şifre çözülebilirdi. AES ise [Shannon bölümünde](../../modern-gecis/shannon.qmd) tanıttığımız **SPN (Substitution-Permutation Network — yerine koyma–permütasyon ağı)** mimarisini kullanır: her döngüde **bloğun tamamı** dönüştürülür. Bunun bedeli, şifre çözmenin çalışabilmesi için her adımın **kendi başına tersinir** olmak zorunda olmasıdır — birazdan her adımın bu koşulu nasıl sağladığını tek tek göreceğiz.
+
+## Durum Matrisi (State)
+
+AES, veriyi her zaman **128 bitlik bloklar** hâlinde işler. Algoritmanın zarif taraflarından biri, bu 128 biti uzun bir bit dizisi olarak değil, kompakt bir tablo olarak ele almasıdır.
+
+::: {#def-durum-matrisi name="Durum Matrisi (State)"}
+128 bitlik blok 16 bayta bölünür ve baytlar **sütun sütun** $4 \times 4$'lük bir matrise yerleştirilir. Bu matrise **durum (state)** denir. Giriş dizisinin baytlarını $\text{in}_0, \text{in}_1, \dots, \text{in}_{15}$ ile gösterirsek yerleştirme kuralı şudur:
+
+$$s_{r,c} = \text{in}_{r + 4c}, \qquad 0 \le r, c \le 3$$
+
+Yani ilk dört bayt birinci sütunu, sonraki dört bayt ikinci sütunu doldurur. Örneğin $s_{1,2} = \text{in}_9$ olur.
+:::
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="59.0 -1.0 446.0 275.5" role="img" aria-label="16 baytlik girisin sutun sutun 4x4 durum matrisine yerlestirilmesi">
+  <text x="282.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">16 baytl&#305;k giri&#351; dizisi  in&#8320;, in&#8321;, &#8230;, in&#8321;&#8325;</text>
+  <rect x="74.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="87.0" y="50.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">0</text>
+  <rect x="100.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="113.0" y="50.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">1</text>
+  <rect x="126.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="139.0" y="50.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">2</text>
+  <rect x="152.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="165.0" y="50.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">3</text>
+  <rect x="178.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="191.0" y="50.0" fill="var(--color-base)" font-size="11" text-anchor="middle">4</text>
+  <rect x="204.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="217.0" y="50.0" fill="var(--color-base)" font-size="11" text-anchor="middle">5</text>
+  <rect x="230.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="243.0" y="50.0" fill="var(--color-base)" font-size="11" text-anchor="middle">6</text>
+  <rect x="256.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="269.0" y="50.0" fill="var(--color-base)" font-size="11" text-anchor="middle">7</text>
+  <rect x="282.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="295.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">8</text>
+  <rect x="308.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="321.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">9</text>
+  <rect x="334.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="347.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">10</text>
+  <rect x="360.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="373.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">11</text>
+  <rect x="386.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="399.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">12</text>
+  <rect x="412.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="425.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">13</text>
+  <rect x="438.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="451.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">14</text>
+  <rect x="464.0" y="34.0" width="26.0" height="24.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="477.0" y="50.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">15</text>
+  <rect x="150.0" y="112.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="165.0" y="131.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">0</text>
+  <rect x="150.0" y="142.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="165.0" y="161.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">1</text>
+  <rect x="150.0" y="172.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="165.0" y="191.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">2</text>
+  <rect x="150.0" y="202.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="165.0" y="221.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">3</text>
+  <rect x="180.0" y="112.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="195.0" y="131.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle">4</text>
+  <rect x="180.0" y="142.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="195.0" y="161.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle">5</text>
+  <rect x="180.0" y="172.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="195.0" y="191.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle">6</text>
+  <rect x="180.0" y="202.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="195.0" y="221.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle">7</text>
+  <rect x="210.0" y="112.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="225.0" y="131.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">8</text>
+  <rect x="210.0" y="142.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="225.0" y="161.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">9</text>
+  <rect x="210.0" y="172.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="225.0" y="191.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">10</text>
+  <rect x="210.0" y="202.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="225.0" y="221.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">11</text>
+  <rect x="240.0" y="112.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="255.0" y="131.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">12</text>
+  <rect x="240.0" y="142.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="255.0" y="161.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">13</text>
+  <rect x="240.0" y="172.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="255.0" y="191.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">14</text>
+  <rect x="240.0" y="202.0" width="30.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="255.0" y="221.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">15</text>
+  <line x1="126.0" y1="62.0" x2="161.3" y2="101.8" stroke="var(--color-practice)" stroke-width="1.7" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="165.0,106.0 158.2,102.7 162.6,98.8" fill="var(--color-practice)" opacity="0.9"/>
+  <line x1="230.0" y1="62.0" x2="198.5" y2="101.6" stroke="var(--color-base)" stroke-width="1.7" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="195.0,106.0 197.1,98.7 201.7,102.4" fill="var(--color-base)" opacity="0.9"/>
+  <text x="140.0" y="131.0" fill="var(--color-remark)" font-size="10" text-anchor="end">r = 0</text>
+  <text x="140.0" y="161.0" fill="var(--color-remark)" font-size="10" text-anchor="end">r = 1</text>
+  <text x="140.0" y="191.0" fill="var(--color-remark)" font-size="10" text-anchor="end">r = 2</text>
+  <text x="140.0" y="221.0" fill="var(--color-remark)" font-size="10" text-anchor="end">r = 3</text>
+  <text x="165.0" y="246.0" fill="var(--color-remark)" font-size="10" text-anchor="middle">0</text>
+  <text x="195.0" y="246.0" fill="var(--color-remark)" font-size="10" text-anchor="middle">1</text>
+  <text x="225.0" y="246.0" fill="var(--color-remark)" font-size="10" text-anchor="middle">2</text>
+  <text x="255.0" y="246.0" fill="var(--color-remark)" font-size="10" text-anchor="middle">3</text>
+  <text x="210.0" y="260.0" fill="var(--color-remark)" font-size="10" text-anchor="middle">s&#252;tun  c</text>
+  <text x="360.0" y="142.0" fill="var(--academic-text)" font-size="11" text-anchor="start" font-weight="600">yerle&#351;tirme kural&#305;:</text>
+  <text x="360.0" y="164.0" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">s</tspan><tspan font-size="9" dy="3">r,c</tspan><tspan dy="-3">&#8203;</tspan> = in<tspan font-size="9" dy="3">r + 4c</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="360.0" y="188.0" fill="var(--color-remark)" font-size="11" text-anchor="start">&#246;rnek:  <tspan font-style="italic">s</tspan><tspan font-size="9" dy="3">1,2</tspan><tspan dy="-3">&#8203;</tspan> = in<tspan font-size="9" dy="3">9</tspan><tspan dy="-3">&#8203;</tspan></text>
+</svg>
+<figcaption>128 bitlik blok, 16 bayt olarak <strong>s&#252;tun s&#252;tun</strong> 4&#215;4 durum matrisine yerle&#351;tirilir: ilk d&#246;rt bayt birinci s&#252;tunu, sonraki d&#246;rt bayt ikinci s&#252;tunu doldurur. H&#252;credeki say&#305; bayt&#305;n giri&#351; dizisindeki s&#305;ras&#305;d&#305;r; kural <em>s</em><sub>r,c</sub> = in<sub>r+4c</sub>.</figcaption>
+</figure>
+```
+
+Bundan sonraki her AES işlemi bu matris üzerinde çalışır: kimi adım hücreleri tek tek, kimi satırları, kimi de sütunları dönüştürür. Kritik nokta şudur: matrisin her hücresi sıradan bir bayt değil, [bir önceki bölümde](sonlu-cisimler.qmd) inşa ettiğimiz $\mathrm{GF}(2^8)$ cisminin bir elemanıdır. Toplama XOR'dur, çarpma $m(x)$ modülünde polinom çarpımıdır — AES'in tüm aritmetiği bu cisimde döner.
+
+## Üç Sürüm, Tek Blok Boyutu
+
+AES'in üç resmî sürümü vardır ve aralarındaki fark yalnızca **anahtar uzunluğudur**; blok her sürümde 128 bittir. Anahtar, 32 bitlik **kelimeler (word)** hâlinde sayılır ve kelime sayısı $N_k$ ile gösterilir. Anahtar uzadıkça döngü sayısı $N_r$ de artar:
+
+| Sürüm | Anahtar uzunluğu | Anahtar kelime sayısı ($N_k$) | Döngü sayısı ($N_r$) | Tur anahtarı sayısı ($N_r + 1$) |
+|:---|:---:|:---:|:---:|:---:|
+| **AES-128** | 128 bit | 4 | 10 | 11 |
+| **AES-192** | 192 bit | 6 | 12 | 13 |
+| **AES-256** | 256 bit | 8 | 14 | 15 |
+
+: AES sürümleri — blok her zaman 128 bittir, yalnızca anahtar uzunluğu değişir {#tbl-aes-surumler}
+
+Daha uzun anahtar neden daha çok döngü gerektirir? Uzun anahtar daha büyük bir saldırı yüzeyi (özellikle anahtar genişletme üzerinden gelen ilişkili-anahtar teknikleri) sunar; ek döngüler bu sürümlere daha geniş bir **güvenlik payı** bırakır. Tur anahtarı sayısının $N_r + 1$ olmasının nedenini de birazdan göreceğiz: döngüler başlamadan önce fazladan bir anahtar karıştırma adımı vardır.
+
+## Bir Döngünün Anatomisi
+
+Şifreleme, durum matrisinin üzerinden defalarca geçen dört temel işlemin bestesidir. Akış şöyledir:
+
+1. **Başlangıç:** Daha ilk döngü başlamadan durum, ilk tur anahtarıyla XOR'lanır (**AddRoundKey**). Bu adıma **beyazlatma (whitening)** denir; amaç, saldırganın anahtardan bağımsız tek bir işlem bile gözlemleyememesidir.
+2. **Tam döngüler:** $N_r - 1$ kez şu dörtlü sırayla uygulanır: **SubBytes → ShiftRows → MixColumns → AddRoundKey**.
+3. **Son döngü:** Aynı sıra, ama **MixColumns atlanarak**: SubBytes → ShiftRows → AddRoundKey.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="34.5 -5.0 341.5 481.5" role="img" aria-label="AES tur akisi: AddRoundKey, dongu SubBytes ShiftRows MixColumns AddRoundKey, son tur MixColumns'suz">
+  <text x="180.0" y="18.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">a&#231;&#305;k metin blo&#287;u (128 bit)</text>
+  <line x1="180.0" y1="26.0" x2="180.0" y2="36.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,42.0 177.1,35.0 182.9,35.0" fill="var(--academic-text)" opacity="0.9"/>
+  <rect x="105.0" y="44.0" width="150.0" height="28.0" rx="5" fill="var(--color-base)" fill-opacity="0.12" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="180.0" y="62.0" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">AddRoundKey</text>
+  <text x="269.0" y="62.0" fill="var(--color-remark)" font-size="10.5" text-anchor="start">beyazlatma &#8212; K&#8320;</text>
+  <line x1="180.0" y1="72.0" x2="180.0" y2="84.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,90.0 177.1,83.0 182.9,83.0" fill="var(--academic-text)" opacity="0.9"/>
+  <rect x="105.0" y="92.0" width="150.0" height="28.0" rx="5" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="180.0" y="110.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">SubBytes</text>
+  <rect x="105.0" y="140.0" width="150.0" height="28.0" rx="5" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="180.0" y="158.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">ShiftRows</text>
+  <rect x="105.0" y="188.0" width="150.0" height="28.0" rx="5" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="180.0" y="206.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">MixColumns</text>
+  <rect x="105.0" y="236.0" width="150.0" height="28.0" rx="5" fill="var(--color-base)" fill-opacity="0.12" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="180.0" y="254.0" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">AddRoundKey</text>
+  <line x1="180.0" y1="120.0" x2="180.0" y2="132.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,138.0 177.1,131.0 182.9,131.0" fill="var(--academic-text)" opacity="0.9"/>
+  <line x1="180.0" y1="168.0" x2="180.0" y2="180.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,186.0 177.1,179.0 182.9,179.0" fill="var(--academic-text)" opacity="0.9"/>
+  <line x1="180.0" y1="216.0" x2="180.0" y2="228.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,234.0 177.1,227.0 182.9,227.0" fill="var(--academic-text)" opacity="0.9"/>
+  <text x="93.0" y="110.0" fill="var(--color-remark)" font-size="10.5" text-anchor="end">kar&#305;&#351;&#305;kl&#305;k</text>
+  <text x="85.0" y="196.0" fill="var(--color-remark)" font-size="10.5" text-anchor="end">yay&#305;lma</text>
+  <path d="M97,144 h-4 v88 h4" fill="none" stroke="var(--color-remark)" stroke-width="1.2" opacity="0.7"/>
+  <text x="93.0" y="254.0" fill="var(--color-remark)" font-size="10.5" text-anchor="end">anahtar</text>
+  <path d="M265,88 h8 v180 h-8" fill="none" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="283.0" y="176.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">&#215;(<tspan font-style="italic">N</tspan><tspan font-size="9" dy="3">r</tspan><tspan dy="-3">&#8203;</tspan> &#8722; 1)</text>
+  <text x="283.0" y="194.0" fill="var(--color-practice)" font-size="10.5" text-anchor="start">d&#246;ng&#252;</text>
+  <line x1="180.0" y1="264.0" x2="180.0" y2="294.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,300.0 177.1,293.0 182.9,293.0" fill="var(--academic-text)" opacity="0.9"/>
+  <rect x="105.0" y="302.0" width="150.0" height="28.0" rx="5" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="180.0" y="320.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">SubBytes</text>
+  <rect x="105.0" y="350.0" width="150.0" height="28.0" rx="5" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="180.0" y="368.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">ShiftRows</text>
+  <rect x="105.0" y="398.0" width="150.0" height="28.0" rx="5" fill="var(--color-base)" fill-opacity="0.12" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="180.0" y="416.0" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">AddRoundKey</text>
+  <line x1="180.0" y1="330.0" x2="180.0" y2="342.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,348.0 177.1,341.0 182.9,341.0" fill="var(--academic-text)" opacity="0.9"/>
+  <line x1="180.0" y1="378.0" x2="180.0" y2="390.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,396.0 177.1,389.0 182.9,389.0" fill="var(--academic-text)" opacity="0.9"/>
+  <path d="M265,298 h8 v132 h-8" fill="none" stroke="var(--color-remark)" stroke-width="1.4"/>
+  <text x="283.0" y="362.0" fill="var(--color-remark)" font-size="10.5" text-anchor="start" font-weight="600">son d&#246;ng&#252;:</text>
+  <text x="283.0" y="378.0" fill="var(--color-remark)" font-size="10.5" text-anchor="start">MixColumns yok</text>
+  <line x1="180.0" y1="426.0" x2="180.0" y2="438.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="180.0,444.0 177.1,437.0 182.9,437.0" fill="var(--academic-text)" opacity="0.9"/>
+  <text x="180.0" y="460.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">&#351;ifreli metin (128 bit)</text>
+</svg>
+<figcaption>AES &#351;ifrelemesinin ak&#305;&#351;&#305;: &#246;nce beyazlatma amac&#305;yla bir <strong>AddRoundKey</strong>, ard&#305;ndan <em>N</em><sub>r</sub> &#8722; 1 kez tekrarlanan tam d&#246;ng&#252; ve MixColumns ad&#305;m&#305; at&#305;lm&#305;&#351; son d&#246;ng&#252;. Mavi kutular veri d&#246;n&#252;&#351;&#252;mlerini, ye&#351;il kutular anahtar&#305;n kar&#305;&#351;t&#305;r&#305;ld&#305;&#287;&#305; ad&#305;m&#305; g&#246;sterir.</figcaption>
+</figure>
+```
+
+Son döngüde MixColumns'un atlanmasının nedeni basittir: MixColumns doğrusal ve anahtardan bağımsız olduğundan, sondaki bir MixColumns saldırganın şifreli metne InvMixColumns uygulayıp son tur anahtarını eşdeğer bir anahtarla değiştirmesiyle bedavaya soyulabilir — güvenliğe hiçbir katkısı yoktur. Atılması ise şifreleme ile şifre çözme yapısını birbirine simetrik hâle getirir.
+
+Bu dört işlem, [Shannon'un iki prensibinin](../../modern-gecis/shannon.qmd) doğrudan mühendislik karşılığıdır:
+
+* **SubBytes** → **karışıklık (confusion)**: doğrusal olmayan bayt değişimi.
+* **ShiftRows + MixColumns** → **yayılma (diffusion)**: baytları önce satırlar, sonra sütunlar boyunca tüm bloğa dağıtır.
+* **AddRoundKey** → **anahtarın karıştırılması**: anahtar malzemesinin veriye işlendiği tek adım.
+
+Şimdi her adımı yakından inceleyelim.
+
+## SubBytes — S-Kutusu
+
+SubBytes, durumun 16 baytının her birini sabit bir tabloya — **S-kutusuna (S-box)** — göre değiştirir. DES'in sekiz küçük S-kutusunun aksine AES'in tek ve 256 girdili bir S-kutusu vardır; asıl fark ise tasarım felsefesindedir: AES'in S-kutusu keyfî bir tablo **değildir**, temiz bir matematiksel formülden üretilir.
+
+::: {#def-aes-s-kutusu name="AES S-Kutusu"}
+Bir $x$ baytının S-kutusu değeri iki adımda hesaplanır:
+
+1. **Cisim tersi:** $x$'in $\mathrm{GF}(2^8)$ içindeki çarpımsal tersi $x^{-1}$ alınır ([terslerin varlığını](sonlu-cisimler.qmd) biliyoruz); tersi olmayan tek eleman için $\{00\} \mapsto \{00\}$ kabul edilir.
+2. **Affine dönüşüm:** Çıkan baytın bitlerine sabit bir doğrusal karıştırma uygulanır ve üzerine $\{63\}$ sabiti XOR'lanır. Bit düzeyinde kural şudur ($c = \{63\} = 01100011$ olmak üzere):
+
+$$b'_i = b_i \oplus b_{(i+4) \bmod 8} \oplus b_{(i+5) \bmod 8} \oplus b_{(i+6) \bmod 8} \oplus b_{(i+7) \bmod 8} \oplus c_i$$
+:::
+
+Tablonun 256 girdisini buraya dökmenin bir anlamı yok; önemli olan üretim reçetesidir. Bir girdiyi baştan sona kendimiz hesaplayalım.
+
+:::: {#exm-sbox}
+$S(\{53\})$ değerini, yani $\{53\}$ baytının S-kutusu karşılığını hesaplayınız.
+
+::: {.cozum}
+**Adım 1 — cisim tersi.** [Sonlu cisimler bölümündeki](sonlu-cisimler.qmd) yöntemlerle (deneme ya da genişletilmiş Öklid algoritması) $\{53\}$'ün tersi bulunur:
+
+$$\{53\}^{-1} = \{CA\}$$
+
+Sağlaması: $\{53\} \cdot \{CA\} = \{01\}$.
+
+**Adım 2 — affine dönüşüm.** $\{CA\} = 11001010$ baytının bitleri (sağdan sola) $b_0 = 0$, $b_1 = 1$, $b_2 = 0$, $b_3 = 1$, $b_4 = 0$, $b_5 = 0$, $b_6 = 1$, $b_7 = 1$'dir. Formülü ilk iki bite uygulayalım ($c_0 = 1$, $c_1 = 1$):
+
+$$
+\begin{aligned}
+b'_0 &= b_0 \oplus b_4 \oplus b_5 \oplus b_6 \oplus b_7 \oplus c_0 = 0 \oplus 0 \oplus 0 \oplus 1 \oplus 1 \oplus 1 = 1 \\
+b'_1 &= b_1 \oplus b_5 \oplus b_6 \oplus b_7 \oplus b_0 \oplus c_1 = 1 \oplus 0 \oplus 1 \oplus 1 \oplus 0 \oplus 1 = 0
+\end{aligned}
+$$
+
+Aynı hesap sekiz bitin tamamı için tekrarlandığında sonuç $11101101$ çıkar:
+
+$$S(\{53\}) = \{ED\}$$
+
+Bu değer FIPS-197'deki resmî S-kutusu tablosuyla birebir örtüşür.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+Peki neden bu kadar zahmetli bir reçete? Çünkü $x \mapsto x^{-1}$ dönüşümü $\mathrm{GF}(2^8)$ üzerinde bilinen **en doğrusal olmayan** fonksiyonlardan biridir; bu da diferansiyel ve doğrusal kriptanaliz gibi DES döneminde geliştirilen güçlü saldırı ailelerine karşı en yüksek direnci sağlar. Affine katman ise cebirsel yapıyı gizler ve $S(x) = x$ gibi sabit noktaları engeller. Üstelik hem ters alma hem affine dönüşüm tersinir olduğundan bileşke de tersinirdir: şifre çözmede kullanılacak **InvSubBytes** tablosu her zaman vardır.
+
+## ShiftRows
+
+İkinci adım göz açıp kapayıncaya kadar biter: durumun her satırı, **satır numarası kadar** sola dairesel kaydırılır. Sıfırıncı satır yerinde kalır; birinci satır 1, ikinci satır 2, üçüncü satır 3 bayt döner.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="45.0 21.5 474.0 201.0" role="img" aria-label="ShiftRows: satirlarin 0,1,2,3 bayt sola dondurulmesi, bir sutunun dort sutuna dagilmasi">
+  <text x="128.0" y="44.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">&#246;nce</text>
+  <text x="436.0" y="44.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">sonra</text>
+  <rect x="60.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="77.0" y="79.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">a&#8320;</text>
+  <rect x="368.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="385.0" y="79.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">a&#8320;</text>
+  <rect x="94.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="111.0" y="79.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">a&#8321;</text>
+  <rect x="402.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="419.0" y="79.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">a&#8321;</text>
+  <rect x="128.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="145.0" y="79.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">a&#8322;</text>
+  <rect x="436.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="453.0" y="79.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">a&#8322;</text>
+  <rect x="162.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="179.0" y="79.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">a&#8323;</text>
+  <rect x="470.0" y="60.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="487.0" y="79.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">a&#8323;</text>
+  <rect x="60.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="77.0" y="109.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">b&#8320;</text>
+  <rect x="368.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="385.0" y="109.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">b&#8321;</text>
+  <rect x="94.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="111.0" y="109.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">b&#8321;</text>
+  <rect x="402.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="419.0" y="109.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">b&#8322;</text>
+  <rect x="128.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="145.0" y="109.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">b&#8322;</text>
+  <rect x="436.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="453.0" y="109.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">b&#8323;</text>
+  <rect x="162.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="179.0" y="109.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">b&#8323;</text>
+  <rect x="470.0" y="90.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="487.0" y="109.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">b&#8320;</text>
+  <rect x="60.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="77.0" y="139.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">c&#8320;</text>
+  <rect x="368.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="385.0" y="139.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">c&#8322;</text>
+  <rect x="94.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="111.0" y="139.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">c&#8321;</text>
+  <rect x="402.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="419.0" y="139.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">c&#8323;</text>
+  <rect x="128.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="145.0" y="139.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">c&#8322;</text>
+  <rect x="436.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="453.0" y="139.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">c&#8320;</text>
+  <rect x="162.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="179.0" y="139.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">c&#8323;</text>
+  <rect x="470.0" y="120.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="487.0" y="139.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">c&#8321;</text>
+  <rect x="60.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="77.0" y="169.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">d&#8320;</text>
+  <rect x="368.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="385.0" y="169.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">d&#8323;</text>
+  <rect x="94.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="111.0" y="169.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">d&#8321;</text>
+  <rect x="402.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="419.0" y="169.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">d&#8320;</text>
+  <rect x="128.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="145.0" y="169.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">d&#8322;</text>
+  <rect x="436.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="453.0" y="169.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">d&#8321;</text>
+  <rect x="162.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="179.0" y="169.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">d&#8323;</text>
+  <rect x="470.0" y="150.0" width="34.0" height="30.0" rx="3" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="487.0" y="169.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">d&#8322;</text>
+  <line x1="206.0" y1="75.0" x2="352.4" y2="75.0" stroke="var(--color-base)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="358.0,75.0 351.0,77.9 351.0,72.1" fill="var(--color-base)" opacity="0.9"/>
+  <text x="282.0" y="69.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle">de&#287;i&#351;mez</text>
+  <line x1="206.0" y1="105.0" x2="352.4" y2="105.0" stroke="var(--color-base)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="358.0,105.0 351.0,107.9 351.0,102.1" fill="var(--color-base)" opacity="0.9"/>
+  <text x="282.0" y="99.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle">1 sola</text>
+  <line x1="206.0" y1="135.0" x2="352.4" y2="135.0" stroke="var(--color-base)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="358.0,135.0 351.0,137.9 351.0,132.1" fill="var(--color-base)" opacity="0.9"/>
+  <text x="282.0" y="129.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle">2 sola</text>
+  <line x1="206.0" y1="165.0" x2="352.4" y2="165.0" stroke="var(--color-base)" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="358.0,165.0 351.0,167.9 351.0,162.1" fill="var(--color-base)" opacity="0.9"/>
+  <text x="282.0" y="159.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle">3 sola</text>
+  <text x="282.0" y="206.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">vurgulu s&#252;tunun d&#246;rt bayt&#305; d&#246;rt farkl&#305; s&#252;tuna da&#287;&#305;l&#305;r</text>
+</svg>
+<figcaption>ShiftRows her sat&#305;r&#305; kendi numaras&#305; kadar sola d&#246;nd&#252;r&#252;r: 0. sat&#305;r sabit kal&#305;r, 1. sat&#305;r bir, 2. sat&#305;r iki, 3. sat&#305;r &#252;&#231; bayt kayar. Solda ayn&#305; s&#252;tunda duran d&#246;rt bayt (koyu h&#252;creler) sa&#287;da d&#246;rt farkl&#305; s&#252;tuna da&#287;&#305;lm&#305;&#351;t&#305;r.</figcaption>
+</figure>
+```
+
+Bu masum görünen adımın işlevi kritiktir: kaydırmadan önce aynı sütunda duran dört bayt, kaydırmadan sonra **dört farklı sütuna** dağılır. Böylece hemen ardından gelen MixColumns, tek bir sütunun etkisini bloğun tamamına taşıyabilir.
+
+## MixColumns
+
+Yayılmanın ağır topu MixColumns'tur. Bu adım durumun her sütununu 4 baytlık bir vektör olarak alır ve onu $\mathrm{GF}(2^8)$ üzerinde sabit bir matrisle çarpar:
+
+$$
+\begin{pmatrix} s'_{0,c} \\ s'_{1,c} \\ s'_{2,c} \\ s'_{3,c} \end{pmatrix}
+=
+\begin{pmatrix}
+\{02\} & \{03\} & \{01\} & \{01\} \\
+\{01\} & \{02\} & \{03\} & \{01\} \\
+\{01\} & \{01\} & \{02\} & \{03\} \\
+\{03\} & \{01\} & \{01\} & \{02\}
+\end{pmatrix}
+\begin{pmatrix} s_{0,c} \\ s_{1,c} \\ s_{2,c} \\ s_{3,c} \end{pmatrix}
+$$
+
+Buradaki toplama XOR, çarpma ise [sonlu cisimler bölümünde](sonlu-cisimler.qmd) öğrendiğimiz $m(x)$ modülünde çarpmadır. Matris girdilerinin $\{01\}$, $\{02\}$ ve $\{03\}$ gibi küçük değerler seçilmesi tesadüf değildir: $\{02\}$ ile çarpmak tek bir `xtime` adımı, $\{03\}$ ile çarpmak `xtime` artı bir XOR'dur — donanımda ve yazılımda son derece ucuzdur. Sonuçta yeni sütunun **her baytı, eski sütunun dört baytının birden** fonksiyonudur.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="25.5 23.0 484.0 217.5" role="img" aria-label="MixColumns: bir sutunun sabit 4x4 matrisle GF(2^8) uzerinde carpilmasi">
+  <rect x="40.0" y="64.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="55.0" y="83.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="40.0" y="94.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="55.0" y="113.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="40.0" y="124.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="55.0" y="143.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="40.0" y="154.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="55.0" y="173.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="70.0" y="64.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="85.0" y="83.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">D4</text>
+  <rect x="70.0" y="94.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="85.0" y="113.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">BF</text>
+  <rect x="70.0" y="124.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="85.0" y="143.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">5D</text>
+  <rect x="70.0" y="154.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="85.0" y="173.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">30</text>
+  <rect x="100.0" y="64.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="115.0" y="83.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="100.0" y="94.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="115.0" y="113.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="100.0" y="124.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="115.0" y="143.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="100.0" y="154.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="115.0" y="173.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="130.0" y="64.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="145.0" y="83.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="130.0" y="94.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="145.0" y="113.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="130.0" y="124.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="145.0" y="143.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <rect x="130.0" y="154.0" width="30.0" height="30.0" rx="3" fill="var(--color-remark)" fill-opacity="0.05" stroke="var(--color-remark)" stroke-width="1.0"/>
+  <text x="145.0" y="173.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">&#183;</text>
+  <text x="100.0" y="46.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">durum</text>
+  <text x="100.0" y="202.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle">c s&#252;tunu</text>
+  <line x1="168.0" y1="124.0" x2="226.4" y2="124.0" stroke="var(--color-practice)" stroke-width="1.7" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="232.0,124.0 225.0,126.9 225.0,121.1" fill="var(--color-practice)" opacity="0.9"/>
+  <rect x="234.0" y="58.0" width="140.0" height="132.0" rx="7" fill="var(--color-theory)" fill-opacity="0.05" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="256.0" y="83.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">02</text>
+  <text x="288.0" y="83.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">03</text>
+  <text x="320.0" y="83.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="352.0" y="83.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="256.0" y="113.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="288.0" y="113.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">02</text>
+  <text x="320.0" y="113.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">03</text>
+  <text x="352.0" y="113.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="256.0" y="143.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="288.0" y="143.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="320.0" y="143.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">02</text>
+  <text x="352.0" y="143.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">03</text>
+  <text x="256.0" y="173.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">03</text>
+  <text x="288.0" y="173.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="320.0" y="173.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">01</text>
+  <text x="352.0" y="173.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">02</text>
+  <text x="304.0" y="46.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">sabit matris</text>
+  <rect x="390.0" y="64.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="405.0" y="83.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">D4</text>
+  <rect x="390.0" y="94.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="405.0" y="113.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">BF</text>
+  <rect x="390.0" y="124.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="405.0" y="143.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">5D</text>
+  <rect x="390.0" y="154.0" width="30.0" height="30.0" rx="3" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="405.0" y="173.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">30</text>
+  <text x="436.0" y="128.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" font-weight="600">=</text>
+  <rect x="452.0" y="64.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.2" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="467.0" y="83.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle" font-weight="600">04</text>
+  <rect x="452.0" y="94.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.2" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="467.0" y="113.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle" font-weight="600">66</text>
+  <rect x="452.0" y="124.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.2" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="467.0" y="143.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle" font-weight="600">81</text>
+  <rect x="452.0" y="154.0" width="30.0" height="30.0" rx="3" fill="var(--color-base)" fill-opacity="0.2" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="467.0" y="173.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle" font-weight="600">E5</text>
+  <text x="467.0" y="202.0" fill="var(--color-base)" font-size="10.5" text-anchor="middle">yeni s&#252;tun</text>
+  <text x="334.0" y="224.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle">&#231;arp&#305;m ve toplam GF(2&#8312;) i&#231;inde: toplama &#8853; (XOR), &#231;arpma mod m(x)</text>
+</svg>
+<figcaption>MixColumns durumun her s&#252;tununu ayr&#305; ayr&#305; ele al&#305;r: s&#252;tun, sabit d&#246;ng&#252;sel matrisle GF(2&#8312;) &#252;zerinde &#231;arp&#305;l&#305;r ve yerine yeni s&#252;tun yaz&#305;l&#305;r. &#214;rnekteki (D4, BF, 5D, 30) s&#252;tunu (04, 66, 81, E5) s&#252;tununa d&#246;n&#252;&#351;&#252;r.</figcaption>
+</figure>
+```
+
+:::: {#exm-mixcolumns}
+FIPS-197'nin örnek şifrelemesinde, birinci döngüde SubBytes ve ShiftRows adımlarından çıkıp MixColumns'a giren durumun ilk sütunu $(\{D4\}, \{BF\}, \{5D\}, \{30\})$'dur. MixColumns'un bu sütunu $(\{04\}, \{66\}, \{81\}, \{E5\})$ sütununa dönüştürdüğünü, ilk baytı elle hesaplayarak doğrulayınız.
+
+::: {.cozum}
+Matrisin ilk satırına göre yeni sütunun ilk baytı şudur:
+
+$$s'_0 = \{02\} \cdot \{D4\} \oplus \{03\} \cdot \{BF\} \oplus \{5D\} \oplus \{30\}$$
+
+Çarpımları [sonlu cisimler bölümündeki](sonlu-cisimler.qmd) `xtime` hilesiyle hesaplayalım.
+
+**$\{02\} \cdot \{D4\}$:** $\{D4\} = 11010100$'ü bir bit sola kaydırırız: $10101000 = \{A8\}$. Taşan bit $1$ olduğundan $\{1B\}$ ile XOR'larız:
+
+$$\{A8\} \oplus \{1B\} = \{B3\}$$
+
+**$\{03\} \cdot \{BF\}$:** $\{03\} = \{02\} \oplus \{01\}$ olduğundan bu çarpım $\operatorname{xtime}(\{BF\}) \oplus \{BF\}$'dir. $\{BF\} = 10111111$ kaydırılınca $01111110 = \{7E\}$; taşma yine var, $\{7E\} \oplus \{1B\} = \{65\}$. Son olarak:
+
+$$\{65\} \oplus \{BF\} = \{DA\}$$
+
+**XOR zinciri:** Dört terimi birleştirelim:
+
+$$s'_0 = \{B3\} \oplus \{DA\} \oplus \{5D\} \oplus \{30\} = \{69\} \oplus \{5D\} \oplus \{30\} = \{34\} \oplus \{30\} = \{04\} \checkmark$$
+
+Kalan üç bayt da matrisin diğer satırlarıyla aynı yöntemle hesaplanır ve sırasıyla $\{66\}$, $\{81\}$, $\{E5\}$ bulunur.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+::: {.callout-tip title="🏔️ İki döngüde tam yayılma"}
+ShiftRows ile MixColumns'un ortak eseri çarpıcıdır: girişteki tek bir baytın etkisi, bir döngüde kendi sütununun tamamına, **iki döngüde ise 16 baytın hepsine** ulaşır. [Shannon bölümünde](../../modern-gecis/shannon.qmd) tanımladığımız çığ etkisinin AES'te bu kadar hızlı oturmasının nedeni budur.
+:::
+
+## AddRoundKey
+
+Dördüncü adım en basitidir: durumun 128 biti, o döngünün 128 bitlik **tur anahtarıyla (round key)** bit bit XOR'lanır. Sadeliğine aldanmayın — bu, algoritmanın **anahtara bağlı olan tek adımıdır**; SubBytes, ShiftRows ve MixColumns sabit ve herkesçe bilinen dönüşümlerdir. AddRoundKey olmasaydı AES, anahtarsız ve herkesin tersine çevirebileceği süslü bir karıştırmadan ibaret olurdu.
+
+Bu adımın tersi kendisidir: [XOR bölümünden](../../modern-gecis/binary-xor.qmd) bildiğimiz $A \oplus A = 0$ özelliği sayesinde aynı tur anahtarıyla bir kez daha XOR'lamak durumu eski hâline döndürür.
+
+## Anahtar Genişletme (Key Expansion)
+
+Toplam $N_r + 1$ tur anahtarı, yani $4(N_r + 1)$ kelime gerekir — AES-128 için 44 kelime. Tek bir gizli anahtardan bu malzemeyi üreten mekanizmaya **anahtar genişletme (key expansion)** denir; DES'teki key schedule'ın AES karşılığıdır.
+
+Gizli anahtar önce 32 bitlik kelimeler hâlinde okunur: $w_0, w_1, \dots, w_{N_k - 1}$. Sonraki her kelime, $i \ge N_k$ için şu kuralla üretilir:
+
+$$
+w_i = w_{i - N_k} \oplus
+\begin{cases}
+\operatorname{SubWord}\!\big(\operatorname{RotWord}(w_{i-1})\big) \oplus \operatorname{Rcon}_{i/N_k}, & i \equiv 0 \pmod{N_k} \\[0.4em]
+w_{i-1}, & \text{aksi hâlde}
+\end{cases}
+$$
+
+Buradaki üç yardımcı işlem tek satırda özetlenebilir:
+
+* **RotWord:** kelimenin 4 baytını bir bayt sola döndürür — $(a_0, a_1, a_2, a_3) \mapsto (a_1, a_2, a_3, a_0)$.
+* **SubWord:** kelimenin 4 baytının her birine S-kutusunu uygular.
+* **Rcon:** ilk baytı $x$'in $\mathrm{GF}(2^8)$ içindeki kuvvetleri ($\{01\}, \{02\}, \{04\}, \dots, \{36\}$), kalan üç baytı sıfır olan **döngü sabitidir**.
+
+(AES-256'da bir ek incelik vardır: $i \equiv 4 \pmod 8$ olduğunda da kelimeye yalnızca SubWord uygulanır.)
+
+Amaç iki katmanlıdır: RotWord ile SubWord her tur anahtarının bir öncekinden **bambaşka görünmesini** sağlar; Rcon sabitleri ise tüm döngülerin aynı işleme tabi tutulmasından doğabilecek **simetrileri kırar** — aynı kelimenin farklı döngülerde aynı sonucu üretmesi engellenir.
+
+## Şifre Çözme
+
+Feistel yapısında şifre çözme neredeyse bedavaydı: [DES'te](des.qmd) aynı devre, alt anahtarları ters sırada vermekle şifre çözüyordu. SPN'de bu lüks yoktur; bunun yerine her adım **tek tek tersine çevrilir**. Neyse ki tüm adımlar bu iş için tasarlanmıştır:
+
+* **InvSubBytes:** S-kutusunun ters tablosu,
+* **InvShiftRows:** satırları aynı miktarlarda bu kez **sağa** döndürme,
+* **InvMixColumns:** sabit matrisin $\mathrm{GF}(2^8)$ üzerindeki ters matrisiyle çarpma,
+* **AddRoundKey:** zaten kendi tersi.
+
+Şifre çözme, bu ters işlemleri şifrelemenin **ters sırasında** ve tur anahtarlarını sondan başa vererek uygular. Son döngüden MixColumns'un atılmış olması burada meyvesini verir: şifreleme ile şifre çözme akışları birbirinin aynadaki görüntüsü olur.
+
+## Güvenlik Durumu
+
+Yirmi yılı aşkın acımasız bir incelemenin ardından tablo şudur: **tam döngülü AES'e karşı bilinen pratik bir saldırı yoktur.** Akademik cephedeki en iyi sonuç, 2011'de yayımlanan **biclique saldırısıdır**: AES-128'in anahtarını yaklaşık $2^{126{,}1}$ işlemde bulur — kaba kuvvetten yalnızca dört kat kadar hızlı, yani pratikte hiçbir anlamı olmayan marjinal bir iyileştirme. AES-256'ya karşı bilinen **ilişkili-anahtar (related-key)** saldırıları da yalnızca saldırganın birbirine özel biçimde bağlı anahtarlarla şifreleme yaptırabildiği yapay senaryolarda çalışır; doğru kullanılan protokollerde karşılığı yoktur.
+
+Hızın da güvenliğin bir bileşeni olduğunu unutmayalım: modern işlemcilerdeki **AES-NI** komut seti, her döngüyü donanımda tek komutla çalıştırır. Bu sayede AES hem telefonunuzdaki disk şifrelemesinde hem de saniyede milyonlarca bağlantı kuran sunucularda hissedilmeyecek kadar hızlıdır — güvenli olduğu için değil, güvenli **ve** ucuz olduğu için her yerdedir.
+
+Kuantum ufkuna gelince: Grover algoritması kaba kuvvet aramasını karesel hızlandırır, bu da etkin anahtar uzunluğunu kabaca yarıya indirmek demektir. AES-128'in etkin gücü kuantum saldırgana karşı 64 bit düzeyine iner ve rahatsız edici bir sınıra yaklaşır; **AES-256 ise 128 bitlik kuantum-sonrası güvenlik payıyla** rahat koltuğunda oturmaya devam eder. Simetrik kriptografinin kuantum çağında da ayakta kalacak olması, bir sonraki bölümlerde göreceğimiz açık anahtarlı sistemler için söylenemeyecektir.
