@@ -16,16 +16,18 @@
      correctly by screen readers as an "expandable region".
 
   3) Wraps the curriculum lists on each book's index.qmd page in a single
-     <div class="mufredat"> so the CSS does not have to guess the structure.
+     <div class="curriculum"> so the CSS does not have to guess the structure.
 
   Note: Quarto converts callouts into a custom AST node at read time, so
   they cannot be caught by an ordinary Div filter; the `Callout` handler
   below uses Quarto's custom-node API.
 
-  The class and attribute names emitted here ("katlanir", "katlanir-baslik",
-  "katlanir-govde", "mufredat", "cozum", "ispat", baslik=, acik=) are the
-  public contract shared with styles/global.css and the .qmd sources; they
-  are Turkish on purpose and must not be renamed here alone.
+  The class names emitted here ("collapsible", "collapsible--solution",
+  "collapsible--proof", "collapsible-title", "collapsible-body", "curriculum")
+  are the contract shared with styles/global.css. The authoring vocabulary
+  read from the .qmd sources (".cozum", ".ispat", baslik=, acik=) is part of
+  the Turkish content and is used in hundreds of notes; do not rename it here
+  alone.
 ]]
 
 -- ----------------------------------------------------------------- helpers
@@ -103,21 +105,51 @@ end
 -- symbol, proofs share the theorem symbol).
 local function collapsible_title(title_text)
   local lower = pandoc.text.lower(title_text)
-  if lower:find("^çözüm") then return "Çözüm", "cozum" end
+  if lower:find("^çözüm") then return "Çözüm", "solution" end
   if lower:find("^ispat") or lower:find("^i̇spat") then
     -- Keep descriptive titles such as "İspat: bu formüller nereden geliyor?"
-    return title_text, "ispat"
+    return title_text, "proof"
   end
   return nil
 end
 
+-- The website gets <details>; the exported formats (PDF via Typst, EPUB,
+-- DOCX) have no disclosure widget, so they get the title as a bold lead-in
+-- and, in Typst, a thin rule on the left to keep the block visually apart.
+local function is_html_output()
+  return FORMAT:match("^html") ~= nil
+end
+
+local function plain_blocks(title, content)
+  local blocks = pandoc.List({})
+  local typst = FORMAT == "typst"
+  if typst then
+    blocks:insert(pandoc.RawBlock("typst",
+      "#block(width: 100%, inset: (left: 1.1em, top: 0.3em, bottom: 0.3em), " ..
+      "stroke: (left: 1.5pt + luma(175)))["))
+  end
+  blocks:insert(pandoc.Para({ pandoc.Strong({ pandoc.Str(title .. ".") }) }))
+  if content.t ~= nil then
+    blocks:insert(content)
+  else
+    blocks:extend(content)
+  end
+  if typst then
+    blocks:insert(pandoc.RawBlock("typst", "]"))
+  end
+  return blocks
+end
+
 -- Build the <details> block
 local function details_blocks(title, content, kind, open)
-  local class = "katlanir katlanir--" .. (kind or "ispat")
+  if not is_html_output() then
+    return plain_blocks(title, content)
+  end
+  local class = "collapsible collapsible--" .. (kind or "proof")
   local opening = pandoc.RawBlock("html",
     '<details class="' .. class .. '"' .. (open and " open" or "") .. '>' ..
-    '<summary class="katlanir-baslik">' .. html_escape(title) .. '</summary>' ..
-    '<div class="katlanir-govde">')
+    '<summary class="collapsible-title">' .. html_escape(title) .. '</summary>' ..
+    '<div class="collapsible-body">')
   local closing = pandoc.RawBlock("html", '</div></details>')
 
   local blocks = pandoc.List({ opening })
@@ -169,10 +201,10 @@ function Div(el)
   local title, kind
   if el.classes:includes("cozum") then
     title = el.attributes["baslik"] or "Çözüm"
-    kind = "cozum"
+    kind = "solution"
   elseif el.classes:includes("ispat") then
     title = el.attributes["baslik"] or "İspat"
-    kind = "ispat"
+    kind = "proof"
   end
 
   if title then
@@ -193,7 +225,7 @@ end
           * topic                       * topic
 
   The code below reduces both to shape B and wraps every run of consecutive
-  groups in a single <div class="mufredat">. The CSS then needs no
+  groups in a single <div class="curriculum">. The CSS then needs no
   structural guessing (:has() chains), and the curriculum box can be drawn
   BELOW the section heading without swallowing the heading.
 
@@ -242,7 +274,11 @@ local function flatten_group_list(block)
 end
 
 function Pandoc(doc)
-  if not is_curriculum_page() then return nil end
+  -- Exported formats: Quarto merges the whole book into one document whose
+  -- input file is index.qmd, so the detector would walk every chapter and
+  -- eat any "bold label + list" pair in the lecture texts. The curriculum
+  -- lists are cut out of the intro page by scripts/export.py instead.
+  if not is_html_output() or not is_curriculum_page() then return nil end
 
   local blocks = doc.blocks
   local new_blocks = pandoc.List({})
@@ -267,7 +303,7 @@ function Pandoc(doc)
     end
 
     if #box > 0 then
-      new_blocks:insert(pandoc.Div(box, pandoc.Attr("", { "mufredat" })))
+      new_blocks:insert(pandoc.Div(box, pandoc.Attr("", { "curriculum" })))
     else
       new_blocks:insert(blocks[i])
       i = i + 1

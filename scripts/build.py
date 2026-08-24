@@ -15,9 +15,16 @@ clean directories outside the project and let stale files pile up.
 Order matters: rendering the root project wipes _site, so the course books
 are rendered and copied AFTER the root project.
 
+Before a course's HTML is rendered, scripts/export.py produces its
+downloadable PDF / EPUB / DOCX files (one per sub-course) and drops a
+manifest next to the course; the download panel on the curriculum page is
+drawn from that manifest, and the files are copied under _site with the
+HTML.
+
 Usage:
-    python scripts/build.py              # build everything
-    python scripts/build.py kriptografi  # build a single course only
+    python scripts/build.py                        # build everything
+    python scripts/build.py kriptografi            # build a single course only
+    python scripts/build.py --no-export            # HTML only, skip PDF/EPUB/DOCX
 """
 from __future__ import annotations
 
@@ -26,6 +33,9 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from export import export_course, publish_exports  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 COURSES = ROOT / "dersler"
@@ -113,16 +123,35 @@ def publish(book: Path) -> None:
     shutil.copytree(built, target)
 
 
+def build_book(book: Path, with_exports: bool) -> list[str]:
+    """Export (optional), render and publish one course; return export failures."""
+    failures: list[str] = []
+    if with_exports:
+        print(f"\n\033[1m>> export: {book.name}\033[0m")
+        failures = export_course(book)["failures"]
+    render(book, f"course: {book.name}")
+    publish(book)
+    # Files from an earlier export run are still published with --no-export
+    publish_exports(book, SITE / "dersler" / book.name)
+    return failures
+
+
 def main() -> None:
-    only = sys.argv[1] if len(sys.argv) > 1 else None
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flags = {a for a in sys.argv[1:] if a.startswith("--")}
+    unknown = flags - {"--no-export"}
+    if unknown:
+        sys.exit(f"ERROR: unknown option(s): {', '.join(sorted(unknown))}")
+    with_exports = "--no-export" not in flags
+    only = args[0] if args else None
     started = time.time()
+    failures: list[str] = []
 
     if only:
         target = COURSES / only
         if not (target / "_quarto.yml").exists():
             sys.exit(f"ERROR: there is no course project named '{only}'.")
-        render(target, f"course: {only}")
-        publish(target)
+        failures += build_book(target, with_exports)
         sync_shared_assets()
     else:
         # 1) Portal pages — this step wipes the _site directory
@@ -133,11 +162,20 @@ def main() -> None:
         if not found:
             print("   ! no book projects found under dersler/")
         for book in found:
-            render(book, f"course: {book.name}")
-            publish(book)
+            failures += build_book(book, with_exports)
 
     pages = len(list(SITE.rglob("*.html"))) if SITE.exists() else 0
-    print(f"\n\033[1mDone.\033[0m {pages} HTML pages, {time.time() - started:.1f} s -> {SITE}")
+    downloads = sum(len(list(SITE.rglob(f"*.{ext}"))) for ext in ("pdf", "epub", "docx")) if SITE.exists() else 0
+    print(f"\n\033[1mDone.\033[0m {pages} HTML pages, {downloads} downloadable files, "
+          f"{time.time() - started:.1f} s -> {SITE}")
+    if failures:
+        # Every course must stay downloadable: fail the build (after finishing
+        # everything else) so CI shows the broken unit instead of deploying
+        # a site that silently lacks its files.
+        print("\033[1m! Failed exports:\033[0m " + ", ".join(failures))
+        for item in failures:
+            print(f"::error::export failed: {item}")
+        sys.exit(2)
 
 
 if __name__ == "__main__":

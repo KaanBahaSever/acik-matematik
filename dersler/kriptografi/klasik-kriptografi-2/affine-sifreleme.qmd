@@ -147,87 +147,87 @@ $e_k(x) \equiv a \cdot x + b \pmod{26}$ denkleminin pratikte nasıl çalıştı�
 Dikkat ederseniz, fonksiyonun birebir olma şartını korumak için **çarpan ($a$)** menüsünde yalnızca $26$ ile aralarında asal olan o $12$ geçerli anahtar yer almaktadır. Yanlarında modüler tersleri ($a^{-1}$) de hesaplanmıştır.
 
 ```{=html}
-<div class="hesaplayici" id="afin-hesaplayici">
+<div class="calculator" id="affine-calculator">
   <h4>Canlı Afin Hesaplayıcı</h4>
 
   <label>
     <span>İşlem türü</span>
-    <select data-rol="mod">
-      <option value="sifrele">🔒 Şifrele (encrypt)</option>
-      <option value="desifrele">🔓 Deşifrele (decrypt)</option>
+    <select data-role="mode">
+      <option value="encrypt">🔒 Şifrele (encrypt)</option>
+      <option value="decrypt">🔓 Deşifrele (decrypt)</option>
     </select>
   </label>
 
-  <div class="hesap-satir">
+  <div class="calc-row">
     <label>
       <span>Çarpan (a)</span>
-      <select data-rol="a"></select>
+      <select data-role="a"></select>
     </label>
     <label>
       <span>Kaydırma (b)</span>
-      <input type="number" data-rol="b" min="0" max="25" value="8">
+      <input type="number" data-role="b" min="0" max="25" value="8">
     </label>
   </div>
 
   <label>
     <span>Mesaj</span>
-    <input type="text" data-rol="girdi" value="MATH" placeholder="Şifrelenecek veya çözülecek mesaj...">
+    <input type="text" data-role="input" value="MATH" placeholder="Şifrelenecek veya çözülecek mesaj...">
   </label>
 
   <label>
     <span>Sonuç</span>
-    <output data-rol="cikti"></output>
+    <output data-role="output"></output>
   </label>
 
-  <p class="hesap-not" data-rol="formul"></p>
+  <p class="calc-note" data-role="formula"></p>
 </div>
 
 <script>
 (function () {
-  const kutu = document.getElementById("afin-hesaplayici");
-  const al = (rol) => kutu.querySelector('[data-rol="' + rol + '"]');
-  const mod = al("mod"), aSec = al("a"), bGir = al("b");
-  const girdi = al("girdi"), cikti = al("cikti"), formul = al("formul");
+  const box = document.getElementById("affine-calculator");
+  const get = (role) => box.querySelector('[data-role="' + role + '"]');
+  const mode = get("mode"), aSelect = get("a"), bInput = get("b");
+  const input = get("input"), output = get("output"), formula = get("formula");
 
   const M = 26;
-  const ebob = (x, y) => (y === 0 ? x : ebob(y, x % y));
-  const tersi = (a) => {
+  const gcd = (x, y) => (y === 0 ? x : gcd(y, x % y));
+  const inverse = (a) => {
     for (let x = 1; x < M; x++) if ((a * x) % M === 1) return x;
     return null;
   };
 
-  // Yalnızca gcd(a, 26) = 1 olan geçerli çarpanlar listelenir
+  // Only multipliers with gcd(a, 26) = 1 are valid keys
   for (let a = 1; a < M; a++) {
-    if (ebob(a, M) !== 1) continue;
-    const secenek = document.createElement("option");
-    secenek.value = a;
-    secenek.textContent = "a = " + a + "   (a⁻¹ = " + tersi(a) + ")";
-    if (a === 5) secenek.selected = true;
-    aSec.appendChild(secenek);
+    if (gcd(a, M) !== 1) continue;
+    const option = document.createElement("option");
+    option.value = a;
+    option.textContent = "a = " + a + "   (a⁻¹ = " + inverse(a) + ")";
+    if (a === 5) option.selected = true;
+    aSelect.appendChild(option);
   }
 
-  function hesapla() {
-    const a = Number(aSec.value);
-    const b = ((Number(bGir.value) % M) + M) % M;
-    const aTers = tersi(a);
-    const sifrele = mod.value === "sifrele";
+  function compute() {
+    const a = Number(aSelect.value);
+    const b = ((Number(bInput.value) % M) + M) % M;
+    const aInv = inverse(a);
+    const encrypting = mode.value === "encrypt";
 
-    formul.textContent = sifrele
+    formula.textContent = encrypting
       ? "e(x) ≡ " + a + "x + " + b + " (mod 26)"
-      : "d(y) ≡ " + aTers + "(y − " + b + ") (mod 26)";
+      : "d(y) ≡ " + aInv + "(y − " + b + ") (mod 26)";
 
-    cikti.textContent = girdi.value.toUpperCase().replace(/[A-Z]/g, (harf) => {
-      const v = harf.charCodeAt(0) - 65;
-      const yeni = sifrele ? a * v + b : aTers * (v - b);
-      return String.fromCharCode(((yeni % M) + M) % M + 65);
+    output.textContent = input.value.toUpperCase().replace(/[A-Z]/g, (letter) => {
+      const v = letter.charCodeAt(0) - 65;
+      const mapped = encrypting ? a * v + b : aInv * (v - b);
+      return String.fromCharCode(((mapped % M) + M) % M + 65);
     });
   }
 
-  [mod, aSec, bGir, girdi].forEach((el) => {
-    el.addEventListener("input", hesapla);
-    el.addEventListener("change", hesapla);
+  [mode, aSelect, bInput, input].forEach((el) => {
+    el.addEventListener("input", compute);
+    el.addEventListener("change", compute);
   });
-  hesapla();
+  compute();
 })();
 </script>
 ```
