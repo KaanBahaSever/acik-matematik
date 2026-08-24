@@ -1,7 +1,7 @@
 ---
 title: "DES (Data Encryption Standard) ve Feistel Ağı"
 pagetitle: "DES (Data Encryption Standard) ve Feistel Ağı"
-description: "DES algoritmasının blok ve anahtar yapısı, 56 bitlik efektif anahtar, PC-1 ve PC-2 permütasyonları ile 16 döngülük alt anahtar üretimi (key schedule)."
+description: "DES'in anahtar üretimini, Feistel yapısını ve tersinirlik ispatını, f fonksiyonunun E genişletmesi, S-kutuları ve P permütasyonunu, kaba kuvvetle kırılışını, ortada buluşma saldırısını ve 3DES'i anlatır."
 ---
 
 DES, modern kriptografinin dönüm noktasıdır. 1970'lerde IBM tarafından "Lucifer" projesi adıyla geliştirilen ve 1977'de Amerikan Ulusal Standartlar Bürosu (NBS, günümüzdeki NIST) tarafından federal standart olarak kabul edilen, simetrik anahtarlı bir **blok şifreleme** algoritmasıdır.
@@ -27,7 +27,7 @@ Algoritmanın anahtar yapısı ise kriptografi tarihinin en ilginç tasarımlar�
 
 DES, her 64 bitlik veri bloğunu şifrelemek için tam **16 döngü (round)** kullanır. Şifrelemenin güvenli olabilmesi için bu 16 döngünün her birine, orijinal anahtardan türetilmiş **farklı ve benzersiz 48 bitlik alt anahtarlar** ($K_1, K_2, \dots, K_{16}$) verilmesi gerekir.
 
-64 bitlik tek bir kök anahtardan 16 farklı alt anahtar üreten bu mekanizmaya **key schedule (anahtar zamanlaması)** denir. İşlem üç temel aşamada gerçekleşir.
+64 bitlik tek bir kök anahtardan 16 farklı alt anahtar üreten bu mekanizmaya **anahtar üretimi (key schedule)** denir. İşlem üç temel aşamada gerçekleşir.
 
 ### Adım 1 — PC-1: Eşlik Bitlerini Eleme ve İkiye Bölme
 
@@ -118,4 +118,461 @@ CD_i \ (56\text{-bit}) \quad &\xrightarrow{\ \text{PC-2 filtresi}\ } \quad K_i \
 \end{aligned}
 $$
 
-Bu üç adım 16 döngünün tamamı için zincirleme olarak tekrarlanır ve şifreleme işleminde kullanılacak 16 alt anahtardan oluşan set hazır hâle getirilmiş olur.
+Bu üç adım 16 döngünün tamamı için zincirleme olarak tekrarlanır ve şifreleme işleminde kullanılacak 16 alt anahtardan oluşan set hazır hâle getirilmiş olur. Artık elimizde $K_1, K_2, \dots, K_{16}$ var; sıra bu anahtarlarla verinin kendisini şifrelemeye geldi.
+
+## Şifrelemenin Genel Akışı
+
+64 bitlik bir açık metin bloğu, DES'in içinden şu duraklardan geçerek çıkar:
+
+1. **Başlangıç permütasyonu (IP — Initial Permutation):** Bloğun 64 biti, sabit bir tabloya göre yeniden sıralanır.
+2. **16 Feistel döngüsü:** Blok iki yarıya bölünür ve her döngüde anahtar üretiminden gelen $K_1, K_2, \dots, K_{16}$ alt anahtarlarından biri kullanılarak dönüştürülür.
+3. **Son takas (swap):** 16\. döngünün ardından 32 bitlik iki yarı birbiriyle yer değiştirir.
+4. **Ters permütasyon ($IP^{-1}$):** Başlangıçtaki sıralama işleminin tam tersi uygulanır ve 64 bitlik şifreli metin bloğu elde edilir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="45.0 3.0 420.0 474.0" role="img" aria-label="DES genel akis semasi: IP, 16 Feistel dongusu, takas ve ters IP">
+  <rect x="60" y="18" width="210" height="34" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="165.0" y="39.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">64 bitlik a&#231;&#305;k metin blo&#287;u</text>
+  <line x1="165.0" y1="52.0" x2="165.0" y2="62.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="165.0,68.0 162.1,61.0 167.9,61.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="60" y="70" width="210" height="34" rx="6" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="165.0" y="91.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">ba&#351;lang&#305;&#231; perm&#252;tasyonu IP</text>
+  <line x1="165.0" y1="104.0" x2="165.0" y2="114.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="165.0,120.0 162.1,113.0 167.9,113.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="60" y="122" width="103" height="30" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="111.5" y="141.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">L<tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan> (32 bit)</text>
+  <rect x="167" y="122" width="103" height="30" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="218.5" y="141.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">R<tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan> (32 bit)</text>
+  <line x1="165.0" y1="152.0" x2="165.0" y2="162.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="165.0,168.0 162.1,161.0 167.9,161.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="60" y="170" width="210" height="130" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="165.0" y="188.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">16 Feistel d&#246;ng&#252;s&#252;</text>
+  <rect x="80" y="198" width="170" height="26" rx="4" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.1"/>
+  <text x="165.0" y="215.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">1. d&#246;ng&#252; — K<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="165.0" y="242.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">&#8942;</text>
+  <rect x="80" y="252" width="170" height="26" rx="4" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.1"/>
+  <text x="165.0" y="269.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">16. d&#246;ng&#252; — K<tspan font-size="9" dy="4">16</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <rect x="302" y="200" width="148" height="82" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="376.0" y="226.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">anahtar &#252;retimi</text>
+  <text x="376.0" y="242.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">(key schedule)</text>
+  <text x="376.0" y="262.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">K<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> &#8230; K<tspan font-size="9" dy="4">16</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="302.0" y1="211.0" x2="259.6" y2="211.0" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="254.0,211.0 261.0,208.1 261.0,213.9" fill="var(--color-practice)" opacity="0.85"/>
+  <line x1="302.0" y1="265.0" x2="259.6" y2="265.0" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="254.0,265.0 261.0,262.1 261.0,267.9" fill="var(--color-practice)" opacity="0.85"/>
+  <line x1="165.0" y1="300.0" x2="165.0" y2="310.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="165.0,316.0 162.1,309.0 167.9,309.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="60" y="318" width="210" height="40" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="165.0" y="335.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">son takas (swap)</text>
+  <text x="165.0" y="350.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">(L<tspan font-size="9" dy="4">16</tspan><tspan dy="-4">&#8203;</tspan>, R<tspan font-size="9" dy="4">16</tspan><tspan dy="-4">&#8203;</tspan>) &#8594; (R<tspan font-size="9" dy="4">16</tspan><tspan dy="-4">&#8203;</tspan>, L<tspan font-size="9" dy="4">16</tspan><tspan dy="-4">&#8203;</tspan>)</text>
+  <line x1="165.0" y1="358.0" x2="165.0" y2="368.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="165.0,374.0 162.1,367.0 167.9,367.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="60" y="376" width="210" height="34" rx="6" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="165.0" y="397.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">ters perm&#252;tasyon IP<tspan font-size="9" dy="-5">&#8722;1</tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="165.0" y1="410.0" x2="165.0" y2="420.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="165.0,426.0 162.1,419.0 167.9,419.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="60" y="428" width="210" height="34" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="165.0" y="449.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">64 bitlik &#351;ifreli metin blo&#287;u</text>
+</svg>
+<figcaption>DES'in ku&#351;bak&#305;&#351;&#305; ak&#305;&#351;&#305;: 64 bitlik blok ba&#351;lang&#305;&#231; perm&#252;tasyonu IP'den ge&#231;ip iki yar&#305;ya b&#246;l&#252;n&#252;r, anahtar &#252;retiminden gelen K<sub>1</sub>, &#8230;, K<sub>16</sub> alt anahtarlar&#305;yla 16 Feistel d&#246;ng&#252;s&#252;nde i&#351;lenir; son takas ve IP<sup>&#8722;1</sup> ile &#351;ifreli metin elde edilir.</figcaption>
+</figure>
+```
+
+Akışı sembollerle özetlersek:
+
+$$
+\text{açık metin} \;\xrightarrow{\ IP\ }\; (L_0, R_0) \;\xrightarrow{\ 16\ \text{döngü}\ }\; (L_{16}, R_{16}) \;\xrightarrow{\ \text{takas}\ }\; (R_{16}, L_{16}) \;\xrightarrow{\ IP^{-1}\ }\; \text{şifreli metin}
+$$
+
+::: {.callout-note title="🔩 IP güvenliğe hiçbir şey katmaz"}
+Başlangıç permütasyonu $IP$ ve tersi $IP^{-1}$, bitleri yalnızca sabit ve herkesçe bilinen bir düzende yeniden sıralar; anahtara hiç dokunmaz. Bu yüzden **kriptografik güce sıfır katkısı vardır.** Varlık nedeni tamamen tarihseldir: 1970'lerin donanımlarında verinin yongaya yükleniş sırasını kolaylaştırmak için eklenmiştir. Matematiksel bir ders vermediği için bu tabloyu basmıyoruz; asıl olay birazdan geleceğimiz 16 döngünün içindedir.
+:::
+
+## Feistel Yapısı
+
+$IP$'den çıkan 64 bitlik blok, tıpkı anahtarın $C_0$ ve $D_0$ olarak bölünmesi gibi, iki eşit yarıya ayrılır: soldaki 32 bit $L_0$ (left), sağdaki 32 bit $R_0$ (right). Bundan sonraki 16 döngünün her biri, IBM mühendisi Horst Feistel'in adını taşıyan tek ve çok zarif bir kurala göre işler:
+
+$$
+L_i = R_{i-1}, \qquad R_i = L_{i-1} \oplus f(R_{i-1},\, K_i)
+$$
+
+Kelimelerle söylersek: **sağ yarı hiç değişmeden çaprazlama sola taşınır**; sol yarı ise, sağ yarının $f$ adlı bir fonksiyondan geçirilmiş hâliyle XOR'lanarak yeni sağ yarıyı oluşturur. $f$'nin içini birazdan açacağız; şimdilik onu "sağ yarı ile alt anahtarı öğüten bir karıştırıcı kutu" olarak düşünmemiz yeterli.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="25.0 9.0 410.0 308.0" role="img" aria-label="Tek Feistel dongusu: L ve R seritleri, f kutusu ve XOR">
+  <rect x="65" y="24" width="110" height="32" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="120.0" y="44.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">L<tspan font-size="9" dy="4">i&#8722;1</tspan><tspan dy="-4">&#8203;</tspan> (32 bit)</text>
+  <rect x="285" y="24" width="110" height="32" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="340.0" y="44.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">R<tspan font-size="9" dy="4">i&#8722;1</tspan><tspan dy="-4">&#8203;</tspan> (32 bit)</text>
+  <line x1="120" y1="56" x2="120" y2="139" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7"/>
+  <line x1="340" y1="56" x2="340" y2="205" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7"/>
+  <circle cx="340" cy="150" r="2.6" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="190" y="126" width="100" height="48" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="240.0" y="156.0" fill="var(--academic-text)" font-size="16" text-anchor="middle" font-weight="600" font-style="italic">f</text>
+  <line x1="340.0" y1="150.0" x2="297.6" y2="150.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="292.0,150.0 299.0,147.1 299.0,152.9" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="240.0" y1="94.0" x2="240.0" y2="118.4" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="240.0,124.0 237.1,117.0 242.9,117.0" fill="var(--color-practice)" opacity="0.85"/>
+  <text x="248.0" y="102.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start" font-weight="600">K<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan> (48 bit)</text>
+  <line x1="190.0" y1="150.0" x2="138.6" y2="150.0" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="133.0,150.0 140.0,147.1 140.0,152.9" fill="var(--color-practice)" opacity="0.85"/>
+  <circle cx="120" cy="150" r="11" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <line x1="112" y1="150" x2="128" y2="150" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <line x1="120" y1="142" x2="120" y2="158" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <line x1="120" y1="161" x2="120" y2="205" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7"/>
+  <line x1="340.0" y1="205.0" x2="117.4" y2="264.6" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="112.0,266.0 118.0,261.4 119.5,267.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="120.0" y1="205.0" x2="327.6" y2="264.5" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="333.0,266.0 325.5,266.9 327.1,261.2" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="40" y="270" width="140" height="32" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="110.0" y="290.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">L<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan> = R<tspan font-size="9" dy="4">i&#8722;1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <rect x="250" y="270" width="170" height="32" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="335.0" y="290.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">R<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan> = L<tspan font-size="9" dy="4">i&#8722;1</tspan><tspan dy="-4">&#8203;</tspan> &#8853; f(R<tspan font-size="9" dy="4">i&#8722;1</tspan><tspan dy="-4">&#8203;</tspan>, K<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan>)</text>
+</svg>
+<figcaption>Tek bir Feistel d&#246;ng&#252;s&#252;: sa&#287; yar&#305; R<sub>i&#8722;1</sub> hi&#231; de&#287;i&#351;meden &#231;aprazlama sola ta&#351;&#305;n&#305;r; sol yar&#305; L<sub>i&#8722;1</sub> ise sa&#287; yar&#305;n&#305;n f fonksiyonundan ge&#231;mi&#351; hâliyle XOR'lanarak yeni sa&#287; yar&#305;y&#305; olu&#351;turur. Anahtar devreye yaln&#305;zca f'nin i&#231;inde girer.</figcaption>
+</figure>
+```
+
+Bu yapının neden dâhice olduğunu görmek için kendimize şu soruyu soralım: mesajı alan taraf bu işlemi nasıl geri saracak? $f$ karmaşık bir karıştırıcıysa, geri dönmek için $f$'nin tersini hesaplamak gerekmez mi? İşte Feistel yapısının bütün sırrı, cevabın **hayır** olmasıdır.
+
+::: {#thm-feistel-tersinir name="Feistel Yapısının Tersinirliği"}
+$f$ fonksiyonu ne olursa olsun — tersinir olmasa, hatta bilgi kaybettirse bile — Feistel döngüsü her zaman tersinirdir. $(L_i, R_i)$ çiftinden bir önceki $(L_{i-1}, R_{i-1})$ çifti şu formüllerle geri kazanılır:
+
+$$
+R_{i-1} = L_i, \qquad L_{i-1} = R_i \oplus f(L_i,\, K_i)
+$$
+:::
+
+::: {.ispat}
+Birinci eşitlik döngü kuralının doğrudan kendisidir: $L_i = R_{i-1}$ tanımlandığına göre $R_{i-1} = L_i$ olur; sağ yarı zaten hiç şifrelenmeden karşıya taşınmıştır.
+
+İkinci eşitlik için $R_i$'nin tanımını yerine yazalım ve az önce bulduğumuz $R_{i-1} = L_i$ eşitliğini kullanalım:
+
+$$
+R_i \oplus f(L_i, K_i) = \Bigl(L_{i-1} \oplus f(R_{i-1}, K_i)\Bigr) \oplus f(R_{i-1}, K_i)
+$$
+
+[XOR bölümünde](../../modern-gecis/binary-xor.qmd) gördüğümüz birleşme özelliğiyle parantezi kaydıralım ve kendi kendini yok etme özelliğini ($A \oplus A = 0$) uygulayalım:
+
+$$
+= L_{i-1} \oplus \underbrace{\Bigl(f(R_{i-1}, K_i) \oplus f(R_{i-1}, K_i)\Bigr)}_{=\,0} = L_{i-1} \oplus 0 = L_{i-1}
+$$
+
+Dikkat edilirse bu adımların hiçbirinde $f$'nin tersini almadık; $f$'yi yalnızca **ileri yönde**, elimizde zaten bulunan $L_i = R_{i-1}$ girdisiyle bir kez daha hesapladık. [$\blacksquare$]{.qed}
+:::
+
+::: {.callout-tip title="🔑 Şifre çözme = aynı devre, anahtarlar ters sırada"}
+@thm-feistel-tersinir'in pratik sonucu muazzamdır: DES'te şifre çözmek için **ayrı bir algoritma yoktur.** Şifreli metni aynı 16 döngülük devreye sokar, alt anahtarları yalnızca ters sırada ($K_{16}, K_{15}, \dots, K_1$) verirsiniz; devre her döngüyü kendiliğinden geri sarar.
+
+Bu, 1970'lerin pahalı donanım çağında bir deha hamlesiydi: tek bir yonga hem şifreleme hem çözme yapabiliyordu. Daha da önemlisi, tasarımcılara tam bir özgürlük verdi — madem yapının tersinirliği $f$'ye hiç bağlı değil, o hâlde $f$ **istediğimiz kadar vahşi ve doğrusal olmayan** bir karıştırıcı olabilir. Şimdi bu özgürlüğün nasıl kullanıldığına bakalım.
+:::
+
+## Kalp: f Fonksiyonu
+
+DES'in bütün kriptografik gücü, her döngüde çalışan $f(R_{i-1}, K_i)$ fonksiyonunda toplanmıştır. $f$, 32 bitlik sağ yarıyı ve 48 bitlik alt anahtarı alıp 32 bitlik bir çıktı üretir; bunu dört aşamada yapar.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="2.0 1.0 409.0 360.0" role="img" aria-label="f fonksiyonunun dort asamasi: E genislemesi, alt anahtar XOR, 8 S-kutusu, P permutasyonu">
+  <rect x="125" y="16" width="150" height="30" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="200.0" y="35.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">R<tspan font-size="9" dy="4">i&#8722;1</tspan><tspan dy="-4">&#8203;</tspan> (32 bit)</text>
+  <line x1="200.0" y1="46.0" x2="200.0" y2="56.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="200.0,62.0 197.1,55.0 202.9,55.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="85" y="64" width="230" height="38" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="200.0" y="80.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">geni&#351;letme E</text>
+  <text x="200.0" y="95.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">32 bit &#8594; 48 bit</text>
+  <text x="322.0" y="80.0" fill="var(--color-remark)" font-size="10.5" text-anchor="start">16 kenar biti</text>
+  <text x="322.0" y="93.0" fill="var(--color-remark)" font-size="10.5" text-anchor="start">iki kez kullan&#305;l&#305;r</text>
+  <line x1="200.0" y1="102.0" x2="200.0" y2="121.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="200.0,127.0 197.1,120.0 202.9,120.0" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="208.0" y="119.0" fill="var(--color-remark)" font-size="10.5" text-anchor="start">48 bit</text>
+  <circle cx="200" cy="140" r="11" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <line x1="192" y1="140" x2="208" y2="140" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <line x1="200" y1="132" x2="200" y2="148" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <line x1="320.0" y1="140.0" x2="219.6" y2="140.0" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="214.0,140.0 221.0,137.1 221.0,142.9" fill="var(--color-practice)" opacity="0.85"/>
+  <text x="326.0" y="144.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start" font-weight="600">K<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan> (48 bit)</text>
+  <line x1="200" y1="151" x2="200" y2="163" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7"/>
+  <line x1="37" y1="163" x2="359" y2="163" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7"/>
+  <line x1="37" y1="227" x2="359" y2="227" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7"/>
+  <rect x="17" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="37.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="37.0" y1="163.0" x2="37.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="37.0,173.0 34.9,168.0 39.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="37" y1="215" x2="37" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <rect x="63" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="83.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="83.0" y1="163.0" x2="83.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="83.0,173.0 80.9,168.0 85.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="83" y1="215" x2="83" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <rect x="109" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="129.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="129.0" y1="163.0" x2="129.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="129.0,173.0 126.9,168.0 131.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="129" y1="215" x2="129" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <rect x="155" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="175.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">4</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="175.0" y1="163.0" x2="175.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="175.0,173.0 172.9,168.0 177.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="175" y1="215" x2="175" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <rect x="201" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="221.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">5</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="221.0" y1="163.0" x2="221.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="221.0,173.0 218.9,168.0 223.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="221" y1="215" x2="221" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <rect x="247" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="267.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">6</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="267.0" y1="163.0" x2="267.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="267.0,173.0 264.9,168.0 269.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="267" y1="215" x2="267" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <rect x="293" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="313.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">7</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="313.0" y1="163.0" x2="313.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="313.0,173.0 310.9,168.0 315.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="313" y1="215" x2="313" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <rect x="339" y="175" width="40" height="40" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="359.0" y="199.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">S<tspan font-size="9" dy="4">8</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="359.0" y1="163.0" x2="359.0" y2="169.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="359.0,173.0 356.9,168.0 361.1,168.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="359" y1="215" x2="359" y2="227" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7"/>
+  <line x1="200.0" y1="227.0" x2="200.0" y2="248.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="200.0,254.0 197.1,247.0 202.9,247.0" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="188.0" y="245.0" fill="var(--color-remark)" font-size="10.5" text-anchor="end">her kutu: 6 bit &#8594; 4 bit</text>
+  <text x="208.0" y="248.0" fill="var(--color-remark)" font-size="10.5" text-anchor="start">32 bit</text>
+  <rect x="85" y="256" width="230" height="38" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="200.0" y="272.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">P perm&#252;tasyonu</text>
+  <text x="200.0" y="287.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">32 bitin yerini kar&#305;&#351;t&#305;r&#305;r</text>
+  <line x1="200.0" y1="294.0" x2="200.0" y2="304.4" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="200.0,310.0 197.1,303.0 202.9,303.0" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="105" y="312" width="190" height="34" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="200.0" y="333.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">f(R<tspan font-size="9" dy="4">i&#8722;1</tspan><tspan dy="-4">&#8203;</tspan>, K<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan>) — 32 bit</text>
+</svg>
+<figcaption>f fonksiyonunun d&#246;rt a&#351;amas&#305;: E geni&#351;letmesi 32 biti 48 bite &#231;&#305;kar&#305;r, sonu&#231; alt anahtar K<sub>i</sub> ile XOR'lan&#305;r, 48 bit sekiz S-kutusundan ge&#231;erek 32 bite iner ve P perm&#252;tasyonu bu bitleri blo&#287;un geneline da&#287;&#305;t&#305;r.</figcaption>
+</figure>
+```
+
+### Aşama 1 — Genişletme E: 32 Bitten 48 Bite
+
+İlk sorun boyut uyuşmazlığıdır: elimizdeki yarı 32 bit, alt anahtar $K_i$ ise 48 bittir. **Genişletme tablosu E (expansion)**, tıpkı PC-1 ve PC-2 gibi konum indeksleriyle çalışan bir seçim tablosudur; ancak bu kez bit atmak yerine bit **çoğaltır**:
+
+| | | | | | |
+|:--:|:--:|:--:|:--:|:--:|:--:|
+| 32 | 1 | 2 | 3 | 4 | 5 |
+| 4 | 5 | 6 | 7 | 8 | 9 |
+| 8 | 9 | 10 | 11 | 12 | 13 |
+| 12 | 13 | 14 | 15 | 16 | 17 |
+| 16 | 17 | 18 | 19 | 20 | 21 |
+| 20 | 21 | 22 | 23 | 24 | 25 |
+| 24 | 25 | 26 | 27 | 28 | 29 |
+| 28 | 29 | 30 | 31 | 32 | 1 |
+
+: E genişletme tablosu — 32 bitten 48 bite {#tbl-e-genisletme}
+
+Tabloyu dikkatle sayarsanız 48 hücrede yalnızca 32 farklı indeks görürsünüz: **16 kenar biti iki kez kullanılır** ($48 = 32 + 16$). Bu bilinçli bir tekrardır — bir bit iki komşu gruba birden sızdığı için, tek bir girdi bitindeki değişiklik ilerleyen aşamalarda birden fazla S-kutusunu etkiler. Çığ etkisini besleyen **yayılma (diffusion)** çarklarından ilki burada döner.
+
+### Aşama 2 — Alt Anahtarla Karıştırma
+
+Genişletilmiş 48 bit, o döngünün alt anahtarıyla XOR'lanır:
+
+$$
+E(R_{i-1}) \oplus K_i
+$$
+
+Gösterişsiz görünen bu tek satır aslında kritik bir gerçeği saklar: **anahtar, DES'in veri yoluna yalnızca burada girer.** Permütasyonlar, genişletmeler, S-kutuları — hepsi sabit ve herkesçe bilinir; gizli olan tek şey bu XOR'a karışan 48 bittir.
+
+### Aşama 3 — S-Kutuları: Doğrusal Olmayan Kalp
+
+XOR'dan çıkan 48 bit, 6'şar bitlik **8 gruba** bölünür ve her grup kendi **S-kutusuna (substitution box)** girer: $S_1, S_2, \dots, S_8$. Her kutu 6 bitlik girdisini 4 bitlik bir çıktıya dönüştürür; böylece $8 \cdot 6 = 48$ bit içeri girer, $8 \cdot 4 = 32$ bit dışarı çıkar.
+
+Bir S-kutusu, satır ve sütunlardan oluşan sabit bir arama tablosudur. 6 bitlik $b_1 b_2 b_3 b_4 b_5 b_6$ girdisinin adresi şöyle çözülür:
+
+* **Dış iki bit** $b_1 b_6$ birleştirilir ve satır numarasını verir: $0$–$3$ arası.
+* **İç dört bit** $b_2 b_3 b_4 b_5$ sütun numarasını verir: $0$–$15$ arası.
+
+Kesişimdeki sayı (0–15 arası) kutunun çıktısıdır ve 4 bit olarak yazılır. İşte $S_1$ kutusunun resmî tablosu:
+
+| | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| **0** | 14 | 4 | 13 | 1 | 2 | 15 | 11 | 8 | 3 | 10 | 6 | 12 | 5 | 9 | 0 | 7 |
+| **1** | 0 | 15 | 7 | 4 | 14 | 2 | 13 | 1 | 10 | 6 | 12 | 11 | 9 | 5 | 3 | 8 |
+| **2** | 4 | 1 | 14 | 8 | 13 | 6 | 2 | 11 | 15 | 12 | 9 | 7 | 3 | 10 | 5 | 0 |
+| **3** | 15 | 12 | 8 | 2 | 4 | 9 | 1 | 7 | 5 | 11 | 3 | 14 | 10 | 0 | 6 | 13 |
+
+: S1 kutusu — satırlar dış bitlerle, sütunlar iç bitlerle seçilir {#tbl-s1}
+
+:::: {#exm-s-kutusu}
+$S_1$ kutusuna 6 bitlik $011011$ dizisi giriyor. Kutunun 4 bitlik çıktısını bulunuz.
+
+::: {.cozum}
+Girdiyi bit bit adlandıralım: $b_1 b_2 b_3 b_4 b_5 b_6 = 0\,1\,1\,0\,1\,1$.
+
+**Satır:** dış bitler $b_1 b_6 = 01$, yani ikilik sistemde $01_2 = 1$. Satır $1$.
+
+**Sütun:** iç bitler $b_2 b_3 b_4 b_5 = 1101$, yani $1101_2 = 8 + 4 + 0 + 1 = 13$. Sütun $13$.
+
+@tbl-s1'de satır $1$ ile sütun $13$'ün kesişiminde $5$ yazar. Çıktı, $5$ sayısının 4 bitlik gösterimidir:
+
+$$
+011011 \;\xrightarrow{\ S_1\ }\; 5 = 0101
+$$
+
+Kutuya 6 bit girdi, 4 bit çıktı; dizinin boyu kutunun içinde eridi. [$\boxtimes$]{.qed}
+:::
+::::
+
+$S_2, S_3, \dots, S_8$ kutuları da tamamen aynı mantıkla çalışan, standartta sabitlenmiş farklı tablolardır; sekizini birden basarak sayfayı işgal etmeyeceğiz.
+
+Asıl vurgulanması gereken şudur: permütasyonlar, genişletme ve XOR'un tamamı **doğrusal** işlemlerdir — girdiyle çıktı arasında denklem sistemleriyle çözülebilecek düzgün bir cebirsel ilişki korurlar. **S-kutuları ise DES'in doğrusal olmayan tek bileşenidir.** Shannon'un diliyle söylersek, **[karışıklık (confusion)](../../modern-gecis/shannon.qmd)** prensibinin bu şifredeki tek taşıyıcısı S-kutularıdır: anahtar ile şifreli metin arasındaki ilişkiyi denklemle izlenemez hâle getiren adım budur. Tarihsel bir not olarak, 1970'lerde NSA'in bu kutuların sabitlerini kimseye gerekçe göstermeden değiştirmesi yıllarca "arka kapı mı gizlendi?" tartışması yaratmış; ancak diferansiyel kriptanaliz 1990'larda kamuya açık olarak keşfedilince, değişikliklerin kutuları tam da bu saldırıya karşı **güçlendirdiği** anlaşılmıştır.
+
+### Aşama 4 — P Permütasyonu
+
+Sekiz kutudan çıkan $8 \cdot 4 = 32$ bit son olarak **P permütasyonundan** geçer; bu tablo hiçbir biti atmadan 32 bitin yerlerini değiştirir:
+
+| | | | |
+|:--:|:--:|:--:|:--:|
+| 16 | 7 | 20 | 21 |
+| 29 | 12 | 28 | 17 |
+| 1 | 15 | 23 | 26 |
+| 5 | 18 | 31 | 10 |
+| 2 | 8 | 24 | 14 |
+| 32 | 27 | 3 | 9 |
+| 19 | 13 | 30 | 6 |
+| 22 | 11 | 4 | 25 |
+
+: P permütasyon tablosu — 32 bitlik çıktının yeniden sıralanması {#tbl-p-perm}
+
+P'nin görevi, her S-kutusunun 4 bitlik çıktısını bloğun dört bir yanına savurmaktır: aynı kutudan çıkan bitler, bir sonraki döngüde E genişletmesi tarafından **farklı** S-kutularına dağıtılır. Bu, Shannon'un **yayılma (diffusion)** prensibinin ta kendisidir — tek bir bitlik değişim, birkaç döngü içinde bloğun tamamına bulaşır ve çığ etkisi doğar.
+
+## Şifre Çözme
+
+Şifre çözme bölümü, DES anlatımlarının en kısa bölümüdür ve bunu @thm-feistel-tersinir'e borçluyuz. Alıcı taraf, şifreli metni **aynı algoritmadan** geçirir; tek fark alt anahtarların sırasıdır: ilk döngüye $K_{16}$, ikincisine $K_{15}$, sonuncusuna $K_1$ verilir. Her döngü, teoremdeki $R_{i-1} = L_i$ ve $L_{i-1} = R_i \oplus f(L_i, K_i)$ formülleri gereği bir öncekini geri sarar; $f$'nin, S-kutularının veya P'nin tersini hesaplamak hiçbir zaman gerekmez.
+
+Akışın uçlarındaki yardımcı adımlar da kendiliğinden temizlenir: $IP$ ile $IP^{-1}$ zaten birbirinin tersidir, son takas ise iki yarıyı değiştirmekten ibaret olduğundan kendi kendisinin tersidir. Yeni bir matematik yok; şifreleme devresini kurduğumuz anda çözme devresini de bedavaya almış olduk.
+
+## DES'in Sonu: Kaba Kuvvetin Zaferi
+
+DES'in mimarisi bugün bile saygı duyulan bir tasarımdır; onu emekliye ayıran şey yapısındaki bir çatlak değil, anahtarının kısalığıdır. Efektif anahtar 56 bit olduğuna göre anahtar uzayı
+
+$$
+2^{56} \approx 7{,}2 \cdot 10^{16}
+$$
+
+anahtardan oluşur. 1977'de bu sayı aşılamaz bir duvar gibi görünüyordu; ancak Moore yasası duvarı her 18 ayda bir inceltti ve 1990'ların sonunda üç darbe art arda geldi:
+
+* **1997 — DESCHALL:** RSA firmasının ödüllü meydan okuması, internet üzerinden anahtar uzayını paylaşan binlerce gönüllü bilgisayarın ortak çalışmasıyla yaklaşık 96 günde sonuçlandı; bir DES anahtarı ilk kez halka açık biçimde kaba kuvvetle bulundu.
+* **1998 — Deep Crack:** Electronic Frontier Foundation (EFF), yaklaşık 250 000 dolarlık bütçeyle **Deep Crack** adında özel amaçlı bir makine inşa etti. Bu makine bir DES anahtarını yaklaşık **56 saatte** buldu — artık sıradan zengin bir kurumun bile DES kırabileceği kanıtlanmıştı.
+* **1999 — 22 saat:** Deep Crack ile distributed.net ağındaki on binlerce bilgisayar güçlerini birleştirdi ve süre **22 saat 15 dakikaya** düştü.
+
+Akademik cephede diferansiyel kriptanaliz ($2^{47}$ seçilmiş açık metin) ve lineer kriptanaliz ($2^{43}$ bilinen açık metin) gibi kaba kuvvetten "daha akıllı" saldırılar da bulunmuştur; ancak bu kadar veriyi toplamak pratikte imkânsıza yakındır. DES'i tarihe gömen, zarif bir matematiksel gedik değil, ham hesaplama gücü olmuştur.
+
+## Çifte DES Neden Çare Değil? Ortada Buluşma Saldırısı
+
+Anahtar kısaysa akla ilk gelen yama bellidir: DES'i iki farklı anahtarla **art arda iki kez** uygulamak. Bu yapıya **2DES** denir:
+
+$$
+C = E_{K_2}\!\bigl(E_{K_1}(P)\bigr)
+$$
+
+Toplam $56 + 56 = 112$ bitlik anahtar malzemesi kullanıldığına göre güvenliğin de $2^{112}$'lik bir aramaya denk gelmesini bekleriz. Ne yazık ki bu beklenti yanlıştır. Denklemin iki tarafına $D_{K_2}$ uygularsak şifrelemenin tam ortasındaki değeri iki yönden de yakalayabileceğimizi görürüz:
+
+$$
+D_{K_2}(C) = E_{K_1}(P)
+$$
+
+Eşitliğin sağı orta değere **açık metinden ileri giderek**, solu ise **şifreli metinden geri gelerek** ulaşır. Elinde tek bir $(P, C)$ çifti olan bir saldırgan bunu şöyle sömürür: önce $2^{56}$ olası $K_1$ anahtarının her biri için $E_{K_1}(P)$ değerini hesaplayıp sonuçları bir tabloya koyar. Ardından $2^{56}$ olası $K_2$ anahtarının her biri için $D_{K_2}(C)$ değerini hesaplar ve her sonucu tabloda arar. İki liste **ortada buluştuğunda** — yani bir $D_{K_2}(C)$ değeri tabloda bulunduğunda — eldeki $(K_1, K_2)$ çifti güçlü bir adaydır; birkaç yedek $(P, C)$ çiftiyle doğrulanarak kesinleştirilir.
+
+Bu saldırıya **ortada buluşma (meet-in-the-middle)** denir ve maliyeti iki tam aramanın toplamıdır: $2^{56} + 2^{56} = 2^{57}$ DES işlemi (artı $2^{56}$ girdilik tablo için devasa ama ilkesel olarak mümkün bir bellek). Yani 2DES, kâğıt üstünde 112 bitlik görünse de, kırması **tek DES'in yalnızca iki katı iş gerektiren** bir hedeftir.
+
+:::: {#exm-ortada-bulusma}
+Ortada buluşma saldırısı, 2DES'e yönelik saf kaba kuvvet aramasını kaç kat ucuzlatır?
+
+::: {.cozum}
+Saf kaba kuvvet, $112$ bitlik anahtar malzemesinin tamamını tarar: $2^{112}$ deneme. Ortada buluşma ise $2^{57}$ işlemle sonuca ulaşır. Kazanç oranı:
+
+$$
+\frac{2^{112}}{2^{57}} = 2^{55} \approx 3{,}6 \cdot 10^{16}
+$$
+
+Saldırı, işlem sayısını yaklaşık 36 katrilyon kat azaltır; "iki kat şifrele, iki kat güvenli ol" sezgisi paramparça olur. [$\boxtimes$]{.qed}
+:::
+::::
+
+## Üçlü DES (3DES)
+
+Madem iki katman yetmiyor, üç katmana çıkalım. **3DES (Triple DES)**, DES'i üç anahtarla art arda uygular; ancak dizilim şaşırtıcıdır — şifrele, **çöz**, şifrele:
+
+$$
+C = E_{K_3}\!\Bigl(D_{K_2}\bigl(E_{K_1}(P)\bigr)\Bigr)
+$$
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="0.0 11.5 524.0 173.0" role="img" aria-label="3DES E-D-E zinciri ve K1 esittir K2 durumunda tek DES'e cokme">
+  <text x="38.0" y="96.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" font-weight="600" font-style="italic">P</text>
+  <text x="38.0" y="112.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle">a&#231;&#305;k metin</text>
+  <line x1="56.0" y1="92.0" x2="72.4" y2="92.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="78.0,92.0 71.0,94.9 71.0,89.1" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="80" y="70" width="90" height="44" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="125.0" y="89.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">E</text>
+  <text x="125.0" y="104.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">&#351;ifrele</text>
+  <line x1="170.0" y1="92.0" x2="207.4" y2="92.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="213.0,92.0 206.0,94.9 206.0,89.1" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="215" y="70" width="90" height="44" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="260.0" y="89.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">D</text>
+  <text x="260.0" y="104.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">&#231;&#246;z</text>
+  <line x1="305.0" y1="92.0" x2="342.4" y2="92.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="348.0,92.0 341.0,94.9 341.0,89.1" fill="var(--academic-text)" opacity="0.7"/>
+  <rect x="350" y="70" width="90" height="44" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="395.0" y="89.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">E</text>
+  <text x="395.0" y="104.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">&#351;ifrele</text>
+  <line x1="440.0" y1="92.0" x2="456.4" y2="92.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="462.0,92.0 455.0,94.9 455.0,89.1" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="482.0" y="96.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" font-weight="600" font-style="italic">C</text>
+  <text x="482.0" y="112.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle">&#351;ifreli metin</text>
+  <line x1="125.0" y1="42.0" x2="125.0" y2="62.4" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="125.0,68.0 122.1,61.0 127.9,61.0" fill="var(--color-practice)" opacity="0.85"/>
+  <text x="125.0" y="34.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">K<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="260.0" y1="42.0" x2="260.0" y2="62.4" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="260.0,68.0 257.1,61.0 262.9,61.0" fill="var(--color-practice)" opacity="0.85"/>
+  <text x="260.0" y="34.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">K<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="395.0" y1="42.0" x2="395.0" y2="62.4" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="395.0,68.0 392.1,61.0 397.9,61.0" fill="var(--color-practice)" opacity="0.85"/>
+  <text x="395.0" y="34.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">K<tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <rect x="74" y="62" width="237" height="58" rx="6" fill="var(--color-remark)" fill-opacity="0.0" stroke="var(--color-remark)" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <line x1="192" y1="122" x2="192" y2="136" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.8"/>
+  <text x="226.0" y="152.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">K<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> = K<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> se&#231;ilirse bu iki kutu birbirini yok eder;</text>
+  <text x="226.0" y="168.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">geriye tek DES kal&#305;r &#8594; geriye uyumluluk</text>
+</svg>
+<figcaption>3DES'in E&#8211;D&#8211;E zinciri: a&#231;&#305;k metin &#246;nce K<sub>1</sub> ile &#351;ifrelenir, K<sub>2</sub> ile &#231;&#246;z&#252;l&#252;r, K<sub>3</sub> ile yeniden &#351;ifrelenir. K<sub>1</sub> = K<sub>2</sub> se&#231;ildi&#287;inde ilk iki kutu birbirini yok eder ve sistem tek DES'e d&#246;n&#252;&#351;&#252;r — eski donan&#305;mla geriye uyumlulu&#287;un s&#305;rr&#305;.</figcaption>
+</figure>
+```
+
+Ortadaki adımın şifre çözme olması güvenlikle ilgili değildir; $D$ de $E$ kadar iyi bir karıştırıcıdır. Sebep tamamen mühendislik zekâsıdır:
+
+::: {.callout-tip title="🔌 E-D-E dizilimi ve geriye uyumluluk"}
+Üç anahtar da aynı seçilirse ($K_1 = K_2 = K_3 = K$) ortadaki $D_K$, ilk $E_K$'yi tam olarak geri alır ve zincirden geriye yalnızca son $E_K$ kalır:
+
+$$
+E_K\!\Bigl(D_K\bigl(E_K(P)\bigr)\Bigr) = E_K(P)
+$$
+
+Yani bir 3DES yongası, anahtarları eşitleyerek **sıradan bir DES cihazı gibi** çalıştırılabilir. Sahadaki milyonlarca eski DES donanımıyla haberleşebilmek — 1990'ların bankacılık dünyasında paha biçilmez bir özellik — E-D-E diziliminin tek ve yeterli gerekçesidir. E-E-E dizilimi bu zarif geri çekilme yolunu kapatırdı.
+:::
+
+Anahtarların nasıl seçildiğine göre üç standart kullanım biçimi vardır:
+
+| Seçenek | Anahtar ilişkisi | Nominal boyut | Efektif güvenlik |
+|:--|:--:|:--:|:--|
+| 3 bağımsız anahtar | $K_1 \neq K_2 \neq K_3$ | 168 bit | Ortada buluşma nedeniyle $\approx 112$ bit |
+| 2 anahtar | $K_1 = K_3 \neq K_2$ | 112 bit | Pratik saldırılar daha da aşağı çeker |
+| Tek anahtar | $K_1 = K_2 = K_3$ | 56 bit | Tek DES'e eşdeğer — yalnızca geriye uyumluluk |
+
+: 3DES anahtarlama seçenekleri {#tbl-3des-secenekler}
+
+Tabloya dikkat: üç bağımsız anahtar bile $168$ bitlik nominal gücü vermez; bir önceki bölümdeki ortada buluşma fikri 3DES'e de uyarlanabildiğinden efektif güvenlik $2^{112}$ mertebesinde kalır.
+
+3DES görevini onlarca yıl onurluca yaptı, ama iki yapısal yükten hiç kurtulamadı: her blok için DES'in üç kez çalışması gerektiğinden **üç kat yavaştır** ve blok boyu hâlâ **64 bittir** — büyük veri hacimlerinde doğum günü paradoksu yüzünden blok çakışmaları istatistiksel bilgi sızdırmaya başlar (2016'da gösterilen Sweet32 zafiyetinin özü budur). Nitekim NIST, 3DES'i 2019'da resmen "kullanımdan kaldırılıyor (deprecated)" statüsüne aldı ve 31 Aralık 2023 itibarıyla yeni uygulamalardaki kullanımını tamamen sonlandırdı.
+
+Kısa anahtar sorununa yama üstüne yama yapmak yerine sıfırdan, modern ilkelerle tasarlanmış bir şifreye geçmek gerekiyordu. O şifre, bir sonraki bölümün konusu olan [AES](aes.qmd)'tir.

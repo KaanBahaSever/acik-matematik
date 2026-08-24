@@ -1,0 +1,285 @@
+---
+title: "Sonlu Cisimler (Galois Cisimleri)"
+pagetitle: "Sonlu Cisimler (Galois Cisimleri)"
+description: "AES'in bayt aritmetiğinin temeli olan sonlu cisimleri tanıtır: cisim aksiyomları, GF(2) ve GF(2^8), baytların polinom gösterimi, m(x) ile indirgeme ve xtime kısayolu."
+---
+
+DES ve AES'e dalmadan önce ufak bir matematik molası vermemiz gerekiyor. Modern blok şifrelerin — özellikle AES'in — her adımı, baytlar üzerinde yapılan cebirsel işlemlerle tanımlanır. Bu kısa köprü bölümünde o işlemlerin yaşadığı yapıyı tanıyacağız: **sonlu cisimler (finite fields)**.
+
+## Her Adım Geri Alınabilmeli
+
+Bir şifreleme algoritmasındaki her adım **geri alınabilir (invertible)** olmak zorundadır; aksi hâlde mesajı meşru alıcı bile açamaz. Toplamayı çıkarmayla geri alırız. Çarpmayı geri almak içinse "bölme" gerekir — modüler dünyada bunun adı, sıfırdan farklı her elemanın bir **çarpımsal tersinin** var olmasıdır.
+
+Bu şartın sancısını klasik bölümlerde bizzat çektik:
+
+* [Afin şifrelemesinde](../../klasik-kriptografi-2/affine-sifreleme.qmd) çarpan olarak $\mathbb{Z}_{26}$'nın yalnızca $26$ ile aralarında asal $12$ elemanını kullanabildik; geri kalanların tersi yoktu.
+* [Hill şifrelemesinde](../../klasik-kriptografi-2/hill-sifreleme.qmd) anahtar matrisin determinantı $\gcd(\det K, 26) = 1$ koşulunu sağlamazsa mesaj bir daha asla açılamıyordu.
+
+Sorunun kökü $26$'nın asal olmamasıdır: $2 \cdot 13 \equiv 0 \pmod{26}$ olduğundan, sıfırdan farklı iki elemanın çarpımı sıfır çıkabilir ve böyle "sıfır bölenlerin" tersi olamaz. Oysa [matematiksel temeller bölümünde](../../kriptografiye-giris/matematiksel-temeller.qmd) görmüştük: modül bir $p$ asalı seçilirse $\mathbb{Z}_p$'de sıfır hariç *her* elemanın tersi vardır. Cebirde bu "her şeyin tersi var" cennetinin özel bir adı vardır.
+
+::: {#def-cisim name="Cisim (Field)"}
+Üzerinde toplama ve çarpma adında iki işlem tanımlanmış bir $F$ kümesi şu koşulları sağlıyorsa **cisim (field)** adını alır:
+
+* Her iki işlem de **birleşmeli** ve **değişmelidir**; çarpma toplama üzerine **dağılır**: $a(b + c) = ab + ac$.
+* Toplamanın birim elemanı $0$, çarpmanın birim elemanı $1$ kümenin içindedir.
+* Her $a$ elemanının bir toplamsal tersi $-a$ vardır; yani çıkarma daima yapılabilir.
+* **Taç özellik:** $0$ dışındaki *her* $a$ elemanının bir çarpımsal tersi $a^{-1}$ vardır; yani sıfırla bölme hariç bölme daima yapılabilir.
+:::
+
+Kısacası cisim; toplama, çıkarma, çarpma ve bölmenin hiç takılmadan çalıştığı bir sayı sistemidir. $\mathbb{Q}$ ve $\mathbb{R}$ bildiğimiz sonsuz örneklerdir; ama bilgisayarlar sonsuz kümelerle çalışamaz. Kriptografinin aradığı şey, **sonlu** cisimlerdir.
+
+## Galois Cisimleri: $\mathrm{GF}(p)$ ve $\mathrm{GF}(p^n)$
+
+En kolay sonlu cisim örneklerini zaten tanıyoruz: $p$ asal olmak üzere her $\mathbb{Z}_p$ bir cisimdir ve sonlu cisim gösteriminde $\mathrm{GF}(p)$ olarak yazılır. Peki başka boyutlarda sonlu cisim var mıdır?
+
+::: {.callout-note title="🎩 Galois'nın mirası: hangi boyutlarda sonlu cisim var?"}
+Cebirin bize ispatsız aktaracağımız temel armağanı şudur: $q$ elemanlı bir sonlu cisim **ancak ve ancak** $q = p^n$ ($p$ asal, $n \geq 1$) biçimindeyse vardır ve aynı eleman sayısına sahip tüm sonlu cisimler özünde (izomorfizme kadar) birbirinin aynısıdır.
+
+Bu biricik yapı, grup teorisinin temellerini atıp henüz $20$ yaşındayken bir düelloda hayatını kaybeden Fransız matematikçi Évariste Galois'nın (1811–1832) onuruna **Galois cismi (Galois field)** $\mathrm{GF}(p^n)$ olarak adlandırılır.
+
+Örneğin $4 = 2^2$, $9 = 3^2$ ve $256 = 2^8$ elemanlı birer sonlu cisim vardır; ama $6 = 2 \cdot 3$ elemanlı bir cisim yoktur — $26$ elemanlı da yoktur!
+:::
+
+En küçük Galois cismi ise modern kriptografinin ta kendisidir: $\mathrm{GF}(2) = \{0, 1\}$. Bu cismin toplama tablosu tam olarak **XOR**, çarpım tablosu tam olarak **AND** kapısıdır. [İkili sistem bölümünde](../../modern-gecis/binary-xor.qmd) yazdığımız $A \oplus B \equiv A + B \pmod 2$ eşitliği, aslında "XOR, $\mathrm{GF}(2)$ cisminin toplamasıdır" cümlesinin ta kendisiydi.
+
+## Hedef: Bir Bayt = Bir Sayı
+
+Bilgisayarlar baytlarla konuşur: bellekteki her hücre $8$ bitlik, yani $2^8 = 256$ farklı değer alabilen bir pakettir. Şifreleme adımlarını doğrudan baytlar üzerinde tanımlayabilmek için $256$ elemanlı bir cisim istiyoruz — böylece "bir bayt = bir sayı" olur ve dört işlemin tamamı her bayt için çalışır. $256 = 2^8$ bir asal kuvveti olduğundan Galois'nın teoremi böyle bir cismin var olduğunu garanti eder: $\mathrm{GF}(2^8)$.
+
+::: {.callout-warning title="⚠️ Tuzak: mod 256 aritmetiği cisim değildir"}
+İlk akla gelen aday olan $\mathbb{Z}_{256}$, yani "mod $256$ aritmetiği" bir cisim **değildir**. $256$ asal olmadığı için yine sıfır bölenler ortaya çıkar:
+
+$$2 \cdot 128 \equiv 0 \pmod{256}$$
+
+Bu yüzden hiçbir çift sayının — elemanların tam yarısının! — çarpımsal tersi yoktur. $\mathbb{Z}_{26}$'da başımıza gelenin aynısı. $\mathrm{GF}(2^8)$'i inşa etmenin doğru yolu tam sayılarla değil, **polinomlarla** hesap yapmaktır.
+:::
+
+## Baytlar Polinom Olarak
+
+Fikir şaşırtıcı derecede basittir: $b_7 b_6 \dots b_1 b_0$ bitlerinden oluşan bir baytı, katsayıları $\mathrm{GF}(2)$'de olan ve derecesi en çok $7$ olan bir polinom olarak *okuruz*:
+
+$$b_7 b_6 b_5 b_4 b_3 b_2 b_1 b_0 \;\longleftrightarrow\; b_7 x^7 + b_6 x^6 + \dots + b_1 x + b_0$$
+
+AES literatürü baytları onaltılık (hex) sistemde yazıp süslü paranteze alır; biz de bu geleneğe uyacağız. Örneğin $\{57\}$ baytı ikilik sistemde $01010111$'dir ve polinom karşılığı şudur:
+
+$$\{57\} = 01010111 \;\longleftrightarrow\; x^6 + x^4 + x^2 + x + 1$$
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="39.0 -3.5 378.0 188.0" role="img" aria-label="Bir baytin sekiz bitinin GF(2) katsayili polinom terimlerine eslenmesi">
+  <text x="230.0" y="20.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">Bir bayt&#305; polinom olarak okumak: {57} = 01010111</text>
+  <text x="74.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8327;</text>
+  <rect x="54" y="50" width="40" height="36" rx="6" fill="var(--color-theory)" fill-opacity="0.0" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="74.0" y="74.5" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="118.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8326;</text>
+  <rect x="98" y="50" width="40" height="36" rx="6" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.7"/>
+  <text x="118.0" y="74.5" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">1</text>
+  <text x="162.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8325;</text>
+  <rect x="142" y="50" width="40" height="36" rx="6" fill="var(--color-theory)" fill-opacity="0.0" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="162.0" y="74.5" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="206.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8324;</text>
+  <rect x="186" y="50" width="40" height="36" rx="6" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.7"/>
+  <text x="206.0" y="74.5" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">1</text>
+  <text x="250.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8323;</text>
+  <rect x="230" y="50" width="40" height="36" rx="6" fill="var(--color-theory)" fill-opacity="0.0" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="250.0" y="74.5" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="294.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8322;</text>
+  <rect x="274" y="50" width="40" height="36" rx="6" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.7"/>
+  <text x="294.0" y="74.5" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">1</text>
+  <text x="338.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8321;</text>
+  <rect x="318" y="50" width="40" height="36" rx="6" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.7"/>
+  <text x="338.0" y="74.5" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">1</text>
+  <text x="382.0" y="42.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle" font-style="italic">b&#8320;</text>
+  <rect x="362" y="50" width="40" height="36" rx="6" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.7"/>
+  <text x="382.0" y="74.5" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">1</text>
+  <line x1="118.0" y1="90.0" x2="118.0" y2="114.8" stroke="var(--color-remark)" stroke-width="1.4" stroke-linecap="round"/>
+  <polygon points="118.0,120.0 115.3,113.5 120.7,113.5" fill="var(--color-remark)"/>
+  <line x1="206.0" y1="90.0" x2="206.0" y2="114.8" stroke="var(--color-remark)" stroke-width="1.4" stroke-linecap="round"/>
+  <polygon points="206.0,120.0 203.3,113.5 208.7,113.5" fill="var(--color-remark)"/>
+  <line x1="294.0" y1="90.0" x2="294.0" y2="114.8" stroke="var(--color-remark)" stroke-width="1.4" stroke-linecap="round"/>
+  <polygon points="294.0,120.0 291.3,113.5 296.7,113.5" fill="var(--color-remark)"/>
+  <line x1="338.0" y1="90.0" x2="338.0" y2="114.8" stroke="var(--color-remark)" stroke-width="1.4" stroke-linecap="round"/>
+  <polygon points="338.0,120.0 335.3,113.5 340.7,113.5" fill="var(--color-remark)"/>
+  <line x1="382.0" y1="90.0" x2="382.0" y2="114.8" stroke="var(--color-remark)" stroke-width="1.4" stroke-linecap="round"/>
+  <polygon points="382.0,120.0 379.3,113.5 384.7,113.5" fill="var(--color-remark)"/>
+  <text x="118.0" y="134.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600" font-style="italic">x<tspan font-size="9" dy="-5">6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="206.0" y="134.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600" font-style="italic">x<tspan font-size="9" dy="-5">4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="294.0" y="134.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600" font-style="italic">x<tspan font-size="9" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="338.0" y="134.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600" font-style="italic">x</text>
+  <text x="382.0" y="134.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600" font-style="italic">1</text>
+  <text x="162.0" y="134.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">+</text>
+  <text x="250.0" y="134.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">+</text>
+  <text x="316.0" y="134.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">+</text>
+  <text x="360.0" y="134.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">+</text>
+  <text x="230.0" y="168.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle">bitler = GF(2) katsay&#305;lar&#305;; polinomda yaln&#305;z 1 olan bitler g&#246;r&#252;n&#252;r</text>
+</svg>
+<figcaption>Bir bayt&#305;n sekiz biti, katsay&#305;lar&#305; GF(2)'de olan bir polinomun katsay&#305; listesidir: {57} = 01010111 bayt&#305;, yaln&#305;zca 1 olan bitlerin kuvvetleri al&#305;narak <em>x</em><sup>6</sup> + <em>x</em><sup>4</sup> + <em>x</em><sup>2</sup> + <em>x</em> + 1 polinomuna d&#246;n&#252;&#351;&#252;r.</figcaption>
+</figure>
+```
+
+Polinomun $x$'ine bir sayı koymayacağız; o yalnızca katsayıları raflara dizen bir **yer tutucudur**. Bütün bilgi, $\mathrm{GF}(2)$'de yaşayan katsayılardadır.
+
+## Toplama: Eski Dostumuz XOR
+
+İki polinomu toplarken aynı dereceli katsayılar $\mathrm{GF}(2)$'de, yani mod $2$'de toplanır. Bunun bayt karşılığı tek kelimedir: **XOR**. Örneğin $\{57\} \oplus \{83\}$:
+
+$$(x^6 + x^4 + x^2 + x + 1) + (x^7 + x + 1) = x^7 + x^6 + x^4 + x^2$$
+
+$x$ ve $1$ terimleri iki kez göründükleri için yok oldular ($1 + 1 = 0$). Bayt dilinde aynı işlem:
+
+$$01010111 \oplus 10000011 = 11010100 \implies \{57\} \oplus \{83\} = \{D4\}$$
+
+Dikkat ederseniz her eleman kendi toplamsal tersidir: [XOR bölümünden](../../modern-gecis/binary-xor.qmd) bildiğimiz $A \oplus A = 0$ özelliği, $\mathrm{GF}(2^8)$'de "çıkarma ile toplama aynı işlemdir" anlamına gelir. Donanım için bundan güzeli olamaz.
+
+## Çarpma: $m(x)$ Polinomuna Göre Kalan
+
+Asıl marifet çarpmadadır. İki polinomu çarptığımızda derece $14$'e kadar çıkabilir — sonuç artık bir bayta sığmaz. $\mathbb{Z}_p$'de büyüyen sayıları mod $p$ ile küçültüyorduk; burada da çarpımı sabit bir polinoma bölüp **kalanı** alırız. Asal sayı $p$'nin rolünü ise özel bir polinom türü üstlenir.
+
+::: {#def-indirgenemez name="İndirgenemez Polinom (Irreducible Polynomial)"}
+Katsayıları $\mathrm{GF}(2)$'de olan ve daha küçük dereceli iki polinomun çarpımı biçiminde yazılamayan polinomlara **indirgenemez polinom (irreducible polynomial)** denir. İndirgenemez polinomlar, polinom dünyasında asal sayıların oynadığı rolü oynar: $\mathbb{Z}_p$'nin cisim olması nasıl $p$'nin asallığına bağlıysa, "mod $m(x)$" aritmetiğinin cisim olması da $m(x)$'in indirgenemezliğine bağlıdır.
+:::
+
+AES standardı bu iş için şu sabit, $8$. dereceden indirgenemez polinomu seçmiştir:
+
+$$m(x) = x^8 + x^4 + x^3 + x + 1$$
+
+Bit karşılığı $1\,0001\,1011$, yani hex gösterimiyle $\{11B\}$'dir. Çarpma işleminin tamamı şu akışla yürür: polinomları çarp, çıkan uzun polinomu $m(x)$'e böl, kalanı bayta geri çevir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="9.0 27.0 542.0 175.5" role="img" aria-label="Iki baytin polinom carpimi ve m(x) ile indirgeme akis semasi">
+  <rect x="24" y="42" width="104" height="36" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="76.0" y="65.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">{57}</text>
+  <text x="76.0" y="94.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle">x<tspan font-size="9" dy="-5">6</tspan><tspan dy="5">&#8203;</tspan>+x<tspan font-size="9" dy="-5">4</tspan><tspan dy="5">&#8203;</tspan>+x<tspan font-size="9" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan>+x+1</text>
+  <rect x="24" y="112" width="104" height="36" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="76.0" y="135.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">{83}</text>
+  <text x="76.0" y="164.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle">x<tspan font-size="9" dy="-5">7</tspan><tspan dy="5">&#8203;</tspan>+x+1</text>
+  <rect x="192" y="70" width="170" height="54" rx="6" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="277.0" y="91.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">polinom &#231;arp&#305;m&#305;</text>
+  <text x="277.0" y="110.0" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">derece 14'e kadar</text>
+  <text x="277.0" y="140.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-weight="600">bayta s&#305;&#287;maz!</text>
+  <line x1="128.0" y1="60.0" x2="184.2" y2="86.3" stroke="var(--color-theory)" stroke-width="1.7" stroke-linecap="round"/>
+  <polygon points="190.0,89.0 181.3,88.7 184.2,82.6" fill="var(--color-theory)"/>
+  <line x1="128.0" y1="130.0" x2="184.1" y2="107.4" stroke="var(--color-theory)" stroke-width="1.7" stroke-linecap="round"/>
+  <polygon points="190.0,105.0 183.8,111.1 181.3,104.9" fill="var(--color-theory)"/>
+  <rect x="432" y="70" width="104" height="54" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="484.0" y="93.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">{C1}</text>
+  <text x="484.0" y="112.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle">x<tspan font-size="9" dy="-5">7</tspan><tspan dy="5">&#8203;</tspan>+x<tspan font-size="9" dy="-5">6</tspan><tspan dy="5">&#8203;</tspan>+1</text>
+  <text x="484.0" y="140.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle">yine tek bayt</text>
+  <line x1="362.0" y1="97.0" x2="423.6" y2="97.0" stroke="var(--color-practice)" stroke-width="1.7" stroke-linecap="round"/>
+  <polygon points="430.0,97.0 422.0,100.4 422.0,93.6" fill="var(--color-practice)"/>
+  <text x="396.0" y="86.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">mod m(x)</text>
+  <text x="396.0" y="114.0" fill="var(--color-remark)" font-size="10" text-anchor="middle">kalan&#305; al</text>
+  <text x="280.0" y="186.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">m(x) = x<tspan font-size="9" dy="-5">8</tspan><tspan dy="5">&#8203;</tspan> + x<tspan font-size="9" dy="-5">4</tspan><tspan dy="5">&#8203;</tspan> + x<tspan font-size="9" dy="-5">3</tspan><tspan dy="5">&#8203;</tspan> + x + 1 = {11B} &#8212; AES'in sabit indirgenemez polinomu</text>
+</svg>
+<figcaption>GF(2<sup>8</sup>)'de &#231;arpman&#305;n ak&#305;&#351;&#305;: iki bayt polinom olarak &#231;arp&#305;l&#305;r, derecesi 14'e kadar &#231;&#305;kabilen ara sonu&#231; indirgenemez m(x) polinomuna b&#246;l&#252;n&#252;p kalan al&#305;n&#305;r ve sonu&#231; yeniden tek bir bayta s&#305;&#287;ar: {57} &#183; {83} = {C1}.</figcaption>
+</figure>
+```
+
+:::: {#exm-gf-carpim}
+FIPS-197 standardının klasik örneğini hesaplayalım: $\mathrm{GF}(2^8)$'de $\{57\} \cdot \{83\}$ çarpımını bulunuz.
+
+::: {.cozum}
+**1. adım — polinom çarpımı.** $\{57\} = x^6 + x^4 + x^2 + x + 1$ ve $\{83\} = x^7 + x + 1$ polinomlarını dağılma özelliğiyle çarpalım. Soldaki polinomun her terimini $x^7 + x + 1$ ile çarpıyoruz:
+
+$$
+\begin{aligned}
+x^6 \cdot (x^7 + x + 1) &= x^{13} + x^7 + x^6 \\
+x^4 \cdot (x^7 + x + 1) &= x^{11} + x^5 + x^4 \\
+x^2 \cdot (x^7 + x + 1) &= x^9 + x^3 + x^2 \\
+x \cdot (x^7 + x + 1) &= x^8 + x^2 + x \\
+1 \cdot (x^7 + x + 1) &= x^7 + x + 1
+\end{aligned}
+$$
+
+Katsayılar $\mathrm{GF}(2)$'de toplandığı için **çift sayıda görünen terimler yok olur**: $x^7$, $x^2$ ve $x$ ikişer kez göründüklerinden silinir. Geriye kalan:
+
+$$x^{13} + x^{11} + x^9 + x^8 + x^6 + x^5 + x^4 + x^3 + 1$$
+
+**2. adım — $m(x)$'e göre kalan.** Derece $13 > 7$ olduğu için indirgeme şart. Polinom bölmesinde çıkarma yerine XOR kullanılır: en yüksek dereceli terimi silmek için $m(x)$'i uygun kuvvetle çarpıp ekleriz.
+
+$x^{13}$'ü silmek için $x^5 \cdot m(x) = x^{13} + x^9 + x^8 + x^6 + x^5$ ekleyelim:
+
+$$x^{11} + x^4 + x^3 + 1$$
+
+$x^{11}$'i silmek için $x^3 \cdot m(x) = x^{11} + x^7 + x^6 + x^4 + x^3$ ekleyelim:
+
+$$x^7 + x^6 + 1$$
+
+Derece artık $7$'ye indi; bu bizim kalanımızdır.
+
+**3. adım — bayta dönüş.** $x^7 + x^6 + 1 = 11000001 = \{C1\}$. Sonuç:
+
+$$\{57\} \cdot \{83\} = \{C1\}$$
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## xtime: $\{02\}$ ile Çarpmanın Kısayolu
+
+Görünüşte hantal olan bu çarpma, donanımda neden ışık hızındadır? Sır, $x$ ile — yani $\{02\}$ baytıyla — çarpmanın sadeliğindedir. $x$ ile çarpmak her terimin derecesini bir artırır; bayt dilinde bu, **baytı $1$ bit sola kaydırmaktır**. İki durum vardır:
+
+* En soldaki bit $b_7 = 0$ ise kaydırma yeterlidir; sonuç zaten bayta sığar.
+* $b_7 = 1$ ise kaydırma sonucunda bir $x^8$ terimi doğar. $m(x)$'ten dolayı $x^8 \equiv x^4 + x^3 + x + 1 \pmod{m(x)}$ olduğundan, taşan bit atılır ve sonuç $\{1B\}$ ile XOR'lanır.
+
+AES literatürü bu işleme **xtime** adını verir. İki hızlı örnek:
+
+$$\{57\} \cdot \{02\}: \quad 01010111 \xrightarrow{\;\text{kaydır}\;} 10101110 = \{AE\} \quad (\text{taşma yok})$$
+
+$$\{AE\} \cdot \{02\}: \quad 10101110 \xrightarrow{\;\text{kaydır}\;} \mathbf{1}\,01011100 \xrightarrow{\;\mathbf{1}\text{ at, }\oplus \{1B\}\;} 01000111 = \{47\}$$
+
+Herhangi bir baytla çarpma, xtime zincirinin uygun halkalarının XOR'lanmasıyla elde edilir. Bunu bir örnekle görelim.
+
+:::: {#exm-xtime-zincir}
+$\mathrm{GF}(2^8)$'de $\{57\} \cdot \{13\}$ çarpımını xtime zinciriyle hesaplayınız.
+
+::: {.cozum}
+Önce çarpanı ikinin kuvvetlerine ayıralım: $\{13\} = 00010011$, yani $\{13\} = \{10\} \oplus \{02\} \oplus \{01\}$. Cisim aksiyomlarındaki dağılma özelliği sayesinde:
+
+$$\{57\} \cdot \{13\} = \{57\} \cdot \{10\} \;\oplus\; \{57\} \cdot \{02\} \;\oplus\; \{57\} \cdot \{01\}$$
+
+Şimdi xtime'ı zincirleme uygulayarak $\{57\}$'nin ikinin kuvvetleriyle çarpımlarını üretelim:
+
+$$
+\begin{aligned}
+\{57\} \cdot \{01\} &= \{57\} \\
+\{57\} \cdot \{02\} &= \{AE\} \\
+\{57\} \cdot \{04\} &= \{AE\} \cdot \{02\} = \{47\} \\
+\{57\} \cdot \{08\} &= \{47\} \cdot \{02\} = \{8E\} \\
+\{57\} \cdot \{10\} &= \{8E\} \cdot \{02\} = \{07\}
+\end{aligned}
+$$
+
+İhtiyacımız olan üç halkayı XOR'layalım:
+
+$$\{07\} \oplus \{AE\} \oplus \{57\}: \quad 00000111 \oplus 10101110 \oplus 01010111 = 11111110$$
+
+Sonuç:
+
+$$\{57\} \cdot \{13\} = \{FE\}$$
+
+AES'in MixColumns adımı donanımda tam olarak bu yöntemle hesaplanır: kocaman bir cisim çarpması, birkaç bit kaydırma ve XOR'a dönüşür.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## Her Baytın Tersi Var
+
+Gelelim bu bölümü başlatan soruya: bölme çalışıyor mu? Evet. $m(x)$ indirgenemez olduğu için mod $m(x)$ polinom aritmetiği gerçekten bir cisimdir: **sıfır dışındaki $255$ baytın her birinin çarpımsal tersi vardır** (ispatsız kabul ediyoruz). Üstelik tam sayılar için öğrendiğimiz genişletilmiş Öklid algoritması, neredeyse hiç değişmeden polinomlar için de çalışır ve bu tersleri hızla bulur. Örneğin $\{53\} \cdot \{CA\} = \{01\}$ olduğundan $\{53\}^{-1} = \{CA\}$'dır.
+
+Bu tersler bir sonraki hedefimizin kalbinde atar: [AES bölümünde](aes.qmd) göreceğimiz **S-kutusu**, her baytı önce $\mathrm{GF}(2^8)$'deki çarpımsal tersiyle değiştirir — algoritmanın doğrusal olmayan gücü, yani Shannon'un karışıklık prensibi buradan gelir. **MixColumns** adımı ise sütunları $\{01\}, \{02\}, \{03\}$ sabitleriyle çarparak yayılmayı sağlar.
+
+## Özet: Cisim Teorisi Çipe Sığıyor
+
+| $\mathrm{GF}(2^8)$ işlemi | Bilgisayar nasıl yapar? | AES'te nerede? |
+| :--- | :--- | :--- |
+| Toplama = çıkarma | Tek bir XOR komutu | AddRoundKey (tur anahtarı ekleme) |
+| $\{02\}$ ile çarpma | $1$ bit sola kaydır; taşarsa $\{1B\}$ ile XOR (xtime) | MixColumns |
+| $\{03\}$ ile çarpma | xtime sonucu $\oplus$ baytın kendisi | MixColumns |
+| Ters alma $b^{-1}$ | $256$ girişlik hazır tablo | SubBytes (S-kutusu) |
+
+: $\mathrm{GF}(2^8)$ aritmetiğinin donanımdaki karşılıkları {#tbl-gf-ozet}
+
+Soyut cebirin en zarif yapılarından biri, çipin üzerinde birkaç XOR kapısına ve bir kaydırıcıya dönüşüyor — kriptografinin güzelliği tam da bu köprüde saklı. Artık [DES'in](des.qmd) bit permütasyonlarına ve ardından bu aritmetiğin üzerinde yükselen [AES'e](aes.qmd) hazırız.

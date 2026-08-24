@@ -26,7 +26,8 @@ Bu sayede devasa müfredat birbirine karışmaz ve her ders kendi izolasyonunda 
 │   ├── 📄 collapsible.lua       # Pandoc filtresi: çözüm/ispat blokları, emoji temizliği, müfredat kutusu
 │   ├── 📄 svg_plot.py           # Tema uyumlu, bağımlılıksız SVG çizim yardımcısı
 │   ├── 📄 stochastic_figures.py # Raslantı Süreçleri grafiklerini üretir (çıktı .qmd'ye elle gömülür)
-│   └── 📄 complex_figures.py    # Kompleks Analiz grafiklerini üretir
+│   ├── 📄 complex_figures.py    # Kompleks Analiz grafiklerini üretir
+│   └── 📄 crypto_figures.py     # Kriptografi grafiklerini üretir
 │
 ├── 📂 .github/workflows/
 │   └── 📄 deploy.yml            # CI/CD: derle → Cloudflare Pages'e yayınla
@@ -171,7 +172,7 @@ Dikkat edilecek noktalar:
 - **Matematik:** Satır içi `$…$`, blok `$$…$$`. MathJax'te bulunmayan komutlardan (`\centernot` gibi) kaçının.
 - **Ondalık ayırıcı:** Türkçe metinde virgül — matematik modunda `$0{,}6$` biçiminde yazılır.
 - **Callout başlıkları:** Emoji yazabilirsiniz; filtre çıktıda otomatik temizler. Bölüm başlıklarındaki emojilere dokunulmaz.
-- **Grafikler:** Çizimler derleme sırasında üretilmez. `scripts/svg_plot.py` yardımcısıyla yazılmış üretici betikler (`scripts/complex_figures.py`, `scripts/stochastic_figures.py`) çalıştırılır, ardından `scripts/center_figures.py` her çizimin görünür içeriğini ölçüp viewBox'ı ortalar; çıktı `scripts/_figures/*.md` dosyalarına yazılır ve ilgili `.qmd` dosyasına elle yapıştırılır. Grafikler tanım/teorem kutularının **içine değil**, kutunun üstüne ya da altına konur. SVG'ler tema renklerini CSS değişkenlerinden (`--color-theory` vb.) aldığı için açık ve koyu temada doğru görünür.
+- **Grafikler:** Çizimler derleme sırasında üretilmez. `scripts/svg_plot.py` yardımcısıyla yazılmış üretici betikler (`scripts/complex_figures.py`, `scripts/crypto_figures.py`, `scripts/stochastic_figures.py`) çalıştırılır, ardından `scripts/center_figures.py` her çizimin görünür içeriğini ölçüp viewBox'ı ortalar; çıktı `scripts/_figures/*.md` dosyalarına yazılır ve ilgili `.qmd` dosyasına elle yapıştırılır. Grafikler tanım/teorem kutularının **içine değil**, kutunun üstüne ya da altına konur. SVG'ler tema renklerini CSS değişkenlerinden (`--color-theory` vb.) aldığı için açık ve koyu temada doğru görünür.
 
 ## 🤝 Katkıda Bulunma
 
