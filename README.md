@@ -4,6 +4,8 @@ Lisans matematik derslerinden derlenmiş; karmaşık el yazılarından arındır
 
 Bu proje, Türkçe matematik literatüründeki dağınık ve okunması zor kaynak problemini çözmek ve öğrenciler için erişilebilir bir dijital kütüphane yaratmak amacıyla oluşturulmuştur.
 
+🌐 Canlı site: **[acik-matematik.com](https://acik-matematik.com)**
+
 ## 🏗️ Proje Mimarisi
 
 Proje, standart bir web sitesi yerine **çoklu kütüphane (multi-project)** mimarisiyle inşa edilmiştir. Kök dizin bir portal (katalog) görevi görürken, her ders kendi içinde bağımsız ve otomatik numaralandırmalı birer **Quarto kitabı** olarak çalışır.
@@ -23,7 +25,12 @@ Bu sayede devasa müfredat birbirine karışmaz ve her ders kendi izolasyonunda 
 │
 ├── 📂 scripts/
 │   ├── 📄 build.py              # Portalı + tüm kitapları derleyip _site'a toplar
+│   ├── 📄 export.py             # Her dersi (alt dersleri) PDF/EPUB/DOCX olarak üretir
 │   ├── 📄 collapsible.lua       # Pandoc filtresi: çözüm/ispat blokları, emoji temizliği, müfredat kutusu
+│   ├── 📄 export_figures.lua    # Pandoc filtresi: gömülü SVG çizimleri PDF/EPUB/DOCX için şekle çevirir
+│   ├── 📄 export_math.lua       # Pandoc filtresi: \tag, vmatrix, array gibi yapıları Typst'e uyarlar
+│   ├── 📄 downloads.lua         # Pandoc filtresi: müfredat sayfasına indirme panelini ekler
+│   ├── 📂 export-assets/        # Dışa aktarma şablonları: Typst altbilgi/kapak-lisans/gövde ayarları + EPUB meta verisi
 │   ├── 📄 svg_plot.py           # Tema uyumlu, bağımlılıksız SVG çizim yardımcısı
 │   ├── 📄 stochastic_figures.py # Raslantı Süreçleri grafiklerini üretir (çıktı .qmd'ye elle gömülür)
 │   ├── 📄 complex_figures.py    # Kompleks Analiz grafiklerini üretir
@@ -60,7 +67,7 @@ Böylece tema, tipografi, Türkçe teorem/tanım etiketleri (`Teorem`, `Tanım`,
 
 ## 🚀 Yerel Geliştirme
 
-Derlemek için sisteminizde [Quarto CLI](https://quarto.org/docs/get-started/) (1.9+) ve Python 3.8+ kurulu olmalıdır.
+Derlemek için sisteminizde [Quarto CLI](https://quarto.org/docs/get-started/) (1.9.17+; CI 1.9.38 kullanır — PDF dışa aktarmanın dayandığı Typst kitap şablonu bu sürümle gelir) ve Python 3.8+ kurulu olmalıdır.
 
 **1. Projeyi klonlayın:**
 
@@ -94,14 +101,44 @@ cd dersler/kriptografi
 quarto preview
 ```
 
+**5. Yalnızca HTML (hızlı derleme):**
+
+`build.py` her dersin PDF/EPUB/DOCX dosyalarını da üretir (aşağıya bakınız). Yalnızca web sürümüyle ilgileniyorsanız bu adımı atlayabilirsiniz:
+
+```bash
+python scripts/build.py kriptografi --no-export
+```
+
+## 📥 İndirilebilir Dosyalar (PDF / EPUB / DOCX)
+
+Her ders — dönemlere bölünmüş derslerde her **alt ders** (Cebir 1, Cebir 2, Lineer Cebir 1/2 …) — ayrı bir PDF, EPUB ve DOCX dosyası olarak indirilebilir. Bağlantılar dersin müfredat sayfasındaki "Notları indirin" panelinde yer alır.
+
+- **Üretim:** `scripts/export.py`, `build.py` tarafından her kitabın HTML derlemesinden önce çağrılır; elle de çalıştırılabilir:
+
+  ```bash
+  python scripts/export.py                    # tüm dersler
+  python scripts/export.py soyut-cebir        # tek ders
+  python scripts/export.py analiz --formats pdf
+  ```
+
+- **Alt dersler nereden bilinir?** Kitabın `index.qmd` sayfasındaki ikinci düzey başlıklardan (`## Cebir 1 — Grup Teorisi` gibi). Bir başlığın altında bağlantısı bulunan bölümler o alt dersin dosyasına girer; henüz hiç bölümü yazılmamış alt dersler ve yalnızca müfredat sayfasından ibaret kitaplar atlanır. Alt ders başlığı olmayan kitaplar (`## Ders İçeriği`) tek dosya olarak üretilir. Ayrıca — birden çok alt ders varsa ya da hiçbir alt ders başlığına bağlanmamış bölümler kaldıysa — kitabın tamamı da tek dosya olarak sunulur.
+- **PDF nasıl üretiliyor?** LaTeX değil, Quarto ile birlikte gelen **Typst** kullanılır: ek kurulum gerektirmez, saniyeler içinde derlenir ve satır içi SVG çizimleri doğrudan vektör olarak basar. Kapak dışındaki her sayfanın altında site adresi ve lisans (CC BY-NC-SA 4.0), kapağın arkasındaki sayfada ise lisans açıklaması yer alır (`scripts/export-assets/`).
+- **Üretim mekanizması:** Quarto profilleri `book.chapters` listesini değiştirmek yerine ona eklediğinden, her birim `_export-src/<ders>/` altındaki geçici bir kopyadan, üretilmiş bir `_quarto.yml` ile derlenir. Çıktılar `_export/<ders>/` altına yazılır, kitapla birlikte `_site/dersler/<ders>/` altına kopyalanır; `dersler/<ders>/_downloads.json` manifesti panelin kaynağıdır. Bu dizinlerin hepsi `.gitignore`'dadır.
+- **Bilinmesi gerekenler:**
+  - Alt ders dosyalarında bölüm numaraları 1'den başlar (site kitap boyunca kesintisiz numaralar); dosyanın kendi içindeki çapraz referanslar tutarlıdır. Kitabın ilk alt dersinde ve tek dosyalık kitaplarda numaralar siteyle birebir aynıdır (giriş sayfası numarasızdır).
+  - Bir dışa aktarma başarısız olursa `build.py` her şeyi bitirdikten sonra hata koduyla çıkar; CI bunu ve "manifesti olup PDF'i olmayan ders" durumunu yakalar.
+  - `\tag{…}` etiketleri, `vmatrix` ve `\begin{array}` (dikey/yatay çizgileriyle) Typst'e `export_math.lua` ile uyarlanır. Pandoc'un tanımadığı yeni bir LaTeX makrosu PDF derlemesini durdurur; `export.py` hangi dosyanın hangi yapıda takıldığını yazdırır, karşılığı `export_math.lua` içindeki `MACROS` tablosuna eklenir.
+  - Etkileşimli hesaplayıcılar (yalnızca web) PDF'te tek satırlık bir notla belirtilir.
+  - Tarih ("Bu sürüm") son commit'in tarihidir; aynı commit yeniden derlendiğinde dosyalar değişmez.
+
 ## 🌍 Yayınlama (CI/CD)
 
 `main` dalına yapılan her push, GitHub Actions üzerinden şu adımları tetikler:
 
 1. Quarto ve Python kurulur.
-2. `scripts/build.py` ile tüm site derlenir.
-3. Çıktı doğrulanır (ana sayfa ve katalog üretilmiş mi?).
-4. `_site/` dizini **Cloudflare Pages**'e yayınlanır.
+2. `scripts/build.py` ile tüm site derlenir (her dersin PDF/EPUB/DOCX dosyaları dâhil).
+3. Çıktı doğrulanır (ana sayfa ve katalog üretilmiş mi, en az bir PDF var mı?).
+4. `_site/` dizini **Cloudflare Pages**'e yayınlanır; üretim dağıtımı [acik-matematik.com](https://acik-matematik.com) özel alan adından yayınlanır (alan adı Cloudflare panelinde Pages projesine bağlıdır).
 
 Pull request'ler için ayrıca birer önizleme dağıtımı oluşturulur.
 
@@ -177,6 +214,8 @@ Dikkat edilecek noktalar:
 ## 🤝 Katkıda Bulunma
 
 Eksik bir ispat, hatalı bir işlem veya eklenmesini istediğiniz yeni bir teorem mi gördünüz? Bu arşiv hepimizin.
+
+**Dil kuralı:** İçerik (notlar, başlıklar, arayüz metinleri, grafik etiketleri) Türkçe; **kod İngilizce** yazılır — `scripts/` altındaki betikler ve Lua filtreleri, `styles/global.css` (yorumlar ve sınıf adları), YAML yapılandırma yorumları, CI iş akışı ve `.qmd` içine gömülü JavaScript dâhil. Yalnızca notların yazım sözlüğü (`::: {.cozum}`, `.ispat`, `baslik=`, `acik=`, `ders-grafik`) Türkçe kalır.
 
 1. Bu depoyu **fork**'layın.
 2. Yeni bir dal oluşturun: `git checkout -b ozellik/yeni-teorem`

@@ -1,4 +1,4 @@
-name: Derle ve Cloudflare Pages'e yayınla
+name: Build and deploy to Cloudflare Pages
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Aynı anda tek bir yayın işi çalışsın; art arda gelen push'larda
-# yarıda kalanlar iptal edilmesin (yayın bütünlüğü için).
+# Only one deployment at a time; do not cancel a run that is already in
+# progress when pushes arrive back to back (keeps deployments consistent).
 concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
@@ -19,38 +19,44 @@ permissions:
 
 jobs:
   build:
-    name: Siteyi derle
+    name: Build the site
     runs-on: ubuntu-latest
     steps:
-      - name: Depoyu çek
+      - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Quarto kur
+      - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: 1.9.38
 
-      - name: Python kur
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Sürümleri yazdır
+      - name: Print tool versions
         run: |
           quarto --version
           python3 --version
 
-      - name: Tüm siteyi derle
+      - name: Build the whole site
         run: python3 scripts/build.py
 
-      - name: Derleme çıktısını doğrula
+      - name: Verify the build output
         run: |
-          test -f _site/index.html || { echo "::error::_site/index.html üretilmedi"; exit 1; }
-          test -f _site/dersler/index.html || { echo "::error::ders kataloğu üretilmedi"; exit 1; }
-          echo "Üretilen HTML sayfa sayısı: $(find _site -name '*.html' | wc -l)"
-          echo "Toplam boyut: $(du -sh _site | cut -f1)"
+          test -f _site/index.html || { echo "::error::_site/index.html was not produced"; exit 1; }
+          test -f _site/dersler/index.html || { echo "::error::the course catalog was not produced"; exit 1; }
+          echo "HTML pages: $(find _site -name '*.html' | wc -l)"
+          echo "Downloadable files: $(find _site -name '*.pdf' | wc -l) PDF, $(find _site -name '*.epub' | wc -l) EPUB, $(find _site -name '*.docx' | wc -l) DOCX"
+          test "$(find _site -name '*.pdf' | wc -l)" -gt 0 || { echo "::error::no PDF was produced (scripts/export.py)"; exit 1; }
+          for m in dersler/*/_downloads.json; do
+            d="_site/dersler/$(basename "$(dirname "$m")")"
+            ls "$d"/*.pdf >/dev/null 2>&1 || { echo "::error::$d has a download manifest but no PDF"; exit 1; }
+          done
+          echo "Total size: $(du -sh _site | cut -f1)"
 
-      - name: Çıktıyı arşivle
+      - name: Upload the build artifact
         uses: actions/upload-artifact@v4
         with:
           name: site
@@ -58,22 +64,22 @@ jobs:
           retention-days: 7
 
   deploy:
-    name: Cloudflare Pages'e yayınla
+    name: Deploy to Cloudflare Pages
     needs: build
     runs-on: ubuntu-latest
-    # Fork'lardan gelen PR'lar gizli anahtarlara erişemez; deneyip hata vermesin.
+    # Pull requests from forks cannot read the secrets; skip instead of failing.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
       url: ${{ steps.cloudflare.outputs.deployment-url }}
     steps:
-      - name: Derlenmiş siteyi indir
+      - name: Download the built site
         uses: actions/download-artifact@v4
         with:
           name: site
           path: _site
 
-      - name: Cloudflare Pages'e gönder
+      - name: Publish to Cloudflare Pages
         id: cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
@@ -84,8 +90,9 @@ jobs:
             --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME || 'acik-matematik' }}
             --branch=${{ github.head_ref || github.ref_name }}
 
-      - name: Yayın adresini özetle
+      - name: Summarize the deployment
         run: |
-          echo "### 🌿 Yayınlandı" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌿 Deployed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.cloudflare.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment: ${{ steps.cloudflare.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "Production: https://acik-matematik.com" >> $GITHUB_STEP_SUMMARY

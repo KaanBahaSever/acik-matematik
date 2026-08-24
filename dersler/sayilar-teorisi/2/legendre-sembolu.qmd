@@ -113,83 +113,83 @@ Dördüncü özellik pratikte şu anlama gelir: $-1$ sayısı, ancak ve ancak $p
 Legendre sembolünün tanımını ve özelliklerini öğrendikten sonra, farklı $a$ ve $p$ değerleri için sembolün nasıl davrandığını gözlemlemek faydalı olacaktır. Aşağıdaki araç, herhangi bir $a$ ve tek asal $p$ değeri için $\left( \frac{a}{p} \right)$ değerini Euler kriteriyle hesaplar.
 
 ```{=html}
-<div class="hesaplayici" id="legendre-hesaplayici">
+<div class="calculator" id="legendre-calculator">
   <h4>Legendre Sembolü Hesaplayıcı</h4>
 
-  <div class="hesap-satir">
+  <div class="calc-row">
     <label>
       <span>Tam sayı (a)</span>
-      <input type="number" data-rol="a" value="3">
+      <input type="number" data-role="a" value="3">
     </label>
     <label>
       <span>Tek asal (p)</span>
-      <input type="number" data-rol="p" value="13" min="3">
+      <input type="number" data-role="p" value="13" min="3">
     </label>
   </div>
 
   <label>
     <span>Sonuç</span>
-    <output data-rol="cikti"></output>
+    <output data-role="output"></output>
   </label>
 
-  <p class="hesap-not" data-rol="aciklama"></p>
+  <p class="calc-note" data-role="explanation"></p>
 </div>
 
 <script>
 (function () {
-  const kutu = document.getElementById("legendre-hesaplayici");
-  const al = (rol) => kutu.querySelector('[data-rol="' + rol + '"]');
-  const aGir = al("a"), pGir = al("p");
-  const cikti = al("cikti"), aciklama = al("aciklama");
+  const box = document.getElementById("legendre-calculator");
+  const get = (role) => box.querySelector('[data-role="' + role + '"]');
+  const aInput = get("a"), pInput = get("p");
+  const output = get("output"), explanation = get("explanation");
 
-  const asalMi = (n) => {
+  const isPrime = (n) => {
     if (n < 2) return false;
     for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
     return true;
   };
 
-  // Euler kriteri: a^((p-1)/2) mod p  — ardışık kare alma ile
-  const modUs = (taban, us, mod) => {
-    let sonuc = 1n, t = ((BigInt(taban) % BigInt(mod)) + BigInt(mod)) % BigInt(mod);
-    let e = BigInt(us), m = BigInt(mod);
+  // Euler's criterion: a^((p-1)/2) mod p, by repeated squaring
+  const modPow = (base, exponent, modulus) => {
+    let result = 1n, t = ((BigInt(base) % BigInt(modulus)) + BigInt(modulus)) % BigInt(modulus);
+    let e = BigInt(exponent), m = BigInt(modulus);
     while (e > 0n) {
-      if (e & 1n) sonuc = (sonuc * t) % m;
+      if (e & 1n) result = (result * t) % m;
       t = (t * t) % m;
       e >>= 1n;
     }
-    return Number(sonuc);
+    return Number(result);
   };
 
-  function hesapla() {
-    const a = Number(aGir.value), p = Number(pGir.value);
+  function compute() {
+    const a = Number(aInput.value), p = Number(pInput.value);
 
-    if (!Number.isInteger(a) || !Number.isInteger(p) || p < 3 || !asalMi(p) || p === 2) {
-      cikti.textContent = "—";
-      aciklama.innerHTML = '<span class="hesap-hata">p, 2\'den büyük bir asal sayı olmalıdır.</span>';
+    if (!Number.isInteger(a) || !Number.isInteger(p) || p < 3 || !isPrime(p) || p === 2) {
+      output.textContent = "—";
+      explanation.innerHTML = '<span class="calc-error">p, 2\'den büyük bir asal sayı olmalıdır.</span>';
       return;
     }
 
-    const kalan = ((a % p) + p) % p;
-    if (kalan === 0) {
-      cikti.textContent = "( " + a + " / " + p + " ) = 0";
-      aciklama.textContent = "p sayısı a'yı tam böldüğü için sembol 0 değerini alır.";
+    const residue = ((a % p) + p) % p;
+    if (residue === 0) {
+      output.textContent = "( " + a + " / " + p + " ) = 0";
+      explanation.textContent = "p sayısı a'yı tam böldüğü için sembol 0 değerini alır.";
       return;
     }
 
-    const us = modUs(kalan, (p - 1) / 2, p);
-    const deger = us === 1 ? 1 : -1;
+    const exponent = modPow(residue, (p - 1) / 2, p);
+    const value = exponent === 1 ? 1 : -1;
 
-    cikti.textContent = "( " + a + " / " + p + " ) = " + deger;
-    aciklama.textContent =
-      "Euler kriteri: " + kalan + "^" + ((p - 1) / 2) + " ≡ " + us + " (mod " + p + ")  ⇒  " +
-      (deger === 1 ? "a bir kuadratik rezidüdür (KR)." : "a bir kuadratik non-rezidüdür (KNR).");
+    output.textContent = "( " + a + " / " + p + " ) = " + value;
+    explanation.textContent =
+      "Euler kriteri: " + residue + "^" + ((p - 1) / 2) + " ≡ " + exponent + " (mod " + p + ")  ⇒  " +
+      (value === 1 ? "a bir kuadratik rezidüdür (KR)." : "a bir kuadratik non-rezidüdür (KNR).");
   }
 
-  [aGir, pGir].forEach((el) => {
-    el.addEventListener("input", hesapla);
-    el.addEventListener("change", hesapla);
+  [aInput, pInput].forEach((el) => {
+    el.addEventListener("input", compute);
+    el.addEventListener("change", compute);
   });
-  hesapla();
+  compute();
 })();
 </script>
 ```
