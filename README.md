@@ -34,7 +34,8 @@ Bu sayede devasa müfredat birbirine karışmaz ve her ders kendi izolasyonunda 
 │   ├── 📄 svg_plot.py           # Tema uyumlu, bağımlılıksız SVG çizim yardımcısı
 │   ├── 📄 stochastic_figures.py # Raslantı Süreçleri grafiklerini üretir (çıktı .qmd'ye elle gömülür)
 │   ├── 📄 complex_figures.py    # Kompleks Analiz grafiklerini üretir
-│   └── 📄 crypto_figures.py     # Kriptografi grafiklerini üretir
+│   ├── 📄 crypto_figures.py     # Kriptografi grafiklerini üretir
+│   └── 📄 analysis_figures.py   # Analiz grafiklerini üretir
 │
 ├── 📂 .github/workflows/
 │   └── 📄 deploy.yml            # CI/CD: derle → Cloudflare Pages'e yayınla
@@ -129,6 +130,7 @@ Her ders — dönemlere bölünmüş derslerde her **alt ders** (Cebir 1, Cebir 
   - Bir dışa aktarma başarısız olursa `build.py` her şeyi bitirdikten sonra hata koduyla çıkar; CI bunu ve "manifesti olup PDF'i olmayan ders" durumunu yakalar.
   - `\tag{…}` etiketleri, `vmatrix` ve `\begin{array}` (dikey/yatay çizgileriyle) Typst'e `export_math.lua` ile uyarlanır. Pandoc'un tanımadığı yeni bir LaTeX makrosu PDF derlemesini durdurur; `export.py` hangi dosyanın hangi yapıda takıldığını yazdırır, karşılığı `export_math.lua` içindeki `MACROS` tablosuna eklenir.
   - Etkileşimli hesaplayıcılar (yalnızca web) PDF'te tek satırlık bir notla belirtilir.
+  - Typst etiketli PDF üretir; yapı ağacı sayfa başına yüzlerce küçük nesneden oluştuğu için uzun kitaplarda dosya şişer (Analiz 1: 420 sayfa, 21 MB). Makinede **PyMuPDF** kuruluysa (`pip install pymupdf`) `export.py` PDF'i nesne akışlarıyla yeniden yazar ve dosya üçte birine iner (6,6 MB); kurulu değilse bu adım sessizce atlanır. Cloudflare Pages tek dosyada 25 MiB sınırı koyduğundan CI'da da kurulması önerilir.
   - Tarih ("Bu sürüm") son commit'in tarihidir; aynı commit yeniden derlendiğinde dosyalar değişmez.
 
 ## 🌍 Yayınlama (CI/CD)
@@ -209,7 +211,7 @@ Dikkat edilecek noktalar:
 - **Matematik:** Satır içi `$…$`, blok `$$…$$`. MathJax'te bulunmayan komutlardan (`\centernot` gibi) kaçının.
 - **Ondalık ayırıcı:** Türkçe metinde virgül — matematik modunda `$0{,}6$` biçiminde yazılır.
 - **Callout başlıkları:** Emoji yazabilirsiniz; filtre çıktıda otomatik temizler. Bölüm başlıklarındaki emojilere dokunulmaz.
-- **Grafikler:** Çizimler derleme sırasında üretilmez. `scripts/svg_plot.py` yardımcısıyla yazılmış üretici betikler (`scripts/complex_figures.py`, `scripts/crypto_figures.py`, `scripts/stochastic_figures.py`) çalıştırılır, ardından `scripts/center_figures.py` her çizimin görünür içeriğini ölçüp viewBox'ı ortalar; çıktı `scripts/_figures/*.md` dosyalarına yazılır ve ilgili `.qmd` dosyasına elle yapıştırılır. Bir teoremi, ispatı, örneği ya da çözümü açıklayan grafik **o kutunun içine**, anlattığı adımın hemen yanına konur; kutudan çıkarılırsa bağlam kopar. Yalnızca **tanım kutularının** (`def-…`) içine grafik konmaz — tanım kısa kalır, grafik kutunun altına gelir. SVG'ler tema renklerini CSS değişkenlerinden (`--color-theory` vb.) aldığı için açık ve koyu temada doğru görünür.
+- **Grafikler:** Çizimler derleme sırasında üretilmez. `scripts/svg_plot.py` yardımcısıyla yazılmış üretici betikler (`scripts/complex_figures.py`, `scripts/crypto_figures.py`, `scripts/stochastic_figures.py`, `scripts/analysis_figures.py`) çalıştırılır, ardından `scripts/center_figures.py` her çizimin görünür içeriğini ölçüp viewBox'ı ortalar (varsayılan desen `complex-*.md`'dir; başka bir ders için desen verilir: `python scripts/center_figures.py "analysis-*.md"`); çıktı `scripts/_figures/*.md` dosyalarına yazılır ve ilgili `.qmd` dosyasına elle yapıştırılır. Bir teoremi, ispatı, örneği ya da çözümü açıklayan grafik **o kutunun içine**, anlattığı adımın hemen yanına konur; kutudan çıkarılırsa bağlam kopar. Yalnızca **tanım kutularının** (`def-…`) içine grafik konmaz — tanım kısa kalır, grafik kutunun altına gelir. SVG'ler tema renklerini CSS değişkenlerinden (`--color-theory` vb.) aldığı için açık ve koyu temada doğru görünür.
 
 ## 🤝 Katkıda Bulunma
 
