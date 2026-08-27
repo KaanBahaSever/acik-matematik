@@ -7,77 +7,107 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Only one deployment at a time; do not cancel a run that is already in
-# progress when pushes arrive back to back (keeps deployments consistent).
+# One run at a time per ref. A deployment of main must never be cut in half,
+# but a pull-request build that a newer push has superseded is safe to cancel.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
   deployments: write
 
 jobs:
-  build:
-    name: Build the site
-    runs-on: [self-hosted, Windows, X64] # BAHA-PC Windows Runner'a yönlendirildi
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-
-      # Quarto ve Python kurulum adımları silindi. 
-      # Sistemde kurulu olan sürümler kullanılacak.
-
-      - name: Print tool versions
-        shell: bash # Windows'ta Bash komutlarının çalışması için eklendi
-        run: |
-          quarto --version
-          python --version
-
-      - name: Build the whole site
-        shell: bash
-        run: python scripts/build.py
-
-      - name: Verify the build output
-        shell: bash # Linux komutlarının (find, wc, test vb.) Windows'ta hata vermemesi için kritik
-        run: |
-          test -f _site/index.html || { echo "::error::_site/index.html was not produced"; exit 1; }
-          test -f _site/dersler/index.html || { echo "::error::the course catalog was not produced"; exit 1; }
-          echo "HTML pages: $(find _site -name '*.html' | wc -l)"
-          echo "Downloadable files: $(find _site -name '*.pdf' | wc -l) PDF, $(find _site -name '*.epub' | wc -l) EPUB, $(find _site -name '*.docx' | wc -l) DOCX"
-          test "$(find _site -name '*.pdf' | wc -l)" -gt 0 || { echo "::error::no PDF was produced (scripts/export.py)"; exit 1; }
-          for m in dersler/*/_downloads.json; do
-            d="_site/dersler/$(basename "$(dirname "$m")")"
-            ls "$d"/*.pdf >/dev/null 2>&1 || { echo "::error::$d has a download manifest but no PDF"; exit 1; }
-          done
-          echo "Total size: $(du -sh _site | cut -f1)"
-
-      - name: Upload the build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: site
-          path: _site
-          retention-days: 7
-
   deploy:
-    name: Deploy to Cloudflare Pages
-    needs: build
-    runs-on: [self-hosted, Windows, X64] # Deploy adımı da yerel makinede yapılacak
-    # Pull requests from forks cannot read the secrets; skip instead of failing.
+    name: Build and deploy
+    # Building and deploying happen on the same machine, so they are one job:
+    # splitting them meant pushing the whole _site directory to GitHub as an
+    # artifact and pulling it straight back down again.
+    runs-on: [self-hosted, Windows, X64] # BAHA-PC Windows Runner'a yönlendirildi
+    # This repository is public and the runner is a personal machine, so a fork's
+    # pull request must never execute code on it. Forks cannot read the Cloudflare
+    # secrets either, so such a run could not have deployed anything anyway.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Runs are serialised, so a hung build would block every later deployment.
+    timeout-minutes: 120
+    defaults:
+      run:
+        # The "bash" on this runner's PATH is the WSL app-execution alias under
+        # WindowsApps. It reads the Windows-style path of the temporary .sh file
+        # the runner writes as an escape sequence and fails with "No such file or
+        # directory", so point every run step straight at Git Bash instead. The
+        # first step below checks that it is really there.
+        shell: 'C:\Program Files\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
       url: ${{ steps.cloudflare.outputs.deployment-url }}
     steps:
-      - name: Download the built site
-        uses: actions/download-artifact@v4
-        with:
-          name: site
-          path: _site
+      # Also put Git Bash ahead of the WSL alias on PATH, for any action that
+      # shells out to bash on its own.
+      - name: Make Git Bash the bash on PATH
+        shell: powershell
+        run: |
+          $gitBin = 'C:\Program Files\Git\bin'
+          if (-not (Test-Path (Join-Path $gitBin 'bash.exe'))) {
+            throw "Git Bash is missing from $gitBin. Install Git for Windows on the runner, or correct the shell path in .github/workflows/deploy.yml."
+          }
+          $gitBin | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      # Quarto ve Python kurulum adımları yok; sistemde kurulu sürümler kullanılır.
+      - name: Print tool versions
+        run: |
+          for tool in quarto python node; do
+            command -v "$tool" >/dev/null || { echo "::error::$tool is not on the runner's PATH"; exit 1; }
+          done
+          echo "bash    $(which bash)"
+          echo "quarto  $(quarto --version)"
+          echo "python  $(python --version)"
+          echo "node    $(node --version)"
+
+      # Checked before the build so a missing secret fails in seconds instead of
+      # after the full render.
+      - name: Check the deploy credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::the CLOUDFLARE_API_TOKEN secret is not set"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::the CLOUDFLARE_ACCOUNT_ID secret is not set"; exit 1; }
+
+      - name: Build the whole site
+        run: python scripts/build.py
+
+      - name: Verify the build output
+        run: |
+          test -f _site/index.html || { echo "::error::_site/index.html was not produced"; exit 1; }
+          test -f _site/dersler/index.html || { echo "::error::the course catalog was not produced"; exit 1; }
+          count() { find _site -name "$1" | wc -l | tr -d '[:space:]'; }
+          pages=$(count '*.html'); pdf=$(count '*.pdf'); epub=$(count '*.epub'); docx=$(count '*.docx')
+          test "$pdf" -gt 0 || { echo "::error::no PDF was produced (scripts/export.py)"; exit 1; }
+          for manifest in dersler/*/_downloads.json; do
+            test -e "$manifest" || continue
+            course="_site/dersler/$(basename "$(dirname "$manifest")")"
+            ls "$course"/*.pdf >/dev/null 2>&1 || { echo "::error::$course has a download manifest but no PDF"; exit 1; }
+          done
+          echo "HTML pages: $pages"
+          echo "Downloadable files: $pdf PDF, $epub EPUB, $docx DOCX"
+          {
+            echo "### 📚 Built"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| HTML pages | $pages |"
+            echo "| Downloads | $pdf PDF, $epub EPUB, $docx DOCX |"
+            echo "| Total size | $(du -sh _site | cut -f1) |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish to Cloudflare Pages
         id: cloudflare
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -87,9 +117,10 @@ jobs:
             --branch=${{ github.head_ref || github.ref_name }}
 
       - name: Summarize the deployment
-        shell: bash
         run: |
-          echo "### 🌿 Deployed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Deployment: ${{ steps.cloudflare.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
-          echo "Production: https://acik-matematik.com" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### 🌿 Deployed"
+            echo
+            echo "Deployment: ${{ steps.cloudflare.outputs.deployment-url }}"
+            echo "Production: https://acik-matematik.com"
+          } >> "$GITHUB_STEP_SUMMARY"
