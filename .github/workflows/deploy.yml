@@ -20,7 +20,7 @@ permissions:
 jobs:
   build:
     name: Build the site
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64] # BAHA-PC Windows Runner'a yönlendirildi
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -36,14 +36,17 @@ jobs:
           python-version: "3.12"
 
       - name: Print tool versions
+        shell: bash # Windows'ta Bash komutlarının çalışması için eklendi
         run: |
           quarto --version
-          python3 --version
+          python --version
 
       - name: Build the whole site
-        run: python3 scripts/build.py
+        shell: bash
+        run: python scripts/build.py
 
       - name: Verify the build output
+        shell: bash # Linux komutlarının (find, wc, test vb.) Windows'ta hata vermemesi için kritik
         run: |
           test -f _site/index.html || { echo "::error::_site/index.html was not produced"; exit 1; }
           test -f _site/dersler/index.html || { echo "::error::the course catalog was not produced"; exit 1; }
@@ -66,7 +69,7 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Pages
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64] # Deploy adımı da yerel makinede yapılacak
     # Pull requests from forks cannot read the secrets; skip instead of failing.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     environment:
@@ -91,6 +94,7 @@ jobs:
             --branch=${{ github.head_ref || github.ref_name }}
 
       - name: Summarize the deployment
+        shell: bash
         run: |
           echo "### 🌿 Deployed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
