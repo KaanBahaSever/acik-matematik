@@ -352,6 +352,29 @@ def render(copy: Path, fmt: str) -> tuple[bool, str]:
     return result.returncode == 0, log
 
 
+def compact_pdf(path: Path) -> None:
+    """Rewrite a Typst PDF with object streams (PDF 1.5).
+
+    Typst emits a tagged PDF whose structure tree is tens of thousands of tiny
+    objects (about 230 per page); stored one by one they dominate the file
+    size — a 420-page book came out at 21 MB with only 4 MB of real content.
+    Packing them into compressed object streams cuts the file to roughly a
+    third without touching pages, fonts or the outline.
+
+    Optional: needs PyMuPDF (`pip install pymupdf`). Without it the PDF is
+    left as Typst wrote it.
+    """
+    try:
+        import pymupdf
+    except ImportError:
+        return
+    tmp = path.with_name(path.stem + ".compact.pdf")
+    doc = pymupdf.open(path)
+    doc.save(tmp, garbage=1, deflate=True, use_objstms=1)
+    doc.close()
+    tmp.replace(path)
+
+
 def export_course(course: Path, formats: tuple[str, ...] = ALL_FORMATS, today: dt.date | None = None,
                   keep_copy: bool = False) -> dict:
     """Render every unit of `course` in every format; write and return the manifest.
@@ -393,6 +416,8 @@ def export_course(course: Path, formats: tuple[str, ...] = ALL_FORMATS, today: d
             if ok and produced.exists():
                 target = out_dir / produced.name
                 shutil.move(str(produced), target)
+                if fmt == "pdf":
+                    compact_pdf(target)
                 size = target.stat().st_size
                 entry["files"][fmt] = {"name": target.name, "bytes": size}
                 print(f"   {unit.stem}.{fmt}  ({size / 1048576:.1f} MB)")
