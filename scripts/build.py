@@ -16,7 +16,7 @@ Order matters: rendering the root project wipes _site, so the course books
 are rendered and copied AFTER the root project.
 
 Before a course's HTML is rendered, scripts/export.py produces its
-downloadable PDF / EPUB / DOCX files (one per sub-course) and drops a
+downloadable PDF / EPUB files (one per sub-course) and drops a
 manifest next to the course; the download panel on the curriculum page is
 drawn from that manifest, and the files are copied under _site with the
 HTML.
@@ -24,7 +24,7 @@ HTML.
 Usage:
     python scripts/build.py                        # build everything
     python scripts/build.py kriptografi            # build a single course only
-    python scripts/build.py --no-export            # HTML only, skip PDF/EPUB/DOCX
+    python scripts/build.py --no-export            # HTML only, skip PDF/EPUB
 """
 from __future__ import annotations
 
@@ -165,7 +165,7 @@ def main() -> None:
             failures += build_book(book, with_exports)
 
     pages = len(list(SITE.rglob("*.html"))) if SITE.exists() else 0
-    downloads = sum(len(list(SITE.rglob(f"*.{ext}"))) for ext in ("pdf", "epub", "docx")) if SITE.exists() else 0
+    downloads = sum(len(list(SITE.rglob(f"*.{ext}"))) for ext in ("pdf", "epub")) if SITE.exists() else 0
     print(f"\n\033[1mDone.\033[0m {pages} HTML pages, {downloads} downloadable files, "
           f"{time.time() - started:.1f} s -> {SITE}")
     if failures:
