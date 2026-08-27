@@ -74,8 +74,8 @@ Derlemek için sisteminizde [Quarto CLI](https://quarto.org/docs/get-started/) (
 **1. Projeyi klonlayın:**
 
 ```bash
-git clone https://github.com/KaanBahaSever/math-notebook.git
-cd math-notebook
+git clone https://github.com/KaanBahaSever/acik-matematik.git
+cd acik-matematik
 ```
 
 **2. Tüm siteyi derleyin:**
