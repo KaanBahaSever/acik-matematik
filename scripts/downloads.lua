@@ -1,8 +1,8 @@
 --[[
   Açık Matematik — download panel on the curriculum page (HTML only)
 
-  scripts/export.py renders every course (or its sub-courses) to PDF / EPUB /
-  DOCX and leaves a manifest, dersler/<course>/_downloads.json, next to the
+  scripts/export.py renders every course (or its sub-courses) to PDF / EPUB
+  and leaves a manifest, dersler/<course>/_downloads.json, next to the
   course. When that manifest exists, this filter draws a panel with the
   download links on the course's index.qmd page, right before the curriculum
   ("Ders İçeriği") heading.
@@ -47,8 +47,8 @@ local function human_size(bytes)
   return (text:gsub("%.", ","))   -- Turkish decimal comma
 end
 
-local FORMAT_LABEL = { pdf = "PDF", epub = "EPUB", docx = "DOCX" }
-local FORMAT_ORDER = { "pdf", "epub", "docx" }
+local FORMAT_LABEL = { pdf = "PDF", epub = "EPUB" }
+local FORMAT_ORDER = { "pdf", "epub" }
 
 local function panel_html(manifest)
   local parts = {}
@@ -72,8 +72,6 @@ local function panel_html(manifest)
     end
   end
   parts[#parts + 1] = '</ul>'
-  parts[#parts + 1] = '<p class="downloads-note">Dosyalar her yayında notlardan yeniden üretilir; ' ..
-    'her sayfanın altında lisans (CC BY-NC-SA 4.0) ve site adresi yer alır.</p>'
   parts[#parts + 1] = '</div>'
   return table.concat(parts, "\n")
 end

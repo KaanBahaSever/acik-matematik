@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Açık Matematik — exports every course (or the sub-courses it is split into)
-as downloadable PDF / EPUB / DOCX files.
+as downloadable PDF / EPUB files.
 
 Why a separate script instead of `quarto render --to pdf` on the book?
 
@@ -20,11 +20,11 @@ resolve unchanged. Quarto silently ignores a missing metadata file, so a
 copy at the wrong depth would render without any of the shared setup.
 
 PDFs are produced with Typst (bundled with Quarto — no TeX installation
-needed, and it renders the inline SVG figures natively). EPUB and DOCX come
-straight from Pandoc.
+needed, and it renders the inline SVG figures natively). EPUB comes straight
+from Pandoc.
 
 Outputs
-    <repo>/_export/<course>/<unit>.{pdf,epub,docx}
+    <repo>/_export/<course>/<unit>.{pdf,epub}
     dersler/<course>/_downloads.json   manifest read by scripts/downloads.lua,
                                         which draws the download panel on the
                                         course's curriculum page
@@ -32,7 +32,7 @@ Outputs
 Usage
     python scripts/export.py                       # every course
     python scripts/export.py kriptografi           # one course
-    python scripts/export.py kriptografi --formats pdf,epub
+    python scripts/export.py kriptografi --formats pdf
 """
 from __future__ import annotations
 
@@ -63,8 +63,8 @@ MAX_FILE_BYTES = 25 * 1024 * 1024
 AUTHOR = "Açık Matematik"
 # Colours, licence text and the site address of the PDF live in
 # scripts/export-assets/{typst-show,footer,body}.typ
-ALL_FORMATS = ("pdf", "epub", "docx")
-QUARTO_FORMAT = {"pdf": "typst", "epub": "epub", "docx": "docx"}
+ALL_FORMATS = ("pdf", "epub")
+QUARTO_FORMAT = {"pdf": "typst", "epub": "epub"}
 
 # Headings on the curriculum page that do NOT start a sub-course (compared
 # as slugs so that "İ" and other Turkish letters need no special casing)
@@ -268,9 +268,6 @@ def export_config(unit: Unit, today: dt.date) -> str:
         "    toc-depth: 2",
         # Pandoc resolves this one itself (not Quarto), so it must be absolute
         f"    epub-metadata: {yaml_str((ROOT / 'scripts' / 'export-assets' / 'epub-metadata.xml').as_posix())}",
-        "  docx:",
-        "    toc: true",
-        "    toc-depth: 2",
         "",
     ]
     return "\n".join(lines)
@@ -457,9 +454,9 @@ def books() -> list[Path]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Export the courses as PDF/EPUB/DOCX.")
+    parser = argparse.ArgumentParser(description="Export the courses as PDF/EPUB.")
     parser.add_argument("course", nargs="?", help="course directory name under dersler/ (default: all)")
-    parser.add_argument("--formats", default=",".join(ALL_FORMATS), help="comma-separated subset of pdf,epub,docx")
+    parser.add_argument("--formats", default=",".join(ALL_FORMATS), help="comma-separated subset of pdf,epub")
     parser.add_argument("--keep", action="store_true", help="keep the disposable copy under _export-src/ for debugging")
     args = parser.parse_args()
 

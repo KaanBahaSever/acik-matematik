@@ -25,9 +25,9 @@ Bu sayede devasa müfredat birbirine karışmaz ve her ders kendi izolasyonunda 
 │
 ├── 📂 scripts/
 │   ├── 📄 build.py              # Portalı + tüm kitapları derleyip _site'a toplar
-│   ├── 📄 export.py             # Her dersi (alt dersleri) PDF/EPUB/DOCX olarak üretir
+│   ├── 📄 export.py             # Her dersi (alt dersleri) PDF/EPUB olarak üretir
 │   ├── 📄 collapsible.lua       # Pandoc filtresi: çözüm/ispat blokları, emoji temizliği, müfredat kutusu
-│   ├── 📄 export_figures.lua    # Pandoc filtresi: gömülü SVG çizimleri PDF/EPUB/DOCX için şekle çevirir
+│   ├── 📄 export_figures.lua    # Pandoc filtresi: gömülü SVG çizimleri PDF/EPUB için şekle çevirir
 │   ├── 📄 export_math.lua       # Pandoc filtresi: \tag, vmatrix, array gibi yapıları Typst'e uyarlar
 │   ├── 📄 downloads.lua         # Pandoc filtresi: müfredat sayfasına indirme panelini ekler
 │   ├── 📂 export-assets/        # Dışa aktarma şablonları: Typst altbilgi/kapak-lisans/gövde ayarları + EPUB meta verisi
@@ -36,7 +36,7 @@ Bu sayede devasa müfredat birbirine karışmaz ve her ders kendi izolasyonunda 
 │   ├── 📄 complex_figures.py    # Kompleks Analiz grafiklerini üretir
 │   ├── 📄 crypto_figures.py     # Kriptografi grafiklerini üretir
 │   ├── 📄 analysis_figures.py   # Analiz grafiklerini üretir
-│   └── 📄 finance_figures.py    # Finans Matematiği grafiklerini üretir
+│   └── 📄 finance_figures.py    # Temel Finans Matematiği grafiklerini üretir
 │
 ├── 📂 .github/workflows/
 │   └── 📄 deploy.yml            # CI/CD: derle → Cloudflare Pages'e yayınla
@@ -105,15 +105,15 @@ quarto preview
 
 **5. Yalnızca HTML (hızlı derleme):**
 
-`build.py` her dersin PDF/EPUB/DOCX dosyalarını da üretir (aşağıya bakınız). Yalnızca web sürümüyle ilgileniyorsanız bu adımı atlayabilirsiniz:
+`build.py` her dersin PDF/EPUB dosyalarını da üretir (aşağıya bakınız). Yalnızca web sürümüyle ilgileniyorsanız bu adımı atlayabilirsiniz:
 
 ```bash
 python scripts/build.py kriptografi --no-export
 ```
 
-## 📥 İndirilebilir Dosyalar (PDF / EPUB / DOCX)
+## 📥 İndirilebilir Dosyalar (PDF / EPUB)
 
-Her ders — dönemlere bölünmüş derslerde her **alt ders** (Cebir 1, Cebir 2, Lineer Cebir 1/2 …) — ayrı bir PDF, EPUB ve DOCX dosyası olarak indirilebilir. Bağlantılar dersin müfredat sayfasındaki "Notları indirin" panelinde yer alır.
+Her ders — dönemlere bölünmüş derslerde her **alt ders** (Cebir 1, Cebir 2, Lineer Cebir 1/2 …) — ayrı bir PDF ve EPUB dosyası olarak indirilebilir. Bağlantılar dersin müfredat sayfasındaki "Notları indirin" panelinde yer alır.
 
 - **Üretim:** `scripts/export.py`, `build.py` tarafından her kitabın HTML derlemesinden önce çağrılır; elle de çalıştırılabilir:
 
@@ -139,7 +139,7 @@ Her ders — dönemlere bölünmüş derslerde her **alt ders** (Cebir 1, Cebir 
 `main` dalına yapılan her push, GitHub Actions üzerinden şu adımları tetikler:
 
 1. Quarto ve Python kurulur.
-2. `scripts/build.py` ile tüm site derlenir (her dersin PDF/EPUB/DOCX dosyaları dâhil).
+2. `scripts/build.py` ile tüm site derlenir (her dersin PDF/EPUB dosyaları dâhil).
 3. Çıktı doğrulanır (ana sayfa ve katalog üretilmiş mi, en az bir PDF var mı?).
 4. `_site/` dizini **Cloudflare Pages**'e yayınlanır; üretim dağıtımı [acik-matematik.com](https://acik-matematik.com) özel alan adından yayınlanır (alan adı Cloudflare panelinde Pages projesine bağlıdır).
 

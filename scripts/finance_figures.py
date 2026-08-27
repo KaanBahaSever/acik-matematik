@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Generates the SVG figures used in the "Finans Matematiği" chapters.
+Generates the SVG figures used in the "Temel Finans Matematiği" chapters.
 
 The figures are NOT produced at build time: run this script, then
 scripts/center_figures.py "finance-*.md" (which measures each drawing and
@@ -707,33 +707,38 @@ OUT["ornek-29-ertelenmis"] = figure(
     "gereken anapara elde edilir.",
     aria="Ornek 2.9: 19 yas sonrasi baslayan sekiz odemeli ertelenmis anuite")
 
-# --- Örnek 2.10: iki yöntem -------------------------------------------------
-q1 = tl_panel(30, 84, 400, 92, -0.6, 7.4)
-tline(q1, 0, [0, 1, 2, 5.4, 6.5], ["0", "1", "2", "20", "21"])
-dots(q1, 3.7, dy=-11, size=12)
+# --- Örnek 2.10, 1. yöntem: farkı son ödemeye eklemek ------------------------
+p = tl_panel(40, 104, 420, 96, -0.6, 7.4)
+tline(p, 0, [0, 1, 2, 5.4, 6.5], ["0", "1", "2", "20", "21"])
+dots(p, 3.7, dy=-11, size=12)
 for x in [1, 2, 5.4]:
-    amount(q1, x, "200", color=THEORY, size=10)
-amount(q1, 6.5, "200 + X", color=PRACTICE, size=10.5)
-stream(q1, [1, 2, 5.4, 6.5], 6.5, THEORY, rise0=20, drise=14)
-drop(q1, 6.5, "S = 8000", depth=48, start=26, color=BASE)
-note(q1, q1.X(3.4), q1.Y(0) - 84, "1. yöntem: son ödemeye X = 1,45 TL eklenir", TEXT, 10.5, "middle", True)
+    amount(p, x, "200", color=THEORY, size=10)
+amount(p, 6.5, "200 + X", color=PRACTICE, size=10.5)
+stream(p, [1, 2, 5.4], 6.5, THEORY, rise0=20, drise=14, gap=26)
+drop(p, 6.5, "S = 8000", depth=48, start=26, color=BASE)
+OUT["ornek-210-yontem1"] = figure(
+    500, 230, [p],
+    "1. yöntem: bütün ödemeler 21. döneme taşınır. 21 tam ödeme hedefin biraz altında kaldığından "
+    "aradaki fark <em>X</em>, aynı tarihte son ödemenin üzerine eklenir.",
+    aria="Ornek 2.10 birinci yontem: farkin son odemeye eklenmesi")
 
-q2 = tl_panel(30, 248, 400, 92, -0.6, 7.4)
-tline(q2, 0, [0, 1, 2, 5.4, 6.5, 7.1], ["0", "1", "2", "20", "21", "22"])
-dots(q2, 3.7, dy=-11, size=12)
+# --- Örnek 2.10, 2. yöntem: bir dönem sonra küçük bir ödeme ------------------
+p = tl_panel(40, 104, 420, 96, -0.6, 7.9)
+tline(p, 0, [0, 1, 2, 5.4, 6.5, 7.4], ["0", "1", "2", "20", "21", "22"])
+dots(p, 3.7, dy=-11, size=12)
 for x in [1, 2, 5.4, 6.5]:
-    amount(q2, x, "200", color=THEORY, size=10)
-amount(q2, 7.1, "Y", color=PRACTICE, size=11)
-stream(q2, [1, 2, 5.4, 6.5], 7.1, THEORY, rise0=20, drise=14)
-drop(q2, 7.1, "S = 8000", depth=48, start=26, color=BASE)
-note(q2, q2.X(3.4), q2.Y(0) - 84, "2. yöntem: 22. döneme küçük bir Y ödemesi konur", TEXT, 10.5, "middle", True)
-note(q2, q2.X(6.0), q2.Y(0) + 78, "Y = &#8722;478,46 &lt; 0  &#8594;  22. dönemde ödemeye gerek yok", PRACTICE, 10, "middle", True)
-OUT["ornek-210-yontemler"] = figure(
-    460, 400, [q1, q2],
-    "Dönem sayısı 21,002 çıktığında iki yol vardır: <strong>1. yöntem</strong>de fark son ödemeye "
-    "eklenir (21. ödeme 201,45 TL olur); <strong>2. yöntem</strong>de bir dönem sonraya küçük bir "
-    "ödeme konur. Burada bu ödeme eksi çıkıyor, yani 21 tam ödeme hedefi zaten aşmıştır.",
-    aria="Ornek 2.10: son odemenin iki farkli yontemle duzenlenmesi", css_class=WIDE)
+    amount(p, x, "200", color=THEORY, size=10)
+amount(p, 7.4, "Y", color=PRACTICE, size=11)
+# The 21 full payments are collected on their own date first; only their total
+# moves on to the 22nd period, where Y closes the gap.
+stream(p, [1, 2, 5.4], 6.5, THEORY, rise0=20, drise=14, gap=26)
+flow(p, 6.5, 7.4, "1 dönem faiz", BASE, rise=17, gap=26, lab_t=0.5, lab_dy=-9)
+drop(p, 7.4, "S = 8000", depth=48, start=26, color=BASE)
+OUT["ornek-210-yontem2"] = figure(
+    500, 240, [p],
+    "2. yöntem: önce 21 tam ödeme kendi tarihinde toplanır, sonra bu toplam bir dönem daha faiz "
+    "görerek 22. döneme taşınır. Eksik kalan tutar <em>Y</em> orada ödenir.",
+    aria="Ornek 2.10 ikinci yontem: 21. donemde toplanip 22. doneme tasinan odemeler")
 
 # --- Örnek 2.11 -------------------------------------------------------------
 p = tl_panel(40, 100, 420, 96, -0.6, 7.4)
