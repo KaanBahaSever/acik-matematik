@@ -8,6 +8,10 @@ rasterized (light and dark palette), the bounding box of the actual content
 is measured, and the viewBox is rewritten so the content sits centered with
 a uniform margin.
 
+The measured box also decides how wide a column the figure gets: an SVG fills
+its <figure>, so a nearly square drawing would be twice as tall on screen as a
+two-panel strip. Those get the .ders-grafik-dar class (see set_width_class).
+
 Authoring flow:  python scripts/complex_figures.py
                  python scripts/center_figures.py            # this script
                  ...then paste/refresh the markup into the .qmd files.
@@ -31,6 +35,7 @@ PAD = 14          # margin around the content, in viewBox units
 PROBE = 80        # extra room added around the old viewBox to catch overflow
 TOL = 7           # per-channel background tolerance
 SCALE = 2
+TALL = 0.72       # height/width above which a drawing gets the narrow column
 
 PALETTES = (
     ({"--academic-text": "#2C2A27", "--academic-bg": "#FAF6EE", "--color-theory": "#2B4C7E",
@@ -40,6 +45,7 @@ PALETTES = (
 )
 
 VIEWBOX = re.compile(r'viewBox="([-\d. ]+)"')
+FIGCLASS = re.compile(r'<figure class="([^"]+)">')
 
 
 def content_bbox(svg, vb, colors, bg):
@@ -68,6 +74,23 @@ def content_bbox(svg, vb, colors, bg):
             probe[0] + box[2] * sc, probe[1] + box[3] * sc)
 
 
+def set_width_class(body, ratio):
+    """Give nearly square drawings the narrow column, wide strips the wide one.
+
+    The SVG fills its figure's width, so the rendered height is that width
+    times the aspect ratio; without this a square panel is twice as tall on
+    screen as a two-panel strip. Idempotent: the class is recomputed, never
+    appended twice.
+    """
+    m = FIGCLASS.search(body)
+    if not m:
+        return body
+    names = [c for c in m.group(1).split() if c != "ders-grafik-dar"]
+    if "ders-grafik-genis" not in names and ratio >= TALL:
+        names.append("ders-grafik-dar")
+    return body.replace(m.group(0), '<figure class="%s">' % " ".join(names), 1)
+
+
 def main():
     pattern = sys.argv[1] if len(sys.argv) > 1 else "complex-*.md"
     changed = 0
@@ -89,8 +112,10 @@ def main():
         y1 = max(b[3] for b in boxes) + PAD
         new = f'viewBox="{x0:.1f} {y0:.1f} {x1 - x0:.1f} {y1 - y0:.1f}"'
         old = m.group(0)
-        if new != old:
-            f.write_text(body.replace(old, new, 1), encoding="utf-8")
+        out = body.replace(old, new, 1) if new != old else body
+        out = set_width_class(out, (y1 - y0) / (x1 - x0))
+        if out != body:
+            f.write_text(out, encoding="utf-8")
             changed += 1
             print(f"  {f.name}: {old[9:-1]} -> {new[9:-1]}")
     print(f"centered {changed} figures")
