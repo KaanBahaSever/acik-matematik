@@ -304,82 +304,6 @@ def radial_boundary(c, inside, rmax=8.0, samples=200, steps=40):
 # PART 1 — Giriş  (R^n: iç çarpım, norm, topoloji, kompaktlık)
 # ############################################################################
 
-# ============================================================ iç çarpım ve açı
-x_v, y_v = (3.4, 0.9), (1.1, 2.5)
-nx = math.hypot(*x_v)
-proj = (x_v[0] / nx, x_v[1] / nx)
-t_pr = (x_v[0] * y_v[0] + x_v[1] * y_v[1]) / nx          # ||y|| cos(theta)
-foot = (proj[0] * t_pr, proj[1] * t_pr)
-
-p1 = panel(34, 42, 292, (-0.75, 4.15), (-0.55, 3.15))
-p1.origin_axes(xlabel="", ylabel="")
-p1.arrow((0, 0), x_v, THEORY, 2.2)
-p1.arrow((0, 0), y_v, PRACTICE, 2.2)
-seg(p1, y_v, foot, TEXT, 1.2, "4 3", 0.6)
-right_angle(p1, foot, (y_v[0] - foot[0], y_v[1] - foot[1]), (-proj[0], -proj[1]), 0.22)
-seg(p1, (0, 0), foot, BASE, 3.0)
-p1.arc(0, 0, 0.95, math.atan2(x_v[1], x_v[0]), math.atan2(y_v[1], y_v[0]), REMARK, 1.5)
-p1.label(0.72, 0.62, THETA, 6, 2, REMARK, 12.5, "start", True, True)
-p1.label(*x_v, "x", 8, 10, THEORY, 13, "start", True, True)
-p1.label(*y_v, "y", 2, -9, PRACTICE, 13, "start", True, True)
-p1.label(foot[0], foot[1], "&#8214;y&#8214; cos " + THETA, 4, 20, BASE, 11.5, "middle", True)
-panel_title(p1, "genel durum", TEXT, 11.5)
-
-xo, yo = (3.1, 0.85), (-0.85, 3.1)                        # <xo, yo> = -2.635 + 2.635 = 0
-p2 = panel(378, 42, 292, (-1.55, 3.35), (-0.55, 3.15))
-p2.origin_axes(xlabel="", ylabel="")
-p2.arrow((0, 0), xo, THEORY, 2.2)
-p2.arrow((0, 0), yo, PRACTICE, 2.2)
-right_angle(p2, (0, 0), xo, yo, 0.36)
-p2.label(*xo, "x", 8, 10, THEORY, 13, "start", True, True)
-p2.label(*yo, "y", -8, -6, PRACTICE, 13, "end", True, True)
-p2.text(0.35, 2.55, LANG + "x, y" + RANG + " = 0", PRACTICE, 12, "start", True)
-panel_title(p2, "dik (ortogonal) vektörler", TEXT, 11.5)
-
-OUT["ic-carpim-aci"] = figure(
-    700, 330, [p1, p2],
-    "İç çarpım iki vektör arasındaki açıyı ölçer: &#10216;x, y&#10217; = &#8214;x&#8214; " + CDOT +
-    " &#8214;y&#8214; " + CDOT + " cos " + THETA + ". Solda <em>y</em>'nin <em>x</em> yönündeki dik izdüşümü "
-    "&#8214;y&#8214; cos " + THETA + " uzunluğundadır; iç çarpım bu uzunluğun &#8214;x&#8214; katıdır. "
-    "Sağda açı 90&#176; olduğundan kosinüs sıfırdır: iç çarpımın sıfır olması ile diklik aynı şeydir.",
-    css_class=WIDE, aria="Ic carpim ve aci; ortogonal vektorler")
-
-# ======================================================== üçgen eşitsizliği
-a_v, b_v = (2.5, 0.55), (0.85, 2.15)
-s_v = (a_v[0] + b_v[0], a_v[1] + b_v[1])
-p1 = panel(34, 46, 286, (-0.55, 4.15), (-0.5, 3.25))
-p1.origin_axes(xlabel="", ylabel="")
-p1.arrow((0, 0), a_v, THEORY, 2.1)
-p1.arrow(a_v, s_v, PRACTICE, 2.1)
-p1.arrow((0, 0), s_v, BASE, 2.4)
-p1.arrow((0, 0), b_v, PRACTICE, 1.5, dash="5 4", opacity=0.55)
-p1.label(*a_v, "x", 2, 18, THEORY, 12.5, "middle", True, True)
-p1.label(a_v[0] + b_v[0] / 2, a_v[1] + b_v[1] / 2, "y", 10, 2, PRACTICE, 12.5, "start", True, True)
-p1.label(*s_v, "x + y", -4, -8, BASE, 12.5, "end", True, True)
-p1.text(0.15, 2.9, "&#8214;x + y&#8214; &lt; &#8214;x&#8214; + &#8214;y&#8214;", BASE, 12, "start", True)
-panel_title(p1, "aynı doğrultuda değil", TEXT, 11.5)
-
-a2 = (2.15, 1.15)
-b2 = (a2[0] * 0.72, a2[1] * 0.72)
-s2 = (a2[0] + b2[0], a2[1] + b2[1])
-p2 = panel(372, 46, 286, (-0.55, 4.15), (-0.5, 3.25))
-p2.origin_axes(xlabel="", ylabel="")
-p2.arrow((0, 0), a2, THEORY, 2.1)
-p2.arrow(a2, s2, PRACTICE, 2.1)
-p2.label(a2[0] / 2, a2[1] / 2, "x", 4, -8, THEORY, 12.5, "middle", True, True)
-p2.label(a2[0] + b2[0] / 2, a2[1] + b2[1] / 2, "y = " + ALPHA + "x", 6, -8, PRACTICE, 12.5, "start", True, True)
-p2.points([s2], BASE, 4.2)
-p2.text(0.15, 2.9, "&#8214;x + y&#8214; = &#8214;x&#8214; + &#8214;y&#8214;", BASE, 12, "start", True)
-panel_title(p2, "aynı yönde: eşitlik hâli", TEXT, 11.5)
-
-OUT["ucgen-esitsizligi"] = figure(
-    690, 330, [p1, p2],
-    "Üçgen eşitsizliği &#8214;x + y&#8214; " + LEQ + " &#8214;x&#8214; + &#8214;y&#8214;: iki kenar üzerinden "
-    "dolaşmak, doğrudan gitmekten kısa olamaz. Eşitlik yalnızca sağdaki gibi <em>x</em> ile <em>y</em> aynı "
-    "yöne baktığında, yani bir " + ALPHA + " " + GEQ + " 0 için <em>x</em> = " + ALPHA + "<em>y</em> olduğunda "
-    "gerçekleşir; üçgen yassılıp doğru parçasına dönüşür.",
-    css_class=WIDE, aria="Ucgen esitsizligi ve esitlik hali")
-
 # ================================================================ komşuluklar
 def _nb_panel(x0, title, dash, punctured):
     q = panel(x0, 50, 196, (-1.85, 1.85), (-1.85, 1.85))
@@ -496,76 +420,60 @@ OUT["acik-kapali-kume"] = figure(
     css_class=WIDE, aria="Acik, kapali ve ne acik ne kapali kumeler")
 
 # ================================================================ A + B toplamı
+# A ile B ayrı ayrı, toplam ise onlardan hesaplanarak çizilir; şekildeki
+# paralelkenar ile yuvarlatılmış kare gerçekten çizili kümelerin toplamıdır.
+
 # Panel 1: doğru parçası + doğru parçası = paralelkenar
-Aseg = [(0.0, 0.0), (0.75, 1.65)]
-Bseg = [(0.0, 0.0), (1.9, 0.0)]
-p1 = panel(34, 54, 300, (-0.7, 3.55), (-1.15, 2.4))
-p1.origin_axes(xlabel="", ylabel="", opacity=0.3)
-para = [(0, 0), (1.9, 0), (2.65, 1.65), (0.75, 1.65)]
-p1.polygon(para, PRACTICE, 0.16, stroke="none")
+a0, a1 = (0.45, 0.90), (1.05, 2.25)                      # A
+b0, b1 = (1.10, 0.25), (2.50, 0.25)                      # B
+para = [(a0[0] + b0[0], a0[1] + b0[1]), (a1[0] + b0[0], a1[1] + b0[1]),
+        (a1[0] + b1[0], a1[1] + b1[1]), (a0[0] + b1[0], a0[1] + b1[1])]
+
+p1 = panel(34, 54, 300, (-0.55, 4.15), (-0.55, 3.45))
+p1.origin_axes(xlabel="", ylabel="", opacity=0.28)
+p1.polygon(para, PRACTICE, 0.15, stroke="none")
+for k in range(1, 7):                                    # B'nin A boyunca ötelenmiş kopyaları
+    t = k / 7.0
+    o = (a0[0] + t * (a1[0] - a0[0]), a0[1] + t * (a1[1] - a0[1]))
+    seg(p1, (o[0] + b0[0], o[1] + b0[1]), (o[0] + b1[0], o[1] + b1[1]), BASE, 1.0, None, 0.45)
 p1.line(para + [para[0]], PRACTICE, 2.1)
-for t in (0.0, 0.25, 0.5, 0.75, 1.0):
-    o = (Aseg[1][0] * t, Aseg[1][1] * t)
-    seg(p1, o, (o[0] + Bseg[1][0], o[1] + Bseg[1][1]), PRACTICE, 1.0, "3 3", 0.5)
-seg(p1, *Aseg, color=THEORY, width=3.4)
-seg(p1, (0.0, -0.72), (1.9, -0.72), BASE, 3.4)
-p1.label(0.34, 0.9, "A", -10, 0, THEORY, 13, "end", True, True)
-p1.label(0.95, -0.72, "B", 0, 20, BASE, 13, "middle", True, True)
-p1.label(1.7, 0.85, "A + B", 0, 0, PRACTICE, 13, "middle", True, True)
-panel_title(p1, "iki doğru parçası", TEXT, 11.5)
+seg(p1, a0, a1, THEORY, 3.4)
+seg(p1, b0, b1, BASE, 3.4)
+p1.label(0.75, 1.575, "A", -9, 1, THEORY, 13, "end", True, True)
+p1.label(1.80, 0.25, "B", 0, 20, BASE, 13, "middle", True, True)
+p1.label(2.85, 2.50, "A + B", 0, -11, PRACTICE, 13, "middle", True, True)
+panel_title(p1, "doğru parçası + doğru parçası", TEXT, 11.5)
 
 # Panel 2: kare + disk = köşeleri yuvarlatılmış kare
-p2 = panel(382, 54, 300, (-1.35, 2.9), (-1.6, 1.95))
-p2.origin_axes(xlabel="", ylabel="", opacity=0.3)
-rr = 0.5
-sq = rect(0.0, 0.0, 1.25, 1.25)
+sq = rect(0.25, 1.15, 1.15, 2.05)                        # A
+c, rr = (1.95, 0.45), 0.42                               # B = B(c, rr)
+sq_t = [(x + c[0], y + c[1]) for x, y in sq]             # A + c
 rounded = []
-for (cx, cy), a0 in ((sq[1], -0.5 * PI), (sq[2], 0.0), (sq[3], 0.5 * PI), (sq[0], PI)):
-    rounded += circle_pts(cx, cy, rr, a0, a0 + 0.5 * PI, 20)
-p2.polygon(rounded, PRACTICE, 0.16, stroke="none")
+for (cx, cy), ang in ((sq_t[1], -0.5 * PI), (sq_t[2], 0.0), (sq_t[3], 0.5 * PI), (sq_t[0], PI)):
+    rounded += circle_pts(cx, cy, rr, ang, ang + 0.5 * PI, 20)
+
+p2 = panel(382, 54, 300, (-0.55, 4.15), (-0.55, 3.45))
+p2.origin_axes(xlabel="", ylabel="", opacity=0.28)
+p2.polygon(rounded, PRACTICE, 0.15, stroke="none")
+for q in sq_t:                                           # köşelere oturan B kopyaları
+    p2.circle(q[0], q[1], rr, BASE, 1.1, None, "none", 0.55)
+p2.line(list(sq_t) + [sq_t[0]], THEORY, 1.3, "4 3", 0.75)
 p2.line(rounded + [rounded[0]], PRACTICE, 2.1)
-region(p2, sq, THEORY, 0.20, 2.0)
-ball(p2, (-0.78, -1.05), rr, BASE, 0.22, None, 2.0)
-p2.points([(-0.78, -1.05)], BASE, 3.0)
-p2.label(0.62, 0.62, "A", 0, 5, THEORY, 13, "middle", True, True)
-p2.label(-0.78, -1.05, "B", 0, 30, BASE, 13, "middle", True, True)
-p2.label(1.72, 1.5, "A + B", 0, 0, PRACTICE, 13, "middle", True, True)
-panel_title(p2, "kare ve disk", TEXT, 11.5)
+region(p2, sq, THEORY, 0.18, 2.0)
+ball(p2, c, rr, BASE, 0.22, None, 2.0)
+p2.label(0.70, 1.60, "A", 0, 5, THEORY, 13, "middle", True, True)
+p2.label(c[0] + rr, c[1], "B", 9, 5, BASE, 13, "start", True, True)
+p2.label(2.65, 2.92, "A + B", 0, -11, PRACTICE, 13, "middle", True, True)
+panel_title(p2, "kare + disk", TEXT, 11.5)
 
 OUT["kume-toplami"] = figure(
-    712, 350, [p1, p2],
-    "Kümelerin toplamı A + B = { x + y : x " + IN + " A, y " + IN + " B }, B kümesinin A'nın her noktasına "
-    "ötelenmesiyle taranan bölgedir. Solda iki doğru parçasının toplamı bir paralelkenar, sağda bir kare ile "
-    "diskin toplamı köşeleri yuvarlatılmış bir karedir: disk ile toplamak, kümeyi yarıçap kadar her yöne "
-    "kalınlaştırmak demektir.",
-    css_class=WIDE, aria="Iki kumenin toplami: paralelkenar ve yuvarlatilmis kare")
-
-# ================================================= sınırlı dizi ve yakınsak alt dizi
-pts_all = [(-1.55, 1.35), (1.72, -1.42), (-0.35, -1.66), (1.95, 1.15), (-1.82, -0.42),
-           (0.95, 1.78), (-1.05, -1.15), (1.35, 0.15), (-1.68, 0.62), (0.25, -1.32),
-           (1.55, 1.72), (-0.85, 1.62), (1.05, -1.78), (-1.42, -1.58), (0.55, 0.95)]
-limit = (0.62, 0.28)
-sub = [(limit[0] + 1.15 * math.cos(0.7 * k), limit[1] + 1.15 * math.sin(0.7 * k))
-       for k in range(6)]
-sub = [(limit[0] + (q[0] - limit[0]) * 0.62 ** k, limit[1] + (q[1] - limit[1]) * 0.62 ** k)
-       for k, q in enumerate(sub)]
-p = panel(44, 46, 320, (-2.5, 2.5), (-2.35, 2.35))
-region(p, rect(-2.1, -2.1, 2.1, 2.1), REMARK, 0.07, 1.4, "6 5")
-p.points(pts_all, TEXT, 3.0)
-p.line(sub, PRACTICE, 1.4, "4 3", 0.75)
-p.points(sub, PRACTICE, 4.2)
-p.points([limit], BASE, 5.0)
-p.label(*limit, "x" + SUB0, 11, 5, BASE, 12.5, "start", True, True)
-p.label(*sub[0], "x" + SUBK + SUB1, 8, -8, PRACTICE, 11.5, "start", True, True)
-p.label(*sub[1], "x" + SUBK + SUB2, -8, -6, PRACTICE, 11.5, "end", True, True)
-p.label(-2.1, 2.1, "&#8214;x" + SUBK + "&#8214; " + LEQ + " M", 4, -8, REMARK, 11.5, "start", True)
-OUT["bolzano-weierstrass"] = figure(
-    420, 340, [p],
-    "Bolzano-Weierstrass teoremi. Dizinin bütün terimleri &#8214;x" + SUBK + "&#8214; " + LEQ + " M "
-    "kutusunda sıkıştığından, sonsuz sayıda terim aynı bölgede yığılmak zorundadır; bunlardan seçilen alt dizi "
-    "bir x" + SUB0 + " noktasına yakınsar. Dizinin kendisi yakınsamayabilir — teorem yalnızca <em>bir</em> "
-    "yakınsak alt dizinin varlığını söyler.",
-    aria="Sinirli dizinin yakinsak alt dizisi")
+    700, 325, [p1, p2],
+    "Toplam kümesi A + B, B'nin A'nın her noktasına ötelenmesiyle taranan bölgedir: "
+    "A + B = &#8899;<sub>x " + IN + " A</sub> (x + B). Solda iki doğru parçasının toplamı bir "
+    "paralelkenardır; içindeki ince çizgiler B'nin A boyunca kayan kopyalarıdır. Sağda karenin "
+    "köşelerine oturan disk kopyaları köşeleri yuvarlatır — bir kümeyi diskle toplamak, onu yarıçap "
+    "kadar her yöne kalınlaştırmak demektir.",
+    css_class=WIDE, aria="Iki kumenin toplami: paralelkenar ve koseleri yuvarlatilmis kare")
 
 # ============================================================== kompaktlık
 q1 = panel(24, 52, 198, (-2.3, 2.3), (-2.3, 2.3))
@@ -633,29 +541,6 @@ OUT["weierstrass-ekstremum"] = figure(
     "uç noktadadır ama o nokta kümede olmadığından ulaşılamaz: supremum vardır, maksimum yoktur.",
     css_class=WIDE, aria="Weierstrass teoremi: kapali ve acik aralikta ekstremumlar")
 
-# ================================================================= sup ve inf
-p = Plot(40, 60, 520, 130, (-3.4, 3.9), (-1.05, 0.85))
-numline(p, 0.0, -3.2, 3.7, (-3, -2, -1, 0, 1, 2, 3), ("&#8722;3", "&#8722;2", "&#8722;1", "0", "1", "2", "3"))
-bracket(p, -1.0, 2.0, 0.0, THEORY, 3.6, False, True)
-p.label(0.5, 0.0, "D", 0, -14, THEORY, 13, "middle", True, True)
-p.line([(-3.15, -0.5), (-1.0, -0.5)], BASE, 3.0)
-p.arrow((-2.6, -0.5), (-3.35, -0.5), BASE, 1.4, head=7.0)
-p.label(-2.05, -0.5, "alt sınırlar", 0, 18, BASE, 11, "middle", True)
-p.line([(2.0, -0.5), (3.65, -0.5)], PRACTICE, 3.0)
-p.arrow((3.1, -0.5), (3.85, -0.5), PRACTICE, 1.4, head=7.0)
-p.label(2.85, -0.5, "üst sınırlar", 0, 18, PRACTICE, 11, "middle", True)
-p.vline(-1.0, -0.5, 0.0, BASE, "3 3", 0.7)
-p.vline(2.0, -0.5, 0.0, PRACTICE, "3 3", 0.7)
-p.label(-1.0, 0.0, "inf D = &#8722;1", -4, -14, BASE, 11.5, "end", True)
-p.label(2.0, 0.0, "sup D = 2", 6, -14, PRACTICE, 11.5, "start", True)
-OUT["sup-inf"] = figure(
-    600, 230, [p],
-    "D = (&#8722;1, 2] kümesi için alt sınırlar sola, üst sınırlar sağa uzanan iki yarı doğrudur. "
-    "Infimum alt sınırların <strong>en büyüğü</strong>, supremum üst sınırların <strong>en küçüğüdür</strong>; "
-    "ikisi de kümeye ait olmak zorunda değildir. Burada sup D = 2 kümededir (maksimumdur), "
-    "inf D = &#8722;1 ise değildir.",
-    aria="Alt ve ust sinirlar, infimum ve supremum")
-
 # ============================================================ bağlantılı kümeler
 p = Plot(44, 44, 520, 190, (-0.75, 4.85), (-0.55, 1.75))
 numline(p, 1.15, -0.55, 4.7, (0, 1, 2, 3, 4), ("0", "1", "2", "3", "4"))
@@ -697,9 +582,9 @@ p.polygon(rect(_loc - 0.55, -0.9, _loc + 0.55, 3.3), PRACTICE, 0.10, stroke="non
 p.points([(_glob, _mf(_glob)), (_loc, _mf(_loc))], PRACTICE, 4.6)
 p.label(_glob, _mf(_glob), "mutlak minimum", 0, 22, PRACTICE, 11, "middle", True)
 p.label(_loc, _mf(_loc), "yerel minimum", 0, 22, PRACTICE, 11, "middle", True)
-p.label(_loc + 0.55, 2.75, "B(x" + SUB0 + ", " + DELTA + ")", 6, 0, REMARK, 11, "start", True)
+p.label(_loc, 3.12, "B(x" + SUB0 + ", " + DELTA + ")", 0, 0, REMARK, 11, "middle", True)
 p.points([(2.1, _mf(2.1))], BASE, 4.2)
-p.label(2.1, _mf(2.1), "mutlak maksimum", -8, -8, BASE, 11, "end", True)
+p.label(2.1, _mf(2.1), "mutlak maksimum", -8, 16, BASE, 11, "end", True)
 OUT["yerel-mutlak-minimum"] = figure(
     520, 320, [p],
     "Yerel minimumda f(x" + SUB0 + ") " + LEQ + " f(x) eşitsizliği yalnızca bir B(x" + SUB0 + ", " + DELTA +
@@ -758,7 +643,7 @@ x1_v = (x0_v[0] + 1.5 * d_dir[0] / 2.5, x0_v[1] + 1.5 * d_dir[1] / 2.5)
 p.arrow((0, 0), x1_v, PRACTICE, 1.5, dash="5 4", opacity=0.6)
 p.points([x1_v], THEORY, 4.0)
 p.label(*x0_v, "x" + SUB0, -9, -5, PRACTICE, 12.5, "end", True, True)
-p.label(*x1_v, "x" + SUB1, 8, -6, REMARK, 12, "start", True, True)
+p.label(*x1_v, "x" + SUB1, 6, -13, REMARK, 12, "start", True, True)
 p.label(2.3, 3.05, "A", 0, 0, THEORY, 14, "middle", True, True)
 p.label(2.25, 0.62, "L = A " + MINUS + " x" + SUB0, 8, 12, BASE, 12, "start", True)
 p.label(0, 0, "0", -8, 14, BASE, 11.5, "end", True)
@@ -780,9 +665,9 @@ foot_n = (0.0, 1.0)                                   # 0 + 1.6*1 = 1.6 -> H üz
 p.arrow(foot_n, (foot_n[0] + 0.42 * a_n[0], foot_n[1] + 0.42 * a_n[1]), BASE, 2.4)
 p.points([foot_n], BASE, 3.6)
 p.label(foot_n[0] + 0.42 * a_n[0], foot_n[1] + 0.42 * a_n[1], "a", 7, -3, BASE, 13, "start", True, True)
-p.label(2.55, -0.6, "H" + "&#8804;" + ": " + LANG + "a, x" + RANG + " " + LEQ + " b", 0, 0, THEORY, 11.5, "middle", True)
+p.label(-1.2, -1.0, "H" + "&#8804;" + ": " + LANG + "a, x" + RANG + " " + LEQ + " b", 0, 0, THEORY, 11.5, "middle", True)
 p.label(-0.75, 2.15, "H" + "&#8805;" + ": " + LANG + "a, x" + RANG + " " + GEQ + " b", 0, 0, PRACTICE, 11.5, "middle", True)
-p.label(3.05, -0.9, "H: " + LANG + "a, x" + RANG + " = b", -6, 0, TEXT, 12, "end", True)
+p.label(2.6, -0.625, "H: " + LANG + "a, x" + RANG + " = b", -8, 18, TEXT, 12, "end", True)
 OUT["hiperduzlem-yari-uzay"] = figure(
     500, 360, [p],
     "Bir hiperdüzlem H = { x : " + LANG + "a, x" + RANG + " = b }, uzayı iki kapalı yarı uzaya böler. "
@@ -803,9 +688,9 @@ p.arrow((0, 0), a_e, REMARK, 2.2)
 p.label(*a_e, "a = (1, 2)", 8, -4, REMARK, 11.5, "start", True)
 p.points([(4.0, 0.0), (5.0, -4.0)], THEORY, 4.4)
 p.arrow((4.0, 0.0), (5.0, -4.0), PRACTICE, 1.8, dash="5 4")
-p.label(4.6, -2.0, "(1, &#8722;4)", 8, 4, PRACTICE, 11.5, "start", True)
+p.label(4.6, -2.0, "(1, &#8722;4)", 10, -4, PRACTICE, 11.5, "start", True)
 p.label(-1.0, 2.5, "H: x + 2y = 4", 8, -8, THEORY, 11.5, "start", True)
-p.label(2.0, -1.0, "L: x + 2y = 0", 10, 14, BASE, 11.5, "start", True)
+p.label(-2.6, 1.3, "L: x + 2y = 0", 8, -8, BASE, 11.5, "start", True)
 p.label(-1.0, -1.0, "H" + SUB1 + ": x + 2y = &#8722;3", -8, 16, PRACTICE, 11.5, "end", True)
 OUT["ornek-hiperduzlem"] = figure(
     520, 400, [p],
@@ -864,10 +749,10 @@ p.line([u0, u1, u2, u0], THEORY, 2.3)
 p.points([u0, u1, u2], THEORY, 4.4)
 p.points([z_in], BASE, 4.8)
 p.points([w_out], PRACTICE, 4.8)
-p.label(*u0, "x" + SUB1, -8, 10, THEORY, 12, "end", True, True)
-p.label(*u1, "x" + SUB2, 8, 8, THEORY, 12, "start", True, True)
-p.label(*u2, "x" + SUB3, 2, -10, THEORY, 12, "start", True, True)
-p.label(*z_in, "½x" + SUB1 + " + 0,3x" + SUB2 + " + 0,2x" + SUB3, -8, -8, BASE, 10.5, "end", True)
+p.label(*u0, "x" + SUB1, -10, 16, THEORY, 12, "end", True, True)
+p.label(*u1, "x" + SUB2, 12, 10, THEORY, 12, "start", True, True)
+p.label(*u2, "x" + SUB3, -6, -8, THEORY, 12, "end", True, True)
+p.label(1.85, z_in[1], "½x" + SUB1 + " + 0,3x" + SUB2 + " + 0,2x" + SUB3, 0, -16, BASE, 10.5, "middle", True)
 p.label(*w_out, "0,9x" + SUB1 + " + 0,5x" + SUB2 + " " + MINUS + " 0,4x" + SUB3, 6, 16, PRACTICE, 10.5, "start", True)
 OUT["konveks-kombinasyon-ucgen"] = figure(
     500, 330, [p],
@@ -971,8 +856,15 @@ p2.points([(0, 0)], TEXT, 3.2)
 p2.label(0, 0, "0", -8, 13, TEXT, 11, "end", True)
 for sc, col, txt, size in ((0.55, BASE, "0,55 C", 11.5), (1.0, THEORY, "C", 13),
                           (1.75, PRACTICE, "1,75 C", 11.5)):
-    tip = extreme([(x * sc, y * sc) for x, y in base_blob], 135 * DEG)
-    p2.label(tip[0], tip[1], txt, -4, -4, col, size, "end", True, txt == "C")
+    pts = [(x * sc, y * sc) for x, y in base_blob]
+    if sc < 1.0:
+        # En içteki etiket kümenin içine sığmaz; iki eğri arasındaki boşluğa,
+        # eğrilerin yatay olduğu tepe noktasının üstüne konur.
+        tip = extreme(pts, 90 * DEG)
+        p2.label(tip[0], tip[1], txt, 0, -9, col, size, "middle", True)
+    else:
+        tip = extreme(pts, 135 * DEG)
+        p2.label(tip[0], tip[1], txt, -4, -4, col, size, "end", True, txt == "C")
 panel_title(p2, "skaler kat", TEXT, 11.5)
 
 OUT["konveks-korunum"] = figure(
@@ -1033,7 +925,7 @@ p.arrow((xr[0], xr[1] + rad + 0.12), (zr[0], zr[1] + rad + 0.12), REMARK, 1.5, d
 p.label((xr[0] + zr[0]) / 2, zr[1] + rad + 0.12, LAMBDA + "(y " + MINUS + " x)", 0, -8, REMARK, 11, "middle", True)
 p.label(*xr, "x", -6, 16, BASE, 12.5, "end", True, True)
 p.label(*yr, "y", 8, 12, BASE, 12.5, "start", True, True)
-p.label(*zr, "(1" + MINUS + LAMBDA + ")x + " + LAMBDA + "y", 2, -20, PRACTICE, 11, "middle", True)
+p.label(zr[0] + 0.3, zr[1], "(1" + MINUS + LAMBDA + ")x + " + LAMBDA + "y", 0, 40, PRACTICE, 11, "middle", True)
 p.label(-2.05, 1.85, "C", 0, 0, THEORY, 14, "middle", True, True)
 OUT["ic-nokta-konveks"] = figure(
     450, 340, [p],
@@ -1070,113 +962,6 @@ OUT["konveks-ortu"] = figure(
     "verir; sağda girintili bir bölgenin çukurları doldurulur. conv(A), A elemanlarının bütün konveks "
     "kombinasyonlarının kümesine eşittir.",
     css_class=WIDE, aria="Sonlu nokta kumesinin ve girintili bolgenin konveks ortusu")
-
-# =============================================================== Carathéodory
-cpts = [(0.5, 0.7), (2.4, 0.35), (3.7, 1.5), (2.85, 3.15), (1.0, 2.85), (1.9, 1.7)]
-tri_c = [cpts[0], cpts[2], cpts[4]]
-zc = (0.45 * tri_c[0][0] + 0.3 * tri_c[1][0] + 0.25 * tri_c[2][0],
-      0.45 * tri_c[0][1] + 0.3 * tri_c[1][1] + 0.25 * tri_c[2][1])
-p = panel(48, 48, 380, (-0.4, 4.35), (-0.45, 3.65))
-hc = hull(cpts)
-p.polygon(hc, THEORY, 0.09, stroke="none")
-p.line(hc + [hc[0]], THEORY, 2.1, "6 5")
-p.polygon(tri_c, PRACTICE, 0.20, stroke="none")
-p.line(tri_c + [tri_c[0]], PRACTICE, 2.3)
-p.points(cpts, TEXT, 4.0)
-p.points(tri_c, PRACTICE, 4.8)
-p.points([zc], BASE, 5.2)
-p.label(*zc, "x", 9, 5, BASE, 13, "start", True, True)
-p.label(2.1, 3.42, "conv(A)", 0, 0, THEORY, 12, "middle", True)
-p.label(1.55, 1.05, "3 nokta yeter", 0, 0, PRACTICE, 11.5, "middle", True)
-OUT["caratheodory"] = figure(
-    470, 380, [p],
-    "Carathéodory teoremi. conv(A) kümesindeki bir <em>x</em> noktası, başlangıçta kaç nokta kullanılırsa "
-    "kullanılsın, A'nın <strong>en çok n + 1</strong> elemanının konveks kombinasyonu olarak yazılabilir. "
-    "Düzlemde (n = 2) bu sayı 3'tür: x noktası daima köşeleri A'dan seçilen bir üçgenin içinde kalır. "
-    "İspat, fazla noktaların katsayılarını birer birer sıfırlayan bir indirgemedir.",
-    aria="Caratheodory teoremi: duzlemde uc nokta yeter")
-
-# ===================================================================== Radon
-r1 = [(0.5, 0.55), (3.3, 0.75), (3.0, 2.9), (0.85, 2.6)]
-p1 = panel(34, 50, 282, (-0.35, 3.95), (-0.35, 3.35))
-p1.line(r1 + [r1[0]], REMARK, 1.3, "6 5", 0.6)
-seg(p1, r1[0], r1[2], THEORY, 2.4)
-seg(p1, r1[1], r1[3], PRACTICE, 2.4)
-
-
-def _cross_pt(a, b, c, d):
-    d1 = (b[0] - a[0], b[1] - a[1])
-    d2 = (d[0] - c[0], d[1] - c[1])
-    den = d1[0] * d2[1] - d1[1] * d2[0]
-    t = ((c[0] - a[0]) * d2[1] - (c[1] - a[1]) * d2[0]) / den
-    return (a[0] + t * d1[0], a[1] + t * d1[1])
-
-
-xc1 = _cross_pt(r1[0], r1[2], r1[1], r1[3])
-p1.points([r1[0], r1[2]], THEORY, 4.6)
-p1.points([r1[1], r1[3]], PRACTICE, 4.6)
-p1.points([xc1], BASE, 5.0)
-p1.label(*r1[0], "x" + SUB1, -8, 8, THEORY, 11.5, "end", True, True)
-p1.label(*r1[2], "x" + SUB3, 8, -4, THEORY, 11.5, "start", True, True)
-p1.label(*r1[1], "x" + SUB2, 8, 8, PRACTICE, 11.5, "start", True, True)
-p1.label(*r1[3], "x&#8324;", -8, -4, PRACTICE, 11.5, "end", True, True)
-p1.label(*xc1, "kesişim", 10, 16, BASE, 11, "start", True)
-panel_title(p1, "dörtgen konumu", TEXT, 11.5)
-
-r2 = [(0.5, 0.5), (3.4, 0.7), (1.9, 3.05)]
-inner = ((r2[0][0] + r2[1][0] + r2[2][0]) / 3, (r2[0][1] + r2[1][1] + r2[2][1]) / 3)
-p2 = panel(376, 50, 282, (-0.35, 3.95), (-0.35, 3.35))
-p2.polygon(r2, THEORY, 0.16, stroke="none")
-p2.line(r2 + [r2[0]], THEORY, 2.3)
-p2.points(r2, THEORY, 4.6)
-p2.points([inner], PRACTICE, 5.2)
-p2.label(*r2[0], "x" + SUB1, -8, 8, THEORY, 11.5, "end", True, True)
-p2.label(*r2[1], "x" + SUB2, 8, 8, THEORY, 11.5, "start", True, True)
-p2.label(*r2[2], "x" + SUB3, 4, -9, THEORY, 11.5, "start", True, True)
-p2.label(*inner, "x&#8324;", 9, 5, PRACTICE, 12, "start", True, True)
-panel_title(p2, "biri üçgenin içinde", TEXT, 11.5)
-
-OUT["radon"] = figure(
-    700, 330, [p1, p2],
-    "Radon teoremi: düzlemde 4 (genel olarak n + 2) nokta daima, konveks örtüleri kesişen iki ayrık parçaya "
-    "bölünebilir. İki olası durum vardır. Solda dört nokta dörtgen konumundadır ve köşegenler kesişir: "
-    "parçalar { x" + SUB1 + ", x" + SUB3 + " } ile { x" + SUB2 + ", x&#8324; }. Sağda bir nokta diğer üçünün "
-    "üçgeninin içindedir; parçalar { x&#8324; } ile { x" + SUB1 + ", x" + SUB2 + ", x" + SUB3 + " } olur.",
-    css_class=WIDE, aria="Radon teoreminin iki durumu")
-
-# ====================================================================== Helly
-cen4 = [(-1.3, -1.3), (1.3, -1.3), (1.3, 1.3), (-1.3, 1.3)]
-R4 = 2.6
-p1 = panel(30, 52, 282, (-4.2, 4.2), (-4.2, 4.2))
-for c in cen4:
-    disk_fill(p1, c[0], c[1], R4, THEORY, 0.07)
-    p1.circle(c[0], c[1], R4, THEORY, 1.7)
-common = radial_boundary((0, 0), lambda q: all(math.hypot(q[0] - c[0], q[1] - c[1]) <= R4 for c in cen4), 4.5)
-p1.polygon(common, PRACTICE, 0.45, stroke="none")
-p1.line(common + [common[0]], PRACTICE, 1.9)
-p1.label(0, 0, "ortak", 0, 4, PRACTICE, 11.5, "middle", True)
-panel_title(p1, "her üçü kesişiyor " + ARROW + " dördü de", TEXT, 11.5)
-
-# kenar uzunlugu 2 olan eskenar ucgen: cevrel yaricap 2/sqrt(3) = 1,155
-CIRC = 2.0 / math.sqrt(3)
-cen3 = [(CIRC * math.cos(PI / 2 + k * 2 * PI / 3), CIRC * math.sin(PI / 2 + k * 2 * PI / 3))
-        for k in range(3)]
-R3 = 1.1                       # 1,1 < 1,155: ucunun ortak noktasi yoktur
-p2 = panel(374, 52, 282, (-4.2, 4.2), (-4.2, 4.2))
-for c in cen3:
-    disk_fill(p2, c[0], c[1], R3, BASE, 0.10)
-    p2.circle(c[0], c[1], R3, BASE, 1.9)
-cross(p2, (0, 0), PRACTICE, 6.5, 2.4)
-p2.text(0, -2.85, "ortak nokta yok", PRACTICE, 11.5, "middle", True)
-panel_title(p2, "ikişerli kesişim yetmez", TEXT, 11.5)
-
-OUT["helly"] = figure(
-    700, 350, [p1, p2],
-    "Helly teoremi: R<sup>n</sup>'de n + 1 taneli her alt ailenin kesişimi boş değilse, bütün ailenin "
-    "kesişimi de boş değildir. Solda düzlemde dört disk vardır ve üçerli her kesişim doluysa dördünün ortak "
-    "noktası da vardır. Sağdaki üç disk ikişer ikişer kesişir ama üçünün ortak noktası yoktur: düzlemde "
-    "aranan sayı 2 değil, n + 1 = 3'tür.",
-    css_class=WIDE, aria="Helly teoremi ve ikiserli kesisimin yetmedigi ornek")
 
 # ==================================================================== simpleksler
 q1 = panel(20, 56, 154, (-0.35, 3.35), (-0.35, 3.05))
@@ -1246,10 +1031,12 @@ C_np = hull(blob(-0.35, 0.0, 1.5, [(0.28, 2, 0.7), (0.15, 3, 2.0)]))
 y_np = (2.55, 1.55)
 z_np = min(C_np, key=lambda q: (q[0] - y_np[0]) ** 2 + (q[1] - y_np[1]) ** 2)
 a_np = (y_np[0] - z_np[0], y_np[1] - z_np[1])
-b_np = a_np[0] * z_np[0] + a_np[1] * z_np[1]
 p1 = panel(30, 50, 300, (-2.4, 3.5), (-2.2, 2.8))
 region(p1, C_np, THEORY, 0.13, 2.1)
-hyperline(p1, a_np, b_np, REMARK, 1.6, "6 5", 0.85)
+# Panelin tepesine kadar uzatılırsa çizgi panel başlığının içinden geçiyor.
+d_np = (-a_np[1] / math.hypot(*a_np), a_np[0] / math.hypot(*a_np))
+pseg(p1, (z_np[0] - 2.0 * d_np[0], z_np[1] - 2.0 * d_np[1]),
+     (z_np[0] + 2.0 * d_np[0], z_np[1] + 2.0 * d_np[1]), REMARK, 1.6, "6 5", 0.85)
 p1.arrow(z_np, y_np, PRACTICE, 2.2)
 p1.points([y_np], PRACTICE, 4.6)
 p1.points([z_np], BASE, 4.6)
@@ -1330,7 +1117,7 @@ for k in range(4):
     a_c = (math.cos(ang), math.sin(ang))
     hyperline(p, a_c, a_c[0] * corner[0] + a_c[1] * corner[1], REMARK, 1.3, "5 4", 0.8)
 p.points([corner], REMARK, 4.4)
-p.label(*corner, "köşede tek değil", 10, 6, REMARK, 11, "start", True)
+p.label(*corner, "köşede tek değil", 20, 20, REMARK, 11, "start", True)
 p.label(edge_pt[0] - 1.5, edge_pt[1], "destek doğrusu", 0, 22, PRACTICE, 11, "middle", True)
 p.label(2.2, 2.0, "M", 0, 0, THEORY, 14, "middle", True, True)
 OUT["destek-hiperduzlemi"] = figure(
@@ -1382,11 +1169,11 @@ p.points([x0_pt], PRACTICE, 4.8)
 p.points([y_pt], BASE, 4.6)
 right_angle(p, y_pt, a_pt, (-a_pt[1], a_pt[0]), 0.28)
 mid_pt = ((y_pt[0] + x0_pt[0]) / 2, (y_pt[1] + x0_pt[1]) / 2)
-p.label(*mid_pt, "a = x" + SUB0 + " " + MINUS + " y", 10, -6, PRACTICE, 11.5, "start", True)
+p.label(*mid_pt, "a = x" + SUB0 + " " + MINUS + " y", 12, 18, PRACTICE, 11.5, "start", True)
 p.label(*x0_pt, "x" + SUB0, 10, 4, PRACTICE, 13, "start", True, True)
 p.label(*y_pt, "y", -10, 6, BASE, 13, "end", True, True)
 p.label(-1.7, -1.5, "M&#772;", 0, 0, THEORY, 14, "middle", True, True)
-p.label(-1.7, 0.9, LANG + "a, x" + RANG + " " + LEQ + " b", 0, 0, THEORY, 11.5, "middle", True)
+p.label(-1.3, 0.35, LANG + "a, x" + RANG + " " + LEQ + " b", 0, 0, THEORY, 11.5, "middle", True)
 p.label(3.9, 2.55, LANG + "a, x" + SUB0 + RANG + " = b + " + EPS + SUB0, 0, 0, PRACTICE, 11.5, "end", True)
 OUT["nokta-ayirma"] = figure(
     460, 350, [p],
@@ -1472,7 +1259,7 @@ OUT["koniler"] = figure(
 
 # ==================================================================== dual koni
 a1_d, a2_d = 20 * DEG, 80 * DEG
-p = panel(52, 50, 360, (-2.9, 2.9), (-2.5, 2.9))
+p = panel(52, 50, 360, (-2.7, 2.9), (-1.35, 2.9))
 p.origin_axes(xlabel="", ylabel="", opacity=0.3)
 wedge(p, (0, 0), a2_d - 90 * DEG, a1_d + 90 * DEG, 3.9, PRACTICE, 0.12, 2.0)
 wedge(p, (0, 0), a1_d, a2_d, 3.9, THEORY, 0.22, 2.6)
@@ -1481,13 +1268,12 @@ right_angle(p, (0, 0), (math.cos(a1_d), math.sin(a1_d)),
 p.points([(0, 0)], TEXT, 3.2)
 p.label(2.0 * math.cos(50 * DEG), 2.0 * math.sin(50 * DEG), "K", 0, 4, THEORY, 15, "middle", True, True)
 p.label(2.45 * math.cos(2 * DEG), 2.45 * math.sin(2 * DEG), "K*", 0, 4, PRACTICE, 15, "middle", True, True)
-p.label(2.7 * math.cos(a1_d), 2.7 * math.sin(a1_d), "u" + SUB1, 6, -4, THEORY, 12, "start", True, True)
-p.label(2.7 * math.cos(a2_d), 2.7 * math.sin(a2_d), "u" + SUB2, 6, -4, THEORY, 12, "start", True, True)
-p.text(-2.8, -2.15, "K* = { x* : " + LANG + "x, x*" + RANG + " " + GEQ + " 0, her x " + IN + " K }",
-       PRACTICE, 11.5, "start", True)
+p.label(2.7 * math.cos(a1_d), 2.7 * math.sin(a1_d), "u" + SUB1, 8, 16, THEORY, 12, "start", True, True)
+p.label(2.7 * math.cos(a2_d), 2.7 * math.sin(a2_d), "u" + SUB2, -10, -2, THEORY, 12, "end", True, True)
 OUT["dual-koni"] = figure(
-    470, 380, [p],
-    "u" + SUB1 + " ile u" + SUB2 + " ışınlarının gerdiği K konisi ve onun dual konisi K*. K* bir x* "
+    470, 330, [p],
+    "u" + SUB1 + " ile u" + SUB2 + " ışınlarının gerdiği K konisi ve onun dual konisi "
+    "K* = { x* : " + LANG + "x, x*" + RANG + " " + GEQ + " 0, her x " + IN + " K }. K* bir x* "
     "vektörünü, K'nın <strong>her</strong> elemanıyla iç çarpımı negatif olmadığında içerir; bu, K'nın iki "
     "kenar ışınına dik iki yarı düzlemin kesişimi demektir. Dar bir koninin duali geniş olur: K burada "
     "60&#176;, K* ise 120&#176; açıklıktadır. Dual koni her zaman kapalı ve konvekstir.",
@@ -1555,10 +1341,10 @@ p.points([(kxm, _kf(kxm)), (kxm, kym)], BASE, 4.4)
 p.vline(kxm, -0.35, _kf(kxm), REMARK, "4 3", 0.5)
 p.vline(kx1, -0.35, _kf(kx1), REMARK, "4 3", 0.4)
 p.vline(kx2, -0.35, _kf(kx2), REMARK, "4 3", 0.4)
-p.label(kx1, -0.35, "x" + SUB1, 0, 17, TEXT, 11.5, "middle", False, True)
-p.label(kx2, -0.35, "x" + SUB2, 0, 17, TEXT, 11.5, "middle", False, True)
-p.label(kxm, -0.35, LAMBDA + "x" + SUB1 + " + (1" + MINUS + LAMBDA + ")x" + SUB2, 0, 17, TEXT, 11, "middle")
-p.label(kxm, kym, LAMBDA + "f(x" + SUB1 + ") + (1" + MINUS + LAMBDA + ")f(x" + SUB2 + ")", 10, -4, PRACTICE, 11, "start", True)
+p.label(kx1, -0.35, "x" + SUB1, 0, 33, TEXT, 11.5, "middle", False, True)
+p.label(kx2, -0.35, "x" + SUB2, 0, 33, TEXT, 11.5, "middle", False, True)
+p.label(kxm, -0.35, LAMBDA + "x" + SUB1 + " + (1" + MINUS + LAMBDA + ")x" + SUB2, 0, 33, TEXT, 11, "middle")
+p.label(kxm, kym, LAMBDA + "f(x" + SUB1 + ") + (1" + MINUS + LAMBDA + ")f(x" + SUB2 + ")", -10, -9, PRACTICE, 11, "end", True)
 p.label(kxm, _kf(kxm), "f(" + LAMBDA + "x" + SUB1 + " + (1" + MINUS + LAMBDA + ")x" + SUB2 + ")", 10, 6, BASE, 11, "start", True)
 OUT["kiris-esitsizligi"] = figure(
     540, 340, [p],
@@ -1574,7 +1360,7 @@ p1.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
 p1.line(curve(lambda x: 0.42 * x ** 2 + 0.25, -2.2, 2.2), THEORY, 2.4)
 seg(p1, (-1.7, 0.42 * 2.89 + 0.25), (1.5, 0.42 * 2.25 + 0.25), PRACTICE, 2.2, "5 4")
 p1.points([(-1.7, 0.42 * 2.89 + 0.25), (1.5, 0.42 * 2.25 + 0.25)], PRACTICE, 4.2)
-p1.label(-0.1, 1.35, "kiriş grafiğin kesin üstünde", 0, 0, PRACTICE, 10.5, "middle", True)
+p1.label(-0.1, 1.33, "kiriş grafiğin kesin üstünde", 0, -20, PRACTICE, 10.5, "middle", True)
 panel_title(p1, "kesin konveks", TEXT, 11.5)
 
 
@@ -1615,37 +1401,6 @@ OUT["supremum-konveks"] = figure(
     "alttan destekleyen afin fonksiyonların supremumu olarak yazılabilir.",
     aria="Afin fonksiyonlarin supremumu konvekstir")
 
-# ================================================================ Jensen eşitsizliği
-def _jf(x):
-    return 0.4 * x ** 2 + 0.3
-
-
-JX = [-1.9, 0.2, 1.9]
-JL = [0.3, 0.45, 0.25]
-jm = sum(l * x for l, x in zip(JL, JX))
-jv = sum(l * _jf(x) for l, x in zip(JL, JX))
-p = Plot(56, 46, 400, 240, (-2.5, 2.5), (-0.35, 2.6))
-p.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
-gr = [(x, _jf(x)) for x in JX]
-p.polygon(gr, PRACTICE, 0.16, stroke="none")
-p.line(gr + [gr[0]], PRACTICE, 1.8, "5 4")
-p.line(curve(_jf, -2.3, 2.3), THEORY, 2.4)
-p.points(gr, PRACTICE, 4.4)
-seg(p, (jm, _jf(jm)), (jm, jv), BASE, 2.6)
-p.points([(jm, jv), (jm, _jf(jm))], BASE, 4.4)
-for x, l in zip(JX, JL):
-    p.vline(x, -0.35, _jf(x), REMARK, "4 3", 0.4)
-    p.label(x, -0.35, LAMBDA + " = " + ("%.2f" % l).replace(".", ","), 0, 17, REMARK, 10.5, "middle")
-p.label(jm, jv, "&#8721; " + LAMBDA + SUBI + " f(x" + SUBI + ")", 10, -2, PRACTICE, 11.5, "start", True)
-p.label(jm, _jf(jm), "f(&#8721; " + LAMBDA + SUBI + " x" + SUBI + ")", 10, 12, BASE, 11.5, "start", True)
-OUT["jensen"] = figure(
-    500, 330, [p],
-    "Jensen eşitsizliği, kiriş eşitsizliğinin sonlu çok noktaya genellemesidir. Grafik üzerindeki üç noktanın "
-    "ağırlıklı ortalaması, üçgenin — yani epigrafın — içinde kalır; aynı ağırlıklarla alınan apsis "
-    "ortalamasının fonksiyon değeri ise daima bunun altındadır. Ağırlıkların negatif olmaması ve toplamlarının "
-    "1 etmesi şarttır.",
-    aria="Jensen esitsizligi: uc noktali agirlikli ortalama")
-
 # ============================================================== norm konvekstir
 p1 = Plot(46, 46, 262, 196, (-2.4, 2.4), (-0.35, 2.5))
 p1.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
@@ -1661,7 +1416,7 @@ region(p2, rect(-1.25, -1.25, 1.25, 1.25), REMARK, 0.08, 1.9)
 region(p2, circle_pts(0, 0, 1.25, 0, 2 * PI, 96), THEORY, 0.10, 2.1)
 region(p2, [(1.25, 0), (0, 1.25), (-1.25, 0), (0, -1.25)], PRACTICE, 0.14, 2.1)
 p2.label(1.25, 1.25, "&#8214;x&#8214;" + "&#8734;", 6, -4, REMARK, 11.5, "start", True)
-p2.label(0.88, 0.88, "&#8214;x&#8214;" + SUB2, 6, -4, THEORY, 11.5, "start", True)
+p2.label(1.05, 0.62, "&#8214;x&#8214;" + SUB2, 8, 4, THEORY, 11.5, "start", True)
 p2.label(0.62, 0.62, "&#8214;x&#8214;" + SUB1, -4, 14, PRACTICE, 11.5, "end", True)
 panel_title(p2, "birim yuvarlar", TEXT, 11.5)
 
@@ -1689,7 +1444,7 @@ for c, op in ((2.4, 0.06), (1.2, 0.06), (0.4, 0.10)):
     p1.polygon(lvl, THEORY, op, stroke="none")
     p1.line(lvl, THEORY, 1.9)
 p1.points([(0, 0)], PRACTICE, 4.2)
-p1.label(0, 0, "en küçük", 10, 16, PRACTICE, 11, "start", True)
+p1.label(0.85, 0.85, "en küçük", 4, 2, PRACTICE, 11, "start", True)
 p1.text(-2.8, -2.7, "seviye kümeleri konveks", THEORY, 11, "start", True)
 panel_title(p1, "pozitif tanımlı Hessian", TEXT, 11.5)
 
@@ -1759,7 +1514,7 @@ p1.points([(r_lo, -0.32), (r_hi, -0.32)], BASE, 4.2)
 p1.vline(r_lo, -0.32, ALP, REMARK, "4 3", 0.5)
 p1.vline(r_hi, -0.32, ALP, REMARK, "4 3", 0.5)
 p1.label(2.8, ALP, ALPHA, -2, -8, PRACTICE, 12, "end", True, True)
-p1.label(0.4, -0.32, "f(x) " + LEQ + " " + ALPHA + ": bir aralık", 0, 18, BASE, 11, "middle", True)
+p1.label(0.4, -0.32, "f(x) " + LEQ + " " + ALPHA + ": bir aralık", 0, -11, BASE, 11, "middle", True)
 panel_title(p1, "konveks f", TEXT, 11.5)
 
 p2 = Plot(392, 46, 276, 206, (-1.9, 1.9), (-3.2, 3.2))
@@ -1773,7 +1528,7 @@ p2.vline(0.5 ** (1 / 3), -2.6, 0.5, REMARK, "4 3", 0.5)
 seg(p2, (-1.4, -2.744), (-0.2, -0.008), PRACTICE, 2.0, "5 4")
 p2.points([(-1.4, -2.744), (-0.2, -0.008)], PRACTICE, 4.0)
 p2.label(1.8, 0.5, ALPHA, -2, -8, PRACTICE, 12, "end", True, True)
-p2.label(-1.55, -1.1, "kiriş altta", -4, 0, PRACTICE, 10.5, "end", True)
+p2.label(-1.85, -0.25, "kiriş altta", 4, 0, PRACTICE, 10.5, "start", True)
 panel_title(p2, "f(x) = x&#179;: tersi doğru değil", TEXT, 11.5)
 
 OUT["seviye-kumeleri"] = figure(
@@ -1794,13 +1549,14 @@ X0 = -0.6
 p = Plot(56, 48, 400, 244, (-1.35, 1.85), (-0.15, 2.1))
 p.axes([-1, 0, 1], [0, 1, 2], "x", "")
 p.line(curve(_df, -1.2, 1.7), THEORY, 2.4)
-for lam_d, col in ((1.6, REMARK), (0.9, REMARK), (0.45, PRACTICE)):
+for lam_d, col, off in ((1.6, REMARK, (6, 15, "start")), (0.9, REMARK, (6, 17, "start")),
+                        (0.45, PRACTICE, (-6, 17, "end"))):
     x1 = X0 + lam_d
     p.line([(X0 - 0.3, _df(X0) + (_df(x1) - _df(X0)) / lam_d * (-0.3)),
             (x1 + 0.12, _df(X0) + (_df(x1) - _df(X0)) / lam_d * (lam_d + 0.12))], col, 1.5, "5 4", 0.85)
     p.points([(x1, _df(x1))], col, 3.8)
     p.label(x1, _df(x1), LAMBDA + " = " + ("%.2f" % lam_d).rstrip("0").rstrip(".").replace(".", ","),
-            6, -6, col, 10.5, "start", True)
+            off[0], off[1], col, 10.5, off[2], True)
 sl = 1.1 * X0
 p.line([(X0 - 0.55, _df(X0) + sl * (-0.55)), (X0 + 0.95, _df(X0) + sl * 0.95)], BASE, 2.4)
 p.points([(X0, _df(X0))], BASE, 4.6)
@@ -1829,8 +1585,8 @@ XT = 1.45
 slt = 1.0 + 0.5 * XT
 p.line([(XT - 1.1, _sf(XT) + slt * (-1.1)), (XT + 0.85, _sf(XT) + slt * 0.85)], BASE, 2.2)
 p.points([(XT, _sf(XT))], BASE, 4.6)
-p.label(0.0, 0.0, "kırılma: " + "&#8706;" + "f(0) = [" + MINUS + "1, 1]", -8, 22, PRACTICE, 11, "end", True)
-p.label(XT, _sf(XT), "düzgün nokta: tek teğet", 8, -10, BASE, 11, "start", True)
+p.label(0.0, -0.58, "&#8706;" + "f(0) = [" + MINUS + "1, 1]", 0, 0, PRACTICE, 10.5, "middle", True)
+p.label(XT, _sf(XT), "düzgün nokta: tek teğet", -10, -12, BASE, 11, "end", True)
 OUT["subgradient"] = figure(
     510, 340, [p],
     "Bir x* subgradienti, grafiğe x" + SUB0 + " noktasında değen ve fonksiyonun her yerde <strong>altında</"
@@ -1846,7 +1602,7 @@ for s in (-1.0, -0.6, -0.2, 0.2, 0.6, 1.0):
     pseg(p1, (-2.0, s * -2.0), (2.0, s * 2.0), REMARK, 1.3, "5 4", 0.85)
 p1.line(curve(abs, -2.0, 2.0, 400), THEORY, 2.8)
 p1.points([(0.0, 0.0)], PRACTICE, 4.8)
-p1.label(-1.35, 1.35, "f(x) = |x|", -6, -6, THEORY, 11.5, "end", True)
+p1.label(-2.15, 2.2, "f(x) = |x|", 0, 0, THEORY, 11.5, "start", True)
 panel_title(p1, "destekleyen doğrular yelpazesi", TEXT, 11.5)
 
 p2 = Plot(392, 48, 276, 200, (-2.2, 2.2), (-1.75, 1.75))
@@ -1880,7 +1636,7 @@ hyperline(p, dirv, Sval, PRACTICE, 2.3)
 p.arrow((0, 0), (dirv[0] * 1.15, dirv[1] * 1.15), BASE, 2.2)
 p.points([best], PRACTICE, 4.6)
 p.points([(0, 0)], TEXT, 3.2)
-p.label(dirv[0] * 1.15, dirv[1] * 1.15, "x", 8, 6, BASE, 13, "start", True, True)
+p.label(dirv[0] * 0.62, dirv[1] * 0.62, "x", -9, -5, BASE, 13, "end", True, True)
 p.label(*best, "en uzak nokta", 10, -8, PRACTICE, 11, "start", True)
 p.label(0.0, -1.3, "A", 0, 0, THEORY, 14, "middle", True, True)
 p.text(-2.3, 2.2, "S(x, A) = sup " + LANG + "x, a" + RANG, PRACTICE, 12, "start", True)
