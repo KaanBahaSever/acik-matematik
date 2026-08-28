@@ -1,0 +1,1325 @@
+---
+title: "Alıştırmalar ve Problemler"
+pagetitle: "Alıştırmalar ve Problemler"
+description: "Konveks Analiz dersinin tüm konularını kapsayan çözümlü problemler: lineer dönüşümler, kapalılık ve kompaktlık, afin kümeler ve hiperdüzlemler, konveks kümeler, göreli iç ve konveks örtü, koniler ve dual koniler, ayrılabilme, konveks fonksiyonlar, Hessian kriteri, yönlü türev ve subdiferansiyel."
+---
+
+Bu bölüm, dersin on iki haftasında kurulan makinenin çalıştığı yerdir. Problemler konu sırasına göre dizilmiştir; her birinin çözümü kapalı bir kutu içindedir, böylece önce kendiniz deneyebilirsiniz. Kullanılan bütün tanım ve teoremler önceki bölümlerdekilerle aynıdır ve gerektiğinde bağlantı verilmiştir.
+
+Birkaç problem bilerek "yanlış" iddialarla gelir: bunlarda beklenen şey ispat değil, iddiayı çürüten bir **ters örnektir**. Konveks analizde bir koşulun neden orada durduğunu çoğu zaman ancak onu kaldırdığımızda bozulan örneği görerek anlarız.
+
+## Lineer Dönüşümler
+
+::::: {#exr-matris-lineer name="Matris Çarpımı Lineerdir"}
+$A$ bir $m \times n$ reel matris olmak üzere $L(u) = Au$ şeklinde tanımlanan $L : \mathbb{R}^n \to \mathbb{R}^m$ dönüşümünün lineer olduğunu gösteriniz.
+
+:::: {.cozum}
+Matris çarpımının toplama üzerine dağılma ve skalerle değişme özellikleri doğrudan kullanılır. $u, v \in \mathbb{R}^n$ ve $\lambda \in \mathbb{R}$ olsun:
+
+$$L(u + v) = A(u + v) = Au + Av = L(u) + L(v),$$
+
+$$L(\lambda u) = A(\lambda u) = \lambda (Au) = \lambda L(u).$$
+
+@def-lineer-donusum'deki iki koşul da sağlandığından $L$ bir lineer dönüşümdür. @thm-lineer-matris bu gözlemin tersini söyler: $\mathbb{R}^n$'den $\mathbb{R}^m$'e giden her lineer dönüşüm bu biçimdedir, yani "lineer dönüşüm" ile "matris" aynı şeyin iki adıdır.
+::::
+:::::
+
+::::: {#exr-fonksiyonel-ic-carpim name="Her Lineer Fonksiyonel Bir İç Çarpımdır"}
+$L : \mathbb{R}^n \to \mathbb{R}$ bir lineer fonksiyonel olsun.
+
+(a) $L(x) = \langle a, x \rangle$ gerçekleyen bir $a \in \mathbb{R}^n$ vektörünün var olduğunu gösteriniz.
+
+(b) $L$ fonksiyonelinin sürekli olduğunu gösteriniz.
+
+:::: {.cozum}
+**(a)** $\{e_1, \dots, e_n\}$ kümesi $\mathbb{R}^n$'in standart tabanı olsun. Her $x = (x_1, \dots, x_n)$ vektörü $x = \sum_{i=1}^{n} x_i e_i$ biçiminde yazıldığından, lineerlik ile
+
+$$L(x) = L\left( \sum_{i=1}^{n} x_i e_i \right) = \sum_{i=1}^{n} x_i L(e_i)$$
+
+elde edilir. Şimdi $a := \big( L(e_1), \dots, L(e_n) \big) \in \mathbb{R}^n$ denirse sağ taraf tam olarak $\langle a, x \rangle$ toplamıdır.
+
+Bu $a$ vektörü tektir: $\langle a, x \rangle = \langle a', x \rangle$ her $x$ için geçerliyse $\langle a - a', x \rangle = 0$ olur; $x = a - a'$ seçilirse $\|a - a'\|^2 = 0$, yani $a = a'$ bulunur.
+
+**(b)** (a) şıkkındaki gösterim ile her $x, y \in \mathbb{R}^n$ için Cauchy-Schwarz eşitsizliği
+
+$$|L(x) - L(y)| = |\langle a, x - y \rangle| \le \|a\| \cdot \|x - y\|$$
+
+verir. Bu, $L$ fonksiyonelinin $\|a\|$ sabitli bir Lipschitz fonksiyonu olması demektir; dolayısıyla düzgün sürekli, özel olarak da süreklidir. Verilen bir $\varepsilon > 0$ için $\delta := \varepsilon / (\|a\| + 1)$ seçmek yeterlidir.
+
+Aynı sonuç @lem-lineer-surekli'nin $m = 1$ özel hâlidir; buradaki hesap, o ispatın tek boyutlu ve daha kısa bir yazılışıdır.
+::::
+:::::
+
+::::: {#exr-lineer-mi name="Lineer mi, Değil mi?"}
+Aşağıdaki dönüşümlerin lineer olup olmadığını inceleyiniz; lineer olanların dönüşüm matrisini bulunuz.
+
+(a) $L : \mathbb{R}^2 \to \mathbb{R}^3$, $L(x, y) = (y,\ x,\ x + y)$.
+
+(b) $L : \mathbb{R}^3 \to \mathbb{R}^2$, $L(x, y, z) = (xy,\ yz)$.
+
+(c) $L : \mathbb{R}^3 \to \mathbb{R}^2$, $L(x, y, z) = (z - x,\ x + y)$. Ayrıca $L(e_1), L(e_2), L(e_3)$ vektörlerini hesaplayıp $L(x, y, z) = x L(e_1) + y L(e_2) + z L(e_3)$ eşitliğini doğrulayınız.
+
+:::: {.cozum}
+**(a)** Bileşenlerin hepsi $x$ ile $y$'nin birinci dereceden ve sabit terimsiz ifadeleridir. $\alpha, \beta \in \mathbb{R}$ için
+
+$$L\big( \alpha(x_1, y_1) + \beta(x_2, y_2) \big) = \big( \alpha y_1 + \beta y_2,\ \alpha x_1 + \beta x_2,\ \alpha(x_1 + y_1) + \beta(x_2 + y_2) \big) = \alpha L(x_1, y_1) + \beta L(x_2, y_2)$$
+
+olduğundan $L$ lineerdir. @thm-lineer-matris'in ispatındaki reçete uyarınca matrisin sütunları $L(e_1)$ ve $L(e_2)$ görüntüleridir: $L(1, 0) = (0, 1, 1)$ ve $L(0, 1) = (1, 0, 1)$. Böylece
+
+$$A = \begin{pmatrix} 0 & 1 \\ 1 & 0 \\ 1 & 1 \end{pmatrix}, \qquad L(x, y) = A \begin{pmatrix} x \\ y \end{pmatrix}.$$
+
+**(b)** Lineer **değildir**: bileşenler ikinci derecedendir. Tek bir ters örnek yeter. $u = (1, 1, 1)$ ve $\lambda = 2$ alınırsa
+
+$$L(2u) = L(2, 2, 2) = (4, 4), \qquad 2L(u) = 2(1, 1) = (2, 2)$$
+
+olup $L(2u) \ne 2L(u)$'dur. Homojenlik koşulu bozulduğundan $L$ lineer olamaz.
+
+**(c)** Bileşenler yine birinci dereceden ve sabit terimsizdir; (a) şıkkındaki hesabın aynısı burada da yürür, dolayısıyla $L$ lineerdir. Taban vektörlerinin görüntüleri
+
+$$L(e_1) = L(1, 0, 0) = (-1, 1), \qquad L(e_2) = L(0, 1, 0) = (0, 1), \qquad L(e_3) = L(0, 0, 1) = (1, 0)$$
+
+olur. Bunlarla
+
+$$x L(e_1) + y L(e_2) + z L(e_3) = (-x, x) + (0, y) + (z, 0) = (z - x,\ x + y) = L(x, y, z)$$
+
+eşitliği doğrulanır. Dönüşüm matrisi, sütunları bu üç görüntü olan matristir:
+
+$$A = \begin{pmatrix} -1 & 0 & 1 \\ 1 & 1 & 0 \end{pmatrix}.$$
+::::
+:::::
+
+::::: {#exr-lineer-sifir name="Lineer Dönüşümün İki Basit Özelliği"}
+$L : \mathbb{R}^n \to \mathbb{R}^m$ bir lineer dönüşüm olmak üzere (a) $L(0) = 0$ ve (b) her $u, v \in \mathbb{R}^n$ için $L(u - v) = L(u) - L(v)$ olduğunu gösteriniz.
+
+:::: {.cozum}
+**(a)** Homojenlik koşulunda $\lambda = 0$ alınır: $L(0) = L(0 \cdot 0) = 0 \cdot L(0) = 0$.
+
+**(b)** Önce $\lambda = -1$ için $L(-v) = -L(v)$ olduğu görülür; ardından toplamsallık kullanılır:
+
+$$L(u - v) = L\big( u + (-v) \big) = L(u) + L(-v) = L(u) - L(v).$$
+
+Birinci özellik, lineer ile afin dönüşümleri ayıran testtir: @thm-afin-yapisi gereği her afin dönüşüm $F(x) = L(x) + a$ biçimindedir ve $a = F(0)$ sıfır olduğunda — ancak o zaman — $F$ lineer olur.
+::::
+:::::
+
+## Kapalılık ve Kompaktlık
+
+::::: {#exr-hiperbol-bolgesi name="Hiperbolün Üstündeki Bölgeler"}
+$\mathbb{R}^2$ uzayında
+
+$$A = \Big\{ (x, y) : y \ge \tfrac{1}{x},\ x > 0 \Big\}, \qquad B = \Big\{ (x, y) : y \ge -\tfrac{1}{x},\ x < 0 \Big\}$$
+
+kümelerini düzlemde betimleyiniz ve kompaktlıklarını inceleyiniz.
+
+:::: {.cozum}
+$A$ kümesi, birinci bölgedeki $y = 1/x$ hiperbol kolunun **üstünde** kalan bölgedir. $B$ kümesinde $x < 0$ olduğundan $-1/x > 0$'dır; dolayısıyla $B$ de ikinci bölgedeki $y = -1/x$ kolunun üstünde kalan bölgedir. İkisi de $y$ eksenine göre birbirinin aynadaki görüntüsüdür.
+
+**Kapalılık.** $A$ kümesinden yakınsak bir $\{(x_k, y_k)\}$ dizisi alalım ve $(x_k, y_k) \to (x, y)$ olsun. Eğer $x = 0$ olsaydı $y_k \ge 1/x_k \to +\infty$ olurdu ve $\{y_k\}$ yakınsayamazdı; demek ki $x > 0$'dır. $t \mapsto 1/t$ fonksiyonu $x > 0$ noktasında sürekli olduğundan $y_k \ge 1/x_k$ eşitsizliğinde limite geçilerek $y \ge 1/x$ bulunur, yani $(x, y) \in A$ olur. Böylece $A$ kapalıdır; aynı akıl yürütme $B$ için de geçerlidir.
+
+**Sınırlılık.** $A$ sınırlı **değildir**: her $k \in \mathbb{N}$ için $(k, 1/k) \in A$ ve $\|(k, 1/k)\| \ge k \to \infty$'dur. Aynı biçimde $B$ de sınırlı değildir.
+
+@thm-heine-borel gereği kompaktlık kapalı **ve** sınırlı olmayı gerektirdiğinden $A$ ve $B$ kümelerinin **hiçbiri kompakt değildir.**
+
+Son bir gözlem: $1/x$ fonksiyonu $x > 0$ üzerinde konveks olduğundan $A$ kümesi onun grafiküstü kümesidir ve dolayısıyla konvekstir; $B$ için de durum aynıdır. Bu iki küme @exr-ayirma-ornekleri'nde yeniden karşımıza çıkacak.
+::::
+:::::
+
+::::: {#exr-kapali-toplam name="Kapalı İki Kümenin Toplamı Kapalı mıdır?"}
+$A, B \subseteq \mathbb{R}^2$ kapalı kümeler ise $A + B$ toplam kümesi de $\mathbb{R}^2$'de kapalı mıdır? Neden?
+
+:::: {.cozum}
+**Hayır.** İddia genel olarak yanlıştır; bir ters örnek verelim.
+
+$$A = \{(t, 0) : t \in \mathbb{R}\} \quad (x\text{-ekseni}), \qquad B = \Big\{ \big( s, \tfrac{1}{s} \big) : s > 0 \Big\} \quad (\text{hiperbol kolu})$$
+
+kümelerini alalım. $A$ bir doğru olduğundan kapalıdır; $B$ ise sürekli bir fonksiyonun grafiğidir ve @exr-hiperbol-bolgesi'ndeki akıl yürütmeyle kapalıdır.
+
+Toplamı hesaplayalım. Herhangi bir $u \in \mathbb{R}$ ve $v > 0$ verilsin. $s := 1/v > 0$ seçilirse $\big( s, \tfrac{1}{s} \big) = \big( \tfrac{1}{v}, v \big) \in B$ olur ve
+
+$$\Big( u - \tfrac{1}{v},\ 0 \Big) + \Big( \tfrac{1}{v},\ v \Big) = (u, v)$$
+
+yazılır. Ters yönde, $A + B$ kümesindeki her noktanın ikinci bileşeni $1/s > 0$ biçiminde olduğundan pozitiftir. Demek ki
+
+$$A + B = \{(u, v) \in \mathbb{R}^2 : v > 0\},$$
+
+yani açık üst yarı düzlemdir; bu küme kapalı değildir. Nitekim $(0, 1/k) \in A + B$ dizisi $A + B$ kümesinde bulunmayan $(0, 0)$ noktasına yakınsar.
+
+Hangi ek koşulun yettiğini @prp-toplam-topoloji söyler: $A$ kapalı ve $B$ **kompakt** ise $A + B$ kapalıdır. Yukarıdaki $B$ kapalıdır ama sınırlı olmadığından kompakt değildir; kapalılığın bozulduğu yer tam olarak burasıdır.
+::::
+:::::
+
+## Afin Kümeler ve Hiperdüzlemler
+
+::::: {#exr-afin-islemler name="Kesişim, Toplam ve Birleşim"}
+(a) Herhangi sayıdaki afin kümenin kesişiminin de afin olduğunu gösteriniz.
+
+(b) $A, B \subseteq \mathbb{R}^n$ afin kümeleri için $A + B$ toplam kümesi afin midir? $A \cup B$ birleşim kümesi afin midir?
+
+:::: {.cozum}
+**(a)** $\{A_i\}_{i \in I}$ afin kümelerden oluşan bir aile ve $x, y \in \bigcap_{i \in I} A_i$ olsun. Herhangi bir $\lambda \in \mathbb{R}$ için: her $i \in I$ indisinde $x, y \in A_i$ ve $A_i$ afin olduğundan $(1 - \lambda)x + \lambda y \in A_i$ gerçeklenir. Bu her $i$ için doğru olduğuna göre nokta kesişimdedir. Demek ki kesişim afindir.
+
+**(b)** **Toplam afindir.** $x_1 + y_1,\ x_2 + y_2 \in A + B$ ve $\lambda \in \mathbb{R}$ olsun. Terimler yeniden gruplanırsa
+
+$$(1 - \lambda)(x_1 + y_1) + \lambda(x_2 + y_2) = \underbrace{\big[ (1 - \lambda)x_1 + \lambda x_2 \big]}_{\in A} + \underbrace{\big[ (1 - \lambda)y_1 + \lambda y_2 \big]}_{\in B} \in A + B$$
+
+elde edilir.
+
+**Birleşim afin olmak zorunda değildir.** $\mathbb{R}^2$ uzayında $A = \{(t, 0) : t \in \mathbb{R}\}$ ve $B = \{(0, t) : t \in \mathbb{R}\}$ eksenlerini alalım; ikisi de afindir. $(1, 0) \in A$ ve $(0, 1) \in B$ noktalarından geçen doğru $\{(1 - \lambda, \lambda) : \lambda \in \mathbb{R}\}$ kümesidir ve örneğin $\lambda = \tfrac{1}{2}$ için elde edilen $\big( \tfrac{1}{2}, \tfrac{1}{2} \big)$ noktası ne $A$'da ne de $B$'dedir. Dolayısıyla $A \cup B$ afin değildir.
+::::
+:::::
+
+::::: {#exr-afin-lineer-iliski name="Afin Kombinasyon ile Lineer Alt Uzay"}
+(a) Bir $z \in \mathbb{R}^n$ noktası $x_1, \dots, x_m \in \mathbb{R}^n$ noktalarının bir afin kombinasyonu ise aynı zamanda bir lineer kombinasyonudur; neden?
+
+(b) $A \subseteq \mathbb{R}^n$ bir lineer alt uzay ise $A$ bir afin kümedir; neden?
+
+:::: {.cozum}
+**(a)** @def-afin-kombinasyon ile @def-lineer-kombinasyon'u yan yana koyalım. İkisi de $\sum_{i=1}^{m} \lambda_i x_i$ biçimindeki noktalardır; tek fark, afin kombinasyonda katsayılara ek olarak $\sum_{i=1}^{m} \lambda_i = 1$ koşulunun konmasıdır. Lineer kombinasyon tanımı katsayılar üzerine hiçbir kısıt koymadığından, koşulu sağlayan her yazılış aynı zamanda kısıtsız tanımı da sağlar. Kısacası afin kombinasyonlar, lineer kombinasyonların özel bir alt sınıfıdır; ters yön doğru değildir — örneğin $2x_1$ noktası bir lineer kombinasyondur ama katsayılar toplamı $1$ olmadığından afin kombinasyon değildir.
+
+**(b)** $A$ bir lineer alt uzay, $x, y \in A$ ve $\lambda \in \mathbb{R}$ olsun. @def-lineer-alt-uzay gereği $A$ kümesi herhangi iki elemanının lineer kombinasyonlarını içerir; özel olarak $\lambda_1 = 1 - \lambda$ ve $\lambda_2 = \lambda$ katsayılarıyla
+
+$$(1 - \lambda)x + \lambda y \in A$$
+
+geçerlidir. Bu ise tam olarak @def-afin-kume'deki koşuldur. Tersi doğru değildir: orijinden geçmeyen bir doğru afindir ama $0$ noktasını içermediğinden alt uzay olamaz. @cor-alt-uzay-orijin bu ayrımı kesinleştirir — lineer alt uzaylar, orijini içeren afin kümelerdir.
+::::
+:::::
+
+::::: {#exr-afin-dogru-boyut name="Bir Doğrunun Afinliği ve Boyutu"}
+$A = \{(x, y) \in \mathbb{R}^2 : x + y = 1\}$ kümesinin afin olduğunu gösteriniz ve boyutunu belirleyiniz.
+
+:::: {.cozum}
+$A$ kümesi tek bir lineer denklemin çözüm kümesidir. Denklem iç çarpım diliyle $\langle (1,1), (x,y) \rangle = 1$ biçiminde yazıldığından @thm-hiperduzlem-denklem gereği $A$ bir hiperdüzlemdir; $\mathbb{R}^2$'de hiperdüzlemler doğrulardır ve her hiperdüzlem afindir.
+
+Aynı sonucu doğrudan da görebiliriz: $(x_1, y_1), (x_2, y_2) \in A$ ve $\lambda \in \mathbb{R}$ için
+
+$$\big[ (1 - \lambda)x_1 + \lambda x_2 \big] + \big[ (1 - \lambda)y_1 + \lambda y_2 \big] = (1 - \lambda)(x_1 + y_1) + \lambda(x_2 + y_2) = (1 - \lambda) + \lambda = 1.$$
+
+**Boyut.** @def-afin-boyut gereği $\dim(A)$, $A$ kümesine paralel olan lineer alt uzayın boyutudur. $(1, 0) \in A$ noktası çıkarılırsa
+
+$$L = A - (1, 0) = \{(x, y) : x + y = 0\} = \operatorname{span}\{(1, -1)\}$$
+
+bulunur. Tek bir sıfırdan farklı vektör tarafından gerildiğinden $\dim(L) = 1$, dolayısıyla $\dim(A) = 1$'dir. Beklendiği gibi: bir doğrunun boyutu birdir ve $\mathbb{R}^2$'de $2 - 1 = 1$, yani $A$ gerçekten bir hiperdüzlemdir.
+::::
+:::::
+
+::::: {#exr-normal-hiperduzlem name="Bir Doğruya Dik Vektörlerden Hiperdüzlem"}
+$A = \operatorname{aff}\{(1, 1, 0),\ (3, 0, -1)\}$ olmak üzere
+
+$$H = \big\{ x \in \mathbb{R}^3 : \langle x,\ y - (1, 1, 0) \rangle = 0,\ \forall y \in A \big\}$$
+
+şeklinde tanımlanan $H$ kümesinin $\mathbb{R}^3$'te bir hiperdüzlem olduğunu gösteriniz; $H = \{x : \langle a, x \rangle = b\}$ yazılışındaki $0 \ne a$ vektörünü ve $b$ sayısını belirleyiniz.
+
+:::: {.cozum}
+Önce $A$ kümesini açalım. İki noktanın afin örtüsü, bu noktalardan geçen doğrudur (@def-dogru); yön vektörü
+
+$$v = (3, 0, -1) - (1, 1, 0) = (2, -1, -1)$$
+
+olduğundan
+
+$$A = \{(1, 1, 0) + t v : t \in \mathbb{R}\}, \qquad \text{yani} \qquad y \in A \iff y - (1, 1, 0) = t v \ \text{ (bir } t \in \mathbb{R} \text{ için)}.$$
+
+Şimdi $H$ kümesindeki koşulu bu yazılışla değiştirelim. Her $y \in A$ için $\langle x, y - (1,1,0) \rangle = 0$ olması, her $t \in \mathbb{R}$ için $t \langle x, v \rangle = 0$ olması demektir. $t = 1$ alındığında $\langle x, v \rangle = 0$ çıkar; tersine $\langle x, v \rangle = 0$ ise her $t$ için eşitlik sağlanır. Dolayısıyla
+
+$$H = \{x \in \mathbb{R}^3 : \langle (2, -1, -1),\ x \rangle = 0\}.$$
+
+Burada $a = (2, -1, -1) \ne 0$ ve $b = 0$'dır. @thm-hiperduzlem-denklem'in ikinci yarısı, bu biçimde verilen her kümenin bir hiperdüzlem olduğunu söylediğinden $H$ bir hiperdüzlemdir — geometrik olarak, $A$ doğrusunun yön vektörüne dik olan ve orijinden geçen düzlemdir. $b = 0$ olması, $H$ kümesinin aynı zamanda bir lineer alt uzay olduğu anlamına gelir (@cor-alt-uzay-orijin).
+::::
+:::::
+
+::::: {#exr-hiperduzlem-polihedral name="Hiperdüzlemler Polihedraldir"}
+Hiperdüzlemlerin polihedral kümeler olduğunu gösteriniz.
+
+:::: {.cozum}
+$H = \{x \in \mathbb{R}^n : \langle a, x \rangle = b\}$ bir hiperdüzlem olsun ($0 \ne a$). Bir reel sayı için "$= b$" koşulu, "$\le b$" ve "$\ge b$" koşullarının ikisinin birden sağlanmasıyla aynı şeydir; ikincisi de $-1$ ile çarpılarak "$\le$" biçimine sokulabilir:
+
+$$\langle a, x \rangle = b \iff \begin{cases} \langle a, x \rangle \le b \\[2pt] \langle -a, x \rangle \le -b. \end{cases}$$
+
+Sağ taraf, satırları $a$ ve $-a$ olan bir $2 \times n$ matrisi $A$ ve $b^{\text{sağ}} = (b, -b)$ vektörü ile $Ax \le b^{\text{sağ}}$ biçiminde yazılan sonlu bir eşitsizlik sistemidir. @def-polihedral gereği çözüm kümesi polihedraldir; yani
+
+$$H = H^{\le} \cap H^{\ge}$$
+
+olup hiperdüzlem, kendi belirlediği iki kapalı yarı uzayın kesişimidir. Bu gözlemin bir yan ürünü de şudur: polihedral kümeler kapalı ve konveks olduğundan (@exm-konveks-ornekler) hiperdüzlemler de kapalı ve konvekstir.
+::::
+:::::
+
+## Konveks Kümeler
+
+::::: {#exr-polihedral-ornekler name="İki Polihedral Küme"}
+Aşağıdaki kümelerin polihedral olduğunu gösteriniz.
+
+(a) $0 \ne a \in \mathbb{R}^n$ ve $\alpha \le \beta$ olmak üzere $A = \{x \in \mathbb{R}^n : \alpha \le \langle a, x \rangle \le \beta\}$.
+
+(b) $0 \ne a_1, a_2 \in \mathbb{R}^n$ olmak üzere $C = \{x \in \mathbb{R}^n : \langle a_1, x \rangle \le b_1,\ \langle a_2, x \rangle \le b_2\}$.
+
+:::: {.cozum}
+**(a)** İki taraflı eşitsizliği iki ayrı "$\le$" koşuluna ayırmak yeter. Soldaki $\alpha \le \langle a, x \rangle$ eşitsizliği $-1$ ile çarpılarak $\langle -a, x \rangle \le -\alpha$ biçimine gelir. Böylece
+
+$$A = \{x : \langle a, x \rangle \le \beta\} \cap \{x : \langle -a, x \rangle \le -\alpha\}$$
+
+olup $A$ kümesi iki kapalı yarı uzayın kesişimidir; @def-polihedral gereği polihedraldir. Geometrik olarak $A$, aynı $a$ normaline sahip iki paralel hiperdüzlem arasında kalan "şerit"tir.
+
+**(b)** Burada yapılacak bir şey yoktur: $C$ zaten sonlu ($m = 2$) sayıda eşitsizlikle tanımlanmıştır. Satırları $a_1$ ve $a_2$ olan $2 \times n$ matris $A$ ve $b = (b_1, b_2)$ ile $C = \{x : Ax \le b\}$ yazılır.
+
+İkisi de @thm-kesisim-konveks gereği konveks, lineer fonksiyoneller sürekli olduğundan (@lem-lineer-surekli) kapalıdır.
+::::
+:::::
+
+::::: {#exr-polar-konveks name="Kutupsal Küme Konvekstir"}
+$\varnothing \ne A \subseteq \mathbb{R}^n$ herhangi bir küme olmak üzere
+
+$$B = \{y \in \mathbb{R}^n : |\langle x, y \rangle| \le 1,\ \forall x \in A\}$$
+
+kümesinin konveks olduğunu gösteriniz.
+
+:::: {.cozum}
+İki yol var; ikisi de aynı fikrin farklı yazılışlarıdır.
+
+**Kesişim olarak.** Sabit bir $x \in A$ için $|\langle x, y \rangle| \le 1$ koşulu, $-1 \le \langle x, y \rangle \le 1$ çift eşitsizliğidir; yani @exr-polihedral-ornekler'in (a) şıkkındaki şeridin ta kendisidir ve konvekstir. $B$ kümesi bu şeritlerin $x \in A$ üzerinden kesişimi olduğundan
+
+$$B = \bigcap_{x \in A} \{y : -1 \le \langle x, y \rangle \le 1\}$$
+
+yazılır ve @thm-kesisim-konveks gereği konvekstir. Kesişimin sonsuz olması bir sorun değildir — teorem herhangi bir indis kümesi için geçerlidir.
+
+**Doğrudan.** $y_1, y_2 \in B$ ve $0 \le \lambda \le 1$ olsun. Sabit bir $x \in A$ için iç çarpımın lineerliği ve üçgen eşitsizliği ile
+
+$$\big| \langle x,\ (1 - \lambda)y_1 + \lambda y_2 \rangle \big| = \big| (1 - \lambda)\langle x, y_1 \rangle + \lambda \langle x, y_2 \rangle \big| \le (1 - \lambda)\underbrace{|\langle x, y_1 \rangle|}_{\le 1} + \lambda \underbrace{|\langle x, y_2 \rangle|}_{\le 1} \le 1$$
+
+elde edilir; burada $1 - \lambda$ ile $\lambda$ negatif olmadığından mutlak değerler doğrudan açılabilmiştir. $x \in A$ herhangi olduğundan $(1 - \lambda)y_1 + \lambda y_2 \in B$ olur.
+
+Dikkat edilirse $A$ kümesinin konveks olması hiç kullanılmadı: $B$, ne kadar düzensiz bir $A$'dan üretilirse üretilsin konvekstir. Aynı olguyu dual koni için @lem-dual-kapali-konveks'te de görmüştük.
+::::
+:::::
+
+::::: {#exr-parabol-bolgesi name="Parabolün Sağındaki Bölge"}
+$C = \{(x, y) \in \mathbb{R}^2 : x \ge y^2,\ y \ge 0\}$ kümesinin konveks olduğunu gösteriniz.
+
+:::: {.cozum}
+$C$ kümesini iki kümenin kesişimi olarak yazalım:
+
+$$C = \underbrace{\{(x, y) : x \ge y^2\}}_{=: \, C_1} \cap \underbrace{\{(x, y) : y \ge 0\}}_{=: \, C_2}.$$
+
+$C_2$ bir kapalı yarı uzay olduğundan konvekstir. $C_1$ için doğrudan tanıma gidelim: $(x_1, y_1), (x_2, y_2) \in C_1$ ve $0 \le \lambda \le 1$ olsun. $t \mapsto t^2$ fonksiyonu $\mathbb{R}$ üzerinde konveks olduğundan
+
+$$\big( (1 - \lambda)y_1 + \lambda y_2 \big)^2 \ \le\ (1 - \lambda)y_1^2 + \lambda y_2^2 \ \le\ (1 - \lambda)x_1 + \lambda x_2$$
+
+zinciri geçerlidir; ilk eşitsizlik kiriş eşitsizliği, ikincisi ise $y_i^2 \le x_i$ varsayımının negatif olmayan katsayılarla birleştirilmesidir. Bu ise $(1 - \lambda)(x_1, y_1) + \lambda(x_2, y_2) \in C_1$ demektir.
+
+İki konveks kümenin kesişimi konveks olduğundan (@thm-kesisim-konveks) $C$ konvekstir.
+
+Aynı sonucu seviye kümeleri diliyle de okuyabiliriz: $g(x, y) = y^2 - x$ fonksiyonu konvekstir ve $C_1 = L_g(0)$ olduğundan @lem-seviye-konveks doğrudan uygulanır.
+::::
+:::::
+
+::::: {#exr-kesisim-konveks-ornekler name="Kesişim Olarak Yazarak Konvekslik"}
+Aşağıdaki kümelerin konveks olduğunu gösteriniz.
+
+(a) $C = \{(x, y, z) \in \mathbb{R}^3 : x + y \le 3,\ x \ge 1,\ y \ge 0,\ z = 3\}$.
+
+(b) $C = \{(x, y) \in \mathbb{R}^2 : x^2 + 2y^2 \le 1,\ x + y < 1,\ x - y \le 1\}$.
+
+:::: {.cozum}
+**(a)** Dört koşulun her biri lineerdir. İlk üçü kapalı yarı uzay, sonuncusu ise $\langle (0,0,1), (x,y,z) \rangle = 3$ hiperdüzlemidir. Hiperdüzlem de iki kapalı yarı uzayın kesişimi olduğundan (@exr-hiperduzlem-polihedral) $C$ toplam beş kapalı yarı uzayın kesişimidir; yani polihedraldir, dolayısıyla @thm-kesisim-konveks gereği konveks ve kapalıdır.
+
+**(b)** Bu kez koşullardan biri lineer değildir, ama yine de konveks bir küme belirler:
+
+* $E = \{(x, y) : x^2 + 2y^2 \le 1\}$ kümesi, $g(x, y) = x^2 + 2y^2$ fonksiyonunun $1$ seviye kümesidir. $g$ konvekstir (Hessian'ı $\operatorname{diag}(2, 4)$ olup pozitif tanımlıdır), dolayısıyla @lem-seviye-konveks gereği $E$ konvekstir — geometrik olarak bir elips ve içidir.
+* $\{(x,y) : x + y < 1\}$ bir açık yarı uzay, $\{(x,y) : x - y \le 1\}$ ise kapalı bir yarı uzaydır; ikisi de konvekstir.
+
+Üçünün kesişimi olan $C$ konvekstir. Kapalı **değildir**, çünkü kesişime giren yarı uzaylardan biri açıktır; konvekslik ile kapalılığın birbirinden bağımsız olduğuna dikkat ediniz.
+::::
+:::::
+
+::::: {#exr-konveks-islemler name="Hangi İşlem Konveksliği Korur?"}
+$C_1, C_2 \subseteq \mathbb{R}^n$ konveks kümeler olmak üzere aşağıdaki kümeler konveks midir? Neden?
+
+(a) $C_1 \cup C_2$  (b) $C_1 \cap C_2$  (c) $C_1 + C_2$  (d) $\overline{C_1} - \operatorname{int}(C_2)$  (e) $C_1 \setminus C_2$
+
+:::: {.cozum}
+**(a) Hayır.** $\mathbb{R}$'de $C_1 = [0, 1]$ ve $C_2 = [2, 3]$ alalım; ikisi de konvekstir. $0 \in C_1$ ve $3 \in C_2$ noktalarının orta noktası $\tfrac{3}{2}$ ise birleşimde değildir.
+
+**(b) Evet.** @thm-kesisim-konveks'in iki kümelik özel hâlidir.
+
+**(c) Evet.** @thm-toplam-konveks.
+
+**(d) Evet.** @thm-kapanis-konveks gereği $\overline{C_1}$, @thm-ic-konveks gereği $\operatorname{int}(C_2)$ konvekstir. Fark kümesi $\overline{C_1} - \operatorname{int}(C_2) = \overline{C_1} + (-1)\operatorname{int}(C_2)$ biçiminde yazıldığından @cor-lineer-birlesim doğrudan uygulanır ($\lambda_1 = 1$, $\lambda_2 = -1$). Burada "fark" işleminin küme farkı değil, **toplam kümesi anlamında** fark olduğuna dikkat ediniz.
+
+**(e) Hayır.** $\mathbb{R}$'de $C_1 = [0, 2]$ ve $C_2 = \{1\}$ alalım. $C_1 \setminus C_2 = [0, 1) \cup (1, 2]$ kümesi konveks değildir: $0$ ile $2$ noktalarının orta noktası $1$ dışarıda kalır.
+
+Kısacası konvekslik toplama, kesişim ve lineer birleşim altında korunur; birleşim ve küme farkı altında korunmaz.
+::::
+:::::
+
+::::: {#exr-konveks-mi name="Konveks mi, Değil mi?"}
+Aşağıdaki kümelerin konveks olup olmadığını belirleyiniz; konveks olmayanlar için birer ters örnek veriniz. (b), (c) ve (d) şıklarında $\langle x, y \rangle$ yazılışı, $x$ ile $y$ reel sayılarının çarpımı $xy$ anlamındadır.
+
+(a) $\mathbb{R}$'de $[-1, 1] \cup [3, 4]$
+
+(b) $\{(x, y, z) \in \mathbb{R}^3 : x \le y \le z\}$
+
+(c) $\{(x, y) \in \mathbb{R}^2 : \langle x, y \rangle \ge 1\}$
+
+(d) $\{(x, y, z) \in \mathbb{R}^3 : \langle x, y \rangle \ge 1,\ y + z \ge 1,\ y - 100z \ge 1\}$
+
+(e) $\{(x, y) \in \mathbb{R}^2 : 3x + 4y \le 12,\ x - y \ge 4\}$
+
+(f) $\{(x, y, z) \in \mathbb{R}^3 : x^2 + y^2 \le 1,\ x^2 + z^2 \le 1\}$
+
+:::: {.cozum}
+**(a) Konveks değildir.** $1 \in [-1,1]$ ve $3 \in [3,4]$ noktalarının orta noktası $2$ kümede değildir. $\mathbb{R}$'de konveks kümeler tam olarak aralıklardır; iki ayrık aralığın birleşimi aralık değildir.
+
+**(b) Konvekstir.** Küme $\{x - y \le 0\}$ ve $\{y - z \le 0\}$ kapalı yarı uzaylarının kesişimidir; polihedraldir.
+
+**(c) Konveks değildir.** $\{(x,y) : xy \ge 1\}$ kümesi hiperbolün **iki** kolunun üstünde kalan bölgelerin birleşimidir. $(1, 1)$ ve $(-1, -1)$ noktalarının ikisi de kümededir (çarpımları $1$), oysa orta noktaları $(0, 0)$ için çarpım $0 < 1$'dir.
+
+**(d) Konvekstir** — ve buradaki incelik tam olarak (c) ile arasındaki farktır. Son iki kısıt, birincisinin kötü kolunu keser: $y + z \ge 1$ eşitsizliğinin $100$ katı ile $y - 100z \ge 1$ toplanırsa
+
+$$100(y + z) + (y - 100z) = 101 y \ \ge\ 101, \qquad \text{yani} \qquad y \ge 1$$
+
+çıkar. Demek ki kümedeki her noktada $y \ge 1 > 0$'dır ve bu bölgede $xy \ge 1$ koşulu $x \ge 1/y$ koşuluna denktir. $y \mapsto 1/y$ fonksiyonu $y > 0$ üzerinde konveks olduğundan $\{(x, y) : y \ge 1,\ x \ge 1/y\}$ kümesi konvekstir; kalan iki kısıt da yarı uzaydır ve kesişim konveks kalır.
+
+**(e) Konvekstir.** İki kapalı yarı uzayın kesişimi, yani polihedral bir kümedir. (Kümenin boş olup olmadığı konveksliği etkilemez; boş küme de konvekstir.)
+
+**(f) Konvekstir.** $\{x^2 + y^2 \le 1\}$ kümesi, $\mathbb{R}^3$'te $z$ ekseni yönünde sonsuza uzanan dolu bir silindirdir ve $g(x,y,z) = x^2 + y^2$ konveks fonksiyonunun bir seviye kümesi olduğundan konvekstir; $\{x^2 + z^2 \le 1\}$ için de aynısı geçerlidir. İkisinin kesişimi konvekstir.
+::::
+:::::
+
+::::: {#exr-ici-bos-konveks name="İçi Boş ve İçi Boş Olmayan Konveks Kümeler"}
+İçi boş olan ve içi boş olmayan konveks küme örnekleri veriniz.
+
+:::: {.cozum}
+**İçi boş olanlar.** $\mathbb{R}^2$ uzayında bir doğru parçası, örneğin
+
+$$S = \{(t, 0) : 0 \le t \le 1\},$$
+
+konvekstir; ama $S$ kümesinin hiçbir noktasının $S$ içinde kalan bir komşuluğu yoktur, çünkü her $B\big( (t,0), \varepsilon \big)$ yuvarı ikinci bileşeni sıfırdan farklı noktalar içerir. Dolayısıyla $\operatorname{int}(S) = \varnothing$'dur. Aynı biçimde tek nokta kümeleri, doğrular, hiperdüzlemler ve boş kümenin kendisi de içi boş konveks kümelerdir.
+
+**İçi boş olmayanlar.** Açık ya da kapalı bir yuvar, örneğin $\overline{B(0,1)} \subset \mathbb{R}^2$, konvekstir ve içi açık birim yuvardır. Bir yarı uzay ve $\mathbb{R}^n$ uzayının kendisi de böyledir.
+
+Ayrımın kaynağı boyuttur: bir konveks kümenin içinin boş olmaması için gerek ve yeter koşul $\dim(C) = n$ olmasıdır. Boyut düştüğünde $\operatorname{int}(C)$ boşalır, ama @def-goreli-ic'teki göreli iç boş kalmaz — yukarıdaki $S$ için $\operatorname{ri}(S) = \{(t, 0) : 0 < t < 1\}$'dir.
+::::
+:::::
+
+## Göreli İç ve Konveks Örtü
+
+::::: {#exr-goreli-ic-parca name="Bir Doğru Parçasının İçi ve Göreli İçi"}
+$A = \{(x, y) \in \mathbb{R}^2 : 1 \le x \le 2,\ y = 0\}$ kümesi için $\operatorname{int}(A)$ ve $\operatorname{ri}(A)$ kümelerini belirleyiniz.
+
+:::: {.cozum}
+$A$ kümesi, $x$ ekseni üzerinde $x = 1$ ile $x = 2$ arasındaki kapalı doğru parçasıdır.
+
+**İç.** Bir $(x, 0) \in A$ noktası ve herhangi bir $\varepsilon > 0$ alalım. $\big( x,\ \tfrac{\varepsilon}{2} \big)$ noktası $B\big( (x, 0), \varepsilon \big)$ komşuluğundadır ama ikinci bileşeni sıfırdan farklı olduğundan $A$ kümesinde değildir. Demek ki hiçbir nokta iç nokta olamaz:
+
+$$\operatorname{int}(A) = \varnothing.$$
+
+**Göreli iç.** Önce afin örtüyü bulalım: $A$ kümesi $x$ ekseni üzerinde iki farklı nokta içerdiğinden onların afin örtüsü bütün eksendir, yani
+
+$$\operatorname{aff}(A) = \{(x, 0) : x \in \mathbb{R}\}.$$
+
+@def-goreli-ic'te komşuluk bu doğru ile kesiştirilir: $B\big( (x,0), \varepsilon \big) \cap \operatorname{aff}(A)$ kümesi, $x$ merkezli $\varepsilon$ yarıçaplı **açık aralıktan** ibarettir. Bu aralığın $A$ içinde kalması için $1 < x < 2$ olması gerekir ve yeter — uç noktalarda aralık dışarı taşar. Böylece
+
+$$\operatorname{ri}(A) = \{(x, 0) : 1 < x < 2\}$$
+
+bulunur. Küme, düzlem içinde "ince" olduğu için içi boştur; ama kendi doğrusu üzerinde bakıldığında uçları dışındaki her noktası içeridedir.
+::::
+:::::
+
+::::: {#exr-goreli-ic-ozellikler name="Göreli İçin Üç Sorusu"}
+(a) $A \subseteq \mathbb{R}^2$ konveks kümesinin boyutu $2$ ise $\operatorname{ri}(A) = \operatorname{int}(A)$ olur; neden?
+
+(b) $\Delta_1$ bir $1$-simpleks olmak üzere $\operatorname{ri}(\Delta_1)$ nedir?
+
+(c) $A \subseteq B$ ise $\operatorname{ri}(A) \subseteq \operatorname{ri}(B)$ kapsaması her zaman geçerli midir?
+
+:::: {.cozum}
+**(a)** $\dim(A) = 2$ olması, $A$ kümesine paralel alt uzayın $\mathbb{R}^2$ olması, yani $\operatorname{aff}(A) = \mathbb{R}^2$ demektir. Bu durumda @def-goreli-ic'teki
+
+$$B(x, \varepsilon) \cap \operatorname{aff}(A) = B(x, \varepsilon) \cap \mathbb{R}^2 = B(x, \varepsilon)$$
+
+olur ve göreli iç koşulu, @def-ic-nokta'daki iç nokta koşuluyla harfi harfine aynı hâle gelir. Dolayısıyla iki küme çakışır. Aynı gerekçe $\mathbb{R}^n$'de $\dim(A) = n$ olduğunda da geçerlidir.
+
+**(b)** @def-simpleks gereği $1$-simpleks, afin bağımsız iki nokta $x_1 \ne x_2$'nin konveks örtüsüdür, yani onları birleştiren kapalı doğru parçasıdır. @exr-goreli-ic-parca'daki hesabın aynısı burada da yürür: afin örtü, iki noktadan geçen doğrudur ve göreli iç, uçları atılmış **açık** doğru parçasıdır:
+
+$$\operatorname{ri}(\Delta_1) = \{ \lambda_1 x_1 + \lambda_2 x_2 : \lambda_1, \lambda_2 > 0,\ \lambda_1 + \lambda_2 = 1 \}.$$
+
+Genel olarak bir $k$-simpleksin göreli içi, köşelerinin konveks kombinasyonu yazılışındaki katsayıların hepsi **kesin pozitif** olan noktalardan oluşur; katsayılardan biri sıfırlandığında bir yüze düşülür ve nokta göreli sınıra geçer.
+
+**(c) Hayır, her zaman geçerli değildir.** $\mathbb{R}^2$ uzayında
+
+$$A = \{(1, 0)\}, \qquad B = \overline{B(0, 1)}$$
+
+alalım; $A \subseteq B$ geçerlidir. Tek nokta kümesinin afin örtüsü kendisi olduğundan $\operatorname{ri}(A) = A = \{(1,0)\}$'dır. Öte yandan $\dim(B) = 2$ olduğundan (a) şıkkı gereği $\operatorname{ri}(B) = \operatorname{int}(B)$, yani açık birim yuvardır ve $\|(1,0)\| = 1$ olduğundan $(1, 0) \notin \operatorname{ri}(B)$'dir. Demek ki $\operatorname{ri}(A) \not\subseteq \operatorname{ri}(B)$.
+
+Kapsamanın bozulmasının nedeni afin örtülerin farklı olmasıdır: $\operatorname{aff}(A)$ tek nokta iken $\operatorname{aff}(B) = \mathbb{R}^2$'dir. $\operatorname{aff}(A) = \operatorname{aff}(B)$ olduğunda kapsama geçerlidir. Buna karşılık kapanışlar için $A \subseteq B \implies \overline{A} \subseteq \overline{B}$ kapsaması hiçbir ek koşul olmadan doğrudur; göreli iç, kapanış kadar uysal davranmaz.
+::::
+:::::
+
+::::: {#exr-hiperbol-konveks-ortu name="Bir Hiperbol Kolunun Konveks Örtüleri"}
+$X = \{(x, y) \in \mathbb{R}^2 : xy = 1,\ x > 0,\ y > 0\}$ olmak üzere aşağıdaki konveks örtüleri belirleyiniz.
+
+(a) $X_1 = \{(0, 0)\}$ ise $\operatorname{conv}(X_1 \cup X) = ?$
+
+(b) $X_2 = \{(0, 0),\ (0, 1)\}$ ise $\operatorname{conv}(X_2 \cup X) = ?$
+
+(c) $X_3 = \{(0, y) : y \in \mathbb{R}\}$ ise $\operatorname{conv}(X_3 \cup X) = ?$
+
+:::: {.cozum}
+Kolaylık için açık birinci bölgeyi $Q = \{(x, y) : x > 0,\ y > 0\}$ ile gösterelim.
+
+**Önce $\operatorname{conv}(X)$.** $X$, hiperbolün birinci bölgedeki kolu — bir eğridir. $H = \{(x,y) \in Q : xy \ge 1\}$ kümesi konvekstir (bu, $x > 0$ üzerinde konveks olan $1/x$ fonksiyonunun grafiküstü kümesidir) ve $X$'i kapsar; ters yönde $H$ kümesinin her noktası, eğri üzerindeki iki noktayı birleştiren bir kirişin üzerindedir. Dolayısıyla $\operatorname{conv}(X) = H$'dir.
+
+**(a)** Konveks örtü, $(0,0)$ noktasından $H$ kümesinin noktalarına giden bütün doğru parçalarının birleşimidir:
+
+$$\operatorname{conv}(X_1 \cup X) = \{\lambda h : h \in H,\ 0 \le \lambda \le 1\}.$$
+
+Bu kümenin tam olarak $Q \cup \{(0,0)\}$ olduğunu görelim. Bir yandan $\lambda h$ noktasının bileşenleri $\lambda > 0$ için pozitiftir, $\lambda = 0$ için nokta orijindir. Öte yandan herhangi bir $(u, v) \in Q$ verilsin ve $c := uv > 0$ olsun. Eğer $c \ge 1$ ise nokta zaten $H$ kümesindedir. Eğer $c < 1$ ise $\lambda := \sqrt{c} \in (0, 1)$ seçilirse
+
+$$h := \frac{1}{\lambda}(u, v) \quad \text{için} \quad \frac{u}{\lambda} \cdot \frac{v}{\lambda} = \frac{c}{c} = 1,$$
+
+yani $h \in X \subseteq H$ ve $(u, v) = \lambda h$ olur. Sonuçta
+
+$$\operatorname{conv}(X_1 \cup X) = \{(x, y) : x > 0,\ y > 0\} \cup \{(0, 0)\}$$
+
+bulunur: açık birinci bölge ile orijinin birleşimi.
+
+**(b)** $X_2$ kümesi $(0,0)$ noktasını da içerdiğinden (a) şıkkında bulunan küme baştan içeridedir; geriye yalnızca $(0, 1)$ noktasının eklenmesi kalır. $(0,0)$ ile $(0,1)$ arasındaki doğru parçası $y$ ekseni üzerindedir; $(0, t)$ biçimindeki bir nokta ile $Q$ kümesinden bir nokta arasındaki doğru parçasının uç noktalar dışındaki her noktasının birinci bileşeni pozitiftir, yani $Q$ kümesindedir. Böylece
+
+$$\operatorname{conv}(X_2 \cup X) = Q \cup \{(0, t) : 0 \le t \le 1\}$$
+
+kümesinin konveks olduğu ve gereken bütün noktaları içerdiği görülür.
+
+**(c)** Bu kez $y$ ekseninin tamamı eklenmiştir. Herhangi bir $(u, w)$ noktası $u > 0$ koşulunu sağlasın; $(0, 2w - 1) \in X_3$ ve $(2u, 1) \in Q$ noktaları alınırsa
+
+$$\tfrac{1}{2}(0,\ 2w - 1) + \tfrac{1}{2}(2u,\ 1) = (u,\ w)$$
+
+olur. Demek ki $x > 0$ olan her nokta konveks örtüdedir; $y$ ekseninin kendisi de zaten $X_3$ olarak içeridedir. Ters yönde, $X_3 \cup X$ kümesinin her noktasının birinci bileşeni negatif olmadığından konveks kombinasyonlarında da negatif olamaz. Sonuçta
+
+$$\operatorname{conv}(X_3 \cup X) = \{(x, y) \in \mathbb{R}^2 : x \ge 0\},$$
+
+yani kapalı sağ yarı düzlem elde edilir.
+
+Üç şık birlikte şunu gösteriyor: konveks örtü alma işlemi, eklenen küçük bir kümeye karşı son derece duyarlıdır — tek bir noktanın eklenmesi eğriyi koca bir bölgeye, bir doğrunun eklenmesi ise yarı düzleme çevirmiştir.
+::::
+:::::
+
+## Koniler ve Dual Koniler
+
+::::: {#exr-koni-korunum name="Koniliği Koruyan İşlemler"}
+Aşağıdakileri gösteriniz.
+
+(a) $I$ herhangi bir indis kümesi olmak üzere $\{C_i\}_{i \in I}$ bir koni ailesi ise $\bigcap_{i \in I} C_i$ de bir konidir.
+
+(b) $C_1 \subseteq \mathbb{R}^n$ ve $C_2 \subseteq \mathbb{R}^m$ birer koni ise $C_1 \times C_2$ de bir konidir.
+
+(c) $C \subseteq \mathbb{R}^n$ bir koni ise $\overline{C}$ de bir konidir.
+
+:::: {.cozum}
+Üçünde de denetlenecek tek şey @def-koni'deki koşuldur: $\lambda > 0$ ve $x$ kümede iken $\lambda x$ de kümede olmalı.
+
+**(a)** $x \in \bigcap_{i \in I} C_i$ ve $\lambda > 0$ olsun. Her $i \in I$ için $x \in C_i$ ve $C_i$ koni olduğundan $\lambda x \in C_i$'dir. Bu her $i$ için geçerli olduğundan $\lambda x$ kesişimdedir.
+
+**(b)** $(x, y) \in C_1 \times C_2$ ve $\lambda > 0$ olsun. Skalerle çarpma bileşen bileşen yapıldığından $\lambda(x, y) = (\lambda x, \lambda y)$ olur; $C_1$ ve $C_2$ birer koni olduğundan $\lambda x \in C_1$ ve $\lambda y \in C_2$, yani $\lambda(x,y) \in C_1 \times C_2$'dir.
+
+**(c)** $\overline{x} \in \overline{C}$ ve $\lambda > 0$ olsun. Elemanları $C$ kümesinden olan ve $x_k \to \overline{x}$ gerçekleyen bir $\{x_k\}$ dizisi vardır. $C$ koni olduğundan her $k$ için $\lambda x_k \in C$'dir; öte yandan skalerle çarpma sürekli olduğundan $\lambda x_k \to \lambda \overline{x}$ olur. Elemanları $C$ kümesinden olan yakınsak bir dizinin limiti kapanışta bulunduğundan $\lambda \overline{x} \in \overline{C}$ elde edilir.
+
+Üçünde de konveksliğin hiç kullanılmadığına dikkat ediniz; koni olma özelliği yalnızca skalerle çarpmayla ilgilidir.
+::::
+:::::
+
+::::: {#exr-pozitif-homojen-koni name="Pozitif Homojen Fonksiyon Altında Koniler"}
+$f : \mathbb{R}^n \to \mathbb{R}$ pozitif homojen bir fonksiyon olsun.
+
+(a) $C \subseteq \mathbb{R}^n$ bir koni ise $f(C)$ kümesinin $\mathbb{R}$'de bir koni olduğunu gösteriniz.
+
+(b) $D \subseteq \mathbb{R}$ bir koni ise $f^{-1}(D)$ kümesinin $\mathbb{R}^n$'de bir koni olduğunu gösteriniz.
+
+:::: {.cozum}
+@def-pozitif-homojen gereği her $\lambda > 0$ ve her $x$ için $f(\lambda x) = \lambda f(x)$'tir; bütün iş bu eşitliği doğru yönde okumaktan ibarettir.
+
+**(a)** $t \in f(C)$ ve $\lambda > 0$ olsun. $t = f(x)$ gerçekleyen bir $x \in C$ vardır. $C$ koni olduğundan $\lambda x \in C$'dir ve pozitif homojenlik ile
+
+$$f(\lambda x) = \lambda f(x) = \lambda t$$
+
+olur. Demek ki $\lambda t \in f(C)$'dir.
+
+**(b)** $x \in f^{-1}(D)$, yani $f(x) \in D$ ve $\lambda > 0$ olsun. Pozitif homojenlik ile $f(\lambda x) = \lambda f(x)$'tir; $D$ bir koni ve $f(x) \in D$ olduğundan $\lambda f(x) \in D$ olur. Böylece $f(\lambda x) \in D$, yani $\lambda x \in f^{-1}(D)$ gerçeklenir.
+
+Norm fonksiyonu pozitif homojen olduğundan (bkz. @def-pozitif-homojen'i izleyen açıklama) bu iki sonuç doğrudan norma uygulanabilir; destek fonksiyonu $S(\cdot, A)$ için de aynısı geçerlidir.
+::::
+:::::
+
+::::: {#exr-negatif-yari-eksen name="Negatif Yarı Eksen"}
+$A = (-\infty, 0) \subset \mathbb{R}$ kümesinin konveks bir koni olduğunu gösteriniz.
+
+:::: {.cozum}
+**Koni.** $x < 0$ ve $\lambda > 0$ ise $\lambda x < 0$, yani $\lambda x \in A$'dır.
+
+**Konveks.** $x, y < 0$ ve $0 \le \lambda \le 1$ olsun. $\lambda$ ile $1 - \lambda$ katsayıları negatif değil ve toplamları $1$ olduğundan en az biri pozitiftir; dolayısıyla
+
+$$(1 - \lambda)x + \lambda y < 0$$
+
+gerçeklenir ve nokta $A$ kümesindedir. (Aynı sonuç, $\mathbb{R}$'de konveks kümelerin tam olarak aralıklar olduğu gözleminden de okunabilir.)
+
+İkisi birlikte $A$ kümesinin konveks bir koni olduğunu verir. Dikkat edilirse $0 \notin A$'dır; @def-koni yalnızca $\lambda > 0$ istediğinden bu bir çelişki yaratmaz — koniler orijini içermek zorunda değildir.
+::::
+:::::
+
+::::: {#exr-norm-konisi name="Norm ile Tanımlanan Koniler"}
+Aşağıdaki kümelerin kapalı konveks koni olduğunu gösteriniz.
+
+(a) $K = \{(x, t) \in \mathbb{R}^n \times \mathbb{R} : \|x\| \le t\}$
+
+(b) $K = \{(x, y) \in \mathbb{R}^2 : |x| \le 2y\}$
+
+:::: {.cozum}
+İki şık da aynı üç adımdan geçer; (b), (a) şıkkının $n = 1$ hâlinin ölçeklenmişidir.
+
+**(a) Koni.** $(x, t) \in K$ ve $\lambda > 0$ olsun. Normun homojenliği ile
+
+$$\|\lambda x\| = \lambda \|x\| \le \lambda t$$
+
+olduğundan $\lambda(x, t) = (\lambda x, \lambda t) \in K$'dır.
+
+**Konveks.** @thm-konveks-koni gereği konik kombinasyonları denetlemek yeter. $(x_1, t_1), (x_2, t_2) \in K$ ve $\lambda_1, \lambda_2 > 0$ olsun; üçgen eşitsizliği ve homojenlik ile
+
+$$\|\lambda_1 x_1 + \lambda_2 x_2\| \le \lambda_1 \|x_1\| + \lambda_2 \|x_2\| \le \lambda_1 t_1 + \lambda_2 t_2$$
+
+elde edilir; yani $\lambda_1 (x_1,t_1) + \lambda_2 (x_2,t_2) \in K$'dır. Koni ve konveks olduğundan $K$ bir konveks konidir.
+
+**Kapalı.** $g(x, t) := \|x\| - t$ fonksiyonu süreklidir (norm süreklidir, çıkarma da öyle) ve $K = \{(x,t) : g(x,t) \le 0\}$'dır. Sürekli bir fonksiyonun bu biçimdeki seviye kümesi kapalıdır: $K$ kümesinde yakınsak bir dizi alınıp eşitsizlikte limite geçilirse limit noktası da koşulu sağlar.
+
+**(b)** $|x| \le 2y$ koşulu $\big| \tfrac{x}{2} \big| \le y$ biçiminde yazılabilir; yani $(x, y) \in K \iff \big( \tfrac{x}{2},\ y \big)$ noktası (a) şıkkındaki $n = 1$ konisindedir. Aynı üç adım harfi harfine tekrarlanır:
+
+* $\lambda > 0$ için $|\lambda x| = \lambda|x| \le 2\lambda y$;
+* $\lambda_1, \lambda_2 > 0$ için $|\lambda_1 x_1 + \lambda_2 x_2| \le \lambda_1|x_1| + \lambda_2|x_2| \le 2(\lambda_1 y_1 + \lambda_2 y_2)$;
+* $(x, y) \mapsto |x| - 2y$ sürekli olduğundan küme kapalıdır.
+
+Geometrik olarak (b), tepesi orijinde olan ve $y$ ekseni etrafında simetrik duran bir açıdır; (a) ise onun $\mathbb{R}^{n+1}$ boyutlu hâli — literatürde **dondurma külahı konisi** diye anılan yapıdır.
+::::
+:::::
+
+::::: {#exr-konik-ortu-konveks name="Konveks Kümenin Konik Örtüsü"}
+$X \subseteq \mathbb{R}^n$ konveks bir küme ise $\operatorname{cone}(X)$ kümesinin konveks bir koni olduğunu gösteriniz.
+
+:::: {.cozum}
+@def-konik-ortu gereği $\operatorname{cone}(X) = \{\lambda x : \lambda \ge 0,\ x \in X\}$'tir.
+
+**Koni.** $u = \alpha x \in \operatorname{cone}(X)$ ($\alpha \ge 0$, $x \in X$) ve $\mu > 0$ olsun. $\mu u = (\mu\alpha)x$ ve $\mu\alpha \ge 0$ olduğundan $\mu u \in \operatorname{cone}(X)$'tir.
+
+**Konveks.** @thm-konveks-koni uyarınca konik kombinasyonları denetleyelim. $u = \alpha x$, $v = \beta y$ ($\alpha, \beta \ge 0$; $x, y \in X$) ve $\lambda_1, \lambda_2 > 0$ olsun. Toplamın katsayılarını
+
+$$s := \lambda_1 \alpha + \lambda_2 \beta \ \ge\ 0$$
+
+ile toplayalım.
+
+* $s = 0$ ise $\lambda_1 \alpha = \lambda_2 \beta = 0$, dolayısıyla $\alpha = \beta = 0$ ve $\lambda_1 u + \lambda_2 v = 0 = 0 \cdot x \in \operatorname{cone}(X)$'tir.
+* $s > 0$ ise toplam $s$ parantezine alınır:
+
+$$\lambda_1 u + \lambda_2 v = \lambda_1 \alpha x + \lambda_2 \beta y = s \left( \frac{\lambda_1 \alpha}{s}\, x + \frac{\lambda_2 \beta}{s}\, y \right).$$
+
+Parantez içindeki katsayılar negatif değildir ve toplamları $1$'dir; yani parantez, $x$ ile $y$ noktalarının bir konveks kombinasyonudur. $X$ konveks olduğundan bu nokta $X$ kümesindedir ve $s \ge 0$ olduğundan $s$ katı da $\operatorname{cone}(X)$ kümesindedir.
+
+Böylece $\operatorname{cone}(X)$ konveks bir konidir. $X$ kümesinin konveks olması **şarttır**: örneğin $X = \{(1,0), (0,1)\}$ için $\operatorname{cone}(X)$ iki ışının birleşimidir ve konveks değildir.
+::::
+:::::
+
+::::: {#exr-koni-toplami name="İki Koninin Toplamı"}
+$\varnothing \ne K_1, K_2 \subset \mathbb{R}^n$ iki koni ise $K_1 + K_2 \subseteq \operatorname{conv}(K_1 \cup K_2)$ kapsamasının geçerli olduğunu gösteriniz.
+
+:::: {.cozum}
+Püf noktası, bir toplamı konveks kombinasyona çevirmek için katsayıların toplamının $1$ olması gerektiğidir; koni olma özelliği de bunu ücretsiz sağlar.
+
+$x_1 \in K_1$ ve $x_2 \in K_2$ olsun. $K_1$ ve $K_2$ birer koni ve $2 > 0$ olduğundan
+
+$$2x_1 \in K_1 \subseteq K_1 \cup K_2, \qquad 2x_2 \in K_2 \subseteq K_1 \cup K_2$$
+
+geçerlidir. Şimdi toplamı bu iki noktanın konveks kombinasyonu olarak yazalım:
+
+$$x_1 + x_2 = \tfrac{1}{2}(2x_1) + \tfrac{1}{2}(2x_2).$$
+
+Katsayılar negatif değildir ve toplamları $1$'dir; yani sağ taraf $K_1 \cup K_2$ kümesinin iki elemanının konveks kombinasyonudur. @thm-conv-esitlik gereği $\operatorname{conv}(K_1 \cup K_2)$ kümesi bu tür bütün kombinasyonları içerdiğinden $x_1 + x_2 \in \operatorname{conv}(K_1 \cup K_2)$ elde edilir.
+
+Kapsama genel olarak **eşitlik değildir**, ama koniler için çoğu zaman öyle olur: örneğin $K_1$ ile $K_2$ orijinden çıkan iki ışın ise her iki taraf da onların gerdiği açıdır.
+::::
+:::::
+
+::::: {#exr-dual-hesaplari name="İki Dual Koni Hesabı"}
+(a) $K_1 = (-\infty, 0) \subset \mathbb{R}$ ve $K_2 = (0, +\infty) \subset \mathbb{R}$ konveks konileri için $(K_1 + K_2)^{*}$ dual konisini belirleyiniz.
+
+(b) $\{0\} \subset \mathbb{R}^n$ tek nokta konisinin dual konisini bulunuz.
+
+:::: {.cozum}
+**(a)** Önce toplamı hesaplayalım. Herhangi bir $t \in \mathbb{R}$ verildiğinde, yeterince büyük bir $s > 0$ için $t - s < 0$ olur ve
+
+$$t = \underbrace{(t - s)}_{\in K_1} + \underbrace{s}_{\in K_2}$$
+
+yazılır. Demek ki $K_1 + K_2 = \mathbb{R}$'dir. Şimdi @def-dual-koni uygulanır:
+
+$$\mathbb{R}^{*} = \{y \in \mathbb{R} : xy \ge 0,\ \forall x \in \mathbb{R}\}.$$
+
+$y > 0$ olsaydı $x = -1$ için çarpım negatif olurdu; $y < 0$ olsaydı $x = 1$ için negatif olurdu. Geriye yalnızca $y = 0$ kalır ve bu değer koşulu sağlar. Böylece
+
+$$(K_1 + K_2)^{*} = \{0\}.$$
+
+**(b)** $K = \{0\}$ için tek denetlenecek eşitsizlik $\langle 0, x^{*} \rangle \ge 0$, yani $0 \ge 0$'dır; bu her $x^{*}$ için doğrudur. Dolayısıyla
+
+$$\{0\}^{*} = \mathbb{R}^n.$$
+
+İki şık birlikte, dual almanın ne kadar "ters çevirici" bir işlem olduğunu gösterir: koni büyüdükçe duali küçülür. En büyük koni olan $\mathbb{R}^n$'in duali en küçük koni $\{0\}$, en küçük koni $\{0\}$'ın duali ise $\mathbb{R}^n$'dir.
+::::
+:::::
+
+::::: {#exr-dual-kapsama name="Bir Koni Kendi Dualini Kapsar mı?"}
+$K = \{(x, y) \in \mathbb{R}^2 : x > 0,\ y > 0\}$ konisi için $K^{*} \subseteq K$ kapsaması geçerli midir?
+
+:::: {.cozum}
+**Hayır, geçerli değildir.** Önce dualı hesaplayalım:
+
+$$K^{*} = \{(a, b) \in \mathbb{R}^2 : ax + by \ge 0,\ \forall x, y > 0\}.$$
+
+Eğer $a < 0$ olsaydı, $y$'yi sabit tutup $x$'i büyüterek $ax + by$ ifadesini negatif yapabilirdik; aynısı $b < 0$ için de geçerlidir. Demek ki $a \ge 0$ ve $b \ge 0$ olmalıdır. Tersine $a, b \ge 0$ ve $x, y > 0$ ise toplam negatif olamaz. Böylece
+
+$$K^{*} = \{(a, b) : a \ge 0,\ b \ge 0\},$$
+
+yani **kapalı** birinci bölge elde edilir.
+
+Şimdi kapsamayı sınayalım: $(0, 0) \in K^{*}$'dır, oysa $K$ kümesi $x > 0$ istediğinden $(0,0) \notin K$'dır. Aynı biçimde $(1, 0) \in K^{*} \setminus K$'dır. Dolayısıyla $K^{*} \not\subseteq K$'dır.
+
+Bunun şaşırtıcı olmaması gerekir. Hangi koniden üretilirse üretilsin dual koni **daima $0$ noktasını içerir**, çünkü her $x$ için $\langle x, 0 \rangle = 0 \ge 0$'dır; oysa $K$ açık olduğundan orijini içermez. Bu tek gözlem, açık bir koninin dualini kapsamasını baştan olanaksız kılar.
+
+Daha derli toplu bir okuma da mümkündür: @lem-dual-kapanis gereği $K^{*} = (\overline{K})^{*}$'tır ve $\overline{K}$ negatif olmayan orthant olduğundan @exm-dual-orthant ile
+
+$$K^{*} = (\overline{K})^{*} = \overline{K}$$
+
+bulunur. Yani dual, $K$ kümesinin kendisini değil **kapanışını** geri verir; kapsama ancak $K$ kapalı olsaydı — o zaman da eşitlik olarak — doğru olurdu.
+::::
+:::::
+
+## Ayrılabilme
+
+::::: {#exr-ayirma-ornekleri name="Ayrılabilme ve Kesin Ayrılabilme"}
+(a) $\mathbb{R}$ uzayında $M = [2, 5)$ ile $T = \big\{ \tfrac{3}{2} \big\}$ kümeleri ayrılabilir midir?
+
+(b) @exr-hiperbol-bolgesi'ndeki $A$ ve $B$ kümeleri ayrılabilir midir? Kesin ayrılabilir midir?
+
+:::: {.cozum}
+**(a) Evet, üstelik kesin ayrılabilirler.** İki küme de konvekstir ($\mathbb{R}$'de aralıklar) ve $\tfrac{3}{2} \notin [2,5)$ olduğundan ayrıktırlar. @def-ayirma'daki eşitsizliği $a = 1$ ile kuralım: her $t \in T$ ve her $m \in M$ için
+
+$$\langle a, t \rangle = \tfrac{3}{2} \ \le\ b \ \le\ 2 \ \le\ m = \langle a, m \rangle$$
+
+olacak bir $b$ arıyoruz. $b = \tfrac{7}{4}$ seçimi işi görür; ayıran hiperdüzlem $H = \big\{ x \in \mathbb{R} : x = \tfrac{7}{4} \big\}$, yani tek bir noktadır ($\mathbb{R}$'de hiperdüzlemler noktalardır).
+
+Ayırma kesindir: $\varepsilon_0 = \tfrac{1}{4}$ alınırsa her $t \in T$ için $t \le b - \varepsilon_0 = \tfrac{3}{2}$ ve her $m \in M$ için $m \ge 2 > b$ gerçeklenir. Bunu @thm-kesin-ayirma'dan da okuyabilirdik: $T$ tek noktalı olduğundan kompakt ve konvekstir, $\overline{M} = [2,5]$ kapalı ve konvekstir, kesişimleri boştur.
+
+**(b) Ayrılabilirler ama kesin ayrılamazlar.** $A$ kümesinin bütün noktalarında $x > 0$, $B$ kümesinin bütün noktalarında $x < 0$'dır. $a = (1, 0)$ ve $b = 0$ alınırsa her $(x, y) \in B$ için
+
+$$\langle a, (x,y) \rangle = x < 0 = b, \qquad \text{her } (x,y) \in A \text{ için } \ \langle a, (x,y) \rangle = x > 0 = b$$
+
+olur; yani $y$ ekseni $B$ ile $A$ kümelerini ayırır. (İkisi de konveks ve @exr-hiperbol-bolgesi'nde görüldüğü gibi kapalıdır, ayrıca ayrıktırlar; ayrılabilirlik zaten @thm-iki-kume-ayirma tarafından garanti edilmişti.)
+
+Ayırma **kesin değildir** ve olamaz da. $\big( \tfrac{1}{k}, k \big) \in A$ ile $\big( -\tfrac{1}{k}, k \big) \in B$ noktaları arasındaki uzaklık $\tfrac{2}{k} \to 0$'dır; iki küme arasındaki uzaklık sıfır olduğundan aralarına pozitif genişlikte bir boşluk sığmaz. @def-kesin-ayirma'daki $\varepsilon_0 > 0$ hiçbir $a$ ve $b$ için bulunamaz.
+
+Eksik olan koşul kompaktlıktır: @thm-kesin-ayirma kümelerden birinin kompakt olmasını ister, oysa $A$ ile $B$ yalnızca kapalıdır. Bu, @thm-kesin-ayirma'yı izleyen uyarıdaki karşı örneğin bir başka yüzüdür.
+::::
+:::::
+
+## Konveks Fonksiyonlar
+
+::::: {#exr-tanimlari-yaziniz name="Dört Temel Tanım"}
+Aşağıdaki kavramların $\mathbb{R}^n$ uzayındaki tanımlarını yazınız.
+
+(a) $f : \mathbb{R}^n \to \overline{\mathbb{R}}$ fonksiyonunun konveks olması.
+
+(b) $f : \mathbb{R}^n \to \overline{\mathbb{R}}$ fonksiyonunun $x_0$ noktasındaki $d$ yönündeki yönlü türevi.
+
+(c) $h : \mathbb{R}^n \to \overline{\mathbb{R}}$ fonksiyonunun grafiküstü kümesi.
+
+(d) $\varnothing \ne K \subseteq \mathbb{R}^n$ konisinin $K^{*}$ dual konisi.
+
+:::: {.cozum}
+**(a)** Grafiküstü kümesi konveks olan fonksiyonlara konveks fonksiyon denir (@def-konveks-fonksiyon): $f$ konvekstir $\iff$ $\operatorname{epi}(f) \subseteq \mathbb{R}^{n+1}$ konveks bir kümedir. @thm-kiris gereği bu, her $x_1, x_2 \in \mathbb{R}^n$ ve $0 \le \lambda \le 1$ için
+
+$$f\big( \lambda x_1 + (1 - \lambda)x_2 \big) \le \lambda f(x_1) + (1 - \lambda)f(x_2)$$
+
+kiriş eşitsizliğine denktir; çoğu kaynak ikincisini doğrudan tanım olarak alır.
+
+**(b)** @def-yonlu-turev gereği $d \in \mathbb{R}^n$ olmak üzere
+
+$$f'(x_0; d) = \lim_{\lambda \downarrow 0} \frac{f(x_0 + \lambda d) - f(x_0)}{\lambda}$$
+
+limitidir. Limitin yalnızca $\lambda \downarrow 0$, yani **sağdan** alındığına dikkat ediniz; konveks fonksiyonlarda bu limit her yönde vardır, oysa iki taraflı türev var olmayabilir.
+
+**(c)** @def-epigraf gereği
+
+$$\operatorname{epi}(h) = \{(x, \alpha) \in \mathbb{R}^n \times \mathbb{R} : h(x) \le \alpha\},$$
+
+yani grafiğin üstünde kalan bölgedir.
+
+**(d)** @def-dual-koni gereği
+
+$$K^{*} = \{x^{*} \in \mathbb{R}^n : \langle x, x^{*} \rangle \ge 0,\ \forall x \in K\},$$
+
+yani $K$ konisinin bütün elemanlarıyla dar açı yapan vektörlerin kümesidir.
+::::
+:::::
+
+::::: {#exr-afin-fonksiyon name="Afin Fonksiyon: Hem Konveks Hem Konkav"}
+$a \in \mathbb{R}^n$, $b \in \mathbb{R}$ olmak üzere $f : \mathbb{R}^n \to \mathbb{R}$ fonksiyonu $f(x) = \langle a, x \rangle + b$ şeklinde tanımlansın. $f$ fonksiyonunun hem konveks hem konkav olduğunu gösteriniz ve seviye kümelerini belirleyiniz.
+
+:::: {.cozum}
+**Konvekslik ve konkavlık.** $x_1, x_2 \in \mathbb{R}^n$ ve $0 \le \lambda \le 1$ olsun. İç çarpımın lineerliği ile
+
+$$f\big( \lambda x_1 + (1-\lambda)x_2 \big) = \big\langle a,\ \lambda x_1 + (1-\lambda)x_2 \big\rangle + b = \lambda \langle a, x_1 \rangle + (1-\lambda)\langle a, x_2 \rangle + \underbrace{\lambda b + (1 - \lambda) b}_{= \, b}$$
+
+$$= \lambda f(x_1) + (1 - \lambda) f(x_2)$$
+
+elde edilir. Kiriş eşitsizliği **eşitlikle** sağlandığından $f$ konvekstir; aynı eşitlik $-f$ için de geçerli olduğundan @def-konveks-fonksiyon gereği $f$ konkavdır da. Geometrik okunuşu şudur: kiriş grafiğin üstünde de altında da kalmaz, grafiğe tam olarak oturur.
+
+**Seviye kümeleri.** $\alpha \in \mathbb{R}$ için
+
+$$L_f(\alpha) = \{x : \langle a, x \rangle + b \le \alpha\} = \{x : \langle a, x \rangle \le \alpha - b\}$$
+
+olur. $a \ne 0$ ise bu, normali $a$ olan bir **kapalı yarı uzaydır**; $a = 0$ ise $b \le \alpha$ olup olmamasına göre ya $\mathbb{R}^n$ ya da $\varnothing$'dur. Her hâlde konvekstir — @lem-seviye-konveks bunu zaten garanti eder.
+
+Son bir not: tersi de doğrudur. $\mathbb{R}^n$ üzerinde hem konveks hem konkav olan reel değerli bir fonksiyon, mutlaka bu biçimdedir; yani afin fonksiyonlar, kiriş eşitsizliğini iki yönde birden sağlayan tek ailedir.
+::::
+:::::
+
+::::: {#exr-seviye-kumesi-konveks name="Maksimum Eşitsizliğinden Seviye Kümelerine"}
+$\varnothing \ne A \subseteq \mathbb{R}^n$ konveks bir küme üzerinde tanımlanmış bir $f : A \to \mathbb{R}$ fonksiyonu
+
+$$\forall x, y \in A \ \text{ ve } \ \forall \lambda \in [0, 1] \ \text{ için } \ f\big( \lambda x + (1 - \lambda)y \big) \le \max\{f(x),\ f(y)\}$$
+
+eşitsizliğini sağlasın. Bu durumda herhangi sabit bir $\alpha \in \mathbb{R}$ için $L_\alpha = \{x \in A : f(x) \le \alpha\}$ seviye kümesinin konveks olduğunu gösteriniz.
+
+:::: {.cozum}
+$x, y \in L_\alpha$ ve $\lambda \in [0,1]$ olsun. Tanım gereği $f(x) \le \alpha$ ve $f(y) \le \alpha$'dır; iki sayının maksimumu da bu ortak üst sınırı aşamayacağından
+
+$$\max\{f(x),\ f(y)\} \le \alpha$$
+
+olur. Hipotezdeki eşitsizlik ile
+
+$$f\big( \lambda x + (1 - \lambda)y \big) \ \le\ \max\{f(x),\ f(y)\} \ \le\ \alpha$$
+
+elde edilir. Ayrıca $A$ konveks olduğundan $\lambda x + (1-\lambda)y \in A$'dır. İkisi birlikte $\lambda x + (1-\lambda)y \in L_\alpha$ demektir; yani $L_\alpha$ konvekstir.
+
+Buradaki koşul, konveksliğin bir adım zayıflatılmış hâlidir: kiriş eşitsizliğinde sağ taraftaki **ağırlıklı ortalama** yerine **maksimum** yazılmıştır ve ortalama daima maksimumdan küçük ya da ona eşit olduğundan her konveks fonksiyon bu koşulu sağlar. Elde edilen sonuç ise tam olarak @def-kuazikonveks'teki özelliktir; kısacası bu koşul, kuazikonveksliğin bir başka yazılışıdır. Tersinin doğru olmadığını $x^3$ örneği gösterir.
+::::
+:::::
+
+::::: {#exr-bileske-konveks name="Artan Konveks Fonksiyonla Bileşke"}
+(a) $f : \mathbb{R}^n \to \mathbb{R}$ konveks bir fonksiyon ve $T : \mathbb{R} \to \mathbb{R}$ konveks ve artan bir fonksiyon olsun. $h(x) = T\big( f(x) \big)$ bileşke fonksiyonunun konveks olduğunu gösteriniz.
+
+(b) $p \ge 1$ olmak üzere $f(x) = \|x\|^p$ fonksiyonunun $\mathbb{R}^n$ üzerinde konveks olduğunu gösteriniz.
+
+:::: {.cozum}
+**(a)** $x, y \in \mathbb{R}^n$ ve $0 \le \lambda \le 1$ olsun. İki adımda ilerleyeceğiz; birincisinde $T$ fonksiyonunun **artan** olması, ikincisinde **konveks** olması kullanılacak.
+
+$f$ konveks olduğundan
+
+$$f\big( \lambda x + (1 - \lambda)y \big) \ \le\ \lambda f(x) + (1 - \lambda)f(y)$$
+
+geçerlidir. $T$ artan olduğundan bu eşitsizliğin iki tarafına uygulanabilir ve yön korunur — ispatın bu adımında $T$ fonksiyonundan istenen tek şey **azalmamasıdır**, kesin artan olması gerekmez:
+
+$$h\big( \lambda x + (1 - \lambda)y \big) = T\Big( f\big( \lambda x + (1-\lambda)y \big) \Big) \ \le\ T\big( \lambda f(x) + (1 - \lambda)f(y) \big).$$
+
+Şimdi $T$ konveks olduğundan, sağ taraftaki argümanın $f(x)$ ile $f(y)$ sayılarının konveks kombinasyonu olduğu kullanılır:
+
+$$T\big( \lambda f(x) + (1 - \lambda)f(y) \big) \ \le\ \lambda T\big( f(x) \big) + (1 - \lambda) T\big( f(y) \big) = \lambda h(x) + (1 - \lambda)h(y).$$
+
+İki eşitsizlik birleştirilirse $h$ için kiriş eşitsizliği elde edilir.
+
+$T$ fonksiyonunun artan olması vazgeçilmezdir: $f(x) = x^2$ konveks, $T(t) = -t$ konveks (afin) ama azalandır ve $T(f(x)) = -x^2$ konveks değildir.
+
+**(b)** $g(x) = \|x\|$ fonksiyonu @exm-norm-konveks gereği konvekstir ve değerleri $[0, +\infty)$ aralığındadır. Dış fonksiyon olarak
+
+$$T(t) = \big( \max\{t, 0\} \big)^p$$
+
+alalım; bu fonksiyon $t \ge 0$ üzerinde $t^p$ ile çakıştığından $T(g(x)) = \|x\|^p$ olur. $T$ fonksiyonu artandır ($t$ büyüdükçe azalmaz) ve konvekstir: $t \le 0$ için sabit sıfır, $t > 0$ için türevi $p t^{p-1} \ge 0$ olup $p \ge 1$ nedeniyle azalmayandır; türevin $\mathbb{R}$ üzerinde azalmaması konveksliğe denktir.
+
+Böylece (a) şıkkı uygulanır ve $f(x) = \|x\|^p$ konveks çıkar. $p = 1$ durumunda sonuç zaten normun konveksliğidir; $p = 2$ durumunda $\|x\|^2 = \langle x, x \rangle$ elde edilir ve bu, Hessian'ı $2I$ olan kesin konveks bir kuadratik formdur.
+::::
+:::::
+
+::::: {#exr-carpim-konveks name="Konveks İki Fonksiyonun Çarpımı"}
+$f, g : \mathbb{R}^n \to \mathbb{R}$ fonksiyonları konveks ise $(f \cdot g)$ çarpım fonksiyonu da konveks midir?
+
+:::: {.cozum}
+**Hayır.** İddia genel olarak yanlıştır ve bir ters örnek yeter. $\mathbb{R}$ üzerinde
+
+$$f(x) = x, \qquad g(x) = -x$$
+
+alalım. İkisi de afin olduğundan @exr-afin-fonksiyon gereği konvekstir (hatta konkavdır). Çarpımları ise
+
+$$(f \cdot g)(x) = -x^2$$
+
+olup $(f \cdot g)''(x) = -2 < 0$'dır; tek değişkenli ölçüt gereği bu fonksiyon konveks değildir. Doğrudan da görülebilir: $-1$ ile $1$ noktalarının orta noktası $0$ için
+
+$$(f \cdot g)(0) = 0 \quad \text{oysa} \quad \tfrac{1}{2}(f \cdot g)(-1) + \tfrac{1}{2}(f \cdot g)(1) = -1$$
+
+olduğundan kiriş grafiğin **altında** kalır.
+
+Ters örneğin kaynağı, çarpanlardan birinin negatif değerler almasıdır. Nitekim tek değişkende ek koşullar altında iddia doğru olur: bir aralık üzerinde $f$ ile $g$ negatif olmayan, konveks ve aynı yönde tekdüze (ikisi de azalmayan ya da ikisi de artmayan) fonksiyonlarsa çarpımları konvekstir. Yukarıdaki örnekte $g$ azalan, $f$ artandır — koşul tam olarak burada bozulur.
+::::
+:::::
+
+::::: {#exr-tek-degiskenli-konvekslik name="İki Tek Değişkenli Aile"}
+Aşağıdaki fonksiyonların $\mathbb{R}$ üzerinde konveksliklerini inceleyiniz.
+
+(a) $f(x) = e^{\alpha x}$, $\quad -\infty < x < +\infty$, $\quad -\infty < \alpha < +\infty$.
+
+(b) $1 \le p < +\infty$ olmak üzere
+$$f(x) = \begin{cases} x^p, & x \ge 0 \\ +\infty, & x < 0. \end{cases}$$
+
+:::: {.cozum}
+**(a)** Fonksiyon her $\alpha$ için iki kez türevlenebilirdir:
+
+$$f'(x) = \alpha e^{\alpha x}, \qquad f''(x) = \alpha^2 e^{\alpha x}.$$
+
+Üstel fonksiyon her zaman pozitif ve $\alpha^2 \ge 0$ olduğundan her $x \in \mathbb{R}$ için $f''(x) \ge 0$'dır; dolayısıyla $f$ **her** $\alpha$ değeri için konvekstir. $\alpha \ne 0$ ise $f'' > 0$ olduğundan kesin konvekstir; $\alpha = 0$ durumunda $f \equiv 1$ sabit fonksiyonu elde edilir ve o da konvekstir ama kesin konveks değildir.
+
+**(b)** Burada fonksiyon genişletilmiş reel değerlidir; $\operatorname{dom}(f) = [0, +\infty)$'dur. İki şey denetlenmeli.
+
+*Tanım kümesi üzerinde.* $x > 0$ için
+
+$$f'(x) = p x^{p-1}, \qquad f''(x) = p(p-1)x^{p-2} \ \ge\ 0$$
+
+olur, çünkü $p \ge 1$ ve $x > 0$'dır. Demek ki $f$ fonksiyonu $[0, +\infty)$ üzerinde konvekstir.
+
+*Tanım kümesinin dışında.* Kiriş eşitsizliğinde $x_1$ ya da $x_2$ noktalarından biri negatifse sağ taraf $+\infty$ olur ve eşitsizlik kendiliğinden sağlanır. İkisi de negatif değilse ara nokta da negatif değildir ve yukarıdaki hesap geçerlidir.
+
+Böylece $f$ genişletilmiş reel değerli konveks bir fonksiyondur; ayrıca $f(0) = 0 < +\infty$ ve hiçbir yerde $-\infty$ değeri almadığından @def-has-fonksiyon anlamında hastır. Grafiküstü kümesi $\operatorname{epi}(f) = \{(x, \alpha) : x \ge 0,\ \alpha \ge x^p\}$ olup konvekstir.
+
+Bu fonksiyon, $+\infty$ değerine izin vermenin ne işe yaradığının küçük bir örneğidir: "$x \ge 0$" kısıtı ayrıca yazılmak yerine fonksiyonun içine gömülmüştür.
+::::
+:::::
+
+::::: {#exr-konkav-mi name="Konkav mıdır?"}
+$f(x) = -\sup\{-\ln x,\ -\sqrt{x}\}$ fonksiyonu $\mathbb{R}^{+}$ kümesi üzerinde konkav mıdır?
+
+:::: {.cozum}
+**Evet, konkavdır.** İşi supremum teoremine havale edelim.
+
+Önce içerideki iki fonksiyonun konveks olduğunu görelim. $x > 0$ üzerinde
+
+$$\frac{d^2}{dx^2}(-\ln x) = \frac{1}{x^2} > 0, \qquad \frac{d^2}{dx^2}\big( -\sqrt{x} \big) = \frac{1}{4} x^{-3/2} > 0$$
+
+olduğundan $-\ln x$ ile $-\sqrt{x}$ fonksiyonlarının ikisi de $\mathbb{R}^{+}$ üzerinde (kesin) konvekstir.
+
+@thm-supremum-konveks gereği konveks fonksiyonların supremumu konvekstir; dolayısıyla
+
+$$g(x) := \sup\{-\ln x,\ -\sqrt{x}\} = \max\{-\ln x,\ -\sqrt{x}\}$$
+
+fonksiyonu $\mathbb{R}^{+}$ üzerinde konvekstir. $f = -g$ olduğundan @def-konveks-fonksiyon'un ikinci yarısı uyarınca $f$ konkavdır.
+
+İfade sadeleştirilirse aynı sonuç bir kez daha görülür:
+
+$$f(x) = -\max\{-\ln x,\ -\sqrt{x}\} = \min\{\ln x,\ \sqrt{x}\},$$
+
+yani $f$, iki konkav fonksiyonun noktasal minimumudur — konkav fonksiyonların minimumu konkavdır (supremum teoreminin işaret değiştirmiş hâli).
+
+Buradaki asimetriye dikkat: konveks fonksiyonların **supremumu** konvekstir, ama **infimumu** olmak zorunda değildir; @thm-infimum-konveks'ten önceki uyarı bunun ters örneğini verir.
+::::
+:::::
+
+::::: {#exr-uzaklik-fonksiyonu name="Uzaklık Fonksiyonu Konvekstir"}
+$\varnothing \ne A \subset \mathbb{R}^n$ konveks bir küme olmak üzere, $x$ noktasının $A$ kümesine uzaklığını veren
+
+$$\rho(A, x) = \inf_{a \in A} \|x - a\|$$
+
+fonksiyonunun $\mathbb{R}^n$ üzerinde konveks olduğunu gösteriniz.
+
+:::: {.cozum}
+$x_1, x_2 \in \mathbb{R}^n$, $0 \le \lambda \le 1$ ve herhangi bir $\varepsilon > 0$ verilsin. İnfimum tanımı gereği
+
+$$\|x_1 - a_1\| \le \rho(A, x_1) + \varepsilon, \qquad \|x_2 - a_2\| \le \rho(A, x_2) + \varepsilon$$
+
+gerçekleyen $a_1, a_2 \in A$ noktaları vardır. $A$ konveks olduğundan
+
+$$a := \lambda a_1 + (1 - \lambda)a_2 \in A$$
+
+geçerlidir. Bu $a$ noktası, $\rho\big( A,\ \lambda x_1 + (1-\lambda)x_2 \big)$ infimumunun adaylarından biridir; infimum bütün adaylardan küçük ya da onlara eşit olduğundan
+
+$$\rho\big( A,\ \lambda x_1 + (1 - \lambda)x_2 \big) \ \le\ \big\| \lambda x_1 + (1 - \lambda)x_2 - a \big\| = \big\| \lambda(x_1 - a_1) + (1 - \lambda)(x_2 - a_2) \big\|$$
+
+yazılır. Üçgen eşitsizliği ve normun homojenliği ile sağ taraf
+
+$$\le \lambda \|x_1 - a_1\| + (1 - \lambda)\|x_2 - a_2\| \ \le\ \lambda \rho(A, x_1) + (1 - \lambda)\rho(A, x_2) + \varepsilon$$
+
+olarak sınırlanır. Buradaki $\varepsilon > 0$ herhangi olduğundan $\varepsilon \to 0^{+}$ için istenen kiriş eşitsizliği elde edilir.
+
+Aynı sonuç @cor-inf-konvolusyon'dan tek satırda da okunabilir: $A$ kümesinin indikatör fonksiyonu $\delta(\cdot, A)$ konveks olduğundan ve
+
+$$\rho(A, x) = \inf_{y \in \mathbb{R}^n} \big\{ \|y\| + \delta(x - y,\ A) \big\}$$
+
+yazılabildiğinden $\rho(A, \cdot)$ fonksiyonu norm ile indikatörün inf-konvolüsyonudur.
+
+$A$ kümesinin konveks olması vazgeçilmezdir: $A = \{-1, 1\} \subset \mathbb{R}$ için $\rho(A, x) = \big| |x| - 1 \big|$ olup $x = 0$ noktasında kiriş grafiğin altına düşer.
+::::
+:::::
+
+## Hessian ile Konvekslik Denetimi
+
+::::: {#exr-kuadratik-formlar name="Üç Kuadratik Form"}
+Aşağıdaki fonksiyonların konveksliğini inceleyiniz.
+
+(a) $f(x, y) = x^2 + y^2 + x + y$, $\quad \mathbb{R}^2$'de.
+
+(b) $f(x, y, z) = 3x^2 + 6xz + y^2 - 4yz + 8z^2$, $\quad \mathbb{R}^3$'te.
+
+(c) $f(x, y, z) = x^2 + 2xy + 4xz + 3y^2 + yz + 7z^2$, $\quad \mathbb{R}^3$'te.
+
+:::: {.cozum}
+Üçünde de fonksiyon ikinci dereceden olduğundan Hessian sabittir; tek bir matris hesabı bütün noktalar için yeter. Üçünde de öncü esas minörler pozitif çıkacağından @lem-sylvester (Sylvester kriteri) yolu izlenir ve sonuç **kesin konveks** olur.
+
+**(a)** Birinci mertebeden türevler $f_x = 2x + 1$ ve $f_y = 2y + 1$ olduğundan
+
+$$H = \begin{pmatrix} 2 & 0 \\ 0 & 2 \end{pmatrix}, \qquad \Delta_1 = 2 > 0, \qquad \Delta_2 = 4 > 0.$$
+
+Hessian pozitif tanımlıdır; @thm-hessian gereği $f$ fonksiyonu $\mathbb{R}^2$ üzerinde kesin konvekstir. Doğrusal terimler ($x + y$) Hessian'a hiç girmez — afin bir ek, konveksliği değiştirmez.
+
+**(b)** Birinci mertebeden türevler
+
+$$f_x = 6x + 6z, \qquad f_y = 2y - 4z, \qquad f_z = 6x - 4y + 16z$$
+
+olduğundan ikinci mertebeden türevler $f_{xx} = 6$, $f_{xy} = 0$, $f_{xz} = 6$, $f_{yy} = 2$, $f_{yz} = -4$, $f_{zz} = 16$ ve
+
+$$H = \begin{pmatrix} 6 & 0 & 6 \\ 0 & 2 & -4 \\ 6 & -4 & 16 \end{pmatrix}$$
+
+bulunur. Öncü esas minörler:
+
+$$\Delta_1 = 6 > 0, \qquad \Delta_2 = \begin{vmatrix} 6 & 0 \\ 0 & 2 \end{vmatrix} = 12 > 0,$$
+
+$$\Delta_3 = \det H = 6(2 \cdot 16 - 16) - 0 + 6(0 - 12) = 96 - 72 = 24 > 0.$$
+
+Üçü de pozitif olduğundan $H$ pozitif tanımlıdır ve $f$ fonksiyonu $\mathbb{R}^3$ üzerinde kesin konvekstir.
+
+**(c)** Birinci mertebeden türevler
+
+$$f_x = 2x + 2y + 4z, \qquad f_y = 2x + 6y + z, \qquad f_z = 4x + y + 14z$$
+
+olduğundan
+
+$$H = \begin{pmatrix} 2 & 2 & 4 \\ 2 & 6 & 1 \\ 4 & 1 & 14 \end{pmatrix}$$
+
+elde edilir. Öncü esas minörler:
+
+$$\Delta_1 = 2 > 0, \qquad \Delta_2 = 12 - 4 = 8 > 0,$$
+
+$$\Delta_3 = 2(84 - 1) - 2(28 - 4) + 4(2 - 24) = 166 - 48 - 88 = 30 > 0.$$
+
+Yine pozitif tanımlıdır; $f$ kesin konvekstir.
+::::
+:::::
+
+::::: {#exr-konveks-ama-kesin-degil name="Konveks mi, Kesin Konveks mi, Konveks Değil mi?"}
+$f(x, y, z) = (x - y)^2 + 2z^2$ fonksiyonunun $\mathbb{R}^3$'teki konveksliğini inceleyip sonucu bu üç ifadeden biriyle belirtiniz.
+
+:::: {.cozum}
+Açarsak $f(x, y, z) = x^2 - 2xy + y^2 + 2z^2$ olur. Birinci mertebeden türevler
+
+$$f_x = 2x - 2y, \qquad f_y = -2x + 2y, \qquad f_z = 4z$$
+
+olduğundan
+
+$$H = \begin{pmatrix} 2 & -2 & 0 \\ -2 & 2 & 0 \\ 0 & 0 & 4 \end{pmatrix}$$
+
+bulunur; Hessian yine sabittir.
+
+**Önce Sylvester'ı deneyelim.** Öncü esas minörler
+
+$$\Delta_1 = 2 > 0, \qquad \Delta_2 = \begin{vmatrix} 2 & -2 \\ -2 & 2 \end{vmatrix} = 4 - 4 = 0, \qquad \Delta_3 = \det H = 4 \cdot 0 = 0$$
+
+biçimindedir. $\Delta_2$ ile $\Delta_3$ pozitif olmadığından @lem-sylvester **uygulanmaz**: matris pozitif tanımlı değildir, dolayısıyla bu yoldan kesin konvekslik çıkmaz.
+
+**Şimdi konveksliğe bakalım.** Bunun için tablonun ikinci satırındayız: bütün esas minörler denetlenmeli, öncü olanlar yetmez. $3 \times 3$ bir matriste $2^3 - 1 = 7$ tane esas minör vardır:
+
+* birinci mertebeden (köşegen elemanları): $2$, $2$, $4$ — hepsi $\ge 0$;
+* ikinci mertebeden: $\{1,2\}$ seçimi $4 - 4 = 0$; $\{1,3\}$ seçimi $2 \cdot 4 = 8$; $\{2,3\}$ seçimi $2 \cdot 4 = 8$ — hepsi $\ge 0$;
+* üçüncü mertebeden: $\det H = 0 \ge 0$.
+
+Yedisi de negatif olmadığından $H$ pozitif **yarı-tanımlıdır** ve @thm-hessian gereği $f$ fonksiyonu $\mathbb{R}^3$ üzerinde **konvekstir.**
+
+**Kesin konveks değildir.** Bunu ayrıca göstermek gerekir, çünkü Hessian kriterinin yalnızca "pozitif tanımlı $\Rightarrow$ kesin konveks" yönü vardır. $d = (1, 1, 0)$ yönünü alalım:
+
+$$f(t, t, 0) = (t - t)^2 + 0 = 0$$
+
+olduğundan $f$ fonksiyonu bu doğru boyunca sabittir. Sabit bir fonksiyon üzerinde kiriş grafiğe tam oturur, yani kesin eşitsizlik bozulur. Aynı şey $\langle d, Hd \rangle = 0$ hesabından da okunur.
+
+**Sonuç:** $f$ konvekstir, kesin konveks değildir. Bu problem, öncü esas minörlerle bütün esas minörler arasındaki ayrımın neden önemli olduğunun tam örneğidir: öncü minörlere bakıp "$\Delta_2 = 0$, demek ki konveks değil" demek yanlış olurdu.
+::::
+:::::
+
+::::: {#exr-kuadratik-bolu-lineer name="Bir Kesirli Fonksiyon"}
+$f(x, y) = \dfrac{x^2}{y}$ fonksiyonunun $\mathbb{R} \times \mathbb{R}^{+}$ kümesi üzerindeki konveksliğini inceleyiniz.
+
+:::: {.cozum}
+Tanım kümesi $C = \{(x, y) : y > 0\}$ açık ve konveks bir kümedir; @thm-hessian tam olarak böyle kümelerde uygulanır.
+
+Birinci mertebeden türevler
+
+$$f_x = \frac{2x}{y}, \qquad f_y = -\frac{x^2}{y^2}$$
+
+olduğundan ikinci mertebeden türevler
+
+$$f_{xx} = \frac{2}{y}, \qquad f_{xy} = f_{yx} = -\frac{2x}{y^2}, \qquad f_{yy} = \frac{2x^2}{y^3}$$
+
+ve
+
+$$H(x, y) = \begin{pmatrix} \dfrac{2}{y} & -\dfrac{2x}{y^2} \\[6pt] -\dfrac{2x}{y^2} & \dfrac{2x^2}{y^3} \end{pmatrix}$$
+
+bulunur. Bu kez Hessian sabit değildir, ama işareti her noktada aynı çıkacaktır.
+
+Bütün esas minörleri yazalım ($n = 2$ için üç tane vardır):
+
+$$\frac{2}{y} > 0, \qquad \frac{2x^2}{y^3} \ge 0, \qquad \det H = \frac{2}{y} \cdot \frac{2x^2}{y^3} - \frac{4x^2}{y^4} = \frac{4x^2}{y^4} - \frac{4x^2}{y^4} = 0.$$
+
+$y > 0$ olduğundan üçü de negatif değildir; dolayısıyla $H(x,y)$ her noktada pozitif yarı-tanımlıdır ve $f$ fonksiyonu $\mathbb{R} \times \mathbb{R}^{+}$ üzerinde **konvekstir.**
+
+Determinantın her noktada sıfır olması, fonksiyonun kesin konveks olmadığını sezdirir; nitekim $t > 0$ için
+
+$$f(tx, ty) = \frac{t^2 x^2}{t y} = t \cdot \frac{x^2}{y} = t f(x, y)$$
+
+olduğundan $f$ pozitif homojendir (@def-pozitif-homojen) ve orijinden çıkan her ışın boyunca doğrusaldır. Bir doğru parçası üzerinde doğrusallaşan fonksiyon kesin konveks olamaz.
+::::
+:::::
+
+::::: {#exr-log-toplam-ustel name="Üstellerin Toplamının Logaritması"}
+$f(x, y) = \ln\big( e^{x} + e^{y} \big)$ fonksiyonunun $\mathbb{R}^2$'deki konveksliğini inceleyiniz.
+
+:::: {.cozum}
+Kısaltma için $S := e^{x} + e^{y} > 0$ yazalım. Birinci mertebeden türevler
+
+$$f_x = \frac{e^{x}}{S}, \qquad f_y = \frac{e^{y}}{S}$$
+
+olur. İkinci mertebeden türevler bölme kuralıyla hesaplanır:
+
+$$f_{xx} = \frac{e^{x} S - e^{x} \cdot e^{x}}{S^2} = \frac{e^{x} e^{y}}{S^2}, \qquad f_{yy} = \frac{e^{x} e^{y}}{S^2}, \qquad f_{xy} = -\frac{e^{x} e^{y}}{S^2}.$$
+
+Ortak çarpan dışarı alınırsa
+
+$$H(x, y) = \frac{e^{x + y}}{S^2} \begin{pmatrix} 1 & -1 \\ -1 & 1 \end{pmatrix}$$
+
+elde edilir; buradaki $c := e^{x+y}/S^2$ sayısı her noktada pozitiftir.
+
+Esas minörler: köşegen elemanları $c > 0$ ve $c > 0$; determinant ise
+
+$$\det H = c^2 (1 \cdot 1 - (-1)(-1)) = 0.$$
+
+Üçü de negatif olmadığından $H$ her noktada pozitif yarı-tanımlıdır ve $f$ fonksiyonu $\mathbb{R}^2$ üzerinde **konvekstir.**
+
+Kesin konveks değildir: $d = (1, 1)$ yönünde $\langle d, Hd \rangle = c(1 - 1 - 1 + 1) = 0$'dır. Nitekim $f(x + t,\ y + t) = f(x,y) + t$ olduğundan fonksiyon köşegen doğrultusunda tam olarak doğrusaldır.
+::::
+:::::
+
+::::: {#exr-ustel-carpim name="Konveksliği Bozan Bir Çarpım"}
+$f(x, y) = x e^{y} + y e^{x}$ fonksiyonunun $\mathbb{R}^2$'deki konveksliğini inceleyiniz.
+
+:::: {.cozum}
+Birinci mertebeden türevler
+
+$$f_x = e^{y} + y e^{x}, \qquad f_y = x e^{y} + e^{x}$$
+
+olduğundan
+
+$$f_{xx} = y e^{x}, \qquad f_{xy} = e^{y} + e^{x}, \qquad f_{yy} = x e^{y}$$
+
+ve
+
+$$H(x, y) = \begin{pmatrix} y e^{x} & e^{x} + e^{y} \\ e^{x} + e^{y} & x e^{y} \end{pmatrix}$$
+
+bulunur. Tek bir noktada koşulun bozulması, fonksiyonun konveks olmaması için yeter. Orijini alalım:
+
+$$H(0, 0) = \begin{pmatrix} 0 & 2 \\ 2 & 0 \end{pmatrix}, \qquad \det H(0,0) = -4 < 0.$$
+
+Determinant bir esas minördür ve negatiftir; dolayısıyla $H(0,0)$ pozitif yarı-tanımlı değildir ve @thm-hessian gereği $f$ fonksiyonu $\mathbb{R}^2$ üzerinde **konveks değildir.**
+
+Aynı sonuç bir doğru üzerinde de görülebilir: $g(t) := f(t, t) = 2t e^{t}$ fonksiyonunun ikinci türevi
+
+$$g''(t) = 2 e^{t}(t + 2)$$
+
+olup $t < -2$ için negatiftir. Konveks bir fonksiyon her doğru üzerinde konveks olmak zorunda olduğundan (bölümün açılışındaki kesit fikri) bu tek başına iddiayı çürütür.
+
+Not: $f$ fonksiyonu eksenler üzerinde doğrusaldır — $f(x, 0) = x$ ve $f(0, y) = y$ — yani "kötü davranış" ancak eksenlerin dışına çıkıldığında görünür. Konveksliği tek bir doğru üzerinde denetlemenin yeterli olmadığını gösteren iyi bir örnektir.
+::::
+:::::
+
+::::: {#exr-yarim-duzlemde-konveks name="Konveksliğin Bölgeye Bağlı Olması"}
+$f(x, y) = x^2 - 2xy + \dfrac{1}{3}y^3 - 3y$ fonksiyonunun $\mathbb{R}^2$'deki konveksliğini inceleyiniz.
+
+:::: {.cozum}
+Birinci mertebeden türevler
+
+$$f_x = 2x - 2y, \qquad f_y = -2x + y^2 - 3$$
+
+olduğundan ikinci mertebeden türevler $f_{xx} = 2$, $f_{xy} = -2$, $f_{yy} = 2y$ ve
+
+$$H(x, y) = \begin{pmatrix} 2 & -2 \\ -2 & 2y \end{pmatrix}$$
+
+bulunur. Bu kez Hessian $y$ değişkenine bağlıdır; sonuç da bölgeye bağlı çıkacaktır.
+
+Esas minörler $2$, $2y$ ve $\det H = 4y - 4$'tür. Hepsinin negatif olmaması için
+
+$$2 \ge 0 \ \ (\text{daima}), \qquad 2y \ge 0 \iff y \ge 0, \qquad 4y - 4 \ge 0 \iff y \ge 1$$
+
+koşulları gerekir; üçü birlikte $y \ge 1$ verir.
+
+* $y > 1$ olan açık yarı düzlemde $\Delta_1 = 2 > 0$ ve $\Delta_2 = 4y - 4 > 0$ olduğundan Hessian pozitif tanımlıdır: $f$ orada **kesin konvekstir.** Süreklilikle $\{(x,y) : y \ge 1\}$ kapalı yarı düzleminde de konvekstir.
+* $y < 1$ olan noktalarda $\det H = 4y - 4 < 0$ olduğundan Hessian pozitif yarı-tanımlı değildir.
+
+Dolayısıyla $f$ fonksiyonu $\mathbb{R}^2$'nin **tamamında konveks değildir**; konveks olduğu en büyük bölge $y \ge 1$ yarı düzlemidir. Konveksliği bozan terim $\tfrac{1}{3}y^3$'tür: tek değişkenli karşılığının ikinci türevi $2y$ olup $y < 0$ bölgesinde negatiftir, çapraz terim $-2xy$ ise eşiği $y = 0$'dan $y = 1$'e taşımıştır.
+
+Buradaki ders şudur: "bu fonksiyon konveks midir?" sorusunun cevabı çoğu zaman **hangi küme üzerinde** diye sorulmadan verilemez.
+::::
+:::::
+
+## Yönlü Türev ve Subdiferansiyel
+
+::::: {#exr-tek-yanli-turevler name="Subdiferansiyel, Tek Yanlı Türevler Arasındaki Aralıktır"}
+$f : \mathbb{R} \to \mathbb{R}$ konveks bir fonksiyon ve $x_0 \in \mathbb{R}$ olsun.
+
+$$\partial f(x_0) = \big[ f'_{-}(x_0),\ f'_{+}(x_0) \big]$$
+
+eşitliğini gösteriniz; burada $f'_{-}$ ve $f'_{+}$ sırasıyla soldan ve sağdan türevleri göstermektedir.
+
+:::: {.cozum}
+Önce konveks fonksiyonların temel gözlemini yazalım: $x_1 < x_0 < x_2$ için **üç kiriş eşitsizliği**
+
+$$\frac{f(x_0) - f(x_1)}{x_0 - x_1} \ \le\ \frac{f(x_2) - f(x_1)}{x_2 - x_1} \ \le\ \frac{f(x_2) - f(x_0)}{x_2 - x_0}$$
+
+geçerlidir. Bu, $x_0 = \lambda x_1 + (1 - \lambda)x_2$ yazıp ($\lambda = \frac{x_2 - x_0}{x_2 - x_1}$) kiriş eşitsizliğini düzenlemekten ibarettir. Sonucu şöyle okuyabiliriz: $x \mapsto \frac{f(x) - f(x_0)}{x - x_0}$ fark bölümü, $x$ değişkeninin azalmayan bir fonksiyonudur. Dolayısıyla
+
+$$f'_{-}(x_0) = \sup_{x < x_0} \frac{f(x) - f(x_0)}{x - x_0}, \qquad f'_{+}(x_0) = \inf_{x > x_0} \frac{f(x) - f(x_0)}{x - x_0}$$
+
+limitleri vardır ve $f'_{-}(x_0) \le f'_{+}(x_0)$'dır.
+
+Şimdi @def-subgradient'i açalım. Bir $x^{*} \in \mathbb{R}$ sayısı için
+
+$$x^{*} \in \partial f(x_0) \iff \forall x \in \mathbb{R} \ \text{ için } \ f(x) - f(x_0) \ge x^{*}(x - x_0).$$
+
+Üç durumu ayrı ayrı inceleyelim.
+
+* $x = x_0$ için eşitsizlik $0 \ge 0$ olur ve her $x^{*}$ bunu sağlar.
+* $x > x_0$ için $x - x_0 > 0$ ile bölünür ve yön korunur:
+$$\frac{f(x) - f(x_0)}{x - x_0} \ \ge\ x^{*}.$$
+Bu, sağ taraftaki bütün fark bölümlerinin $x^{*}$ sayısını aşması demektir; infimum alındığında koşul $x^{*} \le f'_{+}(x_0)$ hâline gelir.
+* $x < x_0$ için $x - x_0 < 0$ ile bölünür ve yön **değişir**:
+$$\frac{f(x) - f(x_0)}{x - x_0} \ \le\ x^{*}.$$
+Supremum alındığında koşul $x^{*} \ge f'_{-}(x_0)$ olur.
+
+Üçü birlikte $x^{*} \in \partial f(x_0) \iff f'_{-}(x_0) \le x^{*} \le f'_{+}(x_0)$ verir; yani iddia edilen eşitlik doğrudur.
+
+İki doğal sonuç: (i) subdiferansiyel daima kapalı bir aralıktır, dolayısıyla kapalı ve konveks bir kümedir; (ii) $f$ fonksiyonu $x_0$ noktasında türevlenebilir olması için gerek ve yeter koşul $f'_{-}(x_0) = f'_{+}(x_0)$, yani $\partial f(x_0)$ kümesinin **tek noktalı** olmasıdır — bu durumda tek eleman $f'(x_0)$'dır.
+::::
+:::::
+
+::::: {#exr-subgradient-yonlu-turev name="Subgradient Yönlü Türevi Alttan Sınırlar"}
+$f : \mathbb{R}^n \to \mathbb{R}$ has konveks bir fonksiyon ve $x_0 \in \operatorname{dom}(f)$ olsun. Eğer $g_0 \in \partial f(x_0)$ ise her $d \in \mathbb{R}^n$ için
+
+$$f'(x_0; d) \ \ge\ \langle g_0,\ d \rangle$$
+
+eşitsizliğinin gerçeklendiğini gösteriniz.
+
+:::: {.cozum}
+$g_0$ bir subgradient olduğundan @def-subgradient gereği **her** $x \in \mathbb{R}^n$ için
+
+$$f(x) - f(x_0) \ \ge\ \langle g_0,\ x - x_0 \rangle$$
+
+geçerlidir. Bu eşitsizliği herhangi bir $d \in \mathbb{R}^n$ yönü ve $\lambda > 0$ için $x = x_0 + \lambda d$ noktasında kullanalım. $x - x_0 = \lambda d$ olduğundan
+
+$$f(x_0 + \lambda d) - f(x_0) \ \ge\ \langle g_0,\ \lambda d \rangle = \lambda \langle g_0,\ d \rangle$$
+
+elde edilir. $\lambda > 0$ olduğundan iki taraf $\lambda$ ile bölünebilir ve yön korunur:
+
+$$\frac{f(x_0 + \lambda d) - f(x_0)}{\lambda} \ \ge\ \langle g_0,\ d \rangle.$$
+
+Sağ taraf $\lambda$ değişkenine bağlı olmadığından, sol tarafta $\lambda \downarrow 0$ için limite geçilebilir. @def-yonlu-turev gereği bu limit tam olarak $f'(x_0; d)$ olduğundan
+
+$$f'(x_0; d) \ \ge\ \langle g_0,\ d \rangle$$
+
+bulunur.
+
+Sonucun anlamı şudur: bir subgradient, fonksiyonun hiçbir yönde kendisinden daha hızlı **azalamayacağını** garanti eder. Nitekim aslında daha fazlası doğrudur — konveks fonksiyonlarda $f'(x_0; d) = \max\{\langle g, d \rangle : g \in \partial f(x_0)\}$ eşitliği geçerlidir; yönlü türev, subdiferansiyelin $d$ yönündeki destek fonksiyonudur (@def-destek-fonksiyonu). Yukarıda gösterilen, bu eşitliğin kolay yönüdür.
+::::
+:::::
+
+::::: {#exr-parcali-subdiferansiyel name="Parçalı Bir Fonksiyonun Subdiferansiyeli"}
+$f : \mathbb{R} \to \mathbb{R}$ fonksiyonu
+
+$$f(x) = \begin{cases} x^2, & x \le 0 \\ x, & x > 0 \end{cases}$$
+
+şeklinde tanımlanmış olsun. $f$ fonksiyonunun konveks olduğunu grafiküstü kümesini çizerek gösteriniz, $x = 0$ noktasındaki türevini araştırınız ve $\partial f(0)$ kümesini belirleyiniz.
+
+:::: {.cozum}
+**Konvekslik.** Fonksiyon $x = 0$ noktasında süreklidir: soldan $0^2 = 0$, sağdan $0$ ve $f(0) = 0$'dır. Türev
+
+$$f'(x) = \begin{cases} 2x, & x < 0 \\ 1, & x > 0 \end{cases}$$
+
+biçimindedir. $x < 0$ bölgesinde $2x$ artarak $0$ değerine yaklaşır; $x > 0$ bölgesinde sabit $1$'dir. Dolayısıyla türev bütün eksen boyunca azalmayan bir fonksiyondur ve bu, tek değişkende konveksliğe denktir.
+
+Grafiküstü kümesi diliyle aynı şey şöyle okunur: $\operatorname{epi}(f)$ kümesi, solda parabolün, sağda $y = x$ doğrusunun üstünde kalan bölgedir; iki parça $x = 0$ noktasında hem değer hem de "yukarı bükülme" yönü bakımından uyumlu biçimde birleşir ve elde edilen bölge konvekstir. @def-konveks-fonksiyon gereği $f$ konvekstir.
+
+**$x = 0$ noktasındaki türev.** Tek yanlı türevleri hesaplayalım:
+
+$$f'_{-}(0) = \lim_{h \to 0^{-}} \frac{f(h) - f(0)}{h} = \lim_{h \to 0^{-}} \frac{h^2}{h} = \lim_{h \to 0^{-}} h = 0,$$
+
+$$f'_{+}(0) = \lim_{h \to 0^{+}} \frac{f(h) - f(0)}{h} = \lim_{h \to 0^{+}} \frac{h}{h} = 1.$$
+
+İkisi eşit olmadığından $f$ fonksiyonu $x = 0$ noktasında **türevlenebilir değildir**; grafikte bir kırılma vardır.
+
+**Subdiferansiyel.** @exr-tek-yanli-turevler gereği doğrudan
+
+$$\partial f(0) = \big[ f'_{-}(0),\ f'_{+}(0) \big] = [0, 1]$$
+
+yazılır. Aynı sonucu tanımdan da doğrulayalım: her $x$ için $f(x) \ge x^{*} x$ olmalıdır.
+
+* $x > 0$ için $x \ge x^{*} x$ olup $x > 0$ ile bölünürse $x^{*} \le 1$;
+* $x < 0$ için $x^2 \ge x^{*} x$ olup **negatif** olan $x$ ile bölünürse yön değişir ve $x \le x^{*}$ bulunur; bu her $x < 0$ için istendiğinden $x^{*} \ge 0$;
+* $x = 0$ için koşul $0 \ge 0$'dır.
+
+Üçü birlikte $0 \le x^{*} \le 1$, yani $\partial f(0) = [0, 1]$ verir. Sıfırdan farklı noktalarda fonksiyon türevlenebilir olduğundan subdiferansiyel tek noktalıdır: $x < 0$ için $\partial f(x) = \{2x\}$, $x > 0$ için $\partial f(x) = \{1\}$.
+::::
+:::::
+
+::::: {#exr-maksimum-subdiferansiyel name="Üç Maksimum Fonksiyonunun Subdiferansiyeli"}
+Aşağıdaki fonksiyonların konveks olduğunu gösteriniz, parçalı biçimde yazınız ve belirtilen noktadaki subdiferansiyellerini belirleyiniz.
+
+(a) $f(x) = \max\{1,\ x\}$, $\quad \partial f(1) = ?$
+
+(b) $f(x) = \max\{x,\ 4 - x\}$, $\quad \partial f(2) = ?$
+
+(c) $f(x) = \max\{e^{x},\ 1 - x\}$, $\quad \partial f(0) = ?$
+
+:::: {.cozum}
+**Ortak gerekçe.** Üç fonksiyon da iki konveks fonksiyonun noktasal maksimumudur; @thm-supremum-konveks gereği (iki elemanlı bir indis kümesiyle) hepsi konvekstir. Kırılma, iki parçanın eşitlendiği noktada oluşur ve orada @exr-tek-yanli-turevler doğrudan uygulanır: subdiferansiyel, soldan ve sağdan türevler arasındaki kapalı aralıktır.
+
+**(a)** $1 \le x \iff x \ge 1$ olduğundan
+
+$$f(x) = \begin{cases} 1, & x \le 1 \\ x, & x > 1. \end{cases}$$
+
+Kırılma noktası $x_0 = 1$'dir ve $f(1) = 1$'dir. Soldan türev sabit parçadan gelir: $f'_{-}(1) = 0$. Sağdan türev doğrusal parçadan gelir: $f'_{+}(1) = 1$. Böylece
+
+$$\partial f(1) = [0, 1].$$
+
+**(b)** $x \ge 4 - x \iff x \ge 2$ olduğundan
+
+$$f(x) = \begin{cases} 4 - x, & x < 2 \\ x, & x \ge 2 \end{cases}$$
+
+ve $f(2) = 2$'dir. Soldan gelen parçanın eğimi $-1$, sağdan gelenin eğimi $+1$ olduğundan
+
+$$f'_{-}(2) = -1, \qquad f'_{+}(2) = 1, \qquad \partial f(2) = [-1, 1].$$
+
+**(c)** Hangi parçanın nerede büyük olduğunu bulmak için $h(x) := e^{x} - (1 - x) = e^{x} + x - 1$ farkına bakalım. $h(0) = 0$ ve $h'(x) = e^{x} + 1 > 0$ olduğundan $h$ kesin artandır; dolayısıyla $x < 0$ için $h(x) < 0$, $x > 0$ için $h(x) > 0$'dır. Demek ki
+
+$$f(x) = \begin{cases} 1 - x, & x \le 0 \\ e^{x}, & x > 0 \end{cases}$$
+
+ve $f(0) = 1$'dir. Tek yanlı türevler $f'_{-}(0) = -1$ ve $f'_{+}(0) = e^{0} = 1$ olduğundan
+
+$$\partial f(0) = [-1, 1].$$
+
+**Ortak kural.** Üç şıkta da sonuç, kırılma noktasında eşitlenen iki parçanın oradaki türevleri arasındaki aralıktır:
+
+$$\partial f(x_0) = \operatorname{conv}\big\{ f_1'(x_0),\ f_2'(x_0) \big\}.$$
+
+Bunun sezgisi @def-subgradient'in geometrik okunuşundan gelir: kırılma noktasında grafiğe alttan yaslanabilen doğru **tek** değildir; iki parçanın teğetleri arasında kalan bütün eğimler işe yarar. Aynı olguyu @exm-subdiferansiyel-mutlak'ta $f(x) = |x| = \max\{x, -x\}$ için de görmüştük; orada iki parçanın eğimleri $-1$ ile $1$ olduğundan $\partial f(0) = [-1, 1]$ çıkmıştı.
+::::
+:::::
