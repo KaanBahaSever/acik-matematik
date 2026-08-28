@@ -1,0 +1,369 @@
+---
+title: "Öklid Algoritması"
+pagetitle: "Öklid Algoritması"
+description: "En büyük ortak böleni ardışık bölmelerle hesaplayan Öklid algoritması, geriye doğru yerine koymayla Bézout katsayılarının bulunması ve üç sayının EBOB'u."
+---
+
+Bézout teoremi $\gcd(a,b) = ax_0 + by_0$ eşitliğini sağlayan katsayıların **var olduğunu** söylüyor, ama onları nasıl bulacağımızı söylemiyor. Küçük sayılarda deneme yanılma işe yarar; $\gcd(1234, 4321)$ gibi bir hesapta ise yararsız kalır. Bu bölümde hem en büyük ortak böleni hem de Bézout katsayılarını sistemli biçimde üreten bir yöntem kuracağız.
+
+## Algoritmanın Dayandığı Gözlem
+
+Bütün yöntem tek bir basit kurala dayanır: bir sayıdan diğerinin katını çıkarmak en büyük ortak böleni değiştirmez.
+
+:::: {#prp-ebob-degismezlik name="EBOB Kat Çıkarmayla Değişmez"}
+Her $a, b, k \in \mathbb{Z}$ için ($a$ ile $b$ ikisi birden sıfır olmamak üzere)
+
+$$\gcd(a, b) = \gcd(a,\ b - ak)$$
+
+::: {.ispat}
+İki çiftin **ortak bölenler kümelerinin aynı** olduğunu göstermek yeterlidir; aynı kümenin en büyük elemanı da aynı olacaktır.
+
+**($\subseteq$)** $c$ sayısı $a$ ile $b$'nin bir ortak böleni olsun; yani $c \mid a$ ve $c \mid b$. @thm-bolunebilme-ozellikleri (6) gereği $c$ sayısı $a$ ile $b$'nin her doğrusal birleşimini böler; özel olarak
+
+$$c \mid b - ak$$
+
+O hâlde $c$, $a$ ile $b - ak$'nın da bir ortak bölenidir.
+
+**($\supseteq$)** $c$ sayısı $a$ ile $b - ak$'nın bir ortak böleni olsun. Yine aynı özellik gereği
+
+$$c \mid (b - ak) + ak = b$$
+
+olur; yani $c$, $a$ ile $b$'nin de bir ortak bölenidir.
+
+İki kapsama birlikte, ortak bölenler kümelerinin çakıştığını gösterir. Dolayısıyla en büyük ortak bölenler de eşittir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="💡 Bölme algoritmasıyla birleştirince"}
+$b = ak + r$ yazılışında $r = b - ak$ olduğundan, yukarıdaki önerme şunu söyler:
+
+$$b = ak + r \implies \gcd(a, b) = \gcd(a, r)$$
+
+Yani **bölen ile kalanın en büyük ortak böleni, bölünen ile bölenin en büyük ortak bölenine eşittir.** Kalan bölenden küçük olduğuna göre, bu kuralı tekrar tekrar uygulamak sayıları hızla küçültür. Öklid algoritması tam olarak budur.
+:::
+
+## Algoritma
+
+:::: {#thm-oklid-algoritmasi name="Öklid Algoritması"}
+$a, b \in \mathbb{Z}$ ve $a > 0$ olsun. Bölme algoritmasını ardışık olarak uygulayalım:
+
+$$
+\begin{aligned}
+b       &= a q_1 + r_1,       &&0 < r_1 < a \\
+a       &= r_1 q_2 + r_2,     &&0 < r_2 < r_1 \\
+r_1     &= r_2 q_3 + r_3,     &&0 < r_3 < r_2 \\
+        &\ \ \vdots \\
+r_{n-2} &= r_{n-1} q_n + r_n, &&0 < r_n < r_{n-1} \\
+r_{n-1} &= r_n q_{n+1}        &&\text{(kalan } 0 \text{)}
+\end{aligned}
+$$
+
+Bu durumda
+
+$$\gcd(a, b) = r_n$$
+
+yani **en büyük ortak bölen, sıfırdan farklı son kalandır**.
+
+::: {.ispat}
+**1. Algoritma durur.** Kalanlar
+
+$$a > r_1 > r_2 > r_3 > \cdots \geq 0$$
+
+biçiminde azalan, negatif olmayan tam sayılardır. Sonsuza kadar azalan bir doğal sayı dizisi olamaz: aksi hâlde bu kalanların kümesi, boş olmayan ama en küçük elemanı bulunmayan bir doğal sayı kümesi olurdu ve iyi sıralama prensibiyle çelişirdi. O hâlde bir adımdan sonra kalan $0$ olur; sıfırdan farklı son kalana $r_n$ diyoruz.
+
+**2. Son kalan, aranan EBOB'tur.** @prp-ebob-degismezlik'i her satıra sırayla uygulayalım. İlk satırda $b = aq_1 + r_1$, yani $r_1 = b - a q_1$ olduğundan
+
+$$\gcd(a, b) = \gcd(a, r_1)$$
+
+İkinci satırda $a = r_1 q_2 + r_2$ olduğundan aynı kuralla
+
+$$\gcd(a, r_1) = \gcd(r_1, r_2)$$
+
+Bu şekilde devam edersek
+
+$$\gcd(a,b) = \gcd(a, r_1) = \gcd(r_1, r_2) = \cdots = \gcd(r_{n-1}, r_n)$$
+
+zinciri elde edilir. Son satırda $r_{n-1} = r_n q_{n+1}$, yani $r_n \mid r_{n-1}$'dir. @prp-ebob-ozellikleri (2) gereği
+
+$$\gcd(r_{n-1}, r_n) = |r_n| = r_n$$
+
+*(son eşitlikte $r_n > 0$ olmasını kullandık)*. Zinciri birleştirirsek $\gcd(a,b) = r_n$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="💡 Ne kadar hızlı?"}
+Algoritmanın çekiciliği hızındadır. Her adımda kalan en az yarıya iner; çünkü $r_{k+1} < r_k$ olmasının yanı sıra, ardışık iki adımda kalan mutlaka yarıdan küçük hâle gelir. Bu yüzden $\gcd(a,b)$ hesabı, sayıların basamak sayısıyla orantılı sayıda bölme işleminde biter — çarpanlara ayırmaya hiç gerek kalmadan.
+
+Bu, algoritmanın ders açısından da önemli bir yanıdır: en büyük ortak böleni bulmak için sayıların asal çarpanlarını bilmemiz **gerekmez**.
+:::
+
+## Bézout Katsayılarını Bulma
+
+Algoritma bittiğinde elimizde bölmelerin listesi kalır. Bu listeyi **sondan başa** okuyup her kalanı bir önceki satırdan gelen ifadeyle değiştirirsek, en büyük ortak böleni adım adım $a$ ile $b$ cinsinden yazarız. Bu işleme **geriye doğru yerine koyma** denir.
+
+:::: {#exm-oklid-182-70 name="$\gcd(182, 70)$ ve Bézout Katsayıları"}
+**a)** $\gcd(182, 70)$ değerini bulunuz.
+
+**b)** $\gcd(182, 70) = 182x + 70y$ koşulunu sağlayan $x, y$ tam sayılarını bulunuz.
+
+::: {.cozum}
+**a) Öklid algoritması.**
+
+$$
+\begin{aligned}
+182 &= 2 \cdot 70 + 42 \\
+ 70 &= 1 \cdot 42 + 28 \\
+ 42 &= 1 \cdot 28 + 14 \\
+ 28 &= 2 \cdot 14 + 0
+\end{aligned}
+$$
+
+Sıfırdan farklı son kalan $14$ olduğundan
+
+$$\gcd(182, 70) = 14$$
+
+**b) Geriye doğru yerine koyma.** Önce her satırdaki kalanı yalnız bırakalım:
+
+$$
+\begin{aligned}
+42 &= 182 - 2 \cdot 70 \\
+28 &= 70 - 1 \cdot 42 \\
+14 &= 42 - 1 \cdot 28
+\end{aligned}
+$$
+
+Şimdi en alttan başlayıp yukarı doğru yerine koyalım:
+
+$$
+\begin{aligned}
+14 &= 42 - 28 \\
+   &= 42 - \left( 70 - 42 \right) &&\text{($28$ yerine kondu)} \\
+   &= 2 \cdot 42 - 70 \\
+   &= 2\left( 182 - 2 \cdot 70 \right) - 70 &&\text{($42$ yerine kondu)} \\
+   &= 2 \cdot 182 - 4 \cdot 70 - 70 \\
+   &= 182 \cdot 2 + 70 \cdot (-5)
+\end{aligned}
+$$
+
+*(Sağlama: $364 - 350 = 14$ ✓)*
+
+O hâlde $x = 2$, $y = -5$ alınabilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="⚠️ Yerine koyarken sadeleştirmeyin"}
+Geriye doğru yerine koyarken en sık yapılan hata, ara adımlarda sayıları çarpıp toplamaktır. Örneğin yukarıdaki üçüncü satırda $2 \cdot 42 - 70$ ifadesini $84 - 70 = 14$ diye hesaplarsak elimizde yalnızca $14$ kalır ve $182$ ile $70$'e nasıl ulaşacağımızı kaybederiz.
+
+Kural şudur: **$182$ ile $70$ sembollerini asla sayıya dönüştürmeyin**, yalnızca katsayılarını düzenleyin.
+:::
+
+:::: {#exm-oklid-70-48 name="$\gcd(70, 48)$ ve Bézout Katsayıları"}
+Öklid algoritmasını kullanarak $\gcd(70, 48)$ değerini ve
+
+$$\gcd(70,48) = 70 x_0 + 48 y_0$$
+
+koşuluna uyan bir $(x_0, y_0)$ tam sayı ikilisi bulunuz.
+
+::: {.cozum}
+**Algoritma.**
+
+$$
+\begin{aligned}
+70 &= 1 \cdot 48 + 22 \\
+48 &= 2 \cdot 22 + 4 \\
+22 &= 5 \cdot 4 + 2 \\
+ 4 &= 2 \cdot 2 + 0
+\end{aligned}
+$$
+
+Sıfırdan farklı son kalan $2$ olduğundan $\gcd(70, 48) = 2$'dir.
+
+**Geriye doğru yerine koyma.** Kalanları yalnız bırakalım:
+
+$$
+\begin{aligned}
+22 &= 70 - 48 \\
+ 4 &= 48 - 2 \cdot 22 \\
+ 2 &= 22 - 5 \cdot 4
+\end{aligned}
+$$
+
+Aşağıdan yukarı doğru ilerleyelim:
+
+$$
+\begin{aligned}
+2 &= 22 - 5 \cdot 4 \\
+  &= 22 - 5\left( 48 - 2 \cdot 22 \right) \\
+  &= 22 - 5 \cdot 48 + 10 \cdot 22 \\
+  &= 11 \cdot 22 - 5 \cdot 48 \\
+  &= 11\left( 70 - 48 \right) - 5 \cdot 48 \\
+  &= 11 \cdot 70 - 11 \cdot 48 - 5 \cdot 48 \\
+  &= 70 \cdot 11 + 48 \cdot (-16)
+\end{aligned}
+$$
+
+*(Sağlama: $770 - 768 = 2$ ✓)*
+
+O hâlde $(x_0, y_0) = (11, -16)$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Üç ve Daha Fazla Sayının EBOB'u
+
+Hepsi birden sıfır olmayan $a, b, c$ tam sayılarının en büyük ortak böleni, üçünün ortak bölenlerinin en büyüğüdür ve $\gcd(a,b,c)$ ile gösterilir. Bu değeri hesaplamak için yeni bir yönteme ihtiyaç yoktur: ikişer ikişer ilerlemek yeterlidir.
+
+::: {#prp-uc-sayi-ebob name="Üç Sayının EBOB'u"}
+Hepsi birden sıfır olmayan her $a, b, c$ tam sayısı için
+
+$$\gcd(a, b, c) = \gcd\big( \gcd(a,b),\ c \big)$$
+:::
+
+Bunun nedeni şudur: @thm-ebob-bolme-olcutu gereği bir sayı $a$ ile $b$'nin ortak böleni olmakla $\gcd(a,b)$'nin böleni olmak aynı şeydir. Dolayısıyla $\{a, b, c\}$ üçlüsünün ortak bölenleri ile $\{\gcd(a,b),\ c\}$ ikilisinin ortak bölenleri aynı kümedir; en büyük elemanları da aynıdır.
+
+:::: {#exm-uc-sayi-56-21-231 name="$\gcd(56, 21, 231)$ Bir Doğrusal Birleşim Olarak"}
+$$\gcd(56, 21, 231) = 56x + 21y + 231z$$
+
+koşulunu sağlayan bir $(x, y, z)$ tam sayı üçlüsü bulunuz.
+
+::: {.cozum}
+**1. Adım: $\gcd(56, 21)$.**
+
+$$
+\begin{aligned}
+56 &= 2 \cdot 21 + 14 \\
+21 &= 1 \cdot 14 + 7 \\
+14 &= 2 \cdot 7 + 0
+\end{aligned}
+$$
+
+O hâlde $\gcd(56, 21) = 7$'dir. Geriye doğru yerine koyalım:
+
+$$
+\begin{aligned}
+7 &= 21 - 14 \\
+  &= 21 - \left( 56 - 2 \cdot 21 \right) \\
+  &= 56 \cdot (-1) + 21 \cdot 3
+\end{aligned}
+$$
+
+*(Sağlama: $-56 + 63 = 7$ ✓)*
+
+**2. Adım: $\gcd(7, 231)$.** $231 = 33 \cdot 7$ olduğundan $7 \mid 231$'dir; @prp-ebob-ozellikleri (2) gereği
+
+$$\gcd(7, 231) = 7$$
+
+**3. Adım: Sonucu birleştirme.** @prp-uc-sayi-ebob gereği
+
+$$\gcd(56, 21, 231) = \gcd\big( \gcd(56,21),\ 231 \big) = \gcd(7, 231) = 7$$
+
+Birinci adımda bulduğumuz birleşimde $231$ katsayısını $0$ alalım:
+
+$$7 = 56 \cdot (-1) + 21 \cdot 3 + 231 \cdot 0$$
+
+O hâlde $(x, y, z) = (-1, 3, 0)$ bir çözümdür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-uc-sayi-100-70-55 name="$\gcd(100, 70, 55)$ Bir Doğrusal Birleşim Olarak"}
+$$\gcd(100, 70, 55) = 100x + 70y + 55z$$
+
+koşulunu sağlayan bir $(x, y, z)$ tam sayı üçlüsü bulunuz.
+
+::: {.cozum}
+**1. Adım: $\gcd(100, 70)$.**
+
+$$
+\begin{aligned}
+100 &= 1 \cdot 70 + 30 \\
+ 70 &= 2 \cdot 30 + 10 \\
+ 30 &= 3 \cdot 10 + 0
+\end{aligned}
+$$
+
+O hâlde $\gcd(100, 70) = 10$'dur. Geriye doğru yerine koyalım:
+
+$$
+\begin{aligned}
+10 &= 70 - 2 \cdot 30 \\
+   &= 70 - 2\left( 100 - 70 \right) \\
+   &= 100 \cdot (-2) + 70 \cdot 3
+\end{aligned}
+$$
+
+*(Sağlama: $-200 + 210 = 10$ ✓)*
+
+**2. Adım: $\gcd(10, 55)$.**
+
+$$
+\begin{aligned}
+55 &= 5 \cdot 10 + 5 \\
+10 &= 2 \cdot 5 + 0
+\end{aligned}
+$$
+
+O hâlde $\gcd(10, 55) = 5$'tir ve
+
+$$5 = 55 - 5 \cdot 10$$
+
+**3. Adım: Birleştirme.** @prp-uc-sayi-ebob gereği
+
+$$\gcd(100, 70, 55) = \gcd(10, 55) = 5$$
+
+Şimdi son eşitlikte $10$ yerine birinci adımda bulduğumuz ifadeyi koyalım:
+
+$$
+\begin{aligned}
+5 &= 55 - 5 \cdot 10 \\
+  &= 55 - 5\left( 100 \cdot (-2) + 70 \cdot 3 \right) \\
+  &= 55 + 10 \cdot 100 - 15 \cdot 70 \\
+  &= 100 \cdot 10 + 70 \cdot (-15) + 55 \cdot 1
+\end{aligned}
+$$
+
+*(Sağlama: $1000 - 1050 + 55 = 5$ ✓)*
+
+O hâlde $(x, y, z) = (10, -15, 1)$ bir çözümdür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="💡 Genel yöntem"}
+Üç sayıda işleyen bu strateji istenildiği kadar uzatılabilir. $\gcd(a_1, a_2, \dots, a_k)$ hesabı için soldan başlayıp ikişer ikişer ilerlenir:
+
+$$\gcd(a_1, a_2, \dots, a_k) = \gcd\Big( \gcd\big( \cdots \gcd(a_1, a_2), \dots \big),\ a_k \Big)$$
+
+Doğrusal birleşim de aynı sırayla, her adımda bir önceki adımın ifadesi yerine konularak elde edilir.
+:::
+
+## Çalışma Problemleri
+
+::: {#exr-oklid-hesap name="Öklid Algoritması Uygulamaları"}
+Aşağıdaki en büyük ortak bölenleri Öklid algoritmasıyla hesaplayınız ve her biri için Bézout katsayılarını bulunuz.
+
+**a)** $\gcd(1001, 357)$ &nbsp;&nbsp; **b)** $\gcd(272, 1479)$ &nbsp;&nbsp; **c)** $\gcd(-84, 132)$ &nbsp;&nbsp; **d)** $\gcd(2024, 748)$
+:::
+
+::: {#exr-oklid-uc-sayi name="Üç Sayının EBOB'u"}
+Aşağıdaki değerleri hesaplayıp birer doğrusal birleşim olarak yazınız.
+
+**a)** $\gcd(6, 10, 15)$ &nbsp;&nbsp; **b)** $\gcd(42, 70, 105)$ &nbsp;&nbsp; **c)** $\gcd(105, 140, 350)$
+:::
+
+::: {#exr-oklid-ardisik name="Ardışık Fibonacci Sayıları"}
+$F_1 = F_2 = 1$ ve $F_{n} = F_{n-1} + F_{n-2}$ ile tanımlanan Fibonacci dizisini göz önüne alınız.
+
+**a)** $\gcd(F_{n+1}, F_n) = 1$ olduğunu tümevarımla gösteriniz.
+
+**b)** $\gcd(F_{n+1}, F_n)$ hesabında Öklid algoritmasının kaç adım sürdüğünü gözlemleyiniz. *(Fibonacci sayıları, algoritmayı en çok yavaşlatan girdilerdir.)*
+:::
