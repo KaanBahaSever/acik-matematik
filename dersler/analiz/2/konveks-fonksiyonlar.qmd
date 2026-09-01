@@ -1,0 +1,733 @@
+---
+title: "Konveks ve Konkav Fonksiyonlar"
+pagetitle: "Konveks ve Konkav Fonksiyonlar"
+description: "Kirişin altında kalma koşuluyla konveks ve konkav fonksiyon tanımı ve kesin konvekslik; Jensen eşitsizliğinin tümevarımla ispatı; konveks fonksiyonlarda yerel minimumun mutlak minimum olması; grafiğin teğetin üstünde kalması; kiriş eğimlerinin monotonluğu; konveksliğin birinci ve ikinci türevle denk koşulları; iç noktalarda süreklilik; aritmetik–geometrik ortalama ve Young eşitsizliği."
+---
+
+[Monotonluk ve Ekstremum Testleri](monotonluk-ve-ekstremum-testleri.qmd) bölümünde birinci türevin işaretinin fonksiyonun **artıp azaldığını** söylediğini gördük; ama bu bilgi grafiği çizmeye tek başına yetmez. $[0,1]$ üzerinde $f(x) = x^2$ ile $g(x) = \sqrt{x}$ fonksiyonlarını düşünelim: ikisi de artandır ve $0$'dan $1$'e gider, ama grafikleri birbirinin tam tersi biçimde kıvrılır — biri "çanak gibi" yukarı, öteki "kubbe gibi" aşağı doğru bükülür. Bu ayrımı yapan şey **eğrilik yönüdür.**
+
+Bu bölümde eğrilik yönünü kesin bir tanıma bağlayacağız. Tanım şaşırtıcı biçimde türevden bağımsızdır: bir fonksiyon, grafiğinin herhangi iki noktasını birleştiren **kiriş** (chord) grafiğin üstünde kalıyorsa **konvekstir** (convex). Bu koşul yalnızca fonksiyonun değerlerini kullanır, süreklilik bile istemez; buna karşın tek başına, fonksiyonun bir aralığın içinde sürekli olmasını, tek yönlü türevlerinin var olmasını, yerel minimumlarının mutlak minimum olmasını ve grafiğin her teğetin üstünde kalmasını getirir. Optimizasyon kuramının konveks fonksiyonlar üzerine kurulmuş olmasının nedeni budur: konveks bir fonksiyonda "yerel olarak en iyi" ile "gerçekten en iyi" aynı şeydir.
+
+Bu bölümde şunları öğreneceğiz: konvekslik ve konkavlığın tanımı ile geometrik anlamı; sonlu Jensen eşitsizliğinin tümevarımla elde edilişi; yerel minimumun neden mutlak minimum olduğu; grafiğin teğetin üstünde kalması; kiriş eğimlerinin monotonluğunu özetleyen üç eşitsizlik; türevlenebilir fonksiyonlar için konveksliğin $f'$'nün artanlığına, iki kez türevlenebilir fonksiyonlar için de $f'' \ge 0$ koşuluna denk oluşu; ve konveks bir fonksiyonun açık aralıkta neden kendiliğinden sürekli olduğu. Bölümü iki klasik uygulamayla — aritmetik–geometrik ortalama eşitsizliği ve Young eşitsizliği — kapatacağız.
+
+## Konvekslik ve Konkavlık
+
+Tanımın çıkış noktası şu gözlemdir: bir aralığın iki ucu $x_1$ ve $x_2$ ise, aradaki her nokta bu iki ucun bir **ağırlıklı ortalaması** olarak yazılabilir.
+
+::: {#def-konveks-fonksiyon name="Konveks Fonksiyon"}
+$I \subseteq \mathbb{R}$ bir aralık ve $f : I \to \mathbb{R}$ bir fonksiyon olsun. Her $x_1, x_2 \in I$ ve her $\alpha \in [0,1]$ için
+
+$$f\big( \alpha x_1 + (1-\alpha) x_2 \big) \;\le\; \alpha f(x_1) + (1-\alpha) f(x_2)$$
+
+oluyorsa $f$'ye $I$ üzerinde **konveks** (convex) denir.
+:::
+
+Tanımdaki $\alpha x_1 + (1-\alpha)x_2$ ifadesine $x_1$ ile $x_2$'nin bir **konveks birleşimi** (convex combination) denir. $\alpha$ parametresi $[0,1]$ aralığında dolaşırken bu ifadenin ne yaptığını görelim:
+
+$$\alpha x_1 + (1-\alpha) x_2 = x_2 + \alpha (x_1 - x_2).$$
+
+$\alpha = 0$ için sonuç $x_2$, $\alpha = 1$ için $x_1$'dir; arada ise nokta $x_2$'den $x_1$'e doğru düzgün biçimde kayar. Gerçekten de $x_1 < x_2$ ve $\alpha \in (0,1)$ ise
+
+$$\alpha x_1 + (1-\alpha) x_2 - x_1 = (1-\alpha)(x_2 - x_1) > 0, \qquad x_2 - \big( \alpha x_1 + (1-\alpha) x_2 \big) = \alpha (x_2 - x_1) > 0$$
+
+olduğundan nokta kesinlikle $x_1$ ile $x_2$ arasındadır: **$\alpha$, $[x_1, x_2]$ aralığını baştan sona tarar.** Ayrıca $I$ bir aralık olduğundan (@def-aralik) bu ara noktaların hepsi $I$'dedir; tanımın aralıklarda yapılmasının nedeni budur.
+
+Peki eşitsizliğin sağ tarafı nedir? Aşağıdaki hesap, sağ tarafın kirişin o noktadaki yüksekliği olduğunu gösterir.
+
+:::: {#lem-konveks-kiris-degeri name="Kirişin Denklemi"}
+$x_1 \ne x_2$ olsun ve $\ell$, düzlemde $(x_1, f(x_1))$ ile $(x_2, f(x_2))$ noktalarından geçen doğru (yani **kiriş**) olsun. Her $\alpha \in [0,1]$ için
+
+$$\ell\big( \alpha x_1 + (1-\alpha) x_2 \big) = \alpha f(x_1) + (1-\alpha) f(x_2)$$
+
+olur. Dolayısıyla @def-konveks-fonksiyon'daki eşitsizlik, $f$'nin grafiğinin $[x_1, x_2]$ üzerinde kirişin **üstüne çıkmaması** — yani ya altında ya da tam üzerinde kalması — demektir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="26.0 -1.0 540.0 258.0" role="img" aria-label="Konveks fonksiyon: yay kirisin altinda, grafik tegetin ustunde, teget egimleri artiyor">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="40.0" y1="224.0" x2="274.0" y2="224.0"/>
+  <line x1="49.6" y1="228.0" x2="49.6" y2="26.0"/>
+  <polygon points="274.0,224.0 266.0,220.5 266.0,227.5" stroke="none"/>
+  <polygon points="49.6,26.0 46.1,34.0 53.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="272.0" y="239.0" text-anchor="end">x</text>
+  <text x="56.6" y="35.0">y</text>
+  </g>
+  <text x="157.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">Konveks: yay kirişin altında</text>
+  <polygon points="80.7,153.6 233.3,66.5 233.3,66.5 229.5,71.6 225.6,76.6 221.8,81.4 218.0,86.0 214.2,90.5 210.4,94.8 206.6,99.0 202.8,103.1 199.0,107.0 195.1,110.7 191.3,114.3 187.5,117.8 183.7,121.1 179.9,124.2 176.1,127.2 172.3,130.1 168.4,132.8 164.6,135.3 160.8,137.7 157.0,140.0 153.2,142.1 149.4,144.0 145.6,145.8 141.7,147.5 137.9,149.0 134.1,150.3 130.3,151.5 126.5,152.6 122.7,153.5 118.9,154.2 115.0,154.9 111.2,155.3 107.4,155.6 103.6,155.8 99.8,155.8 96.0,155.7 92.2,155.4 88.4,154.9 84.5,154.3 80.7,153.6" fill="var(--color-theory)" fill-opacity="0.1" stroke="none" stroke-width="1.2"/>
+  <path d="M80.7,153.6 L233.3,66.5" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M63.8,148.5 L64.7,148.9 L65.7,149.2 L66.6,149.6 L67.6,149.9 L68.5,150.2 L69.5,150.5 L70.4,150.9 L71.3,151.2 L72.3,151.4 L73.2,151.7 L74.2,152.0 L75.1,152.2 L76.1,152.5 L77.0,152.7 L78.0,153.0 L78.9,153.2 L79.9,153.4 L80.8,153.6 L81.8,153.8 L82.7,154.0 L83.6,154.2 L84.6,154.3 L85.5,154.5 L86.5,154.7 L87.4,154.8 L88.4,154.9 L89.3,155.1 L90.3,155.2 L91.2,155.3 L92.2,155.4 L93.1,155.4 L94.1,155.5 L95.0,155.6 L96.0,155.6 L96.9,155.7 L97.8,155.7 L98.8,155.8 L99.7,155.8 L100.7,155.8 L101.6,155.8 L102.6,155.8 L103.5,155.8 L104.5,155.8 L105.4,155.7 L106.4,155.7 L107.3,155.6 L108.3,155.6 L109.2,155.5 L110.1,155.4 L111.1,155.3 L112.0,155.2 L113.0,155.1 L113.9,155.0 L114.9,154.9 L115.8,154.7 L116.8,154.6 L117.7,154.4 L118.7,154.3 L119.6,154.1 L120.6,153.9 L121.5,153.7 L122.5,153.5 L123.4,153.3 L124.3,153.1 L125.3,152.9 L126.2,152.6 L127.2,152.4 L128.1,152.1 L129.1,151.9 L130.0,151.6 L131.0,151.3 L131.9,151.0 L132.9,150.7 L133.8,150.4 L134.8,150.1 L135.7,149.8 L136.6,149.4 L137.6,149.1 L138.5,148.7 L139.5,148.4 L140.4,148.0 L141.4,147.6 L142.3,147.2 L143.3,146.8 L144.2,146.4 L145.2,146.0 L146.1,145.6 L147.1,145.1 L148.0,144.7 L148.9,144.2 L149.9,143.7 L150.8,143.3 L151.8,142.8 L152.7,142.3 L153.7,141.8 L154.6,141.3 L155.6,140.8 L156.5,140.2 L157.5,139.7 L158.4,139.1 L159.4,138.6 L160.3,138.0 L161.3,137.4 L162.2,136.8 L163.1,136.3 L164.1,135.6 L165.0,135.0 L166.0,134.4 L166.9,133.8 L167.9,133.1 L168.8,132.5 L169.8,131.8 L170.7,131.2 L171.7,130.5 L172.6,129.8 L173.6,129.1 L174.5,128.4 L175.4,127.7 L176.4,127.0 L177.3,126.2 L178.3,125.5 L179.2,124.7 L180.2,124.0 L181.1,123.2 L182.1,122.4 L183.0,121.6 L184.0,120.8 L184.9,120.0 L185.9,119.2 L186.8,118.4 L187.8,117.5 L188.7,116.7 L189.6,115.9 L190.6,115.0 L191.5,114.1 L192.5,113.2 L193.4,112.3 L194.4,111.4 L195.3,110.5 L196.3,109.6 L197.2,108.7 L198.2,107.8 L199.1,106.8 L200.1,105.9 L201.0,104.9 L201.9,103.9 L202.9,102.9 L203.8,102.0 L204.8,101.0 L205.7,99.9 L206.7,98.9 L207.6,97.9 L208.6,96.9 L209.5,95.8 L210.5,94.8 L211.4,93.7 L212.4,92.6 L213.3,91.5 L214.2,90.5 L215.2,89.3 L216.1,88.2 L217.1,87.1 L218.0,86.0 L219.0,84.9 L219.9,83.7 L220.9,82.5 L221.8,81.4 L222.8,80.2 L223.7,79.0 L224.7,77.8 L225.6,76.6 L226.6,75.4 L227.5,74.2 L228.4,73.0 L229.4,71.7 L230.3,70.5 L231.3,69.2 L232.2,68.0 L233.2,66.7 L234.1,65.4 L235.1,64.1 L236.0,62.8 L237.0,61.5 L237.9,60.2 L238.9,58.8 L239.8,57.5 L240.7,56.1 L241.7,54.8 L242.6,53.4 L243.6,52.0 L244.5,50.7 L245.5,49.3 L246.4,47.9 L247.4,46.4 L248.3,45.0 L249.3,43.6 L250.2,42.1 L251.2,40.7 L252.1,39.2 L253.1,37.8" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M138.7,148.7 L138.7,120.5" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="80.7" cy="153.6" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="233.3" cy="66.5" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="138.7" cy="120.5" r="3.8" fill="var(--color-practice)"/>
+  <circle cx="138.7" cy="148.7" r="3.8" fill="var(--color-theory)"/>
+  <path d="M80.7,224.0 L80.7,153.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M233.3,224.0 L233.3,66.5" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M138.7,224.0 L138.7,148.7" fill="none" stroke="var(--color-base)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="80.7" y="239.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" font-weight="600" font-style="italic">x<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="233.3" y="239.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" font-weight="600" font-style="italic">x<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="138.7" y="239.0" fill="var(--color-base)" font-size="9.5" text-anchor="middle" font-style="italic">&#945;x<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan>+(1&#8722;&#945;)x<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="150.7" y="107.5" fill="var(--color-practice)" font-size="9.5" text-anchor="start" font-style="italic">&#945;f(x<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan>)+(1&#8722;&#945;)f(x<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan>)</text>
+  <text x="138.7" y="170.7" fill="var(--color-theory)" font-size="9.5" text-anchor="middle" font-style="italic">f(&#945;x<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan>+(1&#8722;&#945;)x<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan>)</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="318.0" y1="224.0" x2="552.0" y2="224.0"/>
+  <line x1="327.6" y1="228.0" x2="327.6" y2="26.0"/>
+  <polygon points="552.0,224.0 544.0,220.5 544.0,227.5" stroke="none"/>
+  <polygon points="327.6,26.0 324.1,34.0 331.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="550.0" y="239.0" text-anchor="end">x</text>
+  <text x="334.6" y="35.0">y</text>
+  </g>
+  <text x="435.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">Teğetin üstünde kalır</text>
+  <path d="M333.3,154.1 L440.6,158.2" fill="none" stroke="var(--color-base)" stroke-width="1.5" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="375.7" cy="155.7" r="3.6" fill="var(--color-base)"/>
+  <path d="M338.9,169.1 L468.9,136.4" fill="none" stroke="var(--color-practice)" stroke-width="1.5" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="403.9" cy="152.7" r="3.6" fill="var(--color-practice)"/>
+  <path d="M429.4,164.7 L536.7,38.0" fill="none" stroke="var(--color-base)" stroke-width="1.5" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="494.3" cy="88.0" r="3.6" fill="var(--color-base)"/>
+  <path d="M341.8,148.5 L342.7,148.9 L343.7,149.2 L344.6,149.6 L345.6,149.9 L346.5,150.2 L347.5,150.5 L348.4,150.9 L349.3,151.2 L350.3,151.4 L351.2,151.7 L352.2,152.0 L353.1,152.2 L354.1,152.5 L355.0,152.7 L356.0,153.0 L356.9,153.2 L357.9,153.4 L358.8,153.6 L359.8,153.8 L360.7,154.0 L361.6,154.2 L362.6,154.3 L363.5,154.5 L364.5,154.7 L365.4,154.8 L366.4,154.9 L367.3,155.1 L368.3,155.2 L369.2,155.3 L370.2,155.4 L371.1,155.4 L372.1,155.5 L373.0,155.6 L374.0,155.6 L374.9,155.7 L375.8,155.7 L376.8,155.8 L377.7,155.8 L378.7,155.8 L379.6,155.8 L380.6,155.8 L381.5,155.8 L382.5,155.8 L383.4,155.7 L384.4,155.7 L385.3,155.6 L386.3,155.6 L387.2,155.5 L388.1,155.4 L389.1,155.3 L390.0,155.2 L391.0,155.1 L391.9,155.0 L392.9,154.9 L393.8,154.7 L394.8,154.6 L395.7,154.4 L396.7,154.3 L397.6,154.1 L398.6,153.9 L399.5,153.7 L400.5,153.5 L401.4,153.3 L402.3,153.1 L403.3,152.9 L404.2,152.6 L405.2,152.4 L406.1,152.1 L407.1,151.9 L408.0,151.6 L409.0,151.3 L409.9,151.0 L410.9,150.7 L411.8,150.4 L412.8,150.1 L413.7,149.8 L414.6,149.4 L415.6,149.1 L416.5,148.7 L417.5,148.4 L418.4,148.0 L419.4,147.6 L420.3,147.2 L421.3,146.8 L422.2,146.4 L423.2,146.0 L424.1,145.6 L425.1,145.1 L426.0,144.7 L426.9,144.2 L427.9,143.7 L428.8,143.3 L429.8,142.8 L430.7,142.3 L431.7,141.8 L432.6,141.3 L433.6,140.8 L434.5,140.2 L435.5,139.7 L436.4,139.1 L437.4,138.6 L438.3,138.0 L439.3,137.4 L440.2,136.8 L441.1,136.3 L442.1,135.6 L443.0,135.0 L444.0,134.4 L444.9,133.8 L445.9,133.1 L446.8,132.5 L447.8,131.8 L448.7,131.2 L449.7,130.5 L450.6,129.8 L451.6,129.1 L452.5,128.4 L453.4,127.7 L454.4,127.0 L455.3,126.2 L456.3,125.5 L457.2,124.7 L458.2,124.0 L459.1,123.2 L460.1,122.4 L461.0,121.6 L462.0,120.8 L462.9,120.0 L463.9,119.2 L464.8,118.4 L465.8,117.5 L466.7,116.7 L467.6,115.9 L468.6,115.0 L469.5,114.1 L470.5,113.2 L471.4,112.3 L472.4,111.4 L473.3,110.5 L474.3,109.6 L475.2,108.7 L476.2,107.8 L477.1,106.8 L478.1,105.9 L479.0,104.9 L479.9,103.9 L480.9,102.9 L481.8,102.0 L482.8,101.0 L483.7,99.9 L484.7,98.9 L485.6,97.9 L486.6,96.9 L487.5,95.8 L488.5,94.8 L489.4,93.7 L490.4,92.6 L491.3,91.5 L492.2,90.5 L493.2,89.3 L494.1,88.2 L495.1,87.1 L496.0,86.0 L497.0,84.9 L497.9,83.7 L498.9,82.5 L499.8,81.4 L500.8,80.2 L501.7,79.0 L502.7,77.8 L503.6,76.6 L504.6,75.4 L505.5,74.2 L506.4,73.0 L507.4,71.7 L508.3,70.5 L509.3,69.2 L510.2,68.0 L511.2,66.7 L512.1,65.4 L513.1,64.1 L514.0,62.8 L515.0,61.5 L515.9,60.2 L516.9,58.8 L517.8,57.5 L518.7,56.1 L519.7,54.8 L520.6,53.4 L521.6,52.0 L522.5,50.7 L523.5,49.3 L524.4,47.9 L525.4,46.4 L526.3,45.0 L527.3,43.6 L528.2,42.1 L529.2,40.7 L530.1,39.2 L531.0,37.8" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="403.9" y="182.7" fill="var(--color-practice)" font-size="10" text-anchor="middle" font-style="italic">f(x) &#8805; f(x<tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan>)+f&#8242;(x<tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan>)(x&#8722;x<tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan>)</text>
+  <text x="500.3" y="70.0" fill="var(--color-base)" font-size="10" text-anchor="end" font-style="italic">teğet eğimleri artar</text>
+</svg>
+<figcaption>Solda konveksliğin tanımı: [<em>x</em><sub>1</sub>, <em>x</em><sub>2</sub>] üzerindeki her ara noktada eğrinin değeri, kirişin değerinden küçük ya da ona eşittir. Sağda iki eşdeğer görünüm: konveks bir fonksiyonun grafiği her teğetinin üstünde kalır ve teğet eğimleri, yani <em>f</em>&#8242;, artar.</figcaption>
+</figure>
+```
+
+::: {.ispat}
+$x_1 \ne x_2$ olduğundan kirişin eğimi $m = \dfrac{f(x_1) - f(x_2)}{x_1 - x_2}$ biçiminde tanımlıdır ve $(x_2, f(x_2))$ noktasından geçen doğrunun denklemi $\ell(x) = f(x_2) + m(x - x_2)$'dir. $x = \alpha x_1 + (1-\alpha)x_2$ alalım; yukarıda hesapladığımız gibi $x - x_2 = \alpha(x_1 - x_2)$'dir, öyleyse
+
+$$\ell(x) = f(x_2) + \frac{f(x_1) - f(x_2)}{x_1 - x_2} \cdot \alpha (x_1 - x_2) = f(x_2) + \alpha \big( f(x_1) - f(x_2) \big) = \alpha f(x_1) + (1-\alpha) f(x_2).$$
+
+$\alpha$ parametresi $[0,1]$'i taradıkça $x$ de $x_1$ ile $x_2$ arasını taradığından, konvekslik eşitsizliği tam olarak "$x_1$ ile $x_2$ arasındaki her $x$ için $f(x) \le \ell(x)$" demektir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Eşitsizliğin yönü ters çevrildiğinde karşı kavramı elde ederiz.
+
+::: {#def-konkav-fonksiyon name="Konkav Fonksiyon"}
+$I \subseteq \mathbb{R}$ bir aralık ve $f : I \to \mathbb{R}$ olsun. Her $x_1, x_2 \in I$ ve her $\alpha \in [0,1]$ için
+
+$$f\big( \alpha x_1 + (1-\alpha) x_2 \big) \;\ge\; \alpha f(x_1) + (1-\alpha) f(x_2)$$
+
+oluyorsa $f$'ye $I$ üzerinde **konkav** (concave) denir. Geometrik olarak: grafik her kirişin üstünde kalır.
+:::
+
+İki kavram arasında gerçek bir fark yoktur; biri ötekinin işaret değiştirmiş hâlidir. Konkavlık eşitsizliğinin iki yanını $-1$ ile çarpmak $-f$ için konvekslik eşitsizliğini verir, ters yön de aynı biçimde yürür:
+
+$$f \ \text{konkav} \iff -f \ \text{konveks}.$$
+
+Bu gözlem sayesinde bundan sonraki bütün teoremleri yalnızca konveks fonksiyonlar için ispatlayacağız; konkav hâl her seferinde $g = -f$ konulduğunda kendiliğinden çıkar.
+
+Tanımda eşitliğe izin verilmiştir; örneğin bir doğru hem konveks hem konkavdır (kiriş grafiğin kendisidir). Eşitliği yasaklayarak daha keskin bir kavram elde ederiz.
+
+::: {#def-kesin-konveks name="Kesin Konvekslik ve Kesin Konkavlık"}
+$I$ bir aralık ve $f : I \to \mathbb{R}$ olsun.
+
+1. Birbirinden farklı her $x_1, x_2 \in I$ ve her $\alpha \in (0,1)$ için
+   $$f\big( \alpha x_1 + (1-\alpha) x_2 \big) \;<\; \alpha f(x_1) + (1-\alpha) f(x_2)$$
+   oluyorsa $f$'ye **kesin konveks** (strictly convex) denir.
+2. Aynı koşulda eşitsizlik $>$ yönünde sağlanıyorsa $f$'ye **kesin konkav** (strictly concave) denir.
+
+Kesin konveks bir fonksiyonun grafiği, uç noktaları dışında kirişe hiçbir yerde değmez.
+:::
+
+$\alpha = 0$, $\alpha = 1$ ve $x_1 = x_2$ hâllerinin dışarıda bırakılması zorunludur: bunlarda iki taraf zaten birbirine eşittir, dolayısıyla kesin eşitsizlik istenemez.
+
+::: {.callout-note title="Konvekslik türev gerektirmez 📌"}
+@def-konveks-fonksiyon'da ne süreklilik ne de türevlenebilirlik geçmektedir; koşul yalnızca fonksiyonun değerleri arasındaki bir eşitsizliktir. Nitekim $f(x) = |x|$ fonksiyonu $\mathbb{R}$ üzerinde konvekstir (aşağıda @exm-konveks-ornekleri'nde üçgen eşitsizliğiyle göreceğiz) ama $0$'da türevlenebilir değildir. Bu yüzden aşağıdaki teoremler iki gruba ayrılır: türev kullanmayanlar (yerel minimum teoremi, Jensen eşitsizliği, eğim monotonluğu, süreklilik) ve türev kullananlar (teğet teoremi, birinci ve ikinci türev ölçütleri).
+:::
+
+## Jensen Eşitsizliği
+
+@def-konveks-fonksiyon **iki** noktanın ağırlıklı ortalaması hakkındadır. Peki üç, dört, $n$ nokta alırsak ne olur? Yanıt, konveksliğin belki de en çok kullanılan biçimidir ve Danimarkalı matematikçi Johan Jensen'in adını taşır. Eşitsizlik, "ortalamanın fonksiyonu, fonksiyonun ortalamasından küçüktür" biçiminde okunur.
+
+:::: {#prp-jensen-esitsizligi name="Jensen Eşitsizliği"}
+$I \subseteq \mathbb{R}$ bir aralık ve $f : I \to \mathbb{R}$ olsun. $f$'nin konveks olması için gerek ve yeter koşul şudur: her $n \ge 2$ tam sayısı, $\sum_{i=1}^{n} \lambda_i = 1$ olacak biçimdeki her $\lambda_1, \dots, \lambda_n \ge 0$ sayıları ve her $x_1, \dots, x_n \in I$ için
+
+$$f\left( \sum_{i=1}^{n} \lambda_i x_i \right) \;\le\; \sum_{i=1}^{n} \lambda_i f(x_i).$$
+
+::: {.ispat}
+**Önce toplamın $I$'de olduğunu görelim.** $m = \min\{x_1,\dots,x_n\}$, $M = \max\{x_1,\dots,x_n\}$ olsun. Her $i$ için $m \le x_i \le M$ ve $\lambda_i \ge 0$ olduğundan $\lambda_i m \le \lambda_i x_i \le \lambda_i M$'dir; bunları toplarsak
+
+$$m = m \sum_{i=1}^{n} \lambda_i \le \sum_{i=1}^{n} \lambda_i x_i \le M \sum_{i=1}^{n} \lambda_i = M$$
+
+buluruz. $m, M \in I$ ve $I$ bir aralık olduğundan (@def-aralik) $\sum \lambda_i x_i \in I$'dir; yani eşitsizliğin sol tarafı anlamlıdır.
+
+**($\Leftarrow$)** Koşul $n = 2$ için yazıldığında $\lambda_1 = \alpha$, $\lambda_2 = 1 - \alpha$ ile @def-konveks-fonksiyon'daki eşitsizliğin ta kendisidir. Demek ki koşul konveksliği gerektirir.
+
+**($\Rightarrow$)** $f$ konveks olsun. İddiayı $n$ üzerinden tümevarımla (@thm-tumevarim-ilkesi) ispatlayacağız.
+
+*Temel adım ($n = 2$).* $\lambda_1 + \lambda_2 = 1$ ve $\lambda_i \ge 0$ ise $\lambda_1 \in [0,1]$ ve $\lambda_2 = 1 - \lambda_1$'dir; iddia doğrudan konvekslik tanımıdır.
+
+*Tümevarım adımı.* İddianın bir $n \ge 2$ için doğru olduğunu varsayalım ve $n+1$ nokta için gösterelim. $\lambda_1, \dots, \lambda_{n+1} \ge 0$, $\sum_{i=1}^{n+1} \lambda_i = 1$ ve $x_1, \dots, x_{n+1} \in I$ verilsin.
+
+**Durum 1: $\lambda_{n+1} = 1$.** Bu durumda $\lambda_1 = \cdots = \lambda_n = 0$'dır (negatif olmayan sayıların toplamı $0$ ise hepsi $0$'dır); iki taraf da $f(x_{n+1})$'e eşittir.
+
+**Durum 2: $\lambda_{n+1} < 1$.** $\mu = 1 - \lambda_{n+1}$ diyelim; $\mu > 0$'dır ve $\mu = \sum_{i=1}^{n}\lambda_i$'dir.
+
+Şimdi $i = 1, \dots, n$ için $\lambda_i' = \dfrac{\lambda_i}{\mu}$ tanımlayalım. Bu sayılar negatif değildir ve $\sum_{i=1}^{n} \lambda_i' = \frac{1}{\mu}\sum_{i=1}^{n}\lambda_i = 1$ olur; yani tümevarım hipotezinin istediği türden ağırlıklardır. Buna göre $y = \sum_{i=1}^{n} \lambda_i' x_i$ noktası, ispatın başında gösterdiğimiz üzere $I$'dedir. Toplamı $y$ ve $x_{n+1}$ cinsinden yazalım:
+
+$$\sum_{i=1}^{n+1} \lambda_i x_i = \sum_{i=1}^{n} \mu \lambda_i' x_i + \lambda_{n+1} x_{n+1} = \mu \, y + \lambda_{n+1} x_{n+1} = \mu \, y + (1 - \mu)\, x_{n+1}.$$
+
+Bu, $y$ ile $x_{n+1}$'in $\alpha = \mu \in (0,1]$ ağırlıklı bir konveks birleşimidir; $f$ konveks olduğundan (iki noktalı tanım)
+
+$$f\left( \sum_{i=1}^{n+1} \lambda_i x_i \right) = f\big( \mu y + (1-\mu) x_{n+1} \big) \le \mu f(y) + \lambda_{n+1} f(x_{n+1}).$$
+
+Tümevarım hipotezi $f(y) \le \sum_{i=1}^{n} \lambda_i' f(x_i)$ verir. $\mu > 0$ olduğundan bunu $\mu$ ile çarpmak yönü bozmaz; yukarıda yerine koyarsak
+
+$$f\left( \sum_{i=1}^{n+1} \lambda_i x_i \right) \le \mu \sum_{i=1}^{n} \lambda_i' f(x_i) + \lambda_{n+1} f(x_{n+1}) = \sum_{i=1}^{n} \mu \frac{\lambda_i}{\mu} f(x_i) + \lambda_{n+1} f(x_{n+1}) = \sum_{i=1}^{n+1} \lambda_i f(x_i)$$
+
+elde ederiz. İddia $n+1$ için de doğrudur; tümevarım ilkesi gereği her $n \ge 2$ için doğrudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Konkav fonksiyonlar için eşitsizlik ters yöndedir: $f$ konkav ise $f\big( \sum \lambda_i x_i \big) \ge \sum \lambda_i f(x_i)$ olur ($-f$'ye Jensen uygulanıp iki yan $-1$ ile çarpılır). En sık kullanılan özel hâl bütün ağırlıkların eşit alınmasıdır: $\lambda_i = \dfrac{1}{n}$ seçilirse
+
+$$f\left( \frac{x_1 + x_2 + \cdots + x_n}{n} \right) \le \frac{f(x_1) + f(x_2) + \cdots + f(x_n)}{n}.$$
+
+Yani konveks bir fonksiyonda **ortalamanın değeri, değerlerin ortalamasını aşmaz.** Bu tek satırdan, aşağıda göreceğimiz gibi, klasik ortalama eşitsizliklerinin çoğu çıkar.
+
+## Konveks Fonksiyonlarda Yerel ve Mutlak Minimum
+
+[Monotonluk ve Ekstremum Testleri](monotonluk-ve-ekstremum-testleri.qmd) bölümünde yerel ekstremumları bulmayı öğrendik; ama bir yerel minimumun mutlak minimum olup olmadığını anlamak için genellikle bütün adayları karşılaştırmak gerekiyordu. Konveks fonksiyonlarda bu karşılaştırmaya hiç gerek yoktur: **yerel olan zaten mutlaktır.**
+
+:::: {#thm-konveks-yerel-mutlak-minimum name="Konveks Fonksiyonda Yerel Minimum Mutlaktır"}
+$I \subseteq \mathbb{R}$ bir aralık ve $f : I \to \mathbb{R}$ konveks olsun. Bir $x_0 \in I$ noktasının $f$'nin **yerel** minimum noktası olması için gerek ve yeter koşul, onun $f$'nin **mutlak** minimum noktası olmasıdır.
+
+::: {.ispat}
+**($\Leftarrow$)** $x_0$ mutlak minimum noktası ise her $x \in I$ için $f(x_0) \le f(x)$'tir; bu, herhangi bir $\varepsilon > 0$ için $V_\varepsilon(x_0) \cap I$ üzerinde de doğru olduğundan @def-yerel-ekstremum gereği $x_0$ yerel minimum noktasıdır. (Mutlak ekstremum her zaman yereldir; bu yön konveksliği kullanmaz.)
+
+**($\Rightarrow$)** $x_0$ bir yerel minimum noktası olsun. @def-yerel-ekstremum gereği öyle bir $\varepsilon > 0$ vardır ki
+
+$$x \in V_\varepsilon(x_0) \cap I \implies f(x_0) \le f(x).$$
+
+Bu koşula, aşağıda geri döneceğimiz için $(\ast)$ diyelim. Şimdi $y \in I$ **keyfî** olsun; amacımız $f(x_0) \le f(y)$ göstermektir. $y = x_0$ ise söyleyecek bir şey yoktur, o hâlde $y \ne x_0$ varsayalım.
+
+Her $n \in \mathbb{N}$ için
+
+$$x_n = \left( 1 - \frac{1}{n} \right) x_0 + \frac{1}{n} y$$
+
+tanımlayalım. $\frac{1}{n} \in (0,1]$ olduğundan $x_n$, $x_0$ ile $y$'nin bir konveks birleşimidir; $I$ bir aralık olduğundan $x_n \in I$'dir. Ayrıca
+
+$$|x_n - x_0| = \left| \frac{1}{n} (y - x_0) \right| = \frac{|y - x_0|}{n}.$$
+
+Arşimet özelliği gereği (@thm-arsimet) $n > \dfrac{|y - x_0|}{\varepsilon}$ olan bir $n \in \mathbb{N}$ vardır; böyle bir $n$ sabitleyelim. O zaman $|x_n - x_0| < \varepsilon$, yani $x_n \in V_\varepsilon(x_0) \cap I$'dir ve $(\ast)$ gereği $f(x_0) \le f(x_n)$'dir. Öte yandan $f$ konveks olduğundan, $\alpha = 1 - \frac{1}{n}$ ile
+
+$$f(x_n) \le \left( 1 - \frac{1}{n} \right) f(x_0) + \frac{1}{n} f(y).$$
+
+İki eşitsizliği birleştirip her iki yandan $\left( 1 - \frac{1}{n} \right) f(x_0)$ çıkaralım:
+
+$$\frac{1}{n} f(x_0) \le \frac{1}{n} f(y).$$
+
+$\frac{1}{n} > 0$ olduğundan $n$ ile çarpmak yönü bozmaz: $f(x_0) \le f(y)$. $y \in I$ keyfî olduğundan $x_0$, $f$'nin mutlak minimum noktasıdır (@def-mutlak-ekstremum).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İspatta $n \to \infty$ limitine gerek olmadığına dikkat edin: yeterince büyük **tek bir** $n$ seçmek yetti, çünkü elde edilen $f(x_0) \le f(y)$ eşitsizliği $n$'den bağımsızdır. Konvekslik, $x_0$'ın minimum olduğu bilgisini ne kadar küçük olursa olsun bir komşuluktan alıp bütün aralığa taşımaktadır.
+
+::: {.callout-warning title="Maksimum için benzer bir sonuç yoktur"}
+Teorem yalnızca **minimum** hakkındadır. Konveks bir fonksiyonun yerel maksimumu mutlak maksimum olmak zorunda değildir: $f(x) = x^2$ fonksiyonu $[-1,2]$ üzerinde konvekstir ve $x = -1$ bir yerel maksimum noktasıdır ($f(-1) = 1$, sağındaki yakın noktalarda $f$ daha küçüktür), ama mutlak maksimum $x = 2$'de alınır: $f(2) = 4$. Doğru olan sonuç şudur: kapalı bir $[a,b]$ aralığında konveks bir fonksiyonun mutlak maksimumu **uçlardan birinde** alınır; nedeni @lem-konveks-kiris-degeri'dir — grafik uçları birleştiren kirişin altındadır ve kirişin en büyük değeri uçlardan birindedir.
+
+Tanım kümesinin bir **aralık** olması da şarttır: $A = [-2,-1] \cup [1,2]$ gibi bağlantısız bir kümede ispattaki $x_n$ noktaları $A$'nın dışına düşer ve teoremin güvencesi ortadan kalkar. Somut bir karşı örnek için $A$ üzerinde
+
+$$f(x) = \begin{cases} 0, & x \in [-2,-1] \\ -1, & x \in [1,2] \end{cases}$$
+
+alalım. $A$'nın iki parçasından birer nokta seçildiğinde aradaki konveks birleşimler $A$'ya düşmediğinden konvekslik eşitsizliği yalnızca aynı parçadaki noktalar için sorulur; orada da $f$ sabit olduğundan eşitlikle sağlanır. Buna karşın $[-2,-1]$'in her noktası bir yerel minimum noktasıdır ($f$ orada sabittir) ama mutlak minimum $-1$ değeriyle $[1,2]$ üzerinde alınır.
+:::
+
+::: {.callout-tip title="Kesin konvekslikte minimum tektir 💡"}
+$f$ kesin konveks ve $x_1 \ne x_2$ iki mutlak minimum noktası olsun; ortak değere $m$ diyelim. $\alpha = \frac{1}{2}$ ile kesin konvekslik
+
+$$f\left( \frac{x_1 + x_2}{2} \right) < \frac{1}{2} f(x_1) + \frac{1}{2} f(x_2) = m$$
+
+verir; ama $\frac{x_1+x_2}{2} \in I$ olduğundan bu, $m$'nin minimum olmasıyla çelişir. Öyleyse **kesin konveks bir fonksiyonun en çok bir minimum noktası vardır.** (Varlığı ayrı bir sorudur: $e^x$ kesin konvekstir ama $\mathbb{R}$'de minimumu yoktur.)
+:::
+
+## Grafik Teğetin Üstündedir
+
+Konveks bir fonksiyonun grafiği kirişlerin altında kalır. Türevlenebilir olduğunda ise ikinci bir "sıkışma" ortaya çıkar: grafik, her noktasındaki **teğetin üstünde** kalır. Bu, konveksliğin en kullanışlı analitik biçimidir; eşitsizlik ispatlarında sürekli karşımıza çıkacaktır.
+
+:::: {#thm-konveks-teget name="Konveks Fonksiyonun Grafiği Teğetin Üstündedir"}
+$I \subseteq \mathbb{R}$ bir aralık, $f : I \to \mathbb{R}$ konveks ve $x_0 \in I$ noktasında türevlenebilir olsun. O hâlde her $x \in I$ için
+
+$$f(x) \;\ge\; f(x_0) + f'(x_0)(x - x_0),$$
+
+yani grafik, $x_0$'daki teğet doğrusunun (@def-teget-dogrusu) üstünde ya da üzerinde kalır.
+
+::: {.ispat}
+$x = x_0$ ise iki taraf da $f(x_0)$'a eşittir; eşitsizlik sağlanır. Bundan sonra $x \in I$, $x \ne x_0$ olsun.
+
+**Adım 1: Konveksliğin fark oranına çevrilmesi.** $\alpha \in (0,1]$ alalım ve $x_\alpha = \alpha x + (1-\alpha)x_0 = x_0 + \alpha(x - x_0)$ diyelim; $x_\alpha$, $x$ ile $x_0$'ın konveks birleşimi olduğundan $x_\alpha \in I$'dir. Konvekslik $f(x_\alpha) \le \alpha f(x) + (1-\alpha) f(x_0)$ verir; her iki yandan $f(x_0)$ çıkarırsak
+
+$$f(x_\alpha) - f(x_0) \le \alpha f(x) + (1-\alpha) f(x_0) - f(x_0) = \alpha \big( f(x) - f(x_0) \big).$$
+
+$\alpha > 0$ olduğundan $\alpha$'ya bölmek yönü bozmaz:
+
+$$\frac{f\big( x_0 + \alpha(x - x_0) \big) - f(x_0)}{\alpha} \;\le\; f(x) - f(x_0), \qquad \alpha \in (0,1].$$
+
+Bu eşitsizliğe $(\ast\ast)$ diyelim. Dikkat: sağ taraf $\alpha$'dan bağımsızdır. Yani soldaki ifade, $\alpha$ ne olursa olsun sabit bir sayıyla sınırlıdır.
+
+**Adım 2: $\alpha \to 0^+$ limiti.** Soldaki ifadenin limitini dizisel ölçütle (@thm-dizisel-olcut) hesaplayalım. $(\alpha_n)$, $(0,1]$ içinde ilerleyen ve $\alpha_n \to 0$ olan **herhangi** bir dizi olsun; $h_n = \alpha_n (x - x_0)$ diyelim. $x \ne x_0$ olduğundan $h_n \ne 0$'dır, $|h_n| = \alpha_n|x-x_0| \to 0$'dır (@thm-limit-aritmetigi) ve $x_0 + h_n = x_{\alpha_n} \in I$'dir. Soldaki ifadeyi fark oranı (@def-fark-orani) biçiminde yazalım:
+
+$$\frac{f(x_0 + h_n) - f(x_0)}{\alpha_n} = \frac{f(x_0 + h_n) - f(x_0)}{h_n} \cdot \frac{h_n}{\alpha_n} = (x - x_0) \cdot \frac{f(x_0 + h_n) - f(x_0)}{h_n}.$$
+
+$f$, $x_0$'da türevlenebilir olduğundan (@def-turev-noktada) ve $h_n \to 0$, $h_n \ne 0$ olduğundan sağdaki fark oranı $f'(x_0)$'a gider; çarpım kuralıyla (@thm-limit-aritmetigi) bütün ifade $f'(x_0)(x - x_0)$'a yakınsar. $(\alpha_n)$ dizisi keyfî olduğundan dizisel ölçüt
+
+$$\lim_{\alpha \to 0^+} \frac{f\big( x_0 + \alpha(x-x_0) \big) - f(x_0)}{\alpha} = f'(x_0)(x - x_0)$$
+
+verir.
+
+**Adım 3: Eşitsizliğin limite taşınması.** $(\ast\ast)$'da sol taraf her $\alpha \in (0,1]$ için sabit $f(x) - f(x_0)$ sayısını aşmıyor; limitte sıralama korunduğundan (@thm-limit-siralama-fonksiyon) $f'(x_0)(x - x_0) \le f(x) - f(x_0)$, yani $f(x) \ge f(x_0) + f'(x_0)(x - x_0)$ olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Konkav fonksiyonlar için eşitsizlik ters döner: $f$ konkav ve $x_0$'da türevlenebilirse her $x \in I$ için $f(x) \le f(x_0) + f'(x_0)(x - x_0)$, yani grafik teğetin **altında** kalır. ($-f$ konvekstir, teoremi ona uygulayıp iki yanı $-1$ ile çarpın.)
+
+::: {.callout-tip title="İki hazır sonuç"}
+**1\. Kesin hâl.** $f$ kesin konveks, $x_0$'da türevlenebilir ve $x \ne x_0$ ise eşitsizlik kesindir. Gerçekten, $z = \dfrac{x + x_0}{2}$ için teorem $f(z) \ge f(x_0) + \tfrac{1}{2} f'(x_0)(x - x_0)$, kesin konvekslik ise $f(z) < \tfrac{1}{2} f(x) + \tfrac{1}{2} f(x_0)$ verir; ikisini birleştirip $\tfrac{1}{2}$ ile sadeleştirmek $f(x) > f(x_0) + f'(x_0)(x-x_0)$ verir.
+
+**2\. Kritik nokta doğrudan mutlak minimumdur.** $f$ konveks, $x_0$'da türevlenebilir ve $f'(x_0) = 0$ ise teorem her $x \in I$ için $f(x) \ge f(x_0)$ verir: $x_0$ **mutlak** minimum noktasıdır. Konveks fonksiyonlarda ekstremum testine gerek yoktur; kritik noktayı bulmak (@def-kritik-nokta) yeter — yani Fermat teoreminin (@thm-fermat) ters yönü burada geçerlidir.
+:::
+
+## Kiriş Eğimlerinin Monotonluğu
+
+Konveksliğin bütün türev ölçütleri tek bir geometrik gözlemden çıkar: **konveks bir fonksiyonda kiriş eğimleri, sağa gidildikçe artar.** Bunu üç noktalı bir eşitsizlik olarak yazacağız.
+
+:::: {#prp-egim-monotonlugu name="Eğimlerin Monotonluğu"}
+$I$ bir aralık ve $f : I \to \mathbb{R}$ konveks olsun.
+
+1. $a, x, b \in I$ ve $a < x < b$ ise
+   $$\frac{f(x) - f(a)}{x - a} \;\le\; \frac{f(b) - f(a)}{b - a} \;\le\; \frac{f(b) - f(x)}{b - x}.$$
+2. Sabit bir $c \in I$ için $I \setminus \{c\}$ üzerinde tanımlı
+   $$\varphi_c(x) = \frac{f(x) - f(c)}{x - c}$$
+   fonksiyonu artandır (@def-monoton-fonksiyon).
+
+::: {.ispat}
+**(1)** $a < x < b$ olduğundan $\alpha = \dfrac{x - a}{b - a}$ sayısı tanımlıdır ve $0 < \alpha < 1$'dir (pay ve payda pozitif, pay paydadan küçük). Bu $\alpha$ ile
+
+$$(1 - \alpha) a + \alpha b = a + \alpha (b - a) = a + (x - a) = x, \qquad 1 - \alpha = \frac{(b-a) - (x-a)}{b-a} = \frac{b - x}{b - a}$$
+
+olur; yani $x$, $a$ ile $b$'nin $\alpha$ ağırlıklı konveks birleşimidir ve sağdaki eşitliği ispat boyunca kullanacağız. Konvekslik gereği
+
+$$f(x) \le (1-\alpha) f(a) + \alpha f(b).$$
+
+Bu temel eşitsizliğe $(\dagger)$ diyelim; üç eşitsizliğin üçü de ondan çıkacak.
+
+*Birinci eşitsizlik.* $(\dagger)$'nın iki yanından $f(a)$ çıkaralım:
+
+$$f(x) - f(a) \le (1-\alpha) f(a) + \alpha f(b) - f(a) = \alpha \big( f(b) - f(a) \big) = \frac{x-a}{b-a} \big( f(b) - f(a) \big).$$
+
+$x - a > 0$ olduğundan iki yanı $x - a$'ya bölmek yönü bozmaz:
+
+$$\frac{f(x) - f(a)}{x - a} \le \frac{f(b) - f(a)}{b - a}.$$
+
+*İkinci eşitsizlik.* Bu kez $(\dagger)$'nın iki yanını $-1$ ile çarpıp $f(b)$ ekleyelim:
+
+$$f(b) - f(x) \ge f(b) - (1-\alpha) f(a) - \alpha f(b) = (1 - \alpha) \big( f(b) - f(a) \big) = \frac{b - x}{b - a} \big( f(b) - f(a) \big).$$
+
+$b - x > 0$ olduğundan iki yanı $b - x$'e bölelim:
+
+$$\frac{f(b) - f(x)}{b - x} \ge \frac{f(b) - f(a)}{b - a}.$$
+
+*Üçüncü eşitsizlik (uçlar).* Bu iki eşitsizliği yan yana koymak istenen zinciri verir; özel olarak uçlar için $\dfrac{f(x)-f(a)}{x-a} \le \dfrac{f(b)-f(x)}{b-x}$'tir. Böylece üç eşitsizliğin üçü de gösterilmiş oldu.
+
+**(2)** $x, y \in I \setminus \{c\}$ ve $x < y$ olsun; $\varphi_c(x) \le \varphi_c(y)$ göstereceğiz. Üç durum vardır.
+
+Hesaplarda, bir kesirde pay ve paydayı $-1$ ile çarpmanın değeri değiştirmediğini, yani $\dfrac{f(c) - f(t)}{c - t} = \dfrac{f(t) - f(c)}{t - c} = \varphi_c(t)$ olduğunu kullanacağız.
+
+*Durum A: $c < x < y$.* (1)'i $a = c$, orta nokta $x$, $b = y$ ile uygulayalım; birinci eşitsizlik doğrudan
+
+$$\varphi_c(x) = \frac{f(x) - f(c)}{x - c} \le \frac{f(y) - f(c)}{y - c} = \varphi_c(y)$$
+
+verir.
+
+*Durum B: $x < c < y$.* (1)'i $a = x$, orta nokta $c$, $b = y$ ile uygulayalım. Zincirin uçlarını karşılaştıran eşitsizlik
+
+$$\varphi_c(x) = \frac{f(c) - f(x)}{c - x} \le \frac{f(y) - f(c)}{y - c} = \varphi_c(y)$$
+
+verir.
+
+*Durum C: $x < y < c$.* (1)'i $a = x$, orta nokta $y$, $b = c$ ile uygulayalım. Bu kez orta ve sağ terimleri karşılaştıran ikinci eşitsizlik
+
+$$\varphi_c(x) = \frac{f(c) - f(x)}{c - x} \le \frac{f(c) - f(y)}{c - y} = \varphi_c(y)$$
+
+verir. Üç durumda da $\varphi_c(x) \le \varphi_c(y)$ bulundu; $\varphi_c$ artandır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Önermenin (2) maddesi bundan sonraki üç sonucun ortak anahtarıdır: konvekslik, "bir noktadan çizilen kesenlerin eğimi noktadan uzaklaştıkça artar" biçiminde okunabilir. Türev bu kesen eğimlerinin limiti olduğuna göre (@def-fark-orani), türevin de artan olmasını beklemek doğaldır.
+
+## Konvekslik ve Birinci Türev
+
+:::: {#thm-konveks-turev-artan name="Konvekslik ile Türevin Artanlığı Denktir"}
+$I \subseteq \mathbb{R}$ bir aralık ve $f : I \to \mathbb{R}$ türevlenebilir olsun.
+
+1. $f$ konvekstir $\iff$ $f'$ $I$ üzerinde artandır.
+2. $f$ konkavdır $\iff$ $f'$ $I$ üzerinde azalandır.
+
+Ayrıca $f'$ kesin artan ise $f$ kesin konvekstir.
+
+::: {.ispat}
+**(1) ($\Rightarrow$)** $f$ konveks olsun. $a, b \in I$, $a < b$ alalım; $f'(a) \le f'(b)$ göstereceğiz. $x \in (a,b)$ için @prp-egim-monotonlugu (1) gereği
+
+$$\frac{f(x) - f(a)}{x - a} \le \frac{f(b) - f(a)}{b - a} \le \frac{f(b) - f(x)}{b - x}.$$
+
+Ortadaki sayı $x$'ten bağımsız bir sabittir. Soldaki ifadede $x \to a^+$ limitini alalım: bu, $f$'nin $a$'daki fark oranıdır ve limiti $f'(a)$'dır. Sağdaki ifade ise $\dfrac{f(b) - f(x)}{b - x} = \dfrac{f(x) - f(b)}{x - b}$ olduğundan $f$'nin $b$'deki fark oranıdır ve $x \to b^-$ iken limiti $f'(b)$'dir. Limitte sıralama korunduğundan (@thm-limit-siralama-fonksiyon)
+
+$$f'(a) \le \frac{f(b) - f(a)}{b - a} \le f'(b),$$
+
+yani $f'(a) \le f'(b)$'dir. $a < b$ keyfî olduğundan $f'$ artandır.
+
+**(1) ($\Leftarrow$)** Şimdi $f'$'nün $I$ üzerinde artan olduğunu varsayalım ve $f$'nin konveks olduğunu gösterelim. $x_1, x_2 \in I$ ve $\alpha \in [0,1]$ verilsin. Yozlaşmış hâllerde ($x_1 = x_2$, $\alpha = 0$, $\alpha = 1$) iki taraf birbirine eşittir; ayrıca eşitsizlik $x_1$ ile $x_2$'nin ($\alpha \leftrightarrow 1-\alpha$ değişimiyle) yer değiştirmesi altında korunduğundan $x_1 < x_2$ ve $\alpha \in (0,1)$ varsayabiliriz. $x_\alpha = \alpha x_1 + (1-\alpha) x_2$ diyelim; bölümün başında hesapladığımız gibi
+
+$$x_\alpha - x_1 = (1-\alpha)(x_2 - x_1) > 0, \qquad x_2 - x_\alpha = \alpha (x_2 - x_1) > 0,$$
+
+yani $x_1 < x_\alpha < x_2$'dir; ayrıca $x_\alpha \in I$'dir.
+
+$f$ türevlenebilir olduğundan $[x_1, x_\alpha]$ ve $[x_\alpha, x_2]$ kapalı aralıklarında sürekli (@thm-turev-sureklilik), iç kısımlarında türevlenebilirdir. Ortalama değer teoremini (@thm-ortalama-deger) her iki aralığa ayrı ayrı uygulayalım:
+
+$$f(x_\alpha) - f(x_1) = f'(c_1)(x_\alpha - x_1) = f'(c_1)(1-\alpha)(x_2 - x_1) \qquad \text{bir } c_1 \in (x_1, x_\alpha) \text{ için},$$
+
+$$f(x_2) - f(x_\alpha) = f'(c_2)(x_2 - x_\alpha) = f'(c_2)\, \alpha \, (x_2 - x_1) \qquad \text{bir } c_2 \in (x_\alpha, x_2) \text{ için}.$$
+
+$c_1 < x_\alpha < c_2$ olduğundan $c_1 < c_2$'dir; $f'$ artan olduğundan
+
+$$f'(c_1) \le f'(c_2).$$
+
+Bu eşitsizliğe $(\ddagger)$ diyelim.
+
+Şimdi ispatlamak istediğimiz eşitsizliğin iki yanının farkını hesaplayalım; amaç
+
+$$D = \alpha f(x_1) + (1-\alpha) f(x_2) - f(x_\alpha) \ge 0$$
+
+olduğunu göstermektir. $\alpha + (1-\alpha) = 1$ olduğundan $f(x_\alpha) = \alpha f(x_\alpha) + (1-\alpha) f(x_\alpha)$ yazabiliriz; farkı düzenlemenin anahtarı budur:
+
+$$D = \alpha \big( f(x_1) - f(x_\alpha) \big) + (1-\alpha) \big( f(x_2) - f(x_\alpha) \big).$$
+
+Yukarıdaki iki ortalama değer eşitliğini, yani $f(x_1) - f(x_\alpha) = -f'(c_1)(1-\alpha)(x_2 - x_1)$ ve $f(x_2) - f(x_\alpha) = f'(c_2)\,\alpha\,(x_2 - x_1)$ eşitliklerini yerine koyalım:
+
+$$D = -\alpha (1-\alpha)(x_2 - x_1) f'(c_1) + (1-\alpha)\alpha (x_2 - x_1) f'(c_2) = \alpha(1-\alpha)(x_2 - x_1)\big[ f'(c_2) - f'(c_1) \big].$$
+
+Çarpanları teker teker inceleyelim: $\alpha > 0$, $1 - \alpha > 0$, $x_2 - x_1 > 0$ ve $(\ddagger)$ gereği $f'(c_2) - f'(c_1) \ge 0$. Negatif olmayan sayıların çarpımı negatif olmadığından $D \ge 0$, yani
+
+$$f\big( \alpha x_1 + (1-\alpha) x_2 \big) \le \alpha f(x_1) + (1-\alpha) f(x_2).$$
+
+$x_1, x_2, \alpha$ keyfî olduğundan $f$ konvekstir.
+
+**Kesin hâl.** $f'$ kesin artan ise $(\ddagger)$'da eşitlik olamaz: $c_1 < c_2$ olduğundan $f'(c_1) < f'(c_2)$'dir. O hâlde yukarıdaki çarpımda bütün çarpanlar kesin pozitiftir ve $D > 0$ olur; yani $x_1 \ne x_2$ ve $\alpha \in (0,1)$ için eşitsizlik kesindir. Demek ki $f$ kesin konvekstir.
+
+**(2)** $g = -f$ diyelim. $f$ konkavdır ancak ve ancak $g$ konvekstir; (1) gereği bu da ancak ve ancak $g' = -f'$ artandır. Son olarak $-f'$ artandır ancak ve ancak $f'$ azalandır: $x < y$ için $-f'(x) \le -f'(y) \iff f'(y) \le f'(x)$. Zinciri birleştirirsek $f$ konkavdır $\iff$ $f'$ azalandır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="İspatın verdiği fazladan bilgi"}
+($\Rightarrow$) yönünde yalnızca $f'(a) \le f'(b)$ değil, daha ayrıntılı olarak $f'(a) \le \dfrac{f(b) - f(a)}{b - a} \le f'(b)$ zincirini elde ettik: **uçlardaki teğet eğimleri kirişin eğimini kuşatır.** Soldaki eşitsizlik doğrudan @thm-konveks-teget'ten de çıkar; $x = b$, $x_0 = a$ alıp $b - a > 0$ ile bölmek yeter.
+:::
+
+## İkinci Türev Ölçütü
+
+Konveksliği doğrudan tanımdan denetlemek zahmetlidir. Bir önceki teorem konveksliği $f'$'nün monotonluğuna indirgemişti; $f'$'nün monotonluğunu da monotonluk testiyle (@cor-monotonluk-testi) $f''$'nün işaretine indirgeyebiliriz. Böylece çok daha kullanışlı bir ölçüt elde ederiz.
+
+:::: {#thm-konveks-ikinci-turev name="İkinci Türev Ölçütü"}
+$I \subseteq \mathbb{R}$ bir açık aralık ve $f : I \to \mathbb{R}$ iki kez türevlenebilir olsun (@def-yuksek-mertebeden-turev).
+
+1. $f$ konvekstir $\iff$ her $x \in I$ için $f''(x) \ge 0$.
+2. $f$ konkavdır $\iff$ her $x \in I$ için $f''(x) \le 0$.
+
+Ayrıca her $x \in I$ için $f''(x) > 0$ ise $f$ kesin konvekstir; her $x \in I$ için $f''(x) < 0$ ise $f$ kesin konkavdır.
+
+::: {.ispat}
+**(1) ($\Rightarrow$)** $f$ konveks olsun. @thm-konveks-turev-artan gereği $f'$, $I$ üzerinde artandır. Bir $x \in I$ sabitleyelim. İkinci türevin tanımı gereği
+
+$$f''(x) = \lim_{h \to 0} \frac{f'(x+h) - f'(x)}{h}$$
+
+limiti vardır. $I$ açık olduğundan yeterince küçük $|h|$ için $x + h \in I$'dir. $h > 0$ ise $f'$'nün artanlığı $f'(x+h) - f'(x) \ge 0$ verir ve payda pozitiftir; $h < 0$ ise $f'(x+h) - f'(x) \le 0$'dır ve payda negatiftir. Her iki hâlde de oran negatif değildir: $x$'in delinmiş bir komşuluğundaki her $h$ için
+
+$$\frac{f'(x+h) - f'(x)}{h} \ge 0.$$
+
+Limitte sıralama korunduğundan (@thm-limit-siralama-fonksiyon) $f''(x) \ge 0$'dır. $x$ keyfî olduğundan iddia bütün $I$ üzerinde doğrudur.
+
+**(1) ($\Leftarrow$)** Her $x \in I$ için $f''(x) \ge 0$ olsun. @thm-konveks-turev-artan gereği $f'$'nün artan olduğunu göstermek yeter. $x_1, x_2 \in I$, $x_1 < x_2$ alalım. $f$ iki kez türevlenebilir olduğundan $f'$, $[x_1,x_2]$ üzerinde türevlenebilir, dolayısıyla süreklidir (@thm-turev-sureklilik). Ortalama değer teoremini (@thm-ortalama-deger) **$f'$ fonksiyonuna** uygulayalım: öyle bir $c \in (x_1, x_2)$ vardır ki
+
+$$\frac{f'(x_2) - f'(x_1)}{x_2 - x_1} = (f')'(c) = f''(c).$$
+
+Varsayım gereği $f''(c) \ge 0$ ve $x_2 - x_1 > 0$ olduğundan
+
+$$f'(x_2) - f'(x_1) = f''(c)(x_2 - x_1) \ge 0, \qquad \text{yani} \qquad f'(x_1) \le f'(x_2).$$
+
+Öyleyse $f'$ artandır ve @thm-konveks-turev-artan gereği $f$ konvekstir.
+
+**Kesin hâl.** Her $x \in I$ için $f''(x) > 0$ olsun. Yukarıdaki aynı hesapta $f''(c) > 0$ ve $x_2 - x_1 > 0$ olduğundan $f'(x_1) < f'(x_2)$ çıkar: $f'$ **kesin** artandır. @thm-konveks-turev-artan'ın son cümlesi gereği $f$ kesin konvekstir.
+
+**(2)** $g = -f$ olsun; türevin doğrusallığı gereği (@thm-turev-aritmetigi) $g'' = -f''$'tür. O hâlde $f$ konkavdır $\iff$ $g$ konvekstir $\iff$ her $x$ için $g''(x) = -f''(x) \ge 0$ $\iff$ her $x$ için $f''(x) \le 0$. Kesin hâl de aynı biçimde $g$'ye taşınır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Kesin konvekslik için $f'' > 0$ yeterlidir ama gerekli değildir"}
+@thm-konveks-ikinci-turev'in son cümlesi tek yönlüdür: $f'' > 0$ kesin konveksliği **getirir**, ama kesin konveks bir fonksiyonun ikinci türevi bazı noktalarda sıfır olabilir.
+
+Klasik örnek $f(x) = x^4$'tür: $f''(x) = 12x^2$ olduğundan $f''(0) = 0$'dır, yani "her yerde $f'' > 0$" koşulu sağlanmaz. Buna karşın $f'(x) = 4x^3$ fonksiyonu $\mathbb{R}$ üzerinde kesin artandır ($x < y$ iken $x^3 < y^3$'tür), dolayısıyla @thm-konveks-turev-artan'ın son cümlesi gereği $f$ **kesin konvekstir.**
+
+Doğru ifade şudur: $f$ kesin konveks ise $f'' \ge 0$'dır ama $f''$ tek tek noktalarda sıfırlanabilir. Bu ayrım bir sonraki bölümde belirleyici olacaktır: $f''(x_0) = 0$ olması $x_0$'ın bir dönüm noktası olduğunu göstermez — $x^4$'ün $0$'ın iki yanında da konveks kalması bunun kanıtıdır.
+:::
+
+## Temel Örnekler
+
+Şimdi elimizdeki ölçütü tanıdık fonksiyonlara uygulayalım; bu listedeki sonuçlar bundan sonra sık sık kullanılacaktır.
+
+:::: {#exm-konveks-ornekleri name="Tanıdık Fonksiyonların Konveksliği"}
+Aşağıdaki fonksiyonların belirtilen aralıklardaki konvekslik durumunu belirleyiniz:
+$e^x$; $x^2$; $-\ln x$; $x^\alpha$ ($\alpha > 1$); $\ln x$; $\sqrt{x}$; $\dfrac{1}{x}$; $|x|$; $x^3$.
+
+::: {.cozum}
+**$f(x) = e^x$ ($\mathbb{R}$ üzerinde).** @thm-ustel-turevi gereği $f'(x) = f''(x) = e^x > 0$'dır; @thm-konveks-ikinci-turev gereği $e^x$ **bütün $\mathbb{R}$ üzerinde kesin konvekstir.**
+
+**$f(x) = x^2$ ($\mathbb{R}$ üzerinde).** $f''(x) = 2 > 0$; kesin konveks. Daha genel olarak $f(x) = ax^2 + bx + c$ için $f''(x) = 2a$'dır: $a > 0$ ise kesin konveks, $a < 0$ ise kesin konkav, $a = 0$ ise (doğru) hem konveks hem konkavdır.
+
+**$f(x) = -\ln x$ ($(0,\infty)$ üzerinde).** @thm-log-turevi gereği $f'(x) = -\dfrac{1}{x}$ ve $f''(x) = \dfrac{1}{x^2} > 0$'dır: $-\ln x$ **kesin konvekstir.** Buradan hemen $\ln x$'in $(0,\infty)$ üzerinde **kesin konkav** olduğu çıkar; bunu aşağıda ortalama eşitsizliklerinde kullanacağız.
+
+**$f(x) = x^\alpha$ ($(0,\infty)$ üzerinde).** @thm-genel-kuvvet-turevi gereği $f''(x) = \alpha(\alpha-1)x^{\alpha-2}$'dir ve $x > 0$ için $x^{\alpha-2} > 0$'dır. $\alpha > 1$ ise $\alpha(\alpha-1) > 0$: **kesin konveks** (örneğin $x^3$, $x^{5/2}$, $x^\pi$). $0 < \alpha < 1$ ise $\alpha - 1 < 0$ olduğundan $f'' < 0$: **kesin konkav**; özel olarak $\sqrt{x} = x^{1/2}$ için $f''(x) = -\dfrac{1}{4x^{3/2}} < 0$'dır. Aynı biçimde $\ln x$ için $f''(x) = -\dfrac{1}{x^2} < 0$: kesin konkav.
+
+**$f(x) = \dfrac{1}{x}$.** $f''(x) = \dfrac{2}{x^3}$'tür: $(0,\infty)$ üzerinde $f'' > 0$ (kesin konveks), $(-\infty,0)$ üzerinde $f'' < 0$ (kesin konkav). $(-\infty,0) \cup (0,\infty)$ bir aralık olmadığından tanım kümesinin tamamı üzerinde konvekslikten söz edilemez.
+
+**$f(x) = |x|$ ($\mathbb{R}$ üzerinde).** $0$'da türevlenebilir olmadığından ikinci türev ölçütü uygulanamaz; ama konvekslik tanımdan görülür. Üçgen eşitsizliği (@thm-ucgen-esitsizligi) ve $\alpha, 1-\alpha \ge 0$ olması gereği
+
+$$|\alpha x_1 + (1-\alpha)x_2| \le |\alpha x_1| + |(1-\alpha)x_2| = \alpha|x_1| + (1-\alpha)|x_2|.$$
+
+**Kesin konveks değildir:** $x_1 = 1$, $x_2 = 2$, $\alpha = \frac{1}{2}$ için iki taraf da $\frac{3}{2}$'dir (grafiğin $[1,2]$ üzerindeki parçası kirişle çakışır).
+
+**$f(x) = x^3$ ($\mathbb{R}$ üzerinde).** $f''(x) = 6x$'tir: $x > 0$ için pozitif, $x < 0$ için negatif. Öyleyse $x^3$, $[0,\infty)$ üzerinde konveks, $(-\infty,0]$ üzerinde konkavdır; $\mathbb{R}$'nin tamamında **ne konveks ne konkavdır.** $0$ noktası eğrilik yönünün değiştiği yerdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Son iki örnek önemli bir noktayı gösteriyor: konvekslik bir **aralığa göre** tanımlı bir kavramdır; bir fonksiyon tanım kümesinin bir parçasında konveks, başka bir parçasında konkav olabilir. Grafik çizerken yapılacak iş de tam olarak bu parçaları ayırmaktır.
+
+:::: {#exm-konvekslik-analizi name="Kaydırılmış Sinüs Fonksiyonunun Konveksliği"}
+$f(x) = 3 + \sin x$ fonksiyonunun $[0, 2\pi]$ aralığındaki konvekslik durumunu belirleyiniz.
+
+::: {.cozum}
+**Adım 1: Birinci ve ikinci türevi bulalım.** Sabitin türevi sıfır olduğundan ve $\sin$'in türevi $\cos$ olduğundan (@thm-turev-aritmetigi, @thm-trigonometrik-turevler)
+
+$$f'(x) = \frac{d}{dx}\big( 3 + \sin x \big) = \cos x, \qquad f''(x) = \frac{d}{dx}\big( \cos x \big) = -\sin x.$$
+
+Fonksiyon her mertebeden türevlenebilirdir; özel olarak $C^2$ sınıfındadır (@def-c-n-sinifi), dolayısıyla @thm-konveks-ikinci-turev uygulanabilir.
+
+**Adım 2: $f''$'nün işaretini inceleyelim.** İşaret tamamen $\sin x$'in işaretine bağlıdır.
+
+- $(0,\pi)$ **aralığında** $\sin x > 0$, dolayısıyla $f''(x) = -\sin x < 0$'dır; @thm-konveks-ikinci-turev (2) gereği $f$ burada **kesin konkavdır.**
+- $(\pi, 2\pi)$ **aralığında** $\sin x < 0$, dolayısıyla $f''(x) = -\sin x > 0$'dır; @thm-konveks-ikinci-turev (1) gereği $f$ burada **kesin konvekstir.**
+
+$x = 0$, $x = \pi$ ve $x = 2\pi$ noktalarında $f''(x) = 0$'dır; bunlar işaretin değiştiği sınırlardır. Eğrilik yönü kapalı aralıklara da taşınır: $f$, $[0,\pi]$ üzerinde kesin konkav, $[\pi,2\pi]$ üzerinde kesin konvekstir. (Uçlar için ayrıca hesap gerekmez: @thm-konveks-turev-artan ile $f' = \cos$ fonksiyonunun $[\pi, 2\pi]$ üzerinde artan, $[0,\pi]$ üzerinde azalan olduğu görülür.)
+
+**Adım 3: Sonuç.** $f$'nin eğrilik yönü $x = \pi$'de değişir: $(0,\pi)$ üzerinde konkav (grafik kubbe gibi, kirişlerin üstünde), $(\pi, 2\pi)$ üzerinde konvekstir (grafik çanak gibi, kirişlerin altında). Dolayısıyla $(\pi, f(\pi)) = (\pi, 3)$ noktası eğriliğin yön değiştirdiği noktadır; bu tür noktalara **dönüm noktası** (inflection point) denir ve bir sonraki bölümün konusudurlar.
+
+Aralığın **tamamında** $f$ ne konvekstir ne konkav; bunu tanımdan doğrudan da görebiliriz. $x_1 = 0$, $x_2 = \pi$, $\alpha = \frac{1}{2}$ için $f\big( \frac{\pi}{2} \big) = 4 > 3 = \frac{f(0)+f(\pi)}{2}$ olması konvekslik eşitsizliğini, $x_1 = \pi$, $x_2 = 2\pi$, $\alpha = \frac{1}{2}$ için $f\big( \frac{3\pi}{2} \big) = 2 < 3 = \frac{f(\pi)+f(2\pi)}{2}$ olması da konkavlık eşitsizliğini bozar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Konveks Fonksiyonlar Süreklidir
+
+Bölümün başında konvekslik tanımının süreklilik istemediğini söylemiştik; şaşırtıcı olan, **istemesine gerek olmamasıdır.** Anahtar @prp-egim-monotonlugu (2)'dir: bir noktadan çizilen kesen eğimleri artan olduğundan, yakın noktalarda fark oranı iki sabit sayı arasında sıkışır ve fonksiyon o noktada "fazla oynayamaz".
+
+:::: {#cor-konveks-surekli name="Konveks Fonksiyon İç Noktalarda Süreklidir"}
+$I \subseteq \mathbb{R}$ bir aralık ve $f : I \to \mathbb{R}$ konveks olsun. $x_0$, $I$'nin bir **iç noktası** ise ($x_0$'ın bir komşuluğu $I$'nin içinde kalıyorsa) $f$, $x_0$'da süreklidir. Özel olarak, bir **açık** aralıkta konveks olan her fonksiyon o aralıkta süreklidir.
+
+::: {.ispat}
+$x_0$, $I$'nin iç noktası olsun; o hâlde $[a,b] \subseteq I$ ve $a < x_0 < b$ olacak biçimde $a, b$ seçilebilir. @prp-egim-monotonlugu (2) gereği
+
+$$\varphi(x) = \frac{f(x) - f(x_0)}{x - x_0}, \qquad x \in I \setminus \{x_0\}$$
+
+fonksiyonu artandır. Öyleyse $x \in [a,b] \setminus \{x_0\}$ olan her $x$ için
+
+$$\varphi(a) \le \varphi(x) \le \varphi(b)$$
+
+olur ($a \le x \le b$ olduğu ve üçü de $I \setminus \{x_0\}$'da bulunduğu için). $m = \varphi(a)$, $K = \varphi(b)$ ve $M = \max\{|m|, |K|\}$ diyelim. $m \le \varphi(x) \le K$ olduğundan $|\varphi(x)| \le M$'dir; yani her $x \in [a,b] \setminus \{x_0\}$ için
+
+$$\left| \frac{f(x) - f(x_0)}{x - x_0} \right| \le M, \qquad \text{yani} \qquad |f(x) - f(x_0)| \le M |x - x_0|.$$
+
+Bu eşitsizlik $x = x_0$ için de (iki taraf da sıfır olduğundan) doğrudur; demek ki her $x \in [a,b]$ için geçerlidir.
+
+Şimdi sürekliliği $\varepsilon$–$\delta$ diliyle gösterelim (@def-sureklilik). $\varepsilon > 0$ verilsin ve
+
+$$\delta = \min\left\{ \frac{\varepsilon}{M+1}, \; x_0 - a, \; b - x_0 \right\} > 0$$
+
+alalım ($M$ yerine $M+1$ yazmamızın tek nedeni $M = 0$ hâlinde bölmeyi anlamlı kılmaktır). $x \in I$ ve $|x - x_0| < \delta$ olsun; $\delta \le x_0 - a$ ve $\delta \le b - x_0$ olduğundan $x \in [a,b]$'dir ve yukarıdaki kestirim uygulanabilir:
+
+$$|f(x) - f(x_0)| \le M|x - x_0| \le (M+1)|x - x_0| < (M+1)\, \delta \le (M+1) \cdot \frac{\varepsilon}{M+1} = \varepsilon.$$
+
+Demek ki $f$, $x_0$'da süreklidir. $I$ açık bir aralık ise her noktası iç noktadır; öyleyse $f$ bütün $I$ üzerinde süreklidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Uç noktalarda süreklilik bozulabilir"}
+Sonucun "iç nokta" koşulu kaldırılamaz. $I = [0,1]$ üzerinde
+
+$$f(x) = \begin{cases} 1, & x = 0 \\ 0, & 0 < x \le 1 \end{cases}$$
+
+fonksiyonunu alalım. Bu fonksiyon konvekstir: değerleri negatif olmadığından konvekslik eşitsizliğinin sağ tarafı her zaman $\ge 0$'dır; sol taraf ise ancak $\alpha x_1 + (1-\alpha)x_2 = 0$ iken, yani ağırlığı sıfır olmayan bütün noktalar $0$ iken $1$ değerini alır, o hâlde de sağ taraf $1$'e eşittir. Öteki bütün hâllerde sol taraf $0$'dır.
+
+Buna karşın $f$, $x_0 = 0$ uç noktasında sürekli değildir: $\lim_{x \to 0^+} f(x) = 0 \ne 1 = f(0)$. Demek ki konvekslik uçlarda süreklilik güvencesi vermez; verdiği tek şey iç noktalardaki sürekliliktir.
+:::
+
+::: {.callout-note title="Tek yönlü türevler de vardır 🧠"}
+@cor-konveks-surekli'nin ispatındaki kestirim biraz daha ileri götürülebilir. $\varphi$ artan ve $(x_0,b]$ üzerinde alttan $\varphi(a)$ ile sınırlı olduğundan, monoton fonksiyonların tek yönlü limitleri hakkındaki sonuç (@thm-monoton-tek-yonlu-limit) gereği $f'_+(x_0) = \lim_{x \to x_0^+} \varphi(x)$ limiti vardır ve sonludur; benzer biçimde $\varphi$, $[a,x_0)$ üzerinde üstten $\varphi(b)$ ile sınırlı olduğundan $f'_-(x_0)$ de vardır. $x < x_0 < y$ için $\varphi(x) \le \varphi(y)$ olduğundan $f'_-(x_0) \le f'_+(x_0)$'dır.
+
+Yani **konveks bir fonksiyonun her iç noktada iki tek yönlü türevi vardır** (@def-tek-yonlu-turev) ve soldaki sağdakini aşmaz. $f(x) = |x|$ örneğinde $f'_-(0) = -1 < 1 = f'_+(0)$'dır; ikisi de vardır ama eşit olmadıklarından $f$, $0$'da türevlenebilir değildir.
+:::
+
+## Uygulama: Ortalama Eşitsizlikleri
+
+Jensen eşitsizliğinin en güzel yanı, tek bir konveks fonksiyondan bütün bir eşitsizlik ailesi üretmesidir. Şimdi $-\ln$ fonksiyonunun konveksliğinden iki klasik sonucu çıkaralım.
+
+:::: {#exm-jensen-ortalama name="Aritmetik ve Geometrik Ortalama Eşitsizliği"}
+$x_1, x_2, \dots, x_n > 0$ olsun. **Aritmetik ortalama** $A$ ile **geometrik ortalama** $G$
+
+$$A = \frac{x_1 + x_2 + \cdots + x_n}{n}, \qquad G = \sqrt[n]{x_1 x_2 \cdots x_n}$$
+
+biçiminde tanımlanır. $G \le A$ olduğunu ve eşitliğin ancak $x_1 = x_2 = \cdots = x_n$ iken sağlandığını gösteriniz.
+
+::: {.cozum}
+**Eşitsizlik.** @exm-konveks-ornekleri'nde $f(x) = -\ln x$ fonksiyonunun $(0,\infty)$ üzerinde kesin konveks olduğunu görmüştük. Jensen eşitsizliğini (@prp-jensen-esitsizligi) $\lambda_i = \dfrac{1}{n}$ ağırlıklarıyla yazıp iki yanı $-1$ ile çarpalım (eşitsizlik yön değiştirir):
+
+$$\ln A \ge \frac{1}{n} \sum_{i=1}^{n} \ln x_i = \frac{1}{n} \ln \big( x_1 x_2 \cdots x_n \big) = \ln \Big( (x_1 x_2 \cdots x_n)^{1/n} \Big) = \ln G.$$
+
+Burada logaritmanın çarpımı toplama çevirmesini ve $\ln(t^{1/n}) = \frac{1}{n}\ln t$ özelliğini kullandık. $\ln$ kesin artan olduğundan (türevi $\frac{1}{x} > 0$'dır; @cor-monotonluk-testi) $\ln A \ge \ln G$ eşitsizliği $A \ge G$ demektir.
+
+**Eşitlik durumu.** Bunu @thm-konveks-teget'in konkav hâliyle bulalım. $\ln$ fonksiyonu $(0,\infty)$ üzerinde kesin konkavdır ve $x_0 = 1$ noktasında $\ln 1 = 0$, $(\ln)'(1) = 1$'dir; teğet eşitsizliği (konkav hâlde grafik teğetin altındadır) her $t > 0$ için
+
+$$\ln t \le \ln 1 + 1 \cdot (t - 1) = t - 1$$
+
+verir ve kesin konkavlık gereği eşitlik ancak $t = 1$ iken sağlanır. Bunu her $i$ için $t = \dfrac{x_i}{G}$ ile yazıp toplayalım. $G^n = x_1 x_2 \cdots x_n$ olduğundan sol tarafın toplamı
+
+$$\sum_{i=1}^{n} \ln \frac{x_i}{G} = \ln \frac{x_1 x_2 \cdots x_n}{G^n} = \ln 1 = 0,$$
+
+sağ tarafın toplamı ise $\displaystyle\sum_{i=1}^{n} \left( \frac{x_i}{G} - 1 \right) = \frac{nA}{G} - n$'dir. Öyleyse $0 \le n\left( \dfrac{A}{G} - 1 \right)$, yani $A \ge G$; eşitsizliği bu kez teğet yöntemiyle elde ettik.
+
+Eşitlik ancak toplanan eşitsizliklerin hepsinde eşitlik varken, yani her $i$ için $x_i = G$ iken olabilir; bu da bütün $x_i$'lerin eşit olması demektir. Tersine hepsi eşitse $A = G = x_1$ olur. ($n=2$ hâlinde eşitsizlik $\sqrt{x_1x_2} \le \frac{x_1+x_2}{2}$, yani $\big(\sqrt{x_1}-\sqrt{x_2}\big)^2 \ge 0$'dır.)
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Aynı fikir eşit olmayan ağırlıklarla çalıştırıldığında, ileride integral eşitsizliklerinde (Hölder ve Minkowski) temel taşı olacak bir sonuç verir.
+
+:::: {#exm-agirlikli-ortalama-esitsizligi name="Ağırlıklı Ortalama ve Young Eşitsizliği"}
+a\) $\lambda_1, \dots, \lambda_n \ge 0$, $\sum_{i=1}^{n}\lambda_i = 1$ ve $x_1, \dots, x_n > 0$ olsun. **Ağırlıklı aritmetik–geometrik ortalama eşitsizliğini**
+
+$$x_1^{\lambda_1} x_2^{\lambda_2} \cdots x_n^{\lambda_n} \;\le\; \lambda_1 x_1 + \lambda_2 x_2 + \cdots + \lambda_n x_n$$
+
+ispatlayınız.
+
+b\) $p, q > 1$ ve $\dfrac{1}{p} + \dfrac{1}{q} = 1$ olsun. Her $a, b \ge 0$ için **Young eşitsizliğini**
+
+$$ab \le \frac{a^p}{p} + \frac{b^q}{q}$$
+
+ispatlayınız.
+
+::: {.cozum}
+**a)** $f(x) = -\ln x$ fonksiyonu $(0,\infty)$ üzerinde konvekstir. Jensen eşitsizliğini (@prp-jensen-esitsizligi) verilen $\lambda_i$ ağırlıklarıyla yazıp iki yanı $-1$ ile çarpalım:
+
+$$\ln \left( \sum_{i=1}^{n} \lambda_i x_i \right) \ge \sum_{i=1}^{n} \lambda_i \ln x_i = \sum_{i=1}^{n} \ln \big( x_i^{\lambda_i} \big) = \ln \left( \prod_{i=1}^{n} x_i^{\lambda_i} \right).$$
+
+Burada $\lambda \ln x = \ln(x^\lambda)$ ve logaritmanın çarpımı toplama çevirmesi kullanıldı. $\ln$ kesin artan olduğundan eşitsizlik logaritmaların içindeki sayılara taşınır ve $\prod x_i^{\lambda_i} \le \sum \lambda_i x_i$ bulunur. $\lambda_i = \frac{1}{n}$ alındığında bu, @exm-jensen-ortalama'daki eşitsizliğin ta kendisidir.
+
+**b)** $a = 0$ ise sol taraf $0$, sağ taraf $\dfrac{b^q}{q} \ge 0$'dır; $b = 0$ hâli de aynıdır. Bundan sonra $a, b > 0$ olsun. $\dfrac{1}{p} + \dfrac{1}{q} = 1$ ve $\dfrac{1}{p}, \dfrac{1}{q} > 0$ olduğundan (a) şıkkını $n = 2$, $\lambda_1 = \dfrac{1}{p}$, $\lambda_2 = \dfrac{1}{q}$ ağırlıkları ve $x_1 = a^p$, $x_2 = b^q$ seçimiyle uygulayabiliriz:
+
+$$ab = \big( a^p \big)^{1/p} \big( b^q \big)^{1/q} \le \frac{1}{p} a^p + \frac{1}{q} b^q.$$
+
+$p = q = 2$ özel hâli $ab \le \dfrac{a^2 + b^2}{2}$ verir; bu da $(a-b)^2 \ge 0$'ın başka bir yazılışıdır. (a) şıkkı $-\ln$'in kesin konveksliğinden geldiğinden eşitlik ancak $x_1 = x_2$, yani $a^p = b^q$ iken sağlanır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+:::: {#exr-konvekslik name="Konvekslik Üzerine"}
+a\) $f(x) = x^4$ fonksiyonunun $\mathbb{R}$ üzerinde kesin konveks olduğunu, $f''(0) = 0$ olmasına rağmen gösteriniz.
+
+b\) $f, g : I \to \mathbb{R}$ konveks ve $c > 0$ olsun. $f + g$, $cf$ ve $\max\{f, g\}$ fonksiyonlarının da konveks olduğunu gösteriniz.
+
+c\) $f : I \to \mathbb{R}$ konveks, $J \supseteq f(I)$ bir aralık ve $g : J \to \mathbb{R}$ hem artan hem konveks olsun. $g \circ f$ bileşkesinin konveks olduğunu gösteriniz.
+
+d\) $f(x) = \ln(1 + x^2)$ fonksiyonunun konveks ve konkav olduğu aralıkları belirleyiniz.
+
+e\) $p \ge 1$ ve $a, b \ge 0$ olsun. $\left( \dfrac{a+b}{2} \right)^p \le \dfrac{a^p + b^p}{2}$ eşitsizliğini ispatlayınız.
+
+f\) $f : \mathbb{R} \to \mathbb{R}$ konveks ve üstten sınırlı ise $f$'nin sabit olduğunu gösteriniz.
+
+::: {.cozum}
+**a)** $f'(x) = 4x^3$ ve $f''(x) = 12x^2$'dir; $f''(0) = 0$ olduğundan @thm-konveks-ikinci-turev'in "$f'' > 0$" koşulu $\mathbb{R}$'nin tamamında sağlanmaz. Buna karşın $f'' \ge 0$ her yerde doğru olduğundan $f$ **konvekstir.** Kesinliği @thm-konveks-turev-artan ile elde edelim: $f'(x) = 4x^3$'ün kesin artan olduğunu göstermek yeter. $x < y$ için $y^3 - x^3 = (y-x)\big( y^2 + xy + x^2 \big)$'dir ve $y^2 + xy + x^2 = \big( y + \frac{x}{2} \big)^2 + \frac{3x^2}{4}$ ifadesi ancak $x = y = 0$ iken sıfır olur; $x < y$ olduğundan bu olamaz, çarpan kesin pozitiftir. $y - x > 0$ olduğundan $y^3 > x^3$'tür: $f'$ kesin artandır ve $x^4$ **kesin konvekstir.** Demek ki "$f''$ bir noktada sıfırlanınca kesin konvekslik bozulur" sanısı yanlıştır.
+
+**b)** $x_1, x_2 \in I$, $\alpha \in [0,1]$ ve $x_\alpha = \alpha x_1 + (1-\alpha)x_2$ olsun.
+
+*Toplam ve pozitif katsayıyla çarpım.* $f$ ile $g$'nin konvekslik eşitsizliklerini taraf tarafa toplayıp terimleri gruplamak $(f+g)(x_\alpha) \le \alpha (f+g)(x_1) + (1-\alpha)(f+g)(x_2)$ verir. Benzer biçimde $c > 0$ olduğundan $f$'nin eşitsizliğini $c$ ile çarpmak yönü bozmaz ve $cf$'nin konveksliği çıkar. ($c < 0$ için bu adım çalışmaz; nitekim $-f$ konveks değil konkavdır.)
+
+*Maksimum.* $h = \max\{f,g\}$ olsun. $f \le h$ ve $g \le h$ olduğundan
+
+$$f(x_\alpha) \le \alpha f(x_1) + (1-\alpha) f(x_2) \le \alpha h(x_1) + (1-\alpha) h(x_2)$$
+
+olur ve aynı zincir $g$ için de yazılır. İki sayının her biri bir $S$ sayısını aşmıyorsa maksimumları da $S$'yi aşmaz; öyleyse $h(x_\alpha) \le \alpha h(x_1) + (1-\alpha)h(x_2)$'dir: $h$ konvekstir. (Minimum için aynı şey doğru değildir: $f(x) = x$ ve $g(x) = -x$ konvekstir ama $\min\{f,g\}(x) = -|x|$ konkavdır.)
+
+**c)** $x_1, x_2 \in I$, $\alpha \in [0,1]$ ve $x_\alpha = \alpha x_1 + (1-\alpha)x_2$ olsun. $f$ konveks olduğundan $f(x_\alpha) \le \alpha f(x_1) + (1-\alpha) f(x_2)$'dir. Sağ taraf, $f(x_1), f(x_2) \in J$ noktalarının bir konveks birleşimi ve $J$ bir aralık olduğundan $J$'dedir; dolayısıyla $g$ orada tanımlıdır. Önce $g$'nin **artan** olmasını, sonra **konveks** olmasını kullanalım:
+
+$$(g \circ f)(x_\alpha) \le g\big( \alpha f(x_1) + (1-\alpha) f(x_2) \big) \le \alpha (g \circ f)(x_1) + (1-\alpha) (g \circ f)(x_2).$$
+
+Yani $g \circ f$ konvekstir; örneğin $f$ konveks ise $e^f$ de konvekstir. $g$'nin artan olması şarttır: $g(t) = -t$ konvekstir ama azalandır ve $-x^2$ konveks değildir.
+
+**d)** $1 + x^2 \ge 1 > 0$ olduğundan $f$ her $x$ için tanımlıdır. Zincir kuralıyla (@thm-zincir-kurali, @thm-log-turevi) $f'(x) = \dfrac{2x}{1+x^2}$, bölüm kuralıyla (@thm-turev-aritmetigi) da
+
+$$f''(x) = \frac{2(1+x^2) - 2x \cdot 2x}{(1+x^2)^2} = \frac{2(1 - x^2)}{(1+x^2)^2}$$
+
+bulunur. Payda her zaman pozitiftir; işareti $1 - x^2 = (1-x)(1+x)$ belirler:
+
+- $-1 < x < 1$ için $f''(x) > 0$: $f$, $[-1,1]$ üzerinde (kesin) konvekstir.
+- $|x| > 1$ için $f''(x) < 0$: $f$, $(-\infty,-1]$ ve $[1,\infty)$ aralıklarının her birinde (kesin) konkavdır.
+- $x = \pm 1$ noktalarında $f''$ işaret değiştirir; eğrilik yönü buralarda döner.
+
+**e)** $p = 1$ ise iki taraf da $\dfrac{a+b}{2}$'ye eşittir; $p > 1$ olsun. $a, b > 0$ hâlinde, @exm-konveks-ornekleri'nde $g(x) = x^p$'nin $(0,\infty)$ üzerinde konveks olduğunu görmüştük ($g''(x) = p(p-1)x^{p-2} > 0$); konvekslik tanımını $x_1 = a$, $x_2 = b$, $\alpha = \frac{1}{2}$ ile yazmak istenen eşitsizliği doğrudan verir. Uç hâller: $a = b = 0$ ise iki taraf da $0$'dır; $a = 0$, $b > 0$ ise (ya da tersi) eşitsizlik $\dfrac{b^p}{2^p} \le \dfrac{b^p}{2}$, yani $2^p \ge 2$ hâline gelir ve $p \ge 1$ olduğundan doğrudur. Aynı akıl yürütme Jensen eşitsizliğiyle (@prp-jensen-esitsizligi) $n$ sayıya genişletilir: $a_i > 0$, $p \ge 1$ için $\left( \frac{a_1 + \cdots + a_n}{n} \right)^p \le \frac{a_1^p + \cdots + a_n^p}{n}$.
+
+**f)** $f$ konveks ve her $x$ için $f(x) \le C$ olsun. $f$ sabit değilse $f(a) \ne f(b)$ olan $a < b$ noktaları vardır; $m = \dfrac{f(b) - f(a)}{b - a} \ne 0$ diyelim.
+
+*Durum $m > 0$.* $x > b$ için @prp-egim-monotonlugu (1)'i $a < b < x$ üçlüsüne uygulayalım; zincirin **uçlarını** karşılaştıran eşitsizlik $m = \dfrac{f(b) - f(a)}{b - a} \le \dfrac{f(x) - f(b)}{x - b}$ verir ve $x - b > 0$ olduğundan
+
+$$f(x) \ge f(b) + m(x - b) \qquad (x > b).$$
+
+$m > 0$ olduğundan sağ taraf $x$ büyüdükçe sınırsız büyür: $x > b + \dfrac{C - f(b)}{m}$ alırsak $f(x) > C$ olur ki bu $C$'nin üst sınır olmasıyla çelişir.
+
+*Durum $m < 0$.* Bu kez $x < a$ alalım. @prp-egim-monotonlugu (1)'i $x < a < b$ üçlüsüne uygulayınca zincirin **uçlarını** karşılaştıran eşitsizlik $\dfrac{f(a) - f(x)}{a - x} \le \dfrac{f(b) - f(a)}{b - a} = m$ verir; $a - x > 0$ olduğundan iki yanı $a - x$ ile çarpmak $f(x) \ge f(a) + m(x-a)$ verir. $m < 0$ ve $x - a < 0$ olduğundan $m(x-a) > 0$'dır ve $x$ küçüldükçe sınırsız büyür: $x < a + \dfrac{C - f(a)}{m}$ alındığında (negatif $m$ ile bölme eşitsizliğin yönünü çevirir) $f(x) > C$ olur; yine çelişki.
+
+Her iki durumda da çelişki çıktığından $f(a) = f(b)$ olmalıdır. $a < b$ keyfî olduğundan $f$ sabittir. (Aynı sonuç alttan sınırlılık için doğru **değildir**: $f(x) = e^x$ konvekstir, alttan $0$ ile sınırlıdır ve sabit değildir.)
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde eğrilik yönünü tanımladık ve türevin diline çevirdik: konvekslik, $f'$'nün artan ve $f''$'nün negatif olmaması demektir. Geriye eğrilik yönünün **değiştiği** noktalar kaldı; $3 + \sin x$ örneğinde $x = \pi$'nin, $\ln(1+x^2)$ örneğinde $x = \pm 1$'in böyle noktalar olduğunu gördük, $x^4$ örneği ise $f''(x_0) = 0$ olmasının tek başına yetmediğini gösterdi. Bu noktaları bir sonraki bölümde inceleyeceğiz: [Dönüm Noktaları](donum-noktalari.qmd).

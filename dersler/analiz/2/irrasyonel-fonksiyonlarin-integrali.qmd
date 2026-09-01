@@ -1,0 +1,949 @@
+---
+title: "İrrasyonel Fonksiyonların İntegrali"
+pagetitle: "İrrasyonel Fonksiyonların İntegrali"
+description: "Köklü ifadeler içeren integralleri rasyonel integrallere indirgeyen değişimler; doğrusal kesirli köklerde EKOK değişimi; ikinci dereceli köklü ifadeler için üç Euler değişimi ve bunların geometrik anlamı; belirsiz katsayılar yöntemiyle polinom bölü karekök integralleri; binom integralleri ve Çebişev'in üç koşulu; elemanter olarak hesaplanamayan integraller."
+---
+
+[Rasyonel Fonksiyonların İntegrali](rasyonel-fonksiyonlarin-integrali.qmd) bölümünde şunu gördük: paydası çarpanlara ayrılmış her rasyonel fonksiyon **basit kesirlere ayırma** (partial fraction decomposition) ile sonlu sayıda basit parçaya bölünür ve bu parçaların her birinin ilkel fonksiyonu logaritma, arktanjant ve kuvvet fonksiyonlarıyla yazılabilir. Yani rasyonel fonksiyonlar için integral hesabı bitmiş bir iştir: yöntem her zaman işler ve her zaman elemanter bir yanıt verir.
+
+İntegrand köklü bir ifade içerdiğinde bu rahatlık kaybolur. $\sqrt{x^2+2x+2}$ ya da $\sqrt[3]{x}$ gibi bir çarpan, fonksiyonu rasyonel olmaktan çıkarır; basit kesirlere ayırma makinesi doğrudan çalışmaz. Buna karşılık elimizde çok güçlü bir başka araç var: **değişken değiştirme** ([Değişken Değiştirme ve Kısmi İntegrasyon](integral-alma-yontemleri.qmd)). Akıllıca seçilmiş bir $u$ değişkeni, köklü integrandı $u$'nun rasyonel bir fonksiyonuna çevirebilir; böyle bir değişim bulunduğunda iş biter, çünkü yeni integral bir önceki bölümün yöntemiyle sonuna kadar hesaplanır.
+
+Bu bölümün konusu tam olarak budur: **köklü integrandları rasyonelleştiren değişimler.** Üç büyük sınıf inceleyeceğiz. Birincisi, integrandda yalnızca $\frac{ax+b}{cx+d}$ ifadesinin kökleri geçtiğinde kullanılan doğrudan değişim; farklı dereceden kökler varsa derecelerin **en küçük ortak katı** (EKOK) devreye girer. İkincisi, $\sqrt{ax^2+bx+c}$ biçimindeki ifadeleri rasyonelleştiren üç **Euler değişimi**; bunların arkasında bir koniği doğrularla parametrelendirmek gibi net bir geometrik fikir yatar. Üçüncüsü, $\int x^r(a+bx^p)^q\,dx$ biçimindeki **binom integralleri** ve bunların ne zaman rasyonelleşebileceğini tam olarak söyleyen **Çebişev koşulları**.
+
+Bu bölümde şunları öğreneceğiz: bir köklü integrandın hangi değişimle rasyonelleşeceğini tanımayı; Euler değişimlerinin üçünü de kurup uygulamayı; $\int \frac{p_n(x)}{\sqrt{ax^2+bx+c}}\,dx$ integralini tek bir doğrusal denklem sistemiyle çözen belirsiz katsayılar yöntemini; binom integrallerinin üç uygun hâlini ayırt etmeyi. Ve son olarak bu bölümde ilk kez, bir integralin **hiçbir elemanter fonksiyonla ifade edilemeyebileceği** olgusuyla yüzleşeceğiz.
+
+## Rasyonelleştirme Fikri
+
+Yöntemleri tek tek ele almadan önce hepsinin ortak iskeletini görelim. $R(s,t)$ ile, iki değişkenli iki polinomun oranı olan **rasyonel fonksiyonu** göstereceğiz; örneğin $R(s,t) = \dfrac{s+2t}{s(2+t^2)}$ böyledir. Bu gösterim sayesinde "integrand, $x$ ile bir kökün rasyonel bileşimidir" cümlesini kısaca $R\bigl(x, \sqrt[n]{\varphi(x)}\bigr)$ diye yazabiliriz.
+
+Rasyonelleştirme fikri şöyle işler. Diyelim ki bir $u \mapsto x = \psi(u)$ dönüşümü bulduk ve bu dönüşüm iki şeyi birden sağlıyor: $\psi$ **rasyonel** bir fonksiyondur (dolayısıyla $\psi'$ de rasyoneldir) ve integranddaki kök $u$'nun rasyonel bir ifadesine dönüşür. O zaman değişken değiştirme kuralı gereği
+
+$$\int R\bigl(x, \sqrt[n]{\varphi(x)}\bigr)\,dx = \int R\bigl(\psi(u), \text{(rasyonel ifade)}\bigr)\,\psi'(u)\,du$$
+
+olur ve sağ taraftaki integrand, rasyonel fonksiyonların toplam-çarpım-bölümüyle kurulduğundan **rasyoneldir**. Rasyonel fonksiyonların integralini almayı bildiğimize göre iş bitmiştir; geriye yalnızca $u$ yerine $u(x)$ yazmak kalır.
+
+Her seferinde denetlenmesi gereken teknik nokta şudur: $x = \psi(u)$ dönüşümü çalıştığımız aralıkta **birebir ve türevi sıfırdan farklı** olmalıdır. Bu sağlanırsa, bulduğumuz $G$ ilkel fonksiyonu için $F(x) = G(u(x))$ yazdığımızda zincir kuralı (@thm-zincir-kurali) ve ters fonksiyonun türev kuralı (@thm-ters-turev) gereği $\psi'(u(x))\,u'(x) = 1$ olduğundan $F'(x) = R\bigl(x, \sqrt[n]{\varphi(x)}\bigr)$ çıkar. Aşağıdaki her yöntemde bu koşulun sağlandığını ayrıca belirteceğiz.
+
+::: {.callout-note title="💡 Yöntemin sınırı"}
+Rasyonelleştirme her köklü integrandda mümkün değildir. Örneğin $\int \sqrt{1+x^3}\,dx$ integrali için hiçbir rasyonel değişim işe yaramaz; bu integral hiçbir elemanter fonksiyonla ifade edilemez. Bölümün sonunda, binom integralleri için bu ayrımı **tam olarak** yapan bir ölçüt göreceğiz.
+:::
+
+## Doğrusal Kesirli Köklü İfadeler
+
+En kolay hâlle başlıyoruz: kökün içinde **birinci dereceden bir kesir** varsa. Bu durumda kökün kendisini yeni değişken seçmek doğrudan sonuç verir.
+
+:::: {#prp-dogrusal-kesirli-kok name="Doğrusal Kesirli Kökün Rasyonelleştirilmesi"}
+$a, b, c, d \in \mathbb{R}$ ve $ad - bc \neq 0$ olsun. $n \in \mathbb{N}$, $n \geq 2$ ve $R$ iki değişkenli bir rasyonel fonksiyon olmak üzere
+
+$$\int R\!\left(x, \sqrt[n]{\frac{ax+b}{cx+d}}\right) dx$$
+
+integralinde
+
+$$u = \sqrt[n]{\frac{ax+b}{cx+d}} \qquad \Longleftrightarrow \qquad u^n = \frac{ax+b}{cx+d}$$
+
+değişimi yapılırsa, integral $u$ değişkeninin bir rasyonel fonksiyonunun integraline dönüşür. Bu değişimde
+
+$$x = \frac{b - d\,u^n}{c\,u^n - a}, \qquad dx = \frac{n(ad-bc)\,u^{n-1}}{\bigl(c\,u^n - a\bigr)^2}\,du$$
+
+olur.
+
+::: {.ispat}
+Önce $x$'i $u$ cinsinden çözelim. $u^n = \dfrac{ax+b}{cx+d}$ eşitliğinde içler dışlar çarpımı yapıp $x$'li terimleri bir yana toplayalım:
+
+$$u^n(cx+d) = ax + b \quad \Longrightarrow \quad x\bigl(c\,u^n - a\bigr) = b - d\,u^n \quad \Longrightarrow \quad x = \frac{b - d\,u^n}{c\,u^n - a}.$$
+
+Bu, $u$'nun rasyonel bir fonksiyonudur; ona $\psi(u)$ diyelim. (Paydayı sıfırlayan $u$ değerleri en çok $n$ tanedir ve çalıştığımız aralıktan dışlanır.)
+
+Şimdi $dx$'i hesaplayalım. Bölüm kuralıyla (@thm-turev-aritmetigi)
+
+$$\psi'(u) = \frac{\bigl(-d\,n\,u^{n-1}\bigr)\bigl(c\,u^n - a\bigr) - \bigl(b - d\,u^n\bigr)\bigl(c\,n\,u^{n-1}\bigr)}{\bigl(c\,u^n-a\bigr)^2} = \frac{n\,u^{n-1}\Bigl[-d\bigl(c\,u^n-a\bigr) - c\bigl(b - d\,u^n\bigr)\Bigr]}{\bigl(c\,u^n-a\bigr)^2}.$$
+
+Köşeli parantezin içini açalım: $-dc\,u^n + ad - bc + cd\,u^n = ad - bc$. Böylece $u^n$'li terimler birbirini götürür ve
+
+$$\psi'(u) = \frac{n(ad-bc)\,u^{n-1}}{\bigl(c\,u^n-a\bigr)^2}$$
+
+bulunur; bu da $u$'nun rasyonel bir fonksiyonudur.
+
+Değişim meşru mudur? $\varphi(x) = \dfrac{ax+b}{cx+d}$ diyelim; bölüm kuralıyla
+
+$$\varphi'(x) = \frac{a(cx+d) - c(ax+b)}{(cx+d)^2} = \frac{ad-bc}{(cx+d)^2} \neq 0,$$
+
+çünkü $ad - bc \neq 0$'dır. Demek ki $\varphi$, tanımlı olduğu her aralıkta kesin monotondur (@cor-monotonluk-testi) ve $t \mapsto \sqrt[n]{t}$ de kesin artan olduğundan $u = \sqrt[n]{\varphi(x)}$ kesin monotondur, dolayısıyla birebirdir. Ayrıca $u^n = \varphi(x)$ eşitliğinin iki yanının türevini alırsak
+
+$$n\,u^{n-1}\,u'(x) = \frac{ad-bc}{(cx+d)^2}$$
+
+elde ederiz; sağ taraf sıfırdan farklı olduğundan $u \neq 0$ olan noktalarda $u'(x) \neq 0$'dır. ($u = 0$ yalnızca $ax + b = 0$ noktasında olur; bu tek nokta aralıktan çıkarılır.)
+
+Son adım kolay: $x = \psi(u)$ rasyonel olduğundan $R\bigl(\psi(u), u\bigr)$ da $u$'nun rasyonel bir fonksiyonudur (rasyonel fonksiyonların bileşkesi rasyoneldir); bunu yine rasyonel olan $\psi'(u)$ ile çarparsak
+
+$$\int R\!\left(x, \sqrt[n]{\varphi(x)}\right)dx = \int R\bigl(\psi(u), u\bigr)\,\psi'(u)\,du$$
+
+integralinin integrandı rasyonel çıkar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+$ad - bc \neq 0$ koşulu boş bir teknik ayrıntı değildir: $ad = bc$ olsaydı $\dfrac{ax+b}{cx+d}$ ifadesi sabit olurdu, kök de sabit olurdu ve ortada rasyonelleştirilecek bir şey kalmazdı.
+
+Önermenin en çok kullanılan özel hâli $c = 0$, $d = 1$ durumudur: integrandda yalnızca $\sqrt[n]{ax+b}$ geçiyorsa $u = \sqrt[n]{ax+b}$, yani $u^n = ax+b$ alınır; buradan $x = \dfrac{u^n - b}{a}$ ve $dx = \dfrac{n}{a}u^{n-1}\,du$ çıkar. Daha da özel olarak $\sqrt[n]{x}$ için $x = u^n$, $dx = n\,u^{n-1}\,du$.
+
+::: {.callout-tip title="📌 Farklı dereceden kökler: EKOK kuralı"}
+İntegrandda **aynı** $\dfrac{ax+b}{cx+d}$ ifadesinin farklı dereceden kökleri geçiyorsa — diyelim $\sqrt[n_1]{\cdot}, \dots, \sqrt[n_k]{\cdot}$ — hepsini birden rasyonelleştirmek için $n = \operatorname{ekok}(n_1, \dots, n_k)$ alınır ve $u^n = \dfrac{ax+b}{cx+d}$ değişimi yapılır. Gerçekten her $i$ için $n_i \mid n$ olduğundan
+
+$$\sqrt[n_i]{\frac{ax+b}{cx+d}} = \bigl(u^n\bigr)^{1/n_i} = u^{\,n/n_i}$$
+
+olur ve $n/n_i$ bir doğal sayıdır; yani her kök $u$'nun bir **kuvveti**ne dönüşür. Daha küçük bir $n$ seçilirse köklerden en az biri kurtulamaz; daha büyüğü ise gereksiz yere yüksek dereceli bir rasyonel fonksiyon üretir.
+:::
+
+Bunu bir örnekte sonuna kadar çalıştıralım.
+
+:::: {#exm-ekok-degisimi name="EKOK Değişimiyle Rasyonelleştirme"}
+$x > 0$ için
+
+$$I = \int \frac{x + 2\sqrt{x} + \sqrt[3]{x}}{x\bigl(2 + \sqrt[3]{x}\bigr)}\,dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+İntegrandda geçen kökler $\sqrt{x}$ ve $\sqrt[3]{x}$'tir; kökün içindeki ifade her ikisinde de aynıdır ($\varphi(x) = x$, yani $a = d = 1$, $b = c = 0$ ve $ad-bc = 1 \neq 0$). EKOK kuralı gereği
+
+$$n = \operatorname{ekok}(2,3) = 6, \qquad x = u^6, \qquad dx = 6u^5\,du$$
+
+alıyoruz. $x > 0$ olduğundan $u = \sqrt[6]{x} > 0$'dır ve $u \mapsto u^6$ dönüşümü $(0,\infty)$ üzerinde kesin artan olduğundan değişim meşrudur. Bu değişimle $\sqrt{x} = u^3$, $\sqrt[3]{x} = u^2$ olur; integrandı yazalım:
+
+$$\frac{x + 2\sqrt{x} + \sqrt[3]{x}}{x\bigl(2+\sqrt[3]{x}\bigr)} \cdot dx = \frac{u^6 + 2u^3 + u^2}{u^6\bigl(2 + u^2\bigr)} \cdot 6u^5\,du = 6\,\frac{u^6 + 2u^3 + u^2}{u\bigl(u^2+2\bigr)}\,du.$$
+
+Payın $u^2$ ortak çarpanını görelim: $u^6 + 2u^3 + u^2 = u^2\bigl(u^4 + 2u + 1\bigr)$. Bunu paydadaki $u$ ile sadeleştirirsek
+
+$$I = 6\int \frac{u\bigl(u^4+2u+1\bigr)}{u^2+2}\,du = 6\int \frac{u^5 + 2u^2 + u}{u^2+2}\,du$$
+
+buluruz. Beklendiği gibi elimizde bir **rasyonel** integral var. Payın derecesi paydanınkinden büyük olduğu için önce polinom bölmesi yapıyoruz:
+
+$$\begin{aligned}
+u^5 + 2u^2 + u &= u^3\bigl(u^2+2\bigr) - 2u^3 + 2u^2 + u \\
+&= u^3\bigl(u^2+2\bigr) - 2u\bigl(u^2+2\bigr) + 2u^2 + 5u \\
+&= u^3\bigl(u^2+2\bigr) - 2u\bigl(u^2+2\bigr) + 2\bigl(u^2+2\bigr) + 5u - 4.
+\end{aligned}$$
+
+Yani
+
+$$\frac{u^5+2u^2+u}{u^2+2} = u^3 - 2u + 2 + \frac{5u - 4}{u^2+2}.$$
+
+Kalan kesir zaten basit kesir biçimindedir ($u^2 + 2$ indirgenemez); onu da payda türevini içeren kısım ile sabit kısma ayırıyoruz:
+
+$$\int \frac{5u-4}{u^2+2}\,du = \frac{5}{2}\int \frac{2u}{u^2+2}\,du - 4\int\frac{du}{u^2+2} = \frac52 \ln\bigl(u^2+2\bigr) - \frac{4}{\sqrt2}\arctan\frac{u}{\sqrt2}.$$
+
+($u^2 + 2 > 0$ olduğundan mutlak değere gerek yoktur; ayrıca $\frac{4}{\sqrt2} = 2\sqrt2$'dir.) Polinom kısmını da integralleyip hepsini $6$ ile çarpalım:
+
+$$\begin{aligned}
+I &= 6\left[\frac{u^4}{4} - u^2 + 2u + \frac52\ln\bigl(u^2+2\bigr) - 2\sqrt2\,\arctan\frac{u}{\sqrt2}\right] + C \\
+&= \frac{3u^4}{2} - 6u^2 + 12u + 15\ln\bigl(u^2+2\bigr) - 12\sqrt2\,\arctan\frac{u}{\sqrt2} + C.
+\end{aligned}$$
+
+Son adım geri dönüştür: $u = \sqrt[6]{x}$ olduğundan $u^4 = x^{2/3}$, $u^2 = x^{1/3}$, $u = x^{1/6}$'dır:
+
+$$I = \frac{3}{2}x^{2/3} - 6x^{1/3} + 12x^{1/6} + 15\ln\bigl(x^{1/3}+2\bigr) - 12\sqrt2\,\arctan\frac{x^{1/6}}{\sqrt2} + C.$$
+
+**Doğrulama.** $u = \sqrt[6]{x}$ için $\dfrac{du}{dx} = \dfrac{1}{6}x^{-5/6} = \dfrac{1}{6u^5}$'tir. Sonucun $u$'ya göre türevi ($\arctan$ terimi için $\bigl(\arctan\frac{u}{\sqrt2}\bigr)' = \frac{\sqrt2}{u^2+2}$ kullanılarak)
+
+$$6u^3 - 12u + 12 + \frac{30u - 24}{u^2+2} = 6\left(u^3 - 2u + 2 + \frac{5u-4}{u^2+2}\right) = \frac{6\bigl(u^5+2u^2+u\bigr)}{u^2+2}$$
+
+olur. Zincir kuralıyla
+
+$$\frac{dI}{dx} = \frac{6\bigl(u^5+2u^2+u\bigr)}{u^2+2}\cdot\frac{1}{6u^5} = \frac{u^4+2u+1}{u^4\bigl(u^2+2\bigr)},$$
+
+ki bu, $x = u^6$ için integrandın ta kendisidir:
+
+$$\frac{u^6+2u^3+u^2}{u^6\bigl(u^2+2\bigr)} = \frac{u^4+2u+1}{u^4\bigl(u^2+2\bigr)}. \qquad \checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Euler Değişimleri
+
+Şimdi asıl ilginç sınıfa geliyoruz: integrandda **ikinci dereceden** bir polinomun karekökü geçiyorsa ne yapmalı? Yani
+
+$$\int R\Bigl(x, \sqrt{ax^2+bx+c}\Bigr)\,dx, \qquad a \neq 0$$
+
+biçimindeki integraller. Burada @prp-dogrusal-kesirli-kok işe yaramaz, çünkü $\sqrt{ax^2+bx+c} = u$ demek $x$'i $u$ cinsinden ikinci dereceden bir denklemden çözmek demektir ve çözüm yine köklü çıkar. Euler'in fikri, kökü **tek başına** değil, $x$'te birinci dereceden bir ifadeyle **birlikte** yeni değişkene eşitlemektir; böylece karesi alındığında $x^2$'li terimler götürülür ve geriye $x$ için birinci dereceden bir denklem kalır.
+
+::: {#def-euler-degisimleri name="Euler Değişimleri"}
+$a, b, c \in \mathbb{R}$, $a \neq 0$ ve $\Delta = b^2 - 4ac$ olsun. $\sqrt{ax^2+bx+c}$ ifadesini içeren integrallerde aşağıdaki **Euler değişimleri** kullanılır.
+
+1. **Birinci Euler değişimi ($a > 0$ ise).**
+   $$\sqrt{ax^2+bx+c} = u - x\sqrt{a}.$$
+   Kare alındığında $ax^2$ terimleri iki tarafta da çıkar ve $x$ için birinci dereceden bir denklem kalır:
+   $$bx + 2\sqrt{a}\,u\,x = u^2 - c, \qquad x = \frac{u^2-c}{b + 2\sqrt{a}\,u}.$$
+   ($u + x\sqrt a$ seçimi de aynı işi görür; yalnızca $u$'nun işareti değişir.)
+
+2. **İkinci Euler değişimi ($c > 0$ ise).**
+   $$\sqrt{ax^2+bx+c} = ux + \sqrt{c}.$$
+   Kare alındığında sabit terimler götürülür, kalan denklem $x$ ile sadeleşir:
+   $$ax + b = u^2 x + 2\sqrt{c}\,u, \qquad x = \frac{2\sqrt{c}\,u - b}{a - u^2}.$$
+
+3. **Üçüncü Euler değişimi ($\Delta > 0$ ise).** Bu durumda $ax^2+bx+c = a(x-x_1)(x-x_2)$ biçiminde iki farklı reel kökle çarpanlara ayrılır ve
+   $$\sqrt{a(x-x_1)(x-x_2)} = u\,(x - x_1)$$
+   alınır. Kare alınıp ortak $(x-x_1)$ çarpanı sadeleştirilirse
+   $$a(x-x_2) = u^2(x-x_1), \qquad x = \frac{a\,x_2 - u^2 x_1}{a - u^2}$$
+   bulunur.
+
+Üç durumda da $x$, $u$'nun rasyonel bir fonksiyonu olarak çözülür; dolayısıyla $dx$ ve $\sqrt{ax^2+bx+c}$ de $u$'nun rasyonel fonksiyonları olur ve integral rasyonelleşir.
+:::
+
+Hangi değişimi ne zaman kullanacağımıza karar vermek zor değildir. İntegrandın anlamlı olması için $ax^2+bx+c$ ifadesinin bir aralık boyunca **pozitif** olması gerekir. $a > 0$ ise birinci değişim **her zaman** kullanılabilir; $\Delta$'nın işaretinin hiçbir önemi yoktur. $a < 0$ ise $ax^2+bx+c$ ancak ve ancak $\Delta > 0$ olduğunda pozitif değerler alır (aksi hâlde aşağı açılan parabolün tepe noktası bile $x$ ekseninin üstüne çıkmaz ve ifade her yerde $\leq 0$ olur); demek ki bu hâlde üçüncü değişim her zaman kullanılabilir. Yani **birinci ve üçüncü değişimler, integralin anlamlı olduğu bütün durumları kapsar.** İkinci değişim vazgeçilmez değildir; ama $c > 0$ olduğunda hesabı çoğu kez kısalttığı için ayrı bir seçenek olarak tutulur.
+
+Bölümün başında, her rasyonelleştirmede $u = u(x)$ dönüşümünün çalıştığımız aralıkta birebir ve türevi sıfırdan farklı olduğunu ayrıca denetleyeceğimizi söylemiştik. Üç Euler değişimi için bu denetimi bir kerede yapalım. $\Delta \neq 0$ olsun ve kısaca $Y = \sqrt{ax^2+bx+c} > 0$ yazalım.
+
+Birinci değişimde $u = x\sqrt a + Y$'dir; türevi
+
+$$u'(x) = \sqrt a + \frac{2ax+b}{2Y} = \frac{2\sqrt a\,Y + 2ax + b}{2Y}$$
+
+olur. Pay sıfır olsaydı $2\sqrt a\,Y = -(2ax+b)$ olurdu; iki yanın karesini alırsak $4a\bigl(ax^2+bx+c\bigr) = (2ax+b)^2$, yani $4ac = b^2$, yani $\Delta = 0$ çıkardı. Demek ki $\Delta \neq 0$ iken pay hiçbir noktada sıfırlanmaz; sürekli olduğu için işaretini de değiştiremez ve $u$ kesin monotondur.
+
+İkinci değişimde $u = \dfrac{Y - \sqrt c}{x}$'tir. Bölüm kuralıyla türevi alıp $2Y x^2$ ile çarparsak, $Y^2 = ax^2+bx+c$ olduğundan
+
+$$2Y\,x^2\,u'(x) = (2ax+b)\,x - 2Y^2 + 2\sqrt c\,Y = 2\sqrt c\,Y - (bx + 2c)$$
+
+buluruz. Sağ tarafın sıfır olması $2\sqrt c\,Y = bx+2c$ demektir; kare alınca bu koşul $\bigl(4ac - b^2\bigr)x^2 = 0$'a indirgenir. Öyleyse $x \neq 0$ ve $\Delta \neq 0$ iken $u'(x) \neq 0$'dır.
+
+Üçüncü değişimde $u^2 = \dfrac{a(x-x_2)}{x-x_1}$'dir ve
+
+$$\frac{d}{dx}\left(\frac{a(x-x_2)}{x-x_1}\right) = \frac{a\,(x_2-x_1)}{(x-x_1)^2} \neq 0$$
+
+olur, çünkü $a \neq 0$ ve $x_1 \neq x_2$'dir. Demek ki $u^2$ kesin monotondur; kökün pozitif dalını ($u > 0$) seçtiğimizde $u$ da kesin monoton, dolayısıyla birebirdir.
+
+Dışarıda bıraktığımız $\Delta = 0$ hâlinde ise zaten yapacak bir şey yoktur: $ax^2+bx+c = a\bigl(x+\frac{b}{2a}\bigr)^2$ olduğundan $a>0$ için $\sqrt{ax^2+bx+c} = \sqrt a\,\bigl|x+\frac{b}{2a}\bigr|$ olur, kök kendiliğinden kaybolur ve integrand rasyonel bir fonksiyona (daha doğrusu iki aralıkta ayrı ayrı rasyonel fonksiyonlara) dönüşür.
+
+::: {.callout-note title="🧠 Geometrik anlamı"}
+$y = \sqrt{ax^2+bx+c}$ eğrisi, $y^2 = ax^2+bx+c$ koniğinin üst yarısıdır. Birinci Euler değişimi $y = u - x\sqrt a$, eğim $-\sqrt a$ olan **paralel doğrular ailesi** demektir; bu eğim koniğin asimptot eğimidir, bu yüzden her doğru koniği tam olarak **bir** noktada keser ve $u$ parametresi eğri üzerindeki noktaları birebir tarar. Üçüncü Euler değişimi $y = u(x - x_1)$ ise eğrinin $x$ eksenini kestiği $(x_1, 0)$ noktasından geçen doğrular ailesidir; bu noktadan geçen bir doğru koniği zaten $(x_1,0)$'da kestiğinden geriye tek bir kesişim noktası kalır. Her iki durumda da "bir noktadan geçen doğrularla koniği parametrelendirme" fikri, kökü rasyonel bir ifadeye çevirir.
+:::
+
+İlk örneğimizde birinci Euler değişimini sonuna kadar çalıştıracağız.
+
+:::: {#exm-euler-birinci name="Birinci Euler Değişimi"}
+$$I = \int \frac{x\,dx}{1 + \sqrt{x^2+2x+2}}$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+Burada $a = 1$, $b = 2$, $c = 2$ ve $\Delta = 4 - 8 = -4 < 0$'dır. $\Delta < 0$ olduğu için üçüncü değişim kullanılamaz; ama $a = 1 > 0$ olduğundan **birinci** Euler değişimi uygulanabilir. $\sqrt a = 1$ olduğundan
+
+$$\sqrt{x^2+2x+2} = u - x$$
+
+alalım. İki tarafın karesini alırsak
+
+$$x^2+2x+2 = u^2 - 2ux + x^2 \quad \Longrightarrow \quad 2x + 2ux = u^2 - 2 \quad \Longrightarrow \quad x = \frac{u^2-2}{2(1+u)}.$$
+
+Türev alarak $dx$'i bulalım:
+
+$$dx = \frac{2u \cdot 2(1+u) - 2\bigl(u^2-2\bigr)}{4(1+u)^2}\,du = \frac{4u + 4u^2 - 2u^2 + 4}{4(1+u)^2}\,du = \frac{u^2+2u+2}{2(1+u)^2}\,du.$$
+
+Kökü de $u$ cinsinden yazalım:
+
+$$\sqrt{x^2+2x+2} = u - \frac{u^2-2}{2(1+u)} = \frac{2u(1+u) - u^2 + 2}{2(1+u)} = \frac{u^2+2u+2}{2(1+u)}.$$
+
+Bu yüzden paydada duran ifade çok güzel sadeleşir:
+
+$$1 + \sqrt{x^2+2x+2} = \frac{2(1+u) + u^2+2u+2}{2(1+u)} = \frac{u^2+4u+4}{2(1+u)} = \frac{(u+2)^2}{2(1+u)}.$$
+
+Şimdi her şeyi yerine koyalım:
+
+$$\frac{x\,dx}{1+\sqrt{x^2+2x+2}} = \frac{u^2-2}{2(1+u)} \cdot \frac{2(1+u)}{(u+2)^2}\cdot \frac{u^2+2u+2}{2(1+u)^2}\,du = \frac{\bigl(u^2-2\bigr)\bigl(u^2+2u+2\bigr)}{2\,(u+1)^2(u+2)^2}\,du,$$
+
+yani $I = \dfrac12 \displaystyle\int \frac{\bigl(u^2-2\bigr)\bigl(u^2+2u+2\bigr)}{(u+1)^2(u+2)^2}\,du$. Rasyonel integrale ulaştık. Pay $u^4+2u^3-4u-4$, payda ise $\bigl[(u+1)(u+2)\bigr]^2 = u^4+6u^3+13u^2+12u+4$'tür. Dereceler eşit olduğundan önce bölme yapıyoruz; bölüm $1$, kalan
+
+$$\bigl(u^4+2u^3-4u-4\bigr) - \bigl(u^4+6u^3+13u^2+12u+4\bigr) = -4u^3-13u^2-16u-8$$
+
+olur. Böylece
+
+$$\frac{\bigl(u^2-2\bigr)\bigl(u^2+2u+2\bigr)}{(u+1)^2(u+2)^2} = 1 + \frac{-4u^3-13u^2-16u-8}{(u+1)^2(u+2)^2}.$$
+
+Kalan kesri basit kesirlere ayıralım. Pay polinomuna $N(u) = -4u^3-13u^2-16u-8$ diyelim; payda iki katlı doğrusal çarpan içerdiğinden ayrışım $\dfrac{A}{u+1} + \dfrac{B}{(u+1)^2} + \dfrac{C}{u+2} + \dfrac{D}{(u+2)^2}$ biçimindedir ve iki yanı $(u+1)^2(u+2)^2$ ile çarpınca
+
+$$N(u) = A(u+1)(u+2)^2 + B(u+2)^2 + C(u+2)(u+1)^2 + D(u+1)^2$$
+
+özdeşliğini buluruz. $u = -1$ koyarsak sağda yalnızca $B$ kalır: $N(-1) = -1$, yani $B = -1$. $u = -2$ koyarsak $N(-2) = 4$, yani $D = 4$. Kalan iki bilinmeyen için $u^3$ katsayılarını eşitleriz ($A + C = -4$) ve $u = 0$ koyarız ($4A + 4B + 2C + D = -8$, yani $2A + C = -4$); bu iki denklemden $A = 0$ ve $C = -4$ çıkar. (Kontrol: $u^2$ katsayıları $5A+B+4C+D = -13$, $u$ katsayıları $8A+4B+5C+2D = -16$; ikisi de $N$'ninkilerle uyuşuyor.)
+
+Böylece integrand
+
+$$1 - \frac{1}{(u+1)^2} - \frac{4}{u+2} + \frac{4}{(u+2)^2}$$
+
+hâline gelir. Terim terim integralleyip $\frac12$ ile çarpalım:
+
+$$I = \frac12\left[u + \frac{1}{u+1} - 4\ln|u+2| - \frac{4}{u+2}\right] + C.$$
+
+Geri dönüş için $u = x + \sqrt{x^2+2x+2}$ yazıyoruz. İşaretleri denetleyelim: $t = x+1$ dersek $\sqrt{x^2+2x+2} = \sqrt{t^2+1} > |t|$ olduğundan $u+1 = t + \sqrt{t^2+1} > 0$ ve $u + 2 > 1 > 0$'dır; yani logaritmada mutlak değere gerek yoktur.
+
+Sonucu güzelleştirebiliriz: $\bigl(\sqrt{t^2+1}+t\bigr)\bigl(\sqrt{t^2+1}-t\bigr) = 1$ olduğundan
+
+$$\frac{1}{u+1} = \frac{1}{t+\sqrt{t^2+1}} = \sqrt{t^2+1} - t = \sqrt{x^2+2x+2} - (x+1)$$
+
+yazılır ve ilk iki terim birleşir:
+
+$$\frac{u}{2} + \frac{1}{2(u+1)} = \frac{x + \sqrt{x^2+2x+2} + \sqrt{x^2+2x+2} - x - 1}{2} = \sqrt{x^2+2x+2} - \frac12.$$
+
+Sabit $-\frac12$ integral sabitine karışır. Sonuç:
+
+$$I = \sqrt{x^2+2x+2} \;-\; \frac{2}{x+2+\sqrt{x^2+2x+2}} \;-\; 2\ln\Bigl(x+2+\sqrt{x^2+2x+2}\Bigr) + C.$$
+
+**Doğrulama.** En kısa yol, $u$ değişkenindeki ilkel fonksiyonu türetip zincir kuralını kullanmaktır. Bulduğumuz ifadeye
+
+$$G(u) = \frac12\left[u + \frac{1}{u+1} - 4\ln(u+2) - \frac{4}{u+2}\right]$$
+
+diyelim. Türevi
+
+$$G'(u) = \frac12\left[1 - \frac{1}{(u+1)^2} - \frac{4}{u+2} + \frac{4}{(u+2)^2}\right] = \frac12\cdot\frac{\bigl(u^2-2\bigr)\bigl(u^2+2u+2\bigr)}{(u+1)^2(u+2)^2}$$
+
+olur; son eşitlik, yukarıda kurduğumuz basit kesirlere ayırmanın ta kendisidir. Öte yandan $\dfrac{dx}{du} = \dfrac{u^2+2u+2}{2(1+u)^2}$ olduğundan, ters fonksiyonun türev kuralıyla (@thm-ters-turev)
+
+$$\frac{dI}{dx} = \frac{G'(u)}{\;dx/du\;} = \frac12\cdot\frac{\bigl(u^2-2\bigr)\bigl(u^2+2u+2\bigr)}{(u+1)^2(u+2)^2}\cdot\frac{2(1+u)^2}{u^2+2u+2} = \frac{u^2-2}{(u+2)^2}$$
+
+bulunur. Bu ise integrandın kendisidir: yukarıda $x = \dfrac{u^2-2}{2(1+u)}$ ve $1+\sqrt{x^2+2x+2} = \dfrac{(u+2)^2}{2(1+u)}$ olduğunu görmüştük, dolayısıyla
+
+$$\frac{x}{1+\sqrt{x^2+2x+2}} = \frac{u^2-2}{(u+2)^2}. \qquad \checkmark$$
+
+Son yazdığımız $x$'li biçim, $G(u(x))$'ten yalnızca cebirsel sadeleştirmeyle — ve yol boyunca sabite karışan $-\frac12$ terimiyle — elde edildiği için, bir sabit farkıyla aynı fonksiyondur; ikisinin de türevi integranddır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İkinci örnekte aynı değişimi biraz farklı bir integrandda kullanacağız; bu kez hesap çok daha kısa çıkacak.
+
+:::: {#exm-euler-ikinci name="Birinci Euler Değişiminin İkinci Uygulaması"}
+$$I = \int \frac{dx}{x - 2 + \sqrt{x^2-2x+2}}$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+Burada $a = 1 > 0$ ve $\Delta = -4 < 0$'dır; yine birinci Euler değişimini kullanıyoruz. Bu kez işaret seçimini değiştirip $\sqrt{x^2-2x+2} = u + x$ alalım (bu, $u \mapsto -u$ değişikliğinden ibarettir ve sonucu etkilemez). Kare alalım:
+
+$$x^2-2x+2 = u^2 + 2ux + x^2 \quad \Longrightarrow \quad -2x - 2ux = u^2 - 2 \quad \Longrightarrow \quad x = \frac{2-u^2}{2(1+u)}.$$
+
+Türev:
+
+$$dx = \frac{-2u\cdot 2(1+u) - \bigl(2-u^2\bigr)\cdot 2}{4(1+u)^2}\,du = \frac{-4u-4u^2-4+2u^2}{4(1+u)^2}\,du = -\,\frac{u^2+2u+2}{2(1+u)^2}\,du.$$
+
+Kök ve paydadaki ifade:
+
+$$\sqrt{x^2-2x+2} = u + x = \frac{2u(1+u) + 2 - u^2}{2(1+u)} = \frac{u^2+2u+2}{2(1+u)},$$
+
+$$x - 2 = \frac{2-u^2 - 4(1+u)}{2(1+u)} = \frac{-u^2-4u-2}{2(1+u)}.$$
+
+İkisini toplarsak paydadaki ifade çarpıcı biçimde sadeleşir:
+
+$$x - 2 + \sqrt{x^2-2x+2} = \frac{-u^2-4u-2+u^2+2u+2}{2(1+u)} = \frac{-2u}{2(1+u)} = \frac{-u}{1+u}.$$
+
+Şimdi integrandı yazalım:
+
+$$\frac{dx}{x-2+\sqrt{x^2-2x+2}} = \left(-\frac{u^2+2u+2}{2(1+u)^2}\right)\cdot\left(-\frac{1+u}{u}\right)du = \frac{u^2+2u+2}{2\,u\,(u+1)}\,du.$$
+
+Yani
+
+$$I = \frac12\int \frac{u^2+2u+2}{u(u+1)}\,du.$$
+
+Pay ile paydanın dereceleri eşit; önce bölme yapalım. $u^2 + 2u + 2 = \bigl(u^2 + u\bigr) + (u + 2)$ olduğundan
+
+$$\frac{u^2+2u+2}{u(u+1)} = 1 + \frac{u+2}{u(u+1)}.$$
+
+Kalan kesri basit kesirlere ayıralım: $\dfrac{u+2}{u(u+1)} = \dfrac{A}{u} + \dfrac{B}{u+1}$ yazıp iki yanı $u(u+1)$ ile çarparsak $u + 2 = A(u+1) + Bu$ olur. $u = 0$ için $A = 2$, $u = -1$ için $-B = 1$, yani $B = -1$'dir. Böylece
+
+$$I = \frac12 \int\left(1 + \frac{2}{u} - \frac{1}{u+1}\right)du = \frac{u}{2} + \ln|u| - \frac12\ln|u+1| + C.$$
+
+Geri dönüş: $\sqrt{x^2-2x+2} = u + x$ olduğundan
+
+$$u = \sqrt{x^2-2x+2} - x.$$
+
+İşaretlere bakalım: $s = x-1$ dersek $u+1 = \sqrt{s^2+1} - s > 0$ daima pozitiftir, orada mutlak değere gerek yoktur. Buna karşılık $u$ kendisi $x<1$ için pozitif, $x>1$ için negatiftir ve $x=1$'de sıfır olur — nitekim $x=1$'de integrandın paydası da sıfırdır, yani orası gerçek bir tekil noktadır ve hesap $x<1$ ile $x>1$ aralıklarında ayrı ayrı geçerlidir. Mutlak değeri koruyarak yazalım:
+
+$$I = \frac{\sqrt{x^2-2x+2} - x}{2} + \ln\left|\sqrt{x^2-2x+2} - x\right| - \frac12 \ln\left(\sqrt{x^2-2x+2} - x + 1\right) + C.$$
+
+**Doğrulama.** $u$ değişkenindeki ilkel fonksiyona
+
+$$G(u) = \frac{u}{2} + \ln|u| - \frac12\ln(u+1)$$
+
+diyelim. Türevini ortak paydada toplayalım:
+
+$$G'(u) = \frac12 + \frac{1}{u} - \frac{1}{2(u+1)} = \frac{u(u+1) + 2(u+1) - u}{2u(u+1)} = \frac{u^2+2u+2}{2u(u+1)}.$$
+
+Değişimin kuruluşundan $\dfrac{dx}{du} = -\dfrac{u^2+2u+2}{2(1+u)^2}$ ve $x - 2 + \sqrt{x^2-2x+2} = \dfrac{-u}{1+u}$ olduğunu biliyoruz. Ters fonksiyonun türev kuralıyla (@thm-ters-turev)
+
+$$\frac{dI}{dx} = \frac{G'(u)}{\;dx/du\;} = \frac{u^2+2u+2}{2u(u+1)}\cdot\left(-\frac{2(1+u)^2}{u^2+2u+2}\right) = -\frac{u+1}{u} = \frac{1}{\;\dfrac{-u}{1+u}\;} = \frac{1}{x-2+\sqrt{x^2-2x+2}}. \qquad \checkmark$$
+
+Bulduğumuz türev tam olarak integranddır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Üçüncü örnekte $\Delta > 0$ hâlini kullanacağız; bu değişim, kökün içindeki polinomun reel kökleri olduğunda çoğu zaman en kısa yoldur.
+
+:::: {#exm-euler-ucuncu name="Üçüncü Euler Değişimi"}
+$x > 2$ için
+
+$$I = \int \frac{dx}{(x-1)\sqrt{x^2-3x+2}}$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+Kökün içindeki polinomu çarpanlarına ayıralım: $x^2-3x+2 = (x-1)(x-2)$, yani $a = 1$, $x_1 = 1$, $x_2 = 2$ ve $\Delta = 1 > 0$. $a>0$ olduğu için birinci değişim de kullanılabilirdi; ama $\Delta > 0$ olduğundan **üçüncü** değişim çok daha kısa bir hesap verir. $x_1 = 1$ köküne göre
+
+$$\sqrt{(x-1)(x-2)} = u\,(x-1)$$
+
+alalım. Kare alıp ortak $(x-1)$ çarpanını sadeleştirirsek ($x > 2$ olduğundan $x - 1 \neq 0$)
+
+$$x - 2 = u^2(x-1) \quad \Longrightarrow \quad x\bigl(1 - u^2\bigr) = 2 - u^2 \quad \Longrightarrow \quad x = \frac{2-u^2}{1-u^2}.$$
+
+Bu ifadeden hemen şunu okuyoruz:
+
+$$x - 1 = \frac{2-u^2 - \bigl(1-u^2\bigr)}{1-u^2} = \frac{1}{1-u^2}.$$
+
+Türev alalım ve kökü yazalım:
+
+$$dx = \frac{-2u\bigl(1-u^2\bigr) + 2u\bigl(2-u^2\bigr)}{\bigl(1-u^2\bigr)^2}\,du = \frac{2u}{\bigl(1-u^2\bigr)^2}\,du, \qquad \sqrt{x^2-3x+2} = u(x-1) = \frac{u}{1-u^2}.$$
+
+Şimdi integrandın paydası kurulabilir:
+
+$$(x-1)\sqrt{x^2-3x+2} = \frac{1}{1-u^2}\cdot\frac{u}{1-u^2} = \frac{u}{\bigl(1-u^2\bigr)^2},$$
+
+ve bu, $dx$ ile birebir sadeleşecek biçimdedir:
+
+$$I = \int \frac{\bigl(1-u^2\bigr)^2}{u}\cdot\frac{2u}{\bigl(1-u^2\bigr)^2}\,du = \int 2\,du = 2u + C.$$
+
+Geri dönüşte $u = \dfrac{\sqrt{x^2-3x+2}}{x-1}$ yazıyoruz:
+
+$$I = \frac{2\sqrt{x^2-3x+2}}{x-1} + C = 2\sqrt{\frac{x-2}{x-1}} + C \qquad (x > 2).$$
+
+Son eşitlikte $x > 2$ için $\dfrac{\sqrt{(x-1)(x-2)}}{x-1} = \sqrt{\dfrac{x-2}{x-1}}$ olduğunu kullandık.
+
+**Doğrulama.** $X = x^2-3x+2$ diyelim; $X' = 2x - 3$'tür. Bölüm kuralıyla
+
+$$\frac{d}{dx}\left(\frac{2\sqrt{X}}{x-1}\right) = 2\,\frac{\dfrac{2x-3}{2\sqrt X}(x-1) - \sqrt X}{(x-1)^2} = \frac{(2x-3)(x-1) - 2X}{\sqrt X\,(x-1)^2}.$$
+
+Payı hesaplayalım: $(2x-3)(x-1) = 2x^2-5x+3$ ve $2X = 2x^2-6x+4$ olduğundan pay $x - 1$'e eşittir. Böylece
+
+$$\frac{d}{dx}\left(\frac{2\sqrt X}{x-1}\right) = \frac{x-1}{\sqrt X\,(x-1)^2} = \frac{1}{(x-1)\sqrt{x^2-3x+2}}. \qquad \checkmark$$
+
+Bu hesapta $x-1$'in işaretini hiç kullanmadık: $\dfrac{2\sqrt{x^2-3x+2}}{x-1}$ ifadesi, integrandın tanımlı olduğu **iki** aralıkta da ($x<1$ ve $x>2$) bir ilkel fonksiyondur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="⚠️ Değişim seçimi hesabın uzunluğunu belirler"}
+Üç Euler değişiminden birden fazlası uygulanabiliyorsa hepsi doğru sonuca götürür; ama ürettikleri rasyonel integraller çok farklı zorlukta olabilir. Son örnekte birinci değişim ($\sqrt{x^2-3x+2} = u-x$) de kullanılabilirdi; o yol basit kesirlere ayırma gerektiren çok daha uzun bir hesap verirdi. Genel kural: kökün içindeki polinomun **reel kökleri varsa** üçüncü değişimi, yoksa ve $c>0$ ise ikinci değişimi denemek hesabı kısaltır.
+:::
+
+## Belirsiz Katsayılar Yöntemi
+
+Euler değişimleri her zaman işe yarar, ama bazı biçimlerde gereksiz yere uzundur. Bunların en sık karşılaşılanı
+
+$$\int \frac{p_n(x)}{\sqrt{ax^2+bx+c}}\,dx, \qquad p_n \ \text{bir } n\text{-inci dereceden polinom}$$
+
+biçimidir. Sonucun neye benzeyeceğini tahmin edebiliriz: $q(x)\sqrt{ax^2+bx+c}$ biçimindeki bir ifadenin türevi, paydası $\sqrt{ax^2+bx+c}$ olan bir kesir verir. Öyleyse yanıt da bu biçimde olmalı — artı, tek başına kalan bir "temel" integral. Yanıtın biçimini önceden yazıp katsayılarını bilinmeyen bırakmaya ve sonra bu katsayıları bir denklem sisteminden çözmeye **belirsiz katsayılar yöntemi** (method of undetermined coefficients) denir. Bu tahmini bir teoreme çevirelim.
+
+:::: {#thm-belirsiz-katsayilar-yontemi name="Belirsiz Katsayılar Yöntemi"}
+$a \neq 0$ ve $X(x) = ax^2+bx+c$ olsun; $X$'in pozitif olduğu bir aralıkta çalışalım. $p_n$, derecesi $n \geq 1$ olan bir polinom olmak üzere, derecesi $n-1$ olan **tek bir** $q_{n-1}$ polinomu ve **tek bir** $\lambda \in \mathbb{R}$ sayısı vardır ki
+
+$$\int \frac{p_n(x)}{\sqrt{X(x)}}\,dx = q_{n-1}(x)\,\sqrt{X(x)} \;+\; \lambda \int \frac{dx}{\sqrt{X(x)}}$$
+
+olur. $q_{n-1}$ ile $\lambda$, yukarıdaki eşitliğin iki yanının türevi alınıp $\sqrt X$ ile çarpılarak elde edilen
+
+$$p_n(x) = q_{n-1}'(x)\,X(x) + \frac12\,q_{n-1}(x)\,X'(x) + \lambda$$
+
+polinom özdeşliğinden, katsayılar eşitlenerek bulunur.
+
+::: {.ispat}
+Önce özdeşliğin nereden geldiğini görelim. İddia edilen eşitliğin iki yanının türevini alalım. Sağ tarafta çarpım kuralı ve zincir kuralıyla (@thm-zincir-kurali), $\bigl(\sqrt X\bigr)' = \dfrac{X'}{2\sqrt X}$ olduğundan
+
+$$\frac{p_n(x)}{\sqrt X} = q_{n-1}'(x)\sqrt X + q_{n-1}(x)\,\frac{X'(x)}{2\sqrt X} + \frac{\lambda}{\sqrt X}.$$
+
+İki yanı $\sqrt X > 0$ ile çarparsak, $\bigl(\sqrt X\bigr)^2 = X$ olduğundan
+
+$$p_n(x) = q_{n-1}'(x)\,X(x) + \frac12\,q_{n-1}(x)\,X'(x) + \lambda$$
+
+polinom özdeşliğini buluruz; buna kısaca **temel özdeşlik** diyelim. Tersine, temel özdeşliği sağlayan bir $q_{n-1}$ ve $\lambda$ bulursak, yukarıdaki adımları geri yürüterek
+
+$$\frac{d}{dx}\left[q_{n-1}(x)\sqrt{X(x)}\right] = \frac{p_n(x)}{\sqrt{X(x)}} - \frac{\lambda}{\sqrt{X(x)}}$$
+
+elde ederiz; iki yanın ilkel fonksiyonlarını alınca teoremdeki eşitlik (bir sabit farkıyla) çıkar. Demek ki bütün mesele temel özdeşliğin çözülebilirliğidir.
+
+**Dereceler tutuyor mu?** $n \geq 2$ iken $q_{n-1}'X$ çarpımının derecesi $(n-2)+2 = n$, $q_{n-1}X'$ çarpımının derecesi $(n-1)+1 = n$'dir ($a \neq 0$ olduğundan $X'$ birinci derecedendir); $n = 1$ iken ise $q_0' = 0$ olduğu için ilk çarpım hiç görünmez ve ikinci çarpımın derecesi $1$'dir. Her iki durumda da temel özdeşliğin sağ tarafı, tıpkı sol tarafı gibi, en çok $n$-inci derecedendir. Bilinmeyenler $q_{n-1}$'in $n$ katsayısı ile $\lambda$, toplam $n+1$ tanedir; denklemler ise $x^n, \dots, x^1, x^0$ katsayılarının eşitliği, yine $n+1$ tanedir. Sayılar tutuyor; ama bu tek başına varlık ve teklik vermez. Sistemin yapısına bakalım.
+
+**Sistem üçgenseldir.** $q_{n-1}(x) = \sum_{k=0}^{n-1} A_k x^k$ yazalım. $X = ax^2+bx+c$ ve $X' = 2ax + b$ olduğundan
+
+$$q_{n-1}'X = \sum_{k=1}^{n-1} k A_k x^{k-1}\bigl(ax^2+bx+c\bigr) = \sum_{k=1}^{n-1} k A_k\bigl(a x^{k+1} + b x^{k} + c x^{k-1}\bigr),$$
+
+$$\frac12 q_{n-1}X' = \sum_{k=0}^{n-1} A_k \left(a x^{k+1} + \frac{b}{2}x^{k}\right).$$
+
+Şimdi sağ tarafta $x^m$'in katsayısını toplayalım ($0 \le m \le n$). $x^{k+1}$ terimlerinden $k = m-1$, $x^k$ terimlerinden $k = m$, $x^{k-1}$ terimlerinden $k = m+1$ katkı verir:
+
+$$a(m-1)A_{m-1} + a A_{m-1} \;+\; b\,m\,A_m + \frac b2 A_m \;+\; c\,(m+1)A_{m+1} \;+\; \lambda\,[m=0]$$
+
+$$= a\,m\,A_{m-1} \;+\; b\left(m + \tfrac12\right)A_m \;+\; c\,(m+1)\,A_{m+1} \;+\; \lambda\,[m=0],$$
+
+burada $[m=0]$ ifadesi $m=0$ ise $1$, değilse $0$ demektir. Denklemleri $m=n$'den $m=0$'a doğru sıralayalım. Her $j = n-1, n-2, \dots, 0$ için $m = j+1$ denklemi, katsayısı $a(j+1) \neq 0$ olan $A_j$ ile yalnızca daha önce belirlenmiş $A_{j+1}, A_{j+2}$'yi içerir; buradan $A_j$ **tek türlü** çözülür. (İlk adımda, yani $m=n$ denkleminde $a\,n\,A_{n-1} = (p_n\text{'in } x^n \text{ katsayısı})$ olur; $a \neq 0$ ve $n \geq 1$ olduğundan $A_{n-1}$ hemen bulunur.) Bütün $A_k$'lar belirlendikten sonra geriye $m=0$ denklemi kalır: $\frac b2 A_0 + cA_1 + \lambda = (p_n\text{'in sabit terimi})$, buradan $\lambda$ tek türlü çıkar. Katsayı matrisi bu sıralamada alt üçgenseldir ve köşegeninde $an, a(n-1), \dots, a, 1$ sayıları bulunur; hepsi sıfırdan farklı olduğundan sistem tek çözümlüdür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yöntemin bütün yükü tek bir doğrusal sisteme indi. Geriye kalan $\displaystyle\int \frac{dx}{\sqrt{ax^2+bx+c}}$ integrali ise **temel** bir integraldir: kareyi tamamlayarak $a > 0$ hâlinde
+
+$$\int \frac{dx}{\sqrt{x^2 + k}} = \ln\left|x + \sqrt{x^2+k}\right| + C$$
+
+biçimine, $a < 0$ hâlinde ise
+
+$$\int \frac{dx}{\sqrt{k^2 - x^2}} = \arcsin\frac{x}{k} + C \qquad (k>0)$$
+
+biçimine gelir. Birincisini doğrulamak kolaydır: $\ln\bigl|x+\sqrt{x^2+k}\bigr|$ ifadesinin türevi
+
+$$\frac{1 + \dfrac{x}{\sqrt{x^2+k}}}{x+\sqrt{x^2+k}} = \frac{1}{\sqrt{x^2+k}}$$
+
+olur; ikincisi ise ters trigonometrik fonksiyonların türev kuralının (@thm-ters-trigonometrik-turevler) doğrudan sonucudur.
+
+Aynı fikrin küçük bir uzantısı da vardır: paydada bir kuvvet çarpanı bulunan $\displaystyle\int \frac{dx}{(x-\alpha)^m \sqrt{ax^2+bx+c}}$ integralinde $x - \alpha = \dfrac{1}{t}$ değişimi yapılırsa integral yine "polinom bölü karekök" biçimine gelir ve yukarıdaki yöntem doğrudan çalışır.
+
+Şimdi yöntemi en tipik örneğinde çalıştıralım. Dikkat edilecek tek şey, integrandın önce doğru biçime sokulmasıdır.
+
+:::: {#exm-belirsiz-katsayilar-hesap name="Belirsiz Katsayılarla Bir Hesap"}
+$$I = \int x^2\sqrt{x^2+4}\;dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+İntegrand şu anda "polinom bölü karekök" biçiminde değil; $\bigl(\sqrt{x^2+4}\bigr)^2 = x^2+4$ olduğunu kullanarak kökü paydaya taşıyalım:
+
+$$\int x^2\sqrt{x^2+4}\,dx = \int \frac{x^2\bigl(x^2+4\bigr)}{\sqrt{x^2+4}}\,dx = \int \frac{x^4+4x^2}{\sqrt{x^2+4}}\,dx.$$
+
+Artık $p_4(x) = x^4+4x^2$ ve $X(x) = x^2+4$'tür ($a = 1$, $b = 0$, $c = 4$). @thm-belirsiz-katsayilar-yontemi gereği, üçüncü dereceden bir $q_3(x) = Ax^3+Bx^2+Cx+D$ ve bir $\lambda$ sayısı için
+
+$$\int \frac{x^4+4x^2}{\sqrt{x^2+4}}\,dx = \bigl(Ax^3+Bx^2+Cx+D\bigr)\sqrt{x^2+4} + \lambda\int\frac{dx}{\sqrt{x^2+4}}$$
+
+yazabiliriz. Teoremdeki temel özdeşliği kuralım: $X' = 2x$ olduğundan
+
+$$x^4+4x^2 = \bigl(3Ax^2+2Bx+C\bigr)\bigl(x^2+4\bigr) + \bigl(Ax^3+Bx^2+Cx+D\bigr)\,x + \lambda.$$
+
+Sağ tarafı açalım:
+
+$$3Ax^4 + 2Bx^3 + Cx^2 + 12Ax^2 + 8Bx + 4C + Ax^4 + Bx^3 + Cx^2 + Dx + \lambda.$$
+
+Şimdi katsayıları eşitliyoruz; teoremin ispatındaki gibi en yüksek dereceden başlayarak:
+
+$$\begin{aligned}
+x^4: &\quad 3A + A = 1 &&\Longrightarrow\quad A = \tfrac14, \\
+x^3: &\quad 2B + B = 0 &&\Longrightarrow\quad B = 0, \\
+x^2: &\quad 12A + 2C = 4 &&\Longrightarrow\quad 3 + 2C = 4 \ \Longrightarrow\ C = \tfrac12, \\
+x^1: &\quad 8B + D = 0 &&\Longrightarrow\quad D = 0, \\
+x^0: &\quad 4C + \lambda = 0 &&\Longrightarrow\quad \lambda = -2.
+\end{aligned}$$
+
+Görüldüğü gibi her denklem, bir önceki adımda bulunan değerler yerine konduğunda tek bir bilinmeyen bırakıyor — teoremdeki üçgensel yapı tam olarak budur. Bulduklarımızı yerine koyalım:
+
+$$\int \frac{x^4+4x^2}{\sqrt{x^2+4}}\,dx = \left(\frac{x^3}{4} + \frac{x}{2}\right)\sqrt{x^2+4} - 2\int \frac{dx}{\sqrt{x^2+4}}.$$
+
+Kalan integral temel biçimdedir:
+
+$$\int\frac{dx}{\sqrt{x^2+4}} = \ln\left(x + \sqrt{x^2+4}\right) + C$$
+
+(burada $\sqrt{x^2+4} > |x|$ olduğundan $x + \sqrt{x^2+4} > 0$'dır, mutlak değere gerek yoktur). Sonuç:
+
+$$I = \left(\frac{x^3}{4} + \frac{x}{2}\right)\sqrt{x^2+4} \;-\; 2\ln\left(x+\sqrt{x^2+4}\right) + C.$$
+
+**Doğrulama.** $S = \sqrt{x^2+4}$ ve $S' = \dfrac{x}{S}$'dir. Birinci terimin türevi çarpım kuralıyla
+
+$$\left(\frac{3x^2}{4} + \frac12\right)S + \left(\frac{x^3}{4}+\frac{x}{2}\right)\frac{x}{S} = \frac{\frac{3x^4}{4} + 3x^2 + \frac{x^2}{2} + 2 + \frac{x^4}{4} + \frac{x^2}{2}}{S} = \frac{x^4+4x^2+2}{S}$$
+
+olur; ikinci terimin türevi ise yukarıda hesapladığımız gibi $-\dfrac{2}{S}$'dir. Toplarsak
+
+$$\frac{x^4+4x^2+2}{S} - \frac{2}{S} = \frac{x^4+4x^2}{S} = \frac{x^2\bigl(x^2+4\bigr)}{\sqrt{x^2+4}} = x^2\sqrt{x^2+4}. \qquad \checkmark$$
+
+Türev, başladığımız integranda birebir eşit.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Binom İntegralleri
+
+Bölümün son ve en ilginç sınıfına geliyoruz. Şimdiye kadar hep "uygun bir değişim vardır" diyebiliyorduk; binom integrallerinde durum farklıdır. Burada uygun değişimin **ne zaman var olduğunu** tam olarak söyleyen bir ölçüt vardır ve bu ölçüt sağlanmadığında integral hiçbir elemanter fonksiyonla yazılamaz.
+
+::: {#def-binom-integrali name="Binom İntegrali"}
+$a, b \in \mathbb{R}\setminus\{0\}$ ve $p, q, r \in \mathbb{Q}$, $p \neq 0$ olmak üzere
+
+$$\int x^r\bigl(a + b\,x^p\bigr)^q\,dx$$
+
+biçimindeki integrallere **binom integrali** (binomial integral) ya da **binom diferansiyelinin integrali** denir. Burada $x > 0$ alınır; kesirli üsler bu aralıkta tek türlü tanımlıdır.
+:::
+
+Tanımın kapsamı sanıldığından geniştir: $\int \sqrt{x}\,\bigl(3+\sqrt[3]{x}\bigr)^{-1}dx$ integralinde $r = \frac12$, $p = \frac13$, $q = -1$; $\int \dfrac{dx}{x^4\sqrt{1+x^2}}$ integralinde $r = -4$, $p = 2$, $q = -\frac12$'dir. Şimdi bunların ne zaman rasyonelleşeceğini söyleyen teoremi kuralım.
+
+:::: {#thm-cebisev-kosullari name="Çebişev Koşulları"}
+$\displaystyle\int x^r\bigl(a+bx^p\bigr)^q\,dx$ binom integralini ele alalım ($p,q,r \in \mathbb{Q}$, $p \neq 0$, $ab \neq 0$). Aşağıdaki üç koşuldan **en az biri** sağlanıyorsa, uygun bir değişimle bu integral bir rasyonel fonksiyonun integraline dönüşür; dolayısıyla elemanter fonksiyonlarla hesaplanır.
+
+1. **Birinci hâl: $q \in \mathbb{Z}$.** $k$, $p$ ile $r$'nin (en sade biçimdeki) paydalarının en küçük ortak katı olsun. Değişim: $x = u^{k}$.
+
+2. **İkinci hâl: $\dfrac{r+1}{p} \in \mathbb{Z}$.** $n$, $q$'nun (en sade biçimdeki) paydası olsun. Değişim: $a + b x^p = u^{n}$.
+
+3. **Üçüncü hâl: $\dfrac{r+1}{p} + q \in \mathbb{Z}$.** $n$, $q$'nun paydası olsun. Değişim: $\dfrac{a + bx^p}{x^p} = u^{n}$, yani $a\,x^{-p} + b = u^n$.
+
+::: {.ispat}
+Üç hâli sırayla ele alıyoruz. Her seferinde göstereceğimiz şey aynı: değişimden sonra integrandın $u$'nun **tam sayı** kuvvetlerinden kurulu bir ifadeye, yani bir rasyonel fonksiyona dönüştüğü.
+
+**Birinci hâl.** $q \in \mathbb{Z}$ olsun. $k$, $p$ ve $r$'nin paydalarının EKOK'u olduğundan $kp, kr \in \mathbb{Z}$'dir. $x = u^k$ değişiminde $dx = k\,u^{k-1}\,du$ olur ve
+
+$$x^r\bigl(a+bx^p\bigr)^q\,dx = u^{kr}\bigl(a + b\,u^{kp}\bigr)^{q}\,k\,u^{k-1}\,du.$$
+
+Burada $u^{kr}$ ve $u^{k-1}$ birer tam sayı kuvvettir; $a+bu^{kp}$ ifadesi $u$'nun bir polinomu ya da ($kp<0$ ise) rasyonel fonksiyonudur ve $q$ tam sayı olduğundan onun $q$-inci kuvveti de rasyoneldir. Rasyonel fonksiyonların çarpımı rasyonel olduğundan integrand rasyoneldir.
+
+**İkinci hâl.** $m := \dfrac{r+1}{p} \in \mathbb{Z}$ olsun ve $n$, $q$'nun paydası olsun; yani $nq \in \mathbb{Z}$. Değişim $a + bx^p = u^n$'dir; buradan
+
+$$x^p = \frac{u^n - a}{b}.$$
+
+İki yanın türevini alalım: $b\,p\,x^{p-1}\,dx = n\,u^{n-1}\,du$, yani
+
+$$x^{p-1}\,dx = \frac{n}{bp}\,u^{n-1}\,du.$$
+
+Şimdi integrandı bu ifadeye uyacak biçimde parçalayalım:
+
+$$x^r\bigl(a+bx^p\bigr)^q dx = x^{\,r-p+1}\cdot \bigl(a+bx^p\bigr)^q \cdot x^{p-1}dx = x^{\,r+1-p}\cdot u^{nq}\cdot\frac{n}{bp}u^{n-1}\,du.$$
+
+Son olarak $x^{r+1-p}$ ifadesini $x^p$ cinsinden yazalım:
+
+$$x^{\,r+1-p} = \bigl(x^p\bigr)^{\frac{r+1-p}{p}} = \bigl(x^p\bigr)^{\frac{r+1}{p} - 1} = \left(\frac{u^n-a}{b}\right)^{m-1}.$$
+
+$m \in \mathbb{Z}$ olduğundan üs $m-1$ bir tam sayıdır ve bu ifade $u$'nun rasyonel bir fonksiyonudur. Ayrıca $nq \in \mathbb{Z}$ olduğundan $u^{nq}$ da rasyoneldir. Demek ki integrandın tamamı $u$'nun rasyonel bir fonksiyonudur.
+
+**Üçüncü hâl.** $m := \dfrac{r+1}{p} + q \in \mathbb{Z}$ olsun ve yine $n$, $q$'nun paydası olsun. Buradaki püf nokta, parantezin içinden $x^p$'yi dışarı almaktır:
+
+$$a + bx^p = x^p\bigl(a\,x^{-p} + b\bigr) \quad \Longrightarrow \quad \bigl(a+bx^p\bigr)^q = x^{pq}\bigl(a x^{-p}+b\bigr)^q.$$
+
+Böylece integrand
+
+$$x^r\bigl(a+bx^p\bigr)^q = x^{\,r+pq}\bigl(ax^{-p}+b\bigr)^q$$
+
+hâline gelir. Şimdi $a x^{-p} + b = u^n$ değişimini yapalım; buradan
+
+$$x^{-p} = \frac{u^n - b}{a}$$
+
+ve türev alarak $-a\,p\,x^{-p-1}dx = n\,u^{n-1}du$, yani
+
+$$x^{-p-1}\,dx = -\frac{n}{ap}\,u^{n-1}\,du$$
+
+buluruz. İntegrandı buna uyacak biçimde parçalayalım:
+
+$$x^{\,r+pq}\bigl(ax^{-p}+b\bigr)^q\,dx = x^{\,r+pq+p+1}\cdot u^{nq} \cdot x^{-p-1}dx = x^{\,r+pq+p+1}\cdot u^{nq}\cdot\left(-\frac{n}{ap}\right)u^{n-1}du.$$
+
+Kalan $x$ kuvvetini $x^{-p}$ cinsinden yazalım:
+
+$$x^{\,r+pq+p+1} = \bigl(x^{-p}\bigr)^{-\frac{r+pq+p+1}{p}} = \bigl(x^{-p}\bigr)^{-\left(\frac{r+1}{p} + q + 1\right)} = \left(\frac{u^n-b}{a}\right)^{-(m+1)}.$$
+
+$m \in \mathbb{Z}$ olduğundan üs yine bir tam sayıdır ve ifade rasyoneldir; $u^{nq}$ da rasyoneldir. Böylece integrand $u$'nun rasyonel bir fonksiyonuna dönüşmüş olur.
+
+Son olarak değişimlerin meşruluğunu denetleyelim. Birinci hâlde $x = u^k$ dönüşümü $(0,\infty)$ üzerinde kesin artandır ve türevi $k\,u^{k-1}$ orada sıfırdan farklıdır. İkinci hâlde $p \neq 0$ olduğundan $x \mapsto x^p$, $b \neq 0$ olduğundan $x \mapsto a + bx^p$ kesin monotondur; $t \mapsto t^{1/n}$ pozitif sayılarda kesin arttığından $u = \bigl(a+bx^p\bigr)^{1/n}$ de kesin monotondur. Türevi $n\,u^{n-1}u'(x) = b\,p\,x^{p-1}$ bağıntısından okunur: sağ taraf $(0,\infty)$ üzerinde sıfırdan farklı olduğundan $u \neq 0$ olan her noktada $u'(x) \neq 0$'dır. ($u = 0$ ancak $a+bx^p = 0$ noktasında olur; orada $q<0$ ise integrand zaten tanımsızdır, bu tek nokta aralıktan çıkarılır.) Üçüncü hâl, $x^p$ yerine $x^{-p}$ ile aynıdır. Demek ki üç hâlde de değişken değiştirme meşrudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-important title="⚠️ Üç koşul da sağlanmazsa"}
+Çebişev, 1853'te bu üç koşulun yalnızca **yeterli** değil aynı zamanda **gerekli** olduğunu kanıtladı: $p, q, r$ rasyonel sayıları için $q$, $\dfrac{r+1}{p}$ ve $\dfrac{r+1}{p}+q$ sayılarından hiçbiri tam sayı değilse,
+
+$$\int x^r\bigl(a+bx^p\bigr)^q dx$$
+
+integrali **elemanter fonksiyonlarla ifade edilemez** — yani sonucu polinomlar, rasyonel fonksiyonlar, kökler, üstel, logaritmik, trigonometrik ve ters trigonometrik fonksiyonlar ile bunların sonlu bileşkeleriyle yazmak imkânsızdır. Bu, "henüz bir yol bulunamadı" demek değildir; olanaksızlığın kanıtıdır. Kanıt, elemanter fonksiyonların cebirsel yapısını inceleyen Liouville kuramına dayanır ve bu dersin kapsamı dışındadır.
+
+Klasik bir örnek: $\displaystyle\int \sqrt{1+x^3}\,dx$ integralinde $r=0$, $p=3$, $q=\frac12$'dir ve üç sayı sırasıyla $\frac12$, $\frac13$, $\frac56$ olup hiçbiri tam sayı değildir. Kökün altında üçüncü ya da dördüncü dereceden, katlı kökü olmayan bir polinomun bulunduğu bu türden integrallere **eliptik integral** (elliptic integral) denir.
+:::
+
+Şimdi üç hâlin her birini birer örnekte çalıştıralım.
+
+:::: {#exm-binom-birinci-hal name="Birinci Hâl: Tam Sayı Üs"}
+$x > 0$ için
+
+$$I = \int \sqrt{x}\,\bigl(3+\sqrt[3]{x}\bigr)^{-1}dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+Önce integrali binom biçiminde yazalım:
+
+$$I = \int x^{1/2}\bigl(3 + x^{1/3}\bigr)^{-1}dx.$$
+
+Buradan $r = \dfrac12$, $p = \dfrac13$, $q = -1$ okunur. $q = -1 \in \mathbb{Z}$ olduğundan @thm-cebisev-kosullari'nin **birinci hâli** uygulanır. $r$ ve $p$'nin paydaları $2$ ve $3$'tür; dolayısıyla
+
+$$k = \operatorname{ekok}(2,3) = 6, \qquad x = u^6, \qquad dx = 6u^5\,du.$$
+
+Bu değişimle $x^{1/2} = u^3$, $x^{1/3} = u^2$ olur:
+
+$$I = \int \frac{u^3}{3+u^2}\cdot 6u^5\,du = 6\int \frac{u^8}{u^2+3}\,du.$$
+
+Rasyonel bir integrale ulaştık; payın derecesi paydanınkinden büyük olduğu için polinom bölmesi yapıyoruz. Doğrudan çarparak
+
+$$\bigl(u^2+3\bigr)\bigl(u^6 - 3u^4 + 9u^2 - 27\bigr) = u^8 - 3u^6 + 9u^4 - 27u^2 + 3u^6 - 9u^4 + 27u^2 - 81 = u^8 - 81$$
+
+olduğunu görürüz. Demek ki
+
+$$\frac{u^8}{u^2+3} = u^6 - 3u^4 + 9u^2 - 27 + \frac{81}{u^2+3}.$$
+
+Şimdi terim terim integralleyelim. Son terim için $\displaystyle\int\frac{du}{u^2+3} = \frac{1}{\sqrt3}\arctan\frac{u}{\sqrt3}$ olduğunu kullanıyoruz:
+
+$$I = 6\left[\frac{u^7}{7} - \frac{3u^5}{5} + 3u^3 - 27u + \frac{81}{\sqrt3}\arctan\frac{u}{\sqrt3}\right] + C.$$
+
+$\dfrac{81}{\sqrt3} = 27\sqrt3$ olduğundan
+
+$$I = \frac{6u^7}{7} - \frac{18u^5}{5} + 18u^3 - 162u + 162\sqrt3\,\arctan\frac{u}{\sqrt3} + C.$$
+
+Geri dönüşte $u = x^{1/6}$ yazıyoruz; $u^7 = x^{7/6}$, $u^5 = x^{5/6}$, $u^3 = x^{1/2}$:
+
+$$I = \frac{6}{7}x^{7/6} - \frac{18}{5}x^{5/6} + 18\sqrt{x} - 162\,x^{1/6} + 162\sqrt3\,\arctan\frac{x^{1/6}}{\sqrt3} + C.$$
+
+**Doğrulama.** Sonucu $u$ değişkeninde türetip zincir kuralını kullanmak en kısa yoldur. $u = x^{1/6}$ için $\dfrac{du}{dx} = \dfrac{1}{6}x^{-5/6} = \dfrac{1}{6u^5}$'tir. Yukarıdaki $u$'lu ifadenin $u$'ya göre türevi
+
+$$6u^6 - 18u^4 + 54u^2 - 162 + 162\sqrt3\cdot\frac{1/\sqrt3}{1+\frac{u^2}{3}} = 6\left(u^6 - 3u^4 + 9u^2 - 27 + \frac{81}{u^2+3}\right) = \frac{6u^8}{u^2+3}$$
+
+olur. Zincir kuralıyla
+
+$$\frac{dI}{dx} = \frac{6u^8}{u^2+3}\cdot\frac{1}{6u^5} = \frac{u^3}{u^2+3} = \frac{x^{1/2}}{x^{1/3}+3} = \sqrt{x}\,\bigl(3+\sqrt[3]{x}\bigr)^{-1}. \qquad \checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-binom-ikinci-hal name="İkinci Hâl: Parantezin Kuvveti"}
+$x > 0$ için
+
+$$I = \int x^{-2/3}\sqrt{1+\sqrt[3]{x}}\;dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+Binom biçiminde yazalım:
+
+$$I = \int x^{-2/3}\bigl(1 + x^{1/3}\bigr)^{1/2}dx,$$
+
+yani $r = -\dfrac23$, $p = \dfrac13$, $q = \dfrac12$. Koşulları sırayla deneyelim. $q = \frac12 \notin \mathbb{Z}$ olduğundan birinci hâl uygulanmaz. İkinci hâli sınayalım:
+
+$$\frac{r+1}{p} = \frac{-\frac23 + 1}{\frac13} = \frac{\frac13}{\frac13} = 1 \in \mathbb{Z}. \qquad \checkmark$$
+
+Demek ki **ikinci hâl** geçerlidir. $q = \frac12$'nin paydası $n = 2$ olduğundan değişim
+
+$$1 + x^{1/3} = u^2$$
+
+olur. İki yanın türevini alalım:
+
+$$\frac13 x^{-2/3}\,dx = 2u\,du \quad \Longrightarrow \quad x^{-2/3}\,dx = 6u\,du.$$
+
+İntegrandın $x^{-2/3}dx$ parçası bir bütün olarak dönüşüyor; geriye kalan çarpan ise $\bigl(1+x^{1/3}\bigr)^{1/2} = u$'dur ($u>0$ seçiyoruz). Böylece
+
+$$I = \int u\cdot 6u\,du = 6\int u^2\,du = 2u^3 + C.$$
+
+Geri dönüşte $u = \sqrt{1+x^{1/3}}$ yazıyoruz:
+
+$$I = 2\bigl(1+x^{1/3}\bigr)^{3/2} + C = 2\sqrt{\bigl(1+\sqrt[3]{x}\bigr)^3} + C.$$
+
+**Doğrulama.** Zincir kuralıyla
+
+$$\frac{d}{dx}\left[2\bigl(1+x^{1/3}\bigr)^{3/2}\right] = 2\cdot\frac32\bigl(1+x^{1/3}\bigr)^{1/2}\cdot\frac13 x^{-2/3} = x^{-2/3}\bigl(1+x^{1/3}\bigr)^{1/2}. \qquad \checkmark$$
+
+Bu, integrandın kendisidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-binom-ucuncu-hal name="Üçüncü Hâl: Parantezi Bölerek"}
+$x > 0$ için
+
+$$I = \int \frac{dx}{x^4\bigl(1+x^2\bigr)^{1/2}}$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+Binom biçiminde yazalım:
+
+$$I = \int x^{-4}\bigl(1+x^2\bigr)^{-1/2}dx,$$
+
+yani $r = -4$, $p = 2$, $q = -\dfrac12$. Koşulları sırayla sınayalım:
+
+$$q = -\tfrac12 \notin \mathbb{Z}, \qquad \frac{r+1}{p} = -\tfrac32 \notin \mathbb{Z}, \qquad \frac{r+1}{p} + q = -\tfrac32 - \tfrac12 = -2 \in \mathbb{Z}. \quad \checkmark$$
+
+Demek ki **üçüncü hâl** geçerlidir. $q$'nun paydası $n = 2$ olduğundan değişim
+
+$$\frac{1+x^2}{x^2} = u^2, \qquad \text{yani} \qquad x^{-2} + 1 = u^2$$
+
+olur. İki yanın türevini alalım:
+
+$$-2x^{-3}\,dx = 2u\,du \quad \Longrightarrow \quad x^{-3}\,dx = -u\,du,$$
+
+ve değişimden doğrudan
+
+$$x^{-2} = u^2 - 1$$
+
+çıkar. Ayrıca $x > 0$ olduğundan $\sqrt{1+x^2} = x\,u$'dur (gerçekten $u = \frac{\sqrt{1+x^2}}{x} > 0$). Şimdi integrandı, $x^{-3}dx$ parçası bir bütün olarak görünecek biçimde parçalayalım:
+
+$$x^{-4}\bigl(1+x^2\bigr)^{-1/2}dx = x^{-4}\cdot\frac{1}{x\,u}\,dx = x^{-5}u^{-1}dx = x^{-2}\cdot u^{-1}\cdot\bigl(x^{-3}dx\bigr).$$
+
+Her parçayı $u$ cinsinden yazalım:
+
+$$I = \int \bigl(u^2-1\bigr)\cdot u^{-1}\cdot\bigl(-u\,du\bigr) = \int\bigl(1 - u^2\bigr)du = u - \frac{u^3}{3} + C.$$
+
+Geri dönüşte $u = \dfrac{\sqrt{1+x^2}}{x}$ yazıyoruz:
+
+$$I = \frac{\sqrt{1+x^2}}{x} - \frac13\left(\frac{\sqrt{1+x^2}}{x}\right)^{\!3} + C.$$
+
+Ortak paydaya alıp $3x^2\sqrt{1+x^2} - \bigl(1+x^2\bigr)\sqrt{1+x^2} = \bigl(2x^2-1\bigr)\sqrt{1+x^2}$ olduğunu kullanırsak sonuç tek kesirde de yazılabilir:
+
+$$I = \frac{\bigl(2x^2-1\bigr)\sqrt{1+x^2}}{3x^3} + C.$$
+
+**Doğrulama.** $u(x) = \dfrac{\sqrt{1+x^2}}{x}$ için, bölüm kuralıyla
+
+$$u'(x) = \frac{\dfrac{x}{\sqrt{1+x^2}}\cdot x - \sqrt{1+x^2}}{x^2} = \frac{x^2 - \bigl(1+x^2\bigr)}{x^2\sqrt{1+x^2}} = \frac{-1}{x^2\sqrt{1+x^2}}.$$
+
+Sonucumuz $F = u - \frac{u^3}{3}$ biçiminde olduğundan zincir kuralıyla
+
+$$F'(x) = \bigl(1 - u^2\bigr)u'(x) = \left(1 - \frac{1+x^2}{x^2}\right)\cdot\frac{-1}{x^2\sqrt{1+x^2}} = \frac{-1}{x^2}\cdot\frac{-1}{x^2\sqrt{1+x^2}} = \frac{1}{x^4\sqrt{1+x^2}}. \qquad \checkmark$$
+
+İntegrandı bulduk. Bu hesapta $x$'in işaretini hiç kullanmadık; bulunan ifade $x<0$ aralığında da bir ilkel fonksiyondur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+:::: {#exr-irrasyonel-integral name="İrrasyonel Fonksiyonların İntegrali Üzerine"}
+Aşağıdaki integralleri hesaplayınız; her birinde önce hangi yöntemin (doğrusal kesirli kök, Euler değişimi, belirsiz katsayılar, binom) uygun olduğunu belirtiniz. Bulduğunuz her sonucu türev alarak doğrulayınız.
+
+a) $\displaystyle\int \frac{dx}{\sqrt{x+1} + \sqrt[3]{x+1}}$
+
+b) $\displaystyle\int \frac{1}{(x+1)^2}\sqrt[3]{\frac{x-1}{x+1}}\;dx$
+
+c) $\displaystyle\int \frac{dx}{x\sqrt{x^2+x+1}}$
+
+d) $\displaystyle\int \frac{x^2\,dx}{\sqrt{1-x^2}}$
+
+e) $\displaystyle\int \frac{dx}{x^2\sqrt{1+x^2}}$. Ayrıca $\displaystyle\int\frac{dx}{\sqrt{1+x^4}}$ integralinin Çebişev koşullarından hiçbirini sağlamadığını doğrulayınız.
+
+::: {.cozum}
+**a)** İntegrandda aynı $x+1$ ifadesinin $2$ ve $3$ dereceli kökleri geçiyor; @prp-dogrusal-kesirli-kok ve EKOK kuralı gereği $n = \operatorname{ekok}(2,3) = 6$ alıyoruz:
+
+$$x + 1 = u^6, \qquad dx = 6u^5\,du, \qquad \sqrt{x+1} = u^3, \qquad \sqrt[3]{x+1} = u^2.$$
+
+($x > -1$ alıyoruz, böylece $u > 0$'dır.) İntegral
+
+$$\int \frac{6u^5}{u^3+u^2}\,du = 6\int\frac{u^3}{u+1}\,du$$
+
+hâline gelir. $u^3 = (u+1)\bigl(u^2-u+1\bigr) - 1$ olduğundan $\dfrac{u^3}{u+1} = u^2-u+1-\dfrac{1}{u+1}$'dir ve
+
+$$6\left[\frac{u^3}{3} - \frac{u^2}{2} + u - \ln(u+1)\right] + C = 2u^3 - 3u^2 + 6u - 6\ln(u+1) + C$$
+
+bulunur. Geri dönüşte $u = \sqrt[6]{x+1}$:
+
+$$\int \frac{dx}{\sqrt{x+1}+\sqrt[3]{x+1}} = 2\sqrt{x+1} - 3\sqrt[3]{x+1} + 6\sqrt[6]{x+1} - 6\ln\left(\sqrt[6]{x+1}+1\right) + C.$$
+
+*Doğrulama.* $u$'ya göre türev $6u^2 - 6u + 6 - \dfrac{6}{u+1}$'dir. Ortak paydaya alırsak, $\bigl(u^2-u+1\bigr)(u+1) = u^3+1$ olduğundan bu ifade $\dfrac{6\bigl(u^3+1\bigr) - 6}{u+1} = \dfrac{6u^3}{u+1}$'e eşittir. $\dfrac{du}{dx} = \dfrac{1}{6u^5}$ olduğundan zincir kuralıyla türev
+
+$$\frac{6u^3}{u+1}\cdot\frac{1}{6u^5} = \frac{1}{u^2(u+1)} = \frac{1}{u^3+u^2} = \frac{1}{\sqrt{x+1}+\sqrt[3]{x+1}}$$
+
+çıkar; integrandın kendisi.
+
+**b)** Burada kökün içinde doğrusal kesirli bir ifade var; @prp-dogrusal-kesirli-kok'te $a=1$, $b=-1$, $c=1$, $d=1$ ve $ad-bc = 1+1 = 2 \neq 0$'dır. Değişim:
+
+$$u = \sqrt[3]{\frac{x-1}{x+1}}, \qquad u^3 = \frac{x-1}{x+1}.$$
+
+$x$'i çözelim: $u^3(x+1) = x-1$, yani $x\bigl(u^3-1\bigr) = -1-u^3$ ve $x = \dfrac{1+u^3}{1-u^3}$. Buradan $x+1 = \dfrac{2}{1-u^3}$, dolayısıyla $\dfrac{1}{(x+1)^2} = \dfrac{\bigl(1-u^3\bigr)^2}{4}$'tür. Türev alalım:
+
+$$dx = \frac{3u^2\bigl(1-u^3\bigr) + 3u^2\bigl(1+u^3\bigr)}{\bigl(1-u^3\bigr)^2}\,du = \frac{6u^2}{\bigl(1-u^3\bigr)^2}\,du.$$
+
+Her şeyi yerine koyalım:
+
+$$\int \frac{\bigl(1-u^3\bigr)^2}{4}\cdot u \cdot \frac{6u^2}{\bigl(1-u^3\bigr)^2}\,du = \frac{6}{4}\int u^3\,du = \frac{3}{8}u^4 + C.$$
+
+Sonuç:
+
+$$\int \frac{1}{(x+1)^2}\sqrt[3]{\frac{x-1}{x+1}}\,dx = \frac38\left(\frac{x-1}{x+1}\right)^{4/3} + C.$$
+
+*Doğrulama.* $w = \dfrac{x-1}{x+1}$ dersek $w' = \dfrac{(x+1)-(x-1)}{(x+1)^2} = \dfrac{2}{(x+1)^2}$'dir. Zincir kuralıyla
+
+$$\frac{d}{dx}\left(\frac38 w^{4/3}\right) = \frac38\cdot\frac43 w^{1/3}\cdot\frac{2}{(x+1)^2} = \frac{w^{1/3}}{(x+1)^2} = \frac{1}{(x+1)^2}\sqrt[3]{\frac{x-1}{x+1}}. \ \checkmark$$
+
+**c)** İntegrandda $\sqrt{x^2+x+1}$ geçiyor: bir Euler değişimi gerekli. Burada $a=1>0$, $c=1>0$ ve $\Delta = -3 < 0$'dır; birinci ya da ikinci değişim kullanılabilir. $\sqrt c = 1$ olduğu için en temiz hesabı veren **ikinci** değişimi seçelim: $\sqrt{x^2+x+1} = ux+1$. Kare alırsak $x^2+x = u^2x^2+2ux$; iki yanı $x \neq 0$ ile bölersek $x+1 = u^2x+2u$ ve buradan
+
+$$x = \frac{2u-1}{1-u^2}, \qquad dx = \frac{2\bigl(1-u^2\bigr) - (2u-1)(-2u)}{\bigl(1-u^2\bigr)^2}\,du = \frac{2u^2-2u+2}{\bigl(1-u^2\bigr)^2}\,du.$$
+
+Kökü de yazalım:
+
+$$\sqrt{x^2+x+1} = ux+1 = \frac{u(2u-1)}{1-u^2} + 1 = \frac{2u^2-u+1-u^2}{1-u^2} = \frac{u^2-u+1}{1-u^2}.$$
+
+Böylece paydadaki çarpım
+
+$$x\sqrt{x^2+x+1} = \frac{(2u-1)\bigl(u^2-u+1\bigr)}{\bigl(1-u^2\bigr)^2}$$
+
+olur ve integral çarpıcı biçimde sadeleşir:
+
+$$\int\frac{dx}{x\sqrt{x^2+x+1}} = \int \frac{\bigl(1-u^2\bigr)^2}{(2u-1)\bigl(u^2-u+1\bigr)}\cdot\frac{2\bigl(u^2-u+1\bigr)}{\bigl(1-u^2\bigr)^2}\,du = \int\frac{2\,du}{2u-1} = \ln|2u-1| + C.$$
+
+Geri dönüşte $\sqrt{x^2+x+1} = ux+1$ eşitliğinden $u = \dfrac{\sqrt{x^2+x+1}-1}{x}$ yazıyoruz:
+
+$$\int\frac{dx}{x\sqrt{x^2+x+1}} = \ln\left|\frac{2\sqrt{x^2+x+1} - x - 2}{x}\right| + C.$$
+
+*Doğrulama.* $u$ değişkenindeki ilkel fonksiyon $\ln|2u-1|$'dir; $u$'ya göre türevi $\dfrac{2}{2u-1}$'dir. Değişimin kuruluşundan $\dfrac{dx}{du} = \dfrac{2\bigl(u^2-u+1\bigr)}{\bigl(1-u^2\bigr)^2}$ olduğunu biliyoruz. Ters fonksiyonun türev kuralıyla (@thm-ters-turev)
+
+$$\frac{dI}{dx} = \frac{2}{2u-1}\cdot\frac{\bigl(1-u^2\bigr)^2}{2\bigl(u^2-u+1\bigr)} = \frac{\bigl(1-u^2\bigr)^2}{(2u-1)\bigl(u^2-u+1\bigr)} = \frac{1}{x\sqrt{x^2+x+1}},$$
+
+çünkü yukarıda $x\sqrt{x^2+x+1} = \dfrac{(2u-1)\bigl(u^2-u+1\bigr)}{\bigl(1-u^2\bigr)^2}$ olduğunu bulmuştuk. $\checkmark$
+
+**d)** İntegrand "polinom bölü karekök" biçimindedir; @thm-belirsiz-katsayilar-yontemi doğrudan uygulanır. Burada $p_2(x) = x^2$ ve $X(x) = 1-x^2$ ($a = -1$, $b = 0$, $c = 1$, $X' = -2x$) olduğundan birinci dereceden bir $q_1(x) = Ax+B$ ve bir $\lambda$ arıyoruz:
+
+$$\int\frac{x^2\,dx}{\sqrt{1-x^2}} = (Ax+B)\sqrt{1-x^2} + \lambda\int\frac{dx}{\sqrt{1-x^2}}.$$
+
+Teoremdeki polinom özdeşliğini kuralım:
+
+$$x^2 = A\bigl(1-x^2\bigr) + \frac12(Ax+B)(-2x) = A - Ax^2 - Ax^2 - Bx = -2Ax^2 - Bx + A.$$
+
+Katsayıları eşitleyelim: $x^2$ için $-2A = 1$, yani $A = -\frac12$; $x$ için $B = 0$; sabit terim için $A + \lambda = 0$, yani $\lambda = \frac12$. Kalan integral temeldir. Sonuç:
+
+$$\int \frac{x^2\,dx}{\sqrt{1-x^2}} = -\frac{x}{2}\sqrt{1-x^2} + \frac12\arcsin x + C, \qquad |x| < 1.$$
+
+*Doğrulama.* Çarpım kuralıyla
+
+$$\frac{d}{dx}\left(-\frac x2\sqrt{1-x^2}\right) = -\frac12\sqrt{1-x^2} - \frac{x}{2}\cdot\frac{-x}{\sqrt{1-x^2}} = \frac{-\bigl(1-x^2\bigr) + x^2}{2\sqrt{1-x^2}} = \frac{2x^2-1}{2\sqrt{1-x^2}},$$
+
+ve @thm-ters-trigonometrik-turevler gereği $\dfrac{d}{dx}\left(\frac12\arcsin x\right) = \dfrac{1}{2\sqrt{1-x^2}}$'dir. Toplarsak
+
+$$\frac{2x^2-1+1}{2\sqrt{1-x^2}} = \frac{x^2}{\sqrt{1-x^2}}. \ \checkmark$$
+
+**e)** Binom biçiminde $\displaystyle\int x^{-2}\bigl(1+x^2\bigr)^{-1/2}dx$, yani $r = -2$, $p = 2$, $q = -\dfrac12$. Koşulları sınayalım:
+
+$$q = -\tfrac12\notin\mathbb{Z}, \qquad \frac{r+1}{p} = -\tfrac12 \notin \mathbb{Z}, \qquad \frac{r+1}{p} + q = -\tfrac12 - \tfrac12 = -1 \in \mathbb{Z}.$$
+
+Demek ki **üçüncü hâl** geçerli. $q$'nun paydası $n = 2$ olduğundan değişim $x^{-2} + 1 = u^2$'dir; buradan
+
+$$-2x^{-3}dx = 2u\,du \quad \Longrightarrow \quad x^{-3}dx = -u\,du,$$
+
+ve $x>0$ için $\sqrt{1+x^2} = xu$'dur. İntegrandı $x^{-3}dx$ görünecek biçimde parçalayalım:
+
+$$x^{-2}\bigl(1+x^2\bigr)^{-1/2}dx = x^{-2}\cdot\frac{1}{xu}\,dx = u^{-1}\bigl(x^{-3}dx\bigr) = u^{-1}\bigl(-u\,du\bigr) = -\,du.$$
+
+O hâlde
+
+$$\int\frac{dx}{x^2\sqrt{1+x^2}} = -u + C = -\frac{\sqrt{1+x^2}}{x} + C.$$
+
+*Doğrulama.* Bölüm kuralıyla
+
+$$\frac{d}{dx}\left(-\frac{\sqrt{1+x^2}}{x}\right) = -\frac{\dfrac{x}{\sqrt{1+x^2}}\cdot x - \sqrt{1+x^2}}{x^2} = -\frac{x^2 - \bigl(1+x^2\bigr)}{x^2\sqrt{1+x^2}} = \frac{1}{x^2\sqrt{1+x^2}}. \ \checkmark$$
+
+Şimdi ikinci soruya bakalım: $\displaystyle\int\frac{dx}{\sqrt{1+x^4}} = \int x^{0}\bigl(1+x^4\bigr)^{-1/2}dx$ integralinde $r = 0$, $p = 4$, $q = -\dfrac12$'dir ve
+
+$$q = -\frac12 \notin \mathbb{Z}, \qquad \frac{r+1}{p} = \frac14 \notin\mathbb{Z}, \qquad \frac{r+1}{p} + q = -\frac14 \notin \mathbb{Z}$$
+
+olur. Üç koşuldan hiçbiri sağlanmıyor; Çebişev'in teoremi gereği bu integral hiçbir elemanter fonksiyonla ifade edilemez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Köklü integrandları rasyonelleştirmenin yollarını gördük; şimdi sıra, integral hesabının bir başka büyük ailesindedir. Trigonometrik fonksiyonların kuvvetleri ve çarpımları da uygun özdeşlikler ve değişimlerle — özellikle de her trigonometrik integrandı bir rasyonel integrale çeviren evrensel bir değişimle — hesaplanabilir hâle gelir: [Trigonometrik Fonksiyonların İntegrali](trigonometrik-fonksiyonlarin-integrali.qmd).
