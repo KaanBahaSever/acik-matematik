@@ -1,0 +1,706 @@
+---
+title: "L'Hôpital Kuralı"
+pagetitle: "L'Hôpital Kuralı"
+description: "Belirsiz biçimler ve neden belirsiz oldukları; türev tanımına dayanan basit L'Hôpital kuralı; sıfır bölü sıfır ve sonsuz bölü sonsuz biçimleri için Cauchy ortalama değer teoremine dayanan genel kurallar ve tam ispatları; kuralın tek yönlü ve sonsuzdaki sürümleri; çarpım, fark ve üstel belirsizlikler; kuralın tersinin yanlışlığı; büyüme hızları."
+---
+
+Analiz 1'de limit hesaplarken sık sık şöyle bir duvara çarpmıştık: pay da payda da $0$'a gidiyor, ya da ikisi birden $+\infty$'a gidiyor; limit aritmetiği (@thm-limit-aritmetigi-fonksiyon) bu durumda hiçbir şey söylemiyor. $\dfrac{\sin x}{x}$ için geometrik bir eşitsizlik kurmuş (@thm-sinx-bolu-x), $\left(1 + \dfrac{1}{n}\right)^n$ için monotonluk ve sınırlılık üzerine ayrı bir uğraş vermiştik; her belirsizlik için ayrı bir hile bulmak zorunda kalıyorduk.
+
+Türev, bu hilelerin yerine geçecek tek bir yöntem verir. Fikir basittir: pay ve payda aynı noktada sıfırlanıyorsa, ikisi de o nokta yakınında kendi teğetleri gibi davranır; dolayısıyla oranın limiti, teğetlerin eğimlerinin — yani türevlerin — oranı olmalıdır. Bu sezgiyi kesin bir teoreme dönüştüren araç, [Rolle ve ortalama değer teoremleri](rolle-ve-ortalama-deger-teoremi.qmd) bölümünde ispatladığımız **Cauchy ortalama değer teoremi**dir; hipotezlerin sağlamasını yaparken de bir önceki bölümde gördüğümüz [Darboux teoremi](darboux-teoremi.qmd) işimize yarayacaktır. Sonuç, 1696'da Guillaume de l'Hôpital'in yayımladığı ilk diferansiyel hesap kitabında yer aldığı için onun adıyla anılır; gerçek sahibi ise l'Hôpital'e ders veren Johann Bernoulli'dir.
+
+Bu bölümde şunları öğreneceğiz: hangi ifadelerin **belirsiz biçim** olduğunu ve "belirsiz" sözcüğünün ne anlama geldiğini; türev tanımından çıkan basit L'Hôpital kuralını; $0/0$ ve $\infty/\infty$ biçimleri için genel kuralları ve tam ispatlarını; kalan beş biçimin bu ikisine nasıl indirgendiğini; kuralın hangi durumlarda çalışmadığını; logaritma, kuvvet ve üstel fonksiyonların büyüme hızlarının kesin sıralamasını.
+
+## Belirsiz Biçimler
+
+Limit aritmetiği bize şunu söyler: $f(x) \to A$ ve $g(x) \to B$ ise $f(x)/g(x) \to A/B$ — **ama** $B \ne 0$ koşuluyla. $B = 0$ ve $A \ne 0$ ise oran mutlak değerce sınırsız büyür. Geriye kalan tek sorunlu durum $A = B = 0$'dır ve o durumda oranın limiti hakkında hiçbir şey söylenemez. Benzer boşluklar başka işlemlerde de vardır.
+
+::: {#def-belirsiz-bicimler name="Belirsiz Biçimler"}
+$x \to c$ (burada $c$ bir reel sayı, $c^+$, $c^-$, $+\infty$ ya da $-\infty$ olabilir) iken aşağıdaki yedi durumdan biri ortaya çıkıyorsa, ilgili ifadeye o noktada **belirsiz biçim** (indeterminate form) denir:
+
+$$\frac{0}{0}, \qquad \frac{\infty}{\infty}, \qquad \infty - \infty, \qquad 0 \cdot \infty, \qquad 1^{\infty}, \qquad 0^0, \qquad \infty^0.$$
+
+Örneğin $\dfrac{0}{0}$ biçimi, $\lim f(x) = \lim g(x) = 0$ iken $\dfrac{f(x)}{g(x)}$ oranı için; $1^{\infty}$ biçimi $f(x) \to 1$, $g(x) \to \pm\infty$ iken, $\infty^0$ biçimi ise $f(x) \to +\infty$, $g(x) \to 0$ iken $f(x)^{g(x)}$ ifadesi için kullanılır.
+
+**Belirsiz** sözcüğü "limit yoktur" demek değildir; "yalnızca bu bilgiye bakarak limit belirlenemez" demektir.
+:::
+
+Bu son cümleyi ciddiye almak gerekir. Her biçim için, aynı biçimde olup **farklı** sonuçlar veren örnekler verelim.
+
+| Biçim | Bir örnek | Başka bir örnek | Üçüncü bir örnek |
+|---|---|---|---|
+| $\dfrac{0}{0}$ | $\lim_{x \to 0} \frac{3x}{x} = 3$ | $\lim_{x \to 0} \frac{x^2}{x} = 0$ | $\lim_{x \to 0^+} \frac{x}{x^2} = +\infty$ |
+| $\dfrac{\infty}{\infty}$ | $\lim_{x \to \infty} \frac{2x}{x} = 2$ | $\lim_{x \to \infty} \frac{x}{x^2} = 0$ | $\lim_{x \to \infty} \frac{x^2}{x} = +\infty$ |
+| $\infty - \infty$ | $\lim_{x \to \infty} \big[(x + 7) - x\big] = 7$ | $\lim_{x \to \infty} \big[x - x\big] = 0$ | $\lim_{x \to \infty} \big[x^2 - x\big] = +\infty$ |
+| $0 \cdot \infty$ | $\lim_{x \to 0^+} x \cdot \frac{5}{x} = 5$ | $\lim_{x \to 0^+} x^2 \cdot \frac{1}{x} = 0$ | $\lim_{x \to 0^+} x \cdot \frac{1}{x^2} = +\infty$ |
+| $1^{\infty}$ | $\lim_{x \to \infty} 1^{\,x} = 1$ | $\lim_{x \to \infty} \left(1 + \frac{1}{x}\right)^x = e$ | $\lim_{x \to \infty} \left(1 + \frac{1}{x}\right)^{x^2} = +\infty$ |
+| $0^0$ | $\lim_{x \to 0^+} x^{\,x} = 1$ | $\lim_{x \to 0^+} (e^{-1/x})^x = e^{-1}$ | $\lim_{x \to 0^+} (e^{-1/x^2})^x = 0$ |
+| $\infty^0$ | $\lim_{x \to \infty} x^{1/x} = 1$ | $\lim_{x \to \infty} (e^x)^{1/x} = e$ | $\lim_{x \to \infty} (e^{x^2})^{1/x} = +\infty$ |
+
+Son iki satırın doğrulanması bir satırlık hesaptır: $(e^{-1/x})^x = e^{-1}$, $(e^{-1/x^2})^x = e^{-1/x} \to 0$, $(e^x)^{1/x} = e$ ve $(e^{x^2})^{1/x} = e^x \to +\infty$; her birinde taban ile üsün eğilimleri sütunun başındaki biçimi verir. $1^{\infty}$ satırının ikinci örneğini bölümün sonunda L'Hôpital kuralıyla hesaplayacak, üçüncüsünü de ondan türeteceğiz.
+
+Demek ki yedi biçimin her biri için, aynı biçimde olup önceden verilmiş herhangi bir sayıya (hatta $\pm\infty$'a) yakınsayan örnekler kurulabilir; bu biçimlerde limit, fonksiyonların **kendisine** bakılarak hesaplanmak zorundadır.
+
+::: {.callout-note title="Belirsiz olmayan biçimler"}
+Her "tuhaf" ifade belirsiz değildir: $f(x) \to 0^+$ ve $g(x) \to +\infty$ iken $f(x)^{g(x)} \to 0$'dır, yani $0^{\infty}$ **belirsiz değildir**. Aynı biçimde
+
+$$\infty + \infty = +\infty, \qquad \infty \cdot \infty = +\infty, \qquad \frac{1}{0^+} = +\infty, \qquad \infty^{\infty} = +\infty, \qquad 0^{-\infty} = +\infty$$
+
+kısaltmalarının hepsi doğrudur (bunlar @thm-sonsuzda-limit-kurallari türünden sonuçlardır). Belirsizlik yalnızca iki eğilimin **birbirini götürdüğü** yedi durumda ortaya çıkar. Bu yüzden bir limite başlamadan önce yapılacak ilk iş, ifadenin gerçekten belirsiz olup olmadığını saptamaktır; belirsiz değilse L'Hôpital kuralına gerek yoktur ve kuralı uygulamak yanlış sonuç verir.
+:::
+
+## Basit Hâl: Türevlerin Oranı
+
+Genel teoreme geçmeden önce, doğrudan türev tanımından çıkan basit hâli görelim. Bu hâl kuralın neden doğru olduğunu da anlatır: $f$ ve $g$ aynı $a$ noktasında sıfırlanıyorsa $a$ yakınında $f(x) \approx f'(a)(x-a)$, $g(x) \approx g'(a)(x-a)$'dır; oranda $(x-a)$ sadeleşir ve $f'(a)/g'(a)$ kalır.
+
+:::: {#thm-lhospital-basit name="L'Hôpital Kuralı, Basit Hâl"}
+$I \subseteq \mathbb{R}$ açık bir aralık, $a \in I$ ve $f, g : I \to \mathbb{R}$ fonksiyonları $a$ noktasında türevlenebilir olsun. Ayrıca
+
+$$f(a) = g(a) = 0 \qquad \text{ve} \qquad g'(a) \ne 0$$
+
+olsun. O hâlde $a$'nın delinmiş bir komşuluğunda $g(x) \ne 0$'dır ve
+
+$$\lim_{x \to a} \frac{f(x)}{g(x)} = \frac{f'(a)}{g'(a)}.$$
+
+::: {.ispat}
+**Adım 1: paydanın sıfırdan farklı olduğu bir komşuluk.** $g$ fonksiyonu $a$'da türevlenebilir olduğundan, fark oranı (@def-fark-orani) için
+
+$$\lim_{x \to a} \frac{g(x) - g(a)}{x - a} = g'(a) \ne 0$$
+
+olur. Limitin işaret koruma özelliği (@thm-isaret-koruma) gereği — $\varepsilon = \dfrac{|g'(a)|}{2}$ alarak — öyle bir $\delta > 0$ vardır ki $0 < |x - a| < \delta$ ve $x \in I$ iken
+
+$$\left| \frac{g(x) - g(a)}{x - a} \right| > \frac{|g'(a)|}{2} > 0$$
+
+sağlanır. Özel olarak bu $x$'ler için $g(x) - g(a) \ne 0$, yani $g(a) = 0$ olduğundan $g(x) \ne 0$'dır. Demek ki $f(x)/g(x)$ oranı $a$'nın delinmiş bir komşuluğunda tanımlıdır.
+
+**Adım 2: oranı fark oranlarına çevirmek.** $0 < |x - a| < \delta$ olsun. $f(a) = g(a) = 0$ olduğundan pay ve paydaya birer sıfır ekleyebiliriz; sonra hem payı hem paydayı $x - a \ne 0$ ile bölelim:
+
+$$\frac{f(x)}{g(x)} = \frac{f(x) - f(a)}{g(x) - g(a)} = \frac{\dfrac{f(x) - f(a)}{x - a}}{\dfrac{g(x) - g(a)}{x - a}}.$$
+
+**Adım 3: limite geçmek.** Türevin tanımı (@def-turev-noktada) gereği
+
+$$\lim_{x \to a} \frac{f(x) - f(a)}{x - a} = f'(a), \qquad \lim_{x \to a} \frac{g(x) - g(a)}{x - a} = g'(a) \ne 0.$$
+
+Paydanın limiti sıfırdan farklı olduğundan bölüm için limit aritmetiği (@thm-limit-aritmetigi-fonksiyon) uygulanabilir:
+
+$$\lim_{x \to a} \frac{f(x)}{g(x)} = \frac{\displaystyle\lim_{x \to a} \frac{f(x) - f(a)}{x - a}}{\displaystyle\lim_{x \to a} \frac{g(x) - g(a)}{x - a}} = \frac{f'(a)}{g'(a)}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu basit hâl bile pek çok limiti anında verir: $f(x) = e^x - 1$, $g(x) = \sin x$ için $f(0) = g(0) = 0$ ve $g'(0) = 1 \ne 0$ olduğundan (@thm-ustel-turevi, @thm-trigonometrik-turevler)
+
+$$\lim_{x \to 0} \frac{e^x - 1}{\sin x} = \frac{f'(0)}{g'(0)} = \frac{e^0}{\cos 0} = 1$$
+
+olur.
+
+::: {.callout-warning title="⚠️ Hipotezi atlarsanız yanlış sonuç çıkar"}
+$f(a) = g(a) = 0$ koşulu vazgeçilmezdir. $f(x) = x + 17$, $g(x) = 2x + 3$ ve $a = 0$ alalım. Bu ifade $x \to 0$ iken belirsiz **değildir**; payda $3 \ne 0$'a gittiği için limit doğrudan bölüm kuralıyla $\displaystyle\lim_{x \to 0} \frac{x + 17}{2x + 3} = \frac{17}{3}$ olarak hesaplanır. Oysa türevlerin oranı $\dfrac{f'(0)}{g'(0)} = \dfrac{1}{2}$'dir ve $\dfrac{17}{3} \ne \dfrac{1}{2}$'dir. Kural burada uygulanamaz, çünkü $f(0) = 17 \ne 0$'dır.
+
+Kısacası: **önce belirsizliği doğrula, sonra türev al.** Bu, L'Hôpital kuralıyla ilgili en sık yapılan hatadır.
+:::
+
+## Ortak Bir Gözlem: Payda Neden Sıfırlanmaz?
+
+Aşağıdaki iki teoremin ikisinde de "$(a,b)$ üzerinde $g'(x) \ne 0$" hipotezi var. Bu hipotez göründüğünden güçlüdür ve ispatlarda iki ayrı yerde işimize yarayacak; bir kez baştan çıkaralım. $f, g$ fonksiyonları $(a,b)$ üzerinde türevlenebilir ve her $x \in (a,b)$ için $g'(x) \ne 0$ olsun.
+
+**(i) $g$ birebirdir.** Türev fonksiyonu $g'$ ara değer özelliğini taşır (@thm-darboux). $g'$ hem pozitif hem negatif değer alsaydı aradaki $0$ değerini de alması gerekirdi; oysa $g'$ hiç sıfırlanmıyor. Demek ki $g'$ bütün $(a,b)$ üzerinde ya hep pozitiftir ya hep negatiftir; monotonluk testi (@cor-monotonluk-testi) gereği $g$ kesin monotondur (@def-kesin-monoton), dolayısıyla birebirdir:
+
+$$\alpha, \beta \in (a,b), \quad \alpha \ne \beta \quad \Longrightarrow \quad g(\alpha) \ne g(\beta).$$
+
+Bu, Cauchy ortalama değer teoremini $[\alpha,\beta]$ üzerinde uygulayabilmek için gereken koşuldur. Gözlemin tamamı bir önceki bölümde ayrıca kaydedilmişti: @cor-turev-isaret-degistirmez, türevi hiç sıfırlanmayan bir fonksiyonun bir aralık üzerinde kesin monoton olduğunu söyler. (Aynı sonuç Rolle teoremiyle de görülür: $g(\alpha) = g(\beta)$ olsaydı $(\alpha,\beta)$ içinde $g'$ sıfırlanırdı.)
+
+**(ii) $0/0$ hâlinde $g$ hiç sıfırlanmaz.** Ayrıca $\lim_{x \to a^+} g(x) = 0$ olsun; $g$'nin kesin artan olduğunu varsayabiliriz (kesin azalan hâlde $g$ yerine $-g$ alınır, bu hem $f/g$'yi hem $f'/g'$'yü $-1$ ile çarptığından teoremlerin ifadesini bozmaz). $x \in (a,b)$ olsun. Her $t \in (a,x)$ için $g(t) < g(x)$'tir; $t \to a^+$ limitine geçince sıralamanın korunmasıyla (@thm-sonsuzda-limit-kurallari) $0 \le g(x)$ buluruz. Bu her $x$ için doğru olduğuna göre bir $t_0 \in (a,x)$ seçip $g(x) > g(t_0) \ge 0$ yazabiliriz: $g(x) > 0$'dır, yani $g$ hiç sıfırlanmaz ve $f(x)/g(x)$ her yerde tanımlıdır.
+
+## L'Hôpital Kuralı I: $0/0$ Biçimi
+
+Şimdi asıl teoreme geliyoruz. Basit hâlden farkı büyüktür: burada $f$ ve $g$'nin $a$'da türevlenebilir olması — hatta $a$'da tanımlı olması — istenmiyor, $a$ sonsuz bile olabilir. İstenen tek şey, $a$'nın sağındaki bir aralıkta türevlenebilirlik ve $g' \ne 0$'dır.
+
+::: {.callout-note title="Gösterim üzerine"}
+Teoremde $-\infty \le a < b \le \infty$ yazıp $x \to a^+$ diyeceğiz. $a$ bir reel sayıysa bu alışılmış sağdan limittir; $a = -\infty$ ise $x \to -\infty$ anlamına gelir (@def-sonsuzda-limit). Her iki hâlde de "$x \to a^+$ iken bir özellik sonunda sağlanır" cümlesi tek bir biçimde okunur: **öyle bir $c \in (a,b)$ vardır ki her $x \in (a,c)$ için o özellik sağlanır.** İspatta yalnızca bu okumayı kullanacağız.
+:::
+
+:::: {#thm-lhospital-sifir-sifir name="L'Hôpital Kuralı I"}
+$-\infty \le a < b \le \infty$ olsun. $f, g : (a,b) \to \mathbb{R}$ türevlenebilir ve her $x \in (a,b)$ için $g'(x) \ne 0$ olsun. Ayrıca
+
+$$\lim_{x \to a^+} f(x) = 0 \qquad \text{ve} \qquad \lim_{x \to a^+} g(x) = 0$$
+
+olsun. O hâlde:
+
+1. $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = L \in \mathbb{R}$ ise $\displaystyle\lim_{x \to a^+} \frac{f(x)}{g(x)} = L$'dir.
+2. $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = +\infty$ ise $\displaystyle\lim_{x \to a^+} \frac{f(x)}{g(x)} = +\infty$'dur; aynı biçimde limit $-\infty$ ise sonuç da $-\infty$'dur.
+
+::: {.ispat}
+Yukarıdaki ortak gözlemin (i) ve (ii) maddeleri gereği $g$ birebirdir ve $(a,b)$ üzerinde hiç sıfırlanmaz. Dolayısıyla $\dfrac{f(x)}{g(x)}$ oranı $(a,b)$'nin her noktasında tanımlıdır ve $a < \alpha < \beta < b$ olduğunda $g(\beta) - g(\alpha) \ne 0$'dır.
+
+**Adım 1: Cauchy ortalama değer teoremini uygulamak.** $a < \alpha < \beta < b$ olsun. $f$ ve $g$, $[\alpha, \beta]$ üzerinde türevlenebilir olduğundan orada süreklidir de (@thm-turev-sureklilik); ayrıca $g(\alpha) \ne g(\beta)$'dır. Cauchy ortalama değer teoremi gereği öyle bir $u \in (\alpha, \beta)$ vardır ki
+
+$$\frac{f(\beta) - f(\alpha)}{g(\beta) - g(\alpha)} = \frac{f'(u)}{g'(u)}. \tag{$*$}$$
+
+Bu eşitlik ispatın yükünü taşır: solda yalnızca $f$ ve $g$'nin değerleri, sağda yalnızca türevlerin oranı vardır.
+
+**Adım 2 (birinci kısım): türevlerin oranını kuşatmak.** $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = L \in \mathbb{R}$ olsun ve bir $\varepsilon > 0$ verilsin. Limit tanımı gereği öyle bir $c \in (a,b)$ vardır ki her $u \in (a,c)$ için
+
+$$L - \varepsilon < \frac{f'(u)}{g'(u)} < L + \varepsilon.$$
+
+**Adım 3: kuşatmayı kirişlere taşımak.** $a < \alpha < \beta \le c$ olsun. $(*)$'daki $u$ noktası $(\alpha, \beta) \subseteq (a, c)$ içindedir; öyleyse Adım 2'deki eşitsizlik $u$ için geçerlidir ve $(*)$ ile
+
+$$L - \varepsilon < \frac{f(\beta) - f(\alpha)}{g(\beta) - g(\alpha)} < L + \varepsilon \qquad \text{(her } a < \alpha < \beta \le c \text{ için)}$$
+
+elde ederiz.
+
+**Adım 4: $\alpha \to a^+$ limitine geçmek.** Şimdi $\beta \in (a, c]$ noktasını **sabit** tutup $\alpha$'yı $a$'ya yaklaştıralım. Varsayım gereği $f(\alpha) \to 0$ ve $g(\alpha) \to 0$'dır; $g(\beta) \ne 0$ olduğundan bölüm için limit aritmetiği (@thm-sonsuzda-limit-kurallari) uygulanabilir:
+
+$$\lim_{\alpha \to a^+} \frac{f(\beta) - f(\alpha)}{g(\beta) - g(\alpha)} = \frac{f(\beta) - 0}{g(\beta) - 0} = \frac{f(\beta)}{g(\beta)}.$$
+
+Adım 3'teki eşitsizlikler $\alpha$'nın $(a,\beta)$ içindeki her değeri için geçerli olduğundan, limitlerde sıralamanın korunması (@thm-sonsuzda-limit-kurallari) ile
+
+$$L - \varepsilon \le \frac{f(\beta)}{g(\beta)} \le L + \varepsilon$$
+
+buluruz; limite geçerken katı eşitsizliklerin zayıflaması sorun değildir.
+
+**Adım 5: sonuç.** Son eşitsizlik $\left| \dfrac{f(\beta)}{g(\beta)} - L \right| \le \varepsilon$ demektir ve her $\beta \in (a,c)$ için geçerlidir. Verilen bir $\varepsilon_0 > 0$ için bütün akıl yürütmeyi $\varepsilon = \dfrac{\varepsilon_0}{2}$ ile tekrarlarsak, uygun bir $c$ için her $\beta \in (a,c)$'de $\left| \dfrac{f(\beta)}{g(\beta)} - L \right| \le \dfrac{\varepsilon_0}{2} < \varepsilon_0$ olur. Bu tam olarak $\displaystyle\lim_{\beta \to a^+} \frac{f(\beta)}{g(\beta)} = L$ demektir; birinci kısım tamamlanmıştır.
+
+**Adım 6 (ikinci kısım): sonsuz limit hâli.** Şimdi $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = +\infty$ olsun ve herhangi bir $M \in \mathbb{R}$ verilsin. Sonsuz limitin tanımı (@def-sonsuz-limit-fonksiyon) gereği öyle bir $c \in (a,b)$ vardır ki her $u \in (a,c)$ için $\dfrac{f'(u)}{g'(u)} > M + 1$'dir. Adım 3'teki akıl yürütmenin aynısıyla, $a < \alpha < \beta \le c$ için $(*)$ ile
+
+$$\frac{f(\beta) - f(\alpha)}{g(\beta) - g(\alpha)} > M + 1$$
+
+elde ederiz. $\beta$'yı sabitleyip $\alpha \to a^+$ limitine geçelim; Adım 4'teki hesap aynen geçerlidir ve sıralamanın korunmasıyla her $\beta \in (a,c)$ için $\dfrac{f(\beta)}{g(\beta)} \ge M + 1 > M$ buluruz. $M$ keyfî olduğundan $\displaystyle\lim_{\beta \to a^+} \frac{f(\beta)}{g(\beta)} = +\infty$'dur.
+
+Limit $-\infty$ ise $f$ yerine $-f$ alalım: $-f$ de aynı hipotezleri sağlar ve $\dfrac{(-f)'}{g'} = -\dfrac{f'}{g'} \to +\infty$'dur. Az önce ispatladığımız hâl gereği $\dfrac{-f}{g} \to +\infty$, yani $\dfrac{f}{g} \to -\infty$'dur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Kuralı kullanırken eşitlik işaretinin üstüne kısaca "L.H." yazmak yaygın bir alışkanlıktır; biz de öyle yapacağız. Ama zincirin **sondan başa** okunduğunu unutmayalım: önce türevlerin oranının limitinin var olduğunu görürüz, ancak ondan sonra teorem asıl oranın limitinin de var ve aynı olduğunu söyler.
+
+:::: {#exm-lhospital-basit-hesaplar name="İki Temel Hesap"}
+Aşağıdaki limitleri L'Hôpital kuralıyla hesaplayınız.
+
+1. $\displaystyle\lim_{x \to 0^+} \frac{\sin x}{\sqrt{x}}$
+2. $\displaystyle\lim_{x \to 1} \frac{\ln x}{x - 1}$
+
+::: {.cozum}
+**1.** $x \to 0^+$ iken $\sin x \to 0$ ve $\sqrt{x} \to 0$ olduğundan bu bir $\dfrac{0}{0}$ belirsizliğidir. $f(x) = \sin x$ ve $g(x) = \sqrt{x}$ alalım; ikisi de $(0, \infty)$ üzerinde türevlenebilirdir ve $g'(x) = \dfrac{1}{2\sqrt{x}} \ne 0$ olduğundan @thm-lhospital-sifir-sifir'in bütün hipotezleri $(a,b) = (0,1)$ üzerinde sağlanır. Türevlerin oranı:
+
+$$\frac{f'(x)}{g'(x)} = \frac{\cos x}{\dfrac{1}{2\sqrt{x}}} = 2\sqrt{x}\,\cos x.$$
+
+$x \to 0^+$ iken $2\sqrt{x} \to 0$ ve $\cos x \to 1$ olduğundan (@prp-sin-cos-surekli) bu çarpımın limiti $0$'dır. Öyleyse
+
+$$\lim_{x \to 0^+} \frac{\sin x}{\sqrt{x}} \overset{\text{L.H.}}{=} \lim_{x \to 0^+} 2\sqrt{x}\,\cos x = 0.$$
+
+Aynı sonuç kural olmadan da bulunur: $\dfrac{\sin x}{\sqrt{x}} = \dfrac{\sin x}{x} \cdot \sqrt{x} \to 1 \cdot 0 = 0$ (@thm-sinx-bolu-x).
+
+**2.** $x \to 1$ iken $\ln x \to 0$ ve $x - 1 \to 0$; yine $\dfrac{0}{0}$ biçimi. $f(x) = \ln x$, $g(x) = x - 1$ alalım; $g'(x) = 1 \ne 0$'dır ve iki fonksiyon da $(0,\infty)$ üzerinde türevlenebilirdir (@thm-log-turevi). Limit iki yönlü olduğundan kuralı $(1, 2)$ aralığında sağdan, $\left(\frac{1}{2}, 1\right)$ aralığında soldan uygularız; iki tek yönlü limit de aynı çıkar (@thm-tek-yonlu-limit-denklik):
+
+$$\lim_{x \to 1} \frac{\ln x}{x - 1} \overset{\text{L.H.}}{=} \lim_{x \to 1} \frac{1/x}{1} = \frac{1}{1} = 1.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bazen bir kez türev almak belirsizliği yok etmeye yetmez; o zaman kuralı yeniden uygularız — ama her seferinde yeni ifadenin de belirsiz olduğunu doğrulamak koşuluyla.
+
+:::: {#exm-lhospital-iki-kez name="Kuralın Ard Arda Uygulanması"}
+Aşağıdaki limitleri hesaplayınız.
+
+1. $\displaystyle\lim_{x \to 0} \frac{1 - \cos x}{x^2}$
+2. $\displaystyle\lim_{x \to 0} \frac{e^x - 1}{x}$
+
+::: {.cozum}
+**1.** $x \to 0$ iken $1 - \cos x \to 0$ ve $x^2 \to 0$: $\dfrac{0}{0}$ biçimi. Paydanın türevi $2x$, $x \ne 0$ için sıfırdan farklıdır; o yüzden kuralı $0$'ın sağında ve solunda ayrı ayrı uygulayabiliriz. Bir kez türev alalım:
+
+$$\frac{(1 - \cos x)'}{(x^2)'} = \frac{\sin x}{2x}.$$
+
+Bu da $x \to 0$ iken $\dfrac{0}{0}$ biçimindedir; paydanın türevi $2 \ne 0$'dır. İkinci kez türev alalım:
+
+$$\frac{(\sin x)'}{(2x)'} = \frac{\cos x}{2} \longrightarrow \frac{\cos 0}{2} = \frac{1}{2}.$$
+
+Son ifade belirsiz değildir; durmamız gereken yer burasıdır. Zinciri sondan başa okuyarak
+
+$$\lim_{x \to 0} \frac{1 - \cos x}{x^2} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{\sin x}{2x} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{\cos x}{2} = \frac{1}{2}$$
+
+buluruz. İkinci adımı @thm-sinx-bolu-x ile de bitirebilirdik.
+
+**2.** $x \to 0$ iken $e^x - 1 \to 0$ ve $x \to 0$: $\dfrac{0}{0}$ biçimi. Paydanın türevi $1 \ne 0$'dır ve
+
+$$\lim_{x \to 0} \frac{e^x - 1}{x} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{e^x}{1} = e^0 = 1.$$
+
+Bu limit aslında $e^x$ fonksiyonunun $0$ noktasındaki türevinin tanımıdır (@def-turev-noktada); yani kural burada kendi ispatında kullandığı bilgiyi geri veriyor. Yanlış değildir ama gereksizdir: @thm-lhospital-basit zaten aynı şeyi söyler.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Kuralın Öteki Sürümleri
+
+Teoremi $x \to a^+$ için ifade ettik. Uygulamalarda bize soldan limit, iki yönlü limit ve $x \to \pm\infty$ hâlleri de gerekir. Hepsi ispatlanmış hâlden çıkar; ayrı ispat yazmaya gerek yoktur.
+
+**Soldan limit ($x \to b^-$).** $F(t) = f(-t)$ ve $G(t) = g(-t)$ fonksiyonlarını $(-b, -a)$ aralığında tanımlayalım. Zincir kuralı (@thm-zincir-kurali) gereği $F'(t) = -f'(-t)$ ve $G'(t) = -g'(-t)$'dir; dolayısıyla $G'$ hiç sıfırlanmaz, $\dfrac{F(t)}{G(t)} = \dfrac{f(-t)}{g(-t)}$ ve $\dfrac{F'(t)}{G'(t)} = \dfrac{f'(-t)}{g'(-t)}$ olur. $t \to (-b)^+$ olması $x = -t \to b^-$ olması demektir; @thm-lhospital-sifir-sifir'i $F, G$ çiftine $(-b,-a)$ üzerinde uygularsak $x \to b^-$ hâlindeki L'Hôpital kuralını elde ederiz.
+
+**İki yönlü limit ($x \to a$).** $f$ ve $g$, $a$'yı içeren bir açık aralıkta (belki $a$ hariç) türevlenebilir, $g' \ne 0$ ve $f, g \to 0$ olsun. Kuralı $a$'nın sağındaki ve solundaki aralıkta ayrı ayrı uygularız; her iki tek yönlü limit de $L$ çıkar, @thm-tek-yonlu-limit-denklik gereği iki yönlü limit de $L$'dir.
+
+**$x \to +\infty$ ve $x \to -\infty$.** Bunlar için yeni bir şey gerekmez: teoremde $b = \infty$ alıp soldan sürümü kullanmak $x \to +\infty$ hâlini, $a = -\infty$ alıp teoremi doğrudan kullanmak $x \to -\infty$ hâlini verir.
+
+::: {.callout-tip title="💡 Sonsuzdaki hâlin ikinci bir ispatı"}
+$x \to +\infty$ hâli $t = \dfrac{1}{x}$ değişken değiştirmesiyle $t \to 0^+$ hâline de indirgenir. $\varphi(t) = f\!\left(\dfrac{1}{t}\right)$, $\psi(t) = g\!\left(\dfrac{1}{t}\right)$ diyelim. Zincir kuralıyla $\varphi'(t) = -\dfrac{1}{t^2} f'\!\left(\dfrac{1}{t}\right)$ ve $\psi'(t) = -\dfrac{1}{t^2} g'\!\left(\dfrac{1}{t}\right)$ olur; $-\dfrac{1}{t^2}$ çarpanları oranda sadeleşir ve $\dfrac{\varphi'(t)}{\psi'(t)} = \dfrac{f'(1/t)}{g'(1/t)}$ kalır. $t \to 0^+$ iken $\dfrac{1}{t} \to +\infty$ olduğundan $t \to 0^+$ için elde edilen sonuç doğrudan $x \to +\infty$ için istenen sonuca dönüşür.
+:::
+
+## L'Hôpital Kuralı II: $\infty/\infty$ Biçimi
+
+İkinci kural, ilkinden hem daha kullanışlı hem daha şaşırtıcıdır: **paydan hiçbir şey istenmez.** $f$'nin bir limiti olması bile gerekmez; yalnızca paydanın mutlak değerce sonsuza gitmesi yeter. Sezgisel açıklama şudur: payda çok büyükse $f$ ve $g$'nin sabit bir $c$ noktasındaki değerleri orana neredeyse katkı yapmaz; geriye $c$ ile $x$ arasındaki *değişimlerin* oranı kalır, bu da Cauchy ortalama değer teoremi gereği bir türev oranıdır.
+
+:::: {#thm-lhospital-sonsuz-sonsuz name="L'Hôpital Kuralı II"}
+$-\infty \le a < b \le \infty$ olsun. $f, g : (a,b) \to \mathbb{R}$ türevlenebilir ve her $x \in (a,b)$ için $g'(x) \ne 0$ olsun. Ayrıca
+
+$$\lim_{x \to a^+} g(x) = +\infty \qquad \text{ya da} \qquad \lim_{x \to a^+} g(x) = -\infty$$
+
+olsun. O hâlde:
+
+1. $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = L \in \mathbb{R}$ ise $\displaystyle\lim_{x \to a^+} \frac{f(x)}{g(x)} = L$'dir.
+2. $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = \pm\infty$ ise $\displaystyle\lim_{x \to a^+} \frac{f(x)}{g(x)} = \pm\infty$'dur.
+
+::: {.ispat}
+Hipotez, $x \to a^+$ iken $|g(x)| \to +\infty$ olduğunu söyler. Ortak gözlemin (i) maddesi gereği $g$ birebirdir; bu, Cauchy ortalama değer teoremini uygulamak için yeter.
+
+**Adım 1: türevlerin oranını kuşatmak.** Önce (1) hâlini ispatlayalım: $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = L \in \mathbb{R}$ olsun ve $\varepsilon > 0$ verilsin. Öyle bir $c \in (a,b)$ vardır ki
+
+$$\left| \frac{f'(u)}{g'(u)} - L \right| < \frac{\varepsilon}{4} \qquad \text{(her } u \in (a,c) \text{ için)}.$$
+
+**Adım 2: sabit uçlu kirişler.** $c$ noktasını bundan böyle **sabit** tutuyoruz. $x \in (a,c)$ olsun. $f$ ve $g$, $[x, c]$ üzerinde sürekli, $(x,c)$ üzerinde türevlenebilirdir ve $g$ birebir olduğundan $g(x) \ne g(c)$'dir. $Q(x) := \dfrac{f(x) - f(c)}{g(x) - g(c)}$ diyelim; Cauchy ortalama değer teoremi gereği bir $u \in (x,c) \subseteq (a,c)$ için $Q(x) = \dfrac{f'(u)}{g'(u)}$ olur. Adım 1'in eşitsizliği $u$ için geçerli olduğundan
+
+$$|Q(x) - L| < \frac{\varepsilon}{4} \qquad \text{(her } x \in (a,c) \text{ için)}. \tag{$\dagger$}$$
+
+**Adım 3: asıl oranı $Q$ cinsinden yazmak.** $g(x) \ne 0$ olan $x$'ler için $\lambda(x) := \dfrac{g(x) - g(c)}{g(x)} = 1 - \dfrac{g(c)}{g(x)}$ diyelim. O zaman
+
+$$Q(x)\,\lambda(x) = \frac{f(x) - f(c)}{g(x) - g(c)} \cdot \frac{g(x) - g(c)}{g(x)} = \frac{f(x)}{g(x)} - \frac{f(c)}{g(x)}, \qquad \text{yani} \qquad \frac{f(x)}{g(x)} = Q(x)\,\lambda(x) + \frac{f(c)}{g(x)}.$$
+
+Buradan $L$'yi çıkaralım ve $L\lambda(x) = L - \dfrac{L\,g(c)}{g(x)}$ olduğunu kullanalım:
+
+$$\frac{f(x)}{g(x)} - L = \big(Q(x) - L\big)\lambda(x) + \big(L\lambda(x) - L\big) + \frac{f(c)}{g(x)} = \big(Q(x) - L\big)\lambda(x) + \frac{f(c) - L\,g(c)}{g(x)}.$$
+
+Üçgen eşitsizliğiyle
+
+$$\left| \frac{f(x)}{g(x)} - L \right| \le |Q(x) - L| \cdot |\lambda(x)| + \frac{|f(c) - L\,g(c)|}{|g(x)|}. \tag{$\ddagger$}$$
+
+**Adım 4: $|g(x)| \to \infty$ olduğunu kullanmak.** $A := |f(c) - L\,g(c)| \ge 0$ olsun; $c$ sabit olduğundan $A$ bir sabittir. $|g(x)| \to +\infty$ olduğundan öyle bir $c_1 \in (a,c)$ vardır ki her $x \in (a, c_1)$ için
+
+$$|g(x)| > \max\left\{ 1,\ 2|g(c)|,\ \frac{2A}{\varepsilon} + 1 \right\}$$
+
+sağlanır. Bu $x$'ler için üç şey birden elde ederiz:
+
+- $|g(x)| > 1 > 0$ olduğundan $g(x) \ne 0$'dır; $\dfrac{f(x)}{g(x)}$ ve $\lambda(x)$ tanımlıdır.
+- $|g(x)| > 2|g(c)| \ge |g(c)|$ olduğundan $g(x) \ne g(c)$'dir ve $\left| \dfrac{g(c)}{g(x)} \right| < \dfrac{1}{2}$; dolayısıyla $|\lambda(x)| = \left| 1 - \dfrac{g(c)}{g(x)} \right| \le \dfrac{3}{2}$'dir.
+- $|g(x)| > \dfrac{2A}{\varepsilon}$ olduğundan $\dfrac{A}{|g(x)|} < \dfrac{\varepsilon}{2}$'dir ($A = 0$ ise bu terim zaten $0$'dır).
+
+**Adım 5: birleştirme.** $x \in (a, c_1)$ için $(\dagger)$ ve $(\ddagger)$'yi bir araya getirelim:
+
+$$\left| \frac{f(x)}{g(x)} - L \right| < \frac{\varepsilon}{4} \cdot \frac{3}{2} + \frac{\varepsilon}{2} = \frac{3\varepsilon}{8} + \frac{\varepsilon}{2} = \frac{7\varepsilon}{8} < \varepsilon.$$
+
+$\varepsilon > 0$ keyfî olduğundan $\displaystyle\lim_{x \to a^+} \frac{f(x)}{g(x)} = L$'dir.
+
+**Adım 6: sonsuz limit hâli.** $\displaystyle\lim_{x \to a^+} \frac{f'(x)}{g'(x)} = +\infty$ olsun ve bir $M > 0$ verilsin. Öyle bir $c \in (a,b)$ vardır ki her $u \in (a,c)$ için $\dfrac{f'(u)}{g'(u)} > 4M$'dir. Adım 2'deki gibi Cauchy ortalama değer teoremini $[x,c]$ üzerinde uygulayarak
+
+$$Q(x) > 4M \qquad \text{(her } x \in (a,c) \text{ için)}$$
+
+elde ederiz. Şimdi $c_1 \in (a,c)$ noktasını, her $x \in (a,c_1)$ için
+
+$$|g(x)| > \max\left\{ 2|g(c)|,\ \frac{|f(c)|}{M} + 1 \right\}$$
+
+olacak biçimde seçelim. Böylece $\left| \dfrac{g(c)}{g(x)} \right| < \dfrac{1}{2}$ ve dolayısıyla $\lambda(x) > \dfrac{1}{2}$; ayrıca $\left| \dfrac{f(c)}{g(x)} \right| < M$ olur. Adım 3'teki özdeşlikte bunları kullanırsak
+
+$$\frac{f(x)}{g(x)} = Q(x)\,\lambda(x) + \frac{f(c)}{g(x)} > 4M \cdot \frac{1}{2} - M = 2M - M = M$$
+
+buluruz. $M > 0$ keyfî olduğundan $\displaystyle\lim_{x \to a^+} \frac{f(x)}{g(x)} = +\infty$'dur. Limit $-\infty$ ise, birinci teoremin ispatındaki gibi $f$ yerine $-f$ alınır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="Paya neden koşul konmadı?"}
+@thm-lhospital-sonsuz-sonsuz'da $f$ hakkında hiçbir limit varsayımı yok. Bu, ispata bakınca anlaşılır: $f$ yalnızca $Q(x)$ ve $\dfrac{f(c)}{g(x)}$ terimlerinde geçer; ikincisinde $f(c)$ **sabit** bir sayıdır ve $|g(x)| \to \infty$ olduğu için etkisi silinir, birincisinde ise Cauchy ortalama değer teoremi $f$'nin değerlerini $f'$ ile değiştirir.
+:::
+
+:::: {#exm-lhospital-sonsuzda name="Sonsuzdaki Belirsizlikler"}
+Aşağıdaki limitleri hesaplayınız.
+
+1. $\displaystyle\lim_{x \to \infty} \frac{\ln x}{x}$
+2. $\displaystyle\lim_{x \to \infty} x^2 e^{-x}$
+3. $\displaystyle\lim_{x \to 0^+} \frac{\ln(\sin x)}{\ln x}$
+
+::: {.cozum}
+**1.** $x \to \infty$ iken $\ln x \to +\infty$ ve $x \to +\infty$; bu bir $\dfrac{\infty}{\infty}$ belirsizliğidir. $f(x) = \ln x$, $g(x) = x$ alalım; $(1,\infty)$ üzerinde ikisi de türevlenebilirdir, $g'(x) = 1 \ne 0$'dır ve $g(x) \to +\infty$'dur. @thm-lhospital-sonsuz-sonsuz gereği
+
+$$\lim_{x \to \infty} \frac{\ln x}{x} \overset{\text{L.H.}}{=} \lim_{x \to \infty} \frac{1/x}{1} = \lim_{x \to \infty} \frac{1}{x} = 0.$$
+
+**2.** Önce çarpımı bir orana çevirelim: $x^2 e^{-x} = \dfrac{x^2}{e^x}$. $x \to \infty$ iken pay ve payda ayrı ayrı $+\infty$'a gider; $\dfrac{\infty}{\infty}$ biçimi ve paydanın türevi $e^x$ hiç sıfırlanmaz. Kuralı iki kez uygulayalım:
+
+$$\lim_{x \to \infty} \frac{x^2}{e^x} \overset{\text{L.H.}}{=} \lim_{x \to \infty} \frac{2x}{e^x} \overset{\text{L.H.}}{=} \lim_{x \to \infty} \frac{2}{e^x} = 0.$$
+
+İkinci adımdan önce $\dfrac{2x}{e^x}$ ifadesinin gerçekten $\dfrac{\infty}{\infty}$ biçiminde olduğunu doğruladık; son ifade belirsiz değildir, o yüzden orada durduk.
+
+**3.** $x \to 0^+$ iken $\sin x \to 0^+$ olduğundan $\ln(\sin x) \to -\infty$; ayrıca $\ln x \to -\infty$'dur. Payda $-\infty$'a gittiğine göre @thm-lhospital-sonsuz-sonsuz uygulanabilir ($g(x) = \ln x$, $g'(x) = \dfrac{1}{x} \ne 0$ ve $(0, \tfrac{\pi}{2})$ üzerinde her iki fonksiyon türevlenebilirdir). Türevlerin oranı:
+
+$$\frac{\big(\ln(\sin x)\big)'}{(\ln x)'} = \frac{\dfrac{\cos x}{\sin x}}{\dfrac{1}{x}} = \frac{x \cos x}{\sin x} = \frac{x}{\sin x} \cdot \cos x.$$
+
+Payın türevinde zincir kuralını kullandık (@thm-zincir-kurali). $x \to 0^+$ iken $\dfrac{x}{\sin x} \to 1$ ve $\cos x \to 1$ olduğundan $\displaystyle\lim_{x \to 0^+} \frac{\ln(\sin x)}{\ln x} = 1$'dir. Sonuç sezgiyle uyuşur: $x$ küçükken $\sin x$ ile $x$ birbirine çok yakındır, logaritmaları da öyle.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Öteki Belirsiz Biçimler
+
+Kalan beş belirsiz biçim — $\infty - \infty$, $0 \cdot \infty$, $1^{\infty}$, $0^0$, $\infty^0$ — için ayrı teorem yoktur; hepsi cebirsel bir düzenlemeyle ya da logaritma alarak $\dfrac{0}{0}$ veya $\dfrac{\infty}{\infty}$ biçimine indirgenir.
+
+### Fark ve Çarpım Biçimleri
+
+$\infty - \infty$ biçiminde standart hamle **ortak paydada toplamaktır**: iki terim tek bir kesre dönüşünce genellikle $\dfrac{0}{0}$ biçimi ortaya çıkar.
+
+:::: {#exm-belirsizlik-fark name="Fark Biçimi"}
+$\displaystyle\lim_{x \to 0^+} \left( \frac{1}{x} - \frac{1}{\sin x} \right)$ limitini hesaplayınız.
+
+::: {.cozum}
+$x \to 0^+$ iken $\dfrac{1}{x} \to +\infty$ ve $\dfrac{1}{\sin x} \to +\infty$'dur; bu bir $\infty - \infty$ belirsizliğidir. Ortak paydada toplayınca $\dfrac{1}{x} - \dfrac{1}{\sin x} = \dfrac{\sin x - x}{x \sin x}$ olur; artık pay ve payda $0$'a gider: $\dfrac{0}{0}$ biçimi. Paydanın türevi $\sin x + x \cos x$'tir ve $0 < x < \dfrac{\pi}{2}$ için hem $\sin x > 0$ hem $x \cos x > 0$ olduğundan pozitiftir; dolayısıyla $\left(0, \dfrac{\pi}{2}\right)$ aralığında kural uygulanabilir:
+
+$$\lim_{x \to 0^+} \frac{\sin x - x}{x \sin x} \overset{\text{L.H.}}{=} \lim_{x \to 0^+} \frac{\cos x - 1}{\sin x + x \cos x}.$$
+
+Bu da $\dfrac{0}{0}$ biçimindedir. Bir kez daha türev alalım; paydanın türevi çarpım kuralıyla (@thm-turev-aritmetigi) $\big(\sin x + x \cos x\big)' = 2\cos x - x \sin x$ olur ve $x \to 0^+$ iken $2 \ne 0$'a gittiğinden küçük $x > 0$'lar için sıfırdan farklıdır. Öyleyse
+
+$$\lim_{x \to 0^+} \frac{\cos x - 1}{\sin x + x \cos x} \overset{\text{L.H.}}{=} \lim_{x \to 0^+} \frac{-\sin x}{2\cos x - x \sin x} = \frac{0}{2} = 0.$$
+
+Son ifade belirsiz değildir; zinciri sondan başa okuyarak $\displaystyle\lim_{x \to 0^+} \left( \frac{1}{x} - \frac{1}{\sin x} \right) = 0$ sonucuna varırız. Aynı hesap $x \to 0^-$ için de geçerlidir, dolayısıyla iki yönlü limit de $0$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+$0 \cdot \infty$ biçiminde ise çarpanlardan birini paydaya atarız: $f \cdot g$ yerine $\dfrac{f}{1/g}$ ya da $\dfrac{g}{1/f}$ yazılır; hangisinin işe yarayacağını hesabın kolaylığı belirler.
+
+:::: {#exm-belirsizlik-carpim name="Çarpım Biçimi"}
+$\displaystyle\lim_{x \to 0^+} x \ln x$ limitini hesaplayınız.
+
+::: {.cozum}
+$x \to 0^+$ iken $x \to 0$ ve $\ln x \to -\infty$; bu bir $0 \cdot \infty$ belirsizliğidir. Çarpımı orana çevirmenin iki yolu var: $x \ln x = \dfrac{\ln x}{1/x}$ ya da $x \ln x = \dfrac{x}{1/\ln x}$. Birincisini seçiyoruz, çünkü $\ln x$'in türevi basittir; ikinci yolda $\dfrac{1}{\ln x}$'in türevi $-\dfrac{1}{x (\ln x)^2}$ çıkar ve ifade karışır. Birinci biçimde pay $-\infty$'a, payda $+\infty$'a gider: $\dfrac{\infty}{\infty}$ biçimi ve $g(x) = \dfrac{1}{x}$ için $g'(x) = -\dfrac{1}{x^2} \ne 0$'dır. Kuralı uygulayalım:
+
+$$\lim_{x \to 0^+} \frac{\ln x}{1/x} \overset{\text{L.H.}}{=} \lim_{x \to 0^+} \frac{1/x}{-1/x^2} = \lim_{x \to 0^+} \left( \frac{1}{x} \cdot (-x^2) \right) = \lim_{x \to 0^+} (-x) = 0.$$
+
+Öyleyse $\displaystyle\lim_{x \to 0^+} x \ln x = 0$'dır. Bu limiti aklımızda tutalım; birazdan üstel biçimlerde kullanacağız. Sonucun anlamı şudur: $x$ sıfıra giderken $\ln x$ sonsuza gider, ama $x$'in sıfıra gitmesi $\ln x$'in patlamasından daha güçlüdür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Üstel Biçimler
+
+$1^{\infty}$, $0^0$ ve $\infty^0$ biçimlerinin üçü de aynı hamleyle çözülür. $f(x) > 0$ olmak üzere
+
+$$f(x)^{g(x)} = e^{\,g(x) \ln f(x)}$$
+
+özdeşliğini kullanırız (@thm-genel-kuvvet-turevi'nin dayandığı tanım budur). Üstteki $g(x) \ln f(x)$ çarpımı her üç biçimde de $0 \cdot \infty$ türündendir ve bir önceki kesimin yöntemiyle hesaplanır. Sonra üstel fonksiyonun sürekliliğinden yararlanırız: $g(x)\ln f(x) \to S$ ise $e^{g(x)\ln f(x)} \to e^S$ olur. Bu, bileşke fonksiyonun limiti kuralının (@thm-bileske-limiti) süreklilik hâlidir: dış fonksiyon $\exp$, $S$ noktasında sürekli olduğundan — yani oradaki limiti ile değeri çakıştığından — iç fonksiyonun $S$ değerini alıp almadığına ayrıca bakmak gerekmez. ($S = -\infty$ ise limit $0$, $S = +\infty$ ise $+\infty$'dur.)
+
+:::: {#exm-belirsizlik-ustel name="Sıfır Üzeri Sıfır Biçimi"}
+$\displaystyle\lim_{x \to 0^+} x^{\,x}$ limitini hesaplayınız.
+
+::: {.cozum}
+$x \to 0^+$ iken taban $x \to 0^+$ ve üs $x \to 0$'dır; bu bir $0^0$ belirsizliğidir. $x > 0$ için $x^{\,x} = e^{\,x \ln x}$ yazalım. @exm-belirsizlik-carpim'de $\displaystyle\lim_{x \to 0^+} x \ln x = 0$ olduğunu bulmuştuk; üstel fonksiyon her yerde sürekli olduğundan
+
+$$\lim_{x \to 0^+} x^{\,x} = \lim_{x \to 0^+} e^{\,x \ln x} = e^{\,\lim_{x \to 0^+} x \ln x} = e^0 = 1.$$
+
+Sonuç ilk bakışta şaşırtıcıdır: taban sıfıra giderek ifadeyi sıfıra, üs sıfıra giderek $1$'e itiyor; kazanan üstür. Nedeni tam olarak $x \ln x \to 0$ olmasıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi bölümün en güzel örneğine geliyoruz. Analiz 1'de $e$ sayısını $\left(1 + \dfrac{1}{n}\right)^n$ dizisinin limiti olarak tanımlamış (@def-e-sayisi, @thm-e-dizisi), yakınsaklığı için monotonluk ve sınırlılık üzerine epeyce emek vermiştik. L'Hôpital kuralı aynı sonucun fonksiyon sürümünü birkaç satırda verir.
+
+:::: {#exm-lhospital-e-sayisi name="e Sayısına Giden Limit ve İkizi"}
+Aşağıdaki iki limiti hesaplayınız ve neden farklı çıktıklarını açıklayınız.
+
+1. $\displaystyle\lim_{x \to \infty} \left( 1 + \frac{1}{x} \right)^x$
+2. $\displaystyle\lim_{x \to 0^+} \left( 1 + \frac{1}{x} \right)^x$
+
+::: {.cozum}
+Her iki limitte de aynı ifadeyle çalışıyoruz. $x > 0$ için $1 + \dfrac{1}{x} > 0$ olduğundan logaritma alabiliriz:
+
+$$\left( 1 + \frac{1}{x} \right)^x = e^{\,\varphi(x)}, \qquad \varphi(x) = x \ln\left( 1 + \frac{1}{x} \right) = \frac{\ln\left( 1 + \dfrac{1}{x} \right)}{\dfrac{1}{x}}.$$
+
+$\varphi$'yi hesaplamak için türevleri bulalım. Payın türevi zincir kuralıyla
+
+$$\left[ \ln\left( 1 + \frac{1}{x} \right) \right]' = \frac{1}{1 + \dfrac{1}{x}} \cdot \left( -\frac{1}{x^2} \right),$$
+
+paydanın türevi ise $\left( \dfrac{1}{x} \right)' = -\dfrac{1}{x^2}$'dir; bu, $x > 0$ için hiç sıfırlanmaz. İki türevin oranında $-\dfrac{1}{x^2}$ çarpanları sadeleşir:
+
+$$\frac{\left[ \ln\left( 1 + \frac{1}{x} \right) \right]'}{\left( \frac{1}{x} \right)'} = \frac{1}{1 + \dfrac{1}{x}}.$$
+
+Bundan sonrası iki durumda ayrılıyor.
+
+**1\. Durum: $x \to \infty$.** Burada $\ln\left( 1 + \dfrac{1}{x} \right) \to 0$ ve $\dfrac{1}{x} \to 0$; yani $\varphi$ bir $\dfrac{0}{0}$ belirsizliğidir ve @thm-lhospital-sifir-sifir uygulanır. Türevlerin oranının limiti
+
+$$\lim_{x \to \infty} \frac{1}{1 + \dfrac{1}{x}} = \frac{1}{1 + 0} = 1$$
+
+olduğundan $\displaystyle\lim_{x \to \infty} \varphi(x) = 1$'dir. Üstel fonksiyonun sürekliliğiyle
+
+$$\lim_{x \to \infty} \left( 1 + \frac{1}{x} \right)^x = e^1 = e.$$
+
+**2\. Durum: $x \to 0^+$.** Şimdi $\dfrac{1}{x} \to +\infty$ olduğundan hem $\ln\left( 1 + \dfrac{1}{x} \right)$ hem payda $+\infty$'a gider: bu kez $\dfrac{\infty}{\infty}$ belirsizliği vardır ve @thm-lhospital-sonsuz-sonsuz uygulanır. Türevlerin oranı yukarıdakinin aynısıdır ama limiti farklıdır: payda $+\infty$'a gittiğinden $\displaystyle\lim_{x \to 0^+} \frac{1}{1 + \frac{1}{x}} = 0$, yani $\varphi(x) \to 0$ ve
+
+$$\lim_{x \to 0^+} \left( 1 + \frac{1}{x} \right)^x = e^0 = 1.$$
+
+**Neden farklılar?** Biçimleri farklıdır: birincisinde taban $1$'e, üs $+\infty$'a gider ($1^{\infty}$); ikincisinde taban $+\infty$'a, üs $0$'a gider ($\infty^0$). Aynı cebirsel ifadenin farklı noktalarda farklı belirsiz biçimler üretip farklı sonuçlar vermesi, "belirsiz" sözcüğünün ne kadar yerinde olduğunu gösterir. Birinci sonuç Analiz 1'deki dizi sonucuyla da uyuşur: genel dizisel ölçüt (@thm-dizisel-olcut-genel) gereği $x = n$ alınarak @thm-e-dizisi'ndeki $\left( 1 + \dfrac{1}{n} \right)^n \to e$ elde edilir.
+
+Bölümün başındaki tablonun $1^{\infty}$ satırında duran üçüncü örnek de birinci durumdan çıkar. $x > 0$ için
+
+$$\left( 1 + \frac{1}{x} \right)^{x^2} = \left[ \left( 1 + \frac{1}{x} \right)^{x} \right]^{x}$$
+
+yazalım. Köşeli parantezin içi $e$'ye yakınsar ve $e > 2$ olduğundan yeterince büyük $x$'ler için $\left( 1 + \dfrac{1}{x} \right)^{x} > 2$, dolayısıyla
+
+$$\left( 1 + \frac{1}{x} \right)^{x^2} > 2^{\,x}$$
+
+olur. $2^{\,x} \to +\infty$ olduğundan sol taraf da $+\infty$'a ıraksar. Aynı $1^{\infty}$ biçimi, üs biraz daha hızlı büyüdüğünde sonlu bir sayı yerine $+\infty$ veriyor: tabanın $1$'e yaklaşma hızı ile üssün büyüme hızı arasındaki yarış, sonucu tek başına belirliyor.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kuralın Sınırları
+
+L'Hôpital kuralı çok güçlüdür ama her derde deva değildir; iki tipik başarısızlığını da tanımak gerekir.
+
+:::: {#exm-lhospital-tuzak name="Türevlerin Oranının Limiti Olmayabilir"}
+Aşağıdaki limitleri hesaplayınız ve her birinde L'Hôpital kuralının ne yaptığını inceleyiniz.
+
+1. $\displaystyle\lim_{x \to \infty} \frac{x - \sin x}{x + \sin x}$
+2. $\displaystyle\lim_{x \to 0} \dfrac{x^2 \sin\left( \frac{1}{x} \right)}{\sin x}$
+
+::: {.cozum}
+**1.** $|\sin x| \le 1$ olduğundan $x \to \infty$ iken $x - \sin x \to +\infty$ ve $x + \sin x \to +\infty$'dur; ifade $\dfrac{\infty}{\infty}$ biçimindedir. $f(x) = x - \sin x$, $g(x) = x + \sin x$ için $\dfrac{f'(x)}{g'(x)} = \dfrac{1 - \cos x}{1 + \cos x}$'tir. Bu ifadenin $x \to \infty$ iken limiti **yoktur**: $x_n = 2n\pi$ alırsak $\cos x_n = 1$ ve oran $\dfrac{0}{2} = 0$; $z_n = 2n\pi + \dfrac{2\pi}{3}$ alırsak $\cos z_n = -\dfrac{1}{2}$ ve oran $\dfrac{3/2}{1/2} = 3$ olur. İki dizi boyunca iki farklı değer çıktığından, genel dizisel ölçüt (@thm-dizisel-olcut-genel) gereği limit yoktur.
+
+Dahası, kuralın hipotezi de sağlanmıyor: $g'(x) = 1 + \cos x$ ifadesi $x = (2n+1)\pi$ noktalarında sıfırlanır; dolayısıyla $(c, \infty)$ biçiminde hiçbir aralıkta "$g' \ne 0$" koşulu sağlanamaz ve @thm-lhospital-sonsuz-sonsuz burada **uygulanamaz**.
+
+Ama asıl limit gayet iyi durumdadır. Pay ve paydayı $x$'e bölelim:
+
+$$\frac{x - \sin x}{x + \sin x} = \frac{1 - \dfrac{\sin x}{x}}{1 + \dfrac{\sin x}{x}} \qquad (x > 0).$$
+
+$\left| \dfrac{\sin x}{x} \right| \le \dfrac{1}{x} \to 0$ olduğundan sıkıştırma kuralıyla (@thm-sonsuzda-limit-kurallari) $\dfrac{\sin x}{x} \to 0$'dır. Payda $1 + 0 = 1 \ne 0$'a gittiğinden limit aritmetiği kullanılabilir:
+
+$$\lim_{x \to \infty} \frac{x - \sin x}{x + \sin x} = \frac{1 - 0}{1 + 0} = 1.$$
+
+**2.** $f(x) = x^2 \sin\left( \dfrac{1}{x} \right)$ ($x \ne 0$) ve $g(x) = \sin x$ olsun. $|f(x)| \le x^2 \to 0$ olduğundan pay $0$'a gider; payda da $0$'a gider: $\dfrac{0}{0}$ biçimi. Çarpım ve zincir kurallarıyla
+
+$$f'(x) = 2x \sin\left( \frac{1}{x} \right) + x^2 \cos\left( \frac{1}{x} \right) \cdot \left( -\frac{1}{x^2} \right) = 2x \sin\left( \frac{1}{x} \right) - \cos\left( \frac{1}{x} \right)$$
+
+olur ve $\dfrac{f'(x)}{g'(x)} = \dfrac{2x \sin\left( \frac{1}{x} \right) - \cos\left( \frac{1}{x} \right)}{\cos x}$'tir. $x \to 0$ iken payda $1$'e, ilk terim $0$'a gider; ama $\cos\left( \dfrac{1}{x} \right)$ terimi $-1$ ile $1$ arasında durmadan salınır ve hiçbir değere yaklaşmaz. Demek ki türevlerin oranının limiti yoktur.
+
+Asıl limit ise vardır. $x \ne 0$ için ifadeyi şöyle ayıralım:
+
+$$\frac{x^2 \sin\left( \frac{1}{x} \right)}{\sin x} = \underbrace{x \sin\left( \frac{1}{x} \right)}_{\to\, 0} \cdot \underbrace{\frac{x}{\sin x}}_{\to\, 1}.$$
+
+Birinci çarpanda $x \to 0$ ve $\left| \sin\left( \dfrac{1}{x} \right) \right| \le 1$ olduğundan, sınırlı çarpı sıfır kuralıyla (@thm-sinirli-carpi-sifir-fonksiyon) çarpım $0$'a gider; ikinci çarpan @thm-sinx-bolu-x gereği $1$'e gider. Öyleyse limit $0 \cdot 1 = 0$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="⚠️ Kuralın karşıtı doğru değildir"}
+@thm-lhospital-sifir-sifir ve @thm-lhospital-sonsuz-sonsuz tek yönlüdür:
+
+$$\lim \frac{f'}{g'} \text{ var} \quad \Longrightarrow \quad \lim \frac{f}{g} \text{ var ve aynıdır.}$$
+
+Ters yön **yanlıştır**: @exm-lhospital-tuzak'ta gördüğümüz gibi türevlerin oranının limiti hiç var olmadığı hâlde asıl limit var olabilir. Pratik sonucu şudur: **L'Hôpital kuralı bir limitin var olmadığını göstermek için kullanılamaz.** Türev alıp limitin olmadığını görmek asıl limit hakkında hiçbir şey söylemez; o durumda başka bir yöntem denenir (pay ve paydayı bölmek, sıkıştırma, seri açılımı gibi).
+:::
+
+::: {.callout-warning title="⚠️ Her adımda belirsizliği yeniden doğrulayın"}
+Kural ard arda uygulanırken en sık yapılan hata, ifade artık belirsiz olmadığı hâlde türev almaya devam etmektir. Örneğin
+
+$$\lim_{x \to 0} \frac{e^x - 1}{x^2 + x} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{e^x}{2x + 1} = \frac{1}{1} = 1$$
+
+doğru hesaptır. Ama burada durmayıp bir kez daha türev alan biri $\displaystyle\lim_{x \to 0} \frac{e^x}{2} = \frac{1}{2}$ diyerek yanlış sonuca varır; çünkü $\dfrac{e^x}{2x+1}$ ifadesi $x \to 0$ iken $\dfrac{1}{1}$ biçimindedir, belirsiz değildir.
+
+Doğru sıra şudur: **(i)** ifadenin belirsiz olduğunu doğrula; **(ii)** ilgilendiğin aralıkta $g' \ne 0$ olduğunu doğrula; **(iii)** türevlerin oranının limitini bul; **(iv)** o oran hâlâ belirsizse (i)'e dön, değilse dur.
+:::
+
+## Büyüme Hızları
+
+L'Hôpital kuralının en kalıcı armağanı, sonsuza giden fonksiyonlar arasında kesin bir hız sıralaması kurmasıdır. Analiz 1'de bu sıralamanın dizi sürümünü görmüştük (@thm-buyume-hizlari); şimdi fonksiyon sürümünü, üstelik keyfî reel üslerle, kolayca ispatlayabiliriz. $\displaystyle\lim_{x \to \infty} \frac{u(x)}{v(x)} = 0$ olduğunda "$v$, $u$'dan hızlı büyür" der ve $u(x) \ll v(x)$ yazarız.
+
+:::: {#cor-buyume-hizlari-lhospital name="Büyüme Hızlarının Sıralanması"}
+$p > 0$, $q > 0$ ve $a > 1$ reel sayılar olsun. O hâlde:
+
+1. $\displaystyle\lim_{x \to \infty} \frac{(\ln x)^p}{x^q} = 0$; yani logaritmanın her kuvveti, $x$'in her pozitif kuvvetinden yavaş büyür.
+2. $\displaystyle\lim_{x \to \infty} \frac{x^q}{a^x} = 0$; yani her üstel fonksiyon, $x$'in her kuvvetinden hızlı büyür.
+3. $\displaystyle\lim_{x \to 0^+} x^q |\ln x|^p = 0$.
+
+Bunlar Analiz 1'deki dizi sonuçlarıyla birleştirildiğinde ($\dfrac{a^n}{n!} \to 0$ ve $\dfrac{n!}{n^n} \to 0$, @thm-buyume-hizlari) şu zincir elde edilir:
+
+$$(\ln n)^p \ \ll \ n^q \ \ll \ a^n \ \ll \ n! \ \ll \ n^n \qquad (n \to \infty).$$
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="28.0 8.0 344.0 255.0" role="img" aria-label="ln x, x, x kare ve 2 uzeri x egrileri ayni eksende; 2 uzeri x, x=4 sonrasi hepsinin ustunde">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="44.0" y1="232.0" x2="358.0" y2="232.0"/>
+  <line x1="61.7" y1="236.0" x2="61.7" y2="22.0"/>
+  <polygon points="358.0,232.0 350.0,228.5 350.0,235.5" stroke="none"/>
+  <polygon points="61.7,22.0 58.2,30.0 65.2,30.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="107.4" y1="229.0" x2="107.4" y2="235.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="107.4" y="247.0" text-anchor="middle">1</text>
+  <line x1="153.0" y1="229.0" x2="153.0" y2="235.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="153.0" y="247.0" text-anchor="middle">2</text>
+  <line x1="198.7" y1="229.0" x2="198.7" y2="235.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="198.7" y="247.0" text-anchor="middle">3</text>
+  <line x1="244.4" y1="229.0" x2="244.4" y2="235.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="244.4" y="247.0" text-anchor="middle">4</text>
+  <line x1="290.1" y1="229.0" x2="290.1" y2="235.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="290.1" y="247.0" text-anchor="middle">5</text>
+  <line x1="335.7" y1="229.0" x2="335.7" y2="235.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="335.7" y="247.0" text-anchor="middle">6</text>
+  <line x1="58.7" y1="197.7" x2="64.7" y2="197.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="54.7" y="201.7" text-anchor="end">5</text>
+  <line x1="58.7" y1="163.3" x2="64.7" y2="163.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="54.7" y="167.3" text-anchor="end">10</text>
+  <line x1="58.7" y1="129.0" x2="64.7" y2="129.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="54.7" y="133.0" text-anchor="end">15</text>
+  <line x1="58.7" y1="94.7" x2="64.7" y2="94.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="54.7" y="98.7" text-anchor="end">20</text>
+  <line x1="58.7" y1="60.3" x2="64.7" y2="60.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="54.7" y="64.3" text-anchor="end">25</text>
+  <line x1="58.7" y1="26.0" x2="64.7" y2="26.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="54.7" y="30.0" text-anchor="end">30</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="356.0" y="247.0" text-anchor="end">x</text>
+  <text x="68.7" y="31.0">y</text>
+  </g>
+  <path d="M244.4,232.0 L244.4,122.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.38" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M107.4,232.0 L108.1,231.9 L108.8,231.8 L109.6,231.7 L110.3,231.6 L111.0,231.5 L111.7,231.4 L112.5,231.3 L113.2,231.2 L113.9,231.1 L114.6,231.0 L115.4,230.9 L116.1,230.8 L116.8,230.7 L117.5,230.6 L118.3,230.5 L119.0,230.4 L119.7,230.4 L120.4,230.3 L121.2,230.2 L121.9,230.1 L122.6,230.0 L123.3,229.9 L124.1,229.9 L124.8,229.8 L125.5,229.7 L126.2,229.6 L127.0,229.5 L127.7,229.5 L128.4,229.4 L129.1,229.3 L129.9,229.3 L130.6,229.2 L131.3,229.1 L132.0,229.0 L132.8,229.0 L133.5,228.9 L134.2,228.8 L134.9,228.8 L135.7,228.7 L136.4,228.6 L137.1,228.6 L137.8,228.5 L138.6,228.4 L139.3,228.4 L140.0,228.3 L140.7,228.2 L141.5,228.2 L142.2,228.1 L142.9,228.0 L143.6,228.0 L144.4,227.9 L145.1,227.9 L145.8,227.8 L146.5,227.7 L147.3,227.7 L148.0,227.6 L148.7,227.6 L149.4,227.5 L150.2,227.5 L150.9,227.4 L151.6,227.3 L152.3,227.3 L153.1,227.2 L153.8,227.2 L154.5,227.1 L155.2,227.1 L156.0,227.0 L156.7,227.0 L157.4,226.9 L158.1,226.9 L158.9,226.8 L159.6,226.8 L160.3,226.7 L161.0,226.7 L161.8,226.6 L162.5,226.6 L163.2,226.5 L163.9,226.5 L164.7,226.4 L165.4,226.4 L166.1,226.3 L166.8,226.3 L167.6,226.2 L168.3,226.2 L169.0,226.1 L169.7,226.1 L170.5,226.0 L171.2,226.0 L171.9,226.0 L172.6,225.9 L173.4,225.9 L174.1,225.8 L174.8,225.8 L175.5,225.7 L176.3,225.7 L177.0,225.6 L177.7,225.6 L178.4,225.6 L179.2,225.5 L179.9,225.5 L180.6,225.4 L181.3,225.4 L182.1,225.3 L182.8,225.3 L183.5,225.3 L184.2,225.2 L185.0,225.2 L185.7,225.1 L186.4,225.1 L187.1,225.1 L187.9,225.0 L188.6,225.0 L189.3,224.9 L190.0,224.9 L190.8,224.9 L191.5,224.8 L192.2,224.8 L192.9,224.8 L193.7,224.7 L194.4,224.7 L195.1,224.6 L195.8,224.6 L196.6,224.6 L197.3,224.5 L198.0,224.5 L198.7,224.5 L199.5,224.4 L200.2,224.4 L200.9,224.3 L201.6,224.3 L202.4,224.3 L203.1,224.2 L203.8,224.2 L204.5,224.2 L205.3,224.1 L206.0,224.1 L206.7,224.1 L207.4,224.0 L208.2,224.0 L208.9,224.0 L209.6,223.9 L210.3,223.9 L211.1,223.9 L211.8,223.8 L212.5,223.8 L213.2,223.8 L214.0,223.7 L214.7,223.7 L215.4,223.7 L216.1,223.6 L216.9,223.6 L217.6,223.6 L218.3,223.5 L219.0,223.5 L219.8,223.5 L220.5,223.4 L221.2,223.4 L221.9,223.4 L222.7,223.4 L223.4,223.3 L224.1,223.3 L224.8,223.3 L225.6,223.2 L226.3,223.2 L227.0,223.2 L227.7,223.1 L228.5,223.1 L229.2,223.1 L229.9,223.0 L230.6,223.0 L231.4,223.0 L232.1,223.0 L232.8,222.9 L233.5,222.9 L234.3,222.9 L235.0,222.8 L235.7,222.8 L236.4,222.8 L237.2,222.8 L237.9,222.7 L238.6,222.7 L239.3,222.7 L240.1,222.6 L240.8,222.6 L241.5,222.6 L242.2,222.6 L243.0,222.5 L243.7,222.5 L244.4,222.5 L245.1,222.5 L245.9,222.4 L246.6,222.4 L247.3,222.4 L248.0,222.3 L248.8,222.3 L249.5,222.3 L250.2,222.3 L250.9,222.2 L251.7,222.2 L252.4,222.2 L253.1,222.2 L253.8,222.1 L254.6,222.1 L255.3,222.1 L256.0,222.1 L256.7,222.0 L257.5,222.0 L258.2,222.0 L258.9,222.0 L259.6,221.9 L260.4,221.9 L261.1,221.9 L261.8,221.9 L262.5,221.8 L263.3,221.8 L264.0,221.8 L264.7,221.8 L265.4,221.7 L266.2,221.7 L266.9,221.7 L267.6,221.7 L268.3,221.6 L269.1,221.6 L269.8,221.6 L270.5,221.6 L271.2,221.5 L272.0,221.5 L272.7,221.5 L273.4,221.5 L274.1,221.4 L274.9,221.4 L275.6,221.4 L276.3,221.4 L277.0,221.4 L277.8,221.3 L278.5,221.3 L279.2,221.3 L279.9,221.3 L280.7,221.2 L281.4,221.2 L282.1,221.2 L282.8,221.2 L283.6,221.1 L284.3,221.1 L285.0,221.1 L285.7,221.1 L286.5,221.1 L287.2,221.0 L287.9,221.0 L288.6,221.0 L289.4,221.0 L290.1,220.9 L290.8,220.9 L291.5,220.9 L292.3,220.9 L293.0,220.9 L293.7,220.8 L294.4,220.8 L295.2,220.8 L295.9,220.8 L296.6,220.8 L297.3,220.7 L298.1,220.7 L298.8,220.7 L299.5,220.7 L300.2,220.6 L301.0,220.6 L301.7,220.6 L302.4,220.6 L303.1,220.6 L303.9,220.5 L304.6,220.5 L305.3,220.5 L306.0,220.5 L306.8,220.5 L307.5,220.4 L308.2,220.4 L308.9,220.4 L309.7,220.4 L310.4,220.4 L311.1,220.3 L311.8,220.3 L312.6,220.3 L313.3,220.3 L314.0,220.3 L314.7,220.2 L315.5,220.2 L316.2,220.2 L316.9,220.2 L317.6,220.2 L318.4,220.1 L319.1,220.1 L319.8,220.1 L320.5,220.1 L321.3,220.1 L322.0,220.0 L322.7,220.0 L323.4,220.0 L324.2,220.0 L324.9,220.0 L325.6,220.0 L326.3,219.9 L327.1,219.9 L327.8,219.9 L328.5,219.9 L329.2,219.9 L330.0,219.8 L330.7,219.8 L331.4,219.8 L332.1,219.8 L332.9,219.8 L333.6,219.8 L334.3,219.7 L335.0,219.7 L335.8,219.7 L336.5,219.7 L337.2,219.7 L337.9,219.6 L338.7,219.6 L339.4,219.6 L340.1,219.6 L340.8,219.6 L341.6,219.6 L342.3,219.5 L343.0,219.5 L343.7,219.5 L344.5,219.5 L345.2,219.5 L345.9,219.4 L346.6,219.4 L347.4,219.4 L348.1,219.4 L348.8,219.4 L349.5,219.4 L350.3,219.3 L351.0,219.3 L351.7,219.3" fill="none" stroke="var(--academic-text)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M61.7,232.0 L62.4,231.9 L63.2,231.8 L63.9,231.7 L64.6,231.6 L65.3,231.5 L66.1,231.3 L66.8,231.2 L67.5,231.1 L68.2,231.0 L69.0,230.9 L69.7,230.8 L70.4,230.7 L71.1,230.6 L71.9,230.5 L72.6,230.4 L73.3,230.3 L74.0,230.1 L74.8,230.0 L75.5,229.9 L76.2,229.8 L76.9,229.7 L77.7,229.6 L78.4,229.5 L79.1,229.4 L79.8,229.3 L80.6,229.2 L81.3,229.1 L82.0,228.9 L82.7,228.8 L83.5,228.7 L84.2,228.6 L84.9,228.5 L85.6,228.4 L86.4,228.3 L87.1,228.2 L87.8,228.1 L88.5,228.0 L89.3,227.9 L90.0,227.7 L90.7,227.6 L91.4,227.5 L92.2,227.4 L92.9,227.3 L93.6,227.2 L94.3,227.1 L95.1,227.0 L95.8,226.9 L96.5,226.8 L97.2,226.7 L98.0,226.5 L98.7,226.4 L99.4,226.3 L100.1,226.2 L100.9,226.1 L101.6,226.0 L102.3,225.9 L103.0,225.8 L103.8,225.7 L104.5,225.6 L105.2,225.5 L105.9,225.4 L106.7,225.2 L107.4,225.1 L108.1,225.0 L108.8,224.9 L109.6,224.8 L110.3,224.7 L111.0,224.6 L111.7,224.5 L112.5,224.4 L113.2,224.3 L113.9,224.2 L114.6,224.0 L115.4,223.9 L116.1,223.8 L116.8,223.7 L117.5,223.6 L118.3,223.5 L119.0,223.4 L119.7,223.3 L120.4,223.2 L121.2,223.1 L121.9,223.0 L122.6,222.8 L123.3,222.7 L124.1,222.6 L124.8,222.5 L125.5,222.4 L126.2,222.3 L127.0,222.2 L127.7,222.1 L128.4,222.0 L129.1,221.9 L129.9,221.8 L130.6,221.6 L131.3,221.5 L132.0,221.4 L132.8,221.3 L133.5,221.2 L134.2,221.1 L134.9,221.0 L135.7,220.9 L136.4,220.8 L137.1,220.7 L137.8,220.6 L138.6,220.4 L139.3,220.3 L140.0,220.2 L140.7,220.1 L141.5,220.0 L142.2,219.9 L142.9,219.8 L143.6,219.7 L144.4,219.6 L145.1,219.5 L145.8,219.4 L146.5,219.2 L147.3,219.1 L148.0,219.0 L148.7,218.9 L149.4,218.8 L150.2,218.7 L150.9,218.6 L151.6,218.5 L152.3,218.4 L153.1,218.3 L153.8,218.2 L154.5,218.0 L155.2,217.9 L156.0,217.8 L156.7,217.7 L157.4,217.6 L158.1,217.5 L158.9,217.4 L159.6,217.3 L160.3,217.2 L161.0,217.1 L161.8,217.0 L162.5,216.8 L163.2,216.7 L163.9,216.6 L164.7,216.5 L165.4,216.4 L166.1,216.3 L166.8,216.2 L167.6,216.1 L168.3,216.0 L169.0,215.9 L169.7,215.8 L170.5,215.6 L171.2,215.5 L171.9,215.4 L172.6,215.3 L173.4,215.2 L174.1,215.1 L174.8,215.0 L175.5,214.9 L176.3,214.8 L177.0,214.7 L177.7,214.6 L178.4,214.4 L179.2,214.3 L179.9,214.2 L180.6,214.1 L181.3,214.0 L182.1,213.9 L182.8,213.8 L183.5,213.7 L184.2,213.6 L185.0,213.5 L185.7,213.4 L186.4,213.3 L187.1,213.1 L187.9,213.0 L188.6,212.9 L189.3,212.8 L190.0,212.7 L190.8,212.6 L191.5,212.5 L192.2,212.4 L192.9,212.3 L193.7,212.2 L194.4,212.1 L195.1,211.9 L195.8,211.8 L196.6,211.7 L197.3,211.6 L198.0,211.5 L198.7,211.4 L199.5,211.3 L200.2,211.2 L200.9,211.1 L201.6,211.0 L202.4,210.9 L203.1,210.7 L203.8,210.6 L204.5,210.5 L205.3,210.4 L206.0,210.3 L206.7,210.2 L207.4,210.1 L208.2,210.0 L208.9,209.9 L209.6,209.8 L210.3,209.7 L211.1,209.5 L211.8,209.4 L212.5,209.3 L213.2,209.2 L214.0,209.1 L214.7,209.0 L215.4,208.9 L216.1,208.8 L216.9,208.7 L217.6,208.6 L218.3,208.5 L219.0,208.3 L219.8,208.2 L220.5,208.1 L221.2,208.0 L221.9,207.9 L222.7,207.8 L223.4,207.7 L224.1,207.6 L224.8,207.5 L225.6,207.4 L226.3,207.3 L227.0,207.1 L227.7,207.0 L228.5,206.9 L229.2,206.8 L229.9,206.7 L230.6,206.6 L231.4,206.5 L232.1,206.4 L232.8,206.3 L233.5,206.2 L234.3,206.1 L235.0,205.9 L235.7,205.8 L236.4,205.7 L237.2,205.6 L237.9,205.5 L238.6,205.4 L239.3,205.3 L240.1,205.2 L240.8,205.1 L241.5,205.0 L242.2,204.9 L243.0,204.7 L243.7,204.6 L244.4,204.5 L245.1,204.4 L245.9,204.3 L246.6,204.2 L247.3,204.1 L248.0,204.0 L248.8,203.9 L249.5,203.8 L250.2,203.7 L250.9,203.5 L251.7,203.4 L252.4,203.3 L253.1,203.2 L253.8,203.1 L254.6,203.0 L255.3,202.9 L256.0,202.8 L256.7,202.7 L257.5,202.6 L258.2,202.5 L258.9,202.3 L259.6,202.2 L260.4,202.1 L261.1,202.0 L261.8,201.9 L262.5,201.8 L263.3,201.7 L264.0,201.6 L264.7,201.5 L265.4,201.4 L266.2,201.3 L266.9,201.2 L267.6,201.0 L268.3,200.9 L269.1,200.8 L269.8,200.7 L270.5,200.6 L271.2,200.5 L272.0,200.4 L272.7,200.3 L273.4,200.2 L274.1,200.1 L274.9,200.0 L275.6,199.8 L276.3,199.7 L277.0,199.6 L277.8,199.5 L278.5,199.4 L279.2,199.3 L279.9,199.2 L280.7,199.1 L281.4,199.0 L282.1,198.9 L282.8,198.8 L283.6,198.6 L284.3,198.5 L285.0,198.4 L285.7,198.3 L286.5,198.2 L287.2,198.1 L287.9,198.0 L288.6,197.9 L289.4,197.8 L290.1,197.7 L290.8,197.6 L291.5,197.4 L292.3,197.3 L293.0,197.2 L293.7,197.1 L294.4,197.0 L295.2,196.9 L295.9,196.8 L296.6,196.7 L297.3,196.6 L298.1,196.5 L298.8,196.4 L299.5,196.2 L300.2,196.1 L301.0,196.0 L301.7,195.9 L302.4,195.8 L303.1,195.7 L303.9,195.6 L304.6,195.5 L305.3,195.4 L306.0,195.3 L306.8,195.2 L307.5,195.0 L308.2,194.9 L308.9,194.8 L309.7,194.7 L310.4,194.6 L311.1,194.5 L311.8,194.4 L312.6,194.3 L313.3,194.2 L314.0,194.1 L314.7,194.0 L315.5,193.8 L316.2,193.7 L316.9,193.6 L317.6,193.5 L318.4,193.4 L319.1,193.3 L319.8,193.2 L320.5,193.1 L321.3,193.0 L322.0,192.9 L322.7,192.8 L323.4,192.6 L324.2,192.5 L324.9,192.4 L325.6,192.3 L326.3,192.2 L327.1,192.1 L327.8,192.0 L328.5,191.9 L329.2,191.8 L330.0,191.7 L330.7,191.6 L331.4,191.4 L332.1,191.3 L332.9,191.2 L333.6,191.1 L334.3,191.0 L335.0,190.9 L335.8,190.8 L336.5,190.7 L337.2,190.6 L337.9,190.5 L338.7,190.4 L339.4,190.2 L340.1,190.1 L340.8,190.0 L341.6,189.9 L342.3,189.8 L343.0,189.7 L343.7,189.6 L344.5,189.5 L345.2,189.4 L345.9,189.3 L346.6,189.2 L347.4,189.1 L348.1,188.9 L348.8,188.8 L349.5,188.7 L350.3,188.6 L351.0,188.5 L351.7,188.4" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M61.7,232.0 L62.4,232.0 L63.2,232.0 L63.9,232.0 L64.6,232.0 L65.3,232.0 L66.1,231.9 L66.8,231.9 L67.5,231.9 L68.2,231.9 L69.0,231.8 L69.7,231.8 L70.4,231.8 L71.1,231.7 L71.9,231.7 L72.6,231.6 L73.3,231.6 L74.0,231.5 L74.8,231.4 L75.5,231.4 L76.2,231.3 L76.9,231.2 L77.7,231.2 L78.4,231.1 L79.1,231.0 L79.8,230.9 L80.6,230.8 L81.3,230.7 L82.0,230.6 L82.7,230.5 L83.5,230.4 L84.2,230.3 L84.9,230.2 L85.6,230.1 L86.4,230.0 L87.1,229.9 L87.8,229.8 L88.5,229.6 L89.3,229.5 L90.0,229.4 L90.7,229.2 L91.4,229.1 L92.2,228.9 L92.9,228.8 L93.6,228.6 L94.3,228.5 L95.1,228.3 L95.8,228.2 L96.5,228.0 L97.2,227.8 L98.0,227.7 L98.7,227.5 L99.4,227.3 L100.1,227.1 L100.9,227.0 L101.6,226.8 L102.3,226.6 L103.0,226.4 L103.8,226.2 L104.5,226.0 L105.2,225.8 L105.9,225.6 L106.7,225.3 L107.4,225.1 L108.1,224.9 L108.8,224.7 L109.6,224.5 L110.3,224.2 L111.0,224.0 L111.7,223.8 L112.5,223.5 L113.2,223.3 L113.9,223.0 L114.6,222.8 L115.4,222.5 L116.1,222.3 L116.8,222.0 L117.5,221.7 L118.3,221.5 L119.0,221.2 L119.7,220.9 L120.4,220.6 L121.2,220.4 L121.9,220.1 L122.6,219.8 L123.3,219.5 L124.1,219.2 L124.8,218.9 L125.5,218.6 L126.2,218.3 L127.0,218.0 L127.7,217.7 L128.4,217.4 L129.1,217.0 L129.9,216.7 L130.6,216.4 L131.3,216.1 L132.0,215.7 L132.8,215.4 L133.5,215.0 L134.2,214.7 L134.9,214.3 L135.7,214.0 L136.4,213.6 L137.1,213.3 L137.8,212.9 L138.6,212.6 L139.3,212.2 L140.0,211.8 L140.7,211.4 L141.5,211.1 L142.2,210.7 L142.9,210.3 L143.6,209.9 L144.4,209.5 L145.1,209.1 L145.8,208.7 L146.5,208.3 L147.3,207.9 L148.0,207.5 L148.7,207.1 L149.4,206.7 L150.2,206.2 L150.9,205.8 L151.6,205.4 L152.3,205.0 L153.1,204.5 L153.8,204.1 L154.5,203.6 L155.2,203.2 L156.0,202.8 L156.7,202.3 L157.4,201.8 L158.1,201.4 L158.9,200.9 L159.6,200.5 L160.3,200.0 L161.0,199.5 L161.8,199.0 L162.5,198.6 L163.2,198.1 L163.9,197.6 L164.7,197.1 L165.4,196.6 L166.1,196.1 L166.8,195.6 L167.6,195.1 L168.3,194.6 L169.0,194.1 L169.7,193.6 L170.5,193.1 L171.2,192.5 L171.9,192.0 L172.6,191.5 L173.4,191.0 L174.1,190.4 L174.8,189.9 L175.5,189.3 L176.3,188.8 L177.0,188.3 L177.7,187.7 L178.4,187.1 L179.2,186.6 L179.9,186.0 L180.6,185.5 L181.3,184.9 L182.1,184.3 L182.8,183.7 L183.5,183.2 L184.2,182.6 L185.0,182.0 L185.7,181.4 L186.4,180.8 L187.1,180.2 L187.9,179.6 L188.6,179.0 L189.3,178.4 L190.0,177.8 L190.8,177.2 L191.5,176.6 L192.2,175.9 L192.9,175.3 L193.7,174.7 L194.4,174.0 L195.1,173.4 L195.8,172.8 L196.6,172.1 L197.3,171.5 L198.0,170.8 L198.7,170.2 L199.5,169.5 L200.2,168.9 L200.9,168.2 L201.6,167.5 L202.4,166.9 L203.1,166.2 L203.8,165.5 L204.5,164.8 L205.3,164.2 L206.0,163.5 L206.7,162.8 L207.4,162.1 L208.2,161.4 L208.9,160.7 L209.6,160.0 L210.3,159.3 L211.1,158.6 L211.8,157.8 L212.5,157.1 L213.2,156.4 L214.0,155.7 L214.7,155.0 L215.4,154.2 L216.1,153.5 L216.9,152.7 L217.6,152.0 L218.3,151.3 L219.0,150.5 L219.8,149.8 L220.5,149.0 L221.2,148.2 L221.9,147.5 L222.7,146.7 L223.4,145.9 L224.1,145.2 L224.8,144.4 L225.6,143.6 L226.3,142.8 L227.0,142.0 L227.7,141.3 L228.5,140.5 L229.2,139.7 L229.9,138.9 L230.6,138.1 L231.4,137.2 L232.1,136.4 L232.8,135.6 L233.5,134.8 L234.3,134.0 L235.0,133.2 L235.7,132.3 L236.4,131.5 L237.2,130.7 L237.9,129.8 L238.6,129.0 L239.3,128.1 L240.1,127.3 L240.8,126.4 L241.5,125.6 L242.2,124.7 L243.0,123.8 L243.7,123.0 L244.4,122.1 L245.1,121.2 L245.9,120.4 L246.6,119.5 L247.3,118.6 L248.0,117.7 L248.8,116.8 L249.5,115.9 L250.2,115.0 L250.9,114.1 L251.7,113.2 L252.4,112.3 L253.1,111.4 L253.8,110.5 L254.6,109.6 L255.3,108.6 L256.0,107.7 L256.7,106.8 L257.5,105.8 L258.2,104.9 L258.9,104.0 L259.6,103.0 L260.4,102.1 L261.1,101.1 L261.8,100.2 L262.5,99.2 L263.3,98.3 L264.0,97.3 L264.7,96.3 L265.4,95.4 L266.2,94.4 L266.9,93.4 L267.6,92.4 L268.3,91.4 L269.1,90.5 L269.8,89.5 L270.5,88.5 L271.2,87.5 L272.0,86.5 L272.7,85.5 L273.4,84.5 L274.1,83.4 L274.9,82.4 L275.6,81.4 L276.3,80.4 L277.0,79.4 L277.8,78.3 L278.5,77.3 L279.2,76.3 L279.9,75.2 L280.7,74.2 L281.4,73.1 L282.1,72.1 L282.8,71.0 L283.6,70.0 L284.3,68.9 L285.0,67.8 L285.7,66.8 L286.5,65.7 L287.2,64.6 L287.9,63.5 L288.6,62.5 L289.4,61.4 L290.1,60.3 L290.8,59.2 L291.5,58.1 L292.3,57.0 L293.0,55.9 L293.7,54.8 L294.4,53.7 L295.2,52.6 L295.9,51.5 L296.6,50.3 L297.3,49.2 L298.1,48.1 L298.8,47.0 L299.5,45.8 L300.2,44.7 L301.0,43.5 L301.7,42.4 L302.4,41.3 L303.1,40.1 L303.9,39.0 L304.6,37.8 L305.3,36.6 L306.0,35.5 L306.8,34.3 L307.5,33.1 L308.2,32.0 L308.9,30.8 L309.7,29.6 L310.4,28.4 L311.1,27.2 L311.8,26.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M61.7,225.1 L62.4,225.1 L63.2,225.0 L63.9,224.9 L64.6,224.8 L65.3,224.7 L66.1,224.7 L66.8,224.6 L67.5,224.5 L68.2,224.4 L69.0,224.3 L69.7,224.2 L70.4,224.2 L71.1,224.1 L71.9,224.0 L72.6,223.9 L73.3,223.8 L74.0,223.7 L74.8,223.6 L75.5,223.5 L76.2,223.4 L76.9,223.3 L77.7,223.3 L78.4,223.2 L79.1,223.1 L79.8,223.0 L80.6,222.9 L81.3,222.8 L82.0,222.7 L82.7,222.6 L83.5,222.4 L84.2,222.3 L84.9,222.2 L85.6,222.1 L86.4,222.0 L87.1,221.9 L87.8,221.8 L88.5,221.7 L89.3,221.6 L90.0,221.5 L90.7,221.3 L91.4,221.2 L92.2,221.1 L92.9,221.0 L93.6,220.9 L94.3,220.7 L95.1,220.6 L95.8,220.5 L96.5,220.4 L97.2,220.2 L98.0,220.1 L98.7,220.0 L99.4,219.8 L100.1,219.7 L100.9,219.6 L101.6,219.4 L102.3,219.3 L103.0,219.1 L103.8,219.0 L104.5,218.9 L105.2,218.7 L105.9,218.6 L106.7,218.4 L107.4,218.3 L108.1,218.1 L108.8,218.0 L109.6,217.8 L110.3,217.6 L111.0,217.5 L111.7,217.3 L112.5,217.2 L113.2,217.0 L113.9,216.8 L114.6,216.7 L115.4,216.5 L116.1,216.3 L116.8,216.2 L117.5,216.0 L118.3,215.8 L119.0,215.6 L119.7,215.4 L120.4,215.3 L121.2,215.1 L121.9,214.9 L122.6,214.7 L123.3,214.5 L124.1,214.3 L124.8,214.1 L125.5,213.9 L126.2,213.7 L127.0,213.5 L127.7,213.3 L128.4,213.1 L129.1,212.9 L129.9,212.7 L130.6,212.5 L131.3,212.3 L132.0,212.0 L132.8,211.8 L133.5,211.6 L134.2,211.4 L134.9,211.1 L135.7,210.9 L136.4,210.7 L137.1,210.4 L137.8,210.2 L138.6,210.0 L139.3,209.7 L140.0,209.5 L140.7,209.2 L141.5,209.0 L142.2,208.7 L142.9,208.5 L143.6,208.2 L144.4,207.9 L145.1,207.7 L145.8,207.4 L146.5,207.1 L147.3,206.8 L148.0,206.6 L148.7,206.3 L149.4,206.0 L150.2,205.7 L150.9,205.4 L151.6,205.1 L152.3,204.8 L153.1,204.5 L153.8,204.2 L154.5,203.9 L155.2,203.6 L156.0,203.3 L156.7,203.0 L157.4,202.7 L158.1,202.3 L158.9,202.0 L159.6,201.7 L160.3,201.3 L161.0,201.0 L161.8,200.7 L162.5,200.3 L163.2,200.0 L163.9,199.6 L164.7,199.2 L165.4,198.9 L166.1,198.5 L166.8,198.1 L167.6,197.8 L168.3,197.4 L169.0,197.0 L169.7,196.6 L170.5,196.2 L171.2,195.8 L171.9,195.4 L172.6,195.0 L173.4,194.6 L174.1,194.2 L174.8,193.8 L175.5,193.4 L176.3,192.9 L177.0,192.5 L177.7,192.1 L178.4,191.6 L179.2,191.2 L179.9,190.7 L180.6,190.3 L181.3,189.8 L182.1,189.3 L182.8,188.9 L183.5,188.4 L184.2,187.9 L185.0,187.4 L185.7,186.9 L186.4,186.4 L187.1,185.9 L187.9,185.4 L188.6,184.9 L189.3,184.4 L190.0,183.8 L190.8,183.3 L191.5,182.8 L192.2,182.2 L192.9,181.7 L193.7,181.1 L194.4,180.6 L195.1,180.0 L195.8,179.4 L196.6,178.8 L197.3,178.2 L198.0,177.7 L198.7,177.1 L199.5,176.4 L200.2,175.8 L200.9,175.2 L201.6,174.6 L202.4,173.9 L203.1,173.3 L203.8,172.7 L204.5,172.0 L205.3,171.3 L206.0,170.7 L206.7,170.0 L207.4,169.3 L208.2,168.6 L208.9,167.9 L209.6,167.2 L210.3,166.5 L211.1,165.7 L211.8,165.0 L212.5,164.3 L213.2,163.5 L214.0,162.8 L214.7,162.0 L215.4,161.2 L216.1,160.4 L216.9,159.7 L217.6,158.9 L218.3,158.0 L219.0,157.2 L219.8,156.4 L220.5,155.6 L221.2,154.7 L221.9,153.9 L222.7,153.0 L223.4,152.1 L224.1,151.2 L224.8,150.3 L225.6,149.4 L226.3,148.5 L227.0,147.6 L227.7,146.7 L228.5,145.7 L229.2,144.8 L229.9,143.8 L230.6,142.8 L231.4,141.8 L232.1,140.8 L232.8,139.8 L233.5,138.8 L234.3,137.8 L235.0,136.7 L235.7,135.7 L236.4,134.6 L237.2,133.5 L237.9,132.5 L238.6,131.4 L239.3,130.2 L240.1,129.1 L240.8,128.0 L241.5,126.8 L242.2,125.7 L243.0,124.5 L243.7,123.3 L244.4,122.1 L245.1,120.9 L245.9,119.6 L246.6,118.4 L247.3,117.1 L248.0,115.9 L248.8,114.6 L249.5,113.3 L250.2,112.0 L250.9,110.7 L251.7,109.3 L252.4,108.0 L253.1,106.6 L253.8,105.2 L254.6,103.8 L255.3,102.4 L256.0,100.9 L256.7,99.5 L257.5,98.0 L258.2,96.5 L258.9,95.0 L259.6,93.5 L260.4,92.0 L261.1,90.4 L261.8,88.9 L262.5,87.3 L263.3,85.7 L264.0,84.1 L264.7,82.4 L265.4,80.8 L266.2,79.1 L266.9,77.4 L267.6,75.7 L268.3,74.0 L269.1,72.2 L269.8,70.5 L270.5,68.7 L271.2,66.9 L272.0,65.0 L272.7,63.2 L273.4,61.3 L274.1,59.4 L274.9,57.5 L275.6,55.6 L276.3,53.6 L277.0,51.7 L277.8,49.7 L278.5,47.7 L279.2,45.6 L279.9,43.6 L280.7,41.5 L281.4,39.4 L282.1,37.2 L282.8,35.1 L283.6,32.9 L284.3,30.7 L285.0,28.5 L285.7,26.2" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="244.4" cy="122.1" r="4.2" fill="var(--color-practice)"/>
+  <text x="231.4" y="113.1" fill="var(--color-practice)" font-size="10.5" text-anchor="end" font-style="italic">son kesişim</text>
+  <text x="351.7" y="211.3" fill="var(--academic-text)" font-size="11" text-anchor="end" font-weight="600" font-style="italic">y = ln x</text>
+  <text x="351.7" y="179.4" fill="var(--color-base)" font-size="11" text-anchor="end" font-weight="600" font-style="italic">y = x</text>
+  <text x="280.9" y="98.7" fill="var(--color-theory)" font-size="11" text-anchor="start" font-weight="600" font-style="italic">y = x<tspan font-size="8.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="268.9" y="50.6" fill="var(--color-practice)" font-size="11" text-anchor="end" font-weight="600" font-style="italic">y = 2<tspan font-size="8.5" dy="-5">x</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="77.7" y="46.6" fill="var(--academic-text)" font-size="11" text-anchor="start" font-style="italic">x &gt; 4 için</text>
+  <text x="77.7" y="65.8" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic"><tspan fill="var(--academic-text)">ln x</tspan> &lt; <tspan fill="var(--color-base)">x</tspan> &lt; <tspan fill="var(--color-theory)">x<tspan font-size="8.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></tspan> &lt; <tspan fill="var(--color-practice)">2<tspan font-size="8.5" dy="-5">x</tspan><tspan dy="5">&#8203;</tspan></tspan></text>
+</svg>
+<figcaption>Aynı eksende dört büyüme hızı: ln <em>x</em> neredeyse yatay kalırken <em>x</em>, <em>x</em><sup>2</sup> ve 2<sup><em>x</em></sup> sırayla dikleşir; son kesişim <em>x</em> = 4'te olur ve ondan sonra 2<sup><em>x</em></sup> hepsini geride bırakır. L'Hôpital kuralının en sık uygulaması bu sıralamayı ispatlamaktır: ln <em>x</em> &#8810; <em>x</em><sup><em>a</em></sup> &#8810; <em>b</em><sup><em>x</em></sup> (<em>a</em> &gt; 0, <em>b</em> &gt; 1); her oranın limiti sıfırdır.</figcaption>
+</figure>
+```
+
+::: {.ispat}
+**1.** Önce $p = 1$ hâlini görelim: her $r > 0$ için $\displaystyle\lim_{x \to \infty} \frac{\ln x}{x^r} = 0$'dır. Gerçekten $x \to \infty$ iken pay ve payda $+\infty$'a gider ve $(1,\infty)$ üzerinde $(x^r)' = r x^{r-1} \ne 0$'dır; @thm-lhospital-sonsuz-sonsuz gereği
+
+$$\lim_{x \to \infty} \frac{\ln x}{x^r} \overset{\text{L.H.}}{=} \lim_{x \to \infty} \frac{1/x}{r x^{r-1}} = \lim_{x \to \infty} \frac{1}{r\, x^r} = 0,$$
+
+çünkü $r > 0$ olduğundan $x^r \to +\infty$'dur.
+
+Şimdi genel $p > 0$ için $r = \dfrac{q}{p}$ alalım. $x > 1$ için
+
+$$\frac{(\ln x)^p}{x^q} = \left( \frac{\ln x}{x^{q/p}} \right)^p = \big( w(x) \big)^p, \qquad w(x) := \frac{\ln x}{x^{q/p}} > 0$$
+
+yazılır. Az önce gösterdiğimiz üzere $w(x) \to 0^+$'dır. Bir $\varepsilon > 0$ verildiğinde yeterince büyük $x$'ler için $0 < w(x) < \varepsilon^{1/p}$ olur; $t \mapsto t^p$ dönüşümü $(0,\infty)$ üzerinde kesin artan olduğundan bu $x$'ler için $0 < \big( w(x) \big)^p < \varepsilon$'dur. Demek ki $\big( w(x) \big)^p \to 0$, yani $\dfrac{(\ln x)^p}{x^q} \to 0$'dır.
+
+**2.** $k = \lceil q \rceil$, yani $q$'dan küçük olmayan en küçük doğal sayı olsun; $k \ge 1$ ve $q - k \le 0 < q - k + 1$'dir. $j = 0, 1, \dots, k-1$ için $q - j \ge q - k + 1 > 0$ olduğundan $x^{q-j} \to +\infty$'dur; ayrıca $a > 1$ olduğundan $a^x = e^{x \ln a} \to +\infty$ ve $(a^x)' = a^x \ln a \ne 0$'dır. Demek ki $\dfrac{x^{q-j}}{a^x}$ ifadelerinin her biri $\dfrac{\infty}{\infty}$ biçimindedir ve her birine @thm-lhospital-sonsuz-sonsuz uygulanabilir. Bir adımlık hesap şöyledir:
+
+$$\frac{\big( x^{q-j} \big)'}{\big( a^x \big)'} = \frac{(q-j)\, x^{q-j-1}}{a^x \ln a} = \frac{q-j}{\ln a} \cdot \frac{x^{q-(j+1)}}{a^x}.$$
+
+Yani her türev alma adımı üssü tam olarak $1$ azaltıyor ve önüne sabit bir çarpan koyuyor. $k$ adım sonra ulaşılan ifade
+
+$$C \cdot \frac{x^{q-k}}{a^x}, \qquad C = \frac{q(q-1)\cdots(q-k+1)}{(\ln a)^k}$$
+
+biçimindedir. Burada $q - k \le 0$ olduğundan $x \ge 1$ için $0 < x^{q-k} \le 1$'dir; $a^x \to +\infty$ olduğundan $0 < \dfrac{x^{q-k}}{a^x} \le \dfrac{1}{a^x} \to 0$ olur ve sıkıştırma kuralıyla (@thm-sonsuzda-limit-kurallari) bu son limit $0$'dır. Şimdi zinciri **sondan başa** okuyoruz: son limit var ve $0$ olduğuna göre @thm-lhospital-sonsuz-sonsuz bir önceki ifadenin limitinin de $0$ olduğunu söyler; $k$ adım geri giderek $\displaystyle\lim_{x \to \infty} \frac{x^q}{a^x} = 0$ sonucuna varırız.
+
+**3.** $0 < x < 1$ olsun ve $t = \dfrac{1}{x}$ diyelim; $x \to 0^+$ iken $t \to +\infty$'dur. $\ln x = -\ln t$ ve $\ln t > 0$ olduğundan $|\ln x| = \ln t$'dir. Böylece
+
+$$x^q |\ln x|^p = \frac{(\ln t)^p}{t^q}.$$
+
+Birinci kısım gereği sağ taraf $t \to +\infty$ iken $0$'a gider; dolayısıyla sol taraf da $x \to 0^+$ iken $0$'a gider.
+
+**Zincirin kalan halkaları.** $\dfrac{a^n}{n!} \to 0$ ve $\dfrac{n!}{n^n} \to 0$ sonuçları @thm-buyume-hizlari'nin (2) ve (3) maddeleridir; $n!$ yalnızca doğal sayılarda tanımlı olduğundan orada türev alınmaz. Birinci ve ikinci kısımları $x = n$ için okuyup bu ikisini eklersek zincir tamamlanır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu sıralamayı bir kez ezberlemek sayısız limiti hesap yapmadan bitirmeye yeter: $\dfrac{x^{100}}{1{,}0001^x} \to 0$'dır, çünkü üs ne kadar büyük, üstel tabanı ne kadar $1$'e yakın olursa olsun üstel er ya da geç kazanır.
+
+## Alıştırmalar
+
+:::: {#exr-lhospital name="L'Hôpital Kuralı Üzerine"}
+a) $\displaystyle\lim_{x \to 0} \frac{\tan x - x}{x^3}$ limitini hesaplayınız.
+
+b) $\displaystyle\lim_{x \to \infty} x \left( \frac{\pi}{2} - \arctan x \right)$ limitini hesaplayınız.
+
+c) $\displaystyle\lim_{x \to 0} \left( \frac{1}{x} - \frac{1}{e^x - 1} \right)$ limitini hesaplayınız.
+
+d) $\displaystyle\lim_{x \to 0} (\cos x)^{1/x^2}$ limitini hesaplayınız.
+
+e) $\displaystyle\lim_{x \to \infty} (e^x + x)^{1/x}$ limitini hesaplayınız.
+
+f) $\displaystyle\lim_{x \to 2} \frac{x^2 + 3x}{x + 5}$ limitini hesaplayınız. Bu limite L'Hôpital kuralı uygulansaydı hangi sayı bulunurdu? Aradaki fark neyi gösterir?
+
+::: {.cozum}
+**a)** $x \to 0$ iken $\tan x - x \to 0$ ve $x^3 \to 0$: $\dfrac{0}{0}$ biçimi. $(x^3)' = 3x^2$, $x \ne 0$ için sıfırdan farklı olduğundan kuralı $0$'ın sağında ve solunda ayrı ayrı uygularız. $(\tan x)' = \dfrac{1}{\cos^2 x}$ olduğundan
+
+$$\lim_{x \to 0} \frac{\tan x - x}{x^3} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{\frac{1}{\cos^2 x} - 1}{3x^2}.$$
+
+Şimdi $\dfrac{1}{\cos^2 x} - 1 = \dfrac{1 - \cos^2 x}{\cos^2 x} = \tan^2 x$ özdeşliğini kullanalım:
+
+$$\lim_{x \to 0} \frac{\tan^2 x}{3 x^2} = \frac{1}{3} \lim_{x \to 0} \left( \frac{\tan x}{x} \right)^2 = \frac{1}{3} \cdot 1^2 = \frac{1}{3},$$
+
+çünkü $\dfrac{\tan x}{x} = \dfrac{\sin x}{x} \cdot \dfrac{1}{\cos x} \to 1 \cdot 1 = 1$'dir (@thm-sinx-bolu-x). Sonuç: limit $\dfrac{1}{3}$'tür.
+
+**b)** $x \to \infty$ iken $x \to +\infty$ ve $\dfrac{\pi}{2} - \arctan x \to 0$: $0 \cdot \infty$ belirsizliği. Çarpanı paydaya atarsak $x \left( \dfrac{\pi}{2} - \arctan x \right) = \dfrac{\frac{\pi}{2} - \arctan x}{1/x}$ olur ve artık pay ve payda $0$'a gider: $\dfrac{0}{0}$ biçimi. Ters fonksiyonun türevi kuralından $(\arctan x)' = \dfrac{1}{1 + x^2}$ ve $\left( \dfrac{1}{x} \right)' = -\dfrac{1}{x^2} \ne 0$'dır:
+
+$$\lim_{x \to \infty} \frac{\dfrac{\pi}{2} - \arctan x}{\dfrac{1}{x}} \overset{\text{L.H.}}{=} \lim_{x \to \infty} \frac{-\dfrac{1}{1 + x^2}}{-\dfrac{1}{x^2}} = \lim_{x \to \infty} \frac{x^2}{1 + x^2} = \lim_{x \to \infty} \frac{1}{\dfrac{1}{x^2} + 1} = 1.$$
+
+Sonuç: limit $1$'dir; yani $x$ büyükken $\dfrac{\pi}{2} - \arctan x$ farkı yaklaşık $\dfrac{1}{x}$ kadardır.
+
+**c)** $x \to 0$ iken $\dfrac{1}{x}$ ve $\dfrac{1}{e^x - 1}$ ifadelerinin ikisi de mutlak değerce sonsuza gider: $\infty - \infty$ biçimi. Ortak paydada toplayalım:
+
+$$\frac{1}{x} - \frac{1}{e^x - 1} = \frac{e^x - 1 - x}{x (e^x - 1)}.$$
+
+Pay ve payda $0$'a gider: $\dfrac{0}{0}$ biçimi. Paydanın türevi $\big( x e^x - x \big)' = e^x + x e^x - 1 = (1+x)e^x - 1$'dir. Bu son ifadenin türevi $e^x(2+x)$ olup $|x| < 1$ için pozitiftir; öyleyse $(1+x)e^x - 1$ fonksiyonu $(-1,1)$ üzerinde kesin artandır (@cor-monotonluk-testi) ve $x = 0$'da aldığı $0$ değerini orada bir daha almaz. Demek ki $0$'ın delinmiş bir komşuluğunda hem $(1+x)e^x - 1 \ne 0$ hem de $e^x(2+x) \ne 0$'dır; kuralı $0$'ın iki yanında da iki kez uygulayabiliriz:
+
+$$\lim_{x \to 0} \frac{e^x - 1 - x}{x e^x - x} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{e^x - 1}{e^x + x e^x - 1} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{e^x}{e^x (2 + x)} = \lim_{x \to 0} \frac{1}{2 + x} = \frac{1}{2}.$$
+
+Ortadaki ifade hâlâ $\dfrac{0}{0}$ biçimindeydi, sonuncusu ise belirsiz değildir; orada durduk. Sonuç: limit $\dfrac{1}{2}$'dir.
+
+**d)** $x \to 0$ iken taban $\cos x \to 1$ ve üs $\dfrac{1}{x^2} \to +\infty$: $1^{\infty}$ biçimi. Yeterince küçük $|x|$ için $\cos x > 0$ olduğundan logaritma alabiliriz:
+
+$$(\cos x)^{1/x^2} = e^{\,\psi(x)}, \qquad \psi(x) = \frac{\ln(\cos x)}{x^2}.$$
+
+$\psi$, $\dfrac{0}{0}$ biçimindedir ($\ln \cos 0 = 0$) ve paydanın türevi $2x$, $x \ne 0$ için sıfırdan farklıdır. Zincir kuralıyla $\big( \ln \cos x \big)' = -\tan x$ olduğundan
+
+$$\lim_{x \to 0} \frac{\ln(\cos x)}{x^2} \overset{\text{L.H.}}{=} \lim_{x \to 0} \frac{-\tan x}{2x} = -\frac{1}{2} \lim_{x \to 0} \frac{\tan x}{x} = -\frac{1}{2}$$
+
+olur; üstel fonksiyonun sürekliliğiyle $\displaystyle\lim_{x \to 0} (\cos x)^{1/x^2} = e^{-1/2} = \frac{1}{\sqrt{e}}$'dir.
+
+**e)** $x \to \infty$ iken taban $e^x + x \to +\infty$ ve üs $\dfrac{1}{x} \to 0$: $\infty^0$ biçimi. Logaritma alalım:
+
+$$(e^x + x)^{1/x} = e^{\,\chi(x)}, \qquad \chi(x) = \frac{\ln(e^x + x)}{x}.$$
+
+$x \to \infty$ iken pay ve payda $+\infty$'a gider: $\dfrac{\infty}{\infty}$ biçimi ve paydanın türevi $1 \ne 0$'dır. Zincir kuralıyla
+
+$$\lim_{x \to \infty} \frac{\ln(e^x + x)}{x} \overset{\text{L.H.}}{=} \lim_{x \to \infty} \frac{e^x + 1}{e^x + x} = \lim_{x \to \infty} \frac{1 + e^{-x}}{1 + x e^{-x}} = 1.$$
+
+Son adımda kuralı yeniden uygulamak yerine pay ve paydayı $e^x$'e böldük; $e^{-x} \to 0$ ve @cor-buyume-hizlari-lhospital (2) gereği $x e^{-x} = \dfrac{x}{e^x} \to 0$'dır. Öyleyse $\chi(x) \to 1$ ve $\displaystyle\lim_{x \to \infty} (e^x + x)^{1/x} = e^1 = e$'dir: büyük $x$ için $e^x + x$ ile $e^x$ arasındaki fark, $\dfrac{1}{x}$ kuvveti alındığında silinir.
+
+**f)** Bu limit **belirsiz değildir**. $x \to 2$ iken pay $2^2 + 3 \cdot 2 = 10$'a, payda $2 + 5 = 7 \ne 0$'a gider. Polinomlar sürekli olduğundan (@cor-polinom-surekli) limit aritmetiği doğrudan uygulanır (@thm-limit-aritmetigi-fonksiyon):
+
+$$\lim_{x \to 2} \frac{x^2 + 3x}{x + 5} = \frac{10}{7}.$$
+
+L'Hôpital kuralı yanlışlıkla uygulansaydı $\dfrac{(x^2 + 3x)'}{(x + 5)'} = \dfrac{2x + 3}{1} \to 7$ bulunurdu; oysa doğru yanıt $\dfrac{10}{7}$'dir. Aradaki fark şunu gösterir: L'Hôpital kuralı bir "türev alıp sadeleştirme" hilesi değil, hipotezleri olan bir teoremdir. İlk hipotez — ifadenin $\dfrac{0}{0}$ ya da $\dfrac{\infty}{\infty}$ biçiminde olması — sağlanmazsa kural uygulanamaz; zorlanırsa alakasız bir sayı üretir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Elimizdeki araçlar bir fonksiyonun bir nokta yakınındaki davranışını birinci mertebeden — teğet doğrusu düzeyinde — betimlemeye yetiyor. Bir sonraki bölümde bu betimlemeyi istediğimiz mertebeye çıkaracağız: [Taylor Formülü](taylor-formulu.qmd).
