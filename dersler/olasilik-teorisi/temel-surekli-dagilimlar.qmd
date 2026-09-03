@@ -1,0 +1,839 @@
+---
+title: "Düzgün, Üstel ve Normal Dağılımlar"
+pagetitle: "Düzgün, Üstel ve Normal Dağılımlar"
+description: "Sürekli düzgün dağılımın yoğunluğu, momentleri ve moment üreten fonksiyonu; olasılık integral dönüşümü ve ters dönüşüm yöntemi; üstel dağılımın momentleri, hafızasızlığı ve Poisson dağılımıyla ilişkisi; normal dağılımın yoğunluğu, Gauss integrali, moment üreten fonksiyonu, standartlaştırma, doğrusal dönüşüm ve bağımsız normallerin toplamı; standart normal tablo hesapları."
+---
+
+[Geometrik, Negatif Binom ve Hipergeometrik Dağılımlar](geometrik-negatif-binom-ve-hipergeometrik.qmd) bölümüyle kesikli dağılım ailelerini tamamladık. Bernoulli, binom, Poisson, geometrik, negatif binom ve hipergeometrik dağılımların ortak yanı, değer kümelerinin sayılabilir olmasıydı; her birini bir olasılık fonksiyonuyla (@def-olasilik-fonksiyonu) tanımladık. Bu bölümde sürekli tarafa geçiyoruz: değer kümesi bir aralık ya da bütün $\mathbb{R}$ olan, dağılımı bir olasılık yoğunluk fonksiyonuyla (@def-yogunluk-fonksiyonu) verilen üç temel aileyi inceleyeceğiz.
+
+**Sürekli düzgün dağılım**, bir aralıktan "rastgele nokta seçmek" fikrinin rastgele değişken diliyle ifadesidir; kitabın başındaki geometrik olasılık örnekleri bu dağılımın örnekleriydi. **Üstel dağılım**, bekleme sürelerinin ve ömürlerin dağılımıdır; geometrik dağılımın sürekli karşılığıdır ve onun gibi hafızasızdır. **Normal dağılım** ise olasılık teorisinin en önemli dağılımıdır: ölçüm hatalarını modeller, çok sayıda küçük etkinin toplamı olarak ortaya çıkar ve istatistiğin klasik yöntemlerinin temelinde yatar.
+
+Her dağılım için aynı programı izleyeceğiz: yoğunluğu doğrulamak, dağılım fonksiyonunu bulmak, beklenen değeri, varyansı ve moment üreten fonksiyonu hesaplamak, dağılımı ötekilere bağlayan yapısal özellikleri ispatlamak. Normal dağılımda bu program iki ünlü hesabı içerir: kutupsal koordinatlarla Gauss integrali ve kareye tamamlamayla moment üreten fonksiyon. Bölümün sonunda standart normal tablonun kullanımını sayısal örneklerle göreceğiz. Bu, kitabın son bölümüdür; alıştırmalardan sonra kitap boyunca kurduğumuz yapıya toplu olarak bakacağız.
+
+## Sürekli Düzgün Dağılım
+
+[Olasılık Uzayı Örnekleri ve Geometrik Olasılık](olasilik-uzayi-ornekleri.qmd) bölümünde bir aralıktan "rastgele" nokta seçme deneyini, alt aralığın olasılığını uzunluğuyla orantılı alarak modellemiştik: $(a,b)$'den seçilen noktanın $(c,d) \subseteq (a,b)$'ye düşme olasılığı $\frac{d-c}{b-a}$ idi. Bu, Laplace uzayının (@def-laplace-uzayi) sürekli karşılığıdır: her nokta "eşit olasılıklı"dır, ama tek noktanın olasılığı sıfır olduğundan bu eşitlik ancak yoğunluğun sabit olmasıyla ifade edilebilir.
+
+::: {#def-surekli-duzgun-dagilim name="Sürekli Düzgün Dağılım"}
+$a < b$ reel sayılar olsun. Olasılık yoğunluk fonksiyonu
+
+$$f_X(x) = \begin{cases} \dfrac{1}{b-a}, & a < x < b \\[2mm] 0, & \text{diğer durumlarda} \end{cases}$$
+
+olan sürekli rastgele değişkene $(a,b)$ aralığında **sürekli düzgün dağılıma** sahiptir denir ve $X \sim U(a,b)$ yazılır. $U(0,1)$ dağılımına **standart düzgün dağılım** denir.
+:::
+
+$f_X$ gerçekten bir yoğunluktur: negatif değildir ve
+
+$$\int_{-\infty}^{\infty} f_X(x)\,dx = \int_a^b \frac{1}{b-a}\,dx = \frac{b-a}{b-a} = 1.$$
+
+Dağılım fonksiyonunu (@def-dagilim-fonksiyonu) yoğunluğu integre ederek buluruz. $x \le a$ için integrand sıfırdır, $F_X(x) = 0$. $a < x < b$ için
+
+$$F_X(x) = \int_a^x \frac{1}{b-a}\,du = \frac{x-a}{b-a}.$$
+
+$x \ge b$ için $F_X(x) = 1$. Böylece
+
+$$F_X(x) = \begin{cases} 0, & x \le a \\[1mm] \dfrac{x-a}{b-a}, & a < x < b \\[2mm] 1, & x \ge b. \end{cases}$$
+
+$a \le c < d \le b$ için
+
+$$P(c < X < d) = F_X(d) - F_X(c) = \frac{d-c}{b-a};$$
+
+yani bir alt aralığın olasılığı yalnızca uzunluğuna bağlıdır, nerede durduğuna değil. Bu tam olarak geometrik olasılık modelidir. Sürekli bir rastgele değişkende tek noktanın olasılığı sıfır olduğundan (@prp-nokta-olasiligi-sifir) uç noktaların aralığa dâhil olup olmaması hiçbir olasılığı değiştirmez; $U(a,b)$ ile $U[a,b]$ arasında ayrım yapılmaz.
+
+Düzgün dağılımın sayısal özelliklerini hesaplayalım. Simetri nedeniyle beklenen değerin aralığın orta noktası olması beklenir; varyans ise aralık uzunluğunun karesiyle ölçeklenmelidir.
+
+:::: {#thm-duzgun-momentleri-mgf name="Düzgün Dağılımın Momentleri ve Moment Üreten Fonksiyonu"}
+$X \sim U(a,b)$ olsun. O zaman
+
+$$E(X) = \frac{a+b}{2}, \qquad \operatorname{Var}(X) = \frac{(b-a)^2}{12}$$
+
+ve moment üreten fonksiyon her $t \in \mathbb{R}$ için sonludur:
+
+$$M_X(t) = \begin{cases} \dfrac{e^{bt} - e^{at}}{(b-a)\,t}, & t \ne 0 \\[3mm] 1, & t = 0. \end{cases}$$
+
+::: {.ispat}
+Beklenen değer tanımından (@def-beklenen-deger)
+
+$$E(X) = \int_a^b \frac{x}{b-a}\,dx = \frac{1}{b-a} \cdot \frac{b^2 - a^2}{2} = \frac{(b-a)(b+a)}{2(b-a)} = \frac{a+b}{2}.$$
+
+İkinci moment:
+
+$$E(X^2) = \int_a^b \frac{x^2}{b-a}\,dx = \frac{1}{b-a} \cdot \frac{b^3 - a^3}{3} = \frac{(b-a)(b^2 + ab + a^2)}{3(b-a)} = \frac{a^2 + ab + b^2}{3}.$$
+
+Varyans hesap formülü (@prp-varyans-hesap-formulu) ile
+
+$$\operatorname{Var}(X) = E(X^2) - \big(E(X)\big)^2 = \frac{a^2 + ab + b^2}{3} - \frac{(a+b)^2}{4} = \frac{4a^2 + 4ab + 4b^2 - 3a^2 - 6ab - 3b^2}{12} = \frac{a^2 - 2ab + b^2}{12} = \frac{(b-a)^2}{12}.$$
+
+Moment üreten fonksiyon (@def-moment-ureten-fonksiyon) için $t \ne 0$ olsun:
+
+$$M_X(t) = E\big(e^{tX}\big) = \int_a^b \frac{e^{tx}}{b-a}\,dx = \frac{1}{b-a} \left[ \frac{e^{tx}}{t} \right]_a^b = \frac{e^{bt} - e^{at}}{(b-a)\,t}.$$
+
+$t = 0$ için $M_X(0) = E(1) = 1$. İntegral her $t$ için sonludur; dolayısıyla $M_X$ bütün $\mathbb{R}$'de vardır ve @thm-mgf-momentler ile momentler ondan da okunabilir. Üstel fonksiyonun seri açılımıyla
+
+$$e^{bt} - e^{at} = \sum_{n=0}^{\infty} \frac{\big(b^{n+1} - a^{n+1}\big)\,t^{n+1}}{(n+1)!}$$
+
+olduğundan, $t \ne 0$ için $(b-a)\,t$ ile bölüp $(n+1)! = (n+1)\,n!$ yazarsak
+
+$$M_X(t) = \sum_{n=0}^{\infty} \frac{b^{n+1} - a^{n+1}}{(n+1)(b-a)} \cdot \frac{t^n}{n!}$$
+
+elde ederiz. $\frac{t^n}{n!}$'in katsayısı $E(X^n)$ olduğundan
+
+$$E(X^n) = \frac{b^{n+1} - a^{n+1}}{(n+1)(b-a)}, \qquad n = 1, 2, \ldots$$
+
+$n = 1$ için $\frac{b^2 - a^2}{2(b-a)} = \frac{a+b}{2}$, $n = 2$ için $\frac{b^3 - a^3}{3(b-a)} = \frac{a^2 + ab + b^2}{3}$ bulunur; yukarıdaki hesaplarla uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Özel olarak $U \sim U(0,1)$ için $E(U) = \frac{1}{2}$, $\operatorname{Var}(U) = \frac{1}{12}$ ve $M_U(t) = \frac{e^t - 1}{t}$'dir. Genel durumda standart sapma $\frac{b-a}{2\sqrt{3}} \approx 0{,}289\,(b-a)$, yani aralık uzunluğunun yaklaşık yüzde $29$'udur.
+
+### Olasılık İntegral Dönüşümü ve Ters Dönüşüm Yöntemi
+
+Standart düzgün dağılımın özel bir önemi vardır: **her** sürekli dağılım ona dönüştürülebilir ve ondan üretilebilir. Bu iki yönlü ilişki, bilgisayarda rastgele sayı üretmenin temelidir. Bilgisayarlar doğrudan $U(0,1)$ dağılımlı sayılar üretir; istenen dağılıma sahip bir değer elde etmek için bu sayıyı dağılım fonksiyonunun tersinden geçirmek yeter.
+
+Aşağıdaki önermenin (b\) kısmında dağılım fonksiyonu kesin artan olmak zorunda olmadığından sıradan ters fonksiyon yerine **genelleştirilmiş ters** kullanılır: $F$ bir dağılım fonksiyonu ve $0 < u < 1$ için
+
+$$F^{-1}(u) = \inf\{x \in \mathbb{R} : F(x) \ge u\}.$$
+
+$F$ sürekli ve kesin artan olduğunda bu, sıradan ters fonksiyondur.
+
+:::: {#prp-duzgun-donusum name="Olasılık İntegral Dönüşümü ve Ters Dönüşüm Yöntemi"}
+(a\) $X$, dağılım fonksiyonu $F_X$ sürekli olan bir rastgele değişken olsun. O zaman $F_X(X) \sim U(0,1)$'dir.
+
+(b\) $U \sim U(0,1)$ ve $F$ herhangi bir dağılım fonksiyonu olsun. $X = F^{-1}(U)$ rastgele değişkeninin dağılım fonksiyonu $F$'dir.
+
+::: {.ispat}
+**(a\)** $Y = F_X(X)$ diyelim. $F_X$'in değerleri $[0,1]$'de olduğundan $Y$ de $[0,1]$'de değer alır; $u < 0$ için $P(Y \le u) = 0$ ve $u \ge 1$ için $P(Y \le u) = 1$'dir. Geriye $0 < u < 1$ için $P(Y \le u) = u$ göstermek kalır; $u = 0$ değeri bundan dağılım fonksiyonunun sağdan sürekliliğiyle çıkar: $F_Y(0) = \lim_{u \downarrow 0} F_Y(u) = \lim_{u \downarrow 0} u = 0$.
+
+$A_u = \{x \in \mathbb{R} : F_X(x) \le u\}$ kümesini alalım. $\lim_{x \to -\infty} F_X(x) = 0 < u$ olduğundan $A_u$ boş değildir; $\lim_{x \to \infty} F_X(x) = 1 > u$ olduğundan üstten sınırlıdır. $x_u = \sup A_u$ olsun. $F_X$ sürekli olduğundan $F_X(x_u) = u$'dur: $A_u$ içinde $x_n \to x_u$ olan bir dizi vardır ve $F_X(x_u) = \lim F_X(x_n) \le u$; öte yandan $x > x_u$ olan her $x$ için $x \notin A_u$, yani $F_X(x) > u$ olduğundan $F_X(x_u) = \lim_{x \to x_u^+} F_X(x) \ge u$.
+
+Şimdi $(Y \le u) = (X \le x_u)$ olduğunu gösterelim. $X \le x_u$ ise, $F_X$ azalmayan olduğundan $F_X(X) \le F_X(x_u) = u$; $X > x_u$ ise $X \notin A_u$, yani $F_X(X) > u$. Öyleyse
+
+$$P(Y \le u) = P(X \le x_u) = F_X(x_u) = u.$$
+
+Demek ki $Y$'nin dağılım fonksiyonu $U(0,1)$'in dağılım fonksiyonudur; dağılım fonksiyonu dağılımı belirlediğinden $Y \sim U(0,1)$.
+
+**(b\)** $0 < u < 1$ için $B_u = \{x \in \mathbb{R} : F(x) \ge u\}$ olsun. $\lim_{x \to \infty} F(x) = 1 > u$ olduğundan $B_u$ boş değildir; $\lim_{x \to -\infty} F(x) = 0 < u$ olduğundan alttan sınırlıdır. Dolayısıyla $F^{-1}(u) = \inf B_u$ sonlu bir reel sayıdır. $U$'nun değerleri $1$ olasılıkla $(0,1)$'de olduğundan $X = F^{-1}(U)$ iyi tanımlıdır.
+
+Anahtar gözlem şudur: her $x \in \mathbb{R}$ ve $u \in (0,1)$ için
+
+$$F^{-1}(u) \le x \iff u \le F(x).$$
+
+Sağdan sola: $u \le F(x)$ ise $x \in B_u$, dolayısıyla $\inf B_u \le x$. Soldan sağa: $m = \inf B_u$ olsun. $B_u$ içinde $y_n \downarrow m$ olan bir dizi vardır ($m \in B_u$ ise sabit dizi alınır); $F$ sağdan sürekli olduğundan $F(m) = \lim F(y_n) \ge u$, yani $m \in B_u$. $F$ azalmayan olduğundan $m \le x$ ise $F(x) \ge F(m) \ge u$.
+
+Bu denklikle, her $x \in \mathbb{R}$ için
+
+$$P(X \le x) = P\big(F^{-1}(U) \le x\big) = P\big(U \le F(x)\big) = F(x);$$
+
+son eşitlikte $U \sim U(0,1)$ ve $0 \le F(x) \le 1$ kullanıldı. Demek ki $X$'in dağılım fonksiyonu $F$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+(a\) kısmına **olasılık integral dönüşümü**, (b\) kısmına **ters dönüşüm yöntemi** denir. (b\) kısmı $F$'nin türü hakkında hiçbir şey varsaymaz; (a\) kısmındaki süreklilik koşulu ise atılamaz: $X$ kesikli ise $F_X(X)$ yalnızca sayılabilir çoklukta değer alır ve düzgün dağılamaz.
+
+:::: {#exm-duzgun-hesaplari name="Düzgün Dağılım Hesapları"}
+(a\) Bir durağa otobüs her $30$ dakikada bir gelmektedir. Durağa rastgele bir anda gelen yolcunun bekleme süresi $X$ (dakika), $U(0,30)$ dağılımlıdır. $P(X > 20)$, $P(5 < X < 15)$, $E(X)$ ve $\sigma_X$ değerlerini bulunuz.
+
+(b\) $X \sim U(0,1)$ ve $Y = X^2$ olsun. $Y$'nin yoğunluk fonksiyonunu ve beklenen değerini bulunuz.
+
+(c\) Yoğunluğu $f(x) = 2x$ ($0 < x < 1$) olan bir rastgele değişkeni ve $U(a,b)$ dağılımlı bir rastgele değişkeni standart düzgün bir $U$'dan ters dönüşüm yöntemiyle üretiniz.
+
+::: {.cozum}
+**(a\)** $b - a = 30$ olduğundan olasılıklar uzunluk oranlarıdır:
+
+$$P(X > 20) = \frac{30 - 20}{30} = \frac{1}{3}, \qquad P(5 < X < 15) = \frac{15 - 5}{30} = \frac{1}{3}.$$
+
+@thm-duzgun-momentleri-mgf ile $E(X) = \frac{0 + 30}{2} = 15$ dakika, $\operatorname{Var}(X) = \frac{30^2}{12} = 75$ ve $\sigma_X = \sqrt{75} = 5\sqrt{3} \approx 8{,}66$ dakika.
+
+**(b\)** $g(x) = x^2$ fonksiyonu $(0,1)$ üzerinde kesin artan ve türevlenebilirdir; tersi $h(y) = \sqrt{y}$, türevi $h'(y) = \frac{1}{2\sqrt{y}}$'dir. Dönüşüm formülü (@thm-donusum-formulu) ile $0 < y < 1$ için
+
+$$f_Y(y) = f_X\big(h(y)\big)\,|h'(y)| = 1 \cdot \frac{1}{2\sqrt{y}} = \frac{1}{2\sqrt{y}},$$
+
+öteki $y$'ler için $f_Y(y) = 0$. Beklenen değer:
+
+$$E(Y) = \int_0^1 y \cdot \frac{1}{2\sqrt{y}}\,dy = \frac{1}{2} \int_0^1 y^{1/2}\,dy = \frac{1}{2} \cdot \frac{2}{3} = \frac{1}{3}.$$
+
+Bu, $E(X^2) = \frac{0 + 0 + 1}{3} = \frac{1}{3}$ ile uyuşur.
+
+**(c\)** Birinci dağılımın dağılım fonksiyonu $0 \le x \le 1$ için $F(x) = \int_0^x 2u\,du = x^2$'dir; $(0,1)$ üzerinde sürekli ve kesin artandır, tersi $F^{-1}(u) = \sqrt{u}$'dur. @prp-duzgun-donusum gereği $X = \sqrt{U}$ istenen dağılıma sahiptir. Doğrudan sağlama: $0 < x < 1$ için
+
+$$P(\sqrt{U} \le x) = P(U \le x^2) = x^2 = F(x).$$
+
+$U(a,b)$ için $F(x) = \frac{x-a}{b-a}$, tersi $F^{-1}(u) = a + (b-a)u$'dur; öyleyse $a + (b-a)U \sim U(a,b)$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Üstel Dağılım
+
+Bir telefon santraline ilk çağrının gelmesine kadar geçen süre, bir ampulün ömrü, radyoaktif bir atomun bozunmasına kadar geçen süre: bunların hepsi pozitif değerli, "ne kadar beklenirse beklensin gelecek" türünden rastgele büyüklüklerdir. Geometrik dağılım (@def-geometrik-dagilim) ilk başarıya kadar geçen **deneme sayısını** modelliyordu; üstel dağılım, ilk olaya kadar geçen **süreyi** modeller.
+
+::: {#def-ustel-dagilim name="Üstel Dağılım"}
+$\lambda > 0$ olsun. Olasılık yoğunluk fonksiyonu
+
+$$f_X(x) = \begin{cases} \lambda e^{-\lambda x}, & x > 0 \\[1mm] 0, & \text{diğer durumlarda} \end{cases}$$
+
+olan sürekli rastgele değişkene $\lambda$ parametreli **üstel dağılıma** sahiptir denir ve $X \sim \operatorname{Üstel}(\lambda)$ yazılır. $\lambda$'ya **oran parametresi** denir.
+:::
+
+$f_X$ bir yoğunluktur: negatif değildir ve
+
+$$\int_0^{\infty} \lambda e^{-\lambda x}\,dx = \Big[ -e^{-\lambda x} \Big]_0^{\infty} = 0 - (-1) = 1.$$
+
+Dağılım fonksiyonu $x \le 0$ için $F_X(x) = 0$, $x > 0$ için
+
+$$F_X(x) = \int_0^x \lambda e^{-\lambda u}\,du = \Big[ -e^{-\lambda u} \Big]_0^x = 1 - e^{-\lambda x}$$
+
+olur. Uygulamalarda dağılım fonksiyonundan çok **yaşam fonksiyonu** denen tümleyeni kullanılır:
+
+$$P(X > x) = 1 - F_X(x) = e^{-\lambda x}, \qquad x > 0.$$
+
+:::: {#thm-ustel-momentleri-mgf name="Üstel Dağılımın Momentleri ve Moment Üreten Fonksiyonu"}
+$X \sim \operatorname{Üstel}(\lambda)$ olsun. Moment üreten fonksiyon $t < \lambda$ için sonludur ve
+
+$$M_X(t) = \frac{\lambda}{\lambda - t}, \qquad t < \lambda.$$
+
+Ayrıca
+
+$$E(X) = \frac{1}{\lambda}, \qquad \operatorname{Var}(X) = \frac{1}{\lambda^2}, \qquad E(X^n) = \frac{n!}{\lambda^n} \quad (n \in \mathbb{N}).$$
+
+::: {.ispat}
+Tanımdan
+
+$$M_X(t) = \int_0^{\infty} e^{tx}\,\lambda e^{-\lambda x}\,dx = \lambda \int_0^{\infty} e^{-(\lambda - t)x}\,dx.$$
+
+$t \ge \lambda$ ise integrand her $x \ge 0$ için $1$'den küçük değildir ve integral ıraksar; $t < \lambda$ ise
+
+$$M_X(t) = \lambda \left[ \frac{e^{-(\lambda - t)x}}{-(\lambda - t)} \right]_0^{\infty} = \lambda \cdot \frac{1}{\lambda - t} = \frac{\lambda}{\lambda - t}.$$
+
+$M_X$, sıfırın $(-\lambda, \lambda)$ komşuluğunda sonlu olduğundan @thm-mgf-momentler uygulanır. Türevler:
+
+$$M_X'(t) = \frac{\lambda}{(\lambda - t)^2}, \qquad M_X''(t) = \frac{2\lambda}{(\lambda - t)^3}.$$
+
+$t = 0$'da $E(X) = M_X'(0) = \frac{1}{\lambda}$ ve $E(X^2) = M_X''(0) = \frac{2}{\lambda^2}$; dolayısıyla
+
+$$\operatorname{Var}(X) = \frac{2}{\lambda^2} - \frac{1}{\lambda^2} = \frac{1}{\lambda^2}.$$
+
+Genel moment için $M_X$'i geometrik seri olarak açalım; $|t| < \lambda$ için
+
+$$M_X(t) = \frac{1}{1 - t/\lambda} = \sum_{n=0}^{\infty} \left( \frac{t}{\lambda} \right)^n = \sum_{n=0}^{\infty} \frac{n!}{\lambda^n} \cdot \frac{t^n}{n!}.$$
+
+$\frac{t^n}{n!}$'in katsayısı $E(X^n)$ olduğundan $E(X^n) = \frac{n!}{\lambda^n}$; $n = 1, 2$ için yukarıdaki değerler yeniden bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Üstel dağılımda standart sapma beklenen değere eşittir: $\sigma_X = \frac{1}{\lambda} = E(X)$. Oran parametresi büyüdükçe olaylar sıklaşır, bekleme kısalır.
+
+Üstel dağılımın en önemli yapısal özelliği, geometrik dağılımla paylaştığı hafızasızlıktır: bir parça $s$ zaman çalışmışsa, en az $t$ zaman daha çalışma olasılığı, yeni bir parçanın en az $t$ zaman çalışma olasılığına eşittir. Geçmiş, geleceğe dair hiçbir bilgi taşımaz. Teorem bunun tersini de söyler: bu özelliğe sahip tek sürekli dağılım üsteldir.
+
+:::: {#thm-ustel-hafizasizlik name="Hafızasızlık Özelliği"}
+(a\) $X \sim \operatorname{Üstel}(\lambda)$ ise her $s, t \ge 0$ için
+
+$$P(X > s + t \mid X > s) = P(X > t).$$
+
+(b\) Tersine, $X$, $P(X > 0) = 1$ olan bir rastgele değişken ve her $s, t \ge 0$ için
+
+$$P(X > s + t) = P(X > s)\,P(X > t)$$
+
+ise, bir $\lambda > 0$ için $X \sim \operatorname{Üstel}(\lambda)$'dır.
+
+::: {.ispat}
+**(a\)** $s + t \ge s$ olduğundan $(X > s + t) \subseteq (X > s)$'dir. Koşullu olasılık tanımıyla
+
+$$P(X > s + t \mid X > s) = \frac{P(X > s + t,\, X > s)}{P(X > s)} = \frac{P(X > s + t)}{P(X > s)} = \frac{e^{-\lambda(s+t)}}{e^{-\lambda s}} = e^{-\lambda t} = P(X > t).$$
+
+**(b\)** $G(t) = P(X > t) = 1 - F_X(t)$ yazalım ($t \ge 0$). Varsayım $G(s+t) = G(s)\,G(t)$ biçimini alır. $G$ **artmayan** bir fonksiyondur; $G(0) = P(X > 0) = 1$'dir ve dağılım fonksiyonunun sonsuzdaki limitinden $G(t) \to 0$ ($t \to \infty$).
+
+*Adım 1: $0 < G(1) < 1$.* Fonksiyonel denklemi ardışık olarak uygulayarak her $n \in \mathbb{N}$ için $G(1) = G\!\left(\tfrac{1}{n}\right)^n$ ve $G(n) = G(1)^n$ buluruz. $G(1) = 0$ olsaydı her $n$ için $G\!\left(\tfrac{1}{n}\right) = 0$ olurdu; $G$ artmayan olduğundan her $t > 0$ için $G(t) = 0$ olur, dolayısıyla
+
+$$P(X > 0) = P\left( \bigcup_{n=1}^{\infty} \left( X > \tfrac{1}{n} \right) \right) = \lim_{n \to \infty} G\!\left(\tfrac{1}{n}\right) = 0$$
+
+çıkardı (artan olaylar dizisinde olasılığın sürekliliği); bu, $P(X > 0) = 1$ ile çelişir. $G(1) = 1$ olsaydı her $n$ için $G(n) = 1$ olur, $G(t) \to 0$ ile çelişirdi. Öyleyse $0 < G(1) < 1$ ve
+
+$$\lambda = -\ln G(1)$$
+
+sayısı $(0, \infty)$ aralığındadır; $G(1) = e^{-\lambda}$.
+
+*Adım 2: rasyonel noktalar.* $m, n \in \mathbb{N}$ için $G\!\left(\tfrac{m}{n}\right) = G\!\left(\tfrac{1}{n}\right)^m$ ve $G\!\left(\tfrac{1}{n}\right) = G(1)^{1/n} = e^{-\lambda/n}$ olduğundan
+
+$$G\!\left(\frac{m}{n}\right) = e^{-\lambda m/n}.$$
+
+Yani her pozitif rasyonel $q$ için $G(q) = e^{-\lambda q}$.
+
+*Adım 3: bütün pozitif reel sayılar.* $t > 0$ irrasyonel olsun. $q_1 < t < q_2$ olan rasyonel $q_1, q_2$ alalım. $G$ artmayan olduğundan
+
+$$e^{-\lambda q_2} = G(q_2) \le G(t) \le G(q_1) = e^{-\lambda q_1}.$$
+
+$q_1 \uparrow t$ ve $q_2 \downarrow t$ alınırsa iki uç da $e^{-\lambda t}$'ye gider; sıkıştırmayla $G(t) = e^{-\lambda t}$.
+
+Böylece $t > 0$ için $F_X(t) = 1 - e^{-\lambda t}$ ve $P(X > 0) = 1$ nedeniyle $t \le 0$ için $F_X(t) = 0$ bulundu. Bu, $\operatorname{Üstel}(\lambda)$ dağılımının dağılım fonksiyonudur; dağılım fonksiyonu dağılımı belirlediğinden $X \sim \operatorname{Üstel}(\lambda)$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="Hafızasızlık yalnızca iki dağılıma özgüdür"}
+Geometrik dağılımda $P(X > n) = (1-p)^n$, üstel dağılımda $P(X > t) = e^{-\lambda t}$ idi; ikisi de $G(s+t) = G(s)G(t)$ denklemini sağlar ve $1 - p$ ile $e^{-\lambda}$ birbirine karşılık gelir. Yukarıdaki ispat, bu denklemi pozitif reel sayılarda sağlayan, $G(0) = 1$ olan ve sonsuzda sıfıra giden tek artmayan fonksiyonun $e^{-\lambda t}$ olduğunu gösterdi; doğal sayılarda aynı akıl yürütme $(1-p)^n$'i verir. Dolayısıyla hafızasız tek sürekli dağılım üstel, hafızasız tek kesikli dağılım geometrik dağılımdır. Yıpranan parçalar için $P(X > s + t \mid X > s)$, $s$ ile azalır; üstel model yalnızca "yaşlanmayan" parçalara uygundur.
+:::
+
+Üstel dağılım, Poisson dağılımının (@def-poisson-dagilimi) zaman eksenindeki karşılığıdır. Poisson dağılımı sabit bir zaman aralığındaki **olay sayısını** sayar; üstel dağılım ilk olaya kadar geçen **süreyi** ölçer. Aralarındaki ilişki tek satırlık bir gözleme dayanır: "ilk olay $t$'den sonra gelir" ile "$(0, t]$ aralığında hiç olay yoktur" aynı olaydır.
+
+:::: {#prp-ustel-poisson-iliskisi name="Üstel Dağılım ile Poisson Dağılımı Arasındaki İlişki"}
+Zaman içinde gerçekleşen olaylar için her $t > 0$'da $(0, t]$ aralığındaki olay sayısı $N_t$, $\operatorname{Poisson}(\lambda t)$ dağılımlı olsun; yani birim zamandaki olay sayısı $\operatorname{Poisson}(\lambda)$ dağılımlıdır. $T$ ilk olayın zamanı ise $T \sim \operatorname{Üstel}(\lambda)$'dır.
+
+::: {.ispat}
+$t > 0$ olsun. İlk olay $t$'den sonra gerçekleşir ancak ve ancak $(0, t]$ aralığında hiç olay olmazsa: $(T > t) = (N_t = 0)$. Poisson olasılık fonksiyonuyla
+
+$$P(T > t) = P(N_t = 0) = e^{-\lambda t} \frac{(\lambda t)^0}{0!} = e^{-\lambda t}.$$
+
+Dolayısıyla $t > 0$ için $F_T(t) = 1 - e^{-\lambda t}$; $T$ pozitif olduğundan $t \le 0$ için $F_T(t) = 0$. Bu, $\operatorname{Üstel}(\lambda)$ dağılımının dağılım fonksiyonudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Önerme, oran parametresinin anlamını açıklar: birim zamanda ortalama $\lambda$ olay gerçekleşiyorsa ilk olaya kadar ortalama $\frac{1}{\lambda}$ birim beklenir. Ardışık iki olay arasındaki sürelerin de bağımsız ve $\operatorname{Üstel}(\lambda)$ dağılımlı olduğu, bu kitabın kapsamı dışında kalan stokastik süreçler dersinde ispatlanır; bu yapıya **Poisson süreci** denir.
+
+:::: {#exm-ustel-omur-hesabi name="Üstel Ömür ve Bekleme Süresi Hesapları"}
+(a\) Elektronik bir parçanın ömrü $X$ (saat), beklenen değeri $1000$ saat olan üstel dağılıma sahiptir. Parçanın $2000$ saatten uzun çalışma olasılığını, $500$ saatten önce bozulma olasılığını, ömrün medyanını ve $500$ saat çalışmış bir parçanın en az $1000$ saat daha çalışma olasılığını bulunuz.
+
+(b\) Bir çağrı merkezine çağrılar, saatte ortalama $3$ çağrı olacak biçimde, her $t$ saatlik aralıktaki çağrı sayısı $\operatorname{Poisson}(3t)$ olacak şekilde gelmektedir. İlk çağrı için yarım saatten uzun bekleme olasılığını, $10$ dakikadan kısa bekleme olasılığını ve beklenen bekleme süresini bulunuz.
+
+::: {.cozum}
+**(a\)** $E(X) = \frac{1}{\lambda} = 1000$ olduğundan $\lambda = \frac{1}{1000}$ ve $P(X > x) = e^{-x/1000}$.
+
+$$P(X > 2000) = e^{-2} \approx 0{,}1353, \qquad P(X < 500) = 1 - e^{-1/2} \approx 0{,}3935.$$
+
+Medyan $m$, $F_X(m) = \frac{1}{2}$ denkleminin çözümüdür: $1 - e^{-m/1000} = \frac{1}{2}$, yani $e^{-m/1000} = \frac{1}{2}$ ve
+
+$$m = 1000 \ln 2 \approx 693{,}1 \text{ saat.}$$
+
+Medyan beklenen değerden küçüktür: ömürlerin yarısından fazlası ortalamanın altındadır, az sayıdaki uzun ömür ortalamayı yukarı çeker.
+
+Son olasılık için hafızasızlık (@thm-ustel-hafizasizlik) kullanılır:
+
+$$P(X > 1500 \mid X > 500) = P(X > 1000) = e^{-1} \approx 0{,}3679.$$
+
+Doğrudan hesapla da aynı sonuç çıkar: $\dfrac{e^{-1500/1000}}{e^{-500/1000}} = e^{-1}$.
+
+**(b\)** @prp-ustel-poisson-iliskisi gereği ilk çağrıya kadar geçen süre $T$ (saat), $\operatorname{Üstel}(3)$ dağılımlıdır.
+
+$$P\!\left(T > \tfrac{1}{2}\right) = e^{-3 \cdot 1/2} = e^{-1{,}5} \approx 0{,}2231.$$
+
+Aynı sonuç Poisson tarafından da çıkar: $P(N_{1/2} = 0) = e^{-1{,}5}$. $10$ dakika $\frac{1}{6}$ saattir:
+
+$$P\!\left(T < \tfrac{1}{6}\right) = 1 - e^{-3/6} = 1 - e^{-1/2} \approx 0{,}3935.$$
+
+Beklenen bekleme süresi $E(T) = \frac{1}{3}$ saat, yani $20$ dakikadır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="10.0 -4.5 574.0 236.5" role="img" aria-label="Lambda 1 ve 2 icin ustel yogunluk egrileri solda, dagilim fonksiyonlari sagda">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="46.0" y1="200.0" x2="274.0" y2="200.0"/>
+  <line x1="46.0" y1="24.0" x2="46.0" y2="200.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="53.8" y="216.0" text-anchor="middle">0</text>
+  <text x="105.5" y="216.0" text-anchor="middle">1</text>
+  <text x="157.3" y="216.0" text-anchor="middle">2</text>
+  <text x="209.1" y="216.0" text-anchor="middle">3</text>
+  <text x="260.8" y="216.0" text-anchor="middle">4</text>
+  <text x="39.0" y="164.9" text-anchor="end">0,5</text>
+  <text x="39.0" y="125.9" text-anchor="end">1</text>
+  <text x="39.0" y="86.8" text-anchor="end">1,5</text>
+  <text x="39.0" y="47.7" text-anchor="end">2</text>
+  <text x="280.0" y="204.0" font-style="italic">x</text>
+  <text x="42.0" y="18.0" text-anchor="middle" font-style="italic">f(x)</text>
+  </g>
+  <text x="156.0" y="24.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">yoğunluk  &#955;e<tspan font-size="8.5" dy="-5">&#8722;&#955;x</tspan><tspan dy="5">&#8203;</tspan></text>
+  <path d="M53.8,43.7 L54.5,47.9 L55.2,51.9 L55.9,55.9 L56.6,59.7 L57.3,63.5 L58.0,67.1 L58.7,70.6 L59.4,74.1 L60.1,77.4 L60.8,80.7 L61.5,83.9 L62.2,87.0 L62.8,90.0 L63.5,92.9 L64.2,95.8 L64.9,98.5 L65.6,101.2 L66.3,103.9 L67.0,106.4 L67.7,108.9 L68.4,111.4 L69.1,113.7 L69.8,116.0 L70.5,118.3 L71.2,120.4 L71.9,122.5 L72.6,124.6 L73.3,126.6 L74.0,128.6 L74.7,130.5 L75.4,132.3 L76.1,134.1 L76.8,135.9 L77.5,137.6 L78.2,139.3 L78.9,140.9 L79.6,142.5 L80.3,144.0 L81.0,145.5 L81.7,146.9 L82.4,148.3 L83.1,149.7 L83.8,151.1 L84.5,152.4 L85.2,153.6 L85.9,154.9 L86.6,156.1 L87.3,157.2 L88.0,158.4 L88.7,159.5 L89.4,160.6 L90.1,161.6 L90.8,162.6 L91.5,163.6 L92.2,164.6 L92.9,165.5 L93.6,166.5 L94.3,167.4 L95.0,168.2 L95.7,169.1 L96.4,169.9 L97.1,170.7 L97.8,171.5 L98.5,172.2 L99.2,173.0 L99.9,173.7 L100.6,174.4 L101.3,175.1 L102.0,175.7 L102.7,176.4 L103.4,177.0 L104.1,177.6 L104.8,178.2 L105.5,178.8 L106.2,179.4 L106.9,179.9 L107.6,180.5 L108.3,181.0 L109.0,181.5 L109.7,182.0 L110.4,182.5 L111.1,182.9 L111.8,183.4 L112.5,183.8 L113.2,184.3 L113.9,184.7 L114.6,185.1 L115.3,185.5 L116.0,185.9 L116.7,186.2 L117.4,186.6 L118.1,187.0 L118.8,187.3 L119.5,187.7 L120.2,188.0 L120.9,188.3 L121.6,188.6 L122.2,188.9 L122.9,189.2 L123.6,189.5 L124.3,189.8 L125.0,190.0 L125.7,190.3 L126.4,190.6 L127.1,190.8 L127.8,191.1 L128.5,191.3 L129.2,191.5 L129.9,191.8 L130.6,192.0 L131.3,192.2 L132.0,192.4 L132.7,192.6 L133.4,192.8 L134.1,193.0 L134.8,193.2 L135.5,193.4 L136.2,193.5 L136.9,193.7 L137.6,193.9 L138.3,194.0 L139.0,194.2 L139.7,194.4 L140.4,194.5 L141.1,194.7 L141.8,194.8 L142.5,194.9 L143.2,195.1 L143.9,195.2 L144.6,195.3 L145.3,195.5 L146.0,195.6 L146.7,195.7 L147.4,195.8 L148.1,195.9 L148.8,196.0 L149.5,196.1 L150.2,196.2 L150.9,196.3 L151.6,196.4 L152.3,196.5 L153.0,196.6 L153.7,196.7 L154.4,196.8 L155.1,196.9 L155.8,197.0 L156.5,197.0 L157.2,197.1 L157.9,197.2 L158.6,197.3 L159.3,197.3 L160.0,197.4 L160.7,197.5 L161.4,197.6 L162.1,197.6 L162.8,197.7 L163.5,197.7 L164.2,197.8 L164.9,197.9 L165.6,197.9 L166.3,198.0 L167.0,198.0 L167.7,198.1 L168.4,198.1 L169.1,198.2 L169.8,198.2 L170.5,198.3 L171.2,198.3 L171.9,198.4 L172.6,198.4 L173.3,198.5 L174.0,198.5 L174.7,198.5 L175.4,198.6 L176.1,198.6 L176.8,198.7 L177.5,198.7 L178.2,198.7 L178.9,198.8 L179.6,198.8 L180.3,198.8 L181.0,198.9 L181.6,198.9 L182.3,198.9 L183.0,198.9 L183.7,199.0 L184.4,199.0 L185.1,199.0 L185.8,199.1 L186.5,199.1 L187.2,199.1 L187.9,199.1 L188.6,199.1 L189.3,199.2 L190.0,199.2 L190.7,199.2 L191.4,199.2 L192.1,199.3 L192.8,199.3 L193.5,199.3 L194.2,199.3 L194.9,199.3 L195.6,199.3 L196.3,199.4 L197.0,199.4 L197.7,199.4 L198.4,199.4 L199.1,199.4 L199.8,199.4 L200.5,199.5 L201.2,199.5 L201.9,199.5 L202.6,199.5 L203.3,199.5 L204.0,199.5 L204.7,199.5 L205.4,199.6 L206.1,199.6 L206.8,199.6 L207.5,199.6 L208.2,199.6 L208.9,199.6 L209.6,199.6 L210.3,199.6 L211.0,199.6 L211.7,199.7 L212.4,199.7 L213.1,199.7 L213.8,199.7 L214.5,199.7 L215.2,199.7 L215.9,199.7 L216.6,199.7 L217.3,199.7 L218.0,199.7 L218.7,199.7 L219.4,199.7 L220.1,199.7 L220.8,199.8 L221.5,199.8 L222.2,199.8 L222.9,199.8 L223.6,199.8 L224.3,199.8 L225.0,199.8 L225.7,199.8 L226.4,199.8 L227.1,199.8 L227.8,199.8 L228.5,199.8 L229.2,199.8 L229.9,199.8 L230.6,199.8 L231.3,199.8 L232.0,199.8 L232.7,199.8 L233.4,199.8 L234.1,199.9 L234.8,199.9 L235.5,199.9 L236.2,199.9 L236.9,199.9 L237.6,199.9 L238.3,199.9 L239.0,199.9 L239.7,199.9 L240.4,199.9 L241.0,199.9 L241.7,199.9 L242.4,199.9 L243.1,199.9 L243.8,199.9 L244.5,199.9 L245.2,199.9 L245.9,199.9 L246.6,199.9 L247.3,199.9 L248.0,199.9 L248.7,199.9 L249.4,199.9 L250.1,199.9 L250.8,199.9 L251.5,199.9 L252.2,199.9 L252.9,199.9 L253.6,199.9 L254.3,199.9 L255.0,199.9 L255.7,199.9 L256.4,199.9 L257.1,199.9 L257.8,199.9 L258.5,199.9 L259.2,199.9 L259.9,199.9 L260.6,199.9 L261.3,199.9 L262.0,199.9 L262.7,200.0 L263.4,200.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M53.8,121.9 L54.5,122.9 L55.2,123.9 L55.9,125.0 L56.6,126.0 L57.3,127.0 L58.0,127.9 L58.7,128.9 L59.4,129.9 L60.1,130.8 L60.8,131.7 L61.5,132.6 L62.2,133.5 L62.8,134.4 L63.5,135.3 L64.2,136.2 L64.9,137.0 L65.6,137.9 L66.3,138.7 L67.0,139.5 L67.7,140.3 L68.4,141.1 L69.1,141.9 L69.8,142.7 L70.5,143.5 L71.2,144.2 L71.9,145.0 L72.6,145.7 L73.3,146.5 L74.0,147.2 L74.7,147.9 L75.4,148.6 L76.1,149.3 L76.8,150.0 L77.5,150.6 L78.2,151.3 L78.9,151.9 L79.6,152.6 L80.3,153.2 L81.0,153.8 L81.7,154.5 L82.4,155.1 L83.1,155.7 L83.8,156.3 L84.5,156.9 L85.2,157.4 L85.9,158.0 L86.6,158.6 L87.3,159.1 L88.0,159.7 L88.7,160.2 L89.4,160.7 L90.1,161.3 L90.8,161.8 L91.5,162.3 L92.2,162.8 L92.9,163.3 L93.6,163.8 L94.3,164.3 L95.0,164.8 L95.7,165.2 L96.4,165.7 L97.1,166.2 L97.8,166.6 L98.5,167.1 L99.2,167.5 L99.9,167.9 L100.6,168.4 L101.3,168.8 L102.0,169.2 L102.7,169.6 L103.4,170.0 L104.1,170.4 L104.8,170.8 L105.5,171.2 L106.2,171.6 L106.9,172.0 L107.6,172.4 L108.3,172.7 L109.0,173.1 L109.7,173.5 L110.4,173.8 L111.1,174.2 L111.8,174.5 L112.5,174.9 L113.2,175.2 L113.9,175.5 L114.6,175.9 L115.3,176.2 L116.0,176.5 L116.7,176.8 L117.4,177.1 L118.1,177.4 L118.8,177.7 L119.5,178.0 L120.2,178.3 L120.9,178.6 L121.6,178.9 L122.2,179.2 L122.9,179.5 L123.6,179.7 L124.3,180.0 L125.0,180.3 L125.7,180.5 L126.4,180.8 L127.1,181.1 L127.8,181.3 L128.5,181.6 L129.2,181.8 L129.9,182.1 L130.6,182.3 L131.3,182.5 L132.0,182.8 L132.7,183.0 L133.4,183.2 L134.1,183.5 L134.8,183.7 L135.5,183.9 L136.2,184.1 L136.9,184.3 L137.6,184.5 L138.3,184.7 L139.0,184.9 L139.7,185.2 L140.4,185.3 L141.1,185.5 L141.8,185.7 L142.5,185.9 L143.2,186.1 L143.9,186.3 L144.6,186.5 L145.3,186.7 L146.0,186.8 L146.7,187.0 L147.4,187.2 L148.1,187.4 L148.8,187.5 L149.5,187.7 L150.2,187.9 L150.9,188.0 L151.6,188.2 L152.3,188.4 L153.0,188.5 L153.7,188.7 L154.4,188.8 L155.1,189.0 L155.8,189.1 L156.5,189.3 L157.2,189.4 L157.9,189.5 L158.6,189.7 L159.3,189.8 L160.0,190.0 L160.7,190.1 L161.4,190.2 L162.1,190.4 L162.8,190.5 L163.5,190.6 L164.2,190.7 L164.9,190.9 L165.6,191.0 L166.3,191.1 L167.0,191.2 L167.7,191.3 L168.4,191.5 L169.1,191.6 L169.8,191.7 L170.5,191.8 L171.2,191.9 L171.9,192.0 L172.6,192.1 L173.3,192.2 L174.0,192.3 L174.7,192.4 L175.4,192.5 L176.1,192.6 L176.8,192.7 L177.5,192.8 L178.2,192.9 L178.9,193.0 L179.6,193.1 L180.3,193.2 L181.0,193.3 L181.6,193.4 L182.3,193.5 L183.0,193.6 L183.7,193.7 L184.4,193.7 L185.1,193.8 L185.8,193.9 L186.5,194.0 L187.2,194.1 L187.9,194.1 L188.6,194.2 L189.3,194.3 L190.0,194.4 L190.7,194.5 L191.4,194.5 L192.1,194.6 L192.8,194.7 L193.5,194.7 L194.2,194.8 L194.9,194.9 L195.6,195.0 L196.3,195.0 L197.0,195.1 L197.7,195.2 L198.4,195.2 L199.1,195.3 L199.8,195.3 L200.5,195.4 L201.2,195.5 L201.9,195.5 L202.6,195.6 L203.3,195.7 L204.0,195.7 L204.7,195.8 L205.4,195.8 L206.1,195.9 L206.8,195.9 L207.5,196.0 L208.2,196.0 L208.9,196.1 L209.6,196.2 L210.3,196.2 L211.0,196.3 L211.7,196.3 L212.4,196.4 L213.1,196.4 L213.8,196.4 L214.5,196.5 L215.2,196.5 L215.9,196.6 L216.6,196.6 L217.3,196.7 L218.0,196.7 L218.7,196.8 L219.4,196.8 L220.1,196.9 L220.8,196.9 L221.5,196.9 L222.2,197.0 L222.9,197.0 L223.6,197.1 L224.3,197.1 L225.0,197.1 L225.7,197.2 L226.4,197.2 L227.1,197.3 L227.8,197.3 L228.5,197.3 L229.2,197.4 L229.9,197.4 L230.6,197.4 L231.3,197.5 L232.0,197.5 L232.7,197.5 L233.4,197.6 L234.1,197.6 L234.8,197.6 L235.5,197.7 L236.2,197.7 L236.9,197.7 L237.6,197.8 L238.3,197.8 L239.0,197.8 L239.7,197.8 L240.4,197.9 L241.0,197.9 L241.7,197.9 L242.4,198.0 L243.1,198.0 L243.8,198.0 L244.5,198.0 L245.2,198.1 L245.9,198.1 L246.6,198.1 L247.3,198.1 L248.0,198.2 L248.7,198.2 L249.4,198.2 L250.1,198.2 L250.8,198.3 L251.5,198.3 L252.2,198.3 L252.9,198.3 L253.6,198.4 L254.3,198.4 L255.0,198.4 L255.7,198.4 L256.4,198.4 L257.1,198.5 L257.8,198.5 L258.5,198.5 L259.2,198.5 L259.9,198.5 L260.6,198.6 L261.3,198.6 L262.0,198.6 L262.7,198.6 L263.4,198.6" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="53.8" cy="43.7" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="53.8" cy="121.9" r="3.4" fill="var(--color-theory)"/>
+  <text x="90.2" y="146.0" fill="var(--color-practice)" font-size="10.5" text-anchor="start" font-weight="600">&#955; = 2</text>
+  <text x="144.6" y="180.2" fill="var(--color-theory)" font-size="10.5" text-anchor="start" font-weight="600">&#955; = 1</text>
+  <text x="188.4" y="78.9" fill="var(--academic-text)" font-size="10.5" text-anchor="middle" font-style="italic">E(X) = 1/&#955;</text>
+  <text x="188.4" y="98.4" fill="var(--academic-text)" font-size="10.5" text-anchor="middle" font-style="italic">Var(X) = 1/&#955;<tspan font-size="8.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="330.0" y1="200.0" x2="558.0" y2="200.0"/>
+  <line x1="330.0" y1="24.0" x2="330.0" y2="200.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="337.8" y="216.0" text-anchor="middle">0</text>
+  <text x="389.5" y="216.0" text-anchor="middle">1</text>
+  <text x="441.3" y="216.0" text-anchor="middle">2</text>
+  <text x="493.1" y="216.0" text-anchor="middle">3</text>
+  <text x="544.8" y="216.0" text-anchor="middle">4</text>
+  <text x="323.0" y="129.0" text-anchor="end">0,5</text>
+  <text x="323.0" y="54.0" text-anchor="end">1</text>
+  <text x="564.0" y="204.0" font-style="italic">x</text>
+  <text x="326.0" y="18.0" text-anchor="middle" font-style="italic">F(x)</text>
+  </g>
+  <text x="440.0" y="24.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">dağılım  1 &#8722; e<tspan font-size="8.5" dy="-5">&#8722;&#955;x</tspan><tspan dy="5">&#8203;</tspan></text>
+  <path d="M330.0,50.0 L550.0,50.0" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M337.8,200.0 L338.5,196.0 L339.2,192.1 L339.9,188.3 L340.6,184.6 L341.3,181.1 L342.0,177.6 L342.7,174.2 L343.4,170.9 L344.1,167.6 L344.8,164.5 L345.5,161.5 L346.2,158.5 L346.8,155.6 L347.5,152.8 L348.2,150.0 L348.9,147.4 L349.6,144.8 L350.3,142.3 L351.0,139.8 L351.7,137.4 L352.4,135.1 L353.1,132.8 L353.8,130.6 L354.5,128.5 L355.2,126.4 L355.9,124.3 L356.6,122.4 L357.3,120.4 L358.0,118.6 L358.7,116.7 L359.4,115.0 L360.1,113.2 L360.8,111.5 L361.5,109.9 L362.2,108.3 L362.9,106.7 L363.6,105.2 L364.3,103.8 L365.0,102.3 L365.7,100.9 L366.4,99.6 L367.1,98.3 L367.8,97.0 L368.5,95.7 L369.2,94.5 L369.9,93.3 L370.6,92.2 L371.3,91.0 L372.0,90.0 L372.7,88.9 L373.4,87.9 L374.1,86.8 L374.8,85.9 L375.5,84.9 L376.2,84.0 L376.9,83.1 L377.6,82.2 L378.3,81.3 L379.0,80.5 L379.7,79.7 L380.4,78.9 L381.1,78.1 L381.8,77.4 L382.5,76.6 L383.2,75.9 L383.9,75.2 L384.6,74.6 L385.3,73.9 L386.0,73.3 L386.7,72.7 L387.4,72.1 L388.1,71.5 L388.8,70.9 L389.5,70.3 L390.2,69.8 L390.9,69.3 L391.6,68.8 L392.3,68.3 L393.0,67.8 L393.7,67.3 L394.4,66.8 L395.1,66.4 L395.8,66.0 L396.5,65.5 L397.2,65.1 L397.9,64.7 L398.6,64.3 L399.3,63.9 L400.0,63.6 L400.7,63.2 L401.4,62.9 L402.1,62.5 L402.8,62.2 L403.5,61.9 L404.2,61.5 L404.9,61.2 L405.6,60.9 L406.2,60.6 L406.9,60.4 L407.6,60.1 L408.3,59.8 L409.0,59.6 L409.7,59.3 L410.4,59.0 L411.1,58.8 L411.8,58.6 L412.5,58.3 L413.2,58.1 L413.9,57.9 L414.6,57.7 L415.3,57.5 L416.0,57.3 L416.7,57.1 L417.4,56.9 L418.1,56.7 L418.8,56.5 L419.5,56.4 L420.2,56.2 L420.9,56.0 L421.6,55.9 L422.3,55.7 L423.0,55.6 L423.7,55.4 L424.4,55.3 L425.1,55.1 L425.8,55.0 L426.5,54.9 L427.2,54.7 L427.9,54.6 L428.6,54.5 L429.3,54.4 L430.0,54.2 L430.7,54.1 L431.4,54.0 L432.1,53.9 L432.8,53.8 L433.5,53.7 L434.2,53.6 L434.9,53.5 L435.6,53.4 L436.3,53.3 L437.0,53.2 L437.7,53.2 L438.4,53.1 L439.1,53.0 L439.8,52.9 L440.5,52.8 L441.2,52.8 L441.9,52.7 L442.6,52.6 L443.3,52.5 L444.0,52.5 L444.7,52.4 L445.4,52.3 L446.1,52.3 L446.8,52.2 L447.5,52.2 L448.2,52.1 L448.9,52.0 L449.6,52.0 L450.3,51.9 L451.0,51.9 L451.7,51.8 L452.4,51.8 L453.1,51.7 L453.8,51.7 L454.5,51.7 L455.2,51.6 L455.9,51.6 L456.6,51.5 L457.3,51.5 L458.0,51.4 L458.7,51.4 L459.4,51.4 L460.1,51.3 L460.8,51.3 L461.5,51.3 L462.2,51.2 L462.9,51.2 L463.6,51.2 L464.3,51.1 L465.0,51.1 L465.6,51.1 L466.3,51.0 L467.0,51.0 L467.7,51.0 L468.4,51.0 L469.1,50.9 L469.8,50.9 L470.5,50.9 L471.2,50.9 L471.9,50.8 L472.6,50.8 L473.3,50.8 L474.0,50.8 L474.7,50.8 L475.4,50.7 L476.1,50.7 L476.8,50.7 L477.5,50.7 L478.2,50.7 L478.9,50.6 L479.6,50.6 L480.3,50.6 L481.0,50.6 L481.7,50.6 L482.4,50.6 L483.1,50.5 L483.8,50.5 L484.5,50.5 L485.2,50.5 L485.9,50.5 L486.6,50.5 L487.3,50.5 L488.0,50.5 L488.7,50.4 L489.4,50.4 L490.1,50.4 L490.8,50.4 L491.5,50.4 L492.2,50.4 L492.9,50.4 L493.6,50.4 L494.3,50.4 L495.0,50.3 L495.7,50.3 L496.4,50.3 L497.1,50.3 L497.8,50.3 L498.5,50.3 L499.2,50.3 L499.9,50.3 L500.6,50.3 L501.3,50.3 L502.0,50.3 L502.7,50.3 L503.4,50.2 L504.1,50.2 L504.8,50.2 L505.5,50.2 L506.2,50.2 L506.9,50.2 L507.6,50.2 L508.3,50.2 L509.0,50.2 L509.7,50.2 L510.4,50.2 L511.1,50.2 L511.8,50.2 L512.5,50.2 L513.2,50.2 L513.9,50.2 L514.6,50.2 L515.3,50.2 L516.0,50.2 L516.7,50.1 L517.4,50.1 L518.1,50.1 L518.8,50.1 L519.5,50.1 L520.2,50.1 L520.9,50.1 L521.6,50.1 L522.3,50.1 L523.0,50.1 L523.7,50.1 L524.4,50.1 L525.0,50.1 L525.7,50.1 L526.4,50.1 L527.1,50.1 L527.8,50.1 L528.5,50.1 L529.2,50.1 L529.9,50.1 L530.6,50.1 L531.3,50.1 L532.0,50.1 L532.7,50.1 L533.4,50.1 L534.1,50.1 L534.8,50.1 L535.5,50.1 L536.2,50.1 L536.9,50.1 L537.6,50.1 L538.3,50.1 L539.0,50.1 L539.7,50.1 L540.4,50.1 L541.1,50.1 L541.8,50.1 L542.5,50.1 L543.2,50.1 L543.9,50.1 L544.6,50.1 L545.3,50.0 L546.0,50.0 L546.7,50.0 L547.4,50.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M337.8,200.0 L338.5,198.0 L339.2,196.0 L339.9,194.0 L340.6,192.1 L341.3,190.2 L342.0,188.3 L342.7,186.5 L343.4,184.6 L344.1,182.8 L344.8,181.1 L345.5,179.3 L346.2,177.6 L346.8,175.9 L347.5,174.2 L348.2,172.5 L348.9,170.9 L349.6,169.2 L350.3,167.6 L351.0,166.1 L351.7,164.5 L352.4,163.0 L353.1,161.5 L353.8,160.0 L354.5,158.5 L355.2,157.0 L355.9,155.6 L356.6,154.2 L357.3,152.8 L358.0,151.4 L358.7,150.0 L359.4,148.7 L360.1,147.4 L360.8,146.1 L361.5,144.8 L362.2,143.5 L362.9,142.3 L363.6,141.0 L364.3,139.8 L365.0,138.6 L365.7,137.4 L366.4,136.2 L367.1,135.1 L367.8,133.9 L368.5,132.8 L369.2,131.7 L369.9,130.6 L370.6,129.5 L371.3,128.5 L372.0,127.4 L372.7,126.4 L373.4,125.3 L374.1,124.3 L374.8,123.3 L375.5,122.4 L376.2,121.4 L376.9,120.4 L377.6,119.5 L378.3,118.6 L379.0,117.6 L379.7,116.7 L380.4,115.8 L381.1,115.0 L381.8,114.1 L382.5,113.2 L383.2,112.4 L383.9,111.5 L384.6,110.7 L385.3,109.9 L386.0,109.1 L386.7,108.3 L387.4,107.5 L388.1,106.7 L388.8,106.0 L389.5,105.2 L390.2,104.5 L390.9,103.8 L391.6,103.0 L392.3,102.3 L393.0,101.6 L393.7,100.9 L394.4,100.3 L395.1,99.6 L395.8,98.9 L396.5,98.3 L397.2,97.6 L397.9,97.0 L398.6,96.3 L399.3,95.7 L400.0,95.1 L400.7,94.5 L401.4,93.9 L402.1,93.3 L402.8,92.7 L403.5,92.2 L404.2,91.6 L404.9,91.0 L405.6,90.5 L406.2,90.0 L406.9,89.4 L407.6,88.9 L408.3,88.4 L409.0,87.9 L409.7,87.3 L410.4,86.8 L411.1,86.3 L411.8,85.9 L412.5,85.4 L413.2,84.9 L413.9,84.4 L414.6,84.0 L415.3,83.5 L416.0,83.1 L416.7,82.6 L417.4,82.2 L418.1,81.8 L418.8,81.3 L419.5,80.9 L420.2,80.5 L420.9,80.1 L421.6,79.7 L422.3,79.3 L423.0,78.9 L423.7,78.5 L424.4,78.1 L425.1,77.7 L425.8,77.4 L426.5,77.0 L427.2,76.6 L427.9,76.3 L428.6,75.9 L429.3,75.6 L430.0,75.2 L430.7,74.9 L431.4,74.6 L432.1,74.2 L432.8,73.9 L433.5,73.6 L434.2,73.3 L434.9,73.0 L435.6,72.7 L436.3,72.4 L437.0,72.1 L437.7,71.8 L438.4,71.5 L439.1,71.2 L439.8,70.9 L440.5,70.6 L441.2,70.3 L441.9,70.1 L442.6,69.8 L443.3,69.5 L444.0,69.3 L444.7,69.0 L445.4,68.8 L446.1,68.5 L446.8,68.3 L447.5,68.0 L448.2,67.8 L448.9,67.5 L449.6,67.3 L450.3,67.1 L451.0,66.8 L451.7,66.6 L452.4,66.4 L453.1,66.2 L453.8,66.0 L454.5,65.7 L455.2,65.5 L455.9,65.3 L456.6,65.1 L457.3,64.9 L458.0,64.7 L458.7,64.5 L459.4,64.3 L460.1,64.1 L460.8,63.9 L461.5,63.8 L462.2,63.6 L462.9,63.4 L463.6,63.2 L464.3,63.0 L465.0,62.9 L465.6,62.7 L466.3,62.5 L467.0,62.3 L467.7,62.2 L468.4,62.0 L469.1,61.9 L469.8,61.7 L470.5,61.5 L471.2,61.4 L471.9,61.2 L472.6,61.1 L473.3,60.9 L474.0,60.8 L474.7,60.6 L475.4,60.5 L476.1,60.4 L476.8,60.2 L477.5,60.1 L478.2,59.9 L478.9,59.8 L479.6,59.7 L480.3,59.6 L481.0,59.4 L481.7,59.3 L482.4,59.2 L483.1,59.0 L483.8,58.9 L484.5,58.8 L485.2,58.7 L485.9,58.6 L486.6,58.5 L487.3,58.3 L488.0,58.2 L488.7,58.1 L489.4,58.0 L490.1,57.9 L490.8,57.8 L491.5,57.7 L492.2,57.6 L492.9,57.5 L493.6,57.4 L494.3,57.3 L495.0,57.2 L495.7,57.1 L496.4,57.0 L497.1,56.9 L497.8,56.8 L498.5,56.7 L499.2,56.6 L499.9,56.5 L500.6,56.5 L501.3,56.4 L502.0,56.3 L502.7,56.2 L503.4,56.1 L504.1,56.0 L504.8,56.0 L505.5,55.9 L506.2,55.8 L506.9,55.7 L507.6,55.6 L508.3,55.6 L509.0,55.5 L509.7,55.4 L510.4,55.3 L511.1,55.3 L511.8,55.2 L512.5,55.1 L513.2,55.1 L513.9,55.0 L514.6,54.9 L515.3,54.9 L516.0,54.8 L516.7,54.7 L517.4,54.7 L518.1,54.6 L518.8,54.5 L519.5,54.5 L520.2,54.4 L520.9,54.4 L521.6,54.3 L522.3,54.2 L523.0,54.2 L523.7,54.1 L524.4,54.1 L525.0,54.0 L525.7,54.0 L526.4,53.9 L527.1,53.9 L527.8,53.8 L528.5,53.8 L529.2,53.7 L529.9,53.7 L530.6,53.6 L531.3,53.6 L532.0,53.5 L532.7,53.5 L533.4,53.4 L534.1,53.4 L534.8,53.3 L535.5,53.3 L536.2,53.2 L536.9,53.2 L537.6,53.2 L538.3,53.1 L539.0,53.1 L539.7,53.0 L540.4,53.0 L541.1,53.0 L541.8,52.9 L542.5,52.9 L543.2,52.8 L543.9,52.8 L544.6,52.8 L545.3,52.7 L546.0,52.7 L546.7,52.6 L547.4,52.6" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="355.1" y="103.0" fill="var(--color-practice)" font-size="10.5" text-anchor="end" font-weight="600">&#955; = 2</text>
+  <text x="455.6" y="82.6" fill="var(--color-theory)" font-size="10.5" text-anchor="start" font-weight="600">&#955; = 1</text>
+</svg>
+<figcaption>&#955; = 1 ve &#955; = 2 için üstel dağılım. Yoğunluk sıfırda &#955; değerinden başlayıp geometrik hızla azalır; &#955; büyüdükçe kütle sıfıra yığılır, ortalama 1/&#955; küçülür. Dağılım fonksiyonu 1 &#8722; e<sup>&#8722;&#955;<em>x</em></sup> de aynı ölçüde daha hızlı 1'e yaklaşır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Normal Dağılım
+
+Normal dağılım, olasılık teorisinin merkezindeki dağılımdır. Gauss onu ölçüm hatalarının dağılımı olarak kullandı; bugün önemi, matematiksel istatistikte ispatlanacak olan merkezi limit teoreminden gelir: çok sayıda bağımsız, küçük etkinin toplamı, tek tek etkilerin dağılımı ne olursa olsun, yaklaşık olarak normal dağılır. Bu bölümde teoremi değil, dağılımın kendisini kuracağız.
+
+::: {#def-normal-dagilim name="Normal (Gauss) Dağılımı"}
+$\mu \in \mathbb{R}$ ve $\sigma > 0$ olsun. Olasılık yoğunluk fonksiyonu
+
+$$f_X(x) = \frac{1}{\sigma \sqrt{2\pi}} \exp\!\left( -\frac{(x - \mu)^2}{2\sigma^2} \right), \qquad x \in \mathbb{R}$$
+
+olan sürekli rastgele değişkene $\mu$ ve $\sigma^2$ parametreli **normal dağılıma** (Gauss dağılımına) sahiptir denir ve $X \sim N(\mu, \sigma^2)$ yazılır. $N(0,1)$ dağılımına **standart normal dağılım** denir; yoğunluğu ve dağılım fonksiyonu
+
+$$\varphi(z) = \frac{1}{\sqrt{2\pi}}\,e^{-z^2/2}, \qquad \Phi(z) = \int_{-\infty}^{z} \varphi(u)\,du$$
+
+ile gösterilir.
+:::
+
+Yoğunluğun biçimine bakalım. $f_X$ her yerde pozitiftir, $x = \mu$ noktasına göre simetriktir ve en büyük değerini $\frac{1}{\sigma\sqrt{2\pi}}$ olarak $x = \mu$'de alır. Türevleri
+
+$$f_X'(x) = -\frac{x - \mu}{\sigma^2}\,f_X(x), \qquad f_X''(x) = \left( \frac{(x-\mu)^2}{\sigma^4} - \frac{1}{\sigma^2} \right) f_X(x)$$
+
+olduğundan büküm noktaları $x = \mu \pm \sigma$'dadır. $\sigma$ küçüldükçe çan daralır ve yükselir, büyüdükçe genişler ve basıklaşır; $\mu$ değişince eğri yalnızca yatay kayar. Tanımda $\sigma^2$ yazılmasının nedeni, ikinci parametrenin varyans olmasıdır.
+
+Bu fonksiyonun bir yoğunluk olduğunu göstermek bir satırlık iş değildir; $e^{-x^2}$'nin ilkel fonksiyonu elemanter fonksiyonlarla yazılamaz. İntegralin değeri, iki boyutlu integrale geçip kutupsal koordinat kullanan klasik bir hileyle bulunur.
+
+:::: {#thm-normal-yogunluk-toplam-bir name="Normal Yoğunluğun İntegrali Birdir"}
+Standart normal yoğunluğun normalleştirme sabitini veren eşitlik şudur:
+
+$$\int_{-\infty}^{\infty} e^{-z^2/2}\,dz = \sqrt{2\pi}.$$
+
+Dolayısıyla her $\mu \in \mathbb{R}$ ve $\sigma > 0$ için @def-normal-dagilim'deki $f_X$ bir olasılık yoğunluk fonksiyonudur.
+
+::: {.ispat}
+*Adım 1: integral yakınsar.* $[-1, 1]$ üzerinde integrand sürekli olduğundan oradaki integral sonludur. $|z| \ge 1$ için $z^2 \ge |z|$, dolayısıyla $e^{-z^2/2} \le e^{-|z|/2}$'dir; $\int_1^{\infty} e^{-z/2}\,dz = 2e^{-1/2}$ sonlu olduğundan karşılaştırmayla sağ kuyruk yakınsar, integrand çift olduğundan sol kuyruk da aynı değere yakınsar. Böylece $\int_{-\infty}^{\infty} e^{-z^2/2}\,dz$ yakınsar. Değerine $I$ diyelim; integrand pozitif olduğundan $I > 0$.
+
+*Adım 2: $I^2$'yi iki katlı integral olarak yazma.* Değişken adının önemi olmadığından
+
+$$I^2 = \left( \int_{-\infty}^{\infty} e^{-x^2/2}\,dx \right) \left( \int_{-\infty}^{\infty} e^{-y^2/2}\,dy \right) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} e^{-(x^2 + y^2)/2}\,dx\,dy;$$
+
+integrand pozitif ve iki ayrı integralin çarpımı sonlu olduğundan iki katlı integral düzlemin tamamı üzerinde yakınsar ve ardışık integral olarak hesaplanabilir.
+
+*Adım 3: kutupsal koordinatlar.* $x = r\cos\theta$, $y = r\sin\theta$ ($r > 0$, $0 \le \theta < 2\pi$) dönüşümünün Jacobian'ı $r$'dir ve $x^2 + y^2 = r^2$ olur:
+
+$$I^2 = \int_0^{2\pi} \int_0^{\infty} e^{-r^2/2}\,r\,dr\,d\theta.$$
+
+İç integralde $u = \frac{r^2}{2}$, $du = r\,dr$ alınırsa
+
+$$\int_0^{\infty} e^{-r^2/2}\,r\,dr = \int_0^{\infty} e^{-u}\,du = 1.$$
+
+Öyleyse $I^2 = \int_0^{2\pi} 1\,d\theta = 2\pi$ ve $I > 0$ olduğundan $I = \sqrt{2\pi}$.
+
+*Adım 4: genel $\mu$, $\sigma$.* $f_X \ge 0$ açıktır. $z = \frac{x - \mu}{\sigma}$ değişken değişimiyle $dx = \sigma\,dz$ ve
+
+$$\int_{-\infty}^{\infty} f_X(x)\,dx = \frac{1}{\sigma\sqrt{2\pi}} \int_{-\infty}^{\infty} e^{-z^2/2}\,\sigma\,dz = \frac{\sigma}{\sigma\sqrt{2\pi}} \cdot \sqrt{2\pi} = 1.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Teorem aynı zamanda $\varphi$'nin bir yoğunluk ve $\Phi$'nin bir dağılım fonksiyonu olduğunu söyler. $\Phi$ sürekli ve kesin artandır, $\Phi(0) = \frac{1}{2}$'dir; ama kapalı bir formülü yoktur, değerleri tablodan okunur.
+
+Şimdi parametrelerin anlamını belirleyelim. Önce moment üreten fonksiyonu hesaplamak en kestirme yoldur; beklenen değeri, varyansı ve dağılımın öteki yapısal özelliklerini ondan okuyacağız.
+
+:::: {#thm-normal-momentleri-mgf name="Normal Dağılımın Moment Üreten Fonksiyonu, Beklenen Değeri ve Varyansı"}
+$X \sim N(\mu, \sigma^2)$ olsun. Her $t \in \mathbb{R}$ için
+
+$$M_X(t) = \exp\!\left( \mu t + \frac{\sigma^2 t^2}{2} \right)$$
+
+ve
+
+$$E(X) = \mu, \qquad \operatorname{Var}(X) = \sigma^2.$$
+
+::: {.ispat}
+$t \in \mathbb{R}$ sabit olsun. Tanımdan
+
+$$M_X(t) = \int_{-\infty}^{\infty} e^{tx}\,\frac{1}{\sigma\sqrt{2\pi}} \exp\!\left( -\frac{(x-\mu)^2}{2\sigma^2} \right) dx.$$
+
+$x = \mu + \sigma z$ değişken değişimiyle ($dx = \sigma\,dz$)
+
+$$M_X(t) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} e^{t(\mu + \sigma z)}\,e^{-z^2/2}\,dz = e^{\mu t} \cdot \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} \exp\!\left( \sigma t z - \frac{z^2}{2} \right) dz.$$
+
+Üsteli kareye tamamlayalım:
+
+$$\sigma t z - \frac{z^2}{2} = -\frac{1}{2}\left( z^2 - 2\sigma t z \right) = -\frac{1}{2}\left( (z - \sigma t)^2 - \sigma^2 t^2 \right) = -\frac{(z - \sigma t)^2}{2} + \frac{\sigma^2 t^2}{2}.$$
+
+$z$'ye bağlı olmayan $\frac{\sigma^2 t^2}{2}$ terimi integralin dışına çıkar:
+
+$$M_X(t) = e^{\mu t + \sigma^2 t^2/2} \cdot \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} e^{-(z - \sigma t)^2/2}\,dz.$$
+
+Son integralde $w = z - \sigma t$ alınırsa $\int_{-\infty}^{\infty} e^{-w^2/2}\,dw = \sqrt{2\pi}$ olur (@thm-normal-yogunluk-toplam-bir). Dolayısıyla
+
+$$M_X(t) = e^{\mu t + \sigma^2 t^2/2}.$$
+
+İntegral her $t$ için yakınsadığından $M_X$ bütün $\mathbb{R}$'de sonludur ve @thm-mgf-momentler uygulanır. Türevler:
+
+$$M_X'(t) = (\mu + \sigma^2 t)\,M_X(t), \qquad M_X''(t) = \sigma^2 M_X(t) + (\mu + \sigma^2 t)^2 M_X(t).$$
+
+$M_X(0) = 1$ olduğundan $E(X) = M_X'(0) = \mu$ ve $E(X^2) = M_X''(0) = \sigma^2 + \mu^2$; @prp-varyans-hesap-formulu ile
+
+$$\operatorname{Var}(X) = \sigma^2 + \mu^2 - \mu^2 = \sigma^2.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Demek ki $N(\mu, \sigma^2)$ gösterimindeki iki parametre tam olarak beklenen değer ve varyanstır. Moment üreten fonksiyonun üstelinin $t$'de ikinci dereceden bir polinom olması normal dağılımın ayırt edici özelliğidir; aşağıdaki sonuçların hepsi bu biçimin korunmasına dayanır.
+
+### Standartlaştırma
+
+Normal dağılım hesaplarında tek bir tablo yeter, çünkü her normal rastgele değişken doğrusal bir dönüşümle standart normale çevrilebilir.
+
+:::: {#thm-standartlastirma name="Standartlaştırma"}
+$X \sim N(\mu, \sigma^2)$ ise
+
+$$Z = \frac{X - \mu}{\sigma} \sim N(0, 1).$$
+
+Tersine, $Z \sim N(0,1)$ ise $X = \mu + \sigma Z \sim N(\mu, \sigma^2)$. Sonuç olarak her $x \in \mathbb{R}$ ve $a < b$ için
+
+$$F_X(x) = \Phi\!\left( \frac{x - \mu}{\sigma} \right), \qquad P(a < X \le b) = \Phi\!\left( \frac{b - \mu}{\sigma} \right) - \Phi\!\left( \frac{a - \mu}{\sigma} \right)$$
+
+ve her $z \in \mathbb{R}$ için $\Phi(-z) = 1 - \Phi(z)$.
+
+::: {.ispat}
+$g(x) = \frac{x - \mu}{\sigma}$ fonksiyonu $\mathbb{R}$ üzerinde kesin artan ve türevlenebilirdir; tersi $h(z) = \mu + \sigma z$, türevi $h'(z) = \sigma > 0$'dır. Dönüşüm formülü (@thm-donusum-formulu) ile $Z = g(X)$'in yoğunluğu
+
+$$f_Z(z) = f_X\big(h(z)\big)\,|h'(z)| = \frac{1}{\sigma\sqrt{2\pi}} \exp\!\left( -\frac{(\mu + \sigma z - \mu)^2}{2\sigma^2} \right) \sigma = \frac{1}{\sqrt{2\pi}}\,e^{-z^2/2} = \varphi(z).$$
+
+Demek ki $Z \sim N(0,1)$. Ters yön aynı formülle: $g(z) = \mu + \sigma z$ kesin artan, tersi $h(x) = \frac{x-\mu}{\sigma}$, $h'(x) = \frac{1}{\sigma}$; $X = g(Z)$'nin yoğunluğu
+
+$$f_X(x) = \varphi\!\left( \frac{x - \mu}{\sigma} \right) \cdot \frac{1}{\sigma} = \frac{1}{\sigma\sqrt{2\pi}} \exp\!\left( -\frac{(x-\mu)^2}{2\sigma^2} \right),$$
+
+yani $X \sim N(\mu, \sigma^2)$.
+
+Dağılım fonksiyonu için, $g$ kesin artan olduğundan $(X \le x) = \left( Z \le \frac{x-\mu}{\sigma} \right)$ ve
+
+$$F_X(x) = P\!\left( Z \le \frac{x - \mu}{\sigma} \right) = \Phi\!\left( \frac{x - \mu}{\sigma} \right).$$
+
+$P(a < X \le b) = F_X(b) - F_X(a)$ eşitliği bunu izler; $X$ sürekli olduğundan aralığın uçlarının dâhil olup olmaması önemsizdir.
+
+Simetri özelliği için $\Phi(-z)$ integralinde $u = -v$ değişimini yapalım:
+
+$$\Phi(-z) = \int_{-\infty}^{-z} \varphi(u)\,du = \int_{z}^{\infty} \varphi(-v)\,dv = \int_{z}^{\infty} \varphi(v)\,dv = 1 - \Phi(z);$$
+
+burada $\varphi(-v) = \varphi(v)$ (çift fonksiyon) ve $\int_{-\infty}^{\infty} \varphi = 1$ kullanıldı.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="26.0 -2.0 540.0 240.0" role="img" aria-label="Farkli standart sapmali normal yogunluklar ve standart normal egri altinda Phi(z) alani">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="40.0" y1="207.9" x2="274.0" y2="207.9"/>
+  <line x1="157.0" y1="224.0" x2="157.0" y2="26.0"/>
+  <polygon points="274.0,207.9 266.0,204.4 266.0,211.4" stroke="none"/>
+  <polygon points="157.0,26.0 153.5,34.0 160.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="107.9" y1="204.9" x2="107.9" y2="210.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="107.9" y="222.9" text-anchor="middle">-2</text>
+  <line x1="206.1" y1="204.9" x2="206.1" y2="210.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="206.1" y="222.9" text-anchor="middle">2</text>
+  <line x1="154.0" y1="127.0" x2="160.0" y2="127.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="150.0" y="131.0" text-anchor="end">0,4</text>
+  <line x1="154.0" y1="46.2" x2="160.0" y2="46.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="150.0" y="50.2" text-anchor="end">0,8</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="272.0" y="222.9" text-anchor="end">x</text>
+  <text x="164.0" y="35.0">y</text>
+  </g>
+  <text x="157.0" y="22.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">N(0, &#963;<tspan font-size="8.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan>) yoğunlukları</text>
+  <path d="M46.5,207.9 L47.1,207.9 L47.7,207.9 L48.3,207.9 L48.9,207.9 L49.5,207.9 L50.1,207.9 L50.8,207.9 L51.4,207.9 L52.0,207.9 L52.6,207.9 L53.2,207.9 L53.8,207.9 L54.4,207.9 L55.1,207.9 L55.7,207.9 L56.3,207.9 L56.9,207.9 L57.5,207.9 L58.1,207.9 L58.7,207.9 L59.4,207.9 L60.0,207.9 L60.6,207.9 L61.2,207.9 L61.8,207.9 L62.4,207.9 L63.0,207.9 L63.7,207.9 L64.3,207.9 L64.9,207.9 L65.5,207.9 L66.1,207.9 L66.7,207.9 L67.3,207.9 L68.0,207.9 L68.6,207.9 L69.2,207.9 L69.8,207.9 L70.4,207.9 L71.0,207.9 L71.6,207.9 L72.2,207.9 L72.9,207.9 L73.5,207.9 L74.1,207.9 L74.7,207.9 L75.3,207.9 L75.9,207.9 L76.5,207.9 L77.2,207.9 L77.8,207.9 L78.4,207.9 L79.0,207.9 L79.6,207.9 L80.2,207.9 L80.8,207.9 L81.5,207.9 L82.1,207.9 L82.7,207.9 L83.3,207.9 L83.9,207.9 L84.5,207.9 L85.1,207.9 L85.8,207.9 L86.4,207.9 L87.0,207.9 L87.6,207.9 L88.2,207.9 L88.8,207.9 L89.4,207.9 L90.1,207.9 L90.7,207.9 L91.3,207.9 L91.9,207.9 L92.5,207.9 L93.1,207.9 L93.7,207.9 L94.4,207.9 L95.0,207.9 L95.6,207.9 L96.2,207.9 L96.8,207.9 L97.4,207.9 L98.0,207.9 L98.7,207.9 L99.3,207.9 L99.9,207.9 L100.5,207.9 L101.1,207.9 L101.7,207.9 L102.3,207.9 L103.0,207.9 L103.6,207.9 L104.2,207.9 L104.8,207.9 L105.4,207.8 L106.0,207.8 L106.6,207.8 L107.3,207.8 L107.9,207.8 L108.5,207.8 L109.1,207.8 L109.7,207.8 L110.3,207.8 L110.9,207.7 L111.6,207.7 L112.2,207.7 L112.8,207.6 L113.4,207.6 L114.0,207.5 L114.6,207.5 L115.2,207.4 L115.9,207.3 L116.5,207.2 L117.1,207.1 L117.7,206.9 L118.3,206.7 L118.9,206.6 L119.5,206.3 L120.2,206.1 L120.8,205.8 L121.4,205.5 L122.0,205.1 L122.6,204.7 L123.2,204.2 L123.8,203.7 L124.5,203.1 L125.1,202.4 L125.7,201.6 L126.3,200.8 L126.9,199.9 L127.5,198.8 L128.1,197.7 L128.8,196.4 L129.4,195.0 L130.0,193.5 L130.6,191.9 L131.2,190.1 L131.8,188.1 L132.4,186.0 L133.0,183.8 L133.7,181.3 L134.3,178.7 L134.9,176.0 L135.5,173.0 L136.1,169.9 L136.7,166.5 L137.3,163.0 L138.0,159.4 L138.6,155.5 L139.2,151.5 L139.8,147.3 L140.4,143.0 L141.0,138.6 L141.6,134.0 L142.3,129.4 L142.9,124.6 L143.5,119.8 L144.1,114.9 L144.7,110.1 L145.3,105.2 L145.9,100.3 L146.6,95.5 L147.2,90.8 L147.8,86.1 L148.4,81.6 L149.0,77.3 L149.6,73.2 L150.2,69.2 L150.9,65.5 L151.5,62.1 L152.1,59.0 L152.7,56.2 L153.3,53.7 L153.9,51.6 L154.5,49.8 L155.2,48.4 L155.8,47.4 L156.4,46.8 L157.0,46.6 L157.6,46.8 L158.2,47.4 L158.8,48.4 L159.5,49.8 L160.1,51.6 L160.7,53.7 L161.3,56.2 L161.9,59.0 L162.5,62.1 L163.1,65.5 L163.8,69.2 L164.4,73.2 L165.0,77.3 L165.6,81.6 L166.2,86.1 L166.8,90.8 L167.4,95.5 L168.1,100.3 L168.7,105.2 L169.3,110.1 L169.9,114.9 L170.5,119.8 L171.1,124.6 L171.7,129.4 L172.4,134.0 L173.0,138.6 L173.6,143.0 L174.2,147.3 L174.8,151.5 L175.4,155.5 L176.0,159.4 L176.7,163.0 L177.3,166.5 L177.9,169.9 L178.5,173.0 L179.1,176.0 L179.7,178.7 L180.3,181.3 L181.0,183.8 L181.6,186.0 L182.2,188.1 L182.8,190.1 L183.4,191.9 L184.0,193.5 L184.6,195.0 L185.2,196.4 L185.9,197.7 L186.5,198.8 L187.1,199.9 L187.7,200.8 L188.3,201.6 L188.9,202.4 L189.5,203.1 L190.2,203.7 L190.8,204.2 L191.4,204.7 L192.0,205.1 L192.6,205.5 L193.2,205.8 L193.8,206.1 L194.5,206.3 L195.1,206.6 L195.7,206.7 L196.3,206.9 L196.9,207.1 L197.5,207.2 L198.1,207.3 L198.8,207.4 L199.4,207.5 L200.0,207.5 L200.6,207.6 L201.2,207.6 L201.8,207.7 L202.4,207.7 L203.1,207.7 L203.7,207.8 L204.3,207.8 L204.9,207.8 L205.5,207.8 L206.1,207.8 L206.7,207.8 L207.4,207.8 L208.0,207.8 L208.6,207.8 L209.2,207.9 L209.8,207.9 L210.4,207.9 L211.0,207.9 L211.7,207.9 L212.3,207.9 L212.9,207.9 L213.5,207.9 L214.1,207.9 L214.7,207.9 L215.3,207.9 L216.0,207.9 L216.6,207.9 L217.2,207.9 L217.8,207.9 L218.4,207.9 L219.0,207.9 L219.6,207.9 L220.3,207.9 L220.9,207.9 L221.5,207.9 L222.1,207.9 L222.7,207.9 L223.3,207.9 L223.9,207.9 L224.6,207.9 L225.2,207.9 L225.8,207.9 L226.4,207.9 L227.0,207.9 L227.6,207.9 L228.2,207.9 L228.9,207.9 L229.5,207.9 L230.1,207.9 L230.7,207.9 L231.3,207.9 L231.9,207.9 L232.5,207.9 L233.2,207.9 L233.8,207.9 L234.4,207.9 L235.0,207.9 L235.6,207.9 L236.2,207.9 L236.8,207.9 L237.5,207.9 L238.1,207.9 L238.7,207.9 L239.3,207.9 L239.9,207.9 L240.5,207.9 L241.1,207.9 L241.8,207.9 L242.4,207.9 L243.0,207.9 L243.6,207.9 L244.2,207.9 L244.8,207.9 L245.4,207.9 L246.0,207.9 L246.7,207.9 L247.3,207.9 L247.9,207.9 L248.5,207.9 L249.1,207.9 L249.7,207.9 L250.3,207.9 L251.0,207.9 L251.6,207.9 L252.2,207.9 L252.8,207.9 L253.4,207.9 L254.0,207.9 L254.6,207.9 L255.3,207.9 L255.9,207.9 L256.5,207.9 L257.1,207.9 L257.7,207.9 L258.3,207.9 L258.9,207.9 L259.6,207.9 L260.2,207.9 L260.8,207.9 L261.4,207.9 L262.0,207.9 L262.6,207.9 L263.2,207.9 L263.9,207.9 L264.5,207.9 L265.1,207.9 L265.7,207.9 L266.3,207.9 L266.9,207.9 L267.5,207.9" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M46.5,207.9 L47.1,207.9 L47.7,207.9 L48.3,207.9 L48.9,207.9 L49.5,207.9 L50.1,207.9 L50.8,207.9 L51.4,207.9 L52.0,207.9 L52.6,207.9 L53.2,207.9 L53.8,207.9 L54.4,207.9 L55.1,207.9 L55.7,207.9 L56.3,207.9 L56.9,207.9 L57.5,207.9 L58.1,207.8 L58.7,207.8 L59.4,207.8 L60.0,207.8 L60.6,207.8 L61.2,207.8 L61.8,207.8 L62.4,207.8 L63.0,207.8 L63.7,207.8 L64.3,207.8 L64.9,207.8 L65.5,207.8 L66.1,207.8 L66.7,207.8 L67.3,207.8 L68.0,207.8 L68.6,207.7 L69.2,207.7 L69.8,207.7 L70.4,207.7 L71.0,207.7 L71.6,207.7 L72.2,207.7 L72.9,207.6 L73.5,207.6 L74.1,207.6 L74.7,207.6 L75.3,207.6 L75.9,207.5 L76.5,207.5 L77.2,207.5 L77.8,207.4 L78.4,207.4 L79.0,207.4 L79.6,207.3 L80.2,207.3 L80.8,207.2 L81.5,207.2 L82.1,207.1 L82.7,207.0 L83.3,207.0 L83.9,206.9 L84.5,206.8 L85.1,206.8 L85.8,206.7 L86.4,206.6 L87.0,206.5 L87.6,206.4 L88.2,206.3 L88.8,206.2 L89.4,206.0 L90.1,205.9 L90.7,205.8 L91.3,205.6 L91.9,205.5 L92.5,205.3 L93.1,205.1 L93.7,204.9 L94.4,204.7 L95.0,204.5 L95.6,204.3 L96.2,204.1 L96.8,203.9 L97.4,203.6 L98.0,203.3 L98.7,203.1 L99.3,202.8 L99.9,202.5 L100.5,202.1 L101.1,201.8 L101.7,201.5 L102.3,201.1 L103.0,200.7 L103.6,200.3 L104.2,199.9 L104.8,199.4 L105.4,199.0 L106.0,198.5 L106.6,198.0 L107.3,197.5 L107.9,197.0 L108.5,196.4 L109.1,195.8 L109.7,195.2 L110.3,194.6 L110.9,194.0 L111.6,193.3 L112.2,192.6 L112.8,191.9 L113.4,191.2 L114.0,190.4 L114.6,189.7 L115.2,188.9 L115.9,188.0 L116.5,187.2 L117.1,186.3 L117.7,185.5 L118.3,184.5 L118.9,183.6 L119.5,182.7 L120.2,181.7 L120.8,180.7 L121.4,179.7 L122.0,178.7 L122.6,177.6 L123.2,176.5 L123.8,175.5 L124.5,174.4 L125.1,173.2 L125.7,172.1 L126.3,171.0 L126.9,169.8 L127.5,168.6 L128.1,167.4 L128.8,166.2 L129.4,165.0 L130.0,163.8 L130.6,162.6 L131.2,161.4 L131.8,160.2 L132.4,159.0 L133.0,157.7 L133.7,156.5 L134.3,155.3 L134.9,154.1 L135.5,152.9 L136.1,151.7 L136.7,150.5 L137.3,149.3 L138.0,148.2 L138.6,147.0 L139.2,145.9 L139.8,144.8 L140.4,143.7 L141.0,142.6 L141.6,141.5 L142.3,140.5 L142.9,139.5 L143.5,138.6 L144.1,137.6 L144.7,136.7 L145.3,135.8 L145.9,135.0 L146.6,134.2 L147.2,133.4 L147.8,132.7 L148.4,132.0 L149.0,131.4 L149.6,130.8 L150.2,130.2 L150.9,129.7 L151.5,129.3 L152.1,128.8 L152.7,128.5 L153.3,128.1 L153.9,127.9 L154.5,127.6 L155.2,127.5 L155.8,127.3 L156.4,127.3 L157.0,127.2 L157.6,127.3 L158.2,127.3 L158.8,127.5 L159.5,127.6 L160.1,127.9 L160.7,128.1 L161.3,128.5 L161.9,128.8 L162.5,129.3 L163.1,129.7 L163.8,130.2 L164.4,130.8 L165.0,131.4 L165.6,132.0 L166.2,132.7 L166.8,133.4 L167.4,134.2 L168.1,135.0 L168.7,135.8 L169.3,136.7 L169.9,137.6 L170.5,138.6 L171.1,139.5 L171.7,140.5 L172.4,141.5 L173.0,142.6 L173.6,143.7 L174.2,144.8 L174.8,145.9 L175.4,147.0 L176.0,148.2 L176.7,149.3 L177.3,150.5 L177.9,151.7 L178.5,152.9 L179.1,154.1 L179.7,155.3 L180.3,156.5 L181.0,157.7 L181.6,159.0 L182.2,160.2 L182.8,161.4 L183.4,162.6 L184.0,163.8 L184.6,165.0 L185.2,166.2 L185.9,167.4 L186.5,168.6 L187.1,169.8 L187.7,171.0 L188.3,172.1 L188.9,173.2 L189.5,174.4 L190.2,175.5 L190.8,176.5 L191.4,177.6 L192.0,178.7 L192.6,179.7 L193.2,180.7 L193.8,181.7 L194.5,182.7 L195.1,183.6 L195.7,184.5 L196.3,185.5 L196.9,186.3 L197.5,187.2 L198.1,188.0 L198.8,188.9 L199.4,189.7 L200.0,190.4 L200.6,191.2 L201.2,191.9 L201.8,192.6 L202.4,193.3 L203.1,194.0 L203.7,194.6 L204.3,195.2 L204.9,195.8 L205.5,196.4 L206.1,197.0 L206.7,197.5 L207.4,198.0 L208.0,198.5 L208.6,199.0 L209.2,199.4 L209.8,199.9 L210.4,200.3 L211.0,200.7 L211.7,201.1 L212.3,201.5 L212.9,201.8 L213.5,202.1 L214.1,202.5 L214.7,202.8 L215.3,203.1 L216.0,203.3 L216.6,203.6 L217.2,203.9 L217.8,204.1 L218.4,204.3 L219.0,204.5 L219.6,204.7 L220.3,204.9 L220.9,205.1 L221.5,205.3 L222.1,205.5 L222.7,205.6 L223.3,205.8 L223.9,205.9 L224.6,206.0 L225.2,206.2 L225.8,206.3 L226.4,206.4 L227.0,206.5 L227.6,206.6 L228.2,206.7 L228.9,206.8 L229.5,206.8 L230.1,206.9 L230.7,207.0 L231.3,207.0 L231.9,207.1 L232.5,207.2 L233.2,207.2 L233.8,207.3 L234.4,207.3 L235.0,207.4 L235.6,207.4 L236.2,207.4 L236.8,207.5 L237.5,207.5 L238.1,207.5 L238.7,207.6 L239.3,207.6 L239.9,207.6 L240.5,207.6 L241.1,207.6 L241.8,207.7 L242.4,207.7 L243.0,207.7 L243.6,207.7 L244.2,207.7 L244.8,207.7 L245.4,207.7 L246.0,207.8 L246.7,207.8 L247.3,207.8 L247.9,207.8 L248.5,207.8 L249.1,207.8 L249.7,207.8 L250.3,207.8 L251.0,207.8 L251.6,207.8 L252.2,207.8 L252.8,207.8 L253.4,207.8 L254.0,207.8 L254.6,207.8 L255.3,207.8 L255.9,207.8 L256.5,207.9 L257.1,207.9 L257.7,207.9 L258.3,207.9 L258.9,207.9 L259.6,207.9 L260.2,207.9 L260.8,207.9 L261.4,207.9 L262.0,207.9 L262.6,207.9 L263.2,207.9 L263.9,207.9 L264.5,207.9 L265.1,207.9 L265.7,207.9 L266.3,207.9 L266.9,207.9 L267.5,207.9" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M46.5,204.7 L47.1,204.6 L47.7,204.5 L48.3,204.4 L48.9,204.3 L49.5,204.2 L50.1,204.1 L50.8,204.0 L51.4,203.9 L52.0,203.8 L52.6,203.7 L53.2,203.5 L53.8,203.4 L54.4,203.3 L55.1,203.2 L55.7,203.1 L56.3,202.9 L56.9,202.8 L57.5,202.7 L58.1,202.6 L58.7,202.4 L59.4,202.3 L60.0,202.1 L60.6,202.0 L61.2,201.8 L61.8,201.7 L62.4,201.6 L63.0,201.4 L63.7,201.2 L64.3,201.1 L64.9,200.9 L65.5,200.8 L66.1,200.6 L66.7,200.4 L67.3,200.2 L68.0,200.1 L68.6,199.9 L69.2,199.7 L69.8,199.5 L70.4,199.3 L71.0,199.2 L71.6,199.0 L72.2,198.8 L72.9,198.6 L73.5,198.4 L74.1,198.2 L74.7,198.0 L75.3,197.7 L75.9,197.5 L76.5,197.3 L77.2,197.1 L77.8,196.9 L78.4,196.7 L79.0,196.4 L79.6,196.2 L80.2,196.0 L80.8,195.7 L81.5,195.5 L82.1,195.3 L82.7,195.0 L83.3,194.8 L83.9,194.5 L84.5,194.3 L85.1,194.0 L85.8,193.8 L86.4,193.5 L87.0,193.3 L87.6,193.0 L88.2,192.7 L88.8,192.5 L89.4,192.2 L90.1,191.9 L90.7,191.7 L91.3,191.4 L91.9,191.1 L92.5,190.8 L93.1,190.6 L93.7,190.3 L94.4,190.0 L95.0,189.7 L95.6,189.4 L96.2,189.1 L96.8,188.8 L97.4,188.5 L98.0,188.2 L98.7,188.0 L99.3,187.7 L99.9,187.4 L100.5,187.1 L101.1,186.8 L101.7,186.5 L102.3,186.2 L103.0,185.9 L103.6,185.6 L104.2,185.2 L104.8,184.9 L105.4,184.6 L106.0,184.3 L106.6,184.0 L107.3,183.7 L107.9,183.4 L108.5,183.1 L109.1,182.8 L109.7,182.5 L110.3,182.2 L110.9,181.9 L111.6,181.6 L112.2,181.3 L112.8,181.0 L113.4,180.7 L114.0,180.4 L114.6,180.1 L115.2,179.8 L115.9,179.5 L116.5,179.2 L117.1,178.9 L117.7,178.6 L118.3,178.3 L118.9,178.0 L119.5,177.7 L120.2,177.4 L120.8,177.2 L121.4,176.9 L122.0,176.6 L122.6,176.3 L123.2,176.0 L123.8,175.8 L124.5,175.5 L125.1,175.2 L125.7,175.0 L126.3,174.7 L126.9,174.4 L127.5,174.2 L128.1,173.9 L128.8,173.7 L129.4,173.5 L130.0,173.2 L130.6,173.0 L131.2,172.7 L131.8,172.5 L132.4,172.3 L133.0,172.1 L133.7,171.9 L134.3,171.6 L134.9,171.4 L135.5,171.2 L136.1,171.0 L136.7,170.8 L137.3,170.7 L138.0,170.5 L138.6,170.3 L139.2,170.1 L139.8,169.9 L140.4,169.8 L141.0,169.6 L141.6,169.5 L142.3,169.3 L142.9,169.2 L143.5,169.0 L144.1,168.9 L144.7,168.8 L145.3,168.7 L145.9,168.6 L146.6,168.5 L147.2,168.4 L147.8,168.3 L148.4,168.2 L149.0,168.1 L149.6,168.0 L150.2,167.9 L150.9,167.9 L151.5,167.8 L152.1,167.8 L152.7,167.7 L153.3,167.7 L153.9,167.6 L154.5,167.6 L155.2,167.6 L155.8,167.6 L156.4,167.6 L157.0,167.6 L157.6,167.6 L158.2,167.6 L158.8,167.6 L159.5,167.6 L160.1,167.6 L160.7,167.7 L161.3,167.7 L161.9,167.8 L162.5,167.8 L163.1,167.9 L163.8,167.9 L164.4,168.0 L165.0,168.1 L165.6,168.2 L166.2,168.3 L166.8,168.4 L167.4,168.5 L168.1,168.6 L168.7,168.7 L169.3,168.8 L169.9,168.9 L170.5,169.0 L171.1,169.2 L171.7,169.3 L172.4,169.5 L173.0,169.6 L173.6,169.8 L174.2,169.9 L174.8,170.1 L175.4,170.3 L176.0,170.5 L176.7,170.7 L177.3,170.8 L177.9,171.0 L178.5,171.2 L179.1,171.4 L179.7,171.6 L180.3,171.9 L181.0,172.1 L181.6,172.3 L182.2,172.5 L182.8,172.7 L183.4,173.0 L184.0,173.2 L184.6,173.5 L185.2,173.7 L185.9,173.9 L186.5,174.2 L187.1,174.4 L187.7,174.7 L188.3,175.0 L188.9,175.2 L189.5,175.5 L190.2,175.8 L190.8,176.0 L191.4,176.3 L192.0,176.6 L192.6,176.9 L193.2,177.2 L193.8,177.4 L194.5,177.7 L195.1,178.0 L195.7,178.3 L196.3,178.6 L196.9,178.9 L197.5,179.2 L198.1,179.5 L198.8,179.8 L199.4,180.1 L200.0,180.4 L200.6,180.7 L201.2,181.0 L201.8,181.3 L202.4,181.6 L203.1,181.9 L203.7,182.2 L204.3,182.5 L204.9,182.8 L205.5,183.1 L206.1,183.4 L206.7,183.7 L207.4,184.0 L208.0,184.3 L208.6,184.6 L209.2,184.9 L209.8,185.2 L210.4,185.6 L211.0,185.9 L211.7,186.2 L212.3,186.5 L212.9,186.8 L213.5,187.1 L214.1,187.4 L214.7,187.7 L215.3,188.0 L216.0,188.2 L216.6,188.5 L217.2,188.8 L217.8,189.1 L218.4,189.4 L219.0,189.7 L219.6,190.0 L220.3,190.3 L220.9,190.6 L221.5,190.8 L222.1,191.1 L222.7,191.4 L223.3,191.7 L223.9,191.9 L224.6,192.2 L225.2,192.5 L225.8,192.7 L226.4,193.0 L227.0,193.3 L227.6,193.5 L228.2,193.8 L228.9,194.0 L229.5,194.3 L230.1,194.5 L230.7,194.8 L231.3,195.0 L231.9,195.3 L232.5,195.5 L233.2,195.7 L233.8,196.0 L234.4,196.2 L235.0,196.4 L235.6,196.7 L236.2,196.9 L236.8,197.1 L237.5,197.3 L238.1,197.5 L238.7,197.7 L239.3,198.0 L239.9,198.2 L240.5,198.4 L241.1,198.6 L241.8,198.8 L242.4,199.0 L243.0,199.2 L243.6,199.3 L244.2,199.5 L244.8,199.7 L245.4,199.9 L246.0,200.1 L246.7,200.2 L247.3,200.4 L247.9,200.6 L248.5,200.8 L249.1,200.9 L249.7,201.1 L250.3,201.2 L251.0,201.4 L251.6,201.6 L252.2,201.7 L252.8,201.8 L253.4,202.0 L254.0,202.1 L254.6,202.3 L255.3,202.4 L255.9,202.6 L256.5,202.7 L257.1,202.8 L257.7,202.9 L258.3,203.1 L258.9,203.2 L259.6,203.3 L260.2,203.4 L260.8,203.5 L261.4,203.7 L262.0,203.8 L262.6,203.9 L263.2,204.0 L263.9,204.1 L264.5,204.2 L265.1,204.3 L265.7,204.4 L266.3,204.5 L266.9,204.6 L267.5,204.7" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="180.2" y="131.1" fill="var(--color-practice)" font-size="10.5" text-anchor="start" font-style="italic">&#963; = 0,5</text>
+  <text x="193.2" y="166.2" fill="var(--color-theory)" font-size="10.5" text-anchor="start" font-style="italic">&#963; = 1</text>
+  <text x="234.2" y="189.8" fill="var(--color-base)" font-size="10.5" text-anchor="start" font-style="italic">&#963; = 2</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="318.0" y1="202.7" x2="552.0" y2="202.7"/>
+  <line x1="435.0" y1="224.0" x2="435.0" y2="26.0"/>
+  <polygon points="552.0,202.7 544.0,199.2 544.0,206.2" stroke="none"/>
+  <polygon points="435.0,26.0 431.5,34.0 438.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="373.9" y1="199.7" x2="373.9" y2="205.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="373.9" y="217.7" text-anchor="middle">-2</text>
+  <line x1="404.5" y1="199.7" x2="404.5" y2="205.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="404.5" y="217.7" text-anchor="middle">-1</text>
+  <line x1="496.1" y1="199.7" x2="496.1" y2="205.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="496.1" y="217.7" text-anchor="middle">2</text>
+  <line x1="432.0" y1="133.6" x2="438.0" y2="133.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="428.0" y="137.6" text-anchor="end">0,2</text>
+  <line x1="432.0" y1="64.5" x2="438.0" y2="64.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="428.0" y="68.5" text-anchor="end">0,4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="550.0" y="217.7" text-anchor="end">z</text>
+  <text x="442.0" y="35.0">y</text>
+  </g>
+  <text x="435.0" y="22.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">standart normal: &#934;(z) alanı</text>
+  <polygon points="325.1,202.7 325.1,202.5 325.8,202.5 326.5,202.5 327.2,202.5 327.9,202.4 328.6,202.4 329.3,202.4 330.0,202.4 330.7,202.3 331.4,202.3 332.1,202.3 332.8,202.2 333.5,202.2 334.2,202.1 334.9,202.1 335.6,202.0 336.3,202.0 337.0,201.9 337.7,201.9 338.4,201.8 339.1,201.7 339.8,201.7 340.5,201.6 341.2,201.5 341.9,201.4 342.6,201.3 343.3,201.2 344.0,201.1 344.7,201.0 345.4,200.9 346.1,200.7 346.8,200.6 347.5,200.4 348.2,200.3 348.9,200.1 349.6,200.0 350.3,199.8 351.0,199.6 351.7,199.4 352.4,199.2 353.2,198.9 353.9,198.7 354.6,198.4 355.3,198.2 356.0,197.9 356.7,197.6 357.4,197.3 358.1,197.0 358.8,196.6 359.5,196.3 360.2,195.9 360.9,195.5 361.6,195.1 362.3,194.6 363.0,194.2 363.7,193.7 364.4,193.2 365.1,192.7 365.8,192.2 366.5,191.6 367.2,191.0 367.9,190.4 368.6,189.8 369.3,189.1 370.0,188.4 370.7,187.7 371.4,187.0 372.1,186.2 372.8,185.4 373.5,184.6 374.2,183.7 374.9,182.8 375.6,181.9 376.3,181.0 377.0,180.0 377.7,179.0 378.4,177.9 379.1,176.9 379.8,175.7 380.5,174.6 381.2,173.4 382.0,172.2 382.7,171.0 383.4,169.7 384.1,168.4 384.8,167.1 385.5,165.7 386.2,164.3 386.9,162.9 387.6,161.5 388.3,160.0 389.0,158.5 389.7,156.9 390.4,155.3 391.1,153.7 391.8,152.1 392.5,150.4 393.2,148.7 393.9,147.0 394.6,145.3 395.3,143.5 396.0,141.7 396.7,139.9 397.4,138.1 398.1,136.3 398.8,134.4 399.5,132.6 400.2,130.7 400.9,128.8 401.6,126.9 402.3,125.0 403.0,123.1 403.7,121.1 404.4,119.2 405.1,117.3 405.8,115.4 406.5,113.5 407.2,111.6 407.9,109.7 408.6,107.8 409.3,105.9 410.0,104.0 410.8,102.2 411.5,100.3 412.2,98.5 412.9,96.8 413.6,95.0 414.3,93.3 415.0,91.6 415.7,89.9 416.4,88.3 417.1,86.7 417.8,85.2 418.5,83.7 419.2,82.2 419.9,80.8 420.6,79.4 421.3,78.1 422.0,76.9 422.7,75.7 423.4,74.5 424.1,73.4 424.8,72.4 425.5,71.4 426.2,70.5 426.9,69.7 427.6,68.9 428.3,68.2 429.0,67.5 429.7,67.0 430.4,66.5 431.1,66.0 431.8,65.7 432.5,65.4 433.2,65.1 433.9,65.0 434.6,64.9 435.3,64.9 436.0,65.0 436.7,65.1 437.4,65.4 438.1,65.6 438.8,66.0 439.6,66.4 440.3,66.9 441.0,67.5 441.7,68.1 442.4,68.9 443.1,69.6 443.8,70.5 444.5,71.4 445.2,72.3 445.9,73.4 446.6,74.5 447.3,75.6 448.0,76.8 448.7,78.1 449.4,79.4 450.1,80.7 450.8,82.2 451.5,83.6 452.2,85.1 452.9,86.7 453.6,88.2 454.3,89.9 455.0,91.5 455.7,93.2 456.4,94.9 457.1,96.7 457.8,98.5 458.5,100.3 459.2,102.1 459.9,103.9 460.6,105.8 461.3,107.7 462.0,109.6 462.7,111.5 463.4,113.4 464.1,115.3 464.8,117.2 465.5,119.1 465.5,202.7" fill="var(--color-theory)" fill-opacity="0.2" stroke="none" stroke-width="1.2"/>
+  <path d="M325.1,202.5 L325.7,202.5 L326.3,202.5 L326.9,202.5 L327.5,202.4 L328.1,202.4 L328.7,202.4 L329.3,202.4 L329.9,202.4 L330.6,202.3 L331.2,202.3 L331.8,202.3 L332.4,202.2 L333.0,202.2 L333.6,202.2 L334.2,202.1 L334.8,202.1 L335.4,202.0 L336.0,202.0 L336.7,202.0 L337.3,201.9 L337.9,201.8 L338.5,201.8 L339.1,201.7 L339.7,201.7 L340.3,201.6 L340.9,201.5 L341.5,201.5 L342.2,201.4 L342.8,201.3 L343.4,201.2 L344.0,201.1 L344.6,201.0 L345.2,200.9 L345.8,200.8 L346.4,200.7 L347.0,200.5 L347.7,200.4 L348.3,200.3 L348.9,200.1 L349.5,200.0 L350.1,199.8 L350.7,199.7 L351.3,199.5 L351.9,199.3 L352.5,199.1 L353.2,198.9 L353.8,198.7 L354.4,198.5 L355.0,198.3 L355.6,198.0 L356.2,197.8 L356.8,197.5 L357.4,197.3 L358.0,197.0 L358.6,196.7 L359.3,196.4 L359.9,196.0 L360.5,195.7 L361.1,195.4 L361.7,195.0 L362.3,194.6 L362.9,194.2 L363.5,193.8 L364.1,193.4 L364.8,192.9 L365.4,192.5 L366.0,192.0 L366.6,191.5 L367.2,191.0 L367.8,190.5 L368.4,189.9 L369.0,189.4 L369.6,188.8 L370.3,188.2 L370.9,187.5 L371.5,186.9 L372.1,186.2 L372.7,185.5 L373.3,184.8 L373.9,184.1 L374.5,183.3 L375.1,182.5 L375.8,181.7 L376.4,180.9 L377.0,180.1 L377.6,179.2 L378.2,178.3 L378.8,177.4 L379.4,176.4 L380.0,175.5 L380.6,174.5 L381.2,173.4 L381.9,172.4 L382.5,171.3 L383.1,170.2 L383.7,169.1 L384.3,168.0 L384.9,166.8 L385.5,165.6 L386.1,164.4 L386.7,163.2 L387.4,161.9 L388.0,160.6 L388.6,159.3 L389.2,158.0 L389.8,156.6 L390.4,155.3 L391.0,153.9 L391.6,152.4 L392.2,151.0 L392.9,149.5 L393.5,148.1 L394.1,146.6 L394.7,145.1 L395.3,143.5 L395.9,142.0 L396.5,140.4 L397.1,138.8 L397.7,137.2 L398.4,135.6 L399.0,134.0 L399.6,132.4 L400.2,130.8 L400.8,129.1 L401.4,127.5 L402.0,125.8 L402.6,124.1 L403.2,122.5 L403.8,120.8 L404.5,119.1 L405.1,117.5 L405.7,115.8 L406.3,114.1 L406.9,112.5 L407.5,110.8 L408.1,109.2 L408.7,107.5 L409.3,105.9 L410.0,104.3 L410.6,102.7 L411.2,101.1 L411.8,99.5 L412.4,97.9 L413.0,96.4 L413.6,94.9 L414.2,93.4 L414.8,91.9 L415.5,90.4 L416.1,89.0 L416.7,87.6 L417.3,86.2 L417.9,84.9 L418.5,83.6 L419.1,82.3 L419.7,81.1 L420.3,79.9 L421.0,78.7 L421.6,77.6 L422.2,76.5 L422.8,75.5 L423.4,74.5 L424.0,73.6 L424.6,72.7 L425.2,71.8 L425.8,71.0 L426.4,70.2 L427.1,69.5 L427.7,68.8 L428.3,68.2 L428.9,67.6 L429.5,67.1 L430.1,66.7 L430.7,66.3 L431.3,65.9 L431.9,65.6 L432.6,65.4 L433.2,65.2 L433.8,65.0 L434.4,64.9 L435.0,64.9 L435.6,64.9 L436.2,65.0 L436.8,65.2 L437.4,65.4 L438.1,65.6 L438.7,65.9 L439.3,66.3 L439.9,66.7 L440.5,67.1 L441.1,67.6 L441.7,68.2 L442.3,68.8 L442.9,69.5 L443.6,70.2 L444.2,71.0 L444.8,71.8 L445.4,72.7 L446.0,73.6 L446.6,74.5 L447.2,75.5 L447.8,76.5 L448.4,77.6 L449.0,78.7 L449.7,79.9 L450.3,81.1 L450.9,82.3 L451.5,83.6 L452.1,84.9 L452.7,86.2 L453.3,87.6 L453.9,89.0 L454.5,90.4 L455.2,91.9 L455.8,93.4 L456.4,94.9 L457.0,96.4 L457.6,97.9 L458.2,99.5 L458.8,101.1 L459.4,102.7 L460.0,104.3 L460.7,105.9 L461.3,107.5 L461.9,109.2 L462.5,110.8 L463.1,112.5 L463.7,114.1 L464.3,115.8 L464.9,117.5 L465.5,119.1 L466.2,120.8 L466.8,122.5 L467.4,124.1 L468.0,125.8 L468.6,127.5 L469.2,129.1 L469.8,130.8 L470.4,132.4 L471.0,134.0 L471.6,135.6 L472.3,137.2 L472.9,138.8 L473.5,140.4 L474.1,142.0 L474.7,143.5 L475.3,145.1 L475.9,146.6 L476.5,148.1 L477.1,149.5 L477.8,151.0 L478.4,152.4 L479.0,153.9 L479.6,155.3 L480.2,156.6 L480.8,158.0 L481.4,159.3 L482.0,160.6 L482.6,161.9 L483.3,163.2 L483.9,164.4 L484.5,165.6 L485.1,166.8 L485.7,168.0 L486.3,169.1 L486.9,170.2 L487.5,171.3 L488.1,172.4 L488.8,173.4 L489.4,174.5 L490.0,175.5 L490.6,176.4 L491.2,177.4 L491.8,178.3 L492.4,179.2 L493.0,180.1 L493.6,180.9 L494.2,181.7 L494.9,182.5 L495.5,183.3 L496.1,184.1 L496.7,184.8 L497.3,185.5 L497.9,186.2 L498.5,186.9 L499.1,187.5 L499.7,188.2 L500.4,188.8 L501.0,189.4 L501.6,189.9 L502.2,190.5 L502.8,191.0 L503.4,191.5 L504.0,192.0 L504.6,192.5 L505.2,192.9 L505.9,193.4 L506.5,193.8 L507.1,194.2 L507.7,194.6 L508.3,195.0 L508.9,195.4 L509.5,195.7 L510.1,196.0 L510.7,196.4 L511.4,196.7 L512.0,197.0 L512.6,197.3 L513.2,197.5 L513.8,197.8 L514.4,198.0 L515.0,198.3 L515.6,198.5 L516.2,198.7 L516.8,198.9 L517.5,199.1 L518.1,199.3 L518.7,199.5 L519.3,199.7 L519.9,199.8 L520.5,200.0 L521.1,200.1 L521.7,200.3 L522.3,200.4 L523.0,200.5 L523.6,200.7 L524.2,200.8 L524.8,200.9 L525.4,201.0 L526.0,201.1 L526.6,201.2 L527.2,201.3 L527.8,201.4 L528.5,201.5 L529.1,201.5 L529.7,201.6 L530.3,201.7 L530.9,201.7 L531.5,201.8 L532.1,201.8 L532.7,201.9 L533.3,202.0 L534.0,202.0 L534.6,202.0 L535.2,202.1 L535.8,202.1 L536.4,202.2 L537.0,202.2 L537.6,202.2 L538.2,202.3 L538.8,202.3 L539.4,202.3 L540.1,202.4 L540.7,202.4 L541.3,202.4 L541.9,202.4 L542.5,202.4 L543.1,202.5 L543.7,202.5 L544.3,202.5 L544.9,202.5" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M465.5,202.7 L465.5,119.1" fill="none" stroke="var(--color-practice)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="465.5" y="217.7" fill="var(--color-practice)" font-size="11" text-anchor="middle" font-weight="600" font-style="italic">z</text>
+  <text x="404.5" y="178.5" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600" font-style="italic">&#934;(z)</text>
+  <text x="502.2" y="133.6" fill="var(--color-practice)" font-size="10.5" text-anchor="middle" font-style="italic">1 &#8722; &#934;(z)</text>
+</svg>
+<figcaption>Solda sıfır ortalamalı normal yoğunluklar: &#963; küçüldükçe eğri dikleşir ve kütle ortalamaya toplanır; her eğrinin altındaki alan 1'dir. Sağda standart normal dağılım fonksiyonu &#934;(<em>z</em>) = <em>P</em>(<em>Z</em> &#8804; <em>z</em>), <em>z</em>'nin solunda kalan alan olarak; simetri gereği &#934;(&#8722;<em>z</em>) = 1 &#8722; &#934;(<em>z</em>).</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-tip title="Bir, iki, üç standart sapma kuralı"}
+$X \sim N(\mu, \sigma^2)$ için @thm-standartlastirma ve $\Phi(-z) = 1 - \Phi(z)$ ile
+
+$$P(|X - \mu| < k\sigma) = P(-k < Z < k) = \Phi(k) - \Phi(-k) = 2\Phi(k) - 1.$$
+
+$k = 1, 2, 3$ için bu olasılıklar yaklaşık $0{,}6827$, $0{,}9545$ ve $0{,}9973$'tür: normal dağılımlı bir büyüklük, ortalamasının bir standart sapma yakınına yaklaşık üçte iki, iki standart sapma yakınına yüzde $95$, üç standart sapma yakınına yüzde $99{,}7$ olasılıkla düşer. Chebyshev eşitsizliğinin (@thm-chebyshev-esitsizligi) $k = 2$ için verdiği $P(|X - \mu| \ge 2\sigma) \le \frac{1}{4}$ sınırıyla karşılaştırınız: gerçek değer $0{,}0455$'tir.
+:::
+
+Standartlaştırma, $aX + b$ biçiminde bir dönüşümdür. Genel doğrusal dönüşümün de normal dağılımı koruduğunu bu kez moment üreten fonksiyonla gösterelim; aynı teknik bir sonraki teoremde toplamlar için de işe yarayacak.
+
+:::: {#prp-normal-dogrusal-donusum name="Normal Dağılımın Doğrusal Dönüşümü"}
+$X \sim N(\mu, \sigma^2)$, $a \ne 0$ ve $b \in \mathbb{R}$ ise
+
+$$aX + b \sim N\big(a\mu + b,\; a^2\sigma^2\big).$$
+
+::: {.ispat}
+$Y = aX + b$ olsun. Her $t \in \mathbb{R}$ için
+
+$$M_Y(t) = E\big(e^{t(aX + b)}\big) = e^{bt}\,E\big(e^{(at)X}\big) = e^{bt}\,M_X(at) = e^{bt} \exp\!\left( \mu a t + \frac{\sigma^2 a^2 t^2}{2} \right) = \exp\!\left( (a\mu + b)\,t + \frac{a^2\sigma^2\,t^2}{2} \right).$$
+
+Bu, @thm-normal-momentleri-mgf gereği $N(a\mu + b, a^2\sigma^2)$ dağılımının moment üreten fonksiyonudur ve her $t$ için sonludur. Moment üreten fonksiyon dağılımı tek türlü belirlediğinden (@thm-mgf-teklik) $Y \sim N(a\mu + b, a^2\sigma^2)$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Parametreler @thm-dogrusal-donusum-beklenen-varyans ile uyumludur; önermenin yeni söylediği, dağılımın **türünün** korunmasıdır. $a = \frac{1}{\sigma}$, $b = -\frac{\mu}{\sigma}$ alınırsa $N(0,1)$ bulunur; standartlaştırma teoremi böylece ikinci bir ispat kazanır.
+
+### Bağımsız Normallerin Toplamı
+
+Bağımsız normal rastgele değişkenlerin toplamı yine normaldir. Bunu konvolüsyonla (@prp-toplam-dagilimi-konvolusyon) göstermek uzun bir kareye tamamlama gerektirir; moment üreten fonksiyon aynı sonucu iki satırda verir.
+
+:::: {#thm-normal-toplami name="Bağımsız Normal Rastgele Değişkenlerin Toplamı"}
+$X_1, \ldots, X_n$ bağımsız ve her $i$ için $X_i \sim N(\mu_i, \sigma_i^2)$ olsun. O zaman
+
+$$S = X_1 + \cdots + X_n \sim N\big(\mu_1 + \cdots + \mu_n,\; \sigma_1^2 + \cdots + \sigma_n^2\big).$$
+
+Özel olarak, $X_1, \ldots, X_n$ bağımsız ve hepsi $N(\mu, \sigma^2)$ dağılımlı ise
+
+$$S \sim N(n\mu, n\sigma^2) \qquad \text{ve} \qquad \overline{X} = \frac{S}{n} \sim N\!\left( \mu, \frac{\sigma^2}{n} \right).$$
+
+::: {.ispat}
+$X_1, \ldots, X_n$ bağımsız olduğundan (@def-bagimsiz-rastgele-degiskenler) $e^{tX_1}, \ldots, e^{tX_n}$ de bağımsızdır; bağımsız rastgele değişkenlerin çarpımının beklenen değeri beklenen değerlerin çarpımıdır (@thm-bagimsiz-carpim-beklenen; $n$ çarpan için, $e^{t(X_1 + \cdots + X_{n-1})}$ ile $e^{tX_n}$ bağımsız olduğundan tümevarımla). Dolayısıyla her $t \in \mathbb{R}$ için
+
+$$M_S(t) = E\big(e^{t(X_1 + \cdots + X_n)}\big) = E\!\left( \prod_{i=1}^n e^{tX_i} \right) = \prod_{i=1}^n E\big(e^{tX_i}\big) = \prod_{i=1}^n \exp\!\left( \mu_i t + \frac{\sigma_i^2 t^2}{2} \right) = \exp\!\left( \Big( \sum_{i=1}^n \mu_i \Big) t + \Big( \sum_{i=1}^n \sigma_i^2 \Big) \frac{t^2}{2} \right).$$
+
+Bu, $N\!\left( \sum \mu_i, \sum \sigma_i^2 \right)$ dağılımının moment üreten fonksiyonudur; @thm-mgf-teklik gereği $S$ bu dağılıma sahiptir.
+
+Özdeş dağılım durumunda toplamlar $n\mu$ ve $n\sigma^2$ olur. $\overline{X} = \frac{1}{n} S$ için @prp-normal-dogrusal-donusum'u $a = \frac{1}{n}$, $b = 0$ ile uygularız:
+
+$$\overline{X} \sim N\!\left( \frac{n\mu}{n}, \frac{n\sigma^2}{n^2} \right) = N\!\left( \mu, \frac{\sigma^2}{n} \right).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Varyansların toplanması @cor-bagimsiz-toplam-varyansi'nın söylediğinden fazlası değildir; teoremin katkısı yine dağılım türünün korunmasıdır. $\overline{X}$ için bulunan sonuç matematiksel istatistiğin çıkış noktasıdır: $n$ bağımsız ölçümün ortalaması, tek ölçümle aynı merkezde ama $\sqrt{n}$ kat küçük standart sapmayla dağılır.
+
+::: {.callout-warning title="Bağımsızlık varsayımı atılamaz"}
+$X \sim N(0,1)$ ve $\varepsilon$, $X$'ten bağımsız, $P(\varepsilon = 1) = P(\varepsilon = -1) = \frac{1}{2}$ olsun; $Y = \varepsilon X$ alalım. Toplam olasılık formülü ve $-X \sim N(0,1)$ (@prp-normal-dogrusal-donusum, $a = -1$) ile
+
+$$P(Y \le y) = \tfrac{1}{2} P(X \le y) + \tfrac{1}{2} P(-X \le y) = \Phi(y),$$
+
+yani $Y \sim N(0,1)$. Oysa $X + Y = (1 + \varepsilon) X$, $\varepsilon = -1$ iken tam olarak $0$'dır: $P(X + Y = 0) = \frac{1}{2} > 0$. $X + Y$ sürekli bile değildir, normal hiç değildir.
+:::
+
+### Standart Normal Tablo Hesapları
+
+$\Phi$'nin kapalı formülü olmadığından değerleri tablodan okunur. Tablolar $z \ge 0$ için verilir; negatif $z$ için $\Phi(-z) = 1 - \Phi(z)$ kullanılır. Çözüm şeması her zaman aynıdır: istenen olay $X$ cinsinden yazılır, @thm-standartlastirma ile $Z = \frac{X - \mu}{\sigma}$ cinsine çevrilir, gerekirse simetriyle pozitif $z$'lere indirgenir ve tablodan okunur.
+
+:::: {#exm-normal-tablo-hesaplari name="Standart Normal Tablo Hesapları"}
+Aşağıdaki tablo, $\Phi(z)$ değerlerini dört ondalıkla verir; satır $z$'nin ilk basamaklarını, sütun eklenecek miktarı gösterir (örneğin $\Phi(1{,}25)$, satır $1{,}2$ ile sütun $+0{,}05$'in kesişimidir).
+
+| $z$ | $+0{,}00$ | $+0{,}05$ | $+0{,}10$ | $+0{,}15$ |
+|---|---|---|---|---|
+| $0{,}0$ | $0{,}5000$ | $0{,}5199$ | $0{,}5398$ | $0{,}5596$ |
+| $0{,}2$ | $0{,}5793$ | $0{,}5987$ | $0{,}6179$ | $0{,}6368$ |
+| $0{,}4$ | $0{,}6554$ | $0{,}6736$ | $0{,}6915$ | $0{,}7088$ |
+| $0{,}6$ | $0{,}7257$ | $0{,}7422$ | $0{,}7580$ | $0{,}7734$ |
+| $0{,}8$ | $0{,}7881$ | $0{,}8023$ | $0{,}8159$ | $0{,}8289$ |
+| $1{,}0$ | $0{,}8413$ | $0{,}8531$ | $0{,}8643$ | $0{,}8749$ |
+| $1{,}2$ | $0{,}8849$ | $0{,}8944$ | $0{,}9032$ | $0{,}9115$ |
+| $1{,}4$ | $0{,}9192$ | $0{,}9265$ | $0{,}9332$ | $0{,}9394$ |
+| $1{,}6$ | $0{,}9452$ | $0{,}9505$ | $0{,}9554$ | $0{,}9599$ |
+| $1{,}8$ | $0{,}9641$ | $0{,}9678$ | $0{,}9713$ | $0{,}9744$ |
+| $2{,}0$ | $0{,}9772$ | $0{,}9798$ | $0{,}9821$ | $0{,}9842$ |
+| $2{,}2$ | $0{,}9861$ | $0{,}9878$ | $0{,}9893$ | $0{,}9906$ |
+| $2{,}4$ | $0{,}9918$ | $0{,}9929$ | $0{,}9938$ | $0{,}9946$ |
+| $2{,}6$ | $0{,}9953$ | $0{,}9960$ | $0{,}9965$ | $0{,}9970$ |
+| $2{,}8$ | $0{,}9974$ | $0{,}9978$ | $0{,}9981$ | $0{,}9984$ |
+| $3{,}0$ | $0{,}9987$ | $0{,}9989$ | $0{,}9990$ | $0{,}9992$ |
+
+Bir sınavdaki puanlar $X \sim N(100, 15^2)$ dağılımlı olsun.
+
+(a\) $P(X \le 115)$, $P(X > 130)$ ve $P(85 < X < 122{,}5)$ olasılıklarını bulunuz.
+
+(b\) $P(X \le c) = 0{,}9332$ olan $c$ puanını ve puanların yalnızca yüzde $5$'inin aştığı $d$ puanını bulunuz ($\Phi(1{,}6449) = 0{,}9500$ verilmiştir).
+
+(c\) Bir üründe iki parçanın uzunlukları bağımsız ve $Y_1 \sim N(50, 3^2)$, $Y_2 \sim N(30, 4^2)$ (mm) dağılımlıdır. Toplam uzunluğun $90$ mm'yi aşma olasılığını bulunuz.
+
+(d\) Bir büyüklük, beklenen değeri $\mu$ ve varyansı $16$ olan normal dağılımlı bir aletle $16$ kez bağımsız olarak ölçülüyor. Ölçümlerin ortalamasının $\mu$'ye $1$ birimden yakın olma olasılığını bulunuz.
+
+::: {.cozum}
+**(a\)** $\mu = 100$, $\sigma = 15$ ile standartlaştırırız.
+
+$$P(X \le 115) = \Phi\!\left( \frac{115 - 100}{15} \right) = \Phi(1) = 0{,}8413.$$
+
+$$P(X > 130) = 1 - \Phi\!\left( \frac{130 - 100}{15} \right) = 1 - \Phi(2) = 1 - 0{,}9772 = 0{,}0228.$$
+
+$$P(85 < X < 122{,}5) = \Phi\!\left( \frac{122{,}5 - 100}{15} \right) - \Phi\!\left( \frac{85 - 100}{15} \right) = \Phi(1{,}5) - \Phi(-1).$$
+
+$\Phi(-1) = 1 - \Phi(1) = 1 - 0{,}8413 = 0{,}1587$ olduğundan
+
+$$P(85 < X < 122{,}5) = 0{,}9332 - 0{,}1587 = 0{,}7745.$$
+
+**(b\)** $P(X \le c) = \Phi\!\left( \frac{c - 100}{15} \right) = 0{,}9332$ olmalıdır. Tabloda $0{,}9332 = \Phi(1{,}5)$; $\Phi$ kesin artan olduğundan $\frac{c - 100}{15} = 1{,}5$ ve $c = 100 + 15 \cdot 1{,}5 = 122{,}5$.
+
+$P(X > d) = 0{,}05$, yani $P(X \le d) = 0{,}95$ istenir: $\frac{d - 100}{15} = 1{,}6449$ ve
+
+$$d = 100 + 15 \cdot 1{,}6449 = 124{,}67.$$
+
+Puanların yüzde $5$'i $124{,}67$'nin üstündedir. (Tabloda $\Phi(1{,}60) = 0{,}9452$ ve $\Phi(1{,}65) = 0{,}9505$; $0{,}95$ bu ikisinin arasındadır.)
+
+**(c\)** @thm-normal-toplami gereği $T = Y_1 + Y_2 \sim N(50 + 30,\; 9 + 16) = N(80, 25)$; $\sigma_T = 5$.
+
+$$P(T > 90) = 1 - \Phi\!\left( \frac{90 - 80}{5} \right) = 1 - \Phi(2) = 0{,}0228.$$
+
+**(d\)** $\sigma^2 = 16$, $n = 16$; @thm-normal-toplami gereği $\overline{X} \sim N\!\left( \mu, \frac{16}{16} \right) = N(\mu, 1)$. Öyleyse
+
+$$P\big(|\overline{X} - \mu| < 1\big) = P\!\left( -1 < \frac{\overline{X} - \mu}{1} < 1 \right) = \Phi(1) - \Phi(-1) = 2\Phi(1) - 1 = 2 \cdot 0{,}8413 - 1 = 0{,}6826$$
+
+(daha hassas değeri $0{,}6827$'dir). Tek ölçümde aynı olasılık $2\Phi(0{,}25) - 1 = 0{,}1974$ olurdu; on altı ölçüm standart sapmayı $4$ kat küçültür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+:::: {#exr-surekli-dagilimlar name="Düzgün, Üstel ve Normal Dağılımlar Üzerine"}
+a\) $X \sim U(-1, 3)$ olsun. $E(X)$, $\operatorname{Var}(X)$, $P(|X| < 1)$ ve $P(X > 2 \mid X > 0)$ değerlerini bulunuz.
+
+b\) $U \sim U(0,1)$ ve $\lambda > 0$ olsun. $Y = -\dfrac{1}{\lambda} \ln(1 - U)$ rastgele değişkeninin $\operatorname{Üstel}(\lambda)$ dağılımlı olduğunu iki yolla gösteriniz: ters dönüşüm yöntemiyle ve dönüşüm formülüyle. $-\dfrac{1}{\lambda} \ln U$'nun da aynı dağılıma sahip olduğunu açıklayınız.
+
+c\) $X_1 \sim \operatorname{Üstel}(\lambda_1)$ ve $X_2 \sim \operatorname{Üstel}(\lambda_2)$ bağımsız olsun. $\min\{X_1, X_2\} \sim \operatorname{Üstel}(\lambda_1 + \lambda_2)$ olduğunu ve $P(X_1 < X_2) = \dfrac{\lambda_1}{\lambda_1 + \lambda_2}$ olduğunu gösteriniz.
+
+d\) $X \sim \operatorname{Üstel}(\lambda)$ ve $0 < p < 1$ olsun. $P(X \le x_p) = p$ olan $x_p$ sayısını ($p$-kantilini) bulunuz. Beklenen ömrü $1000$ saat olan parça için ömürlerin yüzde $10$'unun altında kaldığı ve yüzde $10$'unun üstünde kaldığı süreleri hesaplayınız.
+
+e\) $X \sim N(\mu, \sigma^2)$ için $P(X < 10) = 0{,}1587$ ve $P(X < 20) = 0{,}9332$ olduğu biliniyor. $\mu$ ve $\sigma$'yı bulunuz; ardından $P(X > 18)$'i hesaplayınız.
+
+f\) $X \sim N(\mu, \sigma^2)$ için $P(|X - \mu| \ge 3\sigma)$ olasılığını Chebyshev eşitsizliğinden gelen üst sınırla karşılaştırınız.
+
+g\) $Z \sim N(0,1)$ olsun. Moment üreten fonksiyonun seri açılımından $E(Z^3) = 0$ ve $E(Z^4) = 3$ olduğunu gösteriniz. $X \sim N(\mu, \sigma^2)$ için $E(e^X)$'i bulunuz.
+
+::: {.cozum}
+**a\)** @thm-duzgun-momentleri-mgf ile $E(X) = \frac{-1 + 3}{2} = 1$ ve $\operatorname{Var}(X) = \frac{4^2}{12} = \frac{4}{3}$. $(|X| < 1) = (-1 < X < 1)$ olayının uzunluğu $2$, aralığın uzunluğu $4$: $P(|X| < 1) = \frac{2}{4} = \frac{1}{2}$. Koşullu olasılık:
+
+$$P(X > 2 \mid X > 0) = \frac{P(X > 2)}{P(X > 0)} = \frac{1/4}{3/4} = \frac{1}{3}.$$
+
+**b\)** *Ters dönüşüm.* $\operatorname{Üstel}(\lambda)$ dağılım fonksiyonu $F(x) = 1 - e^{-\lambda x}$ ($x > 0$), $(0, \infty)$ üzerinde sürekli ve kesin artandır. $F(x) = u$ denklemi $e^{-\lambda x} = 1 - u$, yani $x = -\frac{1}{\lambda} \ln(1 - u)$ verir; $F^{-1}(u) = -\frac{1}{\lambda} \ln(1-u)$. @prp-duzgun-donusum gereği $Y = F^{-1}(U) \sim \operatorname{Üstel}(\lambda)$.
+
+*Dönüşüm formülü.* $g(u) = -\frac{1}{\lambda} \ln(1-u)$, $(0,1)$ üzerinde kesin artan ve türevlenebilirdir; görüntüsü $(0, \infty)$, tersi $h(y) = 1 - e^{-\lambda y}$, $h'(y) = \lambda e^{-\lambda y}$. @thm-donusum-formulu ile $y > 0$ için
+
+$$f_Y(y) = f_U\big(h(y)\big)\,|h'(y)| = 1 \cdot \lambda e^{-\lambda y},$$
+
+ki bu $\operatorname{Üstel}(\lambda)$ yoğunluğudur.
+
+$0 < u < 1$ için $P(1 - U \le u) = P(U \ge 1 - u) = u$ olduğundan $1 - U \sim U(0,1)$; dolayısıyla $-\frac{1}{\lambda} \ln U$ da $\operatorname{Üstel}(\lambda)$ dağılımlıdır.
+
+**c\)** $M = \min\{X_1, X_2\}$ olsun. $t > 0$ için $(M > t) = (X_1 > t) \cap (X_2 > t)$ ve bağımsızlıkla
+
+$$P(M > t) = P(X_1 > t)\,P(X_2 > t) = e^{-\lambda_1 t}\,e^{-\lambda_2 t} = e^{-(\lambda_1 + \lambda_2) t}.$$
+
+$M > 0$ olduğundan $F_M(t) = 1 - e^{-(\lambda_1 + \lambda_2)t}$ ($t > 0$), $F_M(t) = 0$ ($t \le 0$): $M \sim \operatorname{Üstel}(\lambda_1 + \lambda_2)$.
+
+İkinci olasılık için bağımsızlık nedeniyle ortak yoğunluk çarpımdır: $f(x_1, x_2) = \lambda_1 e^{-\lambda_1 x_1} \lambda_2 e^{-\lambda_2 x_2}$ ($x_1, x_2 > 0$). $\{x_1 < x_2\}$ bölgesi üzerinde integral alalım; önce $x_2$ üzerinden:
+
+$$P(X_1 < X_2) = \int_0^{\infty} \lambda_1 e^{-\lambda_1 x_1} \left( \int_{x_1}^{\infty} \lambda_2 e^{-\lambda_2 x_2}\,dx_2 \right) dx_1 = \int_0^{\infty} \lambda_1 e^{-\lambda_1 x_1}\,e^{-\lambda_2 x_1}\,dx_1 = \lambda_1 \int_0^{\infty} e^{-(\lambda_1 + \lambda_2)x_1}\,dx_1 = \frac{\lambda_1}{\lambda_1 + \lambda_2}.$$
+
+**d\)** $1 - e^{-\lambda x_p} = p$ denkleminden $e^{-\lambda x_p} = 1 - p$ ve
+
+$$x_p = -\frac{\ln(1 - p)}{\lambda} = \frac{1}{\lambda} \ln \frac{1}{1 - p}.$$
+
+$p = \frac{1}{2}$ için medyan $\frac{\ln 2}{\lambda}$ bulunur (@exm-ustel-omur-hesabi ile uyumlu). $\lambda = \frac{1}{1000}$ için:
+
+$$x_{0{,}1} = -1000 \ln 0{,}9 \approx 105{,}4 \text{ saat}, \qquad x_{0{,}9} = -1000 \ln 0{,}1 \approx 2302{,}6 \text{ saat}.$$
+
+Ömürlerin yüzde $10$'u $105{,}4$ saatin altında, yüzde $10$'u $2302{,}6$ saatin üstündedir.
+
+**e\)** Standartlaştırma ile $\Phi\!\left( \frac{10 - \mu}{\sigma} \right) = 0{,}1587$ ve $\Phi\!\left( \frac{20 - \mu}{\sigma} \right) = 0{,}9332$. Tablodan $\Phi(1) = 0{,}8413$, dolayısıyla $\Phi(-1) = 0{,}1587$; ve $\Phi(1{,}5) = 0{,}9332$. $\Phi$ kesin artan olduğundan
+
+$$\frac{10 - \mu}{\sigma} = -1, \qquad \frac{20 - \mu}{\sigma} = 1{,}5.$$
+
+İkinci denklemden birinciyi çıkarınca $\frac{10}{\sigma} = 2{,}5$, yani $\sigma = 4$; birinci denklemden $\mu = 10 + \sigma = 14$. Sağlama: $\frac{20 - 14}{4} = 1{,}5$. O hâlde $X \sim N(14, 16)$ ve
+
+$$P(X > 18) = 1 - \Phi\!\left( \frac{18 - 14}{4} \right) = 1 - \Phi(1) = 0{,}1587.$$
+
+**f\)** @thm-chebyshev-esitsizligi ile $P(|X - \mu| \ge 3\sigma) \le \frac{1}{9} \approx 0{,}1111$. Gerçek değer, standartlaştırma ve simetriyle,
+
+$$P(|X - \mu| \ge 3\sigma) = P(|Z| \ge 3) = 2\big(1 - \Phi(3)\big) = 2(1 - 0{,}9987) = 0{,}0026$$
+
+(daha hassas değeri $0{,}0027$'dir). Chebyshev sınırı gerçek olasılığın kırk katından büyüktür; her dağılım için geçerli olmanın bedeli budur.
+
+**g\)** $M_Z(t) = e^{t^2/2}$ (@thm-normal-momentleri-mgf, $\mu = 0$, $\sigma = 1$). Üstel serisiyle
+
+$$M_Z(t) = \sum_{k=0}^{\infty} \frac{(t^2/2)^k}{k!} = 1 + \frac{t^2}{2} + \frac{t^4}{8} + \cdots$$
+
+Seride yalnızca çift kuvvetler bulunur; $\frac{t^3}{3!}$'in katsayısı $0$ olduğundan @thm-mgf-momentler gereği $E(Z^3) = 0$. $\frac{t^4}{4!}$'in katsayısı $E(Z^4)$'tür: $\frac{t^4}{8} = E(Z^4)\,\frac{t^4}{24}$ eşitliğinden $E(Z^4) = \frac{24}{8} = 3$.
+
+Son olarak $E(e^X)$, moment üreten fonksiyonun $t = 1$'deki değeridir:
+
+$$E(e^X) = M_X(1) = e^{\mu + \sigma^2/2};$$
+
+örneğin $X \sim N(0,1)$ için $E(e^X) = e^{1/2} \approx 1{,}6487$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Olasılık Teorisi'nin Sonu
+
+Bu bölümle kitap tamamlanıyor. Geriye dönüp bakınca tek bir iplik görünür.
+
+Bir rastgele deneyin bütün olası sonuçlarını toplayan **örnek uzay** $\Omega$ ile başladık. Olasılık atayacağımız olayları keyfi bir aile olarak değil, tümleyen ve sayılabilir birleşim altında kapalı bir **$\sigma$-cebir** $\mathcal{U}$ olarak seçtik; sayılabilir işlemler altında kapalılık, sonsuz deneyler ve limitler hakkında konuşabilmenin bedeliydi. Bu aile üzerinde Kolmogorov aksiyomlarını sağlayan bir **olasılık ölçüsü** $P$ tanımladık ve $(\Omega, \mathcal{U}, P)$ üçlüsüne olasılık uzayı dedik. Laplace uzayı, sayma teknikleri ve geometrik olasılık bu yapının ilk örnekleri oldu; koşullu olasılık, Bayes teoremi ve bağımsızlık, bir olay hakkındaki bilginin ötekilerin olasılığını nasıl değiştirdiğini anlattı.
+
+İkinci adım, $\Omega$'yı sayı doğrusuna taşıyan **rastgele değişken** kavramıydı: $(X \le a)$ kümelerinin olay olması koşuluyla $X : \Omega \to \mathbb{R}$. Bu koşul, $P$ ölçüsünü Borel cebrine taşıyıp $X$'in **dağılımını** üretti; dağılım fonksiyonu $F_X$ bu dağılımı tek bir azalmayan, sağdan sürekli fonksiyonda özetledi. Kesikli değişkenlerde olasılık fonksiyonu, sürekli değişkenlerde yoğunluk fonksiyonu $F_X$'i yeniden kurdu; dönüşüm formülü bir değişkenin fonksiyonunun dağılımını verdi. Rastgele vektörler aynı yapıyı $\mathbb{R}^n$'e genişletti: ortak, marjinal ve koşullu dağılımlar, bağımsızlık ve konvolüsyon.
+
+Üçüncü adım **beklenen değer** oldu: dağılımın tek bir sayıya sıkıştırılmış özeti. Varyans, kovaryans ve korelasyon yayılımı ve birlikte hareketi ölçtü; Chebyshev eşitsizliği varyanstan olasılık sınırı çıkardı. Moment üreten fonksiyon ve karakteristik fonksiyon bütün momentleri tek bir fonksiyonda topladı ve teklik teoremi sayesinde dağılımları tanımanın en güçlü aracı oldu. Koşullu beklenen değer, bilginin beklentiyi nasıl güncellediğini söyledi.
+
+Son kısımda bu araçları **dağılım ailelerine** uyguladık. Bernoulli denemelerinden binom, geometrik ve negatif binom; nadir olayların limitinden Poisson; iadesiz çekilişten hipergeometrik dağılım doğdu. Bu bölümde sürekli tarafta düzgün, üstel ve normal dağılımları kurduk: her sürekli dağılım düzgünden üretilir, üstel dağılım geometrik dağılımın sürekli kardeşi ve Poisson dağılımının zaman eksenindeki karşılığıdır, normal dağılım ise doğrusal dönüşüm ve bağımsız toplam altında kapalı kalan çan eğrisidir. Her dağılım için aynı soruları sorduk ve her yanıt önceki kısımlardaki genel teoremlerin bir uygulaması oldu.
+
+Buradan iki ders devam eder. **Matematiksel İstatistik** soruyu tersine çevirir: dağılımı bilip örneklemin davranışını hesaplamak yerine, örneklemi görüp dağılımın bilinmeyen parametrelerini tahmin etmek. Büyük sayılar yasası ve merkezi limit teoremi normal dağılımın neden her yerde ortaya çıktığını açıklar; örneklem ortalaması için bulduğumuz $N\!\left(\mu, \frac{\sigma^2}{n}\right)$ sonucu güven aralıklarının ve hipotez testlerinin çıkış noktasıdır. **Stokastik Süreçler** ise zamanla değişen rastgele değişken ailelerini inceler: Poisson süreci, ilk olayın zamanı için gösterdiğimiz üstel dağılımın bütün olaylar dizisine genişletilmiş hâlidir; Markov zincirleri koşullu olasılık ve hafızasızlık fikrini zamana yayar; Brown hareketi normal dağılımlı, bağımsız artışlı sürekli bir süreçtir. Bu kitapta kurulan olasılık uzayı, rastgele değişken ve dağılım dili her ikisinin de ortak temelidir.
+
+Kitabın bütününe ve öteki bölümlere dönmek için: [Müfredat ve Giriş](index.qmd).
