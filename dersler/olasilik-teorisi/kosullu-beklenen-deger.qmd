@@ -1,0 +1,717 @@
+---
+title: "Koşullu Beklenen Değer"
+pagetitle: "Koşullu Beklenen Değer"
+description: "Kesikli ve sürekli durumda koşullu beklenen değer E(Y | X = x); sabit, lineerlik, çarpanı dışarı alma ve bağımsızlık özellikleri; E(Y | X) rastgele değişkeni; toplam beklenen değer (kule) kuralı ve tam ispatı; koşullu varyans ve toplam varyans kuralı; rastgele sayıda terimin toplamının beklenen değeri ve varyansı; koşullu beklenen değerin en iyi karesel tahmin olması."
+---
+
+[Rastgele Vektörlerde Beklenen Değer, Kovaryans ve Korelasyon](rastgele-vektorlerde-beklenen-deger.qmd) bölümünde bir rastgele vektörün fonksiyonunun beklenen değerini tanımladık; kovaryans ve korelasyon katsayısıyla iki rastgele değişken arasındaki doğrusal ilişkiyi ölçtük. Bu araçların hepsi $(X, Y)$ vektörünün **ortak** dağılımına bakar. Oysa uygulamada sık sık şu durumla karşılaşırız: $X$'in değeri öğrenilmiştir ve artık yalnızca $Y$ merak edilmektedir. Bu durumu betimleyen nesneyi, $X = x$ verilmişken $Y$'nin **koşullu dağılımını**, [Bağımsız Rastgele Değişkenler ve Koşullu Dağılımlar](bagimsizlik-ve-kosullu-dagilimlar.qmd) bölümünde tanımlamıştık. Bu bölümde o koşullu dağılımın beklenen değerini, yani **koşullu beklenen değeri** inceleyeceğiz.
+
+Koşullu beklenen değer $E(Y \mid X = x)$, "$X$'in $x$ olduğu bilindiğinde $Y$'den ortalama olarak ne beklenir?" sorusunun yanıtıdır. Bu sayı $x$'e bağlıdır; $x$ yerine $X$ yazınca $E(Y \mid X)$ adlı yeni bir rastgele değişken ortaya çıkar. Bölümün ana teoremi olan **toplam beklenen değer kuralı** (kule kuralı), bu rastgele değişkenin ortalamasının tam olarak $E(Y)$ olduğunu söyler: $E[E(Y \mid X)] = E(Y)$. Bu, toplam olasılık formülünün beklenen değerler için olan karşılığıdır ve bir beklenen değeri "önce $X$'i sabit tut, sonra $X$ üzerinden ortala" biçiminde iki adıma bölmemizi sağlar. Aynı fikrin varyans için karşılığı **toplam varyans kuralıdır.**
+
+Bölümü iki uygulamayla kapatacağız. İlki, terim sayısı da rastgele olan bir toplamın ($X_1 + \cdots + X_N$) beklenen değeri ve varyansıdır; sigorta hasarları, kuyruk uzunlukları gibi pek çok modelde bu yapı görülür. İkincisi, koşullu beklenen değerin $X$'e bakarak $Y$'yi tahmin etmenin **en iyi** yolu olmasıdır: ortalama karesel hatayı en küçük yapan tahmin $E(Y \mid X)$'tir. Bu son gözlem, istatistikteki regresyon fikrinin olasılık kuramındaki kaynağıdır.
+
+## Koşullu Beklenen Değerin Tanımı
+
+Önce gereken nesneleri hatırlayalım. $(X, Y)$ kesikli bir rastgele vektör ve $x$, $f_X(x) = P(X = x) > 0$ olan bir nokta olsun. @thm-kosullu-olasilik-fonksiyonu'na göre $X = x$ verilmişken $Y$'nin koşullu olasılık fonksiyonu
+
+$$f_{Y \mid X = x}(y) = P(Y = y \mid X = x) = \frac{f_{X,Y}(x,y)}{f_X(x)}, \qquad y \in D_{Y \mid X = x}$$
+
+dir; burada $D_{Y \mid X = x} = \{y \in D_Y : f_{X,Y}(x,y) > 0\}$, koşullu dağılımın değer kümesidir. $(X, Y)$ sürekli bir rastgele vektör ve $f_X(x) > 0$ ise @def-kosullu-yogunluk gereği koşullu olasılık yoğunluk fonksiyonu
+
+$$f_{Y \mid X = x}(y) = \frac{f_{X,Y}(x,y)}{f_X(x)}$$
+
+dir. Her iki durumda da koşullu olasılık (yoğunluk) fonksiyonu gerçek bir olasılık (yoğunluk) fonksiyonudur: negatif değildir ve $y$ üzerinden toplamı (integrali) $1$'dir. Öyleyse ona göre bir beklenen değer alınabilir. Bu beklenen değer, aşağıdaki tanımın konusudur.
+
+::: {#def-kosullu-beklenen-deger name="Koşullu Beklenen Değer"}
+$(X, Y)$ bir rastgele vektör ve $x$, $f_X(x) > 0$ olan bir nokta olsun.
+
+**(i)** $(X, Y)$ kesikli ve $\sum_{y \in D_{Y \mid X = x}} |y|\, f_{Y \mid X = x}(y) < \infty$ ise
+
+$$E(Y \mid X = x) = \sum_{y \in D_{Y \mid X = x}} y\, f_{Y \mid X = x}(y)$$
+
+**(ii)** $(X, Y)$ sürekli ve $\int_{-\infty}^{\infty} |y|\, f_{Y \mid X = x}(y)\,dy < \infty$ ise
+
+$$E(Y \mid X = x) = \int_{-\infty}^{\infty} y\, f_{Y \mid X = x}(y)\,dy$$
+
+sayısına, $X = x$ verilmişken $Y$ rastgele değişkeninin **koşullu beklenen değeri** denir.
+
+Daha genel olarak, $h : \mathbb{R}^2 \to \mathbb{R}$ Borel ölçülebilir bir fonksiyon olmak üzere, $X = x$ verilmişken $h(X, Y)$'nin koşullu beklenen değeri (ilgili toplam ya da integral mutlak yakınsak olduğunda)
+
+$$E\big(h(X, Y) \mid X = x\big) = \sum_{y \in D_{Y \mid X = x}} h(x, y)\, f_{Y \mid X = x}(y) \qquad \text{ya da} \qquad E\big(h(X, Y) \mid X = x\big) = \int_{-\infty}^{\infty} h(x, y)\, f_{Y \mid X = x}(y)\,dy$$
+
+ile tanımlanır. $f_X(x) = 0$ olan $x$ noktalarında $E(Y \mid X = x) = 0$ alınır.
+:::
+
+Tanımda üç noktaya dikkat edelim.
+
+- Genel formülde $h(X, Y)$'nin ilk bileşenine $X$ değil $x$ yazılır. Nedeni açıktır: $X = x$ koşulu altında $X$ artık rastgele değildir, $x$ sayısına eşittir; rastgele kalan tek şey $Y$'dir. $h(x, y) = y$ seçimi $E(Y \mid X = x)$'i, $h(x, y) = g(y)$ seçimi $E(g(Y) \mid X = x)$'i verir.
+- $E(Y \mid X = x)$ bir **sayıdır** ve bu sayı $x$'e bağlıdır. $x \mapsto E(Y \mid X = x)$ fonksiyonuna $Y$'nin $X$ üzerine **regresyon fonksiyonu** da denir.
+- $f_X(x) = 0$ olan noktalardaki değer önemsizdir; bu noktalar ileride göreceğimiz bütün toplamlara ve integrallere sıfır katkı verir.
+
+::: {.callout-note title="Koşullu beklenen değer sıradan bir beklenen değerdir"}
+$E(Y \mid X = x)$, olasılık fonksiyonu $f_{Y \mid X = x}$ olan bir dağılıma göre alınmış, @def-beklenen-deger anlamında sıradan bir beklenen değerdir. Değişen tek şey, kullanılan dağılımın $Y$'nin marjinal dağılımı $f_Y$ değil, $X = x$ bilgisiyle güncellenmiş koşullu dağılımı $f_{Y \mid X = x}$ olmasıdır. Bu yüzden beklenen değerin bildiğimiz bütün özellikleri (lineerlik, monotonluk, sabitin beklenen değerinin kendisi olması) koşullu beklenen değer için de geçerlidir. Bunları bir sonraki alt bölümde açıkça yazacağız.
+:::
+
+İlk örneğimiz, koşullu dağılımlarını @exm-uc-para-kosullu'da incelediğimiz üç para atışı deneyidir.
+
+:::: {#exm-kosullu-beklenen-kesikli name="Üç Para Atışında Koşullu Beklenen Değer"}
+Düzgün bir para üç kez atılıyor. $X_1$ üç atışta gelen tura sayısı, $X_2$ ilk iki atışta gelen tura sayısı olsun. $(X_1, X_2)$ rastgele vektörünün olasılık fonksiyonu tablosu şudur:
+
+| $x_1 \setminus x_2$ | $0$ | $1$ | $2$ | $f_{X_1}(x_1)$ |
+|---|---|---|---|---|
+| $0$ | $\frac{1}{8}$ | $0$ | $0$ | $\frac{1}{8}$ |
+| $1$ | $\frac{1}{8}$ | $\frac{2}{8}$ | $0$ | $\frac{3}{8}$ |
+| $2$ | $0$ | $\frac{2}{8}$ | $\frac{1}{8}$ | $\frac{3}{8}$ |
+| $3$ | $0$ | $0$ | $\frac{1}{8}$ | $\frac{1}{8}$ |
+| $f_{X_2}(x_2)$ | $\frac{2}{8}$ | $\frac{4}{8}$ | $\frac{2}{8}$ | $1$ |
+
+Her $x_2 \in \{0, 1, 2\}$ için $E(X_1 \mid X_2 = x_2)$ ve her $x_1 \in \{0, 1, 2, 3\}$ için $E(X_2 \mid X_1 = x_1)$ koşullu beklenen değerlerini hesaplayınız.
+
+::: {.cozum}
+**Adım 1: $X_2 = x_2$ verilmişken $X_1$'in koşullu dağılımı.** @exm-uc-para-kosullu'da olduğu gibi, tablonun $x_2$ sütununu o sütunun toplamı $f_{X_2}(x_2)$'ye bölelim.
+
+$x_2 = 0$ için sütun toplamı $\frac{2}{8}$'dir ve
+
+$$f_{X_1 \mid X_2 = 0}(0) = \frac{1/8}{2/8} = \frac{1}{2}, \qquad f_{X_1 \mid X_2 = 0}(1) = \frac{1/8}{2/8} = \frac{1}{2}.$$
+
+$x_2 = 1$ için sütun toplamı $\frac{4}{8}$'dir ve
+
+$$f_{X_1 \mid X_2 = 1}(1) = \frac{2/8}{4/8} = \frac{1}{2}, \qquad f_{X_1 \mid X_2 = 1}(2) = \frac{2/8}{4/8} = \frac{1}{2}.$$
+
+$x_2 = 2$ için sütun toplamı $\frac{2}{8}$'dir ve
+
+$$f_{X_1 \mid X_2 = 2}(2) = \frac{1}{2}, \qquad f_{X_1 \mid X_2 = 2}(3) = \frac{1}{2}.$$
+
+Sonuç sezgiyle uyumludur: ilk iki atışta $x_2$ tura geldiyse, üçüncü atışın sonucuna göre toplam tura sayısı $x_2$ ya da $x_2 + 1$ olur ve ikisi eşit olasılıklıdır.
+
+**Adım 2: $E(X_1 \mid X_2 = x_2)$.** @def-kosullu-beklenen-deger'e göre
+
+$$\begin{aligned}
+E(X_1 \mid X_2 = 0) &= 0 \cdot \tfrac{1}{2} + 1 \cdot \tfrac{1}{2} = \tfrac{1}{2}, \\
+E(X_1 \mid X_2 = 1) &= 1 \cdot \tfrac{1}{2} + 2 \cdot \tfrac{1}{2} = \tfrac{3}{2}, \\
+E(X_1 \mid X_2 = 2) &= 2 \cdot \tfrac{1}{2} + 3 \cdot \tfrac{1}{2} = \tfrac{5}{2}.
+\end{aligned}$$
+
+Üç sonuç tek bir formülde toplanır:
+
+$$E(X_1 \mid X_2 = x_2) = x_2 + \frac{1}{2}, \qquad x_2 \in \{0, 1, 2\}.$$
+
+Sözle: ilk iki atıştaki tura sayısına, üçüncü atıştan beklenen $\frac{1}{2}$ tura eklenir.
+
+**Adım 3: $X_1 = x_1$ verilmişken $X_2$'nin koşullu dağılımı.** Bu kez tablonun $x_1$ satırını satır toplamı $f_{X_1}(x_1)$'e böleriz.
+
+- $x_1 = 0$: tek olası değer $x_2 = 0$; $f_{X_2 \mid X_1 = 0}(0) = 1$.
+- $x_1 = 1$: satır toplamı $\frac{3}{8}$; $f_{X_2 \mid X_1 = 1}(0) = \frac{1/8}{3/8} = \frac{1}{3}$, $f_{X_2 \mid X_1 = 1}(1) = \frac{2/8}{3/8} = \frac{2}{3}$.
+- $x_1 = 2$: satır toplamı $\frac{3}{8}$; $f_{X_2 \mid X_1 = 2}(1) = \frac{2}{3}$, $f_{X_2 \mid X_1 = 2}(2) = \frac{1}{3}$.
+- $x_1 = 3$: tek olası değer $x_2 = 2$; $f_{X_2 \mid X_1 = 3}(2) = 1$.
+
+**Adım 4: $E(X_2 \mid X_1 = x_1)$.**
+
+$$\begin{aligned}
+E(X_2 \mid X_1 = 0) &= 0, \\
+E(X_2 \mid X_1 = 1) &= 0 \cdot \tfrac{1}{3} + 1 \cdot \tfrac{2}{3} = \tfrac{2}{3}, \\
+E(X_2 \mid X_1 = 2) &= 1 \cdot \tfrac{2}{3} + 2 \cdot \tfrac{1}{3} = \tfrac{4}{3}, \\
+E(X_2 \mid X_1 = 3) &= 2.
+\end{aligned}$$
+
+Dört sonuç yine tek bir formüle sığar:
+
+$$E(X_2 \mid X_1 = x_1) = \frac{2 x_1}{3}, \qquad x_1 \in \{0, 1, 2, 3\}.$$
+
+Bunun da sezgisel bir okuması vardır: üç atışta $x_1$ tura geldiği biliniyorsa, bu turalar üç atış arasında eşit olasılıkla dağılmıştır; ilk iki atışa düşen pay $\frac{2}{3} x_1$'dir.
+
+Karşılaştırma için marjinal beklenen değerleri de yazalım:
+
+$$E(X_1) = 0 \cdot \tfrac{1}{8} + 1 \cdot \tfrac{3}{8} + 2 \cdot \tfrac{3}{8} + 3 \cdot \tfrac{1}{8} = \tfrac{12}{8} = \tfrac{3}{2}, \qquad E(X_2) = 0 \cdot \tfrac{2}{8} + 1 \cdot \tfrac{4}{8} + 2 \cdot \tfrac{2}{8} = 1.$$
+
+Koşullu beklenen değerler, koşul değiştikçe bu marjinal değerlerin etrafında dolaşır: $E(X_1 \mid X_2 = x_2)$ değerleri $\frac{1}{2}, \frac{3}{2}, \frac{5}{2}$ iken $E(X_1) = \frac{3}{2}$'dir. Bu "etrafında dolaşma"nın kesin ifadesi, toplam beklenen değer kuralı olacaktır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Sürekli durumda hesap, integrallerle aynı adımları izler.
+
+:::: {#exm-kosullu-beklenen-surekli name="Üçgen Üzerinde Düzgün Dağılımda Koşullu Beklenen Değer"}
+$(X, Y)$ rastgele vektörünün ortak olasılık yoğunluk fonksiyonu
+
+$$f_{X,Y}(x, y) = \begin{cases} 2, & 0 < x < y < 1 \\ 0, & \text{diğer durumlarda} \end{cases}$$
+
+olsun. $0 < x < 1$ için $E(Y \mid X = x)$ ve $0 < y < 1$ için $E(X \mid Y = y)$ koşullu beklenen değerlerini bulunuz.
+
+::: {.cozum}
+**Adım 1: Marjinal yoğunluklar.** Tanım bölgesi, köşeleri $(0,0)$, $(0,1)$ ve $(1,1)$ olan üçgendir. @def-marjinal-yogunluk'a göre, $0 < x < 1$ için
+
+$$f_X(x) = \int_{x}^{1} 2\,dy = 2(1 - x),$$
+
+ve $0 < y < 1$ için
+
+$$f_Y(y) = \int_{0}^{y} 2\,dx = 2y.$$
+
+Bu aralıkların dışında iki marjinal de sıfırdır.
+
+**Adım 2: $X = x$ verilmişken $Y$'nin koşullu yoğunluğu.** $0 < x < 1$ için $f_X(x) = 2(1-x) > 0$ olduğundan @def-kosullu-yogunluk uygulanır:
+
+$$f_{Y \mid X = x}(y) = \frac{f_{X,Y}(x,y)}{f_X(x)} = \begin{cases} \dfrac{2}{2(1-x)} = \dfrac{1}{1-x}, & x < y < 1 \\[2mm] 0, & \text{diğer durumlarda.} \end{cases}$$
+
+Yani $X = x$ verilmişken $Y$, $(x, 1)$ aralığında düzgün dağılmıştır. Bunun beklenen değeri aralığın orta noktasıdır; doğrudan hesapla da görelim:
+
+$$E(Y \mid X = x) = \int_{x}^{1} y \cdot \frac{1}{1-x}\,dy = \frac{1}{1-x} \cdot \frac{y^2}{2}\bigg|_{x}^{1} = \frac{1 - x^2}{2(1-x)} = \frac{1 + x}{2}.$$
+
+**Adım 3: $Y = y$ verilmişken $X$'in koşullu yoğunluğu.** $0 < y < 1$ için $f_Y(y) = 2y > 0$ ve
+
+$$f_{X \mid Y = y}(x) = \frac{f_{X,Y}(x,y)}{f_Y(y)} = \begin{cases} \dfrac{2}{2y} = \dfrac{1}{y}, & 0 < x < y \\[2mm] 0, & \text{diğer durumlarda.} \end{cases}$$
+
+Bu kez $X$, $(0, y)$ aralığında düzgün dağılmıştır:
+
+$$E(X \mid Y = y) = \int_{0}^{y} x \cdot \frac{1}{y}\,dx = \frac{1}{y} \cdot \frac{y^2}{2} = \frac{y}{2}.$$
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="4.0 6.0 360.0 244.0" role="img" aria-label="Ucgen bolge uzerinde x = x0 dusey kesiti, orta noktasi ve kosullu ortalama dogrusu y = (1+x)/2">
+  <polygon points="66.9,211.7 66.9,42.6 235.4,42.6" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--color-theory)" stroke-width="1.4"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="211.7" x2="300.0" y2="211.7"/>
+  <line x1="66.9" y1="236.0" x2="66.9" y2="20.0"/>
+  <polygon points="300.0,211.7 292.0,208.2 292.0,215.2" stroke="none"/>
+  <polygon points="66.9,20.0 63.4,28.0 70.4,28.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="134.3" y1="208.7" x2="134.3" y2="214.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="134.3" y="226.7" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <line x1="235.4" y1="208.7" x2="235.4" y2="214.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="235.4" y="226.7" text-anchor="middle">1</text>
+  <line x1="63.9" y1="127.2" x2="69.9" y2="127.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="59.9" y="131.2" text-anchor="end">1/2</text>
+  <line x1="63.9" y1="93.3" x2="69.9" y2="93.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="59.9" y="97.3" text-anchor="end">(1+<tspan font-style="italic">x</tspan><tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan>)/2</text>
+  <line x1="63.9" y1="42.6" x2="69.9" y2="42.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="59.9" y="46.6" text-anchor="end">1</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="298.0" y="226.7" text-anchor="end">x</text>
+  <text x="73.9" y="29.0">y</text>
+  </g>
+  <text x="59.9" y="226.7" fill="var(--academic-text)" font-size="11" text-anchor="end">0</text>
+  <path d="M134.3,211.7 L134.3,144.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M66.9,93.3 L134.3,93.3" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M235.4,211.7 L235.4,42.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M66.9,127.2 L235.4,42.6" fill="none" stroke="var(--color-base)" stroke-width="1.9" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M134.3,144.1 L134.3,42.6" fill="none" stroke="var(--color-practice)" stroke-width="3.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="134.3" cy="93.3" r="4.4" fill="var(--color-base)" stroke="var(--academic-bg)" stroke-width="1.6"/>
+  <text x="100.6" y="137.3" fill="var(--color-theory)" font-size="10.5" text-anchor="middle"><tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>, <tspan font-style="italic">y</tspan>) = 2</text>
+  <text x="127.3" y="56.1" fill="var(--color-practice)" font-size="10.5" text-anchor="end"><tspan font-style="italic">Y</tspan> | <tspan font-style="italic">X</tspan> = <tspan font-style="italic">x</tspan><tspan font-size="9" dy="4">0</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="127.3" y="69.7" fill="var(--color-practice)" font-size="10.5" text-anchor="end">düzgün</text>
+  <text x="243.4" y="46.6" fill="var(--color-base)" font-size="10.5" text-anchor="start"><tspan font-style="italic">E</tspan>(<tspan font-style="italic">Y</tspan> | <tspan font-style="italic">X</tspan> = <tspan font-style="italic">x</tspan>) = (1 + <tspan font-style="italic">x</tspan>)/2</text>
+</svg>
+<figcaption>Üçgen üzerinde düzgün dağılımın koşullu ortalaması. Taralı üçgen, <em>f</em>(<em>x</em>, <em>y</em>) = 2 yoğunluğunun tanım bölgesidir. <em>X</em> = <em>x</em><sub>0</sub> verilmişken <em>Y</em> yalnızca kalın düşey kesit üzerinde, (<em>x</em><sub>0</sub>, 1) aralığında düzgün dağılır; koşullu beklenen değer bu kesitin orta noktası (1 + <em>x</em><sub>0</sub>)/2'dir. <em>x</em><sub>0</sub> değiştikçe orta noktalar kesikli <em>y</em> = (1 + <em>x</em>)/2 doğrusunu çizer: (0, 1/2)'den (1, 1)'e uzanan regresyon doğrusu.</figcaption>
+</figure>
+```
+
+Her iki regresyon fonksiyonu da doğrusaldır: $E(Y \mid X = x) = \frac{1+x}{2}$ doğrusu üçgenin düşey kesitlerinin orta noktalarını, $E(X \mid Y = y) = \frac{y}{2}$ doğrusu yatay kesitlerin orta noktalarını birleştirir. İki doğru farklıdır; genel olarak $Y$'nin $X$ üzerine regresyonu ile $X$'in $Y$ üzerine regresyonu aynı fonksiyonun tersi değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Koşullu Beklenen Değerin Özellikleri
+
+Koşullu beklenen değer bir dağılıma göre alınmış beklenen değer olduğundan, beklenen değerin lineerlik gibi özelliklerini taşıması beklenir. Ancak koşullama, sıradan beklenen değerde bulunmayan iki özellik daha getirir: $X$'e bağlı çarpanlar dışarı alınabilir; bağımsızlık ise koşullamayı etkisiz kılar. Bu dört özelliği bir arada yazıp ispatlayalım; bölümün geri kalanında sürekli kullanılacaklar.
+
+:::: {#prp-kosullu-beklenen-ozellikleri name="Koşullu Beklenen Değerin Özellikleri"}
+$(X, Y)$ bir rastgele vektör, $x$ noktası $f_X(x) > 0$ olacak biçimde sabit, $a, b, c \in \mathbb{R}$ ve $g, h$ Borel ölçülebilir fonksiyonlar olsun. Aşağıdaki koşullu beklenen değerlerin var olduğu varsayılsın.
+
+**(a)** **Sabit:** $E(c \mid X = x) = c$.
+
+**(b)** **Lineerlik:** $E\big(a\, g(X, Y) + b\, h(X, Y) \mid X = x\big) = a\, E\big(g(X, Y) \mid X = x\big) + b\, E\big(h(X, Y) \mid X = x\big)$.
+
+**(c)** **Çarpanı dışarı alma:** $E\big(g(X)\, h(X, Y) \mid X = x\big) = g(x)\, E\big(h(X, Y) \mid X = x\big)$; özel olarak $E\big(g(X)\, h(Y) \mid X = x\big) = g(x)\, E\big(h(Y) \mid X = x\big)$ ve $E\big(g(X) \mid X = x\big) = g(x)$.
+
+**(d)** **Bağımsızlık:** $X$ ve $Y$ bağımsız ise $E\big(h(Y) \mid X = x\big) = E\big(h(Y)\big)$; özel olarak $E(Y \mid X = x) = E(Y)$.
+
+::: {.ispat}
+Önce kesikli durumu yazalım; her toplam $y \in D_{Y \mid X = x}$ üzerindendir ve bu toplamlar mutlak yakınsak olduğundan terimleri ayırıp yeniden düzenleyebiliriz.
+
+**(a)** $f_{Y \mid X = x}$ bir olasılık fonksiyonu olduğundan toplamı $1$'dir:
+
+$$E(c \mid X = x) = \sum_{y} c\, f_{Y \mid X = x}(y) = c \sum_{y} f_{Y \mid X = x}(y) = c \cdot 1 = c.$$
+
+**(b)** @def-kosullu-beklenen-deger'deki genel formülü $a\,g + b\,h$ fonksiyonuna uygulayalım:
+
+$$\begin{aligned}
+E\big(a\, g(X,Y) + b\, h(X,Y) \mid X = x\big) &= \sum_{y} \big[a\, g(x, y) + b\, h(x, y)\big] f_{Y \mid X = x}(y) \\
+&= a \sum_{y} g(x, y)\, f_{Y \mid X = x}(y) + b \sum_{y} h(x, y)\, f_{Y \mid X = x}(y) \\
+&= a\, E\big(g(X,Y) \mid X = x\big) + b\, E\big(h(X,Y) \mid X = x\big).
+\end{aligned}$$
+
+**(c)** Genel formülde $h$ yerine $(x, y) \mapsto g(x)\, h(x, y)$ fonksiyonunu koyalım. Toplam $y$ üzerinden alındığından $g(x)$ toplama göre bir sabittir:
+
+$$E\big(g(X)\, h(X,Y) \mid X = x\big) = \sum_{y} g(x)\, h(x, y)\, f_{Y \mid X = x}(y) = g(x) \sum_{y} h(x, y)\, f_{Y \mid X = x}(y) = g(x)\, E\big(h(X,Y) \mid X = x\big).$$
+
+$h(x, y) = h(y)$ seçimi ilk özel durumu verir. $h \equiv 1$ seçimi ve (a) ise $E(g(X) \mid X = x) = g(x) \cdot 1 = g(x)$ verir.
+
+**(d)** $X$ ve $Y$ bağımsız olsun. @def-bagimsiz-rastgele-degiskenler'e göre her $(x, y)$ için $f_{X,Y}(x, y) = f_X(x)\, f_Y(y)$'dir; dolayısıyla $f_X(x) > 0$ iken
+
+$$f_{Y \mid X = x}(y) = \frac{f_{X,Y}(x, y)}{f_X(x)} = \frac{f_X(x)\, f_Y(y)}{f_X(x)} = f_Y(y).$$
+
+Koşullu dağılım marjinal dağılımla aynıdır; öyleyse
+
+$$E\big(h(Y) \mid X = x\big) = \sum_{y} h(y)\, f_{Y \mid X = x}(y) = \sum_{y \in D_Y} h(y)\, f_Y(y) = E\big(h(Y)\big)$$
+
+olur; son eşitlik @def-beklenen-deger'dir. ($D_{Y \mid X = x} = D_Y$ olduğuna dikkat edin: bağımsızlıkta $f_{X,Y}(x,y) > 0 \iff f_Y(y) > 0$'dır.) $h(y) = y$ seçimi $E(Y \mid X = x) = E(Y)$ verir.
+
+Şimdi sürekli durum. Bütün integraller $\mathbb{R}$ üzerinden ve mutlak yakınsaktır; adımlar birebir aynıdır, toplamın yerini integral alır.
+
+**(a)** $\displaystyle E(c \mid X = x) = \int_{-\infty}^{\infty} c\, f_{Y \mid X = x}(y)\,dy = c \int_{-\infty}^{\infty} f_{Y \mid X = x}(y)\,dy = c.$
+
+**(b)** İntegralin lineerliğiyle
+
+$$\int_{-\infty}^{\infty} \big[a\, g(x, y) + b\, h(x, y)\big] f_{Y \mid X = x}(y)\,dy = a \int_{-\infty}^{\infty} g(x, y)\, f_{Y \mid X = x}(y)\,dy + b \int_{-\infty}^{\infty} h(x, y)\, f_{Y \mid X = x}(y)\,dy.$$
+
+**(c)** $g(x)$, $y$'ye göre alınan integralde sabittir:
+
+$$\int_{-\infty}^{\infty} g(x)\, h(x, y)\, f_{Y \mid X = x}(y)\,dy = g(x) \int_{-\infty}^{\infty} h(x, y)\, f_{Y \mid X = x}(y)\,dy.$$
+
+**(d)** Bağımsızlıkta $f_{X,Y}(x, y) = f_X(x)\, f_Y(y)$ olduğundan $f_X(x) > 0$ iken $f_{Y \mid X = x}(y) = f_Y(y)$'dir ve
+
+$$E\big(h(Y) \mid X = x\big) = \int_{-\infty}^{\infty} h(y)\, f_Y(y)\,dy = E\big(h(Y)\big).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Özellik (c), koşullu beklenen değerin en çok kullanılan özelliğidir. Sözle: **$X = x$ koşulu altında $X$'in fonksiyonları sabit gibi davranır ve beklenen değerin dışına çıkar.** Özellik (d) ise koşullamanın ne zaman işe yaramadığını söyler: $X$, $Y$ hakkında bilgi taşımıyorsa $X$'i bilmek $Y$ için beklentimizi değiştirmez.
+
+::: {.callout-warning title="Ters yön doğru değildir"}
+Özellik (d)'nin tersi genel olarak yanlıştır: her $x$ için $E(Y \mid X = x) = E(Y)$ olması $X$ ile $Y$'nin bağımsız olmasını gerektirmez. $Y$, $\{-1, 0, 1\}$ üzerinde düzgün dağılsın ve $X = Y^2$ olsun. $X = 1$ verilmişken $Y$, $\{-1, 1\}$ üzerinde düzgün dağılır ve $E(Y \mid X = 1) = 0$; $X = 0$ verilmişken $Y = 0$ kesindir ve $E(Y \mid X = 0) = 0$. Yani her $x$ için $E(Y \mid X = x) = 0 = E(Y)$'dir. Oysa $X$ ile $Y$ bağımsız değildir: $P(Y = 0, X = 1) = 0$ ama $P(Y = 0)\, P(X = 1) = \frac{1}{3} \cdot \frac{2}{3} \ne 0$. Koşullu beklenen değerin sabit olması, koşullu **dağılımın** sabit olmasından çok daha zayıf bir bilgidir.
+:::
+
+## Rastgele Değişken Olarak Koşullu Beklenen Değer
+
+$E(Y \mid X = x)$ sayısı $x$'e bağlıdır; yani elimizde $m(x) = E(Y \mid X = x)$ ile tanımlı bir $m : \mathbb{R} \to \mathbb{R}$ fonksiyonu vardır. Bu fonksiyonu $x$ noktasında değil, rastgele değişken $X$'te değerlendirirsek yeni bir rastgele değişken elde ederiz. Bu küçük gösterim değişikliği, bölümün ana teoremini ifade etmemizi sağlar.
+
+::: {#def-kosullu-beklenen-rastgele-degisken name="Koşullu Beklenen Değer Rastgele Değişkeni"}
+$(X, Y)$ bir rastgele vektör ve $f_X(x) > 0$ olan her $x$ için $E(Y \mid X = x)$ var olsun. $m(x) = E(Y \mid X = x)$ ile tanımlanan $m : \mathbb{R} \to \mathbb{R}$ fonksiyonu için
+
+$$E(Y \mid X) = m(X)$$
+
+rastgele değişkenine, $X$ verilmişken $Y$'nin **koşullu beklenen değeri** denir. Aynı biçimde, $h$ Borel ölçülebilir ve $m_h(x) = E(h(X, Y) \mid X = x)$ olmak üzere $E(h(X, Y) \mid X) = m_h(X)$ yazılır.
+:::
+
+$E(Y \mid X)$, $X$'in bir fonksiyonu olduğundan bir rastgele değişkendir ve dağılımı $X$'in dağılımıyla belirlenir. Örneklerimizde:
+
+- Üç para atışında (@exm-kosullu-beklenen-kesikli) $E(X_1 \mid X_2 = x_2) = x_2 + \frac{1}{2}$ bulmuştuk; öyleyse $E(X_1 \mid X_2) = X_2 + \frac{1}{2}$ ve benzer biçimde $E(X_2 \mid X_1) = \frac{2}{3} X_1$'dir.
+- Üçgen örneğinde (@exm-kosullu-beklenen-surekli) $E(Y \mid X) = \dfrac{1 + X}{2}$ ve $E(X \mid Y) = \dfrac{Y}{2}$'dir.
+
+Bu rastgele değişkenin en önemli özelliği, ortalamasının $Y$'nin ortalaması olmasıdır. Sezgisel gerekçe şudur: $E(Y \mid X = x)$, $Y$'nin $X = x$ dilimi içindeki ortalamasıdır; bu dilim ortalamalarını dilimlerin olasılıklarıyla ağırlıklandırıp toplamak $Y$'nin bütün ortalamasını verir. Toplam olasılık formülünde olayları $X$'in değerlerine göre parçalayarak $P(A) = \sum_x P(A \mid X = x)\, P(X = x)$ yazmıştık; şimdi aynı parçalamayı beklenen değer için yapıyoruz.
+
+:::: {#thm-toplam-beklenen-deger name="Toplam Beklenen Değer Kuralı (Kule Kuralı)"}
+$(X, Y)$ bir rastgele vektör ve $h : \mathbb{R}^2 \to \mathbb{R}$, $E\big(|h(X, Y)|\big) < \infty$ olan Borel ölçülebilir bir fonksiyon olsun. O zaman
+
+**(i)** $E\big[E\big(h(X, Y) \mid X\big)\big] = E\big(h(X, Y)\big)$; özel olarak $E\big[E(Y \mid X)\big] = E(Y)$.
+
+**(ii)** $g$, $E\big(|g(X)\, h(X, Y)|\big) < \infty$ olan bir fonksiyon ise $E\big[g(X)\, h(X, Y)\big] = E\big[g(X)\, E\big(h(X, Y) \mid X\big)\big]$; özel olarak $E\big[g(X)\, Y\big] = E\big[g(X)\, E(Y \mid X)\big]$.
+
+::: {.ispat}
+$m(x) = E(h(X, Y) \mid X = x)$ olsun; $f_X(x) = 0$ olan noktalarda $m(x) = 0$'dır. $E(h(X,Y) \mid X) = m(X)$, $X$'in bir fonksiyonu olduğundan beklenen değeri @def-beklenen-deger ile $X$'in dağılımı üzerinden hesaplanır.
+
+**Kesikli durum, (i).** $x \in D_X$ için $f_X(x) > 0$'dır ve
+
+$$E\big[m(X)\big] = \sum_{x \in D_X} m(x)\, f_X(x) = \sum_{x \in D_X} \Bigg( \sum_{y \in D_{Y \mid X = x}} h(x, y)\, f_{Y \mid X = x}(y) \Bigg) f_X(x).$$
+
+$f_X(x)$, iç toplama göre sabittir; içeri alıp $f_{Y \mid X = x}(y)\, f_X(x) = f_{X,Y}(x, y)$ eşitliğini (koşullu olasılık fonksiyonunun tanımı) kullanalım:
+
+$$E\big[m(X)\big] = \sum_{x \in D_X} \sum_{y \in D_{Y \mid X = x}} h(x, y)\, f_{X,Y}(x, y).$$
+
+$x \in D_X$ ve $y \in D_{Y \mid X = x}$ koşulu tam olarak $f_{X,Y}(x, y) > 0$, yani $(x, y) \in D_{(X,Y)}$ demektir. Öyleyse çift toplam, $(X, Y)$'nin değer kümesi üzerinden alınan toplamdır ve @def-vektor-beklenen-deger'e göre
+
+$$E\big[m(X)\big] = \sum_{(x, y) \in D_{(X,Y)}} h(x, y)\, f_{X,Y}(x, y) = E\big(h(X, Y)\big)$$
+
+olur. Toplamın sırasını serbestçe değiştirebildik; çünkü $E(|h(X,Y)|) < \infty$ varsayımı çift toplamın mutlak yakınsak olduğunu söyler. $h(x, y) = y$ seçimi $E[E(Y \mid X)] = E(Y)$ verir.
+
+**Kesikli durum, (ii).** (i)'i $\tilde h(x, y) = g(x)\, h(x, y)$ fonksiyonuna uygulayalım. @prp-kosullu-beklenen-ozellikleri (c)'ye göre
+
+$$E\big(\tilde h(X, Y) \mid X = x\big) = E\big(g(X)\, h(X, Y) \mid X = x\big) = g(x)\, m(x),$$
+
+yani $E(\tilde h(X, Y) \mid X) = g(X)\, m(X)$'tir. (i) gereği
+
+$$E\big[g(X)\, h(X, Y)\big] = E\big(\tilde h(X, Y)\big) = E\big[E\big(\tilde h(X, Y) \mid X\big)\big] = E\big[g(X)\, m(X)\big] = E\big[g(X)\, E\big(h(X,Y) \mid X\big)\big].$$
+
+**Sürekli durum, (i).** $f_X(x) > 0$ olan $x$ noktaları için $m(x) = \int_{-\infty}^{\infty} h(x, y)\, f_{Y \mid X = x}(y)\,dy$'dir; $f_X(x) = 0$ olan noktalar aşağıdaki dış integrale katkı vermez. @def-beklenen-deger'e göre
+
+$$E\big[m(X)\big] = \int_{-\infty}^{\infty} m(x)\, f_X(x)\,dx = \int_{-\infty}^{\infty} \Bigg( \int_{-\infty}^{\infty} h(x, y)\, f_{Y \mid X = x}(y)\,dy \Bigg) f_X(x)\,dx.$$
+
+$f_X(x)$'i iç integrale alıp $f_{Y \mid X = x}(y)\, f_X(x) = f_{X,Y}(x, y)$ yazalım; bu eşitlik $f_X(x) > 0$ iken koşullu yoğunluğun tanımıdır. $f_X(x) = 0$ olan $x$ noktalarında ise $m(x)\, f_X(x) = 0$'dır ve $\int f_{X,Y}(x, y)\,dy = f_X(x) = 0$ olduğundan $\int h(x,y)\, f_{X,Y}(x, y)\,dy = 0$'dır; bu noktalar iki tarafa da katkı vermez. Böylece
+
+$$E\big[m(X)\big] = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} h(x, y)\, f_{X,Y}(x, y)\,dy\,dx = E\big(h(X, Y)\big);$$
+
+son eşitlik @def-vektor-beklenen-deger'dir. İntegrallerin sırasını değiştirmeyi $E(|h(X,Y)|) < \infty$ varsayımı, yani $\iint |h|\, f_{X,Y}$ integralinin sonlu olması sağlar (Fubini teoremi).
+
+**Sürekli durum, (ii).** Kesikli durumdaki akıl yürütme aynen geçerlidir: @prp-kosullu-beklenen-ozellikleri (c) ile $E(g(X)\, h(X,Y) \mid X) = g(X)\, m(X)$ ve (i) ile $E[g(X)\, h(X,Y)] = E[g(X)\, m(X)]$ olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Teoremin (i) kısmına "kule kuralı" denmesinin nedeni, iç içe iki beklenen değerin bir kule gibi üst üste durmasıdır: içteki $E(\cdot \mid X)$ önce $Y$ üzerinden, dıştaki $E$ sonra $X$ üzerinden ortalama alır. (ii) kısmı ise şunu söyler: bir beklenen değerin içinde $X$'in fonksiyonunun yanındaki $Y$, hiçbir şey değişmeden $E(Y \mid X)$ ile değiştirilebilir. Bu, bölüm sonunda en iyi tahmin sonucunu verecek olan araçtır.
+
+::: {.callout-tip title="Kule kuralının hesap biçimi"}
+Uygulamada kule kuralı çoğu zaman açık biçimiyle kullanılır:
+
+$$E(Y) = \sum_{x \in D_X} E(Y \mid X = x)\, f_X(x) \qquad \text{ya da} \qquad E(Y) = \int_{-\infty}^{\infty} E(Y \mid X = x)\, f_X(x)\,dx.$$
+
+Bu, toplam olasılık formülünün beklenen değer karşılığıdır: $Y$'nin ortalaması, $X$'in her değerine karşılık gelen dilim ortalamalarının $X$'in dağılımıyla ağırlıklı ortalamasıdır. Kural özellikle $Y$'nin marjinal dağılımı karmaşık, ama $X = x$ verildiğinde $Y$'nin dağılımı basit olduğunda güçlüdür: $E(Y)$ marjinal hiç hesaplanmadan bulunur.
+:::
+
+:::: {#exm-tower-uygulama name="Kule Kuralının Doğrulanması"}
+@exm-kosullu-beklenen-kesikli ve @exm-kosullu-beklenen-surekli'de bulunan koşullu beklenen değerlerden yola çıkarak kule kuralıyla $E(X_1)$, $E(X_2)$, $E(Y)$ ve $E(X)$'i hesaplayınız; sonuçları marjinal dağılımlardan bulunan değerlerle karşılaştırınız.
+
+::: {.cozum}
+**Üç para atışı.** $E(X_1 \mid X_2 = x_2) = x_2 + \frac{1}{2}$ ve $f_{X_2}$ değerleri $\frac{2}{8}, \frac{4}{8}, \frac{2}{8}$ idi. Kule kuralına göre
+
+$$E(X_1) = \sum_{x_2 = 0}^{2} E(X_1 \mid X_2 = x_2)\, f_{X_2}(x_2) = \frac{1}{2} \cdot \frac{2}{8} + \frac{3}{2} \cdot \frac{4}{8} + \frac{5}{2} \cdot \frac{2}{8} = \frac{1 + 6 + 5}{8} = \frac{12}{8} = \frac{3}{2}.$$
+
+Aynı sonuca daha kısa yoldan, rastgele değişken biçimini kullanarak da varılır: $E(X_1) = E\big[E(X_1 \mid X_2)\big] = E\big(X_2 + \tfrac{1}{2}\big) = E(X_2) + \tfrac{1}{2} = 1 + \tfrac{1}{2} = \tfrac{3}{2}$; burada @thm-dogrusal-donusum-beklenen-varyans kullanıldı. Marjinalden bulduğumuz $E(X_1) = \frac{3}{2}$ ile uyuşur.
+
+Öteki yönde $E(X_2 \mid X_1) = \frac{2}{3} X_1$ olduğundan
+
+$$E(X_2) = E\big[E(X_2 \mid X_1)\big] = E\big(\tfrac{2}{3} X_1\big) = \tfrac{2}{3} \cdot \tfrac{3}{2} = 1,$$
+
+marjinalden bulunan $E(X_2) = 1$ ile uyuşur.
+
+**Üçgen örneği.** $E(Y \mid X = x) = \frac{1 + x}{2}$ ve $f_X(x) = 2(1 - x)$, $0 < x < 1$. Kule kuralı:
+
+$$E(Y) = \int_{0}^{1} \frac{1 + x}{2} \cdot 2(1 - x)\,dx = \int_{0}^{1} (1 - x^2)\,dx = 1 - \frac{1}{3} = \frac{2}{3}.$$
+
+Doğrudan hesap: $E(Y) = \int_{0}^{1} y \cdot 2y\,dy = \frac{2}{3}$. Uyuşur.
+
+$E(X \mid Y = y) = \frac{y}{2}$ ve $f_Y(y) = 2y$, $0 < y < 1$ olduğundan
+
+$$E(X) = \int_{0}^{1} \frac{y}{2} \cdot 2y\,dy = \int_{0}^{1} y^2\,dy = \frac{1}{3}.$$
+
+Doğrudan hesap: $E(X) = \int_{0}^{1} x \cdot 2(1 - x)\,dx = 1 - \frac{2}{3} = \frac{1}{3}$. Uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Koşullu Varyans ve Toplam Varyans Kuralı
+
+Koşullu dağılım gerçek bir dağılım olduğuna göre yalnızca beklenen değeri değil, varyansı da vardır. $X = x$ bilgisi $Y$'nin ortalamasını $E(Y \mid X = x)$'e taşıdığı gibi, $Y$'nin yayılımını da değiştirir; çoğu zaman azaltır.
+
+::: {#def-kosullu-varyans name="Koşullu Varyans"}
+$(X, Y)$ bir rastgele vektör ve $x$, $f_X(x) > 0$ ve $E(Y^2 \mid X = x) < \infty$ olan bir nokta olsun.
+
+$$\operatorname{Var}(Y \mid X = x) = E\Big( \big[Y - E(Y \mid X = x)\big]^2 \,\Big|\, X = x \Big)$$
+
+sayısına, $X = x$ verilmişken $Y$'nin **koşullu varyansı** denir. $v(x) = \operatorname{Var}(Y \mid X = x)$ olmak üzere $\operatorname{Var}(Y \mid X) = v(X)$ rastgele değişkenine, $X$ verilmişken $Y$'nin koşullu varyansı denir.
+:::
+
+Koşullu varyans, tıpkı sıradan varyans gibi, ikinci momentle ortalamanın karesinin farkı olarak hesaplanır. $\mu(x) = E(Y \mid X = x)$ yazalım; bu, $X = x$ koşulu altında bir sabittir. @prp-kosullu-beklenen-ozellikleri'nin (a) ve (b) özellikleriyle
+
+$$\begin{aligned}
+\operatorname{Var}(Y \mid X = x) &= E\big( Y^2 - 2\mu(x)\, Y + \mu(x)^2 \,\big|\, X = x \big) \\
+&= E(Y^2 \mid X = x) - 2\mu(x)\, E(Y \mid X = x) + \mu(x)^2 \\
+&= E(Y^2 \mid X = x) - 2\mu(x)^2 + \mu(x)^2 = E(Y^2 \mid X = x) - \big[E(Y \mid X = x)\big]^2.
+\end{aligned}$$
+
+Rastgele değişken biçiminde:
+
+$$\operatorname{Var}(Y \mid X) = E(Y^2 \mid X) - \big[E(Y \mid X)\big]^2.$$
+
+Örneğin üç para atışında $X_2 = x_2$ verilmişken $X_1$, $x_2$ ve $x_2 + 1$ değerlerini her biri $\frac{1}{2}$ olasılıkla alır; $E(X_1^2 \mid X_2 = x_2) = \frac{x_2^2 + (x_2+1)^2}{2} = x_2^2 + x_2 + \frac{1}{2}$ ve
+
+$$\operatorname{Var}(X_1 \mid X_2 = x_2) = x_2^2 + x_2 + \tfrac{1}{2} - \big(x_2 + \tfrac{1}{2}\big)^2 = \tfrac{1}{2} - \tfrac{1}{4} = \tfrac{1}{4}$$
+
+olur; koşullu varyans $x_2$'ye bağlı değildir. Üçgen örneğinde ise $X = x$ verilmişken $Y$, uzunluğu $1 - x$ olan bir aralıkta düzgün dağılır; aşağıdaki örnekte $\operatorname{Var}(Y \mid X = x) = \frac{(1 - x)^2}{12}$ bulacağız: $x$ büyüdükçe $Y$'nin belirsizliği azalır.
+
+Kule kuralı beklenen değeri iki aşamaya bölüyordu. Varyans için benzer bir bölme vardır, ama bir fark çıkar: $Y$'nin toplam yayılımı, dilimlerin içindeki yayılımın ortalaması **artı** dilim ortalamalarının kendi aralarındaki yayılımıdır.
+
+:::: {#thm-toplam-varyans name="Toplam Varyans Kuralı"}
+$(X, Y)$ bir rastgele vektör ve $E(Y^2) < \infty$ olsun. O zaman
+
+$$\operatorname{Var}(Y) = E\big[\operatorname{Var}(Y \mid X)\big] + \operatorname{Var}\big[E(Y \mid X)\big].$$
+
+::: {.ispat}
+$\operatorname{Var}(Y \mid X) = E(Y^2 \mid X) - [E(Y \mid X)]^2$ eşitliğinin iki tarafının beklenen değerini alalım. @thm-beklenen-deger-lineerlik ve kule kuralı (@thm-toplam-beklenen-deger, $h(x, y) = y^2$ ile) gereği
+
+$$E\big[\operatorname{Var}(Y \mid X)\big] = E\big[E(Y^2 \mid X)\big] - E\Big( \big[E(Y \mid X)\big]^2 \Big) = E(Y^2) - E\Big( \big[E(Y \mid X)\big]^2 \Big).$$
+
+Öte yandan $E(Y \mid X)$ bir rastgele değişkendir ve varyansı @prp-varyans-hesap-formulu ile, ardından kule kuralı ($E[E(Y \mid X)] = E(Y)$) ile
+
+$$\operatorname{Var}\big[E(Y \mid X)\big] = E\Big( \big[E(Y \mid X)\big]^2 \Big) - \Big( E\big[E(Y \mid X)\big] \Big)^2 = E\Big( \big[E(Y \mid X)\big]^2 \Big) - \big[E(Y)\big]^2$$
+
+olur. İki eşitliği taraf tarafa toplayalım; $E\big([E(Y \mid X)]^2\big)$ terimleri birbirini götürür:
+
+$$E\big[\operatorname{Var}(Y \mid X)\big] + \operatorname{Var}\big[E(Y \mid X)\big] = E(Y^2) - \big[E(Y)\big]^2 = \operatorname{Var}(Y).$$
+
+Son eşitlik yine @prp-varyans-hesap-formulu'dür. $E(Y^2) < \infty$ varsayımı, bütün bu beklenen değerlerin sonlu olmasını sağlar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Kuralın iki terimi ayrı ayrı anlamlıdır. $E[\operatorname{Var}(Y \mid X)]$, **açıklanamayan** yayılımdır: $X$ bilinse bile $Y$'de kalan belirsizliğin ortalaması. $\operatorname{Var}[E(Y \mid X)]$ ise **açıklanan** yayılımdır: $Y$'nin ortalamasının $X$ değiştikçe ne kadar oynadığı. İki terim de negatif olmadığından iki sonuç hemen çıkar:
+
+- $\operatorname{Var}[E(Y \mid X)] \le \operatorname{Var}(Y)$: koşullu beklenen değer, $Y$'den daha az yayılmış bir rastgele değişkendir.
+- $E[\operatorname{Var}(Y \mid X)] \le \operatorname{Var}(Y)$: $X$'i bilmek, ortalamada, $Y$ hakkındaki belirsizliği artırmaz.
+
+:::: {#exm-kosbek-toplam-varyans name="Toplam Varyans Kuralının Doğrulanması"}
+Üç para atışında $\operatorname{Var}(X_1)$'i ve üçgen örneğinde $\operatorname{Var}(Y)$'yi toplam varyans kuralıyla hesaplayınız; sonuçları marjinal dağılımlardan bulunan değerlerle karşılaştırınız.
+
+::: {.cozum}
+**Üç para atışı.** Yukarıda $\operatorname{Var}(X_1 \mid X_2 = x_2) = \frac{1}{4}$ bulmuştuk; sabit olduğundan $E[\operatorname{Var}(X_1 \mid X_2)] = \frac{1}{4}$. Öte yandan $E(X_1 \mid X_2) = X_2 + \frac{1}{2}$ olduğundan @thm-dogrusal-donusum-beklenen-varyans ile
+
+$$\operatorname{Var}\big[E(X_1 \mid X_2)\big] = \operatorname{Var}\big(X_2 + \tfrac{1}{2}\big) = \operatorname{Var}(X_2).$$
+
+$E(X_2) = 1$ ve $E(X_2^2) = 0 \cdot \frac{2}{8} + 1 \cdot \frac{4}{8} + 4 \cdot \frac{2}{8} = \frac{12}{8} = \frac{3}{2}$ olduğundan $\operatorname{Var}(X_2) = \frac{3}{2} - 1 = \frac{1}{2}$. Toplam varyans kuralı:
+
+$$\operatorname{Var}(X_1) = \frac{1}{4} + \frac{1}{2} = \frac{3}{4}.$$
+
+Doğrudan hesap: $E(X_1^2) = 0 \cdot \frac{1}{8} + 1 \cdot \frac{3}{8} + 4 \cdot \frac{3}{8} + 9 \cdot \frac{1}{8} = \frac{24}{8} = 3$ ve $\operatorname{Var}(X_1) = 3 - \left(\frac{3}{2}\right)^2 = 3 - \frac{9}{4} = \frac{3}{4}$. Uyuşur.
+
+**Üçgen örneği.** Önce $\operatorname{Var}(Y \mid X = x)$'i hesaplayalım. $X = x$ verilmişken $Y$'nin yoğunluğu $(x, 1)$ üzerinde $\frac{1}{1-x}$ idi:
+
+$$E(Y^2 \mid X = x) = \int_{x}^{1} \frac{y^2}{1 - x}\,dy = \frac{1 - x^3}{3(1 - x)} = \frac{1 + x + x^2}{3}.$$
+
+Böylece
+
+$$\operatorname{Var}(Y \mid X = x) = \frac{1 + x + x^2}{3} - \left( \frac{1 + x}{2} \right)^2 = \frac{4 + 4x + 4x^2 - 3 - 6x - 3x^2}{12} = \frac{1 - 2x + x^2}{12} = \frac{(1 - x)^2}{12}.$$
+
+Bunun $X$ üzerinden ortalaması, $f_X(x) = 2(1-x)$ ile
+
+$$E\big[\operatorname{Var}(Y \mid X)\big] = \int_{0}^{1} \frac{(1 - x)^2}{12} \cdot 2(1 - x)\,dx = \frac{1}{6} \int_{0}^{1} (1 - x)^3\,dx = \frac{1}{6} \cdot \frac{1}{4} = \frac{1}{24}.$$
+
+İkinci terim için $E(Y \mid X) = \frac{1 + X}{2}$ olduğundan $\operatorname{Var}[E(Y \mid X)] = \frac{1}{4} \operatorname{Var}(X)$. $E(X) = \frac{1}{3}$ idi ve
+
+$$E(X^2) = \int_{0}^{1} x^2 \cdot 2(1 - x)\,dx = 2\left( \frac{1}{3} - \frac{1}{4} \right) = \frac{1}{6}, \qquad \operatorname{Var}(X) = \frac{1}{6} - \frac{1}{9} = \frac{1}{18}.$$
+
+Öyleyse $\operatorname{Var}[E(Y \mid X)] = \frac{1}{72}$ ve toplam varyans kuralıyla
+
+$$\operatorname{Var}(Y) = \frac{1}{24} + \frac{1}{72} = \frac{3}{72} + \frac{1}{72} = \frac{4}{72} = \frac{1}{18}.$$
+
+Doğrudan hesap: $E(Y^2) = \int_{0}^{1} y^2 \cdot 2y\,dy = \frac{1}{2}$ ve $\operatorname{Var}(Y) = \frac{1}{2} - \frac{4}{9} = \frac{1}{18}$. Uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Rastgele Sayıda Terimin Toplamı
+
+Kule kuralı ve toplam varyans kuralının en tipik uygulaması, terim sayısının kendisi de rastgele olan toplamlardır. Bir mağazaya bir günde gelen müşteri sayısı ve her müşterinin harcaması; bir sigorta şirketine bir ayda gelen hasar talebi sayısı ve her talebin tutarı; bir sunucuya bir saatte gelen istek sayısı ve her isteğin işlem süresi hep bu yapıdadır. Toplamın marjinal dağılımı genellikle karmaşıktır; ama terim sayısı sabitlendiğinde toplam, bildiğimiz sabit sayıda terimli bir toplama dönüşür.
+
+::: {.callout-note title="Koşullayan değişken kesikli, koşullanan değişken herhangi bir dağılıma sahipse"}
+Tanımlarımız ve kule kuralı, $(X, Y)$'nin ikisi birden kesikli ya da ikisi birden sürekli olduğu durumu kapsıyor. Aşağıdaki örnekte ise koşullayan değişken $N$ kesiklidir, koşullanan toplam $S$ ise herhangi bir dağılıma sahip (örneğin sürekli) olabilir. Bu karma durumda tanım şöyledir: $P(X = x) > 0$ olan bir $x$ için $P(\cdot \mid X = x)$ bir olasılık ölçüsüdür (@thm-kosullu-olasilik-olcudur); $Y$'nin bu ölçüye göre dağılımına $X = x$ verilmişken $Y$'nin **koşullu dağılımı**, bu dağılıma göre beklenen değerine de $E(Y \mid X = x)$ denir. Kule kuralı yine geçerlidir: $\{X = x\}$, $x \in D_X$, olayları $\Omega$'yı parçaladığından toplam olasılık formülü (@thm-toplam-olasilik) her $y \in \mathbb{R}$ için
+
+$$P(Y \le y) = \sum_{x \in D_X} P(Y \le y \mid X = x)\, P(X = x)$$
+
+verir; yani $Y$'nin dağılım fonksiyonu, koşullu dağılım fonksiyonlarının $f_X$ ağırlıklı toplamıdır. Aynı eşitlik, $Y$ kesikli ise olasılık fonksiyonuna, sürekli ise (türev alarak) yoğunluk fonksiyonuna geçer: $f_Y(y) = \sum_{x \in D_X} f_{Y \mid X = x}(y)\, P(X = x)$. Şimdi $E(|Y|) < \infty$ olduğunu varsayalım; bu durumda terimleri negatif olmayan $\sum_{x \in D_X} \int |y|\, f_{Y \mid X = x}(y)\, P(X = x)\,dy$ ifadesi sonludur ve Tonelli–Fubini teoremi toplamla integralin (ya da iki toplamın) yerinin değiştirilmesine izin verir. Öyleyse iki tarafı $y$ ile çarpıp $y$ üzerinden toplayınca ya da integre edince
+
+$$E(Y) = \sum_{x \in D_X} E(Y \mid X = x)\, P(X = x) = E\big[E(Y \mid X)\big]$$
+
+çıkar. Toplam varyans kuralının ispatı yalnızca kule kuralını ve koşullu beklenen değerin özelliklerini kullandığından o da karma durumda geçerli kalır.
+:::
+
+:::: {#exm-rastgele-toplam name="Rastgele Sayıda Terimin Toplamı"}
+$N$, değer kümesi $\{0, 1, 2, \dots\}$ olan ve $E(N^2) < \infty$ sağlayan bir rastgele değişken; $X_1, X_2, \dots$ ise bağımsız, aynı dağılımlı, $E(X_i) = \mu$ ve $\operatorname{Var}(X_i) = \sigma^2$ olan rastgele değişkenler olsun. $N$'nin $X_1, X_2, \dots$ dizisinden bağımsız olduğu varsayılsın. **Rastgele toplam**
+
+$$S = \sum_{i = 1}^{N} X_i = X_1 + X_2 + \cdots + X_N$$
+
+ile tanımlansın ($N = 0$ ise $S = 0$).
+
+**(a)** $E(S)$'yi hesaplayınız.
+
+**(b)** $\operatorname{Var}(S)$'yi hesaplayınız.
+
+**(c)** $N$'nin $\lambda > 0$ parametreli Poisson dağılımına sahip olduğunu varsayınız; bu dağılımı [Poisson Dağılımı](poisson-dagilimi.qmd) bölümünde ayrıntılı inceleyeceğiz, burada yalnızca $E(N) = \operatorname{Var}(N) = \lambda$ olduğunu kullanınız. $E(S)$ ve $\operatorname{Var}(S)$'yi $\lambda$, $\mu$, $\sigma^2$ cinsinden yazınız.
+
+**(d)** Bir sigorta şirketine bir ayda gelen hasar talebi sayısı $\lambda = 20$ parametreli Poisson dağılımlı, her talebin tutarı ortalaması $500$ ve standart sapması $300$ olsun. Aylık toplam hasarın beklenen değerini ve standart sapmasını bulunuz.
+
+::: {.cozum}
+**(a)** Doğrudan hesap zordur, çünkü $S$'nin dağılımı $N$'nin ve $X_i$'lerin dağılımlarının karmaşık bir bileşimidir. Bunun yerine $N$'ye göre koşullayalım.
+
+$N = n$ verilmişken ($n \ge 1$) $S = X_1 + \cdots + X_n$'dir. $N$, $(X_1, \dots, X_n)$ vektöründen bağımsız olduğundan, $N = n$ koşulu bu vektörün dağılımını değiştirmez: $(X_1, \dots, X_n)$'nin $N = n$ verilmişken koşullu dağılımı, koşulsuz dağılımıyla aynıdır. Dolayısıyla $X_1 + \cdots + X_n$'nin $N = n$ verilmişken koşullu dağılımı da koşulsuz dağılımıyla aynıdır ve @prp-vektor-lineerlik'in tümevarımla $n$ değişkene genişletilmiş hâliyle
+
+$$E(S \mid N = n) = E(X_1 + \cdots + X_n) = n\mu.$$
+
+$n = 0$ için $S = 0$ ve $E(S \mid N = 0) = 0 = 0 \cdot \mu$; formül $n = 0$'ı da kapsar. Rastgele değişken biçiminde $E(S \mid N) = \mu N$'dir. Kule kuralı (@thm-toplam-beklenen-deger):
+
+$$E(S) = E\big[E(S \mid N)\big] = E(\mu N) = \mu\, E(N).$$
+
+Sonuç, sezgiyle tam uyumludur: ortalama terim sayısı çarpı ortalama terim.
+
+**(b)** Aynı koşullamayla $N = n$ verilmişken $S$'nin koşullu varyansı, bağımsız $X_1, \dots, X_n$'nin toplamının varyansıdır. Bağımsız rastgele değişkenlerin kovaryansları sıfır olduğundan (@thm-bagimsiz-kovaryans-sifir), @cor-bagimsiz-toplam-varyansi'nin tümevarımla $n$ terime genişletilmiş hâli varyansların toplandığını söyler:
+
+$$\operatorname{Var}(S \mid N = n) = \operatorname{Var}(X_1 + \cdots + X_n) = n\sigma^2.$$
+
+$n = 0$ için $\operatorname{Var}(S \mid N = 0) = 0$; formül yine geçerlidir. Öyleyse $\operatorname{Var}(S \mid N) = \sigma^2 N$. Toplam varyans kuralı (@thm-toplam-varyans) ile, $\operatorname{Var}(\mu N) = \mu^2 \operatorname{Var}(N)$ olduğunu (@thm-dogrusal-donusum-beklenen-varyans) kullanarak
+
+$$\operatorname{Var}(S) = E\big[\operatorname{Var}(S \mid N)\big] + \operatorname{Var}\big[E(S \mid N)\big] = E(\sigma^2 N) + \operatorname{Var}(\mu N) = \sigma^2 E(N) + \mu^2 \operatorname{Var}(N).$$
+
+İki terimin anlamı: birincisi, terim sayısı bilinse bile terimlerin kendi yayılımından gelen belirsizlik; ikincisi, terim sayısının belirsizliğinden gelen belirsizlik. $N$ sabit ($N = n$, $\operatorname{Var}(N) = 0$) olsaydı ikinci terim düşer ve bilinen $n\sigma^2$ formülü kalırdı.
+
+**(c)** $E(N) = \operatorname{Var}(N) = \lambda$ konursa
+
+$$E(S) = \lambda \mu, \qquad \operatorname{Var}(S) = \lambda \sigma^2 + \lambda \mu^2 = \lambda \big( \sigma^2 + \mu^2 \big) = \lambda\, E(X_1^2)$$
+
+olur; son eşitlik @prp-varyans-hesap-formulu'nden gelir ($E(X_1^2) = \sigma^2 + \mu^2$). Yani Poisson sayıda terimli bir toplamın varyansı, terim sayısının ortalaması ile bir terimin ikinci momentinin çarpımıdır.
+
+**(d)** $\lambda = 20$, $\mu = 500$, $\sigma = 300$:
+
+$$E(S) = 20 \cdot 500 = 10\,000, \qquad \operatorname{Var}(S) = 20 \cdot \big( 300^2 + 500^2 \big) = 20 \cdot 340\,000 = 6\,800\,000.$$
+
+Standart sapma $\sigma_S = \sqrt{6\,800\,000} \approx 2607{,}7$'dir. Karşılaştırma için: talep sayısı rastgele olmayıp tam $20$ olsaydı varyans $20 \cdot 300^2 = 1\,800\,000$, standart sapma yaklaşık $1341{,}6$ olurdu. Toplam yayılımın büyük kısmı ($5\,000\,000$) talep sayısındaki belirsizlikten gelmektedir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## En İyi Tahmin Olarak Koşullu Beklenen Değer
+
+$X$ gözlenmiş, $Y$ gözlenmemiş olsun; $Y$'yi $X$'in bir fonksiyonu $g(X)$ ile tahmin etmek istiyoruz. Hangi $g$ en iyisidir? Bu soruyu sormak için önce "iyi"nin ölçüsünü seçmeliyiz. En yaygın ölçü **ortalama karesel hata** $E\big[(Y - g(X))^2\big]$'dir. Aşağıdaki örnekte, bu ölçüye göre en iyi tahminin koşullu beklenen değer olduğunu göstereceğiz. Kule kuralının (ii) kısmı ispatın kalbidir.
+
+:::: {#exm-en-iyi-tahmin name="Koşullu Beklenen Değer En İyi Karesel Tahmindir"}
+$(X, Y)$ bir rastgele vektör, $E(Y^2) < \infty$ ve $m(x) = E(Y \mid X = x)$ olsun. $E\big[g(X)^2\big] < \infty$ olan her Borel ölçülebilir $g$ fonksiyonu için
+
+$$E\Big[ \big( Y - g(X) \big)^2 \Big] \ \ge\ E\Big[ \big( Y - E(Y \mid X) \big)^2 \Big] = E\big[ \operatorname{Var}(Y \mid X) \big]$$
+
+olduğunu ve eşitliğin ancak $P\big(g(X) = E(Y \mid X)\big) = 1$ iken sağlandığını gösteriniz.
+
+::: {.cozum}
+**Adım 1: Hatayı iki parçaya ayırma.** $Y - g(X) = \big(Y - m(X)\big) + \big(m(X) - g(X)\big)$ yazıp kare alalım:
+
+$$\big( Y - g(X) \big)^2 = \big( Y - m(X) \big)^2 + \big( m(X) - g(X) \big)^2 + 2\, \big( m(X) - g(X) \big)\big( Y - m(X) \big).$$
+
+Beklenen değer alalım (@prp-vektor-lineerlik'in üç terime genişletilmiş hâliyle):
+
+$$E\Big[ \big( Y - g(X) \big)^2 \Big] = E\Big[ \big( Y - m(X) \big)^2 \Big] + E\Big[ \big( m(X) - g(X) \big)^2 \Big] + 2\, E\Big[ \big( m(X) - g(X) \big)\big( Y - m(X) \big) \Big].$$
+
+**Adım 2: Çapraz terim sıfırdır.** Çapraz terimde $X$'in fonksiyonu $m(X) - g(X)$ ile $Y - m(X)$ çarpılmıştır; bu çarpımın beklenen değerinin var olması $E(Y^2) < \infty$ ve $E[g(X)^2] < \infty$ varsayımlarından çıkar. Kule kuralının (ii) kısmına (@thm-toplam-beklenen-deger, $g(X)$ yerine $m(X) - g(X)$ ve $h(X, Y) = Y - m(X)$ ile) başvuralım:
+
+$$E\Big[ \big( m(X) - g(X) \big)\big( Y - m(X) \big) \Big] = E\Big[ \big( m(X) - g(X) \big)\, E\big( Y - m(X) \mid X \big) \Big].$$
+
+İçteki koşullu beklenen değeri hesaplayalım. Sabit bir $x$ için, @prp-kosullu-beklenen-ozellikleri (b) ve (c) ile
+
+$$E\big( Y - m(X) \mid X = x \big) = E(Y \mid X = x) - E\big( m(X) \mid X = x \big) = m(x) - m(x) = 0.$$
+
+Yani $E(Y - m(X) \mid X) = 0$ özdeş olarak sıfırdır ve çapraz terim $E\big[(m(X) - g(X)) \cdot 0\big] = 0$ olur.
+
+**Adım 3: Eşitsizlik.** Adım 1 ve 2'den
+
+$$E\Big[ \big( Y - g(X) \big)^2 \Big] = E\Big[ \big( Y - m(X) \big)^2 \Big] + E\Big[ \big( m(X) - g(X) \big)^2 \Big].$$
+
+Sağdaki ikinci terim, negatif olmayan bir rastgele değişkenin beklenen değeri olduğundan $\ge 0$'dır; öyleyse
+
+$$E\Big[ \big( Y - g(X) \big)^2 \Big] \ge E\Big[ \big( Y - m(X) \big)^2 \Big] = E\Big[ \big( Y - E(Y \mid X) \big)^2 \Big].$$
+
+**Adım 4: En küçük hatanın değeri.** $h(x, y) = (y - m(x))^2$ ile kule kuralının (i) kısmı
+
+$$E\Big[ \big( Y - m(X) \big)^2 \Big] = E\Big[ E\Big( \big( Y - m(X) \big)^2 \,\Big|\, X \Big) \Big]$$
+
+verir. Sabit $x$ için $E\big( (Y - m(x))^2 \mid X = x \big)$, tam olarak @def-kosullu-varyans'taki $\operatorname{Var}(Y \mid X = x)$'tir. Öyleyse en küçük ortalama karesel hata $E[\operatorname{Var}(Y \mid X)]$'tir.
+
+**Adım 5: Eşitlik durumu.** Eşitlik ancak $E\big[(m(X) - g(X))^2\big] = 0$ iken sağlanır. $Z = m(X) - g(X)$ dersek $Z^2$, değer kümesi $[0, \infty)$ içinde kalan ve beklenen değeri $E(Z^2) = 0$ olan bir rastgele değişkendir. @thm-markov-esitsizligi her $\varepsilon > 0$ için $P(Z^2 \ge \varepsilon) \le E(Z^2)/\varepsilon = 0$ verir. $\{Z \ne 0\} = \bigcup_{k \ge 1} \{Z^2 \ge \tfrac{1}{k}\}$ sayılabilir birleşiminin olasılığı da sayılabilir alt toplamsallık (@cor-sayilabilir-alt-toplamsallik) ile sıfırdır: $P(Z \ne 0) = 0$, yani $P\big(g(X) = m(X)\big) = 1$. Tersine, $P(g(X) = m(X)) = 1$ ise $Z^2$ olasılığı $1$ olan bir olay üzerinde sıfırdır; beklenen değeri $E(Z^2) = 0$ olur ve eşitlik sağlanır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Sonucu iki bakış açısıyla yorumlayalım.
+
+**Sabit tahminle karşılaştırma.** $g$ sabit bir $c$ fonksiyonu olsun; $X$'e hiç bakmadan $Y$'yi $c$ ile tahmin ediyoruz. $E[(Y - c)^2] = \operatorname{Var}(Y) + (E(Y) - c)^2$ olduğundan en iyi sabit $c = E(Y)$'dir ve hatası $\operatorname{Var}(Y)$'dir. $X$'e bakarak tahmin yapınca hata $E[\operatorname{Var}(Y \mid X)]$'e iner ve toplam varyans kuralına göre kazanç tam olarak $\operatorname{Var}[E(Y \mid X)]$'tir: $X$'in $Y$ hakkında taşıdığı bilgi, $Y$'nin ortalamasının $X$'le ne kadar değiştiğiyle ölçülür. Üçgen örneğinde sabit tahminin hatası $\operatorname{Var}(Y) = \frac{1}{18}$, en iyi tahmin $\frac{1 + X}{2}$'nin hatası $\frac{1}{24}$'tür.
+
+**Regresyonla bağ.** $m(x) = E(Y \mid X = x)$ fonksiyonuna regresyon fonksiyonu dememizin nedeni budur: istatistikte "$Y$'nin $X$ üzerine regresyonu" denen iş, veriden bu fonksiyonu kestirmeye çalışmaktır. Üç para atışında ve üçgen örneğinde $m$ doğrusaldı; genel olarak doğrusal olmak zorunda değildir ve koşullu beklenen değer, doğrusal olsun olmasın bütün tahminler arasında en iyisidir.
+
+## Alıştırmalar
+
+:::: {#exr-kosullu-beklenen-deger name="Koşullu Beklenen Değer Alıştırmaları"}
+**(a)** $(X, Y)$ rastgele vektörünün olasılık fonksiyonu aşağıdaki tabloyla verilsin.
+
+| $x \setminus y$ | $0$ | $1$ |
+|---|---|---|
+| $0$ | $\frac{1}{8}$ | $\frac{2}{8}$ |
+| $1$ | $\frac{2}{8}$ | $\frac{1}{8}$ |
+| $2$ | $\frac{1}{8}$ | $\frac{1}{8}$ |
+
+Her $x$ için $E(Y \mid X = x)$'i ve her $y$ için $E(X \mid Y = y)$'yi bulunuz; kule kuralıyla $E(Y)$'yi hesaplayıp marjinalden bulunan değerle karşılaştırınız.
+
+**(b)** $(X, Y)$'nin ortak yoğunluğu $f_{X,Y}(x, y) = e^{-y}$ ($0 < x < y < \infty$), diğer durumlarda $0$ olsun. $E(Y \mid X = x)$ ve $E(X \mid Y = y)$'yi bulunuz; kule kuralıyla $E(Y)$'yi, toplam varyans kuralıyla $\operatorname{Var}(Y)$'yi hesaplayınız.
+
+**(c)** Düzgün bir zar iki kez atılıyor; $X$ ilk atıştaki sayı, $Y$ iki atıştaki sayıların toplamı olsun. $E(Y \mid X = x)$ ve $E(X \mid Y = y)$'yi bulunuz; toplam varyans kuralıyla $\operatorname{Var}(Y)$'yi hesaplayınız. (Bir zar atışının varyansının $\frac{35}{12}$ olduğunu kullanabilirsiniz.)
+
+**(d)** $N$, $\{1, 2, 3\}$ üzerinde düzgün dağılmış olsun; $X_1, X_2, X_3$ bağımsız, aynı dağılımlı, $E(X_i) = 2$, $\operatorname{Var}(X_i) = 1$ ve $N$'den bağımsız olsun. $S = X_1 + \cdots + X_N$ için $E(S)$ ve $\operatorname{Var}(S)$'yi bulunuz.
+
+**(e)** $X$ ile $Y$'nin ikinci momentleri sonlu ve $E(Y \mid X) = c$ sabit olsun. $E(Y) = c$ ve $\operatorname{Cov}(X, Y) = 0$ olduğunu gösteriniz.
+
+**(f)** $X$, $(0, 1)$ üzerinde düzgün dağılsın ve $X = x$ verilmişken $Y$, $(0, x)$ üzerinde düzgün dağılsın; yani $f_{Y \mid X = x}(y) = \frac{1}{x}$, $0 < y < x$. Kule kuralı ve toplam varyans kuralıyla $E(Y)$ ve $\operatorname{Var}(Y)$'yi bulunuz; sonra $Y$'nin marjinal yoğunluğunu hesaplayarak doğrulayınız.
+
+::: {.cozum}
+**(a)** Satır toplamları $f_X(0) = \frac{3}{8}$, $f_X(1) = \frac{3}{8}$, $f_X(2) = \frac{2}{8}$; sütun toplamları $f_Y(0) = \frac{4}{8}$, $f_Y(1) = \frac{4}{8}$.
+
+$Y$ yalnızca $0$ ve $1$ değerlerini aldığından $E(Y \mid X = x) = P(Y = 1 \mid X = x) = \dfrac{f_{X,Y}(x, 1)}{f_X(x)}$:
+
+$$E(Y \mid X = 0) = \frac{2/8}{3/8} = \frac{2}{3}, \qquad E(Y \mid X = 1) = \frac{1/8}{3/8} = \frac{1}{3}, \qquad E(Y \mid X = 2) = \frac{1/8}{2/8} = \frac{1}{2}.$$
+
+$E(X \mid Y = y) = \sum_x x\, \dfrac{f_{X,Y}(x, y)}{f_Y(y)}$:
+
+$$E(X \mid Y = 0) = \frac{0 \cdot \frac{1}{8} + 1 \cdot \frac{2}{8} + 2 \cdot \frac{1}{8}}{4/8} = \frac{4/8}{4/8} = 1, \qquad E(X \mid Y = 1) = \frac{0 \cdot \frac{2}{8} + 1 \cdot \frac{1}{8} + 2 \cdot \frac{1}{8}}{4/8} = \frac{3/8}{4/8} = \frac{3}{4}.$$
+
+Kule kuralı:
+
+$$E(Y) = \frac{2}{3} \cdot \frac{3}{8} + \frac{1}{3} \cdot \frac{3}{8} + \frac{1}{2} \cdot \frac{2}{8} = \frac{2}{8} + \frac{1}{8} + \frac{1}{8} = \frac{4}{8} = \frac{1}{2}.$$
+
+Marjinalden: $E(Y) = 0 \cdot \frac{4}{8} + 1 \cdot \frac{4}{8} = \frac{1}{2}$. Uyuşur.
+
+**(b)** Marjinaller: $x > 0$ için $f_X(x) = \int_x^{\infty} e^{-y}\,dy = e^{-x}$; $y > 0$ için $f_Y(y) = \int_0^y e^{-y}\,dx = y e^{-y}$.
+
+$X = x$ verilmişken: $f_{Y \mid X = x}(y) = \dfrac{e^{-y}}{e^{-x}} = e^{-(y - x)}$, $y > x$. Bu, $x$ kadar kaydırılmış bir üstel yoğunluktur. $u = y - x$ değişken değiştirmesiyle
+
+$$E(Y \mid X = x) = \int_x^{\infty} y\, e^{-(y - x)}\,dy = \int_0^{\infty} (u + x)\, e^{-u}\,du = 1 + x.$$
+
+$Y = y$ verilmişken: $f_{X \mid Y = y}(x) = \dfrac{e^{-y}}{y e^{-y}} = \dfrac{1}{y}$, $0 < x < y$; yani $(0, y)$ üzerinde düzgün dağılım ve $E(X \mid Y = y) = \dfrac{y}{2}$.
+
+Kule kuralı: $E(Y) = E(1 + X) = 1 + E(X)$ ve $E(X) = \int_0^{\infty} x e^{-x}\,dx = 1$; öyleyse $E(Y) = 2$. Doğrulama: $E(Y) = \int_0^{\infty} y^2 e^{-y}\,dy = 2! = 2$.
+
+Toplam varyans: $X = x$ verilmişken $Y - x$'in yoğunluğu $e^{-u}$, $u > 0$'dır; ikinci momenti $\int_0^{\infty} u^2 e^{-u}\,du = 2$ ve ortalaması $1$ olduğundan $\operatorname{Var}(Y \mid X = x) = 2 - 1 = 1$. Buradan $E[\operatorname{Var}(Y \mid X)] = 1$. Öte yandan $\operatorname{Var}[E(Y \mid X)] = \operatorname{Var}(1 + X) = \operatorname{Var}(X) = \int_0^{\infty} x^2 e^{-x}\,dx - 1 = 2 - 1 = 1$. Öyleyse $\operatorname{Var}(Y) = 1 + 1 = 2$. Doğrulama: $E(Y^2) = \int_0^{\infty} y^3 e^{-y}\,dy = 3! = 6$ ve $\operatorname{Var}(Y) = 6 - 4 = 2$.
+
+**(c)** $Z$ ikinci atıştaki sayı olsun; $Y = X + Z$ ve $X$ ile $Z$ bağımsız, her biri $\{1, \dots, 6\}$ üzerinde düzgün, $E(X) = E(Z) = \frac{7}{2}$, $\operatorname{Var}(X) = \operatorname{Var}(Z) = \frac{35}{12}$.
+
+$E(Y \mid X = x) = E(X + Z \mid X = x) = x + E(Z \mid X = x) = x + E(Z) = x + \frac{7}{2}$; burada @prp-kosullu-beklenen-ozellikleri (b), (c) ve bağımsızlık için (d) kullanıldı.
+
+$E(X \mid Y = y)$ için bakışım kullanalım: $(X, Z)$'nin ortak dağılımı bileşenlerin yer değiştirmesine göre bakışımlıdır, dolayısıyla $Y = y$ verilmişken $X$ ile $Z$'nin koşullu dağılımları aynıdır ve $E(X \mid Y = y) = E(Z \mid Y = y)$. Lineerlikle $E(X \mid Y = y) + E(Z \mid Y = y) = E(X + Z \mid Y = y) = E(Y \mid Y = y) = y$; öyleyse $E(X \mid Y = y) = \dfrac{y}{2}$, $y \in \{2, \dots, 12\}$. (Doğrudan sayma ile de görülebilir: $Y = y$ verilmişken $X$, $\max(1, y - 6)$ ile $\min(6, y - 1)$ arasındaki tam sayılar üzerinde düzgün dağılır ve bu aralığın orta noktası $\frac{y}{2}$'dir.)
+
+Toplam varyans: $X = x$ verilmişken $Y = x + Z$'dir ve $Z$, $X$'ten bağımsız olduğundan $\operatorname{Var}(Y \mid X = x) = \operatorname{Var}(Z) = \frac{35}{12}$; $E[\operatorname{Var}(Y \mid X)] = \frac{35}{12}$. $\operatorname{Var}[E(Y \mid X)] = \operatorname{Var}\big(X + \frac{7}{2}\big) = \operatorname{Var}(X) = \frac{35}{12}$. Öyleyse $\operatorname{Var}(Y) = \frac{35}{12} + \frac{35}{12} = \frac{35}{6}$; bu, bağımsız iki zarın toplamının varyansı olarak beklenen sonuçtur.
+
+**(d)** @exm-rastgele-toplam'daki formüllerle $E(S) = \mu E(N)$ ve $\operatorname{Var}(S) = \sigma^2 E(N) + \mu^2 \operatorname{Var}(N)$. $E(N) = \frac{1 + 2 + 3}{3} = 2$, $E(N^2) = \frac{1 + 4 + 9}{3} = \frac{14}{3}$, $\operatorname{Var}(N) = \frac{14}{3} - 4 = \frac{2}{3}$. Öyleyse
+
+$$E(S) = 2 \cdot 2 = 4, \qquad \operatorname{Var}(S) = 1 \cdot 2 + 4 \cdot \frac{2}{3} = 2 + \frac{8}{3} = \frac{14}{3}.$$
+
+**(e)** Kule kuralıyla $E(Y) = E[E(Y \mid X)] = E(c) = c$. İkinci momentler sonlu olduğundan $|XY| \le \frac{1}{2}(X^2 + Y^2)$ eşitsizliği $E|XY| < \infty$ verir; öyleyse @thm-toplam-beklenen-deger (ii)'yi $g(X) = X$ ile uygulayabiliriz: $E(XY) = E\big[X\, E(Y \mid X)\big] = E(cX) = c\, E(X)$. @prp-kovaryans-ozellikleri (a)'ya göre
+
+$$\operatorname{Cov}(X, Y) = E(XY) - E(X)\, E(Y) = c\, E(X) - E(X) \cdot c = 0.$$
+
+Yani $E(Y \mid X)$'in sabit olması, kovaryansın sıfır olmasından daha güçlü bir koşuldur; ama daha önce gördüğümüz gibi bağımsızlıktan zayıftır.
+
+**(f)** $X = x$ verilmişken $Y$, $(0, x)$ üzerinde düzgün dağıldığından $E(Y \mid X = x) = \frac{x}{2}$ ve $\operatorname{Var}(Y \mid X = x) = \frac{x^2}{12}$. $X$ de $(0, 1)$ üzerinde düzgün olduğundan $E(X) = \frac{1}{2}$, $E(X^2) = \frac{1}{3}$, $\operatorname{Var}(X) = \frac{1}{3} - \frac{1}{4} = \frac{1}{12}$.
+
+Kule kuralı: $E(Y) = E\big(\frac{X}{2}\big) = \frac{1}{4}$.
+
+Toplam varyans: $E[\operatorname{Var}(Y \mid X)] = E\big(\frac{X^2}{12}\big) = \frac{1}{36}$ ve $\operatorname{Var}[E(Y \mid X)] = \operatorname{Var}\big(\frac{X}{2}\big) = \frac{1}{4} \cdot \frac{1}{12} = \frac{1}{48}$. Öyleyse
+
+$$\operatorname{Var}(Y) = \frac{1}{36} + \frac{1}{48} = \frac{4}{144} + \frac{3}{144} = \frac{7}{144}.$$
+
+Doğrulama: Ortak yoğunluk $f_{X,Y}(x, y) = f_X(x)\, f_{Y \mid X = x}(y) = \frac{1}{x}$, $0 < y < x < 1$. Marjinal: $0 < y < 1$ için
+
+$$f_Y(y) = \int_y^1 \frac{1}{x}\,dx = -\ln y.$$
+
+Buradaki momentler için gereken integrali kısmi integrasyonla hesaplayalım: $k \ge 0$ için $u = -\ln y$, $dv = y^k\,dy$ alınırsa $du = -\dfrac{dy}{y}$, $v = \dfrac{y^{k+1}}{k+1}$ olur ve
+
+$$\int_0^1 y^k (-\ln y)\,dy = \left[ -\frac{y^{k+1}}{k+1} \ln y \right]_0^1 + \frac{1}{k+1} \int_0^1 y^{k}\,dy = 0 + \frac{1}{k+1} \cdot \frac{1}{k+1} = \frac{1}{(k+1)^2};$$
+
+sınır teriminde $y = 1$ için $\ln 1 = 0$, $y \to 0^+$ için ise $y^{k+1} \ln y \to 0$'dır. Öyleyse $E(Y) = \int_0^1 y(-\ln y)\,dy = \frac{1}{4}$ ve $E(Y^2) = \int_0^1 y^2(-\ln y)\,dy = \frac{1}{9}$; $\operatorname{Var}(Y) = \frac{1}{9} - \frac{1}{16} = \frac{16 - 9}{144} = \frac{7}{144}$. Uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümle beklenen değer kuramının temel araçları tamamlanmış oldu. Bundan sonraki kısımda, buraya kadar geliştirilen kavramları en sık karşılaşılan somut dağılımlara uygulayacağız; ilk durak, tekrarlı denemelerin temel modeli olan Bernoulli ve binom dağılımlarıdır: [Bernoulli ve Binom Dağılımları](bernoulli-ve-binom-dagilimlari.qmd).

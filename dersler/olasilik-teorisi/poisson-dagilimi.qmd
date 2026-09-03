@@ -1,0 +1,693 @@
+---
+title: "Poisson Dağılımı"
+pagetitle: "Poisson Dağılımı"
+description: "Poisson dağılımının tanımı ve olasılık fonksiyonunun toplamının üstel seriyle doğrulanması; ardışık oran ve mod; çarpımsal momentlerle beklenen değer ve varyans; moment üreten, karakteristik ve çarpımsal moment üreten fonksiyonlar; bağımsız Poisson değişkenlerinin toplamı; binom dağılımına Poisson yaklaşımının tam limit ispatı; baskı hatası, çağrı merkezi ve kusurlu parça örnekleri."
+---
+
+[Bernoulli ve Binom Dağılımları](bernoulli-ve-binom-dagilimlari.qmd) bölümünde, $n$ bağımsız denemede gözlenen başarı sayısının binom dağılımına sahip olduğunu gördük. Binom dağılımının iki parametresi vardır: deneme sayısı $n$ ve başarı olasılığı $p$. Uygulamada sık karşılaşılan bir durum, $n$'nin çok büyük, $p$'nin çok küçük, ama çarpımları $np$'nin ılımlı bir sayı olmasıdır. Bir kitabın bir sayfasındaki baskı hataları, bir çağrı merkezine bir dakikada gelen çağrılar, bir radyoaktif maddenin bir saniyede yaydığı parçacıklar, bir şehirde bir günde olan trafik kazaları bu türdendir. "Deneme" sayısı (harfler, saniyeler, atomlar, sürücüler) çok büyüktür; her denemede "başarı" (hata, çağrı, bozunma, kaza) olasılığı çok küçüktür; ama ortalama başarı sayısı $1$, $3$ ya da $10$ gibi makul bir sayıdır.
+
+Böyle durumlarda binom olasılıklarını doğrudan hesaplamak zahmetlidir ve aslında gereksizdir: $n \to \infty$, $p \to 0$ ve $np \to \lambda$ iken binom olasılıkları, yalnızca $\lambda$'ya bağlı olan bir limite yaklaşır. Bu limit dağılım **Poisson dağılımı**dır; adını, bu limiti 1837'de inceleyen Siméon Denis Poisson'dan alır. Poisson dağılımı, bir zaman aralığında ya da bir bölgede gözlenen "nadir olay" sayılarının doğal modeli olduğundan olasılık teorisinin en çok kullanılan kesikli dağılımlarından biridir.
+
+Bu bölümde şunları öğreneceğiz: Poisson dağılımının tanımı ve olasılık fonksiyonunun toplamının bir olduğunun üstel seriyle gösterilmesi; ardışık olasılıkların oranı ve dağılımın en olası değeri; beklenen değerin de varyansın da $\lambda$ olduğu; moment üreten, karakteristik ve çarpımsal moment üreten fonksiyonlar; bağımsız Poisson değişkenlerinin toplamının yine Poisson olduğu; ve binom dağılımına Poisson yaklaşımının her çarpanın limitini ayrı ayrı bulan tam ispatı. Her sonucu sayısal örneklerle sınayacağız.
+
+## Tanım ve Olasılık Fonksiyonu
+
+Poisson dağılımını önce doğrudan, bir olasılık fonksiyonu formülüyle tanımlayacağız; binom dağılımıyla bağını bölümün sonunda kuracağız. Formülün nereden geldiğini şimdiden sezmek için şu kadarını akılda tutmak yeterlidir: binom olasılığındaki $(1-p)^{n-x}$ çarpanı, $p = \lambda/n$ ve $n$ büyük iken $e^{-\lambda}$'ya, $\binom{n}{x} p^x$ çarpanı ise $\lambda^x / x!$'e yaklaşır.
+
+::: {#def-poisson-dagilimi name="Poisson Dağılımı"}
+$\lambda > 0$ bir sabit olsun. Değer kümesi $D_X = \{0, 1, 2, \ldots\}$ olan bir $X$ kesikli rastgele değişkeninin olasılık fonksiyonu
+
+$$f_X(x) = \begin{cases} \dfrac{e^{-\lambda} \lambda^x}{x!}, & x = 0, 1, 2, \ldots \\[2mm] 0, & \text{diğer durumlarda} \end{cases}$$
+
+ise $X$, $\lambda$ **parametreli Poisson dağılımına** sahiptir denir ve $X \sim \operatorname{Poisson}(\lambda)$ yazılır.
+:::
+
+Tanım üzerine birkaç gözlem. Değer kümesi sonsuz sayılabilir bir kümedir; binom dağılımından farklı olarak $X$'in alabileceği değerlerin bir üst sınırı yoktur. Dağılımın tek parametresi $\lambda$'dır ve $\lambda$'nın tam sayı olması gerekmez. $0! = 1$ ve $\lambda^0 = 1$ olduğundan $f_X(0) = e^{-\lambda}$'dır; bu, "hiç olay olmaması" olasılığıdır ve Poisson hesaplarının çoğunda başlangıç noktasıdır.
+
+Tanımda $f_X$'e "olasılık fonksiyonu" dedik; ama bir fonksiyona bu adı verebilmek için değerlerinin negatif olmaması ve toplamının $1$ olması gerekir (@prp-olasilik-fonksiyonu-ozellikleri). Bunu doğrulamak zorundayız; hesabın tamamı üstel fonksiyonun kuvvet serisine dayanır.
+
+:::: {#prp-poisson-olasilik-fonksiyonu name="Poisson Olasılık Fonksiyonunun Geçerliliği"}
+$\lambda > 0$ olsun. $x = 0, 1, 2, \ldots$ için $f(x) = \dfrac{e^{-\lambda} \lambda^x}{x!}$ ile tanımlanan fonksiyon şu iki koşulu sağlar:
+
+**(i)** her $x = 0, 1, 2, \ldots$ için $f(x) > 0$;
+
+**(ii)** $\displaystyle \sum_{x=0}^{\infty} f(x) = 1$.
+
+Dolayısıyla $f$, değer kümesi $\{0, 1, 2, \ldots\}$ olan bir kesikli rastgele değişkenin olasılık fonksiyonudur.
+
+::: {.ispat}
+**(i)** $e^{-\lambda} > 0$, $\lambda^x > 0$ ve $x! > 0$ olduğundan üçünün çarpımı ve bölümü de pozitiftir.
+
+**(ii)** Üstel fonksiyonun kuvvet serisi her $u \in \mathbb{R}$ için yakınsaktır ve
+
+$$e^u = \sum_{x=0}^{\infty} \frac{u^x}{x!}$$
+
+eşitliği geçerlidir. $e^{-\lambda}$ çarpanı $x$'e bağlı olmayan bir sabit olduğundan toplamın dışına alınabilir; $u = \lambda$ alınırsa
+
+$$\sum_{x=0}^{\infty} f(x) = e^{-\lambda} \sum_{x=0}^{\infty} \frac{\lambda^x}{x!} = e^{-\lambda} \cdot e^{\lambda} = 1$$
+
+bulunur. Böylece $f$, @prp-olasilik-fonksiyonu-ozellikleri'ndeki (1) ve (2) koşullarını sağlar. Böyle bir $f$'nin gerçekten bir rastgele değişkenin olasılık fonksiyonu olduğunu görmek için $\Omega = \{0, 1, 2, \ldots\}$, $\mathcal{U} = \mathcal{P}(\Omega)$ alalım ve her $\omega \in \Omega$ noktasına $p_\omega = f(\omega)$ ağırlığını verelim; @prp-sayilabilir-ornek-uzay gereği $P(A) = \sum_{\omega \in A} f(\omega)$ bir olasılık ölçüsüdür. $X(\omega) = \omega$ ile tanımlanan rastgele değişken için $P(X = x) = P(\{x\}) = f(x)$ olur; yani $X$'in olasılık fonksiyonu (@def-olasilik-fonksiyonu) tam olarak $f$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+$X \sim \operatorname{Poisson}(\lambda)$ değişkeninin dağılım fonksiyonu (@def-dagilim-fonksiyonu), $x < 0$ için $F_X(x) = 0$ ve $x \ge 0$ için
+
+$$F_X(x) = P(X \le x) = e^{-\lambda} \sum_{k=0}^{\lfloor x \rfloor} \frac{\lambda^k}{k!}$$
+
+olan bir basamak fonksiyonudur; burada $\lfloor x \rfloor$, $x$'i aşmayan en büyük tam sayıdır. Bu toplamın temel fonksiyonlarla yazılabilen kapalı bir formülü yoktur; olasılıklar terim terim toplanarak bulunur. En çok kullanılan özel durum, "en az bir olay" olasılığıdır:
+
+$$P(X \ge 1) = 1 - P(X = 0) = 1 - e^{-\lambda}.$$
+
+### Ardışık Oran ve Mod
+
+Poisson olasılıklarını art arda hesaplarken her seferinde faktöriyel ve kuvvet almak gerekmez: bir terimden bir sonrakine tek bir çarpma ile geçilir. Aynı gözlem dağılımın biçimini de belirler: olasılıklar önce artar, sonra azalır ve en yüksek değerini $\lambda$'nın yakınında alır.
+
+:::: {#prp-poisson-ardisik-oran name="Ardışık Oran ve Mod"}
+$X \sim \operatorname{Poisson}(\lambda)$ ve $f = f_X$ olsun.
+
+**(i)** Her $x = 0, 1, 2, \ldots$ için $\dfrac{f(x+1)}{f(x)} = \dfrac{\lambda}{x+1}$.
+
+**(ii)** $x + 1 < \lambda$ iken $f(x+1) > f(x)$; $x + 1 = \lambda$ iken $f(x+1) = f(x)$; $x + 1 > \lambda$ iken $f(x+1) < f(x)$.
+
+**(iii)** $m = \lfloor \lambda \rfloor$ olsun. $\lambda$ tam sayı değilse $f$ en büyük değerini yalnızca $x = m$ noktasında alır. $\lambda$ tam sayı ise $f$ en büyük değerini $x = \lambda - 1$ ve $x = \lambda$ noktalarında alır ve $f(\lambda - 1) = f(\lambda)$'dır. Yani $X$'in **modu** (en olası değeri) $\lfloor \lambda \rfloor$'dır; $\lambda$ tam sayı olduğunda $\lambda - 1$ de moddur.
+
+::: {.ispat}
+**(i)** $(x+1)! = (x+1) \cdot x!$ olduğundan
+
+$$\frac{f(x+1)}{f(x)} = \frac{e^{-\lambda} \lambda^{x+1} / (x+1)!}{e^{-\lambda} \lambda^x / x!} = \frac{\lambda^{x+1}}{\lambda^x} \cdot \frac{x!}{(x+1)!} = \frac{\lambda}{x+1}.$$
+
+**(ii)** $f(x) > 0$ olduğundan $f(x+1) > f(x)$ eşitsizliği, oranın $1$'den büyük olmasına, yani $\dfrac{\lambda}{x+1} > 1$, yani $x + 1 < \lambda$ olmasına denktir. Aynı nedenle $f(x+1) = f(x)$ eşitliği $\dfrac{\lambda}{x+1} = 1$, yani $x + 1 = \lambda$ olmasına; $f(x+1) < f(x)$ eşitsizliği ise $\dfrac{\lambda}{x+1} < 1$, yani $x + 1 > \lambda$ olmasına denktir. ($x + 1 > 0$ olduğundan $\dfrac{\lambda}{x+1}$ ile $1$'i karşılaştırmak, $\lambda$ ile $x + 1$'i karşılaştırmakla aynı şeydir.)
+
+**(iii)** $m = \lfloor \lambda \rfloor$ için $m \le \lambda < m + 1$ olduğunu hatırlayalım. Önce $\lambda$'nın tam sayı olmadığını varsayalım; o zaman $m < \lambda$'dır. $x = 0, 1, \ldots, m-1$ için $x + 1 \le m < \lambda$ olduğundan **(ii)** gereği
+
+$$f(0) < f(1) < \cdots < f(m)$$
+
+olur. $x \ge m$ için $x + 1 \ge m + 1 > \lambda$ olduğundan
+
+$$f(m) > f(m+1) > f(m+2) > \cdots$$
+
+olur. Demek ki $f$ en büyük değerini yalnızca $m$'de alır.
+
+Şimdi $\lambda$ tam sayı olsun; o zaman $m = \lambda$'dır. $x = 0, 1, \ldots, m-2$ için $x + 1 \le m - 1 < \lambda$ olduğundan $f(0) < f(1) < \cdots < f(m-1)$; $x = m - 1$ için $x + 1 = \lambda$ olduğundan $f(m) = f(m-1)$; $x \ge m$ için $x + 1 > \lambda$ olduğundan $f(m) > f(m+1) > \cdots$ bulunur. Demek ki en büyük değer tam olarak $m - 1 = \lambda - 1$ ve $m = \lambda$ noktalarında alınır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="-12.5 1.0 598.5 233.0" role="img" aria-label="Lambda 1, 4 ve 10 icin Poisson olasilik fonksiyonu cubuklari">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="24.0" y1="202.0" x2="192.0" y2="202.0"/>
+  <line x1="24.0" y1="24.0" x2="24.0" y2="202.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="30.6" y="218.0" text-anchor="middle">0</text>
+  <text x="67.3" y="218.0" text-anchor="middle">5</text>
+  <text x="104.0" y="218.0" text-anchor="middle">10</text>
+  <text x="140.7" y="218.0" text-anchor="middle">15</text>
+  <text x="177.4" y="218.0" text-anchor="middle">20</text>
+  <text x="17.0" y="163.5" text-anchor="end">0,1</text>
+  <text x="17.0" y="121.0" text-anchor="end">0,2</text>
+  <text x="17.0" y="78.5" text-anchor="end">0,3</text>
+  <text x="198.0" y="206.0" font-style="italic">x</text>
+  </g>
+  <text x="104.0" y="24.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">&#955; = 1</text>
+  <rect x="27.7" y="45.7" width="5.9" height="156.3" fill="var(--color-theory)" fill-opacity="0.55" stroke="var(--color-theory)" stroke-width="0.9"/>
+  <rect x="35.0" y="45.7" width="5.9" height="156.3" fill="var(--color-theory)" fill-opacity="0.55" stroke="var(--color-theory)" stroke-width="0.9"/>
+  <rect x="42.3" y="123.8" width="5.9" height="78.2" fill="var(--color-theory)" fill-opacity="0.55" stroke="var(--color-theory)" stroke-width="0.9"/>
+  <rect x="49.7" y="175.9" width="5.9" height="26.1" fill="var(--color-theory)" fill-opacity="0.55" stroke="var(--color-theory)" stroke-width="0.9"/>
+  <rect x="57.0" y="195.5" width="5.9" height="6.5" fill="var(--color-theory)" fill-opacity="0.55" stroke="var(--color-theory)" stroke-width="0.9"/>
+  <rect x="64.4" y="200.7" width="5.9" height="1.3" fill="var(--color-theory)" fill-opacity="0.55" stroke="var(--color-theory)" stroke-width="0.9"/>
+  <rect x="71.7" y="201.8" width="5.9" height="0.2" fill="var(--color-theory)" fill-opacity="0.55" stroke="var(--color-theory)" stroke-width="0.9"/>
+  <text x="129.7" y="63.9" fill="var(--color-theory)" font-size="10" text-anchor="middle" font-style="italic">E(X) = Var(X) = 1</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="208.0" y1="202.0" x2="376.0" y2="202.0"/>
+  <line x1="208.0" y1="24.0" x2="208.0" y2="202.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="214.6" y="218.0" text-anchor="middle">0</text>
+  <text x="251.3" y="218.0" text-anchor="middle">5</text>
+  <text x="288.0" y="218.0" text-anchor="middle">10</text>
+  <text x="324.7" y="218.0" text-anchor="middle">15</text>
+  <text x="361.4" y="218.0" text-anchor="middle">20</text>
+  <text x="201.0" y="163.5" text-anchor="end">0,1</text>
+  <text x="201.0" y="121.0" text-anchor="end">0,2</text>
+  <text x="201.0" y="78.5" text-anchor="end">0,3</text>
+  <text x="382.0" y="206.0" font-style="italic">x</text>
+  </g>
+  <text x="288.0" y="24.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle" font-weight="600">&#955; = 4</text>
+  <rect x="211.7" y="194.2" width="5.9" height="7.8" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="219.0" y="170.9" width="5.9" height="31.1" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="226.3" y="139.7" width="5.9" height="62.3" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="233.7" y="119.0" width="5.9" height="83.0" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="241.0" y="119.0" width="5.9" height="83.0" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="248.4" y="135.6" width="5.9" height="66.4" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="255.7" y="157.7" width="5.9" height="44.3" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="263.0" y="176.7" width="5.9" height="25.3" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="270.4" y="189.3" width="5.9" height="12.7" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="277.7" y="196.4" width="5.9" height="5.6" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="285.1" y="199.8" width="5.9" height="2.2" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="292.4" y="201.2" width="5.9" height="0.8" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <rect x="299.7" y="201.7" width="5.9" height="0.3" fill="var(--color-base)" fill-opacity="0.55" stroke="var(--color-base)" stroke-width="0.9"/>
+  <text x="313.7" y="63.9" fill="var(--color-base)" font-size="10" text-anchor="middle" font-style="italic">E(X) = Var(X) = 4</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="392.0" y1="202.0" x2="560.0" y2="202.0"/>
+  <line x1="392.0" y1="24.0" x2="392.0" y2="202.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="398.6" y="218.0" text-anchor="middle">0</text>
+  <text x="435.3" y="218.0" text-anchor="middle">5</text>
+  <text x="472.0" y="218.0" text-anchor="middle">10</text>
+  <text x="508.7" y="218.0" text-anchor="middle">15</text>
+  <text x="545.4" y="218.0" text-anchor="middle">20</text>
+  <text x="385.0" y="163.5" text-anchor="end">0,1</text>
+  <text x="385.0" y="121.0" text-anchor="end">0,2</text>
+  <text x="385.0" y="78.5" text-anchor="end">0,3</text>
+  <text x="566.0" y="206.0" font-style="italic">x</text>
+  </g>
+  <text x="472.0" y="24.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">&#955; = 10</text>
+  <rect x="410.3" y="201.0" width="5.9" height="1.0" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="417.7" y="198.8" width="5.9" height="3.2" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="425.0" y="194.0" width="5.9" height="8.0" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="432.4" y="185.9" width="5.9" height="16.1" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="439.7" y="175.2" width="5.9" height="26.8" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="447.0" y="163.7" width="5.9" height="38.3" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="454.4" y="154.1" width="5.9" height="47.9" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="461.7" y="148.8" width="5.9" height="53.2" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="469.1" y="148.8" width="5.9" height="53.2" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="476.4" y="153.7" width="5.9" height="48.3" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="483.7" y="161.7" width="5.9" height="40.3" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="491.1" y="171.0" width="5.9" height="31.0" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="498.4" y="179.9" width="5.9" height="22.1" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="505.8" y="187.2" width="5.9" height="14.8" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="513.1" y="192.8" width="5.9" height="9.2" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="520.4" y="196.6" width="5.9" height="5.4" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="527.8" y="199.0" width="5.9" height="3.0" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="535.1" y="200.4" width="5.9" height="1.6" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <rect x="542.5" y="201.2" width="5.9" height="0.8" fill="var(--color-practice)" fill-opacity="0.55" stroke="var(--color-practice)" stroke-width="0.9"/>
+  <text x="497.7" y="63.9" fill="var(--color-practice)" font-size="10" text-anchor="middle" font-style="italic">E(X) = Var(X) = 10</text>
+</svg>
+<figcaption>Poisson olasılık fonksiyonu. &#955; küçükken kütle sıfıra yakın ve sağa çarpık; &#955; büyüdükçe dağılım &#955; çevresinde simetrikleşir ve normal eğriye benzemeye başlar. Ortalama da varyans da &#955;'dır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şekil, üç ayrı $\lambda$ için dağılımın biçimini gösterir. $\lambda = 1$, $4$ ve $10$ tam sayı olduklarından her birinde en yüksek iki çubuk eşit uzunluktadır: sırasıyla $x = 0$ ile $1$, $x = 3$ ile $4$ ve $x = 9$ ile $10$. $\lambda < 1$ olduğunda mod $0$'dır ve olasılıklar baştan itibaren azalır. $\lambda$ büyüdükçe dağılım sağa kayar, yayılır ve giderek simetrik bir çan biçimine yaklaşır; bu biçimin adı olan normal dağılımı ileride tanıyacağız. Yayılmanın nedeni ise bir sonraki teoremde ortaya çıkacak: varyans da $\lambda$'dır.
+
+Tanımı ve ardışık oranı ilk örnekte kullanalım. Örnek, parametrenin "ortalama olay sayısı" olarak yorumlanmasına dayanır; bu yorumun doğruluğunu @thm-poisson-momentleri'nde ispatlayacağız.
+
+:::: {#exm-poisson-hesaplari name="Sayfa Başına Baskı Hatası"}
+Bir kitabın rastgele seçilen bir sayfasındaki baskı hatası sayısı $X$, sayfa başına ortalama $\dfrac{1}{2}$ hata olacak biçimde Poisson dağılımına sahip olsun; yani $X \sim \operatorname{Poisson}\!\left(\dfrac{1}{2}\right)$.
+
+**(a)** Sayfanın hatasız olma olasılığını bulunuz.
+
+**(b)** Sayfada en az iki hata bulunma olasılığını bulunuz.
+
+**(c)** Bir sayfadaki en olası hata sayısını bulunuz ve $x = 0, 1, 2, 3, 4$ için olasılıkları tablo hâlinde veriniz.
+
+**(d)** Kitap $400$ sayfa ise ve sayfalardaki hata sayıları birbirinden bağımsızsa, hatasız sayfa sayısının beklenen değerini bulunuz.
+
+::: {.cozum}
+**(a)** $\lambda = \dfrac{1}{2}$ için
+
+$$P(X = 0) = e^{-1/2} \approx 0{,}6065.$$
+
+Sayfaların yaklaşık yüzde $61$'i hatasızdır.
+
+**(b)** Tümleyen olaydan gidelim:
+
+$$P(X \ge 2) = 1 - P(X = 0) - P(X = 1) = 1 - e^{-1/2} - e^{-1/2} \cdot \frac{1}{2} = 1 - \frac{3}{2} e^{-1/2} \approx 1 - 0{,}9098 = 0{,}0902.$$
+
+**(c)** $\lambda = \dfrac{1}{2}$ tam sayı olmadığından @prp-poisson-ardisik-oran gereği mod $\left\lfloor \dfrac{1}{2} \right\rfloor = 0$'dır: en olası durum sayfanın hatasız olmasıdır. Olasılıkları ardışık oranla üretelim: $f(x+1) = f(x) \cdot \dfrac{\lambda}{x+1}$ ve $\lambda = \dfrac{1}{2}$ olduğundan her terim bir öncekinin $\dfrac{1}{2(x+1)}$ katıdır.
+
+| $x$ | $0$ | $1$ | $2$ | $3$ | $4$ |
+|---|---|---|---|---|---|
+| $f_X(x)$ | $e^{-1/2}$ | $\frac{1}{2} e^{-1/2}$ | $\frac{1}{8} e^{-1/2}$ | $\frac{1}{48} e^{-1/2}$ | $\frac{1}{384} e^{-1/2}$ |
+| yaklaşık | $0{,}6065$ | $0{,}3033$ | $0{,}0758$ | $0{,}0126$ | $0{,}0016$ |
+
+İlk beş olasılığın toplamı $0{,}9998$'dir; kalan $0{,}0002$, beş ve daha çok hatalı sayfaların payıdır.
+
+**(d)** Her sayfa, ötekilerden bağımsız olarak, $p = e^{-1/2}$ olasılıkla hatasızdır. Dolayısıyla $400$ sayfanın her biri bir Bernoulli denemesidir (@def-bernoulli-dagilimi) ve hatasız sayfa sayısı $Y \sim B(400, e^{-1/2})$'dir (@def-binom-dagilimi). @thm-binom-momentleri gereği
+
+$$E(Y) = 400 \, e^{-1/2} \approx 242{,}6.$$
+
+Kitapta ortalama $243$ dolayında hatasız sayfa beklenir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Beklenen Değer ve Varyans
+
+Şimdiye dek $\lambda$'ya "ortalama olay sayısı" dedik; bunu ispatlamanın zamanı geldi. Hesabı doğrudan beklenen değer tanımıyla yapacağız. Varyans için ise $E(X^2)$'yi doğrudan hesaplamak yerine **çarpımsal momentleri** kullanacağız: [Beklenen Değer, Momentler ve Varyans](beklenen-deger-ve-varyans.qmd) bölümünde tanımlanan (@def-momentler) $k$. çarpımsal moment $E\big[X(X-1)\cdots(X-k+1)\big]$, Poisson dağılımında olağanüstü sade çıkar, çünkü $\dfrac{x(x-1)\cdots(x-k+1)}{x!} = \dfrac{1}{(x-k)!}$ sadeleşmesi faktöriyeli ortadan kaldırır.
+
+:::: {#thm-poisson-momentleri name="Poisson Dağılımının Momentleri"}
+$X \sim \operatorname{Poisson}(\lambda)$ olsun.
+
+**(i)** $E(X) = \lambda$.
+
+**(ii)** Her $k = 1, 2, \ldots$ için $k$. çarpımsal moment $E\big[X(X-1)\cdots(X-k+1)\big] = \lambda^k$'dır. Özel olarak $E\big[X(X-1)\big] = \lambda^2$.
+
+**(iii)** $\operatorname{Var}(X) = \lambda$ ve $\sigma_X = \sqrt{\lambda}$.
+
+::: {.ispat}
+**(i)** @def-beklenen-deger gereği $E(X) = \sum_{x=0}^{\infty} x f_X(x)$'tir. $x = 0$ terimi sıfırdır; $x \ge 1$ için $\dfrac{x}{x!} = \dfrac{1}{(x-1)!}$ olduğundan
+
+$$E(X) = \sum_{x=1}^{\infty} x \cdot \frac{e^{-\lambda} \lambda^x}{x!} = \lambda e^{-\lambda} \sum_{x=1}^{\infty} \frac{\lambda^{x-1}}{(x-1)!} = \lambda e^{-\lambda} \sum_{y=0}^{\infty} \frac{\lambda^y}{y!} = \lambda e^{-\lambda} e^{\lambda} = \lambda.$$
+
+Üçüncü eşitlikte $y = x - 1$ yazdık; son toplam üstel seridir. Serinin terimleri pozitif ve toplamı sonlu olduğundan seri mutlak yakınsaktır; yani beklenen değer vardır.
+
+**(ii)** $x < k$ için $x(x-1)\cdots(x-k+1)$ çarpımının çarpanlarından biri sıfırdır; bu terimler toplama katkı vermez. $x \ge k$ için
+
+$$\frac{x(x-1)\cdots(x-k+1)}{x!} = \frac{x!}{(x-k)! \, x!} = \frac{1}{(x-k)!}$$
+
+olduğundan
+
+$$E\big[X(X-1)\cdots(X-k+1)\big] = \sum_{x=k}^{\infty} \frac{e^{-\lambda} \lambda^x}{(x-k)!} = \lambda^k e^{-\lambda} \sum_{x=k}^{\infty} \frac{\lambda^{x-k}}{(x-k)!} = \lambda^k e^{-\lambda} \sum_{y=0}^{\infty} \frac{\lambda^y}{y!} = \lambda^k e^{-\lambda} e^{\lambda} = \lambda^k$$
+
+bulunur; burada $y = x - k$ yazdık. $k = 2$ için $E\big[X(X-1)\big] = \lambda^2$'dir.
+
+**(iii)** $X^2 = X(X-1) + X$ olduğundan beklenen değerin doğrusallığıyla
+
+$$E(X^2) = E\big[X(X-1)\big] + E(X) = \lambda^2 + \lambda.$$
+
+@prp-varyans-hesap-formulu gereği
+
+$$\operatorname{Var}(X) = E(X^2) - \big[E(X)\big]^2 = \lambda^2 + \lambda - \lambda^2 = \lambda$$
+
+ve $\sigma_X = \sqrt{\operatorname{Var}(X)} = \sqrt{\lambda}$ olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="Ortalama ile varyans eşittir"}
+Poisson dağılımının ayırt edici özelliği, beklenen değer ile varyansın aynı sayı olmasıdır: $E(X) = \operatorname{Var}(X) = \lambda$. Binom dağılımında ise $\operatorname{Var}(X) = np(1-p) = E(X)(1-p) < E(X)$'tir (@thm-binom-momentleri); $p \to 0$ iken bu iki büyüklüğün oranı $1 - p \to 1$'e gider. Bu, binom dağılımının küçük $p$ için Poisson dağılımına yaklaşmasıyla tutarlıdır.
+
+Aynı gözlem uygulamada bir sağlama aracıdır: gözlenen sayımların örnek ortalaması ile örnek varyansı birbirine yakınsa Poisson modeli makuldür; varyans ortalamayı belirgin biçimde aşıyorsa Poisson modeli yetersizdir.
+
+Standart sapmanın $\sqrt{\lambda}$ olması, "yayılmanın ortalamaya göre daralması" demektir: $\lambda = 100$ için standart sapma yalnızca $10$'dur, yani gözlemler ortalamanın yüzde $10$'u kadar bir bantta yoğunlaşır. Bu, önceki şekilde $\lambda$ büyüdükçe çubukların mutlak anlamda yayılmasına karşın ortalamaya oranla toplanmasını açıklar.
+:::
+
+## Moment Üreten ve Karakteristik Fonksiyon
+
+Bundan sonraki sonuçlardan biri — bağımsız Poisson değişkenlerinin toplamı — en kısa yoldan üretici fonksiyonlarla ispatlanır; binom dağılımına yaklaşım için de üretici fonksiyonlarla ikinci bir okuma vereceğiz. Bu yüzden Poisson dağılımının moment üreten fonksiyonunu (@def-moment-ureten-fonksiyon), karakteristik fonksiyonunu (@def-karakteristik-fonksiyon) ve çarpımsal moment üreten fonksiyonunu (@def-carpimsal-moment-ureten) hesaplıyoruz. Üçü de aynı üstel seri hesabına dayanır.
+
+:::: {#thm-poisson-mgf name="Poisson Dağılımının Üretici Fonksiyonları"}
+$X \sim \operatorname{Poisson}(\lambda)$ olsun.
+
+**(i)** Moment üreten fonksiyon her $t \in \mathbb{R}$ için tanımlıdır ve
+
+$$M_X(t) = e^{\lambda (e^t - 1)}, \qquad t \in \mathbb{R}.$$
+
+**(ii)** Karakteristik fonksiyon
+
+$$\varphi_X(t) = e^{\lambda (e^{it} - 1)}, \qquad t \in \mathbb{R}.$$
+
+**(iii)** Çarpımsal moment üreten fonksiyon
+
+$$N_X(t) = E\big(t^X\big) = e^{\lambda (t - 1)}, \qquad t \in \mathbb{R}.$$
+
+::: {.ispat}
+Bu hesapları @exm-poisson-mgf ve @exm-poisson-carpimsal'da yapmıştık; burada üçünü toplu olarak kayda geçiriyoruz.
+
+**(i)** @def-moment-ureten-fonksiyon gereği $M_X(t) = E\big(e^{tX}\big)$'dir. Kesikli değişkende bu beklenen değer bir seridir:
+
+$$M_X(t) = \sum_{x=0}^{\infty} e^{tx} \cdot \frac{e^{-\lambda} \lambda^x}{x!} = e^{-\lambda} \sum_{x=0}^{\infty} \frac{\left(\lambda e^t\right)^x}{x!}.$$
+
+Burada $e^{tx} \lambda^x = (\lambda e^t)^x$ yazdık. Son toplam, $u = \lambda e^t$ için üstel seridir ve her $t \in \mathbb{R}$ için yakınsar. Dolayısıyla
+
+$$M_X(t) = e^{-\lambda} e^{\lambda e^t} = e^{\lambda e^t - \lambda} = e^{\lambda (e^t - 1)}.$$
+
+Seri her $t$ için yakınsadığından $M_X$ bütün $\mathbb{R}$'de, özellikle sıfırın bir komşuluğunda tanımlıdır; bu yüzden @thm-mgf-momentler ve @thm-mgf-teklik Poisson dağılımına uygulanabilir.
+
+**(ii)** @def-karakteristik-fonksiyon gereği $\varphi_X(t) = E\big(e^{itX}\big)$'dir. Aynı hesap $e^t$ yerine $e^{it}$ ile yapılır:
+
+$$\varphi_X(t) = \sum_{x=0}^{\infty} e^{itx} \cdot \frac{e^{-\lambda} \lambda^x}{x!} = e^{-\lambda} \sum_{x=0}^{\infty} \frac{\left(\lambda e^{it}\right)^x}{x!} = e^{-\lambda} e^{\lambda e^{it}} = e^{\lambda (e^{it} - 1)}.$$
+
+Üstel seri karmaşık sayılar için de geçerlidir ve $\left| \lambda e^{it} \right|^x / x! = \lambda^x / x!$ terimlerinin toplamı sonlu olduğundan seri mutlak yakınsaktır.
+
+**(iii)** @def-carpimsal-moment-ureten gereği $N_X(t) = E\big(t^X\big)$'dir. Aynı seri hesabıyla
+
+$$N_X(t) = \sum_{x=0}^{\infty} t^x \cdot \frac{e^{-\lambda} \lambda^x}{x!} = e^{-\lambda} \sum_{x=0}^{\infty} \frac{(\lambda t)^x}{x!} = e^{-\lambda} e^{\lambda t} = e^{\lambda (t - 1)}$$
+
+bulunur.
+
+**Sağlama.** @thm-mgf-momentler gereği $E(X) = M_X'(0)$ ve $E(X^2) = M_X''(0)$'dır. Zincir kuralıyla
+
+$$M_X'(t) = \lambda e^t \, e^{\lambda(e^t - 1)} = \lambda e^t M_X(t), \qquad M_X'(0) = \lambda \cdot 1 \cdot 1 = \lambda.$$
+
+Bir kez daha türev alırsak
+
+$$M_X''(t) = \lambda e^t M_X(t) + \lambda e^t M_X'(t) = \lambda e^t M_X(t) + \lambda^2 e^{2t} M_X(t), \qquad M_X''(0) = \lambda + \lambda^2.$$
+
+Böylece $\operatorname{Var}(X) = M_X''(0) - \big[M_X'(0)\big]^2 = \lambda + \lambda^2 - \lambda^2 = \lambda$; @thm-poisson-momentleri ile uyuşur. Çarpımsal momentler için $N_X(t) = e^{-\lambda} \sum_{x=0}^{\infty} \dfrac{(\lambda t)^x}{x!}$ bütün $\mathbb{R}$'de yakınsak bir kuvvet serisi olduğundan terim terim türetilebilir; yani @thm-carpimsal-momentler'in türev ile beklenen değerin yer değiştirme koşulu sağlanır. Zincir kuralıyla $N_X^{(k)}(t) = \lambda^k e^{\lambda(t-1)}$ ve $N_X^{(k)}(1) = \lambda^k$; @thm-carpimsal-momentler gereği bu sayı $k$. çarpımsal momenttir ve @thm-poisson-momentleri'nin **(ii)** şıkkıyla uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+@def-carpimsal-moment-ureten'in ardından belirtildiği gibi $M_X(t) = N_X(e^t)$'dir; $X$'in değerleri negatif olmayan tam sayılar olduğundan aynı kuvvet serisi karmaşık argüman için de mutlak yakınsar ve $\varphi_X(t) = N_X(e^{it})$ yazılabilir. Bu, yalnızca Poisson dağılımına özgü değildir; $t^X$'in $t = e^s$ ve $t = e^{is}$ değerlerinde $e^{sX}$ ve $e^{isX}$ olmasından gelir.
+
+## Bağımsız Poisson Değişkenlerinin Toplamı
+
+Bir dakikada gelen çağrı sayısı Poisson ise iki dakikada gelen çağrı sayısı ne olur? Birinci ve ikinci dakikadaki sayılar bağımsızsa yanıt, iki bağımsız Poisson değişkeninin toplamıdır. Aşağıdaki teorem bu toplamın yine Poisson olduğunu, parametrelerin ise toplandığını söyler. Bu özellik, Poisson dağılımının zaman ve bölge modeli olarak tutarlı kullanılabilmesinin temelidir.
+
+:::: {#thm-poisson-toplami name="Bağımsız Poisson Değişkenlerinin Toplamı"}
+$X \sim \operatorname{Poisson}(\lambda_1)$ ve $Y \sim \operatorname{Poisson}(\lambda_2)$ bağımsız rastgele değişkenler olsun. O zaman
+
+$$X + Y \sim \operatorname{Poisson}(\lambda_1 + \lambda_2).$$
+
+Daha genel olarak, $X_1, \ldots, X_n$ bağımsız ve her $i$ için $X_i \sim \operatorname{Poisson}(\lambda_i)$ ise
+
+$$X_1 + \cdots + X_n \sim \operatorname{Poisson}(\lambda_1 + \cdots + \lambda_n).$$
+
+::: {.ispat}
+**Birinci yol: moment üreten fonksiyon.** $X$ ile $Y$ bağımsız olduğundan (@def-bagimsiz-rastgele-degiskenler) @thm-bagimsiz-carpim-beklenen'i $g_1(u) = g_2(u) = e^{tu}$ ile uygulayabiliriz; her $t \in \mathbb{R}$ için
+
+$$M_{X+Y}(t) = E\big(e^{t(X+Y)}\big) = E\big(e^{tX} e^{tY}\big) = E\big(e^{tX}\big) E\big(e^{tY}\big) = M_X(t) M_Y(t).$$
+
+@thm-poisson-mgf ile
+
+$$M_{X+Y}(t) = e^{\lambda_1 (e^t - 1)} \cdot e^{\lambda_2 (e^t - 1)} = e^{(\lambda_1 + \lambda_2)(e^t - 1)}, \qquad t \in \mathbb{R}.$$
+
+Sağ taraf, $\operatorname{Poisson}(\lambda_1 + \lambda_2)$ dağılımının moment üreten fonksiyonudur ve iki fonksiyon bütün $\mathbb{R}$'de çakışır. @thm-mgf-teklik gereği $X + Y$'nin dağılımı $\operatorname{Poisson}(\lambda_1 + \lambda_2)$'dir.
+
+**İkinci yol: konvolüsyon.** Aynı sonuca olasılık fonksiyonlarını doğrudan toplayarak da ulaşılır. $X + Y$'nin değer kümesi $\{0, 1, 2, \ldots\}$'dır ve @prp-toplam-dagilimi-konvolusyon gereği $z = 0, 1, 2, \ldots$ için
+
+$$f_{X+Y}(z) = \sum_{k=0}^{z} f_X(k) f_Y(z - k) = \sum_{k=0}^{z} \frac{e^{-\lambda_1} \lambda_1^k}{k!} \cdot \frac{e^{-\lambda_2} \lambda_2^{z-k}}{(z-k)!}.$$
+
+$e^{-(\lambda_1 + \lambda_2)}$ çarpanını dışarı alıp toplamı $\dfrac{z!}{z!}$ ile genişletelim:
+
+$$f_{X+Y}(z) = \frac{e^{-(\lambda_1 + \lambda_2)}}{z!} \sum_{k=0}^{z} \frac{z!}{k! \, (z-k)!} \lambda_1^k \lambda_2^{z-k} = \frac{e^{-(\lambda_1 + \lambda_2)}}{z!} \sum_{k=0}^{z} \binom{z}{k} \lambda_1^k \lambda_2^{z-k}.$$
+
+Son toplam, @thm-binom-teoremi gereği $(\lambda_1 + \lambda_2)^z$'dir. Böylece
+
+$$f_{X+Y}(z) = \frac{e^{-(\lambda_1 + \lambda_2)} (\lambda_1 + \lambda_2)^z}{z!}, \qquad z = 0, 1, 2, \ldots$$
+
+olur; bu, $\operatorname{Poisson}(\lambda_1 + \lambda_2)$ dağılımının olasılık fonksiyonudur.
+
+**Genel durum.** $n$ üzerinden tümevarım yapalım. $n = 1$ için söylenecek bir şey yoktur. $S_{n-1} = X_1 + \cdots + X_{n-1}$ toplamının $\operatorname{Poisson}(\lambda_1 + \cdots + \lambda_{n-1})$ dağılımına sahip olduğunu varsayalım. $S_{n-1}$ ile $X_n$'in bağımsız olduğunu görelim: bağımsızlık gereği ortak olasılık fonksiyonu marjinallerin çarpımına ayrıldığından, her $s$ ve $x$ için
+
+$$P(S_{n-1} = s, \, X_n = x) = \sum_{x_1 + \cdots + x_{n-1} = s} P(X_1 = x_1) \cdots P(X_{n-1} = x_{n-1}) \, P(X_n = x) = P(S_{n-1} = s) \, P(X_n = x)$$
+
+olur. İki değişken için ispatlanan sonuç $S_n = S_{n-1} + X_n$'ye uygulanırsa $S_n \sim \operatorname{Poisson}(\lambda_1 + \cdots + \lambda_n)$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Fark ve katlar Poisson değildir"}
+Teorem yalnızca **bağımsız** değişkenlerin **toplamı** için geçerlidir. $X - Y$ farkı negatif değerler alabildiğinden Poisson olamaz. $2X$ gibi bir kat da Poisson değildir: yalnızca çift değerler alır ve $\operatorname{Var}(2X) = 4\lambda \ne 2\lambda = E(2X)$'dir (@thm-dogrusal-donusum-beklenen-varyans); oysa Poisson dağılımında ortalama ile varyans eşittir. Bağımsızlık koşulu da atlanamaz: $Y = X$ alınırsa $X + Y = 2X$ elde edilir.
+:::
+
+Toplam teoremini, zaman ölçeğinin değiştiği bir çağrı merkezi örneğinde kullanalım.
+
+:::: {#exm-poisson-cagri-merkezi name="Çağrı Merkezi"}
+Bir çağrı merkezine gelen çağrılar için şu model kabul edilsin: uzunluğu $t$ dakika olan herhangi bir zaman aralığında gelen çağrı sayısı $\operatorname{Poisson}(3t)$ dağılımına sahiptir ve ayrık zaman aralıklarında gelen çağrı sayıları bağımsızdır. Yani dakikada ortalama $3$ çağrı gelmektedir.
+
+**(a)** Belirli bir dakikada hiç çağrı gelmeme olasılığını bulunuz.
+
+**(b)** Belirli bir dakikada en az $5$ çağrı gelme olasılığını bulunuz.
+
+**(c)** Belirli bir $2$ dakikalık sürede en çok $3$ çağrı gelme olasılığını bulunuz ve modelin @thm-poisson-toplami ile tutarlı olduğunu gösteriniz.
+
+**(d)** Belirli bir $20$ saniyelik sürede en az bir çağrı gelme olasılığını bulunuz.
+
+**(e)** Merkeze, birincisinden bağımsız ve dakikada ortalama $2$ çağrı taşıyan ikinci bir hat eklenmiştir. Bir dakikada iki hatta toplam tam $5$ çağrı gelme olasılığını bulunuz.
+
+::: {.cozum}
+Bir dakikadaki çağrı sayısına $X$ diyelim: $X \sim \operatorname{Poisson}(3)$.
+
+**(a)** $P(X = 0) = e^{-3} \approx 0{,}0498$. Yaklaşık her $20$ dakikadan biri çağrısız geçer.
+
+**(b)** Tümleyeninden hesaplayalım:
+
+$$P(X \ge 5) = 1 - \sum_{x=0}^{4} \frac{e^{-3} 3^x}{x!} = 1 - e^{-3} \left( 1 + 3 + \frac{9}{2} + \frac{27}{6} + \frac{81}{24} \right) = 1 - e^{-3} \left( 1 + 3 + \frac{9}{2} + \frac{9}{2} + \frac{27}{8} \right) = 1 - \frac{131}{8} e^{-3}.$$
+
+Sayısal olarak $\dfrac{131}{8} e^{-3} \approx 0{,}8153$, dolayısıyla $P(X \ge 5) \approx 0{,}1847$.
+
+**(c)** Modele göre $2$ dakikadaki çağrı sayısı $Y \sim \operatorname{Poisson}(6)$'dır. O hâlde
+
+$$P(Y \le 3) = e^{-6} \left( 1 + 6 + \frac{36}{2} + \frac{216}{6} \right) = e^{-6} (1 + 6 + 18 + 36) = 61 e^{-6} \approx 0{,}1512.$$
+
+Tutarlılık: $2$ dakikalık süre, ayrık iki $1$ dakikalık aralığın birleşimidir. Bu aralıklardaki çağrı sayıları $X_1$ ve $X_2$ bağımsız ve her biri $\operatorname{Poisson}(3)$ olduğundan @thm-poisson-toplami gereği $X_1 + X_2 \sim \operatorname{Poisson}(3 + 3) = \operatorname{Poisson}(6)$'dır. Bu, modelin doğrudan verdiği dağılımla aynıdır; yani "$t$ dakikada $\operatorname{Poisson}(3t)$" kuralı toplam teoremiyle çelişmez; tersine, ardışık aralıklardaki çağrı sayılarının toplanabilirliğiyle uyum içindedir.
+
+**(d)** $20$ saniye $\dfrac{1}{3}$ dakikadır; bu süredeki çağrı sayısı $Z \sim \operatorname{Poisson}\!\left(3 \cdot \dfrac{1}{3}\right) = \operatorname{Poisson}(1)$'dir. Buradan
+
+$$P(Z \ge 1) = 1 - P(Z = 0) = 1 - e^{-1} \approx 0{,}6321.$$
+
+**(e)** Birinci hattın bir dakikadaki çağrı sayısı $X \sim \operatorname{Poisson}(3)$, ikincininki $W \sim \operatorname{Poisson}(2)$ ve ikisi bağımsızdır. @thm-poisson-toplami gereği $X + W \sim \operatorname{Poisson}(5)$ ve
+
+$$P(X + W = 5) = \frac{e^{-5} 5^5}{5!} = \frac{3125}{120} e^{-5} = \frac{625}{24} e^{-5} \approx 0{,}1755.$$
+
+$\lambda = 5$ tam sayı olduğundan @prp-poisson-ardisik-oran gereği $4$ ve $5$ birlikte moddur: $P(X + W = 4) = P(X + W = 5)$; gerçekten $\dfrac{e^{-5} 5^4}{4!} = \dfrac{625}{24} e^{-5}$'tir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Binom Dağılımına Poisson Yaklaşımı
+
+Bölümün başındaki vaadi yerine getirme zamanı: $n$ büyük, $p$ küçük ve $np$ ılımlı iken binom olasılıklarının Poisson olasılıklarına yaklaştığını ispatlayacağız. İspatın kalbi, $\left(1 - \dfrac{\lambda}{n}\right)^n \to e^{-\lambda}$ limitidir; ama $np$'nin tam olarak $\lambda$'ya eşit olmasını değil, yalnızca $\lambda$'ya yakınsamasını isteyeceğimizden limitin biraz daha genel bir biçimine ihtiyacımız var. Önce onu ispatlayalım.
+
+:::: {#lem-poisson-ustel-limit name="Üstel Limit"}
+$(a_n)$ gerçel sayı dizisi bir $a \in \mathbb{R}$ sayısına yakınsasın. O zaman
+
+$$\lim_{n \to \infty} \left( 1 + \frac{a_n}{n} \right)^n = e^a.$$
+
+Özel olarak, her $\lambda \in \mathbb{R}$ için $\left( 1 - \dfrac{\lambda}{n} \right)^n \to e^{-\lambda}$'dır.
+
+::: {.ispat}
+**Adım 1: bir logaritma eşitsizliği.** Her $u > -1$ için
+
+$$\frac{u}{1 + u} \le \ln(1 + u) \le u$$
+
+olduğunu gösterelim. $g(u) = u - \ln(1 + u)$ fonksiyonu $(-1, \infty)$ üzerinde türevlenebilirdir, $g(0) = 0$ ve
+
+$$g'(u) = 1 - \frac{1}{1 + u} = \frac{u}{1 + u}$$
+
+olur. $g'$, $(-1, 0)$ üzerinde negatif ve $(0, \infty)$ üzerinde pozitiftir; dolayısıyla $g$ önce azalır, sonra artar ve en küçük değerini $u = 0$'da alır: her $u > -1$ için $g(u) \ge g(0) = 0$, yani $\ln(1 + u) \le u$. Sağ eşitsizlik budur. Sol eşitsizlik için bu sonucu $v = -\dfrac{u}{1 + u}$ sayısına uygulayalım. $1 + v = \dfrac{1}{1 + u} > 0$ olduğundan $v > -1$'dir ve
+
+$$\ln(1 + v) = \ln \frac{1}{1 + u} = -\ln(1 + u) \le v = -\frac{u}{1 + u}$$
+
+bulunur; her iki tarafı $-1$ ile çarpınca $\ln(1 + u) \ge \dfrac{u}{1 + u}$ çıkar.
+
+**Adım 2: sıkıştırma.** Yakınsak dizi sınırlıdır: her $n$ için $|a_n| \le K$ olacak biçimde bir $K > 0$ vardır. $n > K$ için $u_n = \dfrac{a_n}{n}$ sayısı $|u_n| < 1$'i sağlar; özellikle $u_n > -1$ ve $1 + u_n > 0$'dır. Adım 1'deki eşitsizliği $u = u_n$ için yazıp $n$ ile çarpalım:
+
+$$\frac{n u_n}{1 + u_n} \le n \ln(1 + u_n) \le n u_n.$$
+
+Sağdaki dizi $n u_n = a_n \to a$'dır. Soldaki dizi için $|a_n / n| \le K / n \to 0$ olduğundan
+
+$$\frac{n u_n}{1 + u_n} = \frac{a_n}{1 + a_n / n} \to \frac{a}{1 + 0} = a.$$
+
+Sıkıştırma teoremi gereği $n \ln(1 + u_n) \to a$.
+
+**Adım 3: sonuç.** $1 + u_n > 0$ olduğundan $(1 + u_n)^n = \exp\big( n \ln(1 + u_n) \big)$ yazılabilir. Üstel fonksiyon sürekli olduğundan
+
+$$\left( 1 + \frac{a_n}{n} \right)^n = \exp\big( n \ln(1 + u_n) \big) \to \exp(a) = e^a.$$
+
+Özel durum, sabit $a_n = -\lambda$ dizisiyle elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi ana teoreme geçebiliriz. İfadeyi, $p$'nin $n$'ye bağlı olarak değiştiği bir dizi olarak kuruyoruz; "$n$ büyük, $p$ küçük" sezgisinin kesin karşılığı budur.
+
+:::: {#thm-poisson-binom-yaklasimi name="Binom Dağılımına Poisson Yaklaşımı"}
+$\lambda > 0$ olsun. Her $n$ için $p_n \in (0, 1)$ verilmiş ve $n \to \infty$ iken $n p_n \to \lambda$ olsun; en basit örnek, $n > \lambda$ için $p_n = \dfrac{\lambda}{n}$ alınmasıdır. $X_n \sim B(n, p_n)$ ise her sabit $x \in \{0, 1, 2, \ldots\}$ için
+
+$$\lim_{n \to \infty} P(X_n = x) = \lim_{n \to \infty} \binom{n}{x} p_n^x (1 - p_n)^{n-x} = \frac{e^{-\lambda} \lambda^x}{x!}.$$
+
+Yani $n$ büyük ve $p$ küçük iken $B(n, p)$ olasılıkları, $\lambda = np$ alınarak $\operatorname{Poisson}(np)$ olasılıklarıyla yaklaşık olarak hesaplanabilir.
+
+::: {.ispat}
+$\lambda_n = n p_n$ diyelim; varsayım gereği $\lambda_n \to \lambda$ ve $p_n = \dfrac{\lambda_n}{n}$'dir. $x$'i sabitleyelim ve $n \ge x$ alalım. @def-binom-dagilimi ve @thm-kombinasyon-sayisi ile
+
+$$\binom{n}{x} = \frac{n!}{x! \, (n-x)!} = \frac{n (n-1) \cdots (n-x+1)}{x!}$$
+
+olduğundan
+
+$$P(X_n = x) = \frac{n (n-1) \cdots (n-x+1)}{x!} \left( \frac{\lambda_n}{n} \right)^x \left( 1 - \frac{\lambda_n}{n} \right)^{n-x}.$$
+
+$\left( 1 - \dfrac{\lambda_n}{n} \right)^{n-x} = \left( 1 - \dfrac{\lambda_n}{n} \right)^{n} \left( 1 - \dfrac{\lambda_n}{n} \right)^{-x}$ yazıp ($1 - \lambda_n / n = 1 - p_n > 0$ olduğundan negatif kuvvet tanımlıdır) çarpanları yeniden gruplayalım:
+
+$$P(X_n = x) = \underbrace{\frac{\lambda_n^x}{x!}}_{A_n} \cdot \underbrace{\frac{n (n-1) \cdots (n-x+1)}{n^x}}_{B_n} \cdot \underbrace{\left( 1 - \frac{\lambda_n}{n} \right)^{n}}_{C_n} \cdot \underbrace{\left( 1 - \frac{\lambda_n}{n} \right)^{-x}}_{D_n}.$$
+
+Dört çarpanın limitini ayrı ayrı bulalım.
+
+**$A_n$ çarpanı.** $u \mapsto u^x$ sürekli olduğundan $\lambda_n \to \lambda$ iken $\lambda_n^x \to \lambda^x$; dolayısıyla $A_n \to \dfrac{\lambda^x}{x!}$.
+
+**$B_n$ çarpanı.** Pay $x$ tane çarpandan oluşur; her birini $n$'ye bölelim:
+
+$$B_n = \frac{n}{n} \cdot \frac{n-1}{n} \cdots \frac{n-x+1}{n} = \prod_{k=0}^{x-1} \left( 1 - \frac{k}{n} \right).$$
+
+$k = 0, 1, \ldots, x-1$ sabit sayılar olduğundan her çarpan $1$'e yakınsar; sonlu sayıda ($x$ tane) yakınsak dizinin çarpımının limiti limitlerin çarpımıdır. Dolayısıyla $B_n \to 1$. ($x = 0$ için çarpım boştur ve $B_n = 1$'dir.)
+
+**$C_n$ çarpanı.** $C_n = \left( 1 + \dfrac{-\lambda_n}{n} \right)^n$ ve $-\lambda_n \to -\lambda$ olduğundan @lem-poisson-ustel-limit ($a_n = -\lambda_n$, $a = -\lambda$) gereği $C_n \to e^{-\lambda}$.
+
+**$D_n$ çarpanı.** $(\lambda_n)$ yakınsak olduğundan sınırlıdır; dolayısıyla $\dfrac{\lambda_n}{n} \to 0$. $u \mapsto (1 - u)^{-x}$ fonksiyonu $u = 0$'da sürekli olduğundan $D_n \to (1 - 0)^{-x} = 1$.
+
+Yakınsak dizilerin çarpımı limitlerin çarpımına yakınsadığından
+
+$$\lim_{n \to \infty} P(X_n = x) = \frac{\lambda^x}{x!} \cdot 1 \cdot e^{-\lambda} \cdot 1 = \frac{e^{-\lambda} \lambda^x}{x!}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="Aynı limit moment üreten fonksiyonlarla"}
+Teoremin sonucunu üretici fonksiyonlar dilinde de görebiliriz. @thm-binom-mgf gereği $X_n \sim B(n, p_n)$ için $M_{X_n}(t) = \left( 1 - p_n + p_n e^t \right)^n$'dir. $p_n = \lambda_n / n$ yazılırsa
+
+$$M_{X_n}(t) = \left( 1 + \frac{\lambda_n (e^t - 1)}{n} \right)^n.$$
+
+Sabit $t$ için $a_n = \lambda_n (e^t - 1) \to \lambda (e^t - 1)$ olduğundan @lem-poisson-ustel-limit gereği
+
+$$M_{X_n}(t) \to e^{\lambda (e^t - 1)},$$
+
+ki bu @thm-poisson-mgf gereği $\operatorname{Poisson}(\lambda)$ dağılımının moment üreten fonksiyonudur. Moment üreten fonksiyonların sıfırın bir komşuluğundaki her $t$ için yakınsamasının dağılımların yakınsamasını gerektirdiği bilinen bir sonuçtur; burada ona gerek duymadan olasılıkların yakınsadığını doğrudan ispatladık, ama iki hesabın aynı yere çıkması güzel bir sağlamadır.
+:::
+
+::: {.callout-tip title="Yaklaşım ne zaman kullanılır"}
+Teorem bir limit ifadesidir; uygulamada sonlu $n$ ve $p$ için ne kadar iyi olduğunu bilmek gerekir. Yaygın kaba kural, $n \ge 50$ ve $p \le 0{,}05$ olduğunda $B(n, p)$ yerine $\operatorname{Poisson}(np)$ kullanmanın yeterli olduğudur. Daha kesin bir ifade de vardır: bütün $x$ değerleri üzerinden toplanan mutlak hata
+
+$$\sum_{x=0}^{\infty} \left| P(X_n = x) - \frac{e^{-np} (np)^x}{x!} \right| \le 2 n p^2$$
+
+eşitsizliğini sağlar (Le Cam eşitsizliği; ispatı bu kitabın kapsamı dışındadır). $np = \lambda$ sabit tutulursa sağ taraf $2 \lambda p$ olur; yani hata, $p$ ile orantılı olarak sıfıra gider. Örneğin $n = 100$, $p = 0{,}02$ için sınır $0{,}08$'dir; gerçek toplam hata ise yaklaşık $0{,}009$'dur.
+:::
+
+Yaklaşımın niteliğini sayılarla görelim. Aşağıdaki örnekte $np = 2$ sabit tutulup $n$ büyütülmektedir; tablo, her satırda binom olasılıklarının $\operatorname{Poisson}(2)$ değerine nasıl yaklaştığını gösterir.
+
+:::: {#exm-poisson-yaklasim-ornegi name="Nadir Olay Yaklaşımının Sayısal Sınanması"}
+Bir üretim hattında her parçanın, ötekilerden bağımsız olarak, $p = 0{,}02$ olasılıkla kusurlu olduğu bilinmektedir. $100$ parçalık bir kutudaki kusurlu parça sayısı $X$ olsun.
+
+**(a)** $X$'in dağılımını yazınız ve $P(X \le 1)$'i tam olarak hesaplayınız.
+
+**(b)** Aynı olasılığı Poisson yaklaşımıyla hesaplayınız.
+
+**(c)** $np = 2$ sabit kalacak biçimde $n = 20$, $p = 0{,}1$; $n = 100$, $p = 0{,}02$ ve $n = 1000$, $p = 0{,}002$ için $P(X = x)$ binom olasılıklarını $\operatorname{Poisson}(2)$ olasılıklarıyla tablo hâlinde karşılaştırınız.
+
+::: {.cozum}
+**(a)** Parçalar bağımsız Bernoulli denemeleridir; $X \sim B(100;\ 0{,}02)$. Tam hesap:
+
+$$P(X \le 1) = (0{,}98)^{100} + 100 \cdot (0{,}02) \cdot (0{,}98)^{99} = (0{,}98)^{100} + 2 \, (0{,}98)^{99} \approx 0{,}1326 + 0{,}2707 = 0{,}4033.$$
+
+**(b)** $\lambda = np = 100 \cdot 0{,}02 = 2$ ile
+
+$$P(X \le 1) \approx e^{-2} \left( 1 + 2 \right) = 3 e^{-2} \approx 0{,}4060.$$
+
+İki değer arasındaki fark $0{,}003$'ten küçüktür; ikinci hesap ise $100$'üncü kuvvet almadan yapılmıştır.
+
+**(c)** Binom olasılıkları $\binom{n}{x} p^x (1-p)^{n-x}$ formülüyle, Poisson olasılıkları $e^{-2} 2^x / x!$ ile hesaplanır. Dört basamağa yuvarlanmış değerler şöyledir:
+
+| $x$ | $n = 20$, $p = 0{,}1$ | $n = 100$, $p = 0{,}02$ | $n = 1000$, $p = 0{,}002$ | $\operatorname{Poisson}(2)$ |
+|---|---|---|---|---|
+| $0$ | $0{,}1216$ | $0{,}1326$ | $0{,}1351$ | $0{,}1353$ |
+| $1$ | $0{,}2702$ | $0{,}2707$ | $0{,}2707$ | $0{,}2707$ |
+| $2$ | $0{,}2852$ | $0{,}2734$ | $0{,}2709$ | $0{,}2707$ |
+| $3$ | $0{,}1901$ | $0{,}1823$ | $0{,}1806$ | $0{,}1804$ |
+| $4$ | $0{,}0898$ | $0{,}0902$ | $0{,}0902$ | $0{,}0902$ |
+| $5$ | $0{,}0319$ | $0{,}0353$ | $0{,}0360$ | $0{,}0361$ |
+| $6$ | $0{,}0089$ | $0{,}0114$ | $0{,}0120$ | $0{,}0120$ |
+| $7$ | $0{,}0020$ | $0{,}0031$ | $0{,}0034$ | $0{,}0034$ |
+
+Tablodan üç gözlem çıkar. Birincisi, $x = 0$ satırı tam olarak $\left( 1 - \dfrac{2}{n} \right)^n$ dizisidir ve $e^{-2} \approx 0{,}1353$'e yakınsar; @lem-poisson-ustel-limit'in sayısal görüntüsü budur. İkincisi, $n = 20$ için sapma dördüncü basamakta değil ikinci basamaktadır ($x = 2$'de $0{,}2852$ yerine $0{,}2707$); $n = 1000$ için ise her satırdaki fark $0{,}0003$'ü aşmaz. Üçüncüsü, $\operatorname{Poisson}(2)$ için $\lambda = 2$ tam sayı olduğundan @prp-poisson-ardisik-oran gereği $x = 1$ ve $x = 2$ eşit olasılıklı iki moddur; tabloda $0{,}2707 = 0{,}2707$ bunu doğrular. Binom sütunlarında ise $x = 2$ tek moddur: $B\!\left(n, \dfrac{2}{n}\right)$ için $(n+1)p = 2 + \dfrac{2}{n}$, $n \ge 3$ iken tam sayı değildir ve @prp-binom-mod gereği tek mod $\left\lfloor 2 + \dfrac{2}{n} \right\rfloor = 2$'dir. $n$ büyüdükçe $(n+1)p$ değeri $2$'ye yaklaşır; limitte $x = 1$ ile $x = 2$'nin eşit olasılıklı olması bu yaklaşmanın sonucudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-tip title="Poisson dağılımı nerede ortaya çıkar"}
+Poisson yaklaşımı, dağılımın neden bu kadar yaygın olduğunu açıklar. Bir zaman aralığında ya da bir bölgede gözlenen olay sayısını düşünelim ve aralığı çok sayıda küçük parçaya bölelim. Eğer **(1)** ayrık parçalardaki olay sayıları bağımsızsa, **(2)** küçük bir parçada bir olay olma olasılığı parçanın uzunluğuyla orantılıysa ve **(3)** küçük bir parçada iki ya da daha çok olay olma olasılığı ihmal edilebilir düzeydeyse, toplam olay sayısı yaklaşık olarak $B(n, p)$'dir; $n$ büyük, $p$ küçük ve $np = \lambda$ sabit olduğundan @thm-poisson-binom-yaklasimi gereği bu sayı $\operatorname{Poisson}(\lambda)$'ya yakındır. Bu üç varsayımı sağlayan olay akışına **Poisson süreci** denir; @exm-poisson-cagri-merkezi'ndeki "$t$ dakikada $\operatorname{Poisson}(3t)$" modeli tam olarak budur.
+
+Klasik örnekler: bir radyoaktif kaynağın belirli sürede yaydığı parçacık sayısı, bir kavşaktan belirli sürede geçen araç sayısı, bir dokuma kumaşının metrekaresindeki kusur sayısı, bir kekin dilimindeki üzüm sayısı ve bu bölümde gördüğümüz baskı hataları ile çağrılar. Ortak nokta her zaman aynıdır: çok sayıda fırsat, her birinde küçük olasılık, ılımlı bir ortalama.
+:::
+
+## Alıştırmalar
+
+:::: {#exr-poisson name="Poisson Dağılımı Üzerine Alıştırmalar"}
+**(a)** $X \sim \operatorname{Poisson}(3)$ için $P(X = 2)$ ve $P(X \ge 2)$ olasılıklarını hesaplayınız.
+
+**(b)** $X \sim \operatorname{Poisson}(\lambda)$ ve $P(X = 1) = P(X = 2)$ ise $\lambda$'yı, $P(X = 0)$'ı ve $P(X = 3)$'ü bulunuz.
+
+**(c)** $X \sim \operatorname{Poisson}(\lambda)$ için $E(X^3) = \lambda^3 + 3\lambda^2 + \lambda$ olduğunu gösteriniz.
+
+**(d)** $X \sim \operatorname{Poisson}(\lambda)$ için $X$'in çift değer alma olasılığının $\dfrac{1 + e^{-2\lambda}}{2}$ olduğunu gösteriniz ve $\lambda = 2$ için değerini bulunuz.
+
+**(e)** $X \sim \operatorname{Poisson}(\lambda_1)$ ile $Y \sim \operatorname{Poisson}(\lambda_2)$ bağımsız olsun. $n \ge 0$ tam sayısı ve $k = 0, 1, \ldots, n$ için
+
+$$P(X = k \mid X + Y = n) = \binom{n}{k} \left( \frac{\lambda_1}{\lambda_1 + \lambda_2} \right)^k \left( \frac{\lambda_2}{\lambda_1 + \lambda_2} \right)^{n-k}$$
+
+olduğunu gösteriniz; yani $X + Y = n$ verildiğinde $X$'in koşullu dağılımı $B\!\left(n, \dfrac{\lambda_1}{\lambda_1 + \lambda_2}\right)$'dir.
+
+**(f)** Bir aşının her uygulamada, ötekilerden bağımsız olarak, $0{,}005$ olasılıkla hafif bir yan etkiye yol açtığı bilinmektedir. $300$ uygulamada en az iki yan etki görülme olasılığını tam olarak ve Poisson yaklaşımıyla hesaplayınız; aradaki farkı Le Cam sınırıyla karşılaştırınız.
+
+**(g)** $X \sim \operatorname{Poisson}(100)$ olsun. Chebyshev eşitsizliğiyle $P(80 < X < 120)$ için bir alt sınır bulunuz.
+
+::: {.cozum}
+**(a)** $\lambda = 3$ için
+
+$$P(X = 2) = \frac{e^{-3} 3^2}{2!} = \frac{9}{2} e^{-3} \approx 0{,}2240, \qquad P(X \ge 2) = 1 - e^{-3} (1 + 3) = 1 - 4 e^{-3} \approx 0{,}8009.$$
+
+**(b)** $P(X = 1) = \lambda e^{-\lambda}$ ve $P(X = 2) = \dfrac{\lambda^2 e^{-\lambda}}{2}$'dir. Eşitlikten, $\lambda > 0$ ve $e^{-\lambda} > 0$ olduğu için $\lambda e^{-\lambda}$ ile sadeleştirerek $1 = \dfrac{\lambda}{2}$, yani $\lambda = 2$ bulunur. (@prp-poisson-ardisik-oran'ın **(ii)** şıkkı da aynı şeyi söyler: $f(2) = f(1)$ ancak $1 + 1 = \lambda$ iken olur.) Buradan
+
+$$P(X = 0) = e^{-2} \approx 0{,}1353, \qquad P(X = 3) = \frac{e^{-2} 2^3}{3!} = \frac{4}{3} e^{-2} \approx 0{,}1804.$$
+
+**(c)** $x^3$'ü çarpımsal momentlere ayıralım. $x(x-1)(x-2) = x^3 - 3x^2 + 2x$ ve $3x(x-1) = 3x^2 - 3x$ olduğundan
+
+$$x(x-1)(x-2) + 3x(x-1) + x = x^3 - 3x^2 + 2x + 3x^2 - 3x + x = x^3.$$
+
+Beklenen değerin doğrusallığı ve @thm-poisson-momentleri'nin **(ii)** şıkkı ($k = 3, 2, 1$ için çarpımsal momentler $\lambda^3, \lambda^2, \lambda$) ile
+
+$$E(X^3) = E\big[X(X-1)(X-2)\big] + 3 E\big[X(X-1)\big] + E(X) = \lambda^3 + 3\lambda^2 + \lambda.$$
+
+Sağlama: $\lambda = 2$ için formül $8 + 12 + 2 = 22$ verir; $\sum_x x^3 e^{-2} 2^x / x!$ serisinin sayısal değeri de $22{,}000$'dir.
+
+**(d)** $x$ çift iken $1 + (-1)^x = 2$, tek iken $0$ olduğundan çift $x$ üzerinden toplam, bütün $x$ üzerinden $\dfrac{1 + (-1)^x}{2}$ ağırlıklı toplamdır:
+
+$$P(X \text{ çift}) = \sum_{x=0}^{\infty} \frac{1 + (-1)^x}{2} \cdot \frac{e^{-\lambda} \lambda^x}{x!} = \frac{e^{-\lambda}}{2} \left( \sum_{x=0}^{\infty} \frac{\lambda^x}{x!} + \sum_{x=0}^{\infty} \frac{(-\lambda)^x}{x!} \right) = \frac{e^{-\lambda}}{2} \left( e^{\lambda} + e^{-\lambda} \right) = \frac{1 + e^{-2\lambda}}{2}.$$
+
+Her iki seri de mutlak yakınsak olduğundan toplamı terim terim ayırmak geçerlidir. Sonuç her $\lambda$ için $\dfrac{1}{2}$'den büyüktür: çift değerler her zaman biraz daha olasıdır. $\lambda = 2$ için $\dfrac{1 + e^{-4}}{2} \approx 0{,}5092$.
+
+**(e)** $(X = k) \cap (X + Y = n) = (X = k) \cap (Y = n - k)$ olduğundan bağımsızlıkla
+
+$$P(X = k, \, X + Y = n) = P(X = k) P(Y = n - k) = \frac{e^{-\lambda_1} \lambda_1^k}{k!} \cdot \frac{e^{-\lambda_2} \lambda_2^{n-k}}{(n-k)!}.$$
+
+@thm-poisson-toplami gereği $X + Y \sim \operatorname{Poisson}(\lambda_1 + \lambda_2)$, yani $P(X + Y = n) = \dfrac{e^{-(\lambda_1 + \lambda_2)} (\lambda_1 + \lambda_2)^n}{n!} > 0$'dır. Koşullu olasılık tanımıyla
+
+$$P(X = k \mid X + Y = n) = \frac{e^{-(\lambda_1 + \lambda_2)} \lambda_1^k \lambda_2^{n-k} / \big( k! \, (n-k)! \big)}{e^{-(\lambda_1 + \lambda_2)} (\lambda_1 + \lambda_2)^n / n!} = \frac{n!}{k! \, (n-k)!} \cdot \frac{\lambda_1^k \lambda_2^{n-k}}{(\lambda_1 + \lambda_2)^n}.$$
+
+$(\lambda_1 + \lambda_2)^n = (\lambda_1 + \lambda_2)^k (\lambda_1 + \lambda_2)^{n-k}$ yazılırsa istenen biçim elde edilir:
+
+$$P(X = k \mid X + Y = n) = \binom{n}{k} \left( \frac{\lambda_1}{\lambda_1 + \lambda_2} \right)^k \left( \frac{\lambda_2}{\lambda_1 + \lambda_2} \right)^{n-k}, \qquad k = 0, 1, \ldots, n.$$
+
+Bu, $B\!\left(n, \dfrac{\lambda_1}{\lambda_1 + \lambda_2}\right)$ dağılımının olasılık fonksiyonudur. Yorum: iki bağımsız Poisson kaynağından toplam $n$ olay gözlendiği bilindiğinde, bu olayların her biri sanki birbirinden bağımsız olarak $\dfrac{\lambda_1}{\lambda_1 + \lambda_2}$ olasılıkla birinci kaynağa aittir.
+
+**(f)** Yan etki sayısı $X \sim B(300;\ 0{,}005)$'tir. Tümleyen olaydan gidelim; tam hesap:
+
+$$P(X \ge 2) = 1 - (0{,}995)^{300} - 300 \cdot (0{,}005) \cdot (0{,}995)^{299} = 1 - (0{,}995)^{300} - \frac{3}{2} (0{,}995)^{299} \approx 1 - 0{,}22229 - 0{,}33511 = 0{,}44260.$$
+
+Poisson yaklaşımı $\lambda = 300 \cdot 0{,}005 = \dfrac{3}{2}$ ile
+
+$$P(X \ge 2) \approx 1 - e^{-3/2} \left( 1 + \frac{3}{2} \right) = 1 - \frac{5}{2} e^{-3/2} \approx 1 - 0{,}55783 = 0{,}44217.$$
+
+Fark $0{,}0005$'ten küçüktür; $n = 300$, $p = 0{,}005$ kaba kuralın rahatça içindedir. Le Cam sınırı, bütün $x$ değerleri üzerinden toplanan mutlak hata için $2np^2 = 2 \cdot 300 \cdot (0{,}005)^2 = 0{,}015$ verir; tek bir olayda gözlenen bu farkı fazlasıyla aşar.
+
+**(g)** @thm-poisson-momentleri gereği $E(X) = 100$, $\operatorname{Var}(X) = 100$ ve $\sigma_X = 10$'dur. @thm-chebyshev-esitsizligi ile
+
+$$P\big( |X - 100| \ge 20 \big) \le \frac{\operatorname{Var}(X)}{20^2} = \frac{100}{400} = \frac{1}{4}.$$
+
+$80 < X < 120$ olayı $|X - 100| < 20$ olayının kendisidir; dolayısıyla
+
+$$P(80 < X < 120) = 1 - P\big( |X - 100| \ge 20 \big) \ge 1 - \frac{1}{4} = \frac{3}{4}.$$
+
+Poisson olasılıkları terim terim toplanarak bulunan kesin değer yaklaşık $0{,}9491$'dir; Chebyshev sınırı kaba, ama hiçbir hesap gerektirmeden dağılımın ortalama etrafında toplandığını garanti eder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde başarı sayısını sınırsız bırakan ilk dağılımı, Poisson dağılımını inceledik. Sonraki bölümde deneme sayısını sabit tutmak yerine "ilk başarıya kadar" ya da "$r$'inci başarıya kadar" bekleyen dağılımlara ve iadesiz çekilişin dağılımına geçiyoruz: [Geometrik, Negatif Binom ve Hipergeometrik Dağılımlar](geometrik-negatif-binom-ve-hipergeometrik.qmd).

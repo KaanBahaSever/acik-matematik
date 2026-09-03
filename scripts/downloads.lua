@@ -4,8 +4,8 @@
   scripts/export.py renders every course (or its sub-courses) to PDF / EPUB
   and leaves a manifest, dersler/<course>/_downloads.json, next to the
   course. When that manifest exists, this filter draws a panel with the
-  download links on the course's index.qmd page, right before the curriculum
-  ("Ders İçeriği") heading.
+  download links at the very end of the course's index.qmd page, so the
+  reader meets the opening text and the curriculum listing first.
 
   Without the manifest (e.g. `quarto preview` while writing) the page is
   rendered as before — nothing is inserted.
@@ -81,16 +81,6 @@ function Pandoc(doc)
   local manifest = read_manifest()
   if not manifest or not manifest.units or #manifest.units == 0 then return nil end
 
-  local panel = pandoc.RawBlock("html", panel_html(manifest))
-  local blocks = doc.blocks
-  for i, block in ipairs(blocks) do
-    local is_heading = block.t == "Header" and block.level == 2
-    local is_box = block.t == "Div" and block.classes:includes("curriculum")
-    if is_heading or is_box then
-      blocks:insert(i, panel)
-      return doc
-    end
-  end
-  blocks:insert(panel)
+  doc.blocks:insert(pandoc.RawBlock("html", panel_html(manifest)))
   return doc
 end
