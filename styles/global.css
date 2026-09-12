@@ -924,7 +924,97 @@ mjx-container[display="true"] > mjx-math {
   min-width: 0 !important;
 }
 
-/* Satır içi formüller satır sonunda kırılabilsin */
+/* --------------------------------------------------------------------------
+   HARD RULE: no element may make the PAGE itself wider than the screen.
+
+   Display formulas are already scroll containers (see above), but an inline
+   formula cannot break: MathJax 3 has no automatic line breaking, so a long
+   $...$ in the middle of a sentence is one unbreakable box. Clamping that box
+   with max-width does not help -- the <mjx-math> inside it is a real element,
+   so it still stretches the document and every line of the page runs off the
+   screen. The only reliable fix is to let the block that holds the text scroll
+   instead of the page: a paragraph, a list or a table that cannot fit its
+   widest inline box gets a horizontal scrollbar. Blocks that fit are untouched,
+   because `auto` paints a scrollbar only when there is something to scroll.
+
+   Paragraphs that hold a display formula are excluded on purpose. Such a
+   paragraph has the formula as its only child, and section 15 relies on the
+   margins of the two collapsing into one; a scroll container is a new block
+   formatting context, which would stop that collapsing and add a visible gap
+   above and below every display formula. The formula scrolls by itself there.
+   -------------------------------------------------------------------------- */
+#quarto-document-content dd,
+#quarto-document-content blockquote,
+#quarto-document-content figcaption {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;      /* only the horizontal axis may scroll */
+}
+
+/* Kept in a rule of its own: a browser that does not know :has() throws away
+   the whole selector list it appears in, which would take the three elements
+   above down with it. */
+#quarto-document-content p:not(:has(mjx-container[display="true"])) {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Browsers without :has() (Firefox below 121, Safari below 15.4) cannot tell a
+   display formula's paragraph from a text one. There the page must not break,
+   so every paragraph scrolls; the extra gap around display formulas that this
+   causes is the smaller of the two evils. */
+@supports not selector(:has(*)) {
+  #quarto-document-content p {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+/* A list gets the scrollbar as a whole, never the single item: an "outside"
+   bullet or number is painted beyond the item's own box, so a scroll container
+   on the <li> swallows it and the list loses its markers (measured in Chrome).
+   On the <ul>/<ol> the markers sit inside the list's own left padding, so they
+   survive -- provided that padding is wide enough for the widest marker, which
+   is why the lists inside a box get a little more of it below. */
+#quarto-document-content ol,
+#quarto-document-content ul {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Long formulas are easier to swipe when the scrollbar is visible: same thin,
+   theme-neutral bar the display formulas use. */
+#quarto-document-content p,
+#quarto-document-content ol,
+#quarto-document-content ul,
+#quarto-document-content dd,
+#quarto-document-content blockquote {
+  scrollbar-width: thin;                                /* Firefox */
+  scrollbar-color: rgba(128, 128, 128, 0.45) transparent;
+}
+
+#quarto-document-content p::-webkit-scrollbar,
+#quarto-document-content ol::-webkit-scrollbar,
+#quarto-document-content ul::-webkit-scrollbar,
+#quarto-document-content dd::-webkit-scrollbar,
+#quarto-document-content blockquote::-webkit-scrollbar {
+  height: 5px;
+}
+
+#quarto-document-content p::-webkit-scrollbar-thumb,
+#quarto-document-content ol::-webkit-scrollbar-thumb,
+#quarto-document-content ul::-webkit-scrollbar-thumb,
+#quarto-document-content dd::-webkit-scrollbar-thumb,
+#quarto-document-content blockquote::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.4);
+  border-radius: 3px;
+}
+
+/* Inline formulas stay inside their line; the rules above give them somewhere
+   to scroll when they cannot. */
 mjx-container:not([display="true"]) {
   max-width: 100%;
 }
@@ -980,14 +1070,16 @@ mjx-container:not([display="true"]) {
     padding-left: 1.35em;
   }
 
-  /* Kutu içindeki listeler daha da dar olmalı */
+  /* Kutu içindeki listeler daha dar; yine de en geniş madde işareti
+     ("iii.", "10.") bu boşluğa sığmalı, çünkü liste artık kendi içinde
+     kayan bir kutudur ve işaret bu dolgunun dışına taşarsa kırpılır. */
   .theorem ol,
   .theorem ul,
   .callout-body ol,
   .callout-body ul,
   .collapsible-body ol,
   .collapsible-body ul {
-    padding-left: 1.1em;
+    padding-left: 1.9em;
   }
 
   /* Teorem/örnek kutularının iç boşluğu mobilde küçültülür */
