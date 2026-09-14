@@ -278,6 +278,14 @@ def scan_file(path: pathlib.Path):
     return out
 
 
+def shown(path: pathlib.Path) -> str:
+    """Repository-relative path when possible, the full path for drafts elsewhere."""
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("course", nargs="?", help="course directory under dersler/")
@@ -286,15 +294,16 @@ def main():
     ap.add_argument("--limit", type=int, default=25, help="how many findings to print per kind")
     args = ap.parse_args()
 
-    base = COURSES / args.course if args.course else COURSES
-    files = sorted(base.rglob("*.qmd"))
+    # a course name under dersler/, or any directory or single .qmd file (drafts outside the repo)
+    base = (COURSES / args.course) if args.course else COURSES
+    files = [base] if base.is_file() else sorted(base.rglob("*.qmd"))
     findings = []
     counts = {"inline": 0, "display": 0}
     for f in files:
         for line, kind, w, budget, tex in scan_file(f):
             counts[kind] += 1
             if w > budget:
-                findings.append({"file": f.relative_to(ROOT).as_posix(), "line": line,
+                findings.append({"file": shown(f), "line": line,
                                  "kind": kind, "em": round(w, 1), "budget": budget,
                                  "tex": tex[:200]})
 

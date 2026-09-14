@@ -10,6 +10,26 @@ Bu bakış açısı, temel hesaptan tanıdık ama hiçbir zaman tam açıklanmam
 
 Plan şöyle. Önce diferansiyel formülünün neyi anlatmaya çalıştığını bir örnekle görüp 1-form kavramını tanımlayacağız; 1-formları toplamayı, fonksiyonlarla çarpmayı ve vektör alanlarında değerlendirmeyi öğreneceğiz. Sonra bir fonksiyonun diferansiyelini bir 1-form olarak tanımlayıp koordinat diferansiyellerini $dx_1, dx_2, dx_3$ inceleyeceğiz. Her 1-formun bu üçüyle yazılabildiğini ispatlayınca başlangıçtaki formül bir sonuç olarak karşımıza çıkacak. Son olarak diferansiyelin toplam, çarpım ve bileşke kurallarını ispatlayacak ve bunlarla hızlı hesap yapmayı öğreneceğiz.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, fmt, sceneLayout, path, point, label, segment, arrow, surface, cylinder, render } from "../ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Diferansiyel Ne Demek?
 
 Temel hesap derslerinde $\mathbb{R}^3$ üzerindeki gerçel değerli bir $f$ fonksiyonunun diferansiyeli şöyle yazılır:
@@ -716,6 +736,77 @@ Sayısal olarak, $\mathbf{p} = (1, 2, 1)$ ve $\mathbf{v} = (2, 1, 3)$ için $dx(
 ```
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: $dx_i$ teğet vektörün koordinatını okur.** Sahneyi sürükleyerek döndürebilirsiniz. Turuncu ok $\mathbf{p} = (1, 2, 1)$ noktasındaki $\mathbf{v}_{\mathbf{p}}$ teğet vektörü, kesikli yeşil basamaklar onun $U_1$, $U_2$, $U_3$ yönlerindeki parçaları, noktalı gri çizgiler de okun başıyla ucunu karşılıklı köşe kabul eden koordinat kutusudur. $v_1$, $v_2$, $v_3$ kaydırıcılarıyla vektör kısmını değiştirin: $dx(\mathbf{v}_{\mathbf{p}})$, $dy(\mathbf{v}_{\mathbf{p}})$ ve $dz(\mathbf{v}_{\mathbf{p}})$ her an bu basamakların işaretli uzunlukları, yani $v_1$, $v_2$, $v_3$'tür. Bu üç sayı sahnenin altındaki satırda okunur. Nokta seçimini $\mathbf{0}$ yapınca ok başlangıç noktasına taşınır ama üç değer aynı kalır: $dx_i$ yalnızca vektör kısmını okur.
+
+```{ojs}
+//| echo: false
+viewof formReadingControls = Inputs.form({
+  v1: Inputs.range([-3, 3], { value: 2, step: 0.1, label: "v₁" }),
+  v2: Inputs.range([-3, 3], { value: 1, step: 0.1, label: "v₂" }),
+  v3: Inputs.range([-3, 3], { value: 3, step: 0.1, label: "v₃" }),
+  at: Inputs.radio(["p", "0"], { value: "p", label: "nokta", format: (key) => (key === "p" ? "p = (1, 2, 1)" : "0 = (0, 0, 0)") })
+})
+```
+
+```{ojs}
+//| echo: false
+formReadingPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: p = (1, 2, 1) noktasindaki teget vektor, eksenlere paralel bilesenleri ve koordinat kutusu; dx, dy, dz degerleri vektor kisminin koordinatlaridir ve uygulama noktasina bagli degildir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { v1, v2, v3, at } = formReadingControls;
+  const atOrigin = at === "0";
+  const v = [v1, v2, v3];
+  const start = atOrigin ? [0, 0, 0] : [1, 2, 1];
+  const tip = start.map((c, i) => c + v[i]);
+  const pointName = atOrigin ? "0" : "p";
+  // Axis-parallel staircase from the start of the arrow to its tip: v1 U1, then v2 U2, then v3 U3.
+  const steps = [start, [tip[0], start[1], start[2]], [tip[0], tip[1], start[2]], tip];
+  // The other nine edges of the box whose opposite corners are the start and the tip.
+  const corner = (i, j, k) => [i ? tip[0] : start[0], j ? tip[1] : start[1], k ? tip[2] : start[2]];
+  const boxEdges = [];
+  for (const s of [0, 1]) {
+    for (const t of [0, 1]) {
+      if (s || t) boxEdges.push([corner(0, s, t), corner(1, s, t)]);
+      if (!(s === 1 && t === 0)) boxEdges.push([corner(s, 0, t), corner(s, 1, t)]);
+      if (!(s === 1 && t === 1)) boxEdges.push([corner(s, t, 0), corner(s, t, 1)]);
+    }
+  }
+  const middle = (a, b) => a.map((c, i) => (c + b[i]) / 2);
+  const readings = [["dx", v1], ["dy", v2], ["dz", v3]];
+  // In the view below +x points to the left, so the x step runs left when v1 >= 0: keep the dy and dz
+  // labels and the point name on the outer side of the staircase. On screen the arrow runs above the
+  // x step when 2 v3 >= v2 (y points about 0.4 down, z about 0.9 up), so dx goes on the other side.
+  const outside = v1 >= 0 ? "middle left" : "middle right";
+  const labelSides = [2 * v3 >= v2 ? "bottom center" : "top center", outside, outside];
+  const traces = [
+    ...boxEdges.map(([a, b]) => segment(a, b, theme.axis, { width: 2, dash: "dot" })),
+    ...arrow(start, v, theme.practice, `teğet vektör v<sub>${pointName}</sub>`),
+    ...readings.map((reading, i) => ({
+      ...segment(steps[i], steps[i + 1], theme.base, { width: 5, name: i === 0 ? "bileşenler v₁U₁, v₂U₂, v₃U₃" : undefined }),
+      legendgroup: "components"
+    })),
+    // 3D labels keep constant text: WebGL text whose content changed on a slider move was drawn at
+    // half size after the update, so the changing values live in the read-out line below the scene.
+    ...readings.map(([name], i) => label(middle(steps[i], steps[i + 1]), name, theme.base, { position: labelSides[i] })),
+    point(start, theme.text, pointName, { legend: false }),
+    // Both name labels always exist in the same order and only their visibility follows the choice,
+    // so no WebGL text changes; 0 and p lie almost on one line of sight in this camera.
+    { ...label([1, 2, 1], "p", theme.text, { position: v1 >= 0 ? "middle right" : "middle left" }), visible: !atOrigin },
+    { ...label([0, 0, 0], "0", theme.text, { position: v1 >= 0 ? "middle right" : "middle left" }), visible: atOrigin }
+  ];
+  // Seen from the +y side as in the static figure; the default camera hid the y step behind the x step.
+  render(Plotly, formReadingPlot, traces, sceneLayout(theme, { x: [-3.5, 4.5], y: [-3.5, 5.5], z: [-3.5, 4.5], eye: { x: 0.55, y: 1.6, z: 0.82 } }));
+  return html`<div class="scene3d-readout">uygulama noktası <b>${pointName}</b> = ${atOrigin ? "(0, 0, 0)" : "(1, 2, 1)"} &nbsp;·&nbsp; <b>v</b> = (${fmt(v1)}; ${fmt(v2)}; ${fmt(v3)})<br><i>dx</i>(<b>v</b><sub><b>${pointName}</b></sub>) = <i>v</i><sub>1</sub> = ${fmt(v1)} &nbsp;·&nbsp; <i>dy</i>(<b>v</b><sub><b>${pointName}</b></sub>) = <i>v</i><sub>2</sub> = ${fmt(v2)} &nbsp;·&nbsp; <i>dz</i>(<b>v</b><sub><b>${pointName}</b></sub>) = <i>v</i><sub>3</sub> = ${fmt(v3)}</div>`;
+}
+```
 :::
 ::::
 
@@ -1983,4 +2074,4 @@ $\mathbb{R}^3$ üzerinde diferansiyellenebilir bir $f$ fonksiyonu için $df = 0$
 :::
 ::::
 
-Bu bölümde kurduğumuz 1-formlar, diferansiyel formlar denen daha geniş bir sistemin ilk basamağıdır; ileride formları kama çarpımıyla birbirleriyle çarpacak ve dış türevle türevleyerek bu sistemi 2-formlara ve 3-formlara genişleteceğiz.
+Bu bölümde kurduğumuz 1-formlar, diferansiyel formlar denen daha geniş bir sistemin ilk basamağıdır; bir sonraki [Diferansiyel Formlar](diferansiyel-formlar.qmd) bölümünde formları kama çarpımıyla birbirleriyle çarpacak ve dış türevle türevleyerek bu sistemi 2-formlara ve 3-formlara genişleteceğiz.

@@ -10,6 +10,26 @@ Eğriye bir şekil olarak değil, bir yolculuk olarak bakacağız. Uzayda hareke
 
 Bölümün planı şöyledir. Önce eğrinin tanımını ve ileride geometrisini inceleyeceğimiz beş temel örneği vereceğiz. Sonra hız vektörünü tanımlayıp onu kesen vektörlerin limiti olarak yorumlayacağız. Aynı rotayı farklı biçimde dolaşan eğrileri, yani yeniden parametrelendirmeleri, ve bunların hızlarını karşılaştıracağız. Bir fonksiyonun bir eğri boyunca değişim hızını veren lemmayı ispatlayıp birebir, periyodik ve düzgün eğrileri tanımlayacağız. Son olarak düzlemde bir denklemle verilen eğrilere, yani seviye kümelerine, bakacağız.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, fmt, sceneLayout, path, point, label, segment, arrow, surface, cylinder, render } from "../ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Açık Aralıklar
 
 Hareket eden bir noktanın zamanı bir sayı aralığında akar. Bu aralığın her anında noktanın hızını, yani bir türevi, hesaplamak isteyeceğiz. Tek değişkenli bir fonksiyonun $t$ anındaki türevi, $\Delta t$ hem pozitif hem negatif değerlerle sıfıra giderken alınan bir limittir; bu limitin anlamlı olması için $t$'nin iki yanında da aralığa ait sayılar bulunmalıdır. Uç noktası kendisine ait olmayan aralıklar tam bu özelliği taşır.
@@ -360,6 +380,48 @@ $0 \le t \le 2\pi$ iken $\sin(t/2) \ge 0$ olduğundan nokta kürenin $z \ge 0$ y
 :::
 ::::
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: küre ile silindirin kesişimi.** Sahneyi sürükleyerek döndürebilirsiniz. Yarı saydam yüzeyler $\Sigma$ küresi ile $C$ silindiridir; $t$ kaydırıcısı noktayı $\alpha$'nın rotası üzerinde $0$'dan $4\pi$'ye kadar dolaştırır ve değer satırındaki iki toplam her an $4$ ile $1$ kalır, yani nokta iki yüzeyden de ayrılmaz. Turuncu ok noktanın o andaki hız vektörüdür (bu vektörü birazdan tanımlayacağız); $t = 0$ ile $t = 2\pi$'de nokta aynı $(2, 0, 0)$ yerindedir, ama ok iki farklı yönü gösterir.
+
+```{ojs}
+//| echo: false
+viewof vivianiControls = Inputs.form({
+  t: Inputs.range([0, 4 * Math.PI], { value: Math.PI / 2, step: 0.01, label: "t" })
+})
+```
+
+```{ojs}
+//| echo: false
+vivianiPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: yaricapi 2 olan kure ile (x-1)^2 + y^2 = 1 silindirinin kesisim egrisi, uzerinde hareket eden nokta ve hiz vektoru"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { t } = vivianiControls;
+  const alpha = (time) => [1 + Math.cos(time), Math.sin(time), 2 * Math.sin(time / 2)];
+  const p = alpha(t);
+  const velocity = [-Math.sin(t), Math.cos(t), Math.cos(t / 2)];
+  const sphereSum = p[0] * p[0] + p[1] * p[1] + p[2] * p[2];
+  const cylinderSum = (p[0] - 1) * (p[0] - 1) + p[1] * p[1];
+  const sphere = (u, v) => [2 * Math.sin(v) * Math.cos(u), 2 * Math.sin(v) * Math.sin(u), 2 * Math.cos(v)];
+  const traces = [
+    surface(sphere, 0, 2 * Math.PI, 0, Math.PI, theme.surface, { opacity: 0.08, nu: 48, nv: 24 }),
+    cylinder(1, -2.2, 2.2, theme.surface, { cx: 1, opacity: 0.14 }),
+    label([0.66, 1.98, 0.66], "Σ", theme.text),
+    label([1.71, 0.71, 2.2], "C", theme.text),
+    path(alpha, 0, 4 * Math.PI, theme.theory, "kesişim eğrisi α", { samples: 360 }),
+    point(p, theme.text, "α(t)"),
+    ...arrow(p, velocity, theme.practice, "hız vektörü α′(t)")
+  ];
+  render(Plotly, vivianiPlot, traces, sceneLayout(theme, { x: [-2.5, 2.5], y: [-2.5, 2.5], z: [-2.5, 2.5] }));
+  return html`<div class="scene3d-readout">α(t) = (${fmt(p[0])}; ${fmt(p[1])}; ${fmt(p[2])}) &nbsp;·&nbsp; x² + y² + z² = ${fmt(sphereSum)} &nbsp;·&nbsp; (x − 1)² + y² = ${fmt(cylinderSum)} &nbsp;·&nbsp; α′(t) = (${fmt(velocity[0])}; ${fmt(velocity[1])}; ${fmt(velocity[2])})</div>`;
+}
+```
+:::
+::::
+
 :::: {#exm-egri-hiperbol-uzerinde-yukselen name="Hiperbolün Üzerinde Yükselen Eğri"}
 $\alpha : \mathbb{R} \to \mathbb{R}^3$ eğrisi
 
@@ -448,6 +510,47 @@ Kolun her noktası tam bir kez ziyaret edilir. $x_0 > 0$ olmak üzere $(x_0, 1/x
 ```
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: hiperbolün üzerinde yükselen eğri.** Sahneyi sürükleyerek döndürebilirsiniz. Yarı saydam duvar $xy = 1$ hiperbolünün $x > 0$ kolu üzerine dikilmiştir; $t$ kaydırıcısı noktayı eğri boyunca ilerletir, kesikli dikme de noktayı $xy$ düzlemindeki izdüşümüne bağlar. Değer satırında izdüşümün koordinatlarının çarpımı her an $1$, yükseklik ise $\sqrt{2}\,t$'dir. Turuncu hız vektörünün yatay kısmı uzayıp kısalırken üçüncü bileşeni hep $\sqrt{2}$ kalır: eğri sabit hızla yükselir.
+
+```{ojs}
+//| echo: false
+viewof hyperbolaRiseControls = Inputs.form({
+  t: Inputs.range([-1, 1], { value: 1, step: 0.01, label: "t" })
+})
+```
+
+```{ojs}
+//| echo: false
+hyperbolaRisePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: xy = 1 hiperbolunun x > 0 kolu uzerindeki duvarda yukselen egri, hareket eden nokta, hiz vektoru ve xy duzlemine inen kesikli dikme"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { t } = hyperbolaRiseControls;
+  const alpha = (time) => [Math.exp(time), Math.exp(-time), Math.SQRT2 * time];
+  const p = alpha(t);
+  const foot = [p[0], p[1], 0];
+  const velocity = [Math.exp(t), -Math.exp(-t), Math.SQRT2];
+  const wall = (u, height) => [Math.exp(u), Math.exp(-u), height];
+  const traces = [
+    surface(wall, -1.2, 1.2, -2, 2, theme.surface, { opacity: 0.12, nu: 40, nv: 2 }),
+    path((u) => [Math.exp(u), Math.exp(-u), 0], -1.2, 1.2, theme.axis, "xy = 1 hiperbolü", { width: 3, dash: "dash" }),
+    path(alpha, -1.2, 1.2, theme.theory, "eğri α"),
+    segment(p, foot, theme.axis),
+    point(foot, theme.axis, "", { size: 3 }),
+    point(p, theme.text, "α(t)"),
+    ...arrow(p, velocity, theme.practice, "hız vektörü α′(t)")
+  ];
+  render(Plotly, hyperbolaRisePlot, traces, sceneLayout(theme, { x: [0, 5.8], y: [-0.3, 3.5], z: [-2.2, 3.1] }));
+  return html`<div class="scene3d-readout">α(t) = (${fmt(p[0])}; ${fmt(p[1])}; ${fmt(p[2])}) &nbsp;·&nbsp; x·y = ${fmt(p[0] * p[1])} &nbsp;·&nbsp; z = √2·t = ${fmt(Math.SQRT2 * t)} &nbsp;·&nbsp; α′(t) = (${fmt(velocity[0])}; ${fmt(velocity[1])}; ${fmt(velocity[2])})</div>`;
+}
+```
 :::
 ::::
 
@@ -830,6 +933,45 @@ Yatay kısımlar dönerek yön değiştirir, düşey kısım hep $1/2$ kalır.
 :::
 ::::
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: helis ve hız vektörü.** Sahneyi sürükleyerek döndürebilirsiniz. $t$ kaydırıcısı noktayı $\alpha(t) = (a\cos t,\ a\sin t,\ bt)$ helisi üzerinde hareket ettirir; turuncu ok o andaki hız vektörü $\alpha'(t)$'dir. $a$ ile yarıçapı, $b$ ile yükselme hızını değiştirin: hız vektörünün üçüncü bileşeni her an $b$'dir ve uzunluğu $\sqrt{a^2 + b^2}$ olarak sabit kalır.
+
+```{ojs}
+//| echo: false
+viewof helixControls = Inputs.form({
+  t: Inputs.range([0, 2 * Math.PI], { value: 1.2, step: 0.01, label: "t" }),
+  a: Inputs.range([0.5, 2], { value: 1, step: 0.05, label: "a" }),
+  b: Inputs.range([-1, 1], { value: 0.5, step: 0.05, label: "b" })
+})
+```
+
+```{ojs}
+//| echo: false
+helixPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir helis sahnesi: helis uzerinde hareket eden nokta ve hiz vektoru"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { t, a, b } = helixControls;
+  const alpha = (s) => [a * Math.cos(s), a * Math.sin(s), b * s];
+  const p = alpha(t);
+  const velocity = [-a * Math.sin(t), a * Math.cos(t), b];
+  const heights = [b * -0.4, b * (2 * Math.PI + 0.4)];
+  const traces = [
+    cylinder(a, Math.min(...heights) - 0.2, Math.max(...heights) + 0.2, theme.surface, { opacity: 0.1 }),
+    path(alpha, -0.4, 2 * Math.PI + 0.4, theme.theory, "helis α"),
+    point(p, theme.text, "α(t)"),
+    ...arrow(p, velocity, theme.practice, "hız vektörü α′(t)")
+  ];
+  render(Plotly, helixPlot, traces, sceneLayout(theme));
+  return html`<div class="scene3d-readout">α′(t) = (${fmt(velocity[0])}; ${fmt(velocity[1])}; ${fmt(velocity[2])}) &nbsp;·&nbsp; uzunluk √(a² + b²) = ${fmt(Math.hypot(a, b))}</div>`;
+}
+```
+:::
+::::
+
 :::: {#exm-egri-kubik-hizi name="Kübik Eğrinin Hızı"}
 $\alpha(t) = (3t - t^3, 3t^2, 3t + t^3)$ eğrisinin hız vektörünü doğal çatı cinsinden yazalım ve $t = 0$ ile $t = 1$ anlarında yorumlayalım.
 
@@ -1055,6 +1197,60 @@ $$h'(s)\, \alpha'(h(s)) = \left(2s \cdot \dfrac{1}{2s},\ 2s \cdot \dfrac{3s}{2},
 *Yorum.* $s = 1$'de ortak nokta $(1, 1, 0)$'dır; $\beta'(1) = (1, 3, -2)_{(1, 1, 0)}$ ve $\alpha'(1) = (1/2, 3/2, -1)_{(1, 1, 0)}$ olur. $h'(1) = 2$ olduğundan $\beta'(1) = 2\alpha'(1)$: $\beta$ bu noktadan aynı yönde, iki kat hızla geçer. Buna karşılık $s = 1/4$'te $h'(1/4) = 1/2$'dir ve $\beta$, $\alpha(1/16)$ noktasından $\alpha$'nın yarı hızıyla geçer. Önceki örnekteki "başta yavaş, sonda hızlı" gözlemi böylece sayıya dönüşür.
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: aynı rotada iki saat.** Sahneyi sürükleyerek döndürebilirsiniz. $u$ kaydırıcısı iki yolculuğun da toplam süresinin geçen payıdır: $\alpha$ o anda $t = 4u$'da, $\beta$ ise $s = 2u$'dadır. $u = 1/2$'de $\beta$ ancak $(1, 1, 0)$ noktasına varmışken $\alpha$ çoktan $t = 2$ anına ulaşmıştır; $u$ küçükken $\alpha'$ oku daha uzundur, $u$ büyüdükçe $\beta'$ oku onu geçip hızla uzar. Oklar sahneye sığsın diye gerçek boylarının yarısıyla çizilmiştir; değer satırı gerçek uzunlukları ve $\beta'(s) = h'(s)\,\alpha'(h(s))$ eşitliğini gösterir.
+
+```{ojs}
+//| echo: false
+viewof reparamControls = Inputs.form({
+  u: Inputs.range([0.01, 0.99], { value: 0.5, step: 0.01, label: "u" })
+})
+```
+
+```{ojs}
+//| echo: false
+reparamPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: ayni rota uzerinde alfa(t) ve beta(s) = alfa(s^2) yolculuklari, iki nokta ve yari boyda cizilmis hiz vektorleri"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { u } = reparamControls;
+  const alpha = (time) => [Math.sqrt(time), time * Math.sqrt(time), 1 - time];
+  const alphaPrime = (time) => {
+    const root = Math.sqrt(Math.max(time, 1e-6));
+    return [1 / (2 * root), 1.5 * root, -1];
+  };
+  const h = (x) => x * x;
+  const hPrime = (x) => 2 * x;
+  const t = 4 * u;
+  const s = 2 * u;
+  const alphaPoint = alpha(t);
+  const betaPoint = alpha(h(s));
+  const alphaVelocity = alphaPrime(t);
+  const betaVelocity = [1, 3 * s * s, -2 * s];
+  const alphaAtH = alphaPrime(h(s));
+  const chain = alphaAtH.map((c) => hPrime(s) * c);
+  const half = (v) => v.map((c) => c / 2);
+  const vec = (v) => `(${fmt(v[0])}; ${fmt(v[1])}; ${fmt(v[2])})`;
+  const traces = [
+    // A thinner route keeps the tangent arrows, which lie along it, visible.
+    path(alpha, 0, 4, theme.theory, "ortak rota", { width: 4 }),
+    // Labels on opposite sides of the route stay apart when the two points meet near u = 1.
+    point(alphaPoint, theme.practice, "", { text: "α(t)", position: "bottom left" }),
+    ...arrow(alphaPoint, half(alphaVelocity), theme.practice, "α′(t)", { head: 0.4 }),
+    point(betaPoint, theme.base, "", { text: "β(s)", position: "top right" }),
+    ...arrow(betaPoint, half(betaVelocity), theme.base, "β′(s)", { head: 0.4 })
+  ];
+  // Viewed from the -y side: the start of the route, where both points spend most of the slider range, is nearest the reader.
+  render(Plotly, reparamPlot, traces, sceneLayout(theme, { x: [-0.3, 2.9], y: [-0.5, 14], z: [-5.3, 1.5], eye: { x: 2.25, y: -0.56, z: 0.5 } }));
+  return html`<div class="scene3d-readout">t = 4u = ${fmt(t)} &nbsp;·&nbsp; |α′(t)| = ${fmt(Math.hypot(...alphaVelocity))} &nbsp;·&nbsp; s = 2u = ${fmt(s)} &nbsp;·&nbsp; h(s) = s² = ${fmt(h(s))} &nbsp;·&nbsp; |β′(s)| = ${fmt(Math.hypot(...betaVelocity))}<br>h′(s) = ${fmt(hPrime(s))} &nbsp;·&nbsp; α′(h(s)) = ${vec(alphaAtH)} &nbsp;·&nbsp; h′(s) α′(h(s)) = ${vec(chain)} &nbsp;·&nbsp; β′(s) = ${vec(betaVelocity)}</div>`;
+}
+```
 :::
 ::::
 

@@ -13,6 +13,26 @@ Fikir tek değişkenli hesaptan tanıdıktır. Sayı doğrusu üzerinde bir $f$ 
 
 Bölümün planı şöyledir. Önce bu sayıyı, $\mathbf{p}$'den geçen bir doğru boyunca türev alarak tanımlayacağız. Sonra onu $f$'nin kısmi türevleriyle hesaplayan formülü ispatlayacağız. Ardından her türev işleminin taşıdığı iki özelliği, lineerliği ve Leibniz kuralını, ispatlayacağız. Son olarak tek bir teğet vektör yerine bir vektör alanı alıp $f$'nin bu alan boyunca türevi olan $V[f]$ fonksiyonunu kuracak ve özelliklerini inceleyeceğiz.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, fmt, sceneLayout, path, point, label, segment, arrow, surface, cylinder, render } from "../ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Bir Doğru Boyunca Türev
 
 Bir $f$ fonksiyonunun bir $\mathbf{p}$ noktasındaki değişimini ölçmek istiyoruz. Bir teğet vektör $\mathbf{v}_{\mathbf{p}}$ (@def-teget-vektor) bize hem noktayı hem yönü verir. $\mathbf{p}$'den $\mathbf{v}$ yönünde gitmenin en basit yolu bir doğru üzerinde yürümektir. Her $t$ gerçel sayısı için
@@ -343,6 +363,70 @@ Bunu geometrik olarak görelim. $z = x^2 + y^2$ yüzeyi $f$'nin grafiğidir. Dü
 ```
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: yön değişince yönlü türev.** Sahneyi sürükleyerek döndürebilirsiniz; $\theta$ kaydırıcısı $\mathbf{p} = (1, 2)$'den geçen doğrunun yönünü, $|\mathbf{v}|$ kaydırıcısı $\mathbf{v} = |\mathbf{v}|(\cos\theta, \sin\theta)$ vektörünün uzunluğunu değiştirir ve başlangıçta örnekteki $\mathbf{v} = (3, -1)$ seçilidir. Doğrunun üzerindeki düşey düzlem $z = x^2 + y^2$ yüzeyini kesit eğrisi boyunca keser; turuncu ok bu eğrinin $(1, 2, 5)$ noktasındaki teğetidir ve düşey bileşeni $\mathbf{v}_{\mathbf{p}}[f] = 2v_1 + 4v_2$'dir. $\theta$ değişirken $\mathbf{v}$, $\nabla f(\mathbf{p}) = (2, 4)$ okuyla aynı yöne gelince türev en büyük olur; kesikli $x^2 + y^2 = 5$ çemberine teğet olunca ok yataylaşır ve türev sıfırlanır. Uzunluğu değiştirmek kesit eğrisini değiştirmez, türevi aynı oranda büyütür ya da küçültür; $z$ ekseni okunaklılık için sıkıştırılmıştır.
+
+```{ojs}
+//| echo: false
+viewof slopeSectionControls = Inputs.form({
+  theta: Inputs.range([-180, 180], { value: -18.43, step: 0.01, label: "θ (°)" }),
+  norm: Inputs.range([0.2, 3.2], { value: 3.16, step: 0.01, label: "|v|" })
+})
+```
+
+```{ojs}
+//| echo: false
+slopeSectionPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: z = x^2 + y^2 yuzeyi, p = (1, 2) noktasindan secilen yonde gecen dogru, dogrunun uzerindeki kesit egrisi ve (1, 2, 5) noktasindaki teget vektor"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { theta, norm } = slopeSectionControls;
+  const f = (x, y) => x * x + y * y;
+  const p = [1, 2];
+  const top = [p[0], p[1], f(p[0], p[1])];
+  const grad = [2 * p[0], 2 * p[1]];
+  const angle = (theta * Math.PI) / 180;
+  const u = [Math.cos(angle), Math.sin(angle)];
+  const v = [norm * u[0], norm * u[1]];
+  const derivative = grad[0] * v[0] + grad[1] * v[1];
+  const gradNorm = Math.hypot(grad[0], grad[1]);
+  const cosine = norm > 1e-9 ? Math.max(-1, Math.min(1, derivative / (gradNorm * norm))) : 0;
+  const between = (Math.acos(cosine) * 180) / Math.PI;
+  const along = (s) => [p[0] + s * u[0], p[1] + s * u[1]];
+  const reach = 2;
+  const rim = 4.4;
+  const traces = [
+    surface((rho, phi) => [rho * Math.cos(phi), rho * Math.sin(phi), rho * rho], 0.05, rim, 0, 2 * Math.PI, theme.surface, { opacity: 0.13, nu: 24, nv: 48 }),
+    surface((s, h) => { const [x, y] = along(s); return [x, y, h * f(x, y)]; }, -reach, reach, 0, 1, theme.theory, { opacity: 0.12, nu: 40, nv: 1 }),
+    segment([-4.6, 0, 0], [4.6, 0, 0], theme.axis, { dash: "solid", width: 2 }),
+    segment([0, -4.6, 0], [0, 6.4, 0], theme.axis, { dash: "solid", width: 2 }),
+    path((s) => [Math.sqrt(5) * Math.cos(s), Math.sqrt(5) * Math.sin(s), 0], 0, 2 * Math.PI, theme.axis, "", { width: 3, dash: "dash", samples: 120 }),
+    path((s) => [...along(s), 0], -3.4, 3.4, theme.theory, "", { width: 4, samples: 1 }),
+    path((s) => { const [x, y] = along(s); return [x, y, f(x, y)]; }, -reach, reach, theme.theory, "kesit eğrisi", { width: 7, samples: 160 }),
+    segment([p[0], p[1], 0], top, theme.axis),
+    point([p[0], p[1], 0], theme.text, "", { text: "p" }),
+    point(top, theme.text, "", { text: "(1, 2, 5)" }),
+    ...arrow([p[0], p[1], 0], [grad[0], grad[1], 0], theme.base, "∇f(p) = (2, 4)", { head: 0.5 }),
+    ...arrow(top, [v[0], v[1], derivative], theme.practice, "teğet vektör", { head: 0.9 })
+  ];
+  const layout = sceneLayout(theme, {
+    x: [-4.6, 4.6],
+    y: [-4.6, 6.4],
+    z: [-10, 20],
+    aspectmode: "manual",
+    aspectratio: { x: 1, y: 1.2, z: 1.05 },
+    eye: { x: 1.95, y: 0.7, z: 0.95 }
+  });
+  render(Plotly, slopeSectionPlot, traces, layout);
+  return html`<div class="scene3d-readout"><b>v</b> = (${fmt(v[0])}; ${fmt(v[1])}), |<b>v</b>| = ${fmt(norm)} &nbsp;·&nbsp; <b>v</b><sub><b>p</b></sub>[<i>f</i>] = ∇<i>f</i>(<b>p</b>) · <b>v</b> = ${fmt(derivative)} &nbsp;·&nbsp; <b>v</b> ile ∇<i>f</i>(<b>p</b>) arasındaki açı: ${fmt(between, 1)}° &nbsp;·&nbsp; bu uzunlukta en büyük değer |∇<i>f</i>(<b>p</b>)| |<b>v</b>| = ${fmt(gradNorm * norm)}</div>`;
+}
+```
 :::
 ::::
 
