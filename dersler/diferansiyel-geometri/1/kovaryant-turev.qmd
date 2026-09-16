@@ -1,0 +1,1423 @@
+---
+title: "Kovaryant Türev"
+pagetitle: "Kovaryant Türev"
+description: "Bir vektör alanının bir teğet vektöre göre türevi: kovaryant türev; alanın bir eğriye kısıtlanışı; koordinat fonksiyonlarının yönlü türevleriyle hesap formülü; teğet vektörde ve alanda lineerlik, fonksiyonla çarpım için Leibniz kuralı, iç çarpımın türevi; bir vektör alanına göre kovaryant türev, noktasal ilke ve koordinat formülü; simetri eksikliği; çözümlü alıştırmalar."
+---
+
+Önceki bölümde ([Keyfi Hızlı Eğriler](keyfi-hizli-egriler.qmd)) bir eğrinin Frenet aparatını, eğri hangi hızla dolaşılıyor olsun, hesaplamayı öğrendik. Oradaki bütün iş, eğri boyunca tanımlı $T$, $N$, $B$ gibi vektör alanlarının türevlerini almaya dayanıyordu; bu alanlar yalnızca eğrinin uğradığı noktalarda tanımlıydı ve türevleri tek değişkenli bir türevdi. Bu bölümde bir adım geri çekilip daha temel bir soru soruyoruz: bütün uzayda tanımlı bir vektör alanının türevi ne demektir?
+
+Fonksiyonlar için bu sorunun cevabını biliyoruz. Bir $f$ fonksiyonunun $\mathbf{p}$ noktasındaki bir $\mathbf{v}$ teğet vektörüne göre türevi $\mathbf{v}[f]$, $\mathbf{p}$'den $\mathbf{v}$ yönünde harekete geçince $f$'nin ilk anda ne hızla değiştiğini söyleyen tek bir sayıydı. Bir $W$ vektör alanı için aynı soru sorulabilir: $\mathbf{p}$'den $\mathbf{v}$ yönünde yola çıkınca $W$'nin oku ilk anda nasıl değişir? Bu kez cevap bir sayı değil, bir vektör olacaktır; çünkü değişen şey bir oktur ve okun hem uzunluğu hem doğrultusu değişebilir.
+
+Bölümün planı şöyledir. Önce bu türevi, yönlü türevin tanımını adım adım taklit ederek tanımlayacak ve birkaç alanda doğrudan hesaplayacağız. Sonra hesabı kısaltan koordinat formülünü ispatlayacağız: bir vektör alanının türevini almak, koordinat fonksiyonlarının yönlü türevlerini almaktır. Ardından bu türevin lineerlik ve Leibniz kurallarını, yönlü türevin özelliklerinden türeteceğiz. Son olarak tek bir teğet vektör yerine bir vektör alanına göre türev almayı öğreneceğiz; bir sonraki bölümde çatı alanlarını incelerken bu işlem ana aracımız olacaktır.
+
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, fmt, sceneLayout, path, point, label, segment, arrow, surface, cylinder, render } from "../ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
+## Bir Vektör Alanının Bir Yöndeki Türevi
+
+Yönlü türevin tanımını hatırlayalım (@def-yonlu-turev). $f$ bir fonksiyon, $\mathbf{v}$ de $\mathbf{p}$ noktasında $\mathbb{R}^3$'e teğet bir vektör olsun. $\mathbf{p}$'den $\mathbf{v}$ doğrultusunda giden $t \mapsto \mathbf{p} + t\mathbf{v}$ doğrusunu alır, $f$'yi bu doğru üzerinde okuyarak $t \mapsto f(\mathbf{p} + t\mathbf{v})$ tek değişkenli fonksiyonunu kurar ve bunun $t = 0$'daki türevini $\mathbf{v}[f]$ diye adlandırırız. Burada ve bölümün geri kalanında, uygulama noktası bağlamdan belli olduğunda $\mathbf{v}_{\mathbf{p}}$ yerine kısaca $\mathbf{v}$ yazma alışkanlığımızı sürdürüyoruz; $\mathbf{v}[f]$ daima $\mathbf{v}_{\mathbf{p}}[f]$ demektir.
+
+Bu tanımın üç adımı vardır: bir doğru seç, fonksiyonu doğruya kısıtla, tek değişkenli türev al. Aynı üç adımı bir $W$ vektör alanı için yapmayı deneyelim. Birinci adım aynıdır. İkinci adımda $W$'yi doğruya kısıtlarız: her $t$ için $W(\mathbf{p} + t\mathbf{v})$ teğet vektörünü alırız. Bu, doğrunun $t$ anındaki noktasında uygulanmış bir vektördür; yani $t \mapsto W(\mathbf{p} + t\mathbf{v})$, doğru üzerinde bir vektör alanıdır (@def-yay-egri-uzerinde-vektor-alani). Üçüncü adımda ise eğri üzerindeki bir vektör alanının türevini alırız; bunu nasıl yapacağımızı biliyoruz (@def-yay-ivme): koordinat fonksiyonlarının türevi alınır. Kısıtlama adımını, ileride başka eğriler için de kullanacağımızdan, önce genel olarak adlandıralım.
+
+::: {#def-kovaryant-kisitlanis name="Bir Vektör Alanının Bir Eğriye Kısıtlanışı"}
+$W$, $\mathbb{R}^3$ üzerinde bir vektör alanı ve $\alpha : I \to \mathbb{R}^3$ bir eğri olsun. Her $t \in I$ için
+
+$$W_\alpha(t) = W(\alpha(t))$$
+
+kuralıyla tanımlanan $W_\alpha$ fonksiyonuna $W$'nin $\alpha$'ya **kısıtlanışı** (restriction) denir.
+:::
+
+Yani $W_\alpha$, uzaya yayılmış oklar arasından yalnızca eğrinin uğradığı noktalardakileri alır ve her birini o noktaya varış anı $t$ ile etiketler.
+
+$W_\alpha$'nın $\alpha$ üzerinde bir vektör alanı olduğunu doğrulayalım. Her $t$ için $W(\alpha(t))$, $\alpha(t)$ noktasında uygulanmış bir teğet vektördür; eğri üzerinde vektör alanı tanımının istediği şey tam budur. Türevlenebilirlik için $W = \sum_i w_i U_i$ yazalım (@lem-teget-koordinat-fonksiyonlari). O zaman
+
+$$W_\alpha(t) = \sum_{i=1}^{3} w_i(\alpha(t))\, U_i(\alpha(t))$$
+
+olur; $W_\alpha$'nın koordinat fonksiyonları $t \mapsto w_i(\alpha(t))$ bileşkeleridir. $w_i$ ve $\alpha$'nın koordinatları diferansiyellenebilir olduğundan bu bileşkeler de her mertebeden türevlenebilirdir. Dolayısıyla $W_\alpha$, $\alpha$ üzerinde bir vektör alanıdır ve türevi
+
+$$W_\alpha'(t) = \sum_{i=1}^{3} \dfrac{d}{dt}\bigl(w_i(\alpha(t))\bigr)\, U_i(\alpha(t))$$
+
+ile hesaplanır.
+
+:::: {#exm-kovaryant-kisitlanis-cember name="Dönme Alanının Çembere Kısıtlanışı"}
+$W = -yU_1 + xU_2$ vektör alanının $\alpha(t) = (\cos t, \sin t, 0)$ birim çemberine kısıtlanışını bulalım.
+
+::: {.cozum}
+$\alpha(t)$ noktasının koordinatları $x = \cos t$, $y = \sin t$, $z = 0$'dır. $W$'nin koordinat fonksiyonları $w_1 = -y$, $w_2 = x$, $w_3 = 0$ olduğundan
+
+$$W_\alpha(t) = W(\alpha(t)) = -\sin t\, U_1(\alpha(t)) + \cos t\, U_2(\alpha(t))$$
+
+bulunur. Bu, $\alpha(t)$ noktasında uygulanmış $(-\sin t, \cos t, 0)$ vektörüdür; yani $\alpha$'nın hız vektörü $\alpha'(t)$'nin kendisidir. $W$ alanı düzlemde her noktayı orijin çevresinde saatin tersi yönünde döndüren okları taşır; çemberin üzerinde bu oklar tam çembere teğettir. Kısıtlanış, düzlemdeki sonsuz oktan yalnızca çember üzerindekileri seçmiştir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-kisitlanis-dogru name="Bir Alanın Bir Doğruya Kısıtlanışı"}
+$W = x^2 U_1 + yz\, U_3$ vektör alanının $\beta(t) = (2 - t,\ 1,\ 2t)$ doğrusuna kısıtlanışını bulalım.
+
+::: {.cozum}
+$\beta(t)$ noktasında $x = 2 - t$, $y = 1$, $z = 2t$'dir. Koordinat fonksiyonları $w_1 = x^2$, $w_2 = 0$, $w_3 = yz$ bu noktada $(2 - t)^2$, $0$ ve $1 \cdot 2t = 2t$ değerlerini alır. Dolayısıyla
+
+$$W_\beta(t) = (2 - t)^2\, U_1(\beta(t)) + 2t\, U_3(\beta(t)).$$
+
+Koordinat fonksiyonları $(2 - t)^2$, $0$ ve $2t$ polinom olduğundan $W_\beta$, $\beta$ üzerinde bir vektör alanıdır.
+
+Bir denetim: $t = 1$'de $\beta(1) = (1, 1, 2)$ ve $W_\beta(1) = U_1 + 2U_3$'tür; yani $(1, 1, 2)$ noktasında uygulanmış $(1, 0, 2)$ vektörü. Doğrudan $W$'den hesaplarsak $(1, 1, 2)$ noktasında $x^2 = 1$ ve $yz = 2$ olduğundan $W(1, 1, 2)$ de $(1, 0, 2)$ vektör kısımlı teğet vektördür. İki hesap aynı sonucu verir; başka türlü olamazdı, çünkü $W_\beta(1)$ tanım gereği $W(\beta(1))$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi üç adımı birleştirebiliriz.
+
+::: {#def-kovaryant-turev name="Kovaryant Türev"}
+$W$, $\mathbb{R}^3$ üzerinde bir vektör alanı ve $\mathbf{v}$, $\mathbf{p}$ noktasında $\mathbb{R}^3$'e teğet bir vektör olsun. $\alpha(t) = \mathbf{p} + t\mathbf{v}$ doğrusu boyunca $W$'nin kısıtlanışı $W_\alpha$ olmak üzere
+
+$$\nabla_{\mathbf{v}} W = W_\alpha'(0) = \bigl(W(\mathbf{p} + t\mathbf{v})\bigr)'(0)$$
+
+teğet vektörüne $W$'nin $\mathbf{v}$'ye göre **kovaryant türevi** (covariant derivative) denir.
+:::
+
+Yani $\nabla_{\mathbf{v}} W$, $\mathbf{p}$ noktası $\mathbf{v}$ yönünde harekete geçtiği ilk anda $W$ okunun değişim hızıdır; okun uzunluğundaki ve doğrultusundaki değişimi birlikte kaydeden tek bir vektördür.
+
+Tanım üzerine birkaç gözlem yapalım. Birincisi, $\nabla_{\mathbf{v}} W$ bir teğet vektördür ve uygulama noktası $\mathbf{p}$'dir: $W_\alpha'(0)$, eğri üzerindeki bir vektör alanının türevi olarak $\alpha(0) = \mathbf{p}$ noktasında uygulanır. Böylece $W(\mathbf{p})$ ile $\nabla_{\mathbf{v}} W$ aynı teğet uzayında, $T_{\mathbf{p}}(\mathbb{R}^3)$'te yaşar ve birbirleriyle toplanıp iç çarpıma sokulabilirler. İkincisi, $\nabla$ simgesi "nabla" diye okunur; alt indisteki $\mathbf{v}$ hangi yönde türev alındığını, sağdaki $W$ neyin türevinin alındığını söyler. Üçüncüsü, $\mathbf{v}$'nin birim vektör olması istenmez; yönlü türevde olduğu gibi, $\mathbf{v}$'yi iki katına çıkarmak türevi de iki katına çıkaracaktır (bunu ileride ispatlayacağız). Son olarak $\mathbf{v} = \mathbf{0}$ ise "doğru" sabit $\mathbf{p}$ noktasıdır, $W_\alpha$ sabittir ve $\nabla_{\mathbf{0}} W = \mathbf{0}$ olur: hiç hareket etmeyince hiçbir değişim görülmez.
+
+:::: {#exm-kovaryant-tanimdan-hesap name="Tanımdan Doğrudan Hesap"}
+$W = x^2 U_1 + yz\, U_3$ vektör alanı, $\mathbf{p} = (2, 1, 0)$ noktası ve bu noktadaki $\mathbf{v} = (-1, 0, 2)$ teğet vektörü verilsin. $\nabla_{\mathbf{v}} W$ vektörünü doğrudan tanımdan hesaplayalım.
+
+::: {.cozum}
+Doğru $\mathbf{p} + t\mathbf{v} = (2 - t,\ 1,\ 2t)$'dir; bu, @exm-kovaryant-kisitlanis-dogru'daki $\beta$ doğrusunun kendisidir. Orada
+
+$$W(\mathbf{p} + t\mathbf{v}) = (2 - t)^2\, U_1 + 2t\, U_3$$
+
+bulmuştuk; burada $U_1$ ve $U_3$ de aslında $\mathbf{p} + t\mathbf{v}$ noktasında değerlendirilmiştir. Türev almak için koordinat fonksiyonlarını türetiriz:
+
+$$\dfrac{d}{dt}(2 - t)^2 = -2(2 - t), \qquad \dfrac{d}{dt}(0) = 0, \qquad \dfrac{d}{dt}(2t) = 2.$$
+
+$t = 0$'da bunlar $-4$, $0$ ve $2$ olur. Dolayısıyla
+
+$$\nabla_{\mathbf{v}} W = -4\, U_1(\mathbf{p}) + 2\, U_3(\mathbf{p}),$$
+
+yani $\mathbf{p} = (2, 1, 0)$ noktasında uygulanmış $(-4, 0, 2)$ vektörüdür.
+
+Sonucu yorumlayalım. $\mathbf{p}$'de $W(\mathbf{p}) = 4U_1(\mathbf{p})$, yani $(4, 0, 0)$ vektörüdür. $\mathbf{v}$ yönünde ilerlerken $x$ koordinatı azalır, dolayısıyla $x^2$ ve okun birinci bileşeni hızla küçülür; aynı anda $z$ artmaya başladığı için $yz$ bileşeni sıfırdan yukarı çıkar. $(-4, 0, 2)$ vektörü bu iki etkiyi birlikte kaydeder: ok kısalır ve yukarıya doğru dönmeye başlar.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="7.5 3.5 388.5 518.5" role="img" aria-label="Uzayda y = 1 duzleminde alpha(t) = (2 - t, 1, 2t) dogrusu; t = -1/2, 0, 1/2, 1 noktalari (5/2, 1, -1), (2, 1, 0), (3/2, 1, 1), (1, 1, 2) isaretli ve her birinde W = x^2 U1 + yz U3 alaninin mavi oku var, vektor kisimlari sirasiyla (25/4, 0, -1), (4, 0, 0), (9/4, 0, 1), (1, 0, 2), hepsi 1/4 olceginde. p = (2, 1, 0) noktasindan cikan yesil ok v = (-1, 0, 2) dogru boyunca uzanir; ayni noktadan cikan turuncu ok, ayni olcekteki kovaryant turev nabla_v W = (-4, 0, 2)">
+  <polygon points="319.5,382.7 22.4,507.3 22.4,175.2 319.5,50.6" fill="var(--academic-text)" fill-opacity="0.05" stroke="none" stroke-width="1.2"/>
+  <path d="M252.0,411.0 L252.0,78.9" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M184.4,439.3 L184.4,107.2" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M116.9,467.6 L116.9,135.6" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M49.4,496.0 L49.4,163.9" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M319.5,344.5 L22.4,469.1" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M319.5,268.1 L22.4,392.8" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M319.5,191.8 L22.4,316.5" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M319.5,115.5 L22.4,240.1" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M319.5,382.7 L22.4,507.3 L22.4,175.2 L319.5,50.6 L319.5,382.7" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.22" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="262.8" y1="234.4" x2="173.4" y2="271.9" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linecap="round"/>
+  <polygon points="168.3,274.0 173.6,268.6 175.9,274.0" fill="var(--academic-text)" opacity="0.45"/>
+  <text x="163.3" y="288.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x</text>
+  <line x1="262.8" y1="234.4" x2="362.8" y2="294.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linecap="round"/>
+  <polygon points="367.7,296.8 360.1,295.8 363.1,290.7" fill="var(--academic-text)" opacity="0.45"/>
+  <text x="378.7" y="301.8" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">y</text>
+  <line x1="262.8" y1="234.4" x2="262.8" y2="33.9" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linecap="round"/>
+  <polygon points="262.8,28.3 265.8,35.3 259.9,35.3" fill="var(--academic-text)" opacity="0.45"/>
+  <text x="253.8" y="23.3" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">z</text>
+  <path d="M191.3,260.3 L199.3,265.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="192.3" y="277.7" fill="var(--academic-text)" font-size="10" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">1</text>
+  <path d="M324.2,266.2 L314.8,270.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="326.5" y="282.1" fill="var(--academic-text)" font-size="10" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">1</text>
+  <path d="M267.6,156.1 L258.1,160.0" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="270.8" y="162.0" fill="var(--academic-text)" font-size="10" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">1</text>
+  <path d="M267.6,79.7 L258.1,83.7" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="270.8" y="85.7" fill="var(--academic-text)" font-size="10" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">2</text>
+  <line x1="150.7" y1="415.3" x2="251.9" y2="143.9" stroke="var(--academic-bg)" stroke-width="3.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="252.0,143.8 252.0,143.9 251.9,143.9" fill="var(--academic-bg)" opacity="1.0"/>
+  <path d="M150.7,415.3 L252.0,143.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="150.7" y1="415.3" x2="53.2" y2="473.8" stroke="var(--academic-bg)" stroke-width="4.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="45.2,478.7 52.7,468.4 57.7,476.9" fill="var(--academic-bg)" opacity="1.0"/>
+  <line x1="150.7" y1="415.3" x2="51.7" y2="474.8" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="45.2,478.7 51.2,470.4 55.4,477.2" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="184.4" y1="324.8" x2="124.8" y2="349.8" stroke="var(--academic-bg)" stroke-width="4.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="116.9,353.1 125.0,344.9 128.5,353.1" fill="var(--academic-bg)" opacity="1.0"/>
+  <line x1="184.4" y1="324.8" x2="123.2" y2="350.5" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="116.9,353.1 123.4,346.6 126.1,353.1" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="218.2" y1="234.3" x2="187.9" y2="231.8" stroke="var(--academic-bg)" stroke-width="4.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="180.2,231.1 190.2,227.9 189.5,236.0" fill="var(--academic-bg)" opacity="1.0"/>
+  <line x1="218.2" y1="234.3" x2="186.2" y2="231.6" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="180.2,231.1 187.9,228.6 187.4,234.9" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="252.0" y1="143.8" x2="238.8" y2="119.5" stroke="var(--academic-bg)" stroke-width="4.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="235.1,112.7 243.3,119.3 236.1,123.2" fill="var(--academic-bg)" opacity="1.0"/>
+  <line x1="252.0" y1="143.8" x2="237.9" y2="118.0" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="235.1,112.7 241.4,117.8 235.9,120.8" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="184.4" y1="324.8" x2="248.7" y2="152.6" stroke="var(--academic-bg)" stroke-width="4.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="252.0,143.8 252.5,156.5 243.3,153.0" fill="var(--academic-bg)" opacity="1.0"/>
+  <line x1="184.4" y1="324.8" x2="249.3" y2="150.9" stroke="var(--color-base)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="252.0,143.8 252.4,154.1 244.9,151.3" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="184.4" y1="324.8" x2="245.0" y2="265.2" stroke="var(--academic-bg)" stroke-width="4.800000000000001" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="252.0,258.3 246.9,270.5 239.7,263.2" fill="var(--academic-bg)" opacity="1.0"/>
+  <line x1="184.4" y1="324.8" x2="246.3" y2="263.9" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="252.0,258.3 247.8,268.3 241.9,262.3" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="150.7" cy="415.3" r="4.6" fill="var(--academic-bg)"/>
+  <circle cx="150.7" cy="415.3" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="184.4" cy="324.8" r="5.0" fill="var(--academic-bg)"/>
+  <circle cx="184.4" cy="324.8" r="3.6" fill="var(--academic-text)"/>
+  <circle cx="218.2" cy="234.3" r="4.6" fill="var(--academic-bg)"/>
+  <circle cx="218.2" cy="234.3" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="252.0" cy="143.8" r="4.6" fill="var(--academic-bg)"/>
+  <circle cx="252.0" cy="143.8" r="3.2" fill="var(--academic-text)"/>
+  <text x="163.7" y="412.3" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">t</tspan> = &#8722;1/2</text>
+  <text x="163.7" y="427.3" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">(5/2, 1, &#8722;1)</text>
+  <text x="198.4" y="336.8" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">p</tspan> = (2, 1, 0)</text>
+  <text x="198.4" y="350.8" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">t</tspan> = 0</text>
+  <text x="204.2" y="202.3" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">t</tspan> = 1/2</text>
+  <text x="204.2" y="216.3" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">(3/2, 1, 1)</text>
+  <text x="239.0" y="139.8" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">t</tspan> = 1</text>
+  <text x="239.0" y="154.8" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">(1, 1, 2)</text>
+  <text x="86.5" y="428.3" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">(25/4, 0, &#8722;1)</text>
+  <text x="174.7" y="371.0" fill="var(--color-theory)" font-size="10.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">W</tspan>(<tspan font-weight="700">p</tspan>) = (4, 0, 0)</text>
+  <text x="161.5" y="249.4" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">(9/4, 0, 1)</text>
+  <text x="227.6" y="102.2" fill="var(--color-theory)" font-size="10.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">(1, 0, 2)</text>
+  <text x="229.3" y="223.8" fill="var(--color-base)" font-size="12.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">v</tspan></text>
+  <path d="M225.8,301.3 L232.9,301.3 L229.4,309.3 Z" fill="none" stroke="var(--color-practice)" stroke-width="1.15" stroke-linejoin="miter" stroke-opacity="1"/>
+  <text x="234.4" y="309.3" fill="var(--color-practice)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-size="9" dy="4"><tspan font-weight="700">v</tspan></tspan><tspan dy="-4">&#8203;</tspan><tspan font-style="italic">W</tspan> = (&#8722;4, 0, 2)</text>
+  <text x="183.5" y="393.1" fill="var(--academic-text)" font-size="12.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#945;</tspan></text>
+  <text x="315.7" y="363.1" fill="var(--academic-text)" font-size="10.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">y</tspan> = 1 düzlemi</text>
+  <text x="21.3" y="35.2" fill="var(--academic-text)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">W</tspan> = <tspan font-style="italic">x</tspan><tspan font-size="8.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + <tspan font-style="italic">yz</tspan> <tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="21.3" y="54.5" fill="var(--academic-text)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">mavi ve turuncu oklar 1/4 ölçeğinde</text>
+</svg>
+<figcaption><strong>p</strong> = (2, 1, 0) noktasından <strong>v</strong> = (&#8722;1, 0, 2) yönünde giden &#945;(<em>t</em>) = (2 &#8722; <em>t</em>, 1, 2<em>t</em>) doğrusu, tümüyle <em>y</em> = 1 düzleminde kalır; doğru üzerindeki dört noktada mavi oklar <em>W</em> = <em>x</em><sup>2</sup><em>U</em><sub>1</sub> + <em>yzU</em><sub>3</sub> alanının değerleridir ve vektör kısımları <em>t</em> = &#8722;1/2, 0, 1/2, 1 için sırasıyla (25/4, 0, &#8722;1), (4, 0, 0), (9/4, 0, 1), (1, 0, 2)&#8217;dir. Yeşil ok <strong>v</strong>, doğrunun <em>t</em> = 0 ile <em>t</em> = 1 arasındaki parçasının kendisidir; sığmaları için bütün mavi oklar ve turuncu ok gerçek boylarının 1/4&#8217;ü ile çizilmiştir. <em>t</em> büyürken ok önce kısalır, sonra yukarı doğru döner; turuncu ok &#8711;<sub><strong>v</strong></sub><em>W</em> = (&#8722;4, 0, 2) bu iki değişimi tek bir teğet vektörde toplar ve <em>W</em>(<strong>p</strong>) ile aynı noktada uygulanmıştır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: bir doğru boyunca $W$ ve kovaryant türev.** Sahneyi sürükleyerek döndürebilirsiniz. Mavi doğru, $\mathbf{p} = (2, 1, 0)$ noktasından $\mathbf{v} = (v_1, 0, v_3)$ yönünde giden $t \mapsto \mathbf{p} + t\mathbf{v}$ doğrusudur ($-1 \le t \le 1$); üzerindeki soluk yeşil oklar $W = x^2 U_1 + yz\, U_3$ alanının o noktalardaki değerleri, $\mathbf{p}$'deki kalın yeşil ok $W(\mathbf{p})$, turuncu ok $\nabla_{\mathbf{v}} W$'dir. $v_1$ ve $v_3$ kaydırıcılarıyla yönü değiştirin: türevin birinci bileşeni yalnızca $v_1$'e, üçüncü bileşeni yalnızca $v_3$'e bağlıdır ve $\mathbf{v}$ yarıya inince $\nabla_{\mathbf{v}} W$ de yarıya iner. $t$ kaydırıcısı doğru üzerindeki noktayı taşır ve oradaki $W$ okunu vurgular; alttaki satırda $\bigl(W(\mathbf{p} + t\mathbf{v}) - W(\mathbf{p})\bigr)/t$ fark oranı okunur ve $t$ sıfıra yaklaşırken $\nabla_{\mathbf{v}} W$'ye yaklaşır. $W$ ve $\nabla_{\mathbf{v}} W$ okları sığmaları için yarı ölçekte çizilmiştir; gerçek bileşenler alttaki satırdadır.
+
+```{ojs}
+//| echo: false
+viewof covDerivControls = Inputs.form({
+  v1: Inputs.range([-1.5, 1.5], { value: -1, step: 0.25, label: "v₁" }),
+  v3: Inputs.range([-3, 3], { value: 2, step: 0.25, label: "v₃" }),
+  t: Inputs.range([-1, 1], { value: 0.5, step: 0.05, label: "t" })
+})
+```
+
+```{ojs}
+//| echo: false
+covDerivPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: p = (2, 1, 0) noktasindan v yonunde giden dogru, dogru uzerindeki noktalarda W alaninin oklari, p noktasinda W(p) oku ve kovaryant turev oku"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { v1, v3, t } = covDerivControls;
+  // W and the covariant derivative live in the same tangent space; both are drawn at half length so
+  // that the x² component fits the box. The read-out below shows the true components.
+  const scale = 0.5;
+  const p = [2, 1, 0];
+  const v = [v1, 0, v3];
+  const linePoint = (s) => [p[0] + s * v[0], p[1] + s * v[1], p[2] + s * v[2]];
+  // W = x² U₁ + yz U₃ evaluated at the point q.
+  const field = (q) => [q[0] * q[0], 0, q[1] * q[2]];
+  const scaled = (w) => w.map((c) => c * scale);
+  const q = linePoint(t);
+  const wp = field(p);
+  const wq = field(q);
+  // (W(p + tv))'(0): the coordinates along the line are (2 + t v₁)², 0 and t v₃, so the derivative at
+  // t = 0 is (4 v₁, 0, v₃). The same numbers come from v[x²] = 2x v₁ and v[yz] = z v₂ + y v₃ at p.
+  const cov = [4 * v1, 0, v3];
+  const atP = Math.abs(t) < 1e-9;
+  // Difference quotient (W(p + tv) - W(p)) / t; undefined at t = 0, where the read-out names the limit instead.
+  const quotient = atP ? null : wq.map((c, i) => (c - wp[i]) / t);
+  const tip = (base, w) => base.map((c, i) => c + w[i]);
+  const faint = (traces) => traces.map((trace) => ({ ...trace, opacity: 0.35, legendgroup: "samples" }));
+  const samples = [-1, -0.5, 0.5, 1];
+  // Text position on the side of a point given by a direction (nx, nz) in the plane y = 1; seen from the
+  // -y side x runs to the right and z upward.
+  const side = (nx, nz) => {
+    const r = Math.hypot(nx, nz) || 1;
+    const vertical = nz > 0.4 * r ? "top" : nz < -0.4 * r ? "bottom" : "middle";
+    const horizontal = nx < -0.4 * r ? "left" : nx > 0.4 * r ? "right" : "center";
+    return `${vertical} ${horizontal}`;
+  };
+  // A normal of the direction (dx, dz) pointing away from +x, where every W arrow goes; `flat` is the
+  // vertical side used when the direction is horizontal (or zero).
+  const away = (dx, dz, flat) => (dz > 0 ? [-dz, dx] : dz < 0 ? [dz, -dx] : [0, flat]);
+  const qSide = side(...away(v1, v3, 1));
+  const vSide = side(...away(v1, v3, -1));
+  const covSide = side(...away(4 * v1, v3, -1));
+  const traces = [
+    // The whole picture lies in the plane y = 1 (the field has no U₂ component and v₂ = 0).
+    surface((u, w) => [u, 1, w], -1.5, 10, -5, 5, theme.surface, { opacity: 0.1, nu: 2, nv: 2 }),
+    segment(linePoint(-1), linePoint(1), theme.theory, { width: 4, dash: "solid", name: "doğru p + tv" }),
+    ...samples.flatMap((s, i) => faint(arrow(linePoint(s), scaled(field(linePoint(s))), theme.base, "W okları", { width: 4, head: 0.25, legend: i === 0 }))),
+    ...arrow(q, scaled(wq), theme.base, "W(p + tv)", { width: 7, legend: false }),
+    ...arrow(p, scaled(wp), theme.base, "W(p)", { width: 9, legend: false }),
+    ...arrow(p, scaled(cov), theme.practice, "∇ᵥW", { width: 7 }),
+    ...arrow(p, v, theme.theory, "v", { width: 5 }),
+    point(p, theme.text, "p", { size: 5, legend: false }),
+    point(q, theme.text, "p + tv", { size: 6, legend: false }),
+    // 3D texts keep constant content; only their positions and visibility follow the sliders.
+    label(p, "p", theme.text, { position: "bottom center" }),
+    { ...label(q, "p + tv", theme.text, { position: qSide }), visible: !atP },
+    label(tip(p, scaled(wp)), "W(p)", theme.base, { position: "top center" }),
+    label(tip(p, scaled(cov)), "∇ᵥW", theme.practice, { position: covSide }),
+    label(tip(p, v), "v", theme.theory, { position: vSide })
+  ];
+  // Seen from the -y side, so that +x (the direction of W) runs to the right.
+  render(Plotly, covDerivPlot, traces, sceneLayout(theme, { x: [-1.5, 10], y: [-1, 3], z: [-5, 5], eye: { x: 0.7, y: -1.9, z: 0.75 } }));
+  const quotientText = quotient
+    ? `(${fmt(quotient[0])}; ${fmt(quotient[1])}; ${fmt(quotient[2])})`
+    : "t = 0 için tanımsız; t → 0 iken ∇ᵥW'ye yaklaşır";
+  return html`<div class="scene3d-readout"><b>v</b> = (${fmt(v[0])}; ${fmt(v[1])}; ${fmt(v[2])}) &nbsp;·&nbsp; <b>p</b> + t<b>v</b> = (${fmt(q[0])}; ${fmt(q[1])}; ${fmt(q[2])}) &nbsp;·&nbsp; W(<b>p</b> + t<b>v</b>) = (${fmt(wq[0])}; ${fmt(wq[1])}; ${fmt(wq[2])})<br>W(<b>p</b>) = (${fmt(wp[0])}; ${fmt(wp[1])}; ${fmt(wp[2])}) &nbsp;·&nbsp; ∇<sub><b>v</b></sub>W = (${fmt(cov[0])}; ${fmt(cov[1])}; ${fmt(cov[2])}) &nbsp;·&nbsp; denetim: <b>v</b>[x²] = 2x·v₁ = ${fmt(cov[0])}, <b>v</b>[yz] = z·v₂ + y·v₃ = ${fmt(cov[2])}<br>fark oranı (W(<b>p</b> + t<b>v</b>) − W(<b>p</b>))/t = ${quotientText}</div>`;
+}
+```
+:::
+::::
+
+:::: {#exm-kovaryant-duzlemde-donme name="Düzlemde Dönme Alanının Türevi"}
+$W = -yU_1 + xU_2$ dönme alanını alalım; üçüncü koordinatı sıfır olduğu ve $z$'ye bağlı olmadığı için onu $xy$ düzleminde çizilmiş bir alan gibi düşünebiliriz. $\mathbf{p} = (1, 0, 0)$ noktasında $\mathbf{v} = (0, 1, 0)$ için $\nabla_{\mathbf{v}} W$ vektörünü tanımdan hesaplayalım.
+
+::: {.cozum}
+Doğru $\mathbf{p} + t\mathbf{v} = (1, t, 0)$'dır: $(1, 0, 0)$ noktasından düz yukarıya, pozitif $y$ yönüne gider. Bu noktada $x = 1$, $y = t$ olduğundan
+
+$$W(\mathbf{p} + t\mathbf{v}) = -t\, U_1 + 1\cdot U_2 = -t\, U_1 + U_2.$$
+
+Koordinat fonksiyonları $-t$, $1$ ve $0$'dır; türevleri $-1$, $0$ ve $0$. Dolayısıyla
+
+$$\nabla_{\mathbf{v}} W = -U_1(\mathbf{p}),$$
+
+yani $(1, 0, 0)$ noktasında uygulanmış $(-1, 0, 0)$ vektörüdür.
+
+Resim şudur. $x = 1$ doğrusu üzerindeki her noktada okun $y$ bileşeni $1$'dir, $x$ bileşeni ise $-y$'dir. $(1, 0)$'da ok tam yukarı bakar; biraz yukarı çıkınca ok sola yatmaya başlar, biraz aşağı inince sağa yatar. Yukarı doğru birim hızla giderken okun yatma hızı $(-1, 0)$'dır: doğrultu sola döner, uzunluk ise ilk anda değişmez, çünkü $(1, t)$ noktasındaki okun uzunluğu $\sqrt{1 + t^2}$'dir ve bunun $t = 0$'daki türevi sıfırdır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="7.0 -4.0 386.0 355.0" role="img" aria-label="Duzlemde W = -y U1 + x U2 alani; x = 1 kesikli dogrusu uzerinde t = -1/2, 0, 1/2, 1 anlarindaki (1, -1/2), (1, 0), (1, 1/2), (1, 1) noktalarinda W'nin mavi oklari, vektor kisimlari (1/2, 1), (0, 1), (-1/2, 1), (-1, 1); p = (1, 0) noktasindan cikan yesil v = (0, 1) oku mavi W(p) okunun altinda kenar olarak gorunur; ayni noktadan cikan turuncu nabla_v W = (-1, 0) oku; -1..2 x -1..1 tam sayi izgarasinda acik gri W oklari; butun oklar gercek boyunun 0,4 katiyla cizilmis">
+  <path d="M247.0,327.7 L247.0,39.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="21.0" y1="196.2" x2="379.0" y2="196.2"/>
+  <line x1="161.6" y1="336.8" x2="161.6" y2="30.0"/>
+  <polygon points="379.0,196.2 371.0,192.7 371.0,199.7" stroke="none"/>
+  <polygon points="161.6,30.0 158.1,38.0 165.1,38.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="168.6" y="39.0">y</text>
+  </g>
+  <text x="377.0" y="189.2" fill="var(--academic-text)" font-size="11.5" font-style="italic" text-anchor="end" opacity="0.85">x</text>
+  <line x1="76.2" y1="193.2" x2="76.2" y2="199.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="76.2" y="190.2" fill="var(--academic-text)" font-size="10.5" text-anchor="middle" opacity="0.75">&#8722;1</text>
+  <line x1="332.3" y1="193.2" x2="332.3" y2="199.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="332.3" y="210.2" fill="var(--academic-text)" font-size="10.5" text-anchor="middle" opacity="0.75">2</text>
+  <line x1="158.6" y1="110.8" x2="164.6" y2="110.8" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="167.6" y="114.8" fill="var(--academic-text)" font-size="10.5" text-anchor="start" opacity="0.75">1</text>
+  <line x1="158.6" y1="281.6" x2="164.6" y2="281.6" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="155.6" y="285.6" fill="var(--academic-text)" font-size="10.5" text-anchor="end" opacity="0.75">&#8722;1</text>
+  <line x1="76.2" y1="281.6" x2="106.7" y2="312.0" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="110.4,315.7 103.8,313.0 107.7,309.2" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="76.2" y1="196.2" x2="76.2" y2="225.1" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="76.2,230.3 73.5,223.8 78.9,223.8" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="76.2" y1="110.8" x2="45.8" y2="141.3" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="42.1,145.0 44.7,138.4 48.6,142.3" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="161.6" y1="281.6" x2="190.5" y2="281.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="195.7,281.6 189.2,284.3 189.2,278.8" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="161.6" y1="110.8" x2="132.6" y2="110.8" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="127.4,110.8 133.9,108.1 133.9,113.6" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="247.0" y1="281.6" x2="277.4" y2="251.1" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="281.1,247.4 278.4,253.9 274.6,250.1" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="332.3" y1="281.6" x2="364.1" y2="217.9" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="366.5,213.3 366.0,220.3 361.1,217.9" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="332.3" y1="196.2" x2="332.3" y2="133.1" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="332.3,127.9 335.0,134.4 329.6,134.4" fill="var(--academic-text)" opacity="0.42"/>
+  <line x1="332.3" y1="110.8" x2="300.5" y2="47.2" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.42" stroke-linecap="round"/>
+  <polygon points="298.2,42.5 303.5,47.1 298.6,49.6" fill="var(--academic-text)" opacity="0.42"/>
+  <circle cx="76.2" cy="281.6" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="76.2" cy="196.2" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="76.2" cy="110.8" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="161.6" cy="281.6" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="161.6" cy="110.8" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="247.0" cy="281.6" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="332.3" cy="281.6" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="332.3" cy="196.2" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="332.3" cy="110.8" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <circle cx="161.6" cy="196.2" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.45"/>
+  <line x1="247.0" y1="238.9" x2="261.3" y2="210.1" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="264.0,204.7 263.5,212.8 257.9,210.0" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="247.0" y1="153.5" x2="232.6" y2="124.7" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="229.9,119.4 236.0,124.7 230.4,127.5" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="247.0" y1="110.8" x2="217.0" y2="80.9" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="212.8,76.7 220.3,79.8 215.9,84.2" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="247.0" y1="196.2" x2="247.0" y2="168.8" stroke="var(--color-base)" stroke-width="6.4" stroke-linecap="round"/>
+  <polygon points="247.0,162.0 250.5,170.5 243.4,170.5" fill="var(--color-base)" stroke="var(--color-base)" stroke-width="3.8" stroke-linejoin="round"/>
+  <line x1="247.0" y1="196.2" x2="247.0" y2="168.8" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="247.0,162.0 250.5,170.5 243.4,170.5" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="247.0" y1="196.2" x2="219.2" y2="196.2" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="212.8,196.2 220.8,192.8 220.8,199.6" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="247.0" cy="238.9" r="3.3" fill="var(--academic-text)"/>
+  <circle cx="247.0" cy="196.2" r="3.3" fill="var(--academic-text)"/>
+  <circle cx="247.0" cy="153.5" r="3.3" fill="var(--academic-text)"/>
+  <circle cx="247.0" cy="110.8" r="3.3" fill="var(--academic-text)"/>
+  <text x="238.0" y="242.9" fill="var(--academic-text)" font-size="10.5" text-anchor="end"><tspan font-style="italic">t</tspan> = &#8722;1/2</text>
+  <text x="256.0" y="199.2" fill="var(--academic-text)" font-size="10.5" text-anchor="start"><tspan font-style="italic">t</tspan> = 0</text>
+  <text x="256.0" y="157.5" fill="var(--academic-text)" font-size="10.5" text-anchor="start"><tspan font-style="italic">t</tspan> = 1/2</text>
+  <text x="256.0" y="114.8" fill="var(--academic-text)" font-size="10.5" text-anchor="start"><tspan font-style="italic">t</tspan> = 1</text>
+  <text x="241.0" y="211.2" fill="var(--academic-text)" font-size="11.5" text-anchor="end"><tspan font-weight="700">p</tspan> = (1, 0)</text>
+  <text x="238.0" y="168.2" fill="var(--color-theory)" font-size="12" text-anchor="end"><tspan font-style="italic">W</tspan>(<tspan font-weight="700">p</tspan>)</text>
+  <text x="256.0" y="172.2" fill="var(--color-base)" font-size="12.5" text-anchor="start"><tspan font-weight="700">v</tspan></text>
+  <polygon points="213.0,179.2 221.0,179.2 217.0,187.2" fill="none" stroke="var(--color-practice)" stroke-width="1.15" stroke-linejoin="round"/>
+  <text x="223.0" y="187.2" fill="var(--color-practice)" font-size="12.5" text-anchor="start"><tspan font-size="9" dy="4"><tspan font-weight="700">v</tspan></tspan><tspan dy="-4">&#8203;</tspan> <tspan font-style="italic">W</tspan></text>
+  <text x="200.0" y="18.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">W</tspan> = &#8722;<tspan font-style="italic">y</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + <tspan font-style="italic">x</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+</svg>
+<figcaption><em>W</em> = &#8722;<em>y</em><em>U</em><sub>1</sub> + <em>x</em><em>U</em><sub>2</sub> dönme alanının <em>x</em> = 1 doğrusu üzerindeki <em>t</em> = &#8722;1/2, 0, 1/2, 1 noktalarında okları (mavi) ve çevredeki tam sayı noktalarında okları (gri); okunaklılık için her ok gerçek boyunun 0,4 katıyla çizilmiştir. <strong>p</strong> = (1, 0) noktasındaki yeşil <strong>v</strong> = (0, 1) oku, oradaki <em>W</em>(<strong>p</strong>) = (0, 1) mavi okuyla aynı vektör olduğu için onun altında yalnızca kenarlarıyla görünür. Doğru boyunca yukarı çıkıldıkça okun <em>y</em> bileşeni 1 kalır, <em>x</em> bileşeni &#8722;<em>y</em> olur: sağa yatık ok <strong>p</strong>&#8217;de dikleşir, sonra sola yatar. Bu dönüşün <strong>p</strong>&#8217;deki hızı turuncu okla gösterilen &#8711;<sub><strong>v</strong></sub><em>W</em> = (&#8722;1, 0) vektörüdür; ilk anda okun yalnızca doğrultusu değişir, boyu değişmez.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-sabit-alan name="Koordinatları Sabit Alanın Türevi Sıfırdır"}
+$W = 2U_1 - U_2 + 5U_3$ vektör alanı verilsin: her noktada aynı $(2, -1, 5)$ vektör kısmını taşır. Herhangi bir $\mathbf{p}$ noktasında herhangi bir $\mathbf{v}$ teğet vektörü için $\nabla_{\mathbf{v}} W$'yi bulalım.
+
+::: {.cozum}
+Doğru üzerinde $W(\mathbf{p} + t\mathbf{v})$, $\mathbf{p} + t\mathbf{v}$ noktasında uygulanmış $(2, -1, 5)$ vektörüdür; koordinat fonksiyonları $t$'den bağımsız $2$, $-1$, $5$ sabitleridir. Sabitlerin türevi sıfır olduğundan
+
+$$\nabla_{\mathbf{v}} W = 0\cdot U_1(\mathbf{p}) + 0\cdot U_2(\mathbf{p}) + 0\cdot U_3(\mathbf{p}) = \mathbf{0}_{\mathbf{p}}.$$
+
+Sonuç $\mathbf{p}$'ye ve $\mathbf{v}$'ye bağlı değildir. Özellikle doğal çatı alanlarının her biri için $\nabla_{\mathbf{v}} U_i = \mathbf{0}$'dır.
+
+Bu örnek, kovaryant türevin okun kendisini değil okun değişimini ölçtüğünü gösterir: $W$ hiçbir noktada sıfır değildir, uzunluğu her yerde $\sqrt{30}$'dur, ama hangi yönde gidersek gidelim ok değişmediği için türevi sıfırdır. Bunun tersinin de doğru olduğunu, yani her yönde türevi sıfır olan bir alanın koordinatlarının sabit olması gerektiğini, alıştırmalarda göreceğiz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="Kovaryant adı nereden gelir?"}
+Öklid uzayında çalıştığımız sürece $\nabla_{\mathbf{v}} W$'ye yalnızca "vektör alanının yönlü türevi" demek de yeterli olurdu. "Kovaryant" adı, aynı işlemin ileride eğri yüzeyler ve daha genel uzaylar üzerinde genelleştirilmesinden gelir. Şimdilik bunu yalnızca bir ad olarak alalım; tanımın içeriği yukarıdaki üç adımdan ibarettir.
+:::
+
+## Koordinat Formülü
+
+Yukarıdaki örneklerde hep aynı şeyi yaptık: $W$'nin koordinat fonksiyonlarını doğru üzerinde okuduk ve $t = 0$'da türettik. Ama "$w_i$'yi $\mathbf{p} + t\mathbf{v}$ doğrusu üzerinde oku ve $t = 0$'da türet" işlemi tam olarak $\mathbf{v}[w_i]$ yönlü türevinin tanımıdır. Demek ki kovaryant türevin koordinatları, koordinat fonksiyonlarının yönlü türevleridir. Bunu bir lemma olarak yazıp ispatlayalım.
+
+:::: {#lem-kovaryant-koordinat-formulu name="Kovaryant Türevin Koordinat Formülü"}
+$W = \sum_{i=1}^{3} w_i U_i$, $\mathbb{R}^3$ üzerinde bir vektör alanı ve $\mathbf{v}$, $\mathbf{p}$ noktasında bir teğet vektör olsun. O zaman
+
+$$\nabla_{\mathbf{v}} W = \sum_{i=1}^{3} \mathbf{v}[w_i]\, U_i(\mathbf{p}).$$
+
+::: {.ispat}
+$\alpha(t) = \mathbf{p} + t\mathbf{v}$ doğrusu boyunca $W$'nin kısıtlanışı
+
+$$W_\alpha(t) = W(\mathbf{p} + t\mathbf{v}) = \sum_{i=1}^{3} w_i(\mathbf{p} + t\mathbf{v})\, U_i(\mathbf{p} + t\mathbf{v})$$
+
+olur; bunu kısıtlanış tanımının ardından genel bir eğri için görmüştük. $W_\alpha$'nın koordinat fonksiyonları $g_i(t) = w_i(\mathbf{p} + t\mathbf{v})$'dir. Eğri üzerindeki bir vektör alanının türevi koordinat fonksiyonlarının türetilmesiyle bulunur (@def-yay-ivme):
+
+$$W_\alpha'(0) = \sum_{i=1}^{3} g_i'(0)\, U_i(\alpha(0)) = \sum_{i=1}^{3} g_i'(0)\, U_i(\mathbf{p}).$$
+
+Geriye $g_i'(0)$ sayılarını tanımak kalır. $g_i(t) = w_i(\mathbf{p} + t\mathbf{v})$ fonksiyonunun $t = 0$'daki türevi, yönlü türevin tanımı (@def-yonlu-turev) gereği tam olarak $\mathbf{v}_{\mathbf{p}}[w_i]$, yani $\mathbf{v}[w_i]$ sayısıdır. Aynı sonuca eğri boyunca türev lemmasıyla da varılır: $\alpha'(0) = \mathbf{v}_{\mathbf{p}}$ olduğundan @lem-egri-egri-boyunca-turev, $g_i'(0) = \alpha'(0)[w_i] = \mathbf{v}[w_i]$ verir. Yerine koyunca
+
+$$\nabla_{\mathbf{v}} W = W_\alpha'(0) = \sum_{i=1}^{3} \mathbf{v}[w_i]\, U_i(\mathbf{p})$$
+
+elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Lemmanın söylediği kural kısadır: bir vektör alanına $\nabla_{\mathbf{v}}$ uygulamak, koordinat fonksiyonlarına $\mathbf{v}$ uygulamaktır. Yönlü türevi kısmi türevlerle hesaplamayı bildiğimizden (@lem-yonlu-kismi-turev-formulu), kovaryant türev artık tamamen mekanik bir hesaptır: $\mathbf{v} = (v_1, v_2, v_3)$ ise
+
+$$\mathbf{v}[w_i] = \sum_{j=1}^{3} v_j\, \dfrac{\partial w_i}{\partial x_j}(\mathbf{p}).$$
+
+Bu formülü daha önce elde ettiğimiz sonuçlar üzerinde deneyelim.
+
+:::: {#exm-kovaryant-lemma-ile-hesap name="Aynı Alan, Aynı Nokta, İki Farklı Yön"}
+$W = x^2 U_1 + yz\, U_3$ ve $\mathbf{p} = (2, 1, 0)$ olsun. @exm-kovaryant-tanimdan-hesap'ta tanımdan bulduğumuz $\nabla_{\mathbf{v}} W$ vektörünü $\mathbf{v} = (-1, 0, 2)$ için koordinat formülüyle yeniden hesaplayalım; sonra aynı noktadaki $\mathbf{w} = (1, 1, 1)$ vektörü için $\nabla_{\mathbf{w}} W$'yi bulalım.
+
+::: {.cozum}
+Koordinat fonksiyonları $w_1 = x^2$, $w_2 = 0$, $w_3 = yz$'dir. Kısmi türevleri:
+
+| | $\partial/\partial x$ | $\partial/\partial y$ | $\partial/\partial z$ |
+|---|---|---|---|
+| $w_1 = x^2$ | $2x$ | $0$ | $0$ |
+| $w_3 = yz$ | $0$ | $z$ | $y$ |
+
+$\mathbf{p} = (2, 1, 0)$'da $2x = 4$, $z = 0$, $y = 1$ olur.
+
+$\mathbf{v} = (-1, 0, 2)$ için:
+
+$$\begin{aligned}
+\mathbf{v}[x^2] &= (-1)\cdot 4 + 0\cdot 0 + 2\cdot 0 = -4,\\
+\mathbf{v}[yz] &= (-1)\cdot 0 + 0\cdot 0 + 2\cdot 1 = 2.
+\end{aligned}$$
+
+Dolayısıyla $\nabla_{\mathbf{v}} W = -4U_1(\mathbf{p}) + 2U_3(\mathbf{p})$; tanımdan bulduğumuz sonuçla aynıdır.
+
+$\mathbf{w} = (1, 1, 1)$ için:
+
+$$\begin{aligned}
+\mathbf{w}[x^2] &= 1\cdot 4 + 1\cdot 0 + 1\cdot 0 = 4,\\
+\mathbf{w}[yz] &= 1\cdot 0 + 1\cdot 0 + 1\cdot 1 = 1.
+\end{aligned}$$
+
+Dolayısıyla $\nabla_{\mathbf{w}} W = 4U_1(\mathbf{p}) + U_3(\mathbf{p})$, yani $(4, 0, 1)_{\mathbf{p}}$.
+
+Aynı noktada iki farklı yön iki farklı türev verdi: $\mathbf{w}$ yönünde $x$ artar ve $x^2$ bileşeni büyür, $\mathbf{v}$ yönünde ise küçülüyordu.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-ayni-vektor-farkli-nokta name="Aynı Vektör Kısmı, Farklı Nokta"}
+$W = x^2 U_1 + yz\, U_3$ olsun. $(-1, 0, 2)$ vektör kısmını bu kez $\mathbf{q} = (0, 2, 1)$ noktasında uygulayalım ve $\nabla_{\mathbf{v}_{\mathbf{q}}} W$'yi bulalım.
+
+::: {.cozum}
+Uygulama noktası hesabın parçası olduğu için alt indisi yazıyoruz. $\mathbf{q} = (0, 2, 1)$'de kısmi türevler $2x = 0$, $z = 1$, $y = 2$ değerlerini alır. Buradan
+
+$$\begin{aligned}
+\mathbf{v}_{\mathbf{q}}[x^2] &= (-1)\cdot 0 + 0\cdot 0 + 2\cdot 0 = 0,\\
+\mathbf{v}_{\mathbf{q}}[yz] &= (-1)\cdot 0 + 0\cdot 1 + 2\cdot 2 = 4
+\end{aligned}$$
+
+ve $\nabla_{\mathbf{v}_{\mathbf{q}}} W = 4U_3(\mathbf{q})$, yani $(0, 0, 4)_{\mathbf{q}}$ bulunur. @exm-kovaryant-lemma-ile-hesap'ta aynı vektör kısmı $\mathbf{p} = (2, 1, 0)$'da $(-4, 0, 2)$ vermişti. Kovaryant türev yalnızca yöne değil, hangi noktada durduğumuza da bağlıdır; çünkü $W$ alanı noktadan noktaya farklı biçimde değişir. $\mathbf{q}$'da $x = 0$ olduğundan $x^2$ bileşeni bir an için hiç değişmez, $yz$ bileşeni ise $y = 2$ olduğu için $z$'deki artışa iki kat duyarlıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-uc-bilesen name="Üç Bileşeni de Değişen Bir Alan"}
+$W = yz\, U_1 + xz\, U_2 + xy\, U_3$ vektör alanı, $\mathbf{p} = (1, 2, 3)$ noktası ve bu noktadaki $\mathbf{v} = (1, 0, -1)$ vektörü için $\nabla_{\mathbf{v}} W$'yi hem koordinat formülüyle hem tanımdan hesaplayalım.
+
+::: {.cozum}
+*Koordinat formülüyle.* $w_1 = yz$, $w_2 = xz$, $w_3 = xy$. Her birinin yönlü türevini $\mathbf{v}[f] = \partial f/\partial x - \partial f/\partial z$ kuralıyla (çünkü $v_1 = 1$, $v_2 = 0$, $v_3 = -1$) $\mathbf{p}$'de hesaplarız:
+
+$$\begin{aligned}
+\mathbf{v}[yz] &= 0 - y = -2,\\
+\mathbf{v}[xz] &= z - x = 3 - 1 = 2,\\
+\mathbf{v}[xy] &= y - 0 = 2.
+\end{aligned}$$
+
+Dolayısıyla
+
+$$\nabla_{\mathbf{v}} W = -2U_1(\mathbf{p}) + 2U_2(\mathbf{p}) + 2U_3(\mathbf{p}).$$
+
+*Tanımdan.* Doğru $\mathbf{p} + t\mathbf{v} = (1 + t,\ 2,\ 3 - t)$'dir. Bu noktada
+
+$$W(\mathbf{p} + t\mathbf{v}) = 2(3 - t)\, U_1 + (1 + t)(3 - t)\, U_2 + 2(1 + t)\, U_3.$$
+
+Koordinat fonksiyonlarının türevleri $-2$, $(3 - t) - (1 + t) = 2 - 2t$ ve $2$'dir; $t = 0$'da $-2$, $2$, $2$. İki yol aynı sonucu verir. Koordinat formülü daha kısadır; bundan sonra hemen hemen hep onu kullanacağız.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineerlik ve Leibniz Kuralları
+
+Koordinat formülü, kovaryant türevin bütün cebirsel özelliklerini yönlü türevin özelliklerine (@thm-yonlu-turev-ozellikleri) indirger. Yönlü türev teğet vektörde lineerdi, fonksiyonda lineerdi ve çarpım için Leibniz kuralına uyuyordu. Bu üç özelliğin her biri kovaryant türeve aktarılır; dördüncü olarak, iki vektör alanının iç çarpımının türevi için de bir Leibniz kuralı vardır.
+
+:::: {#thm-kovaryant-ozellikleri name="Kovaryant Türevin Temel Özellikleri"}
+$\mathbf{v}$ ve $\mathbf{w}$, aynı $\mathbf{p}$ noktasında $\mathbb{R}^3$'e teğet vektörler; $Y$ ve $Z$, $\mathbb{R}^3$ üzerinde vektör alanları; $a$, $b$ sayılar ve $f$ diferansiyellenebilir bir fonksiyon olsun. O zaman
+
+**(1)** $\nabla_{a\mathbf{v} + b\mathbf{w}} Y = a\,\nabla_{\mathbf{v}} Y + b\,\nabla_{\mathbf{w}} Y$,
+
+**(2)** $\nabla_{\mathbf{v}}(aY + bZ) = a\,\nabla_{\mathbf{v}} Y + b\,\nabla_{\mathbf{v}} Z$,
+
+**(3)** $\nabla_{\mathbf{v}}(fY) = \mathbf{v}[f]\, Y(\mathbf{p}) + f(\mathbf{p})\, \nabla_{\mathbf{v}} Y$,
+
+**(4)** $\mathbf{v}[Y \cdot Z] = \nabla_{\mathbf{v}} Y \cdot Z(\mathbf{p}) + Y(\mathbf{p}) \cdot \nabla_{\mathbf{v}} Z$.
+
+::: {.ispat}
+$Y = \sum_i y_i U_i$ ve $Z = \sum_i z_i U_i$ yazalım. Bütün ispat, her iki tarafı @lem-kovaryant-koordinat-formulu ile koordinatlarına açıp @thm-yonlu-turev-ozellikleri'ni uygulamaktan ibarettir. Toplamlar hep $i = 1, 2, 3$ üzerinden alınır.
+
+**(1)** $a\mathbf{v} + b\mathbf{w}$, $\mathbf{p}$ noktasında bir teğet vektördür; çünkü $\mathbf{v}$ ile $\mathbf{w}$ aynı teğet uzayındadır ve teğet uzayı toplama ve skalerle çarpma altında kapalıdır (@def-teget-uzayi). Koordinat formülü ve yönlü türevin teğet vektörde lineerliği (@thm-yonlu-turev-ozellikleri, (1)) ile
+
+$$\begin{aligned}
+\nabla_{a\mathbf{v} + b\mathbf{w}} Y &= \sum_i (a\mathbf{v} + b\mathbf{w})[y_i]\, U_i(\mathbf{p})\\
+&= \sum_i \bigl(a\,\mathbf{v}[y_i] + b\,\mathbf{w}[y_i]\bigr)\, U_i(\mathbf{p})\\
+&= a \sum_i \mathbf{v}[y_i]\, U_i(\mathbf{p}) + b \sum_i \mathbf{w}[y_i]\, U_i(\mathbf{p})\\
+&= a\,\nabla_{\mathbf{v}} Y + b\,\nabla_{\mathbf{w}} Y.
+\end{aligned}$$
+
+Üçüncü satırda $T_{\mathbf{p}}(\mathbb{R}^3)$ içinde toplama ve skalerle çarpmanın dağılma kurallarını kullandık.
+
+**(2)** $aY + bZ$ alanı noktasal ilkeyle tanımlıdır: her $\mathbf{q}$ noktasında değeri $aY(\mathbf{q}) + bZ(\mathbf{q})$'dur ve bu vektörün $i$-inci koordinatı $a\,y_i(\mathbf{q}) + b\,z_i(\mathbf{q})$'dur. Dolayısıyla $aY + bZ$'nin koordinat fonksiyonları $ay_i + bz_i$'dir. Koordinat formülü ve yönlü türevin fonksiyonda lineerliği (@thm-yonlu-turev-ozellikleri, (2)) ile
+
+$$\begin{aligned}
+\nabla_{\mathbf{v}}(aY + bZ) &= \sum_i \mathbf{v}[ay_i + bz_i]\, U_i(\mathbf{p})\\
+&= \sum_i \bigl(a\,\mathbf{v}[y_i] + b\,\mathbf{v}[z_i]\bigr)\, U_i(\mathbf{p})\\
+&= a\,\nabla_{\mathbf{v}} Y + b\,\nabla_{\mathbf{v}} Z.
+\end{aligned}$$
+
+**(3)** $fY$ alanının $\mathbf{q}$'daki değeri $f(\mathbf{q})\, Y(\mathbf{q})$'dur; koordinat fonksiyonları $f y_i$'dir. Koordinat formülü ve yönlü türevin Leibniz kuralı (@thm-yonlu-turev-ozellikleri, (3)) ile
+
+$$\begin{aligned}
+\nabla_{\mathbf{v}}(fY) &= \sum_i \mathbf{v}[f y_i]\, U_i(\mathbf{p})\\
+&= \sum_i \bigl(\mathbf{v}[f]\, y_i(\mathbf{p}) + f(\mathbf{p})\, \mathbf{v}[y_i]\bigr)\, U_i(\mathbf{p})\\
+&= \mathbf{v}[f] \sum_i y_i(\mathbf{p})\, U_i(\mathbf{p}) + f(\mathbf{p}) \sum_i \mathbf{v}[y_i]\, U_i(\mathbf{p}).
+\end{aligned}$$
+
+Son satırdaki ilk toplam $Y(\mathbf{p})$'nin doğal çatıdaki açılımıdır (@lem-teget-koordinat-fonksiyonlari), ikincisi ise koordinat formülüne göre $\nabla_{\mathbf{v}} Y$'dir. Böylece $\nabla_{\mathbf{v}}(fY) = \mathbf{v}[f]\, Y(\mathbf{p}) + f(\mathbf{p})\, \nabla_{\mathbf{v}} Y$.
+
+**(4)** $Y \cdot Z$, her $\mathbf{q}$ noktasına $Y(\mathbf{q}) \cdot Z(\mathbf{q})$ sayısını karşılık getiren fonksiyondur. Teğet vektörlerin iç çarpımı vektör kısımlarının iç çarpımı olduğundan (@def-iccarpim-teget-ic-carpim)
+
+$$Y \cdot Z = \sum_i y_i z_i$$
+
+olur; sağ taraf diferansiyellenebilir fonksiyonların çarpımlarının toplamı olduğundan $Y \cdot Z$ diferansiyellenebilirdir ve $\mathbf{v}[Y \cdot Z]$ anlamlıdır. Üç terimli bir toplamın yönlü türevi, yönlü türevin fonksiyonda lineerliğinin (@thm-yonlu-turev-ozellikleri, (2)) iki kez uygulanmasıyla, terimlerin yönlü türevlerinin toplamıdır; her terime de yönlü türevin Leibniz kuralını (@thm-yonlu-turev-ozellikleri, (3)) uygularız:
+
+$$\begin{aligned}
+\mathbf{v}[Y \cdot Z] &= \sum_i \mathbf{v}[y_i z_i]\\
+&= \sum_i \mathbf{v}[y_i]\, z_i(\mathbf{p}) + \sum_i y_i(\mathbf{p})\, \mathbf{v}[z_i].
+\end{aligned}$$
+
+Şimdi sağdaki iki toplamı tanıyalım. Koordinat formülüne göre $\nabla_{\mathbf{v}} Y$, $\mathbf{p}$'de uygulanmış ve koordinatları $\mathbf{v}[y_1], \mathbf{v}[y_2], \mathbf{v}[y_3]$ olan teğet vektördür; $Z(\mathbf{p})$'nin koordinatları ise $z_1(\mathbf{p}), z_2(\mathbf{p}), z_3(\mathbf{p})$'dir. İki teğet vektörün iç çarpımı koordinatlarının çarpımlarının toplamı olduğundan
+
+$$\nabla_{\mathbf{v}} Y \cdot Z(\mathbf{p}) = \sum_i \mathbf{v}[y_i]\, z_i(\mathbf{p}).$$
+
+Aynı biçimde $Y(\mathbf{p})$'nin koordinatları $y_i(\mathbf{p})$, $\nabla_{\mathbf{v}} Z$'nin koordinatları $\mathbf{v}[z_i]$ olduğundan
+
+$$Y(\mathbf{p}) \cdot \nabla_{\mathbf{v}} Z = \sum_i y_i(\mathbf{p})\, \mathbf{v}[z_i].$$
+
+Bu iki eşitliği yukarıdaki toplamların yerine koyunca (4) elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Dört özelliği sözle özetleyelim. (1) türev alınan yönde lineerlik: iki yönün toplamındaki değişim, ayrı ayrı değişimlerin toplamıdır; özellikle $\nabla_{2\mathbf{v}} Y = 2\,\nabla_{\mathbf{v}} Y$, yani vektör uzatılınca türev de aynı oranda büyür. (2) türevi alınan alanda lineerlik. (3) fonksiyonla çarpım için Leibniz kuralı: $fY$'nin değişimi, $f$'nin değişiminden ve $Y$'nin değişiminden gelen iki parçadan oluşur. (4) iç çarpım için Leibniz kuralı: burada sol taraf bir fonksiyonun yönlü türevi, sağ taraftaki iki terim ise birer iç çarpımdır. Kuralların her birini sayılarla deneyelim.
+
+:::: {#exm-kovaryant-lineerlik-denetimi name="Yönde Lineerliğin Denetimi"}
+$W = x^2 U_1 + yz\, U_3$, $\mathbf{p} = (2, 1, 0)$, $\mathbf{v} = (-1, 0, 2)$ ve $\mathbf{w} = (1, 1, 1)$ olsun. $\nabla_{\mathbf{v} + \mathbf{w}} W$'yi doğrudan hesaplayıp @thm-kovaryant-ozellikleri'nin (1) şıkkıyla karşılaştıralım.
+
+::: {.cozum}
+$\mathbf{v} + \mathbf{w} = (0, 1, 3)$'tür. $\mathbf{p}$'deki kısmi türev değerleri @exm-kovaryant-lemma-ile-hesap'taki gibi $\partial(x^2)/\partial x = 4$, $\partial(yz)/\partial y = 0$, $\partial(yz)/\partial z = 1$'dir. Buradan
+
+$$\begin{aligned}
+(\mathbf{v} + \mathbf{w})[x^2] &= 0\cdot 4 + 1\cdot 0 + 3\cdot 0 = 0,\\
+(\mathbf{v} + \mathbf{w})[yz] &= 0\cdot 0 + 1\cdot 0 + 3\cdot 1 = 3,
+\end{aligned}$$
+
+yani $\nabla_{\mathbf{v} + \mathbf{w}} W = 3U_3(\mathbf{p})$, vektör kısmı $(0, 0, 3)$.
+
+Öte yandan @exm-kovaryant-lemma-ile-hesap'ta $\nabla_{\mathbf{v}} W = (-4, 0, 2)_{\mathbf{p}}$ ve $\nabla_{\mathbf{w}} W = (4, 0, 1)_{\mathbf{p}}$ bulmuştuk. Toplamları $(0, 0, 3)_{\mathbf{p}}$'dir. İki sonuç uyuşur: $x^2$ bileşenindeki $-4$ ve $+4$ değişimleri birbirini götürmüş, $yz$ bileşenindeki $2$ ve $1$ toplanmıştır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-leibniz-denetimi name="Fonksiyonla Çarpım Kuralının Denetimi"}
+$Y = x^2 U_1 + yz\, U_3$, $f = x + z$, $\mathbf{p} = (2, 1, 0)$ ve $\mathbf{v} = (-1, 0, 2)$ olsun. $\nabla_{\mathbf{v}}(fY)$'yi hem doğrudan koordinat formülüyle hem @thm-kovaryant-ozellikleri'nin (3) şıkkıyla hesaplayalım.
+
+::: {.cozum}
+*Doğrudan.* Çarpımı açalım:
+
+$$fY = (x^3 + x^2 z)\, U_1 + (xyz + yz^2)\, U_3.$$
+
+Koordinat fonksiyonlarının yönlü türevlerini $\mathbf{v}[g] = -\partial g/\partial x + 2\,\partial g/\partial z$ kuralıyla $\mathbf{p}$'de hesaplarız. $\mathbf{p}$'de $x = 2$, $y = 1$, $z = 0$ olduğundan
+
+$$\begin{aligned}
+\mathbf{v}[x^3 + x^2 z] &= -(3x^2 + 2xz) + 2x^2 = -12 + 8 = -4,\\
+\mathbf{v}[xyz + yz^2] &= -(yz) + 2(xy + 2yz) = 0 + 4 = 4.
+\end{aligned}$$
+
+Dolayısıyla $\nabla_{\mathbf{v}}(fY) = (-4, 0, 4)_{\mathbf{p}}$.
+
+*Kuralla.* $\mathbf{v}[f] = -1 + 2 = 1$, $f(\mathbf{p}) = 2 + 0 = 2$, $Y(\mathbf{p}) = (4, 0, 0)_{\mathbf{p}}$ ve $\nabla_{\mathbf{v}} Y = (-4, 0, 2)_{\mathbf{p}}$ (@exm-kovaryant-lemma-ile-hesap). Kural
+
+$$\mathbf{v}[f]\, Y(\mathbf{p}) + f(\mathbf{p})\, \nabla_{\mathbf{v}} Y = 1\cdot(4, 0, 0) + 2\cdot(-4, 0, 2) = (-4, 0, 4)$$
+
+verir. İki hesap uyuşur. Kuralın yararı açıktır: $fY$'nin koordinatlarını açıp altı kısmi türev almak yerine, zaten bildiğimiz $\nabla_{\mathbf{v}} Y$ ile tek bir yönlü türev $\mathbf{v}[f]$ yetti.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-ic-carpim-denetimi name="İç Çarpım Kuralının Denetimi"}
+$Y = x^2 U_1 + yz\, U_3$, $Z = U_1 + xU_2 + yU_3$, $\mathbf{p} = (2, 1, 0)$ ve $\mathbf{v} = (-1, 0, 2)$ olsun. @thm-kovaryant-ozellikleri'nin (4) şıkkının iki tarafını ayrı ayrı hesaplayalım.
+
+::: {.cozum}
+*Sol taraf.* $Y \cdot Z$ fonksiyonu
+
+$$Y \cdot Z = x^2\cdot 1 + 0\cdot x + yz\cdot y = x^2 + y^2 z$$
+
+biçimindedir. $\mathbf{p}$'de
+
+$$\mathbf{v}[x^2 + y^2 z] = -(2x) + 2(y^2) = -4 + 2 = -2.$$
+
+*Sağ taraf.* $\nabla_{\mathbf{v}} Y = (-4, 0, 2)_{\mathbf{p}}$ ve $Z(\mathbf{p}) = (1, 2, 1)_{\mathbf{p}}$; iç çarpımları $-4 + 0 + 2 = -2$. $Z$'nin koordinatları $1, x, y$ olduğundan $\mathbf{v}[1] = 0$, $\mathbf{v}[x] = -1$, $\mathbf{v}[y] = 0$ ve $\nabla_{\mathbf{v}} Z = (0, -1, 0)_{\mathbf{p}}$; $Y(\mathbf{p}) = (4, 0, 0)_{\mathbf{p}}$ ile iç çarpımı $0$. Sağ taraf $-2 + 0 = -2$.
+
+İki taraf eşittir. Sağ tarafın ikinci terimi sıfır çıktı, çünkü $Y(\mathbf{p})$ yalnızca $x$ yönünde uzanırken $Z$'nin $\mathbf{v}$ yönündeki değişimi yalnızca $y$ bileşenindedir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bir Vektör Alanına Göre Kovaryant Türev
+
+Yönlü türevden vektör alanı boyunca türeve geçerken yaptığımız şeyi hatırlayalım: tek bir $\mathbf{v}$ vektörü yerine bir $V$ vektör alanı alıp her $\mathbf{p}$ noktasında $V(\mathbf{p})[f]$ sayısını hesapladık; sonuç $V[f]$ fonksiyonu oldu. Bu, noktasal ilkenin bir uygulamasıydı. Aynı ilkeyi kovaryant türeve uygulayalım: her noktada, $V$'nin o noktadaki vektörüne göre $W$'nin kovaryant türevini alırsak her noktada bir teğet vektör, yani yeni bir vektör alanı elde ederiz.
+
+::: {#def-kovaryant-vektor-alanina-gore-turev name="Bir Vektör Alanına Göre Kovaryant Türev"}
+$V$ ve $W$, $\mathbb{R}^3$ üzerinde vektör alanları olsun. Her $\mathbf{p}$ noktasında değeri
+
+$$(\nabla_V W)(\mathbf{p}) = \nabla_{V(\mathbf{p})} W$$
+
+olan $\nabla_V W$ vektör alanına $W$'nin $V$'ye göre **kovaryant türevi** denir.
+:::
+
+Yani $\nabla_V W$, $W$'nin $V$'nin bütün vektörlerine göre kovaryant türevlerini bir araya toplayan alandır: $\mathbf{p}$'de, $V(\mathbf{p})$ yönünde harekete geçince $W$'nin nasıl değişmeye başladığını gösteren ok.
+
+$\nabla_V W$'nin gerçekten bir vektör alanı olduğunu görelim. $\nabla_{V(\mathbf{p})} W$, $\mathbf{p}$'de uygulanmış bir teğet vektördür; dolayısıyla $\nabla_V W$ her noktaya o noktada uygulanmış bir vektör karşılık getirir. Koordinat fonksiyonlarının diferansiyellenebilir olduğunu aşağıdaki lemmadan okuyacağız.
+
+:::: {#lem-kovaryant-vektor-alani-koordinat-formulu name="Vektör Alanına Göre Kovaryant Türevin Koordinat Formülü"}
+$V$ ve $W = \sum_{i=1}^{3} w_i U_i$, $\mathbb{R}^3$ üzerinde vektör alanları olsun. O zaman
+
+$$\nabla_V W = \sum_{i=1}^{3} V[w_i]\, U_i.$$
+
+Özellikle $\nabla_V W$'nin koordinat fonksiyonları $V[w_1], V[w_2], V[w_3]$ diferansiyellenebilir fonksiyonlardır.
+
+::: {.ispat}
+İki vektör alanının eşit olması, her noktada aynı teğet vektörü vermeleri demektir. Bir $\mathbf{p}$ noktası alalım. Tanım ve @lem-kovaryant-koordinat-formulu ile
+
+$$(\nabla_V W)(\mathbf{p}) = \nabla_{V(\mathbf{p})} W = \sum_{i=1}^{3} V(\mathbf{p})[w_i]\, U_i(\mathbf{p}).$$
+
+$V[w_i]$ fonksiyonunun tanımı gereği $V(\mathbf{p})[w_i] = V[w_i](\mathbf{p})$'dir. Öte yandan $\sum_i V[w_i]\, U_i$ alanının $\mathbf{p}$'deki değeri, noktasal ilke gereği, $\sum_i V[w_i](\mathbf{p})\, U_i(\mathbf{p})$'dir. İki taraf her $\mathbf{p}$'de eşit olduğundan alanlar eşittir.
+
+Diferansiyellenebilirlik için $V = \sum_j v_j U_j$ yazalım. @lem-yonlu-kismi-turev-formulu her noktada uygulanınca
+
+$$V[w_i] = \sum_{j=1}^{3} v_j\, \dfrac{\partial w_i}{\partial x_j}$$
+
+bulunur; sağ taraf diferansiyellenebilir fonksiyonların çarpımlarının toplamı olduğundan diferansiyellenebilirdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Hesaplarda en sık kullanacağımız araç, doğal çatı alanlarının fonksiyonlara etkisidir. $U_j(\mathbf{p})$, $j$-inci koordinatı $1$ ve ötekileri $0$ olan vektör kısmını taşıdığından @lem-yonlu-kismi-turev-formulu ile
+
+$$U_j[f] = \dfrac{\partial f}{\partial x_j}$$
+
+olur; yani $U_j$'yi bir fonksiyona uygulamak, $x_j$'ye göre kısmi türev almaktır. $V = \sum_j v_j U_j$ için de $V[f] = \sum_j v_j\, \partial f/\partial x_j$ bulunur.
+
+:::: {#exm-kovaryant-vektor-alani-hesap name="İki Alandan Yeni Bir Alan"}
+$V = (y - x)\, U_1 + xy\, U_3$ ve $W = x^2 U_1 + yz\, U_3$ olsun. $\nabla_V W$ alanını bulalım.
+
+::: {.cozum}
+$V[f] = (y - x)\, \partial f/\partial x + xy\, \partial f/\partial z$'dir. $W$'nin koordinat fonksiyonları $x^2$, $0$, $yz$ için
+
+$$\begin{aligned}
+V[x^2] &= (y - x)\cdot 2x + xy\cdot 0 = 2x(y - x),\\
+V[yz] &= (y - x)\cdot 0 + xy\cdot y = xy^2.
+\end{aligned}$$
+
+Dolayısıyla
+
+$$\nabla_V W = 2x(y - x)\, U_1 + xy^2\, U_3.$$
+
+Bu, bütün $\mathbb{R}^3$ üzerinde tanımlı yeni bir vektör alanıdır; her noktadaki değeri, $V$'nin o noktadaki oku yönünde $W$'nin nasıl değişmeye başladığını söyler.
+
+Sonucu @exm-kovaryant-tanimdan-hesap ile karşılaştıralım. $\mathbf{p} = (2, 1, 0)$'da $V(\mathbf{p})$, koordinatları $y - x = -1$ ve $xy = 2$ olan $(-1, 0, 2)_{\mathbf{p}}$ vektörüdür; bu, @exm-kovaryant-tanimdan-hesap'taki $\mathbf{v}$'nin ta kendisidir. Formülden $(\nabla_V W)(\mathbf{p})$'nin koordinatları $2\cdot 2\cdot(1 - 2) = -4$, $0$ ve $2\cdot 1 = 2$ çıkar: $(-4, 0, 2)_{\mathbf{p}}$, orada bulduğumuz $\nabla_{\mathbf{v}} W$ ile aynıdır. Tanımın istediği de tam budur: $(\nabla_V W)(\mathbf{p}) = \nabla_{V(\mathbf{p})} W$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-dogal-cati-turevi name="Doğal Çatı Alanlarına Göre Türev"}
+$W = x^2 U_1 + yz\, U_3$ için $\nabla_{U_1} W$, $\nabla_{U_2} W$ ve $\nabla_{U_3} W$ alanlarını bulalım.
+
+::: {.cozum}
+$U_j[f] = \partial f/\partial x_j$ olduğundan koordinat formülü
+
+$$\nabla_{U_j} W = \sum_{i=1}^{3} \dfrac{\partial w_i}{\partial x_j}\, U_i$$
+
+biçimini alır: $U_j$'ye göre kovaryant türev, bütün koordinat fonksiyonlarının $x_j$'ye göre kısmi türevini almaktır. $w_1 = x^2$, $w_2 = 0$, $w_3 = yz$ için
+
+$$\nabla_{U_1} W = 2x\, U_1, \qquad \nabla_{U_2} W = z\, U_3, \qquad \nabla_{U_3} W = y\, U_3.$$
+
+Örneğin $\nabla_{U_2} W = zU_3$ şunu söyler: pozitif $y$ yönünde ilerlerken $W$'nin yalnızca üçüncü bileşeni, o da $z$ oranında, değişir; $xy$ düzleminde ($z = 0$) bu yönde $W$ hiç değişmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Tek bir teğet vektöre göre türevin dört özelliği, noktasal ilkeyle vektör alanlarına taşınır. Tek fark, (1) şıkkında sayılar yerine fonksiyonların katsayı görevi görmesidir: $fV + gW$ alanı noktasal olarak $f(\mathbf{p}) V(\mathbf{p}) + g(\mathbf{p}) W(\mathbf{p})$ ile tanımlıdır.
+
+:::: {#cor-kovaryant-vektor-alani name="Vektör Alanına Göre Kovaryant Türevin Özellikleri"}
+$V$, $W$, $Y$ ve $Z$, $\mathbb{R}^3$ üzerinde vektör alanları; $f$, $g$ diferansiyellenebilir fonksiyonlar ve $a$, $b$ sayılar olsun. O zaman
+
+**(1)** $\nabla_{fV + gW} Y = f\,\nabla_V Y + g\,\nabla_W Y$,
+
+**(2)** $\nabla_V(aY + bZ) = a\,\nabla_V Y + b\,\nabla_V Z$,
+
+**(3)** $\nabla_V(fY) = V[f]\, Y + f\,\nabla_V Y$,
+
+**(4)** $V[Y \cdot Z] = \nabla_V Y \cdot Z + Y \cdot \nabla_V Z$.
+
+::: {.ispat}
+Her eşitliğin iki tarafı da bir vektör alanıdır ya da, (4)'te, bir fonksiyondur. İki alanın (ya da iki fonksiyonun) eşitliği her noktada değerlerinin eşit olması demektir; bu yüzden her formülü keyfi bir $\mathbf{p}$ noktasında değerlendirip @thm-kovaryant-ozellikleri'ni $V(\mathbf{p})$, $W(\mathbf{p})$ teğet vektörlerine uygulayacağız. Tek dikkat edilecek şey parantezlerin yeridir: tanım gereği $(\nabla_V Y)(\mathbf{p}) = \nabla_{V(\mathbf{p})} Y$ ve $V[f](\mathbf{p}) = V(\mathbf{p})[f]$'dir.
+
+**(1)** Noktasal tanım gereği
+
+$$(fV + gW)(\mathbf{p}) = f(\mathbf{p})\, V(\mathbf{p}) + g(\mathbf{p})\, W(\mathbf{p});$$
+
+burada $f(\mathbf{p})$, $g(\mathbf{p})$ birer sayı, $V(\mathbf{p})$, $W(\mathbf{p})$ ise $\mathbf{p}$'deki birer teğet vektördür. Teoremin (1) şıkkını $a = f(\mathbf{p})$, $b = g(\mathbf{p})$ sayılarıyla uygularsak
+
+$$\begin{aligned}
+(\nabla_{fV + gW} Y)(\mathbf{p}) &= \nabla_{f(\mathbf{p}) V(\mathbf{p}) + g(\mathbf{p}) W(\mathbf{p})} Y\\
+&= f(\mathbf{p})\, \nabla_{V(\mathbf{p})} Y + g(\mathbf{p})\, \nabla_{W(\mathbf{p})} Y\\
+&= f(\mathbf{p})\, (\nabla_V Y)(\mathbf{p}) + g(\mathbf{p})\, (\nabla_W Y)(\mathbf{p})\\
+&= (f\,\nabla_V Y + g\,\nabla_W Y)(\mathbf{p}).
+\end{aligned}$$
+
+Son adım, $f\,\nabla_V Y + g\,\nabla_W Y$ alanının noktasal tanımıdır.
+
+**(2)** Teoremin (2) şıkkı $\mathbf{v} = V(\mathbf{p})$ ile
+
+$$\begin{aligned}
+(\nabla_V(aY + bZ))(\mathbf{p}) &= \nabla_{V(\mathbf{p})}(aY + bZ)\\
+&= a\,\nabla_{V(\mathbf{p})} Y + b\,\nabla_{V(\mathbf{p})} Z\\
+&= (a\,\nabla_V Y + b\,\nabla_V Z)(\mathbf{p})
+\end{aligned}$$
+
+verir.
+
+**(3)** Teoremin (3) şıkkı $\mathbf{v} = V(\mathbf{p})$ ile
+
+$$\begin{aligned}
+(\nabla_V(fY))(\mathbf{p}) &= \nabla_{V(\mathbf{p})}(fY)\\
+&= V(\mathbf{p})[f]\, Y(\mathbf{p}) + f(\mathbf{p})\, \nabla_{V(\mathbf{p})} Y\\
+&= V[f](\mathbf{p})\, Y(\mathbf{p}) + f(\mathbf{p})\, (\nabla_V Y)(\mathbf{p})\\
+&= (V[f]\, Y + f\,\nabla_V Y)(\mathbf{p})
+\end{aligned}$$
+
+verir; son satır, $V[f]\, Y$ ve $f\,\nabla_V Y$ alanlarının fonksiyonla çarpım tanımından gelir.
+
+**(4)** $V[Y \cdot Z]$ fonksiyonunun $\mathbf{p}$'deki değeri $V(\mathbf{p})[Y \cdot Z]$'dir. Teoremin (4) şıkkı $\mathbf{v} = V(\mathbf{p})$ ile
+
+$$\begin{aligned}
+V[Y \cdot Z](\mathbf{p}) &= \nabla_{V(\mathbf{p})} Y \cdot Z(\mathbf{p}) + Y(\mathbf{p}) \cdot \nabla_{V(\mathbf{p})} Z\\
+&= (\nabla_V Y)(\mathbf{p}) \cdot Z(\mathbf{p}) + Y(\mathbf{p}) \cdot (\nabla_V Z)(\mathbf{p})\\
+&= (\nabla_V Y \cdot Z + Y \cdot \nabla_V Z)(\mathbf{p})
+\end{aligned}$$
+
+verir; son satırda iki alanın iç çarpımının noktasal tanımını kullandık.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kovaryant-sonuc-ile-hesap name="Sonucun (1) Şıkkıyla Hesap"}
+$V = (y - x)\, U_1 + xy\, U_3$ ve $W = x^2 U_1 + yz\, U_3$ olsun. @exm-kovaryant-dogal-cati-turevi'nde bulunan $\nabla_{U_j} W$ alanlarından ve @cor-kovaryant-vektor-alani'nin (1) şıkkından yararlanarak $\nabla_V W$'yi yeniden hesaplayalım.
+
+::: {.cozum}
+$V = (y - x)\, U_1 + xy\, U_3$, $f = y - x$ ve $g = xy$ fonksiyonlarıyla $fU_1 + gU_3$ biçimindedir. Sonucun (1) şıkkı
+
+$$\nabla_V W = (y - x)\, \nabla_{U_1} W + xy\, \nabla_{U_3} W$$
+
+verir. $\nabla_{U_1} W = 2xU_1$ ve $\nabla_{U_3} W = yU_3$ olduğundan
+
+$$\nabla_V W = (y - x)\cdot 2x\, U_1 + xy\cdot y\, U_3 = 2x(y - x)\, U_1 + xy^2\, U_3.$$
+
+@exm-kovaryant-vektor-alani-hesap ile aynı sonuç. Bu yol genel bir tarif verir: bir $W$ alanının üç $\nabla_{U_j} W$ türevi bilindiğinde, herhangi bir $V = \sum_j v_j U_j$ için $\nabla_V W = \sum_j v_j\, \nabla_{U_j} W$ olur. Katsayıların fonksiyon olması hiçbir sorun çıkarmaz, çünkü türev alınan yön yalnızca cebirsel bir rol oynar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Son cümle önemli bir uyarıyı hak eder. $\nabla_V Y$ ifadesinde $V$ ile $Y$'nin rolleri simetrik değildir: türevi alınan $Y$'dir, $V$ yalnızca hangi yönde bakılacağını söyler. Bu yüzden $V$'nin katsayısı olan bir fonksiyon dışarı çıkarılabilir, ama $Y$'nin katsayısı çıkarılamaz.
+
+::: {.callout-warning title="Fonksiyon katsayısı hangi taraftan dışarı çıkar?"}
+Sonucun (1) şıkkına göre $\nabla_{fV} Y = f\,\nabla_V Y$: yönü belirleyen alanın önündeki fonksiyon, türevin önüne olduğu gibi geçer. Ama (3) şıkkına göre $\nabla_V(fY) = V[f]\, Y + f\,\nabla_V Y$: türevi alınan alanın önündeki fonksiyon dışarı çıkarken $V[f]\, Y$ ek terimini bırakır, çünkü $V$ yönünde giderken $f$ de değişir. Genel olarak $\nabla_V(fY) \neq f\,\nabla_V Y$'dir. Aynı nedenle $\nabla_V W$ ile $\nabla_W V$ de genellikle farklıdır.
+:::
+
+:::: {#exm-kovaryant-simetri-yok name="Simetri Eksikliğine Bir Örnek"}
+$V = U_1$, $Y = xU_1$ ve $f = x$ olsun. $\nabla_{fV} U_1$ ile $\nabla_V(fU_1)$ alanlarını hesaplayıp karşılaştıralım.
+
+::: {.cozum}
+$fV = xU_1 = Y$'dir; yani iki ifade $\nabla_Y V$ ve $\nabla_V Y$'dir.
+
+$\nabla_{xU_1} U_1$: koordinat formülünde $U_1$'in koordinat fonksiyonları $1, 0, 0$ sabitlerdir ve sabit fonksiyonun her yönlü türevi sıfırdır. Dolayısıyla $\nabla_{xU_1} U_1 = \mathbf{0}$. Aynı sonuç sonucun (1) şıkkıyla da çıkar: $\nabla_{xU_1} U_1 = x\,\nabla_{U_1} U_1 = x\cdot\mathbf{0} = \mathbf{0}$.
+
+$\nabla_{U_1}(xU_1)$: $xU_1$'in koordinat fonksiyonları $x, 0, 0$'dır; $U_1[x] = \partial x/\partial x = 1$ olduğundan $\nabla_{U_1}(xU_1) = U_1$. Sonucun (3) şıkkıyla da aynı şey bulunur: $U_1[x]\, U_1 + x\,\nabla_{U_1} U_1 = U_1 + \mathbf{0} = U_1$.
+
+Demek ki $\nabla_Y V = \mathbf{0}$, ama $\nabla_V Y = U_1 \neq \mathbf{0}$. Resim şudur: $Y = xU_1$ alanı $x$ ekseni boyunca uzunluğu $x$ ile büyüyen oklardan oluşur, $V = U_1$ ise her yerde aynı birim oktur. $Y$ yönünde giderken $V$ hiç değişmez; $V$ yönünde, yani pozitif $x$ yönünde giderken $Y$'nin oku birim hızla uzar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+:::: {#exr-kovaryant-tanimdan-hesap-a name="Tanımdan Hesap: İki Bileşenli Alan"}
+$\mathbf{p} = (1, 3, -1)$ noktasındaki $\mathbf{v} = (1, -1, 2)$ teğet vektörü ve $W = x^2 U_1 + yU_2$ vektör alanı verilsin. $\nabla_{\mathbf{v}} W$'yi doğrudan tanımdan hesaplayınız.
+
+::: {.cozum}
+Doğru $\mathbf{p} + t\mathbf{v} = (1 + t,\ 3 - t,\ -1 + 2t)$'dir. Bu noktada $x = 1 + t$ ve $y = 3 - t$ olduğundan
+
+$$W(\mathbf{p} + t\mathbf{v}) = (1 + t)^2\, U_1 + (3 - t)\, U_2.$$
+
+Koordinat fonksiyonları $(1 + t)^2$, $3 - t$ ve $0$'dır; türevleri $2(1 + t)$, $-1$ ve $0$. $t = 0$'da $2$, $-1$, $0$ bulunur:
+
+$$\nabla_{\mathbf{v}} W = 2U_1(\mathbf{p}) - U_2(\mathbf{p}) = (2, -1, 0)_{\mathbf{p}}.$$
+
+Denetim için @lem-kovaryant-koordinat-formulu'nü kullanalım: $\mathbf{v}[x^2] = 1\cdot 2x = 2$ ve $\mathbf{v}[y] = -1$ ($\mathbf{p}$'de $x = 1$). Aynı sonuç.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-tanimdan-hesap-b name="Tanımdan Hesap: Üç Bileşenli Alan"}
+$\mathbf{p} = (1, 3, -1)$ noktasındaki $\mathbf{v} = (1, -1, 2)$ teğet vektörü ve $W = xU_1 + x^2 U_2 - z^2 U_3$ vektör alanı verilsin. $\nabla_{\mathbf{v}} W$'yi doğrudan tanımdan hesaplayınız.
+
+::: {.cozum}
+Doğru yine $\mathbf{p} + t\mathbf{v} = (1 + t,\ 3 - t,\ -1 + 2t)$'dir. $x = 1 + t$, $z = -1 + 2t$ olduğundan
+
+$$W(\mathbf{p} + t\mathbf{v}) = (1 + t)\, U_1 + (1 + t)^2\, U_2 - (2t - 1)^2\, U_3.$$
+
+Koordinat fonksiyonlarını türetelim; üçüncüsünde zincir kuralı gerekir:
+
+$$(1 + t)' = 1, \qquad \bigl((1 + t)^2\bigr)' = 2(1 + t), \qquad \bigl(-(2t - 1)^2\bigr)' = -4(2t - 1).$$
+
+$t = 0$'da bunlar $1$, $2$ ve $-4\cdot(-1) = 4$ olur:
+
+$$\nabla_{\mathbf{v}} W = U_1(\mathbf{p}) + 2U_2(\mathbf{p}) + 4U_3(\mathbf{p}) = (1, 2, 4)_{\mathbf{p}}.$$
+
+Denetim: $\mathbf{v}[x] = 1$; $\mathbf{v}[x^2] = 1\cdot 2x = 2$; $\mathbf{v}[-z^2] = 2\cdot(-2z) = -4z = 4$, çünkü $\mathbf{p}$'de $z = -1$. Üçüncü bileşenin işaretine dikkat: $z = -1$'den $z$ artarken $-z^2$ büyür, bu yüzden türev pozitiftir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-iki-alan-a name="İki Alan: W'nin V'ye Göre Türevi"}
+$V = -yU_1 + xU_3$ ve $W = \cos x\, U_1 + \sin x\, U_2$ olsun. $\nabla_V W$ alanını $U_1, U_2, U_3$ cinsinden yazınız.
+
+::: {.cozum}
+$V$'nin koordinatları $-y, 0, x$ olduğundan herhangi bir $f$ için
+
+$$V[f] = -y\,\dfrac{\partial f}{\partial x} + x\,\dfrac{\partial f}{\partial z}.$$
+
+$W$'nin koordinat fonksiyonları $\cos x$, $\sin x$ ve $0$ yalnızca $x$'e bağlıdır; $z$'ye göre kısmi türevleri sıfırdır. Buradan
+
+$$V[\cos x] = -y\cdot(-\sin x) = y\sin x, \qquad V[\sin x] = -y\cos x, \qquad V[0] = 0.$$
+
+@lem-kovaryant-vektor-alani-koordinat-formulu ile
+
+$$\nabla_V W = y\sin x\, U_1 - y\cos x\, U_2.$$
+
+$W$'nin oku yalnızca $x$ ile döner; $V$'nin $x$'i değiştiren parçası $-y\,U_1$ olduğundan sonuç $y$ ile orantılıdır, $xU_3$ parçası ise $z$'yi değiştirir ve $W$ buna duyarsızdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-iki-alan-b name="İki Alan: V'nin Kendine Göre Türevi"}
+$V = -yU_1 + xU_3$ olsun. $\nabla_V V$ alanını $U_1, U_2, U_3$ cinsinden yazınız.
+
+::: {.cozum}
+$V[f] = -y\,\partial f/\partial x + x\,\partial f/\partial z$ kuralını $V$'nin kendi koordinat fonksiyonlarına uygularız:
+
+$$V[-y] = -y\cdot 0 + x\cdot 0 = 0, \qquad V[0] = 0, \qquad V[x] = -y\cdot 1 + x\cdot 0 = -y.$$
+
+Dolayısıyla
+
+$$\nabla_V V = -y\, U_3.$$
+
+$V$'nin birinci koordinatı $-y$ yalnızca $y$'ye bağlıdır, $V$ ise $y$'yi hiç değiştirmez; bu yüzden birinci bileşen sabit kalır. Üçüncü koordinat $x$, $V$'nin $-y\,U_1$ parçası yüzünden $-y$ hızıyla değişir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-iki-alan-c name="İki Alan: Fonksiyonla Çarpılmış Alanın Türevi"}
+$V = -yU_1 + xU_3$ ve $W = \cos x\, U_1 + \sin x\, U_2$ olsun. $\nabla_V(z^2 W)$ alanını $U_1, U_2, U_3$ cinsinden yazınız.
+
+::: {.cozum}
+@cor-kovaryant-vektor-alani'nin (3) şıkkını $f = z^2$ ile kullanalım:
+
+$$\nabla_V(z^2 W) = V[z^2]\, W + z^2\, \nabla_V W.$$
+
+$V[z^2] = -y\cdot 0 + x\cdot 2z = 2xz$ ve @exr-kovaryant-iki-alan-a'dan $\nabla_V W = y\sin x\, U_1 - y\cos x\, U_2$. Yerine koyup $U_1$ ve $U_2$ katsayılarını toplarsak
+
+$$\begin{aligned}
+\nabla_V(z^2 W) &= 2xz\,(\cos x\, U_1 + \sin x\, U_2) + z^2\,(y\sin x\, U_1 - y\cos x\, U_2)\\
+&= (2xz\cos x + yz^2 \sin x)\, U_1 + (2xz\sin x - yz^2\cos x)\, U_2.
+\end{aligned}$$
+
+Doğrudan denetim: $z^2 W$'nin koordinatları $z^2\cos x$, $z^2 \sin x$, $0$'dır ve
+
+$$\begin{aligned}
+V[z^2\cos x] &= -y\,(-z^2\sin x) + x\,(2z\cos x) = yz^2\sin x + 2xz\cos x,\\
+V[z^2\sin x] &= -y\,(z^2\cos x) + x\,(2z\sin x) = -yz^2\cos x + 2xz\sin x.
+\end{aligned}$$
+
+Aynı katsayılar çıkar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-iki-alan-d name="İki Alan: V'nin W'ye Göre Türevi"}
+$V = -yU_1 + xU_3$ ve $W = \cos x\, U_1 + \sin x\, U_2$ olsun. $\nabla_W V$ alanını $U_1, U_2, U_3$ cinsinden yazınız.
+
+::: {.cozum}
+Bu kez yön $W$'dir: $W$'nin koordinatları $\cos x, \sin x, 0$ olduğundan
+
+$$W[f] = \cos x\,\dfrac{\partial f}{\partial x} + \sin x\,\dfrac{\partial f}{\partial y}.$$
+
+$V$'nin koordinat fonksiyonları $-y, 0, x$ için
+
+$$W[-y] = \cos x\cdot 0 + \sin x\cdot(-1) = -\sin x, \qquad W[0] = 0, \qquad W[x] = \cos x.$$
+
+Dolayısıyla
+
+$$\nabla_W V = -\sin x\, U_1 + \cos x\, U_3.$$
+
+Bunu @exr-kovaryant-iki-alan-a'daki $\nabla_V W = y\sin x\, U_1 - y\cos x\, U_2$ ile karşılaştıralım: ikisi hiç benzemez. $\nabla_W V$'nin $y$'ye bağlılığı yoktur ve üçüncü bileşeni sıfırdan farklıdır; $\nabla_V W$'nin ise üçüncü bileşeni sıfırdır. Kovaryant türev $V$ ile $W$'de simetrik değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-iki-alan-e name="İki Alan: İkinci Kovaryant Türev"}
+$V = -yU_1 + xU_3$ ve $W = \cos x\, U_1 + \sin x\, U_2$ olsun. $\nabla_V(\nabla_V W)$ alanını $U_1, U_2, U_3$ cinsinden yazınız.
+
+::: {.cozum}
+@exr-kovaryant-iki-alan-a'dan $\nabla_V W = y\sin x\, U_1 - y\cos x\, U_2$; bu da bir vektör alanıdır ve ona yeniden $\nabla_V$ uygulayabiliriz. $V[f] = -y\,\partial f/\partial x + x\,\partial f/\partial z$ kuralıyla
+
+$$\begin{aligned}
+V[y\sin x] &= -y\,(y\cos x) + x\cdot 0 = -y^2\cos x,\\
+V[-y\cos x] &= -y\,(y\sin x) + x\cdot 0 = -y^2\sin x.
+\end{aligned}$$
+
+Dolayısıyla
+
+$$\nabla_V(\nabla_V W) = -y^2\cos x\, U_1 - y^2\sin x\, U_2 = -y^2\, W.$$
+
+İkinci türev, alanın kendisinin $-y^2$ katı çıktı. Bu, $\cos$ ve $\sin$'in ikinci türevlerinin kendilerinin eksi işaretlisi olmasının yansımasıdır: $V$ yönünde $x$ koordinatı $-y$ hızıyla değişir, bu yüzden her türev bir $-y$ çarpanı getirip oku $90°$ döndürür; iki türev sonunda ok $y^2$ ile çarpılmış ve ters dönmüştür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-iki-alan-f name="İki Alan: Bileşik Bir Alanın Türevi"}
+$V = -yU_1 + xU_3$ ve $W = \cos x\, U_1 + \sin x\, U_2$ olsun. $\nabla_V(xV - zW)$ alanını $U_1, U_2, U_3$ cinsinden yazınız.
+
+::: {.cozum}
+@cor-kovaryant-vektor-alani'nin (2) ve (3) şıklarını art arda uygularız:
+
+$$\nabla_V(xV - zW) = V[x]\, V + x\,\nabla_V V - V[z]\, W - z\,\nabla_V W.$$
+
+Gereken parçalar: $V[x] = -y$, $V[z] = x$; @exr-kovaryant-iki-alan-b'den $\nabla_V V = -yU_3$; @exr-kovaryant-iki-alan-a'dan $\nabla_V W = y\sin x\, U_1 - y\cos x\, U_2$. Yerine koyalım:
+
+$$\begin{aligned}
+\nabla_V(xV - zW) &= -y\,(-yU_1 + xU_3) + x\,(-yU_3)\\
+&\quad - x\,(\cos x\, U_1 + \sin x\, U_2) - z\,(y\sin x\, U_1 - y\cos x\, U_2).
+\end{aligned}$$
+
+Katsayıları çatı vektörlerine göre toplayalım. $U_1$: $y^2 - x\cos x - yz\sin x$. $U_2$: $-x\sin x + yz\cos x$. $U_3$: $-xy - xy = -2xy$. Sonuç:
+
+$$\begin{aligned}
+\nabla_V(xV - zW) &= (y^2 - x\cos x - yz\sin x)\, U_1\\
+&\quad + (yz\cos x - x\sin x)\, U_2 - 2xy\, U_3.
+\end{aligned}$$
+
+Doğrudan denetim için $xV - zW$'nin koordinatlarını yazalım: $-xy - z\cos x$, $-z\sin x$, $x^2$. $V[f] = -y\,\partial f/\partial x + x\,\partial f/\partial z$ ile
+
+$$\begin{aligned}
+V[-xy - z\cos x] &= -y\,(-y + z\sin x) + x\,(-\cos x) = y^2 - yz\sin x - x\cos x,\\
+V[-z\sin x] &= -y\,(-z\cos x) + x\,(-\sin x) = yz\cos x - x\sin x,\\
+V[x^2] &= -y\cdot 2x = -2xy.
+\end{aligned}$$
+
+Üç katsayı da uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-sabit-uzunluk name="Sabit Uzunluklu Alanın Türevi Alana Diktir"}
+$W$, uzunluğu $\|W\|$ sabit olan bir vektör alanı olsun; yani her $\mathbf{p}$ için $\|W(\mathbf{p})\| = c$ olacak biçimde bir $c \ge 0$ sayısı bulunsun. Her $V$ vektör alanı için $\nabla_V W$'nin her noktada $W$'ye dik olduğunu gösteriniz.
+
+::: {.cozum}
+$W \cdot W = \|W\|^2 = c^2$ sabit fonksiyonudur. Sabit bir fonksiyonun kısmi türevleri sıfır olduğundan @lem-yonlu-kismi-turev-formulu gereği her noktada $V[c^2] = 0$; yani $V[W \cdot W] = 0$.
+
+Öte yandan @cor-kovaryant-vektor-alani'nin (4) şıkkı $Y = Z = W$ ile
+
+$$V[W \cdot W] = \nabla_V W \cdot W + W \cdot \nabla_V W = 2\,\nabla_V W \cdot W$$
+
+verir; iç çarpımın simetrisini kullandık. İki sonucu birleştirince $2\,\nabla_V W \cdot W = 0$, yani her noktada $\nabla_V W \cdot W = 0$ olur. Bu da $\nabla_V W$'nin her noktada $W$'ye dik olması demektir. ($c = 0$ ise $W = \mathbf{0}$, $\nabla_V W = \mathbf{0}$'dır ve sıfır vektör her vektöre diktir; ifade yine doğrudur.)
+
+Denetim için @exr-kovaryant-iki-alan-a'ya dönelim: $W = \cos x\, U_1 + \sin x\, U_2$ alanının uzunluğu her yerde $\sqrt{\cos^2 x + \sin^2 x} = 1$'dir ve $V = -yU_1 + xU_3$ için $\nabla_V W = y\sin x\, U_1 - y\cos x\, U_2$ bulmuştuk. İç çarpım
+
+$$\nabla_V W \cdot W = y\sin x\cos x - y\cos x\sin x = 0.$$
+
+Sonuç sezgiye de uyar. Uzunluğu değişmeyen bir okun ucu, ok bir yönde taşındıkça $c$ yarıçaplı bir kürenin üzerinde dolaşır; ucun hızı, yani $\nabla_V W$, küreye teğet, dolayısıyla yarıçap doğrultusundaki $W$'ye diktir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="10.0 2.0 420.0 313.0" role="img" aria-label="Vektor kisimlari duzleminde birim cember ve orijinden cikan uc birim ok: t = -pi/6 icin (0, 1), t = 0 icin W(p) = (1/2, sqrt3/2), t = pi/6 icin (sqrt3/2, 1/2). W(p) okunun ucundan cikan turuncu ok nabla_V W(p) = (sqrt3/2, -1/2) cembere teget ve W(p)'ye dik, aralarinda dik aci isareti; cemberin disindaki kucuk yay oku ucun t arttikca saat yonunde dolastigini gosterir">
+  <circle cx="157.8" cy="167.1" r="108.2" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.45"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="24.0" y1="167.1" x2="416.0" y2="167.1"/>
+  <line x1="157.8" y1="300.9" x2="157.8" y2="16.0"/>
+  <polygon points="416.0,167.1 408.0,163.6 408.0,170.6" stroke="none"/>
+  <polygon points="157.8,16.0 154.3,24.0 161.3,24.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="266.0" y1="164.1" x2="266.0" y2="170.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="266.0" y="182.1" text-anchor="middle">1</text>
+  <line x1="154.8" y1="58.9" x2="160.8" y2="58.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="150.8" y="62.9" text-anchor="end">1</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="414.0" y="182.1" text-anchor="end">1. bileşen</text>
+  <text x="164.8" y="25.0">2. bileşen</text>
+  </g>
+  <line x1="157.8" y1="167.1" x2="157.8" y2="66.1" stroke="var(--color-theory)" stroke-width="2.2" opacity="0.45" stroke-linecap="round"/>
+  <polygon points="157.8,58.9 161.6,67.9 154.0,67.9" fill="var(--color-theory)" opacity="0.45"/>
+  <line x1="157.8" y1="167.1" x2="245.2" y2="116.6" stroke="var(--color-theory)" stroke-width="2.2" opacity="0.45" stroke-linecap="round"/>
+  <polygon points="251.5,113.0 245.6,120.8 241.8,114.3" fill="var(--color-theory)" opacity="0.45"/>
+  <line x1="157.8" y1="167.1" x2="208.3" y2="79.7" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="211.9,73.4 210.7,83.1 204.1,79.3" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="211.9" y1="73.4" x2="299.3" y2="123.9" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="305.6,127.5 295.9,126.3 299.7,119.7" fill="var(--color-practice)" opacity="1.0"/>
+  <path d="M205.4,84.7 L216.6,91.2 L223.1,79.9" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M170.9,42.3 L172.3,42.5 L173.7,42.7 L175.2,42.8 L176.6,43.0 L178.0,43.3 L179.4,43.5 L180.8,43.8 L182.2,44.0 L183.6,44.3 L185.0,44.6 L186.3,44.9 L187.7,45.3 L189.1,45.6 L190.5,46.0 L191.9,46.3 L193.2,46.7 L194.6,47.1 L196.0,47.6 L197.3,48.0 L198.7,48.5 L200.0,48.9 L201.3,49.4 L202.7,49.9 L204.0,50.4 L205.3,51.0 L206.6,51.5 L207.9,52.1 L209.2,52.7 L210.5,53.3 L211.8,53.9 L213.1,54.5 L214.4,55.1 L215.6,55.8 L216.9,56.4 L218.2,57.1 L219.4,57.8 L220.6,58.5 L221.9,59.2 L223.1,60.0 L224.3,60.7 L225.5,61.5 L226.7,62.2 L227.9,63.0 L229.1,63.8 L230.2,64.6 L231.4,65.5 L232.5,66.3 L233.7,67.2 L234.8,68.0 L235.9,68.9 L237.0,69.8 L238.1,70.7 L239.2,71.6 L240.3,72.6 L241.4,73.5 L242.4,74.5 L243.5,75.4 L244.5,76.4" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="243.5" y1="75.4" x2="242.5" y2="74.5" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="246.5,78.4 239.5,75.6 243.5,71.4" fill="var(--academic-text)" opacity="0.75"/>
+  <circle cx="157.8" cy="167.1" r="2.6" fill="var(--academic-text)"/>
+  <circle cx="157.8" cy="58.9" r="2.6" fill="var(--academic-text)"/>
+  <circle cx="211.9" cy="73.4" r="2.6" fill="var(--academic-text)"/>
+  <circle cx="251.5" cy="113.0" r="2.6" fill="var(--academic-text)"/>
+  <text x="148.8" y="117.0" fill="var(--academic-text)" font-size="11" text-anchor="end"><tspan font-style="italic">t</tspan> = &#8722;&#960;/6</text>
+  <text x="206.6" y="153.1" fill="var(--academic-text)" font-size="11" text-anchor="start"><tspan font-style="italic">t</tspan> = &#960;/6</text>
+  <text x="199.8" y="84.6" fill="var(--color-theory)" font-size="12" text-anchor="end"><tspan font-style="italic">W</tspan>(<tspan font-weight="700">p</tspan>)</text>
+  <text x="236.0" y="52.8" fill="var(--academic-text)" font-size="11" text-anchor="start"><tspan font-style="italic">t</tspan> artar</text>
+  <polygon points="273.4,87.2 281.4,87.2 277.4,95.2" fill="none" stroke="var(--color-practice)" stroke-width="1.15" stroke-linejoin="round"/>
+  <text x="281.9" y="95.2" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-size="9" dy="4"><tspan font-style="italic">V</tspan></tspan><tspan dy="-4">&#8203;</tspan><tspan font-style="italic">W</tspan>(<tspan font-weight="700">p</tspan>) = (&#8730;3/2, &#8722;1/2)</text>
+  <text x="279.0" y="215.8" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-style="italic">W</tspan> = cos <tspan font-style="italic">x</tspan> <tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + sin <tspan font-style="italic">x</tspan> <tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="279.0" y="237.4" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-style="italic">V</tspan> = &#8722;<tspan font-style="italic">y</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + <tspan font-style="italic">x</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="279.0" y="259.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-weight="700">p</tspan> = (&#960;/3, 1, 0)</text>
+</svg>
+<figcaption><em>W</em> = cos <em>x</em> <em>U</em><sub>1</sub> + sin <em>x</em> <em>U</em><sub>2</sub> alanının her oku birim uzunluktadır; vektör kısımları birinci ve ikinci bileşen düzlemine çizilince uçları birim çember üzerinde kalır. <strong>p</strong> = (&#960;/3, 1, 0) noktasından <em>V</em>(<strong>p</strong>) = (&#8722;1, 0, &#960;/3) yönünde ilerlerken <em>x</em> = &#960;/3 &#8722; <em>t</em> olur; <em>t</em> = &#8722;&#960;/6, 0, &#960;/6 anlarındaki oklar &#960;/2, &#960;/3, &#960;/6 açılarındadır ve <em>W</em>(<strong>p</strong>) = (1/2, &#8730;3/2) okunun ucu <em>t</em> arttıkça çember üzerinde saat yönünde dolaşır. Ucun hızı olan &#8711;<sub><em>V</em></sub><em>W</em>(<strong>p</strong>) = (&#8730;3/2, &#8722;1/2) (turuncu) çembere teğettir, dolayısıyla yarıçap doğrultusundaki <em>W</em>(<strong>p</strong>)&#8217;ye diktir; aradaki dik açı işareti bunu gösterir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-konum-alani name="Konum Alanının Türevi Yönün Kendisidir"}
+$x_1, x_2, x_3$ doğal koordinat fonksiyonları olmak üzere $X = \sum_{i=1}^{3} x_i U_i$ vektör alanını alalım; $X(\mathbf{p})$, $\mathbf{p}$ noktasında uygulanmış ve vektör kısmı $\mathbf{p}$'nin kendisi olan "konum" okudur. Her $V$ vektör alanı için $\nabla_V X = V$ olduğunu gösteriniz.
+
+::: {.cozum}
+$V = \sum_j v_j U_j$ yazalım. $X$'in koordinat fonksiyonları $x_1, x_2, x_3$'tür. Kısmi türevleri $\partial x_i/\partial x_j$, $i = j$ için $1$ ve $i \neq j$ için $0$'dır. Dolayısıyla @lem-yonlu-kismi-turev-formulu her noktada uygulanınca
+
+$$V[x_i] = \sum_{j=1}^{3} v_j\,\dfrac{\partial x_i}{\partial x_j} = v_i.$$
+
+@lem-kovaryant-vektor-alani-koordinat-formulu ile
+
+$$\nabla_V X = \sum_{i=1}^{3} V[x_i]\, U_i = \sum_{i=1}^{3} v_i U_i = V.$$
+
+Sözle: $X$'in $\mathbf{p}$'deki oku $\mathbf{p}$'nin kendisidir; $\mathbf{p}$'yi $\mathbf{v}$ yönünde $\mathbf{p} + t\mathbf{v}$'ye taşıyınca ok da $\mathbf{p} + t\mathbf{v}$ olur ve $t$'ye göre türevi $\mathbf{v}$'dir. Hangi yöne gidersek okun değişimi tam o yön kadardır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="12.0 -1.0 376.0 374.5" role="img" aria-label="xy duzleminde X = x U1 + y U2 konum alani: (1,1), (1,2), (2,2), (3,1), (1,3) noktalarinda gri oklar, vektor kisimlari noktanin koordinatlari, 1/2 olceginde; p = (2,1) noktasindan v = (1,2) yesil oku ve kesikli p + t v dogrusu; dogru uzerinde t = 0, 1/2, 1 noktalari (2,1), (5/2,2), (3,3) ve oradaki mavi X oklari (2,1), (5/2,2), (3,3); p'de v'ye paralel turuncu ok nabla_v X = (1,2) = v">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="26.0" y1="333.8" x2="374.0" y2="333.8"/>
+  <line x1="51.6" y1="359.5" x2="51.6" y2="30.0"/>
+  <polygon points="374.0,333.8 366.0,330.3 366.0,337.3" stroke="none"/>
+  <polygon points="51.6,30.0 48.1,38.0 55.1,38.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="113.5" y1="330.8" x2="113.5" y2="336.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="113.5" y="348.8" text-anchor="middle">1</text>
+  <line x1="175.3" y1="330.8" x2="175.3" y2="336.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="175.3" y="348.8" text-anchor="middle">2</text>
+  <line x1="237.1" y1="330.8" x2="237.1" y2="336.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="237.1" y="348.8" text-anchor="middle">3</text>
+  <line x1="298.9" y1="330.8" x2="298.9" y2="336.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="298.9" y="348.8" text-anchor="middle">4</text>
+  <line x1="48.6" y1="272.0" x2="54.6" y2="272.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="44.6" y="276.0" text-anchor="end">1</text>
+  <line x1="48.6" y1="210.2" x2="54.6" y2="210.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="44.6" y="214.2" text-anchor="end">2</text>
+  <line x1="48.6" y1="148.4" x2="54.6" y2="148.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="44.6" y="152.4" text-anchor="end">3</text>
+  <line x1="48.6" y1="86.5" x2="54.6" y2="86.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="44.6" y="90.5" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="372.0" y="348.8" text-anchor="end">x</text>
+  <text x="58.6" y="39.0">y</text>
+  </g>
+  <line x1="113.5" y1="272.0" x2="140.7" y2="244.8" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="144.4,241.1 141.7,247.6 137.8,243.8" fill="var(--academic-text)" opacity="0.5"/>
+  <line x1="113.5" y1="210.2" x2="142.0" y2="153.0" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="144.4,148.4 143.9,155.4 139.0,153.0" fill="var(--academic-text)" opacity="0.5"/>
+  <line x1="175.3" y1="210.2" x2="233.4" y2="152.0" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="237.1,148.4 234.4,154.9 230.6,151.0" fill="var(--academic-text)" opacity="0.5"/>
+  <line x1="237.1" y1="272.0" x2="324.9" y2="242.7" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="329.8,241.1 324.5,245.7 322.8,240.6" fill="var(--academic-text)" opacity="0.5"/>
+  <line x1="113.5" y1="148.4" x2="142.7" y2="60.6" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="144.4,55.6 144.9,62.7 139.7,60.9" fill="var(--academic-text)" opacity="0.5"/>
+  <circle cx="113.5" cy="272.0" r="2.4" fill="var(--academic-text)"/>
+  <circle cx="113.5" cy="210.2" r="2.4" fill="var(--academic-text)"/>
+  <circle cx="175.3" cy="210.2" r="2.4" fill="var(--academic-text)"/>
+  <circle cx="237.1" cy="272.0" r="2.4" fill="var(--academic-text)"/>
+  <circle cx="113.5" cy="148.4" r="2.4" fill="var(--academic-text)"/>
+  <path d="M149.3,323.9 L254.4,113.7" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="175.3" y1="272.0" x2="231.7" y2="243.8" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="237.1,241.1 231.8,247.3 229.0,241.6" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="206.2" y1="210.2" x2="278.8" y2="152.1" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="283.5,148.4 279.6,155.5 275.6,150.6" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="237.1" y1="148.4" x2="325.6" y2="59.9" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="329.8,55.6 326.7,63.2 322.3,58.7" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="175.3" y1="272.0" x2="233.9" y2="154.8" stroke="var(--color-base)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="237.1,148.4 236.4,158.1 229.7,154.7" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="189.1" y1="278.9" x2="247.9" y2="161.4" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="250.9,155.3 250.3,164.5 243.9,161.3" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="175.3" cy="272.0" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="206.2" cy="210.2" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="237.1" cy="148.4" r="3.4" fill="var(--academic-text)"/>
+  <text x="191.3" y="294.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-weight="700">p</tspan> = (2, 1)</text>
+  <text x="191.3" y="307.0" fill="var(--academic-text)" font-size="10.5" text-anchor="start"><tspan font-style="italic">t</tspan> = 0</text>
+  <text x="190.2" y="226.2" fill="var(--academic-text)" font-size="10.5" text-anchor="end"><tspan font-style="italic">t</tspan> = 1/2</text>
+  <text x="227.1" y="144.4" fill="var(--academic-text)" font-size="11.5" text-anchor="end"><tspan font-weight="700">p</tspan> + <tspan font-weight="700">v</tspan> = (3, 3)</text>
+  <text x="227.1" y="131.4" fill="var(--academic-text)" font-size="10.5" text-anchor="end"><tspan font-style="italic">t</tspan> = 1</text>
+  <text x="245.1" y="245.1" fill="var(--color-theory)" font-size="10.5" text-anchor="start">(2, 1)</text>
+  <text x="291.5" y="152.4" fill="var(--color-theory)" font-size="10.5" text-anchor="start">(5/2, 2)</text>
+  <text x="337.8" y="59.6" fill="var(--color-theory)" font-size="10.5" text-anchor="start">(3, 3)</text>
+  <text x="181.7" y="245.1" fill="var(--color-base)" font-size="12.5" text-anchor="end"><tspan font-weight="700">v</tspan></text>
+  <path d="M229.0,213.0 L236.1,213.0 L232.6,221.1 Z" fill="none" stroke="var(--color-practice)" stroke-width="1.1" stroke-linejoin="miter"/>
+  <text x="237.6" y="221.1" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-size="9" dy="4"><tspan font-weight="700">v</tspan></tspan><tspan dy="-4">&#8203;</tspan><tspan font-style="italic">X</tspan> = <tspan font-weight="700">v</tspan></text>
+  <text x="200.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">X</tspan> = <tspan font-style="italic">x</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + <tspan font-style="italic">y</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> okları 1/2 ölçeğinde</text>
+</svg>
+<figcaption>Düzlemde <em>X</em> = <em>xU</em><sub>1</sub> + <em>yU</em><sub>2</sub> konum alanı: her noktadaki okun vektör kısmı noktanın kendisidir, okunaklılık için bütün <em>X</em> okları gerçek boyunun yarısıyla çizilmiştir. <strong>p</strong> = (2, 1) noktasından <strong>v</strong> = (1, 2) yönünde (yeşil ok, gerçek boyda) ilerlerken <strong>p</strong> + <em>t</em><strong>v</strong> noktalarındaki mavi okların vektör kısımları <em>t</em> = 0, 1/2, 1 için (2, 1), (5/2, 2), (3, 3), yani noktanın kendisidir; ok, nokta kadar değişir. Bu değişimin <em>t</em>&#8217;ye göre türevi olan turuncu ok &#8711;<sub><strong>v</strong></sub><em>X</em> = (1, 2), yeşil <strong>v</strong> okunun yanında ona paralel ve eşit boydadır: konum alanının türevi yönün kendisidir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-kisitlanis-a name="Eğri Boyunca Kovaryant Türev Kısıtlanışın Türevidir"}
+$W$, $\mathbb{R}^3$ üzerinde bir vektör alanı ve $\alpha : I \to \mathbb{R}^3$ bir eğri olsun; $W_\alpha(t) = W(\alpha(t))$, $W$'nin $\alpha$'ya kısıtlanışı (@def-kovaryant-kisitlanis). Her $t \in I$ için
+
+$$\nabla_{\alpha'(t)} W = W_\alpha'(t)$$
+
+olduğunu gösteriniz.
+
+::: {.cozum}
+$W = \sum_i w_i U_i$ yazalım. Sol taraf, $\alpha(t)$ noktasındaki $\alpha'(t)$ teğet vektörüne göre kovaryant türevdir; @lem-kovaryant-koordinat-formulu ile
+
+$$\nabla_{\alpha'(t)} W = \sum_{i=1}^{3} \alpha'(t)[w_i]\, U_i(\alpha(t)).$$
+
+Bir fonksiyonun eğri boyunca türevi lemması (@lem-egri-egri-boyunca-turev)
+
+$$\alpha'(t)[w_i] = \dfrac{d}{dt}\bigl(w_i(\alpha(t))\bigr)$$
+
+verir.
+
+Sağ taraf için $W_\alpha(t) = \sum_i w_i(\alpha(t))\, U_i(\alpha(t))$ olduğunu kısıtlanış tanımının ardından görmüştük; koordinat fonksiyonları $w_i(\alpha(t))$'dir ve eğri üzerindeki vektör alanının türevi bunların türetilmesiyle bulunur (@def-yay-ivme):
+
+$$W_\alpha'(t) = \sum_{i=1}^{3} \dfrac{d}{dt}\bigl(w_i(\alpha(t))\bigr)\, U_i(\alpha(t)).$$
+
+İki taraf terim terim aynıdır. Eğrinin düzgün olması gerekmez; ispatın hiçbir adımı $\alpha'(t) \neq \mathbf{0}$ kullanmadı. $W$'nin bütün $\mathbb{R}^3$ yerine eğrinin rotasını içeren açık bir bölgede tanımlı olması da yeter, çünkü hesap yalnızca $\alpha(t)$ çevresindeki noktaları kullanır.
+
+Bir örnek: $W = -yU_1 + xU_2$ ve $\alpha(t) = (\cos t, \sin t, 0)$ için @exm-kovaryant-kisitlanis-cember'de $W_\alpha = \alpha'$ bulmuştuk; dolayısıyla $W_\alpha'(t) = \alpha''(t)$, vektör kısmı $(-\cos t, -\sin t, 0)$. Sol taraf: $\alpha'(t) = (-\sin t, \cos t, 0)$ ile $\alpha'(t)[-y] = -\cos t$ ve $\alpha'(t)[x] = -\sin t$; yani $\nabla_{\alpha'(t)} W$'nin vektör kısmı $(-\cos t, -\sin t, 0)$. Aynı vektör.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-kisitlanis-b name="Tanımdaki Doğru Herhangi Bir Eğriyle Değiştirilebilir"}
+$W$ bir vektör alanı, $\mathbf{v}$ de $\mathbf{p}$ noktasında bir teğet vektör olsun. $\alpha$, $\alpha(0) = \mathbf{p}$ ve $\alpha'(0) = \mathbf{v}$ koşullarını sağlayan herhangi bir eğri ise $\nabla_{\mathbf{v}} W = W_\alpha'(0)$ olduğunu gösteriniz.
+
+::: {.cozum}
+@exr-kovaryant-kisitlanis-a'daki eşitliği $t = 0$'da yazalım: $\nabla_{\alpha'(0)} W = W_\alpha'(0)$. $\alpha'(0) = \mathbf{v}$ olduğundan
+
+$$\nabla_{\mathbf{v}} W = W_\alpha'(0).$$
+
+Demek ki kovaryant türevin tanımında kullandığımız $t \mapsto \mathbf{p} + t\mathbf{v}$ doğrusunun özel bir yanı yoktur: $\mathbf{p}$'den $\mathbf{v}$ hızıyla geçen her eğri, $W$'yi ona kısıtlayıp $t = 0$'da türetince aynı $\nabla_{\mathbf{v}} W$ vektörünü verir. Türev yalnızca başlangıç noktasına ve başlangıç hızına bağlıdır; eğrinin sonradan nereye kıvrıldığı önemsizdir. Örneğin $W = -yU_1 + xU_2$ için $\mathbf{p} = (1, 0, 0)$'daki $\mathbf{v} = (0, 1, 0)$ vektörüne göre türevi @exm-kovaryant-duzlemde-donme'de doğru boyunca $(-1, 0, 0)_{\mathbf{p}}$ bulmuştuk; $\alpha(t) = (\cos t, \sin t, 0)$ çemberi de $\alpha(0) = \mathbf{p}$, $\alpha'(0) = (0, 1, 0)$ koşullarını sağlar ve @exr-kovaryant-kisitlanis-a'daki hesapla $W_\alpha'(0) = \alpha''(0) = (-1, 0, 0)_{\mathbf{p}}$ verir.
+
+Bu sonucun bir yorumu, eğri üzerindeki vektör alanlarının türevine yeni bir gözle bakmamızı sağlar. Bir $\alpha$ eğrisi üzerinde bir $Y$ vektör alanı alalım. $Y$, bütün $\mathbb{R}^3$ üzerinde tanımlı bir $W$ alanının kısıtlanışı ise, yani $Y = W_\alpha$ ise, @exr-kovaryant-kisitlanis-a gereği her $t$ için
+
+$$Y'(t) = W_\alpha'(t) = \nabla_{\alpha'(t)} W.$$
+
+Bu anlamda eğri üzerindeki türev $Y'$, hemen hemen "$\alpha'$'ya göre kovaryant türev" $\nabla_{\alpha'} Y$'dir. "Hemen hemen" kaydının nedeni şudur: $Y$ yalnızca eğrinin noktalarında tanımlıdır, oysa $\nabla_{\alpha'(t)} Y$ yazmak için $Y$'nin $\alpha(t)$ çevresindeki bir bölgede tanımlı olması gerekir. Böyle bir genişletme her zaman var olmayabilir; örneğin eğri aynı noktadan iki kez geçiyor ve $Y$ orada iki farklı değer alıyorsa hiçbir $W$ işe yaramaz. Var olduğunda da tek türlü değildir; ama eşitlik hangi genişletmenin seçildiğine bağlı değildir, çünkü sol taraf yalnızca eğri üzerindeki değerleri kullanır. Örneğin $\alpha(t) = (\cos t, \sin t, 0)$ üzerindeki $Y = \alpha'$ hız alanı hem $W = -yU_1 + xU_2$ hem de $W^* = -yU_1 + xU_2 + z^2 U_3$ alanının kısıtlanışıdır; ikisi de $Y' = \alpha''$ verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-paralel-alan name="Her Yönde Türevi Sıfır Olan Alan"}
+$W$, $\mathbb{R}^3$ üzerinde her $V$ vektör alanı için $\nabla_V W = \mathbf{0}$ koşulunu sağlayan bir vektör alanı olsun. $W$'nin koordinat fonksiyonlarının sabit olduğunu, yani $W = a_1 U_1 + a_2 U_2 + a_3 U_3$ biçiminde sabit $a_i$ sayılarıyla yazılabildiğini gösteriniz.
+
+::: {.cozum}
+$W = \sum_i w_i U_i$ olsun. Koşulu $V = U_j$ ile kullanalım. @exm-kovaryant-dogal-cati-turevi'nde gördüğümüz gibi
+
+$$\nabla_{U_j} W = \sum_{i=1}^{3} \dfrac{\partial w_i}{\partial x_j}\, U_i,$$
+
+ve bu alan sıfır olduğundan her $i$ ve her $j$ için $\partial w_i/\partial x_j = 0$'dır: $w_i$'nin bütün kısmi türevleri bütün $\mathbb{R}^3$'te sıfırdır.
+
+Bütün kısmi türevleri sıfır olan bir $g$ fonksiyonunun sabit olduğunu gösterelim. $\mathbf{p}$ ve $\mathbf{q}$ iki nokta olsun; $\mathbf{u} = \mathbf{q} - \mathbf{p}$ diyelim ve $h(t) = g(\mathbf{p} + t\mathbf{u})$ tek değişkenli fonksiyonunu kuralım. $\alpha(t) = \mathbf{p} + t\mathbf{u}$ doğrusu için $h = g(\alpha)$'dır ve @lem-egri-egri-boyunca-turev ile $h'(t) = \alpha'(t)[g]$; $\alpha'(t)$, $\alpha(t)$ noktasındaki $\mathbf{u}$ vektörü olduğundan @lem-yonlu-kismi-turev-formulu
+
+$$h'(t) = \sum_{j=1}^{3} u_j\,\dfrac{\partial g}{\partial x_j}(\alpha(t)) = 0$$
+
+verir. Türevi her yerde sıfır olan tek değişkenli bir fonksiyon, ortalama değer teoremi gereği sabittir: $0$ ile $1$ arasında bir $c$ için $h(1) - h(0) = h'(c) = 0$. Yani $g(\mathbf{q}) = h(1) = h(0) = g(\mathbf{p})$. $\mathbf{p}$, $\mathbf{q}$ keyfi olduğundan $g$ sabittir.
+
+Bunu $g = w_i$ için uygularsak her $w_i$ bir $a_i$ sabitine eşittir ve $W = \sum_i a_i U_i$ olur. @exm-kovaryant-sabit-alan ile birlikte şu denklik elde edilir: bir vektör alanının her yöndeki kovaryant türevi sıfırdır ancak ve ancak koordinat fonksiyonları sabitse, yani alan her noktada aynı oku taşıyorsa. Eğriler üzerinde paralel vektör alanları için gördüğümüz $Y' = 0$ denkliğinin (@lem-yay-sifir-turevler) bütün uzaydaki karşılığı budur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-donme-alani name="Dönme Alanının Kendine Göre Türevi"}
+$W = -yU_1 + xU_2$ dönme alanı için $\nabla_W W$ alanını hesaplayınız.
+
+::: {.cozum}
+$W[f] = -y\,\partial f/\partial x + x\,\partial f/\partial y$'dir. $W$'nin koordinat fonksiyonları $-y, x, 0$ için
+
+$$\begin{aligned}
+W[-y] &= -y\cdot 0 + x\cdot(-1) = -x,\\
+W[x] &= -y\cdot 1 + x\cdot 0 = -y,\\
+W[0] &= 0.
+\end{aligned}$$
+
+Dolayısıyla
+
+$$\nabla_W W = -x\, U_1 - y\, U_2.$$
+
+Sonucu yorumlayalım. $(x, y, z)$ noktasındaki $\nabla_W W$ oku, vektör kısmı $(-x, -y, 0)$ olan, yani $z$ eksenine doğru bakan oktur; uzunluğu noktanın $z$ eksenine uzaklığı $\sqrt{x^2 + y^2}$'dir. Bunu @exr-kovaryant-kisitlanis-a ile bağlayalım: $\alpha(t) = (r\cos t, r\sin t, 0)$ çemberi ($r > 0$) üzerinde $W_\alpha(t)$, vektör kısmı $(-r\sin t, r\cos t, 0)$ olan vektördür, yani $W_\alpha = \alpha'$. O hâlde $\nabla_{\alpha'(t)} W = W_\alpha'(t) = \alpha''(t)$ ve $\alpha''(t)$'nin vektör kısmı $(-r\cos t, -r\sin t, 0)$, tam olarak $\alpha(t)$ noktasındaki $(-x, -y, 0)$'dır. Yani $\nabla_W W$, $W$'nin akışına kapılıp $z$ ekseni çevresinde birim açısal hızla dönen bir noktanın ivmesidir: merkeze doğru, büyüklüğü yarıçap kadar. Bu, dairesel hareketin merkezcil ivmesinden başka bir şey değildir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="17.0 -0.5 366.0 388.5" role="img" aria-label="Birim cember uzerinde t = 0, pi/2, pi, 3pi/2 noktalari (1, 0), (0, 1), (-1, 0), (0, -1); her birinde W = -y U1 + x U2 alaninin cembere teget mavi oku, vektor kisimlari (0, 1), (-1, 0), (0, -1), (1, 0), ve merkeze bakan turuncu nabla_W W oku, vektor kisimlari (-1, 0), (0, -1), (1, 0), (0, 1), hepsi orijinde biter; cember disinda (1.4, 0), (0, 1.4), (-1.4, 0), (0, -1.4) noktalarinda W'nin kisaltilmis acik gri oklari; saat yonunun tersine donusu gosteren kucuk yay oku">
+  <circle cx="200.0" cy="205.0" r="103.1" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.4"/>
+  <line x1="344.4" y1="205.0" x2="344.4" y2="159.7" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.4" stroke-linecap="round"/>
+  <polygon points="344.4,154.5 347.1,161.0 341.6,161.0" fill="var(--academic-text)" opacity="0.4"/>
+  <circle cx="344.4" cy="205.0" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.4"/>
+  <line x1="200.0" y1="60.6" x2="154.7" y2="60.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.4" stroke-linecap="round"/>
+  <polygon points="149.5,60.6 156.0,57.9 156.0,63.4" fill="var(--academic-text)" opacity="0.4"/>
+  <circle cx="200.0" cy="60.6" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.4"/>
+  <line x1="55.6" y1="205.0" x2="55.6" y2="250.3" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.4" stroke-linecap="round"/>
+  <polygon points="55.6,255.5 52.9,249.0 58.4,249.0" fill="var(--academic-text)" opacity="0.4"/>
+  <circle cx="55.6" cy="205.0" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.4"/>
+  <line x1="200.0" y1="349.4" x2="245.3" y2="349.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.4" stroke-linecap="round"/>
+  <polygon points="250.5,349.4 244.0,352.1 244.0,346.6" fill="var(--academic-text)" opacity="0.4"/>
+  <circle cx="200.0" cy="349.4" r="2.0" fill="var(--academic-text)" stroke="var(--academic-text)" stroke-width="0" opacity="0.4"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="31.0" y1="205.0" x2="369.0" y2="205.0"/>
+  <line x1="200.0" y1="374.0" x2="200.0" y2="36.0"/>
+  <polygon points="369.0,205.0 361.0,201.5 361.0,208.5" stroke="none"/>
+  <polygon points="200.0,36.0 196.5,44.0 203.5,44.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="367.0" y="220.0" text-anchor="end">x</text>
+  <text x="207.0" y="45.0">y</text>
+  </g>
+  <path d="M291.1,156.6 L290.3,155.2 L289.6,153.9 L288.8,152.6 L288.0,151.3 L287.2,150.0 L286.4,148.7 L285.5,147.4 L284.7,146.1 L283.8,144.9 L282.9,143.7 L282.0,142.4 L281.0,141.2 L280.1,140.0 L279.1,138.9 L278.1,137.7 L277.1,136.5 L276.1,135.4 L275.1,134.3 L274.0,133.2 L272.9,132.1 L271.8,131.0 L270.7,129.9 L269.6,128.9 L268.5,127.9 L267.3,126.9 L266.1,125.9 L265.0,124.9 L263.8,124.0 L262.6,123.0 L261.3,122.1 L260.1,121.2 L258.9,120.3 L257.6,119.5 L256.3,118.6 L255.0,117.8 L253.7,117.0 L252.4,116.2 L251.1,115.4" fill="none" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.85" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="252.4" y1="116.2" x2="253.3" y2="116.7" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="248.4,113.9 256.0,114.8 253.1,119.9" fill="var(--academic-text)" opacity="0.85"/>
+  <line x1="303.1" y1="205.0" x2="303.1" y2="108.3" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="303.1,101.9 306.5,109.9 299.8,109.9" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="200.0" y1="101.9" x2="103.3" y2="101.9" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="96.9,101.9 104.9,98.5 104.9,105.2" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="96.9" y1="205.0" x2="96.9" y2="301.7" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="96.9,308.1 93.5,300.1 100.2,300.1" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="200.0" y1="308.1" x2="296.7" y2="308.1" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="303.1,308.1 295.1,311.5 295.1,304.8" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="303.1" y1="205.0" x2="206.4" y2="205.0" stroke="var(--color-practice)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="200.0,205.0 208.0,201.6 208.0,208.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="200.0" y1="101.9" x2="200.0" y2="198.6" stroke="var(--color-practice)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="200.0,205.0 196.6,197.0 203.4,197.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="96.9" y1="205.0" x2="193.6" y2="205.0" stroke="var(--color-practice)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="200.0,205.0 192.0,208.4 192.0,201.6" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="200.0" y1="308.1" x2="200.0" y2="211.4" stroke="var(--color-practice)" stroke-width="2.1" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="200.0,205.0 203.4,213.0 196.6,213.0" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="303.1" cy="205.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="200.0" cy="101.9" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="96.9" cy="205.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="200.0" cy="308.1" r="3.2" fill="var(--academic-text)"/>
+  <text x="310.1" y="219.0" fill="var(--academic-text)" font-size="11" text-anchor="start">(1, 0)</text>
+  <text x="310.1" y="232.0" fill="var(--academic-text)" font-size="10.5" text-anchor="start" opacity="0.8"><tspan font-style="italic">t</tspan> = 0</text>
+  <text x="208.0" y="95.9" fill="var(--academic-text)" font-size="11" text-anchor="start">(0, 1)</text>
+  <text x="208.0" y="82.9" fill="var(--academic-text)" font-size="10.5" text-anchor="start" opacity="0.8"><tspan font-style="italic">t</tspan> = &#960;/2</text>
+  <text x="89.9" y="199.0" fill="var(--academic-text)" font-size="11" text-anchor="end">(&#8722;1, 0)</text>
+  <text x="89.9" y="186.0" fill="var(--academic-text)" font-size="10.5" text-anchor="end" opacity="0.8"><tspan font-style="italic">t</tspan> = &#960;</text>
+  <text x="192.0" y="322.1" fill="var(--academic-text)" font-size="11" text-anchor="end">(0, &#8722;1)</text>
+  <text x="192.0" y="335.1" fill="var(--academic-text)" font-size="10.5" text-anchor="end" opacity="0.8"><tspan font-style="italic">t</tspan> = 3&#960;/2</text>
+  <text x="311.1" y="157.4" fill="var(--color-theory)" font-size="12.5" text-anchor="start"><tspan font-style="italic">W</tspan></text>
+  <polygon points="236.6,188.0 244.6,188.0 240.6,196.0" fill="none" stroke="var(--color-practice)" stroke-width="1.0" stroke-linejoin="round"/>
+  <text x="246.6" y="196.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start"><tspan font-size="9" dy="4"><tspan font-style="italic">W</tspan></tspan><tspan dy="-4">&#8203;</tspan> <tspan font-style="italic">W</tspan></text>
+  <text x="184.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end"><tspan font-style="italic">W</tspan> = &#8722;<tspan font-style="italic">y</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + <tspan font-style="italic">x</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan>,</text>
+  <polygon points="192.0,14.0 200.0,14.0 196.0,22.0" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-linejoin="round"/>
+  <text x="202.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-size="9" dy="4"><tspan font-style="italic">W</tspan></tspan><tspan dy="-4">&#8203;</tspan> <tspan font-style="italic">W</tspan> = &#8722;<tspan font-style="italic">x</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> &#8722; <tspan font-style="italic">y</tspan><tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+</svg>
+<figcaption>Birim çember (gri) üzerinde <em>t</em> = 0, &#960;/2, &#960;, 3&#960;/2 noktalarında <em>W</em> = &#8722;<em>y</em><em>U</em><sub>1</sub> + <em>x</em><em>U</em><sub>2</sub> dönme alanının okları (mavi) ve &#8711;<sub><em>W</em></sub><em>W</em> = &#8722;<em>x</em><em>U</em><sub>1</sub> &#8722; <em>y</em><em>U</em><sub>2</sub> alanının okları (turuncu). Mavi oklar çembere teğettir: saat yönünün tersine dönen noktanın hızıdır. Turuncu oklar merkeze bakar, uzunlukları yarıçap kadardır ve tam orijinde biter: bu, birim açısal hızla dönen noktanın merkezcil ivmesidir. Çember dışındaki açık gri oklar <em>W</em>&#8217;nin oradaki yönünü gösterir; yer kazanmak için kısaltılmıştır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kovaryant-vektorel-carpim name="Vektörel Çarpım için Leibniz Kuralı"}
+$Y$ ve $Z$ vektör alanları, $\mathbf{v}$ de $\mathbf{p}$ noktasında bir teğet vektör olsun. $Y \times Z$ alanı noktasal olarak $(Y \times Z)(\mathbf{q}) = Y(\mathbf{q}) \times Z(\mathbf{q})$ ile tanımlanır (@def-iccarpim-vektorel-carpim). Şunu gösteriniz:
+
+$$\nabla_{\mathbf{v}}(Y \times Z) = \nabla_{\mathbf{v}} Y \times Z(\mathbf{p}) + Y(\mathbf{p}) \times \nabla_{\mathbf{v}} Z.$$
+
+::: {.cozum}
+$Y = \sum_i y_i U_i$, $Z = \sum_i z_i U_i$ yazalım. Vektörel çarpımın koordinatları, $(i, j, k)$ üçlüsü $(1, 2, 3)$, $(2, 3, 1)$ ve $(3, 1, 2)$ sıralamalarından biri olmak üzere
+
+$$(Y \times Z)_i = y_j z_k - y_k z_j$$
+
+biçimindedir; bu tek formül üç koordinatın hepsini kapsar (birinci koordinat $y_2 z_3 - y_3 z_2$, ikincisi $y_3 z_1 - y_1 z_3$, üçüncüsü $y_1 z_2 - y_2 z_1$). Bunlar diferansiyellenebilir fonksiyonlar olduğundan $Y \times Z$ bir vektör alanıdır ve @lem-kovaryant-koordinat-formulu uygulanabilir: $\nabla_{\mathbf{v}}(Y \times Z)$'nin $i$-inci koordinatı $\mathbf{v}[y_j z_k - y_k z_j]$'dir.
+
+Yönlü türevin lineerliği ve Leibniz kuralı (@thm-yonlu-turev-ozellikleri, (2) ve (3)) ile, bütün fonksiyonlar $\mathbf{p}$'de değerlendirilmek üzere,
+
+$$\begin{aligned}
+\mathbf{v}[y_j z_k - y_k z_j] &= \mathbf{v}[y_j]\, z_k + y_j\, \mathbf{v}[z_k] - \mathbf{v}[y_k]\, z_j - y_k\, \mathbf{v}[z_j]\\
+&= \bigl(\mathbf{v}[y_j]\, z_k - \mathbf{v}[y_k]\, z_j\bigr) + \bigl(y_j\, \mathbf{v}[z_k] - y_k\, \mathbf{v}[z_j]\bigr).
+\end{aligned}$$
+
+İlk parantez, koordinatları $\mathbf{v}[y_1], \mathbf{v}[y_2], \mathbf{v}[y_3]$ olan $\nabla_{\mathbf{v}} Y$ vektörüyle koordinatları $z_1(\mathbf{p}), z_2(\mathbf{p}), z_3(\mathbf{p})$ olan $Z(\mathbf{p})$ vektörünün vektörel çarpımının $i$-inci koordinatıdır. İkinci parantez de aynı biçimde $Y(\mathbf{p}) \times \nabla_{\mathbf{v}} Z$'nin $i$-inci koordinatıdır. Bu, $(i, j, k)$'nin üç sıralamasının her biri için geçerli olduğundan üç koordinat da uyuşur ve
+
+$$\nabla_{\mathbf{v}}(Y \times Z) = \nabla_{\mathbf{v}} Y \times Z(\mathbf{p}) + Y(\mathbf{p}) \times \nabla_{\mathbf{v}} Z$$
+
+elde edilir. Terimlerin sırasına dikkat: vektörel çarpım ters değişmeli olduğundan $Z(\mathbf{p}) \times \nabla_{\mathbf{v}} Y$ yazmak işareti bozar; iç çarpım kuralında böyle bir özen gerekmiyordu.
+
+Noktasal ilkeyle vektör alanı sürümü de hemen çıkar: her $V$ için $\nabla_V(Y \times Z) = \nabla_V Y \times Z + Y \times \nabla_V Z$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde bir vektör alanının bir teğet vektöre ve bir vektör alanına göre türevini tanımlayıp hesap kurallarını kurduk; bir sonraki bölümde ([Çatı Alanları](cati-alanlari.qmd)) doğal çatının yerine probleme uyan hareketli çatılar koyacak ve kovaryant türevi bu çatıların uzayda nasıl döndüğünü ölçmek için kullanacağız.

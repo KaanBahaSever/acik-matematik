@@ -364,6 +364,845 @@ OUT["birebir-orten-dort-grafik"] = figure(
     aria="Dort panel: x^3, e^x, x^3+x^2 ve sin x grafikleri, kesikli yatay test dogrulari ve kesisim noktalari",
 )
 
+# ============================================================ cati-donme-alani
+# -*- coding: utf-8 -*-
+# cati-donme-alani: the rotation field V = -y U1 + x U2 seen from above on the circle r = 5, at the
+# three points of the box's table: (3, 4), (-4, 3), (0, -5). At each point the cylindrical frame is
+# drawn at TRUE length: E1 (orange) along the radius, E2 (green) tangent, and V (blue) lying on top
+# of E2 but five times as long, which is the statement V = r E2 with r = 5.
+# So the factor can be counted rather than believed, the blue shaft carries background-coloured cuts
+# at t = 2, 3, 4; with the green arrowhead marking t = 1 the shaft reads as five equal units.
+# The draft asks for a red E1; this palette has no red, so E1 takes PRACTICE (orange), the book's
+# colour for arrows, while E2 keeps BASE (green) and V THEORY (blue) exactly as the draft asks.
+# The y axis passes through (0, -5) and E1 there points straight down along it, so the E1 shafts are
+# drawn over a background halo that lifts them off the axis line.
+import math
+
+XR, YR = (-9.2, 6.6), (-7.2, 8.3)
+p = cplane(20, 30, 370, XR, YR)
+PPU = 370.0 / (XR[1] - XR[0])          # pixels per data unit (equal on both axes)
+R = 5.0
+DBAR = "&#8214;"                        # double bar for the norm
+
+A = dict(q=(3.0, 4.0), V=(-4.0, 3.0), E1=(0.6, 0.8), E2=(-0.8, 0.6))
+B = dict(q=(-4.0, 3.0), V=(-3.0, -4.0), E1=(-0.8, 0.6), E2=(-0.6, -0.8))
+C = dict(q=(0.0, -5.0), V=(5.0, 0.0), E1=(0.0, -1.0), E2=(1.0, 0.0))
+
+# --- the numbers of the box, checked instead of trusted -----------------------------------------
+for d in (A, B, C):
+    x, y = d["q"]
+    assert math.isclose(math.hypot(x, y), R)                       # the point sits on r = 5
+    assert d["E1"] == (x / R, y / R)                               # E1 is radial and a unit vector
+    assert d["E2"] == (-y / R, x / R)                              # E2 is tangent and a unit vector
+    assert math.isclose(d["E1"][0] * d["E2"][0] + d["E1"][1] * d["E2"][1], 0.0, abs_tol=1e-12)
+    assert d["V"] == (-y, x)                                       # V = -y U1 + x U2
+    assert d["V"] == (R * d["E2"][0], R * d["E2"][1])              # V = r E2, the point of the box
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+def col(s, c):
+    return f'<tspan fill="{c}">{s}</tspan>'
+
+
+IT_V = ital("V")
+IT_E1 = ital("E") + subs("1")
+IT_E2 = ital("E") + subs("2")
+
+
+def tip(q, v, t=1.0):
+    return (q[0] + t * v[0], q[1] + t * v[1])
+
+
+def px_dir(v):
+    """Unit pixel direction of the data vector v (the panel's y axis points up)."""
+    dx, dy = v[0] * PPU, -v[1] * PPU
+    n = math.hypot(dx, dy) or 1.0
+    return dx / n, dy / n
+
+
+def unit_marks(d, ts=(2.0, 3.0, 4.0)):
+    """Ruler marks along the V shaft at whole multiples of E2: a hairline notch in the shaft and a
+    short grey tick beside it, on the E1 side. A wider notch would turn V into a dashed arrow, and
+    a dashed arrow means 'auxiliary line' everywhere else in this book. The mark at t = 1 is the
+    green arrowhead itself; a grey tick there would sit on the dashed radius and read as part of
+    it."""
+    q, u, s = d["q"], d["E2"], d["E1"]
+    ux, uy = px_dir(u)
+    nx, ny = -uy, ux
+    sx, sy = px_dir(s)
+    for t in ts:
+        cx, cy = p.X(q[0] + u[0] * t), p.Y(q[1] + u[1] * t)
+        if t > 1.0:                      # at t = 1 the green arrowhead is the mark
+            p.add(f'<line x1="{cx - nx * 3.4:.1f}" y1="{cy - ny * 3.4:.1f}" '
+                  f'x2="{cx + nx * 3.4:.1f}" y2="{cy + ny * 3.4:.1f}" stroke="{BG}" '
+                  f'stroke-width="1.4" stroke-linecap="butt"/>')
+        p.add(f'<line x1="{cx + sx * 3.4:.1f}" y1="{cy + sy * 3.4:.1f}" '
+              f'x2="{cx + sx * 8.6:.1f}" y2="{cy + sy * 8.6:.1f}" stroke="{TEXT}" '
+              f'stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>')
+
+
+def haloed_arrow(q, v, color, width=2.4, head=7.0, halo=4.6):
+    """Arrow drawn over a background halo, so the axis line beneath it does not show through."""
+    x0, y0, x1, y1 = p.X(q[0]), p.Y(q[1]), p.X(q[0] + v[0]), p.Y(q[1] + v[1])
+    p.add(f'<line x1="{x0:.1f}" y1="{y0:.1f}" x2="{x1:.1f}" y2="{y1:.1f}" stroke="{BG}" '
+          f'stroke-width="{halo:.1f}" stroke-linecap="round"/>')
+    p.arrow(q, (q[0] + v[0], q[1] + v[1]), color, width, head)
+
+
+def tick(x, y, horizontal=True, s=3.5):
+    if horizontal:
+        p.add(f'<line x1="{p.X(x):.1f}" y1="{p.Y(y) - s:.1f}" x2="{p.X(x):.1f}" '
+              f'y2="{p.Y(y) + s:.1f}" stroke="{TEXT}" stroke-width="1" opacity="0.65"/>')
+    else:
+        p.add(f'<line x1="{p.X(x) - s:.1f}" y1="{p.Y(y):.1f}" x2="{p.X(x) + s:.1f}" '
+              f'y2="{p.Y(y):.1f}" stroke="{TEXT}" stroke-width="1" opacity="0.65"/>')
+
+
+# --- 1. the circle r = 5, the radii that carry E1, the axes --------------------------------------
+p.circle(0, 0, R, TEXT, 1.2, None, "none", 0.45)
+guide(p, [(0.0, 0.0), A["q"]], TEXT, 0.34)
+guide(p, [(0.0, 0.0), B["q"]], TEXT, 0.34)     # the radius to (0, -5) is the y axis itself
+p.origin_axes("x", "y")
+tick(5, 0); tick(-5, 0); tick(0, 5, False)
+
+# --- 2. V (blue, true length 5), its unit cuts, E2 (green) on its first unit, E1 (orange) --------
+for d in (A, B, C):
+    p.arrow(d["q"], tip(d["q"], d["V"]), THEORY, 2.6, head=10)
+for d in (A, B, C):
+    unit_marks(d)
+for d in (A, B, C):
+    haloed_arrow(d["q"], d["E2"], BASE, 2.6, 8.0, 5.0)   # the halo sets E2 off from the blue shaft
+for d in (A, B, C):
+    haloed_arrow(d["q"], d["E1"], PRACTICE, 2.4, 7.0)
+for d in (A, B, C):
+    dot(p, d["q"], TEXT, 3.4)
+dot(p, (0.0, 0.0), TEXT, 2.4)
+
+# --- 3. labels -----------------------------------------------------------------------------------
+# tick numbers, kept off the circle they sit on
+p.label(5, 0, "5", 5, 15, TEXT, 10.5, "start")
+p.label(-5, 0, MINUS_S + "5", -5, 15, TEXT, 10.5, "end")
+p.label(0, 5, "5", -7, -5, TEXT, 10.5, "end")
+p.label(1.5, 2.0, ital("r") + " = 5", 11, 8, TEXT, 11, "start")
+
+# (3, 4): coordinates to the right, E1 past its tip, E2 under the green head,
+# the two-line block above-left of the blue tip
+p.label(*A["q"], "(3, 4)", 13, 4, TEXT, 11, "start")
+p.label(*tip(A["q"], A["E1"]), IT_E1, 5, -5, PRACTICE, 11.5, "start")
+p.label(*tip(A["q"], A["E2"], 0.5), IT_E2, -8, 11, BASE, 11.5, "end")
+p.label(*tip(A["q"], A["V"]), IT_V + " = (" + MINUS_S + "4, 3)", -10, -10, THEORY, 11.5, "end")
+p.label(*tip(A["q"], A["V"]), IT_E2 + " = (" + MINUS_S + "4/5, 3/5)", -10, 7, BASE, 11.5, "end")
+
+# (-4, 3)
+p.label(*B["q"], "(" + MINUS_S + "4, 3)", 11, -6, TEXT, 11, "start")
+p.label(*tip(B["q"], B["E1"]), IT_E1, -6, -5, PRACTICE, 11.5, "end")
+p.label(*tip(B["q"], B["E2"], 0.8), IT_E2, 9, 10, BASE, 11.5, "start")
+p.label(*tip(B["q"], B["V"]), IT_V + " = (" + MINUS_S + "3, " + MINUS_S + "4)", 0, 16,
+        THEORY, 11.5, "middle")
+p.label(*tip(B["q"], B["V"]), IT_E2 + " = (" + MINUS_S + "3/5, " + MINUS_S + "4/5)", 0, 32,
+        BASE, 11.5, "middle")
+
+# (0, -5): everything goes below the horizontal arrow, where the page is empty
+p.label(*C["q"], "(0, " + MINUS_S + "5)", -9, 15, TEXT, 11, "end")
+p.label(*tip(C["q"], C["E1"]), IT_E1, 7, 0, PRACTICE, 11.5, "start")
+p.label(*tip(C["q"], C["E2"], 0.5), IT_E2, 0, -9, BASE, 11.5, "middle")
+p.label(*tip(C["q"], C["V"]), IT_V + " = (5, 0)", 26, 20, THEORY, 11.5, "end")
+p.label(*tip(C["q"], C["V"]), IT_E2 + " = (1, 0)", 26, 36, BASE, 11.5, "end")
+
+# the two statements of the box, in the corners the drawing leaves empty
+p.label(1.35, 7.55,
+        col(IT_V, THEORY) + " = " + MINUS_S + ital("y") + " " + ital("U") + subs("1") + " + "
+        + ital("x") + " " + ital("U") + subs("2"), 0, 0, TEXT, 12, "start")
+p.label(1.35, 6.85,
+        col(IT_V, THEORY) + " = " + ital("r") + " " + col(IT_E2, BASE), 0, 0, TEXT, 12, "start")
+p.label(-9.0, -4.6, DBAR + IT_V + DBAR + " = " + ital("r") + " = 5", 0, 0, TEXT, 11.5, "start")
+
+OUT["cati-donme-alani"] = figure(
+    400, 400, [p],
+    "<em>z</em> = 0 düzlemine, yani <em>xy</em> düzlemine üstten bakıyoruz: <em>r</em> = 5 çemberi "
+    "üzerindeki üç noktada <em>V</em> = &#8722;<em>y</em> <em>U</em><sub>1</sub> + <em>x</em> "
+    "<em>U</em><sub>2</sub> dönme alanının oku (mavi) ile silindirik çatının birim vektörleri "
+    "<em>E</em><sub>1</sub> (turuncu, yarıçap yönünde) ve <em>E</em><sub>2</sub> (yeşil, çembere "
+    "teğet) gerçek uzunluklarıyla çizilmiştir. Mavi ok her noktada yeşil okla aynı doğrultudadır "
+    "ve tam beş katı uzundur; yanındaki gri çentikler, yeşil okun ucuyla birlikte, onu beş eşit "
+    "birime böler. Görülen şey <em>V</em> = <em>r</em> <em>E</em><sub>2</sub> eşitliğidir: alanın "
+    "<em>E</em><sub>1</sub> yönünde hiç bileşeni yoktur ve boyu yalnızca <em>z</em> eksenine "
+    "uzaklığa, yani <em>r</em> = 5&#8217;e eşittir.",
+    aria="xy duzlemine ustten gorunus: r = 5 cemberi ve uzerindeki (3, 4), (-4, 3), (0, -5) "
+         "noktalari. Her noktada turuncu birim E1 oku yaricap boyunca disa, yesil birim E2 oku "
+         "cembere teget, mavi V oku ise E2 ile ayni yonde ama tam bes kat uzundur; V sirasiyla "
+         "(-4, 3), (-3, -4) ve (5, 0), E2 ise (-4/5, 3/5), (-3/5, -4/5) ve (1, 0) vektorleridir. "
+         "Mavi ok, yanindaki gri centiklerle bes esit birime bolunmustur: V = r E2 ve r = 5.")
+
+# ============================================================ cati-gram-schmidt
+# -*- coding: utf-8 -*-
+# cati-gram-schmidt: the worked case of the exercise, drawn at p = origin. V = 2U1 + 2U2 + U3 and
+# W = U1 (grey) are the data; E1 = V/||V|| (orange, unit), the projection (W . E1)E1 = (4/9, 4/9,
+# 2/9) sits on the E1 shaft as a faint dashed sleeve, the rest W~ = (5/9, -4/9, -2/9) is drawn as
+# the dashed green arrow from the foot of the perpendicular to the tip of W — the same vector as
+# E2 up to length, so the green unit arrow E2 at p is visibly parallel to it. E3 = E1 x E2 (blue).
+# The draft asks for a red E1; this palette has no red, so the frame keeps the book's colours
+# (cati-kuresel-cati, cati-donme-alani): E1 -> PRACTICE, E2 -> BASE, E3 -> THEORY, and W~, being
+# E2 before normalisation, takes E2's green instead of the draft's orange, which E1 already holds.
+# Camera: E1 = (2, 2, 1)/3 points almost exactly along the API's default view direction (dot 0.985),
+# so V would be seen end on. A scan over azimuth and elevation, maximising the smallest page angle
+# between E1, W, E2, E3 while keeping the three unit arrows near the same apparent length, picked
+# azimuth 196, elevation 30: there the frame opens into a 120-degree fan (E1 up-left, E2 right,
+# E3 down-left), the three unit arrows project to 0.84, 0.78, 0.83 of their true length, and no two
+# bold arrows come closer than 58 degrees on the page. The viewer therefore sits over the (-x, -y)
+# quadrant: x runs up-right, y to the left, z up, all three axes labelled.
+import math
+
+AZ, EL = 196.0, 30.0
+AXX, AXY, AXZ, AXZ0 = 1.95, 1.2, 1.3, -0.95
+
+O = (0.0, 0.0, 0.0)
+V = (2.0, 2.0, 1.0)                 # vector part of V = 2U1 + 2U2 + U3
+Wv = (1.0, 0.0, 0.0)                # vector part of W = U1
+E1 = vscale(1.0 / vnorm(V), V)      # (2, 2, 1)/3
+c1 = vdot(Wv, E1)                   # W . E1 = 2/3
+PRJ = vscale(c1, E1)                # (4/9, 4/9, 2/9)
+WT = vsub(Wv, PRJ)                  # (5/9, -4/9, -2/9)
+nWT = vnorm(WT)                     # sqrt(5)/3
+E2 = vscale(1.0 / nWT, WT)          # (5, -4, -2)/(3 sqrt 5)
+E3 = vcross(E1, E2)                 # (0, 1, -2)/sqrt 5
+
+# --- the numbers of the box, checked instead of trusted ------------------------------------------
+TOL = 1e-12
+assert math.isclose(vnorm(V), 3.0, abs_tol=TOL)
+assert all(math.isclose(a, b, abs_tol=TOL) for a, b in zip(E1, (2 / 3, 2 / 3, 1 / 3)))
+assert math.isclose(c1, 2 / 3, abs_tol=TOL)
+assert all(math.isclose(a, b, abs_tol=TOL) for a, b in zip(PRJ, (4 / 9, 4 / 9, 2 / 9)))
+assert all(math.isclose(a, b, abs_tol=TOL) for a, b in zip(WT, (5 / 9, -4 / 9, -2 / 9)))
+assert math.isclose(nWT, math.sqrt(5) / 3, abs_tol=TOL)
+assert all(math.isclose(a, b, abs_tol=TOL)
+           for a, b in zip(E2, vscale(1 / (3 * math.sqrt(5)), (5.0, -4.0, -2.0))))
+assert all(math.isclose(a, b, abs_tol=TOL)
+           for a, b in zip(E3, vscale(1 / math.sqrt(5), (0.0, 1.0, -2.0))))
+assert all(math.isclose(a, b, abs_tol=TOL)             # E3 from the cross product of the box
+           for a, b in zip(vcross(V, (5.0, -4.0, -2.0)), (0.0, 9.0, -18.0)))
+for a, b in ((E1, E2), (E1, E3), (E2, E3)):
+    assert math.isclose(vdot(a, b), 0.0, abs_tol=1e-12)
+for e in (E1, E2, E3):
+    assert math.isclose(vnorm(e), 1.0, abs_tol=1e-12)
+assert math.isclose(vdot(WT, E1), 0.0, abs_tol=1e-12)  # the right angle drawn at the foot
+
+P = space_panel(16, 14, 400, (-2.42, 1.95), (-1.52, 2.45))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+PPU = P.w / (P.xmax - P.xmin)       # pixels per page unit (equal on both axes)
+
+SQ, DBAR = "&#8730;", "&#8214;"     # square root, double bar for the norm
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def EN(k):
+    return ital("E") + subs(str(k))
+
+
+IT_V, IT_W = ital("V"), ital("W")
+
+
+def wtilde(size=12.0):
+    """Italic W with a tilde over it. The combining accent U+0303 is not in the book's font — it
+    comes out as a dotted circle next to the letter — so the tilde is set as a raised tspan pulled
+    back over the W, and the advance it eats is handed back to whatever follows."""
+    ts = 0.92 * size
+    wW, wT = 0.76 * size, 0.50 * ts          # advances of the italic W and of the tilde
+    dx = -(wW + wT) / 2 + 0.09 * size        # the last term centres the ink, measured in the PNG
+    return (ital("W")
+            + f'<tspan dx="{dx:.2f}" dy="{-0.50 * size:.2f}" font-size="{ts:.1f}">~</tspan>'
+            + f'<tspan dx="{-wT - dx:.2f}" dy="{0.50 * size:.2f}">&#8203;</tspan>')
+
+
+def halo(px_, py_, s, color=TEXT, size=11.5, anchor="start"):
+    """Text at a pixel position with a page-coloured halo, so faint lines break under it."""
+    P.add(f'<text x="{px_:.1f}" y="{py_:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}" stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def at(X, Y, s, color=TEXT, size=11.5, anchor="start"):
+    """Halo text at a page (panel data) position."""
+    halo(P.X(X), P.Y(Y), s, color, size, anchor)
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start"):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def px_dir(Q):
+    """Unit page direction (in pixels, y down) of the space vector Q."""
+    X, Y = S.pt(Q)
+    dx, dy = X * PPU, -Y * PPU
+    n = math.hypot(dx, dy) or 1.0
+    return dx / n, dy / n
+
+
+def cut(t, half=4.6, width=3.0):
+    """Background-coloured cut across the V shaft at t units along E1: the unit marks of ||V|| = 3."""
+    X, Y = S.pt(vscale(t, E1))
+    ux, uy = px_dir(E1)
+    x, y = P.X(X), P.Y(Y)
+    P.add(f'<line x1="{x + uy * half:.1f}" y1="{y - ux * half:.1f}" '
+          f'x2="{x - uy * half:.1f}" y2="{y + ux * half:.1f}" stroke="{BG}" '
+          f'stroke-width="{width}" stroke-linecap="butt"/>')
+
+
+def right_angle(Q, a, b, s=0.18, color=TEXT, width=1.2):
+    """Right-angle mark at Q, a true square in the plane of a and b; drawn over a background
+    halo so the faint axis that runs through the E1-E3 wedge breaks behind it."""
+    pts = [vadd(Q, vscale(s, vunit(a))),
+           vadd(Q, vadd(vscale(s, vunit(a)), vscale(s, vunit(b)))),
+           vadd(Q, vscale(s, vunit(b)))]
+    S.line(pts, BG, width + 2.6)
+    S.line(pts, color, width, None, 0.95)
+
+
+# ---------------------------------------------------------------- 1. axes
+S.axes(AXX, AXY, AXZ, zmin=AXZ0, offsets=((11, -4), (-12, -1), (0, -10)))
+S.ticks("y", (1,), offset=(1, 14))
+S.ticks("z", (1,), offset=(-9, 4))
+
+# ---------------------------------------------------------------- 2. the data: V and W
+S.arrow(O, V, TEXT, 2.3, head=10, opacity=0.72)
+cut(2.0)                                       # E1's head marks 1, this cut 2, the tip 3
+S.arrow(O, Wv, TEXT, 2.6, head=9.0, opacity=0.72)
+
+# ---------------------------------------------------------------- 3. the projection and W~
+S.line([O, PRJ], PRACTICE, 7.0, "5 5", 0.50)   # (W . E1)E1 as a sleeve along the E1 shaft
+S.arrow(PRJ, Wv, BASE, 1.9, 8.0, "5 4", 0.95)  # W~ = W - (W . E1)E1, carried to the foot
+right_angle(PRJ, vscale(-1.0, E1), E2, 0.15, TEXT)
+
+# ---------------------------------------------------------------- 4. the frame
+right_angle(O, E1, E3, 0.18, PRACTICE)
+right_angle(O, E2, E3, 0.18, BASE)
+S.arrow(O, E1, PRACTICE, 2.6, head=9)
+S.arrow(O, E2, BASE, 2.6, head=9)
+S.arrow(O, E3, THEORY, 2.6, head=9)
+
+S.point(O, TEXT, 3.6)
+S.point(V, TEXT, 3.0)
+S.point(Wv, TEXT, 3.0)
+S.point(PRJ, PRACTICE, 3.2)
+
+# ---------------------------------------------------------------- 5. labels
+tag(O, bold("p"), 19, 20, TEXT, 12)
+tag(V, IT_V + " = (2, 2, 1)", 14, -6, TEXT, 12)
+tag(vscale(2.4, E1), DBAR + IT_V + DBAR + " = 3", 12, 4, TEXT, 11.5)
+tag(E1, EN(1) + " = (2, 2, 1)/3", -12, -5, PRACTICE, 12, "end")
+tag(PRJ, "(" + IT_W + " " + CDOT + " " + EN(1) + ")" + EN(1) + " = (4/9, 4/9, 2/9)",
+    -13, 11, PRACTICE, 11.5, "end")
+
+at(0.50, 0.62, IT_W + " = (1, 0, 0)", TEXT, 12)
+at(0.50, 0.36, wtilde(12) + " = (5/9, " + MINUS_S + "4/9, " + MINUS_S + "2/9)", BASE, 12)
+at(0.50, 0.16, DBAR + wtilde(11.5) + DBAR + " = " + SQ + "5/3", BASE, 11.5)
+at(0.45, -0.30, EN(2) + " = (5, " + MINUS_S + "4, " + MINUS_S + "2)/(3" + SQ + "5)", BASE, 12)
+
+tag(E3, EN(3) + " = " + EN(1) + " " + TIMES_S + " " + EN(2) + " = (0, 1, " + MINUS_S + "2)/"
+    + SQ + "5", -8, 15, THEORY, 12, "end")
+
+at(0.05, -1.10, EN(1) + " " + CDOT + " " + EN(2) + " = " + EN(1) + " " + CDOT + " " + EN(3)
+   + " = " + EN(2) + " " + CDOT + " " + EN(3) + " = 0", TEXT, 11, "middle")
+at(0.05, -1.33, DBAR + EN(1) + DBAR + " = " + DBAR + EN(2) + DBAR + " = " + DBAR + EN(3) + DBAR
+   + " = 1", TEXT, 11, "middle")
+
+OUT["cati-gram-schmidt"] = figure(
+    432, 424, [P],
+    "Uygulama noktası <strong>p</strong> orijinde alınmıştır; gri oklar orada verilen "
+    "<em>V</em> = 2<em>U</em><sub>1</sub> + 2<em>U</em><sub>2</sub> + <em>U</em><sub>3</sub> ile "
+    "<em>W</em> = <em>U</em><sub>1</sub> alanlarının vektör kısımlarıdır. Birinci adım "
+    "<em>E</em><sub>1</sub> = <em>V</em>/&#8214;<em>V</em>&#8214; (turuncu): aynı doğrultuda, "
+    "&#8214;<em>V</em>&#8214; = 3 olduğu için üçte bir uzunlukta; turuncu ok ucu ile gri okun "
+    "üzerindeki çentik, <em>V</em>&#8217;yi üç eşit birime böler. İkinci adımda "
+    "<em>W</em>&#8217;den <em>E</em><sub>1</sub> yönündeki bileşen (<em>W</em> &#183; "
+    "<em>E</em><sub>1</sub>)<em>E</em><sub>1</sub> = (4/9, 4/9, 2/9) &#8212; turuncu okun "
+    "üzerindeki soluk şerit &#8212; çıkarılır; dik ayaktan <em>W</em>&#8217;nin ucuna giden "
+    "kesikli yeşil ok geriye kalan (5/9, &#8722;4/9, &#8722;2/9) vektörüdür ve dik açı işaretinin "
+    "söylediği gibi <em>E</em><sub>1</sub>&#8217;e diktir; birim uzunluğa getirilince "
+    "<em>p</em>&#8217;deki yeşil ok <em>E</em><sub>2</sub> olur. Üçüncü adım "
+    "<em>E</em><sub>3</sub> = <em>E</em><sub>1</sub> &#215; <em>E</em><sub>2</sub> (mavi), öteki "
+    "iki dik açı işaretinin gösterdiği gibi hem <em>E</em><sub>1</sub>&#8217;e hem "
+    "<em>E</em><sub>2</sub>&#8217;ye diktir; üç ok birlikte, altı koşulu da sağlayan bir çatıdır.",
+    aria="p noktasinda gri oklar V = (2, 2, 1) ve W = (1, 0, 0); turuncu birim ok E1 = (2, 2, 1)/3 "
+         "V ile ayni dogrultudadir ve V nin ucte biri kadardir; W nin E1 uzerine izdusumu "
+         "(4/9, 4/9, 2/9) turuncu okun ilk parcasi olarak soluk kesikli bir seritle gosterilir; "
+         "dik ayaktan W nin "
+         "ucuna giden kesikli yesil ok W tilde = (5/9, -4/9, -2/9) olup E1 e diktir; ona paralel "
+         "yesil birim ok E2 = (5, -4, -2) bolu 3 karekok 5; mavi birim ok E3 = (0, 1, -2) bolu "
+         "karekok 5 hem E1 e hem E2 ye diktir; uc dik aci isareti dikligi gosterir",
+)
+
+# ============================================================ cati-kuresel-cati
+# -*- coding: utf-8 -*-
+# cati-kuresel-cati: the spherical frame field F1, F2, F3 at p = (3, 0, 4) and q = (0, 4, 3),
+# both on the sphere of radius rho = 5. Colours follow teget-dogal-cati: F1 -> PRACTICE,
+# F2 -> BASE, F3 -> THEORY, so the same field keeps the same colour at both points.
+# The sphere itself is drawn in TEXT (like the cylinder of egri-helis-hiz-vektorleri) to leave
+# the three accent colours free for the frame.
+# Camera: the awkward pair is F1(q) = (0, 4/5, 3/5) and F2(q) = (-1, 0, 0) — at the API's default
+# view they project onto almost the same page direction (2 degrees apart). A scan over azimuth and
+# elevation maximising the smallest tip-to-other-arrow distance picked azimuth 57, elevation 19:
+# there the six arrows stay at least 0.25 units (about 12 px) clear of each other, and the floor
+# is still open enough for the vartheta = pi/2 arc.
+import math
+
+AZ, EL = 57.0, 19.0
+RHO = 5.0
+AXX, AXY, AXZ = 5.8, 6.0, 5.6
+
+p = (3.0, 0.0, 4.0)
+q = (0.0, 4.0, 3.0)
+FP = ((0.6, 0.0, 0.8), (0.0, 1.0, 0.0), (-0.8, 0.0, 0.6))      # F1, F2, F3 at p
+FQ = ((0.0, 0.8, 0.6), (-1.0, 0.0, 0.0), (0.0, -0.6, 0.8))     # F1, F2, F3 at q
+COL = (PRACTICE, BASE, THEORY)
+PHI_P = math.atan2(4.0, 3.0)        # cos = 3/5, sin = 4/5
+PHI_Q = math.atan2(3.0, 4.0)        # cos = 4/5, sin = 3/5
+
+RHO_S, PHI_S, TH_S = "&#961;", "&#966;", "&#977;"
+
+P = space_panel(22, 20, 446, (-5.55, 4.05), (-2.15, 6.0))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def FN(k):
+    """Name of the k-th frame field, italic F with a subscript."""
+    return ital("F") + subs(str(k))
+
+
+def halo_px(px, py, s, color=TEXT, size=11.5, anchor="start"):
+    """Text at a pixel position with a page-coloured halo, so the wire frame breaks under it."""
+    P.add(f'<text x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}" stroke="{BG}" stroke-width="3.2" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start"):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo_px(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def sph(th, ph, r=RHO):
+    return (r * math.cos(ph) * math.cos(th), r * math.cos(ph) * math.sin(th), r * math.sin(ph))
+
+
+def block(x, y, rows, dy=0.35, size=10.5):
+    """A small stack of coloured lines placed at panel coordinates (x, y)."""
+    for k, (s, c) in enumerate(rows):
+        halo_px(P.X(x), P.Y(y - k * dy), s, c, size, "start")
+
+
+def sweep(f, t0, t1, head=6.0, width=1.05, opacity=0.8, n=64):
+    """Angle arc with an arrowhead at its end, a shade lighter than the frame arrows."""
+    pts = [f(t0 + (t1 - t0) * k / n) for k in range(n + 1)]
+    S.line(pts[:-2], TEXT, width, None, opacity)
+    S.arrow(pts[-3], pts[-1], TEXT, width, head, None, opacity)
+
+
+# ---------------------------------------------------------------- 1. floor and the sphere octant
+# the grid stops at 4: the corner (5, 5, 0) projects below everything else and would leave a
+# band of empty page under the figure
+S.floor_grid((0, 4), (0, 4), n=4, opacity=0.09)
+S.surface(sph, (0.0, math.pi / 2), (0.0, math.pi / 2), nu=12, nv=9, fill=TEXT, stroke=TEXT,
+          opacity=(0.03, 0.10), stroke_width=0.55, stroke_opacity=0.22)
+
+# the two coordinate curves through p: the meridian vartheta = 0 and the parallel through p,
+# lifted a hair off the sphere so they read above the wire frame
+S.curve(lambda t: sph(0.0, t, RHO + 0.03), 0.0, math.pi / 2, TEXT, 1.2, 96, None, 0.5)
+S.curve(lambda t: sph(t, PHI_P, RHO + 0.03), 0.0, math.pi / 2, TEXT, 1.2, 96, None, 0.5)
+
+# ---------------------------------------------------------------- 2. axes
+S.axes(AXX, AXY, AXZ, offsets=((-6, 14), (11, 5), (-11, -4)))
+S.ticks("x", (3, 5), length=0.16)
+S.ticks("y", (4, 5), length=0.16)
+S.ticks("z", (5,), length=0.16, offset=(-10, -6))
+
+# ---------------------------------------------------------------- 3. radii, drops, angle arcs
+for X in (p, q):
+    S.guide([(0.0, 0.0, 0.0), X], TEXT, 0.55, 1.1)
+    S.drop(X)
+
+R_TH, R_PP, R_PQ = 2.35, 1.55, 1.45
+sweep(lambda t: (R_TH * math.cos(t), R_TH * math.sin(t), 0.0),
+      0.0, math.pi / 2, 6.5)                                               # vartheta, in the floor
+sweep(lambda t: (R_PP * math.cos(t), 0.0, R_PP * math.sin(t)), 0.0, PHI_P)  # phi at p, in y = 0
+sweep(lambda t: (0.0, R_PQ * math.cos(t), R_PQ * math.sin(t)), 0.0, PHI_Q)  # phi at q, in x = 0
+
+# ---------------------------------------------------------------- 4. the two frames
+for X, F in ((p, FP), (q, FQ)):
+    for v, c in zip(F, COL):
+        S.arrow(X, vadd(X, v), c, 2.4, head=7.5)
+S.point(p, TEXT, 3.6)
+S.point(q, TEXT, 3.6)
+
+# ---------------------------------------------------------------- 5. labels
+tag(p, bold("p"), -10, 6, TEXT, 12, "end")
+tag(q, bold("q"), 10, 9, TEXT, 12, "start")
+
+tag(vadd(p, FP[0]), FN(1), -5, -5, PRACTICE, 11.5, "end")
+tag(vadd(p, FP[1]), FN(2), 6, 12, BASE, 11.5, "start")
+tag(vadd(p, FP[2]), FN(3), 0, -9, THEORY, 11.5, "middle")
+tag(vadd(q, FQ[0]), FN(1), 0, -9, PRACTICE, 11.5, "middle")
+tag(vadd(q, FQ[1]), FN(2), 7, 4, BASE, 11.5, "start")
+tag(vadd(q, FQ[2]), FN(3), -5, 11, THEORY, 11.5, "end")   # below the tip: the parallel through p
+
+
+# rho on each dashed radius, the two phi arcs, vartheta in the floor and on the meridian
+halo_px(P.X(-1.42), P.Y(1.50), ital(RHO_S) + " = 5", TEXT, 11.5, "end")
+halo_px(P.X(1.22), P.Y(0.72), ital(RHO_S) + " = 5", TEXT, 11.5, "start")
+tag(sph(0.0, PHI_P / 2, 1.05), ital(PHI_S), 0, 4, TEXT, 12, "middle")
+tag(sph(math.pi / 2, PHI_Q / 2, 1.15), ital(PHI_S), 0, 4, TEXT, 12, "middle")
+halo_px(P.X(-0.49), P.Y(-1.02), ital(TH_S) + " = " + PI_S + "/2", TEXT, 11.5, "middle")
+tag(sph(0.0, math.radians(25.0)), ital(TH_S) + " = 0", -5, 4, TEXT, 11.5, "end")
+
+# the numbers, next to their point
+block(-5.30, 3.05, [(bold("p") + " = (3, 0, 4)", TEXT),
+                    (FN(1) + " = (3/5, 0, 4/5)", PRACTICE),
+                    (FN(2) + " = (0, 1, 0)", BASE),
+                    (FN(3) + " = (" + MINUS_S + "4/5, 0, 3/5)", THEORY)])
+block(1.60, 4.65, [(bold("q") + " = (0, 4, 3)", TEXT),
+                   (FN(1) + " = (0, 4/5, 3/5)", PRACTICE),
+                   (FN(2) + " = (" + MINUS_S + "1, 0, 0)", BASE),
+                   (FN(3) + " = (0, " + MINUS_S + "3/5, 4/5)", THEORY)])
+
+OUT["cati-kuresel-cati"] = figure(
+    490, 420, [P],
+    "Yarıçapı 5 olan kürenin <em>x</em>, <em>y</em>, <em>z</em> &#8805; 0 parçası üzerinde "
+    "küresel çatı alanının iki noktadaki değerleri: <strong>p</strong> = (3, 0, 4) ve "
+    "<strong>q</strong> = (0, 4, 3). Her iki noktada da <em>F</em><sub>1</sub> (turuncu) "
+    "başlangıç noktasından dışa, yani küreye dik bakar; <em>F</em><sub>2</sub> (yeşil) paralel "
+    "çember boyunca doğuya, <em>F</em><sub>3</sub> (mavi) meridyen boyunca kuzeye bakar ve ikisi "
+    "de küreye teğettir. Kesikli çizgiler <em>&#961;</em> = 5 yarıçapını, yaylar "
+    "<em>&#977;</em> ile <em>&#966;</em> açılarını okutur: ilk noktada <em>&#977;</em> = 0, "
+    "ikincide <em>&#977;</em> = &#960;/2&#8217;dir. <em>F</em><sub>1</sub>&#8217;in vektör kısmı "
+    "her seferinde noktanın koordinatlarının 5&#8217;e bölümüdür.",
+    aria="Yaricapi 5 olan kurenin x, y ve z koordinatlari negatif olmayan sekizde birlik "
+         "parcasi uzerinde kuresel cati alani. "
+         "p = (3, 0, 4) noktasinda F1 = (3/5, 0, 4/5), F2 = (0, 1, 0), F3 = (-4/5, 0, 3/5); "
+         "q = (0, 4, 3) noktasinda F1 = (0, 4/5, 3/5), F2 = (-1, 0, 0), F3 = (0, -3/5, 4/5). "
+         "Kesikli yaricaplar rho = 5, yaylar vartheta ve phi acilarini gosterir; F1 kureye dik, "
+         "F2 ile F3 kureye tegettir.",
+)
+
+# ============================================================ cati-kuresel-duzlem
+# -*- coding: utf-8 -*-
+# cati-kuresel-duzlem: the half plane vartheta = 0 (horizontal axis r, vertical axis z) with the
+# point p = (3, 0, 4) of the worked example: r = 3, z = 4, rho = 5, cos phi = 3/5, sin phi = 4/5.
+# Four unit arrows sit at p: the cylindrical frame E1 = (1, 0) and E3 = (0, 1) in grey, and the
+# spherical frame F1 = (3/5, 4/5) (orange, the outward direction O -> p) and F3 = (-4/5, 3/5)
+# (blue, ninety degrees ahead of F1, pointing north). Three arcs carry the same angle phi: at the
+# origin between the r axis and the ray Op, at p between E1 and F1, and at p between E3 and F3 --
+# that is the whole content of F1 = cos phi E1 + sin phi E3, F3 = -sin phi E1 + cos phi E3.
+# The thin grey segment O->p and the orange arrow are deliberately collinear: F1 is the
+# continuation of the radius, which is why its vector part is p/rho.
+# Layout: the empty lower right quadrant takes the two identities, the empty top left takes the
+# name of the plane; equal aspect (cplane) is required, every angle in the picture is read off.
+import math
+
+PHI = math.atan2(4.0, 3.0)          # 53.13 degrees; cos = 3/5, sin = 4/5 exactly
+COSP, SINP = 0.6, 0.8
+
+PHI_S = "&#966;"                    # varphi, as in the text
+TH_S = "&#977;"                     # vartheta
+RHO_S = "&#961;"                    # rho
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def tint(s, color):
+    return f'<tspan fill="{color}">{s}</tspan>'
+
+
+def EE(k):
+    return ital("E") + subs(k)
+
+
+def FF(k):
+    return ital("F") + subs(k)
+
+
+pl = cplane(32, 18, 340, (-0.70, 6.35), (-0.80, 5.80))
+
+O = (0.0, 0.0)
+PT = (3.0, 4.0)
+FOOT = (3.0, 0.0)
+E1 = (4.0, 4.0)                      # PT + (1, 0)
+E3 = (3.0, 5.0)                      # PT + (0, 1)
+F1 = (3.6, 4.8)                      # PT + (3/5, 4/5)
+F3 = (2.2, 4.6)                      # PT + (-4/5, 3/5)
+RMAX, ZMAX = 6.10, 5.55
+GREY = 0.66                          # the cylindrical frame is drawn in the text colour, faded
+
+# ---------------------------------------------------------------- 1. axes of the half plane
+pl.arrow(O, (RMAX, 0.0), TEXT, 1.1, 7, None, 0.55)
+pl.arrow((0.0, -0.55), (0.0, ZMAX), TEXT, 1.1, 7, None, 0.55)
+
+# ---------------------------------------------------------------- 2. how p is read off
+guide(pl, [FOOT, PT], TEXT, 0.55)                     # the height z = 4
+pl.line([O, PT], TEXT, 1.3, None, 0.55)               # the radius rho = 5, continued by F1
+
+# ---------------------------------------------------------------- 3. the three angle arcs
+pl.arc(0.0, 0.0, 0.80, 0.0, PHI, TEXT, 1.2, None, 0.80)
+pl.arc(PT[0], PT[1], 0.45, 0.0, PHI, TEXT, 1.2, None, 0.80)
+pl.arc(PT[0], PT[1], 0.45, math.pi / 2, math.pi / 2 + PHI, TEXT, 1.2, None, 0.80)
+
+# ---------------------------------------------------------------- 4. the four unit arrows
+pl.arrow(PT, E1, TEXT, 2.0, 8.5, None, GREY)
+pl.arrow(PT, E3, TEXT, 2.0, 8.5, None, GREY)
+pl.arrow(PT, F1, PRACTICE, 2.5, 9.5)
+pl.arrow(PT, F3, THEORY, 2.5, 9.5)
+
+dot(pl, O, TEXT, 3.2)
+dot(pl, FOOT, TEXT, 2.8)
+dot(pl, PT, TEXT, 3.6)
+
+# ---------------------------------------------------------------- 5. labels
+pl.label(RMAX, 0.0, "r", -2, 17, TEXT, 11.5, "middle", False, True)
+pl.label(0.0, ZMAX, "z", 8, -1, TEXT, 11.5, "start", False, True)
+pl.label(0.0, 0.0, "O", -7, 15, TEXT, 11.5, "end")
+pl.label(PT[0], PT[1], bold("p") + " = (3, 0, 4)", 9, 17, TEXT, 11.5, "start")
+
+pl.label(1.5, 2.0, ital(RHO_S) + " = 5", -9, -2, TEXT, 11.5, "end")
+pl.label(1.5, 0.0, ital("r") + " = 3", 0, 17, TEXT, 11.5, "middle")
+pl.label(3.0, 3.10, ital("z") + " = 4", 8, 4, TEXT, 11.5, "start")
+
+# the same phi three times: at the origin and in the two wedges at p
+pl.label(1.02 * math.cos(PHI / 2), 1.02 * math.sin(PHI / 2), ital(PHI_S), 0, 4, TEXT, 12.5, "middle")
+pl.label(PT[0] + 0.70 * math.cos(PHI / 2), PT[1] + 0.70 * math.sin(PHI / 2),
+         ital(PHI_S), 0, 4, TEXT, 11.5, "middle")
+pl.label(PT[0] - 0.70 * math.sin(PHI / 2), PT[1] + 0.70 * math.cos(PHI / 2),
+         ital(PHI_S), 0, 4, TEXT, 11.5, "middle")
+
+pl.label(E1[0], E1[1], EE("1"), 9, -5, TEXT, 11.5, "start")
+pl.label(E3[0], E3[1], EE("3"), 0, -9, TEXT, 11.5, "middle")
+pl.label(F1[0], F1[1], FF("1") + " (dışa)", 7, -4, PRACTICE, 12, "start")
+pl.label(F3[0], F3[1], FF("3") + " (kuzeye)", -7, -4, THEORY, 12, "end")
+
+# the name of the plane, in the empty top left corner
+pl.label(0.55, 5.40, ital(TH_S) + " = 0 yarım düzlemi", 0, 0, TEXT, 11.5, "start")
+
+# the two identities, in the empty lower right quadrant
+BX, BY = pl.X(3.15), pl.Y(1.80)
+pl.text_px(BX, BY, tint(FF("1"), PRACTICE) + " = cos " + ital(PHI_S) + " " + EE("1")
+           + " + sin " + ital(PHI_S) + " " + EE("3"), TEXT, 11.5)
+pl.text_px(BX, BY + 21, tint(FF("3"), THEORY) + " = " + MINUS_S + "sin " + ital(PHI_S) + " "
+           + EE("1") + " + cos " + ital(PHI_S) + " " + EE("3"), TEXT, 11.5)
+pl.text_px(BX, BY + 50, "cos " + ital(PHI_S) + " = 3/5,&#160;&#160;&#160;sin " + ital(PHI_S)
+           + " = 4/5", TEXT, 11)
+
+OUT["cati-kuresel-duzlem"] = figure(
+    400, 360, [pl],
+    "<em>&#977;</em> = 0 yarım düzleminde çizilen <strong>p</strong> = (3, 0, 4) noktasının yatay "
+    "uzaklığı <em>r</em> = 3, yüksekliği <em>z</em> = 4, başlangıç noktası O&#8217;ya uzaklığı "
+    "<em>&#961;</em> = 5&#8217;tir. "
+    "Silindirik çatının <em>E</em><sub>1</sub> (yatay) ve <em>E</em><sub>3</sub> (düşey) okları "
+    "gri çizilmiştir; küresel çatının <em>F</em><sub>1</sub> oku (turuncu) O&#8217;dan "
+    "<strong>p</strong>&#8217;ye bakan doğrultunun devamıdır, <em>F</em><sub>3</sub> oku (mavi) ondan "
+    "90&#176; ileride kuzeye bakar. Üç yay da aynı <em>&#966;</em> açısını işaretler: "
+    "<em>F</em><sub>1</sub>, <em>F</em><sub>3</sub> ikilisi <em>E</em><sub>1</sub>, "
+    "<em>E</em><sub>3</sub> ikilisinin <em>&#966;</em> kadar döndürülmüşüdür. Burada "
+    "cos <em>&#966;</em> = 3/5 ve sin <em>&#966;</em> = 4/5 olduğundan <em>F</em><sub>1</sub>&#8217;in "
+    "vektör kısmı (3/5, 0, 4/5), <em>F</em><sub>3</sub>&#8217;ün vektör kısmı ise "
+    "(&#8722;4/5, 0, 3/5) çıkar.",
+    aria="Dikey yarim duzlem, yatay eksen r ve dusey eksen z; p = (3, 0, 4) noktasi r = 3, z = 4 "
+         "konumunda; O dan p ye cizilen dogru parcasi rho = 5 uzunlugunda ve yatay eksenle phi "
+         "acisi yapar; p de dort birim ok: gri E1 yatay, gri E3 dusey, turuncu F1 O p "
+         "dogrultusunda vektor kismi (3/5, 0, 4/5), mavi F3 ondan 90 derece ileride vektor kismi "
+         "(-4/5, 0, 3/5); E1 ile F1 arasindaki ve E3 ile F3 arasindaki yaylar ayni phi acisini "
+         "gosterir",
+)
+
+# ============================================================ cati-silindirik-cati
+# -*- coding: utf-8 -*-
+# cati-silindirik-cati: the cylindrical frame field E1, E2, E3 of the example, evaluated at
+# p = (3, 4, 2), q = (-4, 3, 0) and s = (0, -5, 1). All three lie on the cylinder r = 5, drawn
+# as a translucent grey tube. The vector parts come out of the formula E1 = (x/r, y/r, 0),
+# E2 = (-y/r, x/r, 0), E3 = (0, 0, 1) and are asserted against the table in the box.
+# Colours follow teget-dogal-cati: E1 -> PRACTICE, E2 -> BASE, E3 -> THEORY (the palette has no
+# red token, so the radial field takes the orange one).
+# Camera: azimuth 20 is the largest-clearance choice inside the API's 20-50 band — the three
+# points sit at the polar angles 53.13, 143.13 and 270 degrees, and at az = 20 none of the six
+# horizontal arrows points at the viewer (the shortest, E2 at s, still projects to 0.56 of a unit).
+# Elevation 28 opens the rim ellipses and lifts that shortest projection.
+# The far half of the bottom rim is left out (it is hidden behind the body of the tube); that also
+# keeps the neighbourhoods of q and s, which both sit on the far wall, free of guide lines.
+# What is left running through them is the front lip of the mouth, which the E3 arrows of q and s
+# cross — correctly, the near wall is in front of them. The labels are the ones kept off it: every
+# one of them sits wholly above or wholly below that arc.
+import math
+
+AZ, EL = 20.0, 28.0
+R = 5.0                              # radius of the cylinder every point stands on
+ZB, ZT = -0.7, 3.45                  # drawn height range of the tube
+AXX, AXY, AXZ = 4.8, 6.2, 4.25       # axis ends: x stops inside the tube, y pierces it at (0, 5, 0)
+PHI = math.radians(AZ)               # cos(u - PHI) > 0 on the half of the tube facing the viewer
+NEAR = (PHI - math.pi / 2, PHI + math.pi / 2)
+FAR = (PHI + math.pi / 2, PHI + 3 * math.pi / 2)
+
+P = space_panel(18, 16, 440, (-6.6, 6.7), (-3.9, 5.7))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+TH = "&#977;"                        # vartheta, as in the text
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+def ename(k):
+    """The field name E_k, italic with a subscript."""
+    return ital("E") + subs(k)
+
+
+def halo(x, y, s, color=TEXT, size=11, anchor="start"):
+    """Text at a pixel position on a page-coloured halo, so faint lines break around it."""
+    P.add(f'<text x="{x:.1f}" y="{y:.1f}" fill="{color}" font-size="{size}" text-anchor="{anchor}" '
+          f'stroke="{BG}" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke">{s}</text>')
+
+
+def at(Q, s, dx=0, dy=0, color=TEXT, size=11, anchor="start"):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def tube(u, z):
+    return (R * math.cos(u), R * math.sin(u), z)
+
+
+def rim(z, u0, u1, opacity=0.45, dash=None, n=64):
+    S.line([tube(u0 + (u1 - u0) * k / n, z) for k in range(n + 1)], TEXT, 0.9, dash, opacity)
+
+
+def frame_at(Q):
+    """The cylindrical frame at Q: E1 = (cos t, sin t, 0), E2 = (-sin t, cos t, 0), E3 = U3."""
+    x, y, _ = Q
+    r = math.hypot(x, y)
+    c, s = x / r, y / r
+    return ((c, s, 0.0), (-s, c, 0.0), (0.0, 0.0, 1.0))
+
+
+def draw_frame(Q):
+    e1, e2, e3 = frame_at(Q)
+    S.arrow(Q, vadd(Q, e1), PRACTICE, 2.2, head=7)
+    S.arrow(Q, vadd(Q, e2), BASE, 2.2, head=7)
+    S.arrow(Q, vadd(Q, e3), THEORY, 2.2, head=7)
+    S.point(Q, TEXT, 3.4)
+
+
+def tip(Q, k):
+    return vadd(Q, frame_at(Q)[k])
+
+
+p = (3.0, 4.0, 2.0)
+q = (-4.0, 3.0, 0.0)
+s = (0.0, -5.0, 1.0)
+foot = (3.0, 4.0, 0.0)               # the projection of p on the xy plane
+
+# --- the numbers of the box, checked before anything is drawn ----------------------------------
+TABLE = {p: ((0.6, 0.8, 0.0), (-0.8, 0.6, 0.0)),
+         q: ((-0.8, 0.6, 0.0), (-0.6, -0.8, 0.0)),
+         s: ((0.0, -1.0, 0.0), (1.0, 0.0, 0.0))}
+for Q, (t1, t2) in TABLE.items():
+    e1, e2, e3 = frame_at(Q)
+    assert vnorm(vsub(e1, t1)) < 1e-12 and vnorm(vsub(e2, t2)) < 1e-12, Q
+    assert abs(vnorm(e1) - 1) < 1e-12 and abs(vnorm(e2) - 1) < 1e-12 and abs(vnorm(e3) - 1) < 1e-12
+    assert abs(vdot(e1, e2)) < 1e-12 and abs(vdot(e1, e3)) < 1e-12 and abs(vdot(e2, e3)) < 1e-12
+    # E1 points straight out from the z axis, E2 turns counter-clockwise about it
+    assert vnorm(vsub(e1, vunit((Q[0], Q[1], 0.0)))) < 1e-12
+    assert vnorm(vsub(e2, vcross((0.0, 0.0, 1.0), e1))) < 1e-12
+    assert abs(math.hypot(Q[0], Q[1]) - R) < 1e-12
+    print("%-18s E1 = %-18s E2 = %-18s sayfada |E1| = %.2f, |E2| = %.2f, nokta = (%.2f, %.2f)" %
+          (Q, t1, t2, math.dist(S.pt(vadd(Q, e1)), S.pt(Q)), math.dist(S.pt(vadd(Q, e2)), S.pt(Q)),
+           S.pt(Q)[0], S.pt(Q)[1]))
+
+# --- floor, far wall of the tube ---------------------------------------------------------------
+S.floor_grid((-3.5, 3.5), (-3.5, 3.5), n=4, opacity=0.09)
+S.surface(tube, FAR, (ZB, ZT), nu=22, nv=1, fill=TEXT, stroke="none", opacity=(0.02, 0.075))
+rim(ZT, *FAR, opacity=0.30)          # the far lip of the mouth; the far bottom arc stays hidden
+
+# --- axes and ticks (they run inside the tube) --------------------------------------------------
+S.axes(AXX, AXY, AXZ, offsets=((-4, 13), (10, 4), (-10, -4)))
+S.ticks("y", (5,), length=0.3)
+S.ticks("z", (1, 2, 3), length=0.3, offset=(-9, -2))   # a touch high: the front lip of the mouth
+                                                      # runs just under the 1
+
+# --- the cylindrical coordinates of p, read off on the floor and along the riser -----------------
+S.guide([(0, 0, 0), foot], TEXT, 0.6, 1.1, "5 3")            # r = 5
+S.guide([foot, p], TEXT, 0.6, 1.1, "5 3")                    # z = 2
+ANG = [(2.4 * math.cos(t), 2.4 * math.sin(t), 0.0)
+       for t in [math.atan2(4, 3) * k / 40 for k in range(41)]]
+S.line(ANG[:-2], TEXT, 1.1, None, 0.7)
+S.arrow(ANG[-4], ANG[-1], TEXT, 1.1, 6.0, None, 0.7)
+
+# --- the two points on the far wall -------------------------------------------------------------
+draw_frame(q)
+draw_frame(s)
+
+# --- near wall of the tube ----------------------------------------------------------------------
+S.surface(tube, NEAR, (ZB, ZT), nu=22, nv=1, fill=TEXT, stroke="none", opacity=(0.02, 0.075))
+rim(ZT, *NEAR, opacity=0.5)
+rim(ZB, *NEAR, opacity=0.45)
+for u in NEAR:
+    # light: E2 at s ends right on the left edge of the tube, and a darker line would swallow
+    # the arrowhead; the shading of the wall already marks the silhouette
+    S.line([tube(u, ZB), tube(u, ZT)], TEXT, 0.9, None, 0.32)
+
+# --- p, on the near wall ------------------------------------------------------------------------
+S.point(foot, TEXT, 2.4)
+draw_frame(p)
+
+# --- labels -------------------------------------------------------------------------------------
+at(p, bold("p") + " = (3, 4, 2)", -10, -9, TEXT, 11, "end")
+at(q, bold("q") + " = (" + MINUS_S + "4, 3, 0)", -13, -26, TEXT, 11, "end")
+at(s, bold("s") + " = (0, " + MINUS_S + "5, 1)", 9, -16, TEXT, 11, "start")   # above the front lip
+
+at(tip(p, 0), ename("1"), 6, 21, PRACTICE, 11, "start")   # well clear of the y axis below it
+at(tip(p, 1), ename("2"), 7, -3, BASE, 11, "start")
+at(tip(p, 2), ename("3"), 7, 4, THEORY, 11, "start")      # beside, not above: the lip runs there
+at(tip(q, 0), ename("1"), 7, -2, PRACTICE, 11, "start")
+at(tip(q, 1), ename("2"), -15, 6, BASE, 11, "end")
+at(tip(q, 2), ename("3"), 0, -8, THEORY, 11, "middle")
+at(tip(s, 0), ename("1"), 0, -8, PRACTICE, 11, "middle")
+at(tip(s, 1), ename("2"), -3, 12, BASE, 11, "end")
+at(tip(s, 2), ename("3"), 0, -8, THEORY, 11, "middle")
+
+at((2.1, 2.8, 0.0), ital("r") + " = 5", -16, 18, TEXT, 11, "middle")     # 70% along the r guide
+at((3.0, 4.0, 1.24), ital("z") + " = 2", -7, 4, TEXT, 11, "end")          # 62% up the riser
+at((1.6 * math.cos(math.atan2(4, 3) / 2), 1.6 * math.sin(math.atan2(4, 3) / 2), 0.0),
+   ital(TH), 0, 4, TEXT, 12, "middle")
+
+OUT["cati-silindirik-cati"] = figure(
+    476, 350, [P],
+    "Silindirik çatı alanının üç noktadaki değerleri: <strong>p</strong> = (3, 4, 2), "
+    "<strong>q</strong> = (&#8722;4, 3, 0) ve <strong>s</strong> = (0, &#8722;5, 1); üçü de "
+    "<em>r</em> = 5 silindirinin üzerindedir. Her noktada <em>E</em><sub>1</sub> (turuncu) "
+    "<em>z</em> ekseninden dışa, <em>E</em><sub>2</sub> (yeşil) silindirin çevresi boyunca dönme "
+    "yönüne, <em>E</em><sub>3</sub> (mavi) yukarı bakar. Nokta <em>z</em> ekseninin çevresinde "
+    "döndükçe <em>E</em><sub>1</sub> ile <em>E</em><sub>2</sub> birlikte döner, "
+    "<em>E</em><sub>3</sub> ise hiç değişmez. Kesikli çizgiler <strong>p</strong>&#8217;nin "
+    "silindirik koordinatlarını okur: taban uzaklığı <em>r</em> = 5, taban açısı "
+    "<em>&#977;</em> ve yükseklik <em>z</em> = 2.",
+    aria="Yari saydam r = 5 silindiri uzerinde uc nokta: p = (3, 4, 2), q = (-4, 3, 0), "
+         "s = (0, -5, 1). Her noktada silindirik cati alaninin uc birim oku: E1 turuncu, z "
+         "ekseninden disa; E2 yesil, cember boyunca donme yonunde; E3 mavi, yukari. p icin kesikli "
+         "kilavuzlar taban uzakligi r = 5, taban acisi theta ve yukseklik z = 2 degerlerini okutur.",
+)
+
 # ============================================================ dform-donen-alan
 # -*- coding: utf-8 -*-
 # dform-donen-alan — the rotating field V = -y U1 + x U2 on the integer lattice -2..2 and its curl.
@@ -4436,6 +5275,2071 @@ OUT["form-yerel-ekstremum"] = figure(
          "ilmek olusturan egri. c = 3 egrisi turuncu. (1, 0) yesil nokta, ilmegin icinde: yerel "
          "minimum, f = -2. (-1, 0) noktasi: kritik ama ekstremum degil, f = 2.")
 
+# ============================================================ frenet-cember-merkez-egrisi
+# -*- coding: utf-8 -*-
+# frenet-cember-merkez-egrisi: the lemma "constant kappa, zero torsion => a circle of radius
+# 1/kappa", drawn on the concrete curve of the box, beta(s) = (2cos(s/2), 2sin(s/2), 0), whose
+# plane is z = 0 — so the panel is that plane and its points are written as pairs.
+# kappa = 1/2, so the radius is 1/kappa = 2 and N = (-cos(s/2), -sin(s/2)) has length 1: every N
+# arrow stops exactly halfway to the centre and the dashed rest of the radius carries 1/kappa = 2.
+# Marked points, straight from the box: s = 0 -> (2, 0), s = pi/2 -> (1,414; 1,414), s = pi -> (0, 2).
+# Checked by hand at each of them: T . (radial direction) = 0 (T is tangent) and T . N = 0, with
+# N = -(radial direction) (N looks at the centre); see TANGENT_CHECK below, which asserts it.
+# Colours follow API.md rather than the wording of the draft note: the curve is THEORY, the unit
+# tangent T is PRACTICE ("teget vektorler ve oklar PRACTICE"), the second vector N is BASE.
+# Layout notes, after three rounds of looking at the raster:
+#  * At s = 0 both N and the radius lie along the x axis, so 1/kappa = 2 is written above the
+#    segment and N below it, in the gap between the tick labels 1 and 2.
+#  * At s = pi/2 the label 1/kappa = 2 had to move past the arrowhead of N, which lands at
+#    (0,707; 0,707): it now lies along the arrow on its lower-right side, twice as far from the
+#    x axis as from its own ray, so it cannot be read as belonging to the radius at s = 0.
+#  * The radius at s = pi is named at y = 0,60, below the y tick 1 — at 0,78 the two collided.
+#  * y ticks other than 1 are dropped: 2 would sit on the shaft of the T arrow leaving (0, 2), and
+#    below the axis the room is taken by the centre annotation.
+#  * The dashed radii are drawn at opacity 0.7 (the axes are at 0.45) so that the two that run
+#    along an axis still read as separate segments.
+import math
+
+R = 2.0                      # 1/kappa
+XR, YR = (-3.3, 3.3), (-1.75, 3.0)
+p = cplane(34, 26, 336, XR, YR)
+PPU = 336 / (XR[1] - XR[0])  # pixels per data unit
+
+
+def beta(s):
+    return (R * math.cos(s / 2), R * math.sin(s / 2))
+
+
+def T_of(s):
+    return (-math.sin(s / 2), math.cos(s / 2))
+
+
+def N_of(s):
+    return (-math.cos(s / 2), -math.sin(s / 2))
+
+
+# --- the facts the figure claims, verified before anything is drawn ---------------------------
+def TANGENT_CHECK():
+    for s in (0.0, math.pi / 2, math.pi):
+        b, t, n = beta(s), T_of(s), N_of(s)
+        radial = (b[0] / R, b[1] / R)                       # unit vector from the centre to beta
+        assert abs(t[0] * radial[0] + t[1] * radial[1]) < 1e-12      # T is tangent to the circle
+        assert abs(t[0] * n[0] + t[1] * n[1]) < 1e-12                # N is perpendicular to T
+        assert math.hypot(n[0] + radial[0], n[1] + radial[1]) < 1e-12  # N points at the centre
+        assert abs(math.hypot(*n) - 1.0) < 1e-12                     # N is a unit vector
+        assert abs(math.hypot(*t) - 1.0) < 1e-12                     # T is a unit vector
+        # beta + (1/kappa) N = the centre, for every s
+        assert math.hypot(b[0] + R * n[0], b[1] + R * n[1]) < 1e-12
+
+
+TANGENT_CHECK()
+
+
+def it(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+BETA, GAMMA, KAPPA, TAU = it("&#946;"), it("&#947;"), it("&#954;"), it("&#964;")
+T_S, N_S, C_S, S_S = bold("T"), bold("N"), bold("c"), it("s")
+RADIUS_TXT = "1/" + KAPPA + " = 2"
+
+# --- 1. axes, the three radii of length 1/kappa = 2, then the arc beta runs along --------------
+p.origin_axes("x", "y", xticks=(-3, -2, -1, 1, 2, 3), yticks=(1,), opacity=0.45)
+
+MARKS = (0.0, math.pi / 2, math.pi)
+for s in MARKS:
+    guide(p, [beta(s), (0, 0)], TEXT, 0.7, 1.15)
+p.arc(0, 0, R, 0, math.pi, THEORY, 2.6)
+
+# --- 2. the Frenet vectors: T tangent (orange), N of length 1 towards the centre (green) -------
+for s in MARKS:
+    b, t = beta(s), T_of(s)
+    p.arrow(b, (b[0] + t[0], b[1] + t[1]), PRACTICE, 2.1, head=8)
+for s in MARKS:
+    b, n = beta(s), N_of(s)
+    p.arrow(b, (b[0] + n[0], b[1] + n[1]), BASE, 2.1, head=8)
+for s in MARKS:
+    dot(p, beta(s), TEXT, 3.4)
+dot(p, (0, 0), TEXT, 4.4)                                          # the centre c = gamma
+
+# --- 3. labels at the three points -------------------------------------------------------------
+# s = 0 at (2, 0): the point labels go to the right, above the x axis (the tick labels are below
+# it); N and the radius run along the axis, so they are named above and below the same segment.
+p.label(2, 0, S_S + " = 0", 10, -22, TEXT, 10.5, "start")
+p.label(2, 0, "(2, 0)", 10, -8, TEXT, 11, "start")
+p.label(2, 1, T_S, 8, 1, PRACTICE, 12, "start")
+p.label(1.52, 0, N_S, 0, 13, BASE, 12, "middle")
+p.label(0.78, 0, RADIUS_TXT, 0, -9, TEXT, 10.5, "middle")
+
+# s = pi/2 at (1,414; 1,414): both arrows leave to the left, so the point labels go outward to the
+# upper right; N is named close to its tail, the radius length across the ray on the other side.
+b2, t2, n2 = beta(math.pi / 2), T_of(math.pi / 2), N_of(math.pi / 2)
+p.label(b2[0], b2[1], S_S + " = " + PI_S + "/2", 12, -20, TEXT, 10.5, "start")
+p.label(b2[0], b2[1], APPROX + " (1,414; 1,414)", 12, -6, TEXT, 11, "start")
+p.label(b2[0] + t2[0], b2[1] + t2[1], T_S, -8, -4, PRACTICE, 12, "end")
+p.label(1.36, 1.04, N_S, 0, 0, BASE, 12, "middle")
+p.label(1.336, 0.682, RADIUS_TXT, 0, 0, TEXT, 10.5, "middle")
+
+# s = pi at (0, 2): T leaves to the left, N straight down the y axis; the point labels are stacked
+# above the T arrow, N and the radius length on the left of the axis.
+p.label(0, 2, S_S + " = " + PI_S, -10, -28, TEXT, 10.5, "end")
+p.label(0, 2, "(0, 2)", -10, -14, TEXT, 11, "end")
+p.label(-1, 2, T_S, -8, -5, PRACTICE, 12, "end")
+p.label(0, 1.45, N_S, -8, 0, BASE, 12, "end")
+p.label(0, 0.60, RADIUS_TXT, -8, 0, TEXT, 10.5, "end")
+
+# --- 4. the curve with its invariants, the centre, the parametrisation -------------------------
+p.label(-R * math.cos(math.radians(30)), R * math.sin(math.radians(30)), BETA,
+        -9, -3, THEORY, 12.5, "end")
+p.label(-3.2, 2.78, KAPPA + " = 1/2 (sabit)", 0, 0, THEORY, 11, "start")
+p.label(-3.2, 2.48, TAU + " = 0", 0, 0, THEORY, 11, "start")
+
+p.label(0, 0, GAMMA + " = " + BETA + " + (1/" + KAPPA + ") " + N_S + " = " + C_S,
+        -12, 31, TEXT, 11, "end")
+p.label(0, 0, "= (0, 0) sabit", -12, 46, TEXT, 11, "end")
+
+p.label(3.2, -1.45,
+        BETA + "(" + S_S + ") = (2cos(" + S_S + "/2), 2sin(" + S_S + "/2))",
+        0, 0, TEXT, 10, "end")
+
+OUT["frenet-cember-merkez-egrisi"] = figure(
+    400, 300, [p],
+    "Eğriliği <em>&#954;</em> = 1/2 sabit, burulması sıfır olan <em>&#946;</em> eğrisi "
+    "1/<em>&#954;</em> = 2 yarıçaplı bir çemberin parçasıdır; şekildeki düzlem, eğrinin içinde "
+    "kaldığı <em>z</em> = 0 düzlemidir ve noktalar orada (<em>x</em>, <em>y</em>) çiftiyle "
+    "yazılmıştır. İşaretli üç noktada birim teğet <strong>T</strong> "
+    "(turuncu) çembere teğettir; asli normal <strong>N</strong> (yeşil) ona diktir, birim "
+    "uzunluktadır ve merkeze bakar. Her noktadan <strong>N</strong> yönünde 1/<em>&#954;</em> = 2 "
+    "kadar ilerlenince (kesikli gri parçalar) hep aynı yere varılır: <em>&#947;</em> = "
+    "<em>&#946;</em> + (1/<em>&#954;</em>)<strong>N</strong> sabittir ve değeri çemberin merkezi "
+    "<strong>c</strong> = (0, 0)&#8217;dır. Eğrinin her noktası bu sabit noktadan tam "
+    "1/<em>&#954;</em> = 2 uzaklıktadır.",
+    aria="xy duzleminde merkezi (0, 0) olan 2 yaricapli cemberin ust yarisi kalin mavi cizilmis; "
+         "uzerinde s = 0 icin (2, 0), s = pi/2 icin yaklasik (1,414; 1,414) ve s = pi icin (0, 2) "
+         "noktalari isaretli. Her noktada cembere teget turuncu T oku ve ona dik, merkeze bakan "
+         "1 boyunda yesil N oku var; her noktadan merkeze giden kesikli gri parca 1/kappa = 2 "
+         "uzunlugundadir. Merkezdeki buyuk nokta gamma = beta + (1/kappa) N sabitidir, degeri "
+         "c = (0, 0). Egri beta(s) = (2cos(s/2), 2sin(s/2)) olup kappa = 1/2 sabit, tau = 0",
+)
+
+# ============================================================ frenet-duzlem-egriligi
+# -*- coding: utf-8 -*-
+# frenet-duzlem-egriligi: the slope angle of the parabola y = x^2/2 and its derivative.
+# Left panel (equal scale): the parabola in orange, and at x = -1, 0, 1.5 the unit tangent T (blue)
+# with the unit normal N = T turned 90 degrees to the left (green). A thin grey ray parallel to the
+# x axis leaves every point; the shaded wedge between that ray and T carries the slope angle
+#   phi = arctan(x):  -45 at x = -1, 0 at x = 0, 56.31 at x = 1.5   (the numbers of the box).
+# Right panel: phi against arc length s(x) = (x sqrt(1+x^2) + asinh x)/2, with the tangent of the
+# graph at s = 0 in grey; its slope is the plane curvature.
+# Drawing notes. At x = -1 the parabola runs *inside* its own angle wedge (it leaves the point along
+# T and bends up towards the grey ray), so the wedge is shaded and its outline is drawn before the
+# curve: the curve crosses it cleanly instead of swallowing the arc's end. At x = 0 the tangent lies
+# along the grey ray itself — that is what phi = 0 means — so the ray is drawn past the arrowhead and
+# the 0 degree label hangs under its free end. The wedge is only 0.77 r wide, so the angle labels
+# are bare numbers; the letter phi is fixed by T = (cos phi, sin phi), written inside the cup.
+import math
+
+KAPPA, PHI_S, DEG = "&#954;", "&#966;", "&#176;"
+XS = (-1.0, 0.0, 1.5)
+GUIDE_LEN = {-1.0: 0.90, 0.0: 1.35, 1.5: 0.85}
+WEDGE_R = {-1.0: 0.50, 0.0: 0.0, 1.5: 0.50}
+
+
+def par(x):
+    return (x, x * x / 2)
+
+
+def tangent(x):
+    n = math.hypot(1.0, x)
+    return (1.0 / n, x / n)
+
+
+def normal(x):
+    t = tangent(x)
+    return (-t[1], t[0])            # T turned 90 degrees to the left: N = (-y', x')
+
+
+def arclen(x):
+    return (x * math.sqrt(1 + x * x) + math.asinh(x)) / 2
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def ktilde(size=11.0):
+    """Kappa with a tilde over it. The combining accent U+0303 is not in the book's font, so the
+    tilde is a raised tspan pulled back over the letter; the advance it eats is handed back."""
+    ts = 0.92 * size
+    wK, wT = 0.52 * size, 0.50 * ts          # advances of kappa and of the tilde
+    dx = -(wK + wT) / 2 + 0.10 * size        # the last term centres the ink, measured in the PNG
+    return (KAPPA
+            + f'<tspan dx="{dx:.2f}" dy="{-0.46 * size:.2f}" font-size="{ts:.1f}">~</tspan>'
+            + f'<tspan dx="{-wT - dx:.2f}" dy="{0.46 * size:.2f}">&#8203;</tspan>')
+
+
+# ===================================================================== left panel: the parabola
+A = cplane(22, 16, 350, (-2.40, 2.70), (-0.60, 2.70))     # 68.6 px per unit, equal scale
+
+A.axes((-2, -1, 0, 1, 1.5, 2), (0, 1, 2), "x", "y", xfmt=tfmt)
+
+# dashed drop from each marked point to the x axis, so the tick reads off the point
+for x in XS:
+    guide(A, [par(x), (x, A.ymin)], TEXT, 0.30)
+
+# rays parallel to the x axis and the shaded angle wedges — under the curve
+for x in XS:
+    p = par(x)
+    A.line([p, (p[0] + GUIDE_LEN[x], p[1])], TEXT, 1.0, None, 0.45)
+    if WEDGE_R[x]:
+        A.sector(p[0], p[1], WEDGE_R[x], 0.0, math.atan(x), TEXT, 0.13)
+        A.arc(p[0], p[1], WEDGE_R[x], 0.0, math.atan(x), TEXT, 1.2, None, 0.8)
+
+curve(A, lambda t: t * t / 2, -2.0, 2.2, PRACTICE, 2.6, 300)
+A.label(-1.95, 2.36, ital("y") + " = " + ital("x") + sups("2") + "/2", 0, 0, PRACTICE, 12)
+
+for x in XS:
+    p, T, N = par(x), tangent(x), normal(x)
+    A.arrow(p, (p[0] + T[0], p[1] + T[1]), THEORY, 2.4, 9)
+    A.arrow(p, (p[0] + N[0], p[1] + N[1]), BASE, 2.4, 9)
+    dot(A, p, TEXT, 3.4)
+
+# vector names, each pushed to the free side of its own arrowhead
+# T at x = -1 hangs below-left of its head: to the right it would touch the dashed drop at x = 0
+A.label(-0.2929, -0.2071, bold("T"), -7, 14, THEORY, 12.5, "end")
+A.label(-0.2929, 1.2071, bold("N"), -12, -5, BASE, 12.5, "end")
+A.label(1.0, 0.0, bold("T"), 3, -9, THEORY, 12.5)
+A.label(0.0, 1.0, bold("N"), 8, -2, BASE, 12.5)
+A.label(2.0547, 1.9571, bold("T"), 9, 10, THEORY, 12.5)
+A.label(0.6679, 1.6797, bold("N"), -8, -4, BASE, 12.5, "end")
+
+# the three slope angles, just outside their wedges (x = 0 has none: there the angle is zero)
+A.label(-0.26, 0.22, MINUS_S + "45" + DEG, 0, 0, TEXT, 11, "middle")
+A.label(1.15, -0.26, "0" + DEG, 0, 0, TEXT, 11, "middle")
+A.label(2.26, 1.40, "56,3" + DEG, 0, 0, TEXT, 11, "middle")
+
+# the two Frenet ingredients, written in the free cup of the parabola
+A.label(0.35, 2.42, bold("T") + " = (cos " + PHI_S + ", sin " + PHI_S + ")", 0, 0, THEORY, 12,
+        "middle")
+A.label(0.35, 2.06, bold("N") + " = (" + MINUS_S + "sin " + PHI_S + ", cos " + PHI_S + ")", 0, 0,
+        BASE, 12, "middle")
+
+panel_title(A, "Birim teğet " + bold("T") + ", birim normal " + bold("N") + " ve eğim açısı "
+            + PHI_S, TEXT, 11.5)
+
+# ===================================================================== right panel: phi(s)
+B = Plot(396, 68, 198, 174, (-2.35, 2.95), (-80, 88))
+DEG_PER_UNIT = math.degrees(1.0)          # slope of the tangent at s = 0, where the curvature is 1
+
+B.origin_axes(ital("s"), PHI_S)
+B.line([(arclen(-1.35 + 3.15 * k / 240), math.degrees(math.atan(-1.35 + 3.15 * k / 240)))
+        for k in range(241)], THEORY, 2.2)
+B.line([(-0.85, -0.85 * DEG_PER_UNIT), (0.95, 0.95 * DEG_PER_UNIT)], TEXT, 1.5, None, 0.9)
+for x in XS:
+    dot(B, (arclen(x), math.degrees(math.atan(x))), TEXT, 3.2)
+
+B.label(arclen(-1.0), -45.0, MINUS_S + "45" + DEG, -9, -6, TEXT, 11, "end")
+B.label(arclen(1.5), 56.31, "56,3" + DEG, 2, 18, TEXT, 11)
+B.label(1.0, 68.0, "eğim = " + ktilde(11), 0, 0, TEXT, 11)
+B.label(0.45, -42.0, PHI_S + " hep artar,", 0, 0, TEXT, 11)
+B.label(0.45, -58.0, "yani " + ktilde(11) + " &gt; 0.", 0, 0, TEXT, 11)
+
+# the title is lifted clear of the phi axis arrowhead, which sits right under the panel's midline
+B.text_px(495, 50, "Eğim açısının grafiği", TEXT, 11.5, "middle", True)
+B.text_px(495, 26, ktilde(13.5) + " = " + PHI_S + PRIME, TEXT, 13.5, "middle")
+
+OUT["frenet-duzlem-egriligi"] = figure(
+    620, 280, [A, B],
+    "Birim hızlı bir düzlem eğrisinde eğim açısı " + PHI_S + ", birim teğet <strong>T</strong>"
+    "&#8217;nin <em>x</em> ekseniyle yaptığı açıdır. Solda <em>y</em> = <em>x</em><sup>2</sup>/2 "
+    "parabolü üzerinde üç nokta alınmıştır: <em>x</em> = &#8722;1&#8217;de " + PHI_S + " = "
+    "&#8722;45&#176;, <em>x</em> = 0&#8217;da " + PHI_S + " = 0&#176;, <em>x</em> = 1,5&#8217;te "
+    + PHI_S + " &#8776; 56,3&#176;; her noktada mavi <strong>T</strong> oku eğriye teğettir, "
+    "yeşil <strong>N</strong> oku ise <strong>T</strong>&#8217;nin 90&#176; sola döndürülmüşüdür, "
+    "yani ona diktir. Sağdaki küçük panelde aynı açı yay uzunluğunun fonksiyonu olarak çizilmiştir: "
+    + PHI_S + " durmadan arttığı için grafiğin her noktadaki eğimi pozitiftir. İşte bu eğim, yani "
+    "eğim açısının yay uzunluğuna göre türevi, eğrinin düzlem eğriliğidir.",
+    css_class=WIDE,
+    aria="Solda y = x^2/2 parabolu turuncu cizilmis; x = -1, x = 0 ve x = 1,5 noktalarinda mavi "
+         "birim teget ok T ve yesil birim normal ok N vardir, N her noktada T nin 90 derece sola "
+         "dondurulmusudur. Her noktadan x eksenine paralel ince gri bir isin cikar; isin ile T "
+         "arasindaki aci taranmis bir dilimle isaretlenmis ve sirasiyla -45 derece, 0 derece, "
+         "56,3 derece yazilmistir. Sagdaki kucuk panelde yatay eksen yay uzunlugu s, dusey eksen "
+         "egim acisidir; mavi egri artandir ve s = 0 noktasinda cizilen gri teget dogrunun egimi "
+         "kappa tilde olarak etiketlenmistir",
+)
+
+# ============================================================ frenet-egrilik-vektoru
+# -*- coding: utf-8 -*-
+# frenet-egrilik-vektoru: the two unit-speed circles of the worked example, drawn in the xy plane.
+#   beta1(s) = (sin s, 1 - cos s)            centre (0, 1), radius a = 1  (blue)
+#   beta3(s) = (3 sin s/3, 3 - 3 cos s/3)    centre (0, 3), radius a = 3  (orange)
+# Both pass through the origin with the same unit tangent T = (1, 0), so the x axis is their common
+# tangent line there; the curvature vectors T1'(0) = (0, 1) and T3'(0) = (0, 1/3) stand perpendicular
+# to it, on the y axis, each pointing at its own centre.
+# Left panel: the whole picture — the two circles, the grey T arrow on the common tangent line.
+# Right panel: a zoom on the first unit of arc length. The two curvature arrows live here, not on the
+# left: at 135 px per unit the short one is 45 px long and both labels fit beside the y axis, whereas
+# on the left panel every spot next to the 21 px orange arrow is crossed by the blue circle.
+# The arrows are collinear, so the orange one is drawn over the blue: the shared shaft is orange up
+# to 1/3 and blue above it, which is exactly the "one is three times the other" reading.
+# At s = 1 the points are (0,841; 0,460) and (0,982; 0,165); the dashed drops measure their distance
+# from the tangent line. Panel sizes are chosen so both come out 184.8 px tall.
+import math
+
+# ---------------------------------------------------------------- the two curves
+def b1(s):
+    return (math.sin(s), 1.0 - math.cos(s))
+
+
+def b3(s):
+    return (3.0 * math.sin(s / 3.0), 3.0 - 3.0 * math.cos(s / 3.0))
+
+
+S1 = b1(1.0)                      # (0.84147, 0.45970)
+S3 = b3(1.0)                      # (0.98159, 0.16512)
+K1, K3 = 1.0, 1.0 / 3.0           # the two curvatures
+
+p1 = cplane(16, 40, 240, (-1.35, 2.35), (-0.55, 2.30))    # 64.86 px per unit
+p2 = cplane(316, 40, 210, (-0.22, 1.33), (-0.22, 1.144))  # 135.48 px per unit
+
+KAPPA = "&#954;"
+BETA = "&#946;"
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def halo(p, px, py, s, color=TEXT, size=11.5, anchor="start"):
+    """Text at a pixel position with a page-coloured halo, so a line behind it breaks."""
+    p.add(f'<text x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}" stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def clip_runs(p, f, t0, t1, n=1800):
+    """Maximal runs of the parametric curve f that stay inside the panel's data rectangle."""
+    runs, cur = [], []
+    for k in range(n + 1):
+        x, y = f(t0 + (t1 - t0) * k / n)
+        if p.xmin <= x <= p.xmax and p.ymin <= y <= p.ymax:
+            cur.append((x, y))
+        else:
+            if len(cur) > 1:
+                runs.append(cur)
+            cur = []
+    if len(cur) > 1:
+        runs.append(cur)
+    return runs
+
+
+def draw_curve(p, f, t0, t1, color, width=2.2):
+    for run in clip_runs(p, f, t0, t1):
+        p.line(run, color, width)
+
+
+# ================================================================ LEFT: the two circles
+panel_title(p1, "İki çember, orijinde ortak teğet")
+
+draw_curve(p1, b3, -2.2, 2.2, PRACTICE)
+p1.circle(0, 1, 1.0, THEORY, 2.2)                    # the a = 1 circle fits whole
+p1.origin_axes("x", "y", xticks=(1, 2), yticks=(2,))
+
+p1.arrow((0, 0), (1, 0), TEXT, 2.6, head=8.5)        # the common unit tangent, on the tangent line
+guide(p1, [(0, 1), (1, 1)], THEORY, 0.75, 1.2)       # a radius, drawn sideways so it misses the y axis
+hollow(p1, (0, 1), THEORY, 3.2, 1.6)                 # centre of the small circle
+dot(p1, (0, 0), TEXT, 3.4)
+
+halo(p1, p1.X(0.5), p1.Y(1) - 6, ital("a") + " = 1", THEORY, 11, "middle")
+halo(p1, p1.X(0) + 9, p1.Y(1) + 14, "(0, 1)", THEORY, 11, "start")
+halo(p1, 30, 56, ital(BETA) + subs("1"), THEORY, 12.5, "start")
+halo(p1, 239, 150, ital(BETA) + subs("3"), PRACTICE, 12.5, "middle")
+halo(p1, 235, 164, ital("a") + " = 3", PRACTICE, 11, "middle")
+
+p1.text_px(p1.X(0.55), p1.Y(0) + 15, ital("T"), TEXT, 12.5, "middle")
+p1.text_px(p1.x0 + 3, p1.Y(0) + 15, "teğet doğrusu", TEXT, 10.5, "start")
+
+# ================================================================ RIGHT: curvature vectors, s = 1
+panel_title(p2, "Eğrilik vektörleri ve " + ital("s") + " = 1")
+
+draw_curve(p2, b3, -1.0, 2.2, PRACTICE)
+draw_curve(p2, b1, -1.0, 2.2, THEORY)
+p2.origin_axes("x", "y", xticks=(0.5,), yticks=(0.5,), xfmt=tfmt, yfmt=tfmt)
+
+# the two curvature vectors at the origin; they are collinear, so the short orange one is drawn
+# last and covers the lower third of the blue shaft
+p2.arrow((0, 0), (0, K1), THEORY, 2.6, head=9)
+p2.arrow((0, 0), (0, K3), PRACTICE, 2.6, head=8.5)
+p2.line([(0.08, 0), (0.08, 0.08), (0, 0.08)], TEXT, 1.1, None, 0.85)   # right angle with the tangent
+
+guide(p2, [S1, (S1[0], 0.0)], THEORY, 0.85, 1.2)
+guide(p2, [S3, (S3[0], 0.0)], PRACTICE, 0.85, 1.2)
+dot(p2, S1, THEORY, 3.6)
+dot(p2, S3, PRACTICE, 3.6)
+dot(p2, (0, 0), TEXT, 3.2)
+
+halo(p2, p2.X(0) + 9, p2.Y(K1) + 4, KAPPA + subs("1") + " = 1", THEORY, 12, "start")
+halo(p2, p2.X(0) + 9, p2.Y(K3) + 4, KAPPA + subs("3") + " = 1/3", PRACTICE, 12, "start")
+halo(p2, p2.X(S1[0]) + 6, p2.Y(S1[1]) + 4, "0,460", THEORY, 11.5, "start")
+halo(p2, p2.X(S3[0]) + 6, p2.Y(S3[1] / 2) + 4, "0,165", PRACTICE, 11.5, "start")
+halo(p2, 466, 105, ital(BETA) + subs("1"), THEORY, 12, "end")
+# beta3 sits in the free wedge above its own curve: right of it the curve leaves the panel, below it
+# the "0,165" label already fills the strip between the curve and the axis
+halo(p2, 515, 145, ital(BETA) + subs("3"), PRACTICE, 12, "middle")
+
+# the three notes under the axis: which s the origin is, what the x axis is, and the axis name
+p2.text_px(p2.X(0) - 8, p2.Y(0) + 15, ital("s") + " = 0", TEXT, 11, "end")
+p2.text_px(505, p2.Y(0) + 15, "teğet doğrusu", TEXT, 10.5, "end")
+
+OUT["frenet-egrilik-vektoru"] = figure(
+    560, 240, [p1, p2],
+    "Solda orijinden geçen ve orada aynı birim teğet vektöre sahip iki çember: yarıçapı "
+    "<em>a</em> = 1 olan &#946;<sub>1</sub> (mavi) ile yarıçapı <em>a</em> = 3 olan "
+    "&#946;<sub>3</sub> (turuncu); gri ok ikisinin ortak teğeti <em>T</em>(0) = (1, 0)&#8217;dır ve "
+    "<em>x</em> ekseni ortak teğet doğrusudur. Sağdaki yakın planda aynı noktadan dikey çıkan iki "
+    "eğrilik vektörü görülüyor: mavi okun boyu &#954;<sub>1</sub> = 1, turuncu okunki "
+    "&#954;<sub>3</sub> = 1/3&#8217;tür; ikisi de teğet doğrusuna diktir ve kendi çemberinin "
+    "merkezine bakar. <em>s</em> = 1 anında eğriler teğet doğrusundan 0,460 ile 0,165 kadar "
+    "uzaklaşmıştır: oranları yaklaşık 2,78&#8217;dir, yani eğriliği büyük olan eğri teğet "
+    "doğrusundan üç katına yakın hızla ayrılır.",
+    css_class=WIDE,
+    aria="Iki panel. Solda xy duzleminde orijinden gecen iki cember: merkezi (0, 1) ve yaricapi 1 "
+         "olan mavi beta1 ile merkezi (0, 3) ve yaricapi 3 olan turuncu beta3; orijindeki ortak "
+         "teget dogrusu x eksenidir ve uzerinde gri T oku (1, 0) durur. Sagda yakin plan: "
+         "orijinden yukari cikan mavi ok (0, 1) uzunlugu 1 ve kappa1 = 1, turuncu ok (0, 1/3) "
+         "uzunlugu 1/3 ve kappa3 = 1/3; kucuk kare isareti bu oklarin teget dogrusuna dik "
+         "oldugunu gosterir. s = 1 icin mavi nokta (0,841; 0,460), turuncu nokta (0,982; 0,165); "
+         "her birinden x eksenine kesikli dik iniyor, uzunluklari 0,460 ve 0,165.")
+
+# ============================================================ frenet-helis-cati
+# -*- coding: utf-8 -*-
+# frenet-helis-cati: the helix beta(s) = (3cos(s/5), 3sin(s/5), 4s/5) on the cylinder
+# x^2 + y^2 = 9 with its Frenet frame at s = 5pi/2, where beta = (0, 3, 2pi),
+# T = (-3/5, 0, 4/5), N = (0, -1, 0), B = (4/5, 0, 3/5), kappa = 3/25 and tau = 4/25.
+#
+# Drawn arc.  One full turn of this helix rises 2*pi*b = 8pi = 25.1 units over a tube of
+# radius 3, an 8 : 1 box that leaves the frame a few pixels wide on any readable page.  The
+# figure therefore shows the half turn s in [0, 5pi] (z from 0 to 4pi), which is exactly the
+# piece centred on the marked point: u = s/5 runs 0 to pi and the frame sits at u = pi/2, in
+# the middle of both the sweep and the rise.  The two end labels s = 0 and s = 5pi say so.
+#
+# Colours follow the book's Frenet convention (keyfi-kubik-aparat, keyfi-kubik-cati-t2):
+# curve blue, T orange, N green, B dark, osculating patch hatched in the tangent's colour.
+#
+# Camera.  The two readings the figure has to carry pull against each other, because
+# B = (4/5, 0, 3/5) lies in the xz plane and N = (0, -1, 0) along -y:
+#   * seen from a large azimuth B opens out nicely but N turns into the screen, and the whole
+#     point that N aims straight at the cylinder axis is lost to foreshortening;
+#   * seen from a small azimuth N lies across the page and points at the axis at almost full
+#     length, but B leans toward the viewer and comes out short.
+# _probe_frenet_helis.py scans both angles; the widest spread of the three page directions in
+# the whole band is at az about 27-30 with a low elevation.  At az = 28, el = 12 the page
+# angles are T 73, B 130, N 174 degrees (T-N 101, N-B 44, T-B 57), the projected lengths are
+# 0.94, 0.89, 0.58 and the osculating plane still keeps 0.82 of its area.
+#
+# Because B projects into the sector between T and N, the 2 x 2 osculating patch is hung on
+# the T and -N edges, away from B: a patch on the +N side would have the B arrow lying inside
+# it and would say the opposite of what the figure teaches.  The curve bends toward +N, so it
+# leaves the patch clear as well and only hugs the T arrow, which is what tangency looks like.
+import math
+
+AZ, EL = 28.0, 12.0
+PPU = 30.0                               # pixels per space unit
+A, B_, C = 3.0, 4.0, 5.0                 # a = 3, b = 4, c = 5
+S0, S1 = 0.0, 5 * math.pi                # the drawn arc: half a turn
+SP = 5 * math.pi / 2                     # the marked point
+Z0, Z1 = -1.0, 13.2                      # the drawn piece of the cylinder
+ZAX = 14.0                               # top of the z axis
+LEN = 2.0                                # the unit vectors are drawn twice as long
+PHI = math.radians(AZ)                   # cos(u - PHI) > 0 on the half of the tube facing us
+NEAR = (PHI - math.pi / 2, PHI + math.pi / 2)
+FAR = (PHI + math.pi / 2, PHI + 3 * math.pi / 2)
+
+PT = (0.0, 3.0, 2 * math.pi)             # beta(5pi/2)
+TV = (-0.6, 0.0, 0.8)
+NV = (0.0, -1.0, 0.0)
+BV = (0.8, 0.0, 0.6)
+AXIS_PT = (0.0, 0.0, 2 * math.pi)        # where N points: the axis at the same height
+
+SQ = "&#8730;"
+KAPPA, TAU, BETA = "&#954;", "&#964;", "&#946;"
+
+
+def beta(s):
+    u = s / C
+    return (A * math.cos(u), A * math.sin(u), B_ * s / C)
+
+
+def velocity(s):
+    """beta'(s) — already a unit vector."""
+    u = s / C
+    return (-(A / C) * math.sin(u), (A / C) * math.cos(u), B_ / C)
+
+
+def accel(s):
+    """beta''(s) = T'(s); its length is the curvature."""
+    u = s / C
+    return (-(A / C / C) * math.cos(u), -(A / C / C) * math.sin(u), 0.0)
+
+
+def tube(u, z):
+    return (A * math.cos(u), A * math.sin(u), z)
+
+
+def is_near(u):
+    return math.cos(u - PHI) > 0
+
+
+# ---------------------------------------------------------------- self-checks on the numbers
+assert abs(beta(SP)[0]) < 1e-12 and abs(beta(SP)[1] - 3.0) < 1e-12
+assert abs(beta(SP)[2] - 2 * math.pi) < 1e-12                     # beta(5pi/2) = (0, 3, 2pi)
+assert vnorm(vsub(velocity(SP), TV)) < 1e-12                      # T = (-3/5, 0, 4/5)
+assert abs(vnorm(accel(SP)) - 3.0 / 25.0) < 1e-12                 # kappa = 3/25
+assert vnorm(vsub(vscale(25.0 / 3.0, accel(SP)), NV)) < 1e-12     # N = T'/kappa = (0, -1, 0)
+assert vnorm(vsub(vcross(TV, NV), BV)) < 1e-12                    # B = T x N = (4/5, 0, 3/5)
+for _v in (TV, NV, BV):
+    assert abs(vnorm(_v) - 1.0) < 1e-12
+assert abs(vdot(TV, NV)) + abs(vdot(TV, BV)) + abs(vdot(NV, BV)) < 1e-12
+# B'(s) = (b/c^2)(cos u, sin u, 0) = -tau N with tau = 4/25
+_h = 1e-6
+_Bp = vscale(1 / (2 * _h), vsub(vcross(velocity(SP + _h), vscale(25.0 / 3.0, accel(SP + _h))),
+                                vcross(velocity(SP - _h), vscale(25.0 / 3.0, accel(SP - _h)))))
+assert vnorm(vsub(_Bp, vscale(-4.0 / 25.0, NV))) < 1e-6           # tau = 4/25
+# N really points at the cylinder axis
+assert vnorm(vsub(vadd(PT, vscale(3.0, NV)), AXIS_PT)) < 1e-12
+
+P = space_panel(18, 14, PPU * 9.5, (-4.1, 5.4), (-3.9, 14.1))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+# ---------------------------------------------------------------- page-space report
+_dirs = {}
+for _k, _v in (("T", TV), ("N", NV), ("B", BV)):
+    _X, _Y = S.pt(_v)
+    _dirs[_k] = (math.degrees(math.atan2(_Y, _X)) % 360.0, math.hypot(_X, _Y))
+    print("%s: page angle %6.1f deg, projected length %.2f" % (_k, _dirs[_k][0], _dirs[_k][1]))
+_c0, _c1 = S.pt(beta(SP - 0.02)), S.pt(beta(SP + 0.02))
+_tan = math.degrees(math.atan2(_c1[1] - _c0[1], _c1[0] - _c0[0])) % 360.0
+print("curve tangent on the page: %.1f deg (T reads %.1f) — difference %.2f"
+      % (_tan, _dirs["T"][0], abs(_tan - _dirs["T"][0])))
+print("T to N on the page: %.1f deg (90 in space)"
+      % abs(_dirs["T"][0] - _dirs["N"][0]))
+_pp, _ap = S.pt(PT), S.pt(AXIS_PT)
+print("N on the page points at %.1f deg, the axis point lies at %.1f deg from beta(5pi/2)"
+      % (_dirs["N"][0], math.degrees(math.atan2(_ap[1] - _pp[1], _ap[0] - _pp[0])) % 360.0))
+
+
+def halo(px_, py_, s, color=TEXT, size=11.5, anchor="start", pad=3.8):
+    """Text with a page-coloured outline behind it, drawn as two <text> runs: rsvg drops the
+    ascender of an italic letter that a raised tspan follows when one run is stroked.
+
+    `pad` widens the outline where a wall ruling would otherwise show through the gap between
+    two glyphs and read as a stray tick."""
+    common = f'x="{px_:.1f}" y="{py_:.1f}" font-size="{size}" text-anchor="{anchor}"'
+    P.add(f'<text {common} fill="none" stroke="{BG}" stroke-width="{pad}" '
+          f'stroke-linejoin="round">{s}</text>')
+    P.add(f'<text {common} fill="{color}">{s}</text>')
+
+
+def at(X, Y, s, color=TEXT, size=11.5, anchor="start", pad=3.8):
+    """Halo text at a point of the panel's data plane (that is, of the projected page)."""
+    halo(P.X(X), P.Y(Y), s, color, size, anchor, pad)
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start", pad=3.8):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor, pad)
+
+
+def hatch(poly, angle_deg, color=TEXT, step_px=7.5, width=0.8, opacity=0.38):
+    """Parallel hatch lines at angle_deg (page), clipped to a convex polygon in data units."""
+    a = math.radians(angle_deg)
+    d = (math.cos(a), math.sin(a))
+    nrm = (-d[1], d[0])
+    step = step_px * (P.xmax - P.xmin) / P.w
+    proj = [nrm[0] * x + nrm[1] * y for x, y in poly]
+    lo, hi = min(proj), max(proj)
+    count = max(1, int((hi - lo) / step))
+    c0 = lo + (hi - lo - (count - 1) * step) / 2.0
+    parts = []
+    for i in range(count):
+        c = c0 + i * step
+        hits = []
+        for j in range(len(poly)):
+            (x0, y0), (x1, y1) = poly[j], poly[(j + 1) % len(poly)]
+            s0 = nrm[0] * x0 + nrm[1] * y0 - c
+            s1 = nrm[0] * x1 + nrm[1] * y1 - c
+            if (s0 < 0) != (s1 < 0):
+                t = s0 / (s0 - s1)
+                hits.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
+        if len(hits) >= 2:
+            hits.sort(key=lambda q: d[0] * q[0] + d[1] * q[1])
+            parts.append(f"M{P.P(*hits[0])} L{P.P(*hits[-1])}")
+    P.add(f'<path d="{" ".join(parts)}" fill="none" stroke="{color}" stroke-width="{width}" '
+          f'opacity="{opacity}" stroke-linecap="butt"/>')
+
+
+def rim(z, u0, u1, dash=None, opacity=0.45, n=64):
+    S.line([tube(u0 + (u1 - u0) * k / n, z) for k in range(n + 1)], TEXT, 0.9, dash, opacity)
+
+
+def runs(front, n=900):
+    """Maximal pieces of the drawn arc on the near (front=True) or far half of the tube."""
+    ss = [S0 + (S1 - S0) * k / n for k in range(n + 1)]
+    out, cur = [], []
+    for i, s in enumerate(ss):
+        if is_near(s / C) == front:
+            if not cur and i > 0:
+                cur.append(beta(ss[i - 1]))
+            cur.append(beta(s))
+        elif cur:
+            cur.append(beta(s))
+            out.append(cur)
+            cur = []
+    if cur:
+        out.append(cur)
+    return out
+
+
+def wall(urange):
+    """Half of the tube, with its grid.  nu = 7 puts no ruling at u = PHI, which would project
+    onto the z axis itself; nv = 3 keeps the horizontal circle at z = 8.47 well clear of the
+    frame at z = 2pi = 6.28, and four circles read as a tube where eight read as a cage."""
+    S.surface(tube, urange, (Z0, Z1), nu=7, nv=3, fill=TEXT, stroke=TEXT,
+              opacity=(0.012, 0.05), stroke_width=0.6, stroke_opacity=0.13)
+
+
+# ---------------------------------------------------------------- 1. far half of the tube
+wall(FAR)
+rim(Z0, *FAR, dash="3 3", opacity=0.30)
+rim(Z1, *FAR, opacity=0.40)
+
+# ---------------------------------------------------------------- 2. what the near wall hides
+S.line([(0, 0, 0), (A, 0, 0)], TEXT, 1.1, None, 0.40)          # x axis inside the tube
+S.line([(0, 0, 0), (0, A, 0)], TEXT, 1.1, None, 0.40)          # y axis inside the tube
+S.line([(0, 0, Z0), (0, 0, 13.4)], TEXT, 1.1, "5 4", 0.55)     # the z axis, hidden in the tube
+for run in runs(False):
+    S.line(run, THEORY, 2.0, None, 0.42)
+
+# ---------------------------------------------------------------- 3. near half of the tube
+wall(NEAR)
+rim(Z0, *NEAR, opacity=0.50)
+rim(Z1, *NEAR, opacity=0.50)
+for u in NEAR:
+    S.line([tube(u, Z0), tube(u, Z1)], TEXT, 0.9, None, 0.40)
+
+# ---------------------------------------------------------------- 4. the helix in front
+for run in runs(True):
+    S.line(run, THEORY, 2.6)
+S.arrow(beta(2.45), beta(2.95), THEORY, 2.6, 9.5)              # direction of travel
+S.point(beta(S0), TEXT, 3.0)
+
+# ---------------------------------------------------------------- 5. axes outside the tube
+S.arrow((A, 0, 0), (4.3, 0, 0), TEXT, 1.1, 7, None, 0.55)
+S.arrow((0, A, 0), (0, 4.3, 0), TEXT, 1.1, 7, None, 0.55)
+S.arrow((0, 0, 13.4), (0, 0, ZAX), TEXT, 1.1, 7, None, 0.55)
+S.ticks("y", (3,), offset=(13, 11))       # no x tick: the curve starts at that very point
+
+# ---------------------------------------------------------------- 6. the osculating patch
+CORNER = vadd(PT, vsub(vscale(LEN, TV), vscale(LEN, NV)))
+PATCH = [PT, vadd(PT, vscale(LEN, TV)), CORNER, vsub(PT, vscale(LEN, NV))]
+POLY = S.pts(PATCH)
+P.polygon(POLY, PRACTICE, 0.08, "none")   # 0.10 came out as a solid brown block on dark
+hatch(POLY, 33.0, PRACTICE)                                    # midway between the two edges,
+#                                       which run at 72.5 and -6.3 degrees on the page
+S.guide([PATCH[1], CORNER, PATCH[3], PT], PRACTICE, 0.55, 1.1)  # every edge but the T arrow
+
+# ---------------------------------------------------------------- 7. the frame at s = 5pi/2
+S.drop(PT)                                                     # down to (0, 3, 0) on the y axis
+S.guide([PT, AXIS_PT], TEXT, 0.55, 1.1)                        # N aims here: (0, 0, 2pi)
+for _v in (TV, NV, BV):                                        # halos: three shafts, one origin
+    S.line([PT, vadd(PT, vscale(LEN, _v))], BG, 5.6)
+S.arrow(PT, vadd(PT, vscale(LEN, TV)), PRACTICE, 2.5, head=9)
+S.arrow(PT, vadd(PT, vscale(LEN, NV)), BASE, 2.5, head=9)
+S.arrow(PT, vadd(PT, vscale(LEN, BV)), TEXT, 2.5, head=9)
+S.point(PT, TEXT, 3.8)
+S.point(AXIS_PT, TEXT, 2.6)
+
+# ---------------------------------------------------------------- 8. labels
+IT_S = '<tspan font-style="italic">s</tspan>'
+IT_B = f'<tspan font-style="italic">{BETA}</tspan>'
+
+tag((4.3, 0, 0), '<tspan font-style="italic">x</tspan>', -7, 14, TEXT, 11.5, "middle")
+tag((0, 4.3, 0), '<tspan font-style="italic">y</tspan>', 9, 6, TEXT, 11.5, "start")
+tag((0, 0, ZAX), '<tspan font-style="italic">z</tspan>', -10, -3, TEXT, 11.5, "end")
+tag(AXIS_PT, "2" + PI_S, -9, 4, TEXT, 10, "end", pad=5.4)   # a ruling runs between 2 and pi
+
+tag(vadd(PT, vscale(LEN, TV)), bold("T"), 6, -8, PRACTICE, 12.5, "start")   # above the patch,
+#                                            whose top edge leaves the arrow tip to the right
+tag(vadd(PT, vscale(LEN, NV)), bold("N"), -2, -10, BASE, 12.5, "middle")
+tag(vadd(PT, vscale(LEN, BV)), bold("B"), -9, -3, TEXT, 12.5, "end")
+
+at(0.75, 6.95, IT_B + "(5" + PI_S + "/2) = (0, 3, 2" + PI_S + ")", TEXT, 11.5, "end")
+tag(beta(S0), IT_S + " = 0", 6, 15, TEXT, 11, "start")
+tag(beta(S1), IT_S + " = 5" + PI_S, 9, 3, TEXT, 11, "start")
+
+# the legend goes in the empty upper left of the tube, above the curve; its last line clears
+# the horizontal circle at z = 8.47, whose far branch runs at 8.90 on the page
+at(-2.9, 10.3, bold("T") + " = (" + MINUS_S + "3/5, 0, 4/5)", PRACTICE, 11.5)
+at(-2.9, 9.65, bold("N") + " = (0, " + MINUS_S + "1, 0)", BASE, 11.5)
+at(-2.9, 9.0, bold("B") + " = (4/5, 0, 3/5)", TEXT, 11.5)
+
+at(0.6, -2.0, '<tspan font-style="italic">x</tspan>' + sups("2") + " + "
+   + '<tspan font-style="italic">y</tspan>' + sups("2") + " = 9", TEXT, 11.5)
+at(0.35, -2.8, IT_B + "(" + IT_S + ") = (3 cos(" + IT_S + "/5), 3 sin(" + IT_S + "/5), 4"
+   + IT_S + "/5)", THEORY, 11.5, "middle")
+at(0.35, -3.55, KAPPA + " = 3/25,    " + TAU + " = 4/25", TEXT, 11.5, "middle")
+
+OUT["frenet-helis-cati"] = figure(
+    round(18 + P.w + 18), round(14 + P.h + 14), [P],
+    "Helis <em>&#946;</em>(<em>s</em>) = (3cos(<em>s</em>/5), 3sin(<em>s</em>/5), "
+    "4<em>s</em>/5) <em>x</em><sup>2</sup> + <em>y</em><sup>2</sup> = 9 silindirinin duvarında "
+    "yükselir; çizilen yay yarım turdur, <em>s</em> = 0&#8217;dan <em>s</em> = 5&#960;&#8217;ye. "
+    "Ortadaki <em>&#946;</em>(5&#960;/2) = (0, 3, 2&#960;) noktasında turuncu <strong>T</strong> "
+    "eğriye teğettir, yeşil <strong>N</strong> ona diktir ve kesikli çizginin gösterdiği gibi "
+    "silindirin ekseni üzerindeki (0, 0, 2&#960;) noktasına dosdoğru bakar, koyu "
+    "<strong>B</strong> = <strong>T</strong> &#215; <strong>N</strong> ise ilk ikisinin gerdiği "
+    "taralı oskülatör düzleme diktir ve okura doğru çıkar. Üçü de birim uzunluktadır; "
+    "görünürlük için iki kat uzun çizilmişlerdir, sayfada farklı boyda görünmeleri izdüşümün "
+    "kısaltmasındandır. Bu heliste eğrilik ile burulma her noktada sabittir: "
+    "&#954; = 3/25, &#964; = 4/25.",
+    aria="x^2 + y^2 = 9 silindirinin duvarinda yukselen beta(s) = (3cos(s/5), 3sin(s/5), 4s/5) "
+         "helisinin s = 0 ile s = 5pi arasindaki yarim turu; beta(5pi/2) = (0, 3, 2pi) "
+         "noktasinda turuncu T = (-3/5, 0, 4/5) egriye teget, yesil N = (0, -1, 0) silindir "
+         "ekseni uzerindeki (0, 0, 2pi) noktasina dogru, koyu B = (4/5, 0, 3/5) ise T ve N nin "
+         "gerdigi taranmis oskulator duzleme diktir; kappa = 3/25 ve tau = 4/25",
+)
+
+# ============================================================ frenet-oskulator-cember
+# -*- coding: utf-8 -*-
+# frenet-oskulator-cember: the osculating circle of the exercise, drawn in the osculating plane
+# with kappa_0 = 1. The second-order picture of beta is the parabola y = x^2/2 (orange, thick,
+# -2 <= x <= 2); its curvature at the origin is y''/(1+y'^2)^(3/2) = 1 = kappa_0, so
+#   T_0 = (1, 0)  (horizontal: y'(0) = 0, tangent to the parabola at its vertex),
+#   N_0 = (0, 1)  (T_0 . N_0 = 0, pointing to the concave side),
+#   c   = beta(0) + (1/kappa_0) N_0 = (0, 1),   r = 1/kappa_0 = 1.
+# So the green N_0 arrow IS the radius drawn from beta(0) to c: its tip lands exactly on the
+# centre. A separate dashed segment from c to the origin would be drawn on top of that arrow, so
+# the segment is the arrow and both readings are labelled on its two sides: N_0 = (0, 1) on the
+# left, r = 1/kappa_0 = 1 on the right.
+# The circle (thin blue) lies inside the cup: at x = 0.5 it is at y = 0.134 while the parabola is
+# at 0.125. At height y = 0,5 the parabola is at (1; 0,5) and the circle at (0,866; 0,5) — the
+# two dots are 9.5 px apart, which is the "small difference" the box talks about.
+# Axes are L-shaped at the panel edges on purpose: the centre of the panel is the only place wide
+# enough for "egrilik merkezi", and an axis through the origin would run straight through it.
+# The line y = 0 is redrawn faintly across the panel because it is the common tangent line at
+# beta(0), and the T_0 arrow lies along it.
+
+XR, YR = (-2.35, 2.35), (-0.5, 2.45)
+p = cplane(46, 26, 334, XR, YR)          # 71.06 px per unit, equal scale
+
+KAPPA, BETA, GAMMA = "&#954;", "&#946;", "&#947;"
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def nfmt(v):
+    return fmt(v).replace("-", MINUS_S)
+
+
+def par(x):
+    return x * x / 2.0
+
+
+K0 = ital(KAPPA) + subs("0")
+T0, N0 = bold("T") + subs("0"), bold("N") + subs("0")
+C = (0.0, 1.0)                            # centre of curvature
+Q = (0.866, 0.5)                          # circle point at height y = 0,5
+R = (1.0, 0.5)                            # parabola point at height y = 0,5
+
+# --- 1. frame: L-shaped axes, then the tangent line y = 0 -------------------------------------
+p.axes((-2, -1, 0, 1, 2), (0, 1, 2), "x", "y", xfmt=nfmt, yfmt=nfmt)
+p.line([(XR[0], 0.0), (XR[1], 0.0)], TEXT, 1.0, None, 0.22)
+
+# --- 2. the osculating circle (thin blue) and the parabola (thick orange) ----------------------
+p.circle(C[0], C[1], 1.0, THEORY, 1.6)
+curve(p, par, -2.0, 2.0, PRACTICE, 2.6, 240)
+
+# --- 3. the comparison at height y = 0,5 ------------------------------------------------------
+guide(p, [(0.72, 0.5), (1.12, 0.5)], TEXT, 0.55)      # the common height
+guide(p, [(1.0, 0.1), (1.0, 0.5)], TEXT, 0.55)        # x = 1, up from the tip of T_0
+
+# --- 4. the Frenet arrows at beta(0) ----------------------------------------------------------
+p.arrow((0.0, 0.0), (1.0, 0.0), THEORY, 2.6, 9)       # T_0 = (1, 0), along the parabola's tangent
+p.arrow((0.0, 0.0), (0.0, 1.0), BASE, 2.6, 9)         # N_0 = (0, 1), perpendicular to T_0
+
+# --- 5. points --------------------------------------------------------------------------------
+dot(p, Q, THEORY, 3.4)
+dot(p, R, PRACTICE, 3.4)
+dot(p, (0.0, 0.0), TEXT, 3.8)
+dot(p, C, TEXT, 4.6)
+
+# --- 6. labels --------------------------------------------------------------------------------
+# the circle, named above its highest point; the centre block inside it, centred on x = 0 where
+# nothing else runs
+p.label(0, 2, ital(GAMMA) + ": oskülatör çember", 0, -11, THEORY, 11, "middle")
+p.label(0, 1, "eğrilik merkezi", 0, -29, TEXT, 10.5, "middle")
+p.label(0, 1, bold("c") + " = (0, 1)", 0, -12, TEXT, 11.5, "middle")
+
+# the two readings of the same segment: the unit normal on its left, the radius on its right
+p.label(0, 0.62, N0 + " = (0, 1)", -8, 4, BASE, 11, "end")
+p.label(0, 0.80, ital("r") + " = 1/" + K0 + " = 1", 9, 4, TEXT, 10.5, "start")
+
+# the point and the tangent, below the line y = 0
+p.label(0, 0, ital(BETA) + "(0) = (0, 0)", -8, 16, TEXT, 11, "end")
+p.label(0.53, 0, T0 + " = (1, 0)", 0, 16, THEORY, 11, "middle")
+
+# the parabola, named outside the cup under its left arm
+p.label(-1.21, par(-1.21), ital(BETA) + ": " + ital("y") + " = " + ital("x") + sups("2") + "/2",
+        0, 24, PRACTICE, 11, "end")
+p.label(-1.21, par(-1.21), K0 + " = 1", 0, 41, TEXT, 11, "end")
+
+# the two points of the comparison, outside the cup under the right arm
+p.label(1.22, par(1.22), ital(BETA) + ": (1; 0,5)", 12, 26, PRACTICE, 11, "start")
+p.label(1.22, par(1.22), ital(GAMMA) + ": (0,866; 0,5)", 12, 44, THEORY, 11, "start")
+
+OUT["frenet-oskulator-cember"] = figure(
+    400, 262, [p],
+    "&#954;<sub>0</sub> = 1 alındığında &#946;&#8217;nın oskülatör düzlemdeki ikinci mertebeden "
+    "görüntüsü <em>y</em> = <em>x</em><sup>2</sup>/2 parabolü (turuncu), oskülatör çemberi &#947; "
+    "ise (0, 1) merkezli ve <em>r</em> = 1/&#954;<sub>0</sub> = 1 yarıçaplı çemberdir (mavi). "
+    "Eğrilik merkezi <strong>c</strong>, &#946;(0) noktasından <strong>N</strong><sub>0</sub> "
+    "yönünde 1/&#954;<sub>0</sub> kadar ilerleyerek bulunur: yeşil ok tam <strong>c</strong>&#8217;de "
+    "biter, yani bu ok aynı zamanda yarıçaptır. Çember orijinde parabole içten teğettir; iki "
+    "eğrinin ortak teğet yönü <strong>T</strong><sub>0</sub> = (1, 0), ona dik olan normal yön ise "
+    "<strong>N</strong><sub>0</sub> = (0, 1)&#8217;dir. İkisi orijin yakınında öyle yakındır ki "
+    "<em>y</em> = 0,5 yüksekliğinde parabol (1; 0,5) noktasındayken çember (0,866; 0,5) "
+    "noktasındadır.",
+    aria="xy duzleminde kalin turuncu y = x^2/2 parabolu, x = -2 ile 2 arasinda, ve orijinde ona "
+         "icten teget, merkezi c = (0, 1) ve yaricapi r = 1 olan ince mavi oskulator cember. "
+         "Orijindeki beta(0) = (0, 0) noktasinda yatay mavi T0 = (1, 0) oku ve dusey yesil "
+         "N0 = (0, 1) oku; yesil okun ucu tam c noktasinda biter ve yaricapi gosterir. "
+         "y = 0,5 yuksekliginde parabolun noktasi (1; 0,5) turuncu, cemberin noktasi "
+         "(0,866; 0,5) mavi isaretli; aradaki kucuk fark gorunur.",
+)
+
+# ============================================================ frenet-uc-duzlem
+# -*- coding: utf-8 -*-
+# frenet-uc-duzlem: the Frenet frame at a single point beta(0) and the three planes it fixes.
+#
+# The picture is intrinsic — there is no x, y, z to show — so the frame itself is used as the
+# world basis: T0 = (1,0,0), N0 = (0,1,0), B0 = T0 x N0 = (0,0,1). That keeps the drawn frame
+# right-handed, which the chapter's B = T x N demands. (The draft sketch asked for T0 to the
+# right, N0 toward the viewer and B0 up; with B = T x N that triple is left-handed — right of B
+# up is B x T = "away from the viewer" — so T0 and N0 swap their page directions here.)
+#
+# Camera. The three squares are mutually perpendicular, so their foreshortenings |n . d| obey
+# f_osc^2 + f_rect^2 + f_norm^2 = 1: no view opens all three. az = 45 makes the picture
+# left-right symmetric (T0 down-left, N0 down-right, B0 straight up, 114-123 degrees apart on
+# the page); el = 40 is above the API's 15-30 band on purpose, because f_osc = sin(el) and below
+# ~32 degrees the osculating square is squashed onto its own long diagonal and the unit arrows
+# T0, N0 come within a few pixels of its rim. At (45, 40) the three squares open to 0.64, 0.54
+# and 0.54 of their true area.
+#
+# The approximation beta(s) - beta(0) = s T0 + (s^2/2) N0 + (s^3/6) B0 (kappa0 = tau0 = 1, the
+# box's simplest case) is drawn on -1.5 <= s <= 1.5, after the patches and before the arrows, so
+# the T0 arrow covers the piece of curve that runs along it: the curve then visibly leaves the
+# arrow, which is what "tangent" means here.
+import math
+
+AZ, EL = 45.0, 40.0
+SCALE = 1.2
+HALF = 1.2                 # half side: every patch is a 2.4 x 2.4 square centred at beta(0)
+SMIN, SMAX = -1.5, 1.5     # the s range the box names
+
+O = (0.0, 0.0, 0.0)        # beta(0)
+T0 = (1.0, 0.0, 0.0)
+N0 = (0.0, 1.0, 0.0)
+B0 = vcross(T0, N0)        # (0, 0, 1) — B is T x N by definition, never the other way round
+
+BETA_S, KAPPA_S, TAU_S = "&#946;", "&#954;", "&#964;"
+APPROX_S, RSQUO = "&#8776;", "&#8217;"
+TT = bold("T") + subs("0")
+NN = bold("N") + subs("0")
+BB = bold("B") + subs("0")
+
+
+def beta(s):
+    """Frenet approximation with kappa0 = tau0 = 1, measured from beta(0) at the origin."""
+    return vadd(vscale(s, T0), vadd(vscale(0.5 * s * s, N0), vscale(s ** 3 / 6.0, B0)))
+
+
+P = space_panel(16, 14, 432, (-3.75, 2.95), (-2.55, 2.05))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=SCALE))
+
+
+def it(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def halo(px_, py_, s, color=TEXT, size=11.5, anchor="start"):
+    """Text with a page-coloured halo underneath, so a faint rim behind it breaks.
+
+    Two elements rather than paint-order="stroke": with one element the halo of a subscript
+    eats the letter in front of it."""
+    common = f'x="{px_:.1f}" y="{py_:.1f}" font-size="{size}" text-anchor="{anchor}"'
+    P.add(f'<text {common} fill="none" stroke="{BG}" stroke-width="3.6" '
+          f'stroke-linejoin="round">{s}</text>')
+    P.add(f'<text {common} fill="{color}">{s}</text>')
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start"):
+    """Haloed text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def plane_tag(Q, name, perp, dx=0, dy=0, color=TEXT, anchor="start"):
+    """Two-line patch label: the name, and under it the vector the patch is perpendicular to."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, name, color, 12, anchor)
+    halo(P.X(X) + dx, P.Y(Y) + dy + 14.5, perp + RSQUO + "a dik", color, 10.5, anchor)
+
+
+def patch(e1, e2, color, fill_op=0.065):
+    """A 2.4 x 2.4 square of the plane spanned by e1, e2, centred at beta(0)."""
+    corners = [vadd(vscale(a * HALF, e1), vscale(b * HALF, e2))
+               for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+    S.polygon(corners, color, fill_op, "none")
+    return corners
+
+
+def rim(corners, color):
+    S.polygon(corners, "none", 0.0, color, 1.1, "5 3")
+
+
+def right_angle(a, b, size, color=TEXT, width=1.25, opacity=0.85):
+    """The two outer edges of a small square in the plane of the unit vectors a, b, at beta(0).
+    In one grey and one size the three marks closed up into a hexagon — a little cube corner
+    sitting on the point. Each therefore takes the colour of the patch whose plane it lies in and
+    its own size, and the three read as three separate right angles."""
+    ea, eb = vscale(size, a), vscale(size, b)
+    S.line([ea, vadd(ea, eb), eb], color, width, None, opacity)
+
+
+# ---------------------------------------------------------------- 1. the three plane patches
+OSC = patch(T0, N0, PRACTICE, 0.07)    # spanned by T0 and N0, perpendicular to B0
+RECT = patch(T0, B0, BASE, 0.045)      # spanned by T0 and B0, perpendicular to N0
+NORM = patch(N0, B0, THEORY, 0.045)    # spanned by N0 and B0, perpendicular to T0
+
+# where the patches cut one another: the half-lines opposite the three arrows. They start well
+# outside the right-angle marks, or they turn the middle of the picture into a cube corner.
+for e in (T0, N0, B0):
+    S.line([vscale(-0.45, e), vscale(-HALF, e)], TEXT, 1.0, "3 3", 0.30)
+
+rim(OSC, PRACTICE)
+rim(RECT, BASE)
+rim(NORM, THEORY)
+
+# ---------------------------------------------------------------- 2. the three right angles
+# The curve is tangent to the T0 line, so on the page its s > 0 branch runs inside the (T0, N0)
+# wedge and its s < 0 branch inside the (N0, B0) wedge — no size keeps those two marks clear of
+# it. They are kept small and drawn first, so the curve passes over them close to the point,
+# where the arrows and the dot carry the eye anyway.
+right_angle(T0, N0, 0.28, PRACTICE)    # the corner inside the osculating square
+right_angle(N0, B0, 0.25, THEORY)      # inside the normal square
+right_angle(B0, T0, 0.30, BASE)        # inside the rectifying square, the wedge the curve misses
+
+# ---------------------------------------------------------------- 3. the Frenet approximation
+S.curve(beta, SMIN, SMAX, PRACTICE, 2.0, 260)
+S.point(beta(SMIN), PRACTICE, 2.6)
+S.point(beta(SMAX), PRACTICE, 2.6)
+
+S.arrow(O, T0, THEORY, 2.5, 9.5)
+S.arrow(O, N0, BASE, 2.5, 9.5)
+S.arrow(O, B0, TEXT, 2.5, 9.5)
+S.point(O, TEXT, 3.8)
+
+# ---------------------------------------------------------------- 4. labels
+tag(O, it(BETA_S) + "(0)", -34, -8, TEXT, 12, "end")
+
+# the frame names sit beside the middle of their own arrow, pushed off it sideways
+tag(vscale(0.60, T0), TT, -10, -5, THEORY, 12.5, "end")
+tag(vscale(0.60, N0), NN, 10, -5, BASE, 12.5, "start")
+tag(vscale(0.60, B0), BB, 10, 4, TEXT, 12.5, "start")
+
+# each patch is named at the corner that no other patch reaches
+plane_tag(vadd(vscale(HALF, T0), vscale(-HALF, N0)), "oskülatör düzlem", BB,
+          -12, -2, PRACTICE, "end")                     # left tip of the flat diamond
+plane_tag(vadd(vscale(-HALF, T0), vscale(HALF, B0)), "rektifiyan düzlem", NN,
+          12, -4, BASE, "start")                        # top corner, to the right
+plane_tag(vadd(vscale(-HALF, N0), vscale(HALF, B0)), "normal düzlem", TT,
+          -12, -4, THEORY, "end")                       # top corner, to the left
+
+tag(beta(SMIN), "Frenet yaklaşımı", -14, 26, PRACTICE, 11.5, "middle")
+
+LX, LY = P.X(-3.62), P.Y(-2.08)
+halo(LX, LY, KAPPA_S + subs("0") + " = " + TAU_S + subs("0") + " = 1,"
+     + "&#160;&#160;&#160;" + MINUS_S + "1,5 " + LEQ_S + " " + it("s") + " " + LEQ_S + " 1,5",
+     TEXT, 11.5)
+halo(LX, LY + 19, it(BETA_S) + "(" + it("s") + ") " + MINUS_S + " " + it(BETA_S) + "(0) "
+     + APPROX_S + " " + it("s") + " " + TT + " + (" + it("s") + sups("2") + "/2) " + NN
+     + " + (" + it("s") + sups("3") + "/6) " + BB, PRACTICE, 11.5)
+
+# ---------------------------------------------------------------- 5. what the eye should check
+d = (math.cos(math.radians(EL)) * math.cos(math.radians(AZ)),
+     math.cos(math.radians(EL)) * math.sin(math.radians(AZ)), math.sin(math.radians(EL)))
+print("  |T0|, |N0|, |B0| =", [round(vnorm(v), 12) for v in (T0, N0, B0)])
+print("  T.N, N.B, B.T    =", [round(vdot(a, b), 12) for a, b in ((T0, N0), (N0, B0), (B0, T0))])
+print("  T x N - B        =", [round(c, 12) for c in vsub(vcross(T0, N0), B0)])
+
+h = 1e-5
+tangent = vunit(vsub(beta(h), beta(-h)))
+print("  egri tegeti(0) - T0 =", [round(c, 9) for c in vsub(tangent, T0)])
+acc = vscale(1.0 / (h * h), vsub(vadd(beta(h), beta(-h)), vscale(2.0, beta(0.0))))
+print("  egri ivmesi(0) = kappa0 N0 ?", [round(c, 6) for c in acc], " ivme . T0 =",
+      round(vdot(acc, T0), 9))
+
+for nm, v in (("T0", T0), ("N0", N0), ("B0", B0)):
+    X, Y = S.pt(v)
+    print(f"  {nm}: sayfa boyu {math.hypot(X, Y) * P.w / (P.xmax - P.xmin):.1f} px, "
+          f"yon {math.degrees(math.atan2(Y, X)) % 360:.1f} derece")
+XT, YT = S.pt(T0)
+XC, YC = S.pt(beta(0.02))
+print(f"  egrinin s=0 sayfa yonu {math.degrees(math.atan2(YC, XC)) % 360:.1f} derece "
+      f"(T0 ile fark {abs(math.degrees(math.atan2(YC, XC) - math.atan2(YT, XT))):.2f} derece)")
+XN, YN = S.pt(N0)
+print(f"  sayfada T0-N0 acisi {math.degrees(math.acos((XT * XN + YT * YN) / (math.hypot(XT, YT) * math.hypot(XN, YN)))):.1f} "
+      f"derece (uzayda 90)")
+print("  duzlem acikligi |n.d|: oskulator %.2f, rektifiyan %.2f, normal %.2f"
+      % (abs(vdot(B0, d)), abs(vdot(N0, d)), abs(vdot(T0, d))))
+
+pts = [S.pt(beta(SMIN + (SMAX - SMIN) * k / 400.0)) for k in range(401)]
+pts += [S.pt(q) for q in OSC + RECT + NORM + [T0, N0, B0]]
+xs, ys = [q[0] for q in pts], [q[1] for q in pts]
+print(f"  cizim X [{min(xs):.2f}, {max(xs):.2f}] Y [{min(ys):.2f}, {max(ys):.2f}]  "
+      f"panel X [{P.xmin}, {P.xmax}] Y [{P.ymin}, {P.ymax}]")
+print(f"  piksel/birim {P.w / (P.xmax - P.xmin):.1f}")
+
+OUT["frenet-uc-duzlem"] = figure(
+    464, 326, [P],
+    "<em>&#946;</em>(0) noktasında Frenet çatısının üç birim vektörü &#8212; teğet "
+    "<strong>T</strong><sub>0</sub> (mavi), asli normal <strong>N</strong><sub>0</sub> (yeşil) ve "
+    "binormal <strong>B</strong><sub>0</sub> (koyu) &#8212; her biri bir düzlemi dik olarak deler: "
+    "turuncu kare <strong>B</strong><sub>0</sub>&#8217;a dik oskülatör düzlem, yeşil kare "
+    "<strong>N</strong><sub>0</sub>&#8217;a dik rektifiyan düzlem, mavi kare "
+    "<strong>T</strong><sub>0</sub>&#8217;a dik normal düzlemdir; üç dik açı işareti çatının "
+    "ikişer ikişer dikliğini gösterir. İnce turuncu yay, &#954;<sub>0</sub> = "
+    "&#964;<sub>0</sub> = 1 alınarak yazılan <em>&#946;</em>(<em>s</em>) &#8722; "
+    "<em>&#946;</em>(0) &#8776; <em>s</em> <strong>T</strong><sub>0</sub> + "
+    "(<em>s</em><sup>2</sup>/2) <strong>N</strong><sub>0</sub> + (<em>s</em><sup>3</sup>/6) "
+    "<strong>B</strong><sub>0</sub> Frenet yaklaşımıdır. Yay <em>s</em> = 0&#8217;da "
+    "<strong>T</strong><sub>0</sub> okuna teğettir, ikinci terim onu oskülatör düzlem içinde "
+    "<strong>N</strong><sub>0</sub> yönünde büker, en küçük olan üçüncü terim ise onu bu "
+    "düzlemden <strong>B</strong><sub>0</sub> yönünde ayırır.",
+    aria="beta(0) noktasinda Frenet catisinin uc birim oku: teget T0 mavi, asli normal N0 yesil, "
+         "binormal B0 koyu, ikiser ikiser dik. Uc yari saydam kare duzlem parcasi: T0 ile N0'in "
+         "gerdigi turuncu oskulator duzlem B0'a dik, T0 ile B0'in gerdigi yesil rektifiyan duzlem "
+         "N0'a dik, N0 ile B0'in gerdigi mavi normal duzlem T0'a dik. Ince turuncu yay, "
+         "kappa0 = tau0 = 1 icin beta(s) - beta(0) = s T0 + (s^2/2) N0 + (s^3/6) B0 Frenet "
+         "yaklasimidir; s degeri -1,5 ile 1,5 arasinda cizilmistir ve yay s = 0 noktasinda "
+         "T0 okuna tegettir")
+
+# ============================================================ frenet-yaklasim-izdusumleri
+# -*- coding: utf-8 -*-
+# frenet-yaklasim-izdusumleri: the three projections of the Frenet approximation
+#   beta^(s) - beta(0) = s T0 + (k0 s^2 / 2) N0 + (k0 t0 s^3 / 6) B0,  with k0 = t0 = 1, |s| <= 1.5,
+# written in the frame coordinates p = s, q = s^2/2, w = s^3/6 exactly as the solution does:
+#   osculating (T0, N0): q = p^2/2     parabola;  d(p, q)/ds = (1, s) -> (1, 0) at s = 0, so the
+#                                      blue arrow along T0 really is the tangent there, and N0,
+#                                      drawn as the vertical axis, is perpendicular to it on the page
+#   rectifying (T0, B0): w = p^3/6     cubic; w'' = p changes sign at 0 -> inflection at the origin
+#   normal     (N0, B0): w^2 = 2q^3/9  semicubical parabola; d(q, w)/ds = (s, s^2/2) ~ s(1, s/2),
+#                                      so both branches leave the origin tangent to the N0 axis:
+#                                      the cusp. q = s^2/2 >= 0, so only the right half plane is used.
+# Scale: N0 and B0 get 160/1.7 = 94.1 px per unit in every panel, so the third panel — the only one
+# whose shape depends on the aspect ratio, since the cusp is a tangency — is drawn with equal scale.
+# T0 is compressed to 200/3.5 = 57.1 px per unit to keep the three panels on one line; an
+# axis-parallel scaling leaves a horizontal tangent horizontal, so nothing above is disturbed.
+# Labels sit in the empty parts: inside the cup of the parabola, in the two quadrants the cubic
+# leaves free, and outside the horn of the semicubic. Leaders are slanted so that they are never
+# read as a second copy of the vertical axis.
+
+TOP, LEFT, GAP = 40, 30, 44
+PW, PH, P3W = 200, 160, 198
+S0, S1, NS = -1.5, 1.5, 400
+
+p1 = Plot(LEFT, TOP, PW, PH, (-1.75, 1.75), (-0.35, 1.35))
+p2 = Plot(LEFT + PW + GAP, TOP, PW, PH, (-1.75, 1.75), (-0.85, 0.85))
+p3 = Plot(LEFT + 2 * (PW + GAP), TOP, P3W, PH, (-0.45, 1.65), (-0.85, 0.85))
+
+SS = [S0 + (S1 - S0) * k / NS for k in range(NS + 1)]
+KAPPA, TAU, BETA = "&#954;", "&#964;", "&#946;"
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def sub0(s):
+    """Frame name with the index 0: T0, N0, B0."""
+    return s + subs("0")
+
+
+def halo(p, x, y, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start", strong=False):
+    """Text hung on a data point with a page-coloured halo, so a faint line behind it breaks."""
+    st = ' font-weight="700"' if strong else ''
+    p.add(f'<text x="{p.X(x) + dx:.1f}" y="{p.Y(y) + dy:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}"{st} stroke="{BG}" stroke-width="3.2" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def title(p, s):
+    """Panel title, 15 px above the panel: the vertical axis arrowhead reaches y0 - 4."""
+    p.text_px(p.x0 + p.w / 2, p.y0 - 15, s, TEXT, 11.5, "middle", True)
+
+
+def axis_names(p, xname, yname):
+    """Frame names at the two arrow tips: the x name under the right tip, the y name left of the
+    top tip (on the right it would sit on the equation labels)."""
+    p.text_px(p.x0 + p.w + 2, p.Y(0) + 16, xname, TEXT, 12, "end", True)
+    p.text_px(p.X(0) - 8, p.y0 + 7, yname, TEXT, 12, "end", True)
+
+
+def leader(p, a, b, opacity=0.6):
+    """Thin line from a label to the point it names."""
+    p.add(f'<line x1="{p.X(a[0]):.1f}" y1="{p.Y(a[1]):.1f}" x2="{p.X(b[0]):.1f}" y2="{p.Y(b[1]):.1f}" '
+          f'stroke="{TEXT}" stroke-width="0.9" opacity="{opacity}"/>')
+
+
+def bead(p, pt, color=PRACTICE, r=2.8):
+    """Dot on a curve, rimmed with the page colour so it stays visible on the stroke."""
+    p.add(f'<circle cx="{p.X(pt[0]):.1f}" cy="{p.Y(pt[1]):.1f}" r="{r}" fill="{color}" '
+          f'stroke="{BG}" stroke-width="1.2" paint-order="stroke"/>')
+
+
+def origin_dot(p):
+    p.points([(0, 0)], TEXT, 3.4)
+
+
+# ---------------------------------------------------------------------------------------------
+# 1. osculating plane (T0, N0): the parabola q = p^2/2 and the tangent T0 at beta(0)
+# ---------------------------------------------------------------------------------------------
+title(p1, "Oskülatör düzlem (" + sub0("T") + sub0("N") + ")")
+p1.origin_axes("", "")
+p1.line([(s, s * s / 2) for s in SS], PRACTICE, 2.2)
+p1.arrow((0, 0), (0.8, 0), THEORY, 2.4, head=8)
+origin_dot(p1)
+axis_names(p1, sub0("T"), sub0("N"))
+
+# both labels sit inside the cup of the parabola, centred on the N0 axis; at q = 0,9 the arms are
+# 76 px from the axis and at q = 0,55 they are 60 px, so a 56 px label clears them either side
+halo(p1, 0, 0.90, ital("q") + " = " + ital("p") + sups("2") + "/2", 0, 0, PRACTICE, 12, "middle")
+halo(p1, 0, 0.55, KAPPA + subs("0") + " = " + TAU + subs("0") + " = 1", 0, 0, TEXT, 11.5, "middle")
+halo(p1, 0, 0, BETA + "(0)", -8, 15, TEXT, 11.5, "end")
+halo(p1, 0.5, 0, "teğet", 0, 18, THEORY, 11.5, "middle")
+
+# ---------------------------------------------------------------------------------------------
+# 2. rectifying plane (T0, B0): the cubic w = p^3/6 with its inflection at beta(0)
+# ---------------------------------------------------------------------------------------------
+title(p2, "Rektifiyan düzlem (" + sub0("T") + sub0("B") + ")")
+p2.origin_axes("", "")
+p2.line([(s, s ** 3 / 6) for s in SS], PRACTICE, 2.2)
+origin_dot(p2)
+axis_names(p2, sub0("T"), sub0("B"))
+
+# the cubic leaves the upper left and lower right quadrants free; the two sign labels sit in the
+# wedges the curve leaves next to itself and say what the inflection does: w changes sign at s = 0
+halo(p2, -1.62, 0.58, ital("w") + " = " + ital("p") + sups("3") + "/6", 0, 0, PRACTICE, 12, "start")
+halo(p2, 0.60, 0.55, ital("w") + " &gt; 0", 0, 0, TEXT, 11, "start")
+halo(p2, -0.45, -0.60, ital("w") + " &lt; 0", 0, 0, TEXT, 11, "end")
+halo(p2, 0, 0, BETA + "(0)", -8, -9, TEXT, 11.5, "end")
+leader(p2, (0.316, -0.33), (0.07, -0.095))
+halo(p2, 1.62, -0.45, "dönüm noktası", 0, 0, TEXT, 11.5, "end")
+
+# ---------------------------------------------------------------------------------------------
+# 3. normal plane (N0, B0): the semicubical parabola w^2 = 2q^3/9, cusp at beta(0), q >= 0
+# ---------------------------------------------------------------------------------------------
+title(p3, "Normal düzlem (" + sub0("N") + sub0("B") + ")")
+p3.origin_axes("", "")
+p3.line([(s * s / 2, s ** 3 / 6) for s in SS], PRACTICE, 2.2)
+bead(p3, (S1 * S1 / 2, S1 ** 3 / 6))
+bead(p3, (S0 * S0 / 2, S0 ** 3 / 6))
+origin_dot(p3)
+axis_names(p3, sub0("N"), sub0("B"))
+
+halo(p3, 0.12, 0.60, ital("w") + sups("2") + " = 2" + ital("q") + sups("3") + "/9", 0, 0,
+     PRACTICE, 12, "start")
+halo(p3, 0, 0, BETA + "(0)", -8, 15, TEXT, 11.5, "end")
+leader(p3, (0.33, -0.60), (0.06, -0.07))
+halo(p3, 0.35, -0.72, "sivri uç", 0, 0, TEXT, 11.5, "start")
+halo(p3, S1 * S1 / 2, S1 ** 3 / 6, ital("s") + " = 1,5", 7, 4, TEXT, 11, "start")
+halo(p3, S0 * S0 / 2, S0 ** 3 / 6, ital("s") + " = " + MINUS_S + "1,5", 7, 4, TEXT, 11, "start")
+
+OUT["frenet-yaklasim-izdusumleri"] = figure(
+    734, 220, [p1, p2, p3],
+    "Frenet yaklaşımının &#954;<sub>0</sub> = 1, &#964;<sub>0</sub> = 1 ve "
+    "&#8722;1,5 &#8804; <em>s</em> &#8804; 1,5 için üç çatı düzlemine dik izdüşümleri; her panelde "
+    "orijin <strong>&#946;</strong>(0) noktasıdır ve çatı koordinatları "
+    "<em>p</em> = <em>s</em>, <em>q</em> = <em>s</em><sup>2</sup>/2, "
+    "<em>w</em> = <em>s</em><sup>3</sup>/6&#8217;dır. Oskülatör düzlemde <em>q</em> = "
+    "<em>p</em><sup>2</sup>/2 parabolü görülür: eğri <strong>&#946;</strong>(0) noktasında "
+    "<strong>T</strong><sub>0</sub>&#8217;a teğettir (mavi ok) ve "
+    "<strong>N</strong><sub>0</sub> yönüne kıvrılır. Rektifiyan düzlemdeki "
+    "<em>w</em> = <em>p</em><sup>3</sup>/6 kübiğinin orijinde dönüm noktası vardır; eğri burada "
+    "<strong>B</strong><sub>0</sub> bileşeninin işaretini değiştirir. Normal düzlemde ise "
+    "<em>w</em><sup>2</sup> = 2<em>q</em><sup>3</sup>/9 yarı kübik parabolü yalnızca "
+    "<em>q</em> &#8805; 0 yarı düzleminde kalır ve orijinde sivri uç yapar: eğriye "
+    "<strong>T</strong><sub>0</sub> doğrultusunda bakan gözlemci onu gelip geri dönüyormuş gibi "
+    "görür.",
+    css_class=WIDE,
+    aria="Yan yana uc panel. Birincide oskulator duzlem T0 N0: turuncu parabol q = p kare bolu 2, "
+         "orijindeki siyah nokta beta(0) ve oradan T0 yonunde cikan kisa mavi teget oku. "
+         "Ikincide rektifiyan duzlem T0 B0: turuncu kubik w = p kup bolu 6, orijinde donum "
+         "noktasi. Ucuncude normal duzlem N0 B0: turuncu yari kubik parabol w kare = 2 q kup "
+         "bolu 9, yalnizca q nun negatif olmadigi yari duzlemde, orijinde sivri uc; iki ucu "
+         "s = 1,5 ve s = eksi 1,5 olarak isaretli. Her panelde kappa0 = 1 ve tau0 = 1.",
+)
+
+# ============================================================ iccarpim-aci-kosinus
+# -*- coding: utf-8 -*-
+# iccarpim-aci-kosinus: the angle between two vectors and the "shadow" reading of the dot product.
+# In the xy plane, from a common origin: w = (3, 0) (orange, along the x axis) and v = (2, 2) (blue).
+# The angle between them is vartheta = pi/4, marked by a small arc. A dashed perpendicular drops from
+# the tip of v to the x axis, its foot at (2, 0); the segment from the origin to the foot is drawn as a
+# thick translucent blue band beneath w: it is the shadow of v on w, of length ||v|| cos vartheta = 2.
+# The note in the empty upper-right region records v . w = 6 = 2 . 3 = (||v|| cos vartheta) . ||w||.
+import math
+
+DBAR = "&#8214;"                                        # double vertical bar for the norm
+TH = '<tspan font-style="italic">&#977;</tspan>'        # vartheta, as in the text
+V, W = bold("v"), bold("w")
+NORM_V = DBAR + V + DBAR
+NORM_W = DBAR + W + DBAR
+
+p = cplane(30, 18, 340, (-0.55, 3.75), (-0.55, 3.3))
+
+O = (0.0, 0.0)
+v_tip = (2.0, 2.0)
+w_tip = (3.0, 0.0)
+foot = (2.0, 0.0)
+
+# 1. axes through the origin, scaled 0..3 on both
+p.origin_axes("x", "y", xticks=(1, 2, 3), yticks=(1, 2, 3))
+
+# 2. the shadow of v on w: thick translucent band from the origin to the foot, drawn beneath w
+p.line([O, foot], THEORY, 7.0, None, 0.35)
+
+# 3. angle arc between w (angle 0) and v (angle pi/4)
+p.arc(0, 0, 0.6, 0.0, math.pi / 4, TEXT, 1.2, None, 0.85)
+
+# 4. dashed perpendicular from the tip of v to the x axis, with a right-angle mark at the foot
+guide(p, [v_tip, foot], TEXT, 0.6)
+s = 0.13
+p.line([(2.0 - s, 0.0), (2.0 - s, s), (2.0, s)], TEXT, 1.0, None, 0.7)
+
+# 5. the two vectors
+p.arrow(O, w_tip, PRACTICE, 2.4, head=9)
+p.arrow(O, v_tip, THEORY, 2.4, head=9)
+
+# 6. points: origin and the foot of the perpendicular
+dot(p, O, TEXT, 3.2)
+dot(p, foot, TEXT, 3.2)
+
+# 7. labels
+p.label(1.0, 1.0, V + " = (2, 2)", -9, -3, THEORY, 12, "end")
+p.label(2.5, 0.0, W + " = (3, 0)", 0, 31, PRACTICE, 12, "middle")
+p.label(0.73, 0.27, TH + " = " + PI_S + "/4", 0, 4, TEXT, 12, "start")
+p.label(2.0, 0.0, "(2, 0)", 8, -7, TEXT, 11.5, "start")
+p.label(1.0, 0.0, NORM_V + " cos " + TH + " = 2", 0, 31, THEORY, 12, "middle")
+
+# note in the free upper region: the product and what each factor is
+p.label(2.2, 2.98, V + " " + CDOT + " " + W + " = 6 = 2 " + CDOT + " 3", 0, 0, TEXT, 12.5, "middle")
+p.label(2.2, 2.72, "2 = " + NORM_V + " cos " + TH + ",&#160;&#160;&#160;3 = " + NORM_W, 0, 0, TEXT, 11.5, "middle")
+
+OUT["iccarpim-aci-kosinus"] = figure(
+    400, 330, [p],
+    "<em>xy</em> düzleminde ortak başlangıçtan çıkan iki ok: <strong>w</strong> = (3, 0) (turuncu) "
+    "<em>x</em> ekseni üzerindedir, <strong>v</strong> = (2, 2) (mavi) köşegen doğrultusundadır ve "
+    "aralarındaki açı <em>&#977;</em> = &#960;/4&#8217;tür. <strong>v</strong>&#8217;nin ucundan "
+    "<strong>w</strong>&#8217;nin doğrusuna inen kesikli dikmenin ayağı (2, 0) noktasıdır; başlangıçtan "
+    "bu ayağa kadar uzanan kalın parça <strong>v</strong>&#8217;nin <strong>w</strong> doğrultusundaki "
+    "gölgesidir ve boyu &#8214;<strong>v</strong>&#8214; cos <em>&#977;</em> = 2&#8217;dir. "
+    "İç çarpım bu gölge boyunun &#8214;<strong>w</strong>&#8214; = 3 ile çarpımıdır: "
+    "<strong>v</strong> &#183; <strong>w</strong> = 2 &#183; 3 = 6.",
+    aria="xy duzleminde ortak baslangictan cikan iki ok: w = (3, 0) turuncu, x ekseni uzerinde; "
+         "v = (2, 2) mavi; aralarindaki aci theta = pi/4 kucuk bir yayla isaretli; v'nin ucundan "
+         "x eksenine inen kesikli dikmenin ayagi (2, 0); baslangictan (2, 0)'a kadar kalin parca "
+         "||v|| cos theta = 2; not: v . w = 6 = 2 . 3",
+)
+
+# ============================================================ iccarpim-acik-yuvar
+# -*- coding: utf-8 -*-
+# iccarpim-acik-yuvar: the z = 0 section of the open unit ball O = {||p|| < 1}.
+# The unit circle (centre origin, radius 1) is dashed because it does not belong to O; the disk
+# inside it is tinted grey. At p = (1/2, 0, 0) the gap to the unit sphere is eps = 1 - ||p|| = 1/2,
+# and the blue ball N_eps(p) of that radius touches the unit circle from inside at (1, 0, 0)
+# without sticking out. The radius from p to (1, 0, 0) carries eps = 1 - ||p|| = 1/2.
+# Point names keep the three coordinates of the box text; the note "z = 0 kesiti" in the empty
+# lower-left part of the disk says which plane we are looking at.
+# Tick labels are placed by hand: origin_axes() would print 1 and -1 exactly on the dashed circle,
+# which passes through (+-1, 0) and (0, +-1).
+
+DBAR = "&#8214;"                                   # double vertical bar for the norm
+P_B = bold("p")
+NORM_P = DBAR + P_B + DBAR
+EPS_LABEL = EPS + " = 1 " + MINUS_S + " " + NORM_P + " = 1/2"
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+XR, YR = (-1.42, 1.50), (-1.22, 1.22)
+p = cplane(26, 20, 340, XR, YR)
+ox, oy = p.X(0.0), p.Y(0.0)
+
+P = (0.5, 0.0)          # the point p, drawn in the z = 0 plane
+T = (1.0, 0.0)          # where N_eps(p) touches the unit circle
+EPSILON = 0.5           # 1 - ||p||
+
+
+def tick_mark(t, along_x):
+    if along_x:
+        X = p.X(t)
+        p.add(f'<line x1="{X:.1f}" y1="{oy-3:.1f}" x2="{X:.1f}" y2="{oy+3:.1f}" '
+              f'stroke="{TEXT}" stroke-width="1" opacity="0.7"/>')
+    else:
+        Y = p.Y(t)
+        p.add(f'<line x1="{ox-3:.1f}" y1="{Y:.1f}" x2="{ox+3:.1f}" y2="{Y:.1f}" '
+              f'stroke="{TEXT}" stroke-width="1" opacity="0.7"/>')
+
+
+def tick_label(px, py, s, anchor):
+    p.add(f'<text x="{px:.1f}" y="{py:.1f}" fill="{TEXT}" font-size="11" text-anchor="{anchor}" '
+          f'opacity="0.7">{s}</text>')
+
+
+# 1. the open unit disk O: light grey fill, dashed boundary (the unit circle is not part of O)
+disk_fill(p, 0.0, 0.0, 1.0, TEXT, 0.10)
+
+# 2. axes through the origin; ticks by hand (see the note at the top)
+p.origin_axes("x", "y")
+tick_mark(-1.0, True)
+tick_mark(1.0, False)
+tick_mark(-1.0, False)
+tick_label(p.X(-1.0) - 6, oy + 15, MINUS_S + "1", "end")      # left of the circle's leftmost point
+tick_label(ox - 8, p.Y(1.0) - 5, "1", "end")                  # above the circle's top
+tick_label(ox - 8, p.Y(-1.0) + 14, MINUS_S + "1", "end")      # below the circle's bottom
+
+# 3. the dashed unit circle
+p.circle(0.0, 0.0, 1.0, TEXT, 1.4, "5 4", "none", 0.7)
+
+# 4. the ball N_eps(p): blue tint and blue rim, tangent to the unit circle at (1, 0, 0)
+disk_fill(p, P[0], P[1], EPSILON, THEORY, 0.20)
+p.circle(P[0], P[1], EPSILON, THEORY, 1.7)
+
+# 5. the radius from p to the point of tangency: the gap eps = 1 - ||p||
+p.line([P, T], THEORY, 2.4)
+
+# 6. points: p (filled) and (1, 0, 0) (hollow: it lies on the unit sphere, so it is not in O)
+dot(p, P, TEXT, 4.0)
+hollow(p, T, TEXT, 3.6, 1.6)
+
+# 7. labels — the two inside the ball sit above and below its horizontal radius
+p.label(P[0], P[1], P_B + " = (1/2, 0, 0)", 0, 19, TEXT, 11.5, "middle")
+p.label(0.90, 0.0, EPS_LABEL, 0, -11, THEORY, 11, "end")
+p.label(P[0], 0.26, ital("N") + subs(EPS) + "(" + P_B + ")", 0, 0, THEORY, 12, "middle")
+p.label(T[0], T[1], "(1, 0, 0)", 7, -7, TEXT, 11, "start")
+p.label(-0.5, 0.38, "açık yuvar " + ital("O"), 0, 0, TEXT, 11.5, "middle")
+p.label(-0.52, 1.03, "birim çember", 0, 0, TEXT, 10.5, "end")
+p.label(-0.52, 0.915, "(" + ital("O") + "'ya ait değil)", 0, 0, TEXT, 10.5, "end")
+p.label(-0.48, -0.52, "(" + ital("z") + " = 0 kesiti)", 0, 0, TEXT, 11, "middle")
+
+OUT["iccarpim-acik-yuvar"] = figure(
+    400, 330, [p],
+    "Şekil, &#8214;<strong>p</strong>&#8214; &lt; 1 açık birim yuvarının <em>z</em> = 0 düzlemiyle "
+    "kesitidir: gri disk <em>O</em>&#8217;nun noktalarıdır, kesikli çizilen birim çember ise kümeye "
+    "ait değildir. <strong>p</strong> = (1/2, 0, 0) noktasının çembere olan boşluğu "
+    "&#949; = 1 &#8722; &#8214;<strong>p</strong>&#8214; = 1/2&#8217;dir; bu yarıçapla çizilen mavi "
+    "<em>N</em><sub>&#949;</sub>(<strong>p</strong>) yuvarı birim çembere (1, 0, 0) noktasında içten "
+    "dokunur ama dışına taşmaz, yani tamamen <em>O</em>&#8217;nun içinde kalır. Çembere yaklaşan "
+    "noktalarda &#949; küçülür, fakat &#8214;<strong>p</strong>&#8214; &lt; 1 olduğu sürece sıfır "
+    "olmaz; <em>O</em> bu yüzden açıktır.",
+    aria="z = 0 kesiti: merkezi orijin, yaricapi 1 olan kesikli birim cember ve icini dolduran gri "
+         "disk O; p = (1/2, 0, 0) noktasi isaretli; merkezi p, yaricapi epsilon = 1/2 olan mavi "
+         "cember birim cembere (1, 0, 0) noktasinda icten dokunuyor; p'den (1, 0, 0)'a giden parca "
+         "epsilon = 1 - ||p|| = 1/2 etiketli; eksenler -1 ile 1 arasinda olcekli",
+)
+
+# ============================================================ iccarpim-kure-acik-degil
+# -*- coding: utf-8 -*-
+# iccarpim-kure-acik-degil: the z = 0 section of the unit sphere S = {||p|| = 1}, which is not open.
+# S itself is only the surface, so the section is drawn as a thick solid circle (no tint inside).
+# At p = (1, 0, 0) the neighbourhood N_eps(p) of radius eps = 1/2 (blue, dashed rim, light tint)
+# spills both inside and outside the circle; q = (5/4, 0, 0) lies in that neighbourhood, at distance
+# eps/2 = 1/4 from p, but ||q|| = 5/4 is not 1, so q is not in S.
+# Point names keep the three coordinates of the box text, as in iccarpim-acik-yuvar; the note
+# "(z = 0 kesiti)" in the empty inside of the circle says which plane we are looking at.
+# Labels near the two circles are drawn with a background halo (paint-order) so the lines break
+# behind them instead of running through the text.
+import math
+
+DBAR = "&#8214;"                                   # double vertical bar for the norm
+P_B, Q_B = bold("p"), bold("q")
+NORM_P = DBAR + P_B + DBAR
+NORM_Q = DBAR + Q_B + DBAR
+
+XR, YR = (-1.5, 2.15), (-1.3, 1.35)
+p = cplane(28, 22, 344, XR, YR)
+ox, oy = p.X(0.0), p.Y(0.0)
+
+P = (1.0, 0.0)                                     # the point of S we test
+Q = (1.25, 0.0)                                    # 1 + eps/2, inside N_eps(p) but outside S
+EPSILON = 0.5
+RIM = (1.0 + EPSILON * math.cos(math.pi / 4), EPSILON * math.sin(math.pi / 4))   # end of the eps radius
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+def txt(x, y, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="middle", opacity=1.0):
+    """Label at a data point with a page-coloured halo, so lines behind it break."""
+    op = f' opacity="{opacity}"' if opacity < 1.0 else ""
+    p.add(f'<text x="{p.X(x) + dx:.1f}" y="{p.Y(y) + dy:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}"{op} stroke="{BG}" stroke-width="3.0" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def tick_mark(t, along_x):
+    if along_x:
+        X = p.X(t)
+        p.add(f'<line x1="{X:.1f}" y1="{oy-3:.1f}" x2="{X:.1f}" y2="{oy+3:.1f}" '
+              f'stroke="{TEXT}" stroke-width="1" opacity="0.7"/>')
+    else:
+        Y = p.Y(t)
+        p.add(f'<line x1="{ox-3:.1f}" y1="{Y:.1f}" x2="{ox+3:.1f}" y2="{Y:.1f}" '
+              f'stroke="{TEXT}" stroke-width="1" opacity="0.7"/>')
+
+
+# 1. the neighbourhood N_eps(p): light blue tint (drawn first, everything else sits on top)
+disk_fill(p, P[0], P[1], EPSILON, THEORY, 0.16)
+
+# 2. axes through the origin; ticks by hand, so that no tick number lands on a circle
+p.origin_axes("x", "y")
+tick_mark(-1.0, True)
+tick_mark(1.0, False)
+tick_mark(-1.0, False)
+txt(-1.0, 0.0, MINUS_S + "1", -7, 15, TEXT, 11, "end", 0.7)
+txt(0.0, 1.0, "1", -8, -5, TEXT, 11, "end", 0.7)
+txt(0.0, -1.0, MINUS_S + "1", -8, 14, TEXT, 11, "end", 0.7)
+
+# 3. S itself: the unit circle, thick and solid — the set is exactly this curve
+p.circle(0.0, 0.0, 1.0, TEXT, 2.8)
+
+# 4. the rim of N_eps(p): dashed blue, crossing S at two points
+p.circle(P[0], P[1], EPSILON, THEORY, 1.7, "5 4")
+
+# 5. the radius of the neighbourhood, into the free space above and right of p
+p.line([P, RIM], THEORY, 2.2)
+
+# 6. leader from q down to its label block
+p.line([(1.28, -0.07), (1.45, -0.52)], PRACTICE, 0.9, None, 0.8)
+
+# 7. points: p belongs to S (filled), q does not (hollow).
+# p sits on the thick circle and would melt into it, so a thin background ring separates the two.
+p.add(f'<circle cx="{p.X(P[0]):.1f}" cy="{p.Y(P[1]):.1f}" r="5.8" fill="{BG}" stroke="none"/>')
+dot(p, P, TEXT, 4.2)
+hollow(p, Q, PRACTICE, 4.0, 1.8)
+
+# 8. labels
+txt(-0.98, 1.14, ital("S") + ": " + NORM_P + " = 1", 0, 0, TEXT, 12.5)
+txt(-0.98, 0.99, "birim küre", 0, 0, TEXT, 11)
+# p's name sits clear of the thick circle, so that its halo does not bite into S
+txt(P[0], P[1], P_B + " = (1, 0, 0)", -15, 23, TEXT, 12, "end")
+txt(1.25, 0.62, ital("N") + subs(EPS) + "(" + P_B + ")", 0, 0, THEORY, 12)
+# the radius is labelled past its far end, so the segment does not run through the text
+txt(RIM[0], RIM[1], EPS + " = 1/2", 6, -4, THEORY, 11.5, "start")
+
+txt(1.45, -0.64, Q_B + " = (5/4, 0, 0)", 0, 0, PRACTICE, 12)
+txt(1.45, -0.80, NORM_Q + " = 5/4 " + NEQ_S + " 1", 0, 0, PRACTICE, 11.5)
+txt(1.45, -0.96, ital("S") + "'de değil", 0, 0, PRACTICE, 11.5)
+
+txt(1.30, 0.98, ital("d") + "(" + P_B + ", " + Q_B + ") = " + EPS + "/2 = 1/4 &lt; " + EPS,
+    0, 0, TEXT, 11.5)
+txt(-0.45, -0.45, "(" + ital("z") + " = 0 kesiti)", 0, 0, TEXT, 11, "middle", 0.8)
+
+OUT["iccarpim-kure-acik-degil"] = figure(
+    400, 296, [p],
+    "<em>S</em>: &#8214;<strong>p</strong>&#8214; = 1 birim küresinin <em>z</em> = 0 kesiti kalın "
+    "çemberdir; küme yalnızca yüzeydir, çemberin içi <em>S</em>&#8217;ye ait değildir. "
+    "<strong>p</strong> = (1, 0, 0) noktası <em>S</em>&#8217;nin üzerindedir, ama yarıçapı "
+    "&#949; = 1/2 olan <em>N</em><sub>&#949;</sub>(<strong>p</strong>) komşuluğu çemberin hem içine "
+    "hem dışına taşar. Komşuluktaki <strong>q</strong> = (5/4, 0, 0) noktası <strong>p</strong>&#8217;ye "
+    "yalnızca &#949;/2 = 1/4 uzaklıktadır, fakat &#8214;<strong>q</strong>&#8214; = 5/4 &#8800; 1 "
+    "olduğundan <em>S</em>&#8217;de değildir. &#949; ne kadar küçültülürse küçültülsün aynı şey olur: "
+    "bir yüzeyin kalınlığı yoktur, hiçbir yuvar onun içine sığmaz, bu yüzden <em>S</em> açık değildir.",
+    aria="z = 0 kesiti: merkezi orijin, yaricapi 1 olan kalin birim cember S ve uzerindeki "
+         "p = (1, 0, 0) noktasi; merkezi p, yaricapi epsilon = 1/2 olan mavi kesikli komsuluk cemberi "
+         "birim cemberin hem icine hem disina tasar; komsulugun icindeki q = (5/4, 0, 0) noktasi "
+         "birim cemberin disindadir, normu 5/4, yani S'de degildir; p ile q arasindaki uzaklik "
+         "epsilon bolu 2 = 1/4",
+)
+
+# ============================================================ iccarpim-ortonormal-acilim
+# -*- coding: utf-8 -*-
+# iccarpim-ortonormal-acilim: the orthonormal expansion of v = (3, 1, 2) at p = (1, 1, 0)
+# in the rotated frame e1 = (1,1,0)/sqrt2, e2 = (-1,1,0)/sqrt2, e3 = (0,0,1).
+#   (v.e1) e1 = 2 sqrt2 e1 = (2, 2, 0),  (v.e2) e2 = -sqrt2 e2 = (1, -1, 0),  (v.e3) e3 = 2 e3.
+# The three components are the edges of a box with sides 2 sqrt2, sqrt2, 2 whose main diagonal
+# is v; the second edge runs against e2 because its coefficient is negative.
+# Camera az=34, el=18 comes from _scan_ortonormal.py: it keeps the four rays leaving p
+# (three bold edges and v) at least 41 degrees apart in projection and no face of the box
+# degenerate, while v still projects 1.28 units long.
+# Tick labels are drawn by hand with a halo: near x = 1, 2 the x axis runs inside the narrow
+# wedge above the (v.e2)e2 edge, and the y axis runs ~16 px above the e2 arrow, so the
+# y labels are placed on the upper side of their axis.
+
+AZ, EL = 34.0, 18.0
+P = space_panel(26, 16, 452, (-3.05, 3.15), (-1.75, 2.90))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+R2 = math.sqrt(2.0)
+SQ2 = "&#8730;2"
+
+p = (1.0, 1.0, 0.0)
+E1 = (2.0, 2.0, 0.0)          # (v . e1) e1 = 2 sqrt2 e1
+E2 = (1.0, -1.0, 0.0)         # (v . e2) e2 = -sqrt2 e2   (opposite to e2)
+E3 = (0.0, 0.0, 2.0)          # (v . e3) e3 = 2 e3
+e1 = (1.0 / R2, 1.0 / R2, 0.0)
+e2 = (-1.0 / R2, 1.0 / R2, 0.0)
+e3 = (0.0, 0.0, 1.0)
+
+A = vadd(p, E1)               # (3, 3, 0)
+B = vadd(p, E2)               # (2, 0, 0)
+C = vadd(p, E3)               # (1, 1, 2)
+AB = vadd(A, E2)              # (4, 2, 0)
+AC = vadd(A, E3)              # (3, 3, 2)
+BC = vadd(B, E3)              # (2, 0, 2)
+TIP = vadd(p, (3.0, 1.0, 2.0))  # (4, 2, 2) — the far corner, tip of v
+
+
+def ital(s):
+    """Italic run inside an SVG <text> — the frame names e1, e2, e3 are italic."""
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def txt(q, s, dx=0, dy=0, color=TEXT, size=11.0, anchor="start", opacity=1.0):
+    """Label at a space point, haloed with the page colour so dashed edges break behind it."""
+    X, Y = S.pt(q)
+    px(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor, opacity)
+
+
+def px(x, y, s, color=TEXT, size=11.0, anchor="start", opacity=1.0):
+    """Haloed label at a pixel position."""
+    op = f' opacity="{opacity}"' if opacity < 1.0 else ""
+    P.add(f'<text x="{x:.1f}" y="{y:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}"{op} stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def tick(axis, value, dx, dy, anchor="middle"):
+    """Tick mark on a coordinate axis with a haloed label."""
+    k = "xyz".index(axis)
+    tdir = {"x": (0, 1, 0), "y": (1, 0, 0), "z": (1, 0, 0)}[axis]
+    q = [0.0, 0.0, 0.0]
+    q[k] = value
+    q = tuple(q)
+    S.line([vadd(q, vscale(-0.04, tdir)), vadd(q, vscale(0.04, tdir))], TEXT, 1.0, None, 0.7)
+    txt(q, fmt(value), dx, dy, TEXT, 10, anchor, 0.75)
+
+
+V = bold("v")
+EE = [ital("e") + subs(str(k)) for k in (1, 2, 3)]
+
+
+def comp_label(k, coef):
+    return "(" + V + " " + CDOT + " " + EE[k] + ") " + EE[k] + " = " + coef + " " + EE[k]
+
+
+# 1. floor: the footprint of the box, then the grid and the axes ----------------------------
+S.polygon([p, A, AB, B], TEXT, 0.06)
+S.floor_grid((0, 4), (0, 3), n=4, opacity=0.10)
+S.line([(0, 3, 0), (4, 3, 0)], TEXT, 0.7, None, 0.10)
+S.axes(4.5, 3.5, 2.7)
+for _v in (1, 2, 3, 4):
+    tick("x", _v, -10, 11)
+tick("y", 1, 7, -7, "start")            # above the axis: the e2 arrow runs just below it
+tick("y", 2, 4, -7, "start")
+tick("y", 3, 4, -7, "start")
+tick("z", 1, -9, 4, "end")
+tick("z", 2, -9, 4, "end")
+
+# 2. the box: the nine edges that do not start at p, dashed ---------------------------------
+for a, b in ((A, AB), (A, AC), (B, AB), (B, BC), (C, AC), (C, BC),
+             (AB, TIP), (AC, TIP), (BC, TIP)):
+    S.guide([a, b], TEXT, 0.42, 1.0, "5 4")
+
+# 3. the three components as thick edges leaving p ------------------------------------------
+for q in (A, B, C):
+    S.line([p, q], PRACTICE, 3.2, None, 0.9)
+
+# 4. the frame: unit arrows at p (e2 runs against its own component) -------------------------
+for e in (e1, e2, e3):
+    S.arrow(p, vadd(p, e), BASE, 2.0, head=7)
+
+# 5. v itself: the main diagonal of the box --------------------------------------------------
+S.arrow(p, TIP, THEORY, 2.6, head=10)
+
+S.point(p, TEXT, 3.8)
+S.point(TIP, TEXT, 3.0)
+
+# 6. labels ---------------------------------------------------------------------------------
+txt(p, bold("p") + " = (1, 1, 0)", -6, 22, TEXT, 11.5, "end")
+txt(vadd(p, vscale(0.55, (3.0, 1.0, 2.0))), V + " = (3, 1, 2)", -14, -1, THEORY, 12.5, "end")
+
+txt(vadd(p, e1), EE[0], 10, 5, BASE, 12, "start")
+txt(vadd(p, e2), EE[1], 2, 14, BASE, 12, "middle")
+txt(vadd(p, e3), EE[2], 9, 4, BASE, 12, "start")
+
+txt(A, comp_label(0, "2" + SQ2), 10, 6, PRACTICE, 11, "start")
+txt(B, comp_label(1, MINUS_S + SQ2), -4, -13, PRACTICE, 11, "end")
+txt(C, comp_label(2, "2"), 9, -7, PRACTICE, 11, "start")
+
+# the result, in the free upper-left corner
+px(120, 72, "Ortonormal açılım", TEXT, 10.5, "middle", 0.75)
+px(120, 92, V + " = 2" + SQ2 + " " + EE[0] + " " + MINUS_S + " " + SQ2 + " " + EE[1]
+   + " + 2 " + EE[2], TEXT, 12.5, "middle")
+
+OUT["iccarpim-ortonormal-acilim"] = figure(
+    504, 375, [P],
+    "<strong>p</strong> = (1, 1, 0) noktasındaki <em>e</em><sub>1</sub>, <em>e</em><sub>2</sub>, "
+    "<em>e</em><sub>3</sub> çatısı yeşil birim oklarla, <strong>v</strong> = (3, 1, 2) teğet vektörü "
+    "mavi okla çizilmiştir. Turuncu üç kenar <strong>v</strong>&#8217;nin çatı doğrultularındaki "
+    "bileşenleridir: (<strong>v</strong> &#183; <em>e</em><sub>1</sub>)<em>e</em><sub>1</sub> = "
+    "2&#8730;2 <em>e</em><sub>1</sub>, (<strong>v</strong> &#183; <em>e</em><sub>2</sub>)"
+    "<em>e</em><sub>2</sub> = &#8722;&#8730;2 <em>e</em><sub>2</sub> ve (<strong>v</strong> &#183; "
+    "<em>e</em><sub>3</sub>)<em>e</em><sub>3</sub> = 2<em>e</em><sub>3</sub>; ikinci katsayı "
+    "negatif olduğu için o kenar <em>e</em><sub>2</sub> okunun tersi yönde gider. "
+    "Üç bileşen, kenarları 2&#8730;2, &#8730;2 ve 2 olan kesikli kutuyu belirler ve "
+    "<strong>v</strong> bu kutunun <strong>p</strong>&#8217;den çıkan köşegenidir: ortonormal "
+    "açılımın katsayıları, <strong>v</strong>&#8217;nin çatı doğrultularındaki işaretli gölge "
+    "uzunluklarıdır.",
+    aria="Tangent vector v = (3, 1, 2) at p = (1, 1, 0) drawn as the diagonal of the box whose edges "
+         "are its components in the frame e1 = (1,1,0)/sqrt2, e2 = (-1,1,0)/sqrt2, e3 = (0,0,1): "
+         "(v.e1)e1 = 2 sqrt2 e1, (v.e2)e2 = -sqrt2 e2 running opposite to the e2 arrow, and "
+         "(v.e3)e3 = 2 e3; a note gives v = 2 sqrt2 e1 - sqrt2 e2 + 2 e3",
+)
+
+# ============================================================ iccarpim-paralelyuz-hacmi
+# -*- coding: utf-8 -*-
+# iccarpim-paralelyuz-hacmi: the parallelepiped spanned by u = (1, 2, 3) (blue), v = (2, 0, 0) and
+# w = (1, 3, 0) (orange) at the origin. Its base is the hatched parallelogram (0,0,0), (2,0,0),
+# (3,3,0), (1,3,0) in the xy plane, of area ||v x w|| = 6; the unit normal e = (0, 0, 1) (green)
+# sits on the dashed perpendicular that falls from the tip of u to the base, whose length is
+# u . e = 3. Volume = 6 . 3 = 18.
+# Camera azimuth 40 (rather than the usual 35) keeps the vertex u + v clear of the z axis;
+# elevation 24 opens the base enough to read the hatching. The origin is the hidden far vertex of
+# the box, which is exactly right here: the three edges that meet there are the three vectors, and
+# they are drawn last, opaque, over the glassy faces.
+import math
+
+DBAR = "&#8214;"                       # double bar, for the norm
+
+P = space_panel(14, 14, 404, (-2.45, 3.64), (-2.05, 3.24))
+S = Space(P, Camera(azimuth=40.0, elevation=24.0, scale=1.0))
+
+O = (0.0, 0.0, 0.0)
+u = (1.0, 2.0, 3.0)
+v = (2.0, 0.0, 0.0)
+w = (1.0, 3.0, 0.0)
+e = (0.0, 0.0, 1.0)
+uv, uw, vw = vadd(u, v), vadd(u, w), vadd(v, w)
+uvw = vadd(u, vw)
+F = (1.0, 2.0, 0.0)                    # foot of the perpendicular from the tip of u
+
+U, V, W, E = bold("u"), bold("v"), bold("w"), bold("e")
+
+
+def halo(x, y, s, color=TEXT, size=11.5, anchor="start", italic=False):
+    """Text on a page-coloured halo, so faint grid, hatch and edge lines break around it."""
+    st = ' font-style="italic"' if italic else ""
+    P.add(f'<text x="{x:.1f}" y="{y:.1f}" fill="{color}" font-size="{size}" text-anchor="{anchor}"{st} '
+          f'stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">{s}</text>')
+
+
+def at(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start", italic=False):
+    """halo() at a space point, nudged by (dx, dy) pixels."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor, italic)
+
+
+def tick(axis, val, dx, dy, anchor="middle", length=0.045):
+    """One tick mark on a coordinate axis, its number written with a halo."""
+    k = "xyz".index(axis)
+    tdir = {"x": (0.0, 1.0, 0.0), "y": (1.0, 0.0, 0.0), "z": (1.0, 0.0, 0.0)}[axis]
+    Q = [0.0, 0.0, 0.0]
+    Q[k] = float(val)
+    Q = tuple(Q)
+    S.line([vadd(Q, vscale(-length, tdir)), vadd(Q, vscale(length, tdir))], TEXT, 1.0, None, 0.7)
+    at(Q, fmt(val), dx, dy, TEXT, 10, anchor)
+
+
+# 1. floor grid under the base ---------------------------------------------------------------
+S.floor_grid((0, 3), (0, 3), n=3, opacity=0.11)
+
+# 2. the six faces, painted back to front; the base carries its own hatching -------------------
+BASE_FACE = (O, v, vw, w)
+FACES = [BASE_FACE,
+         (u, uv, uvw, uw),
+         (O, v, uv, u),
+         (w, vw, uvw, uw),
+         (O, w, uw, u),
+         (v, vw, uvw, uv)]
+for face in sorted(FACES, key=lambda f: sum(S.depth(q) for q in f)):
+    if face is BASE_FACE:
+        S.polygon(face, PRACTICE, 0.13)
+        for k in range(1, 8):                       # hatch parallel to w, spaced along v
+            t = k / 8.0
+            S.line([vscale(t, v), vadd(vscale(t, v), w)], PRACTICE, 0.75, None, 0.45)
+    else:
+        S.polygon(face, TEXT, 0.05)
+
+# 3. edges: the nine that are not one of the three vectors --------------------------------------
+for a, b in ((u, uv), (u, uw), (uv, uvw), (uw, uvw), (v, uv), (w, uw), (vw, uvw)):
+    S.line([a, b], TEXT, 0.9, None, 0.42)
+for a, b in ((v, vw), (vw, w)):                     # the two base edges opposite v and w
+    S.line([a, b], PRACTICE, 1.4, None, 0.8)
+
+# 4. axes and ticks ------------------------------------------------------------------------------
+S.axes(3.3, 4.4, 3.3, offsets=((-4, 14), (10, 4), (-10, -4)))
+# v runs along the x axis, so the x numbers go to the other side of it, into the base
+for t in (1, 2, 3):
+    tick("x", t, 6, 13)
+tick("y", 1, -5, -7, "end")                         # clear of the green arrow at (1, 2, 0)
+for t in (2, 3, 4):
+    tick("y", t, 0, -8)
+for t in (1, 2, 3):
+    tick("z", t, -11, 4, "end")
+
+# 5. the height: dashed perpendicular from the tip of u down to the base ------------------------
+S.guide([u, F], TEXT, 0.6, 1.1)
+S.point(F, TEXT, 2.6)
+
+# 6. the three vectors, then the unit normal (which stands in front of the edge w) ---------------
+S.arrow(O, v, PRACTICE, 2.4, head=9)
+S.arrow(O, w, PRACTICE, 2.4, head=9)
+S.arrow(O, u, THEORY, 2.4, head=9)
+S.arrow(F, vadd(F, e), BASE, 2.3, head=7)
+S.point(O, TEXT, 3.6)
+S.point(u, TEXT, 2.8)
+
+# 7. labels ---------------------------------------------------------------------------------------
+at(u, U + " = (1, 2, 3)", 10, -13, THEORY, 12, "middle")
+at(v, V + " = (2, 0, 0)", -10, -6, PRACTICE, 12, "end")
+at(w, W + " = (1, 3, 0)", 9, 7, PRACTICE, 12, "start")
+at(vadd(F, e), E + " = (0, 0, 1)", 9, 5, BASE, 12, "start")
+at((1.0, 2.0, 2.0), U + " " + CDOT + " " + E + " = 3", 9, 4, TEXT, 12, "start")
+
+# area of the base, written in its own colour just under the near edge of the hatching
+halo(P.X(-0.45), P.Y(-1.92), "alan = " + DBAR + V + " " + TIMES_S + " " + W + DBAR + " = 6",
+     PRACTICE, 11.5, "middle")
+
+# the reading of the volume, in the free upper-left corner
+halo(P.X(-2.38), P.Y(3.05), "hacim = alan " + CDOT + " yükseklik", TEXT, 12)
+halo(P.X(-2.38), P.Y(2.74), "= 6 " + CDOT + " 3 = 18", TEXT, 12)
+
+OUT["iccarpim-paralelyuz-hacmi"] = figure(
+    432, 379, [P],
+    "Kenarları <strong>u</strong> = (1, 2, 3), <strong>v</strong> = (2, 0, 0) ve "
+    "<strong>w</strong> = (1, 3, 0) olan paralelyüzün tabanı, <em>xy</em> düzleminde duran taralı "
+    "paralelkenardır; alanı &#8214;<strong>v</strong> &#215; <strong>w</strong>&#8214; = 6&#8217;dır. "
+    "Taban düzlemine dik birim vektör <strong>e</strong> = (0, 0, 1) yeşil okla gösterilmiştir ve "
+    "<strong>u</strong>&#8217;nun ucundan tabana inen kesikli dikme, yüksekliğin "
+    "<strong>u</strong> &#183; <strong>e</strong> = 3 olduğunu okutur. Hacim taban alanı ile "
+    "yüksekliğin çarpımıdır: 6 &#183; 3 = 18 = <strong>u</strong> &#183; <strong>v</strong> "
+    "&#215; <strong>w</strong>.",
+    aria="Parallelepiped at the origin with edges u = (1, 2, 3) in blue, v = (2, 0, 0) and "
+         "w = (1, 3, 0) in orange; its base is the hatched parallelogram with corners (0,0,0), "
+         "(2,0,0), (3,3,0), (1,3,0) in the xy plane, of area ||v x w|| = 6; a green unit normal "
+         "e = (0, 0, 1) stands on the dashed perpendicular dropped from the tip of u to the base, "
+         "whose length is u . e = 3; volume = 6 . 3 = 18",
+)
+
+# ============================================================ iccarpim-uzaklik-kutusu
+# -*- coding: utf-8 -*-
+# iccarpim-uzaklik-kutusu: the distance d(p, q) = 13 between p = (1, 2, 0) and q = (4, 6, 12)
+# read off the axis-parallel box whose opposite corners are p and q.
+# Dashed box (edges 3, 4, 12), orange dashed base diagonal (5) and thick blue space diagonal (13);
+# the two Pythagoras triangles p-a-c (floor) and p-c-q (standing) are tinted and their right
+# angles marked at a = (4, 2, 0) and c = (4, 6, 0).
+# Camera: elevation 30 opens the floor rectangle enough to keep the labels 3, 4 and 5 clear of
+# its edges; azimuth 35 pushes the box's left vertical edge away from the z axis (at azimuth 30
+# the two run 8 px apart and read as one double line).
+import math
+
+P = space_panel(25, 20, 300, (-3.45, 6.55), (-3.6, 11.3))
+S = Space(P, Camera(azimuth=35, elevation=30, scale=1.0))
+
+p = (1.0, 2.0, 0.0)
+q = (4.0, 6.0, 12.0)
+a = (4.0, 2.0, 0.0)          # p + (3, 0, 0)
+c = (4.0, 6.0, 0.0)          # a + (0, 4, 0): the foot of q
+b = (1.0, 6.0, 0.0)
+pz = (1.0, 2.0, 12.0)        # p + (0, 0, 12)
+qa = (4.0, 2.0, 12.0)
+qb = (1.0, 6.0, 12.0)
+
+mid_pa = (2.5, 2.0, 0.0)
+mid_ac = (4.0, 4.0, 0.0)
+mid_cq = (4.0, 6.0, 6.0)
+mid_pc = (2.5, 4.0, 0.0)
+on_pq = (3.25, 5.0, 9.0)     # 75 % of the way from p to q, where the box is widest
+
+
+def txt(Q, s, dx=0.0, dy=0.0, color=TEXT, size=11.5, anchor="middle"):
+    """Label at a space point with a page-coloured halo, so grid lines behind it break."""
+    X, Y = S.pt(Q)
+    P.add(f'<text x="{P.X(X) + dx:.1f}" y="{P.Y(Y) + dy:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}" stroke="{BG}" stroke-width="2.4" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def right_angle(C, u, v, L=0.52):
+    """Corner mark at C along the directions u and v, both legs L units long *on the page*."""
+    def leg(d):
+        d = vunit(d)
+        (X0, Y0), (X1, Y1) = S.pt(C), S.pt(vadd(C, d))
+        return vscale(L / math.hypot(X1 - X0, Y1 - Y0), d)
+    u, v = leg(u), leg(v)
+    S.line([vadd(C, u), vadd(C, vadd(u, v)), vadd(C, v)], TEXT, 1.0, None, 0.75)
+
+
+# 1. floor grid on the integer lines under the box
+for i in range(5):
+    S.line([(i, 0.0, 0.0), (i, 6.0, 0.0)], TEXT, 0.7, None, 0.10)
+for j in range(7):
+    S.line([(0.0, j, 0.0), (4.0, j, 0.0)], TEXT, 0.7, None, 0.10)
+
+# 2. the two right triangles of the calculation: 3-4-5 on the floor, 5-12-13 standing up
+S.polygon([p, a, c], PRACTICE, 0.14)
+S.polygon([p, c, q], THEORY, 0.10)
+
+# 3. axes and ticks (y labels to the right of the axis: p sits right next to y = 2)
+S.axes(5.0, 7.2, 12.6)
+S.ticks("x", (1, 2, 3, 4))
+S.ticks("y", (2, 4, 6), offset=(10, 4))
+S.ticks("z", (4, 8, 12))
+
+# 4. the box: all twelve edges dashed, the three measured ones a shade stronger
+for edge in ([p, a, c, b, p], [pz, qa, q, qb, pz], [p, pz], [a, qa], [b, qb]):
+    S.guide(edge, TEXT, 0.38)
+S.guide([p, a], TEXT, 0.8, 1.3)
+S.guide([a, c], TEXT, 0.8, 1.3)
+S.guide([c, q], TEXT, 0.8, 1.3)
+
+# only the floor right angle is marked: at c the two legs meet at 33 degrees on the page and the
+# corner mark degenerates into a zigzag, while the vertical edge already reads as perpendicular
+right_angle(a, vsub(p, a), vsub(c, a))
+
+# 5. the two diagonals
+S.line([p, c], PRACTICE, 2.0, "6 4")
+S.line([p, q], THEORY, 2.8)
+
+# 6. corners
+S.point(a, TEXT, 2.4)
+S.point(c, TEXT, 2.4)
+S.point(p, TEXT, 4.2)
+S.point(q, TEXT, 4.2)
+
+# 7. edge and diagonal lengths, each beside its own segment
+txt(mid_pa, "3", -7, -9, TEXT, 12)
+txt(mid_ac, "4", -5, 14, TEXT, 12)
+txt(mid_cq, "12", 9, 4, TEXT, 12, "start")
+txt(mid_pc, "5", -11, 7, PRACTICE, 12.5)      # inside the 3-4-5 triangle, on its hypotenuse
+txt(on_pq, "13", -7, 4, THEORY, 12.5, "end")
+
+# 8. the two points: q's coordinates fit inside the top face, p's go in the left margin
+txt(p, bold("p"), -8, -2, TEXT, 12.5, "end")
+txt(q, bold("q") + " = (4, 6, 12)", -18, -26, TEXT, 11.5)
+P.label(-0.95, 0.8, bold("p") + " = (1, 2, 0)", 0, 0, TEXT, 11.5, "end")
+
+# 9. the two Pythagoras steps, in the empty column left of the z axis
+P.label(-0.95, 5.6, "3" + sups("2") + " + 4" + sups("2") + " = 5" + sups("2"),
+        0, 0, PRACTICE, 11, "end")
+P.label(-0.95, 4.65, "5" + sups("2") + " + 12" + sups("2") + " = 13" + sups("2"),
+        0, 0, THEORY, 11, "end")
+
+OUT["iccarpim-uzaklik-kutusu"] = figure(
+    350, 487, [P],
+    "<strong>p</strong> = (1, 2, 0) ile <strong>q</strong> = (4, 6, 12), kenarları koordinat "
+    "eksenlerine paralel olan kesikli kutunun karşılıklı iki köşesidir; kenar uzunlukları "
+    "koordinat farkları 3, 4 ve 12&#8217;dir. Tabandaki turuncu köşegen Pisagor&#8217;la "
+    "3<sup>2</sup> + 4<sup>2</sup> = 5<sup>2</sup> hesabından 5 çıkar; bu 5 ile 12 yüksekliği "
+    "yeni bir dik üçgen kurduğundan kutunun mavi köşegeni 5<sup>2</sup> + 12<sup>2</sup> = "
+    "13<sup>2</sup> hesabından 13 olur. Uzaklık formülü bu iki Pisagor adımını tek karekökte "
+    "birleştirir: <em>d</em>(<strong>p</strong>, <strong>q</strong>) = 13.",
+    aria="Rectangular box with axis-parallel edges whose opposite corners are p = (1, 2, 0) and "
+         "q = (4, 6, 12); dashed edges of lengths 3, 4 and 12, an orange dashed base diagonal of "
+         "length 5 and a thick blue space diagonal of length 13; the right triangles 3-4-5 on the "
+         "floor and 5-12-13 standing on it are tinted",
+)
+
+# ============================================================ iccarpim-vektorel-carpim
+# -*- coding: utf-8 -*-
+# iccarpim-vektorel-carpim: the cross product of the example, drawn at the origin.
+# v = (2, 1, 0) (blue, lies in the floor z = 0) and w = (0, 3, 1) (orange, one unit above the
+# floor) span the hatched parallelogram 0, v, v + w = (2, 4, 1), w, of area sqrt(41); the normal
+# v x w = (1, -2, 6) (green, thick) carries the same length sqrt(41). Two right-angle marks at the
+# origin show v . (v x w) = 0 and w . (v x w) = 0, each in the colour of its own vector; the small
+# curved arrow turns v into w, the right-hand rule that fixes the direction of the green arrow.
+# The y ticks 1 and 2 are dropped: the projected y axis runs through the patch and their labels
+# would land on the hatching next to 'alan'.
+# Camera: azimuth 45 keeps v clear of the projected x axis (30 deg) and n clear of the z axis
+# (22 deg); elevation 38 is above the API's 15-30 band on purpose — below ~32 the parallelogram is
+# seen almost edge on (foreshortening 0.34) and neither the hatching nor the area label fits in it,
+# while at 38 the patch opens to 0.49 of its true area and v is still 1.5 units long on the page.
+import math
+
+AZ, EL = 45.0, 38.0
+AXX, AXY, AXZ = 3.0, 4.4, 6.6
+
+O = (0.0, 0.0, 0.0)
+v = (2.0, 1.0, 0.0)
+w = (0.0, 3.0, 1.0)
+n = vcross(v, w)                     # (1, -2, 6)
+vw = vadd(v, w)                      # (2, 4, 1)
+PARA = [O, v, vw, w]
+
+P = space_panel(16, 14, 372, (-3.45, 4.05), (-2.75, 5.65))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+SQ = "&#8730;"                       # square root
+DBAR = "&#8214;"                     # double bar for the norm
+V, W = bold("v"), bold("w")
+N = V + " " + TIMES_S + " " + W
+
+
+def halo(px_, py_, s, color=TEXT, size=11.5, anchor="start"):
+    """Text at a pixel position with a page-coloured halo, so faint lines behind it break."""
+    P.add(f'<text x="{px_:.1f}" y="{py_:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}" stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start"):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def hatch(poly, angle_deg, color=TEXT, step_px=7.5, width=0.8, opacity=0.38):
+    """Parallel hatch lines at angle_deg (page), clipped to a convex polygon in panel data units."""
+    a = math.radians(angle_deg)
+    d = (math.cos(a), math.sin(a))
+    nrm = (-d[1], d[0])
+    step = step_px * (P.xmax - P.xmin) / P.w
+    proj = [nrm[0] * x + nrm[1] * y for x, y in poly]
+    lo, hi = min(proj), max(proj)
+    count = max(1, int((hi - lo) / step))
+    c0 = lo + (hi - lo - (count - 1) * step) / 2.0
+    parts = []
+    for i in range(count):
+        c = c0 + i * step
+        hits = []
+        for j in range(len(poly)):
+            (x0, y0), (x1, y1) = poly[j], poly[(j + 1) % len(poly)]
+            s0 = nrm[0] * x0 + nrm[1] * y0 - c
+            s1 = nrm[0] * x1 + nrm[1] * y1 - c
+            if (s0 < 0) != (s1 < 0):
+                t = s0 / (s0 - s1)
+                hits.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
+        if len(hits) >= 2:
+            hits.sort(key=lambda q: d[0] * q[0] + d[1] * q[1])
+            parts.append(f"M{P.P(*hits[0])} L{P.P(*hits[-1])}")
+    P.add(f'<path d="{" ".join(parts)}" fill="none" stroke="{color}" stroke-width="{width}" '
+          f'opacity="{opacity}" stroke-linecap="butt"/>')
+
+
+def right_angle(a, b, s=0.32, color=TEXT, width=1.1, opacity=0.9):
+    """Right-angle mark at the origin, a true square in the plane of a and b (both drawn from the
+    origin). The two marks share their edge along b = v x w, so in one grey they closed up into a
+    hexagonal collar around the green arrow; each therefore takes the colour of its own vector."""
+    ea, eb = vscale(s, vunit(a)), vscale(s, vunit(b))
+    S.line([ea, vadd(ea, eb), eb], color, width, None, opacity)
+
+
+# ---------------------------------------------------------------- 1. floor and axes
+for gx in range(0, 4):
+    S.line([(gx, 0, 0), (gx, 3, 0)], TEXT, 0.7, None, 0.09)
+for gy in range(0, 4):
+    S.line([(0, gy, 0), (3, gy, 0)], TEXT, 0.7, None, 0.09)
+
+S.axes(AXX, AXY, AXZ, offsets=((-7, -8), (11, 5), (-10, -4)))
+S.ticks("x", (1, 2))
+S.ticks("y", (3, 4))          # 1 and 2 would fall inside the parallelogram
+S.ticks("z", (2, 4, 6))
+
+# ---------------------------------------------------------------- 2. the parallelogram
+POLY = S.pts(PARA)
+P.polygon(POLY, TEXT, 0.07, "none")
+hatch(POLY, 25.0)
+S.guide([v, vw, w], TEXT, 0.55, 1.1)          # the two far edges, the near ones are the arrows
+S.drop(w)                                      # w stands one unit above the floor
+
+# ---------------------------------------------------------------- 3. right angles and the turn
+right_angle(v, n, color=THEORY)
+right_angle(w, n, 0.28, color=PRACTICE)
+
+e1 = vunit(v)
+e2 = vunit(vsub(w, vscale(vdot(w, e1), e1)))
+TH = math.acos(vdot(v, w) / (vnorm(v) * vnorm(w)))
+R = 1.15
+T0, T1 = 0.10 * TH, 0.90 * TH                  # short of both arrows, so nothing touches
+
+
+def turn(t):
+    return vadd(vscale(R * math.cos(t), e1), vscale(R * math.sin(t), e2))
+
+
+S.curve(turn, T0, T1, BG, 3.0, 48)             # halo, so the hatching breaks under the arc
+S.segment_arrow(turn, T0, T1, BASE, 1.5, 7.0, 48)
+
+# ---------------------------------------------------------------- 4. the three vectors
+S.arrow(O, v, THEORY, 2.4, head=9)
+S.arrow(O, w, PRACTICE, 2.4, head=9)
+S.arrow(O, n, BASE, 2.8, head=10)
+S.point(O, TEXT, 3.4)
+
+# ---------------------------------------------------------------- 5. labels
+tag(O, bold("p"), -24, 3, TEXT, 12, "end")
+tag(v, V + " = (2, 1, 0)", -8, 24, THEORY, 12, "end")
+tag(w, W + " = (0, 3, 1)", 9, 5, PRACTICE, 12, "start")
+tag(vw, V + " + " + W + " = (2, 4, 1)", 0, 16, TEXT, 11.5, "middle")
+
+tag(n, N + " = (1, " + MINUS_S + "2, 6)", 0, -13, BASE, 12, "middle")
+tag(vscale(0.45, n), DBAR + N + DBAR + " = " + SQ + "41", -8, 4, BASE, 11.5, "end")
+
+# labels placed by hand in the free parts of the page: the area inside the hatched patch,
+# the right-hand rule just above the w edge next to the turn, the two orthogonality checks
+# in the open region to the right of the z axis
+halo(P.X(0.96), P.Y(-0.97), "alan = " + SQ + "41", TEXT, 11.5, "middle")
+halo(P.X(0.95), P.Y(0.33), "sağ el kuralı", BASE, 11.5, "middle")
+halo(P.X(0.25), P.Y(2.95), V + " " + CDOT + " (" + N + ") = 2 " + MINUS_S + " 2 + 0 = 0", TEXT, 11.5)
+halo(P.X(0.25), P.Y(2.55), W + " " + CDOT + " (" + N + ") = 0 " + MINUS_S + " 6 + 6 = 0", TEXT, 11.5)
+
+OUT["iccarpim-vektorel-carpim"] = figure(
+    400, 470, [P],
+    "Uygulama noktası <strong>p</strong> orijinde alınmıştır; oradan çıkan "
+    "<strong>v</strong> = (2, 1, 0) (mavi) ile <strong>w</strong> = (0, 3, 1) (turuncu) taralı "
+    "paralelkenarı gerer. Vektörel çarpım <strong>v</strong> &#215; <strong>w</strong> = "
+    "(1, &#8722;2, 6) (yeşil) bu paralelkenarın düzlemine diktir: iki dik açı işareti, "
+    "<strong>v</strong> &#183; (<strong>v</strong> &#215; <strong>w</strong>) = 0 ve "
+    "<strong>w</strong> &#183; (<strong>v</strong> &#215; <strong>w</strong>) = 0 hesaplarının "
+    "geometrik karşılığıdır. Okun yönünü sağ el kuralı belirler: <strong>v</strong>&#8217;den "
+    "<strong>w</strong>&#8217;ye dönülürken başparmak <strong>v</strong> &#215; "
+    "<strong>w</strong> yönünü gösterir. Okun uzunluğu &#8214;<strong>v</strong> &#215; "
+    "<strong>w</strong>&#8214; = &#8730;41, paralelkenarın alanına eşittir.",
+    aria="Uzayda orijinden cikan mavi v = (2, 1, 0) ve turuncu w = (0, 3, 1) oklari taranmis bir "
+         "paralelkenar gerer; paralelkenara dik yesil ok v x w = (1, -2, 6) olup uzunlugu "
+         "karekok 41'dir; orijindeki iki dik aci isareti v ve w ile bu okun dikligini, kavisli "
+         "ok ise v den w ye donusu, yani sag el kuralini gosterir",
+)
+
 # ============================================================ kapali-yari-duzlem-acik-degil
 # -*- coding: utf-8 -*-
 # kapali-yari-duzlem-acik-degil — the closed half-plane C: p1 >= 0 (shaded, boundary line
@@ -4516,6 +7420,815 @@ OUT["kapali-yari-duzlem-acik-degil"] = figure(
          "sol yarisi C'nin disina tasar; icindeki q = (-0,25; 1) noktasi C'de degildir. "
          "Karsilastirma icin s = (1,5; 1,5) etrafindaki yaricapi 1 olan kesikli daire tamamen "
          "C'nin icinde kalir.")
+
+# ============================================================ keyfi-koni-egrisi
+# -*- coding: utf-8 -*-
+# keyfi-koni-egrisi — the curve alpha(t) = (t cos t, t sin t, t) on the double cone x^2 + y^2 = z^2,
+# with the Frenet frame at the vertex alpha(0) = (0, 0, 0).
+#
+# From the exercise box: alpha'(0) = (1, 0, 1), alpha''(0) = (0, 2, 0), alpha'''(0) = (-3, 0, 0),
+# so v(0) = sqrt2, alpha' x alpha'' = (-2, 0, 2), kappa(0) = 1, tau(0) = 3/4 and
+#   T(0) = (1, 0, 1)/sqrt2,  N(0) = (0, 1, 0),  B(0) = (-1, 0, 1)/sqrt2.
+# Checks done by hand for this drawing: T . N = 0, B = T x N, and T is the direction the curve
+# leaves the vertex in (alpha'(0) = sqrt2 T). T lies along the cone generator u = 0 and B along
+# u = pi; N is horizontal, so it is the only one of the three that leaves the cone at once.
+# The three unit vectors are drawn 2 units long (said in the caption) — at this scale, where the
+# cone is 2pi = 6.28 units wide, a unit arrow would be 30 px and its head would swallow the shaft.
+#
+# Depth: the cone's near face is |u - az| < acos(tan el) on the upper nappe and |u - az| <
+# acos(-tan el) on the lower one, so the curve is cut into near/far runs; the far runs go in
+# before the surface and stay pale, the near runs after it, each with a page-coloured halo that
+# breaks the grid beneath. B points away from the viewer (it is a generator of the back of the
+# cone) so it is drawn before the near curve and the curve crosses over it; T and N come toward
+# the viewer and are drawn last.
+# Camera az = 40, el = 20: the upper end alpha(2pi) = (2pi, 0, 2pi) then lands on the near face and
+# the free wedges left and right of the two nappes (nothing of the cone projects into a band of
+# +-41 deg about the horizon) carry the axes and all the text.
+import math
+
+AZ, EL = 40.0, 20.0
+PHI = math.radians(AZ)
+TAN_EL = math.tan(math.radians(EL))
+TWO_PI = 2.0 * math.pi
+SQ2 = math.sqrt(2.0)
+CAM = Camera(azimuth=AZ, elevation=EL, scale=1.0)
+AXX, AXY, AXZ = 7.0, 7.0, 7.2          # axis ends (z is drawn both ways)
+VLEN = 2.0                             # drawn length of T, N, B
+
+SQRT_S, KAPPA_S, TAU_S = "&#8730;", "&#954;", "&#964;"
+
+
+def alpha(t):
+    return (t * math.cos(t), t * math.sin(t), t)
+
+
+def cone(u, w):
+    """The double cone x^2 + y^2 = z^2: radius |w| at height w."""
+    r = abs(w)
+    return (r * math.cos(u), r * math.sin(u), w)
+
+
+def faces_viewer(t):
+    """True when alpha(t) sits on the half of the cone that faces the camera."""
+    x, y, z = alpha(t)
+    if x == 0.0 and y == 0.0:
+        return True
+    c = math.cos(math.atan2(y, x) - PHI)
+    return c > TAN_EL if z > 0 else c > -TAN_EL
+
+
+def spans(front, n=1600):
+    """Parameter intervals on which the curve stays on the near (front=True) or far half."""
+    ts = [-TWO_PI + 2 * TWO_PI * k / n for k in range(n + 1)]
+    out, start = [], None
+    for i, t in enumerate(ts):
+        if faces_viewer(t) == front:
+            if start is None:
+                start = ts[i - 1] if i else t
+        elif start is not None:
+            out.append((start, t))
+            start = None
+    if start is not None:
+        out.append((start, ts[-1]))
+    return out
+
+
+def poly(t0, t1, n=240):
+    return [alpha(t0 + (t1 - t0) * k / n) for k in range(n + 1)]
+
+
+def proj(P):
+    X, Y, _ = CAM.project(P)
+    return X, Y
+
+
+# --- panel: the projected bounding box of cone, curve and axes ---------------------------------
+box = [proj(cone(TWO_PI * k / 120, w)) for k in range(121) for w in (TWO_PI, -TWO_PI)]
+box += [proj(alpha(-TWO_PI + 2 * TWO_PI * k / 240)) for k in range(241)]
+box += [proj((AXX, 0, 0)), proj((0, AXY, 0)), proj((0, 0, AXZ)), proj((0, 0, -AXZ))]
+X0, X1 = min(b[0] for b in box), max(b[0] for b in box)
+Y0, Y1 = min(b[1] for b in box), max(b[1] for b in box)
+PAD_L, PAD_R, PAD_B, PAD_T = 0.30, 0.30, 1.30, 1.00
+PW = 470
+SP = space_panel(30, 30, PW, (X0 - PAD_L, X1 + PAD_R), (Y0 - PAD_B, Y1 + PAD_T))
+S = Space(SP, CAM)
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + "</tspan>"
+
+
+def halo_px(x, y, s, color=TEXT, size=11.0, anchor="start", opacity=1.0, halo=True):
+    """Text at a pixel position, with a page-coloured outline so faint lines break behind it."""
+    op = f' opacity="{opacity}"' if opacity < 1.0 else ""
+    h = (f' stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"'
+         if halo else "")
+    SP.add(f'<text x="{x:.1f}" y="{y:.1f}" fill="{color}" font-size="{size}" '
+           f'text-anchor="{anchor}"{op}{h}>{s}</text>')
+
+
+def at(X, Y, s, color=TEXT, size=11.0, anchor="start", opacity=1.0, halo=True):
+    """Halo text at a point of the projected plane (the panel's own coordinates)."""
+    halo_px(SP.X(X), SP.Y(Y), s, color, size, anchor, opacity, halo)
+
+
+def tag(P, s, dx=0, dy=0, color=TEXT, size=11.0, anchor="start"):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(P)
+    halo_px(SP.X(X) + dx, SP.Y(Y) + dy, s, color, size, anchor)
+
+
+def haloed_arrow(P0, P1, color, width=2.6, head=9.5, halo=3.4):
+    """A space arrow on a cleared strip, so the cone's grid does not run through it."""
+    S.line([P0, P1], BG, width + halo)
+    S.arrow(P0, P1, color, width, head)
+
+
+PPU = PW / (SP.xmax - SP.xmin)          # pixels per projected unit
+
+
+def trimmed(pts, px=3.6):
+    """The polyline shortened by px at both ends — used for the curve's halo, so the white
+    strip stops short of the joins with the far runs instead of biting into them."""
+    def cut(seq):
+        x0, y0 = S.pt(seq[0])
+        i = 0
+        while i < len(seq) - 2:
+            x, y = S.pt(seq[i])
+            if math.hypot(x - x0, y - y0) * PPU >= px:
+                break
+            i += 1
+        return seq[i:]
+    return list(reversed(cut(list(reversed(cut(pts))))))
+
+
+# --- 1. the parts of the curve that run behind the cone ---------------------------------------
+# far runs reach a little past their ends, so the near runs' halos cover the join
+FAR = [poly(max(-TWO_PI, a - 0.07), min(TWO_PI, b + 0.07)) for a, b in spans(False)]
+NEAR = [poly(a, b) for a, b in spans(True)]
+for r in FAR:
+    S.line(r, THEORY, 2.0, None, 0.42)
+
+# --- 2. the cone, its two rims, then the axes -------------------------------------------------
+# u starts at 7.5 deg so that no grid generator falls on u = 0 or u = pi, where T and B lie
+S.surface(cone, (math.pi / 24, TWO_PI + math.pi / 24), (-TWO_PI, TWO_PI), nu=24, nv=12,
+          fill=TEXT, stroke=TEXT, opacity=(0.012, 0.055), stroke_width=0.55, stroke_opacity=0.20)
+for w in (TWO_PI, -TWO_PI):
+    S.circle((0, 0, w), (1, 0, 0), (0, 1, 0), abs(w), TEXT, 0.9, None, 96, 0.45)
+
+S.axes(AXX, AXY, AXZ, zmin=-AXZ, offsets=((-5, 14), (11, 5), (-11, -4)))
+S.ticks("x", (2, 4, 6), offset=(-6, 16))   # the x axis runs down-left; keep its numbers off it
+
+# --- 3. the binormal: it points into the back of the cone, so the curve passes in front of it --
+B0 = vscale(VLEN / SQ2, (-1.0, 0.0, 1.0))
+haloed_arrow((0, 0, 0), B0, TEXT)
+
+# --- 4. the near parts of the curve, the direction of travel, the starting point ---------------
+for r in NEAR:
+    S.line(trimmed(r), BG, 5.4)
+for r in NEAR:
+    S.line(r, THEORY, 2.4)
+S.arrow(alpha(TWO_PI - 0.20), alpha(TWO_PI), THEORY, 2.4, head=10)   # travel direction at t = 2pi
+S.arrow(alpha(-2.25), alpha(-1.95), THEORY, 2.4, head=9.5)
+S.point(alpha(-TWO_PI), THEORY, 3.4)
+
+# --- 5. tangent and normal: both point toward the viewer, so they go on top --------------------
+T0 = vscale(VLEN / SQ2, (1.0, 0.0, 1.0))
+N0 = (0.0, VLEN, 0.0)
+haloed_arrow((0, 0, 0), N0, BASE)
+# T gets only a hairline halo: the curve leaves the vertex along T, and a wide cleared strip
+# would rub out exactly the piece of curve that shows the tangency
+haloed_arrow((0, 0, 0), T0, PRACTICE, halo=1.0)
+S.point((0, 0, 0), TEXT, 3.0)
+
+# --- 6. labels --------------------------------------------------------------------------------
+tag(T0, bold("T"), -6, -5, PRACTICE, 12.5)
+tag(N0, bold("N"), 7, -7, BASE, 12.5)
+tag(B0, bold("B"), 5, -6, TEXT, 12.5)
+# the vertex's name goes into the open wedge between the x axis and T, far enough out that
+# neither line reaches it
+tag((0, 0, 0), ital("&#945;") + "(0)", -26, 4, TEXT, 11, "end")
+
+# the two ends of the curve
+tag(alpha(TWO_PI), ital("&#945;") + "(2" + PI_S + ") = (2" + PI_S + ", 0, 2" + PI_S + ")",
+    -7, 20, TEXT, 11, "middle")
+at(3.78, -5.22, ital("&#945;") + "(" + MINUS_S + "2" + PI_S + ") = ("
+   + MINUS_S + "2" + PI_S + ", 0, " + MINUS_S + "2" + PI_S + ")", TEXT, 11, "middle")
+SP.add(f'<path d="M{SP.X(3.95):.1f},{SP.Y(-4.45):.1f} L{SP.X(3.83):.1f},{SP.Y(-4.95):.1f}" '
+       f'fill="none" stroke="{TEXT}" stroke-width="0.9" opacity="0.5"/>')
+
+# the curve's name, on the free side of its far stretch across the top
+tag(alpha(4.2), ital("&#945;"), 0, 15, THEORY, 12.5, "middle")
+
+# the apparatus at t = 0, in the open wedge left of the two nappes
+LX = X0 - PAD_L + 0.25
+at(LX, 2.45, ital("&#945;") + "(0) = (0, 0, 0)", TEXT, 11.5, halo=False)
+at(LX, 1.83, bold("T") + "(0) = (1, 0, 1)/" + SQRT_S + "2", PRACTICE, 11.5, halo=False)
+at(LX, 1.21, bold("N") + "(0) = (0, 1, 0)", BASE, 11.5, halo=False)
+at(LX, 0.59, bold("B") + "(0) = (" + MINUS_S + "1, 0, 1)/" + SQRT_S + "2", TEXT, 11.5, halo=False)
+at(LX, -0.20, ital("t") + " = 0: " + KAPPA_S + " = 1, " + TAU_S + " = 3/4", TEXT, 11.5, halo=False)
+
+# titles in the free band above the cone
+at(LX, Y1 + 0.55, ital("x") + sups("2") + " + " + ital("y") + sups("2") + " = " + ital("z")
+   + sups("2"), TEXT, 11.5, opacity=0.85, halo=False)
+at(X1 + 0.25, Y1 + 0.55, ital("&#945;") + "(" + ital("t") + ") = (" + ital("t") + " cos "
+   + ital("t") + ", " + ital("t") + " sin " + ital("t") + ", " + ital("t") + ")",
+   THEORY, 11.5, "end", halo=False)
+
+OUT["keyfi-koni-egrisi"] = figure(
+    int(PW + 60), int(SP.h + 60), [SP],
+    "<em>x</em><sup>2</sup> + <em>y</em><sup>2</sup> = <em>z</em><sup>2</sup> çift konisi (gri "
+    "ızgara) ve üzerinde kalan <em>&#945;</em>(<em>t</em>) = (<em>t</em> cos <em>t</em>, "
+    "<em>t</em> sin <em>t</em>, <em>t</em>) eğrisi, &#8722;2&#960; &#8804; <em>t</em> &#8804; "
+    "2&#960; (mavi; koninin arkasından geçen parçalar soluk çizilmiştir). Eğri alt koniden "
+    "gelip tepeden geçer ve üst koniye çıkar; tepe koni için bir tekillik olsa da eğri orada "
+    "düzgündür, çünkü <em>&#945;</em>&#8242;(0) = (1, 0, 1) &#8800; <strong>0</strong>. "
+    "Tepeden çıkan üç ok <em>t</em> = 0 anındaki Frenet çatısıdır: <strong>T</strong> (turuncu) "
+    "eğriye teğettir, <strong>N</strong> (yeşil) eğrinin döndüğü yana bakar, <strong>B</strong> "
+    "= <strong>T</strong> &#215; <strong>N</strong> (koyu) ikisine de diktir. Üçü de birim "
+    "vektördür, görünürlük için 2 birim uzunlukta çizilmiştir; eğrilik orada &#954; = 1 olduğu "
+    "için eğri, tepeden ayrılır ayrılmaz <strong>T</strong> doğrultusundan sapıp "
+    "<strong>N</strong> yönüne döner.",
+    aria="Cift koni x^2 + y^2 = z^2 ve uzerindeki alpha(t) = (t cos t, t sin t, t) egrisi, t "
+         "-2pi ile 2pi arasinda; egri alt koniden gelip tepeden gecer ve ust koniye cikar, uclari "
+         "alpha(-2pi) = (-2pi, 0, -2pi) ve alpha(2pi) = (2pi, 0, 2pi); tepeden, yani "
+         "alpha(0) = (0, 0, 0) noktasindan cikan uc ok t = 0 anindaki Frenet catisidir: turuncu "
+         "T(0) = (1, 0, 1)/karekok 2, yesil N(0) = (0, 1, 0), koyu B(0) = (-1, 0, 1)/karekok 2; "
+         "o anda kappa = 1 ve tau = 3/4")
+
+# ============================================================ keyfi-kubik-aparat
+# -*- coding: utf-8 -*-
+# keyfi-kubik-aparat: alpha(t) = (3t - t^3, 3t^2, 3t + t^3) on [-1.5, 1.5] with the Frenet
+# apparatus of the worked example at t = 1: alpha(1) = (2, 3, 4), T = (0, 1, 1)/sqrt2 (orange,
+# tangent), N = (-1, 0, 0) (green), B = (0, -1, 1)/sqrt2 (dark), each drawn 2 units long, and
+# the 2 x 2 osculating patch spanned by T and N hatched in the tangent's colour.
+#
+# Camera.  Three things fight here, and only a narrow band of views survives all of them
+# (the search is in _probe_keyfi_kubik_aparat*.py):
+#   * every unit tangent of this curve has T_z = 1/sqrt2, so all of them lie on the 45 degree
+#     cone about the z axis and an elevation near 45 projects a piece of the curve onto a cusp;
+#   * the osculating plane is seen edge on from low down, and with it the right angle between
+#     T and N collapses — at the elevations the API recommends (15-30) the projected T and N
+#     are less than 25 degrees apart, which would make the drawing say the opposite of the text;
+#   * B(1) points from alpha(1) back across the origin, so in most views the B arrow and the
+#     y axis fall on the same page line.
+# At az = 40, el = 72 the page angles are T-N 70, N-B 81, T-B 151 degrees, the patch keeps 0.53
+# of its area, the worst foreshortening along the curve is 0.45, the y axis clears every arrow
+# as far as y = 1.4, and the drawing comes out square.  The curve leaves the origin along
+# (1, 0, 1), which from this height is only 15 degrees off the x axis, so the two run together
+# for the first few pixels; the curve is painted over the axis there.
+#
+# Depth.  For t < 0 the curve hangs below the floor z = 0 and is drawn lighter.  It crosses the
+# patch, the N arrow and the rising branch, so the rising branch and the three frame arrows are
+# laid on a background-coloured halo and read as being in front — which is what they are.
+import math
+
+AZ, EL = 40.0, 72.0
+R2 = math.sqrt(2.0)
+T0, T1 = -1.5, 1.5
+AXX, AXY, AXZ = 2.8, 1.4, 6.0            # the y axis stops at 1.4: any longer and it runs into
+                                         # the N arrow and then into the osculating patch
+
+A1 = (2.0, 3.0, 4.0)                     # alpha(1)
+TV = (0.0, 1 / R2, 1 / R2)               # T(1)
+NV = (-1.0, 0.0, 0.0)                    # N(1)
+BV = (0.0, -1 / R2, 1 / R2)              # B(1) = T(1) x N(1)
+LEN = 2.0                                # the unit vectors are drawn twice as long
+
+SQ = "&#8730;"
+KAPPA, TAU = "&#954;", "&#964;"
+IT_A = '<tspan font-style="italic">&#945;</tspan>'
+IT_T = '<tspan font-style="italic">t</tspan>'
+
+
+def alpha(t):
+    return (3 * t - t ** 3, 3 * t * t, 3 * t + t ** 3)
+
+
+P = space_panel(20, 18, 360, (-2.2, 6.3), (-6.1, 2.4))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+TIP = {k: vadd(A1, vscale(LEN, v)) for k, v in (("T", TV), ("N", NV), ("B", BV))}
+CORNER = vadd(A1, vadd(vscale(LEN, TV), vscale(LEN, NV)))
+
+
+def halo(px, py, s, color=TEXT, size=11.5, anchor="start", ring=True):
+    """Text at a pixel position, by default with a page-coloured halo so lines behind it break.
+
+    The halo is dropped where the text carries a superscript: rsvg loses the ascender of an
+    italic letter that a raised tspan follows once the run is stroked."""
+    stroke = (f'stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke" '
+              if ring else "")
+    P.add(f'<text x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}" {stroke}>{s}</text>')
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start"):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def at(x, y, s, color=TEXT, size=11.5, anchor="start", ring=True):
+    """Text at a panel position (page coordinates of the projection)."""
+    halo(P.X(x), P.Y(y), s, color, size, anchor, ring)
+
+
+def italic(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def hatch(poly, angle_deg, color=TEXT, step_px=8.0, width=0.8, opacity=0.36):
+    """Parallel hatch lines at angle_deg (page), clipped to a convex polygon in panel units."""
+    a = math.radians(angle_deg)
+    d = (math.cos(a), math.sin(a))
+    nrm = (-d[1], d[0])
+    step = step_px * (P.xmax - P.xmin) / P.w
+    proj = [nrm[0] * x + nrm[1] * y for x, y in poly]
+    lo, hi = min(proj), max(proj)
+    count = max(1, int((hi - lo) / step))
+    c0 = lo + (hi - lo - (count - 1) * step) / 2.0
+    parts = []
+    for i in range(count):
+        c = c0 + i * step
+        hits = []
+        for j in range(len(poly)):
+            (x0, y0), (x1, y1) = poly[j], poly[(j + 1) % len(poly)]
+            s0 = nrm[0] * x0 + nrm[1] * y0 - c
+            s1 = nrm[0] * x1 + nrm[1] * y1 - c
+            if (s0 < 0) != (s1 < 0):
+                t = s0 / (s0 - s1)
+                hits.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
+        if len(hits) >= 2:
+            hits.sort(key=lambda q: d[0] * q[0] + d[1] * q[1])
+            parts.append(f"M{P.P(*hits[0])} L{P.P(*hits[-1])}")
+    P.add(f'<path d="{" ".join(parts)}" fill="none" stroke="{color}" stroke-width="{width}" '
+          f'opacity="{opacity}" stroke-linecap="butt"/>')
+
+
+# ---------------------------------------------------------------- 1. the floor
+S.floor_grid((-1, 2), (0, 3), n=3, opacity=0.10)
+
+# ---------------------------------------------------------------- 2. the curve below the floor
+S.curve(alpha, T0, 0.0, THEORY, 2.2, 240, None, 0.45)
+
+# ---------------------------------------------------------------- 3. the osculating patch
+POLY = S.pts([A1, TIP["T"], CORNER, TIP["N"]])
+P.polygon(POLY, PRACTICE, 0.10, "none")
+hatch(POLY, 105.0, PRACTICE)
+S.guide([TIP["T"], CORNER, TIP["N"]], PRACTICE, 0.5, 1.1)
+
+# ---------------------------------------------------------------- 4. the curve above the floor
+S.curve(alpha, 0.0, T1, BG, 5.6, 240)                  # halo: the lower branch passes behind
+S.curve(alpha, 0.0, T1, THEORY, 2.6, 240)
+S.arrow(alpha(1.26), alpha(1.38), THEORY, 2.6, 10.0)   # direction of travel, kept off the
+#                                                        self-crossing that sits at the far end
+
+# the axes go on top of the curve: alpha(0) is the origin itself, and near it the curve runs
+# within a few pixels of the x axis, so underneath they would leave the axes looking cut off
+S.axes(AXX, AXY, AXZ, labels=("", "", ""))
+
+# ---------------------------------------------------------------- 5. the frame at t = 1
+S.drop(A1)
+for k in ("T", "N", "B"):                      # halos first: the three shafts share a start point
+    S.line([A1, TIP[k]], BG, 5.8)
+S.arrow(A1, TIP["T"], PRACTICE, 2.5, head=9)
+S.arrow(A1, TIP["N"], BASE, 2.5, head=9)
+S.arrow(A1, TIP["B"], TEXT, 2.5, head=9)
+S.point(A1, TEXT, 3.8)
+
+# ---------------------------------------------------------------- 6. labels
+tag((AXX, 0, 0), italic("x"), -4, 14, TEXT, 11.5, "middle")
+tag((0, AXY, 0), italic("y"), 6, -8, TEXT, 11.5, "middle")
+tag((0, 0, AXZ), italic("z"), -11, -3, TEXT, 11.5, "end")
+
+tag(A1, IT_A + "(1) = (2, 3, 4)", -11, 16, TEXT, 11.5, "end")
+tag(TIP["T"], bold("T"), 7, 15, PRACTICE, 12.5)
+tag(vadd(A1, vscale(0.8 * LEN, NV)), bold("N"), -12, -8, BASE, 12.5, "middle")
+tag(vadd(A1, vscale(0.7 * LEN, BV)), bold("B"), 11, -9, TEXT, 12.5, "middle")
+tag(alpha(1.5), IT_A, 7, -7, THEORY, 13)
+
+at(1.70, 1.75, bold("T") + "(1) = (0, 1/" + SQ + "2, 1/" + SQ + "2)", PRACTICE, 11.5)
+at(1.70, 1.30, bold("N") + "(1) = (" + MINUS_S + "1, 0, 0)", BASE, 11.5)
+at(1.70, 0.85, bold("B") + "(1) = (0, " + MINUS_S + "1/" + SQ + "2, 1/" + SQ + "2)", TEXT, 11.5)
+
+at(0.35, -4.25, IT_A + "(" + IT_T + ") = (3" + IT_T + " " + MINUS_S + " " + IT_T + sups("3")
+   + ", 3" + IT_T + sups("2") + ", 3" + IT_T + " + " + IT_T + sups("3") + ")", THEORY, 11.5,
+   "start", False)
+at(0.35, -4.85, KAPPA + "(1) = " + TAU + "(1) = 1/12", TEXT, 11.5)
+
+OUT["keyfi-kubik-aparat"] = figure(
+    400, 400, [P],
+    "&#945;(<em>t</em>) = (3<em>t</em> &#8722; <em>t</em><sup>3</sup>, 3<em>t</em><sup>2</sup>, "
+    "3<em>t</em> + <em>t</em><sup>3</sup>) eğrisi &#8722;1,5 &#8804; <em>t</em> &#8804; 1,5 "
+    "aralığında çizilmiştir; ok, <em>t</em>&#8217;nin arttığı yönü gösterir, soluk kısım "
+    "<em>z</em> = 0 düzleminin altında kalır. &#945;(1) = (2, 3, 4) noktasında turuncu "
+    "<strong>T</strong>(1) eğriye teğettir, yeşil <strong>N</strong>(1) = (&#8722;1, 0, 0) ona "
+    "diktir ve eğrinin büküldüğü yana bakar, koyu <strong>B</strong>(1) = <strong>T</strong>(1) "
+    "&#215; <strong>N</strong>(1) ise ilk ikisinin gerdiği taralı oskülatör düzleme diktir. "
+    "Üç vektör de birim uzunluktadır; görünürlük için iki kat uzun çizilmişlerdir, sayfada "
+    "farklı boyda görünmeleri izdüşümün kısaltmasındandır. Bu noktada eğrilik ile burulma "
+    "eşittir: "
+    "&#954;(1) = &#964;(1) = 1/12.",
+    aria="Uzayda alpha(t) = (3t - t^3, 3t^2, 3t + t^3) egrisi ve t = 1 anindaki Frenet catisi; "
+         "alpha(1) = (2, 3, 4) noktasindan cikan turuncu T = (0, 1/karekok2, 1/karekok2) egriye "
+         "tegettir, yesil N = (-1, 0, 0) ile taranmis oskulator duzlem karesini gerer, koyu "
+         "B = (0, -1/karekok2, 1/karekok2) bu kareye diktir; egrilik ve burulma 1/12")
+
+# ============================================================ keyfi-kubik-cati-t2
+# -*- coding: utf-8 -*-
+# keyfi-kubik-cati-t2: the cubic alpha(t) = (2t, t^2, t^3/3) on -4 <= t <= 4 with the Frenet frame
+# at t = 2. alpha(2) = (4, 4, 8/3); T = (1,2,2)/3, N = (-2,-1,2)/3, B = (2,-2,1)/3, each drawn 4
+# units long, and the hatched piece of the osculating plane they span.
+#
+# Camera. The whole exercise is a fight between three things: T = (1,2,2)/3 must not point at the
+# viewer (it would collapse to a stub), the osculating plane must not be seen edge on (|B.d| small),
+# and the drawing must not be absurdly tall (z sweeps 42.7 units while x and y sweep 16). A scan
+# over az in [14, 30], el in [14, 26] (see _scan_kubik.py) settles on az = 21, el = 18, where the
+# three unit vectors project to 2.76, 3.47 and 3.51 of their 4 units, |B.d| = 0.48 opens the patch,
+# and the page directions 43 / 95 / 167 degrees fan the arrows apart.
+#
+# Depth. depth(t) = d . alpha(t) = 1.776 t + 0.341 t^2 + 0.103 t^3 is strictly increasing, so the
+# whole t < 0 half lies behind the t > 0 half: it is drawn thinner and paler, and the near half
+# carries a background-coloured halo that breaks it where they cross (t = 1.67 over t = -0.90).
+# That crossing and the far branch pass about one unit (15 px) under alpha(2) — the only tight
+# spot in the picture, and the reason the labels at alpha(2) all go up and to the right.
+import math
+
+AZ, EL = 21.0, 18.0
+L = 4.0                                  # drawn length of each frame vector
+T2 = (1 / 3.0, 2 / 3.0, 2 / 3.0)
+N2 = (-2 / 3.0, -1 / 3.0, 2 / 3.0)
+B2 = (2 / 3.0, -2 / 3.0, 1 / 3.0)
+
+
+def alpha(t):
+    return (2 * t, t * t, t ** 3 / 3.0)
+
+
+A2 = alpha(2.0)                          # (4, 4, 8/3)
+
+P = space_panel(20, 16, 376, (-5.0, 19.6), (-21.4, 17.5))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+ALPHA_S, KAPPA_S, TAU_S = "&#945;", "&#954;", "&#964;"
+
+
+def it(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def mfmt(v):
+    """Tick label with a typographic minus."""
+    return fmt(v).replace("-", MINUS_S)
+
+
+def halo(px_, py_, s, color=TEXT, size=11.5, anchor="start"):
+    """Text with a page-coloured halo, so the faint grid behind it breaks.
+
+    The halo is a separate stroke-only copy underneath rather than paint-order="stroke" on one
+    element: with one element the renderer strokes and fills each tspan in turn, and the halo of a
+    superscript then eats the crossbar of the italic letter in front of it.
+    """
+    common = (f'x="{px_:.1f}" y="{py_:.1f}" font-size="{size}" text-anchor="{anchor}"')
+    P.add(f'<text {common} fill="none" stroke="{BG}" stroke-width="3.6" '
+          f'stroke-linejoin="round">{s}</text>')
+    P.add(f'<text {common} fill="{color}">{s}</text>')
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start"):
+    """Halo text hung on a space point."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def hatch(poly, angle_deg, color=TEXT, step_px=8.0, width=0.8, opacity=0.34):
+    """Parallel hatch lines at angle_deg (page), clipped to a convex polygon in panel units."""
+    a = math.radians(angle_deg)
+    d = (math.cos(a), math.sin(a))
+    nrm = (-d[1], d[0])
+    step = step_px * (P.xmax - P.xmin) / P.w
+    proj = [nrm[0] * x + nrm[1] * y for x, y in poly]
+    lo, hi = min(proj), max(proj)
+    count = max(1, int((hi - lo) / step))
+    c0 = lo + (hi - lo - (count - 1) * step) / 2.0
+    parts = []
+    for i in range(count):
+        c = c0 + i * step
+        hits = []
+        for j in range(len(poly)):
+            (x0, y0), (x1, y1) = poly[j], poly[(j + 1) % len(poly)]
+            s0 = nrm[0] * x0 + nrm[1] * y0 - c
+            s1 = nrm[0] * x1 + nrm[1] * y1 - c
+            if (s0 < 0) != (s1 < 0):
+                t = s0 / (s0 - s1)
+                hits.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
+        if len(hits) >= 2:
+            hits.sort(key=lambda q: d[0] * q[0] + d[1] * q[1])
+            parts.append(f"M{P.P(*hits[0])} L{P.P(*hits[-1])}")
+    P.add(f'<path d="{" ".join(parts)}" fill="none" stroke="{color}" stroke-width="{width}" '
+          f'opacity="{opacity}" stroke-linecap="butt"/>')
+
+
+def right_angle(Q, a, b, s=0.75, color=TEXT, width=1.1, opacity=0.85):
+    """Right-angle mark at Q, a true square in the plane of a and b, on a halo so that the grid
+    line running behind it does not turn the corner into a crossroads."""
+    ea, eb = vscale(s, vunit(a)), vscale(s, vunit(b))
+    pts = [vadd(Q, ea), vadd(Q, vadd(ea, eb)), vadd(Q, eb)]
+    S.line(pts, BG, width + 2.6)
+    S.line(pts, color, width, None, opacity)
+
+
+# ---------------------------------------------------------------- 1. the wall y = 0 and the axes
+for gx in (-8, -4, 4, 8):
+    S.line([(gx, 0, -12), (gx, 0, 12)], TEXT, 0.7, None, 0.10)
+for gz in (-12, -8, -4, 4, 8, 12):
+    S.line([(-8, 0, gz), (8, 0, gz)], TEXT, 0.7, None, 0.10)
+
+S.axes(9.0, 18.0, 14.0, xmin=-9.0, zmin=-14.0, labels=("x", "y", "z"),
+       offsets=((-5, 15), (11, 5), (-11, -5)))
+
+
+def ticks(axis, values, dx, dy, anchor="middle"):
+    """Ticks with haloed numbers — S.ticks() writes plain text, which the wall grid crosses."""
+    k = "xyz".index(axis)
+    tdir = {"x": (0, 1, 0), "y": (1, 0, 0), "z": (1, 0, 0)}[axis]
+    for v in values:
+        Q = [0.0, 0.0, 0.0]
+        Q[k] = float(v)
+        Q = tuple(Q)
+        S.line([vadd(Q, vscale(-0.28, tdir)), vadd(Q, vscale(0.28, tdir))], TEXT, 1.0, None, 0.7)
+        tag(Q, mfmt(v), dx, dy, TEXT, 10, anchor)
+
+
+ticks("x", (4, 8), 11, 8)
+ticks("y", (8, 12, 16), 0, 14)          # a tick at 4 would land on the far branch of the curve
+ticks("z", (-10, -5, 5, 10), -10, 4, "end")
+
+# ---------------------------------------------------------------- 2. the far half t <= 0
+S.curve(alpha, -4.0, 0.0, THEORY, 2.0, 320, None, 0.5)
+
+# ---------------------------------------------------------------- 3. the osculating patch
+# The negative margins are wide enough that the rim of the patch does not run along the N and T
+# arrows: -0.30 L back along T is 11 px to the left of N, -0.22 L back along N is 14 px under T.
+CORNERS = [vadd(A2, vadd(vscale(a, vscale(L, T2)), vscale(b, vscale(L, N2))))
+           for a, b in ((-0.30, -0.22), (1.20, -0.22), (1.20, 1.18), (-0.30, 1.18))]
+POLY = S.pts(CORNERS)
+P.polygon(POLY, PRACTICE, 0.09, "none")
+hatch(POLY, 28.0, PRACTICE, 8.0, 0.8, 0.36)
+P.polygon(POLY, "none", 0.0, PRACTICE, 1.0, "4 3")
+
+# ---------------------------------------------------------------- 4. the near half t >= 0
+NEAR = [alpha(4.0 * k / 320.0) for k in range(321)]
+S.line(NEAR, BG, 4.6)                      # halo: breaks the far branch where they cross
+S.line(NEAR[:-3], THEORY, 2.5)
+S.arrow(NEAR[-4], NEAR[-1], THEORY, 2.5, 9.5)
+
+# ---------------------------------------------------------------- 5. the frame at t = 2
+right_angle(A2, T2, N2, 0.72, TEXT, 1.3, 0.95)
+S.arrow(A2, vadd(A2, vscale(L, T2)), PRACTICE, 2.6, 9.5)
+S.arrow(A2, vadd(A2, vscale(L, N2)), BASE, 2.6, 9.5)
+S.arrow(A2, vadd(A2, vscale(L, B2)), TEXT, 2.6, 9.5)
+
+for Q in (alpha(-4.0), (0.0, 0.0, 0.0), A2, alpha(4.0)):
+    S.point(Q, TEXT, 3.4)
+
+# ---------------------------------------------------------------- 6. labels
+tag(vadd(A2, vscale(L, T2)), bold("T"), 10, 15, PRACTICE, 12.5)
+tag(vadd(A2, vscale(L, N2)), bold("N"), -12, -6, BASE, 12.5, "end")   # clear of the patch's rim
+tag(vadd(A2, vscale(L, B2)), bold("B"), -8, 2, TEXT, 12.5, "end")
+tag(A2, it(ALPHA_S) + "(2) = (4, 4, 8/3)", 15, 13, TEXT, 11.5)   # between the patch rim and y
+tag((0.0, 0.0, 0.0), it(ALPHA_S) + "(0) = (0, 0, 0)", -9, -7, TEXT, 11.5, "end")
+tag(alpha(4.0), it(ALPHA_S) + "(4) = (8, 16, 64/3)", -12, 1, TEXT, 11.5, "end")
+tag(alpha(-4.0), it(ALPHA_S) + "(" + MINUS_S + "4) = (" + MINUS_S + "8, 16, " + MINUS_S + "64/3)",
+    -9, 15, TEXT, 11.5, "end")
+halo(P.X(8.0), P.Y(11.0), it(ALPHA_S) + "(" + it("t") + ") = (2" + it("t") + ", " + it("t")
+     + sups("2") + ", " + it("t") + sups("3") + "/3)", THEORY, 12.5, "end")
+
+LEG = (P.X(-4.6), (P.Y(-15.2), P.Y(-16.8), P.Y(-18.4), P.Y(-20.0)))
+halo(LEG[0], LEG[1][0], it("t") + " = 2:  " + KAPPA_S + " = " + TAU_S + " = 1/18", TEXT, 12)
+halo(LEG[0], LEG[1][1], bold("T") + " = (1/3, 2/3, 2/3)", PRACTICE, 11.5)
+halo(LEG[0], LEG[1][2], bold("N") + " = (" + MINUS_S + "2/3, " + MINUS_S + "1/3, 2/3)", BASE, 11.5)
+halo(LEG[0], LEG[1][3], bold("B") + " = (2/3, " + MINUS_S + "2/3, 1/3)", TEXT, 11.5)
+
+# ---------------------------------------------------------------- 7. what the eye should check
+d = (math.cos(math.radians(EL)) * math.cos(math.radians(AZ)),
+     math.cos(math.radians(EL)) * math.sin(math.radians(AZ)), math.sin(math.radians(EL)))
+print("  |T|, |N|, |B| =", [round(vnorm(v), 12) for v in (T2, N2, B2)])
+print("  T.N, N.B, T.B =", [round(vdot(a, b), 12) for a, b in ((T2, N2), (N2, B2), (T2, B2))])
+print("  T x N - B =", [round(c, 12) for c in vsub(vcross(T2, N2), B2)])
+tang = vunit(vsub(alpha(2.0001), alpha(1.9999)))
+print("  egri tegeti - T =", [round(c, 6) for c in vsub(tang, T2)])
+for nm, v in (("T", T2), ("N", N2), ("B", B2)):
+    X, Y = S.pt(v)
+    print(f"  {nm}: sayfa boyu {L * math.hypot(X, Y):.2f}/4 birim, "
+          f"yon {math.degrees(math.atan2(Y, X)) % 360:.0f} derece")
+print(f"  patch |B.d| = {abs(vdot(B2, d)):.2f}")
+P2 = S.pt(A2)
+worst = min(((math.dist(S.pt(alpha(-4 + 8 * k / 2000.0)), P2), -4 + 8 * k / 2000.0)
+             for k in range(2001) if abs(-4 + 8 * k / 2000.0 - 2) > 0.8))
+print(f"  alpha(2)'ye en yakin oteki egri noktasi: t = {worst[1]:.2f}, {worst[0]:.2f} birim "
+      f"({worst[0] * P.w / (P.xmax - P.xmin):.0f} px), derinlik {vdot(alpha(worst[1]), d):.1f} "
+      f"({vdot(A2, d):.1f})")
+xs, ys = [], []
+for k in range(801):
+    X, Y = S.pt(alpha(-4 + 8 * k / 800.0))
+    xs.append(X)
+    ys.append(Y)
+print(f"  egri X [{min(xs):.1f}, {max(xs):.1f}]  Y [{min(ys):.1f}, {max(ys):.1f}]  "
+      f"panel X [{P.xmin}, {P.xmax}] Y [{P.ymin}, {P.ymax}]")
+
+OUT["keyfi-kubik-cati-t2"] = figure(
+    416, 628, [P],
+    "<em>&#945;</em>(<em>t</em>) = (2<em>t</em>, <em>t</em><sup>2</sup>, <em>t</em><sup>3</sup>/3) "
+    "kübik eğrisi &#8722;4 &#8804; <em>t</em> &#8804; 4 aralığında çizilmiştir; uçtaki ok "
+    "<em>t</em>&#8217;nin artış yönünü, soluk parça ise eğrinin arkada kalan "
+    "<em>t</em> &#8804; 0 yarısını gösterir. <em>t</em> = 2 noktasında, yani "
+    "<em>&#945;</em>(2) = (4, 4, 8/3)&#8217;te, Frenet çatısının üç birim vektörü dörder "
+    "birim uzunluğunda çizilmiştir: teğet <strong>T</strong> (turuncu), asli normal "
+    "<strong>N</strong> (yeşil) ve binormal <strong>B</strong>. <strong>T</strong> ile "
+    "<strong>N</strong>&#8217;nin gerdiği taralı parça oskülatör düzlemdir; <strong>T</strong> "
+    "eğriye teğet olduğu için eğriyle birlikte gider, dik açı işareti de "
+    "<strong>T</strong> &#183; <strong>N</strong> = 0 olduğunu hatırlatır. Üç okun sayfada farklı "
+    "boylarda görünmesi izdüşümdendir; üçü de birim vektördür ve bu noktada "
+    "&#954; = &#964; = 1/18&#8217;dir.",
+    aria="Uzayda alpha(t) = (2t, t kare, t kup bolu 3) kubik egrisi t = -4 ile t = 4 arasinda; "
+         "isaretli noktalar alpha(-4) = (-8, 16, -64/3), alpha(0) = (0, 0, 0), "
+         "alpha(2) = (4, 4, 8/3) ve alpha(4) = (8, 16, 64/3). alpha(2) noktasindan dorder birim "
+         "uzunlugunda uc ok cikar: turuncu T = (1/3, 2/3, 2/3) egriye tegettir, yesil "
+         "N = (-2/3, -1/3, 2/3) ve koyu B = (2/3, -2/3, 1/3). T ile N taranmis oskulator duzlem "
+         "parcasini gerer; o noktada kappa = tau = 1/18",
+)
+
+# ============================================================ keyfi-silindirik-helis
+# -*- coding: utf-8 -*-
+# keyfi-silindirik-helis: alpha(t) = (3t - t^3, 3t^2, 3t + t^3) on the vertical cylinder erected
+# over its floor projection gamma(t) = (3t - t^3, 3t^2, 0). The axis of the cylindrical helix is
+# u = (0, 0, 1) (the z axis), and the unit tangent meets every ruling of the wall at vartheta = pi/4.
+# The ruling through t = 0 IS the z axis (gamma(0) = origin), so the angle at alpha(0) is read off
+# the axis itself; the angle at alpha(1) = (2, 3, 4) is read off the ruling through
+# gamma(1) = (2, 3, 0). Both verticals are already on the page — no extra dashed line is needed.
+# The wall covers the whole height the curve occupies, -7.9 <= z <= 7.9, so that the curve really
+# lies in it; a wall stopping at z = 0 would leave the branch t < 0 hanging in the air.
+# u is drawn one unit long, its true length: three units would contradict the label u = (0, 0, 1).
+# Camera: azimuth 32 is a compromise. Smaller azimuths open the floor curve and keep the figure
+# wide, but they also lay T(0) = (1, 0, 1)/sqrt2 along the line of sight (at az = 22 that arrow
+# shrinks to 28 px while T(1) stays 58); at az = 32 the two tangents come out 35 and 53 px long.
+# Elevation 30 keeps the drawn angles honest: the two pi/4 angles read 46 and 53 degrees on the
+# page, while at elevation 45 the first one would flatten to about 80.
+import math
+
+AZ, EL = 32.0, 30.0
+T0, T1 = -1.5, 1.5                    # parameter range of the curve
+Z1 = 3 * T1 + T1 ** 3                 # 7.875 — the height the curve reaches
+Z0 = -Z1
+RULINGS = (-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5)
+AXX, AXY, AXZ = 3.3, 7.9, 8.8
+PPU = 36.0                            # pixels per space unit
+UP = (0.0, 0.0, 1.0)                  # the axis vector u, a unit vector
+ARROWS = (0.0, 1.0)                   # where the tangent vectors are drawn
+TLEN = 2.0                            # drawn length of the tangent vectors
+
+
+def alpha(t):
+    return (3 * t - t ** 3, 3 * t * t, 3 * t + t ** 3)
+
+
+def gam(t):
+    return (3 * t - t ** 3, 3 * t * t, 0.0)
+
+
+def wall(u, v):
+    return (3 * u - u ** 3, 3 * u * u, v)
+
+
+def tangent(t):
+    """Unit tangent, straight from alpha'(t) = (3 - 3t^2, 6t, 3 + 3t^2)."""
+    return vunit((3 - 3 * t * t, 6 * t, 3 + 3 * t * t))
+
+
+def tip(t):
+    return vadd(alpha(t), vscale(TLEN, tangent(t)))
+
+
+# ---- self-check: unit tangents, each at pi/4 to u, and the two points of the text --------------
+SQ2 = math.sqrt(2.0)
+assert vnorm(vsub(tangent(0.0), (1 / SQ2, 0.0, 1 / SQ2))) < 1e-12     # T(0) = (1, 0, 1)/sqrt 2
+assert vnorm(vsub(tangent(1.0), (0.0, 1 / SQ2, 1 / SQ2))) < 1e-12     # T(1) = (0, 1, 1)/sqrt 2
+for _t in ARROWS:
+    assert abs(math.acos(vdot(tangent(_t), UP)) - math.pi / 4) < 1e-12
+assert alpha(0.0) == (0.0, 0.0, 0.0) and alpha(1.0) == (2.0, 3.0, 4.0) and gam(1.0) == (2, 3, 0)
+
+# ---- panel sized from the projected content ----------------------------------------------------
+CAM = Camera(azimuth=AZ, elevation=EL, scale=1.0)
+CLOUD = [alpha(T0 + (T1 - T0) * k / 120) for k in range(121)]
+CLOUD += [wall(T0 + (T1 - T0) * k / 120, z) for k in range(121) for z in (Z0, Z1)]
+CLOUD += [(AXX, 0, 0), (0, AXY, 0), (0, 0, AXZ)] + [tip(t) for t in ARROWS]
+XS = [CAM.project(q)[0] for q in CLOUD]
+YS = [CAM.project(q)[1] for q in CLOUD]
+PAD = 0.45
+XR = (min(XS) - PAD, max(XS) + PAD)
+YR = (min(YS) - PAD, max(YS) + PAD)
+X0, Y0 = 26.0, 18.0
+P = space_panel(X0, Y0, PPU * (XR[1] - XR[0]), XR, YR)
+S = Space(P, CAM)
+
+# ---- page-space report, so the arrows and angles can be checked without guessing ----------------
+for _t in ARROWS:
+    _a, _b = S.pt(alpha(_t)), S.pt(tip(_t))
+    _dx, _dy = P.X(_b[0]) - P.X(_a[0]), P.Y(_b[1]) - P.Y(_a[1])
+    print("t = %.0f: T arrow %.0f px, %.1f deg from the page vertical (true 45)"
+          % (_t, math.hypot(_dx, _dy), math.degrees(math.atan2(abs(_dx), -_dy))))
+
+
+def halo(px_, py_, s, color=TEXT, size=11.5, anchor="start"):
+    """Text with a page-coloured outline behind it, so the faint wall lines break under it.
+
+    Two separate <text> elements, not paint-order="stroke": rsvg strokes each tspan run in turn,
+    so a superscript's halo was painted over the crossbar of the italic t just before it and
+    '3t^2' came out as '3iota^2'.
+    """
+    common = (f'x="{px_:.1f}" y="{py_:.1f}" font-size="{size}" text-anchor="{anchor}"')
+    P.add(f'<text {common} fill="none" stroke="{BG}" stroke-width="3.4" '
+          f'stroke-linejoin="round">{s}</text>')
+    P.add(f'<text {common} fill="{color}">{s}</text>')
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11.5, anchor="start"):
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def angle_mark(t, R, dx, dy, anchor):
+    """Arc from the vertical ruling to the tangent at alpha(t), plus the vartheta label."""
+    p, Tv = alpha(t), tangent(t)
+    e = vunit(vsub(Tv, vscale(vdot(Tv, UP), UP)))      # in-plane direction, perpendicular to u
+    ang = math.acos(vdot(Tv, UP))
+
+    def at(r, th):
+        return vadd(p, vadd(vscale(r * math.cos(th), UP), vscale(r * math.sin(th), e)))
+
+    arc = [at(R, ang * k / 48) for k in range(49)]
+    S.line(arc, BG, 2.4)                               # halo: at t = 0 the curve runs through the
+    S.line(arc, TEXT, 1.3, None, 0.9)                  # wedge, and the arc has to stay readable
+    tag(at(R, 0.0), TH + " = " + PI_S + "/4", dx, dy, TEXT, 11.5, anchor)
+
+
+TH = "&#977;"                          # vartheta, as in the text
+IT = '<tspan font-style="italic">%s</tspan>'
+AL, GA, IT_T = IT % "&#945;", IT % "&#947;", IT % "t"
+MIN = " " + MINUS_S + " "
+CUBIC = ("(3" + IT_T + MIN + IT_T + sups("3") + ", 3" + IT_T + sups("2") + ", ")
+
+# ---- 1. the wall over gamma, its rulings and rims -----------------------------------------------
+S.surface(wall, (T0, T1), (Z0, Z1), nu=28, nv=1, fill=TEXT, stroke="none", opacity=(0.030, 0.085))
+for u in RULINGS:
+    S.line([wall(u, Z0), wall(u, Z1)], TEXT, 0.9, None, 0.30)
+for z in (Z0, Z1):
+    S.curve(lambda t, z=z: wall(t, z), T0, T1, TEXT, 1.0, 160, None, 0.40)
+S.curve(gam, T0, T1, TEXT, 2.0, 200, None, 0.60)      # the cross-section curve, on the floor
+
+# ---- 2. axes and the axis vector u ---------------------------------------------------------------
+S.axes(AXX, AXY, AXZ, offsets=((-2, 14), (11, 4), (-11, -4)))
+S.arrow((0, 0, 0), UP, TEXT, 2.6, head=9)
+
+# ---- 3. the curve, its tangents and the two angles -----------------------------------------------
+S.segment_arrow(alpha, T0, T1, THEORY, 2.5, 10.0, 300)
+for t in ARROWS:
+    S.arrow(alpha(t), tip(t), PRACTICE, 2.4, head=8.5)
+angle_mark(0.0, 1.3, -5, -14, "end")
+angle_mark(1.0, 1.1, 0, -11, "middle")
+
+S.point(gam(1.0), TEXT, 2.6)
+for t in ARROWS:
+    S.point(alpha(t), TEXT, 3.4)
+
+# ---- 4. labels -----------------------------------------------------------------------------------
+tag(tip(0.0), bold("T"), -4, 16, PRACTICE, 12.5, "end")
+tag(tip(1.0), bold("T"), 8, 14, PRACTICE, 12.5, "start")
+tag(UP, bold("u") + " = (0, 0, 1)", -18, 2, TEXT, 12, "end")
+
+tag(alpha(0.0), AL + "(0) = (0, 0, 0)", -30, 13, TEXT, 11.5, "end")
+tag(alpha(1.0), AL + "(1) = (2, 3, 4)", 13, 17, TEXT, 11.5, "start")
+tag(alpha(1.5), AL + "(" + IT_T + ") = " + CUBIC + "3" + IT_T + " + " + IT_T + sups("3") + ")",
+    10, 26, THEORY, 11.5, "start")
+tag(gam(1.5), GA + "(" + IT_T + ") = " + CUBIC + "0)", 10, 20, TEXT, 11.5, "start")
+
+OUT["keyfi-silindirik-helis"] = figure(
+    round(X0 + P.w + 24), round(Y0 + P.h + 18), [P],
+    "&#945;(<em>t</em>) = (3<em>t</em> &#8722; <em>t</em><sup>3</sup>, 3<em>t</em><sup>2</sup>, "
+    "3<em>t</em> + <em>t</em><sup>3</sup>) eğrisi, düzlemdeki izdüşümü "
+    "&#947;(<em>t</em>) = (3<em>t</em> &#8722; <em>t</em><sup>3</sup>, 3<em>t</em><sup>2</sup>, 0) "
+    "üstüne dikilen düşey silindirin duvarında yükselir. Silindirin doğrultmanları düşey olduğundan "
+    "eksen vektörü <strong>u</strong> = (0, 0, 1)&#8217;dir. Birim teğet <strong>T</strong> "
+    "(turuncu) her noktada bu düşey doğrultuyla aynı &#977; = &#960;/4 açısını yapar: "
+    "&#945;(0) = (0, 0, 0) ile &#945;(1) = (2, 3, 4) noktalarındaki iki yay eşittir. Kesit eğrisi "
+    "&#947; bir çember olmadığından &#945; dairesel bir helis değil, genel bir silindirik helistir.",
+    aria="alpha(t) = (3t - t^3, 3t^2, 3t + t^3) egrisi, xy duzlemindeki izdusumu gamma(t) = "
+         "(3t - t^3, 3t^2, 0) uzerine dikilen dusey silindirin duvarinda ilerler; orijinden cikan "
+         "kalin ok eksen vektoru u = (0, 0, 1), turuncu oklar alpha(0) = (0, 0, 0) ve "
+         "alpha(1) = (2, 3, 4) noktalarindaki birim tegetler T olup her ikisi de dusey "
+         "dogrultmanla pi/4 acisi yapar")
 
 # ============================================================ kismi-turev-egim
 # -*- coding: utf-8 -*-
@@ -4690,6 +8403,697 @@ OUT["koordinat-fonksiyonu-x"] = figure(
     aria="The plane x = 2 in R^3 with the points p = (2, 3, 1), q = (2, -1, 3) and r = (2, 0, 0) on it; "
          "dashed arrows from all three points converge on the single value x = 2 at the mark 2 of the x axis",
 )
+
+# ============================================================ kovaryant-cember-uzerinde-ivme
+# -*- coding: utf-8 -*-
+# kovaryant-cember-uzerinde-ivme: the rotation field W = -y U1 + x U2 on the unit circle and its
+# self-derivative nabla_W W = -x U1 - y U2. At t = 0, pi/2, pi, 3pi/2 the W arrows (blue) are
+# tangent to the circle, vector parts (0, 1), (-1, 0), (0, -1), (1, 0); the nabla_W W arrows
+# (orange) point to the centre, vector parts (-1, 0), (0, -1), (1, 0), (0, 1), and — having
+# length 1 — end exactly at the origin. Short light-grey arrows at (+-1.4, 0), (0, +-1.4)
+# hint at W away from the circle; they are drawn shortened (stated in the caption).
+# The nabla glyph (U+2207) is missing from the site font, so it is drawn as an outlined
+# inverted triangle in front of its label.
+import math
+
+XR = YR = (-1.6, 1.6)
+p = cplane(35, 40, 330, XR, YR)
+PPU = 330 / (XR[1] - XR[0])          # pixels per data unit
+OUT_SHRINK = 0.35                    # the grey hint arrows: 0.35 of their true length
+
+TS = (0.0, math.pi / 2, math.pi, 3 * math.pi / 2)
+ON_CIRCLE = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+OUTSIDE = [(1.4, 0), (0, 1.4), (-1.4, 0), (0, -1.4)]
+
+
+def W(a, b):
+    """Vector part of W at (a, b)."""
+    return (-b, a)
+
+
+def acc(a, b):
+    """Vector part of nabla_W W at (a, b)."""
+    return (-a, -b)
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+def num(v):
+    v = int(round(v))
+    return (MINUS_S + str(-v)) if v < 0 else str(v)
+
+
+def nabla(px, py, color, size=8.0, width=1.0):
+    """The nabla sign as an inverted triangle: base at cap height, apex on the baseline."""
+    p.add(f'<polygon points="{px:.1f},{py - size:.1f} {px + size:.1f},{py - size:.1f} '
+          f'{px + size / 2:.1f},{py:.1f}" fill="none" stroke="{color}" stroke-width="{width}" '
+          f'stroke-linejoin="round"/>')
+
+
+def turn_arc(a0, a1, r=1.0, color=TEXT, width=1.5, opacity=0.85, head=7.0, n=40):
+    """Small arc along the circle from angle a0 to a1 with an arrowhead: the sense of rotation."""
+    pts = [polar(r, a0 + (a1 - a0) * k / n) for k in range(n + 1)]
+    p.line(pts[:-2], color, width, None, opacity)
+    p.arrow(pts[-4], pts[-1], color, width, head, None, opacity)
+
+
+# --- the circle r = 1 (grey) and the field away from it (short light-grey arrows) -----------
+p.circle(0, 0, 1.0, TEXT, 1.3, None, "none", 0.4)
+for a, b in OUTSIDE:
+    wa, wb = W(a, b)
+    p.arrow((a, b), (a + OUT_SHRINK * wa, b + OUT_SHRINK * wb), TEXT, 1.4, head=6.5, opacity=0.4)
+    p.circle(a, b, 2.0 / PPU, TEXT, 0, None, TEXT, 0.4)
+
+p.origin_axes("x", "y")
+
+# counter-clockwise sense of the motion, on the circle between t = 0 and t = pi/2
+turn_arc(math.radians(28), math.radians(62))
+
+# --- W (blue, tangent) and nabla_W W (orange, to the centre) at the four points -------------
+for a, b in ON_CIRCLE:
+    wa, wb = W(a, b)
+    p.arrow((a, b), (a + wa, b + wb), THEORY, 2.1, head=8)
+for a, b in ON_CIRCLE:
+    ca, cb = acc(a, b)
+    p.arrow((a, b), (a + ca, b + cb), PRACTICE, 2.1, head=8)
+for a, b in ON_CIRCLE:
+    dot(p, (a, b), TEXT, 3.2)
+
+# --- labels ----------------------------------------------------------------------------------
+T_EQ = ital("t") + " = "
+# (coordinates, t-label, dx, dy of the first line, anchor); the second line sits 13 px further
+# from the point. Each pair is placed on the side of the point that neither arrow crosses.
+POINT_LABELS = [
+    ((1, 0), T_EQ + "0", 7, 14, "start", +13),
+    ((0, 1), T_EQ + PI_S + "/2", 8, -6, "start", -13),
+    ((-1, 0), T_EQ + PI_S, -7, -6, "end", -13),
+    ((0, -1), T_EQ + "3" + PI_S + "/2", -8, 14, "end", +13),
+]
+for (a, b), ts, dx, dy, anc, step in POINT_LABELS:
+    p.label(a, b, "(" + num(a) + ", " + num(b) + ")", dx, dy, TEXT, 11, anc)
+    p.add(f'<text x="{p.X(a) + dx:.1f}" y="{p.Y(b) + dy + step:.1f}" fill="{TEXT}" font-size="10.5" '
+          f'text-anchor="{anc}" opacity="0.8">{ts}</text>')
+
+# W beside the blue arrow at (1, 0); nabla_W W above the orange arrow from (1, 0) to the origin
+p.label(1, 0.5, ital("W"), 8, 4, THEORY, 12.5, "start")
+gx, gy = p.X(0.5) - 15, p.Y(0) - 9
+nabla(gx, gy, PRACTICE)
+p.text_px(gx + 10, gy, subs(ital("W")) + " " + ital("W"), PRACTICE, 12.5, "start")
+
+# formula line above the panel: W = -yU1 + xU2,  nabla_W W = -xU1 - yU2
+fy = p.y0 - 18
+p.text_px(184, fy,
+          ital("W") + " = " + MINUS_S + ital("y") + ital("U") + subs("1") + " + " + ital("x") + ital("U")
+          + subs("2") + ",", TEXT, 11.5, "end")
+nabla(192, fy, TEXT)
+p.text_px(202, fy,
+          subs(ital("W")) + " " + ital("W") + " = " + MINUS_S + ital("x") + ital("U") + subs("1") + " "
+          + MINUS_S + " " + ital("y") + ital("U") + subs("2"), TEXT, 11.5, "start")
+
+OUT["kovaryant-cember-uzerinde-ivme"] = figure(
+    400, 388, [p],
+    "Birim çember (gri) üzerinde <em>t</em> = 0, &#960;/2, &#960;, 3&#960;/2 noktalarında "
+    "<em>W</em> = &#8722;<em>y</em><em>U</em><sub>1</sub> + <em>x</em><em>U</em><sub>2</sub> dönme "
+    "alanının okları (mavi) ve &#8711;<sub><em>W</em></sub><em>W</em> = &#8722;<em>x</em><em>U</em><sub>1</sub> "
+    "&#8722; <em>y</em><em>U</em><sub>2</sub> alanının okları (turuncu). Mavi oklar çembere teğettir: "
+    "saat yönünün tersine dönen noktanın hızıdır. Turuncu oklar merkeze bakar, uzunlukları yarıçap "
+    "kadardır ve tam orijinde biter: bu, birim açısal hızla dönen noktanın merkezcil ivmesidir. "
+    "Çember dışındaki açık gri oklar <em>W</em>&#8217;nin oradaki yönünü gösterir; yer kazanmak için "
+    "kısaltılmıştır.",
+    aria="Birim cember uzerinde t = 0, pi/2, pi, 3pi/2 noktalari (1, 0), (0, 1), (-1, 0), (0, -1); "
+         "her birinde W = -y U1 + x U2 alaninin cembere teget mavi oku, vektor kisimlari (0, 1), "
+         "(-1, 0), (0, -1), (1, 0), ve merkeze bakan turuncu nabla_W W oku, vektor kisimlari "
+         "(-1, 0), (0, -1), (1, 0), (0, 1), hepsi orijinde biter; cember disinda (1.4, 0), (0, 1.4), "
+         "(-1.4, 0), (0, -1.4) noktalarinda W'nin kisaltilmis acik gri oklari; saat yonunun tersine "
+         "donusu gosteren kucuk yay oku")
+
+# ============================================================ kovaryant-dogru-boyunca-alan
+# -*- coding: utf-8 -*-
+# kovaryant-dogru-boyunca-alan: the line alpha(t) = (2 - t, 1, 2t) of the example, drawn for
+# -1/2 <= t <= 1, with the field W = x^2 U1 + yz U3 on it. At t = -1/2, 0, 1/2, 1 the points are
+# (5/2, 1, -1), (2, 1, 0), (3/2, 1, 1), (1, 1, 2) and the vector parts of W are (25/4, 0, -1),
+# (4, 0, 0), (9/4, 0, 1), (1, 0, 2) — blue arrows, all at 1/4 of their true length (said in the
+# title). From p = (2, 1, 0) the green arrow is v = (-1, 0, 2); since p + v is the point at t = 1,
+# it runs along the line and covers its 0 <= t <= 1 piece. The orange arrow is the covariant
+# derivative nabla_v W = (-4, 0, 2), drawn at the same 1/4 scale.
+# Everything lies in the plane y = 1 (the grid), so the three axes at y = 0 are seen through it:
+# every arrow and the line itself are drawn over a background-coloured casing, which is the
+# correct occlusion — the sheet y = 1 is in front of the axes — and keeps the crossings clean.
+# Camera: azimuth 50 is at the top of the API band on purpose. Below ~48 the projected z axis
+# cuts the drawn line (at az 35 it crosses at t = 0.57) and the short W arrow at t = 1/2 shrinks
+# to about 25 px; at 50 the line stays left of the z axis and that arrow is 38 px long.
+# Elevation 30 puts the projected x axis, which is parallel to the z = const grid lines, at the
+# level z = tan(el)/sin(az) = 0.75 — midway between the nabla tip (z = 1/2) and the point at
+# t = 1/2 (z = 1), the only free gap there is.
+import math
+
+AZ, EL = 50.0, 30.0
+SHRINK = 0.25                              # every W arrow and the nabla arrow at 1/4
+TS = (-0.5, 0.0, 0.5, 1.0)
+GX, GZ = (0.0, 4.4), (-1.5, 2.85)          # extent of the grid drawn in the plane y = 1
+AXX, AXY, AXZ = 1.4, 1.85, 2.7
+
+p_pt = (2.0, 1.0, 0.0)
+v_vec = (-1.0, 0.0, 2.0)
+nabla_vec = (-4.0, 0.0, 2.0)
+
+
+def alpha(t):
+    return (2.0 - t, 1.0, 2.0 * t)
+
+
+def field(q):
+    """W = x^2 U1 + yz U3 at the point q."""
+    return (q[0] * q[0], 0.0, q[1] * q[2])
+
+
+def tip(q, w):
+    """Tip of the arrow that carries the vector part w, shortened to 1/4."""
+    return vadd(q, vscale(SHRINK, w))
+
+
+P = space_panel(16, 14, 372, (-2.80, 1.42), (-3.18, 2.50))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+IT_T = None                                # set below, once bold()/subs() are in scope
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+def halo(px, py, s, color=TEXT, size=11, anchor="start"):
+    """Text with a page-coloured outline, so the faint grid and axes break under it."""
+    P.add(f'<text x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="{size}" '
+          f'text-anchor="{anchor}" stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" '
+          f'paint-order="stroke">{s}</text>')
+
+
+def at(X, Y, s, color=TEXT, size=11, anchor="start"):
+    """Halo text at a point of the panel's (projected) data plane."""
+    halo(P.X(X), P.Y(Y), s, color, size, anchor)
+
+
+def tag(Q, s, dx=0, dy=0, color=TEXT, size=11, anchor="start"):
+    """Halo text hung on a space point, nudged by pixels."""
+    X, Y = S.pt(Q)
+    halo(P.X(X) + dx, P.Y(Y) + dy, s, color, size, anchor)
+
+
+def cased_arrow(A, B, color, width, head):
+    """Arrow over a background-coloured casing: it sits in front of the axes and the grid."""
+    S.arrow(A, B, BG, width + 2.2, head + 2.2)
+    S.arrow(A, B, color, width, head)
+
+
+def marked(Q, r=3.4):
+    S.point(Q, BG, r + 1.4)
+    S.point(Q, TEXT, r)
+
+
+def nabla_text(px, py, rest, color, size=11.5):
+    """'nabla' as a small triangle path, then the rest of the label: the font has no U+2207."""
+    w, h = 0.62 * size, 0.70 * size
+    P.add(f'<path d="M{px:.1f},{py - h:.1f} L{px + w:.1f},{py - h:.1f} L{px + w / 2:.1f},{py:.1f} Z" '
+          f'fill="none" stroke="{color}" stroke-width="1.15" stroke-linejoin="miter" '
+          f'stroke-opacity="1"/>')
+    halo(px + w + 1.5, py, rest, color, size, "start")
+
+
+# --- 1. the plane y = 1: a pale sheet with a grid ------------------------------------------------
+CORNERS = [(GX[0], 1, GZ[0]), (GX[1], 1, GZ[0]), (GX[1], 1, GZ[1]), (GX[0], 1, GZ[1])]
+P.polygon(S.pts(CORNERS), TEXT, 0.05, "none")
+for gx in (1, 2, 3, 4):
+    S.line([(gx, 1, GZ[0]), (gx, 1, GZ[1])], TEXT, 0.7, None, 0.13)
+for gz in (-1, 0, 1, 2):
+    S.line([(GX[0], 1, gz), (GX[1], 1, gz)], TEXT, 0.7, None, 0.13)
+S.line(CORNERS + [CORNERS[0]], TEXT, 0.9, None, 0.22)
+
+# --- 2. axes (behind the sheet, so they stay faint) ----------------------------------------------
+S.axes(AXX, AXY, AXZ, color=TEXT, opacity=0.45, offsets=((-5, 14), (11, 5), (-9, -5)))
+for Q, s, dx, dy, anchor in (((1, 0, 0), "1", -3, 15, "middle"),
+                             ((0, 1, 0), "1", 7, 14, "start"),
+                             ((0, 0, 1), "1", 8, 4, "start"),
+                             ((0, 0, 2), "2", 8, 4, "start")):
+    d = (0, 0.07, 0) if Q[0] else (0.07, 0, 0)
+    S.line([vsub(Q, d), vadd(Q, d)], TEXT, 1.0, None, 0.55)
+    tag(Q, s, dx, dy, TEXT, 10, anchor)
+
+# --- 3. the line, the field on it, v and the covariant derivative ---------------------------------
+S.arrow(alpha(-0.5), alpha(1.0), BG, 3.6, 0.1)              # casing for the line
+S.line([alpha(-0.5), alpha(1.0)], TEXT, 1.3, None, 0.55)
+
+HEADS = {-0.5: 9.5, 0.0: 8.5, 0.5: 7.5, 1.0: 7.5}
+for t in TS:
+    q = alpha(t)
+    cased_arrow(q, tip(q, field(q)), THEORY, 2.2, HEADS[t])
+
+cased_arrow(p_pt, vadd(p_pt, v_vec), BASE, 2.4, 9.5)
+cased_arrow(p_pt, tip(p_pt, nabla_vec), PRACTICE, 2.6, 10.0)
+
+for t in TS:
+    marked(alpha(t), 3.6 if t == 0.0 else 3.2)
+
+# --- 4. labels ------------------------------------------------------------------------------------
+IT_T = ital("t") + " = "
+U1 = ital("U") + subs("1")
+U3 = ital("U") + subs("3")
+
+# the points, read off the line: to its right below t = 1/2, to its left at t = 1
+tag(alpha(-0.5), IT_T + MINUS_S + "1/2", 13, -3, TEXT, 11)
+tag(alpha(-0.5), "(5/2, 1, " + MINUS_S + "1)", 13, 12, TEXT, 11)
+tag(p_pt, bold("p") + " = (2, 1, 0)", 14, 12, TEXT, 11)
+tag(p_pt, IT_T + "0", 14, 26, TEXT, 11)
+tag(alpha(0.5), IT_T + "1/2", -14, -32, TEXT, 11, "end")
+tag(alpha(0.5), "(3/2, 1, 1)", -14, -18, TEXT, 11, "end")
+tag(alpha(1.0), IT_T + "1", -13, -4, TEXT, 11, "end")
+tag(alpha(1.0), "(1, 1, 2)", -13, 11, TEXT, 11, "end")
+
+# the vector parts of the blue arrows, each beside its own arrow
+at(-2.00, -2.20, "(25/4, 0, " + MINUS_S + "1)", THEORY, 10.5, "middle")
+at(-1.00, -1.55, ital("W") + "(" + bold("p") + ") = (4, 0, 0)", THEORY, 10.5, "end")
+at(-1.15, -0.17, "(9/4, 0, 1)", THEORY, 10.5, "middle")
+at(-0.40, 1.50, "(1, 0, 2)", THEORY, 10.5, "end")
+
+# v, in the narrow wedge between the line and the projected z axis
+at(-0.38, 0.12, bold("v"), BASE, 12.5)
+# the covariant derivative, in the open pocket below the origin
+nabla_text(P.X(-0.42), P.Y(-0.85), subs(bold("v")) + ital("W") + " = (" + MINUS_S + "4, 0, 2)",
+           PRACTICE, 11.5)
+
+at(-0.90, -1.80, ital("&#945;"), TEXT, 12.5)          # the line, on the free side of its grey piece
+at(0.60, -1.46, ital("y") + " = 1 düzlemi", TEXT, 10.5, "end")
+# the field and the scale of the arrows, in the open corner above the sheet
+at(-2.74, 2.26, ital("W") + " = " + ital("x") + sups("2") + U1 + " + " + ital("yz") + " " + U3,
+   TEXT, 11.5)
+at(-2.74, 2.04, "mavi ve turuncu oklar 1/4 ölçeğinde", TEXT, 11.5)
+
+OUT["kovaryant-dogru-boyunca-alan"] = figure(
+    404, 528, [P],
+    "<strong>p</strong> = (2, 1, 0) noktasından <strong>v</strong> = (&#8722;1, 0, 2) yönünde "
+    "giden &#945;(<em>t</em>) = (2 &#8722; <em>t</em>, 1, 2<em>t</em>) doğrusu, tümüyle "
+    "<em>y</em> = 1 düzleminde kalır; doğru üzerindeki dört noktada mavi oklar "
+    "<em>W</em> = <em>x</em><sup>2</sup><em>U</em><sub>1</sub> + <em>yzU</em><sub>3</sub> "
+    "alanının değerleridir ve vektör kısımları <em>t</em> = &#8722;1/2, 0, 1/2, 1 için sırasıyla "
+    "(25/4, 0, &#8722;1), (4, 0, 0), (9/4, 0, 1), (1, 0, 2)&#8217;dir. Yeşil ok "
+    "<strong>v</strong>, doğrunun <em>t</em> = 0 ile <em>t</em> = 1 arasındaki parçasının "
+    "kendisidir; sığmaları için bütün mavi oklar ve turuncu ok gerçek boylarının "
+    "1/4&#8217;ü ile çizilmiştir. <em>t</em> büyürken ok "
+    "önce kısalır, sonra yukarı doğru döner; turuncu ok "
+    "&#8711;<sub><strong>v</strong></sub><em>W</em> = (&#8722;4, 0, 2) bu iki değişimi tek bir "
+    "teğet vektörde toplar ve <em>W</em>(<strong>p</strong>) ile aynı noktada uygulanmıştır.",
+    aria="Uzayda y = 1 duzleminde alpha(t) = (2 - t, 1, 2t) dogrusu; t = -1/2, 0, 1/2, 1 "
+         "noktalari (5/2, 1, -1), (2, 1, 0), (3/2, 1, 1), (1, 1, 2) isaretli ve her birinde "
+         "W = x^2 U1 + yz U3 alaninin mavi oku var, vektor kisimlari sirasiyla (25/4, 0, -1), "
+         "(4, 0, 0), (9/4, 0, 1), (1, 0, 2), hepsi 1/4 olceginde. p = (2, 1, 0) noktasindan cikan "
+         "yesil ok v = (-1, 0, 2) dogru boyunca uzanir; ayni noktadan cikan turuncu ok, ayni "
+         "olcekteki kovaryant turev nabla_v W = (-4, 0, 2)",
+)
+
+# ============================================================ kovaryant-duzlemde-donme-alani
+# -*- coding: utf-8 -*-
+# kovaryant-duzlemde-donme-alani: the rotation field W = -y U1 + x U2 in the xy plane and its
+# covariant derivative along v = (0, 1) at p = (1, 0). The dashed line x = 1 is p + t v; on it the
+# points t = -1/2, 0, 1/2, 1, i.e. (1, -1/2), (1, 0), (1, 1/2), (1, 1), carry the W arrows (blue) with
+# vector parts (1/2, 1), (0, 1), (-1/2, 1), (-1, 1). At p the green v = (0, 1) and the blue
+# W(p) = (0, 1) are the same vector, so v is drawn underneath as a border around the blue arrow;
+# nabla_v W = (-1, 0) is the orange arrow along the x axis. Light-grey arrows on the lattice
+# {-1, 0, 1, 2} x {-1, 0, 1} show the field around. Every arrow is drawn at SHRINK of its true
+# length (stated in the caption); at 1/2 or 1 the tip of W(p) would land on the next marked point.
+# The nabla glyph (U+2207) is missing from the site font, so it is drawn as an outlined inverted
+# triangle in front of its label, as in kovaryant-cember-uzerinde-ivme.
+
+SHRINK = 0.4
+XR, YR = (-1.6, 2.5), (-1.6, 1.9)
+p = cplane(25, 34, 350, XR, YR)
+PPU = 350 / (XR[1] - XR[0])          # pixels per data unit
+
+P0 = (1.0, 0.0)                      # p
+V = (0.0, 1.0)                       # v
+DW = (-1.0, 0.0)                     # nabla_v W at p
+TS = (-0.5, 0.0, 0.5, 1.0)           # t values of the marked points on the line
+LATTICE = [(a, b) for a in (-1, 0, 1, 2) for b in (-1, 0, 1)
+           if (a, b) not in ((0, 0), (1, 0), (1, 1))]   # grey field arrows; (0, 0) has W = 0
+
+
+def W(a, b):
+    """Vector part of W at (a, b)."""
+    return (-b, a)
+
+
+def tip(q, w):
+    """End point of the shortened arrow with vector part w starting at q."""
+    return (q[0] + SHRINK * w[0], q[1] + SHRINK * w[1])
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+def nabla(px, py, color, size=8.0, width=1.15):
+    """The nabla sign as an inverted triangle: base at cap height, apex on the baseline."""
+    p.add(f'<polygon points="{px:.1f},{py - size:.1f} {px + size:.1f},{py - size:.1f} '
+          f'{px + size / 2:.1f},{py:.1f}" fill="none" stroke="{color}" stroke-width="{width}" '
+          f'stroke-linejoin="round"/>')
+
+
+def stacked_arrows(p0, p1, under, over, width=2.2, head=8.0, border=2.2):
+    """Two equal vectors drawn on top of each other: the `under` arrow shows as a uniform border
+    of `border` px around the `over` arrow (shaft and head alike)."""
+    x0, y0, x1, y1 = p.X(p0[0]), p.Y(p0[1]), p.X(p1[0]), p.Y(p1[1])
+    dx, dy = x1 - x0, y1 - y0
+    L = math.hypot(dx, dy)
+    ux, uy = dx / L, dy / L
+    sx, sy = x1 - ux * head * 0.8, y1 - uy * head * 0.8
+    px_, py_, hw = -uy, ux, head * 0.42
+    pts = (f"{x1:.1f},{y1:.1f} {x1 - ux * head + px_ * hw:.1f},{y1 - uy * head + py_ * hw:.1f} "
+           f"{x1 - ux * head - px_ * hw:.1f},{y1 - uy * head - py_ * hw:.1f}")
+    p.add(f'<line x1="{x0:.1f}" y1="{y0:.1f}" x2="{sx:.1f}" y2="{sy:.1f}" stroke="{under}" '
+          f'stroke-width="{width + 2 * border:.1f}" stroke-linecap="round"/>')
+    p.add(f'<polygon points="{pts}" fill="{under}" stroke="{under}" stroke-width="{2 * border:.1f}" '
+          f'stroke-linejoin="round"/>')
+    p.arrow(p0, p1, over, width, head)
+
+
+def num_label(x, y, s, dx, dy, anchor):
+    """Coordinate number next to a lattice point on an axis."""
+    p.add(f'<text x="{p.X(x) + dx:.1f}" y="{p.Y(y) + dy:.1f}" fill="{TEXT}" font-size="10.5" '
+          f'text-anchor="{anchor}" opacity="0.75">{s}</text>')
+
+
+def tick(x, y, horizontal):
+    """Short tick through an axis point."""
+    if horizontal:
+        p.add(f'<line x1="{p.X(x):.1f}" y1="{p.Y(y) - 3:.1f}" x2="{p.X(x):.1f}" y2="{p.Y(y) + 3:.1f}" '
+              f'stroke="{TEXT}" stroke-width="1" opacity="0.7"/>')
+    else:
+        p.add(f'<line x1="{p.X(x) - 3:.1f}" y1="{p.Y(y):.1f}" x2="{p.X(x) + 3:.1f}" y2="{p.Y(y):.1f}" '
+              f'stroke="{TEXT}" stroke-width="1" opacity="0.7"/>')
+
+
+# --- the line p + t v = (1, t), the axes and the ticks ------------------------------------------
+guide(p, [(1.0, YR[0] + 0.06), (1.0, YR[1] - 0.06)], TEXT, 0.5)
+# the x label goes above the axis: below it, the arrow from (2, -1) ends at (2.4, -0.2)
+p.origin_axes("", "y")
+p.add(f'<text x="{p.x0 + p.w + 2:.1f}" y="{p.Y(0) - 7:.1f}" fill="{TEXT}" font-size="11.5" '
+      f'font-style="italic" text-anchor="end" opacity="0.85">x</text>')
+# tick numbers on the side of the axis that the arrow at that point does not cross
+tick(-1, 0, True);  num_label(-1, 0, MINUS_S + "1", 0, -6, "middle")
+tick(2, 0, True);   num_label(2, 0, "2", 0, 14, "middle")
+tick(0, 1, False);  num_label(0, 1, "1", 6, 4, "start")
+tick(0, -1, False); num_label(0, -1, MINUS_S + "1", -6, 4, "end")
+
+# --- the field around: short light-grey arrows on the lattice -----------------------------------
+for a, b in LATTICE:
+    p.arrow((a, b), tip((a, b), W(a, b)), TEXT, 1.4, head=6.5, opacity=0.42)
+for a, b in LATTICE + [(0, 0)]:
+    p.circle(a, b, 2.0 / PPU, TEXT, 0, None, TEXT, 0.45)
+
+# --- W along the line (blue), v under W(p) (green), nabla_v W (orange) --------------------------
+for t in TS:
+    q = (1.0, t)
+    if t != 0.0:
+        p.arrow(q, tip(q, W(*q)), THEORY, 2.1, head=7.5)
+stacked_arrows(P0, tip(P0, V), BASE, THEORY, 2.6, 8.5, 1.9)      # v = W(p) = (0, 1)
+p.arrow(P0, tip(P0, DW), PRACTICE, 2.2, head=8)
+for t in TS:
+    dot(p, (1.0, t), TEXT, 3.3)
+
+# --- labels --------------------------------------------------------------------------------------
+T_EQ = ital("t") + " = "
+PX, PY = p.X(P0[0]), p.Y(P0[1])
+# t values: to the right of the points, except t = -1/2 whose right side holds the arrow from (1, -1)
+p.label(1.0, -0.5, T_EQ + MINUS_S + "1/2", -9, 4, TEXT, 10.5, "end")
+p.label(1.0, 0.0, T_EQ + "0", 9, 3, TEXT, 10.5, "start")
+p.label(1.0, 0.5, T_EQ + "1/2", 9, 4, TEXT, 10.5, "start")
+p.label(1.0, 1.0, T_EQ + "1", 9, 4, TEXT, 10.5, "start")
+
+p.text_px(PX - 6, PY + 15, bold("p") + " = (1, 0)", TEXT, 11.5, "end")
+p.text_px(PX - 9, PY - 28, ital("W") + "(" + bold("p") + ")", THEORY, 12, "end")
+p.text_px(PX + 9, PY - 24, bold("v"), BASE, 12.5, "start")
+gx, gy = PX - 34, PY - 9
+nabla(gx, gy, PRACTICE)
+p.text_px(gx + 10, gy, subs(bold("v")) + " " + ital("W"), PRACTICE, 12.5, "start")
+
+# formula line above the panel
+p.text_px(p.x0 + p.w / 2, p.y0 - 16,
+          ital("W") + " = " + MINUS_S + ital("y") + ital("U") + subs("1") + " + " + ital("x") + ital("U")
+          + subs("2"), TEXT, 11.5, "middle")
+
+OUT["kovaryant-duzlemde-donme-alani"] = figure(
+    400, 348, [p],
+    "<em>W</em> = &#8722;<em>y</em><em>U</em><sub>1</sub> + <em>x</em><em>U</em><sub>2</sub> dönme "
+    "alanının <em>x</em> = 1 doğrusu üzerindeki <em>t</em> = &#8722;1/2, 0, 1/2, 1 noktalarında okları "
+    "(mavi) ve çevredeki tam sayı noktalarında okları (gri); okunaklılık için her ok gerçek boyunun "
+    "0,4 katıyla çizilmiştir. <strong>p</strong> = (1, 0) noktasındaki yeşil <strong>v</strong> = (0, 1) "
+    "oku, oradaki <em>W</em>(<strong>p</strong>) = (0, 1) mavi okuyla aynı vektör olduğu için onun "
+    "altında yalnızca kenarlarıyla görünür. Doğru boyunca yukarı çıkıldıkça okun <em>y</em> bileşeni 1 "
+    "kalır, <em>x</em> bileşeni &#8722;<em>y</em> olur: sağa yatık ok <strong>p</strong>&#8217;de "
+    "dikleşir, sonra sola yatar. Bu dönüşün <strong>p</strong>&#8217;deki hızı turuncu okla gösterilen "
+    "&#8711;<sub><strong>v</strong></sub><em>W</em> = (&#8722;1, 0) vektörüdür; ilk anda okun yalnızca "
+    "doğrultusu değişir, boyu değişmez.",
+    aria="Duzlemde W = -y U1 + x U2 alani; x = 1 kesikli dogrusu uzerinde t = -1/2, 0, 1/2, 1 "
+         "anlarindaki (1, -1/2), (1, 0), (1, 1/2), (1, 1) noktalarinda W'nin mavi oklari, vektor "
+         "kisimlari (1/2, 1), (0, 1), (-1/2, 1), (-1, 1); p = (1, 0) noktasindan cikan yesil v = (0, 1) "
+         "oku mavi W(p) okunun altinda kenar olarak gorunur; ayni noktadan cikan turuncu "
+         "nabla_v W = (-1, 0) oku; -1..2 x -1..1 tam sayi izgarasinda acik gri W oklari; butun oklar "
+         "gercek boyunun 0,4 katiyla cizilmis")
+
+# ============================================================ kovaryant-konum-alani
+# -*- coding: utf-8 -*-
+# kovaryant-konum-alani: the position field X = x U1 + y U2 in the xy plane. Its arrow at (a, b)
+# has vector part (a, b); every X arrow is drawn at 1/2 of its true length (stated in the title
+# and the caption). Grey arrows at the lattice points (1,1), (1,2), (2,2), (3,1), (1,3); blue arrows
+# at the points p + t v, t = 0, 1/2, 1, of the dashed line through p = (2, 1) with v = (1, 2),
+# i.e. at (2, 1), (5/2, 2), (3, 3) with vector parts (2, 1), (5/2, 2), (3, 3).
+# The tangent vector v (green) and the covariant derivative nabla_v X = (1, 2) = v (orange, the
+# course colour for derivative arrows) are drawn at TRUE length; the orange arrow runs parallel to v,
+# shifted 0.25 units to its right so the two do not coincide.
+# The nabla is drawn as a small triangle path: the site font has no U+2207.
+import math
+
+SHRINK = 0.5                                   # X arrows are shortened to 1/2
+XR, YR = (-0.35, 5.15), (-0.35, 4.85)
+p = cplane(30, 34, 340, XR, YR)
+PPU = p.w / (XR[1] - XR[0])                    # pixels per data unit
+
+P0 = (2.0, 1.0)                                # p
+V = (1.0, 2.0)                                 # v
+LATTICE = [(1, 1), (1, 2), (2, 2), (3, 1), (1, 3)]
+NPERP = (2.0 / math.sqrt(5.0), -1.0 / math.sqrt(5.0))   # unit normal to v, pointing to its right
+OFF = 0.25                                      # shift of the nabla arrow, in data units
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + '</tspan>'
+
+
+def on_line(t):
+    return (P0[0] + t * V[0], P0[1] + t * V[1])
+
+
+def x_tip(q):
+    """Tip of the shortened X arrow at q: q + (1/2) q."""
+    return (q[0] * (1.0 + SHRINK), q[1] * (1.0 + SHRINK))
+
+
+def shifted(q):
+    return (q[0] + OFF * NPERP[0], q[1] + OFF * NPERP[1])
+
+
+def nabla_label(px, py, rest, color, size=11.5):
+    """'nabla' as a triangle path, followed by the text `rest` (subscript first)."""
+    w, h = 0.62 * size, 0.70 * size
+    p.add(f'<path d="M{px:.1f},{py - h:.1f} L{px + w:.1f},{py - h:.1f} L{px + w / 2:.1f},{py:.1f} Z" '
+          f'fill="none" stroke="{color}" stroke-width="1.1" stroke-linejoin="miter"/>')
+    p.text_px(px + w + 1.5, py, rest, color, size, "start")
+
+
+# --- axes ---------------------------------------------------------------------------------------
+p.origin_axes("x", "y", xticks=(1, 2, 3, 4), yticks=(1, 2, 3, 4))
+
+# --- the field on the lattice: grey, at 1/2 scale ----------------------------------------------
+for q in LATTICE:
+    p.arrow(q, x_tip(q), TEXT, 1.5, head=6.5, opacity=0.5)
+for q in LATTICE:
+    dot(p, q, TEXT, 2.4)
+
+# --- the line p + t v, dashed, and the three X arrows on it (blue) ------------------------------
+guide(p, [on_line(-0.42), on_line(1.28)], TEXT, 0.55)
+for t in (0.0, 0.5, 1.0):
+    p.arrow(on_line(t), x_tip(on_line(t)), THEORY, 2.0, head=7.5)
+
+# --- v (green) and nabla_v X = v (orange), true length -----------------------------------------
+p.arrow(P0, on_line(1.0), BASE, 2.4, head=9)
+p.arrow(shifted(P0), shifted(on_line(1.0)), PRACTICE, 2.2, head=8.5)
+
+for t in (0.0, 0.5, 1.0):
+    dot(p, on_line(t), TEXT, 3.4)
+
+# --- labels -------------------------------------------------------------------------------------
+IT_T = ital("t") + " = "
+# p, below-right (the dashed line runs down-left, the orange arrow starts just above the text)
+p.label(*P0, bold("p") + " = (2, 1)", 16, 22, TEXT, 11.5, "start")
+p.label(*P0, IT_T + "0", 16, 35, TEXT, 10.5, "start")
+# t = 1/2, below-left of the dot, clear of the dashed line and of the grey arrow base (2, 2)
+p.label(*on_line(0.5), IT_T + "1/2", -16, 16, TEXT, 10.5, "end")
+# p + v = (3, 3), upper-left: the dashed line leaves to the upper right, the arrows arrive from below
+p.label(*on_line(1.0), bold("p") + " + " + bold("v") + " = (3, 3)", -10, -4, TEXT, 11.5, "end")
+p.label(*on_line(1.0), IT_T + "1", -10, -17, TEXT, 10.5, "end")
+# vector parts of the blue arrows, at their tips
+p.label(*x_tip(on_line(0.0)), "(2, 1)", 8, 4, THEORY, 10.5, "start")
+p.label(*x_tip(on_line(0.5)), "(5/2, 2)", 8, 4, THEORY, 10.5, "start")
+p.label(*x_tip(on_line(1.0)), "(3, 3)", 8, 4, THEORY, 10.5, "start")
+# v, left of the green arrow at t = 1/4
+p.label(*on_line(0.25), bold("v"), -9, 4, BASE, 12.5, "end")
+# nabla_v X = v, right of the orange arrow at its middle
+mx, my = shifted(on_line(0.5))
+nabla_label(p.X(mx) + 9, p.Y(my) + 4,
+            subs(bold("v")) + ital("X") + " = " + bold("v"), PRACTICE, 11.5)
+
+# title: the field and the scale of its arrows
+p.text_px(p.x0 + p.w / 2, p.y0 - 12,
+          ital("X") + " = " + ital("x") + ital("U") + subs("1") + " + " + ital("y") + ital("U") + subs("2")
+          + " okları 1/2 ölçeğinde", TEXT, 11.5, "middle")
+
+OUT["kovaryant-konum-alani"] = figure(
+    400, 392, [p],
+    "Düzlemde <em>X</em> = <em>xU</em><sub>1</sub> + <em>yU</em><sub>2</sub> konum alanı: her noktadaki "
+    "okun vektör kısmı noktanın kendisidir, okunaklılık için bütün <em>X</em> okları gerçek boyunun "
+    "yarısıyla çizilmiştir. <strong>p</strong> = (2, 1) noktasından <strong>v</strong> = (1, 2) yönünde "
+    "(yeşil ok, gerçek boyda) ilerlerken <strong>p</strong> + <em>t</em><strong>v</strong> "
+    "noktalarındaki mavi okların vektör kısımları <em>t</em> = 0, 1/2, 1 için (2, 1), (5/2, 2), (3, 3), "
+    "yani noktanın kendisidir; ok, nokta kadar değişir. Bu değişimin <em>t</em>&#8217;ye göre türevi "
+    "olan turuncu ok &#8711;<sub><strong>v</strong></sub><em>X</em> = (1, 2), yeşil "
+    "<strong>v</strong> okunun yanında ona paralel ve eşit boydadır: konum alanının türevi yönün "
+    "kendisidir.",
+    aria="xy duzleminde X = x U1 + y U2 konum alani: (1,1), (1,2), (2,2), (3,1), (1,3) noktalarinda "
+         "gri oklar, vektor kisimlari noktanin koordinatlari, 1/2 olceginde; p = (2,1) noktasindan "
+         "v = (1,2) yesil oku ve kesikli p + t v dogrusu; dogru uzerinde t = 0, 1/2, 1 noktalari "
+         "(2,1), (5/2,2), (3,3) ve oradaki mavi X oklari (2,1), (5/2,2), (3,3); p'de v'ye paralel "
+         "turuncu ok nabla_v X = (1,2) = v")
+
+# ============================================================ kovaryant-sabit-uzunluk-diklik
+# -*- coding: utf-8 -*-
+# kovaryant-sabit-uzunluk-diklik: the plane of vector parts (first component to the right, second
+# upward) with the unit circle. W = cos x U1 + sin x U2 has unit length everywhere. Along the line
+# p + t V(p) through p = (pi/3, 1, 0) with V(p) = (-1, 0, pi/3) the first coordinate is x = pi/3 - t,
+# so the arrow of W makes the angle pi/3 - t. Three unit arrows from the origin:
+#   t = -pi/6 -> angle pi/2, (0, 1), light blue
+#   t = 0     -> angle pi/3, W(p) = (1/2, sqrt3/2), dark blue
+#   t = pi/6  -> angle pi/6, (sqrt3/2, 1/2), light blue
+# From the tip of W(p) the derivative nabla_V W(p) = (sqrt3/2, -1/2) (orange) is tangent to the
+# circle and perpendicular to W(p): a right-angle mark sits between them. A small clockwise arc arrow
+# outside the circle shows how the tip travels as t grows. The whole circle is drawn; the otherwise
+# empty lower-right corner holds the formulas of W, V and p.
+import math
+
+S3 = math.sqrt(3.0)
+XR, YR = (-1.2, 2.35), (-1.2, 1.36)
+p = cplane(28, 20, 384, XR, YR)
+
+O = (0.0, 0.0)
+W_MINUS = (0.0, 1.0)                    # t = -pi/6, angle pi/2
+W_P = (0.5, S3 / 2)                     # t = 0, angle pi/3
+W_PLUS = (S3 / 2, 0.5)                  # t = pi/6, angle pi/6
+D = (S3 / 2, -0.5)                      # nabla_V W(p): the clockwise unit tangent at W(p)
+TIP = (W_P[0] + D[0], W_P[1] + D[1])    # (1.366, 0.366)
+LIGHT = 0.45                            # opacity of the two neighbouring arrows
+R_ARC = 1.16                            # radius of the "t grows" arc arrow
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def nabla(px, py, color, size=8.0, width=1.15):
+    """The nabla sign drawn as an inverted triangle (the text font lacks the glyph):
+    base at cap height, apex on the baseline."""
+    p.add(f'<polygon points="{px:.1f},{py - size:.1f} {px + size:.1f},{py - size:.1f} '
+          f'{px + size / 2:.1f},{py:.1f}" fill="none" stroke="{color}" stroke-width="{width}" '
+          f'stroke-linejoin="round"/>')
+
+
+def arc_arrow(r, a0_deg, a1_deg, color, width=1.3, head=7.0, opacity=0.8, n=60):
+    """Circular arc about the origin from a0 to a1 (degrees) with an arrowhead at a1."""
+    a0, a1 = math.radians(a0_deg), math.radians(a1_deg)
+    pts = [(r * math.cos(a0 + (a1 - a0) * k / n), r * math.sin(a0 + (a1 - a0) * k / n))
+           for k in range(n + 1)]
+    p.line(pts[:-2], color, width, None, opacity)
+    p.arrow(pts[-4], pts[-1], color, width, head, None, opacity)
+
+
+# --- unit circle and axes ----------------------------------------------------------------------
+p.circle(0, 0, 1, TEXT, 0.9, None, "none", 0.45)
+p.origin_axes("1. bileşen", "2. bileşen", xticks=(1,), yticks=(1,))
+
+# --- the three unit arrows: neighbours faded, W(p) full ------------------------------------------
+p.arrow(O, W_MINUS, THEORY, 2.2, 9, None, LIGHT)
+p.arrow(O, W_PLUS, THEORY, 2.2, 9, None, LIGHT)
+p.arrow(O, W_P, THEORY, 2.6, 9)
+
+# --- the derivative, tangent to the circle at the tip of W(p) -----------------------------------
+p.arrow(W_P, TIP, PRACTICE, 2.4, 9)
+
+# right-angle mark between W(p) (looking back toward the origin) and the derivative
+s = 0.12
+a = (W_P[0] * (1 - s), W_P[1] * (1 - s))
+c = (W_P[0] + s * D[0], W_P[1] + s * D[1])
+b = (a[0] + s * D[0], a[1] + s * D[1])
+p.line([a, b, c], TEXT, 1.1, None, 0.8)
+
+# clockwise arc arrow outside the circle: the tip travels this way as t grows
+arc_arrow(R_ARC, 84, 45, TEXT, 1.3, 7, 0.75)
+
+# --- points --------------------------------------------------------------------------------------
+dot(p, O, TEXT, 2.6)
+for q in (W_MINUS, W_P, W_PLUS):
+    dot(p, q, TEXT, 2.6)
+
+# --- labels --------------------------------------------------------------------------------------
+IT_T = ital("t") + " = "
+p.label(0, 0.5, IT_T + MINUS_S + PI_S + "/6", -9, 4, TEXT, 11, "end")
+p.label(W_PLUS[0] / 2, W_PLUS[1] / 2, IT_T + PI_S + "/6", 2, 13, TEXT, 11, "start")
+# W(p): left of the shaft at height 0.8, in the pocket between the y axis and the arrow
+# (the circle is still 7 px above the text there)
+p.label(0.8 / S3, 0.8, ital("W") + "(" + bold("p") + ")", -8, 4, THEORY, 12, "end")
+p.label(1.26 * math.cos(math.radians(57)), 1.26 * math.sin(math.radians(57)),
+        ital("t") + " artar", 4, 0, TEXT, 11, "start")
+
+# derivative label above the orange arrow: drawn nabla, subscript V, then the rest as text
+q = (W_P[0] + 0.55 * D[0], W_P[1] + 0.55 * D[1])
+gx, gy = p.X(q[0]) + 10, p.Y(q[1]) - 8
+nabla(gx, gy, PRACTICE)
+p.text_px(gx + 8.5, gy,
+          subs(ital("V")) + ital("W") + "(" + bold("p") + ") = (&#8730;3/2, " + MINUS_S + "1/2)",
+          PRACTICE, 11.5)
+
+# formulas in the empty lower-right corner
+U = ital("U")
+LX = 1.12
+p.label(LX, -0.45, ital("W") + " = cos " + ital("x") + " " + U + subs("1") + " + sin " + ital("x") + " "
+        + U + subs("2"), 0, 0, TEXT, 11.5)
+p.label(LX, -0.65, ital("V") + " = " + MINUS_S + ital("y") + U + subs("1") + " + " + ital("x") + U + subs("3"),
+        0, 0, TEXT, 11.5)
+p.label(LX, -0.85, bold("p") + " = (" + PI_S + "/3, 1, 0)", 0, 0, TEXT, 11.5)
+
+OUT["kovaryant-sabit-uzunluk-diklik"] = figure(
+    440, 320, [p],
+    "<em>W</em> = cos <em>x</em> <em>U</em><sub>1</sub> + sin <em>x</em> <em>U</em><sub>2</sub> alanının "
+    "her oku birim uzunluktadır; vektör kısımları birinci ve ikinci bileşen düzlemine çizilince uçları "
+    "birim çember üzerinde kalır. <strong>p</strong> = (&#960;/3, 1, 0) noktasından "
+    "<em>V</em>(<strong>p</strong>) = (&#8722;1, 0, &#960;/3) yönünde ilerlerken <em>x</em> = &#960;/3 &#8722; <em>t</em> "
+    "olur; <em>t</em> = &#8722;&#960;/6, 0, &#960;/6 anlarındaki oklar &#960;/2, &#960;/3, &#960;/6 açılarındadır "
+    "ve <em>W</em>(<strong>p</strong>) = (1/2, &#8730;3/2) okunun ucu <em>t</em> arttıkça çember üzerinde saat "
+    "yönünde dolaşır. Ucun hızı olan &#8711;<sub><em>V</em></sub><em>W</em>(<strong>p</strong>) = "
+    "(&#8730;3/2, &#8722;1/2) (turuncu) çembere teğettir, dolayısıyla yarıçap doğrultusundaki "
+    "<em>W</em>(<strong>p</strong>)&#8217;ye diktir; aradaki dik açı işareti bunu gösterir.",
+    aria="Vektor kisimlari duzleminde birim cember ve orijinden cikan uc birim ok: t = -pi/6 icin (0, 1), "
+         "t = 0 icin W(p) = (1/2, sqrt3/2), t = pi/6 icin (sqrt3/2, 1/2). W(p) okunun ucundan cikan turuncu "
+         "ok nabla_V W(p) = (sqrt3/2, -1/2) cembere teget ve W(p)'ye dik, aralarinda dik aci isareti; "
+         "cemberin disindaki kucuk yay oku ucun t arttikca saat yonunde dolastigini gosterir")
 
 # ============================================================ nokta-koordinat-kutusu
 # -*- coding: utf-8 -*-
@@ -5841,6 +10245,911 @@ OUT["toplam-paralelkenar"] = figure(
     "(<strong>p</strong> + <strong>q</strong>)/2 = (3/2, 1, 1/2), toplam okunun tam ortasında durur.",
     aria="p = (1, 2, 0) ve q = (2, 0, 1) oklari, paralelkenarin karsi kosesi p + q = (3, 2, 1), "
          "uzatilmis ok 2p = (2, 4, 0) ve p ile q'yu birlestiren parcanin orta noktasi (p + q)/2 = (3/2, 1, 1/2)",
+)
+
+# ============================================================ yay-dogru-en-kisa-yol
+# -*- coding: utf-8 -*-
+# yay-dogru-en-kisa-yol: the straight segment is the shortest path (2D, xy plane).
+# p = (0, 0), q = (2, 0); the segment p-q is thick green (d(p, q) = 2); the wavy path
+# alpha(t) = (t, sin pi t), 0 <= t <= 2, is orange (L(alpha) ~ 4.61). At alpha(1/4) = (0.25, 0.71)
+# the blue velocity arrow has vector part (1, pi cos(pi/4)) = (1, 2.22); its projection onto
+# u = (1, 0) is the short grey arrow (1, 0) = 1 * u, with a dashed drop from the blue tip to the
+# grey tip and a right-angle mark at the foot. u itself sits at p as a small arrow on top of
+# the segment. Labels carry the inequality ||alpha'|| >= alpha' . u.
+import math
+
+XR, YR = (-0.9, 2.85), (-1.55, 3.3)
+PW = 330                                    # panel width in px -> 88 px per unit
+p = cplane(35, 22, PW, XR, YR)
+PPU = PW / (XR[1] - XR[0])
+
+P0 = (0.0, 0.0)                             # p
+Q0 = (2.0, 0.0)                             # q
+U = (1.0, 0.0)                              # unit vector u
+T0 = 0.25
+A = (T0, math.sin(math.pi * T0))            # alpha(1/4) = (0.25, 0.7071)
+V = (1.0, math.pi * math.cos(math.pi * T0))  # alpha'(1/4) = (1, 2.2214)
+TIP = (A[0] + V[0], A[1] + V[1])            # (1.25, 2.9285)
+FOOT = (A[0] + U[0], A[1] + U[1])           # tip of the projection (alpha'.u) u = u: (1.25, 0.7071)
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def mfmt(v):
+    """Tick label with a Turkish decimal comma and a real minus sign."""
+    return tfmt(v).replace("-", MINUS_S)
+
+
+def wave(t):
+    return math.sin(math.pi * t)
+
+
+ALPHA = ital("&#945;")
+T = ital("t")
+DBAR = "&#8214;"
+AP = ALPHA + PRIME                          # alpha'
+
+# 1. axes through the origin; the segment p-q lies on the x axis. No x ticks: the curve passes
+#    through (1, 0) and (2, 0) steeply, so tick labels there would sit on it; p, q, 0,25 read the x axis
+p.origin_axes("x", "y", yticks=(-1, 1, 2, 3), xfmt=mfmt, yfmt=mfmt)
+
+# 2. dashed guides reading the coordinates of alpha(1/4) off the axes
+guide(p, [(0.0, A[1]), A], TEXT, 0.5)
+guide(p, [(A[0], 0.0), A], TEXT, 0.5)
+
+# 3. the straight segment (green, thick) and the wavy path (orange)
+p.line([P0, Q0], BASE, 4.5)
+curve(p, wave, 0.0, 2.0, PRACTICE, 2.4, samples=240)
+
+# 4. u at p, drawn on top of the segment at full TEXT opacity: a translucent stroke would blend
+#    into the green and lose the arrowhead
+p.arrow(P0, U, TEXT, 1.7, head=7)
+
+# 5. dashed drop from the velocity tip to the foot of the projection, right-angle mark at the foot
+guide(p, [TIP, FOOT], TEXT, 0.55)
+s = 9.0 / PPU
+p.line([(FOOT[0] - s, FOOT[1]), (FOOT[0] - s, FOOT[1] + s), (FOOT[0], FOOT[1] + s)], TEXT, 1.0, None, 0.7)
+
+# 6. the projection and the velocity (blue). The projection is TEXT at reduced opacity so it reads as
+#    the "gri ok" of the caption in both themes (the axes are the only other grey arrows)
+p.arrow(A, FOOT, TEXT, 2.0, head=7.5, opacity=0.62)
+p.arrow(A, TIP, THEORY, 2.4, head=9)
+
+# 7. points
+dot(p, P0, TEXT, 3.6)
+dot(p, Q0, TEXT, 3.6)
+dot(p, A, TEXT, 3.4)
+
+# 8. labels
+p.label(*P0, bold("p") + " = (0, 0)", -8, 15, TEXT, 11.5, "end")
+p.label(*Q0, bold("q") + " = (2, 0)", 8, -8, TEXT, 11.5, "start")
+p.label(0.62, 0.0, bold("u"), 0, 15, TEXT, 12, "middle")
+p.label(A[0], 0.0, "0,25", 0, 15, TEXT, 10.5, "middle")
+# the point is named where its horizontal guide meets the y axis, on the free left side
+p.label(0.0, A[1], ALPHA + "(1/4) =", -8, -3, TEXT, 11.5, "end")
+p.label(0.0, A[1], "(0,25; 0,71)", -8, 11, TEXT, 11.5, "end")
+p.label(*TIP, AP + "(1/4) = (1; 2,22)", 0, -9, THEORY, 11.5, "middle")
+p.label(*FOOT, AP + " " + CDOT + " " + bold("u") + " = 1", 11, 4, TEXT, 11.5, "start")
+p.label(FOOT[0], 1.9, DBAR + AP + DBAR + " " + GEQ_S + " " + AP + " " + CDOT + " " + bold("u"),
+        12, 0, TEXT, 12.5, "start")
+p.label(1.5, 0.0, ital("d") + "(" + bold("p") + ", " + bold("q") + ") = 2", 0, -8, BASE, 11.5, "middle")
+p.label(1.5, -1.0, ALPHA + "(" + T + ") = (" + T + ", sin " + PI_S + T + ")", 0, 17, PRACTICE, 11.5, "middle")
+p.label(1.5, -1.0, ital("L") + "(" + ALPHA + ") " + APPROX + " 4,61", 0, 31, PRACTICE, 11.5, "middle")
+
+OUT["yay-dogru-en-kisa-yol"] = figure(
+    400, int(22 + p.h + 22), [p],
+    "<strong>p</strong> = (0, 0) ile <strong>q</strong> = (2, 0) arasındaki yeşil doğru parçasının uzunluğu "
+    "<em>d</em>(<strong>p</strong>, <strong>q</strong>) = 2, turuncu dalgalı yol "
+    "&#945;(<em>t</em>) = (<em>t</em>, sin &#960;<em>t</em>), 0 &#8804; <em>t</em> &#8804; 2, ise "
+    "<em>L</em>(&#945;) &#8776; 4,61 uzunluğundadır. &#945;(1/4) = (0,25; 0,71) noktasındaki mavi hız oku "
+    "&#945;&#8242;(1/4) = (1; 2,22)&#8217;nin <strong>u</strong> = (1, 0) birim vektörü üzerine izdüşümü gri "
+    "ok (1, 0)&#8217;dır: uzunluğu &#945;&#8242; &#183; <strong>u</strong> = 1 olup hızın boyunu aşamaz. "
+    "Her anda geçerli olan &#8214;&#945;&#8242;&#8214; &#8805; &#945;&#8242; &#183; <strong>u</strong> "
+    "eşitsizliği integral alınınca <em>L</em>(&#945;) &#8805; <em>d</em>(<strong>p</strong>, <strong>q</strong>) verir.",
+    aria="xy duzleminde p = (0, 0) ile q = (2, 0) arasinda kalin yesil dogru parcasi (uzunluk 2) ve "
+         "turuncu dalgali yol alpha(t) = (t, sin pi t), t 0'dan 2'ye (uzunluk yaklasik 4,61). "
+         "alpha(1/4) = (0,25; 0,71) noktasindan cikan mavi hiz oku (1; 2,22), onun u = (1, 0) uzerine "
+         "izdusumu olan kisa gri ok (1, 0), ucundan inen kesikli dikme ve dik aci isareti; p'de kucuk "
+         "u oku; etiket: ||alpha'|| >= alpha' . u",
+)
+
+# ============================================================ yay-helis-paralel-alan
+# -*- coding: utf-8 -*-
+# yay-helis-paralel-alan: two vector fields on the helix alpha(t) = (cos t, sin t, t), 0 <= t <= 2pi.
+# V = U3 (green): at t = 0, pi/2, pi, 3pi/2, 2pi the same vector part (0, 0, 1) — a parallel field.
+# Y = cos t U1 + sin t U2 (orange): vector parts (1, 0, 0), (0, 1, 0), (-1, 0, 0), (0, -1, 0), (1, 0, 0)
+# — the arrow turns with the helix, so Y is not parallel.
+# Camera az = 56, el = 12 (from _scan_paralel_alan.py): near the textbook view (az ~ 45, el ~ 22) the
+# green tip at t = 3pi/2 lands on the point t = 2pi and the helix runs along two green arrows;
+# a lower, more side-on camera keeps every arrow clear of the curve and of the other markers.
+import math
+
+AZ, EL = 56.0, 12.0
+PHI = math.radians(AZ)
+TS = (0.0, math.pi / 2, math.pi, 3 * math.pi / 2, 2 * math.pi)
+E3 = (0.0, 0.0, 1.0)
+XMAX, YMAX, ZMAX = 2.7, 2.7, 7.6
+
+
+def helix(t):
+    return (math.cos(t), math.sin(t), t)
+
+
+def radial(t):
+    """Vector part of Y(t) = cos t U1 + sin t U2."""
+    return (math.cos(t), math.sin(t), 0.0)
+
+
+def it(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+def helix_piece(t0, t1, opacity):
+    S.curve(helix, t0, t1, TEXT, 1.7, samples=160, opacity=opacity)
+
+
+P = space_panel(14, 12, 312, (-3.0, 3.0), (-0.9, 7.7))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+# 1. floor: faint grid and the dashed unit circle the helix winds over
+S.floor_grid((-2, 2), (-2, 2), n=4, opacity=0.10)
+S.circle((0, 0, 0), (1, 0, 0), (0, 1, 0), 1.0, TEXT, 0.9, dash="4 3", opacity=0.45)
+
+# 2. the half of the helix that lies behind the z axis (cos(t - AZ) < 0), drawn lighter
+helix_piece(PHI + math.pi / 2, PHI + 3 * math.pi / 2, 0.32)
+
+# 3. axes and ticks
+S.axes(XMAX, YMAX, ZMAX)
+S.ticks("x", (2,), offset=(-12, 12))          # the tick at 1 would sit under the point t = 0
+S.ticks("y", (1, 2), offset=(2, 13))
+S.ticks("z", (1, 2, 3, 4, 5, 6))
+
+# 4. the near half of the helix (gray: the curve is the stage, the fields are the subject)
+helix_piece(0.0, PHI + math.pi / 2, 0.5)
+helix_piece(PHI + 3 * math.pi / 2, 2 * math.pi, 0.5)
+
+# 5. the two fields at the five sample points: Y (orange, radial) and V = U3 (green, vertical)
+for t in TS:
+    B = helix(t)
+    S.arrow(B, vadd(B, radial(t)), PRACTICE, 2.4, head=8)
+    S.arrow(B, vadd(B, E3), BASE, 2.4, head=8)
+for t in TS:
+    S.point(helix(t), TEXT, 3.4)
+
+# 6. labels ---------------------------------------------------------------------------------
+IT_T = it("t") + " = "
+p0, p1, p2, p3, p4 = (helix(t) for t in TS)
+# t = 0 sits on the dashed unit circle, so its label goes beside the green shaft, not the point
+S.label(vadd(p0, vscale(0.3, E3)), IT_T + "0", -8, 4, TEXT, 11, "end")
+S.label(p1, IT_T + PI_S + "/2", 6, 21, TEXT, 11, "start")
+S.label(p2, IT_T + PI_S, -8, 12, TEXT, 11, "end")
+S.label(p3, IT_T + "3" + PI_S + "/2", -8, 14, TEXT, 11, "end")
+S.label(p4, IT_T + "2" + PI_S, 8, -3, TEXT, 11, "start")
+
+# vector parts of Y at the orange tips — they change with t
+o_tips = [vadd(helix(t), radial(t)) for t in TS]
+# at t = 0 the arrow lies on the x axis: its label hangs under the shaft
+S.label(o_tips[0], "(1, 0, 0)", 5, 17, PRACTICE, 10.5, "start")
+S.label(o_tips[1], "(0, 1, 0)", 7, -2, PRACTICE, 10.5, "start")
+S.label(o_tips[2], "(" + MINUS_S + "1, 0, 0)", 7, 4, PRACTICE, 10.5, "start")
+S.label(o_tips[3], "(0, " + MINUS_S + "1, 0)", -7, 4, PRACTICE, 10.5, "end")
+S.label(o_tips[4], "(1, 0, 0)", -7, 4, PRACTICE, 10.5, "end")
+
+# vector part of V at the green tips — the same (0, 0, 1) everywhere; at t = pi/2 and 3pi/2 the helix
+# runs right past the tip, so those two stay unlabelled
+g_tips = [vadd(helix(t), E3) for t in TS]
+S.label(g_tips[0], "(0, 0, 1)", -7, 3, BASE, 10.5, "end")
+S.label(g_tips[2], "(0, 0, 1)", 7, 0, BASE, 10.5, "start")
+S.label(g_tips[4], "(0, 0, 1)", -7, 3, BASE, 10.5, "end")
+
+# field names
+S.label(vadd(p4, vscale(0.55, E3)), it("V") + " = " + it("U") + subs("3"), 8, 4, BASE, 12, "start")
+S.label(vadd(p2, vscale(0.5, radial(math.pi))), it("Y"), 0, -8, PRACTICE, 12.5, "middle")
+S.label(helix(2.3), it("&#945;"), 11, 3, TEXT, 12.5, "start")
+
+OUT["yay-helis-paralel-alan"] = figure(
+    340, 472, [P],
+    "&#945;(<em>t</em>) = (cos <em>t</em>, sin <em>t</em>, <em>t</em>) helisi üzerinde iki vektör alanı, "
+    "<em>t</em> = 0, &#960;/2, &#960;, 3&#960;/2, 2&#960; noktalarında. Yeşil oklar <em>V</em> = <em>U</em><sub>3</sub> "
+    "alanının değerleridir: her birinin vektör kısmı (0, 0, 1)'dir, oklar birbirinin ötelenmiş kopyasıdır; "
+    "<em>V</em> paraleldir. Turuncu oklar <em>Y</em> = cos <em>t</em> <em>U</em><sub>1</sub> + sin <em>t</em> <em>U</em><sub>2</sub> "
+    "alanının değerleridir: vektör kısımları (1, 0, 0), (0, 1, 0), (&#8722;1, 0, 0), (0, &#8722;1, 0), (1, 0, 0) "
+    "diye helisle birlikte döner; uzunluk hep 1 olsa da yön değiştiği için <em>Y</em> paralel değildir.",
+    aria="Helis alpha(t) = (cos t, sin t, t), t 0 ile 2pi arasinda, gri; t = 0, pi/2, pi, 3pi/2, 2pi noktalarinda "
+         "yesil dusey oklar, hepsinin vektor kismi (0, 0, 1): paralel alan V = U_3; ayni noktalarda turuncu "
+         "radyal oklar (1, 0, 0), (0, 1, 0), (-1, 0, 0), (0, -1, 0), (1, 0, 0): paralel olmayan alan Y",
+)
+
+# ============================================================ yay-helis-surat-yay-uzunlugu
+# -*- coding: utf-8 -*-
+# yay-helis-surat-yay-uzunlugu: the helix alpha(t) = (3 cos t, 3 sin t, 4t), one full turn on the
+# cylinder x^2 + y^2 = 9 (thin grey), with the quarter turn t in [0, pi/2] in thick orange
+# (length 5pi/2 = 7.85), the velocity vectors (0, 3, 4) at alpha(0) = (3, 0, 0) and (-3, 0, 4) at
+# alpha(pi/2) = (0, 3, 2pi) in blue (both of length 5), and the dashed chord between the two
+# points (length 7.58).
+# Camera az = -12, el = 28 (from _scan_yay_helis.py): the chord and the start velocity leave
+# alpha(0) at 20 degrees on the page and the arrow tip clears the arc by 0.87 units; the usual
+# az = 20..35 views look along the arc's bulge, which lays the blue arrow on top of the orange arc.
+# Painter's order as in egri-helis-hiz-vektorleri: far wall, far pieces, inner axes, near wall,
+# near pieces, then the highlighted quarter turn, arrows, points and text.
+import math
+
+AZ, EL = -12.0, 28.0
+A, B = 3.0, 4.0                       # radius and pitch constant
+TQ = math.pi / 2                      # end of the quarter turn
+TEND = 2 * math.pi                    # one full turn
+Z0, Z1 = 0.0, 8 * math.pi + 0.4       # height range of the drawn cylinder
+ZTIP = Z1 + 2.6                       # z axis arrow tip; shorter and the head sits on the top rim's back edge
+XMAX, YMAX = 4.8, 4.4                 # x and y axis arrow tips (x is foreshortened: a longer stub)
+PHI = math.radians(AZ)                # cos(u - PHI) > 0 on the half of the tube facing the viewer
+FAR = (PHI + math.pi / 2, PHI + 3 * math.pi / 2)
+NEAR = (PHI - math.pi / 2, PHI + math.pi / 2)
+IT_A = '<tspan font-style="italic">&#945;</tspan>'
+
+
+def helix(t):
+    return (A * math.cos(t), A * math.sin(t), B * t)
+
+
+def velocity(t):
+    """Vector part of alpha'(t)."""
+    return (-A * math.sin(t), A * math.cos(t), B)
+
+
+def tube(u, z):
+    return (A * math.cos(u), A * math.sin(u), z)
+
+
+def near(u):
+    return math.cos(u - PHI) > 0
+
+
+def rim_arc(z, u0, u1, dash=None, opacity=0.5, n=60):
+    S.line([tube(u0 + (u1 - u0) * k / n, z) for k in range(n + 1)], TEXT, 0.9, dash, opacity)
+
+
+def helix_runs(front, t0, t1, n=900):
+    """Maximal pieces of the helix on the near (front=True) or far half of the tube."""
+    ts = [t0 + (t1 - t0) * k / n for k in range(n + 1)]
+    out, cur = [], []
+    for i, t in enumerate(ts):
+        if near(t) == front:
+            if not cur and i > 0:
+                cur.append(helix(ts[i - 1]))
+            cur.append(helix(t))
+        elif cur:
+            cur.append(helix(t))
+            out.append(cur)
+            cur = []
+    if cur:
+        out.append(cur)
+    return out
+
+
+def tick_mark(Q, d, half=0.15):
+    """Short tick through an axis point Q along direction d."""
+    S.line([vadd(Q, vscale(-half, d)), vadd(Q, vscale(half, d))], TEXT, 1.0, None, 0.7)
+
+
+P = space_panel(16, 14, 376, (-9.6, 9.2), (-3.3, 25.4))   # 20 px per unit
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+A0, AQ = helix(0), helix(TQ)                    # (3, 0, 0) and (0, 3, 2pi)
+V0, VQ = velocity(0), velocity(TQ)              # (0, 3, 4) and (-3, 0, 4)
+TIP0, TIPQ = vadd(A0, V0), vadd(AQ, VQ)         # (3, 3, 4) and (-3, 3, 4 + 2pi)
+ZTICKS = (2 * math.pi, 4 * math.pi, 6 * math.pi, 8 * math.pi)
+
+# --- far half of the tube and what lies behind the near wall ----------------------------------
+S.surface(tube, FAR, (Z0, Z1), nu=24, nv=1, fill=TEXT, stroke="none", opacity=(0.015, 0.06))
+rim_arc(Z0, *FAR, dash="3 3", opacity=0.35)
+rim_arc(Z1, *FAR, opacity=0.4)
+for run in helix_runs(False, TQ, TEND):
+    S.line(run, TEXT, 1.3, None, 0.4)
+
+# axes inside the tube
+S.line([(0, 0, 0), (A, 0, 0)], TEXT, 1.0, None, 0.35)
+S.line([(0, 0, 0), (0, A, 0)], TEXT, 1.0, None, 0.35)
+S.line([(0, 0, 0), (0, 0, Z1)], TEXT, 1.0, None, 0.4)
+for z in ZTICKS:
+    tick_mark((0, 0, z), (1, 0, 0))
+
+# the velocity at alpha(pi/2) starts on the far side of the tube and stays behind the near wall
+S.arrow(AQ, TIPQ, THEORY, 2.4, head=9)
+
+# --- near half of the tube -------------------------------------------------------------------
+S.surface(tube, NEAR, (Z0, Z1), nu=24, nv=1, fill=TEXT, stroke="none", opacity=(0.015, 0.06))
+rim_arc(Z0, *NEAR, opacity=0.5)
+rim_arc(Z1, *NEAR, opacity=0.5)
+for u in NEAR:
+    S.line([tube(u, Z0), tube(u, Z1)], TEXT, 0.9, None, 0.45)
+for run in helix_runs(True, TQ, TEND):
+    S.line(run, TEXT, 1.3, None, 0.7)
+S.hollow(helix(TEND), TEXT, 2.8, 1.2)           # end of the full turn, right above alpha(0)
+
+# axes outside the tube
+S.arrow((A, 0, 0), (XMAX, 0, 0), TEXT, 1.1, 7, None, 0.55)
+S.arrow((0, A, 0), (0, YMAX, 0), TEXT, 1.1, 7, None, 0.55)
+S.arrow((0, 0, Z1), (0, 0, ZTIP), TEXT, 1.1, 7, None, 0.55)
+tick_mark((0, A, 0), (1, 0, 0))
+
+# --- the quarter turn, its chord, the velocity at alpha(0), the two points -------------------
+S.guide([A0, AQ], TEXT, 0.6, 1.1, "5 3")
+S.curve(helix, 0.0, TQ, PRACTICE, 2.8, samples=120)
+S.arrow(A0, TIP0, THEORY, 2.4, head=9)
+S.point(A0, TEXT, 3.6)
+S.point(AQ, TEXT, 3.6)
+
+# --- labels ----------------------------------------------------------------------------------
+S.label((XMAX, 0, 0), "x", -4, 13, TEXT, 11.5, "middle", False, True)
+S.label((0, YMAX, 0), "y", 10, 4, TEXT, 11.5, "middle", False, True)
+S.label((0, 0, ZTIP), "z", -10, -4, TEXT, 11.5, "middle", False, True)
+S.label((0, A, 0), "3", 9, 15, TEXT, 10, "middle")   # outside the tube's edge, under the y axis
+for k, z in enumerate(ZTICKS, start=1):
+    S.label((0, 0, z), "%d" % (2 * k) + PI_S, -8, 4, TEXT, 10, "end")
+
+S.label(A0, IT_A + "(0) = (3, 0, 0)", -9, 19, TEXT, 11, "end")
+S.label(AQ, IT_A + "(" + PI_S + "/2) = (0, 3, 2" + PI_S + ")", 11, 4, TEXT, 11, "start")
+
+S.label(TIP0, IT_A + PRIME + "(0) = (0, 3, 4)", 12, 1, THEORY, 11, "start")
+S.label(TIP0, "uzunluk 5", 12, 15, THEORY, 10.5, "start")
+mid_q = vadd(AQ, vscale(0.65, VQ))
+S.label(mid_q, IT_A + PRIME + "(" + PI_S + "/2) = (" + MINUS_S + "3, 0, 4)", 12, -2, THEORY, 11, "start")
+S.label(mid_q, "uzunluk 5", 12, 12, THEORY, 10.5, "start")
+
+S.label(helix(math.radians(74)), "5" + PI_S + "/2 " + APPROX + " 7,85", 12, 4, PRACTICE, 11, "start")
+S.label(vadd(A0, vscale(0.88, vsub(AQ, A0))), APPROX + " 7,58", -9, 4, TEXT, 10, "end")
+
+S.label(helix(3 * math.pi / 2), IT_A, -10, 4, TEXT, 12.5, "end")
+S.label(helix(3 * math.pi / 2), "bir tam tur: 10" + PI_S + " " + APPROX + " 31,4", -10, 19, TEXT, 10.5, "end")
+
+OUT["yay-helis-surat-yay-uzunlugu"] = figure(
+    400, 600, [P],
+    "<em>a</em> = 3, <em>b</em> = 4 için &#945;(<em>t</em>) = (3cos <em>t</em>, 3sin <em>t</em>, 4<em>t</em>) "
+    "helisinin <em>x</em><sup>2</sup> + <em>y</em><sup>2</sup> = 9 silindirine sarılan bir tam turu (ince gri) "
+    "ve <em>t</em> = 0&#8217;dan <em>t</em> = &#960;/2&#8217;ye çeyrek turu (kalın turuncu). "
+    "Mavi oklar &#945;(0) = (3, 0, 0) ve &#945;(&#960;/2) = (0, 3, 2&#960;) noktalarındaki hız vektörleridir; "
+    "vektör kısımları (0, 3, 4) ve (&#8722;3, 0, 4) farklı olsa da ikisinin de uzunluğu 5&#8217;tir, "
+    "çünkü helisin sürati sabittir. Sürat sabit olduğundan çeyrek turun uzunluğu "
+    "5 &#183; &#960;/2 = 5&#960;/2 &#8776; 7,85&#8217;tir; aynı iki noktayı birleştiren kesikli doğru parçası ise "
+    "yalnızca &#8776; 7,58 uzunluğundadır: eğri üzerinden gidilen yol kestirmeden uzundur.",
+    aria="Silindir x^2 + y^2 = 9 uzerinde alpha(t) = (3cos t, 3sin t, 4t) helisinin bir tam turu ince gri; "
+         "t = 0'dan pi/2'ye ceyrek tur kalin turuncu, uzunlugu 5pi/2 = 7,85; alpha(0) = (3, 0, 0) ve "
+         "alpha(pi/2) = (0, 3, 2pi) noktalarinda mavi hiz vektorleri (0, 3, 4) ve (-3, 0, 4), ikisi de 5 "
+         "uzunlugunda; iki nokta arasindaki kesikli dogru parcasi 7,58 uzunlugunda",
+)
+
+# ============================================================ yay-helis-teget-olmayan-alan
+# -*- coding: utf-8 -*-
+# yay-helis-teget-olmayan-alan: the helix alpha(t) = (cos t, sin t, t), t in [0, 2pi], drawn grey,
+# with two vector fields on it at t = 0, pi/2, pi, 3pi/2, 2pi:
+#   Y(t)      vector part (cos t, sin t, 0)   — orange, horizontal, pointing away from the axis
+#   alpha'(t) vector part (-sin t, cos t, 1)  — blue, tangent to the helix
+# The axis of the helix (the z axis) is dashed. Painter's order: far arrows (t = pi, 3pi/2, which
+# lie on the side away from the viewer), far pieces of the helix, the z axis, near pieces of the
+# helix, near arrows, points, labels.
+# Camera az = 35, el = 18: the tip of Y(2pi) (which points toward the viewer) and the head of
+# alpha'(3pi/2) approach each other for az near 45, while for az below 30 the last quarter turn of
+# the helix runs through the tip of Y(2pi); a lower elevation keeps Y(2pi) well above alpha(3pi/2).
+import math
+
+AZ, EL = 35.0, 18.0
+PHI = math.radians(AZ)
+TWO_PI = 2.0 * math.pi
+TS = (0.0, math.pi / 2, math.pi, 3 * math.pi / 2, TWO_PI)
+XMAX, YMAX, ZMAX = 2.7, 2.7, TWO_PI + 1.5
+O = (0.0, 0.0, 0.0)
+
+
+def helix(t):
+    return (math.cos(t), math.sin(t), t)
+
+
+def radial(t):
+    """Vector part of Y(t)."""
+    return (math.cos(t), math.sin(t), 0.0)
+
+
+def velocity(t):
+    """Vector part of alpha'(t)."""
+    return (-math.sin(t), math.cos(t), 1.0)
+
+
+def near(t):
+    """True on the half of the helix facing the viewer."""
+    return math.cos(t - PHI) > 0
+
+
+def helix_runs(front, n=1400, trim=7):
+    """Maximal pieces of the helix on the near (front=True) or far half.
+
+    A far piece is cut `trim` samples (about 2.7 px) short at each seam with a near piece: the
+    two runs are translucent, and the round cap of the near run drawn over the far run would
+    otherwise leave a dark bead at the seam.
+    """
+    ts = [TWO_PI * k / n for k in range(n + 1)]
+    out, cur = [], []
+    for i, t in enumerate(ts):
+        if near(t) == front:
+            if not cur and i > 0:
+                cur.append(helix(ts[i - 1]))
+            cur.append(helix(t))
+        elif cur:
+            cur.append(helix(t))
+            out.append(cur)
+            cur = []
+    if cur:
+        out.append(cur)
+    if not front:
+        out = [run[(trim if run[0] != helix(0.0) else 0):
+                   (len(run) - trim if run[-1] != helix(TWO_PI) else len(run))] for run in out]
+    return out
+
+
+def field_arrows(t):
+    B = helix(t)
+    S.arrow(B, vadd(B, radial(t)), PRACTICE, 2.4, head=8.5)
+    S.arrow(B, vadd(B, velocity(t)), THEORY, 2.4, head=8.5)
+
+
+def tick_mark(Q, along):
+    S.line([vadd(Q, vscale(-0.05, along)), vadd(Q, vscale(0.05, along))], TEXT, 1.0, None, 0.7)
+
+
+P = space_panel(16, 14, 400, (-3.0, 3.0), (-1.5, 8.6))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+# --- floor reference: the unit circle under the helix ---------------------------------------
+S.circle(O, (1, 0, 0), (0, 1, 0), 1.0, TEXT, 0.9, "3 3", 96, 0.35)
+
+# --- x and y axes (no x tick: the point alpha(0) sits at x = 1 and the tip of Y(0) at x = 2) -----
+S.arrow(O, (XMAX, 0, 0), TEXT, 1.1, 7, None, 0.55)
+S.arrow(O, (0, YMAX, 0), TEXT, 1.1, 7, None, 0.55)
+tick_mark((0, 1, 0), (1, 0, 0))
+tick_mark((0, 2, 0), (1, 0, 0))
+
+# --- far side: arrows at t = pi, 3pi/2 and the far pieces of the helix ------------------------
+for t in TS:
+    if not near(t):
+        field_arrows(t)
+for run in helix_runs(False):
+    S.line(run, TEXT, 2.2, None, 0.4)
+
+# --- the axis of the helix, dashed, with ticks on its left -------------------------------------
+S.arrow(O, (0, 0, ZMAX), TEXT, 1.1, 7, "5 4", 0.6)
+for k in (2, 4, 6):
+    tick_mark((0, 0, k), (1, 0, 0))
+
+# --- near side ------------------------------------------------------------------------------------
+for run in helix_runs(True):
+    S.line(run, TEXT, 2.4, None, 0.65)
+for t in TS:
+    if near(t):
+        field_arrows(t)
+for t in TS:
+    S.point(helix(t), TEXT, 3.2)
+
+# --- labels ---------------------------------------------------------------------------------------
+IT = '<tspan font-style="italic">%s</tspan>'
+IT_T = IT % "t" + " = "
+IT_Y = IT % "Y"
+IT_A = IT % "&#945;"
+S.label((XMAX, 0, 0), "x", -4, 13, TEXT, 11.5, "middle", False, True)
+S.label((0, YMAX, 0), "y", 10, 4, TEXT, 11.5, "middle", False, True)
+S.label((0, 0, ZMAX), "z", -10, -4, TEXT, 11.5, "middle", False, True)
+S.label((0, 1, 0), "1", 0, 14, TEXT, 10, "middle")
+S.label((0, 2, 0), "2", 0, 14, TEXT, 10, "middle")
+for k in (2, 4, 6):
+    S.label((0, 0, k), str(k), -9, 4, TEXT, 10, "end")
+
+# t labels: each in the free wedge around its point (between the two arrows and the curve)
+S.label(helix(0), IT_T + "0", -14, -3, TEXT, 11, "end")                     # between circle and Y(0)
+S.label(helix(math.pi / 2), IT_T + PI_S + "/2", -9, 4, TEXT, 11, "end")     # left, curve arrives from below-left
+S.label(helix(math.pi), IT_T + PI_S, -7, 14, TEXT, 11, "end")               # below-left, clear of the z axis
+S.label(helix(3 * math.pi / 2), IT_T + "3" + PI_S + "/2", -9, 13, TEXT, 11, "end")   # below-left, under Y(3pi/2)
+S.label(helix(TWO_PI), IT_T + "2" + PI_S, -8, -8, TEXT, 11, "end")          # up-left: blue leaves up-right, curve arrives from below-left
+
+# field labels at t = 0, pi/2 and 2pi
+S.label(vadd(helix(0), radial(0)), IT_Y + "(0)", 6, 12, PRACTICE, 11.5, "start")
+S.label(vadd(helix(0), velocity(0)), IT_A + PRIME + "(0)", 6, 7, THEORY, 11.5, "start")   # under the curve, above the unit circle
+S.label(vadd(helix(math.pi / 2), radial(math.pi / 2)), IT_Y + "(" + PI_S + "/2)", 6, 4, PRACTICE, 11.5, "start")
+S.label(vadd(helix(math.pi / 2), velocity(math.pi / 2)), IT_A + PRIME + "(" + PI_S + "/2)", 7, 0, THEORY, 11.5, "start")
+S.label(vadd(helix(TWO_PI), radial(TWO_PI)), IT_Y + "(2" + PI_S + ")", -6, 0, PRACTICE, 11.5, "end")   # left of the tip, above the head of alpha'(3pi/2)
+S.label(vadd(helix(TWO_PI), velocity(TWO_PI)), IT_A + PRIME + "(2" + PI_S + ")", 7, 4, THEORY, 11.5, "start")
+S.label(helix(4.1), IT_A, -8, 2, TEXT, 12.5, "end")
+
+OUT["yay-helis-teget-olmayan-alan"] = figure(
+    432, 620, [P],
+    "Gri eğri <em>&#945;</em>(<em>t</em>) = (cos <em>t</em>, sin <em>t</em>, <em>t</em>) helisidir; "
+    "<em>t</em> = 0, &#960;/2, &#960;, 3&#960;/2, 2&#960; anlarında iki vektör alanı çizilmiştir. "
+    "Turuncu oklar <em>Y</em>(<em>t</em>)&#8217;dir: vektör kısmı (cos <em>t</em>, sin <em>t</em>, 0) "
+    "olduğundan her ok yataydır ve helisin ekseninden (kesikli <em>z</em> ekseni) dışarıya bakar. "
+    "Mavi oklar hız vektörleri <em>&#945;</em>&#8242;(<em>t</em>)&#8217;dir; vektör kısmı "
+    "(&#8722;sin <em>t</em>, cos <em>t</em>, 1) hep 1 birim yükselir ve eğriye teğettir. "
+    "Aynı noktada duran turuncu ve mavi oklar birbirine diktir; <em>Y</em> eğri üzerinde bir vektör "
+    "alanıdır, ama hiçbir anda eğriye teğet değildir.",
+    aria="Helis alpha(t) = (cos t, sin t, t), t 0 ile 2pi arasinda, gri egri; t = 0, pi/2, pi, "
+         "3pi/2, 2pi noktalarinda turuncu Y oklari (vektor kisimlari (1, 0, 0), (0, 1, 0), "
+         "(-1, 0, 0), (0, -1, 0), (1, 0, 0), yatay ve eksenden disa) ve mavi hiz oklari "
+         "(0, 1, 1), (-1, 0, 1), (0, -1, 1), (1, 0, 1), (0, 1, 1); z ekseni kesikli",
+)
+
+# ============================================================ yay-iki-egri-parcasi
+# -*- coding: utf-8 -*-
+# yay-iki-egri-parcasi: two curve segments from the origin to (0, pi^2, 0) on 0 <= t <= pi,
+#   alpha(t) = (sin t, -t^2 cos t, sin 2t)          orange, L ~ 12.92
+#   beta(t)  = (t^2 sin t, t^2, t^2 (1 + cos t))    blue,   L ~ 14.46
+# The chord joining the end points is the y-axis piece from 0 to pi^2 (length pi^2 ~ 9.87), so the
+# y axis is drawn as that dashed grey chord plus a solid arrow beyond the far end point.
+# Dots mark t = pi/4, pi/2, 3pi/4 on both curves.  Camera az = 30, el = 16 (from _scan_yay2.py):
+# a low elevation keeps alpha (below the floor) and beta (above it) apart on their final approach.
+import math
+
+PI = math.pi
+PI2 = PI * PI                       # 9.8696
+AZ, EL = 30.0, 16.0
+XMAX, YMAX, ZMIN, ZMAX = 4.6, 11.0, -1.35, 2.9
+TS = (PI / 4, PI / 2, 3 * PI / 4)
+
+
+def alpha(t):
+    return (math.sin(t), -t * t * math.cos(t), math.sin(2 * t))
+
+
+def beta(t):
+    return (t * t * math.sin(t), t * t, t * t * (1 + math.cos(t)))
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+P = space_panel(16, 14, 550, (-2.7, 9.8), (-2.0, 3.1))
+S = Space(P, Camera(azimuth=AZ, elevation=EL, scale=1.0))
+
+# 1. floor grid z = 0 over 0 <= x <= 4, 0 <= y <= 10 (unit cells)
+for k in range(5):
+    S.line([(k, 0, 0), (k, 10, 0)], TEXT, 0.7, None, 0.10)
+for k in range(11):
+    S.line([(0, k, 0), (4, k, 0)], TEXT, 0.7, None, 0.10)
+
+# 2. axes: x and z as arrows; the y axis is the dashed chord 0..pi^2 and an arrow past the end
+S.arrow((0, 0, 0), (XMAX, 0, 0), TEXT, 1.1, 7, None, 0.55)
+S.line([(0, 0, ZMIN), (0, 0, 0)], TEXT, 1.1, None, 0.55)
+S.arrow((0, 0, 0), (0, 0, ZMAX), TEXT, 1.1, 7, None, 0.55)
+S.line([(0, 0, 0), (0, PI2, 0)], TEXT, 1.3, "5 4", 0.6)          # chord = segment of the y axis
+S.arrow((0, PI2, 0), (0, YMAX, 0), TEXT, 1.1, 7, None, 0.55)
+S.label((XMAX, 0, 0), "x", -4, 13, TEXT, 11.5, "middle", False, True)
+S.label((0, YMAX, 0), "y", 10, 4, TEXT, 11.5, "middle", False, True)
+S.label((0, 0, ZMAX), "z", -10, -4, TEXT, 11.5, "middle", False, True)
+
+# 3. ticks: no x tick at 1 — alpha(pi/2) = (1, 0, 0) sits there and is labelled itself;
+#    no y ticks — every candidate label lands on beta (t = 3pi/4 sits at y ~ 3, beta crosses the
+#    chord at y ~ 4, and runs 13 px under it from y ~ 6 on); the unit grid and the chord label
+#    give the y scale instead
+S.ticks("x", (2, 3, 4), offset=(-2, 14))
+S.ticks("z", (-1, 1, 2), fmt_=lambda v: fmt(v).replace("-", MINUS_S))
+
+# 4. the two curves (beta is nearer the viewer: drawn last)
+S.curve(alpha, 0, PI, PRACTICE, 2.3, samples=400)
+S.curve(beta, 0, PI, THEORY, 2.3, samples=400)
+
+# 5. points: end points, and t = pi/4, pi/2, 3pi/4 on each curve
+S.point((0, 0, 0), TEXT, 3.6)
+S.point((0, PI2, 0), TEXT, 3.6)
+for t in TS:
+    S.point(alpha(t), TEXT, 2.7)
+    S.point(beta(t), TEXT, 2.7)
+
+# 6. labels
+S.label((0, 0, 0), bold("0"), 3, 15, TEXT, 11.5, "middle")
+S.label((0, PI2, 0), "(0, " + PI_S + sups("2") + ", 0)", 10, -11, TEXT, 10.5, "middle")
+S.label((0, 6.6, 0), PI_S + sups("2") + " &#8776; 9,87", 0, -10, TEXT, 10.5, "middle")
+
+S.label(alpha(2.55), ital("L") + "(" + ital("&#945;") + ") &#8776; 12,92", 0, 17, PRACTICE, 11.5, "middle")
+S.label(beta(1.6), ital("L") + "(" + ital("&#946;") + ") &#8776; 14,46", 8, -8, THEORY, 11.5, "start")
+
+S.label(alpha(TS[0]), PI_S + "/4", -7, -3, PRACTICE, 10, "end")
+S.label(alpha(TS[1]), PI_S + "/2", -9, 3, PRACTICE, 10, "end")
+S.label(alpha(TS[2]), "3" + PI_S + "/4", -4, 14, PRACTICE, 10, "end")
+S.label(beta(TS[0]), PI_S + "/4", 8, 8, THEORY, 10, "start")
+S.label(beta(TS[1]), PI_S + "/2", -6, -6, THEORY, 10, "end")
+S.label(beta(TS[2]), "3" + PI_S + "/4", 6, -6, THEORY, 10, "start")
+
+OUT["yay-iki-egri-parcasi"] = figure(
+    582, 250, [P],
+    "Orijinden (0, &#960;<sup>2</sup>, 0) &#8776; (0, 9,87, 0) noktasına giden iki eğri parçası: "
+    "turuncu &#945;(<em>t</em>) = (sin <em>t</em>, &#8722;<em>t</em><sup>2</sup> cos <em>t</em>, sin 2<em>t</em>) "
+    "ve mavi &#946;(<em>t</em>) = (<em>t</em><sup>2</sup> sin <em>t</em>, <em>t</em><sup>2</sup>, "
+    "<em>t</em><sup>2</sup>(1 + cos <em>t</em>)), 0 &#8804; <em>t</em> &#8804; &#960;; noktalar "
+    "<em>t</em> = &#960;/4, &#960;/2, 3&#960;/4 anlarını gösterir. Uç noktaları birleştiren kesikli gri "
+    "doğru parçası <em>y</em> ekseni üzerindedir ve uzunluğu &#960;<sup>2</sup> &#8776; 9,87'dir; "
+    "Simpson kuralıyla bulunan <em>L</em>(&#945;) &#8776; 12,92 ve <em>L</em>(&#946;) &#8776; 14,46 "
+    "bundan büyüktür; &#945; parçası yaklaşık 1,5 birim daha kısadır. &#946; orijinde durur, sonra "
+    "<em>z</em> yönünde yükselerek geniş bir kavis çizer; &#945; ise önce yükselip <em>t</em> = &#960;/2'de "
+    "<em>x</em> ekseni üzerindeki (1, 0, 0) noktasından geçer, ardından <em>xy</em> düzleminin altına "
+    "iner ve uç noktaya alttan yaklaşır.",
+    css_class=WIDE,
+    aria="Orijinden (0, pi^2, 0) noktasina giden iki egri parcasi: turuncu alpha(t) = (sin t, -t^2 cos t, "
+         "sin 2t), uzunlugu yaklasik 12,92, ve mavi beta(t) = (t^2 sin t, t^2, t^2 (1 + cos t)), uzunlugu "
+         "yaklasik 14,46; uc noktalar arasindaki kesikli gri dogru parcasi y ekseni uzerinde, uzunlugu "
+         "pi^2 yaklasik 9,87; t = pi/4, pi/2, 3pi/4 noktalari isaretli",
+)
+
+# ============================================================ yay-koni-spirali-ayni-rota
+# -*- coding: utf-8 -*-
+# yay-koni-spirali-ayni-rota — one route on the cone, two clocks.
+# Cone z^2 = x^2 + y^2, upper half up to z = 8, as a translucent grey grid. On it the orange spiral
+# alpha(t) = (e^t cos t, e^t sin t, e^t), 0 <= t <= 2. Hollow orange rings: alpha at equal time
+# steps t = 0, 0.5, 1, 1.5, 2 (the arcs between them grow: 1.12, 1.85, 3.05, 5.04). Filled blue
+# squares: the unit-speed copy beta(s) = alpha(t(s)), t(s) = log(1 + s/sqrt 3), at equal path
+# steps s = 0, 2, 4, 6, 8, 10 (every arc between squares has length 2). beta(0) = alpha(0) and
+# beta(6) ~ alpha(1.5) (t(6) = 1.4961), so those two marks carry both symbols.
+#
+# Camera az = 43, el = 17 (from a scan): the spiral sweeps the polar angles 0..114.6 deg, the
+# silhouette generators of the cone sit at az +- acos(tan el) = 43 +- 72 deg, so the whole route
+# stays on the near face; lower azimuths spread the crowded start a little more but push the end
+# of the route round the back of the cone.
+import math
+
+AZ, EL = 43.0, 17.0
+PHI = math.radians(AZ)
+SIL = math.acos(math.tan(math.radians(EL)))         # half-angle of the near face (radians)
+ZTOP = 8.0
+SQ3 = math.sqrt(3.0)
+CAM = Camera(azimuth=AZ, elevation=EL, scale=1.0)
+
+
+def alpha(t):
+    e = math.exp(t)
+    return (e * math.cos(t), e * math.sin(t), e)
+
+
+def beta(s):
+    w = 1.0 + s / SQ3
+    th = math.log(w)
+    return (w * math.cos(th), w * math.sin(th), w)
+
+
+def cone(u, z):
+    return (z * math.cos(u), z * math.sin(u), z)
+
+
+def proj(P):
+    X, Y, _ = CAM.project(P)
+    return X, Y
+
+
+T_MARKS = (0.0, 0.5, 1.0, 1.5, 2.0)
+S_MARKS = (0.0, 2.0, 4.0, 6.0, 8.0, 10.0)
+X_END, Y_END, Z_END = 7.0, 9.0, 10.8
+NEAR = (PHI - SIL, PHI + SIL)
+FAR = (PHI + SIL, PHI + 2 * math.pi - SIL)
+
+# --- panel from the projected bounding box ----------------------------------------------------
+rim = [cone(2 * math.pi * k / 120, ZTOP) for k in range(121)]
+bbox = [proj(P) for P in rim] + [proj((X_END, 0, 0)), proj((0, Y_END, 0)), proj((0, 0, Z_END))]
+X0, X1 = min(b[0] for b in bbox), max(b[0] for b in bbox)
+Y0, Y1 = min(b[1] for b in bbox), max(b[1] for b in bbox)
+PAD_L, PAD_R, PAD_B, PAD_T = 0.5, 0.6, 0.7, 0.6
+PW = 500
+SP = space_panel(16, 16, PW, (X0 - PAD_L, X1 + PAD_R), (Y0 - PAD_B, Y1 + PAD_T))
+S = Space(SP, CAM)
+
+
+def ital(s):
+    return '<tspan font-style="italic">' + s + "</tspan>"
+
+
+def px(P):
+    X, Y = S.pt(P)
+    return SP.X(X), SP.Y(Y)
+
+
+def txt_px(x, y, s, color=TEXT, size=11.0, anchor="start", italic=False, opacity=1.0, halo=True):
+    """Text with a thin page-coloured halo so the cone's grid breaks behind it."""
+    st = ' font-style="italic"' if italic else ""
+    op = f' opacity="{opacity}"' if opacity < 1.0 else ""
+    h = f' stroke="{BG}" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"' if halo else ""
+    SP.add(f'<text x="{x:.1f}" y="{y:.1f}" fill="{color}" font-size="{size}" text-anchor="{anchor}"'
+           f'{st}{op}{h}>{s}</text>')
+
+
+def txt(P, s, dx, dy, color=TEXT, size=11.0, anchor="start", italic=False, opacity=1.0):
+    x, y = px(P)
+    txt_px(x + dx, y + dy, s, color, size, anchor, italic, opacity)
+
+
+def ring_px(cx, cy, color, r, fill=BG):
+    SP.add(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r:.1f}" fill="{fill}" stroke="{color}" stroke-width="1.9"/>')
+
+
+def square_px(cx, cy, color, half):
+    h = half + 1.5
+    SP.add(f'<rect x="{cx - h:.1f}" y="{cy - h:.1f}" width="{2 * h:.1f}" height="{2 * h:.1f}" fill="{BG}"/>')
+    SP.add(f'<rect x="{cx - half:.1f}" y="{cy - half:.1f}" width="{2 * half:.1f}" height="{2 * half:.1f}" '
+           f'fill="{color}"/>')
+
+
+RING_R, SQ_HALF = 5.2, 3.5
+
+# --- the cone: far face first (fainter), then the axis inside it, then the near face -----------
+S.surface(cone, FAR, (0.0, ZTOP), nu=18, nv=8, fill=TEXT, stroke=TEXT,
+          opacity=(0.01, 0.04), stroke_width=0.55, stroke_opacity=0.16)
+S.line([(0, 0, 0), (0, 0, ZTOP)], TEXT, 1.0, None, 0.45)
+S.surface(cone, NEAR, (0.0, ZTOP), nu=12, nv=8, fill=TEXT, stroke=TEXT,
+          opacity=(0.02, 0.075), stroke_width=0.6, stroke_opacity=0.32)
+# outline: the two silhouette generators and the near half of the rim
+for u in NEAR:
+    S.line([(0, 0, 0), cone(u, ZTOP)], TEXT, 0.9, None, 0.45)
+S.curve(lambda u: cone(u, ZTOP), NEAR[0], NEAR[1], TEXT, 0.9, samples=90, opacity=0.45)
+
+# --- axes: x toward the viewer, y to the right, z out of the top opening ---------------------
+S.arrow((0, 0, 0), (X_END, 0, 0), TEXT, 1.1, 7, None, 0.55)
+S.arrow((0, 0, 0), (0, Y_END, 0), TEXT, 1.1, 7, None, 0.55)
+S.arrow((0, 0, ZTOP), (0, 0, Z_END), TEXT, 1.1, 7, None, 0.55)
+txt((X_END, 0, 0), "x", -4, 13, TEXT, 11.5, "middle", italic=True)
+txt((0, Y_END, 0), "y", 10, 4, TEXT, 11.5, "middle", italic=True)
+txt((0, 0, Z_END), "z", -10, -3, TEXT, 11.5, "middle", italic=True)
+S.ticks("x", (2, 4, 6), offset=(-10, 0))
+S.ticks("y", (2, 4, 6, 8), offset=(0, 13))
+# no tick at z = 2: the route's start (t = 0.5 and t = 1) passes right beside the axis there
+for v in (4, 6, 8):
+    S.line([(-0.06, 0, v), (0.06, 0, v)], TEXT, 1.0, None, 0.7)
+    txt((0, 0, v), str(v), -8, 4, TEXT, 10, "end", opacity=0.85)
+
+# --- the route --------------------------------------------------------------------------------
+S.curve(alpha, 0.0, 2.0, PRACTICE, 2.3, samples=400)
+
+# --- marks: squares (beta, equal path steps) under the rings (alpha, equal time steps) ---------
+for s in S_MARKS:
+    square_px(*px(beta(s)), THEORY, SQ_HALF)
+for t in T_MARKS:
+    shared = t in (0.0, 1.5)          # beta(0) = alpha(0), beta(6) ~ alpha(1.5)
+    ring_px(*px(alpha(t)), PRACTICE, RING_R, fill="none" if shared else BG)
+
+# --- labels: t on the upper-left side of the route, s on the lower-right side -----------------
+# The z axis runs through the crowded start (beta(2) sits on it, alpha(1) 20 px to its right), so
+# the shared start point gets one two-coloured label on the left and "t = 1" goes above its ring,
+# entirely to the right of the axis.
+t_, s_ = ital("t"), ital("s")
+
+
+def colored(s, color):
+    return f'<tspan fill="{color}">{s}</tspan>'
+
+
+txt(alpha(0.0), colored(t_ + " = 0", PRACTICE) + ", " + colored(s_ + " = 0", THEORY), -9, 5, TEXT, 11, "end")
+txt(alpha(0.5), t_ + " = 0,5", -9, -4, PRACTICE, 11, "end")
+txt(alpha(1.0), t_ + " = 1", -4, -11, PRACTICE, 11, "middle")
+txt(alpha(1.5), t_ + " = 1,5", -9, 2, PRACTICE, 11, "end")
+txt(alpha(2.0), t_ + " = 2", -9, 0, PRACTICE, 11, "end")
+
+txt(beta(2.0), s_ + " = 2", 9, 9, THEORY, 11, "start")
+txt(beta(4.0), s_ + " = 4", 9, 8, THEORY, 11, "start")
+txt(beta(6.0), s_ + " = 6", 9, 8, THEORY, 11, "start")
+txt(beta(8.0), s_ + " = 8", 9, 8, THEORY, 11, "start")
+txt(beta(10.0), s_ + " = 10", 9, 8, THEORY, 11, "start")
+
+# the curve's name on the upper-left side of its last stretch (the t labels' side, between
+# t = 1,5 and t = 2); the cone's equation in the free top-left corner above the rim
+txt(alpha(1.8), ital("&#945;"), -7, -6, PRACTICE, 12.5, "end")
+txt_px(SP.X(X0 - PAD_L + 0.3), SP.Y(Y1 + PAD_T - 0.45),
+       ital("z") + sups("2") + " = " + ital("x") + sups("2") + " + " + ital("y") + sups("2"),
+       TEXT, 11, halo=False, opacity=0.85)
+
+# --- legend in the empty wedge left of the cone, above the x axis ----------------------------
+LX, LY = SP.X(X0 - PAD_L + 0.3), SP.Y(1.9)
+ring_px(LX + 5, LY - 4, PRACTICE, RING_R, fill=BG)
+txt_px(LX + 16, LY, ital("&#945;") + ": eşit zaman adımları, &#916;" + t_ + " = 0,5", TEXT, 11, halo=False)
+square_px(LX + 5, LY + 15, THEORY, SQ_HALF)
+txt_px(LX + 16, LY + 19, ital("&#946;") + ": eşit yol adımları, &#916;" + s_ + " = 2", TEXT, 11, halo=False)
+
+# --- the two parametrizations in the empty wedge right of the cone, above the y axis ----------
+E_T = ital("e") + sups(ital("t"))
+FX = SP.X(2.6)
+txt_px(FX, SP.Y(1.2), ital("&#945;") + "(" + t_ + ") = (" + E_T + " cos " + t_ + ", " + E_T + " sin " + t_
+       + ", " + E_T + "),  0 " + LEQ_S + " " + t_ + " " + LEQ_S + " 2", TEXT, 11, halo=False)
+txt_px(FX, SP.Y(0.65), ital("&#946;") + "(" + s_ + ") = " + ital("&#945;") + "(log(1 + " + s_ + "/&#8730;3))",
+       TEXT, 11, halo=False)
+
+OUT["yay-koni-spirali-ayni-rota"] = figure(
+    532, 440, [SP],
+    "<em>z</em><sup>2</sup> = <em>x</em><sup>2</sup> + <em>y</em><sup>2</sup> konisinin üst yarısı (gri "
+    "ızgara) ve üzerindeki <em>&#945;</em>(<em>t</em>) = (e<sup><em>t</em></sup> cos <em>t</em>, "
+    "e<sup><em>t</em></sup> sin <em>t</em>, e<sup><em>t</em></sup>) spirali, 0 &#8804; <em>t</em> &#8804; 2 "
+    "(turuncu). İçi boş turuncu daireler <em>&#945;</em>'nın eşit zaman adımlarındaki "
+    "<em>t</em> = 0; 0,5; 1; 1,5; 2 noktalarıdır: aralarındaki yaylar 1,12; 1,85; 3,05; 5,04 diye uzar, "
+    "çünkü sürat &#8730;3&#8201;e<sup><em>t</em></sup> gittikçe büyür. Dolu mavi kareler birim hızlı kopya "
+    "<em>&#946;</em>'nın eşit yol adımlarındaki <em>s</em> = 0, 2, 4, 6, 8, 10 noktalarıdır; ardışık iki "
+    "kare arasındaki yay uzunluğu hep 2'dir. İki eğri aynı rotayı dolaşır; farklı olan yalnızca saatleridir.",
+    aria="Koni z^2 = x^2 + y^2 uzerinde alpha(t) = (e^t cos t, e^t sin t, e^t) spirali, t 0 ile 2 arasinda, "
+         "turuncu; ici bos turuncu daireler t = 0; 0,5; 1; 1,5; 2 noktalari (1; 0; 1), (1,45; 0,79; 1,65), "
+         "(1,47; 2,29; 2,72), (0,32; 4,47; 4,48), (-3,08; 6,72; 7,39) ve aralari giderek uzar; dolu mavi "
+         "kareler birim hizli beta icin s = 0, 2, 4, 6, 8, 10 noktalari (1; 0; 1), (1,55; 1,50; 2,15), "
+         "(1,21; 3,08; 3,31), (0,33; 4,45; 4,46), (-0,87; 5,55; 5,62), (-2,27; 6,38; 6,77); ardisik kareler "
+         "arasi yay uzunlugu hep 2")
+
+# ============================================================ yay-parabol-hiz-ivme
+# -*- coding: utf-8 -*-
+# yay-parabol-hiz-ivme: the parabola alpha(t) = (t, t^2, 0) drawn in the xy plane (y = x^2 on
+# [-1.6, 1.6], grey) with velocity (blue) and acceleration (orange) at t = -1, 0, 1.
+#   alpha(-1) = (-1, 1): alpha' = (1, -2), alpha'' = (0, 2)
+#   alpha(0)  = (0, 0):  alpha' = (1, 0),  alpha'' = (0, 2)
+#   alpha(1)  = (1, 1):  alpha' = (1, 2),  alpha'' = (0, 2)
+# The two arrows at the origin lie on the coordinate axes (that is what the numbers say), so the
+# axes carry tick numbers only; the unit grid supplies the tick marks. The acceleration arrow at
+# the origin is boxed in by the y axis and the two other acceleration arrows, so its label is set
+# on two rows inside the cup of the parabola.
+
+XR, YR = (-2.65, 2.9), (-1.35, 3.45)
+p = cplane(32, 22, 336, XR, YR)        # about 60 px per unit, equal scale
+
+
+def ital(s):
+    return f'<tspan font-style="italic">{s}</tspan>'
+
+
+ALPHA = ital("&#945;")
+DPRIME = "&#8243;"                     # double prime for the second derivative
+A, O, B = (-1.0, 1.0), (0.0, 0.0), (1.0, 1.0)
+VEL = {A: (1.0, -2.0), O: (1.0, 0.0), B: (1.0, 2.0)}
+ACC = (0.0, 2.0)
+
+# 1. unit grid (skipping the axes) and the axes through the origin
+p.grid([x for x in range(-2, 4) if x], [y for y in range(-1, 4) if y])
+p.origin_axes("x", "y")
+for x in (-2, -1, 1, 2):
+    p.label(x, 0, fmt(x).replace("-", MINUS_S), 0, 15, TEXT, 11, "middle")
+for y in (1, 2, 3):
+    p.label(0, y, fmt(y).replace("-", MINUS_S), -7, 4, TEXT, 11, "end")
+p.label(0, -1, MINUS_S + "1", -11, 7, TEXT, 11, "end")   # clear of the arrowhead landing at (0, -1)
+
+# 2. the parabola, grey
+curve(p, lambda x: x * x, -1.6, 1.6, TEXT, 2.2, 240, None, 0.5)
+
+# 3. acceleration arrows (orange, all (0, 2)), then velocity arrows (blue, tangent to the curve)
+for q in (A, O, B):
+    p.arrow(q, (q[0] + ACC[0], q[1] + ACC[1]), PRACTICE, 2.4, 9)
+for q, v in VEL.items():
+    p.arrow(q, (q[0] + v[0], q[1] + v[1]), THEORY, 2.4, 9)
+
+# 4. the three points
+for q in (A, O, B):
+    dot(p, q, TEXT, 3.6)
+
+# 5. labels — points in the text colour, velocity in blue, acceleration in orange
+m = MINUS_S
+# alpha(-1) sits below-left of its point (mirroring alpha(1) below-right): on the point's own
+# height the y = 1 grid line would strike through the text
+p.label(*A, ALPHA + f"({m}1) = ({m}1, 1)", -9, 16, TEXT, 11, "end")
+p.label(*O, ALPHA + "(0) = (0, 0)", 7, 32, TEXT, 11, "start")
+p.label(*B, ALPHA + "(1) = (1, 1)", 8, 16, TEXT, 11, "start")
+
+p.label(-0.25, -0.5, ALPHA + PRIME + f"({m}1) = (1, {m}2)", -14, 4, THEORY, 11, "end")
+p.label(1.0, 0.0, ALPHA + PRIME + "(0) = (1, 0)", 10, -8, THEORY, 11, "start")
+p.label(1.5, 2.0, ALPHA + PRIME + "(1) = (1, 2)", 16, 4, THEORY, 11, "start")
+
+p.label(-1.0, 3.0, ALPHA + DPRIME + f"({m}1) = (0, 2)", 0, -9, PRACTICE, 11, "middle")
+p.label(0.0, 1.6, ALPHA + DPRIME + "(0) =", 8, 4, PRACTICE, 11, "start")
+p.label(0.0, 1.3, "(0, 2)", 8, 4, PRACTICE, 11, "start")
+p.label(1.0, 3.0, ALPHA + DPRIME + "(1) = (0, 2)", -28, -10, PRACTICE, 11, "start")
+
+OUT["yay-parabol-hiz-ivme"] = figure(
+    400, 340, [p],
+    "<em>xy</em> düzleminde <em>y</em> = <em>x</em><sup>2</sup> parabolünü çizen "
+    "&#945;(<em>t</em>) = (<em>t</em>, <em>t</em><sup>2</sup>, 0) eğrisinin <em>t</em> = &#8722;1, 0, 1 "
+    "anlarındaki hız vektörleri (mavi) ve ivme vektörleri (turuncu). "
+    "Hız okları eğriye teğettir ve vektör kısımları (1, &#8722;2), (1, 0), (1, 2) olarak noktadan "
+    "noktaya değişir; ivme oklarının üçü de aynı (0, 2) vektör kısmını taşır, hep yukarı bakar ve "
+    "hiçbir anda hıza paralel değildir. "
+    "<em>t</em> = &#8722;1&#8217;de ivme hızla geniş açı yapar (nokta yavaşlar), <em>t</em> = 0&#8217;da "
+    "ona diktir, <em>t</em> = 1&#8217;de dar açı yapar (nokta hızlanır).",
+    aria="xy duzleminde y = x^2 parabolu (gri, x -1,6 ile 1,6 arasinda) ve alpha(-1) = (-1, 1), "
+         "alpha(0) = (0, 0), alpha(1) = (1, 1) noktalari. Her noktadan mavi hiz oku, vektor kisimlari "
+         "sirasiyla (1, -2), (1, 0), (1, 2), egriye teget; turuncu ivme oku ucunde de (0, 2), hep dusey. "
+         "Eksenler ve birim izgara",
 )
 
 # ============================================================ yonlu-dogru-boyunca-grafik

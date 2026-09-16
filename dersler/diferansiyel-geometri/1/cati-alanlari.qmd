@@ -1,0 +1,1728 @@
+---
+title: "Çatı Alanları"
+pagetitle: "Çatı Alanları"
+description: "Vektör alanlarının iç çarpımı ve normu; çatı alanı tanımı, doğal çatı alanı, sabit ve bükülen çatı alanları; silindirik koordinatlar ve silindirik çatı alanı; küresel koordinatlar ve küresel çatı alanı; bir vektör alanının bir çatı alanına göre koordinat fonksiyonları ve ortonormal açılım; Gram–Schmidt ile çatı alanı kurma; çözümlü alıştırmalar."
+---
+
+Önceki bölümde ([Kovaryant Türev](kovaryant-turev.qmd)) bir vektör alanının bir teğet vektöre göre türevini tanımladık ve bu türevin kurallarını çıkardık. Böylece elimizde, uzaya yayılmış bir oklar topluluğunun bir noktadan bir yöne doğru nasıl değiştiğini ölçen bir araç var. Bu bölümde neyin türevini alacağımızı seçiyoruz: bir tane değil, birbirine dik üç birim vektör alanını birden.
+
+Fikrin kökü Frenet formüllerindedir. Bir eğri boyunca her noktaya $T, N, B$ üçlüsünü, yani o noktada bir çatı, yerleştirmiştik (@def-frenet-cati); sonra bu çatının türevlerini yine çatının kendisi cinsinden yazmıştık (@thm-frenet-formulleri). Bu adım eğrilik ve burulmayı doğurdu: eğrinin bütün geometrisi, çatının kendi kendine göre ne kadar döndüğüne indirgendi. Frenet ve Serret'in on dokuzuncu yüzyılın ortasında eğriler için bulduğu bu yaklaşımı Darboux yüzeylere taşıdı; Cartan ise onu tam genelliğine kavuşturarak "hareketli çatılar yöntemi" hâline getirdi. Yöntemin özü tek cümledir: incelenen nesnenin her noktasına bir çatı ata, sonra çatının değişim hızını ortonormal açılımla çatının kendisi cinsinden ifade et.
+
+Bu bölümde yöntemin ilk adımını $\mathbb{R}^3$'ün tamamı için atıyoruz. $\mathbb{R}^3$'ün her noktasına bir çatı yerleştiren üç vektör alanına çatı alanı diyeceğiz. Doğal çatı alanı $U_1, U_2, U_3$ en basit örnektir; ama silindirik ve küresel koordinatlardan doğan, noktadan noktaya dönen çatı alanları hem daha ilginç hem daha kullanışlıdır. Sonra herhangi bir vektör alanını seçtiğimiz çatı alanına göre açacağız ve iç çarpımın bu açılımda da tanıdık biçimini koruduğunu göreceğiz. Bölümün sonunda, çatı alanının kovaryant türevlerini çatının kendisi cinsinden yazma işine hazır olacağız.
+
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, fmt, sceneLayout, path, point, label, segment, arrow, surface, cylinder, render } from "../ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
+## Vektör Alanlarının İç Çarpımı ve Normu
+
+Bir çatı, bir noktadaki üç karşılıklı dik birim teğet vektördür (@def-iccarpim-cati). Bu tanımı vektör alanlarına taşımak için önce iki vektör alanının iç çarpımından söz edebilmeliyiz. Bunu yapmanın yolu, önceki bölümlerde defalarca kullandığımız noktasal ilkedir: bir işlem tek tek teğet vektörler üzerinde tanımlıysa, alanların her noktadaki değerlerine uygulanarak alanlar üzerinde de tanımlanır.
+
+$V$ ve $W$ vektör alanları olsun. Bir $\mathbf{p}$ noktasında $V(\mathbf{p})$ ile $W(\mathbf{p})$, her ikisi de $\mathbf{p}$'de uygulanan iki teğet vektördür; dolayısıyla iç çarpımları (@def-iccarpim-teget-ic-carpim) bir sayıdır. Nokta değiştikçe bu sayı da değişir ve $\mathbb{R}^3$ üzerinde gerçel değerli bir fonksiyon ortaya çıkar.
+
+::: {#def-cati-alan-ic-carpimi name="Vektör Alanlarının İç Çarpımı ve Normu"}
+$V$ ve $W$, $\mathbb{R}^3$ üzerinde vektör alanları olsun. $V$ ile $W$'nin **iç çarpımı** $V \cdot W$, her $\mathbf{p}$ noktasında
+
+$$(V \cdot W)(\mathbf{p}) = V(\mathbf{p}) \cdot W(\mathbf{p})$$
+
+değerini alan gerçel değerli fonksiyondur. $V$'nin **normu** $\|V\|$, her $\mathbf{p}$ noktasında $\|V(\mathbf{p})\|$ değerini alan gerçel değerli fonksiyondur; böylece $\|V\| = (V \cdot V)^{1/2}$ olur.
+:::
+
+Yani $V \cdot W$ artık bir sayı değil, uzayın her noktasına "o noktadaki iki okun iç çarpımı" sayısını yazan bir fonksiyondur; $\|V\|$ de her noktaya o noktadaki okun uzunluğunu yazar.
+
+Bu fonksiyonların türevlenebilir olup olmadığını sormalıyız, çünkü ileride bunların türevlerini alacağız. Yanıt iç çarpım için her zaman olumlu, norm için ise bir istisna dışında olumludur.
+
+:::: {#lem-cati-ic-carpim-formulu name="İç Çarpımın ve Normun Koordinat Formülü"}
+$V = \sum_i v_i U_i$ ve $W = \sum_i w_i U_i$, Öklid koordinat fonksiyonları $v_i$ ve $w_i$ olan vektör alanları olsun. O zaman
+
+$$V \cdot W = v_1 w_1 + v_2 w_2 + v_3 w_3$$
+
+olur ve $V \cdot W$ türevlenebilir bir fonksiyondur. Ayrıca
+
+$$\|V\| = \sqrt{v_1^2 + v_2^2 + v_3^2}$$
+
+olur ve $\|V\|$, $V(\mathbf{p}) \neq \mathbf{0}$ koşulunu sağlayan her $\mathbf{p}$ noktasının bir komşuluğunda türevlenebilirdir.
+
+::: {.ispat}
+Bir $\mathbf{p}$ noktası alalım. $V(\mathbf{p})$'nin vektör kısmı $(v_1(\mathbf{p}), v_2(\mathbf{p}), v_3(\mathbf{p}))$, $W(\mathbf{p})$'nin vektör kısmı $(w_1(\mathbf{p}), w_2(\mathbf{p}), w_3(\mathbf{p}))$'dir (@lem-teget-koordinat-fonksiyonlari). Aynı noktada uygulanan iki teğet vektörün iç çarpımı vektör kısımlarının iç çarpımı olduğundan
+
+$$(V \cdot W)(\mathbf{p}) = \sum_{i=1}^{3} v_i(\mathbf{p})\, w_i(\mathbf{p})$$
+
+bulunur. Bu, her $\mathbf{p}$ için doğru olduğundan $V \cdot W = \sum_i v_i w_i$ fonksiyon eşitliği geçerlidir. Vektör alanlarının koordinat fonksiyonları türevlenebilirdir; türevlenebilir fonksiyonların çarpımları ve toplamları da türevlenebilir olduğundan $V \cdot W$ türevlenebilirdir.
+
+Norm için $\|V\| = (V \cdot V)^{1/2}$ eşitliğini kullanırız: $V \cdot V = \sum_i v_i^2$ türevlenebilirdir ve $\|V\|$, bu fonksiyonun karekökle bileşkesidir. Karekök fonksiyonu $(0, \infty)$ üzerinde her mertebeden türevlenebilirdir. $V(\mathbf{p}) \neq \mathbf{0}$ ise $(V \cdot V)(\mathbf{p}) > 0$'dır; $V \cdot V$ sürekli olduğundan $\mathbf{p}$'nin bir komşuluğunda da pozitif kalır ve o komşulukta $\|V\|$, türevlenebilir bir fonksiyonun türevlenebilir bir fonksiyonla bileşkesi olarak türevlenebilirdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İspatta karekökün sıfırda türevlenemez oluşu bir boşluk bırakır: $V$'nin sıfırlandığı noktalarda $\|V\|$ türevlenebilir olmayabilir. Aşağıdaki iki örnek, önce formülün kullanımını, sonra bu boşluğun gerçekten ortaya çıkabildiğini gösterir.
+
+:::: {#exm-cati-ic-carpim-hesabi name="İki Alanın İç Çarpımı ve Normları"}
+$V = x U_1 + y U_2$ ve $W = -y U_1 + x U_2$ vektör alanları için $V \cdot W$, $\|V\|$ ve $\|W\|$ fonksiyonlarını bulalım.
+
+::: {.cozum}
+$V$'nin koordinat fonksiyonları $(x, y, 0)$, $W$'ninkiler $(-y, x, 0)$'dır. @lem-cati-ic-carpim-formulu'ne göre
+
+$$V \cdot W = x \cdot (-y) + y \cdot x + 0 \cdot 0 = 0.$$
+
+Yani $V$ ile $W$ her noktada birbirine diktir: $V(\mathbf{p})$, $\mathbf{p}$'nin $xy$ düzlemine izdüşümü doğrultusunda dışa bakar, $W(\mathbf{p})$ ise onu saatin tersi yönünde $90°$ döndürmüştür. Normlar
+
+$$\|V\| = \sqrt{x^2 + y^2}, \qquad \|W\| = \sqrt{y^2 + x^2} = \|V\|$$
+
+olur; iki alanın okları her noktada aynı uzunluktadır ve bu uzunluk, noktanın $z$ eksenine uzaklığıdır.
+
+Sağlama: $\mathbf{p} = (3, 4, 2)$ noktasında $V(\mathbf{p}) = (3, 4, 0)_{\mathbf{p}}$ ve $W(\mathbf{p}) = (-4, 3, 0)_{\mathbf{p}}$'dir. İç çarpım $3 \cdot (-4) + 4 \cdot 3 = 0$, normlar $\sqrt{9 + 16} = 5$ çıkar; formüllerle uyumludur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-cati-norm-turevlenemez name="Türevlenemeyen Bir Norm"}
+$V = x U_1 + y U_2$ alanının normu $\|V\| = \sqrt{x^2 + y^2}$, $z$ ekseninin noktalarında türevlenebilir midir?
+
+::: {.cozum}
+Değildir. Türevlenebilir bir fonksiyonun bir doğru boyunca kısıtlanışı da türevlenebilir olmalıdır; o hâlde $\|V\|$'yi $x$ ekseni boyunca, yani $t \mapsto (t, 0, 0)$ doğrusu üzerinde inceleyelim. Orada
+
+$$\|V\|(t, 0, 0) = \sqrt{t^2} = |t|$$
+
+olur ve $|t|$ fonksiyonunun $t = 0$'da türevi yoktur: sağdan fark oranları $1$'e, soldan $-1$'e gider. Dolayısıyla $\|V\|$, başlangıç noktasında türevlenebilir değildir; aynı akıl yürütme $z$ ekseninin her $(0, 0, c)$ noktasında $t \mapsto (t, 0, c)$ doğrusuyla yinelenir. Bu noktalar tam olarak $V$'nin sıfırlandığı noktalardır.
+
+Buna karşılık $\|V\|^2 = V \cdot V = x^2 + y^2$ bir polinomdur ve her yerde türevlenebilirdir. Bu yüzden ileride bir alanın uzunluğunu incelerken çoğu kez $\|V\|$ yerine $V \cdot V$ ile çalışacağız.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Tek tek teğet vektörler için bildiğimiz iç çarpım kuralları, noktasal ilke sayesinde alanlara olduğu gibi geçer.
+
+:::: {#lem-cati-ic-carpim-kurallari name="Alanların İç Çarpımının Kuralları"}
+$V, W, Y$ vektör alanları ve $f$ bir fonksiyon olsun. O zaman
+
+$$V \cdot W = W \cdot V, \qquad V \cdot (W + Y) = V \cdot W + V \cdot Y, \qquad (fV) \cdot W = f\,(V \cdot W)$$
+
+fonksiyon eşitlikleri geçerlidir.
+
+::: {.ispat}
+Her üç eşitliğin iki yanı da fonksiyondur; iki fonksiyonun eşit olması için her $\mathbf{p}$ noktasında aynı değeri almaları gerekir ve yeter. Bir $\mathbf{p}$ noktası sabitleyelim. Sol yanların $\mathbf{p}$'deki değerleri, tanım gereği, sırasıyla
+
+$$V(\mathbf{p}) \cdot W(\mathbf{p}), \qquad V(\mathbf{p}) \cdot \bigl(W(\mathbf{p}) + Y(\mathbf{p})\bigr), \qquad \bigl(f(\mathbf{p})\, V(\mathbf{p})\bigr) \cdot W(\mathbf{p})$$
+
+sayılarıdır; burada $(W + Y)(\mathbf{p}) = W(\mathbf{p}) + Y(\mathbf{p})$ ve $(fV)(\mathbf{p}) = f(\mathbf{p})\, V(\mathbf{p})$ eşitliklerini kullandık; alanların toplamı ve fonksiyonla çarpımı böyle, noktasal tanımlanmıştı. Bunların hepsi $T_{\mathbf{p}}(\mathbb{R}^3)$ içindeki teğet vektörlerin iç çarpımlarıdır ve teğet vektörlerin iç çarpımı simetrik ve bilineerdir. Dolayısıyla üç sayı sırasıyla
+
+$$W(\mathbf{p}) \cdot V(\mathbf{p}), \qquad V(\mathbf{p}) \cdot W(\mathbf{p}) + V(\mathbf{p}) \cdot Y(\mathbf{p}), \qquad f(\mathbf{p})\, \bigl(V(\mathbf{p}) \cdot W(\mathbf{p})\bigr)$$
+
+sayılarına eşittir. Bunlar da tam olarak sağ yanların $\mathbf{p}$'deki değerleridir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu kurallar sayesinde alanların iç çarpımıyla, tek tek vektörlerin iç çarpımıyla hesap yaptığımız gibi hesap yapabiliriz: parantezleri açarız, fonksiyon katsayılarını dışarı alırız, sırayı değiştiririz.
+
+:::: {#exm-cati-kurallar-hesabi name="Kurallarla Bir İç Çarpım Hesabı"}
+$V = x U_1 + y U_2$, $W = U_1 + z U_3$ ve $f = z$ olsun. $(fV) \cdot (W + V)$ fonksiyonunu bulalım.
+
+::: {.cozum}
+@lem-cati-ic-carpim-kurallari'ndaki kuralları sırayla uygularız: fonksiyon katsayısı dışarı alınır, sonra parantez açılır.
+
+$$(fV) \cdot (W + V) = f\,\bigl(V \cdot (W + V)\bigr) = z\,(V \cdot W) + z\,(V \cdot V).$$
+
+@lem-cati-ic-carpim-formulu ile $V \cdot W = x \cdot 1 + y \cdot 0 + 0 \cdot z = x$ ve $V \cdot V = x^2 + y^2$ olduğundan
+
+$$(fV) \cdot (W + V) = z\,(x + x^2 + y^2).$$
+
+Sağlama için $\mathbf{p} = (1, 2, 3)$ noktasına bakalım: formül $3\,(1 + 1 + 4) = 18$ verir. Doğrudan hesapta
+
+$$(fV)(\mathbf{p}) = 3\,(1, 2, 0)_{\mathbf{p}} = (3, 6, 0)_{\mathbf{p}}, \qquad (W + V)(\mathbf{p}) = (1, 0, 3)_{\mathbf{p}} + (1, 2, 0)_{\mathbf{p}} = (2, 2, 3)_{\mathbf{p}}$$
+
+ve iç çarpımları $3 \cdot 2 + 6 \cdot 2 + 0 \cdot 3 = 18$ olur. İki yol aynı sonucu verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Çatı Alanı
+
+Şimdiye kadar bütün vektör alanlarını $U_1, U_2, U_3$ doğal çatı alanı (@def-teget-dogal-cati) cinsinden yazdık. Bu üç alan her noktada aynı yöne bakar: $U_1(\mathbf{p})$ nerede olursak olalım pozitif $x$ yönündedir. Böyle bir çatı hesap için rahattır, ama geometriye kördür. Örneğin bir küre üzerinde çalışırken kürenin merkezinden dışa bakan yönün, kuzeye bakan yönün ve doğuya bakan yönün her noktada ayrı ayrı adları olsun isteriz; bu üç yön noktadan noktaya değişir ve $U_1, U_2, U_3$ ile hiçbir doğal ilişkileri yoktur.
+
+Frenet çatısı bu ihtiyacın eğriler için karşılanmış hâliydi: $T, N, B$ eğrinin her noktasında eğriye uyarlanmış bir çatıdır. Aynı şeyi eğrinin noktaları için değil, uzayın bütün noktaları için yapmak istiyoruz. Uzayın her noktasında bir çatı seçmek, üç vektör alanı seçmek demektir; bu alanların çatı koşulunu sağlaması ise her noktada birim uzunlukta ve birbirine dik olmaları demektir. Az önce tanımladığımız alan iç çarpımı bu koşulu tek bir formülle söylememize izin verir.
+
+::: {#def-cati-cati-alani name="Çatı Alanı"}
+$E_1, E_2, E_3$, $\mathbb{R}^3$ üzerinde (ya da $\mathbb{R}^3$'ün bir açık alt kümesi üzerinde) tanımlı vektör alanları olsun. Her $1 \le i, j \le 3$ için
+
+$$E_i \cdot E_j = \delta_{ij}$$
+
+ise $E_1, E_2, E_3$ üçlüsüne bir **çatı alanı** (frame field) denir. Burada $\delta_{ij}$ Kronecker deltasıdır: $i = j$ ise $\delta_{ij} = 1$, $i \neq j$ ise $\delta_{ij} = 0$.
+:::
+
+Yani çatı alanı, her noktada üç ok yerleştirir ve bu üç ok o noktada bir çatı oluşturur: $E_i \cdot E_i = 1$ eşitlikleri okların birim uzunlukta olduğunu, $i \neq j$ için $E_i \cdot E_j = 0$ eşitlikleri okların birbirine dik olduğunu söyler. Tanımdaki dokuz eşitlikten yalnızca altısı farklıdır, çünkü $E_i \cdot E_j = E_j \cdot E_i$'dir: üç norm koşulu ve üç diklik koşulu. Bir $\mathbf{p}$ noktasındaki $E_1(\mathbf{p}), E_2(\mathbf{p}), E_3(\mathbf{p})$ teğet vektörleri böylece $T_{\mathbf{p}}(\mathbb{R}^3)$ uzayında bir çatıdır (@def-iccarpim-cati).
+
+::: {.callout-note title="Tanım kümesi bütün uzay olmayabilir"}
+Az sonra göreceğimiz en önemli iki çatı alanı $z$ ekseni üzerinde tanımlı değildir. Bu yüzden tanımda bir açık alt kümeye izin verdik. Bir çatı alanının, ya da herhangi bir vektör alanının, bir $\mathcal{O}$ açık kümesi (@def-oklid-acik-kume) üzerinde tanımlı olması, yalnızca $\mathcal{O}$'nun noktalarına ok yerleştirmesi demektir. Şimdiye kadar yaptığımız ve bundan sonra yapacağımız her şey noktasaldır; dolayısıyla tanımlar, lemmalar ve ispatlar bir açık küme üzerinde tanımlı alanlar için sözcüğü sözcüğüne geçerli kalır. Kümenin açık olması, her noktasının çevresinde türev alacak yer bulunmasını sağlar. Kısalık için çoğu kez yine "$\mathbb{R}^3$ üzerinde bir vektör alanı" diyeceğiz.
+:::
+
+Vektör alanlarını diferansiyellenebilir kabul ettiğimizi hatırlatalım: bir çatı alanının her $E_i$ alanının Öklid koordinat fonksiyonları türevlenebilirdir. Bu, tanımın söylemediği ama "vektör alanı" sözünün içinde taşıdığı bir koşuldur ve örnekleri incelerken ayrıca denetlenir.
+
+:::: {#exm-cati-dogal-cati name="Doğal Çatı Alanı Bir Çatı Alanıdır"}
+$U_1, U_2, U_3$ doğal çatı alanının @def-cati-cati-alani anlamında bir çatı alanı olduğunu gösterelim.
+
+::: {.cozum}
+$U_i$'nin koordinat fonksiyonları sabittir: $U_1$ için $(1, 0, 0)$, $U_2$ için $(0, 1, 0)$, $U_3$ için $(0, 0, 1)$. Sabit fonksiyonlar türevlenebilir olduğundan üçü de vektör alanıdır. @lem-cati-ic-carpim-formulu'ne göre
+
+$$U_1 \cdot U_1 = 1 \cdot 1 + 0 + 0 = 1, \qquad U_1 \cdot U_2 = 1 \cdot 0 + 0 \cdot 1 + 0 = 0$$
+
+ve öteki dört iç çarpım aynı biçimde hesaplanır: $U_2 \cdot U_2 = U_3 \cdot U_3 = 1$, $U_1 \cdot U_3 = U_2 \cdot U_3 = 0$. Yani $U_i \cdot U_j = \delta_{ij}$'dir. "Doğal çatı alanı" adı böylece hak edilmiş olur; bu alan bütün $\mathbb{R}^3$ üzerinde tanımlıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Doğal çatı alanının her noktadaki çatısı aynıdır. Çatı alanının ilk ilginç örnekleri, noktadan noktaya sabit kalan ama doğal çatıdan farklı olan, sonra da noktadan noktaya dönen çatılardır.
+
+:::: {#exm-cati-sabit-cati name="Döndürülmüş Sabit Çatı Alanı"}
+Her noktada
+
+$$E_1 = \dfrac{1}{3}(2U_1 + 2U_2 + U_3), \quad E_2 = \dfrac{1}{3}(-2U_1 + U_2 + 2U_3), \quad E_3 = \dfrac{1}{3}(U_1 - 2U_2 + 2U_3)$$
+
+olsun. $E_1, E_2, E_3$'ün bir çatı alanı olduğunu gösterelim.
+
+::: {.cozum}
+Koordinat fonksiyonları sabit olduğundan üç alan da vektör alanıdır. Vektör kısımları $\tfrac{1}{3}(2, 2, 1)$, $\tfrac{1}{3}(-2, 1, 2)$ ve $\tfrac{1}{3}(1, -2, 2)$'dir. Normların kareleri ve karşılıklı iç çarpımlar şöyledir:
+
+$$\begin{aligned}
+E_1 \cdot E_1 &= \dfrac{4 + 4 + 1}{9} = 1, & E_1 \cdot E_2 &= \dfrac{-4 + 2 + 2}{9} = 0,\\
+E_2 \cdot E_2 &= \dfrac{4 + 1 + 4}{9} = 1, & E_1 \cdot E_3 &= \dfrac{2 - 4 + 2}{9} = 0,\\
+E_3 \cdot E_3 &= \dfrac{1 + 4 + 4}{9} = 1, & E_2 \cdot E_3 &= \dfrac{-2 - 2 + 4}{9} = 0.
+\end{aligned}$$
+
+Dolayısıyla $E_i \cdot E_j = \delta_{ij}$ ve üçlü bir çatı alanıdır.
+
+Bu çatı alanı da her noktada aynı çatıyı verir; doğal çatıdan farkı, uzayın sabit bir dönmesiyle elde edilmiş olmasıdır. Satırları $E_1, E_2, E_3$'ün vektör kısımları olan
+
+$$A = \dfrac{1}{3}\begin{pmatrix} 2 & 2 & 1 \\ -2 & 1 & 2 \\ 1 & -2 & 2 \end{pmatrix}$$
+
+matrisi, her noktadaki çatının duruş matrisidir (@def-iccarpim-durus-matrisi); yukarıdaki altı hesap, tam olarak $A A^{\mathsf{T}} = I$ eşitliğinin dokuz girdisinin denetlenmesidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-cati-bukulen-cati name="Yükseklikle Dönen Çatı Alanı"}
+$\mathbb{R}^3$ üzerinde
+
+$$E_1 = \cos z\, U_1 + \sin z\, U_2, \qquad E_2 = -\sin z\, U_1 + \cos z\, U_2, \qquad E_3 = U_3$$
+
+olsun. $E_1, E_2, E_3$'ün bir çatı alanı olduğunu gösterelim.
+
+::: {.cozum}
+Koordinat fonksiyonları $\cos z$, $\sin z$ ve sabitlerdir; hepsi türevlenebilirdir. Vektör kısımları $(\cos z, \sin z, 0)$, $(-\sin z, \cos z, 0)$ ve $(0, 0, 1)$ olduğundan
+
+$$\begin{aligned}
+E_1 \cdot E_1 &= \cos^2 z + \sin^2 z = 1, & E_1 \cdot E_2 &= -\cos z \sin z + \sin z \cos z = 0,\\
+E_2 \cdot E_2 &= \sin^2 z + \cos^2 z = 1, & E_1 \cdot E_3 &= 0,\\
+E_3 \cdot E_3 &= 1, & E_2 \cdot E_3 &= 0
+\end{aligned}$$
+
+bulunur; üçlü bir çatı alanıdır ve bütün $\mathbb{R}^3$ üzerinde tanımlıdır.
+
+Bu kez çatı noktadan noktaya değişir, ama yalnızca yükseklikle: $z = c$ yatay düzleminin bütün noktalarında çatı aynıdır ve doğal çatının $z$ ekseni etrafında $c$ açısıyla döndürülmüşüdür. $z = 0$ düzleminde $E_1 = U_1$, $E_2 = U_2$, yani doğal çatının kendisidir. $z = \pi/2$ düzleminde $E_1 = U_2$ ve $E_2 = -U_1$: çatı çeyrek tur dönmüştür. $z = \pi$ düzleminde $E_1 = -U_1$, $E_2 = -U_2$: yarım tur. Yükseldikçe çatı, bir vidanın dişleri gibi, $z$ ekseni etrafında düzgün biçimde döner.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Çatı alanı olmayan bir üçlüyü de görmek öğreticidir; en yakın aday, yukarıdaki iç çarpım örneğindeki iki alandır.
+
+:::: {#exm-cati-cati-olmayan name="Dik Ama Birim Olmayan Üçlü"}
+$V_1 = x U_1 + y U_2$, $V_2 = -y U_1 + x U_2$ ve $V_3 = U_3$ olsun. Bu üçlünün her noktada karşılıklı dik olduğunu, ama bir çatı alanı olmadığını gösterelim.
+
+::: {.cozum}
+@exm-cati-ic-carpim-hesabi'nde $V_1 \cdot V_2 = 0$ bulmuştuk. Ayrıca $V_1 \cdot V_3 = x \cdot 0 + y \cdot 0 + 0 \cdot 1 = 0$ ve aynı biçimde $V_2 \cdot V_3 = 0$'dır. Üç alan her noktada karşılıklı diktir.
+
+Ancak $V_1 \cdot V_1 = x^2 + y^2$, sabit $1$ fonksiyonu değildir: $(3, 4, 2)$ noktasında $25$, $(1, 0, 0)$ noktasında $1$, $z$ ekseninin noktalarında $0$ değerini alır. Yani $V_1$ yalnızca $x^2 + y^2 = 1$ silindiri üzerinde birim uzunluktadır, $z$ ekseninde ise sıfır vektörüdür ve bir çatının parçası bile olamaz. Aynı şey $V_2$ için de geçerlidir. Dolayısıyla $V_1, V_2, V_3$ bir çatı alanı değildir.
+
+Kusur yalnızca uzunluktadır ve onarılabilir: $z$ ekseni dışında $V_1$ ile $V_2$'yi ortak uzunlukları $\sqrt{x^2 + y^2}$ ile bölersek her noktada birim uzunlukta, karşılıklı dik üç alan elde ederiz. Bir sonraki kısımda bu çatı alanını, silindirik koordinatlar üzerinden, yeniden ve daha doğal bir yoldan bulacağız.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Silindirik Çatı Alanı
+
+Temel analizde uzayın noktalarını yalnızca $(x, y, z)$ ile değil, silindirik ve küresel koordinatlarla da adlandırırız. Her koordinat sisteminin yanında doğal bir çatı alanı gelir: her noktada, öteki iki koordinat sabit tutulurken bir koordinatın arttığı yöne bakan birim vektörler. Bu kısımda silindirik koordinatlardan başlıyoruz.
+
+Bir $\mathbf{p} = (x, y, z)$ noktasını silindirik koordinatlarla tarif etmek, onun $z$ eksenine uzaklığını, $xy$ düzlemine izdüşümünün pozitif $x$ ekseniyle yaptığı açıyı ve yüksekliğini vermek demektir.
+
+::: {#def-cati-silindirik-koordinatlar name="Silindirik Koordinat Fonksiyonları"}
+$z$ ekseni dışındaki noktalarda $\mathbb{R}^3$'ün **silindirik koordinat fonksiyonları** $r, \vartheta, z$ şöyledir:
+
+- $r = \sqrt{x^2 + y^2}$, noktanın $z$ eksenine uzaklığı;
+- $\vartheta$, pozitif $x$ ekseninden noktanın $xy$ düzlemine izdüşümü olan $(x, y, 0)$'a saatin tersi yönünde ölçülen açı; yani $x = r\cos\vartheta$ ve $y = r\sin\vartheta$ eşitliklerini sağlayan açı;
+- $z$, üçüncü doğal koordinat fonksiyonu.
+
+$\vartheta$ fonksiyonunu bir noktada $2\pi$'nin katı kadar farklı değerlerle seçebiliriz; türevlenebilir tek bir fonksiyon istediğimizde $\vartheta$'yı $y = 0$, $x \le 0$ yarım düzlemi dışında, $-\pi < \vartheta < \pi$ değerleriyle alırız.
+:::
+
+Yani $(r, \vartheta)$ çifti, $xy$ düzlemindeki $(x, y)$ noktasının kutupsal koordinatlarıdır; $z$ olduğu gibi kalır. $r$ fonksiyonu $z$ ekseni dışında türevlenebilirdir, çünkü orada $x^2 + y^2 > 0$'dır ve karekök pozitif sayılarda türevlenebilirdir.
+
+::: {.callout-warning title="Açı fonksiyonu her yerde tanımlı değildir, ama kosinüsü ve sinüsü tanımlıdır"}
+$\vartheta$'yı $z$ ekseni dışındaki bütün noktalarda sürekli bir fonksiyon olarak seçmek olanaksızdır: $z$ ekseninin etrafında bir tam tur atıp başladığımız noktaya dönersek açı $2\pi$ artmış olur, oysa sürekli bir fonksiyon aynı noktada aynı değeri almalıdır. Bu yüzden bir yarım düzlemi dışarıda bırakırız; örneğin $y = 0$, $x \le 0$ yarım düzleminin dışında
+
+$$\vartheta = 2 \tan^{-1}\!\left(\dfrac{y}{r + x}\right)$$
+
+formülü, $(-\pi, \pi)$ aralığında değer alan türevlenebilir bir açı fonksiyonu verir. Buradaki bölen $r + x$, yalnızca $y = 0$ ve $x \le 0$ olan noktalarda sıfırlanır. Öte yandan çatı alanı için $\vartheta$'nın kendisine değil, yalnızca
+
+$$\cos\vartheta = \dfrac{x}{r}, \qquad \sin\vartheta = \dfrac{y}{r}$$
+
+fonksiyonlarına ihtiyacımız olacak. Bu ikisi $z$ ekseni dışındaki her noktada tanımlı, tek değerli ve türevlenebilirdir. Bu yüzden silindirik çatı alanı, $\vartheta$'nın kendisinden daha geniş bir kümede, $z$ ekseni dışındaki bütün noktalarda tanımlı olacaktır.
+:::
+
+:::: {#exm-cati-silindirik-koordinat-hesabi name="Bir Noktanın Silindirik Koordinatları"}
+$\mathbf{p} = (3, 4, 2)$ noktasının silindirik koordinatlarını bulalım.
+
+::: {.cozum}
+$r = \sqrt{9 + 16} = 5$ ve $z = 2$'dir. Açı için $\cos\vartheta = 3/5$ ve $\sin\vartheta = 4/5$ olmalıdır; $\mathbf{p}$'nin izdüşümü $(3, 4, 0)$ birinci bölgede olduğundan $\vartheta = \tan^{-1}(4/3)$'tür. Yukarıdaki formül de aynı sonucu verir:
+
+$$\vartheta = 2\tan^{-1}\!\left(\dfrac{4}{5 + 3}\right) = 2\tan^{-1}\dfrac{1}{2} \approx 0{,}9273 \ \text{radyan},$$
+
+yani yaklaşık $53{,}13°$. Sağlama: $5\cos(0{,}9273) \approx 3{,}000$ ve $5\sin(0{,}9273) \approx 4{,}000$. Dolayısıyla $\mathbf{p}$'nin silindirik koordinatları $r = 5$, $\vartheta \approx 0{,}9273$, $z = 2$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Silindirik koordinatların yanında gelen çatı alanı şudur. Önce çatı alanı olduğunu denetleyeceğiz; ardından üç alanın gerçekten $r$, $\vartheta$ ve $z$ koordinatlarının arttığı yönlere baktığını göstereceğiz.
+
+:::: {#exm-cati-silindirik name="Silindirik Çatı Alanı"}
+$z$ ekseni dışında
+
+$$E_1 = \cos\vartheta\, U_1 + \sin\vartheta\, U_2, \qquad E_2 = -\sin\vartheta\, U_1 + \cos\vartheta\, U_2, \qquad E_3 = U_3$$
+
+olsun. $E_1, E_2, E_3$'ün bir çatı alanı olduğunu gösterelim. Bu üçlüye $\mathbb{R}^3$'ün **silindirik çatı alanı** (cylindrical frame field) denir.
+
+::: {.cozum}
+*Vektör alanı olma.* $\cos\vartheta = x/r$ ve $\sin\vartheta = y/r$ olduğundan
+
+$$E_1 = \dfrac{x}{r}\, U_1 + \dfrac{y}{r}\, U_2, \qquad E_2 = -\dfrac{y}{r}\, U_1 + \dfrac{x}{r}\, U_2$$
+
+yazılabilir. $r$, $z$ ekseni dışında türevlenebilir ve sıfırdan farklı olduğundan bu katsayılar orada türevlenebilirdir; $E_3$'ün katsayıları sabittir. Üçü de $z$ ekseni dışında tanımlı vektör alanlarıdır.
+
+*Ortonormallik.* Vektör kısımları $(\cos\vartheta, \sin\vartheta, 0)$, $(-\sin\vartheta, \cos\vartheta, 0)$ ve $(0, 0, 1)$'dir. @lem-cati-ic-carpim-formulu ile
+
+$$\begin{aligned}
+E_1 \cdot E_1 &= \cos^2\vartheta + \sin^2\vartheta = 1, & E_1 \cdot E_2 &= -\cos\vartheta\sin\vartheta + \sin\vartheta\cos\vartheta = 0,\\
+E_2 \cdot E_2 &= \sin^2\vartheta + \cos^2\vartheta = 1, & E_1 \cdot E_3 &= 0 + 0 + 0 = 0,\\
+E_3 \cdot E_3 &= 1, & E_2 \cdot E_3 &= 0 + 0 + 0 = 0.
+\end{aligned}$$
+
+Altı koşul da sağlanır; $E_1, E_2, E_3$ bir çatı alanıdır.
+
+Birkaç noktadaki değerler:
+
+| nokta | $E_1$'in vektör kısmı | $E_2$'nin vektör kısmı | $E_3$'ün vektör kısmı |
+|---|---|---|---|
+| $(3, 4, 2)$ | $(3/5,\ 4/5,\ 0)$ | $(-4/5,\ 3/5,\ 0)$ | $(0, 0, 1)$ |
+| $(-4, 3, 0)$ | $(-4/5,\ 3/5,\ 0)$ | $(-3/5,\ -4/5,\ 0)$ | $(0, 0, 1)$ |
+| $(0, -5, 1)$ | $(0, -1, 0)$ | $(1, 0, 0)$ | $(0, 0, 1)$ |
+
+Üç noktada da $r = 5$'tir, ama $E_1$ ile $E_2$ noktanın $z$ eksenine göre konumuyla birlikte döner; $E_3$ hep aynıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="30.0 11.5 426.0 306.0" role="img" aria-label="Yari saydam r = 5 silindiri uzerinde uc nokta: p = (3, 4, 2), q = (-4, 3, 0), s = (0, -5, 1). Her noktada silindirik cati alaninin uc birim oku: E1 turuncu, z ekseninden disa; E2 yesil, cember boyunca donme yonunde; E3 mavi, yukari. p icin kesikli kilavuzlar taban uzakligi r = 5, taban acisi theta ve yukseklik z = 2 degerlerini okutur.">
+  <path d="M167.1,134.9 L384.8,172.1" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M167.1,134.9 L87.9,237.1" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M147.3,160.4 L365.0,197.6" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M221.5,144.2 L142.3,246.4" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M127.5,186.0 L345.2,223.2" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M275.9,153.5 L196.7,255.7" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M107.7,211.5 L325.4,248.7" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M330.4,162.8 L251.1,264.9" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M87.9,237.1 L305.6,274.2" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M384.8,172.1 L305.6,274.2" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="236.3,147.4 212.8,148.2 212.8,26.9 236.3,26.1" fill="var(--academic-text)" fill-opacity="0.062" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="259.9,148.2 236.3,147.4 236.3,26.1 259.9,26.9" fill="var(--academic-text)" fill-opacity="0.061" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="212.8,148.2 189.7,150.5 189.7,29.3 212.8,26.9" fill="var(--academic-text)" fill-opacity="0.064" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="282.9,150.5 259.9,148.2 259.9,26.9 282.9,29.3" fill="var(--academic-text)" fill-opacity="0.059" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="189.7,150.5 167.6,154.4 167.6,33.2 189.7,29.3" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="305.1,154.4 282.9,150.5 282.9,29.3 305.1,33.2" fill="var(--academic-text)" fill-opacity="0.057" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="167.6,154.4 146.9,159.7 146.9,38.5 167.6,33.2" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="325.8,159.7 305.1,154.4 305.1,33.2 325.8,38.5" fill="var(--academic-text)" fill-opacity="0.055" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="146.9,159.7 128.0,166.3 128.0,45.1 146.9,38.5" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="344.7,166.3 325.8,159.7 325.8,38.5 344.7,45.1" fill="var(--academic-text)" fill-opacity="0.052" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="128.0,166.3 111.3,174.2 111.3,52.9 128.0,45.1" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="361.4,174.2 344.7,166.3 344.7,45.1 361.4,52.9" fill="var(--academic-text)" fill-opacity="0.050" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="111.3,174.2 97.2,183.0 97.2,61.8 111.3,52.9" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="375.5,183.0 361.4,174.2 361.4,52.9 375.5,61.8" fill="var(--academic-text)" fill-opacity="0.048" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="97.2,183.0 85.9,192.8 85.9,71.5 97.2,61.8" fill="var(--academic-text)" fill-opacity="0.064" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="386.8,192.8 375.5,183.0 375.5,61.8 386.8,71.5" fill="var(--academic-text)" fill-opacity="0.050" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="85.9,192.8 77.6,203.1 77.6,81.9 85.9,71.5" fill="var(--academic-text)" fill-opacity="0.063" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="395.1,203.1 386.8,192.8 386.8,71.5 395.1,81.9" fill="var(--academic-text)" fill-opacity="0.053" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="77.6,203.1 72.6,214.0 72.6,92.7 77.6,81.9" fill="var(--academic-text)" fill-opacity="0.061" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="400.1,214.0 395.1,203.1 395.1,81.9 400.1,92.7" fill="var(--academic-text)" fill-opacity="0.055" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="72.6,214.0 70.9,225.0 70.9,103.8 72.6,92.7" fill="var(--academic-text)" fill-opacity="0.059" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="401.8,225.0 400.1,214.0 400.1,92.7 401.8,103.8" fill="var(--academic-text)" fill-opacity="0.057" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <path d="M401.8,103.8 L401.6,100.0 L401.0,96.2 L400.0,92.4 L398.6,88.6 L396.8,84.9 L394.6,81.3 L392.1,77.6 L389.2,74.1 L385.9,70.6 L382.2,67.2 L378.2,63.9 L373.9,60.7 L369.2,57.5 L364.2,54.5 L358.9,51.6 L353.3,48.9 L347.4,46.3 L341.3,43.8 L334.9,41.4 L328.2,39.2 L321.4,37.2 L314.3,35.3 L307.1,33.6 L299.6,32.1 L292.1,30.7 L284.4,29.5 L276.5,28.5 L268.6,27.6 L260.6,27.0 L252.6,26.5 L244.5,26.2 L236.3,26.1 L228.2,26.2 L220.1,26.5 L212.1,27.0 L204.1,27.6 L196.2,28.5 L188.3,29.5 L180.6,30.7 L173.0,32.1 L165.6,33.6 L158.4,35.3 L151.3,37.2 L144.4,39.2 L137.8,41.4 L131.4,43.8 L125.3,46.3 L119.4,48.9 L113.8,51.6 L108.5,54.5 L103.5,57.5 L98.8,60.7 L94.5,63.9 L90.5,67.2 L86.8,70.6 L83.5,74.1 L80.6,77.6 L78.1,81.3 L75.9,84.9 L74.1,88.6 L72.7,92.4 L71.7,96.2 L71.1,100.0 L70.9,103.8" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.3" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="236.3" y1="204.6" x2="185.5" y2="270.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="182.0,274.6 184.0,267.3 188.6,270.9" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="178.0" y="287.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x</text>
+  <line x1="236.3" y1="204.6" x2="423.6" y2="236.6" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="429.1,237.5 421.7,239.2 422.7,233.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="439.1" y="241.5" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">y</text>
+  <line x1="236.3" y1="204.6" x2="236.3" y2="86.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="236.3,80.4 239.3,87.4 233.4,87.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="226.3" y="76.4" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">z</text>
+  <path d="M393.5,228.9 L390.1,233.3" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="391.8" y="244.1" fill="var(--academic-text)" font-size="10" text-anchor="middle">5</text>
+  <path d="M238.0,173.2 L234.6,177.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="227.3" y="173.4" fill="var(--academic-text)" font-size="10" text-anchor="end">1</text>
+  <path d="M238.0,144.0 L234.6,148.3" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="227.3" y="144.2" fill="var(--academic-text)" font-size="10" text-anchor="end">2</text>
+  <path d="M238.0,114.8 L234.6,119.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="227.3" y="114.9" fill="var(--academic-text)" font-size="10" text-anchor="end">3</text>
+  <path d="M236.3,204.6 L326.8,269.6" fill="none" stroke="var(--academic-text)" stroke-width="1.1" stroke-dasharray="5 3" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M326.8,269.6 L326.8,211.2" fill="none" stroke="var(--academic-text)" stroke-width="1.1" stroke-dasharray="5 3" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M209.2,239.6 L210.9,239.9 L212.7,240.2 L214.4,240.4 L216.2,240.6 L218.0,240.8 L219.8,241.0 L221.6,241.2 L223.4,241.3 L225.2,241.5 L227.1,241.6 L228.9,241.7 L230.7,241.8 L232.6,241.8 L234.4,241.8 L236.2,241.8 L238.1,241.8 L239.9,241.8 L241.8,241.8 L243.6,241.7 L245.4,241.6 L247.2,241.5 L249.1,241.4 L250.9,241.2 L252.7,241.0 L254.5,240.9 L256.3,240.7 L258.0,240.4 L259.8,240.2 L261.6,239.9 L263.3,239.6 L265.0,239.3 L266.7,239.0 L268.4,238.7 L270.1,238.3 L271.8,237.9 L273.4,237.5 L275.0,237.1 L276.6,236.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="275.0" y1="237.1" x2="275.1" y2="237.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="279.7,235.8 274.7,239.8 273.3,235.0" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="374.9" y1="162.1" x2="397.2" y2="155.3" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="402.6,153.6 396.7,158.5 395.0,152.9" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="374.9" y1="162.1" x2="361.3" y2="152.4" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="356.8,149.1 364.2,150.8 360.8,155.6" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="374.9" y1="162.1" x2="374.9" y2="138.5" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="374.9,132.9 377.8,139.9 371.9,139.9" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="374.9" cy="162.1" r="3.4" fill="var(--academic-text)"/>
+  <line x1="80.9" y1="148.8" x2="55.3" y2="144.4" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="49.8,143.5 57.2,141.8 56.2,147.6" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="80.9" y1="148.8" x2="73.0" y2="159.0" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="69.6,163.4 71.6,156.1 76.2,159.7" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="80.9" y1="148.8" x2="80.9" y2="125.2" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="80.9,119.6 83.8,126.6 78.0,126.6" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="80.9" cy="148.8" r="3.4" fill="var(--academic-text)"/>
+  <polygon points="70.9,225.0 72.6,236.1 72.6,114.8 70.9,103.8" fill="var(--academic-text)" fill-opacity="0.057" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="400.1,236.1 401.8,225.0 401.8,103.8 400.1,114.8" fill="var(--academic-text)" fill-opacity="0.059" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="395.1,246.9 400.1,236.1 400.1,114.8 395.1,125.7" fill="var(--academic-text)" fill-opacity="0.061" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="72.6,236.1 77.6,246.9 77.6,125.7 72.6,114.8" fill="var(--academic-text)" fill-opacity="0.055" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="77.6,246.9 85.9,257.3 85.9,136.1 77.6,125.7" fill="var(--academic-text)" fill-opacity="0.053" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="386.8,257.3 395.1,246.9 395.1,125.7 386.8,136.1" fill="var(--academic-text)" fill-opacity="0.063" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="85.9,257.3 97.2,267.0 97.2,145.8 85.9,136.1" fill="var(--academic-text)" fill-opacity="0.050" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="375.5,267.0 386.8,257.3 386.8,136.1 375.5,145.8" fill="var(--academic-text)" fill-opacity="0.064" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="97.2,267.0 111.3,275.9 111.3,154.7 97.2,145.8" fill="var(--academic-text)" fill-opacity="0.048" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="361.4,275.9 375.5,267.0 375.5,145.8 361.4,154.7" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="344.7,283.7 361.4,275.9 361.4,154.7 344.7,162.5" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="111.3,275.9 128.0,283.7 128.0,162.5 111.3,154.7" fill="var(--academic-text)" fill-opacity="0.050" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="128.0,283.7 146.9,290.3 146.9,169.1 128.0,162.5" fill="var(--academic-text)" fill-opacity="0.052" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="325.8,290.3 344.7,283.7 344.7,162.5 325.8,169.1" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="146.9,290.3 167.6,295.7 167.6,174.4 146.9,169.1" fill="var(--academic-text)" fill-opacity="0.055" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="305.1,295.7 325.8,290.3 325.8,169.1 305.1,174.4" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="167.6,295.7 189.7,299.5 189.7,178.3 167.6,174.4" fill="var(--academic-text)" fill-opacity="0.057" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="282.9,299.5 305.1,295.7 305.1,174.4 282.9,178.3" fill="var(--academic-text)" fill-opacity="0.065" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="189.7,299.5 212.8,301.9 212.8,180.7 189.7,178.3" fill="var(--academic-text)" fill-opacity="0.059" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="259.9,301.9 282.9,299.5 282.9,178.3 259.9,180.7" fill="var(--academic-text)" fill-opacity="0.064" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="212.8,301.9 236.3,302.7 236.3,181.5 212.8,180.7" fill="var(--academic-text)" fill-opacity="0.061" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <polygon points="236.3,302.7 259.9,301.9 259.9,180.7 236.3,181.5" fill="var(--academic-text)" fill-opacity="0.062" stroke="none" stroke-width="0.6" stroke-opacity="0.5" stroke-linejoin="round"/>
+  <path d="M70.9,103.8 L71.1,107.6 L71.7,111.4 L72.7,115.2 L74.1,118.9 L75.9,122.7 L78.1,126.3 L80.6,130.0 L83.5,133.5 L86.8,137.0 L90.5,140.4 L94.5,143.7 L98.8,146.9 L103.5,150.1 L108.5,153.1 L113.8,155.9 L119.4,158.7 L125.3,161.3 L131.4,163.8 L137.8,166.2 L144.4,168.4 L151.3,170.4 L158.4,172.3 L165.6,174.0 L173.0,175.5 L180.6,176.9 L188.3,178.1 L196.2,179.1 L204.1,180.0 L212.1,180.6 L220.1,181.1 L228.2,181.4 L236.3,181.5 L244.5,181.4 L252.6,181.1 L260.6,180.6 L268.6,180.0 L276.5,179.1 L284.4,178.1 L292.1,176.9 L299.6,175.5 L307.1,174.0 L314.3,172.3 L321.4,170.4 L328.2,168.4 L334.9,166.2 L341.3,163.8 L347.4,161.3 L353.3,158.7 L358.9,155.9 L364.2,153.1 L369.2,150.1 L373.9,146.9 L378.2,143.7 L382.2,140.4 L385.9,137.0 L389.2,133.5 L392.1,130.0 L394.6,126.3 L396.8,122.7 L398.6,118.9 L400.0,115.2 L401.0,111.4 L401.6,107.6 L401.8,103.8" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M70.9,225.0 L71.1,228.8 L71.7,232.6 L72.7,236.4 L74.1,240.2 L75.9,243.9 L78.1,247.6 L80.6,251.2 L83.5,254.7 L86.8,258.2 L90.5,261.6 L94.5,264.9 L98.8,268.2 L103.5,271.3 L108.5,274.3 L113.8,277.2 L119.4,279.9 L125.3,282.6 L131.4,285.0 L137.8,287.4 L144.4,289.6 L151.3,291.6 L158.4,293.5 L165.6,295.2 L173.0,296.8 L180.6,298.1 L188.3,299.3 L196.2,300.3 L204.1,301.2 L212.1,301.8 L220.1,302.3 L228.2,302.6 L236.3,302.7 L244.5,302.6 L252.6,302.3 L260.6,301.8 L268.6,301.2 L276.5,300.3 L284.4,299.3 L292.1,298.1 L299.6,296.8 L307.1,295.2 L314.3,293.5 L321.4,291.6 L328.2,289.6 L334.9,287.4 L341.3,285.0 L347.4,282.6 L353.3,279.9 L358.9,277.2 L364.2,274.3 L369.2,271.3 L373.9,268.2 L378.2,264.9 L382.2,261.6 L385.9,258.2 L389.2,254.7 L392.1,251.2 L394.6,247.6 L396.8,243.9 L398.6,240.2 L400.0,236.4 L401.0,232.6 L401.6,228.8 L401.8,225.0" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M70.9,225.0 L70.9,103.8" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.32" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M401.8,225.0 L401.8,103.8" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.32" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="326.8" cy="269.6" r="2.4" fill="var(--academic-text)"/>
+  <line x1="326.8" y1="211.2" x2="340.3" y2="220.9" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="344.8,224.2 337.4,222.5 340.9,217.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="326.8" y1="211.2" x2="349.1" y2="204.3" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="354.5,202.7 348.6,207.6 346.9,201.9" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="326.8" y1="211.2" x2="326.8" y2="187.6" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="326.8,182.0 329.7,189.0 323.8,189.0" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="326.8" cy="211.2" r="3.4" fill="var(--academic-text)"/>
+  <text x="316.8" y="202.2" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">p</tspan> = (3, 4, 2)</text>
+  <text x="361.9" y="136.1" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">q</tspan> = (&#8722;4, 3, 0)</text>
+  <text x="89.9" y="132.8" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">s</tspan> = (0, &#8722;5, 1)</text>
+  <text x="350.8" y="245.2" fill="var(--color-practice)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="361.5" y="199.7" fill="var(--color-base)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="333.8" y="186.0" fill="var(--color-theory)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="409.6" y="151.6" fill="var(--color-practice)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="341.8" y="155.1" fill="var(--color-base)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="374.9" y="124.9" fill="var(--color-theory)" font-size="11" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="49.8" y="135.5" fill="var(--color-practice)" font-size="11" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="66.6" y="175.4" fill="var(--color-base)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="80.9" y="111.6" fill="var(--color-theory)" font-size="11" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="283.6" y="268.1" fill="var(--academic-text)" font-size="11" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">r</tspan> = 5</text>
+  <text x="319.8" y="237.4" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">z</tspan> = 2</text>
+  <text x="242.4" y="233.3" fill="var(--academic-text)" font-size="12" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#977;</tspan></text>
+</svg>
+<figcaption>Silindirik çatı alanının üç noktadaki değerleri: <strong>p</strong> = (3, 4, 2), <strong>q</strong> = (&#8722;4, 3, 0) ve <strong>s</strong> = (0, &#8722;5, 1); üçü de <em>r</em> = 5 silindirinin üzerindedir. Her noktada <em>E</em><sub>1</sub> (turuncu) <em>z</em> ekseninden dışa, <em>E</em><sub>2</sub> (yeşil) silindirin çevresi boyunca dönme yönüne, <em>E</em><sub>3</sub> (mavi) yukarı bakar. Nokta <em>z</em> ekseninin çevresinde döndükçe <em>E</em><sub>1</sub> ile <em>E</em><sub>2</sub> birlikte döner, <em>E</em><sub>3</sub> ise hiç değişmez. Kesikli çizgiler <strong>p</strong>&#8217;nin silindirik koordinatlarını okur: taban uzaklığı <em>r</em> = 5, taban açısı <em>&#977;</em> ve yükseklik <em>z</em> = 2.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: silindirik çatı.** Sahneyi sürükleyerek döndürebilirsiniz. Kaydırıcılar $\mathbf{p}$ noktasını silindirik koordinatlarıyla taşır: $r$ noktanın $z$ eksenine uzaklığı, $\vartheta$ dönme açısı, $z$ yüksekliktir; noktadaki üç ok $E_1$ (dışa), $E_2$ (dönme yönü) ve $E_3$ (yukarı) çatısıdır. $r$ ile $z$'yi oynatınca okların yönü hiç değişmez; üçlüyü yalnızca $\vartheta$ birlikte döndürür, çünkü $E_1$ ile $E_2$ yalnızca $\vartheta$'ya bağlıdır. Değer satırındaki altı iç çarpım her konumda $E_i \cdot E_j = \delta_{ij}$ kalır.
+
+```{ojs}
+//| echo: false
+viewof cylFrameControls = Inputs.form({
+  r: Inputs.range([1, 5], { value: 5, step: 0.1, label: "r" }),
+  theta: Inputs.range([0, 2 * Math.PI], { value: 0.927, step: 0.001, label: "ϑ" }),
+  z: Inputs.range([-3, 3], { value: 2, step: 0.1, label: "z" })
+})
+```
+
+```{ojs}
+//| echo: false
+cylFramePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: silindirik koordinatlarla tasinan p noktasi, oradaki E1, E2, E3 cati oklari ve r yaricapli yari saydam silindir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { r, theta, z } = cylFrameControls;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const p = [r * cosT, r * sinT, z];
+  const foot = [p[0], p[1], 0];
+  const e1 = [cosT, sinT, 0];
+  const e2 = [-sinT, cosT, 0];
+  const e3 = [0, 0, 1];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const vec = (u) => `(${fmt(u[0])}; ${fmt(u[1])}; ${fmt(u[2])})`;
+  const traces = [
+    cylinder(r, -3.4, 3.4, theme.surface, { opacity: 0.12 }),
+    segment([0, 0, -3.4], [0, 0, 3.4], theme.axis, { width: 2, dash: "dot" }),
+    path((u) => [r * Math.cos(u), r * Math.sin(u), z], 0, 2 * Math.PI, theme.axis, "ϑ çemberi", { width: 2 }),
+    segment([0, 0, 0], foot, theme.axis, { width: 2 }),
+    segment(foot, p, theme.axis, { width: 2 }),
+    ...arrow(p, e1, theme.practice, "E₁ (r yönü)"),
+    ...arrow(p, e2, theme.base, "E₂ (ϑ yönü)"),
+    ...arrow(p, e3, theme.theory, "E₃ (z yönü)"),
+    point(p, theme.text, "p", { legend: false }),
+    // The 3D label keeps a constant text; every changing number lives in the read-out below.
+    label(p, "p", theme.text, { position: "bottom center" })
+  ];
+  render(Plotly, cylFramePlot, traces, sceneLayout(theme, { x: [-6.2, 6.2], y: [-6.2, 6.2], z: [-4.2, 4.2], eye: { x: 1.75, y: 0.45, z: 0.9 } }));
+  return html`<div class="scene3d-readout"><b>p</b> = ${vec(p)} &nbsp;·&nbsp; E₁ = ${vec(e1)} &nbsp;·&nbsp; E₂ = ${vec(e2)} &nbsp;·&nbsp; E₃ = ${vec(e3)}<br>E₁·E₁ = ${fmt(dot(e1, e1))} &nbsp;|&nbsp; E₂·E₂ = ${fmt(dot(e2, e2))} &nbsp;|&nbsp; E₃·E₃ = ${fmt(dot(e3, e3))} &nbsp;|&nbsp; E₁·E₂ = ${fmt(dot(e1, e2))} &nbsp;|&nbsp; E₁·E₃ = ${fmt(dot(e1, e3))} &nbsp;|&nbsp; E₂·E₃ = ${fmt(dot(e2, e3))}</div>`;
+}
+```
+:::
+::::
+
+Şimdi $E_1, E_2, E_3$'ün adlarını hak ettiğini görelim. Fikir şudur: öteki iki koordinatı sabit tutup birini değiştirince nokta bir eğri çizer; o eğrinin hız vektörü bize aranan yönü verir.
+
+:::: {#exm-cati-silindirik-yonler name="Silindirik Çatının Koordinat Yönleri"}
+$E_1, E_2, E_3$ silindirik çatı alanı olsun. $E_1, E_2, E_3$'ün sırasıyla $r$, $\vartheta$ ve $z$ koordinatlarının arttığı yöne bakan birim vektörler olduğunu doğrulayalım.
+
+::: {.cozum}
+Silindirik koordinatları $(r_0, \vartheta_0, z_0)$ olan bir $\mathbf{p}$ noktası alalım. Yalnızca $r$'yi değiştirirsek nokta
+
+$$u \mapsto (u\cos\vartheta_0,\ u\sin\vartheta_0,\ z_0)$$
+
+doğrusu üzerinde hareket eder; bu eğrinin hızının vektör kısmı $(\cos\vartheta_0, \sin\vartheta_0, 0)$'dır, yani tam $E_1(\mathbf{p})$'nin vektör kısmı. Bu, $z$ ekseninden $\mathbf{p}$'ye doğru yatay olarak dışa bakan birim vektördür. Yalnızca $\vartheta$'yı değiştirirsek nokta
+
+$$u \mapsto (r_0\cos u,\ r_0\sin u,\ z_0)$$
+
+yatay çemberi üzerinde döner; $u = \vartheta_0$ anındaki hızın vektör kısmı $r_0(-\sin\vartheta_0, \cos\vartheta_0, 0)$, yani $r_0$ ile $E_2(\mathbf{p})$'nin vektör kısmının çarpımıdır. Uzunluk $r_0$'ı atınca $E_2(\mathbf{p})$ kalır: $z$ ekseni etrafında saatin tersi yönünde dönmenin yatay birim vektörü. Yalnızca $z$'yi değiştirmek düşey doğru boyunca yürümektir ve hız $U_3(\mathbf{p}) = E_3(\mathbf{p})$'dir. Üç hızın uzunlukları $1$, $r_0$ ve $1$'dir; yön vektörleri $E_1, E_2, E_3$ zaten birim uzunluktadır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani silindirik çatı alanı her noktaya "$z$ ekseninden dışa", "$z$ ekseni etrafında dönme yönüne" ve "yukarı" bakan üç birim ok yerleştirir. $z$ ekseni üzerinde "dışa" ve "dönme yönü" anlamsızdır; çatı alanının orada tanımsız olması bu geometrik gerçeğin yansımasıdır. @exm-cati-cati-olmayan'da dik ama birim olmayan $V_1, V_2$ alanlarını $r$ ile bölerek elde edeceğimizi söylediğimiz çatı, tam olarak $E_1 = V_1/r$, $E_2 = V_2/r$'dir.
+
+## Küresel Çatı Alanı
+
+Küresel koordinatlar bir noktayı, başlangıç noktasına uzaklığıyla ve iki açıyla adlandırır. Açılardan biri silindirik koordinatlardaki $\vartheta$'dır; öteki, noktanın $xy$ düzleminden ne kadar yukarıda (ya da aşağıda) göründüğünü ölçer. Dünya yüzeyindeki benzetmesiyle $\vartheta$ boylam, ikinci açı enlemdir.
+
+::: {#def-cati-kuresel-koordinatlar name="Küresel Koordinat Fonksiyonları"}
+$z$ ekseni dışındaki noktalarda $\mathbb{R}^3$'ün **küresel koordinat fonksiyonları** $\rho, \vartheta, \varphi$ şöyledir:
+
+- $\rho = \sqrt{x^2 + y^2 + z^2}$, noktanın başlangıç noktasına uzaklığı;
+- $\vartheta$, silindirik koordinatlardaki açı (boylam);
+- $\varphi$, başlangıç noktasından noktaya giden doğru parçasının $xy$ düzlemiyle yaptığı, yukarı doğru pozitif sayılan açı (yükseklik açısı); $-\pi/2 < \varphi < \pi/2$ olur ve $r = \rho\cos\varphi$, $z = \rho\sin\varphi$ eşitlikleri geçerlidir.
+
+Böylece $x = \rho\cos\varphi\cos\vartheta$, $y = \rho\cos\varphi\sin\vartheta$ ve $z = \rho\sin\varphi$ olur.
+:::
+
+Yani $\rho$ noktanın "yarıçapı", $\vartheta$ boylamı, $\varphi$ enlemidir: $\varphi = 0$ olan noktalar $xy$ düzlemindedir (ekvator), $\varphi$ pozitifse nokta düzlemin üstünde, negatifse altındadır. $z$ ekseni dışında $r > 0$ olduğundan $\varphi = \tan^{-1}(z/r)$ formülü $\varphi$'yi her yerde tek değerli ve türevlenebilir biçimde verir; $\rho$ da orada pozitif ve türevlenebilirdir. $\vartheta$ için silindirik durumdaki uyarı aynen geçerlidir ve yine yalnızca $\cos\vartheta$, $\sin\vartheta$'ya ihtiyaç duyacağız.
+
+::: {.callout-note title="Açı yukarıdan mı, aşağıdan mı?"}
+Küresel koordinatlarda ikinci açı çoğu kez pozitif $z$ ekseninden aşağı doğru ölçülür; o zaman $z = \rho\cos(\text{açı})$ olur. Biz açıyı $xy$ düzleminden yukarı doğru ölçüyoruz, böylece $z = \rho\sin\varphi$'dir ve $\varphi$ gerçekten coğrafi enlem gibi davranır. İki seçim birbirinin $\pi/2$'den farkıdır; hangisini kullandığımızı bilmek yeter.
+:::
+
+:::: {#exm-cati-kuresel-koordinat-hesabi name="Bir Noktanın Küresel Koordinatları"}
+$\mathbf{p} = (2, 2, 1)$ noktasının küresel koordinatlarını bulalım.
+
+::: {.cozum}
+$\rho = \sqrt{4 + 4 + 1} = 3$ ve $r = \sqrt{4 + 4} = 2\sqrt{2}$'dir. İzdüşüm $(2, 2, 0)$, $x$ ekseniyle $45°$ yapar: $\cos\vartheta = \sin\vartheta = 2/(2\sqrt{2}) = \sqrt{2}/2$, yani $\vartheta = \pi/4$. Yükseklik açısı için
+
+$$\sin\varphi = \dfrac{z}{\rho} = \dfrac{1}{3}, \qquad \cos\varphi = \dfrac{r}{\rho} = \dfrac{2\sqrt{2}}{3}$$
+
+olur; $\varphi = \tan^{-1}\bigl(1/(2\sqrt{2})\bigr) \approx 0{,}3398$ radyan, yaklaşık $19{,}47°$. Sağlama:
+
+$$\rho\cos\varphi\cos\vartheta = 3 \cdot \dfrac{2\sqrt{2}}{3} \cdot \dfrac{\sqrt{2}}{2} = 2 = x, \qquad \rho\sin\varphi = 3 \cdot \dfrac{1}{3} = 1 = z,$$
+
+ve aynı biçimde $\rho\cos\varphi\sin\vartheta = 2 = y$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Küresel çatı alanını silindirik çatı alanından türetmek en kolay yoldur. $\vartheta$'nın artma yönü her iki sistemde aynıdır. $\rho$'nun artma yönü başlangıç noktasından dışa bakan yöndür; bu yön, $\mathbf{p}$'den geçen düşey yarım düzlemin içindedir ve o düzlemde yatay $E_1$ ile düşey $E_3$'ün gerdiği açı $\varphi$'lik doğrultudur. $\varphi$'nin artma yönü ise aynı düzlemde bundan $90°$ ileride, "kuzeye" bakan yöndür.
+
+:::: {#exm-cati-kuresel name="Küresel Çatı Alanı"}
+$E_1, E_2, E_3$ silindirik çatı alanı olsun. $z$ ekseni dışında
+
+$$F_1 = \cos\varphi\, E_1 + \sin\varphi\, E_3, \qquad F_2 = E_2, \qquad F_3 = -\sin\varphi\, E_1 + \cos\varphi\, E_3$$
+
+olsun; doğal çatı cinsinden
+
+$$\begin{aligned}
+F_1 &= \cos\varphi\cos\vartheta\, U_1 + \cos\varphi\sin\vartheta\, U_2 + \sin\varphi\, U_3,\\
+F_2 &= -\sin\vartheta\, U_1 + \cos\vartheta\, U_2,\\
+F_3 &= -\sin\varphi\cos\vartheta\, U_1 - \sin\varphi\sin\vartheta\, U_2 + \cos\varphi\, U_3.
+\end{aligned}$$
+
+$F_1, F_2, F_3$'ün bir çatı alanı olduğunu gösterelim. Bu üçlüye $\mathbb{R}^3$'ün **küresel çatı alanı** (spherical frame field) denir.
+
+::: {.cozum}
+*Açık formüller.* $E_1 = \cos\vartheta\, U_1 + \sin\vartheta\, U_2$ ve $E_3 = U_3$ yerine yazılınca
+
+$$F_1 = \cos\varphi\,(\cos\vartheta\, U_1 + \sin\vartheta\, U_2) + \sin\varphi\, U_3$$
+
+ve benzer biçimde $F_3$ için verilen açılım elde edilir; $F_2 = E_2$ zaten açıktır. Katsayılar $\cos\varphi = r/\rho$, $\sin\varphi = z/\rho$, $\cos\vartheta = x/r$, $\sin\vartheta = y/r$ fonksiyonlarının çarpımlarıdır ve $z$ ekseni dışında türevlenebilirdir. Üçü de vektör alanıdır.
+
+*Ortonormallik, silindirik çatı üzerinden.* $E_i \cdot E_j = \delta_{ij}$ olduğunu biliyoruz. @lem-cati-ic-carpim-kurallari'yla parantezleri açarız:
+
+$$\begin{aligned}
+F_1 \cdot F_1 &= \cos^2\varphi\,(E_1 \cdot E_1) + 2\cos\varphi\sin\varphi\,(E_1 \cdot E_3) + \sin^2\varphi\,(E_3 \cdot E_3)\\
+&= \cos^2\varphi + \sin^2\varphi = 1,\\
+F_3 \cdot F_3 &= \sin^2\varphi + \cos^2\varphi = 1,\\
+F_1 \cdot F_3 &= -\cos\varphi\sin\varphi\,(E_1 \cdot E_1) + (\cos^2\varphi - \sin^2\varphi)(E_1 \cdot E_3) + \sin\varphi\cos\varphi\,(E_3 \cdot E_3)\\
+&= -\cos\varphi\sin\varphi + \sin\varphi\cos\varphi = 0.
+\end{aligned}$$
+
+$F_2 = E_2$ birimdir ve $E_2$ hem $E_1$'e hem $E_3$'e dik olduğundan
+
+$$F_2 \cdot F_1 = \cos\varphi\,(E_2 \cdot E_1) + \sin\varphi\,(E_2 \cdot E_3) = 0$$
+
+ve aynı biçimde $F_2 \cdot F_3 = 0$ olur.
+
+*Ortonormallik, doğrudan.* Aynı sonuca açık formüllerle de ulaşalım; $\sin^2 + \cos^2 = 1$ özdeşliği art arda kullanılır:
+
+$$\begin{aligned}
+F_1 \cdot F_1 &= \cos^2\varphi\,(\cos^2\vartheta + \sin^2\vartheta) + \sin^2\varphi = \cos^2\varphi + \sin^2\varphi = 1,\\
+F_2 \cdot F_2 &= \sin^2\vartheta + \cos^2\vartheta = 1,\\
+F_3 \cdot F_3 &= \sin^2\varphi\,(\cos^2\vartheta + \sin^2\vartheta) + \cos^2\varphi = 1,\\
+F_1 \cdot F_2 &= \cos\varphi\,(-\cos\vartheta\sin\vartheta + \sin\vartheta\cos\vartheta) = 0,\\
+F_1 \cdot F_3 &= -\sin\varphi\cos\varphi\,(\cos^2\vartheta + \sin^2\vartheta) + \sin\varphi\cos\varphi = 0,\\
+F_2 \cdot F_3 &= \sin\varphi\sin\vartheta\cos\vartheta - \sin\varphi\cos\vartheta\sin\vartheta = 0.
+\end{aligned}$$
+
+Her iki yolla da $F_i \cdot F_j = \delta_{ij}$; $F_1, F_2, F_3$ bir çatı alanıdır.
+
+İki noktadaki değerler:
+
+| nokta | $\cos\varphi$, $\sin\varphi$ | $F_1$'in vektör kısmı | $F_2$'nin vektör kısmı | $F_3$'ün vektör kısmı |
+|---|---|---|---|---|
+| $(3, 0, 4)$ | $3/5$, $4/5$ | $(3/5,\ 0,\ 4/5)$ | $(0, 1, 0)$ | $(-4/5,\ 0,\ 3/5)$ |
+| $(0, 4, 3)$ | $4/5$, $3/5$ | $(0,\ 4/5,\ 3/5)$ | $(-1, 0, 0)$ | $(0,\ -3/5,\ 4/5)$ |
+
+İlk noktada $\vartheta = 0$, ikincide $\vartheta = \pi/2$'dir; iki noktada da $\rho = 5$'tir. $F_1$'in vektör kısmının her seferinde noktanın koordinatlarının $\rho$'ya bölümü olduğuna dikkat edin.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="19.0 29.0 441.0 368.0" role="img" aria-label="Yaricapi 5 olan kurenin x, y ve z koordinatlari negatif olmayan sekizde birlik parcasi uzerinde kuresel cati alani. p = (3, 0, 4) noktasinda F1 = (3/5, 0, 4/5), F2 = (0, 1, 0), F3 = (-4/5, 0, 3/5); q = (0, 4, 3) noktasinda F1 = (0, 4/5, 3/5), F2 = (-1, 0, 0), F3 = (0, -3/5, 4/5). Kesikli yaricaplar rho = 5, yaylar vartheta ve phi acilarini gosterir; F1 kureye dik, F2 ile F3 kureye tegettir.">
+  <path d="M279.8,298.8 L381.1,349.5" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M279.8,298.8 L124.0,331.7" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M240.9,307.0 L342.1,357.7" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M305.1,311.4 L149.3,344.4" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M201.9,315.2 L303.1,366.0" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M330.4,324.1 L174.6,357.1" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M163.0,323.5 L264.2,374.2" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M355.8,336.8 L199.9,369.8" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M124.0,331.7 L225.2,382.4" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M381.1,349.5 L225.2,382.4" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.09" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="246.0,89.6 249.2,91.0 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="249.2,91.0 252.9,92.2 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="252.9,92.2 257.0,93.3 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="257.0,93.3 261.5,94.2 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="297.2,94.3 301.8,93.5 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="261.5,94.2 266.4,94.8 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="292.3,94.9 297.2,94.3 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="266.4,94.8 271.5,95.3 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="287.2,95.4 292.3,94.9 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.090" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="271.5,95.3 276.7,95.5 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.089" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="282.0,95.6 287.2,95.4 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.089" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="276.7,95.5 282.0,95.6 279.8,79.1 279.8,79.1" fill="var(--academic-text)" fill-opacity="0.089" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="213.2,106.4 219.4,109.2 249.2,91.0 246.0,89.6" fill="var(--academic-text)" fill-opacity="0.087" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="219.4,109.2 226.7,111.6 252.9,92.2 249.2,91.0" fill="var(--academic-text)" fill-opacity="0.087" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="226.7,111.6 234.8,113.7 257.0,93.3 252.9,92.2" fill="var(--academic-text)" fill-opacity="0.086" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="234.8,113.7 243.8,115.4 261.5,94.2 257.0,93.3" fill="var(--academic-text)" fill-opacity="0.086" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="314.0,115.7 323.1,114.1 301.8,93.5 297.2,94.3" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="182.4,129.1 191.5,133.1 219.4,109.2 213.2,106.4" fill="var(--academic-text)" fill-opacity="0.083" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="243.8,115.4 253.3,116.7 266.4,94.8 261.5,94.2" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="304.4,117.0 314.0,115.7 297.2,94.3 292.3,94.9" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="253.3,116.7 263.3,117.7 271.5,95.3 266.4,94.8" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="294.3,117.8 304.4,117.0 292.3,94.9 287.2,95.4" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="263.3,117.7 273.6,118.1 276.7,95.5 271.5,95.3" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="284.0,118.2 294.3,117.8 287.2,95.4 282.0,95.6" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="273.6,118.1 284.0,118.2 282.0,95.6 276.7,95.5" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="191.5,133.1 202.1,136.6 226.7,111.6 219.4,109.2" fill="var(--academic-text)" fill-opacity="0.082" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="154.6,157.0 166.3,162.1 191.5,133.1 182.4,129.1" fill="var(--academic-text)" fill-opacity="0.079" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="85.0,339.9 103.2,347.9 105.9,309.0 88.0,301.2" fill="var(--academic-text)" fill-opacity="0.076" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="202.1,136.6 214.1,139.7 234.8,113.7 226.7,111.6" fill="var(--academic-text)" fill-opacity="0.082" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="130.6,189.1 144.5,195.2 166.3,162.1 154.6,157.0" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="88.0,301.2 105.9,309.0 113.9,269.8 96.8,262.3" fill="var(--academic-text)" fill-opacity="0.071" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="214.1,139.7 227.1,142.2 243.8,115.4 234.8,113.7" fill="var(--academic-text)" fill-opacity="0.081" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="329.8,142.7 343.1,140.3 323.1,114.1 314.0,115.7" fill="var(--academic-text)" fill-opacity="0.081" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="166.3,162.1 179.9,166.6 202.1,136.6 191.5,133.1" fill="var(--academic-text)" fill-opacity="0.078" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="111.1,224.6 126.9,231.5 144.5,195.2 130.6,189.1" fill="var(--academic-text)" fill-opacity="0.069" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="96.8,262.3 113.9,269.8 126.9,231.5 111.1,224.6" fill="var(--academic-text)" fill-opacity="0.066" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="227.1,142.2 241.1,144.2 253.3,116.7 243.8,115.4" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="315.7,144.5 329.8,142.7 314.0,115.7 304.4,117.0" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="241.1,144.2 255.7,145.5 263.3,117.7 253.3,116.7" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="301.0,145.7 315.7,144.5 304.4,117.0 294.3,117.8" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="103.2,347.9 124.4,355.0 126.8,316.0 105.9,309.0" fill="var(--academic-text)" fill-opacity="0.078" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="255.7,145.5 270.7,146.2 273.6,118.1 263.3,117.7" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="285.9,146.3 301.0,145.7 294.3,117.8 284.0,118.2" fill="var(--academic-text)" fill-opacity="0.079" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="179.9,166.6 195.3,170.6 214.1,139.7 202.1,136.6" fill="var(--academic-text)" fill-opacity="0.077" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="270.7,146.2 285.9,146.3 284.0,118.2 273.6,118.1" fill="var(--academic-text)" fill-opacity="0.079" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="144.5,195.2 160.8,200.6 179.9,166.6 166.3,162.1" fill="var(--academic-text)" fill-opacity="0.073" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="105.9,309.0 126.8,316.0 133.8,276.4 113.9,269.8" fill="var(--academic-text)" fill-opacity="0.073" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="126.9,231.5 145.2,237.6 160.8,200.6 144.5,195.2" fill="var(--academic-text)" fill-opacity="0.067" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="195.3,170.6 212.1,173.8 227.1,142.2 214.1,139.7" fill="var(--academic-text)" fill-opacity="0.076" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="113.9,269.8 133.8,276.4 145.2,237.6 126.9,231.5" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="344.1,174.4 361.2,171.3 343.1,140.3 329.8,142.7" fill="var(--academic-text)" fill-opacity="0.075" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="160.8,200.6 179.1,205.3 195.3,170.6 179.9,166.6" fill="var(--academic-text)" fill-opacity="0.071" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="212.1,173.8 230.0,176.3 241.1,144.2 227.1,142.2" fill="var(--academic-text)" fill-opacity="0.075" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="124.4,355.0 148.3,361.1 150.3,322.0 126.8,316.0" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="326.0,176.7 344.1,174.4 329.8,142.7 315.7,144.5" fill="var(--academic-text)" fill-opacity="0.075" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="230.0,176.3 248.8,178.0 255.7,145.5 241.1,144.2" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="307.1,178.3 326.0,176.7 315.7,144.5 301.0,145.7" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="145.2,237.6 165.9,242.9 179.1,205.3 160.8,200.6" fill="var(--academic-text)" fill-opacity="0.066" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="126.8,316.0 150.3,322.0 156.2,282.2 133.8,276.4" fill="var(--academic-text)" fill-opacity="0.075" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="248.8,178.0 268.1,179.0 270.7,146.2 255.7,145.5" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="179.1,205.3 199.1,209.2 212.1,173.8 195.3,170.6" fill="var(--academic-text)" fill-opacity="0.070" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="287.7,179.0 307.1,178.3 301.0,145.7 285.9,146.3" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="268.1,179.0 287.7,179.0 285.9,146.3 270.7,146.2" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="133.8,276.4 156.2,282.2 165.9,242.9 145.2,237.6" fill="var(--academic-text)" fill-opacity="0.070" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="356.5,209.9 376.8,206.2 361.2,171.3 344.1,174.4" fill="var(--academic-text)" fill-opacity="0.070" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="148.3,361.1 174.4,366.1 176.0,327.0 150.3,322.0" fill="var(--academic-text)" fill-opacity="0.082" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="199.1,209.2 220.4,212.2 230.0,176.3 212.1,173.8" fill="var(--academic-text)" fill-opacity="0.069" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="379.8,367.0 406.4,362.2 404.4,323.1 378.3,327.8" fill="var(--academic-text)" fill-opacity="0.083" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="334.8,212.7 356.5,209.9 344.1,174.4 326.0,176.7" fill="var(--academic-text)" fill-opacity="0.069" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="165.9,242.9 188.5,247.3 199.1,209.2 179.1,205.3" fill="var(--academic-text)" fill-opacity="0.066" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="366.4,248.0 389.4,243.9 376.8,206.2 356.5,209.9" fill="var(--academic-text)" fill-opacity="0.066" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="150.3,322.0 176.0,327.0 180.7,287.0 156.2,282.2" fill="var(--academic-text)" fill-opacity="0.077" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="220.4,212.2 242.8,214.2 248.8,178.0 230.0,176.3" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="156.2,282.2 180.7,287.0 188.5,247.3 165.9,242.9" fill="var(--academic-text)" fill-opacity="0.071" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="312.3,214.5 334.8,212.7 326.0,176.7 307.1,178.3" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="378.3,327.8 404.4,323.1 398.7,283.2 373.8,287.8" fill="var(--academic-text)" fill-opacity="0.077" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="373.8,287.8 398.7,283.2 389.4,243.9 366.4,248.0" fill="var(--academic-text)" fill-opacity="0.072" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="242.8,214.2 265.9,215.3 268.1,179.0 248.8,178.0" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="174.4,366.1 202.3,370.0 203.5,330.8 176.0,327.0" fill="var(--academic-text)" fill-opacity="0.083" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="289.2,215.4 312.3,214.5 307.1,178.3 287.7,179.0" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="188.5,247.3 212.7,250.7 220.4,212.2 199.1,209.2" fill="var(--academic-text)" fill-opacity="0.067" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="265.9,215.3 289.2,215.4 287.7,179.0 268.1,179.0" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="351.6,370.7 379.8,367.0 378.3,327.8 350.5,331.4" fill="var(--academic-text)" fill-opacity="0.084" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="342.0,251.2 366.4,248.0 356.5,209.9 334.8,212.7" fill="var(--academic-text)" fill-opacity="0.067" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="176.0,327.0 203.5,330.8 207.0,290.6 180.7,287.0" fill="var(--academic-text)" fill-opacity="0.078" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="180.7,287.0 207.0,290.6 212.7,250.7 188.5,247.3" fill="var(--academic-text)" fill-opacity="0.073" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="212.7,250.7 238.0,253.0 242.8,214.2 220.4,212.2" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="350.5,331.4 378.3,327.8 373.8,287.8 347.3,291.2" fill="var(--academic-text)" fill-opacity="0.079" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="347.3,291.2 373.8,287.8 366.4,248.0 342.0,251.2" fill="var(--academic-text)" fill-opacity="0.073" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="202.3,370.0 231.5,372.7 232.3,333.5 203.5,330.8" fill="var(--academic-text)" fill-opacity="0.084" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="316.5,253.3 342.0,251.2 334.8,212.7 312.3,214.5" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="322.2,373.1 351.6,370.7 350.5,331.4 321.5,333.8" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="238.0,253.0 264.1,254.2 265.9,215.3 242.8,214.2" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="290.4,254.3 316.5,253.3 312.3,214.5 289.2,215.4" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="231.5,372.7 261.6,374.1 261.9,334.9 232.3,333.5" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="264.1,254.2 290.4,254.3 289.2,215.4 265.9,215.3" fill="var(--academic-text)" fill-opacity="0.068" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="207.0,290.6 234.5,293.1 238.0,253.0 212.7,250.7" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="203.5,330.8 232.3,333.5 234.5,293.1 207.0,290.6" fill="var(--academic-text)" fill-opacity="0.079" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="292.0,374.3 322.2,373.1 321.5,333.8 291.8,335.0" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="319.6,293.5 347.3,291.2 342.0,251.2 316.5,253.3" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="321.5,333.8 350.5,331.4 347.3,291.2 319.6,293.5" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="261.6,374.1 292.0,374.3 291.8,335.0 261.9,334.9" fill="var(--academic-text)" fill-opacity="0.085" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="234.5,293.1 262.7,294.5 264.1,254.2 238.0,253.0" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="232.3,333.5 261.9,334.9 262.7,294.5 234.5,293.1" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="291.3,294.6 319.6,293.5 316.5,253.3 290.4,254.3" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="291.8,335.0 321.5,333.8 319.6,293.5 291.3,294.6" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="262.7,294.5 291.3,294.6 290.4,254.3 264.1,254.2" fill="var(--academic-text)" fill-opacity="0.074" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <polygon points="261.9,334.9 291.8,335.0 291.3,294.6 262.7,294.5" fill="var(--academic-text)" fill-opacity="0.080" stroke="var(--academic-text)" stroke-width="0.55" stroke-opacity="0.22" stroke-linejoin="round"/>
+  <path d="M83.9,340.2 L83.9,336.6 L84.0,332.9 L84.1,329.3 L84.3,325.6 L84.5,322.0 L84.8,318.3 L85.1,314.7 L85.5,311.0 L86.0,307.3 L86.5,303.6 L87.0,300.0 L87.6,296.3 L88.3,292.6 L89.0,288.9 L89.7,285.3 L90.5,281.6 L91.4,277.9 L92.3,274.3 L93.3,270.6 L94.3,267.0 L95.3,263.3 L96.4,259.7 L97.6,256.1 L98.8,252.5 L100.0,248.9 L101.3,245.3 L102.7,241.7 L104.1,238.2 L105.5,234.7 L107.0,231.1 L108.5,227.6 L110.1,224.2 L111.7,220.7 L113.4,217.3 L115.1,213.8 L116.9,210.4 L118.7,207.1 L120.5,203.7 L122.4,200.4 L124.4,197.1 L126.3,193.8 L128.3,190.6 L130.4,187.4 L132.5,184.2 L134.6,181.1 L136.8,178.0 L139.0,174.9 L141.3,171.8 L143.5,168.8 L145.9,165.8 L148.2,162.9 L150.6,159.9 L153.0,157.1 L155.5,154.2 L158.0,151.4 L160.5,148.7 L163.1,146.0 L165.7,143.3 L168.3,140.6 L171.0,138.1 L173.6,135.5 L176.4,133.0 L179.1,130.5 L181.9,128.1 L184.6,125.7 L187.5,123.4 L190.3,121.1 L193.2,118.9 L196.0,116.7 L199.0,114.6 L201.9,112.5 L204.8,110.5 L207.8,108.5 L210.8,106.6 L213.8,104.7 L216.8,102.8 L219.9,101.1 L223.0,99.3 L226.0,97.7 L229.1,96.0 L232.2,94.5 L235.3,93.0 L238.5,91.5 L241.6,90.1 L244.8,88.8 L247.9,87.5 L251.1,86.3 L254.3,85.1 L257.4,84.0 L260.6,82.9 L263.8,81.9 L267.0,81.0 L270.2,80.1 L273.4,79.3 L276.6,78.5 L279.8,77.8" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M162.3,146.8 L163.5,147.5 L164.8,148.1 L166.1,148.7 L167.5,149.3 L168.9,149.9 L170.3,150.5 L171.8,151.1 L173.2,151.6 L174.7,152.2 L176.3,152.8 L177.8,153.3 L179.4,153.8 L181.0,154.4 L182.7,154.9 L184.3,155.4 L186.0,155.9 L187.7,156.4 L189.5,156.9 L191.2,157.4 L193.0,157.8 L194.9,158.3 L196.7,158.7 L198.5,159.2 L200.4,159.6 L202.3,160.0 L204.3,160.4 L206.2,160.8 L208.2,161.2 L210.1,161.6 L212.1,162.0 L214.2,162.3 L216.2,162.7 L218.2,163.0 L220.3,163.3 L222.4,163.6 L224.5,163.9 L226.6,164.2 L228.7,164.5 L230.9,164.8 L233.0,165.0 L235.2,165.3 L237.4,165.5 L239.6,165.7 L241.8,165.9 L244.0,166.1 L246.2,166.3 L248.5,166.5 L250.7,166.6 L252.9,166.8 L255.2,166.9 L257.5,167.0 L259.7,167.2 L262.0,167.3 L264.3,167.4 L266.6,167.4 L268.8,167.5 L271.1,167.5 L273.4,167.6 L275.7,167.6 L278.0,167.6 L280.3,167.6 L282.6,167.6 L284.9,167.6 L287.2,167.6 L289.5,167.5 L291.8,167.5 L294.0,167.4 L296.3,167.3 L298.6,167.2 L300.9,167.1 L303.1,167.0 L305.4,166.9 L307.6,166.7 L309.9,166.6 L312.1,166.4 L314.4,166.2 L316.6,166.0 L318.8,165.8 L321.0,165.6 L323.2,165.4 L325.3,165.2 L327.5,164.9 L329.7,164.7 L331.8,164.4 L333.9,164.1 L336.0,163.8 L338.1,163.5 L340.2,163.2 L342.3,162.9 L344.3,162.5 L346.3,162.2 L348.4,161.8 L350.3,161.4 L352.3,161.1 L354.3,160.7 L356.2,160.3" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="279.8" y1="298.8" x2="59.3" y2="345.4" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="53.9,346.5 60.1,342.2 61.3,348.0" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="47.9" y="360.5" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x</text>
+  <line x1="279.8" y1="298.8" x2="426.7" y2="372.4" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="431.7,374.9 424.1,374.4 426.7,369.1" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="442.7" y="379.9" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">y</text>
+  <line x1="279.8" y1="298.8" x2="279.8" y2="58.4" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="279.8,52.8 282.8,59.8 276.9,59.8" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="268.8" y="48.8" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">z</text>
+  <path d="M160.9,322.4 L165.0,324.5" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="155.0" y="333.5" fill="var(--academic-text)" font-size="10" text-anchor="middle">3</text>
+  <path d="M83.0,338.9 L87.1,341.0" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="77.0" y="349.9" fill="var(--academic-text)" font-size="10" text-anchor="middle">5</text>
+  <path d="M384.2,348.8 L377.9,350.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="381.1" y="362.5" fill="var(--academic-text)" font-size="10" text-anchor="middle">4</text>
+  <path d="M409.5,361.5 L403.2,362.8" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="406.4" y="375.2" fill="var(--academic-text)" font-size="10" text-anchor="middle">5</text>
+  <path d="M283.0,78.5 L276.7,79.8" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="269.8" y="73.1" fill="var(--academic-text)" font-size="10" text-anchor="end">5</text>
+  <path d="M279.8,298.8 L163.0,147.8" fill="none" stroke="var(--academic-text)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M163.0,147.8 L163.0,323.5" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="163.0" cy="323.5" r="2.2" fill="var(--academic-text)"/>
+  <path d="M279.8,298.8 L381.1,217.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M381.1,217.7 L381.1,349.5" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="381.1" cy="349.5" r="2.2" fill="var(--academic-text)"/>
+  <path d="M188.3,318.1 L189.8,318.8 L191.3,319.5 L192.9,320.2 L194.5,320.9 L196.2,321.6 L198.0,322.3 L199.8,322.9 L201.6,323.6 L203.5,324.2 L205.5,324.8 L207.5,325.4 L209.5,325.9 L211.6,326.5 L213.7,327.0 L215.8,327.5 L218.0,328.0 L220.2,328.5 L222.5,329.0 L224.8,329.4 L227.1,329.9 L229.5,330.3 L231.9,330.7 L234.3,331.1 L236.7,331.4 L239.2,331.7 L241.7,332.1 L244.2,332.4 L246.8,332.6 L249.4,332.9 L251.9,333.1 L254.5,333.3 L257.1,333.5 L259.8,333.7 L262.4,333.8 L265.1,334.0 L267.7,334.1 L270.4,334.2 L273.1,334.2 L275.7,334.3 L278.4,334.3 L281.1,334.3 L283.8,334.3 L286.4,334.2 L289.1,334.2 L291.8,334.1 L294.4,334.0 L297.1,333.8 L299.7,333.7 L302.4,333.5 L305.0,333.3 L307.6,333.1 L310.2,332.9 L312.7,332.6 L315.3,332.4 L317.8,332.1 L320.3,331.8 L322.8,331.4 L325.2,331.1 L327.7,330.7 L330.0,330.3 L332.4,329.9 L334.7,329.5" fill="none" stroke="var(--academic-text)" stroke-width="1.05" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="334.7" y1="329.5" x2="334.2" y2="329.6" stroke="var(--academic-text)" stroke-width="1.05" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="339.3,328.6 333.5,332.5 332.4,327.2" fill="var(--academic-text)" opacity="0.8"/>
+  <path d="M219.5,311.5 L219.5,310.5 L219.5,309.5 L219.5,308.5 L219.6,307.6 L219.6,306.6 L219.7,305.6 L219.8,304.6 L219.9,303.6 L220.0,302.6 L220.1,301.6 L220.2,300.6 L220.4,299.5 L220.5,298.5 L220.7,297.5 L220.9,296.5 L221.1,295.5 L221.3,294.5 L221.5,293.5 L221.7,292.5 L222.0,291.5 L222.2,290.5 L222.5,289.5 L222.8,288.5 L223.1,287.6 L223.4,286.6 L223.7,285.6 L224.0,284.6 L224.4,283.6 L224.7,282.6 L225.1,281.7 L225.4,280.7 L225.8,279.7 L226.2,278.8 L226.6,277.8 L227.1,276.8 L227.5,275.9 L227.9,274.9 L228.4,274.0 L228.8,273.1 L229.3,272.1 L229.8,271.2 L230.3,270.3 L230.8,269.4 L231.3,268.5 L231.8,267.6 L232.4,266.7 L232.9,265.8 L233.5,264.9 L234.0,264.1 L234.6,263.2 L235.2,262.3 L235.8,261.5 L236.4,260.6 L237.0,259.8 L237.6,259.0 L238.3,258.2 L238.9,257.4 L239.5,256.6 L240.2,255.8 L240.9,255.0 L241.5,254.2 L242.2,253.4" fill="none" stroke="var(--academic-text)" stroke-width="1.05" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="242.2" y1="253.4" x2="240.4" y2="255.5" stroke="var(--academic-text)" stroke-width="1.05" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="243.6,251.9 241.4,258.1 237.7,254.6" fill="var(--academic-text)" opacity="0.8"/>
+  <path d="M316.5,317.1 L316.5,316.5 L316.5,315.9 L316.5,315.2 L316.5,314.6 L316.5,313.9 L316.5,313.3 L316.4,312.6 L316.4,312.0 L316.4,311.3 L316.3,310.7 L316.3,310.0 L316.3,309.3 L316.2,308.7 L316.2,308.0 L316.1,307.4 L316.1,306.7 L316.0,306.0 L315.9,305.4 L315.9,304.7 L315.8,304.1 L315.7,303.4 L315.6,302.7 L315.6,302.1 L315.5,301.4 L315.4,300.7 L315.3,300.1 L315.2,299.4 L315.1,298.7 L315.0,298.1 L314.9,297.4 L314.8,296.7 L314.7,296.1 L314.5,295.4 L314.4,294.7 L314.3,294.1 L314.2,293.4 L314.0,292.7 L313.9,292.1 L313.7,291.4 L313.6,290.7 L313.5,290.1 L313.3,289.4 L313.2,288.8 L313.0,288.1 L312.8,287.4 L312.7,286.8 L312.5,286.1 L312.3,285.5 L312.2,284.8 L312.0,284.2 L311.8,283.5 L311.6,282.9 L311.4,282.2 L311.3,281.6 L311.1,280.9 L310.9,280.3 L310.7,279.7 L310.5,279.0 L310.3,278.4 L310.1,277.8 L309.8,277.1 L309.6,276.5" fill="none" stroke="var(--academic-text)" stroke-width="1.05" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="309.6" y1="276.5" x2="310.8" y2="279.8" stroke="var(--academic-text)" stroke-width="1.05" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="309.2,275.2 313.6,280.1 308.8,281.7" fill="var(--academic-text)" opacity="0.8"/>
+  <line x1="163.0" y1="147.8" x2="143.2" y2="122.3" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="139.6,117.6 146.7,121.6 141.7,125.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="163.0" y1="147.8" x2="182.9" y2="157.8" stroke="var(--color-base)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="188.3,160.4 180.1,159.9 183.0,154.3" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="163.0" y1="147.8" x2="190.0" y2="119.2" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="194.1,114.8 191.3,122.4 186.7,118.1" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="381.1" y1="217.7" x2="396.6" y2="205.3" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="401.3,201.5 397.4,208.6 393.5,203.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="381.1" y1="217.7" x2="414.1" y2="210.7" stroke="var(--color-base)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="420.0,209.5 413.3,214.1 412.0,207.9" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="381.1" y1="217.7" x2="367.9" y2="180.6" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="365.9,175.0 371.4,181.0 365.4,183.1" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="163.0" cy="147.8" r="3.6" fill="var(--academic-text)"/>
+  <circle cx="381.1" cy="217.7" r="3.6" fill="var(--academic-text)"/>
+  <text x="153.0" y="153.8" fill="var(--academic-text)" font-size="12" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">p</tspan></text>
+  <text x="391.1" y="226.7" fill="var(--academic-text)" font-size="12" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">q</tspan></text>
+  <text x="134.6" y="112.6" fill="var(--color-practice)" font-size="11.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="194.3" y="172.4" fill="var(--color-base)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="194.1" y="105.8" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="401.3" y="192.5" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="427.0" y="213.5" fill="var(--color-base)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="360.9" y="186.0" fill="var(--color-theory)" font-size="11.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="213.9" y="229.1" fill="var(--academic-text)" font-size="11.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#961;</tspan> = 5</text>
+  <text x="336.5" y="265.3" fill="var(--academic-text)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#961;</tspan> = 5</text>
+  <text x="243.3" y="289.9" fill="var(--academic-text)" font-size="12" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#966;</tspan></text>
+  <text x="307.4" y="300.6" fill="var(--academic-text)" font-size="12" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#966;</tspan></text>
+  <text x="257.1" y="346.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#977;</tspan> = &#960;/2</text>
+  <text x="98.3" y="247.3" fill="var(--academic-text)" font-size="11.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#977;</tspan> = 0</text>
+  <text x="33.6" y="157.1" fill="var(--academic-text)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">p</tspan> = (3, 0, 4)</text>
+  <text x="33.6" y="173.3" fill="var(--color-practice)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> = (3/5, 0, 4/5)</text>
+  <text x="33.6" y="189.6" fill="var(--color-base)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = (0, 1, 0)</text>
+  <text x="33.6" y="205.8" fill="var(--color-theory)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan> = (&#8722;4/5, 0, 3/5)</text>
+  <text x="354.2" y="82.7" fill="var(--academic-text)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">q</tspan> = (0, 4, 3)</text>
+  <text x="354.2" y="99.0" fill="var(--color-practice)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> = (0, 4/5, 3/5)</text>
+  <text x="354.2" y="115.2" fill="var(--color-base)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = (&#8722;1, 0, 0)</text>
+  <text x="354.2" y="131.5" fill="var(--color-theory)" font-size="10.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan> = (0, &#8722;3/5, 4/5)</text>
+</svg>
+<figcaption>Yarıçapı 5 olan kürenin <em>x</em>, <em>y</em>, <em>z</em> &#8805; 0 parçası üzerinde küresel çatı alanının iki noktadaki değerleri: <strong>p</strong> = (3, 0, 4) ve <strong>q</strong> = (0, 4, 3). Her iki noktada da <em>F</em><sub>1</sub> (turuncu) başlangıç noktasından dışa, yani küreye dik bakar; <em>F</em><sub>2</sub> (yeşil) paralel çember boyunca doğuya, <em>F</em><sub>3</sub> (mavi) meridyen boyunca kuzeye bakar ve ikisi de küreye teğettir. Kesikli çizgiler <em>&#961;</em> = 5 yarıçapını, yaylar <em>&#977;</em> ile <em>&#966;</em> açılarını okutur: ilk noktada <em>&#977;</em> = 0, ikincide <em>&#977;</em> = &#960;/2&#8217;dir. <em>F</em><sub>1</sub>&#8217;in vektör kısmı her seferinde noktanın koordinatlarının 5&#8217;e bölümüdür.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: küresel çatı.** Sahneyi sürükleyerek döndürün. Kaydırıcılar $\mathbf{p}$ noktasını küresel koordinatlarıyla taşır: $\rho$ yarıçap, $\vartheta$ boylam, $\varphi$ enlemdir; yarı saydam küre $\rho$ ile büyüyüp küçülür, noktadan geçen paralel çember ile meridyen ince çizgilerle çizilidir. $F_1$ başlangıç noktasından dışa, $F_2$ paralele teğet (doğuya), $F_3$ meridyene teğet (kuzeye) bakar. Yalnızca $\rho$'yu değiştirirseniz nokta ışın boyunca kayar ama üç okun yönü hiç değişmez; $\vartheta$ ile $\varphi$ çatının tamamını küre üzerinde döndürür ve değer satırındaki altı iç çarpım her konumda $F_i \cdot F_j = \delta_{ij}$ kalır.
+
+```{ojs}
+//| echo: false
+viewof sphFrameControls = Inputs.form({
+  rho: Inputs.range([1, 5], { value: 5, step: 0.1, label: "ρ" }),
+  theta: Inputs.range([0, 2 * Math.PI], { value: 0, step: 0.001, label: "ϑ" }),
+  phi: Inputs.range([-1.5, 1.5], { value: 0.927, step: 0.001, label: "φ" })
+})
+```
+
+```{ojs}
+//| echo: false
+sphFramePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: kuresel koordinatlarla tasinan p noktasi, oradaki F1, F2, F3 cati oklari, p den gecen paralel ve meridyen, yaricapi rho olan yari saydam kure"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { rho, theta, phi } = sphFrameControls;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const cosP = Math.cos(phi);
+  const sinP = Math.sin(phi);
+  const p = [rho * cosP * cosT, rho * cosP * sinT, rho * sinP];
+  const f1 = [cosP * cosT, cosP * sinT, sinP];
+  const f2 = [-sinT, cosT, 0];
+  const f3 = [-sinP * cosT, -sinP * sinT, cosP];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const vec = (u) => `(${fmt(u[0])}; ${fmt(u[1])}; ${fmt(u[2])})`;
+  const traces = [
+    surface(
+      (u, v) => [rho * Math.cos(v) * Math.cos(u), rho * Math.cos(v) * Math.sin(u), rho * Math.sin(v)],
+      0, 2 * Math.PI, -Math.PI / 2, Math.PI / 2,
+      theme.surface, { opacity: 0.1, nu: 48, nv: 24 }
+    ),
+    segment([0, 0, -5.6], [0, 0, 5.6], theme.axis, { width: 2, dash: "dot" }),
+    path((u) => [rho * cosP * Math.cos(u), rho * cosP * Math.sin(u), rho * sinP], 0, 2 * Math.PI, theme.axis, "paralel çember", { width: 2 }),
+    path((v) => [rho * Math.cos(v) * cosT, rho * Math.cos(v) * sinT, rho * Math.sin(v)], -Math.PI / 2, Math.PI / 2, theme.axis, "meridyen", { width: 2 }),
+    segment([0, 0, 0], p, theme.axis, { width: 2 }),
+    ...arrow(p, f1, theme.practice, "F₁ (ρ yönü)"),
+    ...arrow(p, f2, theme.base, "F₂ (ϑ yönü)"),
+    ...arrow(p, f3, theme.theory, "F₃ (φ yönü)"),
+    point(p, theme.text, "p", { legend: false }),
+    // The 3D label keeps a constant text; every changing number lives in the read-out below.
+    label(p, "p", theme.text, { position: "bottom center" })
+  ];
+  render(Plotly, sphFramePlot, traces, sceneLayout(theme, { x: [-6.2, 6.2], y: [-6.2, 6.2], z: [-6.2, 6.2], eye: { x: 1.5, y: 1.45, z: 0.95 } }));
+  return html`<div class="scene3d-readout"><b>p</b> = ${vec(p)} &nbsp;·&nbsp; F₁ = ${vec(f1)} &nbsp;·&nbsp; F₂ = ${vec(f2)} &nbsp;·&nbsp; F₃ = ${vec(f3)}<br>F₁·F₁ = ${fmt(dot(f1, f1))} &nbsp;|&nbsp; F₂·F₂ = ${fmt(dot(f2, f2))} &nbsp;|&nbsp; F₃·F₃ = ${fmt(dot(f3, f3))} &nbsp;|&nbsp; F₁·F₂ = ${fmt(dot(f1, f2))} &nbsp;|&nbsp; F₁·F₃ = ${fmt(dot(f1, f3))} &nbsp;|&nbsp; F₂·F₃ = ${fmt(dot(f2, f3))}</div>`;
+}
+```
+:::
+::::
+
+Küresel çatının üç alanının gerçekten $\rho$, $\vartheta$ ve $\varphi$ koordinatlarının arttığı yönlere baktığını, silindirik durumda yaptığımız gibi koordinat eğrilerinin hızlarıyla görelim.
+
+:::: {#exm-cati-kuresel-yonler name="Küresel Çatının Koordinat Yönleri"}
+$F_1, F_2, F_3$ küresel çatı alanı olsun. $F_1, F_2, F_3$'ün sırasıyla $\rho$, $\vartheta$ ve $\varphi$ koordinatlarının arttığı yöne bakan birim vektörler olduğunu doğrulayalım.
+
+::: {.cozum}
+Küresel koordinatları $(\rho_0, \vartheta_0, \varphi_0)$ olan bir $\mathbf{p}$ noktasında yalnızca $\rho$'yu değiştirirsek nokta
+
+$$u \mapsto u\,(\cos\varphi_0\cos\vartheta_0,\ \cos\varphi_0\sin\vartheta_0,\ \sin\varphi_0)$$
+
+doğrusu üzerinde, başlangıç noktasından dışa doğru hareket eder; hızın vektör kısmı parantezin içidir ve bu tam $F_1(\mathbf{p})$'nin vektör kısmıdır. Yalnızca $\varphi$'yi değiştirirsek nokta
+
+$$u \mapsto \rho_0\,(\cos u\cos\vartheta_0,\ \cos u\sin\vartheta_0,\ \sin u)$$
+
+meridyen çemberi üzerinde kuzeye doğru yürür; $u = \varphi_0$'daki hızın vektör kısmı
+
+$$\rho_0\,(-\sin\varphi_0\cos\vartheta_0,\ -\sin\varphi_0\sin\vartheta_0,\ \cos\varphi_0),$$
+
+yani $\rho_0$ çarpı $F_3(\mathbf{p})$'nin vektör kısmıdır. Yalnızca $\vartheta$'yı değiştirmek ise $\mathbf{p}$'yi yarıçapı $r_0 = \rho_0\cos\varphi_0$ olan yatay bir çember üzerinde döndürür ve hız $r_0 E_2(\mathbf{p}) = r_0 F_2(\mathbf{p})$'dir. Üç hızın uzunlukları $1$, $r_0$ ve $\rho_0$'dır; yön vektörleri $F_1, F_2, F_3$ zaten birim uzunluktadır.
+
+Bu hesap, $F_1$ ve $F_3$'ün $E_1, E_3$ cinsinden tanımını geometrik olarak açıklar. $\mathbf{p}$'den geçen düşey yarım düzlemde $E_1(\mathbf{p})$ yatay, $E_3(\mathbf{p})$ düşeydir; başlangıç noktasından $\mathbf{p}$'ye bakan yön yatayla $\varphi_0$ açısı yapar. Bu yönün birim vektörü ile ondan $90°$ ileride, kuzeye bakan birim vektör
+
+$$F_1(\mathbf{p}) = \cos\varphi_0\, E_1(\mathbf{p}) + \sin\varphi_0\, E_3(\mathbf{p}), \qquad F_3(\mathbf{p}) = -\sin\varphi_0\, E_1(\mathbf{p}) + \cos\varphi_0\, E_3(\mathbf{p})$$
+
+olur.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="36.5 9.5 338.5 329.5" role="img" aria-label="Dikey yarim duzlem, yatay eksen r ve dusey eksen z; p = (3, 0, 4) noktasi r = 3, z = 4 konumunda; O dan p ye cizilen dogru parcasi rho = 5 uzunlugunda ve yatay eksenle phi acisi yapar; p de dort birim ok: gri E1 yatay, gri E3 dusey, turuncu F1 O p dogrultusunda vektor kismi (3/5, 0, 4/5), mavi F3 ondan 90 derece ileride vektor kismi (-4/5, 0, 3/5); E1 ile F1 arasindaki ve E3 ile F3 arasindaki yaylar ayni phi acisini gosterir">
+  <line x1="65.8" y1="297.7" x2="354.3" y2="297.7" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="359.9,297.7 352.9,300.7 352.9,294.8" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="65.8" y1="324.2" x2="65.8" y2="35.7" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="65.8,30.1 68.7,37.1 62.8,37.1" fill="var(--academic-text)" opacity="0.55"/>
+  <path d="M210.4,297.7 L210.4,104.8" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M65.8,297.7 L210.4,104.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M104.3,297.7 L104.3,297.0 L104.3,296.2 L104.3,295.5 L104.2,294.7 L104.2,294.0 L104.1,293.3 L104.0,292.5 L103.9,291.8 L103.8,291.0 L103.6,290.3 L103.5,289.6 L103.3,288.9 L103.1,288.1 L102.9,287.4 L102.7,286.7 L102.5,286.0 L102.3,285.3 L102.0,284.6 L101.8,283.9 L101.5,283.2 L101.2,282.5 L100.9,281.8 L100.6,281.1 L100.3,280.5 L99.9,279.8 L99.6,279.1 L99.2,278.5 L98.8,277.8 L98.4,277.2 L98.0,276.6 L97.6,276.0 L97.2,275.4 L96.8,274.8 L96.3,274.2 L95.9,273.6 L95.4,273.0 L94.9,272.4 L94.4,271.9 L93.9,271.3 L93.4,270.8 L92.9,270.3 L92.3,269.7 L91.8,269.2 L91.2,268.7 L90.7,268.2 L90.1,267.8 L89.5,267.3 L88.9,266.9" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M232.1,104.8 L232.1,104.4 L232.1,104.0 L232.1,103.6 L232.1,103.1 L232.0,102.7 L232.0,102.3 L231.9,101.9 L231.9,101.5 L231.8,101.1 L231.7,100.6 L231.7,100.2 L231.6,99.8 L231.5,99.4 L231.4,99.0 L231.2,98.6 L231.1,98.2 L231.0,97.8 L230.8,97.4 L230.7,97.0 L230.5,96.6 L230.4,96.2 L230.2,95.9 L230.0,95.5 L229.9,95.1 L229.7,94.7 L229.5,94.4 L229.3,94.0 L229.0,93.6 L228.8,93.3 L228.6,92.9 L228.4,92.6 L228.1,92.2 L227.9,91.9 L227.6,91.6 L227.4,91.2 L227.1,90.9 L226.8,90.6 L226.6,90.3 L226.3,90.0 L226.0,89.7 L225.7,89.4 L225.4,89.1 L225.1,88.8 L224.8,88.5 L224.4,88.2 L224.1,88.0 L223.8,87.7 L223.5,87.4" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M210.4,83.1 L210.0,83.1 L209.6,83.1 L209.2,83.1 L208.8,83.2 L208.3,83.2 L207.9,83.3 L207.5,83.3 L207.1,83.4 L206.7,83.4 L206.3,83.5 L205.9,83.6 L205.5,83.7 L205.0,83.8 L204.6,83.9 L204.2,84.0 L203.8,84.1 L203.4,84.3 L203.0,84.4 L202.7,84.6 L202.3,84.7 L201.9,84.9 L201.5,85.0 L201.1,85.2 L200.7,85.4 L200.4,85.6 L200.0,85.8 L199.6,86.0 L199.3,86.2 L198.9,86.4 L198.6,86.7 L198.2,86.9 L197.9,87.1 L197.5,87.4 L197.2,87.6 L196.9,87.9 L196.5,88.1 L196.2,88.4 L195.9,88.7 L195.6,89.0 L195.3,89.3 L195.0,89.6 L194.7,89.9 L194.4,90.2 L194.1,90.5 L193.9,90.8 L193.6,91.1 L193.3,91.5 L193.1,91.8" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="210.4" y1="104.8" x2="251.9" y2="104.8" stroke="var(--academic-text)" stroke-width="2.0" opacity="0.66" stroke-linecap="round"/>
+  <polygon points="258.7,104.8 250.2,108.4 250.2,101.2" fill="var(--academic-text)" opacity="0.66"/>
+  <line x1="210.4" y1="104.8" x2="210.4" y2="63.4" stroke="var(--academic-text)" stroke-width="2.0" opacity="0.66" stroke-linecap="round"/>
+  <polygon points="210.4,56.6 214.0,65.1 206.9,65.1" fill="var(--academic-text)" opacity="0.66"/>
+  <line x1="210.4" y1="104.8" x2="234.8" y2="72.3" stroke="var(--color-practice)" stroke-width="2.5" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="239.4,66.2 236.9,76.2 230.5,71.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="210.4" y1="104.8" x2="177.9" y2="80.4" stroke="var(--color-theory)" stroke-width="2.5" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="171.9,75.9 181.9,78.4 177.1,84.8" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="65.8" cy="297.7" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="210.4" cy="297.7" r="2.8" fill="var(--academic-text)"/>
+  <circle cx="210.4" cy="104.8" r="3.6" fill="var(--academic-text)"/>
+  <text x="357.9" y="314.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">r</text>
+  <text x="73.8" y="29.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">z</text>
+  <text x="58.8" y="312.7" fill="var(--academic-text)" font-size="11.5" text-anchor="end">O</text>
+  <text x="219.4" y="121.8" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-weight="700">p</tspan> = (3, 0, 4)</text>
+  <text x="129.1" y="199.3" fill="var(--academic-text)" font-size="11.5" text-anchor="end"><tspan font-style="italic">&#961;</tspan> = 5</text>
+  <text x="138.1" y="314.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">r</tspan> = 3</text>
+  <text x="218.4" y="152.2" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-style="italic">z</tspan> = 4</text>
+  <text x="109.8" y="279.7" fill="var(--academic-text)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">&#966;</tspan></text>
+  <text x="240.6" y="93.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">&#966;</tspan></text>
+  <text x="195.3" y="78.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">&#966;</tspan></text>
+  <text x="267.7" y="99.8" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="210.4" y="47.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="246.4" y="62.2" fill="var(--color-practice)" font-size="12" text-anchor="start"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> (dışa)</text>
+  <text x="164.9" y="71.9" fill="var(--color-theory)" font-size="12" text-anchor="end"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan> (kuzeye)</text>
+  <text x="92.3" y="37.3" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan font-style="italic">&#977;</tspan> = 0 yarım düzlemi</text>
+  <text x="217.7" y="210.9" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan fill="var(--color-practice)"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></tspan> = cos <tspan font-style="italic">&#966;</tspan> <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + sin <tspan font-style="italic">&#966;</tspan> <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="217.7" y="231.9" fill="var(--academic-text)" font-size="11.5" text-anchor="start"><tspan fill="var(--color-theory)"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></tspan> = &#8722;sin <tspan font-style="italic">&#966;</tspan> <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + cos <tspan font-style="italic">&#966;</tspan> <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="217.7" y="260.9" fill="var(--academic-text)" font-size="11" text-anchor="start">cos <tspan font-style="italic">&#966;</tspan> = 3/5,&#160;&#160;&#160;sin <tspan font-style="italic">&#966;</tspan> = 4/5</text>
+</svg>
+<figcaption><em>&#977;</em> = 0 yarım düzleminde çizilen <strong>p</strong> = (3, 0, 4) noktasının yatay uzaklığı <em>r</em> = 3, yüksekliği <em>z</em> = 4, başlangıç noktası O&#8217;ya uzaklığı <em>&#961;</em> = 5&#8217;tir. Silindirik çatının <em>E</em><sub>1</sub> (yatay) ve <em>E</em><sub>3</sub> (düşey) okları gri çizilmiştir; küresel çatının <em>F</em><sub>1</sub> oku (turuncu) O&#8217;dan <strong>p</strong>&#8217;ye bakan doğrultunun devamıdır, <em>F</em><sub>3</sub> oku (mavi) ondan 90&#176; ileride kuzeye bakar. Üç yay da aynı <em>&#966;</em> açısını işaretler: <em>F</em><sub>1</sub>, <em>F</em><sub>3</sub> ikilisi <em>E</em><sub>1</sub>, <em>E</em><sub>3</sub> ikilisinin <em>&#966;</em> kadar döndürülmüşüdür. Burada cos <em>&#966;</em> = 3/5 ve sin <em>&#966;</em> = 4/5 olduğundan <em>F</em><sub>1</sub>&#8217;in vektör kısmı (3/5, 0, 4/5), <em>F</em><sub>3</sub>&#8217;ün vektör kısmı ise (&#8722;4/5, 0, 3/5) çıkar.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani küresel çatı alanı her noktaya "başlangıç noktasından dışa", "doğuya" ve "kuzeye" bakan üç birim ok yerleştirir. $F_1$ küreye diktir; $F_2$ ile $F_3$ ise noktadan geçen $\rho$ yarıçaplı küreye teğettir. Küresel çatı alanının tanım kümesi de $z$ ekseni dışıdır: kutuplarda "doğu" ve "kuzey" anlamını yitirir.
+
+:::: {#exm-cati-kuresel-noktada name="Bir Noktada Küresel Çatı"}
+$\mathbf{p} = (2, 2, 1)$ noktasında $F_1(\mathbf{p}), F_2(\mathbf{p}), F_3(\mathbf{p})$ teğet vektörlerini bulalım.
+
+::: {.cozum}
+@exm-cati-kuresel-koordinat-hesabi'nde $\rho = 3$, $\cos\vartheta = \sin\vartheta = \sqrt{2}/2$, $\cos\varphi = 2\sqrt{2}/3$ ve $\sin\varphi = 1/3$ bulmuştuk. Silindirik çatının vektör kısımları $E_1$: $(\sqrt{2}/2, \sqrt{2}/2, 0)$, $E_2$: $(-\sqrt{2}/2, \sqrt{2}/2, 0)$, $E_3$: $(0, 0, 1)$'dir. Buradan
+
+$$\begin{aligned}
+F_1(\mathbf{p}) &= \dfrac{2\sqrt{2}}{3}\left(\dfrac{\sqrt{2}}{2}, \dfrac{\sqrt{2}}{2}, 0\right)_{\mathbf{p}} + \dfrac{1}{3}(0, 0, 1)_{\mathbf{p}} = \left(\dfrac{2}{3}, \dfrac{2}{3}, \dfrac{1}{3}\right)_{\mathbf{p}},\\
+F_2(\mathbf{p}) &= \left(-\dfrac{\sqrt{2}}{2}, \dfrac{\sqrt{2}}{2}, 0\right)_{\mathbf{p}},\\
+F_3(\mathbf{p}) &= -\dfrac{1}{3}\left(\dfrac{\sqrt{2}}{2}, \dfrac{\sqrt{2}}{2}, 0\right)_{\mathbf{p}} + \dfrac{2\sqrt{2}}{3}(0, 0, 1)_{\mathbf{p}} = \left(-\dfrac{\sqrt{2}}{6}, -\dfrac{\sqrt{2}}{6}, \dfrac{2\sqrt{2}}{3}\right)_{\mathbf{p}}.
+\end{aligned}$$
+
+Sağlama:
+
+$$\begin{aligned}
+\|F_3(\mathbf{p})\|^2 &= \dfrac{2}{36} + \dfrac{2}{36} + \dfrac{8}{9} = \dfrac{1}{9} + \dfrac{8}{9} = 1,\\
+F_1(\mathbf{p}) \cdot F_3(\mathbf{p}) &= -\dfrac{2\sqrt{2}}{18} - \dfrac{2\sqrt{2}}{18} + \dfrac{2\sqrt{2}}{9} = 0.
+\end{aligned}$$
+
+$F_1(\mathbf{p})$'nin vektör kısmı $(2, 2, 1)/3 = \mathbf{p}/\rho$'dur: başlangıç noktasından $\mathbf{p}$'ye doğru bakan birim vektör, beklendiği gibi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Çatı Alanına Göre Koordinat Fonksiyonları
+
+Bir vektör alanını şimdiye kadar $V = \sum_i v_i U_i$ biçiminde, doğal çatı alanı cinsinden yazdık (@lem-teget-koordinat-fonksiyonlari). Elimizde artık başka çatı alanları var ve doğal soru şudur: verilen bir $V$ alanı, silindirik ya da küresel çatı alanı cinsinden de yazılabilir mi, yazılabilirse katsayılar nasıl bulunur? Yanıt, bir noktadaki çatı için bildiğimiz ortonormal açılımın (@thm-iccarpim-ortonormal-acilim) noktasal ilkeyle alanlara taşınmasıdır.
+
+:::: {#lem-cati-ortonormal-acilim name="Bir Çatı Alanına Göre Açılım"}
+$E_1, E_2, E_3$ bir çatı alanı olsun.
+
+- $V$ bir vektör alanıysa $f_i = V \cdot E_i$ ($i = 1, 2, 3$) türevlenebilir fonksiyonlardır ve
+
+  $$V = f_1 E_1 + f_2 E_2 + f_3 E_3 = \sum_{i=1}^{3} (V \cdot E_i)\, E_i$$
+
+  olur. $V = \sum_i g_i E_i$ eşitliğini sağlayan başka fonksiyonlar yoktur: böyle bir eşitlik varsa $g_i = f_i$'dir. $f_1, f_2, f_3$ fonksiyonlarına $V$'nin $E_1, E_2, E_3$ çatı alanına göre **koordinat fonksiyonları** (coordinate functions) denir.
+
+- $V = \sum_i f_i E_i$ ve $W = \sum_i g_i E_i$ ise
+
+  $$V \cdot W = f_1 g_1 + f_2 g_2 + f_3 g_3, \qquad \|V\| = \sqrt{f_1^2 + f_2^2 + f_3^2}$$
+
+  olur.
+
+::: {.ispat}
+*Açılım.* Bir $\mathbf{p}$ noktası alalım. $E_1(\mathbf{p}), E_2(\mathbf{p}), E_3(\mathbf{p})$, $T_{\mathbf{p}}(\mathbb{R}^3)$ uzayında bir çatıdır ve $V(\mathbf{p})$ bu uzayın bir vektörüdür. Ortonormal açılım teoremine göre
+
+$$V(\mathbf{p}) = \sum_{i=1}^{3} \bigl(V(\mathbf{p}) \cdot E_i(\mathbf{p})\bigr)\, E_i(\mathbf{p}).$$
+
+Alan iç çarpımının tanımıyla $V(\mathbf{p}) \cdot E_i(\mathbf{p}) = f_i(\mathbf{p})$'dir; fonksiyonla çarpım ve toplamın noktasal tanımıyla da sağ yan, $\sum_i f_i E_i$ alanının $\mathbf{p}$'deki değeridir. Eşitlik her $\mathbf{p}$'de geçerli olduğundan $V = \sum_i f_i E_i$'dir.
+
+*Türevlenebilirlik.* $f_i = V \cdot E_i$, iki vektör alanının iç çarpımıdır; @lem-cati-ic-carpim-formulu'ne göre türevlenebilirdir.
+
+*Teklik.* $V = \sum_i g_i E_i$ olsun. Her iki yanın $E_j$ ile iç çarpımını alalım. @lem-cati-ic-carpim-kurallari ile
+
+$$V \cdot E_j = \sum_{i=1}^{3} g_i\,(E_i \cdot E_j) = \sum_{i=1}^{3} g_i\,\delta_{ij} = g_j$$
+
+bulunur; sol yan $f_j$'dir. Dolayısıyla $g_j = f_j$.
+
+*İç çarpım formülü.* Yine @lem-cati-ic-carpim-kurallari ile çarpımı açarız:
+
+$$V \cdot W = \Bigl(\sum_{i} f_i E_i\Bigr) \cdot \Bigl(\sum_{j} g_j E_j\Bigr) = \sum_{i, j} f_i g_j\,(E_i \cdot E_j) = \sum_{i, j} f_i g_j\,\delta_{ij} = \sum_{i} f_i g_i.$$
+
+Dokuz terimden yalnızca $i = j$ olan üçü kalmıştır. Norm için $W = V$ alınır: $\|V\| = (V \cdot V)^{1/2} = (\sum_i f_i^2)^{1/2}$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bir vektör alanının bir çatı alanına göre katsayılarını bulmak için alanı çatının her üyesiyle iç çarpmak yeter, ve bir kez katsayılar bulununca iç çarpımlar sanki doğal çatıdaymışız gibi hesaplanır. Öklid koordinat fonksiyonları bu lemmanın $E_i = U_i$ özel hâlidir: $v_i = V \cdot U_i$.
+
+::: {.callout-warning title="Koordinat fonksiyonları çatıya bağlıdır"}
+Aynı vektör alanının her çatı alanına göre başka koordinat fonksiyonları vardır. Örneğin $U_3$'ün doğal çatıya göre koordinat fonksiyonları sabit $(0, 0, 1)$'dir; silindirik çatıya göre de $(0, 0, 1)$'dir, çünkü $E_3 = U_3$; ama küresel çatıya göre, az sonra göreceğimiz gibi, $(\sin\varphi, 0, \cos\varphi)$'dir. "$V$'nin koordinat fonksiyonları" derken hangi çatı alanından söz ettiğimizi her zaman belirtmeliyiz; belirtmezsek doğal çatı anlaşılır.
+:::
+
+:::: {#exm-cati-u3-kuresel name="Düşey Alanın Küresel Çatıya Göre Açılımı"}
+$U_3$ alanını küresel çatı alanı $F_1, F_2, F_3$ cinsinden yazalım.
+
+::: {.cozum}
+@lem-cati-ortonormal-acilim'e göre katsayılar $U_3 \cdot F_i$ iç çarpımlarıdır. $F_i$'lerin açık formüllerinde $U_3$ katsayılarını okuruz:
+
+$$U_3 \cdot F_1 = \sin\varphi, \qquad U_3 \cdot F_2 = 0, \qquad U_3 \cdot F_3 = \cos\varphi.$$
+
+Dolayısıyla
+
+$$U_3 = \sin\varphi\, F_1 + \cos\varphi\, F_3.$$
+
+Bu, $F_1$ ve $F_3$'ün $E_1, E_3$ cinsinden tanımını tersine çevirmekle de bulunabilirdi: $F_1 = \cos\varphi\, E_1 + \sin\varphi\, E_3$ ve $F_3 = -\sin\varphi\, E_1 + \cos\varphi\, E_3$ eşitliklerinden ilkini $\sin\varphi$, ikincisini $\cos\varphi$ ile çarpıp toplarsak $E_1$ terimleri yok olur ve
+
+$$\sin\varphi\, F_1 + \cos\varphi\, F_3 = (\sin^2\varphi + \cos^2\varphi)\, E_3 = U_3$$
+
+kalır. Lemmanın norm formülü de tutarlıdır: $\sin^2\varphi + 0 + \cos^2\varphi = 1 = \|U_3\|^2$.
+
+Sağlama: $\mathbf{p} = (3, 0, 4)$ noktasında $\sin\varphi = 4/5$, $\cos\varphi = 3/5$ ve @exm-cati-kuresel'deki tabloya göre $F_1(\mathbf{p})$, $F_3(\mathbf{p})$'nin vektör kısımları $(3/5, 0, 4/5)$, $(-4/5, 0, 3/5)$'tir:
+
+$$\dfrac{4}{5}\left(\dfrac{3}{5}, 0, \dfrac{4}{5}\right) + \dfrac{3}{5}\left(-\dfrac{4}{5}, 0, \dfrac{3}{5}\right) = \left(\dfrac{12 - 12}{25}, 0, \dfrac{16 + 9}{25}\right) = (0, 0, 1).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-cati-donme-alani name="Dönme Alanının Silindirik Çatıya Göre Açılımı"}
+$V = -y U_1 + x U_2$ ve $W = x U_1 + y U_2$ alanlarını silindirik çatı alanı cinsinden yazalım.
+
+::: {.cozum}
+$E_1 = (x/r) U_1 + (y/r) U_2$ ve $E_2 = -(y/r) U_1 + (x/r) U_2$ olduğunu biliyoruz. Katsayılar:
+
+$$\begin{aligned}
+V \cdot E_1 &= -y\,\dfrac{x}{r} + x\,\dfrac{y}{r} = 0, & V \cdot E_2 &= y\,\dfrac{y}{r} + x\,\dfrac{x}{r} = \dfrac{x^2 + y^2}{r} = r, & V \cdot E_3 &= 0,\\
+W \cdot E_1 &= x\,\dfrac{x}{r} + y\,\dfrac{y}{r} = r, & W \cdot E_2 &= -x\,\dfrac{y}{r} + y\,\dfrac{x}{r} = 0, & W \cdot E_3 &= 0.
+\end{aligned}$$
+
+Dolayısıyla $V = r E_2$ ve $W = r E_1$: doğal çatıya göre iki değişken katsayısı olan bu alanlar, silindirik çatıya göre tek katsayılıdır ve katsayı yalnızca $z$ eksenine uzaklıktır. Bu, alanların geometrisini bir bakışta söyler: $V$ her noktada dönme yönünde, $W$ dışa doğru bakar ve ikisinin de uzunluğu $r$'dir.
+
+Lemmanın iç çarpım formülüyle $V \cdot W = 0 \cdot r + r \cdot 0 + 0 \cdot 0 = 0$ ve $\|V\| = \sqrt{0 + r^2 + 0} = r$ bulunur; @exm-cati-ic-carpim-hesabi'ndeki $V \cdot W = 0$, $\|V\| = \sqrt{x^2 + y^2}$ sonuçlarıyla aynıdır. $r = 5$ çemberi üzerindeki üç noktada denetleyelim:
+
+| nokta | $V$'nin vektör kısmı | $E_2$'nin vektör kısmı |
+|---|---|---|
+| $(3, 4, 0)$ | $(-4, 3, 0)$ | $(-4/5,\ 3/5,\ 0)$ |
+| $(-4, 3, 0)$ | $(-3, -4, 0)$ | $(-3/5,\ -4/5,\ 0)$ |
+| $(0, -5, 0)$ | $(5, 0, 0)$ | $(1, 0, 0)$ |
+
+Her satırda $V$'nin vektör kısmı $E_2$'ninkinin tam $5 = r$ katıdır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="2.0 12.0 406.0 399.0" role="img" aria-label="xy duzlemine ustten gorunus: r = 5 cemberi ve uzerindeki (3, 4), (-4, 3), (0, -5) noktalari. Her noktada turuncu birim E1 oku yaricap boyunca disa, yesil birim E2 oku cembere teget, mavi V oku ise E2 ile ayni yonde ama tam bes kat uzundur; V sirasiyla (-4, 3), (-3, -4) ve (5, 0), E2 ise (-4/5, 3/5), (-3/5, -4/5) ve (1, 0) vektorleridir. Mavi ok, yanindaki gri centiklerle bes esit birime bolunmustur: V = r E2 ve r = 5.">
+  <circle cx="235.4" cy="224.4" r="117.1" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.45"/>
+  <path d="M235.4,224.4 L305.7,130.7" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.34" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M235.4,224.4 L141.8,154.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.34" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="16.0" y1="224.4" x2="394.0" y2="224.4"/>
+  <line x1="235.4" y1="397.0" x2="235.4" y2="26.0"/>
+  <polygon points="394.0,224.4 386.0,220.9 386.0,227.9" stroke="none"/>
+  <polygon points="235.4,26.0 231.9,34.0 238.9,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="392.0" y="239.4" text-anchor="end">x</text>
+  <text x="242.4" y="35.0">y</text>
+  </g>
+  <line x1="352.5" y1="220.9" x2="352.5" y2="227.9" stroke="var(--academic-text)" stroke-width="1" opacity="0.65"/>
+  <line x1="118.4" y1="220.9" x2="118.4" y2="227.9" stroke="var(--academic-text)" stroke-width="1" opacity="0.65"/>
+  <line x1="231.9" y1="107.3" x2="238.9" y2="107.3" stroke="var(--academic-text)" stroke-width="1" opacity="0.65"/>
+  <line x1="305.7" y1="130.7" x2="218.4" y2="65.2" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="212.0,60.4 222.5,63.1 217.5,69.8" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="141.8" y1="154.1" x2="76.3" y2="241.4" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="71.5,247.8 74.2,237.3 80.9,242.3" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="235.4" y1="341.5" x2="344.5" y2="341.5" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="352.5,341.5 342.5,345.7 342.5,337.3" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="266.2" y1="105.3" x2="270.3" y2="99.9" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="270.3" y1="99.9" x2="273.4" y2="95.7" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="247.5" y1="91.3" x2="251.5" y2="85.8" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="251.5" y1="85.8" x2="254.7" y2="81.7" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="228.7" y1="77.2" x2="232.8" y2="71.8" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="232.8" y1="71.8" x2="235.9" y2="67.6" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="116.4" y1="193.6" x2="111.0" y2="189.5" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="111.0" y1="189.5" x2="106.8" y2="186.4" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="102.3" y1="212.4" x2="96.9" y2="208.3" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="96.9" y1="208.3" x2="92.7" y2="205.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="88.3" y1="231.1" x2="82.8" y2="227.0" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="82.8" y1="227.0" x2="78.7" y2="223.9" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="282.3" y1="338.1" x2="282.3" y2="344.9" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="282.3" y1="344.9" x2="282.3" y2="350.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="305.7" y1="338.1" x2="305.7" y2="344.9" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="305.7" y1="344.9" x2="305.7" y2="350.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="329.1" y1="338.1" x2="329.1" y2="344.9" stroke="var(--academic-bg)" stroke-width="1.4" stroke-linecap="butt"/>
+  <line x1="329.1" y1="344.9" x2="329.1" y2="350.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="butt"/>
+  <line x1="305.7" y1="130.7" x2="287.0" y2="116.6" stroke="var(--academic-bg)" stroke-width="5.0" stroke-linecap="round"/>
+  <line x1="305.7" y1="130.7" x2="292.1" y2="120.5" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="287.0,116.6 295.4,118.8 291.3,124.1" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="141.8" y1="154.1" x2="127.7" y2="172.8" stroke="var(--academic-bg)" stroke-width="5.0" stroke-linecap="round"/>
+  <line x1="141.8" y1="154.1" x2="131.6" y2="167.7" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="127.7,172.8 129.8,164.4 135.2,168.5" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="235.4" y1="341.5" x2="258.9" y2="341.5" stroke="var(--academic-bg)" stroke-width="5.0" stroke-linecap="round"/>
+  <line x1="235.4" y1="341.5" x2="252.5" y2="341.5" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="258.9,341.5 250.9,344.8 250.9,338.1" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="305.7" y1="130.7" x2="319.7" y2="112.0" stroke="var(--academic-bg)" stroke-width="4.6" stroke-linecap="round"/>
+  <line x1="305.7" y1="130.7" x2="316.4" y2="116.4" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="319.7,112.0 317.9,119.3 313.2,115.8" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="141.8" y1="154.1" x2="123.0" y2="140.1" stroke="var(--academic-bg)" stroke-width="4.6" stroke-linecap="round"/>
+  <line x1="141.8" y1="154.1" x2="127.5" y2="143.4" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="123.0,140.1 130.4,141.9 126.9,146.6" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="235.4" y1="341.5" x2="235.4" y2="364.9" stroke="var(--academic-bg)" stroke-width="4.6" stroke-linecap="round"/>
+  <line x1="235.4" y1="341.5" x2="235.4" y2="359.3" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="235.4,364.9 232.5,357.9 238.4,357.9" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="305.7" cy="130.7" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="141.8" cy="154.1" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="235.4" cy="341.5" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="235.4" cy="224.4" r="2.4" fill="var(--academic-text)"/>
+  <text x="357.5" y="239.4" fill="var(--academic-text)" font-size="10.5" text-anchor="start">5</text>
+  <text x="113.4" y="239.4" fill="var(--academic-text)" font-size="10.5" text-anchor="end">&#8722;5</text>
+  <text x="228.4" y="102.3" fill="var(--academic-text)" font-size="10.5" text-anchor="end">5</text>
+  <text x="281.6" y="185.5" fill="var(--academic-text)" font-size="11" text-anchor="start"><tspan font-style="italic">r</tspan> = 5</text>
+  <text x="318.7" y="134.7" fill="var(--academic-text)" font-size="11" text-anchor="start">(3, 4)</text>
+  <text x="324.7" y="107.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="288.3" y="134.7" fill="var(--color-base)" font-size="11.5" text-anchor="end"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="202.0" y="50.4" fill="var(--color-theory)" font-size="11.5" text-anchor="end"><tspan font-style="italic">V</tspan> = (&#8722;4, 3)</text>
+  <text x="202.0" y="67.4" fill="var(--color-base)" font-size="11.5" text-anchor="end"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = (&#8722;4/5, 3/5)</text>
+  <text x="152.8" y="148.1" fill="var(--academic-text)" font-size="11" text-anchor="start">(&#8722;4, 3)</text>
+  <text x="117.0" y="135.1" fill="var(--color-practice)" font-size="11.5" text-anchor="end"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="139.5" y="179.1" fill="var(--color-base)" font-size="11.5" text-anchor="start"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="71.5" y="263.8" fill="var(--color-theory)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">V</tspan> = (&#8722;3, &#8722;4)</text>
+  <text x="71.5" y="279.8" fill="var(--color-base)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = (&#8722;3/5, &#8722;4/5)</text>
+  <text x="226.4" y="356.5" fill="var(--academic-text)" font-size="11" text-anchor="end">(0, &#8722;5)</text>
+  <text x="242.4" y="364.9" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="247.2" y="332.5" fill="var(--color-base)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="378.5" y="361.5" fill="var(--color-theory)" font-size="11.5" text-anchor="end"><tspan font-style="italic">V</tspan> = (5, 0)</text>
+  <text x="378.5" y="377.5" fill="var(--color-base)" font-size="11.5" text-anchor="end"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = (1, 0)</text>
+  <text x="267.1" y="47.6" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan fill="var(--color-theory)"><tspan font-style="italic">V</tspan></tspan> = &#8722;<tspan font-style="italic">y</tspan> <tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> + <tspan font-style="italic">x</tspan> <tspan font-style="italic">U</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="267.1" y="64.0" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan fill="var(--color-theory)"><tspan font-style="italic">V</tspan></tspan> = <tspan font-style="italic">r</tspan> <tspan fill="var(--color-base)"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></tspan></text>
+  <text x="24.7" y="332.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">&#8214;<tspan font-style="italic">V</tspan>&#8214; = <tspan font-style="italic">r</tspan> = 5</text>
+</svg>
+<figcaption><em>z</em> = 0 düzlemine, yani <em>xy</em> düzlemine üstten bakıyoruz: <em>r</em> = 5 çemberi üzerindeki üç noktada <em>V</em> = &#8722;<em>y</em> <em>U</em><sub>1</sub> + <em>x</em> <em>U</em><sub>2</sub> dönme alanının oku (mavi) ile silindirik çatının birim vektörleri <em>E</em><sub>1</sub> (turuncu, yarıçap yönünde) ve <em>E</em><sub>2</sub> (yeşil, çembere teğet) gerçek uzunluklarıyla çizilmiştir. Mavi ok her noktada yeşil okla aynı doğrultudadır ve tam beş katı uzundur; yanındaki gri çentikler, yeşil okun ucuyla birlikte, onu beş eşit birime böler. Görülen şey <em>V</em> = <em>r</em> <em>E</em><sub>2</sub> eşitliğidir: alanın <em>E</em><sub>1</sub> yönünde hiç bileşeni yoktur ve boyu yalnızca <em>z</em> eksenine uzaklığa, yani <em>r</em> = 5&#8217;e eşittir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu iki örnek, çatı alanlarını neden istediğimizi göstermeye başlıyor. Kürenin merkezinden dışa bakan bir alan doğal çatıda üç değişken katsayı taşır, küresel çatıda ise tek bir katsayı; $z$ ekseni etrafında dönen bir alan silindirik çatıda $r E_2$ kadar kısadır. Eğrileri ve yüzeyleri incelerken her seferinde probleme uyarlanmış bir çatı alanı seçecek, hesapları kısaltmanın ötesinde, geometriyi çıplak gözle görebileceğiz.
+
+Frenet formüllerinde asıl güç, $T', N', B'$ türevlerinin ne olduğunu söylemelerinde değil, onları $T, N, B$'nin kendisi cinsinden yazmalarındaydı. Sıradaki adım tam olarak bu: herhangi bir $E_1, E_2, E_3$ çatı alanının $\nabla_{\mathbf{v}} E_i$ kovaryant türevlerini, bu bölümün lemmasıyla, $E_1(\mathbf{p}), E_2(\mathbf{p}), E_3(\mathbf{p})$ cinsinden açmak. Açılımdaki $\nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p})$ katsayıları, $\mathbf{v}$'ye bağlı sayılar olacak ve bir sonraki bölümün konusu, bağlantı formları, bu katsayıların incelenmesinden doğacak.
+
+## Alıştırmalar
+
+:::: {#exr-cati-gram-schmidt name="İki Alandan Çatı Alanı Kurma"}
+$V$ ve $W$, her noktada lineer bağımsız olan iki vektör alanı olsun; yani hiçbir $\mathbf{p}$'de $V(\mathbf{p})$ ile $W(\mathbf{p})$'den biri ötekinin bir katı değildir. $\tilde{W} = W - (W \cdot E_1)\, E_1$ olmak üzere
+
+$$E_1 = \dfrac{V}{\|V\|}, \qquad E_2 = \dfrac{\tilde{W}}{\|\tilde{W}\|}, \qquad E_3 = E_1 \times E_2$$
+
+alanlarının bir çatı alanı oluşturduğunu gösteriniz.
+
+::: {.cozum}
+*Birinci alan.* $V(\mathbf{p})$ ile $W(\mathbf{p})$ lineer bağımsız olduğundan $V(\mathbf{p}) \neq \mathbf{0}$'dır; sıfır vektörü her vektörün $0$ katıdır. Dolayısıyla $\|V\|$ hiç sıfırlanmaz ve @lem-cati-ic-carpim-formulu'ne göre her noktanın bir komşuluğunda, yani her yerde, türevlenebilirdir. $E_1 = (1/\|V\|)\, V$, türevlenebilir bir fonksiyonla çarpılmış bir vektör alanıdır; kendisi de vektör alanıdır ve
+
+$$E_1 \cdot E_1 = \dfrac{1}{\|V\|^2}\,(V \cdot V) = \dfrac{\|V\|^2}{\|V\|^2} = 1.$$
+
+*İkinci alan.* $W \cdot E_1$ türevlenebilir bir fonksiyon, $\tilde{W} = W - (W \cdot E_1)\, E_1$ bir vektör alanıdır. @lem-cati-ic-carpim-kurallari ile
+
+$$\tilde{W} \cdot E_1 = W \cdot E_1 - (W \cdot E_1)(E_1 \cdot E_1) = W \cdot E_1 - W \cdot E_1 = 0.$$
+
+$\tilde{W}$ hiçbir noktada sıfırlanmaz: $\tilde{W}(\mathbf{p}) = \mathbf{0}$ olsaydı $W(\mathbf{p}) = (W \cdot E_1)(\mathbf{p})\, E_1(\mathbf{p})$, yani $W(\mathbf{p})$, $V(\mathbf{p})$'nin $(W \cdot E_1)(\mathbf{p})/\|V(\mathbf{p})\|$ katı olurdu; bu lineer bağımsızlıkla çelişir. Dolayısıyla $\|\tilde{W}\|$ her yerde türevlenebilir ve pozitiftir, $E_2 = \tilde{W}/\|\tilde{W}\|$ bir vektör alanıdır, $E_2 \cdot E_2 = 1$ ve $E_2 \cdot E_1 = (1/\|\tilde{W}\|)(\tilde{W} \cdot E_1) = 0$'dır.
+
+*Üçüncü alan.* $E_3 = E_1 \times E_2$'nin koordinat fonksiyonları, $E_1$ ile $E_2$'nin koordinat fonksiyonlarının çarpımlarının farklarıdır (@def-iccarpim-vektorel-carpim); dolayısıyla türevlenebilirdir ve $E_3$ bir vektör alanıdır. Her $\mathbf{p}$'de $E_1(\mathbf{p}) \times E_2(\mathbf{p})$, hem $E_1(\mathbf{p})$'ye hem $E_2(\mathbf{p})$'ye diktir ve uzunluğunun karesi
+
+$$\|E_1(\mathbf{p})\|^2\, \|E_2(\mathbf{p})\|^2 - \bigl(E_1(\mathbf{p}) \cdot E_2(\mathbf{p})\bigr)^2 = 1 \cdot 1 - 0 = 1$$
+
+olur (@lem-iccarpim-vektorel-carpim-ozellikleri). Yani $E_3 \cdot E_1 = E_3 \cdot E_2 = 0$ ve $E_3 \cdot E_3 = 1$.
+
+Altı koşulun altısı da sağlandı: $E_i \cdot E_j = \delta_{ij}$ ve $E_1, E_2, E_3$ bir çatı alanıdır. Bu yöntem, bir noktadaki iki lineer bağımsız vektörden bir çatı üreten Gram–Schmidt işleminin noktasal ilkeyle alanlara uygulanmasıdır; işlem her noktada aynı formülle yapıldığından sonuç türevlenebilir kalır.
+
+Somut bir durumda adımları izleyelim: $V = 2U_1 + 2U_2 + U_3$ ve $W = U_1$ sabit alanları her noktada lineer bağımsızdır. $\|V\| = 3$, dolayısıyla $E_1$'in vektör kısmı $\tfrac{1}{3}(2, 2, 1)$; $W \cdot E_1 = 2/3$ ve
+
+$$\begin{aligned}
+\tilde{W} &= (1, 0, 0) - \dfrac{2}{3} \cdot \dfrac{1}{3}(2, 2, 1) = \left(\dfrac{5}{9}, -\dfrac{4}{9}, -\dfrac{2}{9}\right),\\
+\|\tilde{W}\| &= \dfrac{\sqrt{25 + 16 + 4}}{9} = \dfrac{\sqrt{5}}{3}.
+\end{aligned}$$
+
+Böylece $E_2$'nin vektör kısmı $\tfrac{1}{3\sqrt{5}}(5, -4, -2)$ olur. Vektörel çarpım
+
+$$(2, 2, 1) \times (5, -4, -2) = (0, 9, -18)$$
+
+olduğundan
+
+$$E_3 = \dfrac{1}{3} \cdot \dfrac{1}{3\sqrt{5}}\,(0, 9, -18) = \dfrac{1}{\sqrt{5}}\,(0, 1, -2).$$
+
+Denetim: $E_3 \cdot E_1 = (0 + 2 - 2)/(3\sqrt{5}) = 0$, $E_3 \cdot E_2 = (0 - 4 + 4)/15 = 0$ ve $\|E_3\|^2 = (0 + 1 + 4)/5 = 1$.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="29.5 16.5 388.0 363.5" role="img" aria-label="p noktasinda gri oklar V = (2, 2, 1) ve W = (1, 0, 0); turuncu birim ok E1 = (2, 2, 1)/3 V ile ayni dogrultudadir ve V nin ucte biri kadardir; W nin E1 uzerine izdusumu (4/9, 4/9, 2/9) turuncu okun ilk parcasi olarak soluk kesikli bir seritle gosterilir; dik ayaktan W nin ucuna giden kesikli yesil ok W tilde = (5/9, -4/9, -2/9) olup E1 e diktir; ona paralel yesil birim ok E2 = (5, -4, -2) bolu 3 karekok 5; mavi birim ok E3 = (0, 1, -2) bolu karekok 5 hem E1 e hem E2 ye diktir; uc dik aci isareti dikligi gosterir">
+  <line x1="237.5" y1="238.3" x2="283.9" y2="157.3" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="286.7,152.5 285.8,160.0 280.7,157.1" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="297.7" y="148.5" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x</text>
+  <line x1="237.5" y1="238.3" x2="137.5" y2="223.9" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="131.9,223.1 139.3,221.2 138.4,227.0" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="119.9" y="222.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">y</text>
+  <path d="M237.5,313.6 L237.5,238.3" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="237.5" y1="238.3" x2="237.5" y2="140.8" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="237.5,135.2 240.5,142.2 234.6,142.2" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="237.5" y="125.2" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">z</text>
+  <path d="M148.5,227.4 L150.5,223.9" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="150.5" y="239.6" fill="var(--academic-text)" font-size="10" text-anchor="middle">1</text>
+  <path d="M236.5,160.7 L238.5,157.2" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="228.5" y="163.0" fill="var(--academic-text)" font-size="10" text-anchor="end">1</text>
+  <line x1="237.5" y1="238.3" x2="116.4" y2="52.5" stroke="var(--academic-text)" stroke-width="2.3" opacity="0.72" stroke-linecap="round"/>
+  <polygon points="112.0,45.8 121.0,51.9 113.9,56.4" fill="var(--academic-text)" opacity="0.72"/>
+  <line x1="150.0" y1="112.4" x2="157.7" y2="107.4" stroke="var(--academic-bg)" stroke-width="3.0" stroke-linecap="butt"/>
+  <line x1="237.5" y1="238.3" x2="259.2" y2="200.5" stroke="var(--academic-text)" stroke-width="2.6" opacity="0.72" stroke-linecap="round"/>
+  <polygon points="262.7,194.3 261.5,204.0 255.0,200.2" fill="var(--academic-text)" opacity="0.72"/>
+  <path d="M237.5,238.3 L209.6,195.5" fill="none" stroke="var(--color-practice)" stroke-width="7.0" stroke-dasharray="5 5" opacity="0.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="209.6" y1="195.5" x2="256.3" y2="194.4" stroke="var(--color-base)" stroke-width="1.9" stroke-dasharray="5 4" opacity="0.95" stroke-linecap="round"/>
+  <polygon points="262.7,194.3 254.8,197.8 254.7,191.1" fill="var(--color-base)" opacity="0.95"/>
+  <path d="M215.9,205.1 L226.6,204.9 L220.3,195.2" fill="none" stroke="var(--academic-bg)" stroke-width="3.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M215.9,205.1 L226.6,204.9 L220.3,195.2" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M230.0,226.7 L222.9,238.5 L230.4,250.0" fill="none" stroke="var(--academic-bg)" stroke-width="3.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M230.0,226.7 L222.9,238.5 L230.4,250.0" fill="none" stroke="var(--color-practice)" stroke-width="1.2" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M250.3,238.0 L243.3,249.7 L230.4,250.0" fill="none" stroke="var(--academic-bg)" stroke-width="3.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M250.3,238.0 L243.3,249.7 L230.4,250.0" fill="none" stroke="var(--color-base)" stroke-width="1.2" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="237.5" y1="238.3" x2="199.6" y2="180.1" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="195.7,174.1 203.8,179.6 197.4,183.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="237.5" y1="238.3" x2="301.6" y2="236.8" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="308.8,236.6 299.9,240.6 299.7,233.0" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="237.5" y1="238.3" x2="201.9" y2="297.4" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="198.2,303.5 199.6,293.9 206.0,297.8" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="237.5" cy="238.3" r="3.6" fill="var(--academic-text)"/>
+  <circle cx="112.0" cy="45.8" r="3.0" fill="var(--academic-text)"/>
+  <circle cx="262.7" cy="194.3" r="3.0" fill="var(--academic-text)"/>
+  <circle cx="209.6" cy="195.5" r="3.2" fill="var(--color-practice)"/>
+  <text x="256.5" y="258.3" fill="var(--academic-text)" font-size="12" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">p</tspan></text>
+  <text x="126.0" y="39.8" fill="var(--academic-text)" font-size="12" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">V</tspan> = (2, 2, 1)</text>
+  <text x="149.1" y="88.3" fill="var(--academic-text)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">&#8214;<tspan font-style="italic">V</tspan>&#8214; = 3</text>
+  <text x="183.7" y="169.1" fill="var(--color-practice)" font-size="12" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> = (2, 2, 1)/3</text>
+  <text x="196.6" y="206.5" fill="var(--color-practice)" font-size="11.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">(<tspan font-style="italic">W</tspan> &#183; <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan>)<tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> = (4/9, 4/9, 2/9)</text>
+  <text x="283.3" y="181.5" fill="var(--academic-text)" font-size="12" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">W</tspan> = (1, 0, 0)</text>
+  <text x="283.3" y="205.3" fill="var(--color-base)" font-size="12" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">W</tspan><tspan dx="-6.24" dy="-6.00" font-size="11.0">~</tspan><tspan dx="0.72" dy="6.00">&#8203;</tspan> = (5/9, &#8722;4/9, &#8722;2/9)</text>
+  <text x="283.3" y="223.6" fill="var(--color-base)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">&#8214;<tspan font-style="italic">W</tspan><tspan dx="-5.98" dy="-5.75" font-size="10.6">~</tspan><tspan dx="0.69" dy="5.75">&#8203;</tspan>&#8214; = &#8730;5/3</text>
+  <text x="278.7" y="265.7" fill="var(--color-base)" font-size="12" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = (5, &#8722;4, &#8722;2)/(3&#8730;5)</text>
+  <text x="190.2" y="318.5" fill="var(--color-theory)" font-size="12" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan> = <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> &#215; <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = (0, 1, &#8722;2)/&#8730;5</text>
+  <text x="242.1" y="338.9" fill="var(--academic-text)" font-size="11" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> &#183; <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> &#183; <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan> = <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> &#183; <tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan> = 0</text>
+  <text x="242.1" y="360.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">&#8214;<tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan>&#8214; = &#8214;<tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan>&#8214; = &#8214;<tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan>&#8214; = 1</text>
+</svg>
+<figcaption>Uygulama noktası <strong>p</strong> orijinde alınmıştır; gri oklar orada verilen <em>V</em> = 2<em>U</em><sub>1</sub> + 2<em>U</em><sub>2</sub> + <em>U</em><sub>3</sub> ile <em>W</em> = <em>U</em><sub>1</sub> alanlarının vektör kısımlarıdır. Birinci adım <em>E</em><sub>1</sub> = <em>V</em>/&#8214;<em>V</em>&#8214; (turuncu): aynı doğrultuda, &#8214;<em>V</em>&#8214; = 3 olduğu için üçte bir uzunlukta; turuncu ok ucu ile gri okun üzerindeki çentik, <em>V</em>&#8217;yi üç eşit birime böler. İkinci adımda <em>W</em>&#8217;den <em>E</em><sub>1</sub> yönündeki bileşen (<em>W</em> &#183; <em>E</em><sub>1</sub>)<em>E</em><sub>1</sub> = (4/9, 4/9, 2/9) &#8212; turuncu okun üzerindeki soluk şerit &#8212; çıkarılır; dik ayaktan <em>W</em>&#8217;nin ucuna giden kesikli yeşil ok geriye kalan (5/9, &#8722;4/9, &#8722;2/9) vektörüdür ve dik açı işaretinin söylediği gibi <em>E</em><sub>1</sub>&#8217;e diktir; birim uzunluğa getirilince <em>p</em>&#8217;deki yeşil ok <em>E</em><sub>2</sub> olur. Üçüncü adım <em>E</em><sub>3</sub> = <em>E</em><sub>1</sub> &#215; <em>E</em><sub>2</sub> (mavi), öteki iki dik açı işaretinin gösterdiği gibi hem <em>E</em><sub>1</sub>&#8217;e hem <em>E</em><sub>2</sub>&#8217;ye diktir; üç ok birlikte, altı koşulu da sağlayan bir çatıdır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-u1-silindirik name="Birinci Doğal Alanın Silindirik Çatıya Göre Açılımı"}
+$U_1$ alanını silindirik çatı alanı $E_1, E_2, E_3$ cinsinden, katsayıları $r, \vartheta, z$ fonksiyonlarıyla yazılmış olarak ifade ediniz.
+
+::: {.cozum}
+@lem-cati-ortonormal-acilim'e göre katsayılar $U_1 \cdot E_i$'dir. $E_1 = \cos\vartheta\, U_1 + \sin\vartheta\, U_2$, $E_2 = -\sin\vartheta\, U_1 + \cos\vartheta\, U_2$ ve $E_3 = U_3$ formüllerinde $U_1$ katsayılarını okuruz:
+
+$$U_1 \cdot E_1 = \cos\vartheta, \qquad U_1 \cdot E_2 = -\sin\vartheta, \qquad U_1 \cdot E_3 = 0.$$
+
+Dolayısıyla
+
+$$U_1 = \cos\vartheta\, E_1 - \sin\vartheta\, E_2.$$
+
+Katsayılar yalnızca $\vartheta$'ya bağlıdır; $r$ ve $z$ görünmez. Denetim için sağ yanı açalım:
+
+$$\begin{aligned}
+&\cos\vartheta\,(\cos\vartheta\, U_1 + \sin\vartheta\, U_2) - \sin\vartheta\,(-\sin\vartheta\, U_1 + \cos\vartheta\, U_2)\\
+&\quad = (\cos^2\vartheta + \sin^2\vartheta)\, U_1 + (\cos\vartheta\sin\vartheta - \sin\vartheta\cos\vartheta)\, U_2 = U_1.
+\end{aligned}$$
+
+Norm formülü de tutar: $\cos^2\vartheta + \sin^2\vartheta = 1 = \|U_1\|^2$. Sayısal bir sağlama: $(3, 4, 2)$ noktasında $\cos\vartheta = 3/5$, $\sin\vartheta = 4/5$ ve
+
+$$\dfrac{3}{5}\left(\dfrac{3}{5}, \dfrac{4}{5}, 0\right) - \dfrac{4}{5}\left(-\dfrac{4}{5}, \dfrac{3}{5}, 0\right) = \left(\dfrac{9 + 16}{25}, \dfrac{12 - 12}{25}, 0\right) = (1, 0, 0).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-u1-kuresel name="Birinci Doğal Alanın Küresel Çatıya Göre Açılımı"}
+$U_1$ alanını küresel çatı alanı $F_1, F_2, F_3$ cinsinden, katsayıları $\rho, \vartheta, \varphi$ fonksiyonlarıyla yazılmış olarak ifade ediniz.
+
+::: {.cozum}
+Katsayılar $U_1 \cdot F_i$, yani $F_i$'lerin açık formüllerindeki $U_1$ katsayılarıdır (@exm-cati-kuresel):
+
+$$U_1 \cdot F_1 = \cos\varphi\cos\vartheta, \qquad U_1 \cdot F_2 = -\sin\vartheta, \qquad U_1 \cdot F_3 = -\sin\varphi\cos\vartheta.$$
+
+Dolayısıyla
+
+$$U_1 = \cos\varphi\cos\vartheta\, F_1 - \sin\vartheta\, F_2 - \sin\varphi\cos\vartheta\, F_3.$$
+
+Katsayılar $\rho$'ya bağlı değildir. Denetim olarak sağ yanın $U_1, U_2, U_3$ katsayılarını toplayalım. $U_1$ katsayısı
+
+$$\cos^2\varphi\cos^2\vartheta + \sin^2\vartheta + \sin^2\varphi\cos^2\vartheta = \cos^2\vartheta\,(\cos^2\varphi + \sin^2\varphi) + \sin^2\vartheta = 1;$$
+
+$U_2$ katsayısı
+
+$$\begin{aligned}
+&\cos^2\varphi\cos\vartheta\sin\vartheta - \sin\vartheta\cos\vartheta + \sin^2\varphi\cos\vartheta\sin\vartheta\\
+&\quad = \cos\vartheta\sin\vartheta\,(\cos^2\varphi + \sin^2\varphi - 1) = 0;
+\end{aligned}$$
+
+$U_3$ katsayısı
+
+$$\cos\varphi\cos\vartheta\sin\varphi - \sin\varphi\cos\vartheta\cos\varphi = 0.$$
+
+Sonuç $U_1$'dir. Norm formülü de tutar: katsayıların kareleri toplamı, az önce hesapladığımız $U_1$ katsayısının ta kendisidir ve $1$'e eşittir; $\|U_1\| = 1$, beklendiği gibi.
+
+Sayısal sağlama: $(3, 0, 4)$ noktasında $\vartheta = 0$, $\cos\varphi = 3/5$, $\sin\varphi = 4/5$; $F_1$ ve $F_3$'ün vektör kısımları $(3/5, 0, 4/5)$ ve $(-4/5, 0, 3/5)$'tir:
+
+$$\dfrac{3}{5}\left(\dfrac{3}{5}, 0, \dfrac{4}{5}\right) - 0 - \dfrac{4}{5}\left(-\dfrac{4}{5}, 0, \dfrac{3}{5}\right) = \left(\dfrac{9 + 16}{25}, 0, \dfrac{12 - 12}{25}\right) = (1, 0, 0).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-egik-alan-silindirik name="Kırk Beş Derece Yukarı Bakan Alanın Silindirik Açılımı"}
+$z$ ekseni dışında tanımlı $V = \cos\vartheta\, U_1 + \sin\vartheta\, U_2 + U_3$ alanını silindirik çatı alanı cinsinden, katsayıları $r, \vartheta, z$ ile ifade ediniz.
+
+::: {.cozum}
+Katsayılar $V \cdot E_i$'dir. Vektör kısımlarıyla hesaplarsak
+
+$$\begin{aligned}
+V \cdot E_1 &= \cos\vartheta\cos\vartheta + \sin\vartheta\sin\vartheta + 1 \cdot 0 = 1,\\
+V \cdot E_2 &= -\cos\vartheta\sin\vartheta + \sin\vartheta\cos\vartheta + 0 = 0,\\
+V \cdot E_3 &= 0 + 0 + 1 \cdot 1 = 1.
+\end{aligned}$$
+
+Dolayısıyla $V = E_1 + E_3$: katsayılar sabittir, üç koordinat fonksiyonunun hiçbiri görünmez. Aynı sonuç doğrudan da görülür, çünkü $\cos\vartheta\, U_1 + \sin\vartheta\, U_2$ tam olarak $E_1$'dir ve $U_3 = E_3$'tür.
+
+Geometrik olarak $V$, her noktada $z$ ekseninden dışa bakan yatay birim vektörle yukarı bakan birim vektörün toplamıdır: yataydan $45°$ yukarı bakar ve uzunluğu, lemmanın formülüyle, $\sqrt{1 + 0 + 1} = \sqrt{2}$'dir. Alanın $z$ ekseninde tanımsız oluşu $\cos\vartheta = x/r$ katsayısından gelir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-egik-alan-kuresel name="Kırk Beş Derece Yukarı Bakan Alanın Küresel Açılımı"}
+$z$ ekseni dışında tanımlı $V = \cos\vartheta\, U_1 + \sin\vartheta\, U_2 + U_3$ alanını küresel çatı alanı cinsinden, katsayıları $\rho, \vartheta, \varphi$ ile ifade ediniz.
+
+::: {.cozum}
+$V = E_1 + E_3$ olduğunu biliyoruz (@exr-cati-egik-alan-silindirik). $F_1 = \cos\varphi\, E_1 + \sin\varphi\, E_3$ ve $F_3 = -\sin\varphi\, E_1 + \cos\varphi\, E_3$ tanımlarını $E_1, E_3$ için çözelim: ilkini $\cos\varphi$, ikincisini $-\sin\varphi$ ile çarpıp toplarsak $E_3$ terimleri yok olur ve $\cos\varphi\, F_1 - \sin\varphi\, F_3 = E_1$ kalır; ilkini $\sin\varphi$, ikincisini $\cos\varphi$ ile çarpıp toplarsak $E_3 = \sin\varphi\, F_1 + \cos\varphi\, F_3$ çıkar. Buradan
+
+$$V = E_1 + E_3 = (\cos\varphi + \sin\varphi)\, F_1 + (\cos\varphi - \sin\varphi)\, F_3.$$
+
+Aynı katsayılar iç çarpımla da bulunur:
+
+$$V \cdot F_1 = E_1 \cdot F_1 + E_3 \cdot F_1 = \cos\varphi + \sin\varphi, \qquad V \cdot F_3 = \cos\varphi - \sin\varphi,$$
+
+ve $V \cdot F_2 = 0$, çünkü $F_2 = E_2$ hem $E_1$'e hem $E_3$'e diktir.
+
+Norm denetimi:
+
+$$(\cos\varphi + \sin\varphi)^2 + (\cos\varphi - \sin\varphi)^2 = 2\,(\cos^2\varphi + \sin^2\varphi) = 2,$$
+
+önceki kutudaki $\|V\| = \sqrt{2}$ ile uyumlu. Sayısal sağlama: $(3, 0, 4)$ noktasında $V = (1, 0, 1)$, katsayılar $3/5 + 4/5 = 7/5$ ve $3/5 - 4/5 = -1/5$'tir:
+
+$$\dfrac{7}{5}\left(\dfrac{3}{5}, 0, \dfrac{4}{5}\right) - \dfrac{1}{5}\left(-\dfrac{4}{5}, 0, \dfrac{3}{5}\right) = \left(\dfrac{21 + 4}{25}, 0, \dfrac{28 - 3}{25}\right) = (1, 0, 1).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-konum-alani-silindirik name="Konum Alanının Silindirik Açılımı"}
+$X = x U_1 + y U_2 + z U_3$ alanını silindirik çatı alanı cinsinden, katsayıları $r, \vartheta, z$ ile ifade ediniz.
+
+::: {.cozum}
+$E_1 = (x/r) U_1 + (y/r) U_2$, $E_2 = -(y/r) U_1 + (x/r) U_2$, $E_3 = U_3$ ile katsayıları hesaplayalım:
+
+$$X \cdot E_1 = \dfrac{x^2 + y^2}{r} = \dfrac{r^2}{r} = r, \qquad X \cdot E_2 = \dfrac{-xy + yx}{r} = 0, \qquad X \cdot E_3 = z.$$
+
+Dolayısıyla
+
+$$X = r E_1 + z E_3.$$
+
+Yani bir noktanın konum vektörü, o noktada $z$ ekseninden dışa bakan birim vektörün $r$ katı ile yukarı bakan birim vektörün $z$ katının toplamıdır; bu, silindirik koordinatların tanımının vektör diliyle söylenmesidir. Norm formülüyle $\|X\| = \sqrt{r^2 + z^2} = \rho$, beklendiği gibi. $(3, 4, 2)$ noktasında $5\,(3/5, 4/5, 0) + 2\,(0, 0, 1) = (3, 4, 2)$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-konum-alani-kuresel name="Konum Alanının Küresel Açılımı"}
+$X = x U_1 + y U_2 + z U_3$ alanını küresel çatı alanı cinsinden, katsayıları $\rho, \vartheta, \varphi$ ile ifade ediniz.
+
+::: {.cozum}
+$x = \rho\cos\varphi\cos\vartheta$, $y = \rho\cos\varphi\sin\vartheta$, $z = \rho\sin\varphi$ yazarak katsayıları hesaplayalım:
+
+$$\begin{aligned}
+X \cdot F_1 &= \rho\cos^2\varphi\cos^2\vartheta + \rho\cos^2\varphi\sin^2\vartheta + \rho\sin^2\varphi = \rho\,(\cos^2\varphi + \sin^2\varphi) = \rho,\\
+X \cdot F_2 &= -\rho\cos\varphi\cos\vartheta\sin\vartheta + \rho\cos\varphi\sin\vartheta\cos\vartheta = 0,\\
+X \cdot F_3 &= -\rho\cos\varphi\sin\varphi\,(\cos^2\vartheta + \sin^2\vartheta) + \rho\sin\varphi\cos\varphi = 0.
+\end{aligned}$$
+
+Dolayısıyla
+
+$$X = \rho F_1.$$
+
+Konum alanı küresel çatıda tek terimlidir: her noktada başlangıç noktasından dışa bakan birim vektörün $\rho$ katı. Aynı sonuca @exr-cati-konum-alani-silindirik üzerinden de varılır:
+
+$$X = r E_1 + z E_3 = \rho\cos\varphi\, E_1 + \rho\sin\varphi\, E_3 = \rho\,(\cos\varphi\, E_1 + \sin\varphi\, E_3) = \rho F_1.$$
+
+Norm formülüyle $\|X\| = \rho$. $(2, 2, 1)$ noktasında $3\,(2/3, 2/3, 1/3) = (2, 2, 1)$ (@exm-cati-kuresel-noktada).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-verilen-e1 name="Birinci Alanı Verilen Çatı Alanını Tamamlama"}
+İlk alanı
+
+$$E_1 = \cos x\, U_1 + \sin x\cos z\, U_2 + \sin x\sin z\, U_3$$
+
+olan bir $E_1, E_2, E_3$ çatı alanı bulunuz.
+
+::: {.cozum}
+Önce $E_1$'in gerçekten birim uzunlukta olduğunu görelim:
+
+$$E_1 \cdot E_1 = \cos^2 x + \sin^2 x\,(\cos^2 z + \sin^2 z) = \cos^2 x + \sin^2 x = 1.$$
+
+Katsayılar her yerde türevlenebilir olduğundan $E_1$, bütün $\mathbb{R}^3$ üzerinde bir birim vektör alanıdır.
+
+Formülün yapısı küresel çatıdaki $F_1 = \cos\varphi\, E_1 + \sin\varphi\, E_3$ ile aynıdır: $A = \cos z\, U_2 + \sin z\, U_3$ dersek $E_1 = \cos x\, U_1 + \sin x\, A$ olur, $A$ birim uzunluktadır ve $U_1$'e diktir. Küresel çatıda yaptığımız gibi, $U_1$ ile $A$'nın gerdiği düzlemde $E_1$'den $90°$ ileride olan vektörü ve bu düzleme dik olan vektörü alalım. $A$'ya dik, $U_1$'e dik birim alan $-\sin z\, U_2 + \cos z\, U_3$'tür. Böylece
+
+$$E_2 = -\sin x\, U_1 + \cos x\cos z\, U_2 + \cos x\sin z\, U_3, \qquad E_3 = -\sin z\, U_2 + \cos z\, U_3$$
+
+adaylarını elde ederiz. Altı koşulu denetleyelim:
+
+$$\begin{aligned}
+E_2 \cdot E_2 &= \sin^2 x + \cos^2 x\,(\cos^2 z + \sin^2 z) = 1,\\
+E_3 \cdot E_3 &= \sin^2 z + \cos^2 z = 1,\\
+E_1 \cdot E_2 &= -\cos x\sin x + \sin x\cos x\,(\cos^2 z + \sin^2 z) = 0,\\
+E_1 \cdot E_3 &= \sin x\,(-\cos z\sin z + \sin z\cos z) = 0,\\
+E_2 \cdot E_3 &= \cos x\,(-\cos z\sin z + \sin z\cos z) = 0.
+\end{aligned}$$
+
+Dolayısıyla $E_1, E_2, E_3$ bütün $\mathbb{R}^3$ üzerinde bir çatı alanıdır. Vektörel çarpımla da denetleyebiliriz (@def-iccarpim-vektorel-carpim): $E_1 \times E_2$'nin $U_1$, $U_2$, $U_3$ bileşenleri sırasıyla
+
+$$\begin{aligned}
+&\sin x\cos z \cdot \cos x\sin z - \sin x\sin z \cdot \cos x\cos z = 0,\\
+&\sin x\sin z \cdot (-\sin x) - \cos x \cdot \cos x\sin z = -\sin z\,(\sin^2 x + \cos^2 x) = -\sin z,\\
+&\cos x \cdot \cos x\cos z - \sin x\cos z \cdot (-\sin x) = \cos z\,(\cos^2 x + \sin^2 x) = \cos z
+\end{aligned}$$
+
+olduğundan $E_1 \times E_2 = E_3$'tür; çatı sağ el kuralına uyar.
+
+Yanıt tek değildir. $E_1$ verilince $E_2$ ile $E_3$, $E_1$'e dik düzlemde herhangi bir türevlenebilir $\psi$ açı fonksiyonuyla döndürülebilir: $\cos\psi\, E_2 + \sin\psi\, E_3$ ve $-\sin\psi\, E_2 + \cos\psi\, E_3$ alanları da $E_1$ ile bir çatı alanı oluşturur. Bulduğumuz çözüm $\psi = 0$ seçimidir.
+
+Sayısal sağlama: $(\pi/3, 0, \pi/6)$ noktasında $\cos x = 1/2$, $\sin x = \sqrt{3}/2$, $\cos z = \sqrt{3}/2$, $\sin z = 1/2$; vektör kısımları
+
+$$E_1: \left(\dfrac{1}{2}, \dfrac{3}{4}, \dfrac{\sqrt{3}}{4}\right), \qquad E_2: \left(-\dfrac{\sqrt{3}}{2}, \dfrac{\sqrt{3}}{4}, \dfrac{1}{4}\right), \qquad E_3: \left(0, -\dfrac{1}{2}, \dfrac{\sqrt{3}}{2}\right).$$
+
+Uzunlukların kareleri $\tfrac{4 + 9 + 3}{16} = 1$, $\tfrac{12 + 3 + 1}{16} = 1$, $\tfrac{1 + 3}{4} = 1$; $E_1 \cdot E_2 = -\tfrac{\sqrt{3}}{4} + \tfrac{3\sqrt{3}}{16} + \tfrac{\sqrt{3}}{16} = 0$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-kuresel-sag-el name="Küresel Çatı Sağ El Kuralına Uyar"}
+Küresel çatı alanı için $F_1 \times F_2 = F_3$ olduğunu gösteriniz.
+
+::: {.cozum}
+$F_1$ ve $F_2$'nin vektör kısımları $(\cos\varphi\cos\vartheta, \cos\varphi\sin\vartheta, \sin\varphi)$ ve $(-\sin\vartheta, \cos\vartheta, 0)$'dır. Biçimsel determinantı (@def-iccarpim-vektorel-carpim) açalım:
+
+$$F_1 \times F_2 = \begin{vmatrix} U_1 & U_2 & U_3 \\ \cos\varphi\cos\vartheta & \cos\varphi\sin\vartheta & \sin\varphi \\ -\sin\vartheta & \cos\vartheta & 0 \end{vmatrix}.$$
+
+$U_1$, $U_2$, $U_3$ katsayıları sırasıyla
+
+$$\begin{aligned}
+&\cos\varphi\sin\vartheta \cdot 0 - \sin\varphi\cos\vartheta = -\sin\varphi\cos\vartheta,\\
+&\sin\varphi\,(-\sin\vartheta) - \cos\varphi\cos\vartheta \cdot 0 = -\sin\varphi\sin\vartheta,\\
+&\cos\varphi\cos\vartheta\cos\vartheta - \cos\varphi\sin\vartheta\,(-\sin\vartheta) = \cos\varphi\,(\cos^2\vartheta + \sin^2\vartheta) = \cos\varphi
+\end{aligned}$$
+
+olur. Bu üçlü tam olarak $F_3$'ün vektör kısmıdır; dolayısıyla her noktada $F_1 \times F_2 = F_3$. Küresel çatı, tıpkı Frenet çatısı ($B = T \times N$) gibi, sağ el kuralına uyar; bundan $F_2 \times F_3 = F_1$ ve $F_3 \times F_1 = F_2$ de çıkar. Gerçekten $F_2 \times F_3$, hem $F_2$'ye hem $F_3$'e dik bir birim vektördür; @lem-cati-ortonormal-acilim'e göre açılımında $F_2$ ve $F_3$ katsayıları sıfırdır, yani $F_2 \times F_3 = \pm F_1$. İşaret için üçlü skaler çarpımın bir determinant olduğunu ve satırların döngüsel yer değiştirmesinin determinantı değiştirmediğini kullanırız:
+
+$$(F_2 \times F_3) \cdot F_1 = F_1 \cdot F_2 \times F_3 = F_3 \cdot F_1 \times F_2 = F_3 \cdot F_3 = 1.$$
+
+$F_3 \times F_1 = F_2$ eşitliği aynı yolla görülür.
+
+Sayısal sağlama: $(3, 0, 4)$ noktasında $F_1 = (3/5, 0, 4/5)$, $F_2 = (0, 1, 0)$ ve
+
+$$F_1 \times F_2 = \left(0 \cdot 0 - \dfrac{4}{5} \cdot 1,\ \dfrac{4}{5} \cdot 0 - \dfrac{3}{5} \cdot 0,\ \dfrac{3}{5} \cdot 1 - 0 \cdot 0\right) = \left(-\dfrac{4}{5}, 0, \dfrac{3}{5}\right) = F_3.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-konum-ve-dusey-gram-schmidt name="Konum Alanı ile Düşey Alandan Küresel Çatı"}
+$z$ ekseni dışında $X = x U_1 + y U_2 + z U_3$ ve $U_3$ alanlarına @exr-cati-gram-schmidt'teki yöntem ($V = X$ ve $W = U_3$ ile) uygulanırsa hangi çatı alanı çıkar? Sonucu küresel çatı alanı $F_1, F_2, F_3$ cinsinden yazınız.
+
+::: {.cozum}
+Önce yöntemin uygulanabilirliği: $X(\mathbf{p})$ ile $U_3(\mathbf{p})$, ancak $\mathbf{p}$'nin konumu $(0, 0, 1)$'in bir katıysa, yani $\mathbf{p}$ $z$ ekseni üzerindeyse lineer bağımlıdır. $z$ ekseni dışında iki alan her noktada lineer bağımsızdır.
+
+*Birinci alan.* $\|X\| = \sqrt{x^2 + y^2 + z^2} = \rho$, dolayısıyla $E_1 = X/\rho$. @exr-cati-konum-alani-kuresel'e göre $X = \rho F_1$, yani $E_1 = F_1$.
+
+*İkinci alan.* $U_3 \cdot E_1 = z/\rho = \sin\varphi$ ve
+
+$$\tilde{W} = U_3 - \sin\varphi\, F_1.$$
+
+@exm-cati-u3-kuresel'de $U_3 = \sin\varphi\, F_1 + \cos\varphi\, F_3$ bulmuştuk; dolayısıyla $\tilde{W} = \cos\varphi\, F_3$. $z$ ekseni dışında $\cos\varphi = r/\rho > 0$ olduğundan $\|\tilde{W}\| = \cos\varphi$ ve $E_2 = \tilde{W}/\cos\varphi = F_3$.
+
+*Üçüncü alan.* $E_3 = E_1 \times E_2 = F_1 \times F_3$. Küresel çatı sağ el kuralına uyar, $F_1 \times F_2 = F_3$ (@exr-cati-kuresel-sag-el); sağ el kuralına uyan bir çatıda $F_3 \times F_1 = F_2$'dir, dolayısıyla $F_1 \times F_3 = -F_2$. Yani $E_3 = -F_2 = \sin\vartheta\, U_1 - \cos\vartheta\, U_2$.
+
+Sonuç: Gram–Schmidt işlemi, konum alanı ile düşey alandan küresel çatı alanını, üyeleri $F_1, F_3, -F_2$ sırasına dizilmiş olarak, üretir. Bu doğaldır: "dışa" yönü konum alanıyla, "kuzey" yönü düşey alanın dışa yöne dik bileşeniyle belirlenir; geriye kalan "doğu" yönü de sağ el kuralıyla, işaretiyle birlikte, sabitlenir.
+
+Sayısal sağlama: $(3, 0, 4)$ noktasında $E_1 = (3/5, 0, 4/5)$, $U_3 \cdot E_1 = 4/5$,
+
+$$\tilde{W} = (0, 0, 1) - \dfrac{4}{5}\left(\dfrac{3}{5}, 0, \dfrac{4}{5}\right) = \left(-\dfrac{12}{25}, 0, \dfrac{9}{25}\right), \qquad \|\tilde{W}\| = \dfrac{15}{25} = \dfrac{3}{5} = \cos\varphi,$$
+
+$E_2 = (-4/5, 0, 3/5) = F_3(\mathbf{p})$ ve
+
+$$E_3 = \left(\dfrac{3}{5}, 0, \dfrac{4}{5}\right) \times \left(-\dfrac{4}{5}, 0, \dfrac{3}{5}\right) = (0, -1, 0) = -F_2(\mathbf{p}).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-toroidal-a name="Bir Çembere Uzaklık ve Çember Etrafındaki Açı"}
+$a > 0$ sabit olsun ve $C$, $xy$ düzleminde merkezi başlangıç noktası, yarıçapı $a$ olan çember olsun. $z$ ekseni ve $C$ dışındaki noktalarda, $r$ ve $\vartheta$ silindirik koordinat fonksiyonları olmak üzere
+
+$$s = \sqrt{(r - a)^2 + z^2}, \qquad \cos\psi = \dfrac{r - a}{s}, \qquad \sin\psi = \dfrac{z}{s}$$
+
+olsun. $s$ ve $\psi$'nin geometrik anlamını bulunuz.
+
+::: {.cozum}
+$\mathbf{p} = (x, y, z)$, $z$ ekseni dışında bir nokta ve $(r, \vartheta, z)$ onun silindirik koordinatları olsun. $C$ üzerindeki noktalar $\mathbf{q}_t = (a\cos t, a\sin t, 0)$ biçimindedir; $x = r\cos\vartheta$, $y = r\sin\vartheta$ yazılınca
+
+$$\begin{aligned}
+\|\mathbf{p} - \mathbf{q}_t\|^2 &= (r\cos\vartheta - a\cos t)^2 + (r\sin\vartheta - a\sin t)^2 + z^2\\
+&= r^2 + a^2 - 2ar\,(\cos\vartheta\cos t + \sin\vartheta\sin t) + z^2\\
+&= r^2 + a^2 - 2ar\cos(t - \vartheta) + z^2
+\end{aligned}$$
+
+olur. $ar > 0$ olduğundan bu ifade $\cos(t - \vartheta) = 1$, yani $t = \vartheta$ iken en küçüktür ve en küçük değeri
+
+$$r^2 + a^2 - 2ar + z^2 = (r - a)^2 + z^2 = s^2$$
+
+olur. Yani $s$, $\mathbf{p}$'nin $C$ çemberine uzaklığıdır; $C$'nin $\mathbf{p}$'ye en yakın noktası, $\mathbf{p}$ ile aynı düşey yarım düzlemde duran $\mathbf{q} = (a\cos\vartheta, a\sin\vartheta, 0)$ noktasıdır. $s$ ancak $\mathbf{p}$ $C$ üzerindeyken sıfırlanır; $C$'nin dışarıda bırakılmasının nedeni budur.
+
+$\psi$ için aynı düşey yarım düzlemde çalışalım. Bu düzlemde yatay konum $r$ ile, düşey konum $z$ ile ölçülür; $\mathbf{q}$ noktası $(r, z) = (a, 0)$'da, $\mathbf{p}$ ise $(r, z)$'dedir. $\mathbf{q}$'dan $\mathbf{p}$'ye giden vektörün bu düzlemdeki bileşenleri $(r - a, z)$, uzunluğu $s$'dir. Dolayısıyla $\cos\psi = (r - a)/s$ ve $\sin\psi = z/s$ eşitlikleri $\psi$'nin şu açı olduğunu söyler: $\mathbf{q}$ noktasında, $z$ ekseninden dışa bakan yatay birim vektör $E_1(\mathbf{q})$ ile $\mathbf{q}$'dan $\mathbf{p}$'ye giden doğru parçası arasındaki, yukarı doğru pozitif sayılan açı. Bu, küresel koordinatlardaki yükseklik açısı $\varphi$'nin, tepe noktası başlangıç noktasından $C$'nin en yakın noktasına taşınmış hâlidir; gerçekten $a = 0$ alınırsa $s = \rho$ ve $\psi = \varphi$ olur.
+
+Sayısal örnek: $a = 1$ ve $\mathbf{p} = (3, 4, 3)$ için $r = 5$, $\cos\vartheta = 3/5$, $\sin\vartheta = 4/5$; en yakın nokta $\mathbf{q} = (3/5, 4/5, 0)$ ve
+
+$$\|\mathbf{p} - \mathbf{q}\|^2 = \left(\dfrac{12}{5}\right)^2 + \left(\dfrac{16}{5}\right)^2 + 3^2 = \dfrac{144 + 256}{25} + 9 = 16 + 9 = 25,$$
+
+yani $s = 5$; formül de $s = \sqrt{(5 - 1)^2 + 3^2} = 5$ verir. $\cos\psi = 4/5$, $\sin\psi = 3/5$, yani $\psi \approx 36{,}87°$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-toroidal-b name="Bir Çember Etrafındaki Toroidal Çatı Alanı"}
+$a > 0$ sabit, $C$ yine $xy$ düzleminde merkezi başlangıç noktası ve yarıçapı $a$ olan çember olsun; $s$ ile $\psi$ @exr-cati-toroidal-a'daki gibi tanımlansın: $s = \sqrt{(r - a)^2 + z^2}$, $\cos\psi = (r - a)/s$, $\sin\psi = z/s$. $z$ ekseni ve $C$ dışındaki noktalarda, $E_1, E_2, E_3$ silindirik çatı alanı olmak üzere
+
+$$T_1 = \cos\psi\, E_1 + \sin\psi\, E_3, \qquad T_2 = E_2, \qquad T_3 = -\sin\psi\, E_1 + \cos\psi\, E_3$$
+
+olsun. $T_1, T_2, T_3$'ün bir çatı alanı olduğunu gösteriniz.
+
+::: {.cozum}
+*Türevlenebilirlik.* $r$, $z$ ekseni dışında türevlenebilir olduğundan $(r - a)^2 + z^2$ orada türevlenebilir bir fonksiyondur; @exr-cati-toroidal-a'ya göre bu fonksiyon $s^2$'dir ve $C$ dışında pozitiftir, dolayısıyla karekökü $s$ de türevlenebilirdir. Böylece $\cos\psi = (r - a)/s$, $\sin\psi = z/s$ ve $T_i$'lerin bütün katsayıları belirtilen kümede türevlenebilirdir; $T_1, T_2, T_3$ vektör alanlarıdır.
+
+*Ortonormallik.* Önce
+
+$$\cos^2\psi + \sin^2\psi = \dfrac{(r - a)^2 + z^2}{s^2} = 1$$
+
+olduğuna dikkat edelim. Silindirik çatının ortonormalliğiyle, küresel çatıdaki hesabın aynısı:
+
+$$\begin{aligned}
+T_1 \cdot T_1 &= \cos^2\psi\,(E_1 \cdot E_1) + 2\cos\psi\sin\psi\,(E_1 \cdot E_3) + \sin^2\psi\,(E_3 \cdot E_3) = 1,\\
+T_3 \cdot T_3 &= \sin^2\psi + \cos^2\psi = 1,\\
+T_1 \cdot T_3 &= -\cos\psi\sin\psi + \sin\psi\cos\psi = 0,
+\end{aligned}$$
+
+ve $T_2 = E_2$ birim olup $E_1$ ile $E_3$'e dik olduğundan $T_2 \cdot T_1 = T_2 \cdot T_3 = 0$. Dolayısıyla $T_i \cdot T_j = \delta_{ij}$.
+
+*Yorum.* $T_1$, $C$ çemberinden $\mathbf{p}$'ye doğru, yani $C$'den uzaklaşma yönünde bakan birim vektördür; $T_2$ çember boyunca dönme yönünde bakar; $T_3$, $\mathbf{p}$'den geçen ve $C$'yi çevreleyen küçük düşey çember üzerinde, $\psi$'nin arttığı yöne bakar. Bu çatı, $C$ etrafındaki torus yüzeylerine ($s$ sabit) uyarlanmıştır: $T_1$ torusa dik, $T_2$ ve $T_3$ ona teğettir. $a = 0$ alınırsa $s = \rho$, $\psi = \varphi$ olur ve küresel çatı alanı geri gelir.
+
+*Sayısal örnek.* $a = 1$ ve $\mathbf{p} = (3, 4, 3)$ olsun. $r = 5$, $r - a = 4$, $z = 3$, dolayısıyla $s = 5$, $\cos\psi = 4/5$, $\sin\psi = 3/5$; silindirik çatının vektör kısımları $(3/5, 4/5, 0)$, $(-4/5, 3/5, 0)$, $(0, 0, 1)$'dir. Böylece
+
+$$T_1: \dfrac{4}{5}\left(\dfrac{3}{5}, \dfrac{4}{5}, 0\right) + \dfrac{3}{5}(0, 0, 1) = \left(\dfrac{12}{25}, \dfrac{16}{25}, \dfrac{3}{5}\right), \qquad T_3: \left(-\dfrac{9}{25}, -\dfrac{12}{25}, \dfrac{4}{5}\right)$$
+
+ve $T_2 = (-4/5, 3/5, 0)$. Denetim: $\|T_1\|^2 = \tfrac{144 + 256 + 225}{625} = 1$, $T_1 \cdot T_3 = \tfrac{-108 - 192 + 300}{625} = 0$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-silindirik-kovaryant-a name="Silindirik Çatının Kovaryant Türevleri"}
+$E_1, E_2, E_3$ silindirik çatı alanı, $\mathbf{p}$ $z$ ekseni dışında bir nokta ve $\mathbf{v}$, $\mathbf{p}$'de bir teğet vektör olsun. Kovaryant türevlerin
+
+$$\nabla_{\mathbf{v}} E_1 = \dfrac{\mathbf{v} \cdot E_2(\mathbf{p})}{r(\mathbf{p})}\, E_2(\mathbf{p}), \qquad \nabla_{\mathbf{v}} E_2 = -\dfrac{\mathbf{v} \cdot E_2(\mathbf{p})}{r(\mathbf{p})}\, E_1(\mathbf{p}), \qquad \nabla_{\mathbf{v}} E_3 = \mathbf{0}$$
+
+olduğunu gösteriniz.
+
+::: {.cozum}
+@lem-kovaryant-koordinat-formulu'ne göre bir vektör alanının kovaryant türevi, Öklid koordinat fonksiyonlarının $\mathbf{v}$'ye göre türevleri alınarak bulunur: $W = \sum_i w_i U_i$ ise $\nabla_{\mathbf{v}} W = \sum_i \mathbf{v}[w_i]\, U_i(\mathbf{p})$. $E_1$'in koordinat fonksiyonları $x/r$, $y/r$, $0$'dır; $r = \sqrt{x^2 + y^2}$ için $\partial r/\partial x = x/r$ ve $\partial r/\partial y = y/r$ olduğundan kısmi türevler
+
+$$\begin{aligned}
+\dfrac{\partial}{\partial x}\left(\dfrac{x}{r}\right) &= \dfrac{1}{r} - \dfrac{x^2}{r^3} = \dfrac{y^2}{r^3}, & \dfrac{\partial}{\partial y}\left(\dfrac{x}{r}\right) &= -\dfrac{xy}{r^3},\\
+\dfrac{\partial}{\partial x}\left(\dfrac{y}{r}\right) &= -\dfrac{xy}{r^3}, & \dfrac{\partial}{\partial y}\left(\dfrac{y}{r}\right) &= \dfrac{x^2}{r^3}
+\end{aligned}$$
+
+olur; $z$'ye göre türevler sıfırdır. $\mathbf{v} = (v_1, v_2, v_3)_{\mathbf{p}}$ için @lem-yonlu-kismi-turev-formulu ile
+
+$$\begin{aligned}
+\mathbf{v}\!\left[\dfrac{x}{r}\right] &= \dfrac{v_1 y^2 - v_2 xy}{r^3} = -\dfrac{y\,(-v_1 y + v_2 x)}{r^3},\\
+\mathbf{v}\!\left[\dfrac{y}{r}\right] &= \dfrac{-v_1 xy + v_2 x^2}{r^3} = \dfrac{x\,(-v_1 y + v_2 x)}{r^3}
+\end{aligned}$$
+
+bulunur (bütün fonksiyonlar $\mathbf{p}$'de değerlendirilmiştir). Dolayısıyla
+
+$$\nabla_{\mathbf{v}} E_1 = \dfrac{-v_1 y + v_2 x}{r^3}\,\bigl(-y\, U_1(\mathbf{p}) + x\, U_2(\mathbf{p})\bigr) = \dfrac{-v_1 y + v_2 x}{r^2}\, E_2(\mathbf{p}),$$
+
+çünkü $-y U_1 + x U_2 = r E_2$'dir. Öte yandan $E_2(\mathbf{p})$'nin vektör kısmı $(-y/r, x/r, 0)$ olduğundan $\mathbf{v} \cdot E_2(\mathbf{p}) = (-v_1 y + v_2 x)/r$'dir ve
+
+$$\nabla_{\mathbf{v}} E_1 = \dfrac{\mathbf{v} \cdot E_2(\mathbf{p})}{r}\, E_2(\mathbf{p}).$$
+
+$E_2$ için koordinat fonksiyonları $-y/r$, $x/r$, $0$'dır. Yukarıdaki kısmi türevlerle
+
+$$\mathbf{v}\!\left[-\dfrac{y}{r}\right] = \dfrac{v_1 xy - v_2 x^2}{r^3} = -\dfrac{x\,(-v_1 y + v_2 x)}{r^3}, \qquad \mathbf{v}\!\left[\dfrac{x}{r}\right] = -\dfrac{y\,(-v_1 y + v_2 x)}{r^3},$$
+
+dolayısıyla
+
+$$\nabla_{\mathbf{v}} E_2 = -\dfrac{-v_1 y + v_2 x}{r^3}\,\bigl(x\, U_1(\mathbf{p}) + y\, U_2(\mathbf{p})\bigr) = -\dfrac{\mathbf{v} \cdot E_2(\mathbf{p})}{r}\, E_1(\mathbf{p}),$$
+
+çünkü $x U_1 + y U_2 = r E_1$'dir. $E_3 = U_3$'ün koordinat fonksiyonları sabit olduğundan türevleri sıfırdır ve $\nabla_{\mathbf{v}} E_3 = \mathbf{0}$.
+
+Sonuç, Frenet formüllerine benzer bir tablo verir: $E_1$'in türevi yalnızca $E_2$ yönündedir, $E_2$'nin türevi yalnızca $E_1$ yönündedir ve katsayılar birbirinin ters işaretlisidir; $E_3$ hiç değişmez. Katsayı $(\mathbf{v} \cdot E_2(\mathbf{p}))/r$, $\mathbf{v}$'nin dönme yönündeki bileşeninin $r$'ye bölümüdür: $\mathbf{v}$ yönünde küçük bir adım atınca çatının $z$ ekseni etrafında ne kadar döndüğünü ölçer. Yalnızca $r$ yönünde ya da yalnızca $z$ yönünde ilerlerken ($\mathbf{v} \cdot E_2(\mathbf{p}) = 0$) çatı hiç dönmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-cati-silindirik-kovaryant-b name="Silindirik Çatının Kovaryant Türevlerinin Sayısal Denetimi"}
+$E_1, E_2, E_3$ silindirik çatı alanı, $\mathbf{p} = (3, 4, 2)$ ve $\mathbf{v} = (1, 2, 5)_{\mathbf{p}}$ olsun. $\nabla_{\mathbf{v}} E_1$ ve $\nabla_{\mathbf{v}} E_2$ kovaryant türevlerini hem @exr-cati-silindirik-kovaryant-a'daki
+
+$$\nabla_{\mathbf{v}} E_1 = \dfrac{\mathbf{v} \cdot E_2(\mathbf{p})}{r(\mathbf{p})}\, E_2(\mathbf{p}), \qquad \nabla_{\mathbf{v}} E_2 = -\dfrac{\mathbf{v} \cdot E_2(\mathbf{p})}{r(\mathbf{p})}\, E_1(\mathbf{p})$$
+
+formülleriyle hem de Öklid koordinat fonksiyonlarının yönlü türevleriyle doğrudan hesaplayıp iki sonucun aynı olduğunu görünüz.
+
+::: {.cozum}
+$E_1$'in Öklid koordinat fonksiyonları $x/r$, $y/r$, $0$; $E_2$'ninkiler $-y/r$, $x/r$, $0$'dır ve @lem-kovaryant-koordinat-formulu'ne göre kovaryant türev, bu fonksiyonların $\mathbf{v}$'ye göre yönlü türevleri alınarak bulunur; bu türevlerin açık biçimini @exr-cati-silindirik-kovaryant-a'da hesaplamıştık. $\mathbf{p}$'de $r = 5$, $E_2(\mathbf{p})$'nin vektör kısmı $(-4/5, 3/5, 0)$ ve $\mathbf{v} \cdot E_2(\mathbf{p}) = (-4 + 6)/5 = 2/5$. Formüle göre
+
+$$\nabla_{\mathbf{v}} E_1 = \dfrac{2/5}{5}\, E_2(\mathbf{p}) = \dfrac{2}{25}\left(-\dfrac{4}{5}, \dfrac{3}{5}, 0\right)_{\mathbf{p}} = \left(-\dfrac{8}{125}, \dfrac{6}{125}, 0\right)_{\mathbf{p}}.$$
+
+Doğrudan hesap:
+
+$$\begin{aligned}
+\mathbf{v}\!\left[\dfrac{x}{r}\right] &= \dfrac{v_1 y^2 - v_2 xy}{r^3} = \dfrac{16 - 24}{125} = -\dfrac{8}{125},\\
+\mathbf{v}\!\left[\dfrac{y}{r}\right] &= \dfrac{-v_1 xy + v_2 x^2}{r^3} = \dfrac{-12 + 18}{125} = \dfrac{6}{125};
+\end{aligned}$$
+
+iki sonuç aynıdır. Benzer biçimde formül
+
+$$\nabla_{\mathbf{v}} E_2 = -\dfrac{2}{25}\left(\dfrac{3}{5}, \dfrac{4}{5}, 0\right)_{\mathbf{p}} = \left(-\dfrac{6}{125}, -\dfrac{8}{125}, 0\right)_{\mathbf{p}}$$
+
+verir; doğrudan hesapla $\mathbf{v}[-y/r] = (12 - 18)/125$, yani $-6/125$, ve $\mathbf{v}[x/r] = -8/125$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde uzayın her noktasına bir çatı yerleştiren çatı alanlarını tanımladık, silindirik ve küresel koordinatlardan doğan iki temel örneği kurduk ve her vektör alanının böyle bir çatıya göre iç çarpımla bulunan koordinat fonksiyonlarıyla açıldığını gördük; sıradaki konu, bir çatı alanının kovaryant türevlerini çatının kendisi cinsinden yazan katsayıların, yani bağlantı formlarının incelenmesidir.
