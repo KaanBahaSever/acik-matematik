@@ -6,6 +6,15 @@ Usage:
     python scripts/stats.py <path>          # scan another directory
     python scripts/stats.py --per-book      # add a per-book breakdown
     python scripts/stats.py --csv           # machine-readable, one row per book
+    python scripts/stats.py --write-readme  # refresh the numbers in README.md
+
+The README carries two generated sections, each between a pair of HTML comment
+markers (see MARKERS below): the table of contents of the archive and the
+figures of the archive. --write-readme rewrites what is between the markers and
+leaves the rest of the file alone; scripts/build.py calls it after a build that
+actually rendered something. Nothing outside the markers is ever touched, and
+the file is only written when the text really changed, so a build that changes
+no numbers leaves the working tree clean.
 
 What it counts
 --------------
@@ -158,6 +167,124 @@ def collect(root):
     return rows, totals, loose, unreadable
 
 
+# ------------------------------------------------------- generated README bits
+
+# Section name -> (opening marker, closing marker). The markers stay in the
+# README; everything between them is replaced.
+MARKERS = {
+    "books": ("<!-- BOOKS-START -->", "<!-- BOOKS-END -->"),
+    "metrics": ("<!-- METRICS-START -->", "<!-- METRICS-END -->"),
+}
+
+SITE = "https://acik-matematik.com/dersler"
+
+
+def book_title(book):
+    """The book's title from its _quarto.yml, or its directory name."""
+    text = read_text(book / "_quarto.yml") or ""
+    m = re.search(r'^\s*title:\s*"?([^"\n]+)"?\s*$', text, re.M)
+    return m.group(1).strip() if m else book.name
+
+
+def books_markdown(rows, root):
+    """A collapsible list of every book, with its size and its state."""
+    listed = [(book_title(root / "dersler" / r["kitap"]), r)
+              for r in rows if not r.get("portal")]
+    # The books whose chapters are online come first, each group by title --
+    # the directory name is not what a reader sees.
+    listed.sort(key=lambda item: (0 if item[1].get("bolum") else 1, item[0].lower()))
+    entries = []
+    for title, r in listed:
+        if r.get("bolum"):
+            entries.append("- [%s](%s/%s/) — %d bölüm, %s örnek ve alıştırma"
+                           % (title, SITE, r["kitap"], r["bolum"],
+                              "{:,}".format(r.get("ornek", 0)).replace(",", ".")))
+        else:
+            entries.append("- %s — müfredatı hazır, bölümleri yazılıyor" % title)
+    written = sum(1 for r in rows if not r.get("portal") and r.get("bolum"))
+    return "\n".join([
+        "<details>",
+        "<summary><strong>Arşivdeki %d ders</strong> — %d tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>"
+        % (len([r for r in rows if not r.get("portal")]), written),
+        "",
+        "\n".join(entries),
+        "",
+        "</details>",
+    ])
+
+
+def metrics_markdown(totals, rows):
+    """The figures of the archive as a Markdown table."""
+    def n(value):
+        return "{:,}".format(value).replace(",", ".")
+
+    books_only = [r for r in rows if not r.get("portal")]
+    pairs = [
+        ("📚 Kitap", n(len(books_only))),
+        ("📖 Konu/Bölüm", n(sum(r.get("bolum", 0) for r in books_only))),
+        ("📐 Teorem", n(totals.get("teorem", 0))),
+        ("🔹 Lemma", n(totals.get("lemma", 0))),
+        ("📝 Tanım", n(totals.get("tanim", 0))),
+        ("✅ İspat", n(totals.get("ispat", 0))),
+        ("🧮 Örnek ve alıştırma", n(totals.get("ornek", 0))),
+        ("💡 Çözüm", n(totals.get("cozum", 0))),
+        ("📊 Şekil", n(totals.get("sekil", 0))),
+        ("✍️ Kelime", n(totals.get("kelime", 0))),
+        ("🔤 Karakter", n(totals.get("karakter", 0))),
+        ("💾 Kaynak metin", mb(totals.get("bayt", 0)).replace(".", ",")),
+    ]
+    lines = ["| | |", "|---|---:|"]
+    lines += ["| %s | **%s** |" % (label, value) for label, value in pairs]
+    lines.append("")
+    lines.append("<sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>")
+    return "\n".join(lines)
+
+
+def replace_marked(text, name, body):
+    """Put `body` between the markers of `name`; return (text, changed?)."""
+    start, end = MARKERS[name]
+    i, j = text.find(start), text.find(end)
+    if i < 0 or j < 0 or j < i:
+        return text, None                      # markers missing: nothing to do
+    new = "%s\n\n%s\n\n%s" % (start, body.strip("\n"), end)
+    old = text[i:j + len(end)]
+    if old == new:
+        return text, False
+    return text[:i] + new + text[j + len(end):], True
+
+
+def write_readme(root, rows, totals):
+    """Refresh the generated sections of README.md; return a status line."""
+    readme = root / "README.md"
+    text = read_text(readme)
+    if text is None:
+        return "README.md okunamadı, atlandı"
+    updated, changes, missing = text, [], []
+    for name, body in (("books", books_markdown(rows, root)),
+                       ("metrics", metrics_markdown(totals, rows))):
+        updated, changed = replace_marked(updated, name, body)
+        if changed is None:
+            missing.append(MARKERS[name][0])
+        elif changed:
+            changes.append(name)
+    if missing:
+        return "README.md güncellenmedi: %s işareti yok" % ", ".join(missing)
+    if not changes:
+        return "README.md zaten güncel"
+    try:
+        io.open(readme, "w", encoding="utf-8", newline="\n").write(updated)
+    except OSError as exc:
+        return "README.md yazılamadı: %s" % exc
+    return "README.md güncellendi (%s)" % ", ".join(changes)
+
+
+def update_readme(root=None):
+    """Entry point for scripts/build.py: scan and refresh README.md."""
+    root = pathlib.Path(root) if root else pathlib.Path(__file__).resolve().parent.parent
+    rows, totals, _, _ = collect(root)
+    return write_readme(root, rows, totals)
+
+
 def print_table(pairs, title):
     width = max(len(k) for k, _ in pairs)
     line = "+" + "-" * (width + 2) + "+" + "-" * 18 + "+"
@@ -188,6 +315,9 @@ def main():
         for r in rows:
             print(",".join(str(r.get(k, 0)) for k in keys))
         return
+
+    if "--write-readme" in flags:
+        print(write_readme(root, rows, totals))
 
     # The root project holds the portal pages (home page, catalogue); it is not
     # a book, so it is reported on its own line.

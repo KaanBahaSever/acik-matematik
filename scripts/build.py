@@ -55,6 +55,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from export import export_course, publish_exports  # noqa: E402
+from stats import update_readme  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 COURSES = ROOT / "dersler"
@@ -351,6 +352,7 @@ def main() -> None:
             wiped = False
 
     sync_shared_assets()
+    removed: list[str] = []
     if not only:
         removed = prune_site(found)
         if removed:
@@ -412,6 +414,16 @@ def main() -> None:
     cache["quarto"] = version
     cache["books"] = cached_books
     save_cache(cache)
+
+    # The README shows the size of the archive (its books and its counts). It is
+    # refreshed only when this build actually changed something, so a rebuild
+    # that renders nothing leaves the working tree clean. A failure here is
+    # reported but never fails the build: the site is already correct.
+    if plan or removed:
+        try:
+            print("   " + update_readme(ROOT))
+        except Exception as exc:                 # noqa: BLE001 - never fatal
+            print(f"   ! README.md could not be updated: {exc}")
 
     pages = len(list(SITE.rglob("*.html"))) if SITE.exists() else 0
     downloads = sum(len(list(SITE.rglob(f"*.{ext}"))) for ext in ("pdf", "epub")) if SITE.exists() else 0
