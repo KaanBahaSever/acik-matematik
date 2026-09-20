@@ -3,8 +3,22 @@ name: Build and deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
+    # A change to these never changes a single page, and the build is the
+    # slowest part of the pipeline, so it is not started at all for them.
+    paths-ignore:
+      - "README.md"
+      - "LICENCE"
+      - "docs/**"
+      - ".gitignore"
+      - ".github/**/*.md"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "README.md"
+      - "LICENCE"
+      - "docs/**"
+      - ".gitignore"
+      - ".github/**/*.md"
   workflow_dispatch:
 
 # One run at a time per ref. A deployment of main must never be cut in half,
@@ -46,6 +60,14 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v7
+        with:
+          # The runner is a personal machine and its workspace survives between
+          # runs. Checkout deletes untracked files by default, which would throw
+          # away _site, every dersler/<course>/_book and .build-cache.json and
+          # make each run render all 30 books from scratch. Keeping them lets
+          # scripts/build.py render only the courses that actually changed;
+          # it deletes courses that disappeared from the repository itself.
+          clean: false
 
       # Quarto ve Python kurulum adımları yok; sistemde kurulu sürümler kullanılır.
       - name: Print tool versions
