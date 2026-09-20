@@ -1,0 +1,68 @@
+<!-- ===========================================================================
+     Mobile table of contents.
+
+     Quarto drops the whole table-of-contents column below 768px
+     (@media(max-width: 767.98px){#quarto-margin-sidebar{display:none}}), which
+     leaves a phone reader with no way to see the sections of a chapter or jump
+     between them. This copies the page's own table of contents into a
+     collapsible panel right under the chapter title. The panel is hidden by
+     CSS above 768px, where the real column is back, so nothing is duplicated
+     on screen; see "MOBILE TABLE OF CONTENTS" in styles/global.css.
+
+     This file is pulled in by every book through _kitap-ortak.yml
+     (include-after-body), so it runs on every chapter page.
+     =========================================================================== -->
+<script>
+(function () {
+  "use strict";
+
+  function buildMobileToc() {
+    if (document.querySelector(".mobile-toc")) return;           // already built
+    var toc = document.querySelector("nav#TOC");
+    var list = toc && toc.querySelector("ul");
+    if (!list || !list.querySelector("a")) return;               // nothing to link to
+
+    var main = document.querySelector("main#quarto-document-content, main.content");
+    if (!main) return;
+
+    var panel = document.createElement("details");
+    panel.className = "mobile-toc";
+
+    var summary = document.createElement("summary");
+    var title = toc.querySelector(".toc-title, #toc-title");
+    summary.textContent = (title && title.textContent.trim()) || "Bu Sayfada";
+    panel.appendChild(summary);
+
+    var copy = list.cloneNode(true);
+    copy.removeAttribute("id");
+    Array.prototype.forEach.call(copy.querySelectorAll("[id]"), function (el) {
+      el.removeAttribute("id");
+    });
+    // Quarto's scroll spy only ever updates the real column, so a copied
+    // "active" mark would stay stuck on whichever section was current here.
+    Array.prototype.forEach.call(copy.querySelectorAll("a.active"), function (el) {
+      el.classList.remove("active");
+    });
+    panel.appendChild(copy);
+
+    // Close the panel once the reader picks a section, so the page is not
+    // covered by the list when it scrolls to the heading.
+    panel.addEventListener("click", function (event) {
+      if (event.target.closest("a")) panel.removeAttribute("open");
+    });
+
+    var header = main.querySelector("#title-block-header");
+    if (header && header.parentNode === main) {
+      main.insertBefore(panel, header.nextSibling);
+    } else {
+      main.insertBefore(panel, main.firstChild);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", buildMobileToc);
+  } else {
+    buildMobileToc();
+  }
+})();
+</script>

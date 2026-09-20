@@ -109,6 +109,14 @@ def sync_shared_assets() -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(source, target)
 
+    # Cloudflare Pages reads _site/_redirects, which keeps the addresses of
+    # pages that have moved working. Quarto leaves files whose name starts with
+    # "_" out of the build, so it is copied here.
+    redirects = ROOT / "_redirects"
+    if redirects.is_file():
+        SITE.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(redirects, SITE / "_redirects")
+
 
 def publish(book: Path) -> None:
     """Move the rendered book from dersler/<course>/_book/ under _site."""
@@ -156,6 +164,7 @@ def main() -> None:
     else:
         # 1) Portal pages — this step wipes the _site directory
         render(ROOT, "portal (home page + course catalog)")
+        sync_shared_assets()
 
         # 2) Course books — output goes under _site/dersler/<course>/
         found = books()

@@ -18,55 +18,123 @@ body:not(.quarto-dark), body:not(.quarto-dark) #quarto-sidebar {
     background-color: #faf9f6;
 } */
 
-@media (min-width: 1600px) {
+/* ==========================================================================
+   PAGE GRID -- sidebars at the screen edges, text centred between them
+   --------------------------------------------------------------------------
+   Quarto's own "article" grid holds the navigation sidebar, the text and the
+   table of contents in a narrow band in the middle of the window: on a 1536px
+   laptop the text column was only 747px wide while 237px stayed empty at the
+   two screen edges, and between 1300px and 1600px no rule of ours applied at
+   all. The template below spends that space.
 
-    #quarto-document-content {
-        max-width: 1200px;
-        /* Maximum width of the content area */
+   The line names must stay exactly as Quarto writes them, because Quarto
+   places the pieces by name:
+
+       navigation sidebar   page-start ......... body-start
+       text                 body-content-start . body-content-end
+       table of contents    body-end ........... page-end
+
+   The two flexible "slack" columns sit between the sidebars and the text, so
+   they belong to neither span: they take up the leftover width and keep the
+   text centred while the sidebars stay out at the edges.
+
+   The grid stops growing at --am-page-max and is centred from there on, so
+   on an ultra-wide monitor the pieces do not drift apart; the cap applies to
+   the portal pages too, which have no sidebar of their own.
+   ========================================================================== */
+:root {
+    /* Widest the whole layout ever gets: a 1920px monitor minus its gutters. */
+    --am-page-max: 1880px;
+    /* Distance from a sidebar to the screen edge. */
+    --am-edge: 1.25rem;
+    /* Sidebar and table-of-contents column: grows with the window, but stays
+       readable on a small laptop and stops growing on a large screen.
+       Careful: the root font-size is 1.1em, so 1rem resolves to 17.6px --
+       10.5rem is about 185px and 16rem about 282px. */
+    --am-side: clamp(10.5rem, 15vw, 16rem);
+    /* Breathing room between a sidebar and the text area. */
+    --am-gap: 1.5em;
+    /* Reading column (~968px). Wider than this makes long lines hard to scan. */
+    --am-content: 55rem;
+    /* Portal pages carry link lists rather than prose, so they take the
+       same width as the home page (~1160px). */
+    --am-portal-content: 66rem;
+}
+
+@media (min-width: 992px) {
+
+    /* Every page, including the portal: stop expanding on ultra-wide screens. */
+    #quarto-content.page-columns {
+        max-width: var(--am-page-max);
+        margin-inline: auto;
     }
 
-    body.floating .page-columns {
+    /* Book pages (they are the ones with a navigation sidebar). */
+    body.floating #quarto-content.page-layout-article {
         display: grid;
         gap: 0;
         grid-template-columns:
-            [screen-start] 1em [screen-start-inset] 1fr
-            /* Outer left gutter (1fr is enough for equal centring) */
-            [page-start] minmax(25px, 50px) [page-start-inset] 180px
-            /* LEFT SIDEBAR WIDTH (used to be max 150px; widened) */
-            [body-start-outset] minmax(25px, 50px) [body-start] 10em [body-content-start] minmax(600px, 960px)
-            /* MAIN TEXT READING AREA (raised from 800 to 960px; much more breathing room) */
-            [body-content-end] 10em [body-end] minmax(25px, 50px) [body-end-outset] 180px
-            /* RIGHT SIDEBAR WIDTH (widened) */
-            [page-end-inset] minmax(25px, 50px) [page-end] 1fr
-            /* Outer right gutter */
-            [screen-end-inset] 1em [screen-end];
+            [screen-start] var(--am-edge)
+            [screen-start-inset page-start page-start-inset] var(--am-side)
+            [body-start-outset] var(--am-gap)
+            [body-start] minmax(0, 1fr)
+            [body-content-start] minmax(0, var(--am-content))
+            [body-content-end] minmax(0, 1fr)
+            [body-end] var(--am-gap)
+            [body-end-outset] var(--am-side)
+            [page-end-inset page-end screen-end-inset] var(--am-edge)
+            [screen-end];
+    }
+
+    /* The grid decides the width now; the old fixed cap would fight it. */
+    body.floating #quarto-document-content {
+        max-width: 100%;
     }
 }
 
-@media (min-width: 1150px) and (max-width: 1300px) {
+/* Portal pages (course catalog, the Analiz hub): no sidebar, so Quarto keeps
+   the text in a 799px column with everything else empty. Give them the same
+   reading width as the home page instead. */
+@media (min-width: 992px) {
 
-    #quarto-document-content {
-        max-width: 1200px;
-        /* Maximum width of the content area */
-    }
-
-    body.floating .page-columns {
+    body.fullcontent #quarto-content.page-layout-article {
         display: grid;
         gap: 0;
         grid-template-columns:
-            [screen-start] 1em [screen-start-inset] 1fr
-            /* Outer left gutter (1fr is enough for equal centring) */
-            [page-start] minmax(25px, 50px) [page-start-inset] 180px
-            /* LEFT SIDEBAR WIDTH (used to be max 150px; widened) */
-            [body-start-outset] minmax(25px, 50px) [body-start] 2em [body-content-start] minmax(600px, 960px)
-            /* MAIN TEXT READING AREA (raised from 800 to 960px; much more breathing room) */
-            [body-content-end] 2em [body-end] minmax(25px, 50px) [body-end-outset] 180px
-            /* RIGHT SIDEBAR WIDTH (widened) */
-            [page-end-inset] minmax(25px, 50px) [page-end] 1fr
-            /* Outer right gutter */
-            [screen-end-inset] 1em [screen-end];
+            [screen-start] var(--am-edge)
+            [screen-start-inset page-start page-start-inset body-start-outset body-start] minmax(0, 1fr)
+            [body-content-start] minmax(0, var(--am-portal-content))
+            [body-content-end] minmax(0, 1fr)
+            [body-end body-end-outset page-end-inset page-end screen-end-inset] var(--am-edge)
+            [screen-end];
     }
 
+    body.fullcontent #quarto-document-content {
+        max-width: 100%;
+    }
+}
+
+/* Tablet: the navigation sidebar is hidden (Quarto hides it below 992px), so
+   the page is the text plus the table of contents; stretch both to the edges. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+
+    body.floating #quarto-content.page-layout-article {
+        display: grid;
+        gap: 0;
+        grid-template-columns:
+            [screen-start] 1rem
+            [screen-start-inset page-start page-start-inset body-start-outset body-start] minmax(0, 1fr)
+            [body-content-start] minmax(0, var(--am-content))
+            [body-content-end] minmax(0, 1fr)
+            [body-end] 1.25em
+            [body-end-outset] clamp(9rem, 22vw, 12rem)
+            [page-end-inset page-end screen-end-inset] 1rem
+            [screen-end];
+    }
+
+    body.floating #quarto-document-content {
+        max-width: 100%;
+    }
 }
 
 /* Line height and item spacing of the left sidebar menu */
@@ -1116,6 +1184,93 @@ mjx-container:not([display="true"]) {
   /* Gövde tipografisi mobilde bir tık küçük daha rahat okunuyor */
   body {
     font-size: 0.97rem;
+  }
+}
+
+/* ==========================================================================
+   10b. MOBILE TABLE OF CONTENTS
+   --------------------------------------------------------------------------
+   Quarto removes the table-of-contents column below 768px, so on a phone the
+   chapter had no visible outline and no way to jump between its sections.
+   scripts/mobile-toc.html copies the list into a <details> panel under the
+   chapter title; the panel only appears where the real column is gone, so the
+   outline is never on screen twice.
+   ========================================================================== */
+.mobile-toc {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+
+  .mobile-toc {
+    display: block;
+    margin: 0 0 1.6em;
+    border: 1px solid var(--bs-border-color, #e6e2da);
+    border-radius: 8px;
+    background: rgba(128, 128, 128, 0.05);
+  }
+
+  .mobile-toc > summary {
+    cursor: pointer;
+    padding: 0.6em 0.9em;
+    font-weight: 600;
+    font-size: 0.97rem;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Replace the default triangle with a marker on the right-hand side. */
+  .mobile-toc > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-toc > summary::after {
+    content: "▾";
+    font-size: 0.9em;
+    opacity: 0.7;
+  }
+
+  .mobile-toc[open] > summary::after {
+    content: "▴";
+  }
+
+  /* The lists are inside #quarto-document-content, which section 10 gives a
+     horizontal scroll container; an outline wraps instead of scrolling. */
+  .mobile-toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0 0.9em 0.2em 1em;
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .mobile-toc > ul {
+    padding-bottom: 0.9em;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .mobile-toc ul ul {
+    padding-left: 0.9em;
+  }
+
+  .mobile-toc li {
+    margin: 0.15em 0;
+  }
+
+  .mobile-toc a {
+    display: block;
+    padding: 0.25em 0;
+    line-height: 1.35;
+    text-decoration: none;
+    color: var(--academic-text, inherit);
+  }
+
+  .mobile-toc a:hover,
+  .mobile-toc a:focus {
+    text-decoration: underline;
   }
 }
 

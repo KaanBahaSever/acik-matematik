@@ -1,0 +1,1101 @@
+---
+title: "Rasyonel Fonksiyonların İntegrali"
+pagetitle: "Rasyonel Fonksiyonların İntegrali"
+description: "Rasyonel fonksiyonların integrali için üç adımlı yordam: derece denetimi ve polinom bölme; paydanın doğrusal ve indirgenemez kuadratik çarpanlara ayrılması; basit kesirlere ayırma teoremi ve varlık-teklik ispatı. Dört ayrışım kalıbı, basit kesirlerin integralleri, tam kareye tamamlama ve indirgeme formülü; katsayıları kök yerine koyma ile katsayı eşitleme yöntemleri; Ostrogradski ayrıştırması."
+---
+
+[Değişken Değiştirme ve Kısmi İntegrasyon](integral-alma-yontemleri.qmd) bölümünde iki genel araç kurmuştuk. Değişken değiştirme, integrandın içinde saklı bir bileşkeyi görüp onu çözüyordu; kısmi integrasyon ise bir çarpımın integralini başka bir çarpımın integraline dönüştürüyordu. Aynı bölümde, kısmi integrasyonun art arda uygulanmasıyla **indirgeme formülleri** (reduction formulas) elde ettiğimizi de gördük: örneğin $I_n = \int x^n e^{-x}\,dx$ için $u = x^n$, $dv = e^{-x}\,dx$ seçimi
+
+$$I_n = -x^n e^{-x} + n \int x^{n-1} e^{-x}\,dx = -x^n e^{-x} + n\,I_{n-1}$$
+
+formülünü verir ve üstel fonksiyonun yanındaki kuvvet adım adım düşürülerek hesap sonlanır. Ne var ki bu araçların hepsi **hüner** ister: hangi değişkeni seçeceğimizi, hangi çarpanı $u$ alacağımızı problem söylemez, biz buluruz.
+
+Bu bölümde ilk kez bir **algoritma** kuracağız. Belirli bir fonksiyon sınıfı — iki polinomun oranı olarak yazılabilen fonksiyonlar — için, hiçbir hünere başvurmadan, adımları önceden belli sonlu bir işlem dizisiyle ilkel fonksiyonu bulan bir yordam vereceğiz. Bu yordam her zaman çalışır ve sonucu her zaman aynı üç malzemeden kurulur: bir rasyonel fonksiyon, sonlu çok logaritma ve sonlu çok arktanjant. Bir başka deyişle, **rasyonel bir fonksiyonun ilkeli hiçbir zaman yeni bir fonksiyon türü doğurmaz.** Bu, analizde nadir görülen bir kapalılık olgusudur ve rasyonel fonksiyonların integralini bütün integral hesabının omurgası hâline getirir: sonraki bölümlerde göreceğimiz köklü ve trigonometrik integrallerin çoğu, uygun bir değişken değiştirmeyle bu bölümdeki probleme indirgenecektir.
+
+Yordam üç adımdan oluşur. Önce paydanın derecesi payınkinden büyük değilse **polinom bölme** yaparız; sonra paydayı **çarpanlarına ayırırız**; en sonunda kesri, paydaları bu çarpanların kuvvetleri olan küçük parçalara — **basit kesirlere** (partial fractions) — ayırırız. Bu bölümde şunları öğreneceğiz: üç adımın her birinin neden yapılabildiğini; basit kesirlere ayırmanın varlık ve teklik teoremini tam ispatıyla; dört ayrışım kalıbını; basit kesirlerin integrallerini — bu arada $\int \frac{dx}{(x^2+a^2)^n}$ indirgeme formülünü türeteceğiz; katsayıları belirlemenin iki yolunu ve hangisinin ne zaman kullanılacağını; ve son olarak katlı çarpanlarda rasyonel kısmı bir hamlede ayıran Ostrogradski yöntemini.
+
+## Rasyonel Fonksiyon ve Üç Adımlı Yordam
+
+Önce üzerinde çalışacağımız nesneyi tanımlayalım.
+
+::: {#def-rasyonel-fonksiyon-integral name="Rasyonel Fonksiyon ve Öz Kesir"}
+$P$ ve $Q$ reel katsayılı polinomlar ve $Q$ sıfır polinomu olmasın. $Q$'nun sıfırlarının kümesi $Z(Q)$ olmak üzere
+
+$$f(x) = \frac{P(x)}{Q(x)}, \qquad x \in \mathbb{R} \setminus Z(Q)$$
+
+biçiminde tanımlanan $f$ fonksiyonuna **rasyonel fonksiyon** (rational function) denir.
+
+$\deg P < \deg Q$ ise $\frac{P}{Q}$ kesrine **öz kesir** (proper fraction), $\deg P \ge \deg Q$ ise **bileşik kesir** (improper fraction) denir.
+:::
+
+$Q$'nun sıfırları sonlu sayıdadır (sıfırdan farklı bir polinomun en çok derecesi kadar kökü vardır), dolayısıyla $f$'nin tanım kümesi sonlu sayıda noktanın çıkarıldığı bir doğrudur; bu küme açıktır ve sonlu sayıda ayrık açık aralığın birleşimidir. $f$ bu aralıkların her birinde süreklidir ve türevlenebilirdir: süreklilik [rasyonel fonksiyonun limiti sonucundan](../analiz-1/limitin-ozellikleri.html#cor-rasyonel-fonksiyon-limiti), türevlenebilirlik ise türev için bölüm kuralından çıkar. Dolayısıyla $f$'nin bu aralıkların **her birinde ayrı ayrı** bir ilkel fonksiyonu vardır. Aşağıda "$+C$" yazarken bu ayrıntıyı hep akılda tutuyoruz: sabit, tanım kümesinin her bileşeninde ayrı seçilebilir.
+
+Yordamın adımlarını sırayla kuralım.
+
+### Adım 1 — Derece Denetimi ve Polinom Bölme
+
+Basit kesirlere ayırma yöntemi doğrudan yalnızca **öz** kesirlere uygulanır. Payın derecesi paydanınkinden küçük değilse, önce bölme yapıp bileşik kesri "polinom $+$ öz kesir" biçimine getirmemiz gerekir. Bunun her zaman yapılabildiğini söyleyen olgu, tam sayılardaki bölme algoritmasının polinomlardaki karşılığıdır.
+
+:::: {#prp-polinom-bolme-adimi name="Polinomlarda Bölme Algoritması"}
+$P$ ve $Q$ reel katsayılı polinomlar ve $Q \neq 0$ olsun. O hâlde
+
+$$P(x) = S(x)\,Q(x) + R(x), \qquad R = 0 \ \ \text{ya da} \ \ \deg R < \deg Q$$
+
+koşullarını sağlayan **tek bir** $(S, R)$ polinom çifti vardır. Bu durumda $Q$'nun sıfırlarından farklı her $x$ için
+
+$$\frac{P(x)}{Q(x)} = S(x) + \frac{R(x)}{Q(x)}$$
+
+olur; sağdaki ikinci terim bir öz kesirdir.
+
+::: {.ispat}
+**Varlık.** $\deg Q = m$ olsun ve $\deg P$ üzerinden güçlü tümevarım yapalım (bkz. [Analiz 1](../analiz-1/dogal-sayilar-ve-tumevarim.html#thm-guclu-tumevarim)). $P = 0$ ya da $\deg P < m$ ise $S = 0$, $R = P$ almak yeter.
+
+Şimdi $n = \deg P \ge m$ olsun ve derecesi $n$'den küçük bütün polinomlar için iddianın doğru olduğunu varsayalım. $P$'nin baş katsayısı $p_n$, $Q$'nunki $q_m \neq 0$ olsun.
+
+$$P_1(x) = P(x) - \frac{p_n}{q_m}\,x^{\,n-m}\,Q(x)$$
+
+polinomunu kuralım. Sağdaki iki polinomun da $x^n$ katsayısı $p_n$'dir; çıkarmada bu terimler birbirini götürür, dolayısıyla $P_1 = 0$ ya da $\deg P_1 < n$'dir. Tümevarım varsayımı gereği $P_1 = S_1 Q + R$ olacak biçimde $S_1$ ve ($R = 0$ ya da $\deg R < m$ olan) $R$ polinomları vardır. Buradan
+
+$$P(x) = \frac{p_n}{q_m}x^{\,n-m}Q(x) + P_1(x) = \left(\frac{p_n}{q_m}x^{\,n-m} + S_1(x)\right)Q(x) + R(x)$$
+
+çıkar; $S = \frac{p_n}{q_m}x^{n-m} + S_1$ alırsak istenen ayrışım elde edilir.
+
+**Teklik.** $SQ + R = \widetilde{S}Q + \widetilde{R}$ olsun; burada $R$ ve $\widetilde{R}$ ya sıfırdır ya da dereceleri $m$'den küçüktür. $Q$'lu terimleri bir tarafa, kalanları öbür tarafa toplarsak
+
+$$\bigl(S - \widetilde{S}\bigr)\,Q = \widetilde{R} - R$$
+
+olur. $S \neq \widetilde{S}$ olsaydı sol taraf sıfırdan farklı iki polinomun çarpımı olurdu ve derecesi $\deg(S-\widetilde{S}) + m \ge m$ olurdu; oysa sağ taraf ya sıfırdır ya da derecesi $m$'den küçüktür. Bu çelişkiden $S = \widetilde{S}$, dolayısıyla $\widetilde{R} - R = 0$, yani $\widetilde{R} = R$ çıkar.
+
+Son eşitlik, ilk eşitliğin $Q(x) \neq 0$ olan noktalarda $Q(x)$'e bölünmesiyle elde edilir. $R = 0$ ya da $\deg R < \deg Q$ olduğundan $\frac{R}{Q}$ bir öz kesirdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu ayrışımın integral bakımından anlamı şudur: $S$ bir polinomdur, integrali kuvvet kuralıyla anında alınır. Geriye kalan $\frac{R}{Q}$ öz kesri ise Adım 2 ve 3'ün konusudur. Yani bileşik kesirler hiçbir zaman gerçek bir zorluk çıkarmaz.
+
+### Adım 2 — Paydayı Çarpanlarına Ayırma
+
+Öz kesre geldikten sonra yapılacak iş, paydayı **tümüyle** çarpanlarına ayırmaktır. Burada dayanağımız cebirden gelen bir olgudur.
+
+::: {.callout-note title="Cebirin temel teoreminin reel yüzü"}
+Cebirin temel teoremi, sabit olmayan her karmaşık katsayılı polinomun $\mathbb{C}$'de bir kökü olduğunu söyler; buradan, karmaşık katsayılı her polinomun doğrusal çarpanların çarpımı olarak yazılabildiği çıkar. Katsayılar **reel** ise, $z$ bir kök olduğunda eşleniği $\bar{z}$ de köktür ve $z \notin \mathbb{R}$ iken $(x-z)(x-\bar{z}) = x^2 - 2\operatorname{Re}(z)\,x + |z|^2$ çarpımı reel katsayılı, diskriminantı negatif bir ikinci derece polinomdur. Eşlenik kökleri ikişer ikişer eşleştirerek şu sonuca varılır:
+
+**Reel katsayılı, sabit olmayan her polinom, bir sabitle birlikte doğrusal çarpanların ve indirgenemez kuadratik çarpanların (yani $\Delta = p^2 - 4q < 0$ olan $x^2 + px + q$ biçimindeki çarpanların) kuvvetlerinin çarpımı olarak yazılabilir; bu yazılış, çarpanların sırası dışında tektir.**
+
+Bu olgunun ispatı cebire aittir ve burada yapılmayacaktır; biz onu, aşağıdaki bütün yordamın dayandığı bir veri olarak kullanacağız.
+:::
+
+Buna göre, $Q$'nun baş katsayısını paya taşıyarak baş katsayısını $1$ kabul edebiliriz ve
+
+$$Q(x) = (x-a_1)^{k_1}\cdots(x-a_r)^{k_r}\,\bigl(x^2+p_1x+q_1\bigr)^{m_1}\cdots\bigl(x^2+p_sx+q_s\bigr)^{m_s}$$
+
+yazabiliriz. Burada $a_1, \dots, a_r$ birbirinden farklı reel sayılardır, $x^2+p_lx+q_l$ çarpanları birbirinden farklı ve indirgenemezdir ($p_l^2 - 4q_l < 0$), ve
+
+$$\deg Q = k_1 + \cdots + k_r + 2(m_1 + \cdots + m_s)$$
+
+olur.
+
+::: {.callout-warning title="⚠️ İndirgenemez çarpanı zorla parçalamayın"}
+$x^2+4$ polinomunun reel kökü yoktur; onu $\frac{A}{x+2} + \frac{B}{x-2}$ gibi doğrusal parçalara ayırmaya çalışmak anlamsızdır, çünkü $x^2+4 \neq (x+2)(x-2)$'dir. İndirgenemez bir kuadratik çarpan, ayrışımda **bir bütün olarak** kalır ve payına — sabit değil — birinci dereceden bir polinom yazılır. Bir çarpanın indirgenemez olup olmadığı diskriminanta bakılarak anlaşılır: $\Delta = p^2-4q < 0$ ise indirgenemezdir.
+:::
+
+### Adım 3 — Basit Kesirlere Ayırma
+
+Son adım, öz kesri paydaları bu çarpanların kuvvetleri olan parçalara ayırmaktır. Önce parçaların ne olduğunu adlandıralım.
+
+::: {#def-basit-kesir-turleri name="Basit Kesir Türleri"}
+Aşağıdaki iki biçimdeki rasyonel fonksiyonlara **basit kesir** (partial fraction) denir. $k \in \mathbb{N}$, $A, B, a, p, q \in \mathbb{R}$ olmak üzere:
+
+**I. tür.**
+$$\frac{A}{(x-a)^k}.$$
+
+**II. tür.**
+$$\frac{Ax+B}{\bigl(x^2+px+q\bigr)^k}, \qquad \Delta = p^2 - 4q < 0.$$
+
+I. türde payda bir doğrusal çarpanın kuvveti, II. türde ise indirgenemez bir kuadratik çarpanın kuvvetidir; II. türde pay birinci dereceden (ya da sabit) bir polinomdur.
+:::
+
+Yordamın kalbi, her öz kesrin bu iki türden sonlu çok basit kesrin toplamı olarak — üstelik **tek türlü** — yazılabilmesidir.
+
+:::: {#thm-basit-kesirlere-ayirma name="Basit Kesirlere Ayırma Teoremi"}
+$P$ ve $Q$ reel katsayılı polinomlar, $\deg P < \deg Q = n$ ve
+
+$$Q(x) = (x-a_1)^{k_1}\cdots(x-a_r)^{k_r}\,g_1(x)^{m_1}\cdots g_s(x)^{m_s}, \qquad g_l(x) = x^2+p_lx+q_l$$
+
+olsun; burada $a_i$'ler birbirinden farklı, $g_l$'ler birbirinden farklı ve indirgenemezdir. O hâlde
+
+$$\frac{P(x)}{Q(x)} = \sum_{i=1}^{r}\sum_{j=1}^{k_i} \frac{A_{ij}}{(x-a_i)^j} \; + \; \sum_{l=1}^{s}\sum_{j=1}^{m_l} \frac{B_{lj}\,x + C_{lj}}{g_l(x)^j}$$
+
+eşitliğini $Q$'nun sıfırlarından farklı her $x$ için sağlayan $A_{ij},\, B_{lj},\, C_{lj}$ reel sayıları vardır ve bu sayılar **tek türlü** belirlidir.
+
+::: {.ispat}
+Sağ taraftaki bilinmeyenlerin sayısını sayalım: doğrusal çarpanlardan $k_1 + \cdots + k_r$ tane, kuadratik çarpanlardan $2(m_1+\cdots+m_s)$ tane bilinmeyen gelir. Toplam
+
+$$N = k_1 + \cdots + k_r + 2(m_1+\cdots+m_s) = \deg Q = n$$
+
+olur. Bu eşitlik ispatın anahtarıdır: bilinmeyenlerin sayısı, paydanın derecesine tam olarak eşittir.
+
+Şimdi $V = \mathbb{R}^{N}$ ve $\mathcal{P}_{n-1}$, derecesi $n-1$'i aşmayan polinomların vektör uzayı olsun; $\dim V = N = n$ ve $\dim \mathcal{P}_{n-1} = n$'dir.
+
+$v = \bigl(A_{ij}, B_{lj}, C_{lj}\bigr) \in V$ için, sağ taraftaki toplamı ortak paydada birleştirdiğimizde çıkan payı $T(v)$ ile gösterelim; yani $T(v)$, sağ taraftaki ifadenin $Q$ ile çarpımıdır:
+
+$$T(v) = \sum_{i,j} A_{ij}\,(x-a_i)^{k_i-j}\,Q_i(x) \; + \; \sum_{l,j}\bigl(B_{lj}x + C_{lj}\bigr) g_l(x)^{m_l-j}\,G_l(x),$$
+
+burada $Q_i = \dfrac{Q}{(x-a_i)^{k_i}}$ ve $G_l = \dfrac{Q}{g_l^{m_l}}$ polinomlarıdır. Her terimin derecesini kontrol edelim: birinci toplamdaki terimin derecesi $(k_i - j) + (n - k_i) = n - j \le n-1$'dir; ikinci toplamdaki terimin derecesi en çok $1 + 2(m_l-j) + (n-2m_l) = n - 2j + 1 \le n-1$'dir (çünkü $j \ge 1$). Demek ki $T$, $V$'den $\mathcal{P}_{n-1}$'e giden bir dönüşümdür ve tanımı gereği **lineerdir.**
+
+İki uzayın boyutları eşit olduğundan, $T$'nin örten olduğunu göstermek için bire bir olduğunu göstermek yeter. Bunu yapalım.
+
+$T(v) = 0$, yani yukarıdaki ifade **özdeş olarak sıfır polinomu** olsun. Bütün katsayıların sıfır olduğunu göstereceğiz.
+
+*Doğrusal çarpanlar.* Bir $i$ sabitleyelim ve $a = a_i$, $k = k_i$ yazalım. Özdeşlikteki terimlerden $j < k$ olanlar $(x-a)^{k-j}$ çarpanını, $i' \neq i$ indisli terimler $Q_{i'}$ içinde $(x-a)^{k}$ çarpanını, kuadratik terimler ise $G_l$ içinde yine $(x-a)^{k}$ çarpanını taşır; dolayısıyla $j = k$ terimi dışındaki **her terim $(x-a)$ ile bölünür.** Özdeşlikte $x = a$ koyarsak
+
+$$A_{ik}\,Q_i(a) = 0$$
+
+kalır. $a$, $Q$'nun tam olarak $k$ katlı bir köküdür; bu yüzden $Q_i(a) \neq 0$'dır ve $A_{ik} = 0$ bulunur. Bu terim düştükten sonra özdeşlikteki bütün terimler $(x-a)$ ile bölünür; özdeşliği $(x-a)$'ya bölüp aynı akıl yürütmeyi yinelersek $A_{i,k-1} = 0$ çıkar. Bu işlemi $k$ kez tekrarlayarak $A_{ij} = 0$ $(1 \le j \le k)$ elde ederiz. Aynı şey her $i$ için geçerlidir.
+
+*Kuadratik çarpanlar.* Bütün $A_{ij}$'ler sıfır olduğuna göre özdeşlik
+
+$$\sum_{l,j}\bigl(B_{lj}x + C_{lj}\bigr) g_l^{m_l-j}\,G_l = 0$$
+
+hâlini alır. Bir $l$ sabitleyelim, $g = g_l$, $m = m_l$ yazalım. Aynı gerekçeyle, $j = m$ terimi dışındaki her terim $g$ ile bölünür. O hâlde $g$, kalan terimi de bölmelidir:
+
+$$g \ \big| \ \bigl(B_{lm}x + C_{lm}\bigr)\,G_l.$$
+
+$g$ indirgenemezdir ve $G_l$, $g$ çarpanını içermez; polinom halkasında indirgenemez bir çarpan bir çarpımı bölüyorsa çarpanlardan birini böler, dolayısıyla $g \mid \bigl(B_{lm}x + C_{lm}\bigr)$ olmalıdır. Ama $\deg g = 2$ iken $B_{lm}x + C_{lm}$'in derecesi en çok $1$'dir; derecesi daha büyük olan bir polinom, sıfırdan farklı bir polinomu bölemez. Demek ki $B_{lm}x + C_{lm}$ sıfır polinomudur, yani $B_{lm} = C_{lm} = 0$'dır. Bu terim düştükten sonra kalan bütün terimler $g$ ile bölünür; özdeşliği $g$'ye bölüp yineleyerek bütün $j$ için $B_{lj} = C_{lj} = 0$ buluruz.
+
+Böylece $T(v) = 0 \Rightarrow v = 0$, yani $T$ bire birdir. Boyutlar eşit olduğundan $T$ örtendir de.
+
+Şimdi teoremi bitirelim. $\deg P < n$ olduğundan $P \in \mathcal{P}_{n-1}$'dir. $T$ örten olduğundan $T(v) = P$ olacak bir $v \in V$ vardır; bu $v$'nin bileşenlerini ortak payda üzerinden geri okursak, $Q(x) \neq 0$ olan her $x$ için istenen ayrışım elde edilir. $T$ bire bir olduğundan bu $v$ tektir; yani katsayılar tek türlü belirlidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Teklik, pratikte çok işe yarar: katsayıları **hangi yolla** bulursak bulalım — kök yerine koyarak, katsayı eşitleyerek, ya da ikisini karıştırarak — bulduğumuz sayılar aynıdır. Ayrıca bir hesabı iki farklı yolla yapıp aynı sonucu bulmak, hesabın doğruluğunun güvenilir bir denetimidir.
+
+## Dört Ayrışım Kalıbı
+
+$Q$'nun çarpanlarına göre ayrışımın nasıl kurulacağını dört durumda toparlayalım. Bunlar @thm-basit-kesirlere-ayirma'nın özel hâlleridir; ayrı ayrı yazmanın nedeni, uygulamada kalıbı hatasız kurmayı kolaylaştırmasıdır.
+
+### Durum 1 — Farklı Doğrusal Çarpanlar
+
+$Q$, hiçbiri tekrarlamayan doğrusal çarpanların çarpımıysa, yani
+
+$$Q(x) = (a_1x+b_1)(a_2x+b_2)\cdots(a_nx+b_n)$$
+
+ise (çarpanlar birbirinin sabit katı değil), ayrışım her çarpana **bir sabit** düşürür:
+
+$$\frac{P(x)}{Q(x)} = \frac{A_1}{a_1x+b_1} + \frac{A_2}{a_2x+b_2} + \cdots + \frac{A_n}{a_nx+b_n}.$$
+
+### Durum 2 — Katlı Doğrusal Çarpanlar
+
+$Q$, $(ax+b)^k$ biçiminde katlı bir doğrusal çarpan içeriyorsa, bu çarpan için ayrışıma **birinciden $k$'ıncıya kadar bütün kuvvetler** girer:
+
+$$\frac{A_1}{ax+b} + \frac{A_2}{(ax+b)^2} + \cdots + \frac{A_k}{(ax+b)^k}.$$
+
+Ara kuvvetlerden herhangi birini atlamak yanlıştır: @thm-basit-kesirlere-ayirma'nın boyut sayımı tam olarak $k$ bilinmeyene ihtiyaç duyar; $k$'dan az bilinmeyenle kurulan bir sistemin çözümü genellikle yoktur.
+
+### Durum 3 — Farklı İndirgenemez Kuadratik Çarpanlar
+
+$Q$, $ax^2+bx+c$ biçiminde ($\Delta < 0$) indirgenemez bir kuadratik çarpan içeriyorsa, bu çarpanın payına **birinci dereceden bir polinom** yazılır:
+
+$$\frac{Ax+B}{ax^2+bx+c}.$$
+
+Buradaki $Ax+B$ payı, ayrışımın $\deg Q$ kadar bilinmeyene sahip olmasını sağlar; ikinci dereceden bir payda iki bilinmeyen getirir.
+
+### Durum 4 — Katlı İndirgenemez Kuadratik Çarpanlar
+
+$Q$, $(ax^2+bx+c)^k$ biçiminde katlı ve indirgenemez bir kuadratik çarpan içeriyorsa, Durum 2'deki gibi bütün kuvvetler yazılır; tek fark, payların birinci dereceden olmasıdır:
+
+$$\frac{A_1x+B_1}{ax^2+bx+c} + \frac{A_2x+B_2}{(ax^2+bx+c)^2} + \cdots + \frac{A_kx+B_k}{(ax^2+bx+c)^k}.$$
+
+Bir $Q$ paydası bu dört durumun herhangi bir karışımını içerebilir; o zaman kalıp, her çarpanın kendi kalıbının toplanmasıyla kurulur. Örnek olarak
+
+$$Q(x) = x^2(x-3)\bigl(x^2+1\bigr)^2$$
+
+paydası için kalıp şudur:
+
+$$\frac{A_1}{x} + \frac{A_2}{x^2} + \frac{A_3}{x-3} + \frac{B_1x+C_1}{x^2+1} + \frac{B_2x+C_2}{(x^2+1)^2}.$$
+
+Bilinmeyen sayısı $7$'dir ve gerçekten $\deg Q = 2 + 1 + 4 = 7$'dir.
+
+## Basit Kesirlerin İntegralleri
+
+Ayrışımı kurduktan sonra geriye tek tek basit kesirleri integrallemek kalır. I. tür kesirler kolaydır. II. tür kesirlerde ise iki iş yaparız: önce paydayı **tam kareye tamamlarız**, sonra $k \ge 2$ ise bir **indirgeme formülü** kullanırız. O formülü şimdi kuralım.
+
+:::: {#prp-rasyonel-indirgeme-formulu name="Kuadratik Paydanın Kuvvetleri için İndirgeme Formülü"}
+$a > 0$ ve $n \in \mathbb{N}$ olmak üzere
+
+$$J_n = \int \frac{dt}{\bigl(t^2+a^2\bigr)^{n}}$$
+
+yazalım. O hâlde
+
+$$J_1 = \frac{1}{a}\arctan\frac{t}{a} + C$$
+
+ve her $n \ge 2$ için
+
+$$J_n = \frac{t}{2a^2(n-1)\bigl(t^2+a^2\bigr)^{n-1}} + \frac{2n-3}{2a^2(n-1)}\,J_{n-1}.$$
+
+::: {.ispat}
+$n = 1$ hâli standart bir integraldir: $\frac{d}{dt}\left(\frac{1}{a}\arctan\frac{t}{a}\right) = \frac{1}{a}\cdot\frac{1}{1+\frac{t^2}{a^2}}\cdot\frac{1}{a} = \frac{1}{a^2 + t^2}$ olduğundan doğrudur (@thm-ters-trigonometrik-turevler).
+
+Şimdi $n \ge 2$ olsun. Püf nokta, payda $a^2 = (t^2+a^2) - t^2$ yazıp kesri ikiye bölmektir:
+
+$$J_n = \frac{1}{a^2}\int \frac{a^2\,dt}{\bigl(t^2+a^2\bigr)^{n}} = \frac{1}{a^2}\int \frac{\bigl(t^2+a^2\bigr) - t^2}{\bigl(t^2+a^2\bigr)^{n}}\,dt = \frac{1}{a^2}\,J_{n-1} - \frac{1}{a^2}\int \frac{t^2\,dt}{\bigl(t^2+a^2\bigr)^{n}}.$$
+
+Kalan integrali kısmi integrasyonla hesaplayalım. $t^2 = t \cdot t$ yazıp
+
+$$u = t, \qquad dv = \frac{t\,dt}{\bigl(t^2+a^2\bigr)^{n}}$$
+
+seçelim. $dv$'den $v$'yi bulmak için $w = t^2+a^2$ değişken değiştirmesi yapalım: $dw = 2t\,dt$ olduğundan
+
+$$v = \int \frac{t\,dt}{\bigl(t^2+a^2\bigr)^{n}} = \frac{1}{2}\int \frac{dw}{w^{n}} = \frac{1}{2}\cdot\frac{w^{1-n}}{1-n} = -\frac{1}{2(n-1)\bigl(t^2+a^2\bigr)^{n-1}}$$
+
+olur ($n \ge 2$ olduğundan $1-n \neq 0$). $du = dt$ ile kısmi integrasyon formülünü uygulayalım:
+
+$$\int \frac{t^2\,dt}{\bigl(t^2+a^2\bigr)^{n}} = -\frac{t}{2(n-1)\bigl(t^2+a^2\bigr)^{n-1}} + \frac{1}{2(n-1)}\int\frac{dt}{\bigl(t^2+a^2\bigr)^{n-1}}.$$
+
+Sağdaki integral $J_{n-1}$'dir. Bunu yukarıdaki eşitlikte yerine koyalım:
+
+$$\begin{aligned}
+J_n &= \frac{1}{a^2}J_{n-1} - \frac{1}{a^2}\left(-\frac{t}{2(n-1)\bigl(t^2+a^2\bigr)^{n-1}} + \frac{1}{2(n-1)}J_{n-1}\right) \\[4pt]
+&= \frac{t}{2a^2(n-1)\bigl(t^2+a^2\bigr)^{n-1}} + \frac{1}{a^2}\left(1 - \frac{1}{2(n-1)}\right)J_{n-1} \\[4pt]
+&= \frac{t}{2a^2(n-1)\bigl(t^2+a^2\bigr)^{n-1}} + \frac{2n-3}{2a^2(n-1)}\,J_{n-1}.
+\end{aligned}$$
+
+Son satırda $1 - \frac{1}{2(n-1)} = \frac{2n-2-1}{2(n-1)} = \frac{2n-3}{2(n-1)}$ hesabını kullandık. İstenen formül elde edildi.
+
+Formülün $n=2$, $a=1$ hâlini türev alarak denetleyelim: formül $J_2 = \frac{t}{2(t^2+1)} + \frac{1}{2}\arctan t$ verir ve
+
+$$\frac{d}{dt}\left(\frac{t}{2(t^2+1)} + \frac{1}{2}\arctan t\right) = \frac{(t^2+1) - t\cdot 2t}{2(t^2+1)^2} + \frac{1}{2(t^2+1)} = \frac{1-t^2 + (t^2+1)}{2(t^2+1)^2} = \frac{1}{(t^2+1)^2}$$
+
+olur; doğrudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Formül, üstü $n$ olan integrali üstü $n-1$ olan integrale bağlar; $n$ kez uygulandığında $J_1$'e, yani arktanjanta iner. Bu yüzden $\int \frac{dt}{(t^2+a^2)^n}$ integrali her $n$ için "bir rasyonel fonksiyon artı arktanjant" biçimindedir.
+
+Artık bütün basit kesirlerin integralini yazabiliriz.
+
+:::: {#thm-basit-kesir-integralleri name="Basit Kesirlerin İntegralleri"}
+$A, B, a, p, q \in \mathbb{R}$ ve $k \in \mathbb{N}$ olsun.
+
+**I. tür.** $x \neq a$ olan her aralıkta
+
+$$\int \frac{A\,dx}{x-a} = A\ln|x-a| + C, \qquad \int \frac{A\,dx}{(x-a)^k} = -\frac{A}{(k-1)(x-a)^{k-1}} + C \quad (k \ge 2).$$
+
+**II. tür.** $\Delta = p^2-4q < 0$ ve $a_0 = \sqrt{q - \frac{p^2}{4}} > 0$ olsun. $t = x + \frac{p}{2}$ değişken değiştirmesiyle $x^2+px+q = t^2 + a_0^2$ olur ve
+
+$$\int \frac{(Ax+B)\,dx}{\bigl(x^2+px+q\bigr)^{k}} = A\int \frac{t\,dt}{\bigl(t^2+a_0^2\bigr)^{k}} + \left(B - \frac{Ap}{2}\right) J_k$$
+
+yazılır; burada $J_k$, @prp-rasyonel-indirgeme-formulu'ndeki integraldir ve
+
+$$\int \frac{t\,dt}{\bigl(t^2+a_0^2\bigr)^{k}} = \begin{cases} \dfrac{1}{2}\ln\bigl(t^2+a_0^2\bigr) + C, & k = 1, \\[8pt] -\dfrac{1}{2(k-1)\bigl(t^2+a_0^2\bigr)^{k-1}} + C, & k \ge 2 \end{cases}$$
+
+olur. Özel olarak $k=1$ için, $x$ değişkenine dönülünce
+
+$$\int \frac{(Ax+B)\,dx}{x^2+px+q} = \frac{A}{2}\ln\bigl(x^2+px+q\bigr) + \frac{2B-Ap}{\sqrt{4q-p^2}}\arctan\frac{2x+p}{\sqrt{4q-p^2}} + C$$
+
+elde edilir.
+
+::: {.ispat}
+**I. tür.** $k = 1$ için: $x > a$ olan bir aralıkta $\frac{d}{dx}\bigl(A\ln(x-a)\bigr) = \frac{A}{x-a}$; $x < a$ olan bir aralıkta $\frac{d}{dx}\bigl(A\ln(a-x)\bigr) = \frac{-A}{a-x} = \frac{A}{x-a}$'dır. İki durum $|x-a|$ yazılarak birleştirilir (@thm-log-turevi ve @thm-zincir-kurali).
+
+$k \ge 2$ için doğrudan türev alalım:
+
+$$\frac{d}{dx}\left(-\frac{A}{k-1}(x-a)^{1-k}\right) = -\frac{A}{k-1}\,(1-k)(x-a)^{-k} = \frac{A}{(x-a)^k}.$$
+
+Burada @thm-genel-kuvvet-turevi ve zincir kuralı kullanıldı.
+
+**II. tür.** Önce paydayı tam kareye tamamlayalım:
+
+$$x^2 + px + q = \left(x + \frac{p}{2}\right)^2 + q - \frac{p^2}{4} = t^2 + a_0^2, \qquad t = x + \frac{p}{2}.$$
+
+$\Delta < 0$ olduğundan $q - \frac{p^2}{4} = \frac{4q-p^2}{4} > 0$'dır; dolayısıyla $a_0 = \frac{\sqrt{4q-p^2}}{2} > 0$ gerçekten tanımlıdır ve payda hiçbir $x$ için sıfırlanmaz. $dt = dx$ olduğundan değişken değiştirme kuralı doğrudan uygulanır. Payı yeni değişkenle yazalım: $x = t - \frac{p}{2}$ olduğundan
+
+$$Ax + B = A\left(t - \frac{p}{2}\right) + B = At + \left(B - \frac{Ap}{2}\right).$$
+
+Bu, integrali iddiadaki iki parçaya ayırır. İlk parçadaki $\int \frac{t\,dt}{(t^2+a_0^2)^k}$ integrali, @prp-rasyonel-indirgeme-formulu'nün ispatında $v$'yi hesaplarken yaptığımız gibi $w = t^2+a_0^2$ değişken değiştirmesiyle bulunur:
+
+$$\int \frac{t\,dt}{\bigl(t^2+a_0^2\bigr)^k} = \frac{1}{2}\int \frac{dw}{w^k} = \begin{cases} \frac{1}{2}\ln|w| + C = \frac{1}{2}\ln\bigl(t^2+a_0^2\bigr) + C, & k=1, \\[6pt] \frac{1}{2}\cdot\frac{w^{1-k}}{1-k} + C = -\frac{1}{2(k-1)\bigl(t^2+a_0^2\bigr)^{k-1}} + C, & k \ge 2. \end{cases}$$
+
+$w = t^2+a_0^2 > 0$ olduğundan mutlak değer işaretine gerek kalmaz. İkinci parça ise tanımı gereği $\bigl(B - \frac{Ap}{2}\bigr)J_k$'dır.
+
+Son olarak $k=1$ formülünü açalım. Bu durumda
+
+$$\int \frac{(Ax+B)\,dx}{x^2+px+q} = \frac{A}{2}\ln\bigl(t^2+a_0^2\bigr) + \left(B-\frac{Ap}{2}\right)\cdot\frac{1}{a_0}\arctan\frac{t}{a_0} + C$$
+
+olur. $t^2 + a_0^2 = x^2+px+q$, $a_0 = \frac{\sqrt{4q-p^2}}{2}$ ve $\frac{t}{a_0} = \frac{x + p/2}{\sqrt{4q-p^2}/2} = \frac{2x+p}{\sqrt{4q-p^2}}$ ile
+
+$$\left(B - \frac{Ap}{2}\right)\frac{1}{a_0} = \frac{2B-Ap}{2}\cdot\frac{2}{\sqrt{4q-p^2}} = \frac{2B-Ap}{\sqrt{4q-p^2}}$$
+
+bulunur; iddia edilen formül budur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note title="Sonuç neye benzer"}
+Bu teoremle @thm-basit-kesirlere-ayirma birlikte şunu söyler: **her rasyonel fonksiyonun ilkeli**, bir polinomun, bir rasyonel fonksiyonun, sonlu çok $\ln|x-a|$ ve $\ln(x^2+px+q)$ teriminin ve sonlu çok $\arctan$ teriminin bir doğrusal birleşimidir. Yeni bir fonksiyon türü ortaya çıkmaz. Bir hesabın sonunda bunların dışında bir şey görüyorsanız, ya integrand rasyonel değildir ya da bir yerde hata vardır.
+:::
+
+## Katsayıları Belirlemenin İki Yolu
+
+Ayrışım kalıbını kurduktan sonra her iki tarafı ortak paydayla çarparız ve elimizde bir **polinom özdeşliği** kalır. Bu özdeşlikten katsayıları çekmenin iki standart yolu vardır.
+
+**Yol 1 — Kök yerine koyma.** Özdeşlik bütün $x$ değerleri için doğru olduğundan, $x$ yerine paydanın köklerini koyabiliriz. Bir kök yerine konduğunda o kökü içeren çarpanlar sıfırlanır ve terimlerin çoğu düşer; genellikle tek bir bilinmeyen ayakta kalır ve doğrudan okunur. Bu yol, paydanın **birbirinden farklı reel kökleri** olduğunda en hızlısıdır. Katlı doğrusal çarpanlarda ise yalnızca **en yüksek kuvvetin** katsayısını verir; alt kuvvetlerin katsayıları için başka bir hamle gerekir.
+
+**Yol 2 — Katsayı eşitleme.** Özdeşliğin sağ tarafını açıp $x$'in kuvvetlerine göre gruplarız ve iki taraftaki aynı dereceli terimlerin katsayılarını eşitleriz. Elde edilen doğrusal denklem sistemi, @thm-basit-kesirlere-ayirma gereği tek çözümlüdür. Bu yol her durumda çalışır ve **indirgenemez kuadratik çarpan** varken (böyle bir çarpanın reel kökü olmadığından yerine konacak kök de yoktur) tek seçenektir.
+
+::: {.callout-tip title="💡 Hangisini seçmeli"}
+Uygulamada en verimlisi ikisini **karıştırmaktır**: önce her doğrusal çarpanın kökünü yerine koyup ucuza gelen katsayıları alın, sonra kalan bilinmeyenler için $x = 0$ gibi kolay bir değer koyun ya da yalnızca en yüksek dereceli terimin katsayısını eşitleyin. Katlı bir çarpan varken en yüksek kuvvetin katsayısı hep kök yerine koymayla gelir; alt kuvvetler için ise bir tane fazladan denklem yeter.
+
+Ayrıca **kapatma kuralı** (cover-up) diye bilinen kısa yol vardır: $Q(x) = (x-a)Q_1(x)$ ve $Q_1(a) \neq 0$ ise, $\frac{1}{x-a}$'nın katsayısı doğrudan $A = \frac{P(a)}{Q_1(a)}$'dır. Bunun ispatı @exr-rasyonel-integral'in son şıkkındadır.
+:::
+
+Şimdi bu yordamı dört durumun her birinde çalıştıralım.
+
+## Dört Durumun Örnekleri
+
+:::: {#exm-farkli-dogrusal-carpanlar name="Farklı Doğrusal Çarpanlar"}
+$$I = \int \frac{x+5}{x^2+x-2}\,dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+**Adım 1.** Payın derecesi $1$, paydanınki $2$'dir; $1 < 2$ olduğundan kesir özdür ve polinom bölmeye gerek yoktur.
+
+**Adım 2.** Paydayı çarpanlarına ayıralım. $x^2+x-2 = 0$ denkleminin kökleri $x = 1$ ve $x = -2$'dir, dolayısıyla
+
+$$x^2+x-2 = (x+2)(x-1).$$
+
+İki farklı doğrusal çarpan vardır; Durum 1 kalıbı geçerlidir.
+
+**Adım 3.** Ayrışımı kuralım:
+
+$$\frac{x+5}{(x+2)(x-1)} = \frac{A}{x+2} + \frac{B}{x-1}.$$
+
+Her iki tarafı ortak payda $(x+2)(x-1)$ ile çarparsak, $x \neq -2, 1$ için
+
+$$x+5 = A(x-1) + B(x+2)$$
+
+olur. Sol ve sağ taraf, sonsuz çok noktada çakışan iki polinomdur; dolayısıyla özdeştirler ve eşitlik **her** $x$ için geçerlidir. Şimdi paydanın köklerini yerine koyalım:
+
+- $x = 1$ için: $1+5 = A\cdot 0 + B\cdot 3$, yani $6 = 3B$ ve $B = 2$.
+- $x = -2$ için: $-2+5 = A\cdot(-3) + B\cdot 0$, yani $3 = -3A$ ve $A = -1$.
+
+**İntegral.** Katsayıları yerine koyup @thm-basit-kesir-integralleri'ni uygulayalım:
+
+$$I = \int\left(\frac{-1}{x+2} + \frac{2}{x-1}\right)dx = -\int\frac{dx}{x+2} + 2\int\frac{dx}{x-1} = -\ln|x+2| + 2\ln|x-1| + C.$$
+
+**Denetim.** Bulduğumuz fonksiyonun türevini alalım:
+
+$$\frac{d}{dx}\Bigl(-\ln|x+2| + 2\ln|x-1|\Bigr) = -\frac{1}{x+2} + \frac{2}{x-1} = \frac{-(x-1) + 2(x+2)}{(x+2)(x-1)} = \frac{x+5}{x^2+x-2}.$$
+
+İntegrand geri geldi; sonuç doğrudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-katli-dogrusal-carpanlar name="Katlı Doğrusal Çarpan"}
+$$I = \int \frac{x^2+1}{(x+1)(x-1)^2}\,dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+**Adım 1.** Payın derecesi $2$, paydanın açılmış derecesi $3$'tür; kesir özdür.
+
+**Adım 2.** Payda zaten çarpanlarına ayrılmış durumdadır: bir farklı doğrusal çarpan $(x+1)$ ve bir katlı doğrusal çarpan $(x-1)^2$.
+
+**Adım 3.** Durum 1 ve Durum 2 kalıplarını birleştirelim; $(x-1)^2$ için hem birinci hem ikinci kuvvet yazılmalıdır:
+
+$$\frac{x^2+1}{(x+1)(x-1)^2} = \frac{A}{x+1} + \frac{B}{x-1} + \frac{C}{(x-1)^2}.$$
+
+Ortak payda $(x+1)(x-1)^2$ ile çarpalım:
+
+$$x^2+1 = A(x-1)^2 + B(x+1)(x-1) + C(x+1).$$
+
+Katsayıları bulalım.
+
+- $x = 1$ için: sol taraf $1^2+1 = 2$; sağ tarafta ilk iki terim sıfırlanır ve $C(1+1) = 2C$ kalır. Buradan $2 = 2C$, yani $C = 1$.
+- $x = -1$ için: sol taraf $(-1)^2+1 = 2$; sağ tarafta ikinci ve üçüncü terimler sıfırlanır ve $A(-1-1)^2 = 4A$ kalır. Buradan $2 = 4A$, yani $A = \frac{1}{2}$.
+
+Görüldüğü gibi kök yerine koyma $B$'yi vermedi: $x = 1$ koyduğumuzda $B$'nin çarpanı $(x+1)(x-1)$ de sıfırlandı. Katlı çarpanlarda beklenen durum budur. $B$'yi bulmak için kolay bir değer, örneğin $x = 0$ seçelim ve bilinen $A$, $C$ değerlerini kullanalım:
+
+$$0^2 + 1 = \frac{1}{2}(0-1)^2 + B(0+1)(0-1) + 1\cdot(0+1) \;\Longrightarrow\; 1 = \frac{1}{2} - B + 1.$$
+
+Buradan $B = \frac{1}{2}$ çıkar.
+
+**Katsayı eşitlemeyle denetim.** Sağ tarafı açalım:
+
+$$A(x^2-2x+1) + B(x^2-1) + C(x+1) = (A+B)x^2 + (-2A + C)x + (A - B + C).$$
+
+$x^2$ katsayıları: $A + B = 1$; gerçekten $\frac{1}{2}+\frac{1}{2} = 1$. $x$ katsayıları: $-2A + C = 0$; gerçekten $-1 + 1 = 0$. Sabit terimler: $A - B + C = 1$; gerçekten $\frac{1}{2}-\frac{1}{2}+1 = 1$. Üç denklem de sağlanıyor.
+
+**İntegral.**
+
+$$\begin{aligned}
+I &= \int\left(\frac{1/2}{x+1} + \frac{1/2}{x-1} + \frac{1}{(x-1)^2}\right)dx \\[4pt]
+&= \frac{1}{2}\int\frac{dx}{x+1} + \frac{1}{2}\int\frac{dx}{x-1} + \int (x-1)^{-2}\,dx \\[4pt]
+&= \frac{1}{2}\ln|x+1| + \frac{1}{2}\ln|x-1| - \frac{1}{x-1} + C.
+\end{aligned}$$
+
+Son terimde @thm-basit-kesir-integralleri'nin $k=2$ hâlini kullandık: $\int (x-1)^{-2}dx = -\frac{1}{x-1}$.
+
+**Denetim.** Türev alalım:
+
+$$\frac{1}{2(x+1)} + \frac{1}{2(x-1)} + \frac{1}{(x-1)^2} = \frac{(x-1)+(x+1)}{2(x+1)(x-1)} + \frac{1}{(x-1)^2} = \frac{x}{x^2-1} + \frac{1}{(x-1)^2}.$$
+
+Ortak paydayı $(x+1)(x-1)^2$ alalım:
+
+$$\frac{x(x-1)}{(x+1)(x-1)^2} + \frac{x+1}{(x+1)(x-1)^2} = \frac{x^2 - x + x + 1}{(x+1)(x-1)^2} = \frac{x^2+1}{(x+1)(x-1)^2}.$$
+
+İntegrand geri geldi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-indirgenemez-kuadratik name="İndirgenemez Kuadratik Çarpan"}
+$$I = \int \frac{2x^2 - x + 4}{x^3+4x}\,dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+**Adım 1.** Payın derecesi $2$, paydanınki $3$'tür; kesir özdür.
+
+**Adım 2.** Paydayı çarpanlarına ayıralım:
+
+$$x^3+4x = x\bigl(x^2+4\bigr).$$
+
+$x^2+4$ çarpanının diskriminantı $\Delta = 0^2 - 4\cdot 1\cdot 4 = -16 < 0$'dır; reel kökü yoktur ve reeller üzerinde daha ileri çarpanlara ayrılamaz. Durum 3 kalıbı geçerlidir.
+
+**Adım 3.** Doğrusal çarpana bir sabit, indirgenemez kuadratik çarpana birinci dereceden bir pay yazalım:
+
+$$\frac{2x^2-x+4}{x\bigl(x^2+4\bigr)} = \frac{A}{x} + \frac{Bx+C}{x^2+4}.$$
+
+Ortak paydayla çarpalım:
+
+$$2x^2 - x + 4 = A\bigl(x^2+4\bigr) + (Bx+C)\,x = (A+B)x^2 + Cx + 4A.$$
+
+Burada indirgenemez çarpanın reel kökü olmadığından kök yerine koyma yalnızca $x = 0$'ı verir; katsayı eşitleme daha doğrudandır. $x$'in kuvvetlerine göre eşitleyelim:
+
+1. Sabit terim: $4A = 4$, yani $A = 1$.
+2. $x$ katsayısı: $C = -1$.
+3. $x^2$ katsayısı: $A + B = 2$, yani $1 + B = 2$ ve $B = 1$.
+
+Böylece
+
+$$I = \int\left(\frac{1}{x} + \frac{x-1}{x^2+4}\right)dx$$
+
+olur.
+
+**İntegral.** İkinci kesri ikiye bölmek işi kolaylaştırır; payın $x$'li kısmı bir değişken değiştirmeyle, sabit kısmı ise arktanjantla gelir:
+
+$$I = \int\frac{dx}{x} + \int\frac{x\,dx}{x^2+4} - \int\frac{dx}{x^2+4}.$$
+
+Üç integrali sırayla hesaplayalım.
+
+- $\displaystyle\int\frac{dx}{x} = \ln|x| + C_1$.
+- $\displaystyle\int\frac{x\,dx}{x^2+4}$ integralinde $u = x^2+4$ diyelim; $du = 2x\,dx$, yani $x\,dx = \frac{du}{2}$'dir. O hâlde bu integral $\frac{1}{2}\int\frac{du}{u} = \frac{1}{2}\ln|u| = \frac{1}{2}\ln\bigl(x^2+4\bigr)$ olur ($x^2+4 > 0$ olduğundan mutlak değer gereksizdir).
+- $\displaystyle\int\frac{dx}{x^2+4}$ standart bir biçimdir; @prp-rasyonel-indirgeme-formulu'nün $n=1$, $a=2$ hâli gereği $\frac{1}{2}\arctan\frac{x}{2}$'dir.
+
+Üçünü birleştirelim:
+
+$$I = \ln|x| + \frac{1}{2}\ln\bigl(x^2+4\bigr) - \frac{1}{2}\arctan\frac{x}{2} + C.$$
+
+**Denetim.** Türev alalım. Son terim için zincir kuralı gerekir:
+
+$$\frac{d}{dx}\left(-\frac{1}{2}\arctan\frac{x}{2}\right) = -\frac{1}{2}\cdot\frac{1}{1+\frac{x^2}{4}}\cdot\frac{1}{2} = -\frac{1}{4}\cdot\frac{4}{4+x^2} = -\frac{1}{x^2+4}.$$
+
+Diğer iki terimin türevleriyle birlikte
+
+$$\frac{1}{x} + \frac{x}{x^2+4} - \frac{1}{x^2+4} = \frac{\bigl(x^2+4\bigr) + x\cdot x - x}{x\bigl(x^2+4\bigr)} = \frac{2x^2 - x + 4}{x^3+4x}$$
+
+bulunur; integrand geri geldi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-katli-kuadratik name="Katlı İndirgenemez Kuadratik Çarpan"}
+$$I = \int \frac{x^3+x^2+x+2}{\bigl(x^2+1\bigr)^2}\,dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+**Adım 1.** Payın derecesi $3$, paydanın açılmış derecesi $4$'tür; kesir özdür.
+
+**Adım 2.** $x^2+1$ çarpanının diskriminantı $-4 < 0$'dır; indirgenemezdir ve karesi alınmıştır. Durum 4 kalıbı geçerlidir.
+
+**Adım 3.** Kuadratik çarpanın her kuvveti için birinci dereceden bir pay yazalım:
+
+$$\frac{x^3+x^2+x+2}{\bigl(x^2+1\bigr)^2} = \frac{Ax+B}{x^2+1} + \frac{Cx+D}{\bigl(x^2+1\bigr)^2}.$$
+
+Ortak payda $(x^2+1)^2$ ile çarpalım:
+
+$$x^3+x^2+x+2 = (Ax+B)\bigl(x^2+1\bigr) + (Cx+D).$$
+
+Sağ tarafı açalım:
+
+$$x^3+x^2+x+2 = Ax^3 + Ax + Bx^2 + B + Cx + D,$$
+
+ve $x$'in kuvvetlerine göre gruplayalım:
+
+$$x^3+x^2+x+2 = Ax^3 + Bx^2 + (A+C)x + (B+D).$$
+
+Katsayıları eşitleyelim:
+
+1. $x^3$ katsayısı: $A = 1$.
+2. $x^2$ katsayısı: $B = 1$.
+3. $x$ katsayısı: $A + C = 1$, yani $1 + C = 1$ ve $C = 0$.
+4. Sabit terim: $B + D = 2$, yani $1 + D = 2$ ve $D = 1$.
+
+Bu değerleri yerine koyunca
+
+$$I = \int\left(\frac{x+1}{x^2+1} + \frac{1}{\bigl(x^2+1\bigr)^2}\right)dx = \int\frac{x\,dx}{x^2+1} + \int\frac{dx}{x^2+1} + \int\frac{dx}{\bigl(x^2+1\bigr)^2}$$
+
+olur.
+
+**Birinci parça.** $u = x^2+1$, $du = 2x\,dx$ ile
+
+$$\int\frac{x\,dx}{x^2+1} = \frac{1}{2}\int\frac{du}{u} = \frac{1}{2}\ln\bigl(x^2+1\bigr).$$
+
+**İkinci parça.** Standart biçimdir: $\displaystyle\int\frac{dx}{x^2+1} = \arctan x$.
+
+**Üçüncü parça.** Bu, bölümün asıl yeni hesabıdır; iki ayrı yolla yapalım.
+
+*Trigonometrik dönüşümle.* $x = \tan\theta$, $\theta \in \bigl(-\frac{\pi}{2}, \frac{\pi}{2}\bigr)$ diyelim. Bu aralıkta tanjant kesin artan ve türevlenebilirdir, dolayısıyla değişken değiştirme meşrudur (@thm-birebir-monoton). $dx = \sec^2\theta\,d\theta$ ve $x^2+1 = \tan^2\theta + 1 = \sec^2\theta$ olduğundan
+
+$$\int\frac{dx}{\bigl(x^2+1\bigr)^2} = \int\frac{\sec^2\theta}{\sec^4\theta}\,d\theta = \int \cos^2\theta\,d\theta.$$
+
+Yarım açı özdeşliği $\cos^2\theta = \frac{1+\cos 2\theta}{2}$ ile
+
+$$\int\cos^2\theta\,d\theta = \frac{\theta}{2} + \frac{\sin 2\theta}{4} = \frac{\theta}{2} + \frac{\sin\theta\cos\theta}{2}$$
+
+bulunur. Şimdi $x$ değişkenine dönelim: $\theta = \arctan x$'tir; ayrıca $\sec^2\theta = 1+x^2$ olduğundan $\cos^2\theta = \frac{1}{1+x^2}$ ve
+
+$$\sin\theta\cos\theta = \tan\theta\cos^2\theta = \frac{x}{1+x^2}$$
+
+olur. Demek ki
+
+$$\int\frac{dx}{\bigl(x^2+1\bigr)^2} = \frac{1}{2}\arctan x + \frac{x}{2\bigl(x^2+1\bigr)}.$$
+
+*İndirgeme formülüyle.* @prp-rasyonel-indirgeme-formulu'nü $n=2$, $a=1$ ile uygulayalım:
+
+$$J_2 = \frac{x}{2\cdot 1\cdot(2-1)\bigl(x^2+1\bigr)^{1}} + \frac{2\cdot 2 - 3}{2\cdot 1\cdot(2-1)}\,J_1 = \frac{x}{2\bigl(x^2+1\bigr)} + \frac{1}{2}\arctan x.$$
+
+İki yol aynı sonucu verdi.
+
+**Birleştirme.** Üç parçayı toplayalım:
+
+$$I = \frac{1}{2}\ln\bigl(x^2+1\bigr) + \arctan x + \frac{1}{2}\arctan x + \frac{x}{2\bigl(x^2+1\bigr)} + C,$$
+
+yani
+
+$$I = \frac{1}{2}\ln\bigl(x^2+1\bigr) + \frac{3}{2}\arctan x + \frac{x}{2\bigl(x^2+1\bigr)} + C.$$
+
+**Denetim.** Türev alalım:
+
+$$\frac{d}{dx}\left(\frac{1}{2}\ln\bigl(x^2+1\bigr)\right) = \frac{x}{x^2+1}, \qquad \frac{d}{dx}\left(\frac{3}{2}\arctan x\right) = \frac{3}{2\bigl(x^2+1\bigr)},$$
+
+$$\frac{d}{dx}\left(\frac{x}{2\bigl(x^2+1\bigr)}\right) = \frac{\bigl(x^2+1\bigr) - x\cdot 2x}{2\bigl(x^2+1\bigr)^2} = \frac{1-x^2}{2\bigl(x^2+1\bigr)^2}.$$
+
+Üçünü ortak payda $2(x^2+1)^2$ üzerinde toplayalım:
+
+$$\frac{2x\bigl(x^2+1\bigr) + 3\bigl(x^2+1\bigr) + 1 - x^2}{2\bigl(x^2+1\bigr)^2} = \frac{2x^3 + 2x + 3x^2 + 3 + 1 - x^2}{2\bigl(x^2+1\bigr)^2} = \frac{2x^3 + 2x^2 + 2x + 4}{2\bigl(x^2+1\bigr)^2}.$$
+
+Pay ve paydayı $2$'ye bölersek $\frac{x^3+x^2+x+2}{(x^2+1)^2}$ elde ederiz; integrand geri geldi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Polinom Bölme Gerektiren İntegraller
+
+Yukarıdaki dört örnekte de kesir özdü. Bileşik kesirlerde Adım 1 atlanamaz; atlanırsa kurulan ayrışım sistemi çözümsüz çıkar.
+
+::: {.callout-warning title="⚠️ Önce derece denetimi"}
+$\deg P \ge \deg Q$ iken doğrudan basit kesir kalıbı kurmak yanlıştır. Örneğin $\frac{x^2}{x^2-1} = \frac{A}{x-1} + \frac{B}{x+1}$ denemesi $x^2 = A(x+1)+B(x-1)$ verir; sağ taraf birinci dereceden, sol taraf ikinci derecedendir, dolayısıyla hiçbir $A, B$ çifti bu özdeşliği sağlayamaz. Doğrusu önce $\frac{x^2}{x^2-1} = 1 + \frac{1}{x^2-1}$ yazmaktır.
+:::
+
+:::: {#exm-polinom-bolmeli name="Bileşik Kesirlerde Bölme Adımı"}
+Aşağıdaki integralleri hesaplayınız.
+
+a) $\displaystyle I_1 = \int \frac{x^3+1}{x^2-1}\,dx$
+
+b) $\displaystyle I_2 = \int \frac{x^4+x^3+3x^2+x+3}{x^4+x^2}\,dx$
+
+::: {.cozum}
+**a)** Payın derecesi $3$, paydanınki $2$'dir; kesir bileşiktir ve @prp-polinom-bolme-adimi gereği önce bölme yapmalıyız. $x^3+1$'i $x^2-1$'e bölelim: $x\cdot(x^2-1) = x^3-x$ olduğundan
+
+$$x^3+1 = x\bigl(x^2-1\bigr) + (x+1),$$
+
+yani bölüm $S(x) = x$, kalan $R(x) = x+1$'dir ve $\deg R = 1 < 2 = \deg Q$'dur. O hâlde
+
+$$\frac{x^3+1}{x^2-1} = x + \frac{x+1}{x^2-1}.$$
+
+Şimdi kalan öz kesre bakalım. Paydayı çarpanlarına ayıralım: $x^2-1 = (x-1)(x+1)$. Payla payda ortak bir $(x+1)$ çarpanı taşıyor; $x \neq -1$ olduğu sürece sadeleştirebiliriz:
+
+$$\frac{x+1}{(x-1)(x+1)} = \frac{1}{x-1}, \qquad x \neq \pm 1.$$
+
+Sadeleştirmeyi görmek burada bütün basit kesir hesabını gereksiz kılar. (Sadeleştirmeseydik $\frac{x+1}{(x-1)(x+1)} = \frac{A}{x-1}+\frac{B}{x+1}$ kalıbı $A = 1$, $B = 0$ verirdi; aynı sonuç.) Böylece
+
+$$I_1 = \int\left(x + \frac{1}{x-1}\right)dx = \frac{x^2}{2} + \ln|x-1| + C.$$
+
+Burada bir ayrıntıya dikkat edelim: integrandın tanım kümesi $x \neq \pm 1$ noktalarından oluşur, yani üç ayrık aralıktır; bulduğumuz ilkel fonksiyon ise $x = -1$'de de tanımlıdır. Bu bir çelişki değildir — integrandın $x=-1$'de kaldırılabilir bir süreksizliği vardır ve ilkel fonksiyon o boşluğu doldurur. Ama sabit $C$, integrandın tanım kümesinin üç bileşeninde ayrı ayrı seçilebilir.
+
+**Denetim.** Bulduğumuz ilkelin türevini alalım:
+
+$$\frac{d}{dx}\left(\frac{x^2}{2}+\ln|x-1|\right) = x + \frac{1}{x-1} = \frac{x(x-1)+1}{x-1} = \frac{x^2-x+1}{x-1}$$
+
+Öte yandan integrandı sadeleştirirsek
+
+$$\frac{x^3+1}{x^2-1} = \frac{(x+1)\bigl(x^2-x+1\bigr)}{(x-1)(x+1)} = \frac{x^2-x+1}{x-1}$$
+
+olur; ikisi aynıdır.
+
+**b)** Pay ve paydanın dereceleri eşittir ($4$); kesir bileşiktir. Bölme burada çok kolaydır, çünkü payı paydanın kendisi artı bir kalan olarak yazabiliriz:
+
+$$x^4+x^3+3x^2+x+3 = \bigl(x^4+x^2\bigr) + \bigl(x^3+2x^2+x+3\bigr).$$
+
+Demek ki $S(x) = 1$ ve $R(x) = x^3+2x^2+x+3$'tür; $\deg R = 3 < 4$ olduğundan bölme tamamlanmıştır:
+
+$$\frac{x^4+x^3+3x^2+x+3}{x^4+x^2} = 1 + \frac{x^3+2x^2+x+3}{x^2\bigl(x^2+1\bigr)}.$$
+
+Payda $x^4+x^2 = x^2(x^2+1)$ biçiminde çarpanlarına ayrıldı: katlı bir doğrusal çarpan $x^2$ ve indirgenemez bir kuadratik çarpan $x^2+1$. Kalıp Durum 2 ile Durum 3'ün birleşimidir:
+
+$$\frac{x^3+2x^2+x+3}{x^2\bigl(x^2+1\bigr)} = \frac{A}{x} + \frac{B}{x^2} + \frac{Cx+D}{x^2+1}.$$
+
+Ortak paydayla çarpalım:
+
+$$x^3+2x^2+x+3 = A\,x\bigl(x^2+1\bigr) + B\bigl(x^2+1\bigr) + (Cx+D)\,x^2.$$
+
+Sağ tarafı açıp gruplayalım:
+
+$$= (A+C)x^3 + (B+D)x^2 + Ax + B.$$
+
+Katsayıları eşitleyelim:
+
+- $x^0$: $B = 3$.
+- $x^1$: $A = 1$.
+- $x^3$: $A + C = 1 \Rightarrow C = 0$.
+- $x^2$: $B + D = 2 \Rightarrow D = -1$.
+
+Böylece
+
+$$I_2 = \int\left(1 + \frac{1}{x} + \frac{3}{x^2} - \frac{1}{x^2+1}\right)dx = x + \ln|x| - \frac{3}{x} - \arctan x + C.$$
+
+Burada $\int 3x^{-2}dx = -3x^{-1}$ hesabını kullandık.
+
+**Denetim.** Türev alalım:
+
+$$1 + \frac{1}{x} + \frac{3}{x^2} - \frac{1}{x^2+1}.$$
+
+Ortak payda $x^2(x^2+1) = x^4+x^2$ üzerinde toplayalım:
+
+$$\frac{\bigl(x^4+x^2\bigr) + x\bigl(x^2+1\bigr) + 3\bigl(x^2+1\bigr) - x^2}{x^4+x^2} = \frac{x^4+x^2+x^3+x+3x^2+3-x^2}{x^4+x^2} = \frac{x^4+x^3+3x^2+x+3}{x^4+x^2}.$$
+
+İntegrand geri geldi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tam Kareye Tamamlama Gereken Bir Karma Örnek
+
+Şimdiye kadarki kuadratik çarpanlar hep $x^2+a^2$ biçimindeydi; genel durumda $x$'li bir orta terim de bulunur ve @thm-basit-kesir-integralleri'nin ikinci kısmındaki tam kareye tamamlama devreye girer. Yordamın üç adımını da çalıştıran bir örnekle bunu görelim.
+
+:::: {#exm-rasyonel-karma name="Doğrusal ve Kuadratik Çarpanın Birlikte Bulunduğu İntegral"}
+$$I = \int \frac{3x+1}{(x-1)\bigl(x^2+2x+5\bigr)}\,dx$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+**Adım 1.** Payın derecesi $1$, paydanın açılmış derecesi $3$'tür; kesir özdür.
+
+**Adım 2.** $x^2+2x+5$ çarpanının diskriminantı $\Delta = 4 - 20 = -16 < 0$'dır; indirgenemezdir. Payda tam olarak çarpanlarına ayrılmış hâldedir.
+
+**Adım 3.** Kalıp, bir doğrusal çarpan ile bir indirgenemez kuadratik çarpanın birleşimidir:
+
+$$\frac{3x+1}{(x-1)\bigl(x^2+2x+5\bigr)} = \frac{A}{x-1} + \frac{Bx+C}{x^2+2x+5}.$$
+
+Ortak paydayla çarpalım:
+
+$$3x+1 = A\bigl(x^2+2x+5\bigr) + (Bx+C)(x-1).$$
+
+Karma yolu kullanalım: önce tek reel kökü yerine koyalım.
+
+- $x = 1$ için: $3+1 = A(1+2+5)$, yani $4 = 8A$ ve $A = \frac{1}{2}$.
+
+Kalan iki bilinmeyeni katsayı eşitlemeyle bulalım. Sağ tarafı açalım:
+
+$$A x^2 + 2Ax + 5A + Bx^2 - Bx + Cx - C = (A+B)x^2 + (2A - B + C)x + (5A - C).$$
+
+- $x^2$ katsayısı: $A + B = 0 \Rightarrow B = -\frac{1}{2}$.
+- Sabit terim: $5A - C = 1 \Rightarrow \frac{5}{2} - C = 1 \Rightarrow C = \frac{3}{2}$.
+
+$x$ katsayısı bir denetim verir: $2A - B + C = 1 + \frac{1}{2} + \frac{3}{2} = 3$; sol taraftaki $3$ ile uyuşuyor.
+
+**İntegral.** Ayrışımı yerine koyalım:
+
+$$I = \frac{1}{2}\int\frac{dx}{x-1} + \int\frac{-\frac{1}{2}x + \frac{3}{2}}{x^2+2x+5}\,dx = \frac{1}{2}\ln|x-1| - \frac{1}{2}\int\frac{x-3}{x^2+2x+5}\,dx.$$
+
+Kalan integral II. tür bir basit kesirdir ve $k=1$'dir. İki hamlede hallolur: payı, paydanın türevinin bir katı artı sabit olarak yazmak ve paydayı tam kareye tamamlamak. Paydanın türevi $2x+2$'dir; payı buna göre düzenleyelim:
+
+$$x - 3 = \frac{1}{2}(2x+2) - 4.$$
+
+Böylece
+
+$$\int\frac{x-3}{x^2+2x+5}\,dx = \frac{1}{2}\int\frac{(2x+2)\,dx}{x^2+2x+5} - 4\int\frac{dx}{x^2+2x+5}.$$
+
+Birinci integralde payda tam olarak paydanın türevidir; $u = x^2+2x+5$ dönüşümüyle $\frac{1}{2}\ln\bigl(x^2+2x+5\bigr)$ verir. (Payda hiç sıfırlanmadığından ve $x^2+2x+5 = (x+1)^2+4 \ge 4 > 0$ olduğundan mutlak değere gerek yoktur.)
+
+İkinci integralde tam kareye tamamlayalım:
+
+$$x^2+2x+5 = (x+1)^2 + 4.$$
+
+$t = x+1$ diyelim; $dt = dx$'tir ve @prp-rasyonel-indirgeme-formulu'nün $n=1$, $a=2$ hâli gereği
+
+$$\int\frac{dx}{x^2+2x+5} = \int\frac{dt}{t^2+2^2} = \frac{1}{2}\arctan\frac{t}{2} = \frac{1}{2}\arctan\frac{x+1}{2}.$$
+
+Toplarsak
+
+$$\int\frac{x-3}{x^2+2x+5}\,dx = \frac{1}{2}\ln\bigl(x^2+2x+5\bigr) - 2\arctan\frac{x+1}{2}$$
+
+ve buradan
+
+$$I = \frac{1}{2}\ln|x-1| - \frac{1}{4}\ln\bigl(x^2+2x+5\bigr) + \arctan\frac{x+1}{2} + C.$$
+
+**Denetim.** Türev alalım. Arktanjant terimi için zincir kuralı:
+
+$$\frac{d}{dx}\arctan\frac{x+1}{2} = \frac{1}{1 + \frac{(x+1)^2}{4}}\cdot\frac{1}{2} = \frac{2}{4+(x+1)^2} = \frac{2}{x^2+2x+5}.$$
+
+Üç terimin türevlerini toplayalım:
+
+$$\frac{1}{2(x-1)} - \frac{1}{4}\cdot\frac{2x+2}{x^2+2x+5} + \frac{2}{x^2+2x+5} = \frac{1}{2(x-1)} + \frac{-(x+1) + 4}{2\bigl(x^2+2x+5\bigr)} = \frac{1}{2(x-1)} + \frac{3-x}{2\bigl(x^2+2x+5\bigr)}.$$
+
+Ortak payda $2(x-1)(x^2+2x+5)$ üzerinde toplayalım:
+
+$$\frac{\bigl(x^2+2x+5\bigr) + (3-x)(x-1)}{2(x-1)\bigl(x^2+2x+5\bigr)} = \frac{x^2+2x+5 + 3x - 3 - x^2 + x}{2(x-1)\bigl(x^2+2x+5\bigr)} = \frac{6x+2}{2(x-1)\bigl(x^2+2x+5\bigr)}.$$
+
+Pay ve paydayı $2$'ye bölünce $\frac{3x+1}{(x-1)(x^2+2x+5)}$ elde ederiz; integrand geri geldi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Ostrogradski Ayrıştırması
+
+Paydada katlı çarpanlar varsa yukarıdaki yordam çalışır, ama uzar: her katlı çarpan için bütün ara kuvvetlerin katsayıları hesaplanır ve sonra bunların integralleri tek tek alınır. Sonucun **rasyonel** kısmı ile **transandant** (logaritma ve arktanjant) kısmı, aslında birbirinden çok daha ucuza ayrılabilir. Bunu yapan yönteme Ostrogradski ayrıştırması denir.
+
+Fikri anlamak için @prp-rasyonel-indirgeme-formulu'ne ve @thm-basit-kesir-integralleri'ne geri bakalım: $j \ge 2$ üstlü bir basit kesrin integrali daima "bir rasyonel fonksiyon $+$ daha düşük üstlü bir integral" biçiminde çıkar. Üsler $1$'e indiğindeyse artık rasyonel kısım doğmaz; yalnızca logaritma ve arktanjant kalır. Demek ki sonucun rasyonel kısmının paydası, $Q$'nun her çarpanının **bir eksik** kuvvetinden oluşur.
+
+:::: {#prp-ostrogradski name="Ostrogradski Ayrıştırması"}
+$P, Q$ reel katsayılı polinomlar, $\deg P < \deg Q$ olsun; genelliği bozmadan $Q$'nun baş katsayısını $1$ kabul edelim (gerekirse paya taşınır).
+
+$$Q_1 = \gcd\bigl(Q, Q'\bigr), \qquad Q_2 = \frac{Q}{Q_1}$$
+
+yazalım; burada $\gcd$, baş katsayısı $1$ olacak biçimde seçilen en büyük ortak bölendir. $Q = \prod_i f_i^{e_i}$, $f_i$'ler farklı (baş katsayısı $1$ olan) indirgenemez çarpanlar olmak üzere
+
+$$Q_1 = \prod_i f_i^{\,e_i - 1}, \qquad Q_2 = \prod_i f_i$$
+
+olur; özel olarak $Q_2$'nin bütün indirgenemez çarpanları tek katlıdır. Bu durumda
+
+$$\int \frac{P(x)}{Q(x)}\,dx = \frac{P_1(x)}{Q_1(x)} + \int \frac{P_2(x)}{Q_2(x)}\,dx$$
+
+eşitliğini sağlayan, $\deg P_1 < \deg Q_1$ ve $\deg P_2 < \deg Q_2$ koşullarını gerçekleyen $P_1, P_2$ polinomları vardır ve tektir. Sağdaki integral yalnızca logaritma ve arktanjant terimleri üretir.
+
+::: {.ispat}
+Önce $Q_1$ için verilen çarpan yazılışını doğrulayalım. $Q = f^{e}h$ ve $f \nmid h$ olsun. Çarpım kuralıyla
+
+$$Q' = e\,f^{\,e-1}f'\,h + f^{e}h' = f^{\,e-1}\bigl(e f' h + f h'\bigr).$$
+
+Buradan $f^{e-1} \mid Q'$ görülür. Ayrıca $f \nmid \bigl(ef'h + fh'\bigr)$'dir: $f \mid fh'$ olduğundan bu ancak $f \mid ef'h$ olması hâlinde mümkün olurdu; $f$ indirgenemez, $f \nmid h$ ve $\deg f' < \deg f$ ile $f' \neq 0$ olduğundan $f \nmid f'$'dir, dolayısıyla $f \nmid ef'h$. Demek ki $f^{e}\nmid Q'$'dür ve $Q$ ile $Q'$'nün ortak çarpanında $f$ tam olarak $e-1$ kez bulunur. Her indirgenemez çarpan için aynı hesap yapılırsa $Q_1 = \prod f_i^{e_i-1}$ ve $Q_2 = Q/Q_1 = \prod f_i$ çıkar.
+
+Şimdi asıl iddiaya gelelim. @thm-basit-kesirlere-ayirma gereği $\frac{P}{Q}$ basit kesirlerin toplamıdır. Bu toplamı iki gruba ayıralım: üstü $j \ge 2$ olan kesirler ve üstü $j = 1$ olan kesirler.
+
+*Üstü $j\ge 2$ olan kesirler.* @thm-basit-kesir-integralleri'ne göre I. türden $\frac{A}{(x-a)^j}$ kesrinin integrali $-\frac{A}{(j-1)(x-a)^{j-1}}$'dir; paydası $(x-a)^{j-1}$'dir ve $j-1 \le e-1$ olduğundan bu payda $Q_1$'i böler. II. türden $\frac{Bx+C}{g^j}$ kesrinin integrali ise, aynı teoremdeki ayrışım ve @prp-rasyonel-indirgeme-formulu'nün ardışık uygulanmasıyla, paydası $g^{j-1}$'i bölen bir rasyonel fonksiyon ile $J_1$'in, yani bir arktanjantın katı olarak yazılır. Yine payda $Q_1$'i böler.
+
+*Üstü $j = 1$ olan kesirler.* $\frac{A}{x-a}$ kesrinin integrali $A\ln|x-a|$'dır; $\frac{Bx+C}{g}$ kesrinin integrali ise @thm-basit-kesir-integralleri'nin son formülü gereği bir logaritma ile bir arktanjantın toplamıdır. Bunların hiçbirinde rasyonel bir terim doğmaz. Öte yandan bu kesirlerin toplamı, paydası $\prod f_i = Q_2$ olan bir öz kesirdir; payını $P_2$ ile gösterelim, $\deg P_2 < \deg Q_2$'dir.
+
+İki grubu birleştirirsek, birinci grubun integrallerinin toplamı paydası $Q_1$'i bölen bir rasyonel fonksiyondur; ortak paydaya getirilince $\frac{P_1}{Q_1}$ biçimini alır ve öz kesir olduğundan $\deg P_1 < \deg Q_1$'dir. Böylece
+
+$$\int\frac{P}{Q}\,dx = \frac{P_1}{Q_1} + \int\frac{P_2}{Q_2}\,dx$$
+
+elde edilir ve sağdaki integral yalnızca logaritma ve arktanjant üretir.
+
+*Teklik.* $\frac{P_1}{Q_1} + \int\frac{P_2}{Q_2}\,dx = \frac{\widetilde{P_1}}{Q_1} + \int\frac{\widetilde{P_2}}{Q_2}\,dx$ olsun. Her iki tarafın türevini alıp düzenlersek
+
+$$\left(\frac{P_1 - \widetilde{P_1}}{Q_1}\right)' = \frac{\widetilde{P_2} - P_2}{Q_2}$$
+
+çıkar. $R = P_1 - \widetilde{P_1}$ yazalım ve $R \neq 0$ olduğunu varsayıp çelişki arayalım. $\frac{R}{Q_1}$ kesrini sadeleştirip en sade hâline getirelim: $\frac{R}{Q_1} = \frac{u}{v}$ olsun, burada $v \mid Q_1$ ve $\gcd(u,v) = 1$'dir; $\deg R < \deg Q_1$ olduğundan $\deg u < \deg v$'dir. $v$ sabit olsaydı $\frac{u}{v}$, derecesi negatif olan bir polinom, yani sıfır olurdu ve $R = 0$ çıkardı; demek ki $\deg v \ge 1$'dir.
+
+$v$'nin bir indirgenemez çarpanı $f$ olsun ve $f$'nin $v$'deki katı $d \ge 1$ olsun; $v = f^{d}w$ ve $f \nmid w$ yazalım. Bölüm kuralıyla
+
+$$\left(\frac{u}{v}\right)' = \frac{u'v - uv'}{v^{2}}, \qquad v' = f^{\,d-1}\bigl(d\,f'w + f\,w'\bigr)$$
+
+olur; buradan
+
+$$u'v - uv' = f^{\,d-1}\Bigl(f\bigl(u'w - u\,w'\bigr) - d\,u\,f'w\Bigr)$$
+
+çıkar. Parantez içindeki ifade $f$ ile bölünmez: birinci terim $f$ ile bölünür, ama ikinci terim bölünmez; çünkü $f \nmid u$ (kesri sadeleştirdik), $f \nmid w$ ve $f \nmid f'$'dür ($f' \neq 0$ ve $\deg f' < \deg f$), ayrıca $d$ sıfırdan farklı bir sabittir. Demek ki $f$ çarpanı, payı veren $u'v - uv'$ ifadesinde tam olarak $d-1$ kez, paydayı veren $v^{2} = f^{2d}w^{2}$ ifadesinde ise $2d$ kez bulunur; sadeleştirmeden sonra $f$, paydada tam olarak $2d - (d-1) = d+1 \ge 2$ kuvvetiyle kalır.
+
+Oysa eşitliğin sağ tarafı $\frac{\widetilde{P_2}-P_2}{Q_2}$'dir ve $Q_2$'de her indirgenemez çarpan yalnızca birinci kuvvetiyle bulunur; sadeleştirme bu kuvveti ancak düşürebilir. İki taraf aynı rasyonel fonksiyon olduğuna göre bu bir çelişkidir. Demek ki $R = 0$, yani $P_1 = \widetilde{P_1}$'dir; bu durumda $\frac{\widetilde{P_2} - P_2}{Q_2} = 0$, yani $P_2 = \widetilde{P_2}$ olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yöntemin pratikteki kullanımı şudur: $P_1$ ve $P_2$'yi belirsiz katsayılı polinomlar olarak yazarız, eşitliğin **iki tarafının türevini alırız** ve ortak paydayla çarparak katsayı eşitleriz. Böylece hiçbir integral hesaplamadan sonucun rasyonel kısmını buluruz; geriye kalan integralde ise paydanın bütün çarpanları tek katlı olduğundan hesap kısadır. Bunu bir örnekte çalıştıralım.
+
+:::: {#exm-rasyonel-ostrogradski name="Ostrogradski Yöntemiyle Bir İntegral"}
+$$I = \int \frac{dx}{x(x+1)^2}$$
+
+integralini Ostrogradski ayrıştırmasıyla hesaplayınız.
+
+::: {.cozum}
+Burada $P(x) = 1$, $Q(x) = x(x+1)^2$ ve $\deg P = 0 < 3 = \deg Q$'dur.
+
+**$Q_1$ ve $Q_2$'yi bulalım.** @prp-ostrogradski'deki çarpan yazılışını doğrudan kullanabiliriz: $Q$'nun indirgenemez çarpanları $x$ (katı $1$) ve $x+1$ (katı $2$)'dir, dolayısıyla
+
+$$Q_1 = x^{0}(x+1)^{1} = x+1, \qquad Q_2 = x(x+1) = x^2+x.$$
+
+(İsteyen bunu $\gcd$ hesabıyla da görebilir: $Q' = (x+1)^2 + 2x(x+1) = (x+1)(3x+1)$ ve $\gcd\bigl(x(x+1)^2,\ (x+1)(3x+1)\bigr) = x+1$'dir.)
+
+**Kalıbı kuralım.** $\deg P_1 < \deg Q_1 = 1$ olduğundan $P_1$ bir sabittir: $P_1 = a$. $\deg P_2 < \deg Q_2 = 2$ olduğundan $P_2 = bx + c$'dir. Ayrıştırma:
+
+$$\int\frac{dx}{x(x+1)^2} = \frac{a}{x+1} + \int\frac{bx+c}{x^2+x}\,dx.$$
+
+**Türev alıp katsayı eşitleyelim.** Her iki tarafın türevini alalım:
+
+$$\frac{1}{x(x+1)^2} = -\frac{a}{(x+1)^2} + \frac{bx+c}{x(x+1)}.$$
+
+Her iki tarafı $x(x+1)^2$ ile çarpalım:
+
+$$1 = -a\,x + (bx+c)(x+1) = -ax + bx^2 + bx + cx + c = b\,x^2 + (b + c - a)\,x + c.$$
+
+Katsayıları eşitleyelim:
+
+- $x^2$: $b = 0$.
+- $x^0$: $c = 1$.
+- $x^1$: $b + c - a = 0 \Rightarrow 0 + 1 - a = 0 \Rightarrow a = 1$.
+
+**Kalan integrali hesaplayalım.** $b=0$, $c=1$ ile
+
+$$I = \frac{1}{x+1} + \int\frac{dx}{x(x+1)}.$$
+
+Kalan integralin paydasının çarpanları tek katlıdır; Durum 1 kalıbı geçerlidir:
+
+$$\frac{1}{x(x+1)} = \frac{A}{x} + \frac{B}{x+1} \;\Longrightarrow\; 1 = A(x+1) + Bx.$$
+
+$x = 0$ için $A = 1$; $x = -1$ için $1 = -B$, yani $B = -1$. O hâlde
+
+$$\int\frac{dx}{x(x+1)} = \ln|x| - \ln|x+1| + C = \ln\left|\frac{x}{x+1}\right| + C$$
+
+ve sonuç
+
+$$I = \frac{1}{x+1} + \ln|x| - \ln|x+1| + C$$
+
+olur.
+
+**Denetim.** Türev alalım:
+
+$$-\frac{1}{(x+1)^2} + \frac{1}{x} - \frac{1}{x+1}.$$
+
+Ortak payda $x(x+1)^2$ üzerinde toplayalım:
+
+$$\frac{-x + (x+1)^2 - x(x+1)}{x(x+1)^2} = \frac{-x + x^2+2x+1 - x^2 - x}{x(x+1)^2} = \frac{1}{x(x+1)^2}.$$
+
+İntegrand geri geldi.
+
+**Karşılaştırma.** Aynı integrali klasik yordamla yapsaydık $\frac{1}{x(x+1)^2} = \frac{A}{x}+\frac{B}{x+1}+\frac{C}{(x+1)^2}$ kalıbını kurar, $A = 1$, $C = -1$, $B = -1$ bulur ve
+
+$$I = \ln|x| - \ln|x+1| + \frac{1}{x+1} + C$$
+
+elde ederdik — aynı sonuç. Ostrogradski yönteminin üstünlüğü, katlılık büyüdükçe belirginleşir: paydada $(x+1)^{5}$ gibi bir çarpan varsa klasik yol beş katsayı ve beş integral, Ostrogradski ise dört katsayılı tek bir rasyonel kısım ve tek katlı bir paydayla kısa bir logaritma hesabı gerektirir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+:::: {#exr-rasyonel-integral name="Rasyonel Fonksiyonların İntegrali Üzerine"}
+a) $a > 0$ olmak üzere $\displaystyle\int\frac{dx}{x^2-a^2}$ integralini hesaplayınız.
+
+b) $\displaystyle\int\frac{3x+5}{(x-1)(x+2)^2}\,dx$ integralini hesaplayınız.
+
+c) $\displaystyle\int\frac{dx}{x^3+1}$ integralini hesaplayınız.
+
+d) $\displaystyle\int\frac{2x^3-4x^2-x-3}{x^2-2x-3}\,dx$ integralini hesaplayınız.
+
+e) @prp-rasyonel-indirgeme-formulu'nü kullanarak $\displaystyle\int\frac{dx}{\bigl(x^2+9\bigr)^2}$ integralini hesaplayınız.
+
+f) **(Kapatma kuralı.)** $\deg P < \deg Q$, $Q(x) = (x-a)Q_1(x)$ ve $Q_1(a) \neq 0$ olsun. $\frac{P}{Q}$'nun basit kesirlere ayrışımında $\frac{1}{x-a}$ teriminin katsayısının $A = \frac{P(a)}{Q_1(a)}$ olduğunu gösteriniz ve bunu $\frac{x^2+2}{(x-1)(x-2)(x-3)}$ kesrine uygulayınız.
+
+::: {.cozum}
+**a)** Payda iki farklı doğrusal çarpanın çarpımıdır: $x^2-a^2 = (x-a)(x+a)$. Durum 1 kalıbı:
+
+$$\frac{1}{(x-a)(x+a)} = \frac{A}{x-a} + \frac{B}{x+a} \;\Longrightarrow\; 1 = A(x+a) + B(x-a).$$
+
+$x = a$ için $1 = 2aA$, yani $A = \frac{1}{2a}$; $x = -a$ için $1 = -2aB$, yani $B = -\frac{1}{2a}$. O hâlde
+
+$$\int\frac{dx}{x^2-a^2} = \frac{1}{2a}\ln|x-a| - \frac{1}{2a}\ln|x+a| + C = \frac{1}{2a}\ln\left|\frac{x-a}{x+a}\right| + C.$$
+
+Denetim: türev alalım.
+
+$$\begin{aligned}
+\frac{1}{2a}\left(\frac{1}{x-a} - \frac{1}{x+a}\right) &= \frac{1}{2a}\cdot\frac{(x+a)-(x-a)}{(x-a)(x+a)} \\
+&= \frac{1}{2a}\cdot\frac{2a}{x^2-a^2} = \frac{1}{x^2-a^2}
+\end{aligned}$$
+
+Doğru.
+
+**b)** Payın derecesi $1$, paydanın açılmış derecesi $3$'tür; kesir özdür. Kalıp, bir farklı doğrusal çarpan ile bir katlı doğrusal çarpanın birleşimidir:
+
+$$\frac{3x+5}{(x-1)(x+2)^2} = \frac{A}{x-1} + \frac{B}{x+2} + \frac{C}{(x+2)^2}.$$
+
+Ortak paydayla çarpalım:
+
+$$3x+5 = A(x+2)^2 + B(x-1)(x+2) + C(x-1).$$
+
+$x = 1$ için: $8 = 9A$, yani $A = \frac{8}{9}$. $x = -2$ için: $-1 = -3C$, yani $C = \frac{1}{3}$. $B$ için $x^2$ katsayılarını eşitleyelim: sol tarafta $x^2$ yoktur, sağ tarafta katsayı $A + B$'dir; dolayısıyla $A + B = 0$ ve $B = -\frac{8}{9}$'dur.
+
+Denetim olarak sabit terimlere bakalım: sağ tarafta $4A - 2B - C = \frac{32}{9} + \frac{16}{9} - \frac{3}{9} = \frac{45}{9} = 5$; sol taraftaki sabit terim de $5$'tir.
+
+İntegral:
+
+$$\int\frac{3x+5}{(x-1)(x+2)^2}\,dx = \frac{8}{9}\ln|x-1| - \frac{8}{9}\ln|x+2| - \frac{1}{3}\cdot\frac{1}{x+2} + C.$$
+
+Denetim: türev alalım.
+
+$$\frac{8}{9(x-1)} - \frac{8}{9(x+2)} + \frac{1}{3(x+2)^2} = \frac{8}{9}\cdot\frac{3}{(x-1)(x+2)} + \frac{1}{3(x+2)^2} = \frac{8}{3(x-1)(x+2)} + \frac{1}{3(x+2)^2}.$$
+
+Ortak payda $3(x-1)(x+2)^2$ üzerinde:
+
+$$\frac{8(x+2) + (x-1)}{3(x-1)(x+2)^2} = \frac{9x+15}{3(x-1)(x+2)^2} = \frac{3x+5}{(x-1)(x+2)^2}.$$
+
+Doğru.
+
+**c)** Önce paydayı çarpanlarına ayıralım. $x = -1$ bir köktür, dolayısıyla $x+1$ bir çarpandır:
+
+$$x^3+1 = (x+1)\bigl(x^2-x+1\bigr).$$
+
+$x^2-x+1$ çarpanının diskriminantı $1 - 4 = -3 < 0$'dır; indirgenemezdir. Kalıp:
+
+$$\frac{1}{(x+1)\bigl(x^2-x+1\bigr)} = \frac{A}{x+1} + \frac{Bx+C}{x^2-x+1} \;\Longrightarrow\; 1 = A\bigl(x^2-x+1\bigr) + (Bx+C)(x+1).$$
+
+$x = -1$ için: $1 = A(1+1+1) = 3A$, yani $A = \frac{1}{3}$. $x^2$ katsayıları: $A + B = 0 \Rightarrow B = -\frac{1}{3}$. Sabit terimler: $A + C = 1 \Rightarrow C = \frac{2}{3}$. Denetim ($x$ katsayısı): $-A + B + C = -\frac{1}{3} - \frac{1}{3} + \frac{2}{3} = 0$; sol tarafta $x$ terimi yok, uyuşuyor.
+
+İntegrali kuralım:
+
+$$\int\frac{dx}{x^3+1} = \frac{1}{3}\ln|x+1| + \int\frac{-\frac{1}{3}x + \frac{2}{3}}{x^2-x+1}\,dx = \frac{1}{3}\ln|x+1| - \frac{1}{3}\int\frac{x-2}{x^2-x+1}\,dx.$$
+
+Kalan integralde payı, paydanın türevi $2x-1$'e göre düzenleyelim: $x - 2 = \frac{1}{2}(2x-1) - \frac{3}{2}$. Buradan
+
+$$\int\frac{x-2}{x^2-x+1}\,dx = \frac{1}{2}\ln\bigl(x^2-x+1\bigr) - \frac{3}{2}\int\frac{dx}{x^2-x+1}.$$
+
+Paydayı tam kareye tamamlayalım: $x^2-x+1 = \left(x-\frac{1}{2}\right)^2 + \frac{3}{4}$. $t = x - \frac{1}{2}$ ve $a = \frac{\sqrt{3}}{2}$ ile @prp-rasyonel-indirgeme-formulu'nün $n=1$ hâli:
+
+$$\int\frac{dx}{x^2-x+1} = \frac{1}{a}\arctan\frac{t}{a} = \frac{2}{\sqrt{3}}\arctan\frac{2x-1}{\sqrt{3}}.$$
+
+Böylece
+
+$$\int\frac{x-2}{x^2-x+1}\,dx = \frac{1}{2}\ln\bigl(x^2-x+1\bigr) - \frac{3}{2}\cdot\frac{2}{\sqrt{3}}\arctan\frac{2x-1}{\sqrt{3}} = \frac{1}{2}\ln\bigl(x^2-x+1\bigr) - \sqrt{3}\,\arctan\frac{2x-1}{\sqrt{3}}$$
+
+ve sonuç
+
+$$\int\frac{dx}{x^3+1} = \frac{1}{3}\ln|x+1| - \frac{1}{6}\ln\bigl(x^2-x+1\bigr) + \frac{\sqrt{3}}{3}\arctan\frac{2x-1}{\sqrt{3}} + C$$
+
+olur.
+
+Denetim: arktanjant teriminin türevi
+
+$$\frac{\sqrt{3}}{3}\cdot\frac{1}{1+\frac{(2x-1)^2}{3}}\cdot\frac{2}{\sqrt{3}} = \frac{2}{3}\cdot\frac{3}{3+(2x-1)^2} = \frac{2}{4x^2-4x+4} = \frac{1}{2\bigl(x^2-x+1\bigr)}$$
+
+olur. Üç terimin türevlerini toplayalım:
+
+$$\frac{1}{3(x+1)} - \frac{2x-1}{6\bigl(x^2-x+1\bigr)} + \frac{1}{2\bigl(x^2-x+1\bigr)} = \frac{1}{3(x+1)} + \frac{-(2x-1) + 3}{6\bigl(x^2-x+1\bigr)} = \frac{1}{3(x+1)} + \frac{2-x}{3\bigl(x^2-x+1\bigr)}.$$
+
+Ortak payda $3(x+1)(x^2-x+1) = 3\bigl(x^3+1\bigr)$ üzerinde:
+
+$$\frac{\bigl(x^2-x+1\bigr) + (2-x)(x+1)}{3\bigl(x^3+1\bigr)} = \frac{x^2-x+1 + 2x+2-x^2-x}{3\bigl(x^3+1\bigr)} = \frac{3}{3\bigl(x^3+1\bigr)} = \frac{1}{x^3+1}.$$
+
+Doğru.
+
+**d)** Payın derecesi $3$, paydanınki $2$'dir; kesir bileşiktir, önce bölme yapalım. $2x\cdot\bigl(x^2-2x-3\bigr) = 2x^3-4x^2-6x$ olduğundan
+
+$$2x^3-4x^2-x-3 = 2x\bigl(x^2-2x-3\bigr) + (5x-3),$$
+
+yani bölüm $2x$, kalan $5x-3$'tür. Payda $x^2-2x-3 = (x-3)(x+1)$ biçiminde iki farklı doğrusal çarpana ayrılır. Kalan kesir için Durum 1 kalıbı:
+
+$$\frac{5x-3}{(x-3)(x+1)} = \frac{A}{x-3} + \frac{B}{x+1} \;\Longrightarrow\; 5x-3 = A(x+1) + B(x-3).$$
+
+$x = 3$ için $12 = 4A$, yani $A = 3$; $x = -1$ için $-8 = -4B$, yani $B = 2$.
+
+İntegral:
+
+$$\int\frac{2x^3-4x^2-x-3}{x^2-2x-3}\,dx = \int\left(2x + \frac{3}{x-3} + \frac{2}{x+1}\right)dx = x^2 + 3\ln|x-3| + 2\ln|x+1| + C.$$
+
+Denetim:
+
+$$2x + \frac{3}{x-3} + \frac{2}{x+1} = 2x + \frac{3(x+1) + 2(x-3)}{(x-3)(x+1)} = 2x + \frac{5x-3}{x^2-2x-3}.$$
+
+Bu da tam olarak bölme sonucunda elde ettiğimiz ifadedir; doğru.
+
+**e)** @prp-rasyonel-indirgeme-formulu'nü $n = 2$, $a = 3$ ile uygulayalım:
+
+$$J_2 = \frac{x}{2\cdot 9\cdot(2-1)\bigl(x^2+9\bigr)^{1}} + \frac{2\cdot 2 - 3}{2\cdot 9\cdot(2-1)}\,J_1 = \frac{x}{18\bigl(x^2+9\bigr)} + \frac{1}{18}J_1.$$
+
+Formülün $n=1$ hâli $J_1 = \frac{1}{3}\arctan\frac{x}{3}$ verir. Böylece
+
+$$\int\frac{dx}{\bigl(x^2+9\bigr)^2} = \frac{x}{18\bigl(x^2+9\bigr)} + \frac{1}{54}\arctan\frac{x}{3} + C.$$
+
+Denetim: iki terimin türevini alalım.
+
+$$\frac{d}{dx}\left(\frac{x}{18\bigl(x^2+9\bigr)}\right) = \frac{\bigl(x^2+9\bigr) - x\cdot 2x}{18\bigl(x^2+9\bigr)^2} = \frac{9-x^2}{18\bigl(x^2+9\bigr)^2},$$
+
+$$\frac{d}{dx}\left(\frac{1}{54}\arctan\frac{x}{3}\right) = \frac{1}{54}\cdot\frac{1}{1+\frac{x^2}{9}}\cdot\frac{1}{3} = \frac{1}{162}\cdot\frac{9}{9+x^2} = \frac{1}{18\bigl(x^2+9\bigr)} = \frac{x^2+9}{18\bigl(x^2+9\bigr)^2}.$$
+
+Toplarsak
+
+$$\frac{9-x^2 + x^2 + 9}{18\bigl(x^2+9\bigr)^2} = \frac{18}{18\bigl(x^2+9\bigr)^2} = \frac{1}{\bigl(x^2+9\bigr)^2}.$$
+
+Doğru.
+
+**f)** $\frac{P}{Q}$'nun ayrışımını yazalım. $Q(x) = (x-a)Q_1(x)$ ve $Q_1(a) \neq 0$ olduğundan $a$, $Q$'nun **basit** (tek katlı) bir köküdür; @thm-basit-kesirlere-ayirma gereği ayrışımda $x-a$'ya ait tek bir terim bulunur:
+
+$$\frac{P(x)}{Q(x)} = \frac{A}{x-a} + H(x),$$
+
+burada $H$, paydası $Q_1$ olan (ve $x - a$ çarpanı içermeyen) kalan basit kesirlerin toplamıdır; $H$, $a$ noktasında tanımlıdır ve süreklidir. Her iki tarafı $(x-a)$ ile çarpalım. $x \neq a$ için
+
+$$\frac{P(x)}{Q_1(x)} = A + (x-a)H(x)$$
+
+olur. Sol ve sağ taraf $a$ noktasının bir komşuluğunda süreklidir ($Q_1(a) \neq 0$ olduğundan sol taraf $a$'da tanımlıdır); $x \to a$ limitine geçelim:
+
+$$\frac{P(a)}{Q_1(a)} = A + 0\cdot H(a) = A.$$
+
+Demek ki $A = \frac{P(a)}{Q_1(a)}$'dır. Bu kural pratikte şöyle uygulanır: $\frac{P}{Q}$ ifadesinde $x-a$ çarpanı **elle kapatılır** ve geri kalanda $x = a$ yazılır — adı buradan gelir.
+
+Şimdi $\frac{x^2+2}{(x-1)(x-2)(x-3)}$ kesrine uygulayalım. Ayrışım $\frac{A}{x-1} + \frac{B}{x-2} + \frac{C}{x-3}$ biçimindedir.
+
+- $A$ için $(x-1)$ kapatılır ve $x=1$ yazılır: $A = \frac{1^2+2}{(1-2)(1-3)} = \frac{3}{(-1)(-2)} = \frac{3}{2}$.
+- $B$ için $(x-2)$ kapatılır ve $x=2$ yazılır: $B = \frac{2^2+2}{(2-1)(2-3)} = \frac{6}{(1)(-1)} = -6$.
+- $C$ için $(x-3)$ kapatılır ve $x=3$ yazılır: $C = \frac{3^2+2}{(3-1)(3-2)} = \frac{11}{(2)(1)} = \frac{11}{2}$.
+
+Denetim: $A + B + C = \frac{3}{2} - 6 + \frac{11}{2} = 7 - 6 = 1$ olmalıdır, çünkü ortak paydayla çarpıldığında $x^2$ katsayıları eşitlenir ve sol tarafta bu katsayı $1$'dir. Uyuşuyor.
+
+Buradan, istenirse, integral de yazılabilir:
+
+$$\int\frac{x^2+2}{(x-1)(x-2)(x-3)}\,dx = \frac{3}{2}\ln|x-1| - 6\ln|x-2| + \frac{11}{2}\ln|x-3| + C.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde, bir fonksiyon sınıfının integralini hünere değil algoritmaya bağlayan ilk yordamı kurduk: derece denetimi, çarpanlara ayırma, basit kesirlere ayırma. Sonuç her zaman bir rasyonel fonksiyon, logaritmalar ve arktanjantlardan oluşuyor. Bundan sonraki bölümlerde bu yordamın gücünden dolaylı olarak yararlanacağız: köklü ifadeler içeren integrallerde uygun bir değişken değiştirme, integrandı rasyonel bir fonksiyona dönüştürür ve iş yeniden bu bölümün yordamına iner: [İrrasyonel Fonksiyonların İntegrali](irrasyonel-fonksiyonlarin-integrali.qmd).
