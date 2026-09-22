@@ -129,7 +129,11 @@ jobs:
           }
 
           # Every course that advertises downloads must actually ship them.
+          # Only books count: a hub page (dersler/analiz, dersler/soyut-cebir) has
+          # no _quarto.yml, and the checkout is not cleaned between runs, so a
+          # directory that used to be a book can still hold its old manifest.
           foreach ($course in Get-ChildItem -LiteralPath 'dersler' -Directory) {
+            if (-not (Test-Path -LiteralPath (Join-Path $course.FullName '_quarto.yml'))) { continue }
             if (-not (Test-Path -LiteralPath (Join-Path $course.FullName '_downloads.json'))) { continue }
             $published = Join-Path '_site\dersler' $course.Name
             $shipped = @(Get-ChildItem -LiteralPath $published -Filter '*.pdf' -File -ErrorAction SilentlyContinue)
