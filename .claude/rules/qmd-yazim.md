@@ -31,7 +31,7 @@ paths:
   | Derinlik (dış / iç) | Kitaplar |
   |---|---|
   | 4 / 3 | analiz-1, analiz-2, diferansiyel-geometri, olasilik-teorisi, sayilar-teorisi, topoloji, diferansiyel-denklemler, finans-matematigi |
-  | 3 / 3 | kompleks-analiz, lineer-cebir, soyut-cebir, matematigin-temelleri, kismi-diferansiyel-denklemler |
+  | 3 / 3 | kompleks-analiz, lineer-cebir, soyut-cebir-1, matematigin-temelleri, kismi-diferansiyel-denklemler |
   | tanım 4; ispatlı kutu 5 / 4 | konveks-analiz |
   | içinde ispat ya da çözüm olmayan kutu 3; olan kutu 4 / 3 | yeni kitaplar |
 
@@ -55,7 +55,7 @@ paths:
 - Satır başındaki `19.`, `II.`, `(f)` gibi diziler kazara liste açar. Kapanış ayracını kaçır: `19\.`, `II\.`, `(f\)`. Açılış ayracını asla kaçırma, çünkü `\(` LaTeX'tir.
 - Atıf:
   - Kitap içinde `@etiket` kullanılır.
-  - lineer-cebir ve soyut-cebir `@` kullanmaz, yalnız dosya bağlantısı kullanır. Topoloji bölüm içinde `@`, bölümler arasında dosya bağlantısı kullanır.
+  - lineer-cebir ve soyut-cebir-1 `@` kullanmaz, yalnız dosya bağlantısı kullanır. Topoloji bölüm içinde `@`, bölümler arasında dosya bağlantısı kullanır.
   - Kitaplar arasında `@` çalışmaz; biçim `bkz. [Analiz 1](../analiz-1/<bölüm>.html#etiket)` olur.
   - Yeni yazımda `@sec-…'ndeki` gibi atfa bitişik ek yazma. Mevcut olanları toplu düzeltme.
 - Gösterim:

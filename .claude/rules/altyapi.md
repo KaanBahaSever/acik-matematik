@@ -26,7 +26,7 @@ paths:
 
 ## Derleme ve dışa aktarma
 
-- Bir Lua filtresi ya da `_kitap-ortak.yml` değişikliği 30 kitabın hepsini yeniden derletir; önce tek kitapla dene.
+- Bir Lua filtresi ya da `_kitap-ortak.yml` değişikliği bütün kitapları yeniden derletir; önce tek kitapla dene.
 - İndirilebilir dosyalar PDF (Typst) ve EPUB'dur; DOCX yoktur.
   - Her PDF sayfasının altında site adresi ve CC BY-NC-SA 4.0 lisansı bulunur (`scripts/export-assets/footer.typ`). EPUB'da `dc:rights` tanımlıdır. Export'u değiştirirken bunları koru.
   - Dosyalardaki "Bu sürüm" tarihi son commit'ten gelir.

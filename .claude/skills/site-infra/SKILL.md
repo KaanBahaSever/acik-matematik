@@ -73,7 +73,7 @@ Genel ilke: sade ve animasyonsuz. Katalog yalnız hover'da renk değiştirir.
 
 - Quarto callout'ları kullanıcı filtresinden önce özel bir düğüme çevirir. Bu yüzden `Div` değil `Callout` işleyicisini kullan; `el.title` tek bir Block'tur.
 - Kaynak yolu için `quarto.doc.input_file` kullan. Birleşik export render'ında bu değer `index.qmd` döner.
-- Filtre listesi `_kitap-ortak.yml`'dedir. Filtre değişikliği 30 kitabı yeniden derletir.
+- Filtre listesi `_kitap-ortak.yml`'dedir. Filtre değişikliği bütün kitapları yeniden derletir.
 
 ## 6. Derleme ve export hattı
 

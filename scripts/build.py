@@ -36,6 +36,7 @@ Two things keep the build short:
 Usage:
     python scripts/build.py                        # build what has changed
     python scripts/build.py kriptografi            # build a single course only
+    python scripts/build.py analiz-1 analiz-2      # build the named courses only
     python scripts/build.py --force                # ignore the cache, rebuild all
     python scripts/build.py --no-export            # HTML only, skip PDF/EPUB
     python scripts/build.py --jobs 6               # how many books at a time
@@ -157,8 +158,11 @@ def book_inputs(book: Path) -> list[Path]:
 
 def portal_inputs() -> list[Path]:
     """The files the root website project renders (see its `project: render:`)."""
-    files = [ROOT / "_quarto.yml", ROOT / "index.qmd",
-             COURSES / "index.qmd", COURSES / "analiz" / "index.qmd"]
+    # A course directory without a _quarto.yml is a hub page (dersler/analiz,
+    # dersler/soyut-cebir), rendered by the portal rather than as a book.
+    hubs = sorted(d / "index.qmd" for d in COURSES.iterdir()
+                  if d.is_dir() and not (d / "_quarto.yml").exists())
+    files = [ROOT / "_quarto.yml", ROOT / "index.qmd", COURSES / "index.qmd", *hubs]
     return [p for p in files if p.exists()]
 
 
@@ -315,7 +319,7 @@ def main() -> None:
     force = "--force" in flags
     if "--serial" in flags:
         jobs = 1
-    only = args[0] if args else None
+    only = args
 
     started = time.time()
     cache = load_cache()
@@ -330,10 +334,12 @@ def main() -> None:
     skipped: list[str] = []
 
     if only:
-        target = COURSES / only
-        if not (target / "_quarto.yml").exists():
-            sys.exit(f"ERROR: there is no course project named '{only}'.")
-        found = [target]
+        found = []
+        for name in only:
+            target = COURSES / name
+            if not (target / "_quarto.yml").exists():
+                sys.exit(f"ERROR: there is no course project named '{name}'.")
+            found.append(target)
         wiped = False
     else:
         found = books()

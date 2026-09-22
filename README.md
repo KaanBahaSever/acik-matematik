@@ -13,10 +13,10 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 <!-- BOOKS-START -->
 
 <details>
-<summary><strong>Arşivdeki 30 ders</strong> — 17 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
+<summary><strong>Arşivdeki 33 ders</strong> — 17 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
 
-- [Analiz 1](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
-- [Analiz 2](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
+- [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
+- [Analiz 2: Türev ve İntegral](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
 - [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 8 bölüm, 116 örnek ve alıştırma
 - [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 14 bölüm, 556 örnek ve alıştırma
 - [Kompleks Analiz](https://acik-matematik.com/dersler/kompleks-analiz/) — 45 bölüm, 173 örnek ve alıştırma
@@ -29,12 +29,12 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Raslantı Süreçleri](https://acik-matematik.com/dersler/raslanti-surecleri/) — 15 bölüm, 37 örnek ve alıştırma
 - [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 15 bölüm, 180 örnek ve alıştırma
 - [Sayılar Teorisi](https://acik-matematik.com/dersler/sayilar-teorisi/) — 32 bölüm, 232 örnek ve alıştırma
-- [Soyut Cebir](https://acik-matematik.com/dersler/soyut-cebir/) — 25 bölüm, 64 örnek ve alıştırma
+- [Soyut Cebir 1: Gruplar](https://acik-matematik.com/dersler/soyut-cebir-1/) — 25 bölüm, 64 örnek ve alıştırma
 - [Temel Finans Matematiği](https://acik-matematik.com/dersler/finans-matematigi/) — 11 bölüm, 101 örnek ve alıştırma
 - [Topoloji](https://acik-matematik.com/dersler/topoloji/) — 11 bölüm, 74 örnek ve alıştırma
 - Analitik Geometri — müfredatı hazır, bölümleri yazılıyor
-- Analiz 3 — müfredatı hazır, bölümleri yazılıyor
-- Analiz 4 — müfredatı hazır, bölümleri yazılıyor
+- Analiz 3: Fonksiyon Dizileri ve Seriler — müfredatı hazır, bölümleri yazılıyor
+- Analiz 4: Çok Değişkenli Fonksiyonlar — müfredatı hazır, bölümleri yazılıyor
 - Bilgisayarda Matematik Uygulamaları — müfredatı hazır, bölümleri yazılıyor
 - Eliptik Eğriler — müfredatı hazır, bölümleri yazılıyor
 - Fonksiyonel Analiz — müfredatı hazır, bölümleri yazılıyor
@@ -45,6 +45,9 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - Matematiksel İstatistik — müfredatı hazır, bölümleri yazılıyor
 - Nümerik Analiz — müfredatı hazır, bölümleri yazılıyor
 - Python ile Bilimsel Hesaplama — müfredatı hazır, bölümleri yazılıyor
+- Soyut Cebir 2: Halkalar ve İdealler — müfredatı hazır, bölümleri yazılıyor
+- Soyut Cebir 3: Cisim Genişlemeleri — müfredatı hazır, bölümleri yazılıyor
+- Soyut Cebir 4: Modüller — müfredatı hazır, bölümleri yazılıyor
 
 </details>
 
@@ -56,7 +59,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 
 | İçerik | Sayı |
 |---|---:|
-| 📚 Kitap | **30** |
+| 📚 Kitap | **33** |
 | 📖 Konu/Bölüm | **398** |
 | 📐 Teorem | **866** |
 | 🔹 Lemma | **98** |
@@ -65,8 +68,8 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | 🧮 Örnek ve alıştırma | **2.749** |
 | 💡 Çözüm | **2.478** |
 | 📊 Şekil | **545** |
-| ✍️ Kelime | **1.360.372** |
-| 🔤 Karakter | **9.678.516** |
+| ✍️ Kelime | **1.360.597** |
+| 🔤 Karakter | **9.680.527** |
 | 💾 Kaynak metin | **14,8 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>

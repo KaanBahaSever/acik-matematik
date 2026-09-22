@@ -31,7 +31,7 @@ Bilinen eski etiket ihlalleri, `@` atıfları da güncellenmeden yeniden adland�
 
 - `sec-nEx`, `def-nEx` (finans-matematigi)
 - `thm-koprü`, `thm-uA`, `thm-P-us-n` (raslanti-surecleri)
-- `cor-a-uzeri-N` (soyut-cebir)
+- `cor-a-uzeri-N` (soyut-cebir-1)
 
 ## 2. Kutu başına tek soru
 

@@ -5,7 +5,7 @@ Lisans matematik derslerinin açık kaynaklı, reklamsız Türkçe not arşivi. 
 ## Nerede ne var
 
 - `dersler/<ders>/`: her ders bağımsız bir Quarto kitabıdır. Bir `_quarto.yml`, müfredat sayfası olarak `index.qmd` ve bölüm `.qmd` dosyalarından oluşur. Ortak ayarlar `_kitap-ortak.yml`'den gelir. Kitap kökten tam iki seviye aşağıda olmalı; aksi hâlde Lua filtreleri ve Türkçe etiketler sessizce kaybolur.
-- Analiz dört ayrı kitaptır (`dersler/analiz-1` … `analiz-4`); `dersler/analiz/` yalnız hub sayfasıdır. Diğer çok dönemli dersler (Lineer Cebir 1–2, Sayılar Teorisi 1–2, …) tek kitapta `part:` ile bölünür ve bölüm numaraları kitap boyunca kesintisiz akar.
+- Analiz ve Soyut Cebir dörder ayrı kitaptır (`dersler/analiz-1` … `analiz-4`, `dersler/soyut-cebir-1` … `soyut-cebir-4`); `dersler/analiz/` ve `dersler/soyut-cebir/` yalnız hub sayfasıdır. Böyle bölünmüş derslerin kitap adı numara ve iki nokta üstüne kısa bir addan oluşur: `Analiz 1: Temeller`, `Soyut Cebir 1: Gruplar`. Diğer çok dönemli dersler (Lineer Cebir 1–2, Sayılar Teorisi 1–2, …) tek kitapta `part:` ile bölünür ve bölüm numaraları kitap boyunca kesintisiz akar.
 - Kök `_quarto.yml` yalnız portalı (ana sayfa, katalog) basar. Bütün stil `styles/global.css`'tedir.
 - `scripts/`: derleme, dışa aktarma, denetim ve şekil betikleri.
 
@@ -43,7 +43,7 @@ Lisans matematik derslerinin açık kaynaklı, reklamsız Türkçe not arşivi. 
 
 ## Derleme ve denetim
 
-- Daima `python scripts/build.py <ders>` ile derle ve yalnız üzerinde çalıştığın dersi derle (`--no-export` yalnız HTML üretir). Kökte çıplak `quarto render` çalıştırma: `_site`'ı ve içindeki 30 kitabı siler.
+- Daima `python scripts/build.py <ders>` ile derle ve yalnız üzerinde çalıştığın dersi derle (`--no-export` yalnız HTML üretir). Kökte çıplak `quarto render` çalıştırma: `_site`'ı ve içindeki bütün kitapları siler.
 - Seçenekler: `python scripts/build.py [ders...] [--no-export] [--force] [--jobs N] [--serial]`. `--help` yoktur, bilinmeyen bayrak hata verir.
 - Çıkış kodları:
   - 1: render hatası
