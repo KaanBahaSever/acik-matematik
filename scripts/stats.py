@@ -128,8 +128,11 @@ def add(into, row):
 
 def collect(root):
     """(per-book rows, totals, files outside any book, unreadable files)"""
+    # Dot directories are never content: .claude/worktrees holds whole copies of
+    # the repository, and counting them would double every number in README.md.
     books = sorted({p.parent for p in root.rglob("_quarto.yml")
-                    if not any(d in SKIP_DIRS for d in p.parts)})
+                    if not any(d in SKIP_DIRS or d.startswith(".")
+                               for d in p.relative_to(root).parts)})
     # The project root often holds a _quarto.yml of its own (the portal); it is
     # not a book unless it has chapters of its own.
     rows, totals, unreadable = [], {}, []
