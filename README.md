@@ -54,7 +54,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 
 <!-- METRICS-START -->
 
-| | |
+| İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **30** |
 | 📖 Konu/Bölüm | **398** |

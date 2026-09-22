@@ -236,7 +236,7 @@ def metrics_markdown(totals, rows):
         ("🔤 Karakter", n(totals.get("karakter", 0))),
         ("💾 Kaynak metin", mb(totals.get("bayt", 0)).replace(".", ",")),
     ]
-    lines = ["| | |", "|---|---:|"]
+    lines = ["| İçerik | Sayı |", "|---|---:|"]
     lines += ["| %s | **%s** |" % (label, value) for label, value in pairs]
     lines.append("")
     lines.append("<sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>")
