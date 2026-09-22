@@ -1,0 +1,452 @@
+---
+title: "Riemann İntegraline Karşı Lebesgue İntegrali"
+pagetitle: "Riemann İntegraline Karşı Lebesgue İntegrali"
+description: "Riemann integralini basamak fonksiyonlarıyla alttan ve üstten yaklaşım olarak yeniden okuyor, Dirichlet fonksiyonu üzerinden bu integralin limitlerle neden iyi geçinmediğini gösteriyoruz."
+---
+
+Lebesgue integralini kurmamızın asıl nedeni limitlerle iyi geçinen bir integral elde etmektir: $E$ üzerinde noktasal olarak $f_n \to f$ ise, oldukça genel koşullar altında
+$$
+\lim_{n \to \infty} \int_E f_n = \int_E \lim_{n \to \infty} f_n = \int_E f
+$$
+olmasını istiyoruz. Buna *integral işareti altında limite geçiş* denir. Bu kısımda bu geçişi güvenceye alan üç sonuç kanıtlanacak: Sınırlı Yakınsaklık Teoremi, Monoton Yakınsaklık Teoremi ve Lebesgue Baskın Yakınsaklık Teoremi.
+
+Başlamadan önce Riemann integraline bir kez daha, bu kez basamak fonksiyonları gözüyle bakıyoruz. Bu bakış hem Lebesgue integralinin tanımına doğrudan örnek olacak hem de Riemann integralinin nerede yetersiz kaldığını açıkça gösterecek.
+
+## Darboux Toplamları ve Riemann İntegrali
+
+Riemann integralinin kuruluşu Analiz 2'de ayrıntılı işlendi (bkz. [Analiz 2: Bölünüşler ve Darboux Toplamları](../analiz-2/bolunusler-ve-darboux-toplamlari.html)); burada yalnız ihtiyaç duyacağımız tanımları, bu kitabın gösterimiyle topluyoruz.
+
+::: {#def-rl-bolunti name="Bölüntü"}
+$[a, b]$ aralığının bir **bölüntüsü** (partition), $a = x_0 < x_1 < \cdots < x_n = b$ koşulunu sağlayan sonlu bir $P = \{x_0, x_1, \dots, x_n\}$ kümesidir. $x_i$ noktalarına bölüntü noktaları, $(x_{i-1}, x_i)$ aralıklarına bölüntünün alt aralıkları denir.
+:::
+
+::: {#def-rl-incelme name="Bölüntünün İncelmesi"}
+$P$ ve $P'$, $[a, b]$ nin iki bölüntüsü olsun. $P \subseteq P'$ ise, yani $P$ nin her bölüntü noktası $P'$ nün de bölüntü noktasıysa, $P'$ ye $P$ nin bir **incelmesi** (refinement) denir.
+:::
+
+Yani incelme, var olan noktalara yenilerini ekleyerek alt aralıkları küçültmektir. İki bölüntünün birleşimi ikisinin de incelmesidir; buna *ortak incelme* denir.
+
+::: {#def-rl-darboux-toplamlari name="Alt ve Üst Darboux Toplamları"}
+$f : [a, b] \to \mathbb{R}$ sınırlı ve $P = \{x_0, \dots, x_n\}$, $[a, b]$ nin bir bölüntüsü olsun. $1 \le i \le n$ için
+$$
+m_i = \inf\{f(x) : x_{i-1} < x < x_i\}, \qquad M_i = \sup\{f(x) : x_{i-1} < x < x_i\}
+$$
+diyelim. $f$ nin $P$ ye göre **alt** ve **üst Darboux toplamları**
+$$
+L(f, P) = \sum_{i=1}^n m_i\,(x_i - x_{i-1}), \qquad U(f, P) = \sum_{i=1}^n M_i\,(x_i - x_{i-1})
+$$
+sayılarıdır.
+:::
+
+Yani $L(f, P)$ ve $U(f, P)$, grafiğin altına ve üstüne her alt aralıkta birer dikdörtgen yerleştirerek elde edilen alanlardır. İnfimum ve supremum *açık* alt aralıklar üzerinden alındığı için $f$ nin bölüntü noktalarındaki değerleri bu toplamları etkilemez. Her alt aralıkta $m_i \le M_i$ olduğundan $L(f, P) \le U(f, P)$ dir. Daha fazlası da doğrudur: incelme alt toplamı büyütür, üst toplamı küçültür (@exr-rl-incelme) ve bu nedenle her alt toplam her üst toplamdan küçük ya da ona eşittir (@exr-rl-alt-ust-karsilastirma).
+
+::: {#def-rl-riemann-integrali name="Riemann İntegrali"}
+$f : [a, b] \to \mathbb{R}$ sınırlı olsun. $[a, b]$ nin bütün $P$ bölüntüleri üzerinden
+$$
+\underline{I}(f) = \sup_P L(f, P), \qquad \overline{I}(f) = \inf_P U(f, P)
+$$
+sayılarına $f$ nin **alt** ve **üst Riemann integrali** denir. $f$,
+$$
+\sup_P L(f, P) = \inf_P U(f, P) \tag{1}
+$$
+eşitliği sağlandığında **Riemann integrallenebilir** olarak adlandırılır; bu ortak değer $f$ nin **Riemann integrali**dir ve $\int_a^b f(x)\,dx$ ile gösterilir.
+:::
+
+Yani $f$ nin Riemann integrallenebilmesi, alttan ve üstten dikdörtgenlerle yapılan yaklaşımların aynı sayıda buluşmasıdır. Her zaman $\underline{I}(f) \le \overline{I}(f)$ dir (@exr-rl-alt-ust-karsilastirma); integrallenebilirlik bu eşitsizliğin eşitlik olmasıdır. Sürekli bir fonksiyon $[a, b]$ üzerinde düzgün sürekli olduğundan Riemann integrallenebilirdir (@exr-rl-surekli); artan fonksiyonlar da öyledir (@exr-rl-monoton-b).
+
+## Basamak Fonksiyonları
+
+Darboux toplamlarındaki dikdörtgenler aslında birer fonksiyonun grafiğidir: her alt aralıkta sabit olan fonksiyonların. Bu fonksiyonlar Riemann integralinin yapı taşlarıdır.
+
+::: {#def-rl-basamak-fonksiyonu name="Basamak Fonksiyonu"}
+$\eta : [a, b] \to \mathbb{R}$ fonksiyonu için $[a, b]$ nin bir $P = \{x_0, \dots, x_n\}$ bölüntüsü ve $c_1, \dots, c_n$ sayıları
+$$
+x_{i-1} < x < x_i \implies \eta(x) = c_i \qquad (1 \le i \le n)
+$$
+olacak biçimde varsa, $\eta$ ya bir **basamak fonksiyonu** (step function) denir.
+:::
+
+Yani basamak fonksiyonu, açık alt aralıkların her birinde sabittir; bölüntü noktalarındaki değerleri keyfidir.
+
+:::: {#thm-rl-basamak-integrali name="Basamak Fonksiyonunun İntegrali"}
+Tanımdaki gibi bir $\eta$ basamak fonksiyonu Riemann integrallenebilirdir ve
+$$
+\int_a^b \eta(x)\,dx = \sum_{i=1}^n c_i\,(x_i - x_{i-1})
+$$
+dir.
+
+::: {.ispat}
+$\eta$ sonlu sayıda değer aldığından sınırlıdır. $P$ nin her açık alt aralığında $\eta \equiv c_i$ olduğundan $m_i = M_i = c_i$, dolayısıyla
+$$
+L(\eta, P) = U(\eta, P) = \sum_{i=1}^n c_i\,(x_i - x_{i-1}) =: S
+$$
+dir. Alt Riemann integrali bir supremum, üst Riemann integrali bir infimum olduğundan ve her zaman $\underline{I}(\eta) \le \overline{I}(\eta)$ olduğundan (@exr-rl-alt-ust-karsilastirma)
+$$
+S = L(\eta, P) \le \underline{I}(\eta) \le \overline{I}(\eta) \le U(\eta, P) = S
+$$
+bulunur. Bütün eşitsizlikler eşitliktir; (1) sağlanır ve integral $S$ dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Özel olarak, integralin değeri basamak fonksiyonunu temsil etmek için seçilen bölüntüye bağlı değildir: hangi bölüntü kullanılırsa kullanılsın, toplam aynı sayıya, yani Riemann integraline eşittir.
+
+:::: {#exm-rl-basamak-ornegi name="Bir Basamak Fonksiyonunun İntegrali"}
+$[0, 3]$ üzerinde $0 < x < 1$ için $\eta(x) = 2$, $1 < x < 1{,}5$ için $\eta(x) = -1$, $1{,}5 < x < 3$ için $\eta(x) = 4$ olsun; $\eta$ nın $0$, $1$, $1{,}5$ ve $3$ noktalarındaki değerleri keyfi olsun. $\int_0^3 \eta(x)\,dx$ integralini bulun.
+
+::: {.cozum}
+$P = \{0;\ 1;\ 1{,}5;\ 3\}$ bölüntüsünün açık alt aralıklarında $\eta$ sabittir; yani $\eta$ bir basamak fonksiyonudur. @thm-rl-basamak-integrali gereği
+$$
+\int_0^3 \eta(x)\,dx = 2 \cdot 1 + (-1) \cdot 0{,}5 + 4 \cdot 1{,}5 = 7{,}5
+$$
+dir. Bölüntü noktalarındaki değerler sonucu etkilemez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi Darboux toplamlarını basamak fonksiyonlarının integralleri olarak okuyabiliriz. Aşağıda $\varphi \le f$ yazımı, $[a, b]$ nin her noktasında $\varphi(x) \le f(x)$ demektir.
+
+:::: {#thm-rl-basamak-olcutu name="Basamak Fonksiyonlarıyla Riemann İntegrali"}
+$f : [a, b] \to \mathbb{R}$ sınırlı olsun. Supremum ve infimum $[a, b]$ üzerindeki basamak fonksiyonları üzerinden alınmak üzere
+$$
+\underline{I}(f) = \sup_{\varphi \le f} \int_a^b \varphi(x)\,dx, \qquad \overline{I}(f) = \inf_{\psi \ge f} \int_a^b \psi(x)\,dx
+$$
+dir. Dolayısıyla $f$ nin Riemann integrallenebilmesi için gerek ve yeter koşul
+$$
+\sup_{\varphi \le f} \int_a^b \varphi(x)\,dx = \inf_{\psi \ge f} \int_a^b \psi(x)\,dx
+$$
+olmasıdır.
+
+::: {.ispat}
+Alt integral için yapalım; üst integral aynı biçimde (eşitsizlikler ters çevrilerek) gösterilir. Sağdaki supremuma $A$ diyelim.
+
+**Adım 1 ($A \ge \underline{I}(f)$).** $P = \{x_0, \dots, x_n\}$ rastgele bir bölüntü olsun. $\varphi$ yi, $x_{i-1} < x < x_i$ için $\varphi(x) = m_i$ ve bölüntü noktalarında $\varphi(x_i) = f(x_i)$ olarak tanımlayalım. $\varphi$ bir basamak fonksiyonudur ve $m_i$ nin tanımından $\varphi \le f$ dir. @thm-rl-basamak-integrali gereği $\int_a^b \varphi = L(f, P)$, dolayısıyla $A \ge L(f, P)$. $P$ rastgele olduğundan $A \ge \underline{I}(f)$.
+
+**Adım 2 ($A \le \underline{I}(f)$).** $\varphi \le f$ bir basamak fonksiyonu olsun; $P = \{x_0, \dots, x_n\}$ ona eşlik eden bölüntü ve $c_i$ açık alt aralıklardaki değerleri olsun. $x_{i-1} < x < x_i$ için $c_i = \varphi(x) \le f(x)$ olduğundan $c_i$, bu aralıkta $f$ nin bir alt sınırıdır; yani $c_i \le m_i$. Buradan
+$$
+\int_a^b \varphi(x)\,dx = \sum_{i=1}^n c_i\,(x_i - x_{i-1}) \le L(f, P) \le \underline{I}(f)
+$$
+çıkar. $\varphi$ üzerinden supremum alınarak $A \le \underline{I}(f)$ bulunur.
+
+İki adım $A = \underline{I}(f)$ verir. Son önerme, (1) eşitliğinin bu iki ifadeyle yeniden yazılmasıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="23.0 5.5 481.0 300.5" role="img" aria-label="A continuous function between lower and upper step functions of a partition with five subintervals">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="50.0" y1="270.0" x2="478.0" y2="270.0"/>
+  <line x1="50.0" y1="42.0" x2="50.0" y2="270.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="43.0" y="200.7" text-anchor="end">1</text>
+  <text x="43.0" y="127.3" text-anchor="end">2</text>
+  <text x="484.0" y="274.0" font-style="italic">x</text>
+  <text x="46.0" y="36.0" text-anchor="middle" font-style="italic">y</text>
+  </g>
+  <polygon points="50.0,270.0 122.7,270.0 122.7,142.5 50.0,142.5" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.0"/>
+  <path d="M50.0,90.1 L55.0,85.1 M50.0,95.1 L60.0,85.1 M50.0,100.1 L65.0,85.1 M50.0,105.1 L70.0,85.1 M50.0,110.1 L75.0,85.1 M50.0,115.1 L80.0,85.1 M50.0,120.1 L85.0,85.1 M50.0,125.1 L90.0,85.1 M50.0,130.1 L95.0,85.1 M50.0,135.1 L100.0,85.1 M50.0,140.1 L105.0,85.1 M52.6,142.5 L110.0,85.1 M57.6,142.5 L115.0,85.1 M62.6,142.5 L120.0,85.1 M67.6,142.5 L122.7,87.4 M72.6,142.5 L122.7,92.4 M77.6,142.5 L122.7,97.4 M82.6,142.5 L122.7,102.4 M87.6,142.5 L122.7,107.4 M92.6,142.5 L122.7,112.4 M97.6,142.5 L122.7,117.4 M102.6,142.5 L122.7,122.4 M107.6,142.5 L122.7,127.4 M112.6,142.5 L122.7,132.4 M117.6,142.5 L122.7,137.4" fill="none" stroke="var(--color-practice)" stroke-width="0.85" opacity="0.65"/>
+  <polygon points="50.0,142.5 122.7,142.5 122.7,85.1 50.0,85.1" fill="var(--color-practice)" fill-opacity="0.0" stroke="var(--color-practice)" stroke-width="1.2"/>
+  <polygon points="122.7,270.0 219.6,270.0 219.6,140.3 122.7,140.3" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.0"/>
+  <path d="M122.7,98.5 L127.7,93.5 M122.7,103.5 L132.7,93.5 M122.7,108.5 L137.7,93.5 M122.7,113.5 L142.7,93.5 M122.7,118.5 L147.7,93.5 M122.7,123.5 L152.7,93.5 M122.7,128.5 L157.7,93.5 M122.7,133.5 L162.7,93.5 M122.7,138.5 L167.7,93.5 M125.9,140.3 L172.7,93.5 M130.9,140.3 L177.7,93.5 M135.9,140.3 L182.7,93.5 M140.9,140.3 L187.7,93.5 M145.9,140.3 L192.7,93.5 M150.9,140.3 L197.7,93.5 M155.9,140.3 L202.7,93.5 M160.9,140.3 L207.7,93.5 M165.9,140.3 L212.7,93.5 M170.9,140.3 L217.7,93.5 M175.9,140.3 L219.6,96.6 M180.9,140.3 L219.6,101.6 M185.9,140.3 L219.6,106.6 M190.9,140.3 L219.6,111.6 M195.9,140.3 L219.6,116.6 M200.9,140.3 L219.6,121.6 M205.9,140.3 L219.6,126.6 M210.9,140.3 L219.6,131.6 M215.9,140.3 L219.6,136.6" fill="none" stroke="var(--color-practice)" stroke-width="0.85" opacity="0.65"/>
+  <polygon points="122.7,140.3 219.6,140.3 219.6,93.5 122.7,93.5" fill="var(--color-practice)" fill-opacity="0.0" stroke="var(--color-practice)" stroke-width="1.2"/>
+  <polygon points="219.6,270.0 292.3,270.0 292.3,191.5 219.6,191.5" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.0"/>
+  <path d="M219.6,140.3 L224.6,135.3 M219.6,145.3 L229.6,135.3 M219.6,150.3 L234.6,135.3 M219.6,155.3 L239.6,135.3 M219.6,160.3 L244.6,135.3 M219.6,165.3 L249.6,135.3 M219.6,170.3 L254.6,135.3 M219.6,175.3 L259.6,135.3 M219.6,180.3 L264.6,135.3 M219.6,185.3 L269.6,135.3 M219.6,190.3 L274.6,135.3 M223.5,191.5 L279.6,135.3 M228.5,191.5 L284.6,135.3 M233.5,191.5 L289.6,135.3 M238.5,191.5 L292.3,137.7 M243.5,191.5 L292.3,142.7 M248.5,191.5 L292.3,147.7 M253.5,191.5 L292.3,152.7 M258.5,191.5 L292.3,157.7 M263.5,191.5 L292.3,162.7 M268.5,191.5 L292.3,167.7 M273.5,191.5 L292.3,172.7 M278.5,191.5 L292.3,177.7 M283.5,191.5 L292.3,182.7 M288.5,191.5 L292.3,187.7" fill="none" stroke="var(--color-practice)" stroke-width="0.85" opacity="0.65"/>
+  <polygon points="219.6,191.5 292.3,191.5 292.3,135.3 219.6,135.3" fill="var(--color-practice)" fill-opacity="0.0" stroke="var(--color-practice)" stroke-width="1.2"/>
+  <text x="256.0" y="206.5" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-style="italic">m<tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="256.0" y="129.3" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-style="italic">M<tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <polygon points="292.3,270.0 389.2,270.0 389.2,229.5 292.3,229.5" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.0"/>
+  <path d="M292.3,176.4 L297.3,171.4 M292.3,181.4 L302.3,171.4 M292.3,186.4 L307.3,171.4 M292.3,191.4 L312.3,171.4 M292.3,196.4 L317.3,171.4 M292.3,201.4 L322.3,171.4 M292.3,206.4 L327.3,171.4 M292.3,211.4 L332.3,171.4 M292.3,216.4 L337.3,171.4 M292.3,221.4 L342.3,171.4 M292.3,226.4 L347.3,171.4 M294.2,229.5 L352.3,171.4 M299.2,229.5 L357.3,171.4 M304.2,229.5 L362.3,171.4 M309.2,229.5 L367.3,171.4 M314.2,229.5 L372.3,171.4 M319.2,229.5 L377.3,171.4 M324.2,229.5 L382.3,171.4 M329.2,229.5 L387.3,171.4 M334.2,229.5 L389.2,174.5 M339.2,229.5 L389.2,179.5 M344.2,229.5 L389.2,184.5 M349.2,229.5 L389.2,189.5 M354.2,229.5 L389.2,194.5 M359.2,229.5 L389.2,199.5 M364.2,229.5 L389.2,204.5 M369.2,229.5 L389.2,209.5 M374.2,229.5 L389.2,214.5 M379.2,229.5 L389.2,219.5 M384.2,229.5 L389.2,224.5" fill="none" stroke="var(--color-practice)" stroke-width="0.85" opacity="0.65"/>
+  <polygon points="292.3,229.5 389.2,229.5 389.2,171.4 292.3,171.4" fill="var(--color-practice)" fill-opacity="0.0" stroke="var(--color-practice)" stroke-width="1.2"/>
+  <polygon points="389.2,270.0 453.8,270.0 453.8,171.4 389.2,171.4" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.0"/>
+  <path d="M389.2,130.4 L394.2,125.4 M389.2,135.4 L399.2,125.4 M389.2,140.4 L404.2,125.4 M389.2,145.4 L409.2,125.4 M389.2,150.4 L414.2,125.4 M389.2,155.4 L419.2,125.4 M389.2,160.4 L424.2,125.4 M389.2,165.4 L429.2,125.4 M389.2,170.4 L434.2,125.4 M393.2,171.4 L439.2,125.4 M398.2,171.4 L444.2,125.4 M403.2,171.4 L449.2,125.4 M408.2,171.4 L453.8,125.7 M413.2,171.4 L453.8,130.7 M418.2,171.4 L453.8,135.7 M423.2,171.4 L453.8,140.7 M428.2,171.4 L453.8,145.7 M433.2,171.4 L453.8,150.7 M438.2,171.4 L453.8,155.7 M443.2,171.4 L453.8,160.7 M448.2,171.4 L453.8,165.7 M453.2,171.4 L453.8,170.7" fill="none" stroke="var(--color-practice)" stroke-width="0.85" opacity="0.65"/>
+  <polygon points="389.2,171.4 453.8,171.4 453.8,125.4 389.2,125.4" fill="var(--color-practice)" fill-opacity="0.0" stroke="var(--color-practice)" stroke-width="1.2"/>
+  <path d="M50.0,142.5 L51.0,140.7 L52.0,138.9 L53.0,137.1 L54.0,135.3 L55.0,133.5 L56.1,131.7 L57.1,129.9 L58.1,128.2 L59.1,126.5 L60.1,124.8 L61.1,123.1 L62.1,121.4 L63.1,119.8 L64.1,118.1 L65.1,116.5 L66.2,115.0 L67.2,113.4 L68.2,111.9 L69.2,110.4 L70.2,109.0 L71.2,107.6 L72.2,106.2 L73.2,104.8 L74.2,103.5 L75.2,102.3 L76.2,101.0 L77.3,99.8 L78.3,98.7 L79.3,97.6 L80.3,96.5 L81.3,95.5 L82.3,94.5 L83.3,93.6 L84.3,92.7 L85.3,91.9 L86.3,91.1 L87.4,90.4 L88.4,89.7 L89.4,89.0 L90.4,88.4 L91.4,87.9 L92.4,87.4 L93.4,86.9 L94.4,86.5 L95.4,86.2 L96.4,85.9 L97.5,85.6 L98.5,85.4 L99.5,85.3 L100.5,85.2 L101.5,85.1 L102.5,85.1 L103.5,85.1 L104.5,85.2 L105.5,85.3 L106.5,85.5 L107.5,85.7 L108.6,86.0 L109.6,86.3 L110.6,86.6 L111.6,87.0 L112.6,87.4 L113.6,87.9 L114.6,88.3 L115.6,88.9 L116.6,89.4 L117.6,90.0 L118.7,90.7 L119.7,91.3 L120.7,92.0 L121.7,92.8 L122.7,93.5 L123.7,94.3 L124.7,95.1 L125.7,95.9 L126.7,96.8 L127.7,97.7 L128.8,98.6 L129.8,99.5 L130.8,100.4 L131.8,101.3 L132.8,102.3 L133.8,103.3 L134.8,104.2 L135.8,105.2 L136.8,106.2 L137.8,107.2 L138.8,108.2 L139.9,109.2 L140.9,110.3 L141.9,111.3 L142.9,112.3 L143.9,113.3 L144.9,114.3 L145.9,115.3 L146.9,116.3 L147.9,117.3 L148.9,118.2 L150.0,119.2 L151.0,120.2 L152.0,121.1 L153.0,122.0 L154.0,122.9 L155.0,123.8 L156.0,124.7 L157.0,125.6 L158.0,126.4 L159.0,127.3 L160.0,128.1 L161.1,128.8 L162.1,129.6 L163.1,130.3 L164.1,131.0 L165.1,131.7 L166.1,132.4 L167.1,133.0 L168.1,133.6 L169.1,134.2 L170.1,134.8 L171.2,135.3 L172.2,135.8 L173.2,136.3 L174.2,136.8 L175.2,137.2 L176.2,137.6 L177.2,137.9 L178.2,138.3 L179.2,138.6 L180.2,138.9 L181.2,139.1 L182.3,139.4 L183.3,139.6 L184.3,139.8 L185.3,139.9 L186.3,140.0 L187.3,140.2 L188.3,140.2 L189.3,140.3 L190.3,140.3 L191.3,140.3 L192.4,140.3 L193.4,140.3 L194.4,140.3 L195.4,140.2 L196.4,140.1 L197.4,140.0 L198.4,139.9 L199.4,139.8 L200.4,139.7 L201.4,139.5 L202.5,139.4 L203.5,139.2 L204.5,139.0 L205.5,138.8 L206.5,138.6 L207.5,138.4 L208.5,138.2 L209.5,138.0 L210.5,137.8 L211.5,137.6 L212.5,137.4 L213.6,137.2 L214.6,137.0 L215.6,136.8 L216.6,136.6 L217.6,136.4 L218.6,136.3 L219.6,136.1 L220.6,136.0 L221.6,135.8 L222.6,135.7 L223.7,135.6 L224.7,135.5 L225.7,135.4 L226.7,135.4 L227.7,135.4 L228.7,135.3 L229.7,135.4 L230.7,135.4 L231.7,135.4 L232.7,135.5 L233.7,135.6 L234.8,135.8 L235.8,135.9 L236.8,136.1 L237.8,136.3 L238.8,136.6 L239.8,136.9 L240.8,137.2 L241.8,137.5 L242.8,137.9 L243.8,138.3 L244.9,138.7 L245.9,139.2 L246.9,139.7 L247.9,140.2 L248.9,140.8 L249.9,141.4 L250.9,142.0 L251.9,142.7 L252.9,143.4 L253.9,144.2 L255.0,144.9 L256.0,145.8 L257.0,146.6 L258.0,147.5 L259.0,148.4 L260.0,149.3 L261.0,150.3 L262.0,151.3 L263.0,152.4 L264.0,153.4 L265.0,154.5 L266.1,155.6 L267.1,156.8 L268.1,158.0 L269.1,159.2 L270.1,160.4 L271.1,161.7 L272.1,162.9 L273.1,164.3 L274.1,165.6 L275.1,166.9 L276.2,168.3 L277.2,169.7 L278.2,171.1 L279.2,172.5 L280.2,173.9 L281.2,175.3 L282.2,176.8 L283.2,178.2 L284.2,179.7 L285.2,181.1 L286.2,182.6 L287.3,184.1 L288.3,185.6 L289.3,187.1 L290.3,188.5 L291.3,190.0 L292.3,191.5 L293.3,192.9 L294.3,194.4 L295.3,195.8 L296.3,197.3 L297.4,198.7 L298.4,200.1 L299.4,201.5 L300.4,202.9 L301.4,204.2 L302.4,205.6 L303.4,206.9 L304.4,208.2 L305.4,209.4 L306.4,210.7 L307.5,211.9 L308.5,213.0 L309.5,214.2 L310.5,215.3 L311.5,216.4 L312.5,217.4 L313.5,218.4 L314.5,219.4 L315.5,220.3 L316.5,221.2 L317.5,222.1 L318.6,222.9 L319.6,223.7 L320.6,224.4 L321.6,225.1 L322.6,225.7 L323.6,226.3 L324.6,226.8 L325.6,227.3 L326.6,227.8 L327.6,228.2 L328.7,228.5 L329.7,228.8 L330.7,229.0 L331.7,229.2 L332.7,229.4 L333.7,229.4 L334.7,229.5 L335.7,229.5 L336.7,229.4 L337.7,229.3 L338.8,229.1 L339.8,228.9 L340.8,228.6 L341.8,228.3 L342.8,227.9 L343.8,227.5 L344.8,227.0 L345.8,226.5 L346.8,225.9 L347.8,225.3 L348.8,224.6 L349.9,223.9 L350.9,223.1 L351.9,222.3 L352.9,221.4 L353.9,220.5 L354.9,219.6 L355.9,218.6 L356.9,217.5 L357.9,216.5 L358.9,215.4 L360.0,214.2 L361.0,213.0 L362.0,211.8 L363.0,210.6 L364.0,209.3 L365.0,208.0 L366.0,206.7 L367.0,205.3 L368.0,203.9 L369.0,202.5 L370.0,201.0 L371.1,199.6 L372.1,198.1 L373.1,196.6 L374.1,195.1 L375.1,193.5 L376.1,192.0 L377.1,190.4 L378.1,188.9 L379.1,187.3 L380.1,185.7 L381.2,184.1 L382.2,182.5 L383.2,180.9 L384.2,179.3 L385.2,177.7 L386.2,176.1 L387.2,174.5 L388.2,173.0 L389.2,171.4 L390.2,169.8 L391.2,168.3 L392.3,166.7 L393.3,165.2 L394.3,163.7 L395.3,162.2 L396.3,160.7 L397.3,159.2 L398.3,157.8 L399.3,156.4 L400.3,155.0 L401.3,153.6 L402.4,152.2 L403.4,150.9 L404.4,149.6 L405.4,148.3 L406.4,147.1 L407.4,145.9 L408.4,144.7 L409.4,143.6 L410.4,142.5 L411.4,141.4 L412.5,140.3 L413.5,139.3 L414.5,138.3 L415.5,137.4 L416.5,136.5 L417.5,135.6 L418.5,134.8 L419.5,134.0 L420.5,133.2 L421.5,132.5 L422.5,131.8 L423.6,131.1 L424.6,130.5 L425.6,129.9 L426.6,129.4 L427.6,128.9 L428.6,128.4 L429.6,128.0 L430.6,127.6 L431.6,127.2 L432.6,126.9 L433.7,126.6 L434.7,126.3 L435.7,126.1 L436.7,125.9 L437.7,125.7 L438.7,125.6 L439.7,125.5 L440.7,125.4 L441.7,125.4 L442.7,125.4 L443.8,125.4 L444.8,125.4 L445.8,125.4 L446.8,125.5 L447.8,125.6 L448.8,125.7 L449.8,125.9 L450.8,126.0 L451.8,126.2 L452.8,126.4 L453.8,126.6" fill="none" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="50.0" y="286.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">a</text>
+  <text x="122.7" y="286.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x<tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="219.6" y="286.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x<tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="292.3" y="286.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x<tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="389.2" y="286.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x<tspan font-size="9" dy="4">4</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="453.8" y="286.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">b</text>
+  <rect x="50.0" y="20.0" width="14" height="9" fill="var(--color-theory)" fill-opacity="0.25" stroke="var(--color-theory)" stroke-width="0.8"/>
+  <text x="70.0" y="28.0" fill="var(--academic-text)" font-size="10.5" text-anchor="start">alt basamak (m<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan>)</text>
+  <line x1="200.0" y1="24.5" x2="216.0" y2="24.5" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <text x="220.0" y="28.0" fill="var(--academic-text)" font-size="10.5" text-anchor="start">üst basamak (M<tspan font-size="9" dy="4">i</tspan><tspan dy="-4">&#8203;</tspan>)</text>
+  <rect x="350.0" y="20.0" width="14" height="9" fill="none" stroke="var(--color-practice)" stroke-width="0.8"/>
+  <path d="M351.0,28.0 L359.0,20.0 M356.0,28.0 L364.0,20.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.8"/>
+  <text x="370.0" y="28.0" fill="var(--academic-text)" font-size="10.5" text-anchor="start">U(f, P) &#8722; L(f, P)</text>
+</svg>
+<figcaption>Beş alt aralıklı bir <em>P</em> bölüntüsü için alt basamak fonksiyonu (dolgulu, <em>m<sub>i</sub></em> yüksekliğinde) ve üst basamak fonksiyonu (<em>M<sub>i</sub></em> yüksekliğinde). Birincinin integrali <em>L</em>(<em>f</em>, <em>P</em>), ikincininki <em>U</em>(<em>f</em>, <em>P</em>)'dir; taralı şeritlerin toplam alanı aradaki farktır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani Riemann integrali, $f$ yi alttan ve üstten basamak fonksiyonlarıyla sıkıştırmaktır. Lebesgue integralinde aynı fikri koruyacağız, ama basamak fonksiyonlarının yerine çok daha esnek olan basit fonksiyonları (@def-nl-basit-fonksiyon) koyacağız: bir basit fonksiyon aralıklar üzerinde değil, rastgele ölçülebilir kümeler üzerinde sabittir.
+
+## Dirichlet Fonksiyonu
+
+Basamak fonksiyonlarının yetersizliğini gösteren klasik örnek, rasyonel sayılarda $1$, irrasyonel sayılarda $0$ değerini alan fonksiyondur.
+
+:::: {#exm-rl-dirichlet name="Dirichlet Fonksiyonu"}
+$E = \mathbb{Q} \cap [0, 1]$ ve $f = \chi_E : [0, 1] \to \mathbb{R}$ olsun. $f$ nin Riemann integrallenebilir olmadığını gösterin.
+
+::: {.cozum}
+$P = \{x_0, \dots, x_n\}$, $[0, 1]$ in rastgele bir bölüntüsü olsun. Rasyonel sayılar da irrasyonel sayılar da $\mathbb{R}$ de yoğundur; bu yüzden her $(x_{i-1}, x_i)$ aralığı hem rasyonel hem irrasyonel bir nokta içerir. Dolayısıyla her $i$ için $m_i = 0$ ve $M_i = 1$, yani
+$$
+L(f, P) = 0, \qquad U(f, P) = \sum_{i=1}^n (x_i - x_{i-1}) = 1
+$$
+dir. $P$ rastgele olduğundan $\underline{I}(f) = 0 \ne 1 = \overline{I}(f)$; (1) sağlanmaz ve $f$ Riemann integrallenebilir değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Oysa $E$ sayılabilir olduğundan $m(E) = 0$ dır (@thm-dol-sifir-olcu); ileride Lebesgue integralinin $f$ ye doğal olarak $0$ değerini verdiğini göreceğiz. Daha da çarpıcı olanı, $f$ nin çok iyi fonksiyonların limiti olmasıdır.
+
+:::: {#exm-rl-dirichlet-dizisi name="Basamak Fonksiyonlarının İntegrallenemeyen Limiti"}
+$\{q_k\}_{k=1}^\infty$, $E = \mathbb{Q} \cap [0, 1]$ kümesinin bir numaralaması olsun ve her $n$ için $f_n = \chi_{\{q_1, \dots, q_n\}} : [0, 1] \to \mathbb{R}$ tanımlansın. Her $f_n$ nin integrali $0$ olan bir basamak fonksiyonu olduğunu, $\{f_n\}$ nin artan ve $|f_n| \le 1$ olduğunu ve $[0, 1]$ üzerinde noktasal olarak Dirichlet fonksiyonu $f = \chi_E$ ye yakınsadığını gösterin.
+
+::: {.cozum}
+**Basamak fonksiyonu.** $q_1, \dots, q_n$ noktalarını ve $0, 1$ i sıralayarak $[0, 1]$ in bir $P$ bölüntüsünü elde ederiz. $P$ nin açık alt aralıkları hiçbir $q_k$ ($k \le n$) içermez; bu aralıklarda $f_n \equiv 0$ dır. O hâlde $f_n$ bir basamak fonksiyonudur ve @thm-rl-basamak-integrali gereği $\int_0^1 f_n(x)\,dx = 0$ dır.
+
+**Monotonluk ve sınırlılık.** $\{q_1, \dots, q_n\} \subseteq \{q_1, \dots, q_{n+1}\}$ olduğundan $f_n \le f_{n+1}$; ayrıca $f_n$ yalnız $0$ ve $1$ değerlerini aldığından $|f_n| \le 1$.
+
+**Noktasal yakınsaklık.** $x$ irrasyonelse her $n$ için $f_n(x) = 0 = f(x)$. $x \in E$ ise bir $k$ için $x = q_k$ dır; $n \ge k$ için $f_n(x) = 1 = f(x)$. Her iki durumda $f_n(x) \to f(x)$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani Riemann integrallenebilir fonksiyonların düzgün sınırlı, artan bir dizisi, Riemann integrallenebilir olmayan bir fonksiyona noktasal olarak yakınsayabilir. Burada $\int_0^1 f_n = 0$ integralleri bir limite gider, ama bu limiti karşılayacak bir Riemann integrali yoktur. Yakınsaklık düzgün olsaydı böyle bir şey olamazdı (@exr-rl-duzgun-limit); nitekim bu dizi düzgün yakınsamaz (@exr-rl-duzgun-yakinsamaz).
+
+## Riemann İntegralinin Sınırlılıkları
+
+Dirichlet örneği Riemann integralinin iki zayıflığını birden gösterir: integrallenebilir fonksiyonların sınıfı noktasal limitler altında kapalı değildir ve bu yüzden limit ile integralin yer değiştirmesi, limit fonksiyonunun integrallenebilir olduğu *önceden bilinmedikçe* anlamsızdır.
+
+Lebesgue integrali bu durumu açıklar. Sınırlı bir $f : [a, b] \to \mathbb{R}$ fonksiyonunun Riemann integrallenebilmesi için gerek ve yeter koşul, süreksizlik noktalarının kümesinin sıfır ölçülü olmasıdır (Lebesgue'ün Riemann integrallenebilirlik ölçütü; kanıtı bu kitabın kapsamı dışındadır). Dirichlet fonksiyonu her noktada süreksizdir. Ayrıca Riemann integrallenebilir fonksiyonların Lebesgue integrallenebilir olduğunu ve iki integralin çakıştığını (@thm-sfi-riemann-lebesgue), sınırlı fonksiyonlar için de Sınırlı Yakınsaklık Teoremi'ni (@thm-sfi-sinirli-yakinsaklik) kanıtlayacağız. Bu ikisi birlikte Riemann integrali için Arzelà'nın Sınırlı Yakınsaklık Teoremi'ni verir: $\{f_n : [a, b] \to \mathbb{R}\}$ Riemann integrallenebilir fonksiyonların düzgün sınırlı bir dizisi olsun ve noktasal olarak bir $f : [a, b] \to \mathbb{R}$ fonksiyonuna yakınsasın. $f$ nin Riemann integrallenebilir olduğu **varsayılırsa**
+$$
+\lim_{n \to \infty} \int_a^b f_n(x)\,dx = \int_a^b f(x)\,dx
+$$
+dir. Lebesgue integralinde bu varsayıma gerek kalmayacak: ölçülebilir fonksiyonların noktasal limiti yine ölçülebilirdir (@thm-nl-noktasal-limit).
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalar Darboux toplamlarının temel özelliklerini ve bunların birkaç klasik sonucunu kanıtlatıyor.
+
+:::: {#exr-rl-duzgun-yakinsamaz name="Dirichlet Dizisi Düzgün Yakınsamaz"}
+$\{q_k\}_{k=1}^\infty$, $\mathbb{Q} \cap [0, 1]$ in bir numaralaması, $f_n = \chi_{\{q_1, \dots, q_n\}}$ ve $f = \chi_{\mathbb{Q} \cap [0, 1]}$ olsun (@exm-rl-dirichlet-dizisi). $\{f_n\}$ nin $[0, 1]$ üzerinde $f$ ye düzgün olarak yakınsamadığını gösterin.
+
+::: {.cozum}
+Düzgün yakınsaklık, $\sup_{x \in [0, 1]} |f_n(x) - f(x)| \to 0$ demektir. Bu supremumun her $n$ için $1$ olduğunu gösterelim.
+
+$n$ rastgele olsun. Numaralama birebir olduğundan $q_{n+1} \notin \{q_1, \dots, q_n\}$, dolayısıyla $f_n(q_{n+1}) = 0$. Öte yandan $q_{n+1}$ rasyoneldir, yani $f(q_{n+1}) = 1$. Buradan
+$$
+\sup_{x \in [0, 1]} |f_n(x) - f(x)| \ge |f_n(q_{n+1}) - f(q_{n+1})| = 1
+$$
+çıkar; fonksiyonlar yalnız $0$ ve $1$ değerlerini aldığından supremum tam olarak $1$ dir. Supremum sıfıra gitmediğinden yakınsaklık düzgün değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-rl-incelme name="İncelme ve Darboux Toplamları"}
+$f : [a, b] \to \mathbb{R}$ sınırlı olsun. $P'$, $[a, b]$ nin bir $P$ bölüntüsünün incelmesiyse
+$$
+L(f, P) \le L(f, P') \quad \text{ve} \quad U(f, P') \le U(f, P)
+$$
+olduğunu, yani incelme altında alt Darboux toplamlarının azalmadığını ve üst Darboux toplamlarının artmadığını gösterin.
+
+::: {.cozum}
+**Adım 1: Tek nokta eklemek.** Önce $P' = P \cup \{y\}$ olduğunu, $y$ nin $P$ nin bir $(x_{j-1}, x_j)$ alt aralığında bulunduğunu varsayalım. İki toplam yalnız $j$ indisli terimde ayrılır.
+$$
+m' = \inf_{(x_{j-1},\, y)} f, \qquad m'' = \inf_{(y,\, x_j)} f
+$$
+diyelim. $(x_{j-1}, y)$ ve $(y, x_j)$ aralıkları $(x_{j-1}, x_j)$ nin alt kümeleridir; daha küçük bir kümenin infimumu daha büyük ya da eşit olduğundan $m' \ge m_j$ ve $m'' \ge m_j$. Buradan
+$$
+\begin{aligned}
+m'(y - x_{j-1}) + m''(x_j - y) &\ge m_j (y - x_{j-1}) + m_j (x_j - y)\\[1mm]
+&= m_j (x_j - x_{j-1})
+\end{aligned}
+$$
+bulunur; yani $L(f, P') \ge L(f, P)$. Supremumlar için aynı akıl yürütme, daha küçük kümenin supremumu daha küçük ya da eşit olduğundan, $U(f, P') \le U(f, P)$ verir.
+
+**Adım 2: Genel durum.** $P' \setminus P$ sonlu bir kümedir, elemanları $y_1, \dots, y_k$ olsun. $P$ ye bu noktaları birer birer ekleyerek
+$$
+P = Q_0 \subseteq Q_1 \subseteq \cdots \subseteq Q_k = P'
+$$
+bölüntülerini elde ederiz; her $Q_r$, $Q_{r-1}$ e tek nokta eklenerek bulunur. Adım 1 her geçişte alt toplamın azalmadığını, üst toplamın artmadığını söyler:
+$$
+L(f, P) \le L(f, Q_1) \le \cdots \le L(f, P'), \qquad U(f, P') \le \cdots \le U(f, P).
+$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-rl-alt-ust-karsilastirma name="Alt İntegral Üst İntegrali Aşmaz"}
+$f : [a, b] \to \mathbb{R}$ sınırlı olsun. $\sup_P L(f, P) \le \inf_P U(f, P)$ olduğunu, yani (1) eşitliğinin sol tarafının sağ tarafından büyük olamayacağını gösterin.
+
+::: {.cozum}
+**Adım 1: Her alt toplam her üst toplamı aşmaz.** $P_1$ ve $P_2$ iki bölüntü olsun ve $P' = P_1 \cup P_2$ ortak incelmelerini alalım. Her alt aralıkta infimum supremumu aşmadığından $L(f, P') \le U(f, P')$. @exr-rl-incelme gereği
+$$
+L(f, P_1) \le L(f, P') \le U(f, P') \le U(f, P_2)
+$$
+dir.
+
+**Adım 2: Supremum ve infimum.** $P_2$ yi sabit tutalım. Adım 1'e göre $U(f, P_2)$, bütün alt toplamların bir üst sınırıdır; dolayısıyla $\sup_P L(f, P) \le U(f, P_2)$. Bu, her $P_2$ için doğru olduğundan $\sup_P L(f, P)$ bütün üst toplamların bir alt sınırıdır ve
+$$
+\sup_P L(f, P) \le \inf_P U(f, P)
+$$
+bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-rl-bolunti-dizisi-olcutu name="Bölüntü Dizisiyle İntegrallenebilirlik"}
+$f : [a, b] \to \mathbb{R}$ sınırlı olsun. $f$ nin Riemann integrallenebilmesi için gerek ve yeter koşulun, her $P_{n+1}$ in $P_n$ nin bir incelmesi olduğu ve
+$$
+\lim_{n \to \infty} \big[\, U(f, P_n) - L(f, P_n) \,\big] = 0
+$$
+eşitliğini sağlayan bir $\{P_n\}$ bölüntü dizisinin var olması olduğunu gösterin.
+
+::: {.cozum}
+Kısaca $\underline{I} = \sup_P L(f, P)$ ve $\overline{I} = \inf_P U(f, P)$ yazalım; @exr-rl-alt-ust-karsilastirma gereği $\underline{I} \le \overline{I}$.
+
+**Yeterlilik.** Böyle bir $\{P_n\}$ varsa her $n$ için $L(f, P_n) \le \underline{I} \le \overline{I} \le U(f, P_n)$, dolayısıyla
+$$
+0 \le \overline{I} - \underline{I} \le U(f, P_n) - L(f, P_n).
+$$
+Sağ taraf sıfıra gider, sol taraf $n$ den bağımsızdır; demek ki $\overline{I} = \underline{I}$ ve $f$ Riemann integrallenebilirdir. (Bu yönde incelme koşuluna gerek yoktur.)
+
+**Gereklilik.** $f$ Riemann integrallenebilir olsun; $I = \underline{I} = \overline{I}$. Her $n$ için supremum ve infimumun tanımından
+$$
+L(f, Q_n) > I - \frac{1}{n}, \qquad U(f, R_n) < I + \frac{1}{n}
+$$
+olan $Q_n$, $R_n$ bölüntüleri vardır. Tümevarımla $P_1 = Q_1 \cup R_1$ ve $P_n = P_{n-1} \cup Q_n \cup R_n$ tanımlayalım. $P_n \supseteq P_{n-1}$ olduğundan her $P_n$, $P_{n-1}$ in incelmesidir. Ayrıca $P_n$, hem $Q_n$ nin hem $R_n$ nin incelmesidir; @exr-rl-incelme gereği
+$$
+U(f, P_n) - L(f, P_n) \le U(f, R_n) - L(f, Q_n) < \frac{2}{n}
+$$
+dir. Fark negatif olmadığından $U(f, P_n) - L(f, P_n) \to 0$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-rl-surekli name="Sürekli Fonksiyonlar İntegrallenebilir"}
+@exr-rl-bolunti-dizisi-olcutu ve düzgün sürekliliği kullanarak sürekli her $f : [a, b] \to \mathbb{R}$ fonksiyonunun Riemann integrallenebilir olduğunu gösterin.
+
+::: {.cozum}
+**Adım 1: Sınırlılık ve düzgün süreklilik.** Kapalı ve sınırlı bir aralıkta sürekli olan $f$ sınırlıdır ve düzgün süreklidir (bkz. [Analiz 1: Düzgün Süreklilik ve Cantor Teoremi](../analiz-1/duzgun-sureklilik-ve-cantor-teoremi.html)). Dolayısıyla Darboux toplamları tanımlıdır.
+
+**Adım 2: Bölüntü dizisi.** $P_n$, $[a, b]$ yi $2^n$ eşit parçaya bölen bölüntü olsun. $P_n$ nin noktaları $P_{n+1}$ in de noktalarıdır (her alt aralık ikiye bölünür); yani $P_{n+1}$, $P_n$ nin incelmesidir. $P_n$ nin alt aralıklarının uzunluğu $(b - a)/2^n$ dir.
+
+**Adım 3: Farkın tahmini.** $\varepsilon > 0$ verilsin. Düzgün süreklilikten, $|x - y| < \delta$ iken $|f(x) - f(y)| < \varepsilon$ olacak biçimde bir $\delta > 0$ vardır. $(b - a)/2^N < \delta$ olan bir $N$ seçelim ve $n \ge N$ alalım. $P_n$ nin bir $(x_{i-1}, x_i)$ alt aralığındaki her $x, y$ için $|x - y| < \delta$, dolayısıyla $f(x) < f(y) + \varepsilon$. Önce $x$ üzerinden supremum, sonra $y$ üzerinden infimum alırsak $M_i \le m_i + \varepsilon$ buluruz. Böylece
+$$
+U(f, P_n) - L(f, P_n) = \sum_{i=1}^{2^n} (M_i - m_i)(x_i - x_{i-1}) \le \varepsilon\,(b - a)
+$$
+dir.
+
+**Adım 4: Sonuç.** $\varepsilon$ keyfi olduğundan $U(f, P_n) - L(f, P_n) \to 0$. $\{P_n\}$ ardışık incelmelerden oluştuğundan @exr-rl-bolunti-dizisi-olcutu gereği $f$ Riemann integrallenebilirdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-rl-monoton-a name="Artan Fonksiyonun Darboux Farkı"}
+$f : [0, 1] \to \mathbb{R}$ artan olsun ve $P_n$, $[0, 1]$ in $1/n$ uzunluklu $n$ alt aralığa bölüntüsü olsun.
+$$
+U(f, P_n) - L(f, P_n) \le \frac{1}{n}\,\big[f(1) - f(0)\big]
+$$
+olduğunu gösterin.
+
+::: {.cozum}
+$P_n = \{x_0, \dots, x_n\}$, $x_i = i/n$ olsun. $f$ artan olduğundan $f(0) \le f(x) \le f(1)$; yani $f$ sınırlıdır ve Darboux toplamları tanımlıdır.
+
+**Adım 1: Alt aralıkta sınırlar.** $x_{i-1} < x < x_i$ için artanlıktan $f(x_{i-1}) \le f(x) \le f(x_i)$. Dolayısıyla $f(x_i)$ bu aralıkta bir üst sınır, $f(x_{i-1})$ bir alt sınırdır:
+$$
+M_i \le f(x_i), \qquad m_i \ge f(x_{i-1}).
+$$
+
+**Adım 2: Teleskopik toplam.** Her alt aralığın uzunluğu $1/n$ olduğundan
+$$
+\begin{aligned}
+U(f, P_n) - L(f, P_n) &= \frac{1}{n} \sum_{i=1}^n (M_i - m_i)\\[1mm]
+&\le \frac{1}{n} \sum_{i=1}^n \big[f(x_i) - f(x_{i-1})\big]
+\end{aligned}
+$$
+dir. Toplam açıldığında ardışık terimler birbirini götürür:
+$$
+\sum_{i=1}^n \big[f(x_i) - f(x_{i-1})\big] = f(x_n) - f(x_0) = f(1) - f(0).
+$$
+Böylece $U(f, P_n) - L(f, P_n) \le \frac{1}{n}[f(1) - f(0)]$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-rl-monoton-b name="Artan Fonksiyonlar İntegrallenebilir"}
+$f : [0, 1] \to \mathbb{R}$ artan olsun. @exr-rl-monoton-a ve @exr-rl-bolunti-dizisi-olcutu yardımıyla $f$ nin Riemann integrallenebilir olduğunu gösterin.
+
+::: {.cozum}
+@exr-rl-bolunti-dizisi-olcutu ardışık incelmelerden oluşan bir dizi ister; $1/n$ uzunluklu bölüntüler bu koşulu sağlamaz ($P_3$, $P_2$ nin incelmesi değildir). Bu yüzden yalnız $n = 2^k$ indislerini kullanırız.
+
+$Q_k = P_{2^k}$, yani $[0, 1]$ i $2^k$ eşit parçaya bölen bölüntü olsun. $Q_k$ nin her noktası $j/2^k = 2j/2^{k+1}$ biçimindedir ve $Q_{k+1}$ e aittir; yani $Q_{k+1}$, $Q_k$ nin incelmesidir. @exr-rl-monoton-a gereği
+$$
+0 \le U(f, Q_k) - L(f, Q_k) \le \frac{f(1) - f(0)}{2^k} \xrightarrow[k \to \infty]{} 0
+$$
+dır. @exr-rl-bolunti-dizisi-olcutu gereği $f$ Riemann integrallenebilirdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-rl-duzgun-limit name="Düzgün Limitin Riemann İntegrali"}
+$\{f_n : [a, b] \to \mathbb{R}\}$, bir $f : [a, b] \to \mathbb{R}$ fonksiyonuna düzgün olarak yakınsayan, Riemann integrallenebilir fonksiyonların düzgün sınırlı bir dizisi olsun. $f$ nin de Riemann integrallenebilir olduğunu ve
+$$
+\lim_{n \to \infty} \int_a^b f_n(x)\,dx = \int_a^b f(x)\,dx
+$$
+olduğunu gösterin.
+
+::: {.cozum}
+**Adım 1: $f$ sınırlıdır.** Dizi düzgün sınırlı olduğundan her $n$ ve her $x$ için $|f_n(x)| \le K$ olacak bir $K$ vardır; $n \to \infty$ için $|f(x)| \le K$. Dolayısıyla $f$ nin Darboux toplamları tanımlıdır.
+
+**Adım 2: Toplamların karşılaştırılması.** $\varepsilon > 0$ verilsin. Düzgün yakınsaklıktan, $n \ge N$ iken her $x \in [a, b]$ için
+$$
+f_n(x) - \varepsilon < f(x) < f_n(x) + \varepsilon
+$$
+olacak bir $N$ vardır. $n \ge N$ ve $P$ rastgele bir bölüntü olsun. Bir alt aralıkta $f < f_n + \varepsilon$ eşitsizliğinden supremumlar için $M_i(f) \le M_i(f_n) + \varepsilon$, benzer biçimde $m_i(f) \ge m_i(f_n) - \varepsilon$ çıkar. Uzunluklarla çarpıp toplarsak
+$$
+U(f, P) \le U(f_n, P) + \varepsilon(b - a), \qquad L(f, P) \ge L(f_n, P) - \varepsilon(b - a)
+$$
+bulunur.
+
+**Adım 3: $f$ integrallenebilir.** $f_N$ Riemann integrallenebilir olduğundan @exr-rl-bolunti-dizisi-olcutu (ya da doğrudan tanım) gereği $U(f_N, P) - L(f_N, P) < \varepsilon$ olan bir $P$ vardır. Adım 2 deki eşitsizlikleri $n = N$ için kullanırsak
+$$
+\overline{I}(f) - \underline{I}(f) \le U(f, P) - L(f, P) < \varepsilon + 2\varepsilon(b - a)
+$$
+dir. $\varepsilon$ keyfi olduğundan $\overline{I}(f) = \underline{I}(f)$; $f$ Riemann integrallenebilirdir.
+
+**Adım 4: İntegrallerin yakınsaklığı.** $n \ge N$ olsun. Her $P$ için Adım 2 deki eşitsizliklerden
+$$
+L(f_n, P) - \varepsilon(b - a) \le L(f, P) \le \int_a^b f(x)\,dx \le U(f, P) \le U(f_n, P) + \varepsilon(b - a)
+$$
+dir. Soldaki eşitsizlikte $P$ üzerinden supremum, sağdakinde infimum alırsak, $f_n$ integrallenebilir olduğundan
+$$
+\int_a^b f_n(x)\,dx - \varepsilon(b - a) \le \int_a^b f(x)\,dx \le \int_a^b f_n(x)\,dx + \varepsilon(b - a)
+$$
+bulunur. Yani $n \ge N$ için
+$$
+\Big|\int_a^b f_n(x)\,dx - \int_a^b f(x)\,dx\Big| \le \varepsilon(b - a).
+$$
+$\varepsilon$ keyfi olduğundan integraller $\int_a^b f(x)\,dx$ e yakınsar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Riemann integralinin sınırlarını gördük. Sıradaki bölüm [Sınırlı Fonksiyonların İntegrali](sinirli-fonksiyonlarin-integrali.qmd), basamak fonksiyonlarının yerine basit fonksiyonları koyarak Lebesgue integralinin ilk adımını atıyor.

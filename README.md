@@ -13,7 +13,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 <!-- BOOKS-START -->
 
 <details>
-<summary><strong>Arşivdeki 30 ders</strong> — 16 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
+<summary><strong>Arşivdeki 30 ders</strong> — 17 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
 
 - [Analiz 1](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
 - [Analiz 2](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
@@ -27,6 +27,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Matematiğin Temelleri ve Mantık](https://acik-matematik.com/dersler/matematigin-temelleri/) — 19 bölüm, 106 örnek ve alıştırma
 - [Olasılık Teorisi](https://acik-matematik.com/dersler/olasilik-teorisi/) — 23 bölüm, 154 örnek ve alıştırma
 - [Raslantı Süreçleri](https://acik-matematik.com/dersler/raslanti-surecleri/) — 15 bölüm, 37 örnek ve alıştırma
+- [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 15 bölüm, 180 örnek ve alıştırma
 - [Sayılar Teorisi](https://acik-matematik.com/dersler/sayilar-teorisi/) — 32 bölüm, 232 örnek ve alıştırma
 - [Soyut Cebir](https://acik-matematik.com/dersler/soyut-cebir/) — 25 bölüm, 64 örnek ve alıştırma
 - [Temel Finans Matematiği](https://acik-matematik.com/dersler/finans-matematigi/) — 11 bölüm, 101 örnek ve alıştırma
@@ -44,7 +45,6 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - Matematiksel İstatistik — müfredatı hazır, bölümleri yazılıyor
 - Nümerik Analiz — müfredatı hazır, bölümleri yazılıyor
 - Python ile Bilimsel Hesaplama — müfredatı hazır, bölümleri yazılıyor
-- Reel Analiz — müfredatı hazır, bölümleri yazılıyor
 
 </details>
 
@@ -57,17 +57,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | | |
 |---|---:|
 | 📚 Kitap | **30** |
-| 📖 Konu/Bölüm | **383** |
-| 📐 Teorem | **816** |
-| 🔹 Lemma | **82** |
-| 📝 Tanım | **918** |
-| ✅ İspat | **1.307** |
-| 🧮 Örnek ve alıştırma | **2.569** |
-| 💡 Çözüm | **2.298** |
-| 📊 Şekil | **524** |
-| ✍️ Kelime | **1.301.463** |
-| 🔤 Karakter | **9.248.526** |
-| 💾 Kaynak metin | **14,1 MB** |
+| 📖 Konu/Bölüm | **398** |
+| 📐 Teorem | **866** |
+| 🔹 Lemma | **98** |
+| 📝 Tanım | **971** |
+| ✅ İspat | **1.401** |
+| 🧮 Örnek ve alıştırma | **2.749** |
+| 💡 Çözüm | **2.478** |
+| 📊 Şekil | **545** |
+| ✍️ Kelime | **1.360.372** |
+| 🔤 Karakter | **9.678.516** |
+| 💾 Kaynak metin | **14,8 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 
