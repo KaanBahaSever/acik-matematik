@@ -58,7 +58,8 @@ Lisans matematik derslerinin açık kaynaklı, reklamsız Türkçe not arşivi. 
 ## Git
 
 - `git push` asla çalıştırılmaz; yayını kullanıcı yapar. Commit yalnız kullanıcı isteyince atılır. İş bitince commit edilmemiş dosyaları raporla.
-- Commit mesajı İngilizce ve emir kipindedir. Ders işlerinde Türkçe ders adı öneki alır, ör. `Diferansiyel Geometri: add the Frame Fields part (6 chapters)`. Gövdede nedeni ve ölçülen sayıları yaz.
+- Commit mesajı tek satırlık, sade, İngilizce ve emir kiplidir. Ders işlerinde Türkçe ders adı öneki alır, ör. `Diferansiyel Geometri: add the Frame Fields part (6 chapters)`. Gövde yazılmaz.
+- Commit mesajında, kod yorumlarında ve notlarda içeriğin nereden derlendiği anılmaz: PDF, sayfa, el yazısı not, hoca, sınav, okuma ya da aktarma süreci geçmez.
 - Yayındaki bir sayfanın adresi değişecekse `git mv` kullan ve bölüme `aliases:` ya da kitap düzeyinde `_redirects` ekle. Mevcut yönlendirmeleri silme.
 - Yeni worktree boş başlar (`_site`, `.build-cache.json` ve `scripts/_figures` yoktur). Yalnız ilgili dersi derle; şekil düzenlemeden önce ilgili `*_figures.py` betiğini çalıştır.
 
