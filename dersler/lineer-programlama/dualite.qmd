@@ -1,0 +1,1328 @@
+---
+title: "Dualite"
+pagetitle: "Dualite"
+description: "Kanonik formdaki bir lineer programlama probleminden dual problemin yazılması, primal–dual karşılık tablosu ve eşitlik kısıtına karşılık gelen işaretsiz dual değişken; dualin duali, zayıf ve güçlü dualite teoremleri, dual optimal çözümün primal optimal tablodan okunması, bir primal–dual çiftinin simpleks yöntem ve grafik yöntemle çözülmesi."
+---
+
+Her lineer programlama probleminin bir "ikizi" vardır. Aynı $a_{ij}$, $b_i$, $c_j$ sayılarından kurulan bu ikinci probleme **dual problem** denir. Dual problemde kısıtlar ile değişkenlerin rolleri yer değiştirir: primalin her kısıtı dualin bir değişkeni, primalin her değişkeni dualin bir kısıtı olur, maksimum da minimuma dönüşür. İki problemin optimal değerleri aynıdır. Bu yüzden birini çözen ötekini de çözmüş olur.
+
+Bu bölüm, [Lineer programlama problemi](lineer-programlama-problemi.qmd) bölümünde tanımladığımız **kanonik formun** asıl kullanıldığı yerdir (@def-lpp-kanonik-form). Hatırlayalım: maksimum probleminde bütün kısıtlar $\le$, minimum probleminde bütün kısıtlar $\ge$ ve bütün değişkenler $\ge 0$'dır. Standart forma (@def-lpp-standart-form) ya da simpleks yöntem ile çözülebilir hale (@def-lpp-cozulebilir-hal) burada ihtiyaç yoktur. Dual problem, **kanonik formdaki** problemden bir transpoz alınarak doğrudan yazılır. Önce dual problemin nereden çıktığını bir örnekte görecek, sonra tanımını verecek, iki problem arasındaki bağı teoremlerle kuracak ve en sonunda iki problemin optimal tablolarını yan yana koyacağız.
+
+## Dual Problemin Fikri
+
+Dual problemi bir tanım olarak vermeden önce onu doğal olarak ortaya çıkaran soruya bakalım: bir minimum probleminin optimal değeri için, problemi çözmeden bir alt sınır bulabilir miyiz?
+
+:::: {#exm-dua-alt-sinir name="Diyet probleminde maliyete alt sınır"}
+@exm-lpp-artik-anlami diyetini ele alalım: $x_1$ ve $x_2$ tüketilecek $B_1$ ve $B_2$ besinlerinin miktarı (kg) olmak üzere
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\ge 6 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+Kısıtları negatif olmayan sayılarla çarpıp toplayarak her diyetin maliyetinin en az 9 TL olduğunu gösteriniz ve buradan optimal diyeti bulunuz.
+
+::: {.cozum}
+**Bir kısıtı kullanmak.** Birinci kısıtı $2$ ile çarpalım: $2x_1 + 2x_2 \ge 8$. Değişkenler negatif olmadığından $3x_2 \ge 2x_2$'dir, dolayısıyla her uygun diyet için
+
+$$z = 2x_1 + 3x_2 \ge 2x_1 + 2x_2 \ge 8.$$
+
+İkinci kısıtla da benzer bir sınır bulunur: $x_1 \ge 0$ olduğundan $z = 2x_1 + 3x_2 \ge x_1 + 3x_2 \ge 6$. İlk sınır daha iyidir; maliyet 8 TL'nin altına inemez.
+
+**İki kısıtı birlikte kullanmak.** Genel olarak birinci kısıtı $y_1 \ge 0$, ikincisini $y_2 \ge 0$ ile çarpıp toplayalım. Çarpanlar negatif olmadığı için eşitsizliklerin yönü değişmez:
+
+$$(y_1 + y_2)\,x_1 + (y_1 + 3y_2)\,x_2 \ge 4y_1 + 6y_2 .$$
+
+Sol taraftaki katsayılar amaçtaki katsayıları aşmıyorsa, yani
+
+$$y_1 + y_2 \le 2 \qquad \text{ve} \qquad y_1 + 3y_2 \le 3$$
+
+ise, $x_1, x_2 \ge 0$ olduğundan
+
+$$z = 2x_1 + 3x_2 \ge (y_1 + y_2)\,x_1 + (y_1 + 3y_2)\,x_2 \ge 4y_1 + 6y_2$$
+
+olur. Yani bu iki koşulu sağlayan her $(y_1, y_2) \ge 0$ çifti, $4y_1 + 6y_2$ büyüklüğünde bir alt sınır verir. $(y_1, y_2) = (2, 0)$ yukarıdaki $8$ sınırını, $(0, 1)$ ise $6$ sınırını verir. $y_1 = \tfrac{3}{2}$, $y_2 = \tfrac{1}{2}$ seçelim: $\tfrac32 + \tfrac12 = 2 \le 2$ ve $\tfrac32 + \tfrac32 = 3 \le 3$ olduğundan koşullar sağlanır ve
+
+$$z \ge 4 \cdot \tfrac{3}{2} + 6 \cdot \tfrac{1}{2} = 9$$
+
+bulunur. Bu seçimde katsayılar amaçtakilerle tam olarak çakışır:
+
+$$\tfrac32(x_1 + x_2) + \tfrac12(x_1 + 3x_2) = 2x_1 + 3x_2 .$$
+
+**Optimal diyet.** $x_1 = 3$, $x_2 = 1$ diyeti uygundur ($3 + 1 = 4$, $3 + 3 = 6$) ve maliyeti $2 \cdot 3 + 3 \cdot 1 = 9$ TL'dir. Hiçbir diyet 9 TL'den ucuz olamayacağına göre bu diyet optimaldir: $\min z = 9$. Aynı sonucu @exm-ucg-diyet-min örneğinde grafik yöntemle bulmuştuk.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Örnekte en iyi alt sınırı bulmak da bir lineer programlama problemidir:
+
+$$
+\begin{aligned}
+y_1 + y_2 &\le 2 \\
+y_1 + 3y_2 &\le 3 \\
+y_1, y_2 &\ge 0 \\
+\max g &= 4y_1 + 6y_2
+\end{aligned}
+$$
+
+Bu problem diyet probleminin **duali**dir. Nasıl kurulduğuna dikkat edelim. Diyet probleminin $i$. kısıtı bir $y_i$ değişkeni verdi. $x_j$ değişkeni bir kısıt verdi: $x_j$'nin katsayıları ($A$'nın $j$. sütunu) sol tarafa, $c_j$ sağ tarafa geçti. Amaçtaki katsayılar da primalin sağ tarafları $4$ ve $6$ oldu. Yani katsayılar tablosu transpoz edildi.
+
+İki koşul da kanonik formdan geliyor. Çarpanların $y_i \ge 0$ olabilmesi için minimum probleminin kısıtlarının hepsi $\ge$ olmalıdır. Bir kısıt $\le$ olsaydı, onu pozitif bir sayıyla çarpıp ötekilerle toplayınca yönler karışırdı. Katsayıları amaçla karşılaştırırken de $x_j \ge 0$ koşulunu kullandık. İşte kanonik formun istediği tam olarak budur.
+
+Dualin iktisadi bir yorumu da var. Bir eczacının A ve C vitaminini hap olarak sattığını, birim fiyatlarını $y_1$ ve $y_2$ TL koyduğunu düşünelim. Hapların besinlerle rekabet edebilmesi için, $1$ kg $B_1$'deki vitaminlerin ($1$ birim A, $1$ birim C) hap karşılığı $2$ TL'yi, $1$ kg $B_2$'deki vitaminlerin ($1$ birim A, $3$ birim C) hap karşılığı da $3$ TL'yi geçmemelidir. Eczacı, diyetin gerektirdiği $4$ birim A ve $6$ birim C vitamininden elde edeceği $4y_1 + 6y_2$ gelirini en büyük yapmak ister. Bu, tam olarak yukarıdaki dual problemdir.
+
+## Primal ve Dual Problem
+
+Örnekte yaptığımızı şimdi genel olarak yazalım. Tanım kanonik formdaki iki problem türü için ayrı ayrı verilir: minimum primalin duali bir maksimum problemi, maksimum primalin duali bir minimum problemidir.
+
+::: {#def-dua-dual-problem name="Primal ve dual problem"}
+$A = [a_{ij}]$ $m \times n$ boyutlu bir matris, $\vec{b} = (b_1, \dots, b_m)^T$, $\vec{c} = (c_1, \dots, c_n)^T$, $\vec{x} = (x_1, \dots, x_n)^T$ ve $\vec{y} = (y_1, \dots, y_m)^T$ olsun.
+
+**Minimum primal, maksimum dual.** Kanonik formdaki
+
+$$
+\begin{aligned}
+a_{11}x_1 + a_{12}x_2 + \dots + a_{1n}x_n &\ge b_1 \\
+a_{21}x_1 + a_{22}x_2 + \dots + a_{2n}x_n &\ge b_2 \\
+&\;\;\vdots \\
+a_{m1}x_1 + a_{m2}x_2 + \dots + a_{mn}x_n &\ge b_m \\
+x_j \ge 0, \quad j &= \overline{1,n} \\
+\min z &= c_1x_1 + c_2x_2 + \dots + c_nx_n
+\end{aligned}
+$$
+
+problemi ile
+
+$$
+\begin{aligned}
+a_{11}y_1 + a_{21}y_2 + \dots + a_{m1}y_m &\le c_1 \\
+a_{12}y_1 + a_{22}y_2 + \dots + a_{m2}y_m &\le c_2 \\
+&\;\;\vdots \\
+a_{1n}y_1 + a_{2n}y_2 + \dots + a_{mn}y_m &\le c_n \\
+y_i \ge 0, \quad i &= \overline{1,m} \\
+\max g &= b_1y_1 + b_2y_2 + \dots + b_my_m
+\end{aligned}
+$$
+
+problemi birbirinin dualidir. Matrislerle:
+
+$$
+\begin{aligned}
+A\vec{x} &\ge \vec{b} \\
+\vec{x} &\ge 0 \\
+\min z &= \vec{c}^{\,T}\vec{x}
+\end{aligned}
+\quad\Longrightarrow\quad
+\begin{aligned}
+A^T\vec{y} &\le \vec{c} \\
+\vec{y} &\ge 0 \\
+\max g &= \vec{b}^{\,T}\vec{y}
+\end{aligned}
+$$
+
+**Maksimum primal, minimum dual.** Kanonik formdaki
+
+$$
+\begin{aligned}
+a_{11}x_1 + a_{12}x_2 + \dots + a_{1n}x_n &\le b_1 \\
+&\;\;\vdots \\
+a_{m1}x_1 + a_{m2}x_2 + \dots + a_{mn}x_n &\le b_m \\
+x_j \ge 0, \quad j &= \overline{1,n} \\
+\max z &= c_1x_1 + c_2x_2 + \dots + c_nx_n
+\end{aligned}
+$$
+
+problemi ile
+
+$$
+\begin{aligned}
+a_{11}y_1 + a_{21}y_2 + \dots + a_{m1}y_m &\ge c_1 \\
+&\;\;\vdots \\
+a_{1n}y_1 + a_{2n}y_2 + \dots + a_{mn}y_m &\ge c_n \\
+y_i \ge 0, \quad i &= \overline{1,m} \\
+\min g &= b_1y_1 + b_2y_2 + \dots + b_my_m
+\end{aligned}
+$$
+
+problemi birbirinin dualidir. Matrislerle:
+
+$$
+\begin{aligned}
+A\vec{x} &\le \vec{b} \\
+\vec{x} &\ge 0 \\
+\max z &= \vec{c}^{\,T}\vec{x}
+\end{aligned}
+\quad\Longrightarrow\quad
+\begin{aligned}
+A^T\vec{y} &\ge \vec{c} \\
+\vec{y} &\ge 0 \\
+\min g &= \vec{b}^{\,T}\vec{y}
+\end{aligned}
+$$
+
+Her iki durumda da bu iki problemden birine **primal (esas) problem**, diğerine **dual problem** denir.
+:::
+
+Yani dual problemi yazmak için kanonik formdaki primalin katsayılarını bir tabloya dizer ve tabloyu **sütun sütun** okuruz:
+
+$$
+\begin{array}{c|ccc|c}
+ & x_1 & \cdots & x_n & \\
+\hline
+y_1 & a_{11} & \cdots & a_{1n} & b_1 \\
+\vdots & \vdots & & \vdots & \vdots \\
+y_m & a_{m1} & \cdots & a_{mn} & b_m \\
+\hline
+ & c_1 & \cdots & c_n &
+\end{array}
+$$
+
+Primal bu tabloyu satır satır okur: $i$. satır $i$. kısıttır ve sağ tarafı $b_i$'dir. Dual aynı tabloyu sütun sütun okur: $j$. sütun $j$. dual kısıttır, yani $x_j$'nin bütün kısıtlardaki katsayıları $a_{1j}, \dots, a_{mj}$ sol tarafa, $c_j$ sağ tarafa gelir. $y_i$ değişkeni primalin $i$. kısıtına aittir. Boyutlara dikkat edelim: $A$ matrisi $m \times n$, $A^T$ ise $n \times m$ boyutludur. Primalde $m$ kısıt ve $n$ değişken varsa dualde $n$ kısıt ve $m$ değişken vardır. $A^T$ matrisi $A'$ ile de gösterilir. Dual değişkenler $y_i$ tek indislidir; simpleks tablosundaki iki indisli $y_{ij}$ sayılarıyla karıştırılmamalıdır.
+
+Tanımda primalin kanonik formda olduğu varsayılıyor. Kanonik formda olmayan bir problemin duali, önce kanonik forma getirilip sonra tanım uygulanarak yazılır. Aşağıdaki reçete bu işi adım adım yapar.
+
+::: {.callout-tip title="Dört adımda dual yazma"}
+1. **Primali kanonik forma getir** (@def-lpp-kanonik-form, @sec-lpp-donusturme). Aylak, artık ya da yapay değişken **eklenmez**; standart form ve simpleks yöntem ile çözülebilir hal burada gerekmez. Yapılacaklar yalnız şunlardır:
+   - işaret kısıtlaması olmayan değişkeni $x_j' - x_j''$ ile, $x_j \le 0$ olan değişkeni $-x_j'$ ile değiştir;
+   - maksimum probleminde $\ge$ kısıtlarını, minimum probleminde $\le$ kısıtlarını $-1$ ile çarp;
+   - eşitlik kısıtını iki eşitsizliğe ayır (ya da aşağıdaki @prp-dua-esitlik kısayolunu kullan);
+   - sağ tarafların işaretine dokunma: kanonik formda $b_i < 0$ olabilir.
+2. **Her kısıta bir dual değişken ata:** $i$. kısıta $y_i \ge 0$.
+3. **Transpoz al:** $j$. dual kısıtın sol tarafı $a_{1j}y_1 + \dots + a_{mj}y_m$, sağ tarafı $c_j$'dir. Maksimum primalde dual kısıtlar $\ge$, minimum primalde $\le$ olur.
+4. **Amacı yaz:** maksimum minimuma, minimum maksimuma döner; amaç katsayıları primalin sağ taraflarıdır: $g = b_1y_1 + \dots + b_my_m$.
+:::
+
+Önce zaten kanonik formda olan iki problemle başlayalım.
+
+:::: {#exm-dua-ornek1 name="Beş kısıtlı bir maksimum probleminin duali"}
+Aşağıdaki problemin dualini yazınız.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 50 \\
+2x_1 + x_2 &\le 110 \\
+x_1 + 2x_2 &\le 80 \\
+x_1 + 5x_2 &\le 185 \\
+5x_1 + 6x_2 &\le 300 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 10x_1 + 15x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**1. adım: kanonik form.** Amaç maksimumdur, beş kısıtın beşi de $\le$ biçimindedir ve iki değişken de $\ge 0$'dır. Problem zaten kanonik formdadır; hiçbir değişiklik gerekmez.
+
+**2. adım: dual değişkenler.** Beş kısıta sırasıyla $y_1, y_2, y_3, y_4, y_5 \ge 0$ değişkenlerini atarız.
+
+**3. adım: transpoz.** Katsayılar matrisi ve transpozu
+
+$$
+A = \begin{bmatrix} 1 & 1 \\ 2 & 1 \\ 1 & 2 \\ 1 & 5 \\ 5 & 6 \end{bmatrix}, \qquad
+A^T = \begin{bmatrix} 1 & 2 & 1 & 1 & 5 \\ 1 & 1 & 2 & 5 & 6 \end{bmatrix}
+$$
+
+dir. $A^T$'nin birinci satırı $x_1$'in beş kısıttaki katsayılarıdır ve sağ tarafı $c_1 = 10$'dur; ikinci satırı $x_2$'nin katsayılarıdır ve sağ tarafı $c_2 = 15$'tir. Primal maksimum olduğundan dual kısıtlar $\ge$ olur.
+
+**4. adım: amaç.** Primalin sağ tarafları $50, 110, 80, 185, 300$ dualin amaç katsayıları olur ve amaç minimuma döner. Dual problem
+
+$$
+\begin{aligned}
+y_1 + 2y_2 + y_3 + y_4 + 5y_5 &\ge 10 \\
+y_1 + y_2 + 2y_3 + 5y_4 + 6y_5 &\ge 15 \\
+y_1, y_2, y_3, y_4, y_5 &\ge 0 \\
+\min g &= 50y_1 + 110y_2 + 80y_3 \\
+&\quad + 185y_4 + 300y_5
+\end{aligned}
+$$
+
+olarak bulunur. Primalde $5$ kısıt ve $2$ değişken, dualde $2$ kısıt ve $5$ değişken vardır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dua-ornek2 name="Üç kısıtlı bir minimum probleminin duali"}
+Aşağıdaki problemin dualini yazınız.
+
+$$
+\begin{aligned}
+2x_1 + x_2 &\ge 2 \\
+x_1 + 3x_2 &\ge 4 \\
+-2x_1 + 2x_2 &\ge 8 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 10x_1 + 8x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**1. adım: kanonik form.** Amaç minimumdur ve üç kısıtın üçü de $\ge$ biçimindedir; değişkenler $\ge 0$'dır. Problem kanonik formdadır.
+
+**2. adım: dual değişkenler.** Üç kısıta $y_1, y_2, y_3 \ge 0$ değişkenlerini atarız.
+
+**3. adım: transpoz.** $x_1$'in katsayıları $2, 1, -2$ ve $c_1 = 10$ birinci dual kısıtı, $x_2$'nin katsayıları $1, 3, 2$ ve $c_2 = 8$ ikinci dual kısıtı verir. Primal minimum olduğundan dual kısıtlar $\le$ olur.
+
+**4. adım: amaç.** Sağ taraflar $2, 4, 8$ amaç katsayıları olur ve amaç maksimuma döner:
+
+$$
+\begin{aligned}
+2y_1 + y_2 - 2y_3 &\le 10 \\
+y_1 + 3y_2 + 2y_3 &\le 8 \\
+y_1, y_2, y_3 &\ge 0 \\
+\max g &= 2y_1 + 4y_2 + 8y_3
+\end{aligned}
+$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi kanonik formda olmayan bir problemle, reçetenin birinci adımının neden gerekli olduğunu görelim.
+
+:::: {#exm-dua-min-le name="Ters yönlü kısıtı olan minimum probleminin duali"}
+@exm-lpp-kanonik-hayir problemini ele alalım:
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\le 9 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+Bu problemin dualini yazınız.
+
+::: {.cozum}
+**1. adım: kanonik form.** Minimum probleminde bütün kısıtların $\ge$ olması gerekir; ikinci kısıt $\le$ biçimindedir. Onu $-1$ ile çarparız: $-x_1 - 3x_2 \ge -9$. Kanonik form
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+-x_1 - 3x_2 &\ge -9 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+olur. Sağ tarafın $-9$ olması kanonik formu bozmaz; bu satırı standart form için yeniden çevirmeye çalışmayız.
+
+**2.–4. adımlar.** İki kısıta $y_1, y_2 \ge 0$ atarız. $x_1$'in sütunu $(1, -1)$, $x_2$'nin sütunu $(1, -3)$'tür. Dual kısıtlar $\le$, amaç maksimum olur:
+
+$$
+\begin{aligned}
+y_1 - y_2 &\le 2 \\
+y_1 - 3y_2 &\le 3 \\
+y_1, y_2 &\ge 0 \\
+\max g &= 4y_1 - 9y_2
+\end{aligned}
+$$
+
+İkinci kısıtı $-1$ ile çarpmadan transpoz alsaydık dualde $y_1 + y_2 \le 2$, $y_1 + 3y_2 \le 3$ ve $g = 4y_1 + 9y_2$ çıkardı. Bu yanlıştır: örneğin $y = (0, 1)$ bu problemde uygundur ve $g = 9$ verir. Oysa birazdan göreceğimiz zayıf dualiteye göre dualin her uygun değeri primalin her uygun değerinden küçük ya da eşit olmalıdır. Primalin $x = (4, 0)$ uygun çözümünde ise $z = 8 < 9$'dur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Eşitlik kısıtı içeren bir problemde kanonik forma geçiş kısıt sayısını artırır.
+
+:::: {#exm-dua-ornek3 name="Eşitlik kısıtlı bir maksimum probleminin duali"}
+Aşağıdaki problemin dualini, önce problemi kanonik forma getirerek yazınız.
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &\ge 4 \\
+2x_1 - 4x_2 - x_3 &\le 10 \\
+x_1 + 2x_2 + 5x_3 &= 8 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 3x_1 + 4x_2 - x_3
+\end{aligned}
+$$
+
+::: {.cozum}
+**1. adım: kanonik form.** Amaç maksimum olduğundan bütün kısıtlar $\le$ olmalıdır. Satırlara tek tek bakalım.
+
+- Birinci kısıt $\ge$ biçimindedir. $-1$ ile çarparak yönünü değiştiririz: $-x_1 - x_2 - x_3 \le -4$.
+- İkinci kısıt zaten $\le$ biçimindedir.
+
+Üçüncü kısıt bir eşitliktir. Önce onu iki eşitsizliğe ayırırız:
+
+$$
+x_1 + 2x_2 + 5x_3 = 8 \quad\Longleftrightarrow\quad
+\left\{
+\begin{aligned}
+x_1 + 2x_2 + 5x_3 &\le 8 \\
+x_1 + 2x_2 + 5x_3 &\ge 8
+\end{aligned}
+\right.
+$$
+
+Birincisi uygun yöndedir. İkincisini $-1$ ile çarparız: $-x_1 - 2x_2 - 5x_3 \le -8$.
+
+Böylece kanonik form
+
+$$
+\begin{aligned}
+-x_1 - x_2 - x_3 &\le -4 \\
+2x_1 - 4x_2 - x_3 &\le 10 \\
+x_1 + 2x_2 + 5x_3 &\le 8 \\
+-x_1 - 2x_2 - 5x_3 &\le -8 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 3x_1 + 4x_2 - x_3
+\end{aligned}
+$$
+
+olur. Kısıt sayısı $3$'ten $4$'e çıktı.
+
+**2. adım: dual değişkenler.** Dört kısıta $y_1, y_2, y_3, y_4 \ge 0$ atarız.
+
+**3. adım: transpoz.** $x_1$'in dört kısıttaki katsayıları $-1, 2, 1, -1$ ve $c_1 = 3$; $x_2$'ninkiler $-1, -4, 2, -2$ ve $c_2 = 4$; $x_3$'ünkiler $-1, -1, 5, -5$ ve $c_3 = -1$'dir. Primal maksimum olduğundan dual kısıtlar $\ge$ olur.
+
+**4. adım: amaç.** Sağ taraflar $-4, 10, 8, -8$ amaç katsayıları olur ve amaç minimuma döner. Dual problem
+
+$$
+\begin{aligned}
+-y_1 + 2y_2 + y_3 - y_4 &\ge 3 \\
+-y_1 - 4y_2 + 2y_3 - 2y_4 &\ge 4 \\
+-y_1 - y_2 + 5y_3 - 5y_4 &\ge -1 \\
+y_1, y_2, y_3, y_4 &\ge 0 \\
+\min g &= -4y_1 + 10y_2 + 8y_3 - 8y_4
+\end{aligned}
+$$
+
+olarak bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu dualde $y_3$ ile $y_4$ hep birlikte ve zıt katsayılarla görünüyor: her satırda $y_3$'ün katsayısı $a$ ise $y_4$'ünki $-a$'dır. Bu bir rastlantı değildir.
+
+:::: {#prp-dua-esitlik name="Eşitlik kısıtı ve işaretsiz değişken"}
+Kanonik forma getirilecek bir primal problem düşünelim.
+
+1. Primalin $r$. kısıtı bir eşitlikse, yani $a_{r1}x_1 + a_{r2}x_2 + \dots + a_{rn}x_n = b_r$ ise, bu kısıt ikiye ayrılmadan bırakılabilir; dual problemde ona karşılık gelen $y_r$ değişkeni **işaretçe kısıtsız** olur.
+2. Primalin $x_s$ değişkeni işaretçe kısıtsızsa, bu değişken $x_s' - x_s''$ diye yazılmadan bırakılabilir; dual problemde ona karşılık gelen $s$. kısıt bir **eşitlik** olur.
+
+Diğer bütün kısıtlar ve değişkenler tanımdaki gibi yazılır.
+
+::: {.ispat}
+İspatı maksimum primal için yapıyoruz; minimum primalde yalnız eşitsizliklerin yönleri ters döner.
+
+**1. madde.** Eşitliği $a_{r1}x_1 + \dots + a_{rn}x_n \le b_r$ ve $-a_{r1}x_1 - \dots - a_{rn}x_n \le -b_r$ diye ikiye ayıralım ve bu iki kısıta $y_r' \ge 0$, $y_r'' \ge 0$ dual değişkenlerini atayalım. Transpoz alınca $j$. dual kısıtta bu iki değişken
+
+$$a_{rj}\,y_r' + (-a_{rj})\,y_r'' = a_{rj}\,(y_r' - y_r'')$$
+
+terimiyle, amaçta da $b_r y_r' + (-b_r) y_r'' = b_r (y_r' - y_r'')$ terimiyle görünür. Yani dual problem $y_r'$ ve $y_r''$'ye yalnız $y_r' - y_r''$ farkı üzerinden bağlıdır. $y_r = y_r' - y_r''$ yazalım. @prp-iks-esdegerlik gereği $y_r', y_r'' \ge 0$ olan problem ile $y_r$'nin işaretsiz olduğu problem aynı amaç değerlerini alır; birinin her uygun çözümü ötekinin aynı değerli bir uygun çözümüne dönüşür. Dolayısıyla dual, $y_r$ işaretçe kısıtsız olmak üzere tek bir değişkenle yazılabilir.
+
+**2. madde.** $x_s = x_s' - x_s''$, $x_s', x_s'' \ge 0$ yazalım. Katsayılar matrisinde $x_s'$'nün sütunu $A$'nın $s$. sütunu $(a_{1s}, \dots, a_{ms})$, amaç katsayısı $c_s$'dir; $x_s''$'nün sütunu bunun negatifi, amaç katsayısı $-c_s$'dir. Bu iki sütun iki dual kısıt verir:
+
+$$
+a_{1s}y_1 + \dots + a_{ms}y_m \ge c_s, \qquad
+-a_{1s}y_1 - \dots - a_{ms}y_m \ge -c_s .
+$$
+
+İkincisi $-1$ ile çarpılınca $a_{1s}y_1 + \dots + a_{ms}y_m \le c_s$ olur. Bir sayı $c_s$'den hem büyük-eşit hem küçük-eşitse $c_s$'ye eşittir; iki kısıt birlikte
+
+$$a_{1s}y_1 + a_{2s}y_2 + \dots + a_{ms}y_m = c_s$$
+
+eşitliğine denktir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani eşitlik kısıtını ikiye ayırmak, dualde tek bir işaretsiz değişkeni iki negatif olmayan değişkenin farkı olarak yazmaktan başka bir şey değildir. Bu yüzden eşitlik kısıtları ve işaretsiz değişkenler kanonik forma getirilirken olduğu gibi bırakılabilir. Bütün karşılıkları bir tabloda toplayalım.
+
+| Maksimum problemi | Minimum problemi |
+|:--|:--|
+| amaç $\max z = \vec{c}^{\,T}\vec{x}$ | amaç $\min g = \vec{b}^{\,T}\vec{y}$ |
+| $m$ kısıt | $m$ değişken |
+| $n$ değişken | $n$ kısıt |
+| sağ taraf vektörü $\vec{b}$ | amaç katsayıları $\vec{b}$ |
+| amaç katsayıları $\vec{c}$ | sağ taraf vektörü $\vec{c}$ |
+| katsayılar matrisi $A$ | katsayılar matrisi $A^T$ |
+| $i$. kısıt $\le$ | $i$. değişken $y_i \ge 0$ |
+| $i$. kısıt $=$ | $i$. değişken $y_i$ işaretsiz |
+| $j$. değişken $x_j \ge 0$ | $j$. kısıt $\ge$ |
+| $j$. değişken $x_j$ işaretsiz | $j$. kısıt $=$ |
+
+: Primal–dual karşılık tablosu {#tbl-dua-karsilik}
+
+Karşılık tablosu (@tbl-dua-karsilik) iki yönde de okunur. Primal maksimum problemiyse soldan sağa, minimum problemiyse sağdan sola okunur. Minimum primalde değişkenlerin adları yer değiştirir: primalin değişkenleri $x_j$, dualinkiler $y_i$ olur. Örneğin minimum primalin $i$. kısıtı $\ge$ ise ona karşılık gelen dual değişken $\ge 0$'dır. Tablonun iki yönde okunabilmesinin nedenini @thm-dua-dualin-duali gösterecek. Tabloyu kullanmadan önce kanonik forma getirme adımını unutmamak gerekir. Maksimumda $\ge$, minimumda $\le$ kısıtı önce $-1$ ile çarpılır; tabloda bu satırlara karşılık bir satır yoktur.
+
+::: {.callout-warning title="Dual yazarken sık yapılan hatalar"}
+- **Standart forma getirmek.** Dual, kanonik formdan yazılır. Aylak ya da artık değişken ekleyip eşitliklerden dual yazmak işi gereksiz yere uzatır; bütün kısıtlar eşitlik olacağı için dual değişkenlerin hepsi işaretsiz çıkar.
+- **Ters yönlü kısıtı çevirmemek.** Minimum probleminde $\le$, maksimum probleminde $\ge$ kısıtı transpozdan önce $-1$ ile çarpılmalıdır (bkz. @exm-dua-min-le).
+- **Sağ tarafı pozitif yapmaya çalışmak.** Kanonik formda $b_i < 0$ olabilir; $b_i$ olduğu gibi dualin amaç katsayısı olur.
+- **Satır ile sütunu karıştırmak.** $j$. dual kısıtın katsayıları $A$'nın $j$. **sütunudur**, yani tek bir değişkenin bütün kısıtlardaki katsayılarıdır.
+- **Yönü değiştirmeyi unutmak.** Maksimum primalin dual kısıtları $\ge$, minimum primalinkiler $\le$'dir.
+:::
+
+:::: {#exm-dua-ornek3-kisa name="Eşitlik kısıtlı problemin duali kısa yoldan"}
+@exm-dua-ornek3 problemini ($x_1 + x_2 + x_3 \ge 4$, $2x_1 - 4x_2 - x_3 \le 10$, $x_1 + 2x_2 + 5x_3 = 8$, $x_1, x_2, x_3 \ge 0$, $\max z = 3x_1 + 4x_2 - x_3$) @prp-dua-esitlik yardımıyla, eşitliği ikiye ayırmadan dualine dönüştürünüz ve sonucu @exm-dua-ornek3 ile karşılaştırınız.
+
+::: {.cozum}
+**1. adım: kanonik form.** Birinci kısıtı $-1$ ile çarparız: $-x_1 - x_2 - x_3 \le -4$. İkinci kısıt uygundur. Üçüncü kısıt eşitliktir ve @prp-dua-esitlik gereği olduğu gibi bırakılır.
+
+**2.–4. adımlar.** Karışmasın diye dual değişkenlere bu kez $t_1, t_2, t_3$ diyelim. $t_1, t_2 \ge 0$'dır; eşitlik kısıtına karşılık gelen $t_3$ ise işaretçe kısıtsızdır. Sütunlar $x_1$ için $(-1, 2, 1)$, $x_2$ için $(-1, -4, 2)$, $x_3$ için $(-1, -1, 5)$'tir:
+
+$$
+\begin{aligned}
+-t_1 + 2t_2 + t_3 &\ge 3 \\
+-t_1 - 4t_2 + 2t_3 &\ge 4 \\
+-t_1 - t_2 + 5t_3 &\ge -1 \\
+t_1, t_2 \ge 0, \quad &t_3 \text{ işaretçe kısıtsız} \\
+\min g &= -4t_1 + 10t_2 + 8t_3
+\end{aligned}
+$$
+
+**Karşılaştırma.** @exm-dua-ornek3 dualinde $t_1 = y_1$, $t_2 = y_2$ ve $t_3 = y_3 - y_4$ yazalım. Örneğin birinci dual kısıt $-y_1 + 2y_2 + (y_3 - y_4) \ge 3$, amaç da $-4y_1 + 10y_2 + 8(y_3 - y_4)$ olur; üç kısıt ve amaç bu yolla aynen yukarıdakilere dönüşür. Tersine, işaretçe kısıtsız $t_3$ değişkenine $t_3 = t_3' - t_3''$ dönüşümü yapılırsa $t_3' = y_3$, $t_3'' = y_4$ ile önceki dual problem geri gelir. İki problem birbirinin aynısıdır; kısa yol yalnız bir değişken ve bir kısıt tasarruf eder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dua-ornek4 name="Üç türlü kısıtı olan maksimum probleminin duali"}
+Aşağıdaki problemin dualini yazınız.
+
+$$
+\begin{aligned}
+x_1 + 4x_2 + x_3 + x_4 &\le 50 \\
+3x_1 + x_2 + 2x_3 + x_4 &= 30 \\
+x_1 + 2x_2 + x_3 + 2x_4 &\ge 20 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\max z &= x_1 + 2x_2 + 3x_3 + 7x_4
+\end{aligned}
+$$
+
+::: {.cozum}
+**1. adım: kanonik form.** Maksimum probleminde kısıtlar $\le$ olmalıdır. Birinci kısıt uygundur. İkinci kısıt eşitliktir ve @prp-dua-esitlik gereği olduğu gibi kalır. Üçüncü kısıt $\ge$ biçimindedir; $-1$ ile çarparız:
+
+$$
+\begin{aligned}
+x_1 + 4x_2 + x_3 + x_4 &\le 50 \\
+3x_1 + x_2 + 2x_3 + x_4 &= 30 \\
+-x_1 - 2x_2 - x_3 - 2x_4 &\le -20 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\max z &= x_1 + 2x_2 + 3x_3 + 7x_4
+\end{aligned}
+$$
+
+**2. adım: dual değişkenler.** Birinci ve üçüncü kısıta $y_1, y_3 \ge 0$, eşitlik olan ikinci kısıta işaretçe kısıtsız $y_2$ atarız.
+
+**3. adım: transpoz.** Dört değişkenin sütunları $x_1$ için $(1, 3, -1)$, $x_2$ için $(4, 1, -2)$, $x_3$ için $(1, 2, -1)$, $x_4$ için $(1, 1, -2)$'dir. Sağ taraflar $c_j = 1, 2, 3, 7$'dir ve dual kısıtlar $\ge$ olur.
+
+**4. adım: amaç.** Sağ taraflar $50, 30, -20$ amaç katsayıları olur:
+
+$$
+\begin{aligned}
+y_1 + 3y_2 - y_3 &\ge 1 \\
+4y_1 + y_2 - 2y_3 &\ge 2 \\
+y_1 + 2y_2 - y_3 &\ge 3 \\
+y_1 + y_2 - 2y_3 &\ge 7 \\
+y_1, y_3 \ge 0, \quad &y_2 \text{ işaretçe kısıtsız} \\
+\min g &= 50y_1 + 30y_2 - 20y_3
+\end{aligned}
+$$
+
+Eşitliği ikiye ayırsaydık $y_2$ yerine $y_2' \ge 0$ ve $y_2'' \ge 0$ gibi iki değişken çıkacak, her yerde $y_2' - y_2''$ farkıyla görünecekti.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Karşılık tablosunun son satırını, yani işaretsiz primal değişkenin dualde eşitlik kısıtı verdiğini de bir örnekte görelim.
+
+:::: {#exm-dua-isaretsiz name="İşaretsiz değişkenli problemin duali"}
+@exm-lpp-isaretsiz problemini ele alalım: $x_1 \ge 0$ ve $x_2$ işaretçe kısıtsız olmak üzere
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 6 \\
+x_1 - x_2 &\ge -2 \\
+\max z &= x_1 + 3x_2
+\end{aligned}
+$$
+
+Bu problemin dualini yazınız.
+
+::: {.cozum}
+**1. adım: kanonik form.** Maksimum probleminde ikinci kısıt $\le$ olmalıdır; $-1$ ile çarparız: $-x_1 + x_2 \le 2$. İşaretsiz $x_2$'yi @prp-dua-esitlik gereği olduğu gibi bırakıyoruz:
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 6 \\
+-x_1 + x_2 &\le 2 \\
+x_1 \ge 0, \quad &x_2 \text{ işaretçe kısıtsız} \\
+\max z &= x_1 + 3x_2
+\end{aligned}
+$$
+
+**2.–4. adımlar.** İki kısıta $y_1, y_2 \ge 0$ atarız. $x_1$'in sütunu $(1, -1)$'dir ve $x_1 \ge 0$ olduğundan bir $\ge$ kısıtı verir. $x_2$'nin sütunu $(1, 1)$'dir ve $x_2$ işaretsiz olduğundan bir eşitlik kısıtı verir:
+
+$$
+\begin{aligned}
+y_1 - y_2 &\ge 1 \\
+y_1 + y_2 &= 3 \\
+y_1, y_2 &\ge 0 \\
+\min g &= 6y_1 + 2y_2
+\end{aligned}
+$$
+
+**Uzun yoldan sağlama.** @exm-lpp-isaretsiz örneğinde $x_2 = x_2' - x_2''$ yazıp kanonik forma getirmiştik: $x_1 + x_2' - x_2'' \le 6$, $-x_1 + x_2' - x_2'' \le 2$, $\max z = x_1 + 3x_2' - 3x_2''$. Buradan tanımla dual yazılırsa $x_2'$'nün sütunu $y_1 + y_2 \ge 3$, $x_2''$'nün sütunu $-y_1 - y_2 \ge -3$, yani $y_1 + y_2 \le 3$ kısıtını verir. İkisi birlikte $y_1 + y_2 = 3$ eşitliğidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Dualin Duali
+
+Tanımda "birbirinin dualidir" dedik; yani ilişki simetriktir. Bunu şimdi gösterelim.
+
+:::: {#thm-dua-dualin-duali name="Dualin duali primaldir"}
+Kanonik formdaki bir problemin dual probleminin duali, problemin kendisidir.
+
+::: {.ispat}
+Primal $A\vec{x} \le \vec{b}$, $\vec{x} \ge 0$, $\max z = \vec{c}^{\,T}\vec{x}$ olsun. Tanıma göre duali
+
+$$A^T\vec{y} \ge \vec{c}, \qquad \vec{y} \ge 0, \qquad \min g = \vec{b}^{\,T}\vec{y}$$
+
+problemidir. Bu bir minimum problemidir, bütün kısıtları $\ge$ ve bütün değişkenleri $\ge 0$'dır; yani kendisi de kanonik formdadır. Tanımın minimum primal kısmını bu probleme uygulayalım. Katsayılar matrisi $A^T$, sağ taraf vektörü $\vec{c}$, amaç katsayıları $\vec{b}$'dir. Dolayısıyla $\vec{u} \in \mathbb{R}^n$ yeni değişken vektörü olmak üzere duali
+
+$$(A^T)^T\vec{u} \le \vec{b}, \qquad \vec{u} \ge 0, \qquad \max\, \vec{c}^{\,T}\vec{u}$$
+
+problemidir. $(A^T)^T = A$ olduğundan bu, değişkenin adı dışında primalin kendisidir.
+
+Primal minimum problemi ($A\vec{x} \ge \vec{b}$, $\vec{x} \ge 0$, $\min z = \vec{c}^{\,T}\vec{x}$) ise duali $A^T\vec{y} \le \vec{c}$, $\vec{y} \ge 0$, $\max g = \vec{b}^{\,T}\vec{y}$'dir. Bu kanonik formdaki bir maksimum problemidir ve tanımın maksimum kısmı onun dualini $A\vec{u} \ge \vec{b}$, $\vec{u} \ge 0$, $\min \vec{c}^{\,T}\vec{u}$ olarak verir. Bu da primalin kendisidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani "primal" ve "dual" adları yalnız hangi problemden yola çıktığımızı söyler; iki problem bir **dual çift** oluşturur. Eşitlik kısıtı ve işaretsiz değişken içeren problemler için de aynısı geçerlidir. Primalin $r$. kısıtı eşitlikse dualde $y_r$ işaretsizdir; dualin dualinde bu işaretsiz değişken @prp-dua-esitlik ikinci maddesi gereği yeniden bir eşitlik kısıtı verir. Primalin $x_s$ değişkeni işaretsizse dualin $s$. kısıtı eşitliktir; bu kısıt dualin dualinde @prp-dua-esitlik birinci maddesi gereği yeniden işaretsiz bir değişken verir. Diğer satırlar kanonik durumdaki gibidir. Bu yüzden karşılık tablosu (@tbl-dua-karsilik) iki yönde aynı biçimde okunur.
+
+:::: {#exm-dua-dualin-duali name="Bir dualin dualini yazmak"}
+@exm-dua-ornek2 dualinin ($2y_1 + y_2 - 2y_3 \le 10$, $y_1 + 3y_2 + 2y_3 \le 8$, $y_1, y_2, y_3 \ge 0$, $\max g = 2y_1 + 4y_2 + 8y_3$) dualini yazınız.
+
+::: {.cozum}
+Problem bir maksimum problemidir, iki kısıtı da $\le$ ve üç değişkeni de $\ge 0$'dır; kanonik formdadır. İki kısıta $u_1, u_2 \ge 0$ dual değişkenlerini atarız. $y_1$'in sütunu $(2, 1)$ ve amaç katsayısı $2$; $y_2$'ninki $(1, 3)$ ve $4$; $y_3$'ünkü $(-2, 2)$ ve $8$'dir. Maksimumun duali minimumdur ve kısıtları $\ge$'dir:
+
+$$
+\begin{aligned}
+2u_1 + u_2 &\ge 2 \\
+u_1 + 3u_2 &\ge 4 \\
+-2u_1 + 2u_2 &\ge 8 \\
+u_1, u_2 &\ge 0 \\
+\min &\ 10u_1 + 8u_2
+\end{aligned}
+$$
+
+$u_1 = x_1$, $u_2 = x_2$ yazınca @exm-dua-ornek2 primal problemi harfi harfine geri gelir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Zayıf Dualite
+
+@exm-dua-alt-sinir örneğinde dualin her uygun çözümü primalin optimal değeri için bir alt sınır veriyordu. Bu gözlem her dual çift için doğrudur.
+
+:::: {#thm-dua-zayif name="Zayıf dualite teoremi"}
+$\vec{x}$ minimum primalin ($A\vec{x} \ge \vec{b}$, $\vec{x} \ge 0$, $\min z = \vec{c}^{\,T}\vec{x}$) herhangi bir uygun çözümü, $\vec{y}$ de dualinin ($A^T\vec{y} \le \vec{c}$, $\vec{y} \ge 0$, $\max g = \vec{b}^{\,T}\vec{y}$) herhangi bir uygun çözümü olsun. Bu durumda
+
+$$g(\vec{y}) = \vec{b}^{\,T}\vec{y} \le \vec{c}^{\,T}\vec{x} = z(\vec{x})$$
+
+olur. Primal maksimum problemiyse ($A\vec{x} \le \vec{b}$, dual $A^T\vec{y} \ge \vec{c}$, $\min g$) eşitsizlik $z(\vec{x}) \le g(\vec{y})$ biçimini alır. Kısaca: bir dual çiftte maksimum probleminin her uygun değeri, minimum probleminin her uygun değerinden küçük ya da ona eşittir.
+
+::: {.ispat}
+Hesabı toplamlarla açık açık yazalım. $\vec{y}$ uygun olduğundan her $i$ için $y_i \ge 0$; $\vec{x}$ uygun olduğundan her $i$ için $\sum_{j=1}^{n} a_{ij}x_j \ge b_i$'dir. $b_i \le \sum_j a_{ij}x_j$ eşitsizliğini negatif olmayan $y_i$ ile çarpınca yön değişmez. $i$ üzerinden toplarsak
+
+$$
+\begin{aligned}
+g(\vec{y}) = \sum_{i=1}^{m} b_i y_i
+&\le \sum_{i=1}^{m} \Big( \sum_{j=1}^{n} a_{ij}x_j \Big) y_i \\[1mm]
+&= \sum_{j=1}^{n} \Big( \sum_{i=1}^{m} a_{ij}y_i \Big) x_j
+\end{aligned}
+$$
+
+bulunur. Son adımda yalnız toplama sırasını değiştirdik. Şimdi dual kısıtları kullanalım: her $j$ için $\sum_{i} a_{ij}y_i \le c_j$'dir ve $x_j \ge 0$ olduğundan bu eşitsizliği $x_j$ ile çarpınca yön yine değişmez. Böylece
+
+$$\sum_{j=1}^{n} \Big( \sum_{i=1}^{m} a_{ij}y_i \Big) x_j \le \sum_{j=1}^{n} c_jx_j = z(\vec{x})$$
+
+olur ve iki eşitsizlik birlikte $g(\vec{y}) \le z(\vec{x})$ verir.
+
+Primal maksimum problemiyse @thm-dua-dualin-duali gereği primal, kanonik formdaki minimum dualin dualidir. Yukarıdaki sonucu bu çifte uygularız. Minimum problemi dual, maksimum problemi primal olduğundan $z(\vec{x}) \le g(\vec{y})$ çıkar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani ispat kanonik formun her parçasını kullanır. Minimum primalin kısıtları $\ge$ ve $y_i \ge 0$ olduğu için birinci eşitsizlik doğru yöndedir. Dual kısıtlar $\le$ ve $x_j \ge 0$ olduğu için ikinci eşitsizlik de doğru yöndedir. Kanonik formu atlayıp yanlış yönlü bir kısıttan dual yazınca zayıf dualitenin bozulmasının nedeni budur (bkz. @exm-dua-min-le).
+
+:::: {#exm-dua-zayif name="Zayıf dualitenin sayısal bir örneği"}
+@exm-dua-alt-sinir diyetinde ($x_1 + x_2 \ge 4$, $x_1 + 3x_2 \ge 6$, $\min z = 2x_1 + 3x_2$) $\vec{x} = (3, 2)$ ve dualinde ($y_1 + y_2 \le 2$, $y_1 + 3y_2 \le 3$, $\max g = 4y_1 + 6y_2$) $\vec{y} = (1, \tfrac12)$ noktalarının uygun olduğunu gösteriniz. Zayıf dualitenin iki problemin optimal değerleri hakkında ne söylediğini bulunuz.
+
+::: {.cozum}
+**Uygunluk.** $\vec{x} = (3, 2)$ için $3 + 2 = 5 \ge 4$ ve $3 + 6 = 9 \ge 6$; ayrıca $x_1, x_2 \ge 0$. Maliyet $z = 6 + 6 = 12$'dir. $\vec{y} = (1, \tfrac12)$ için $1 + \tfrac12 = \tfrac32 \le 2$ ve $1 + \tfrac32 = \tfrac52 \le 3$; ayrıca $y_1, y_2 \ge 0$. Değer $g = 4 + 3 = 7$'dir.
+
+**Sonuç.** Zayıf dualite gereği $7 \le 12$ olmalıdır; gerçekten öyledir. Daha fazlasını da söyler. Primalin her uygun değeri $7$'den küçük olamaz, dolayısıyla $\min z \ge 7$'dir. Dualin her uygun değeri $12$'yi aşamaz, dolayısıyla $\max g \le 12$'dir. Tek bir uygun çift, iki optimal değeri de $7$ ile $12$ arasına sıkıştırır. Daha iyi bir çift, $\vec{x} = (3, 1)$ ile $\vec{y} = (\tfrac32, \tfrac12)$, bu aralığı tek bir noktaya indirir: ikisinde de değer $9$'dur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Son gözlem genel bir sonuçtur.
+
+:::: {#cor-dua-esit-deger name="Değerleri eşit olan uygun çözümler optimaldir"}
+Bir dual çiftte primalin uygun bir $\vec{x}^{*}$ çözümü ile dualin uygun bir $\vec{y}^{*}$ çözümü için $z(\vec{x}^{*}) = g(\vec{y}^{*})$ ise $\vec{x}^{*}$ primalin, $\vec{y}^{*}$ de dualin optimal çözümüdür.
+
+::: {.ispat}
+Primal minimum problemi olsun. $\vec{x}$ primalin herhangi bir uygun çözümüyse zayıf dualite (@thm-dua-zayif) gereği $z(\vec{x}) \ge g(\vec{y}^{*}) = z(\vec{x}^{*})$ olur. Hiçbir uygun çözüm $\vec{x}^{*}$'dan daha küçük değer vermediğinden $\vec{x}^{*}$ optimaldir. Aynı biçimde dualin her uygun $\vec{y}$ çözümü için $g(\vec{y}) \le z(\vec{x}^{*}) = g(\vec{y}^{*})$'dır ve $\vec{y}^{*}$ maksimum problemi olan dualin optimal çözümüdür. Primal maksimum problemiyse eşitsizlikler ters yönde yazılır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#cor-dua-sinirsiz name="Sınırsız problemin duali"}
+Bir dual çiftte problemlerden birinin sınırsız çözümü varsa (@def-sao-sinirsiz-cozum), diğerinin uygun çözümü yoktur.
+
+::: {.ispat}
+Minimum problemi sınırsız olsun, ama maksimum probleminin bir $\vec{y}$ uygun çözümü bulunsun. Zayıf dualite gereği minimum probleminin her uygun $\vec{x}$ çözümü için $z(\vec{x}) \ge g(\vec{y})$'dir; yani amaç fonksiyonu alttan $g(\vec{y})$ sayısıyla sınırlıdır. Bu, sınırsızlıkla çelişir. Maksimum problemi sınırsızsa aynı akıl yürütme, minimum probleminin bir uygun çözümü varsa maksimum probleminin amacının üstten sınırlı olacağını gösterir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dua-sinirsiz name="Sınırsız bir problemin uygun çözümü olmayan duali"}
+@exm-ucg-sinirsiz problemi ($-x_1 + x_2 \le 1$, $x_1 - 2x_2 \le 2$, $x_1, x_2 \ge 0$, $\max z = x_1 + x_2$) sınırsızdır. Dualini yazınız ve dualin uygun çözümü olmadığını doğrudan gösteriniz.
+
+::: {.cozum}
+Problem kanonik formdadır: maksimum, iki kısıt $\le$, değişkenler $\ge 0$. $x_1$'in sütunu $(-1, 1)$, $x_2$'ninki $(1, -2)$'dir. Dual problem şudur:
+
+$$
+\begin{aligned}
+-y_1 + y_2 &\ge 1 \\
+y_1 - 2y_2 &\ge 1 \\
+y_1, y_2 &\ge 0 \\
+\min g &= y_1 + 2y_2
+\end{aligned}
+$$
+
+Birinci kısıtı $2$ ile çarpıp ikincisine ekleyelim. Çarpan pozitif olduğundan yön korunur:
+
+$$2(-y_1 + y_2) + (y_1 - 2y_2) \ge 2 \cdot 1 + 1, \qquad \text{yani} \qquad -y_1 \ge 3 .$$
+
+Buradan $y_1 \le -3$ çıkar; bu, $y_1 \ge 0$ koşuluyla çelişir. Dualin uygun çözümü yoktur. @cor-dua-sinirsiz de bunu söyler.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Güçlü Dualite
+
+Zayıf dualite iki optimal değer arasında bir eşitsizlik veriyor. Güçlü dualite, optimal değerler varsa aralarında boşluk kalmadığını söyler. Üstelik dualin optimal çözümü, primalin optimal simpleks tablosundan hazır olarak okunur. Bunu görmek için tablonun sütunlarını bir matrisle ifade edelim.
+
+:::: {#lem-dua-tablo name="Tablo sütunları ve baz matrisi"}
+Standart formdaki bir problemin bir simpleks tablosunda, satırlardaki baz vektörleri sırasıyla $v_{B_1}, \dots, v_{B_m}$ olsun. Bu vektörleri sütun olarak yan yana yazarak elde edilen $m \times m$ matrise **baz matrisi** diyelim ve $B$ ile gösterelim. Bu durumda $B$ tersinirdir ve tablonun $v_0$ dahil her $v_j$ sütunu için (aylak, artık ve yapay değişkenlerin sütunları da dahil)
+
+$$\vec{y}_j = B^{-1}v_j, \qquad z_j = \vec{w}^{\,T}v_j$$
+
+olur. Burada $\vec{w}^{\,T} = \vec{c}_B^{\,T}B^{-1}$'dir.
+
+::: {.ispat}
+Baz vektörleri lineer bağımsızdır; sütunları lineer bağımsız olan kare matris tersinirdir. Tablonun $v_j$ sütunundaki $y_{1j}, \dots, y_{mj}$ sayıları, @def-smp-yij gereği $v_j = y_{1j}v_{B_1} + \dots + y_{mj}v_{B_m}$ eşitliğini sağlar. Sağ taraf, $B$ matrisinin $\vec{y}_j$ vektörüyle çarpımıdır: $v_j = B\vec{y}_j$. Soldan $B^{-1}$ ile çarparak $\vec{y}_j = B^{-1}v_j$ buluruz. Buradan
+
+$$z_j = \vec{c}_B^{\,T}\vec{y}_j = \vec{c}_B^{\,T}B^{-1}v_j = \vec{w}^{\,T}v_j$$
+
+çıkar. $j = 0$ için bu, $z_0 = \vec{w}^{\,T}v_0$ demektir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani tek bir $\vec{w}$ vektörü tablodaki bütün $z_j$ değerlerini üretir: $z_j$, $\vec{w}$ ile **orijinal** sütun $v_j$'nin iç çarpımıdır. $\vec{w}$'nin bileşenlerine **simpleks çarpanları** denir. Birazdan göreceğimiz gibi dual optimal çözüm bu çarpanlardan elde edilir.
+
+:::: {#thm-dua-guclu name="Güçlü dualite teoremi"}
+Kanonik formdaki primal problem standart forma getirilip simpleks yöntemle (gerekirse Büyük M yöntemiyle) çözülsün ve yapay değişkenlerin hepsi sıfır olan bir optimal tabloya ulaşılsın. Bu durumda dual problemin de optimal çözümü vardır ve iki problemin optimal değerleri eşittir: primal maksimumsa $\max z = \min g$, primal minimumsa $\min z = \max g$.
+
+::: {.ispat}
+Primal $A\vec{x} \le \vec{b}$, $\vec{x} \ge 0$, $\max z = \vec{c}^{\,T}\vec{x}$ olsun; minimum durumunu sonda ele alacağız.
+
+**Standart form.** Her $i$. kısıta bir $x_{n+i} \ge 0$ değişkeni gelir. $b_i \ge 0$ ise $x_{n+i}$ aylak değişken olarak eklenir: $\sum_j a_{ij}x_j + x_{n+i} = b_i$. $b_i < 0$ ise önce satır $-1$ ile çarpılır ve kısıt $\ge$ biçimine döner; sonra $x_{n+i}$ artık değişken olarak çıkarılır: $-\sum_j a_{ij}x_j - x_{n+i} = -b_i$. İki durumu birlikte yazmak için $b_i \ge 0$ ise $\sigma_i = 1$, $b_i < 0$ ise $\sigma_i = -1$ diyelim. $i$. denklem
+
+$$\sigma_i \sum_{j=1}^{n} a_{ij}x_j + \sigma_i x_{n+i} = \sigma_i b_i$$
+
+olur. Standart formda $x_j$'nin ($j \le n$) sütunu $v_j = (\sigma_1 a_{1j}, \dots, \sigma_m a_{mj})^T$, $x_{n+i}$'nin sütunu da $v_{n+i} = \sigma_i \vec{e}_i$'dir. Burada $\vec{e}_i$, $i$. bileşeni $1$, diğerleri $0$ olan birim vektördür. Sağ taraf $v_0 = (\sigma_1 b_1, \dots, \sigma_m b_m)^T \ge 0$'dır. Amaç katsayıları $x_j$ için $c_j$, $x_{n+i}$ için $0$'dır. Yapay değişkenler bu sütunlara ek olarak gelir.
+
+**Optimal tablo.** Tablonun çözümünde yapay değişkenler sıfır olduğundan, ilk $n$ bileşeni alınarak elde edilen $\vec{x}^{*}$ primalin bir uygun çözümüdür ve $z(\vec{x}^{*}) = z_0$'dır (@thm-bym-optimal). Bazda sıfır değerli yapay değişkenler kalmışsa $c_B$ sütununda $M$ bulunur ve kriterler $aM + b$ biçimindedir. Tablo optimal olduğundan bu kriterlerin her biri, yeterince büyük her $M$ için $\ge 0$'dır (@prp-bym-karsilastirma). Kriterlerin sayısı sonlu olduğundan hepsini birden $\ge 0$ yapan bir $M$ sayısı seçip sabitleyebiliriz. Böylece tablodaki her sütun için $z_j - c_j \ge 0$ bir sayı eşitsizliği olur. @lem-dua-tablo ile $\vec{w}^{\,T} = \vec{c}_B^{\,T}B^{-1}$ alalım ve her $i$ için $y_i = \sigma_i w_i$ diyelim.
+
+**$\vec{y}$ dualin uygun çözümüdür.** $x_{n+i}$ sütununun kriteri
+
+$$z_{n+i} - c_{n+i} = \vec{w}^{\,T}(\sigma_i\vec{e}_i) - 0 = \sigma_i w_i = y_i$$
+
+olduğundan $y_i \ge 0$'dır. $x_j$ sütununun kriteri ise
+
+$$z_j - c_j = \sum_{i=1}^{m} w_i\,\sigma_i a_{ij} - c_j = \sum_{i=1}^{m} a_{ij}y_i - c_j$$
+
+olduğundan her $j = \overline{1,n}$ için $\sum_i a_{ij}y_i \ge c_j$, yani $A^T\vec{y} \ge \vec{c}$'dir.
+
+**Değerler eşittir.** $\sigma_i^2 = 1$ olduğundan $b_i y_i = (\sigma_i b_i)\,w_i$'dir. @lem-dua-tablo içindeki $z_0 = \vec{w}^{\,T}v_0$ eşitliğiyle
+
+$$g(\vec{y}) = \sum_{i=1}^{m} b_iy_i = \sum_{i=1}^{m} (\sigma_i b_i)\,w_i = \vec{w}^{\,T}v_0 = z_0 = z(\vec{x}^{*})$$
+
+bulunur. Bazdaki yapay değişkenlerin değeri sıfır olduğundan $z_0$'da $M$ kalmaz; seçtiğimiz $M$ sayısı sonucu etkilemez. $\vec{x}^{*}$ ve $\vec{y}$ uygun ve değerleri eşit olduğundan @cor-dua-esit-deger gereği ikisi de optimaldir ve $\max z = \min g$'dir.
+
+**Minimum primal.** $A\vec{x} \ge \vec{b}$, $\min z = \vec{c}^{\,T}\vec{x}$ için $b_i \ge 0$ olan satırdan artık değişken çıkarılır. $b_i < 0$ olan satır ise $-1$ ile çarpılıp $\le$ biçimine döner ve ona aylak değişken eklenir. İki durumda da $x_{n+i}$'nin sütunu $-\sigma_i\vec{e}_i$ olur. Optimal tabloda bu kez her $z_j - c_j \le 0$'dır. Aynı $y_i = \sigma_i w_i$ tanımıyla $z_{n+i} - c_{n+i} = -y_i \le 0$, yani $y_i \ge 0$ bulunur. $x_j$ sütunlarından $\sum_i a_{ij}y_i \le c_j$ elde edilir. Değer hesabı aynen $g(\vec{y}) = z_0$ verir ve @cor-dua-esit-deger ile $\min z = \max g$ olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İspat dual çözümü de açıkça verdi. Kısıtların sağ tarafları negatif olmadığında ($\sigma_i = 1$) bu çözüm doğrudan tablodan okunur.
+
+:::: {#prp-dua-tablodan-okuma name="Dual optimal çözümün tablodan okunması"}
+Güçlü dualite teoreminin (@thm-dua-guclu) koşulları sağlansın ve $\vec{b} \ge 0$ olsun. $x_{n+i}$, primalin $i$. kısıtına standart forma geçerken eklenen (maksimumda aylak, minimumda artık) değişken olsun.
+
+1. Primal maksimum problemiyse ($A\vec{x} \le \vec{b}$) dualin bir optimal çözümü, primal optimal tablonun aylak sütunlarının simpleks kriterleridir: $y_i^{*} = z_{n+i} - c_{n+i}$, $i = \overline{1,m}$.
+2. Primal minimum problemiyse ($A\vec{x} \ge \vec{b}$) dualin bir optimal çözümü, primal optimal tablonun artık sütunlarının simpleks kriterlerinin negatifleridir: $y_i^{*} = -(z_{n+i} - c_{n+i})$, $i = \overline{1,m}$.
+
+::: {.ispat}
+$\vec{b} \ge 0$ olduğundan her $i$ için $\sigma_i = 1$'dir. @thm-dua-guclu ispatında bulunan optimal dual çözüm $y_i = \sigma_i w_i = w_i$'dir. Aynı ispatta maksimum durumu için $z_{n+i} - c_{n+i} = y_i$, minimum durumu için $z_{n+i} - c_{n+i} = -y_i$ bulunmuştu.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani maksimum probleminde aylak değişkenlerin başlangıç tablosundaki sütunları birim matrisi oluşturur. Optimal tabloda bu sütunlarda $B^{-1}$ durur ve kriterleri doğrudan simpleks çarpanlarını verir. Minimum probleminde artık değişkenlerin sütunları $-I$ olduğu için işaret değişir.
+
+Teoremin koşulu, yani yapay değişkenleri sıfır olan bir optimal tabloya ulaşılması, optimal çözümü olan her problemde sağlanır. Bunu görmek için simpleks yöntem hakkında şu bilgiyi kullanacağız.
+
+::: {.callout-note appearance="simple"}
+**Not.** Simpleks yöntemin, Büyük M yöntemiyle birlikte, her problemde sonlu sayıda iterasyondan sonra durduğunu kabul ediyoruz. Hiçbir uygun temel çözüm dejenere değilse bunu @cor-smp-sonlu gösterir. Dejenere problemlerde yöntem aynı bazlar arasında dönüp durabilir. Baza girecek ve bazdan çıkacak vektörler uygun bir kuralla seçilirse bu önlenir. Bu genel bilgiyi burada ispatsız kullanıyoruz. Yöntem durduğunda üç sonuçtan biri ortaya çıkar: bazda pozitif değerli bir yapay değişken kalan bir optimal tablo (@thm-bym-uygunsuz), yapay değişkenlerin hepsi sıfır olan bir optimal tablo (@thm-bym-optimal) ya da sınırsızlık belirtisi (@prp-smp-sinirsiz).
+:::
+
+:::: {#prp-dua-uc-sonuc name="Uygun çözümü olan problemin iki durumu"}
+Kanonik formdaki bir problemin uygun çözümü olsun. Bu durumda ya problemin sınırsız çözümü vardır (@def-sao-sinirsiz-cozum), ya da simpleks yöntem (gerekirse Büyük M yöntemiyle) yapay değişkenlerin hepsi sıfır olan bir optimal tabloda durur; ikinci durumda problemin optimal çözümü vardır.
+
+::: {.ispat}
+Minimum problemi için yapalım; maksimumda kriterlerin işaretleri ters döner. Not'taki üç sonuca bakalım.
+
+**Pozitif yapay değişkenli optimal tablo.** Bu, @thm-bym-uygunsuz gereği problemin uygun çözümü olmaması demektir; varsayımımızla çelişir.
+
+**Yapay değişkenleri sıfır olan optimal tablo.** @thm-bym-optimal gereği tablonun çözümü optimaldir.
+
+**Sınırsızlık belirtisi.** Tabloda $z_k - c_k > 0$ olan bir $v_k$ sütununda bütün $y_{ik} \le 0$ olsun. Baz dışındaki sütunlar yapay değildir, çünkü bazdan çıkan yapay değişkenin sütunu atılır. $\vec{d}$ vektörünün $k$. bileşeni $1$, baz değişkenlerine ait bileşenleri $-y_{ik} \ge 0$, diğerleri $0$ olsun. @thm-sao-sinirsiz ispatındaki hesap, $\vec{d}$'nin M probleminin kısıtlarını $\hat{A}\vec{d} = \vec{0}$ biçiminde sağladığını gösterir. Tablonun gövdesindeki sayılar yalnız pivot işlemleriyle elde edildiği için $M$ içermez. Bu yüzden $\vec{d}$ de $M$ içermez. $\vec{d}_x$, $\vec{d}$'nin yapay olmayan bileşenlerinden (orijinal değişkenler ile aylak ve artık değişkenler) oluşan vektör, $\hat{\vec{c}}$ de bu değişkenlerin amaç katsayıları olsun; aylak ve artık değişkenlerin katsayısı $0$'dır. $\vec{d}$'nin yapay bileşenlerinin toplamına $s \ge 0$ diyelim. @thm-sao-sinirsiz ikinci maddesi, $\vec{d}$ yönünde bir birim gidince M probleminin amacının $z_k - c_k$ kadar azaldığını söyler:
+
+$$\hat{\vec{c}}^{\,T}\vec{d}_x + Ms = -(z_k - c_k).$$
+
+$z_k - c_k = aM + b$ olsun. İki tarafta $M$'nin katsayılarını karşılaştırırsak $s = -a$ çıkar. $z_k - c_k > 0$ olduğundan $a \ge 0$'dır (@prp-bym-karsilastirma). $s \ge 0$ ve $s = -a \le 0$ olduğundan $s = 0$ ve $a = 0$'dır; buradan $b > 0$ ve $\hat{\vec{c}}^{\,T}\vec{d}_x = -b < 0$ çıkar. $\vec{d}$'nin yapay bileşenleri negatif olmayan ve toplamı sıfır olan sayılardır; hepsi sıfırdır. $A_s$, problemin standart formunun (yapay sütunlar olmadan) katsayılar matrisi olsun. Yapay bileşenler sıfır olduğundan $\hat{A}\vec{d} = \vec{0}$ eşitliği $A_s\vec{d}_x = \vec{0}$ demektir. Ayrıca $\vec{d}_x \ge 0$ ve $\vec{d}_x \ne \vec{0}$'dır, çünkü $k$. bileşeni $1$'dir. Yani $\vec{d}_x$ standart formun uygun bölgesinin bir yön vektörüdür (@def-sao-yon).
+
+Standart formun bir $\bar{\vec{x}}$ uygun çözümünü alalım; problemin uygun çözümü olduğundan böyle bir çözüm vardır (@prp-lpp-aylak-artik). Her $\lambda \ge 0$ için $\bar{\vec{x}} + \lambda\vec{d}_x$ de standart formun uygun çözümüdür ve amaç değeri $\hat{\vec{c}}^{\,T}\bar{\vec{x}} - \lambda b$'dir. $\lambda$ büyüdükçe bu değer her sayının altına iner. Aylak ve artık değişkenler atılınca problemin aynı değerli uygun çözümleri elde edilir; problemin sınırsız çözümü vardır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Artık güçlü dualiteyi tablolardan bağımsız bir biçimde söyleyebiliriz.
+
+:::: {#cor-dua-guclu-genel name="Güçlü dualite: genel ifade"}
+Bir dual çiftte problemlerden birinin optimal çözümü varsa diğerinin de optimal çözümü vardır ve iki optimal değer eşittir.
+
+::: {.ispat}
+@thm-dua-dualin-duali gereği iki problemin rolleri değiştirilebilir; optimal çözümü olan problemi primal alalım. Primalin uygun çözümü vardır ve sınırsız çözümü yoktur, çünkü sınırsız çözümlü bir problemin optimal çözümü olamaz. @prp-dua-uc-sonuc gereği simpleks yöntem, primali yapay değişkenlerin hepsi sıfır olan bir optimal tabloda çözer. @thm-dua-guclu dualin optimal çözümünün var olduğunu ve optimal değerlerin eşit olduğunu verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Zayıf ve güçlü dualiteyi kanonik formdaki çiftler için ispatladık. Eşitlik kısıtı ya da işaretsiz değişken içeren bir problemin duali, @prp-dua-esitlik ile kısa yoldan yazıldığında da sonuçlar değişmez. Eşitliği iki eşitsizliğe ayırmak uygun çözümleri değiştirmez. İşaretsiz bir değişkeni iki negatif olmayan değişkenin farkı olarak yazmak da amaç değerlerinin kümesini değiştirmez (@prp-iks-esdegerlik). Bu yüzden kısa yoldan yazılan çift, kanonik bir dual çiftle aynı amaç değerlerini alır. Bu kesimdeki bütün sonuçlar böyle çiftler için de geçerlidir.
+
+Güçlü dualiteyi ilk örneğimizde iki problemi ayrı ayrı grafikle çözerek görelim.
+
+:::: {#exm-dua-grafik name="Bir primal–dual çiftinin grafik çözümü"}
+@exm-dua-alt-sinir diyet problemini ve dualini grafik yöntemle çözünüz ve optimal değerleri karşılaştırınız:
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\ge 6 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+\qquad\qquad
+\begin{aligned}
+y_1 + y_2 &\le 2 \\
+y_1 + 3y_2 &\le 3 \\
+y_1, y_2 &\ge 0 \\
+\max g &= 4y_1 + 6y_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Primal.** $x_1 + x_2 = 4$ doğrusu $(4, 0)$ ve $(0, 4)$ noktalarından, $x_1 + 3x_2 = 6$ doğrusu $(6, 0)$ ve $(0, 2)$ noktalarından geçer. Kısıtlar $\ge$ olduğundan uygun taraf, iki doğrunun da orijini içermeyen tarafıdır. Uygun bölge sağa ve yukarı doğru sınırsızdır. Köşeleri şunlardır:
+
+- $A$: $x_1 = 0$ ve $x_1 + x_2 = 4$; $A(0, 4)$. Kontrol: $0 + 12 = 12 \ge 6$;
+- $B$: $x_1 + x_2 = 4$ ve $x_1 + 3x_2 = 6$; çıkarırsak $2x_2 = 2$, $B(3, 1)$;
+- $C$: $x_2 = 0$ ve $x_1 + 3x_2 = 6$; $C(6, 0)$. Kontrol: $6 + 0 = 6 \ge 4$.
+
+Köşelerde $z(A) = 12$, $z(B) = 6 + 3 = 9$, $z(C) = 12$'dir. Bölge sınırsız olduğundan yalnız köşelere bakmak yetmez; amaç doğrusunun kaydırılmasına da bakmak gerekir. $z = 2x_1 + 3x_2$ seviye doğruları gradyanın tersi yönünde kaydırıldığında bölgeye son olarak $B$ köşesinde dokunur. Ayrıca @exm-dua-alt-sinir örneğinde her uygun diyet için $z \ge 9$ olduğunu göstermiştik. Demek ki $\min z = 9$'dur ve $B(3, 1)$ noktasında alınır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="37.0 -3.5 514.5 395.5" role="img" aria-label="Unbounded feasible region above x1 + x2 = 4 and x1 + 3x2 = 6 with vertices A(0,4), B(3,1), C(6,0); dashed level lines z = 15 and z = 9 through B; arrow of the negative gradient.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="164.0" y1="30.0" x2="164.0" y2="360.0"/><line x1="264.0" y1="30.0" x2="264.0" y2="360.0"/><line x1="364.0" y1="30.0" x2="364.0" y2="360.0"/><line x1="464.0" y1="30.0" x2="464.0" y2="360.0"/><line x1="64.0" y1="260.0" x2="514.0" y2="260.0"/><line x1="64.0" y1="160.0" x2="514.0" y2="160.0"/><line x1="64.0" y1="60.0" x2="514.0" y2="60.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="360.0" x2="522.0" y2="360.0"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="360.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="376.0" text-anchor="middle">0</text>
+  <text x="164.0" y="376.0" text-anchor="middle">2</text>
+  <text x="264.0" y="376.0" text-anchor="middle">4</text>
+  <text x="364.0" y="376.0" text-anchor="middle">6</text>
+  <text x="464.0" y="376.0" text-anchor="middle">8</text>
+  <text x="57.0" y="264.0" text-anchor="end">2</text>
+  <text x="57.0" y="164.0" text-anchor="end">4</text>
+  <text x="57.0" y="64.0" text-anchor="end">6</text>
+  <text x="528.0" y="364.0" font-style="italic">x&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="64.0,160.0 214.0,310.0 364.0,360.0 514.0,360.0 514.0,30.0 64.0,30.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M64.0,160.0 L264.0,360.0" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.0,260.0 L364.0,360.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="171.5" y="260.0" fill="var(--color-base)" font-size="12.5" text-anchor="start">x&#8321; + x&#8322; = 4</text>
+  <text x="259.0" y="319.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start">x&#8321; + 3x&#8322; = 6</text>
+  <path d="M64.0,210.0 L289.0,360.0" fill="none" stroke="var(--color-practice)" stroke-width="1.4" stroke-dasharray="7 5" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.0,110.0 L439.0,360.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="7 5" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="71.5" y="205.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start">z = 9</text>
+  <text x="77.0" y="106.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">z = 15</text>
+  <line x1="394.0" y1="190.0" x2="348.4" y2="258.3" stroke="var(--academic-text)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="344.0,265.0 346.1,254.3 353.0,259.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="400.0" y="186.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">&#8722;c = (&#8722;2, &#8722;3)</text>
+  <circle cx="64.0" cy="160.0" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="214.0" cy="310.0" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="364.0" cy="360.0" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="214.0" cy="310.0" r="5.6" fill="var(--color-practice)"/>
+  <text x="73.0" y="154.0" fill="var(--academic-text)" font-size="13.5" text-anchor="start">A(0, 4)</text>
+  <text x="206.0" y="326.0" fill="var(--color-practice)" font-size="13.5" text-anchor="end" font-weight="600">B(3, 1): z = 9</text>
+  <text x="373.0" y="351.0" fill="var(--academic-text)" font-size="13.5" text-anchor="start">C(6, 0)</text>
+</svg>
+<figcaption>Primal problem: min z = 2x₁ + 3x₂, x₁ + x₂ ≥ 4, x₁ + 3x₂ ≥ 6. Uygun bölge sınırsızdır; kesikli doğrular z = 15 ve z = 9 seviye doğrularıdır. Seviye doğrusu gradyanın tersi yönünde kaydırılınca bölgeye son olarak B(3, 1) köşesinde dokunur: min z = 9.</figcaption>
+</figure>
+```
+
+**Dual.** $y_1 + y_2 = 2$ doğrusu $(2, 0)$ ve $(0, 2)$ noktalarından, $y_1 + 3y_2 = 3$ doğrusu $(3, 0)$ ve $(0, 1)$ noktalarından geçer. Kısıtlar $\le$ olduğundan uygun taraf orijini içeren taraftır. Uygun bölge sınırlı bir dörtgendir. Köşeleri şunlardır:
+
+- $O(0, 0)$;
+- $y_2 = 0$ ve $y_1 + y_2 = 2$: $(2, 0)$. Kontrol: $2 + 0 = 2 \le 3$;
+- $D$: $y_1 + y_2 = 2$ ve $y_1 + 3y_2 = 3$; çıkarırsak $2y_2 = 1$, $D(\tfrac32, \tfrac12)$;
+- $y_1 = 0$ ve $y_1 + 3y_2 = 3$: $(0, 1)$. Kontrol: $0 + 1 = 1 \le 2$.
+
+Köşelerde $g$ sırasıyla $0$, $8$, $4 \cdot \tfrac32 + 6 \cdot \tfrac12 = 9$ ve $6$ değerini alır. Bölge sınırlı olduğundan en büyük değer bir köşede alınır: $\max g = 9$, $D(\tfrac32, \tfrac12)$ noktasında.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="28.0 -3.5 569.5 403.0" role="img" aria-label="Feasible quadrilateral of the dual with vertices O, (2,0), D(1.5,0.5), (0,1) bounded by y1 + y2 = 2 and y1 + 3y2 = 3; dashed level lines g = 6 and g = 9, gradient arrow (4,6), optimal vertex D.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="139.0" y1="30.0" x2="139.0" y2="367.5"/><line x1="214.0" y1="30.0" x2="214.0" y2="367.5"/><line x1="289.0" y1="30.0" x2="289.0" y2="367.5"/><line x1="364.0" y1="30.0" x2="364.0" y2="367.5"/><line x1="439.0" y1="30.0" x2="439.0" y2="367.5"/><line x1="514.0" y1="30.0" x2="514.0" y2="367.5"/><line x1="64.0" y1="292.5" x2="559.0" y2="292.5"/><line x1="64.0" y1="217.5" x2="559.0" y2="217.5"/><line x1="64.0" y1="142.5" x2="559.0" y2="142.5"/><line x1="64.0" y1="67.5" x2="559.0" y2="67.5"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="367.5" x2="567.0" y2="367.5"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="367.5"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="383.5" text-anchor="middle">0</text>
+  <text x="139.0" y="383.5" text-anchor="middle">0.5</text>
+  <text x="214.0" y="383.5" text-anchor="middle">1</text>
+  <text x="289.0" y="383.5" text-anchor="middle">1.5</text>
+  <text x="364.0" y="383.5" text-anchor="middle">2</text>
+  <text x="439.0" y="383.5" text-anchor="middle">2.5</text>
+  <text x="514.0" y="383.5" text-anchor="middle">3</text>
+  <text x="57.0" y="296.5" text-anchor="end">0.5</text>
+  <text x="57.0" y="221.5" text-anchor="end">1</text>
+  <text x="57.0" y="146.5" text-anchor="end">1.5</text>
+  <text x="57.0" y="71.5" text-anchor="end">2</text>
+  <text x="573.0" y="371.5" font-style="italic">y&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">y&#8322;</text>
+  </g>
+  <polygon points="289.0,292.5 64.0,217.5 64.0,367.5 364.0,367.5" fill="var(--color-theory)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M64.0,67.5 L364.0,367.5" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.0,217.5 L514.0,367.5" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="90.0" y="64.0" fill="var(--color-base)" font-size="12.5" text-anchor="start">y&#8321; + y&#8322; = 2</text>
+  <text x="551.5" y="337.5" fill="var(--color-practice)" font-size="12.5" text-anchor="end">y&#8321; + 3y&#8322; = 3</text>
+  <path d="M64.0,217.5 L289.0,367.5" fill="none" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="7 5" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.0,142.5 L401.5,367.5" fill="none" stroke="var(--color-practice)" stroke-width="1.4" stroke-dasharray="7 5" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="101.0" y="263.5" fill="var(--academic-text)" font-size="12.5" text-anchor="end">g = 6</text>
+  <text x="94.5" y="153.5" fill="var(--color-practice)" font-size="12.5" text-anchor="start">g = 9</text>
+  <line x1="394.0" y1="217.5" x2="449.6" y2="134.2" stroke="var(--academic-text)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="454.0,127.5 451.9,138.2 445.0,133.5" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="462.0" y="129.5" fill="var(--academic-text)" font-size="12.5" text-anchor="start">c = (4, 6)</text>
+  <circle cx="64.0" cy="367.5" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="364.0" cy="367.5" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="217.5" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="289.0" cy="292.5" r="5.6" fill="var(--color-practice)"/>
+  <text x="72.0" y="359.5" fill="var(--academic-text)" font-size="13.5" text-anchor="start">O</text>
+  <text x="299.0" y="284.5" fill="var(--color-practice)" font-size="13.5" text-anchor="start" font-weight="600">D(3/2, 1/2): g = 9</text>
+</svg>
+<figcaption>Dual problem: max g = 4y₁ + 6y₂, y₁ + y₂ ≤ 2, y₁ + 3y₂ ≤ 3. Uygun bölge köşeleri O(0, 0), (2, 0), D(3/2, 1/2), (0, 1) olan dörtgendir; köşelerde g sırasıyla 0, 8, 9, 6 değerini alır. Seviye doğrusu gradyan yönünde kaydırılınca bölgeden en son D(3/2, 1/2) köşesinde ayrılır: max g = 9, primalin minimum değerine eşit.</figcaption>
+</figure>
+```
+
+**Karşılaştırma.** $\min z = \max g = 9$'dur; güçlü dualitenin (@cor-dua-guclu-genel) söylediği gibi optimal değerler eşittir. Dual optimal çözüm $(\tfrac32, \tfrac12)$, @exm-dua-alt-sinir örneğinde en iyi alt sınırı veren çarpanların ta kendisidir. İki çözüm arasında bir uyum daha görülüyor. Primal optimumda iki kısıt da tam olarak sağlanıyor ($B$ iki doğrunun kesişimidir) ve iki dual değişken de pozitif. Dual optimumda da iki dual kısıt tam olarak sağlanıyor ve iki primal değişken $x_1 = 3$, $x_2 = 1$ pozitif.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Primal ve Dual Optimal Tabloların Karşılaştırılması
+
+Şimdi bir problemi ve dualini simpleks yöntemle ayrı ayrı çözüp optimal tabloları yan yana koyalım. Güçlü dualitenin ve tablodan okuma kuralının (@prp-dua-tablodan-okuma) sayılarda nasıl göründüğünü böylece izleyeceğiz.
+
+:::: {#exm-dua-ornek5-primal name="Beş kısıtlı maksimum probleminin simpleks çözümü"}
+@exm-dua-ornek1 problemini simpleks yöntemle çözünüz:
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 50 \\
+2x_1 + x_2 &\le 110 \\
+x_1 + 2x_2 &\le 80 \\
+x_1 + 5x_2 &\le 185 \\
+5x_1 + 6x_2 &\le 300 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 10x_1 + 15x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Standart form ve çözülebilir hal.** Beş kısıtın beşi de $\le$ biçimindedir ve sağ tarafları negatif değildir. Her birine sırasıyla $x_3, x_4, x_5, x_6, x_7$ aylak değişkenlerini ekleriz:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 50 \\
+2x_1 + x_2 + x_4 &= 110 \\
+x_1 + 2x_2 + x_5 &= 80 \\
+x_1 + 5x_2 + x_6 &= 185 \\
+5x_1 + 6x_2 + x_7 &= 300 \\
+x_j \ge 0, \quad j &= \overline{1,7} \\
+\max z &= 10x_1 + 15x_2 + 0x_3 + 0x_4 \\
+&\quad + 0x_5 + 0x_6 + 0x_7
+\end{aligned}
+$$
+
+Aylak değişkenlerin sütunları $5 \times 5$ birim matrisi oluşturur; standart form zaten simpleks yöntem ile çözülebilir haldedir. Maksimum probleminde en negatif $z_j - c_j$ baza girer; bütün $z_j - c_j \ge 0$ olunca tablo optimaldir.
+
+**Başlangıç tablosu.** Kriterler $z_j - c_j = -c_j$'dir: $-10$ ve $-15$. En negatifi $-15$ olduğundan $v_2$ baza girer. Oranlar $50$, $110$, $40$, $37$, $50$'dir. En küçüğü $x_6$ satırındadır; $v_6$ bazdan çıkar, pivot $5$'tir.
+
+|   |   | $c_j$ | $10$ | $15$ | $0$ | $0$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ | Oran |
+| $x_3$ | $0$ | $50$ | $1$ | $1$ | $1$ | $0$ | $0$ | $0$ | $0$ | $\frac{50}{1}$ |
+| $x_4$ | $0$ | $110$ | $2$ | $1$ | $0$ | $1$ | $0$ | $0$ | $0$ | $\frac{110}{1}$ |
+| $x_5$ | $0$ | $80$ | $1$ | $2$ | $0$ | $0$ | $1$ | $0$ | $0$ | $\frac{80}{2}$ |
+| $x_6$ | $0$ | $185$ | $1$ | $[5]$ | $0$ | $0$ | $0$ | $1$ | $0$ | $\frac{185}{5} \Rightarrow$ |
+| $x_7$ | $0$ | $300$ | $5$ | $6$ | $0$ | $0$ | $0$ | $0$ | $1$ | $\frac{300}{6}$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-10$ | $-15 \Uparrow$ | $0$ | $0$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-dua-p-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $5$'e bölünür ve $x_2$ satırı olur: $\big(37 \mid \tfrac15, 1, 0, 0, 0, \tfrac15, 0\big)$. Diğer satırlardan bu satırın $v_2$ sütunundaki elemanları kadar katı çıkarılır: $x_3$ ve $x_4$ satırlarından $1$, $x_5$ satırından $2$, $x_7$ satırından $6$ katı. $z_j - c_j$ satırına ise $15$ katı eklenir. Tek negatif kriter $-7$'dir; $v_1$ baza girer. Oranlar $\tfrac{65}{4}$, $\tfrac{365}{9}$, $10$, $185$, $\tfrac{390}{19}$'dur. En küçüğü $10$'dur; $v_5$ bazdan çıkar, pivot $\tfrac35$'tir.
+
+|   |   | $c_j$ | $10$ | $15$ | $0$ | $0$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ | Oran |
+| $x_3$ | $0$ | $13$ | $\frac{4}{5}$ | $0$ | $1$ | $0$ | $0$ | $-\frac{1}{5}$ | $0$ | $\frac{13}{4/5}$ |
+| $x_4$ | $0$ | $73$ | $\frac{9}{5}$ | $0$ | $0$ | $1$ | $0$ | $-\frac{1}{5}$ | $0$ | $\frac{73}{9/5}$ |
+| $x_5$ | $0$ | $6$ | $[\frac{3}{5}]$ | $0$ | $0$ | $0$ | $1$ | $-\frac{2}{5}$ | $0$ | $\frac{6}{3/5} \Rightarrow$ |
+| $x_2$ | $15$ | $37$ | $\frac{1}{5}$ | $1$ | $0$ | $0$ | $0$ | $\frac{1}{5}$ | $0$ | $\frac{37}{1/5}$ |
+| $x_7$ | $0$ | $78$ | $\frac{19}{5}$ | $0$ | $0$ | $0$ | $0$ | $-\frac{6}{5}$ | $1$ | $\frac{78}{19/5}$ |
+| $z_j - c_j$ |   | $z_0 = 555$ | $-7 \Uparrow$ | $0$ | $0$ | $0$ | $0$ | $3$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-dua-p-birinci .simpleks}
+
+**İkinci iterasyon.** Pivot satırı $\tfrac35$'e bölünür, yani $\tfrac53$ ile çarpılır ve $x_1$ satırı olur: $\big(10 \mid 1, 0, 0, 0, \tfrac53, -\tfrac23, 0\big)$. Diğer satırlardan bu satırın $v_1$ sütunundaki elemanları kadar katı çıkarılır. Tek negatif kriter $-\tfrac53$'tür; $v_6$ baza girer. $v_6$ sütununda $x_1$ satırının elemanı $-\tfrac23 < 0$ olduğundan o satır oran testine girmez. Oranlar $15$, $55$, $105$, $30$'dur. En küçüğü $15$'tir; $v_3$ bazdan çıkar, pivot $\tfrac13$'tür.
+
+|   |   | $c_j$ | $10$ | $15$ | $0$ | $0$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ | Oran |
+| $x_3$ | $0$ | $5$ | $0$ | $0$ | $1$ | $0$ | $-\frac{4}{3}$ | $[\frac{1}{3}]$ | $0$ | $\frac{5}{1/3} \Rightarrow$ |
+| $x_4$ | $0$ | $55$ | $0$ | $0$ | $0$ | $1$ | $-3$ | $1$ | $0$ | $\frac{55}{1}$ |
+| $x_1$ | $10$ | $10$ | $1$ | $0$ | $0$ | $0$ | $\frac{5}{3}$ | $-\frac{2}{3}$ | $0$ | $-$ |
+| $x_2$ | $15$ | $35$ | $0$ | $1$ | $0$ | $0$ | $-\frac{1}{3}$ | $\frac{1}{3}$ | $0$ | $\frac{35}{1/3}$ |
+| $x_7$ | $0$ | $40$ | $0$ | $0$ | $0$ | $0$ | $-\frac{19}{3}$ | $\frac{4}{3}$ | $1$ | $\frac{40}{4/3}$ |
+| $z_j - c_j$ |   | $z_0 = 625$ | $0$ | $0$ | $0$ | $0$ | $\frac{35}{3}$ | $-\frac{5}{3} \Uparrow$ | $0$ |   |
+
+: İkinci iterasyon tablosu {#tbl-dua-p-ikinci .simpleks}
+
+**Üçüncü iterasyon.** Pivot satırı $3$ ile çarpılır ve $x_6$ satırı olur: $(15 \mid 0, 0, 3, 0, -4, 1, 0)$. Diğer satırlardan bu satırın $v_6$ sütunundaki elemanları kadar katı çıkarılır. Örneğin $x_1$ satırına $\tfrac23$ katı eklenir: $10 + \tfrac23 \cdot 15 = 20$. Bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir.
+
+|   |   | $c_j$ | $10$ | $15$ | $0$ | $0$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ |
+| $x_6$ | $0$ | $15$ | $0$ | $0$ | $3$ | $0$ | $-4$ | $1$ | $0$ |
+| $x_4$ | $0$ | $40$ | $0$ | $0$ | $-3$ | $1$ | $1$ | $0$ | $0$ |
+| $x_1$ | $10$ | $20$ | $1$ | $0$ | $2$ | $0$ | $-1$ | $0$ | $0$ |
+| $x_2$ | $15$ | $30$ | $0$ | $1$ | $-1$ | $0$ | $1$ | $0$ | $0$ |
+| $x_7$ | $0$ | $20$ | $0$ | $0$ | $-4$ | $0$ | $-1$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 650$ | $0$ | $0$ | $5$ | $0$ | $5$ | $0$ | $0$ |
+
+: Optimal tablo {#tbl-dua-p-optimal .simpleks .oransiz}
+
+**Sonuç.** Optimal çözüm $x_1 = 20$, $x_2 = 30$ ve $\max z = 10 \cdot 20 + 15 \cdot 30 = 650$'dir. Primal problemin esas değişkenleri $x_1, x_2$, aylak değişkenleri $x_3, x_4, x_5, x_6, x_7$'dir. Optimal çözümde $x_4 = 40$, $x_6 = 15$, $x_7 = 20$, $x_3 = x_5 = 0$ olur. Yani birinci ve üçüncü kısıt tam olarak sağlanır, diğerlerinde boşluk kalır. Simpleks yöntemin uygun bölgenin köşeleri boyunca izlediği yol aşağıdadır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="36.0 -3.5 560.0 450.5" role="img" aria-label="Feasible pentagon of the five-constraint maximum problem with vertices (0,0), (50,0), (20,30), (10,35), (0,37) bounded by x1 + x2 = 50, x1 + 2x2 = 80, x1 + 5x2 = 185; arrows show the simplex path (0,0) to (0,37) to (10,35) to (20,30); dashed level line z = 650.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="144.0" y1="30.0" x2="144.0" y2="414.8"/><line x1="218.0" y1="30.0" x2="218.0" y2="414.8"/><line x1="292.0" y1="30.0" x2="292.0" y2="414.8"/><line x1="366.0" y1="30.0" x2="366.0" y2="414.8"/><line x1="440.0" y1="30.0" x2="440.0" y2="414.8"/><line x1="514.0" y1="30.0" x2="514.0" y2="414.8"/><line x1="70.0" y1="340.8" x2="558.4" y2="340.8"/><line x1="70.0" y1="266.8" x2="558.4" y2="266.8"/><line x1="70.0" y1="192.8" x2="558.4" y2="192.8"/><line x1="70.0" y1="118.8" x2="558.4" y2="118.8"/><line x1="70.0" y1="44.8" x2="558.4" y2="44.8"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="414.8" x2="566.4" y2="414.8"/>
+  <line x1="70.0" y1="22.0" x2="70.0" y2="414.8"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="70.0" y="430.8" text-anchor="middle">0</text>
+  <text x="144.0" y="430.8" text-anchor="middle">10</text>
+  <text x="218.0" y="430.8" text-anchor="middle">20</text>
+  <text x="292.0" y="430.8" text-anchor="middle">30</text>
+  <text x="366.0" y="430.8" text-anchor="middle">40</text>
+  <text x="440.0" y="430.8" text-anchor="middle">50</text>
+  <text x="514.0" y="430.8" text-anchor="middle">60</text>
+  <text x="63.0" y="344.8" text-anchor="end">10</text>
+  <text x="63.0" y="270.8" text-anchor="end">20</text>
+  <text x="63.0" y="196.8" text-anchor="end">30</text>
+  <text x="63.0" y="122.8" text-anchor="end">40</text>
+  <text x="63.0" y="48.8" text-anchor="end">50</text>
+  <text x="572.4" y="418.8" font-style="italic">x&#8321;</text>
+  <text x="66.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="218.0,192.8 144.0,155.8 70.0,141.0 70.0,414.8 440.0,414.8" fill="var(--color-theory)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M70.0,44.8 L440.0,414.8" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M70.0,118.8 L558.4,363.0" fill="none" stroke="var(--color-remark)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M70.0,141.0 L558.4,238.7" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="387.6" y="370.4" fill="var(--color-base)" font-size="12" text-anchor="end">x&#8321; + x&#8322; = 50</text>
+  <text x="558.4" y="311.0" fill="var(--color-remark)" font-size="12" text-anchor="end">x&#8321; + 2x&#8322; = 80</text>
+  <text x="558.4" y="214.7" fill="var(--color-theory)" font-size="12" text-anchor="end">x&#8321; + 5x&#8322; = 185</text>
+  <path d="M70.0,94.1 L551.0,414.8" fill="none" stroke="var(--color-practice)" stroke-width="1.4" stroke-dasharray="7 5" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="418.4" y="327.6" fill="var(--color-practice)" font-size="12.5" text-anchor="start">z = 650</text>
+  <line x1="70.0" y1="414.8" x2="70.0" y2="149.0" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="70.0,141.0 74.2,151.0 65.8,151.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="70.0" y1="141.0" x2="136.2" y2="154.2" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="144.0,155.8 133.4,158.0 135.0,149.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="144.0" y1="155.8" x2="210.8" y2="189.2" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="218.0,192.8 207.2,192.1 210.9,184.6" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="70.0" cy="414.8" r="4.2" fill="var(--academic-text)"/>
+  <circle cx="70.0" cy="141.0" r="4.2" fill="var(--academic-text)"/>
+  <circle cx="144.0" cy="155.8" r="4.2" fill="var(--academic-text)"/>
+  <circle cx="218.0" cy="192.8" r="5.6" fill="var(--color-practice)"/>
+  <text x="79.0" y="406.8" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="78.0" y="159.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁</text>
+  <text x="138.0" y="175.8" fill="var(--academic-text)" font-size="13" text-anchor="end">X₂</text>
+  <text x="210.0" y="214.8" fill="var(--color-practice)" font-size="13.5" text-anchor="end" font-weight="600">X₃(20, 30)</text>
+</svg>
+<figcaption>Beş kısıtlı maksimum probleminin uygun bölgesi. Simpleks yöntem X₀(0, 0) köşesinden (z = 0) başlar; x₂ baza girince X₁(0, 37) köşesine (z = 555), x₁ baza girince X₂(10, 35) köşesine (z = 625), x₆ baza girince X₃(20, 30) köşesine (z = 650) geçer. Kesikli doğru z = 650 seviye doğrusudur. Şekilde yalnız bölgeyi sınırlayan kısıt doğruları çizildi: 2x₁ + x₂ ≤ 110 ve 5x₁ + 6x₂ ≤ 300 kısıtları bölgenin her noktasında kendiliğinden sağlanır; optimal çözümde aylak değişkenleri x₄ = 40 ve x₇ = 20'dir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dua-ornek5-dual name="Beş kısıtlı maksimum probleminin dualinin çözümü"}
+@exm-dua-ornek1 örneğinde bulunan dual problemi simpleks yöntemle çözünüz:
+
+$$
+\begin{aligned}
+y_1 + 2y_2 + y_3 + y_4 + 5y_5 &\ge 10 \\
+y_1 + y_2 + 2y_3 + 5y_4 + 6y_5 &\ge 15 \\
+y_1, y_2, y_3, y_4, y_5 &\ge 0 \\
+\min g &= 50y_1 + 110y_2 + 80y_3 \\
+&\quad + 185y_4 + 300y_5
+\end{aligned}
+$$
+
+::: {.cozum}
+**Standart form.** İki kısıt da $\ge$ biçimindedir ve sağ tarafları negatif değildir. Onlardan sırasıyla $y_6$ ve $y_7$ artık değişkenlerini çıkarırız. Artık değişkenlerin sütunları $-1$ içerir ve birim sütun vermez. Standart form birim matris içermediği için henüz simpleks yöntem ile çözülebilir halde değildir.
+
+**Çözülebilir hal.** İki denkleme $y_{u_1}$ ve $y_{u_2}$ yapay değişkenlerini ekleriz (@def-lpp-yapay-degisken). Minimum problemi olduğundan amaç katsayıları $+M$'dir:
+
+$$
+\begin{aligned}
+y_1 + 2y_2 + y_3 + y_4 + 5y_5 - y_6 + y_{u_1} &= 10 \\
+y_1 + y_2 + 2y_3 + 5y_4 + 6y_5 - y_7 + y_{u_2} &= 15 \\
+y_1, \dots, y_7, y_{u_1}, y_{u_2} &\ge 0 \\
+\min g &= 50y_1 + 110y_2 + 80y_3 + 185y_4 \\
+&\quad + 300y_5 + 0y_6 + 0y_7 \\
+&\quad + My_{u_1} + My_{u_2}
+\end{aligned}
+$$
+
+Minimum probleminde en büyük pozitif $z_j - c_j$ baza girer; bütün $z_j - c_j \le 0$ olunca tablo optimaldir. $aM + b$ biçimindeki kriterlerde önce $M$'nin katsayısına bakılır (@prp-bym-karsilastirma). Tablolarda baz değişkenlerinin sütunu $y_B$ ile gösterilir. $z_0$ değeri dualin amaç değeri $g$'dir.
+
+**Başlangıç tablosu.** $\vec{c}_B = (M, M)$ olduğundan her sütunun $z_j$ değeri, sütun elemanlarının toplamının $M$ katıdır. Pozitif kriterlerde $M$'nin katsayıları $2, 3, 3, 6, 11$'dir. En büyüğü $11$ olduğundan $v_5$ baza girer. Oranlar $\tfrac{10}{5} = 2$ ve $\tfrac{15}{6} = \tfrac52$'dir; $v_{u_1}$ bazdan çıkar, pivot $5$'tir.
+
+|   |   | $c_j$ | $50$ | $110$ | $80$ | $185$ | $300$ | $0$ | $0$ | $M$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $y_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $y_{u_1}$ | $M$ | $10$ | $1$ | $2$ | $1$ | $1$ | $[5]$ | $-1$ | $0$ | $1$ | $0$ | $\frac{10}{5} \Rightarrow$ |
+| $y_{u_2}$ | $M$ | $15$ | $1$ | $1$ | $2$ | $5$ | $6$ | $0$ | $-1$ | $0$ | $1$ | $\frac{15}{6}$ |
+| $z_j - c_j$ |   | $z_0 = 25M$ | $2M-50$ | $3M-110$ | $3M-80$ | $6M-185$ | $11M-300 \Uparrow$ | $-M$ | $-M$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-dua-d-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $5$'e bölünür ve $y_5$ satırı olur. $y_{u_2}$ satırından bu satırın $6$ katı çıkarılır. $v_{u_1}$ sütunu artık yazılmaz. $\vec{c}_B = (300, M)$ ile kriterleri yeniden hesaplarız. Pozitif kriterler $\tfrac45M - 20$, $\tfrac{19}{5}M - 125$ ve $\tfrac65M - 60$'tır. $M$'nin en büyük katsayısı $\tfrac{19}{5}$ olduğundan $v_4$ baza girer. Oranlar $\tfrac{2}{1/5} = 10$ ve $\tfrac{3}{19/5} = \tfrac{15}{19}$'dur; $v_{u_2}$ bazdan çıkar, pivot $\tfrac{19}{5}$'tir.
+
+|   |   | $c_j$ | $50$ | $110$ | $80$ | $185$ | $300$ | $0$ | $0$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $y_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ | $v_{u_2}$ | Oran |
+| $y_5$ | $300$ | $2$ | $\frac{1}{5}$ | $\frac{2}{5}$ | $\frac{1}{5}$ | $\frac{1}{5}$ | $1$ | $-\frac{1}{5}$ | $0$ | $0$ | $\frac{2}{1/5}$ |
+| $y_{u_2}$ | $M$ | $3$ | $-\frac{1}{5}$ | $-\frac{7}{5}$ | $\frac{4}{5}$ | $[\frac{19}{5}]$ | $0$ | $\frac{6}{5}$ | $-1$ | $1$ | $\frac{3}{19/5} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 3M+600$ | $-\frac{1}{5}M+10$ | $-\frac{7}{5}M+10$ | $\frac{4}{5}M-20$ | $\frac{19}{5}M-125 \Uparrow$ | $0$ | $\frac{6}{5}M-60$ | $-M$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-dua-d-birinci .simpleks}
+
+**İkinci iterasyon.** Pivot satırı $\tfrac{19}{5}$'e bölünür ve $y_4$ satırı olur. $y_5$ satırından bu satırın $\tfrac15$ katı çıkarılır. $v_{u_2}$ sütunu da atılır. Bazda yapay değişken kalmadığından kriterlerde artık $M$ yoktur. $\vec{c}_B = (300, 185)$ ile pozitif kriterler $\tfrac{65}{19}$ ve $\tfrac{120}{19}$'dur. En büyüğü $\tfrac{120}{19}$ olduğundan $v_3$ baza girer. Oranlar $\tfrac{35/19}{3/19} = \tfrac{35}{3}$ ve $\tfrac{15/19}{4/19} = \tfrac{15}{4}$'tür; $v_4$ bazdan çıkar, pivot $\tfrac{4}{19}$'dur.
+
+|   |   | $c_j$ | $50$ | $110$ | $80$ | $185$ | $300$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $y_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ | Oran |
+| $y_5$ | $300$ | $\frac{35}{19}$ | $\frac{4}{19}$ | $\frac{9}{19}$ | $\frac{3}{19}$ | $0$ | $1$ | $-\frac{5}{19}$ | $\frac{1}{19}$ | $\frac{35/19}{3/19}$ |
+| $y_4$ | $185$ | $\frac{15}{19}$ | $-\frac{1}{19}$ | $-\frac{7}{19}$ | $[\frac{4}{19}]$ | $1$ | $0$ | $\frac{6}{19}$ | $-\frac{5}{19}$ | $\frac{15/19}{4/19} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = \frac{13275}{19}$ | $\frac{65}{19}$ | $-\frac{685}{19}$ | $\frac{120}{19} \Uparrow$ | $0$ | $0$ | $-\frac{390}{19}$ | $-\frac{625}{19}$ |   |
+
+: İkinci iterasyon tablosu {#tbl-dua-d-ikinci .simpleks}
+
+**Üçüncü iterasyon.** Pivot satırı $\tfrac{19}{4}$ ile çarpılır ve $y_3$ satırı olur. $y_5$ satırından bu satırın $\tfrac{3}{19}$ katı çıkarılır. $\vec{c}_B = (300, 80)$ ile tek pozitif kriter $5$'tir; $v_1$ baza girer. $v_1$ sütununda yalnız $y_5$ satırının elemanı pozitiftir. Oran $\tfrac{5/4}{1/4} = 5$'tir; $v_5$ bazdan çıkar, pivot $\tfrac14$'tür.
+
+|   |   | $c_j$ | $50$ | $110$ | $80$ | $185$ | $300$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $y_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ | Oran |
+| $y_5$ | $300$ | $\frac{5}{4}$ | $[\frac{1}{4}]$ | $\frac{3}{4}$ | $0$ | $-\frac{3}{4}$ | $1$ | $-\frac{1}{2}$ | $\frac{1}{4}$ | $\frac{5/4}{1/4} \Rightarrow$ |
+| $y_3$ | $80$ | $\frac{15}{4}$ | $-\frac{1}{4}$ | $-\frac{7}{4}$ | $1$ | $\frac{19}{4}$ | $0$ | $\frac{3}{2}$ | $-\frac{5}{4}$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 675$ | $5 \Uparrow$ | $-25$ | $0$ | $-30$ | $0$ | $-30$ | $-25$ |   |
+
+: Üçüncü iterasyon tablosu {#tbl-dua-d-ucuncu .simpleks}
+
+**Dördüncü iterasyon.** Pivot satırı $4$ ile çarpılır ve $y_1$ satırı olur: $(5 \mid 1, 3, 0, -3, 4, -2, 1)$. $y_3$ satırına bu satırın $\tfrac14$ katı eklenir. $\vec{c}_B = (50, 80)$ ile bütün $z_j - c_j \le 0$ olur; tablo optimaldir.
+
+|   |   | $c_j$ | $50$ | $110$ | $80$ | $185$ | $300$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $y_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | $v_7$ |
+| $y_1$ | $50$ | $5$ | $1$ | $3$ | $0$ | $-3$ | $4$ | $-2$ | $1$ |
+| $y_3$ | $80$ | $5$ | $0$ | $-1$ | $1$ | $4$ | $1$ | $1$ | $-1$ |
+| $z_j - c_j$ |   | $z_0 = 650$ | $0$ | $-40$ | $0$ | $-15$ | $-20$ | $-20$ | $-30$ |
+
+: Optimal tablo {#tbl-dua-d-optimal .simpleks .oransiz}
+
+**Sonuç.** Optimal çözüm $y_1 = 5$, $y_3 = 5$, $y_2 = y_4 = y_5 = 0$ ve $\min g = 50 \cdot 5 + 80 \cdot 5 = 650$'dir. Dual problemin esas değişkenleri $y_1, \dots, y_5$, artık değişkenleri $y_6, y_7$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İki optimal tabloyu (@tbl-dua-p-optimal ve @tbl-dua-d-optimal) karşılaştırınca şu özellikler öne çıkar.
+
+1. **Optimal amaç değerleri aynıdır:** $\max z = \min g = 650$. Güçlü dualite teoreminin (@thm-dua-guclu) söylediği budur.
+
+2. **Her tablo diğer problemin çözümünü içerir.** Primalin $x_3, x_4, x_5, x_6, x_7$ aylak değişkenlerini, sırasıyla ait oldukları kısıtların dual değişkenleriyle eşleyelim:
+
+   $$
+   \begin{bmatrix} x_3 \\ x_4 \\ x_5 \\ x_6 \\ x_7 \end{bmatrix} \Longrightarrow \begin{bmatrix} y_1 \\ y_2 \\ y_3 \\ y_4 \\ y_5 \end{bmatrix}
+   $$
+
+   Primal optimal tablonun son satırında bu sütunların simpleks kriterleri $5, 0, 5, 0, 0$'dır. Bu sayılar dualin optimal çözümüdür: $Y^{*} = (y_1, y_2, y_3, y_4, y_5) = (5, 0, 5, 0, 0)$. Primal maksimum problemi olduğundan @prp-dua-tablodan-okuma birinci maddesi tam olarak bunu söyler.
+
+   Benzer biçimde dualin $y_6, y_7$ artık değişkenlerini primalin $x_1, x_2$ esas değişkenleriyle eşleyelim:
+
+   $$
+   \begin{bmatrix} y_6 \\ y_7 \end{bmatrix} \Longrightarrow \begin{bmatrix} x_1 \\ x_2 \end{bmatrix}
+   $$
+
+   Dual optimal tablonun son satırında bu sütunların kriterleri $-20$ ve $-30$'dur. İşaretleri değiştirilince primalin optimal çözümü çıkar: $X^{*} = (x_1, x_2) = (20, 30)$. Dual problem, $\ge$ kısıtlı ve sağ tarafları negatif olmayan bir minimum problemidir. @thm-dua-dualin-duali gereği duali primaldir. Bu yüzden @prp-dua-tablodan-okuma ikinci maddesi dualin tablosuna uygulanır ve işaret değişimi oradan gelir.
+
+   Eşleme öbür sütunlarda da işler. Dual optimal tablonun $v_1, \dots, v_5$ sütunlarındaki kriterler $0, -40, 0, -15, -20$'dir. Bunlar primalin optimal çözümündeki aylak değerlerinin ($x_3 = 0$, $x_4 = 40$, $x_5 = 0$, $x_6 = 15$, $x_7 = 20$) negatifleridir. Nedeni şudur. Dual tabloda sağ taraflar negatif olmadığından @thm-dua-guclu ispatındaki simpleks çarpanları tam olarak $\vec{w} = (x_1^{*}, x_2^{*})$'dır. @lem-dua-tablo gereği $y_i$ sütununun kriteri, $\vec{w}$ ile bu sütunun iç çarpımından $b_i$ çıkarılarak bulunur. Bu sütun primalin $i$. kısıtının katsayılarıdır; iç çarpım primalin $i$. kısıtının sol tarafıdır. Kriter bu yüzden $\sum_j a_{ij}x_j^{*} - b_i = -x_{2+i}$'dir. Primal tablonun $v_1, v_2$ kriterlerinin $0$ olması da dualin $y_6 = y_7 = 0$ olmasıyla uyumludur.
+
+3. **Hangisi kolaysa o çözülür.** Bu özellikler sayesinde bir problemin yerine duali çözülüp optimal tablodan primalin çözümü okunabilir. Primal ile dualinden hangisinin çözümü daha az işlem gerektiriyorsa o çözülür. Bu örnekte primal $\le$ kısıtlı olduğu için yapay değişken gerektirmedi. Dual ise iki yapay değişken ve bir iterasyon fazlası istedi. Tersine, @exm-dua-ornek2 örneğindeki üç $\ge$ kısıtlı minimum problemi üç yapay değişken ister. Dualinin iki $\le$ kısıtı vardır ve aylak değişkenlerle doğrudan çözülür. Genel olarak kısıt sayısı değişken sayısından çok fazla olan bir problemde dualin tablosu daha küçüktür.
+
+4. **Uygun çözümün olmaması ve sınırsızlık birbirine bağlıdır.** Problemlerden biri sınırsızsa diğerinin uygun çözümü yoktur (@cor-dua-sinirsiz). Tersi ise tam olarak doğru değildir: uygun çözümü olmayan bir problemin duali sınırsız olabileceği gibi, onun da uygun çözümü olmayabilir. Bunu aşağıdaki önerme ve iki örnek gösteriyor.
+
+:::: {#prp-dua-uygunsuz name="Uygun çözümü olmayan problemin duali"}
+Bir dual çiftte problemlerden birinin uygun çözümü yoksa diğerinin optimal çözümü yoktur. Yani diğer problem ya sınırsızdır ya da onun da uygun çözümü yoktur.
+
+::: {.ispat}
+Diğer problemin optimal çözümü olsaydı güçlü dualite (@cor-dua-guclu-genel) gereği ilk problemin de optimal çözümü, dolayısıyla uygun çözümü olurdu; bu, varsayımla çelişir. Demek ki diğer problemin optimal çözümü yoktur. Diğer problemin uygun çözümü varsa @prp-dua-uc-sonuc gereği ya optimal çözümü ya da sınırsız çözümü vardır. Optimal çözümü olmadığına göre sınırsızdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dua-bos name="Uygun çözümü olmayan problemin sınırsız duali"}
+@exm-ucg-bos problemi ($x_1 + x_2 \le 2$, $x_1 + 2x_2 \ge 6$, $x_1, x_2 \ge 0$, $\max z = 3x_1 + 2x_2$) uygun çözümü olmayan bir problemdir. Dualini yazınız ve dualin sınırsız olduğunu gösteriniz.
+
+::: {.cozum}
+**Kanonik form ve dual.** Maksimum probleminde ikinci kısıt $-1$ ile çarpılır: $-x_1 - 2x_2 \le -6$. İki kısıta $y_1, y_2 \ge 0$ atarız. $x_1$'in sütunu $(1, -1)$, $x_2$'ninki $(1, -2)$'dir:
+
+$$
+\begin{aligned}
+y_1 - y_2 &\ge 3 \\
+y_1 - 2y_2 &\ge 2 \\
+y_1, y_2 &\ge 0 \\
+\min g &= 2y_1 - 6y_2
+\end{aligned}
+$$
+
+**Dual sınırsızdır.** $t \ge 0$ için $y_1 = 3 + 2t$, $y_2 = t$ noktalarını alalım. $y_1 - y_2 = 3 + t \ge 3$ ve $y_1 - 2y_2 = 3 \ge 2$ olduğundan hepsi uygundur. Amaç değeri
+
+$$g = 2(3 + 2t) - 6t = 6 - 2t$$
+
+olur ve $t$ büyüdükçe her sayının altına iner. Dualin sınırsız çözümü vardır, minimumu yoktur. Bu durum @prp-dua-uygunsuz ile uyumludur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dua-ikisi-bos name="İkisinin de uygun çözümü olmayan dual çift"}
+Aşağıdaki problemin ve dualinin uygun çözümü olmadığını gösteriniz.
+
+$$
+\begin{aligned}
+x_1 - x_2 &\le -1 \\
+-x_1 + x_2 &\le -1 \\
+x_1, x_2 &\ge 0 \\
+\max z &= x_1 + x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Primal.** İki kısıtı toplarsak $0 \le -2$ çıkar; hiçbir $(x_1, x_2)$ iki kısıtı birlikte sağlayamaz. Geometrik olarak birinci kısıt $x_2 \ge x_1 + 1$, ikincisi $x_2 \le x_1 - 1$ demektir ve bu iki bölge ortak nokta içermez.
+
+**Dual.** Problem kanonik formdadır: maksimum, iki kısıt $\le$, değişkenler $\ge 0$. Sağ tarafların negatif olması kanonik formu bozmaz. $x_1$'in sütunu $(1, -1)$, $x_2$'ninki $(-1, 1)$'dir:
+
+$$
+\begin{aligned}
+y_1 - y_2 &\ge 1 \\
+-y_1 + y_2 &\ge 1 \\
+y_1, y_2 &\ge 0 \\
+\min g &= -y_1 - y_2
+\end{aligned}
+$$
+
+İki kısıtı toplarsak $0 \ge 2$ çıkar; dualin de uygun çözümü yoktur. Demek ki uygun çözümü olmayan bir problemin duali her zaman sınırsız değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bir dual çiftte iki problemin her birinin optimal çözümü olabilir, sınırsız çözümü olabilir ya da uygun çözümü olmayabilir. Bu bölümün sonuçları dokuz durumdan hangilerinin gerçekleşebileceğini tam olarak belirler.
+
+| Primal (satır), dual (sütun) | Optimal çözüm var | Sınırsız çözüm | Uygun çözüm yok |
+|:--|:-:|:-:|:-:|
+| Optimal çözüm var | mümkün; optimal değerler eşit | olamaz | olamaz |
+| Sınırsız çözüm | olamaz | olamaz | mümkün |
+| Uygun çözüm yok | olamaz | mümkün | mümkün |
+
+: Bir dual çiftte olası durumlar {#tbl-dua-durumlar}
+
+Tablodaki (@tbl-dua-durumlar) "olamaz" hükümleri şöyle gerekçelendirilir. Birinci satır ve birinci sütundakiler @cor-dua-guclu-genel'den çıkar: birinin optimal çözümü varsa diğerinin de vardır. İki problemin birlikte sınırsız olamaması @cor-dua-sinirsiz'den çıkar, çünkü sınırsız bir problemin duali uygun çözümsüzdür. "Mümkün" hükümleri de örneklerle doğrulanır: birinci satır için @exm-dua-ornek5-primal ve @exm-dua-ornek5-dual, sınırsız–uygunsuz çiftler için @exm-dua-sinirsiz ve @exm-dua-bos, son durum için @exm-dua-ikisi-bos.
+
+Bu bölümde bir problemin dualini kanonik formundan yazmayı, dual çiftin optimal değerlerinin eşit olduğunu ve dual optimal çözümün primal optimal tablodan okunduğunu gördük. Dual tablonun kriterleri primalin çözümünü, primal tablonun kriterleri de dualin çözümünü taşıyor. Bu gözlem yeni bir çözüm yöntemine yol açar. Bu yöntem, primalin tablosu üzerinde çalışırken aslında dualini simpleks yöntemle çözer. Kriterleri optimallik koşulunu sağlayan ama sağ tarafında negatif sayılar bulunan tablolardan başlayarak ilerler. Bir sonraki bölüm, [Dual simpleks algoritması](dual-simpleks-algoritmasi.qmd), bu yöntemi anlatıyor.

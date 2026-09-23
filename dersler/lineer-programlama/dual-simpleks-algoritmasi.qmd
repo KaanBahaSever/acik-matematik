@@ -1,0 +1,823 @@
+---
+title: "Dual Simpleks Algoritması"
+pagetitle: "Dual Simpleks Algoritması"
+description: "Dual uygun temel çözüm, çıkan satırın ve giren sütunun seçildiği dual simpleks kuralları, uygun çözümün olmadığının tanınması, tablodaki z_j − c_j değerlerinin dual değişkenler olması ve yöntemin adının nedeni; ≥ kısıtlı problemlerin yapay değişkensiz çözümü, Büyük M ile birlikte kullanım ve sağ taraf değişince optimal tablodan devam etme örnekleriyle."
+---
+
+[Büyük M yöntemi](buyuk-m-yontemi.qmd) ve [İki faz yöntemi](iki-faz-yontemi.qmd) bölümlerinde, $\ge$ kısıtlı bir problemin standart formu birim matris içermediği için her $\ge$ kısıtına bir yapay değişken ekledik. Kısıt sayısı arttıkça bu pahalıya patlar: her yapay değişken tabloya bir sütun ve $M$'li hesaplar ekler, yapay değişkenleri bazdan çıkarmak için de fazladan iterasyonlar harcanır. Bu bölümde yapay değişkenleri hiç işin içine katmayan bir yol göreceğiz: **dual simpleks algoritması**.
+
+Fikir, simpleks yöntemin tam tersinden başlamaktır. Simpleks yöntem uygun bir temel çözümle başlar ve simpleks kriteri optimallik koşulunu sağlayana kadar ilerler. Dual simpleks algoritması ise simpleks kriterleri optimallik koşulunu **baştan sağlayan** ama bazı değişkenleri negatif olan, yani uygun olmayan bir temel çözümle başlar ve uygunluk sağlanana kadar ilerler. Yöntemin adı [Dualite](dualite.qmd) bölümündeki dual problemden gelir: Tablonun $z_j - c_j$ satırı her adımda dual problemin bir çözümünü taşır. Bunu bölümün ortasında göreceğiz.
+
+## Dual Uygun Temel Çözüm {#sec-dsa-dual-uygun}
+
+Önce "optimal görünen ama uygun olmayan" temel çözüme bir ad verelim.
+
+::: {#def-dsa-dual-uygun name="Dual Uygun Temel Çözüm"}
+Bir temel çözümün simpleks tablosunda
+
+- amaç fonksiyonu **minimum** yapılmak isteniyorsa her $j$ için $z_j - c_j \le 0$,
+- amaç fonksiyonu **maksimum** yapılmak isteniyorsa her $j$ için $z_j - c_j \ge 0$
+
+ise bu temel çözüme **dual uygun** temel çözüm denir. Temel değişkenlerin $x_{Bi}$ değerleri ($v_0$ sütunu) burada negatif olabilir.
+:::
+
+Yani dual uygunluk, simpleks kriterlerinin optimallik koşulunun (@thm-smp-optimallik) sağlanmasıdır; minimumda pozitif, maksimumda negatif $z_j - c_j$ kalmamıştır. Eksik olan tek şey uygunluktur: $v_0$ sütununda negatif sayılar bulunabilir. Böyle bir tablonun gösterdiği nokta, kısıt denklemlerini sağlar ama bazı değişkenleri negatif olduğu için uygun bölgenin dışındadır.
+
+Bir temel çözüm için iki soru sorulabilir: Uygun mu (bütün $x_{Bi} \ge 0$ mı)? Dual uygun mu? Simpleks yöntem birinci soruya "evet" diyen tablolar arasında yürür ve ikinciye "evet" dediği anda durur. Dual simpleks algoritması bunun tersini yapar. İkisinin buluştuğu yer aynıdır.
+
+:::: {#prp-dsa-iki-uygunluk name="Hem Uygun Hem Dual Uygun Çözüm Optimaldir"}
+Bir temel çözüm hem uygun (her $i = \overline{1,m}$ için $x_{Bi} \ge 0$) hem de dual uygun ise optimal çözümdür.
+
+::: {.ispat}
+Temel çözüm uygun olduğu için bir uygun temel çözümdür. Dual uygun olduğu için minimum probleminde her $j$ için $z_j - c_j \le 0$, maksimum probleminde her $j$ için $z_j - c_j \ge 0$'dır. Optimallik koşulu (@thm-smp-optimallik) tam olarak bu durumda uygun temel çözümün optimal olduğunu söyler. [$\blacksquare$]{.qed}
+:::
+::::
+
+Dual uygun bir başlangıç tablosu bulmak çoğu zaman kolaydır. En sık karşılaşılan durum, amaç katsayıları negatif olmayan ve kısıtları $\ge$ olan bir minimum problemidir. Böyle bir kısıttan artık değişkeni çıkarıp (@def-lpp-aylak-artik) denklemin iki yanını $-1$ ile çarparsak artık değişkenin sütunu birim sütuna dönüşür:
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 \ge 6
+&\;\Longrightarrow\; x_1 + x_2 + x_3 - x_4 = 6 \\
+&\;\Longrightarrow\; -x_1 - x_2 - x_3 + x_4 = -6 .
+\end{aligned}
+$$
+İlk denklemde $x_4$'ün katsayısı $-1$'di; $-1$ ile çarpınca $+1$ oldu. Aynı sonuca kısıtı önce $-1$ ile çarpıp $-x_1 - x_2 - x_3 \le -6$ biçimine getirerek, sonra da bir aylak değişken ekleyerek varılır; $x_4 = x_1 + x_2 + x_3 - 6$ her iki yazılışta aynı değişkendir. Bedeli, sağ tarafın negatif olmasıdır. Böyle bir sistem standart formda değildir (standart formda $b_i \ge 0$ istenir, @def-lpp-standart-form); dolayısıyla simpleks yöntem ile çözülebilir halde de değildir (@def-lpp-cozulebilir-hal). Dual simpleks algoritmasının başlaması için ise bu kadarı yeter: Birim matris bir başlangıç bazı verir, sağ tarafların işaretine bakılmaz.
+
+:::: {#prp-dsa-baslangic name="Dual Uygun Başlangıç Tablosu"}
+Kısıtları $\le$ ya da $\ge$ olan bir problemde her $\le$ kısıtına bir aylak değişken eklensin; her $\ge$ kısıttan bir artık değişken çıkarılsın ve o denklem $-1$ ile çarpılsın. Bu durumda
+
+1. aylak ve artık değişkenlerin sütunları birim matris oluşturur, yani bir baz verir;
+2. bu bazda aylak değişkenin değeri kısıtın sağ tarafı $b_i$, artık değişkenin değeri $-b_i$'dir ve tablonun gövdesi, ($\ge$ kısıtları $-1$ ile çarpıldıktan sonraki) denklem sisteminin katsayılarıdır;
+3. $z_0 = 0$ ve her $j$ için $z_j - c_j = -c_j$'dir.
+
+Dolayısıyla minimum probleminde bütün $c_j \ge 0$ ise, maksimum probleminde bütün $c_j \le 0$ ise bu temel çözüm dual uygundur.
+
+::: {.ispat}
+$-1$ ile çarpılan denklemlerde artık değişkenin katsayısı $+1$ olur ve bu değişken başka hiçbir denklemde görünmez; aylak değişkenler de yalnız kendi denklemlerinde $+1$ katsayısıyla görünür. Demek ki bu sütunlar $m \times m$ birim matrisin sütunlarıdır. Birim matrisli başlangıç bazı önermesinin (@prp-smp-birim-baz) ispatındaki hesap, sağ tarafların işaretini hiç kullanmadığı için burada da geçerlidir: Tablonun gövdesi denklemlerin katsayılarıdır, temel değişkenlerin değerleri denklemlerin sağ taraflarıdır ($b_i$ ya da $-b_i$), aylak ve artık değişkenlerin amaç katsayıları 0 olduğundan $\vec{c}_B = \vec{0}$, $z_0 = 0$ ve $z_j - c_j = 0 - c_j = -c_j$ bulunur. Minimum probleminde $c_j \ge 0$ ise $-c_j \le 0$; maksimum probleminde $c_j \le 0$ ise $-c_j \ge 0$. Bu, dual uygunluğun (@def-dsa-dual-uygun) tanımıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani maliyetleri negatif olmayan bir minimum probleminde $\ge$ kısıtlarını $-1$ ile çarpmak, yapay değişkene hiç gerek bırakmadan dual uygun bir başlangıç tablosu verir. Bu tablonun $v_0$ sütununda $\ge$ kısıtlarından gelen $-b_i$ değerleri bulunur; $b_i > 0$ ise bunlar negatiftir ve tablo uygun değildir. Dual simpleks algoritmasının işi bu negatif değerleri, dual uygunluğu bozmadan ortadan kaldırmaktır.
+
+## Dual Simpleks Kuralları {#sec-dsa-kurallar}
+
+Dual uygun ama uygun olmayan bir tablodan bir sonrakine geçerken simpleks yöntemdeki iki seçimin sırası değişir: Önce bazdan çıkacak satır, sonra baza girecek sütun seçilir.
+
+::: {#def-dsa-kurallar name="Dual Simpleks Kuralları"}
+Dual uygun bir tabloda bazı $x_{Bi}$ değerleri negatif olsun.
+
+1. **Bazdan çıkan vektör.** Negatif $x_{Bi}$ değerlerinin en küçüğü (mutlak değerce en büyüğü) seçilir:
+$$
+x_{Br} = \min_{x_{Bi} < 0} \{ x_{Bi} \} .
+$$
+$r$. satırın temel değişkeni bazdan çıkar. Bu satıra **pivot satırı** denir.
+2. **Baza giren vektör.** Pivot satırında yalnız $y_{rj} < 0$ olan sütunlar için $\dfrac{z_j - c_j}{y_{rj}}$ oranları hesaplanır ve $v_k$ şöyle seçilir:
+$$
+\begin{aligned}
+\text{minimumda:}\quad \frac{z_k - c_k}{y_{rk}} &= \min_{y_{rj} < 0} \left\{ \frac{z_j - c_j}{y_{rj}} \right\}, \\[1mm]
+\text{maksimumda:}\quad \frac{z_k - c_k}{y_{rk}} &= \max_{y_{rj} < 0} \left\{ \frac{z_j - c_j}{y_{rj}} \right\}.
+\end{aligned}
+$$
+$v_k$ baza girer; pivot eleman $y_{rk}$'dır.
+
+Bu iki kurala **dual simpleks kuralları** denir.
+:::
+
+Yani önce "en kötü" negatif değişken bazdan atılır, sonra onun satırındaki negatif elemanlar arasından oranı en küçük olan sütun baza alınır. İki formül aslında aynı şeyi söyler. Minimum probleminde $z_j - c_j \le 0$ ve $y_{rj} < 0$ olduğundan oranların hepsi $\ge 0$'dır; en küçüğü, mutlak değerce en küçüğüdür. Maksimum probleminde $z_j - c_j \ge 0$ ve $y_{rj} < 0$ olduğundan oranların hepsi $\le 0$'dır; en büyüğü yine mutlak değerce en küçüğüdür. Bu yüzden her iki problemde de tek bir kural yeter:
+$$
+\left| \frac{z_k - c_k}{y_{rk}} \right| = \min_{y_{rj} < 0} \left| \frac{z_j - c_j}{y_{rj}} \right| .
+$$
+Pivot eleman, simpleks yöntemdekinin aksine **negatiftir**.
+
+Çıkan satırın "en negatif" seçilmesi, simpleks yöntemde giren sütunun "en büyük kriter" seçilmesi gibi bir kuraldır, zorunluluk değildir: $x_{Bi} < 0$ olan her satır pivot satırı olabilir. Giren sütunun oranla seçilmesi ise zorunludur; aşağıdaki teorem bunun nedenini gösteriyor. Oranlarda eşitlik olursa indisi küçük olan sütunu seçeriz.
+
+:::: {#thm-dsa-pivot name="Dual Simpleks Adımı"}
+Dual uygun bir tabloda $x_{Br} = y_{r0} < 0$ olsun ve $v_k$, dual simpleks kurallarıyla (@def-dsa-kurallar) seçilsin. $y_{rk}$ pivot alınarak dönüşüm kuralıyla (@thm-smp-donusum) hesaplanan yeni tablo için:
+
+1. Yeni baz gerçekten bir bazdır ve yeni tablo da dual uygundur.
+2. Baza giren $x_k$'nın yeni değeri $y_{r0} / y_{rk} > 0$'dır.
+3. Amaç değeri
+$$
+z'_0 = z_0 - \frac{(z_k - c_k)\, y_{r0}}{y_{rk}}
+$$
+olur; minimum probleminde $z'_0 \ge z_0$, maksimum probleminde $z'_0 \le z_0$'dır.
+
+::: {.ispat}
+**Baz.** Baz değişimi teoreminin (@thm-smp-baz-degisimi) ispatında yeni vektörlerin lineer bağımsızlığı yalnız $y_{rk} \ne 0$ olmasına dayanır; dönüşüm kuralının (@thm-smp-donusum) ispatı da yalnız $y_{rk} \ne 0$ kullanır. Burada $y_{rk} < 0$ olduğundan yeni vektörler bir baz oluşturur ve dönüşüm kuralı geçerlidir.
+
+**$x_k$'nın değeri.** Dönüşüm kuralına göre yeni pivot satırı eski satırın $y_{rk}$'ya bölümüdür; $v_0$ sütununda $y_{r0} / y_{rk}$ bulunur. Pay ve payda negatif olduğundan bu sayı pozitiftir.
+
+**Dual uygunluk.** $\theta = \dfrac{z_k - c_k}{y_{rk}}$ diyelim. Dönüşüm kuralına göre her $j$ için
+$$
+(z_j - c_j)' = (z_j - c_j) - \theta\, y_{rj} .
+$$
+Minimum problemini ele alalım: Her $j$ için $z_j - c_j \le 0$ ve $\theta \ge 0$'dır. İki durum var:
+
+- $y_{rj} \ge 0$ ise $\theta\, y_{rj} \ge 0$, dolayısıyla $(z_j - c_j)' \le z_j - c_j \le 0$.
+- $y_{rj} < 0$ ise $\theta$ en küçük oran olduğundan $\theta \le \dfrac{z_j - c_j}{y_{rj}}$'dir. Bu eşitsizliğin iki yanını negatif $y_{rj}$ ile çarpınca yön değişir: $\theta\, y_{rj} \ge z_j - c_j$, yani $(z_j - c_j)' \le 0$.
+
+Maksimum probleminde her $z_j - c_j \ge 0$ ve $\theta \le 0$'dır. $y_{rj} \ge 0$ ise $\theta\, y_{rj} \le 0$ ve $(z_j - c_j)' \ge z_j - c_j \ge 0$. $y_{rj} < 0$ ise $\theta$ en büyük oran olduğundan $\theta \ge \dfrac{z_j - c_j}{y_{rj}}$; $y_{rj}$ ile çarpınca $\theta\, y_{rj} \le z_j - c_j$, yani $(z_j - c_j)' \ge 0$. Her iki problemde de yeni tablo dual uygundur.
+
+**Amaç değeri.** Dönüşüm kuralının $j = 0$ için verdiği formül $z'_0 = z_0 - \theta\, y_{r0}$'dır. Minimumda $\theta \ge 0$ ve $y_{r0} < 0$ olduğundan $\theta\, y_{r0} \le 0$ ve $z'_0 \ge z_0$. Maksimumda $\theta \le 0$ olduğundan $\theta\, y_{r0} \ge 0$ ve $z'_0 \le z_0$. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani giren sütunu oranla seçmek, dual uygunluğu korumanın tek yoludur: Başka bir negatif $y_{rj}$ pivot alınsaydı, oranı daha küçük olan bir sütunun $z_j - c_j$ değeri işaret değiştirirdi. Amaç değerinin davranışı da dikkat çekicidir. Minimum probleminde dual simpleks adımları amaç değerini **artırır**. Bu bir kötüleşme değildir: Başlangıçtaki uygun olmayan noktalar "fazla iyi" amaç değerlerine sahiptir ve yöntem optimuma alttan yaklaşır.
+
+Negatif $x_{Br}$'nin satırında hiç negatif eleman bulunmazsa oran hesaplanamaz. Bu, problemin kendisiyle ilgili kesin bir bilgi verir.
+
+:::: {#thm-dsa-uygun-cozum-yok name="Uygun Çözümün Olmaması"}
+Bir tabloda $x_{Br} = y_{r0} < 0$ olsun ve $r$. satırda her $j = \overline{1,n}$ için $y_{rj} \ge 0$ olsun. Bu durumda problemin hiçbir uygun çözümü yoktur.
+
+::: {.ispat}
+Tablonun baz vektörlerinden oluşan matrisi $B$ ile gösterelim. Baza göre katsayıların tanımı (@def-smp-yij) her $j = 0, 1, \dots, n$ için $v_j = B\,\vec{y}_j$ demektir; $B$ tersinir olduğundan $\vec{y}_j = B^{-1} v_j$, yani tablonun $v_j$ sütunu $B^{-1} v_j$'dir.
+
+Şimdi $\vec{x} = (x_1, \dots, x_n)$ kısıt denklemlerinin herhangi bir çözümü olsun: $x_1 v_1 + \dots + x_n v_n = v_0$. İki yanı soldan $B^{-1}$ ile çarparsak
+$$
+x_1 \vec{y}_1 + x_2 \vec{y}_2 + \dots + x_n \vec{y}_n = \vec{y}_0
+$$
+buluruz. Bu vektör eşitliğinin $r$. bileşeni
+$$
+y_{r1} x_1 + y_{r2} x_2 + \dots + y_{rn} x_n = y_{r0}
+$$
+denklemidir; yani tablonun her satırı, kısıtların her çözümünün sağladığı bir denklemdir. $\vec{x}$ uygun olsaydı her $x_j \ge 0$ olurdu; varsayım gereği her $y_{rj} \ge 0$ olduğundan sol taraf $\ge 0$ çıkardı. Oysa sağ taraf $y_{r0} < 0$'dır. Bu çelişki, uygun çözüm olmadığını gösterir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $r$. satır, negatif olmayan değişkenlerin negatif olmayan katsayılarla toplamının negatif bir sayıya eşit olmasını istiyor; bu imkânsızdır. Satırda temel değişkenlerin sütunları da vardır, ama onların elemanları 0 ya da 1 olduğundan koşulu bozmazlar.
+
+:::: {#cor-dsa-sonlu name="Dual Simpleks Algoritmasının Sonlu Adımda Bitmesi"}
+Bir minimum probleminde dual simpleks algoritmasının her adımında seçilen $z_k - c_k$ sıfırdan farklı olsun. Bu durumda algoritma sonlu sayıda adımdan sonra ya optimal bir çözümde ya da uygun çözüm olmadığı sonucunda durur. Maksimum probleminde de aynısı geçerlidir.
+
+::: {.ispat}
+$z_k - c_k \ne 0$ ise $\theta \ne 0$ ve $y_{r0} < 0$ olduğundan dual simpleks adımı teoremindeki (@thm-dsa-pivot) $\theta\, y_{r0}$ sıfırdan farklıdır; minimum probleminde $z'_0 > z_0$ olur. Bir baz, tablonun bütün sayılarını ve dolayısıyla $z_0$'ı tek türlü belirler. $z_0$ her adımda kesin olarak arttığına göre aynı baza bir daha dönülmez. $n$ sütundan $m$ tanesini seçmenin en fazla $\binom{n}{m}$ yolu olduğundan algoritma sonlu adımda durur. Durduğu yerde ya bütün $x_{Bi} \ge 0$'dır, o zaman @prp-dsa-iki-uygunluk gereği çözüm optimaldir; ya da negatif bir $x_{Br}$'nin satırında negatif eleman yoktur, o zaman @thm-dsa-uygun-cozum-yok gereği uygun çözüm yoktur. Maksimum probleminde $z_0$ kesin olarak azalır ve aynı akıl yürütme geçerlidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Algoritma ve Örnekler {#sec-dsa-algoritma}
+
+Buraya kadar söylenenler altı adımlık bir algoritmada toplanır.
+
+::: {.callout-tip}
+## Altı adımda dual simpleks algoritması
+
+1. **Dual uygun başlangıç.** Minimum probleminde her $j$ için $z_j - c_j \le 0$, maksimum probleminde her $j$ için $z_j - c_j \ge 0$ olan bir temel çözüm bul. Maliyetleri negatif olmayan bir minimum probleminde $\ge$ kısıtlarını $-1$ ile çarpmak bunu sağlar (@prp-dsa-baslangic).
+2. **Uygunluk kontrolü.** Her $i = \overline{1,m}$ için $x_{Bi} \ge 0$ ise dur: Çözüm optimaldir (@prp-dsa-iki-uygunluk). Değilse 3. adıma geç.
+3. **Çıkan vektör.** Negatif $x_{Bi}$'lerin en küçüğü $x_{Br}$'nin satırı pivot satırıdır; $x_{Br}$ bazdan çıkar.
+4. **Uygun çözüm var mı?** Pivot satırında her $j$ için $y_{rj} \ge 0$ ise dur: Problemin uygun çözümü yoktur (@thm-dsa-uygun-cozum-yok). Değilse 5. adıma geç.
+5. **Giren vektör.** Pivot satırında $y_{rj} < 0$ olan sütunlar için $\left| \frac{z_j - c_j}{y_{rj}} \right|$ oranlarını hesapla; en küçük oranı veren $v_k$ baza girer, pivot $y_{rk}$'dır.
+6. **Yeni tablo.** Dönüşüm kuralıyla (@sec-smp-donusum) yeni tabloyu hesapla ve 2. adıma dön.
+:::
+
+3\. ve 5. adımlar dual simpleks kurallarıdır (@def-dsa-kurallar). Tabloları simpleks tablosunun düzeninde (@sec-smp-tablo) yazacağız, iki farkla. Oran sütunu yerine en alta bir **Oran satırı** ekleyeceğiz: Pivot satırında $y_{rj} < 0$ olan her sütunun altına $\left| \frac{z_j - c_j}{y_{rj}} \right|$ yazılır, diğerlerine $-$ konur. Bazdan çıkan satırı, $v_0$ sütunundaki değerinin yanına konan $\Rightarrow$ işaretler; baza giren sütunu yine $z_j - c_j$ satırındaki $\Uparrow$ işaretler.
+
+:::: {#exm-dsa-isinma name="İki Değişkenli Bir Minimum Problemi"}
+$$
+\begin{aligned}
+x_1 + 2x_2 &\ge 6 \\
+x_1 + x_2 &\ge 5 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 3x_1 + 5x_2
+\end{aligned}
+$$
+problemini dual simpleks algoritmasıyla çözünüz ve algoritmanın izlediği yolu grafikte gösteriniz.
+
+::: {.cozum}
+**Başlangıç tablosu.** Önce problemi standart forma getirelim: İki $\ge$ kısıtından $x_3$ ve $x_4$ artık değişkenlerini çıkarırız.
+$$
+\begin{aligned}
+x_1 + 2x_2 - x_3 &= 6 \\
+x_1 + x_2 - x_4 &= 5 \\
+x_j &\ge 0, \quad j = \overline{1,4} \\
+\min z &= 3x_1 + 5x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+Artık değişkenlerin sütunları $-1$ taşıdığı için bu standart form birim matris içermez. Büyük M yöntemi iki yapay değişken isterdi. Onun yerine iki denklemi $-1$ ile çarpalım:
+$$
+\begin{aligned}
+-x_1 - 2x_2 + x_3 &= -6 \\
+-x_1 - x_2 + x_4 &= -5
+\end{aligned}
+$$
+Şimdi $v_3$ ve $v_4$ birim matris oluşturur. Maliyetler $3$ ve $5$ negatif olmadığından @prp-dsa-baslangic gereği $B_0 = (v_3, v_4)$ bazının çözümü dual uygundur: $z_1 - c_1 = -3$, $z_2 - c_2 = -5$. Çözüm $x_3 = -6$, $x_4 = -5$ uygun değildir.
+
+**Birinci adım.** Negatif değerlerin en küçüğü $x_3 = -6$'dır; $x_3$ satırı pivot satırıdır ve $v_3$ bazdan çıkar. Bu satırda $y_{31} = -1$ ve $y_{32} = -2$ negatiftir:
+$$
+\left| \frac{z_1 - c_1}{y_{31}} \right| = \left| \frac{-3}{-1} \right| = 3, \qquad
+\left| \frac{z_2 - c_2}{y_{32}} \right| = \left| \frac{-5}{-2} \right| = \frac{5}{2} .
+$$
+En küçük oran $\tfrac{5}{2}$ olduğundan $v_2$ baza girer; pivot $y_{32} = -2$.
+
+|   |   | $c_j$ | $3$ | $5$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $0$ | $-6 \Rightarrow$ | $-1$ | $[-2]$ | $1$ | $0$ |
+| $x_4$ | $0$ | $-5$ | $-1$ | $-1$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-3$ | $-5 \Uparrow$ | $0$ | $0$ |
+| Oran |   |   | $\frac{3}{1}$ | $\frac{5}{2}$ | $-$ | $-$ |
+
+: Başlangıç tablosu {#tbl-dsa-isinma-baslangic .simpleks .oran-satirli .oransiz}
+
+Pivot satırı $-2$'ye bölünür ve $x_2$ satırı olur: $\big(3 \mid \tfrac{1}{2}, 1, -\tfrac{1}{2}, 0\big)$. $x_4$ satırının pivot sütunundaki elemanı $-1$ olduğundan bu satıra yeni pivot satırı eklenir; $z_j - c_j$ satırına da yeni pivot satırının 5 katı eklenir:
+$$
+\begin{aligned}
+x_4&: \ \big(-5 + 3 \mid -1 + \tfrac{1}{2},\ 0,\ -\tfrac{1}{2},\ 1\big) = \big(-2 \mid -\tfrac{1}{2}, 0, -\tfrac{1}{2}, 1\big), \\[1mm]
+z_j - c_j&: \ \big(0 + 15 \mid -3 + \tfrac{5}{2},\ 0,\ -\tfrac{5}{2},\ 0\big) = \big(15 \mid -\tfrac{1}{2}, 0, -\tfrac{5}{2}, 0\big).
+\end{aligned}
+$$
+Amaç değeri formülüyle (@thm-dsa-pivot) de $z'_0 = 0 - \frac{(-5)(-6)}{-2} = 15$.
+
+**İkinci adım.** Kriterler hâlâ $\le 0$'dır ama $x_4 = -2 < 0$. Tek negatif değer bu olduğu için $v_4$ bazdan çıkar. $x_4$ satırında $y_{41} = -\tfrac{1}{2}$ ve $y_{43} = -\tfrac{1}{2}$ negatiftir:
+$$
+\left| \frac{-1/2}{-1/2} \right| = 1, \qquad \left| \frac{-5/2}{-1/2} \right| = 5 .
+$$
+En küçük oran 1 olduğundan $v_1$ baza girer; pivot $y_{41} = -\tfrac{1}{2}$.
+
+|   |   | $c_j$ | $3$ | $5$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_2$ | $5$ | $3$ | $\frac{1}{2}$ | $1$ | $-\frac{1}{2}$ | $0$ |
+| $x_4$ | $0$ | $-2 \Rightarrow$ | $[-\frac{1}{2}]$ | $0$ | $-\frac{1}{2}$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 15$ | $-\frac{1}{2} \Uparrow$ | $0$ | $-\frac{5}{2}$ | $0$ |
+| Oran |   |   | $\frac{1/2}{1/2}$ | $-$ | $\frac{5/2}{1/2}$ | $-$ |
+
+: Birinci iterasyon tablosu {#tbl-dsa-isinma-birinci .simpleks .oran-satirli .oransiz}
+
+Pivot satırı $-\tfrac{1}{2}$'ye bölünür, yani $-2$ ile çarpılır: $x_1$ satırı $(4 \mid 1, 0, 1, -2)$ olur. $x_2$ satırından bunun $\tfrac{1}{2}$ katı çıkarılır, $z_j - c_j$ satırına $\tfrac{1}{2}$ katı eklenir:
+$$
+\begin{aligned}
+x_2&: \ \big(3 - 2 \mid 0,\ 1,\ -\tfrac{1}{2} - \tfrac{1}{2},\ 0 + 1\big) = (1 \mid 0, 1, -1, 1), \\[1mm]
+z_j - c_j&: \ \big(15 + 2 \mid 0,\ 0,\ -\tfrac{5}{2} + \tfrac{1}{2},\ 0 - 1\big) = (17 \mid 0, 0, -2, -1).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $3$ | $5$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_2$ | $5$ | $1$ | $0$ | $1$ | $-1$ | $1$ |
+| $x_1$ | $3$ | $4$ | $1$ | $0$ | $1$ | $-2$ |
+| $z_j - c_j$ |   | $z_0 = 17$ | $0$ | $0$ | $-2$ | $-1$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-dsa-isinma-optimal .simpleks .oransiz}
+
+**Sonuç.** Optimal tabloda (@tbl-dsa-isinma-optimal) bütün $x_{Bi} \ge 0$ ve bütün $z_j - c_j \le 0$; @prp-dsa-iki-uygunluk gereği çözüm optimaldir:
+$$
+X^{*} = (x_1, x_2, x_3, x_4) = (4, 1, 0, 0), \qquad \min z = 3 \cdot 4 + 5 \cdot 1 = 17 .
+$$
+Kontrol: $4 + 2 \cdot 1 = 6$ ve $4 + 1 = 5$; iki kısıt da eşitlikle sağlanır.
+
+**Grafik.** Algoritmanın uğradığı temel çözümler $(x_1, x_2)$ düzleminde $X_0 = (0, 0)$, $X_1 = (0, 3)$ ve $X_2 = (4, 1)$ noktalarıdır. $X_0$ iki kısıtı da, $X_1$ ise ikinci kısıtı bozar: $0 + 3 = 3 < 5$, bu da tablodaki $x_4 = -2$ değeridir. Her nokta iki doğrunun kesişimidir, yani bir temel çözümdür, ama yalnız sonuncusu uygun bölgenin köşesidir. Amaç değeri $0 \to 15 \to 17$ diye artar; uygun bölgenin köşelerindeki değerler ise $(0, 5)$'te $25$, $(4, 1)$'de $17$ ve $(6, 0)$'da $18$'dir. Algoritma uygun bölgeye dışarıdan, amaç değeri optimumu hiç aşmadan yaklaştı.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 506.0 424.0" role="img" aria-label="Unbounded feasible region above the lines x1 + 2x2 = 6 and x1 + x2 = 5; dual simplex path from (0,0) to (0,3) to (4,1) with the dashed level line z = 17">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="154.0" y1="30.0" x2="154.0" y2="417.8"/><line x1="212.8" y1="30.0" x2="212.8" y2="417.8"/><line x1="271.5" y1="30.0" x2="271.5" y2="417.8"/><line x1="330.2" y1="30.0" x2="330.2" y2="417.8"/><line x1="389.0" y1="30.0" x2="389.0" y2="417.8"/><line x1="447.8" y1="30.0" x2="447.8" y2="417.8"/><line x1="506.5" y1="30.0" x2="506.5" y2="417.8"/><line x1="60.0" y1="323.8" x2="530.0" y2="323.8"/><line x1="60.0" y1="265.0" x2="530.0" y2="265.0"/><line x1="60.0" y1="206.2" x2="530.0" y2="206.2"/><line x1="60.0" y1="147.5" x2="530.0" y2="147.5"/><line x1="60.0" y1="88.8" x2="530.0" y2="88.8"/></g>
+  <polygon points="95.2,41.8 95.2,88.8 330.2,323.8 447.8,382.5 518.2,382.5 518.2,41.8" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M95.2,41.8 L95.2,88.8 L330.2,323.8 L447.8,382.5 L518.2,382.5" fill="none" stroke="var(--color-theory)" stroke-width="1.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,188.6 L518.2,417.8" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,53.5 L424.2,417.8" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,161.6 L486.9,417.8" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="382.5" x2="534.0" y2="382.5"/>
+  <line x1="95.2" y1="421.8" x2="95.2" y2="26.0"/>
+  <polygon points="534.0,382.5 526.0,379.0 526.0,386.0" stroke="none"/>
+  <polygon points="95.2,26.0 91.8,34.0 98.8,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="154.0" y1="379.5" x2="154.0" y2="385.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="154.0" y="397.5" text-anchor="middle">1</text>
+  <line x1="212.8" y1="379.5" x2="212.8" y2="385.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="212.8" y="397.5" text-anchor="middle">2</text>
+  <line x1="271.5" y1="379.5" x2="271.5" y2="385.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="271.5" y="397.5" text-anchor="middle">3</text>
+  <line x1="330.2" y1="379.5" x2="330.2" y2="385.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="330.2" y="397.5" text-anchor="middle">4</text>
+  <line x1="389.0" y1="379.5" x2="389.0" y2="385.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="389.0" y="397.5" text-anchor="middle">5</text>
+  <line x1="447.8" y1="379.5" x2="447.8" y2="385.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="447.8" y="397.5" text-anchor="middle">6</text>
+  <line x1="506.5" y1="379.5" x2="506.5" y2="385.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="506.5" y="397.5" text-anchor="middle">7</text>
+  <line x1="92.2" y1="323.8" x2="98.2" y2="323.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.2" y="327.8" text-anchor="end">1</text>
+  <line x1="92.2" y1="265.0" x2="98.2" y2="265.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.2" y="269.0" text-anchor="end">2</text>
+  <line x1="92.2" y1="206.2" x2="98.2" y2="206.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.2" y="210.2" text-anchor="end">3</text>
+  <line x1="92.2" y1="147.5" x2="98.2" y2="147.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.2" y="151.5" text-anchor="end">4</text>
+  <line x1="92.2" y1="88.8" x2="98.2" y2="88.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.2" y="92.8" text-anchor="end">5</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="532.0" y="397.5" text-anchor="end">x₁</text>
+  <text x="102.2" y="35.0">x₂</text>
+  </g>
+  <line x1="95.2" y1="382.5" x2="95.2" y2="215.0" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="95.2,206.2 99.9,217.2 90.6,217.2" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="95.2" y1="206.2" x2="322.4" y2="319.8" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.2,323.8 318.3,323.0 322.5,314.7" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="95.2" cy="382.5" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="95.2" cy="206.2" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="330.2" cy="323.8" r="4.5" fill="var(--color-practice)"/>
+  <text x="103.2" y="374.5" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="87.2" y="192.2" fill="var(--academic-text)" font-size="13" text-anchor="end">X₁</text>
+  <text x="340.2" y="315.8" fill="var(--academic-text)" font-size="13" text-anchor="start">X₂</text>
+  <text x="292.1" y="129.9" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+  <text x="471.2" y="371.9" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="127.6" y="106.4" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="121.7" y="182.8" fill="var(--color-base)" font-size="12" text-anchor="start">z = 17</text>
+</svg>
+<figcaption>Dual simpleks yolu: X₀ = (0, 0) → X₁ = (0, 3) → X₂ = (4, 1). İlk iki nokta uygun bölgenin dışındadır; z değeri 0, 15, 17 diye artarak optimuma alttan yaklaşır. Kesikli doğru z = 17 seviye doğrusudur. (1) x₁ + 2x₂ = 6, (2) x₁ + x₂ = 5.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi aynı yöntemi üç değişkenli bir probleme uygulayalım.
+
+:::: {#exm-dsa-ornek-1 name="Üç Kısıtı da ≥ Olan Bir Minimum Problemi"}
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &\ge 6 \\
+x_1 - 5x_2 - x_3 &\ge 4 \\
+x_1 + 5x_2 + x_3 &\ge 24 \\
+x_1, x_2, x_3 &\ge 0 \\
+\min z &= 3x_1 + 6x_2 + x_3
+\end{aligned}
+$$
+problemini dual simpleks algoritmasıyla çözünüz.
+
+::: {.cozum}
+**Neden dual simpleks?** Problemi standart forma getirmek için üç kısıttan $x_4, x_5, x_6$ artık değişkenlerini çıkarırız. Artık sütunları $-1$ taşıdığından Büyük M yöntemi ile çözmek istesek üç yapay değişken $x_{u_1}, x_{u_2}, x_{u_3}$ de eklememiz gerekirdi: tabloda $6$ yerine $9$ değişken, $z_j - c_j$ satırında da $M$'li ifadeler olurdu. Denklemleri $-1$ ile çarparsak artık değişkenlerle yetiniriz ve problem daha az değişkenle çözülür.
+
+**Başlangıç tablosu.** Eşitsizlikleri $-1$ ile çarpalım:
+$$
+\begin{aligned}
+-x_1 - x_2 - x_3 &\le -6 \\
+-x_1 + 5x_2 + x_3 &\le -4 \\
+-x_1 - 5x_2 - x_3 &\le -24 \\
+x_1, x_2, x_3 &\ge 0 \\
+\min z &= 3x_1 + 6x_2 + x_3
+\end{aligned}
+$$
+Her kısıta sırasıyla $x_4, x_5, x_6$ eklenince
+$$
+\begin{aligned}
+-x_1 - x_2 - x_3 + x_4 &= -6 \\
+-x_1 + 5x_2 + x_3 + x_5 &= -4 \\
+-x_1 - 5x_2 - x_3 + x_6 &= -24 \\
+x_j &\ge 0, \quad j = \overline{1,6} \\
+\min z &= 3x_1 + 6x_2 + x_3 \\
+&\quad + 0x_4 + 0x_5 + 0x_6
+\end{aligned}
+$$
+elde edilir. Örneğin birinci denklem $x_4 = x_1 + x_2 + x_3 - 6$ demektir; $x_4$, birinci kısıtın artık değişkenidir ve $-1$ ile çarpma sayesinde sütunu $(1, 0, 0)^T$ birim vektörü olmuştur. $v_4, v_5, v_6$ birim matris oluşturur, ama sağ taraflar negatif olduğundan sistem standart formda değildir. Maliyetler $3, 6, 1$ negatif olmadığından @prp-dsa-baslangic gereği başlangıç çözümü dual uygundur:
+$$
+z_1 - c_1 = -3, \quad z_2 - c_2 = -6, \quad z_3 - c_3 = -1 .
+$$
+Minimum probleminde pozitif kriter kalmamıştır; dual uygun çözüme ulaşılmıştır. Ama $x_4 = -6$, $x_5 = -4$, $x_6 = -24$ negatif olduğundan esas problem için uygun çözüm değildir.
+
+**Birinci adım.** Negatif değerlerin en küçüğü $x_6 = -24$'tür; $v_6$ bazdan çıkar. $x_6$ satırındaki negatif elemanlar $y_{61} = -1$, $y_{62} = -5$, $y_{63} = -1$'dir. Minimum probleminde kural
+$$
+\min \left\{ \frac{-3}{-1}, \frac{-6}{-5}, \frac{-1}{-1} \right\} = \min \left\{ 3, \frac{6}{5}, 1 \right\} = 1
+$$
+verir. En küçük oran $v_3$ sütunundadır; $v_3$ baza girer ve pivot $y_{63} = -1$'dir.
+
+|   |   | $c_j$ | $3$ | $6$ | $1$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ |
+| $x_4$ | $0$ | $-6$ | $-1$ | $-1$ | $-1$ | $1$ | $0$ | $0$ |
+| $x_5$ | $0$ | $-4$ | $-1$ | $5$ | $1$ | $0$ | $1$ | $0$ |
+| $x_6$ | $0$ | $-24 \Rightarrow$ | $-1$ | $-5$ | $[-1]$ | $0$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-3$ | $-6$ | $-1 \Uparrow$ | $0$ | $0$ | $0$ |
+| Oran |   |   | $\frac{3}{1}$ | $\frac{6}{5}$ | $\frac{1}{1}$ | $-$ | $-$ | $-$ |
+
+: Başlangıç tablosu {#tbl-dsa-ornek-1-baslangic .simpleks .oran-satirli .oransiz}
+
+Pivot $-1$ olduğundan pivot satırı $-1$ ile çarpılır ve $x_3$ satırı olur: $(24 \mid 1, 5, 1, 0, 0, -1)$. $v_3$ sütununun diğer elemanları $x_4$ satırında $-1$, $x_5$ satırında $1$, $z_j - c_j$ satırında $-1$'dir. Dolayısıyla $x_4$ satırına yeni pivot satırı eklenir, $x_5$ satırından çıkarılır, $z_j - c_j$ satırına eklenir:
+$$
+\begin{aligned}
+x_4&: \ (-6 + 24 \mid -1 + 1,\ -1 + 5,\ 0,\ 1,\ 0,\ -1) \\
+&\quad = (18 \mid 0, 4, 0, 1, 0, -1), \\[1mm]
+x_5&: \ (-4 - 24 \mid -1 - 1,\ 5 - 5,\ 0,\ 0,\ 1,\ 1) \\
+&\quad = (-28 \mid -2, 0, 0, 0, 1, 1), \\[1mm]
+z_j - c_j&: \ (0 + 24 \mid -3 + 1,\ -6 + 5,\ 0,\ 0,\ 0,\ -1) \\
+&\quad = (24 \mid -2, -1, 0, 0, 0, -1).
+\end{aligned}
+$$
+
+**İkinci adım.** Kriterler yine $\le 0$'dır ve tek negatif değer $x_5 = -28$'dir; $v_5$ bazdan çıkar. $x_5$ satırında tek negatif eleman $y_{51} = -2$ olduğundan oran tektir: $\left| \frac{-2}{-2} \right| = 1$. $v_1$ baza girer; pivot $y_{51} = -2$.
+
+|   |   | $c_j$ | $3$ | $6$ | $1$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ |
+| $x_4$ | $0$ | $18$ | $0$ | $4$ | $0$ | $1$ | $0$ | $-1$ |
+| $x_5$ | $0$ | $-28 \Rightarrow$ | $[-2]$ | $0$ | $0$ | $0$ | $1$ | $1$ |
+| $x_3$ | $1$ | $24$ | $1$ | $5$ | $1$ | $0$ | $0$ | $-1$ |
+| $z_j - c_j$ |   | $z_0 = 24$ | $-2 \Uparrow$ | $-1$ | $0$ | $0$ | $0$ | $-1$ |
+| Oran |   |   | $\frac{2}{2}$ | $-$ | $-$ | $-$ | $-$ | $-$ |
+
+: Birinci iterasyon tablosu {#tbl-dsa-ornek-1-birinci .simpleks .oran-satirli .oransiz}
+
+Pivot satırı $-2$'ye bölünür ve $x_1$ satırı olur: $\big(14 \mid 1, 0, 0, 0, -\tfrac{1}{2}, -\tfrac{1}{2}\big)$. $x_4$ satırının $v_1$ sütunundaki elemanı 0 olduğundan bu satır değişmez. $x_3$ satırından yeni pivot satırı çıkarılır, $z_j - c_j$ satırına 2 katı eklenir:
+$$
+\begin{aligned}
+x_3&: \ \big(24 - 14 \mid 0,\ 5,\ 1,\ 0,\ \tfrac{1}{2},\ -1 + \tfrac{1}{2}\big) \\
+&\quad = \big(10 \mid 0, 5, 1, 0, \tfrac{1}{2}, -\tfrac{1}{2}\big), \\[1mm]
+z_j - c_j&: \ (24 + 28 \mid 0,\ -1,\ 0,\ 0,\ -1,\ -1 - 1) \\
+&\quad = (52 \mid 0, -1, 0, 0, -1, -2).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $3$ | $6$ | $1$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ |
+| $x_4$ | $0$ | $18$ | $0$ | $4$ | $0$ | $1$ | $0$ | $-1$ |
+| $x_1$ | $3$ | $14$ | $1$ | $0$ | $0$ | $0$ | $-\frac{1}{2}$ | $-\frac{1}{2}$ |
+| $x_3$ | $1$ | $10$ | $0$ | $5$ | $1$ | $0$ | $\frac{1}{2}$ | $-\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 52$ | $0$ | $-1$ | $0$ | $0$ | $-1$ | $-2$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-dsa-ornek-1-optimal .simpleks .oransiz}
+
+**Sonuç.** Optimal tabloda (@tbl-dsa-ornek-1-optimal) her $x_j \ge 0$ ve her $z_j - c_j \le 0$ olduğundan optimal çözüme ulaşılmıştır:
+$$
+\begin{aligned}
+X^{*} &= (x_1, \dots, x_6) = (14, 0, 10, 18, 0, 0), \\
+\min z &= 3 \cdot 14 + 6 \cdot 0 + 1 \cdot 10 = 52 .
+\end{aligned}
+$$
+Kontrol: $14 + 0 + 10 = 24 \ge 6$ (artık $x_4 = 18$), $14 - 0 - 10 = 4$ ve $14 + 0 + 10 = 24$; ikinci ve üçüncü kısıt eşitlikle sağlanır ($x_5 = x_6 = 0$). Amaç değeri adım adım $0 \to 24 \to 52$ diye arttı. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Neden "Dual" Simpleks? {#sec-dsa-neden-dual}
+
+Yöntemin adını açıklamak için tablodaki sayılara bir kez daha, bu kez [Dualite](dualite.qmd) bölümünün gözüyle bakalım.
+
+Kısıtları $\ge$ olan bir minimum problemini ele alalım:
+$$
+\begin{aligned}
+\textstyle\sum_{j=1}^{n} a_{ij} x_j &\ge b_i, \quad i = \overline{1,m} \\
+x_j &\ge 0, \quad j = \overline{1,n} \\
+\min z &= c_1 x_1 + \dots + c_n x_n
+\end{aligned}
+$$
+Bu problemin duali (@def-dua-dual-problem)
+$$
+\begin{aligned}
+\textstyle\sum_{i=1}^{m} a_{ij} y_i &\le c_j, \quad j = \overline{1,n} \\
+y_i &\ge 0, \quad i = \overline{1,m} \\
+\max g &= b_1 y_1 + \dots + b_m y_m
+\end{aligned}
+$$
+problemidir. Dual değişkenler $y_1, \dots, y_m$ tek indislidir; iki indisli tablo elemanları $y_{ij}$ ile karıştırılmamalıdır.
+
+:::: {#prp-dsa-dual-degiskenler name="Simpleks Kriterleri ve Dual Değişkenler"}
+Yukarıdaki minimum probleminde $\ge$ kısıtlarından $x_{n+1}, \dots, x_{n+m}$ artık değişkenleri çıkarılsın ve denklemler $-1$ ile çarpılsın. Herhangi bir baza ait simpleks tablosunda
+$$
+y_i = -(z_{n+i} - c_{n+i}), \quad i = \overline{1,m}
+$$
+tanımlansın; yani $y_i$, $i$. artık değişkenin sütunundaki simpleks kriterinin $-1$ katı olsun. Bu durumda
+
+1. her $j = \overline{1,n}$ için $z_j - c_j = \sum_{i=1}^{m} a_{ij} y_i - c_j$;
+2. $z_0 = b_1 y_1 + \dots + b_m y_m$, yani tablonun amaç değeri, dual amaç fonksiyonunun $(y_1, \dots, y_m)$'deki değeridir;
+3. tablo dual uygun ise $(y_1, \dots, y_m)$ dual problemin uygun bir çözümüdür.
+
+::: {.ispat}
+Tablonun baz vektörlerinden oluşan matris $B$ olsun. Uygun çözüm olmaması teoreminin (@thm-dsa-uygun-cozum-yok) ispatında gördüğümüz gibi tablonun $v_j$ sütunu $B^{-1} v_j$'dir. Dolayısıyla
+$$
+z_j = \vec{c}_B^{\,T} B^{-1} v_j = \vec{p}^{\,T} v_j, \qquad \vec{p}^{\,T} = \vec{c}_B^{\,T} B^{-1}
+$$
+yazabiliriz; $\vec{p} = (p_1, \dots, p_m)^T$ bazın belirlediği sabit bir vektördür. $-1$ ile çarpılmış sistemde sütunlar şöyledir: $x_j$'nin sütunu $v_j = -(a_{1j}, \dots, a_{mj})^T$ ($j = \overline{1,n}$), $x_{n+i}$'nin sütunu $i$. birim vektör $e_i$, sağ taraf $v_0 = -(b_1, \dots, b_m)^T$.
+
+- Artık sütunlarında $c_{n+i} = 0$ ve $z_{n+i} = \vec{p}^{\,T} e_i = p_i$'dir. Tanım gereği $y_i = -p_i$.
+- $j = \overline{1,n}$ için $z_j = -\sum_i p_i a_{ij} = \sum_i a_{ij} y_i$; buradan (1) çıkar.
+- $z_0 = \vec{p}^{\,T} v_0 = -\sum_i p_i b_i$, yani $z_0 = \sum_i b_i y_i$; bu da (2)'dir.
+
+(3) için tablo dual uygun olsun, yani her $j$ için $z_j - c_j \le 0$. $j = \overline{1,n}$ için (1) gereği bu $\sum_i a_{ij} y_i \le c_j$, yani dualin $j$. kısıtıdır. Artık sütunlarında $z_{n+i} - c_{n+i} = -y_i \le 0$, yani $y_i \ge 0$'dır. Demek ki $(y_1, \dots, y_m)$ dualin bütün kısıtlarını sağlar. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $z_j - c_j$ satırının artık değişkenlere ait kısmı, işaret değiştirilince dual problemin bir çözümünü verir; tablonun dual uygun olması tam olarak bu çözümün dual problem için uygun olması demektir. "Dual uygun" adı buradan gelir.
+
+Buradan yöntemin davranışı da anlaşılır. Esas problemin her uygun çözümü $\vec{x}$ ve dualin her uygun çözümü $(y_1, \dots, y_m)$ için
+$$
+\begin{aligned}
+\sum_{j} c_j x_j &\ge \sum_{j} \Big( \sum_{i} a_{ij} y_i \Big) x_j \\[1mm]
+&= \sum_{i} y_i \Big( \sum_{j} a_{ij} x_j \Big) \ge \sum_{i} y_i b_i
+\end{aligned}
+$$
+olur: Birinci eşitsizlik $x_j \ge 0$ ve dual kısıtlardan, ikincisi $y_i \ge 0$ ve esas kısıtlardan gelir. Yani dualin her uygun çözümü, esas problemin minimumu için bir **alt sınır** verir. Dual simpleks algoritmasının her tablosu böyle bir alt sınır taşır: $z_0 = g$. Algoritma adım adım bu alt sınırı yükseltir (@thm-dsa-pivot) ve esas çözüm de uygun hale geldiği anda alt sınır, uygun bir çözümün amaç değerine eşit olur; o değerden daha iyisi olamayacağı için ikisi de optimaldir. Kısacası: **Dual simpleks yöntemin özü, esas ve dual problemin ikisinde de uygun çözüme ulaşılan aşamanın optimal çözüm olmasıdır.**
+
+Böylece dual simpleks algoritması, dual problemi hiç yazmadan dual problem üzerinde simpleks yöntemi uygulamaya denktir. Simpleks yöntem esas problemin uygun köşelerinde yürüyüp dual uygunluğu ararken, dual simpleks dual problemin uygun köşelerinde yürüyüp esas problemin uygunluğunu arar.
+
+:::: {#exm-dsa-dual-yol name="İki Değişkenli Örneğin Dual Problemdeki Yolu"}
+İki değişkenli minimum problemini (@exm-dsa-isinma) ele alalım: $x_1 + 2x_2 \ge 6$, $x_1 + x_2 \ge 5$, $x_1, x_2 \ge 0$, $\min z = 3x_1 + 5x_2$. Dual problemini yazınız ve dual simpleks tablolarından okunan dual çözümlerin dual problemde izlediği yolu gösteriniz.
+
+::: {.cozum}
+**Dual problem.** Kısıt katsayıları matrisinin sütunları dualin kısıtlarını, sağ taraflar dualin amaç katsayılarını verir:
+$$
+\begin{aligned}
+y_1 + y_2 &\le 3 \\
+2y_1 + y_2 &\le 5 \\
+y_1, y_2 &\ge 0 \\
+\max g &= 6y_1 + 5y_2
+\end{aligned}
+$$
+
+**Tablolardan dual çözümler.** Artık değişkenler $x_3$ ve $x_4$ olduğundan @prp-dsa-dual-degiskenler gereği $y_1 = -(z_3 - c_3)$ ve $y_2 = -(z_4 - c_4)$'tür:
+
+- Başlangıç tablosunda (@tbl-dsa-isinma-baslangic) $z_3 - c_3 = z_4 - c_4 = 0$, yani $Y_0 = (0, 0)$ ve $g = 0 = z_0$.
+- Birinci iterasyon tablosunda (@tbl-dsa-isinma-birinci) $z_3 - c_3 = -\tfrac{5}{2}$, $z_4 - c_4 = 0$, yani $Y_1 = \big(\tfrac{5}{2}, 0\big)$ ve $g = 6 \cdot \tfrac{5}{2} = 15 = z_0$.
+- Optimal tabloda (@tbl-dsa-isinma-optimal) $z_3 - c_3 = -2$, $z_4 - c_4 = -1$, yani $Y_2 = (2, 1)$ ve $g = 12 + 5 = 17 = z_0$.
+
+**Uygunluk kontrolü.** $Y_1$ için $\tfrac{5}{2} + 0 \le 3$ ve $2 \cdot \tfrac{5}{2} + 0 = 5 \le 5$; $Y_2$ için $2 + 1 = 3 \le 3$ ve $4 + 1 = 5 \le 5$. Üç nokta da dualin uygun çözümüdür. Ayrıca optimal tablonun $v_1$ ve $v_2$ sütunlarındaki kriterler (1) formülüyle aynıdır: $z_1 - c_1 = (2 + 1) - 3 = 0$, $z_2 - c_2 = (2 \cdot 2 + 1) - 5 = 0$.
+
+**Yol.** Dual uygun bölgenin köşeleri $(0, 0)$, $\big(\tfrac{5}{2}, 0\big)$, $(2, 1)$ ve $(0, 3)$'tür; $g$ bunlarda sırasıyla $0$, $15$, $17$ ve $15$ değerini alır. Dual simpleks algoritmasının esas problemde uygun olmayan noktalardan geçen yolu, dual problemde uygun köşeler arasında $g$'yi artıran sıradan bir simpleks yoludur ve $\max g = 17 = \min z$ değerinde biter.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 476.0 476.0" role="img" aria-label="Dual feasible quadrilateral with corners (0,0), (2.5,0), (2,1), (0,3); simplex path from (0,0) to (2.5,0) to (2,1) and the dashed level line g = 17">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="217.1" y1="30.0" x2="217.1" y2="470.0"/><line x1="321.9" y1="30.0" x2="321.9" y2="470.0"/><line x1="426.7" y1="30.0" x2="426.7" y2="470.0"/><line x1="60.0" y1="312.9" x2="500.0" y2="312.9"/><line x1="60.0" y1="208.1" x2="500.0" y2="208.1"/><line x1="60.0" y1="103.3" x2="500.0" y2="103.3"/></g>
+  <polygon points="112.4,417.6 374.3,417.6 321.9,312.9 112.4,103.3" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M60.0,51.0 L479.0,470.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M400.5,470.0 L180.5,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M452.9,470.0 L86.2,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="417.6" x2="504.0" y2="417.6"/>
+  <line x1="112.4" y1="474.0" x2="112.4" y2="26.0"/>
+  <polygon points="504.0,417.6 496.0,414.1 496.0,421.1" stroke="none"/>
+  <polygon points="112.4,26.0 108.9,34.0 115.9,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="217.1" y1="414.6" x2="217.1" y2="420.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="217.1" y="432.6" text-anchor="middle">1</text>
+  <line x1="321.9" y1="414.6" x2="321.9" y2="420.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="321.9" y="432.6" text-anchor="middle">2</text>
+  <line x1="426.7" y1="414.6" x2="426.7" y2="420.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="426.7" y="432.6" text-anchor="middle">3</text>
+  <line x1="109.4" y1="312.9" x2="115.4" y2="312.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="105.4" y="316.9" text-anchor="end">1</text>
+  <line x1="109.4" y1="208.1" x2="115.4" y2="208.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="105.4" y="212.1" text-anchor="end">2</text>
+  <line x1="109.4" y1="103.3" x2="115.4" y2="103.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="105.4" y="107.3" text-anchor="end">3</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="502.0" y="432.6" text-anchor="end">y₁</text>
+  <text x="119.4" y="35.0">y₂</text>
+  </g>
+  <line x1="112.4" y1="417.6" x2="365.5" y2="417.6" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="374.3,417.6 363.3,422.2 363.3,413.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="374.3" y1="417.6" x2="325.8" y2="320.7" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="321.9,312.9 331.0,320.6 322.7,324.8" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="112.4" cy="417.6" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="374.3" cy="417.6" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="321.9" cy="312.9" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="112.4" cy="103.3" r="3.5" fill="var(--color-theory)"/>
+  <text x="120.4" y="409.6" fill="var(--academic-text)" font-size="13" text-anchor="start">Y₀</text>
+  <text x="364.3" y="435.6" fill="var(--academic-text)" font-size="13" text-anchor="end">Y₁</text>
+  <text x="309.9" y="328.9" fill="var(--academic-text)" font-size="13" text-anchor="end">Y₂</text>
+  <text x="159.5" y="344.3" fill="var(--color-theory)" font-size="12" text-anchor="start">dual uygun bölge</text>
+  <text x="447.6" y="405.0" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="201.4" y="56.2" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="125.0" y="51.0" fill="var(--color-base)" font-size="12" text-anchor="start">g = 17</text>
+</svg>
+<figcaption>Aynı iterasyonlar dual problemde: Y₀ = (0, 0) → Y₁ = (5/2, 0) → Y₂ = (2, 1). Her nokta dual uygun bölgenin bir köşesidir ve g değeri 0, 15, 17 diye artar; kesikli doğru g = 17 seviye doğrusudur. (1) y₁ + y₂ = 3, (2) 2y₁ + y₂ = 5.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dsa-ornek-1-dual name="Üç Kısıtlı Örneğin Dual Çözümleri"}
+Üç kısıtlı minimum probleminin (@exm-dsa-ornek-1) dualini yazınız. Dual simpleks tablolarından dual çözümleri okuyup her adımda $g = z_0$ olduğunu ve optimal tablonun dual çözümünün dualin optimal çözümü olduğunu gösteriniz.
+
+::: {.cozum}
+**Dual problem.** Esas problemin kısıtları $x_1 + x_2 + x_3 \ge 6$, $x_1 - 5x_2 - x_3 \ge 4$, $x_1 + 5x_2 + x_3 \ge 24$ ve amacı $\min z = 3x_1 + 6x_2 + x_3$'tür. Dual, katsayılar matrisinin sütunlarından kurulur:
+$$
+\begin{aligned}
+y_1 + y_2 + y_3 &\le 3 \\
+y_1 - 5y_2 + 5y_3 &\le 6 \\
+y_1 - y_2 + y_3 &\le 1 \\
+y_1, y_2, y_3 &\ge 0 \\
+\max g &= 6y_1 + 4y_2 + 24y_3
+\end{aligned}
+$$
+
+**Dual çözümler.** Artık değişkenler $x_4, x_5, x_6$ olduğundan $y_i = -(z_{3+i} - c_{3+i})$'dir. Tabloların $v_4, v_5, v_6$ sütunlarındaki kriterlerden:
+
+- Başlangıç tablosu (@tbl-dsa-ornek-1-baslangic): $(0, 0, 0)$, yani $Y_0 = (0, 0, 0)$ ve $g = 0 = z_0$.
+- Birinci iterasyon tablosu (@tbl-dsa-ornek-1-birinci): $(0, 0, -1)$, yani $Y_1 = (0, 0, 1)$ ve $g = 24 = z_0$.
+- Optimal tablo (@tbl-dsa-ornek-1-optimal): $(0, -1, -2)$, yani $Y_2 = (0, 1, 2)$ ve $g = 4 + 48 = 52 = z_0$.
+
+**Uygunluk.** $Y_1 = (0, 0, 1)$ için kısıtların sol tarafları $1$, $5$, $1$'dir ve $3$, $6$, $1$'i aşmaz. $Y_2 = (0, 1, 2)$ için sol taraflar
+$$
+0 + 1 + 2 = 3, \quad 0 - 5 + 10 = 5, \quad 0 - 1 + 2 = 1
+$$
+olur; yine $3$, $6$, $1$'i aşmaz. İki çözüm de dual uygundur.
+
+**Optimallik.** $Y_2$ dualin uygun bir çözümüdür ve $g = 52$ verir; $X^{*}$ da esasın uygun bir çözümüdür ve $z = 52$ verir. Metinde gösterdiğimiz eşitsizlik gereği dualin her uygun çözümü için $g \le 52$, esasın her uygun çözümü için $z \ge 52$'dir. Dolayısıyla $Y_2 = (0, 1, 2)$ dualin optimal çözümüdür ve $\max g = \min z = 52$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Önce Dual Uygunluğu Sağlamak {#sec-dsa-once-dual-uygunluk}
+
+Dual simpleks algoritması dual uygun bir tabloyla başlamak zorundadır; bazen ilk tablo bu koşulu sağlamaz.
+
+Örneğin kısıtlardan biri eşitlikse o denklem için ne aylak ne de artık değişken vardır; birim sütun ancak bir yapay değişkenle kurulur. Yapay değişkenin $M$'li maliyeti de $z_j - c_j$ satırına pozitif $M$'li kriterler getirir. Bu durumda önce sıradan simpleks adımlarıyla (burada Büyük M yöntemiyle) dual uygunluk sağlanır, sonra dual simpleks algoritmasına geçilir. Ara adımlarda bazı temel değişkenler negatif olabilir. Bu adımlarda oran testi yalnız $x_{Bi} \ge 0$ **ve** $y_{ik} > 0$ olan satırlarla yapılır. Böylece $\lambda \ge 0$ olur, negatif olmayan temel değişkenler negatif olmaz ve $y_{ik} \le 0$ olan satırlardaki değerler azalmaz. Negatif $x_{Bi}$'li satırlar teste girmez; onların değeri bu adımda değişebilir, bu da sorun değildir. Bu adımların amacı uygunluk değil, $z_j - c_j$ satırını düzeltmektir.
+
+:::: {#exm-dsa-ornek-2 name="Eşitlik Kısıtlı Bir Problemde Büyük M ile Dual Simpleks"}
+$$
+\begin{aligned}
+x_1 + 2x_2 &\le 40 \\
+3x_1 + x_2 &= 30 \\
+4x_1 + 3x_2 &\ge 60 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 20x_1 + 10x_2
+\end{aligned}
+$$
+problemini dual simpleks algoritmasıyla çözünüz.
+
+::: {.cozum}
+**Başlangıç tablosu.** Birinci kısıta $x_3$ aylak değişkenini ekleriz. Yapay değişkene ihtiyaç duymamak için $\ge$ olan üçüncü kısıtı $-1$ ile çarpıp $-4x_1 - 3x_2 \le -60$ haline getirir ve ona da $x_4$'ü ekleriz; $x_4$ bu kısıtın artık değişkenidir. Eşitlik kısıtında birim sütun olmadığından ona $x_{u_1}$ yapay değişkenini ekleriz; minimum problemi olduğu için amaç katsayısı $+M$'dir (@def-bym-m-problemi):
+$$
+\begin{aligned}
+x_1 + 2x_2 + x_3 &= 40 \\
+3x_1 + x_2 + x_{u_1} &= 30 \\
+-4x_1 - 3x_2 + x_4 &= -60 \\
+x_1, x_2, x_3, x_4, x_{u_1} &\ge 0 \\
+\min z &= 20x_1 + 10x_2 + 0x_3 \\
+&\quad + 0x_4 + Mx_{u_1}
+\end{aligned}
+$$
+$v_3$, $v_{u_1}$ ve $v_4$ birim matris oluşturur. Üçüncü sağ taraf negatif olduğundan bu sistem standart formda değildir; M problemini burada yalnız $z_j - c_j$ satırını düzeltmek için kuruyoruz ve kurulumu sağ tarafların işaretini kullanmaz. $\vec{c}_B = (0, M, 0)^T$ olduğundan
+$$
+\begin{aligned}
+z_1 - c_1 &= 3M - 20, & z_2 - c_2 &= M - 10, \\
+z_0 &= 30M .
+\end{aligned}
+$$
+Minimum probleminde pozitif kriterler tükenmediği için bu tablo dual uygun değildir; algoritmanın 2. adımına hemen geçemeyiz. Önce bir dual uygun çözüm bulmamız gerekir; bunun için Büyük M yöntemini kullanırız.
+
+**Birinci adım (Büyük M adımı).** Minimum probleminde en büyük pozitif kriter girer. $M$'nin katsayılarını karşılaştırırsak (@prp-bym-karsilastirma) $3M - 20 > M - 10$; $v_1$ baza girer. Oran testi $v_1$ sütununun pozitif elemanlarıyla yapılır; $y_{41} = -4 < 0$ olduğundan $x_4$ satırı teste girmez:
+$$
+\min \left( \frac{40}{1}, \frac{30}{3} \right) = 10 = \frac{x_{u_1}}{y_{u_1 1}} .
+$$
+$x_{u_1}$ bazdan çıkar; pivot $3$.
+
+|   |   | $c_j$ | $20$ | $10$ | $0$ | $0$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | Oran |
+| $x_3$ | $0$ | $40$ | $1$ | $2$ | $1$ | $0$ | $0$ | $\frac{40}{1}$ |
+| $x_{u_1}$ | $M$ | $30$ | $[3]$ | $1$ | $0$ | $0$ | $1$ | $\frac{30}{3} \Rightarrow$ |
+| $x_4$ | $0$ | $-60$ | $-4$ | $-3$ | $0$ | $1$ | $0$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 30M$ | $3M-20 \Uparrow$ | $M-10$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-dsa-ornek-2-baslangic .simpleks}
+
+Pivot satırı 3'e bölünür: $x_1$ satırı $\big(10 \mid 1, \tfrac{1}{3}, 0, 0\big)$ olur. Bazdan çıkan yapay değişkenin sütunu yeni tabloda yazılmaz (bkz. [Büyük M yöntemi](buyuk-m-yontemi.qmd)). $x_3$ satırından yeni pivot satırı çıkarılır, $x_4$ satırına 4 katı eklenir:
+$$
+\begin{aligned}
+x_3&: \ \big(40 - 10 \mid 0,\ 2 - \tfrac{1}{3},\ 1,\ 0\big) = \big(30 \mid 0, \tfrac{5}{3}, 1, 0\big), \\[1mm]
+x_4&: \ \big(-60 + 40 \mid 0,\ -3 + \tfrac{4}{3},\ 0,\ 1\big) = \big(-20 \mid 0, -\tfrac{5}{3}, 0, 1\big).
+\end{aligned}
+$$
+$z_j - c_j$ satırından yeni pivot satırının $3M - 20$ katı çıkarılır:
+$$
+\begin{aligned}
+z_0&: \ 30M - (3M - 20) \cdot 10 = 200, \\[1mm]
+v_2&: \ (M - 10) - (3M - 20) \cdot \tfrac{1}{3} = -\tfrac{10}{3} .
+\end{aligned}
+$$
+$x_4$ satırının değeri $-60$'tan $-20$'ye yükseldi ama hâlâ negatif.
+
+**İkinci adım (dual simpleks adımı).** Yeni tabloda kriterler $0, -\tfrac{10}{3}, 0, 0$'dır; hepsi $\le 0$ olduğundan tablo dual uygundur, yani simpleks yöntemin gözüyle optimum tabloya ulaşıldı. Ancak çözümdeki $x_4 = -20 < 0$ olduğundan dual simpleks algoritmasına geçeriz. Tek negatif değer $x_4$ olduğundan $v_4$ bazdan çıkar. $x_4$ satırındaki tek negatif eleman $y_{42} = -\tfrac{5}{3}$'tür; $v_2$ baza girer ve pivot $-\tfrac{5}{3}$'tür. Oran $\left| \frac{-10/3}{-5/3} \right| = 2$.
+
+|   |   | $c_j$ | $20$ | $10$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $0$ | $30$ | $0$ | $\frac{5}{3}$ | $1$ | $0$ |
+| $x_1$ | $20$ | $10$ | $1$ | $\frac{1}{3}$ | $0$ | $0$ |
+| $x_4$ | $0$ | $-20 \Rightarrow$ | $0$ | $[-\frac{5}{3}]$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 200$ | $0$ | $-\frac{10}{3} \Uparrow$ | $0$ | $0$ |
+| Oran |   |   | $-$ | $\frac{10/3}{5/3}$ | $-$ | $-$ |
+
+: Birinci iterasyon tablosu {#tbl-dsa-ornek-2-birinci .simpleks .oran-satirli .oransiz}
+
+Pivot satırı $-\tfrac{5}{3}$'e bölünür, yani $-\tfrac{3}{5}$ ile çarpılır: $x_2$ satırı $\big(12 \mid 0, 1, 0, -\tfrac{3}{5}\big)$ olur. $x_3$ satırından bunun $\tfrac{5}{3}$ katı, $x_1$ satırından $\tfrac{1}{3}$ katı çıkarılır; $z_j - c_j$ satırına $\tfrac{10}{3}$ katı eklenir:
+$$
+\begin{aligned}
+x_3&: \ \big(30 - 20 \mid 0,\ 0,\ 1,\ 0 + 1\big) = (10 \mid 0, 0, 1, 1), \\[1mm]
+x_1&: \ \big(10 - 4 \mid 1,\ 0,\ 0,\ 0 + \tfrac{1}{5}\big) = \big(6 \mid 1, 0, 0, \tfrac{1}{5}\big), \\[1mm]
+z_j - c_j&: \ \big(200 + 40 \mid 0,\ 0,\ 0,\ 0 - 2\big) = (240 \mid 0, 0, 0, -2).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $20$ | $10$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $0$ | $10$ | $0$ | $0$ | $1$ | $1$ |
+| $x_1$ | $20$ | $6$ | $1$ | $0$ | $0$ | $\frac{1}{5}$ |
+| $x_2$ | $10$ | $12$ | $0$ | $1$ | $0$ | $-\frac{3}{5}$ |
+| $z_j - c_j$ |   | $z_0 = 240$ | $0$ | $0$ | $0$ | $-2$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-dsa-ornek-2-optimal .simpleks .oransiz}
+
+**Sonuç.** Bütün temel değişkenler negatif değildir ve bütün kriterler $\le 0$'dır; @prp-dsa-iki-uygunluk gereği optimal çözüme ulaşılmıştır:
+$$
+\begin{aligned}
+X^{*} &= (x_1, x_2, x_3, x_4, x_{u_1}) = (6, 12, 10, 0, 0), \\
+\min z &= 20 \cdot 6 + 10 \cdot 12 = 240 .
+\end{aligned}
+$$
+Yapay değişkenin sütunu atılmıştır, yani $x_{u_1} = 0$; son tablo, yapay değişken hiç eklenmemiş orijinal problemin tablosudur ve gösterdiği çözüm orijinal problemin optimal çözümüdür. Kontrol: $6 + 24 = 30 \le 40$ (aylak $x_3 = 10$), $18 + 12 = 30$ ve $24 + 36 = 60$ (artık $x_4 = 0$).
+
+Sonucu grafikle de doğrulayalım. Eşitlik kısıtı uygun çözümleri $3x_1 + x_2 = 30$ doğrusuna, yani $x_2 = 30 - 3x_1$ noktalarına kısıtlar. Bunu yerine koyunca birinci kısıt $60 - 5x_1 \le 40$, yani $x_1 \ge 4$; üçüncü kısıt $90 - 5x_1 \ge 60$, yani $x_1 \le 6$ olur. Uygun bölge $(4, 18)$ ile $(6, 12)$ arasındaki doğru parçasıdır ve üzerinde
+$$
+z = 20x_1 + 10(30 - 3x_1) = 300 - 10x_1
+$$
+olur. $z$, $x_1$ büyüdükçe azaldığından minimum $x_1 = 6$'da, yani $(6, 12)$'de $240$ değerini alır; diğer uçta $z = 260$'tır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Duyarlılık Analizinden Sonra Dual Simpleks {#sec-dsa-duyarlilik}
+
+Dual simpleks algoritmasının en çok kullanıldığı yerlerden biri, çözülmüş bir problemin verisi değiştiğinde yeniden çözmeye gerek bırakmamasıdır.
+
+[Duyarlılık analizi](duyarlilik-analizi.qmd) bölümünde sağ taraf sabitleri $\vec{b}$ değişince optimal tablonun yalnız $v_0$ sütununun değiştiğini gördük: Yeni değerler $B^{-1}\vec{b}$'dir ve $B^{-1}\vec{b} \ge 0$ olduğu sürece temel değişkenler aynı kalır. $z_j - c_j$ satırı ise $\vec{b}$'yi hiç kullanmaz; $z_j = \vec{c}_B^{\,T} B^{-1} v_j$ yalnız baza ve sütunlara bağlıdır. Dolayısıyla $\vec{b}$ izin verilen aralığın dışına çıkınca tablo optimallik koşulunu korur ama uygunluğunu yitirir; yani tablo dual uygundur. Bu, tam da dual simpleks algoritmasının başlangıç noktasıdır.
+
+:::: {#exm-dsa-duyarlilik name="Sağ Taraf Değişince Dual Simpleksle Devam"}
+$$
+\begin{aligned}
+\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 &\le 1 \\
+\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 &\le 3 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 2x_1 + 3x_2 + x_3
+\end{aligned}
+$$
+probleminin optimal tablosu aşağıdadır ($x_4$, $x_5$ aylak değişkenler). Optimal baz, ikinci kısıtın sağ tarafı $1 \le b_2 \le 4$ aralığında kaldıkça değişmez. İkinci kısıtın sağ tarafı $3$'ten $5$'e çıkarılırsa yeni optimal çözüm nedir?
+
+|   |   | $c_j$ | $2$ | $3$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $2$ | $1$ | $1$ | $0$ | $-1$ | $4$ | $-1$ |
+| $x_2$ | $3$ | $2$ | $0$ | $1$ | $2$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 8$ | $0$ | $0$ | $3$ | $5$ | $1$ |
+
+: Optimal tablo ($b_2 = 3$) {#tbl-dsa-duyarlilik-eski .simpleks .oransiz}
+
+::: {.cozum}
+**Yeni $v_0$ sütunu.** Aylak değişkenlerin başlangıç sütunları birim vektörler olduğundan optimal tablonun $v_4$, $v_5$ sütunları $B^{-1} e_1$ ve $B^{-1} e_2$'dir; yani $B^{-1}$ bu iki sütunda okunur:
+$$
+B^{-1} = \begin{bmatrix} 4 & -1 \\ -1 & 1 \end{bmatrix}, \qquad
+B^{-1} \begin{bmatrix} 1 \\ 5 \end{bmatrix} = \begin{bmatrix} 4 - 5 \\ -1 + 5 \end{bmatrix} = \begin{bmatrix} -1 \\ 4 \end{bmatrix} .
+$$
+$b_2 = 5$ izin verilen $[1, 4]$ aralığının dışında olduğu için beklendiği gibi bir değer negatif çıktı: $x_1 = -1$. Yeni amaç değeri $z_0 = 2 \cdot (-1) + 3 \cdot 4 = 10$'dur. $z_j - c_j$ satırı değişmez ve hepsi $\ge 0$'dır; maksimum probleminde bu, tablonun dual uygun olduğunu söyler.
+
+**Dual simpleks adımı.** Tek negatif değer $x_1 = -1$'dir; $v_1$ bazdan çıkar. $x_1$ satırında $y_{13} = -1$ ve $y_{15} = -1$ negatiftir. Maksimum probleminde kural
+$$
+\max \left\{ \frac{3}{-1}, \frac{1}{-1} \right\} = \max \{ -3, -1 \} = -1
+$$
+verir; mutlak değerce en küçük oran $v_5$ sütunundadır. $v_5$ baza girer; pivot $y_{15} = -1$.
+
+|   |   | $c_j$ | $2$ | $3$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $2$ | $-1 \Rightarrow$ | $1$ | $0$ | $-1$ | $4$ | $[-1]$ |
+| $x_2$ | $3$ | $4$ | $0$ | $1$ | $2$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 10$ | $0$ | $0$ | $3$ | $5$ | $1 \Uparrow$ |
+| Oran |   |   | $-$ | $-$ | $\frac{3}{1}$ | $-$ | $\frac{1}{1}$ |
+
+: $b_2 = 5$ için başlangıç tablosu {#tbl-dsa-duyarlilik-yeni .simpleks .oran-satirli .oransiz}
+
+Pivot $-1$ olduğundan pivot satırı $-1$ ile çarpılır ve $x_5$ satırı olur: $(1 \mid -1, 0, 1, -4, 1)$; bu satırın maliyeti $c_5 = 0$'dır. $x_2$ satırından ve $z_j - c_j$ satırından yeni pivot satırı çıkarılır (ikisinin de pivot sütunundaki elemanı 1'dir):
+$$
+\begin{aligned}
+x_2&: \ (4 - 1 \mid 0 + 1,\ 1,\ 2 - 1,\ -1 + 4,\ 0) = (3 \mid 1, 1, 1, 3, 0), \\[1mm]
+z_j - c_j&: \ (10 - 1 \mid 0 + 1,\ 0,\ 3 - 1,\ 5 + 4,\ 0) = (9 \mid 1, 0, 2, 9, 0).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $3$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_5$ | $0$ | $1$ | $-1$ | $0$ | $1$ | $-4$ | $1$ |
+| $x_2$ | $3$ | $3$ | $1$ | $1$ | $1$ | $3$ | $0$ |
+| $z_j - c_j$ |   | $z_0 = 9$ | $1$ | $0$ | $2$ | $9$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) {#tbl-dsa-duyarlilik-optimal .simpleks .oransiz}
+
+**Sonuç.** Bütün temel değişkenler negatif değildir ve maksimum probleminde bütün $z_j - c_j \ge 0$'dır; tablo optimaldir. Yeni optimal çözüm
+$$
+(x_1, x_2, x_3, x_4, x_5) = (0, 3, 0, 0, 1), \qquad \max z = 3 \cdot 3 = 9 .
+$$
+Kontrol: $\tfrac{1}{3} \cdot 3 = 1$, yani birinci kısıt eşitlikle sağlanır; $\tfrac{4}{3} \cdot 3 = 4 \le 5$ ve aylak $x_5 = 1$. Amaç değeri dual simpleks adımında beklendiği gibi azaldı ($10 \to 9$), ama $b_2 = 3$ iken bulunan $8$'den büyüktür: İkinci kaynağın artması kârı artırdı, yalnız artık birinci kısıt darboğazdır ve $x_1$ üretimden çıkar. Problemi baştan çözmek yerine tek bir dual simpleks adımı yetti. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde, simpleks kriterleri optimallik koşulunu sağlayan ama uygun olmayan bir tablodan başlayıp uygunluğa doğru yürüyen dual simpleks algoritmasını gördük. $\ge$ kısıtlı problemlerde yapay değişkenlerden kurtardığı gibi, duyarlılık analizinde veri değişince çözümü birkaç adımda güncellememizi de sağlar. Bir sonraki bölüm [Tam sayılı programlama ve dal-sınır yöntemi](dal-sinir-yontemi.qmd), değişkenlerin tam sayı olması istendiğinde ortaya çıkan problemleri ele alıyor.

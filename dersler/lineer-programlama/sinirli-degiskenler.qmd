@@ -1,0 +1,1112 @@
+---
+title: "Sınırlı Değişkenler"
+pagetitle: "Sınırlı Değişkenler"
+description: "Alttan, üstten ve iki yanlı sınırlı değişkenler; sınırı öteleme ya da yansıtma dönüşümüyle negatif olmama koşuluna çevirme, üst sınırı kısıt satırı olarak ekleme, dönüşümün uygun çözümleri birebir eşlediğinin ve amaç değerini yalnız bir sabit kadar kaydırdığının ispatı ve bütün tablolarıyla çözülmüş beş örnek."
+---
+
+Simpleks yöntem her değişkenin negatif olmamasını, yani alttan $0$ ile sınırlı olmasını ister. [İşaret kısıtlaması olmayan değişkenler](isaret-kisitlamasiz-degiskenler.qmd) bölümünde bu koşulun hiç verilmediği durumu gördük. Uygulamada daha sık karşılaşılan durum ise değişkenin belli bir aralıkta kalmasının istenmesidir: bir makine haftada en çok 40 saat çalışabilir, bir üründen sözleşme gereği en az 5 ton üretilmelidir, bir sıcaklık $-4$ ile $10$ derece arasında tutulmalıdır. Böyle koşullara **sınır** diyeceğiz.
+
+Bir sınır da bir eşitsizliktir; onu kısıtlar arasına bir satır olarak yazıp problemi olduğu gibi çözebiliriz. Ama her yeni satır tabloya bir satır ve bir sütun ekler, $x_j \ge 5$ gibi bir alt sınır da artık ve yapay değişken gerektirir. Çoğu zaman daha iyisi, değişkeni kaydırarak ya da ters çevirerek sınırı sıradan bir $x_j' \ge 0$ koşuluna dönüştürmektir. Bu bölümde dört tür sınırı ve her biri için kullanılan yolu göreceğiz, dönüşümlerin problemi neden değiştirmediğini kanıtlayacak ve beş örneği bütün tablolarıyla çözeceğiz.
+
+## Sınırlı Değişken Türleri
+
+Önce sınırları adlandıralım. Aşağıda $x_j$ bir lineer programlama probleminin değişkeni, $d_j$ ve $s_j$ de verilmiş gerçel sayılardır.
+
+::: {#def-snd-alttan-sinirli name="Alttan sınırlı değişken"}
+Problemde $x_j \ge d_j$ koşulu varsa $x_j$ değişkenine **alttan sınırlı** değişken, $d_j$ sayısına da $x_j$'nin **alt sınırı** denir.
+:::
+
+::: {#def-snd-ustten-sinirli name="Üstten sınırlı değişken"}
+Problemde $x_j \le s_j$ koşulu varsa $x_j$ değişkenine **üstten sınırlı** değişken, $s_j$ sayısına da $x_j$'nin **üst sınırı** denir.
+:::
+
+::: {#def-snd-iki-yanli-sinirli name="İki yanlı sınırlı değişken"}
+Problemde $d_j \le s_j$ olmak üzere $d_j \le x_j \le s_j$ koşulu varsa $x_j$ değişkenine **iki yanlı sınırlı** değişken denir.
+:::
+
+Yani bir sınır, tek bir değişkenin alabileceği değerleri kısıtlayan bir eşitsizliktir. Alışık olduğumuz $x_j \ge 0$ koşulu, alt sınırı $d_j = 0$ olan bir sınırdır. İki yanlı sınırlı bir değişken hem alttan hem üstten sınırlıdır; $d_j \le s_j$ koşulu, aralığın boş olmaması içindir.
+
+Bir lineer programlama probleminde sınırlı değişkenle başlıca dört biçimde karşılaşılır:
+
+1. $x_j \le s_j$: yalnız üstten sınırlı, işaret koşulu yok.
+2. $0 \le x_j \le s_j$: negatif olmayan ve üstten sınırlı.
+3. $d_j \le x_j \le s_j$: iki yanlı sınırlı, alt sınır herhangi bir sayı.
+4. $x_j \ge d_j$: yalnız alttan sınırlı.
+
+Her durumda yapılacak iş @tbl-snd-donusumler tablosunda özetlenmiştir; gerekçeleri ve örnekleri bölümün geri kalanında tek tek göreceğiz.
+
+| Sınır | Dönüşüm | İşaret koşulu | Kısıtlara eklenen satır |
+|:-:|:-:|:-:|:-:|
+| $x_j \le s_j$ | $x_j = -x_j' + s_j$ | $x_j' \ge 0$ | yok |
+| $0 \le x_j \le s_j$ | yok | $x_j \ge 0$ | $x_j \le s_j$ |
+| $d_j \le x_j \le s_j$ | $x_j = x_j' + d_j$ | $x_j' \ge 0$ | $x_j' \le s_j - d_j$ |
+| $x_j \ge d_j$ | $x_j = x_j' + d_j$ | $x_j' \ge 0$ | yok |
+
+: Sınırlı değişkenler için dönüşümler {#tbl-snd-donusumler}
+
+Tablodaki iki dönüşüm de $x_j = t + \sigma x_j'$ biçimindedir: $t$ bir sabit, $\sigma$ ise $1$ ya da $-1$'dir. $\sigma = 1$ olduğunda sayı doğrusu $t$ kadar kaydırılır (**öteleme**), $\sigma = -1$ olduğunda ayrıca ters çevrilir (**yansıtma**). İkisi de negatif olmama koşulunu ortaya çıkarmak içindir: öteleme alt sınırı $0$'a taşır, yansıtma üst sınırı alt sınıra çevirir.
+
+## Dönüşümün Doğruluğu
+
+Bir değişkeni başka bir değişkenle değiştirmek problemin kendisini değiştirmemelidir. Bunu genel biçimde kanıtlayalım; ispat, [İşaret kısıtlaması olmayan değişkenler](isaret-kisitlamasiz-degiskenler.qmd) bölümündeki eşdeğerlik önermesinin (@prp-iks-esdegerlik) ispatına benzer, ama bu kez amaç değeri bir sabit kadar kayar.
+
+:::: {#prp-snd-donusum name="Öteleme ve yansıtma problemi değiştirmez"}
+$(P)$ bir lineer programlama problemi, $x_r$ onun bir değişkeni, $t$ bir sabit ve $\sigma \in \{1, -1\}$ olsun. $(P)$'de $x_r$ geçtiği her yerde, yani kısıtlarda, amaç fonksiyonunda ve $x_r$'nin sınır koşullarında,
+
+$$x_r = t + \sigma x_r'$$
+
+yazılarak $(P')$ problemi elde edilsin. $(P')$'nün amaç fonksiyonu $z = z' + c_rt$ biçimindedir; burada $z'$, amacın değişkenli kısmıdır ve $c_rt$ bir sabittir. Bu durumda:
+
+1. $(P)$'nin her uygun çözümü, diğer değişkenler aynen bırakılıp $x_r' = \sigma(x_r - t)$ alınarak $(P')$'nün bir uygun çözümüne gider. $(P')$'nün her uygun çözümü de $x_r = t + \sigma x_r'$ alınarak $(P)$'nin bir uygun çözümüne gider. Bu iki eşleme birbirinin tersidir.
+2. Eşlenen iki çözümde $(P)$'nin amaç değeri, $(P')$'deki $z'$ değerinin $c_rt$ fazlasıdır.
+
+Dolayısıyla $(P')$'de $z'$'yü optimum yapan çözüm, 1. maddeyle geri çevrilince $(P)$'nin optimal çözümünü verir ve optimal değerler arasında $z^{*} = z'^{*} + c_rt$ bağıntısı vardır. Problemlerden birinin uygun çözümü yoksa ötekinin de yoktur; biri sınırsızsa öteki de sınırsızdır.
+
+::: {.ispat}
+$(P)$'nin kısıtları ve $x_r$'nin sınır koşulları, $\rho$ işareti $\le$, $=$ ya da $\ge$ olmak üzere
+
+$$\sum_{j \ne r} a_jx_j + a_rx_r \ \rho\ b$$
+
+biçimindeki koşullardır ($x_r$'nin sınırında $a_r = 1$ ve diğer $a_j$'ler $0$'dır). $x_r = t + \sigma x_r'$ yazıp sabiti sağa atınca bu koşul
+
+$$\sum_{j \ne r} a_jx_j + \sigma a_rx_r' \ \rho\ b - a_rt$$
+
+olur; $(P')$'nün koşulları tam olarak bunlardır. Diğer değişkenlerin işaret koşulları iki problemde aynıdır.
+
+Birinci madde. $x_r$ verilmişken $x_r' = \sigma(x_r - t)$ alalım. $\sigma^2 = 1$ olduğundan $t + \sigma x_r' = t + \sigma^2(x_r - t) = x_r$'dir. Bu yüzden her koşulun sol tarafı için
+
+$$\sum_{j \ne r} a_jx_j + a_rx_r = \Big(\sum_{j \ne r} a_jx_j + \sigma a_rx_r'\Big) + a_rt$$
+
+eşitliği geçerlidir. Soldaki toplam $\rho\, b$ koşulunu ancak ve ancak parantez içindeki toplam $\rho\, (b - a_rt)$ koşulunu sağladığında sağlar; çünkü bir eşitsizliğin iki yanından aynı $a_rt$ sayısını çıkarmak eşitsizliği korur. Demek ki $(P)$'nin uygun bir çözümü $(P')$'nün uygun bir çözümüne gider. Tersine, $(P')$'nün uygun bir çözümünde $x_r = t + \sigma x_r'$ alınırsa $\sigma(x_r - t) = \sigma^2x_r' = x_r'$ olur ve aynı eşitlik bu kez öteki yönde kullanılarak $(P)$'nin koşullarının sağlandığı görülür. İki eşleme birbirini geri aldığından birbirinin tersidir.
+
+İkinci madde. Amaç fonksiyonunda $x_r = t + \sigma x_r'$ yazılırsa
+
+$$\sum_{j} c_jx_j = \Big(\sum_{j \ne r} c_jx_j + \sigma c_rx_r'\Big) + c_rt = z' + c_rt$$
+
+bulunur. Yani eşlenen iki çözümde $(P)$'nin amaç değeri, $(P')$'deki $z'$ değerine $c_rt$ eklenerek elde edilir.
+
+Sonuç. İki madde birlikte, $(P)$'nin uygun çözümlerinde amacın aldığı değerler kümesinin, $(P')$'nün uygun çözümlerinde $z'$'nün aldığı değerler kümesinin her elemanına $c_rt$ eklenerek elde edildiğini söyler. Bir kümenin bütün elemanlarına aynı sayıyı eklemek en büyük ve en küçük elemanın yerini değiştirmez, onları da aynı sayı kadar kaydırır. Küme boşsa ya da alttan (üstten) sınırsızsa kaydırılmış küme de öyledir. $(P')$'de $z'$'yü optimum yapan çözüm birinci maddeyle $(P)$'nin, amaç değeri $z'^{*} + c_rt$ olan bir uygun çözümüne gider; bu değer $(P)$'nin optimal değeri olduğundan o çözüm $(P)$'nin optimal çözümüdür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İspat diğer değişkenlerin koşullarını hiç kullanmıyor. Bu yüzden birden çok sınırlı değişken varsa önerme her birine sırayla uygulanır; amaç değeri her dönüşümde kendi sabiti kadar kayar ve bu sabitler toplanır.
+
+Yani dönüşüm uygun bölgeyi kaydırır ya da ters çevirir, ama şeklini ve köşelerini korur; amaç fonksiyonu da bütün noktalarda aynı sabit kadar değiştiği için en iyi nokta yine en iyi noktadır. Uygulamada bunun iki sonucu vardır:
+
+- **Sağ taraflar değişir.** $i$. kısıtın sağ tarafı $b_i$'den $b_i - a_{ir}t$'ye geçer. Bu sayı negatif çıkarsa kısıt, standart forma geçmeden önce $-1$ ile çarpılır ve eşitsizliğin yönü döner (bkz. @sec-lpp-donusturme); bunun bir örneğini bölümün sonunda göreceğiz.
+- **Amaçta bir sabit terim belirir.** Sabit terim hangi noktanın optimal olduğunu etkilemez. Simpleks tablosunun $c_j$ satırına yalnız $z'$'nün katsayıları yazılır; tablonun verdiği $z_0$ değeri $z'$'nün değeridir ve asıl optimal değer sonunda $z_0 + c_rt$ olarak hesaplanır.
+
+## Çözüm Yöntemi
+
+Sınırlar dönüştürüldükten sonra elimizde bütün değişkenleri $\ge 0$ olan sıradan bir problem kalır. Aşağıdaki reçete, simpleks yöntemin başına ve sonuna birer adım ekler.
+
+::: {.callout-tip title="Dört adımda sınırlı değişkenli problemi çözme"}
+1. **Sınırları oku.** Her sınırlı değişkenin, @tbl-snd-donusumler tablosundaki dört durumdan hangisine girdiğini belirle.
+2. **Dönüştür.** Dönüşümü kısıtlarda, amaçta ve sınırda yerine koy; sabitleri sağ tarafa at. Sağ tarafı negatif çıkan kısıtı $-1$ ile çarp. Üst sınır satır olarak kalıyorsa onu kısıtlara ekle. Amaçtaki sabiti ayrı yaz: $z = z' + k$.
+3. **Simpleks.** Problemi standart forma, gerekirse yapay değişkenlerle simpleks yöntem ile çözülebilir hale getir ve $z'$'yü simpleks yöntemle optimum yap. Sabit $k$ tabloya girmez.
+4. **Geri dönüş.** Son tablodan yeni değişkenlerin değerlerini oku, dönüşümü tersine çevirerek orijinal değişkenleri bul ve optimal değeri $z_0 + k$ olarak hesapla.
+:::
+
+Şimdi dört durumu kendi örnekleriyle sırayla ele alalım.
+
+## Üstten Sınırlı Değişken
+
+İlk durumda değişkenin yalnız bir üst sınırı vardır, işaret koşulu yoktur. $x_j$ negatif değerler de alabildiği için onu doğrudan tabloya koyamayız. Sınırı satır olarak yazarsak [İşaret kısıtlaması olmayan değişkenler](isaret-kisitlamasiz-degiskenler.qmd) bölümündeki gibi $x_j = x_j' - x_j''$ dönüşümü de gerekir; iki yeni değişken ve bir yeni satır. Oysa üst sınırı kullanan tek bir yansıtma ikisinden de kurtarır:
+
+$$x_j \le s_j \ \Rightarrow\ 0 \le s_j - x_j = x_j' \ \Rightarrow\ x_j = -x_j' + s_j.$$
+
+Bu, @prp-snd-donusum önermesinin $t = s_j$, $\sigma = -1$ halidir. $x_j \le s_j$ sınırı $s_j - x_j' \le s_j$, yani $x_j' \ge 0$ olur ve işaret koşullarına eklenir; kısıtlara yeni satır eklenmez. $x_j'$ sayısı, $x_j$'nin üst sınırına ne kadar uzak olduğunu ölçer. Özel olarak $x_j \le 0$ biliniyorsa $s_j = 0$ alınır ve dönüşüm $x_j = -x_j'$ olur.
+
+:::: {#exm-snd-ornek1 name="Üstten sınırlı bir değişken"}
+Aşağıdaki problemi simpleks yöntemle çözünüz. ($x_1$ için yalnız üst sınır verilmiştir.)
+
+$$
+\begin{aligned}
+-x_1 + 2x_2 &\le 8 \\
+x_1 + 2x_2 &\le 10 \\
+x_1 \le 8, \quad x_2 &\ge 0 \\
+\max z &= x_1 + x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Dönüşüm.** $x_1$ değişkeni $x_1 \le 8$ biçiminde pozitif bir sayıyla üstten sınırlıdır ve işaret koşulu yoktur. Bu nedenle
+
+$$x_1 \le 8 \ \Rightarrow\ 0 \le 8 - x_1 = x_1' \ \Rightarrow\ x_1 = -x_1' + 8$$
+
+dönüşümünü yapar, $x_1' \ge 0$ koşulunu işaret koşullarına ekleriz. $x_1$ yerine $-x_1' + 8$ yazınca problem
+
+$$
+\begin{aligned}
+-(-x_1' + 8) + 2x_2 &\le 8 \\
+-x_1' + 8 + 2x_2 &\le 10 \\
+x_1', x_2 &\ge 0 \\
+\max z &= -x_1' + 8 + x_2
+\end{aligned}
+$$
+
+olur. Parantezi açıp sabitleri sağa atarsak
+
+$$
+\begin{aligned}
+x_1' + 2x_2 &\le 16 \\
+-x_1' + 2x_2 &\le 2 \\
+x_1', x_2 &\ge 0 \\
+\max z &= -x_1' + x_2 + 8
+\end{aligned}
+$$
+
+problemine ulaşırız. $x_1 \le 8$ sınırı artık $x_1' \ge 0$ koşulunun içindedir; ayrı bir satır gerekmez. Amaçtaki $8$ sabittir; simpleks yöntemle $z' = -x_1' + x_2$'yi maksimum yapacağız.
+
+**Standart form.** İki $\le$ kısıta $x_3$ ve $x_4$ aylak değişkenlerini ekleriz. Orijinal problemde iki değişken olduğu için aylak değişkenler $x_3$ ile başlar; $x_1'$ yeni numara almaz:
+
+$$
+\begin{aligned}
+x_1' + 2x_2 + x_3 &= 16 \\
+-x_1' + 2x_2 + x_4 &= 2 \\
+x_1', x_2, x_3, x_4 &\ge 0 \\
+\max z &= -x_1' + x_2 + 0x_3 + 0x_4 + 8
+\end{aligned}
+$$
+
+Bütün kısıtlar eşitlik, sağ taraflar $16$ ve $2$ negatif değil, bütün değişkenler $\ge 0$; problem standart formdadır.
+
+**Çözülebilir hal.** $v_3$ ve $v_4$ sütunları $2 \times 2$ birim matrisi oluşturur. Demek ki standart form zaten simpleks yöntem ile çözülebilir haldedir (@def-lpp-cozulebilir-hal); yapay değişken gerekmez.
+
+**Başlangıç tablosu.** Başlangıç bazı $B_0 = (v_3, v_4)$, başlangıç çözümü $x_3 = 16$, $x_4 = 2$ ve $z_0 = 0$'dır. $\vec{c}_B = \vec{0}$ olduğundan $z_j - c_j = -c_j$'dir (@prp-smp-birim-baz): $v_1'$ için $1$, $v_2$ için $-1$.
+
+Maksimum probleminde en negatif $z_j - c_j$ baza girer; bütün $z_j - c_j \ge 0$ olunca optimal çözüme ulaşılmıştır. Tek negatif kriter $-1$ olduğundan $v_2$ baza girer. Oranlar $16/2 = 8$ ve $2/2 = 1$'dir; en küçüğü $x_4$ satırında olduğundan $v_4$ bazdan çıkar ve pivot $2$'dir.
+
+|   |   | $c_j$ | $-1$ | $1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $16$ | $1$ | $2$ | $1$ | $0$ | $\frac{16}{2}$ |
+| $x_4$ | $0$ | $2$ | $-1$ | $[2]$ | $0$ | $1$ | $\frac{2}{2} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $1$ | $-1 \Uparrow$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-snd-o1-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $2$'ye bölünür ve $c_B = 1$ ile $x_2$ satırı olur: $\big(1 \mid -\tfrac{1}{2}, 1, 0, \tfrac{1}{2}\big)$. $x_3$ satırından bu satırın $2$ katı çıkarılır, $z_j - c_j$ satırına bu satır bir kez eklenir:
+
+$$
+\begin{aligned}
+x_3&: \ (16 - 2 \mid 1 + 1,\ 0,\ 1,\ 0 - 1) = (14 \mid 2, 0, 1, -1), \\[1mm]
+z_j - c_j&: \ \Big(0 + 1 \ \Big|\ 1 - \frac{1}{2},\ 0,\ 0,\ \frac{1}{2}\Big) = \Big(1 \ \Big|\ \frac{1}{2}, 0, 0, \frac{1}{2}\Big).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $-1$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $0$ | $14$ | $2$ | $0$ | $1$ | $-1$ |
+| $x_2$ | $1$ | $1$ | $-\frac{1}{2}$ | $1$ | $0$ | $\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 1$ | $\frac{1}{2}$ | $0$ | $0$ | $\frac{1}{2}$ |
+
+: Birinci iterasyon tablosu (optimal tablo) {#tbl-snd-o1-optimal .simpleks .oransiz}
+
+Simpleks kriterleri arasında negatif olan kalmadı; bütün $z_j - c_j \ge 0$ olduğundan @cor-smp-sonuc-max gereği optimal çözüme ulaşıldı (@tbl-snd-o1-optimal).
+
+**Geri dönüş.** Tablodan $x_3 = 14$, $x_2 = 1$ okunur; baz dışındaki $x_1'$ ve $x_4$ sıfırdır. Orijinal değişkene dönersek $x_1' = 8 - x_1 = 0$, yani $x_1 = 8$ olur. Tablodaki $z_0 = 1$ değeri $z'$'nün değeridir; ayrı tuttuğumuz sabiti ekleriz:
+
+$$X^{*} = (x_1, x_2, x_3, x_4) = (8, 1, 14, 0), \qquad \max z = 1 + 8 = 9.$$
+
+Sağlama: $-8 + 2 \cdot 1 = -6 \le 8$ olup birinci kısıtta $8 - (-6) = 14 = x_3$ birim boşluk kalır; $8 + 2 \cdot 1 = 10$ olduğundan ikinci kısıt eşitlikle sağlanır ($x_4 = 0$); amaç değeri $8 + 1 = 9$'dur. Dönüşüm kısıtların sol tarafını yalnız bir sabit kadar kaydırdığından aylak değişkenlerin değeri iki problemde aynıdır.
+
+$x_1' = 0$ olması, optimumda $x_1$'in tam üst sınırında durduğunu söyler: sınır **etkindir**. Uygun bölgenin köşeleri $(-8, 0)$, $(8, 0)$, $(8, 1)$ ve $(1, \tfrac{9}{2})$'dir; amaç değerleri sırasıyla $-8$, $8$, $9$ ve $\tfrac{11}{2}$ olduğundan en büyüğü gerçekten $(8, 1)$ köşesindeki $9$'dur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 298.5" role="img" aria-label="Feasible quadrilateral (-8,0), (8,0), (8,1), (1,4.5); the bound x1 = 8 cuts off the small triangle (8,0), (10,0), (8,1); x1 prime grows to the left of x1 = 8; dashed level lines z = 4 and z = 9; maximum at (8,1)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="95.7" y1="30.0" x2="95.7" y2="292.4"/><line x1="143.3" y1="30.0" x2="143.3" y2="292.4"/><line x1="191.0" y1="30.0" x2="191.0" y2="292.4"/><line x1="238.6" y1="30.0" x2="238.6" y2="292.4"/><line x1="333.8" y1="30.0" x2="333.8" y2="292.4"/><line x1="381.4" y1="30.0" x2="381.4" y2="292.4"/><line x1="429.0" y1="30.0" x2="429.0" y2="292.4"/><line x1="476.7" y1="30.0" x2="476.7" y2="292.4"/><line x1="524.3" y1="30.0" x2="524.3" y2="292.4"/><line x1="60.0" y1="216.4" x2="560.0" y2="216.4"/><line x1="60.0" y1="181.9" x2="560.0" y2="181.9"/><line x1="60.0" y1="147.4" x2="560.0" y2="147.4"/><line x1="60.0" y1="112.9" x2="560.0" y2="112.9"/><line x1="60.0" y1="78.3" x2="560.0" y2="78.3"/><line x1="60.0" y1="43.8" x2="560.0" y2="43.8"/></g>
+  <polygon points="95.7,251.0 476.7,251.0 476.7,216.4 310.0,95.6" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <polygon points="476.7,251.0 524.3,251.0 476.7,216.4" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.0" stroke-dasharray="3 3"/>
+  <path d="M60.0,276.8 L400.5,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M560.0,276.8 L219.5,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M529.0,292.4 L348.1,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M410.0,292.4 L229.0,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="251.0" x2="564.0" y2="251.0"/>
+  <line x1="286.2" y1="296.4" x2="286.2" y2="26.0"/>
+  <polygon points="564.0,251.0 556.0,247.5 556.0,254.5" stroke="none"/>
+  <polygon points="286.2,26.0 282.7,34.0 289.7,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="95.7" y1="248.0" x2="95.7" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="95.7" y="266.0" text-anchor="middle">-8</text>
+  <line x1="143.3" y1="248.0" x2="143.3" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="143.3" y="266.0" text-anchor="middle">-6</text>
+  <line x1="191.0" y1="248.0" x2="191.0" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="191.0" y="266.0" text-anchor="middle">-4</text>
+  <line x1="238.6" y1="248.0" x2="238.6" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="238.6" y="266.0" text-anchor="middle">-2</text>
+  <line x1="333.8" y1="248.0" x2="333.8" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="333.8" y="266.0" text-anchor="middle">2</text>
+  <line x1="381.4" y1="248.0" x2="381.4" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="381.4" y="266.0" text-anchor="middle">4</text>
+  <line x1="429.0" y1="248.0" x2="429.0" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="429.0" y="266.0" text-anchor="middle">6</text>
+  <line x1="476.7" y1="248.0" x2="476.7" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="476.7" y="266.0" text-anchor="middle">8</text>
+  <line x1="524.3" y1="248.0" x2="524.3" y2="254.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="524.3" y="266.0" text-anchor="middle">10</text>
+  <line x1="283.2" y1="216.4" x2="289.2" y2="216.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="279.2" y="220.4" text-anchor="end">1</text>
+  <line x1="283.2" y1="181.9" x2="289.2" y2="181.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="279.2" y="185.9" text-anchor="end">2</text>
+  <line x1="283.2" y1="147.4" x2="289.2" y2="147.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="279.2" y="151.4" text-anchor="end">3</text>
+  <line x1="283.2" y1="112.9" x2="289.2" y2="112.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="279.2" y="116.9" text-anchor="end">4</text>
+  <line x1="283.2" y1="78.3" x2="289.2" y2="78.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="279.2" y="82.3" text-anchor="end">5</text>
+  <line x1="283.2" y1="43.8" x2="289.2" y2="43.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="279.2" y="47.8" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="266.0" text-anchor="end">x₁</text>
+  <text x="293.2" y="35.0">x₂</text>
+  </g>
+  <path d="M476.7,292.4 L476.7,30.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="482.7" y="46.0" fill="var(--color-practice)" font-size="12" text-anchor="start">x₁ = 8</text>
+  <line x1="476.7" y1="102.5" x2="443.4" y2="102.5" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="436.2,102.5 445.2,98.7 445.2,106.3" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="484.7" y="106.5" fill="var(--color-practice)" font-size="12" text-anchor="start">x₁′ = 8 − x₁</text>
+  <line x1="167.1" y1="137.0" x2="193.5" y2="118.9" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="200.1,114.3 194.2,123.4 189.5,116.5" fill="var(--color-base)" opacity="1.0"/>
+  <text x="206.1" y="114.3" fill="var(--color-base)" font-size="12" text-anchor="start">z artar</text>
+  <circle cx="476.7" cy="216.4" r="5" fill="var(--color-practice)"/>
+  <text x="484.7" y="210.4" fill="var(--academic-text)" font-size="13" text-anchor="start">(8, 1)</text>
+  <text x="183.8" y="161.2" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="369.5" y="112.9" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="531.4" y="238.9" fill="var(--color-base)" font-size="12" text-anchor="start">z = 9</text>
+  <text x="252.9" y="88.7" fill="var(--color-base)" font-size="12" text-anchor="end">z = 4</text>
+</svg>
+<figcaption>Uygun bölge (−8, 0), (8, 0), (8, 1), (1, 4,5) köşeli dörtgendir. x₁ ≤ 8 sınırı, (1) −x₁ + 2x₂ = 8, (2) x₁ + 2x₂ = 10 doğrularının x₂ = 0 ile oluşturduğu üçgenden sağdaki küçük üçgeni (kesikli) atar. Yeni değişken x₁′ = 8 − x₁, x₁ = 8 doğrusunda sıfırdır ve sola doğru artar. Kesikli doğrular z = x₁ + x₂ = 4 ve z = 9 seviye doğrularıdır; maksimum (8, 1) köşesinde, sınırın üstünde alınır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Negatif Olmayan ve Üstten Sınırlı Değişken
+
+İkinci durumda değişken hem negatif değildir hem de üstten sınırlıdır: $0 \le x_j \le s_j$. Burada dönüşüm yapılmaz. $x_j \le s_j$ eşitsizliği bir satır olarak kısıtlara, $x_j \ge 0$ eşitsizliği ise işaret koşullarına yazılır.
+
+Neden dönüşüm yapmıyoruz? $x_j = -x_j' + s_j$ yansıtmasını yapsaydık $x_j \le s_j$ sınırı $x_j' \ge 0$ olurdu, ama bu kez $x_j \ge 0$ koşulu $x_j' \le s_j$ satırına dönüşürdü. İki sınırdan biri her halükârda satır olarak kalır; dönüşüm yalnız işi uzatır. Üstelik $s_j \ge 0$ olduğundan $x_j \le s_j$ satırı sağ tarafı negatif olmayan bir $\le$ kısıtıdır; ona eklenen aylak değişken başlangıç bazına kendiliğinden girer ve yapay değişken gerekmez.
+
+:::: {#exm-snd-ornek2 name="Negatif olmayan ve üstten sınırlı bir değişken"}
+Aşağıdaki problemi simpleks yöntemle çözünüz.
+
+$$
+\begin{aligned}
+-3x_1 + 4x_2 &\le 24 \\
+x_1 + 2x_2 &\le 16 \\
+0 \le x_1 \le 9, \quad x_2 &\ge 0 \\
+\max z &= -x_1 + 2x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Sınır satırı.** $x_1$ değişkeni $0 \le x_1 \le 9$ biçiminde sınırlıdır. $x_1 \le 9$ eşitsizliğini üçüncü kısıt olarak yazar, $x_1 \ge 0$ eşitsizliğini işaret koşullarında bırakırız:
+
+$$
+\begin{aligned}
+-3x_1 + 4x_2 &\le 24 \\
+x_1 + 2x_2 &\le 16 \\
+x_1 &\le 9 \\
+x_1, x_2 &\ge 0 \\
+\max z &= -x_1 + 2x_2
+\end{aligned}
+$$
+
+Değişken değiştirmediğimiz için amaçta sabit terim yoktur.
+
+**Standart form.** Üç $\le$ kısıta sırasıyla $x_3$, $x_4$, $x_5$ aylak değişkenlerini ekleriz:
+
+$$
+\begin{aligned}
+-3x_1 + 4x_2 + x_3 &= 24 \\
+x_1 + 2x_2 + x_4 &= 16 \\
+x_1 + x_5 &= 9 \\
+x_j \ge 0, \quad j &= \overline{1,5} \\
+\max z &= -x_1 + 2x_2 + 0x_3 + 0x_4 + 0x_5
+\end{aligned}
+$$
+
+Bütün kısıtlar eşitlik, sağ taraflar negatif değil, bütün değişkenler $\ge 0$; problem standart formdadır. $x_5$, sınırın aylak değişkenidir: $x_1$'in üst sınırına ne kadar uzak olduğunu ölçer.
+
+**Çözülebilir hal.** $v_3$, $v_4$, $v_5$ sütunları $3 \times 3$ birim matrisi oluşturur; standart form simpleks yöntem ile çözülebilir haldedir.
+
+**Başlangıç tablosu.** $B_0 = (v_3, v_4, v_5)$, $z_0 = 0$ ve $z_j - c_j = -c_j$'dir: $v_1$ için $1$, $v_2$ için $-2$. Maksimum probleminde en negatif kriter girer; tek negatif kriter $-2$ olduğundan $v_2$ baza girer. $x_5$ satırının $v_2$ sütunundaki elemanı $0$ olduğundan bu satır oran testine girmez. Oranlar $24/4 = 6$ ve $16/2 = 8$'dir; $v_3$ bazdan çıkar ve pivot $4$'tür.
+
+|   |   | $c_j$ | $-1$ | $2$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_3$ | $0$ | $24$ | $-3$ | $[4]$ | $1$ | $0$ | $0$ | $\frac{24}{4} \Rightarrow$ |
+| $x_4$ | $0$ | $16$ | $1$ | $2$ | $0$ | $1$ | $0$ | $\frac{16}{2}$ |
+| $x_5$ | $0$ | $9$ | $1$ | $0$ | $0$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $1$ | $-2 \Uparrow$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-snd-o2-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $4$'e bölünür ve $c_B = 2$ ile $x_2$ satırı olur: $\big(6 \mid -\tfrac{3}{4}, 1, \tfrac{1}{4}, 0, 0\big)$. $x_4$ satırından bu satırın $2$ katı çıkarılır, $z_j - c_j$ satırına $2$ katı eklenir; $x_5$ satırı değişmez:
+
+$$
+\begin{aligned}
+x_4&: \ \Big(16 - 12 \ \Big|\ 1 + \frac{3}{2},\ 0,\ -\frac{1}{2},\ 1,\ 0\Big) \\
+&\quad = \Big(4 \ \Big|\ \frac{5}{2}, 0, -\frac{1}{2}, 1, 0\Big), \\[1mm]
+z_j - c_j&: \ \Big(0 + 12 \ \Big|\ 1 - \frac{3}{2},\ 0,\ \frac{1}{2},\ 0,\ 0\Big) \\
+&\quad = \Big(12 \ \Big|\ -\frac{1}{2}, 0, \frac{1}{2}, 0, 0\Big).
+\end{aligned}
+$$
+
+Tek negatif kriter $-\tfrac{1}{2}$ olduğundan $v_1$ baza girer. $x_2$ satırının elemanı $-\tfrac{3}{4} < 0$ olduğundan bu satır teste girmez. Oranlar $4 / \tfrac{5}{2} = \tfrac{8}{5}$ ve $9/1 = 9$'dur; $v_4$ bazdan çıkar ve pivot $\tfrac{5}{2}$'dir.
+
+|   |   | $c_j$ | $-1$ | $2$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_2$ | $2$ | $6$ | $-\frac{3}{4}$ | $1$ | $\frac{1}{4}$ | $0$ | $0$ | $-$ |
+| $x_4$ | $0$ | $4$ | $\left[\frac{5}{2}\right]$ | $0$ | $-\frac{1}{2}$ | $1$ | $0$ | $\frac{4}{5/2} \Rightarrow$ |
+| $x_5$ | $0$ | $9$ | $1$ | $0$ | $0$ | $0$ | $1$ | $\frac{9}{1}$ |
+| $z_j - c_j$ |   | $z_0 = 12$ | $-\frac{1}{2} \Uparrow$ | $0$ | $\frac{1}{2}$ | $0$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-snd-o2-birinci .simpleks}
+
+**İkinci iterasyon.** Pivot satırı $\tfrac{5}{2}$'ye bölünür, yani $\tfrac{2}{5}$ ile çarpılır ve $c_B = -1$ ile $x_1$ satırı olur: $\big(\tfrac{8}{5} \mid 1, 0, -\tfrac{1}{5}, \tfrac{2}{5}, 0\big)$. $x_2$ satırına bu satırın $\tfrac{3}{4}$ katı, $z_j - c_j$ satırına $\tfrac{1}{2}$ katı eklenir; $x_5$ satırından bir kez çıkarılır:
+
+$$
+\begin{aligned}
+x_2&: \ \Big(6 + \frac{6}{5} \ \Big|\ 0,\ 1,\ \frac{1}{4} - \frac{3}{20},\ \frac{3}{10},\ 0\Big) \\
+&\quad = \Big(\frac{36}{5} \ \Big|\ 0, 1, \frac{1}{10}, \frac{3}{10}, 0\Big), \\[1mm]
+x_5&: \ \Big(9 - \frac{8}{5} \ \Big|\ 0,\ 0,\ \frac{1}{5},\ -\frac{2}{5},\ 1\Big) = \Big(\frac{37}{5} \ \Big|\ 0, 0, \frac{1}{5}, -\frac{2}{5}, 1\Big), \\[1mm]
+z_j - c_j&: \ \Big(12 + \frac{4}{5} \ \Big|\ 0,\ 0,\ \frac{1}{2} - \frac{1}{10},\ \frac{1}{5},\ 0\Big) \\
+&\quad = \Big(\frac{64}{5} \ \Big|\ 0, 0, \frac{2}{5}, \frac{1}{5}, 0\Big).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $-1$ | $2$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_2$ | $2$ | $\frac{36}{5}$ | $0$ | $1$ | $\frac{1}{10}$ | $\frac{3}{10}$ | $0$ |
+| $x_1$ | $-1$ | $\frac{8}{5}$ | $1$ | $0$ | $-\frac{1}{5}$ | $\frac{2}{5}$ | $0$ |
+| $x_5$ | $0$ | $\frac{37}{5}$ | $0$ | $0$ | $\frac{1}{5}$ | $-\frac{2}{5}$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = \frac{64}{5}$ | $0$ | $0$ | $\frac{2}{5}$ | $\frac{1}{5}$ | $0$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-snd-o2-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir (@tbl-snd-o2-optimal). Optimal çözüm
+
+$$X^{*} = (x_1, \dots, x_5) = \Big(\frac{8}{5}, \frac{36}{5}, 0, 0, \frac{37}{5}\Big), \qquad \max z = \frac{64}{5}$$
+
+olarak bulunur. Sağlama: $-3 \cdot \tfrac{8}{5} + 4 \cdot \tfrac{36}{5} = \tfrac{120}{5} = 24$ ve $\tfrac{8}{5} + 2 \cdot \tfrac{36}{5} = \tfrac{80}{5} = 16$; iki kısıt da eşitlikle sağlanır. Amaç değeri $-\tfrac{8}{5} + \tfrac{72}{5} = \tfrac{64}{5}$'tir.
+
+Bu kez sınır **etkin değildir**: sınırın aylak değişkeni $x_5 = \tfrac{37}{5}$ bazdadır ve pozitiftir, yani $x_1 = \tfrac{8}{5}$ üst sınır $9$'a $\tfrac{37}{5}$ birim uzaktır. Sınır satırı tabloyu bir satır ve bir sütun büyüttü ama optimumu etkilemedi; hangi sınırın etkin olacağı ise çözmeden önce bilinemez. Uygun bölgenin köşeleri $(0, 0)$, $(9, 0)$, $(9, \tfrac{7}{2})$, $(\tfrac{8}{5}, \tfrac{36}{5})$, $(0, 6)$'dır ve amaç değerleri $0$, $-9$, $-2$, $\tfrac{64}{5}$, $12$ olduğundan en büyüğü simpleks yöntemin bulduğu değerdir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 320.5" role="img" aria-label="Feasible pentagon (0,0), (9,0), (9,3.5), (1.6,7.2), (0,6); the bound x1 = 9 cuts off the triangle (9,0), (16,0), (9,3.5); dashed level lines z = 6 and z = 12.8; maximum at (1.6,7.2)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="152.1" y1="30.0" x2="152.1" y2="314.2"/><line x1="204.7" y1="30.0" x2="204.7" y2="314.2"/><line x1="257.4" y1="30.0" x2="257.4" y2="314.2"/><line x1="310.0" y1="30.0" x2="310.0" y2="314.2"/><line x1="362.6" y1="30.0" x2="362.6" y2="314.2"/><line x1="415.3" y1="30.0" x2="415.3" y2="314.2"/><line x1="467.9" y1="30.0" x2="467.9" y2="314.2"/><line x1="520.5" y1="30.0" x2="520.5" y2="314.2"/><line x1="60.0" y1="230.0" x2="560.0" y2="230.0"/><line x1="60.0" y1="177.4" x2="560.0" y2="177.4"/><line x1="60.0" y1="124.7" x2="560.0" y2="124.7"/><line x1="60.0" y1="72.1" x2="560.0" y2="72.1"/></g>
+  <polygon points="99.5,282.6 336.3,282.6 336.3,190.5 141.6,93.2 99.5,124.7" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <polygon points="336.3,282.6 520.5,282.6 336.3,190.5" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.0" stroke-dasharray="3 3"/>
+  <path d="M60.0,154.3 L225.8,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,52.4 L560.0,302.4" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,133.9 L267.9,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,223.4 L446.8,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="282.6" x2="564.0" y2="282.6"/>
+  <line x1="99.5" y1="318.2" x2="99.5" y2="26.0"/>
+  <polygon points="564.0,282.6 556.0,279.1 556.0,286.1" stroke="none"/>
+  <polygon points="99.5,26.0 96.0,34.0 103.0,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="152.1" y1="279.6" x2="152.1" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="152.1" y="297.6" text-anchor="middle">2</text>
+  <line x1="204.7" y1="279.6" x2="204.7" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="204.7" y="297.6" text-anchor="middle">4</text>
+  <line x1="257.4" y1="279.6" x2="257.4" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="257.4" y="297.6" text-anchor="middle">6</text>
+  <line x1="310.0" y1="279.6" x2="310.0" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="310.0" y="297.6" text-anchor="middle">8</text>
+  <line x1="362.6" y1="279.6" x2="362.6" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="362.6" y="297.6" text-anchor="middle">10</text>
+  <line x1="415.3" y1="279.6" x2="415.3" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="415.3" y="297.6" text-anchor="middle">12</text>
+  <line x1="467.9" y1="279.6" x2="467.9" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="467.9" y="297.6" text-anchor="middle">14</text>
+  <line x1="520.5" y1="279.6" x2="520.5" y2="285.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="520.5" y="297.6" text-anchor="middle">16</text>
+  <line x1="96.5" y1="230.0" x2="102.5" y2="230.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.5" y="234.0" text-anchor="end">2</text>
+  <line x1="96.5" y1="177.4" x2="102.5" y2="177.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.5" y="181.4" text-anchor="end">4</text>
+  <line x1="96.5" y1="124.7" x2="102.5" y2="124.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.5" y="128.7" text-anchor="end">6</text>
+  <line x1="96.5" y1="72.1" x2="102.5" y2="72.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.5" y="76.1" text-anchor="end">8</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="297.6" text-anchor="end">x₁</text>
+  <text x="106.5" y="35.0">x₂</text>
+  </g>
+  <path d="M336.3,314.2 L336.3,30.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="342.3" y="46.0" fill="var(--color-practice)" font-size="12" text-anchor="start">x₁ = 9</text>
+  <line x1="270.5" y1="106.3" x2="255.3" y2="75.9" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="251.7,68.7 260.0,75.8 252.5,79.6" fill="var(--color-base)" opacity="1.0"/>
+  <text x="257.7" y="68.7" fill="var(--color-base)" font-size="12" text-anchor="start">z artar</text>
+  <circle cx="141.6" cy="93.2" r="5" fill="var(--color-practice)"/>
+  <text x="133.6" y="59.2" fill="var(--academic-text)" font-size="13" text-anchor="middle">(8/5, 36/5)</text>
+  <text x="62.6" y="165.5" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="467.9" y="232.6" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="423.2" y="66.8" fill="var(--color-base)" font-size="12" text-anchor="start">z = 64/5</text>
+  <text x="441.6" y="158.9" fill="var(--color-base)" font-size="12" text-anchor="start">z = 6</text>
+</svg>
+<figcaption>Uygun bölge (0, 0), (9, 0), (9, 7/2), (8/5, 36/5), (0, 6) köşeli beşgendir. x₁ ≤ 9 sınırı, sınır olmasaydı bölgeye katılacak (9, 0), (16, 0), (9, 7/2) üçgenini (kesikli) atar. Kesikli doğrular z = −x₁ + 2x₂ = 6 ve z = 64/5 seviye doğrularıdır; maksimum (8/5, 36/5) köşesinde alınır ve orada sınır etkin değildir. (1) −3x₁ + 4x₂ = 24, (2) x₁ + 2x₂ = 16.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İki Yanlı Sınırlı Değişken
+
+Üçüncü durumda alt sınır sıfır olmak zorunda değildir: $d_j \le x_j \le s_j$. Önce alt sınırı $0$'a ötelemek, sonra kalan üst sınırı ikinci durumdaki gibi satır olarak yazmak gerekir:
+
+$$d_j \le x_j \le s_j \ \Rightarrow\ 0 \le x_j - d_j = x_j' \le s_j - d_j \ \Rightarrow\ x_j = x_j' + d_j.$$
+
+Bu, @prp-snd-donusum önermesinin $t = d_j$, $\sigma = 1$ halidir. İki yanlı sınır $0 \le x_j' \le s_j - d_j$ olur: $x_j' \le s_j - d_j$ bir satır olarak kısıtlara, $x_j' \ge 0$ ise işaret koşullarına eklenir. $d_j \le s_j$ olduğundan yeni satırın sağ tarafı negatif değildir. $x_j'$ sayısı, $x_j$'nin alt sınırından ne kadar yukarıda olduğunu ölçer.
+
+:::: {#exm-snd-ornek3 name="İki yanlı sınırlı bir değişken"}
+Aşağıdaki problemi simpleks yöntemle çözünüz.
+
+$$
+\begin{aligned}
+-x_1 + 2x_2 &\le 8 \\
+x_1 + 2x_2 &\le 12 \\
+-4 \le x_1 \le 10, \quad x_2 &\ge 0 \\
+\max z &= -x_1 + 3x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Dönüşüm.** $x_1$ değişkeni $-4 \le x_1 \le 10$ biçiminde iki yanlı sınırlıdır. Alt sınırı $0$'a ötelemek için
+
+$$-4 \le x_1 \le 10 \ \Rightarrow\ 0 \le x_1 + 4 = x_1' \le 10 + 4 \ \Rightarrow\ x_1 = x_1' - 4$$
+
+dönüşümünü yaparız. $x_1$ yerine $x_1' - 4$ yazınca problem
+
+$$
+\begin{aligned}
+-(x_1' - 4) + 2x_2 &\le 8 \\
+x_1' - 4 + 2x_2 &\le 12 \\
+x_1' &\le 14 \\
+x_1', x_2 &\ge 0 \\
+\max z &= -(x_1' - 4) + 3x_2
+\end{aligned}
+$$
+
+olur; üçüncü satır, sınırın kalan yarısıdır. Parantezleri açıp sabitleri sağa atarsak
+
+$$
+\begin{aligned}
+-x_1' + 2x_2 &\le 4 \\
+x_1' + 2x_2 &\le 16 \\
+x_1' &\le 14 \\
+x_1', x_2 &\ge 0 \\
+\max z &= -x_1' + 3x_2 + 4
+\end{aligned}
+$$
+
+problemine ulaşırız. Amaçtaki $4$ sabittir; $z' = -x_1' + 3x_2$'yi maksimum yapacağız.
+
+**Standart form.** Üç $\le$ kısıta sırasıyla $x_3$, $x_4$, $x_5$ aylak değişkenlerini ekleriz:
+
+$$
+\begin{aligned}
+-x_1' + 2x_2 + x_3 &= 4 \\
+x_1' + 2x_2 + x_4 &= 16 \\
+x_1' + x_5 &= 14 \\
+x_1', x_2, x_3, x_4, x_5 &\ge 0 \\
+\max z &= -x_1' + 3x_2 + 0x_3 + 0x_4 + 0x_5 + 4
+\end{aligned}
+$$
+
+Sağ taraflar $4$, $16$, $14$ negatif değildir; problem standart formdadır.
+
+**Çözülebilir hal.** $v_3$, $v_4$, $v_5$ sütunları $3 \times 3$ birim matrisi oluşturur; standart form simpleks yöntem ile çözülebilir haldedir.
+
+**Başlangıç tablosu.** $B_0 = (v_3, v_4, v_5)$, $z_0 = 0$ ve $z_j - c_j = -c_j$'dir: $v_1'$ için $1$, $v_2$ için $-3$. Maksimum probleminde en negatif kriter girer; bütün kriterler $\ge 0$ olunca durulur. $v_2$ baza girer. $x_5$ satırının elemanı $0$ olduğundan oranlar yalnız $4/2 = 2$ ve $16/2 = 8$'dir; $v_3$ bazdan çıkar ve pivot $2$'dir.
+
+|   |   | $c_j$ | $-1$ | $3$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_3$ | $0$ | $4$ | $-1$ | $[2]$ | $1$ | $0$ | $0$ | $\frac{4}{2} \Rightarrow$ |
+| $x_4$ | $0$ | $16$ | $1$ | $2$ | $0$ | $1$ | $0$ | $\frac{16}{2}$ |
+| $x_5$ | $0$ | $14$ | $1$ | $0$ | $0$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $1$ | $-3 \Uparrow$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-snd-o3-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $2$'ye bölünür ve $c_B = 3$ ile $x_2$ satırı olur: $\big(2 \mid -\tfrac{1}{2}, 1, \tfrac{1}{2}, 0, 0\big)$. $x_4$ satırından bu satırın $2$ katı çıkarılır, $z_j - c_j$ satırına $3$ katı eklenir; $x_5$ satırı değişmez:
+
+$$
+\begin{aligned}
+x_4&: \ (16 - 4 \mid 1 + 1,\ 0,\ -1,\ 1,\ 0) = (12 \mid 2, 0, -1, 1, 0), \\[1mm]
+z_j - c_j&: \ \Big(0 + 6 \ \Big|\ 1 - \frac{3}{2},\ 0,\ \frac{3}{2},\ 0,\ 0\Big) \\
+&\quad = \Big(6 \ \Big|\ -\frac{1}{2}, 0, \frac{3}{2}, 0, 0\Big).
+\end{aligned}
+$$
+
+Tek negatif kriter $-\tfrac{1}{2}$ olduğundan $v_1'$ baza girer. $x_2$ satırının elemanı negatif olduğundan oranlar $12/2 = 6$ ve $14/1 = 14$'tür; $v_4$ bazdan çıkar ve pivot $2$'dir.
+
+|   |   | $c_j$ | $-1$ | $3$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_2$ | $3$ | $2$ | $-\frac{1}{2}$ | $1$ | $\frac{1}{2}$ | $0$ | $0$ | $-$ |
+| $x_4$ | $0$ | $12$ | $[2]$ | $0$ | $-1$ | $1$ | $0$ | $\frac{12}{2} \Rightarrow$ |
+| $x_5$ | $0$ | $14$ | $1$ | $0$ | $0$ | $0$ | $1$ | $\frac{14}{1}$ |
+| $z_j - c_j$ |   | $z_0 = 6$ | $-\frac{1}{2} \Uparrow$ | $0$ | $\frac{3}{2}$ | $0$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-snd-o3-birinci .simpleks}
+
+**İkinci iterasyon.** Pivot satırı $2$'ye bölünür ve $c_B = -1$ ile $x_1'$ satırı olur: $\big(6 \mid 1, 0, -\tfrac{1}{2}, \tfrac{1}{2}, 0\big)$. $x_2$ satırına bu satırın $\tfrac{1}{2}$ katı, $z_j - c_j$ satırına $\tfrac{1}{2}$ katı eklenir; $x_5$ satırından bir kez çıkarılır:
+
+$$
+\begin{aligned}
+x_2&: \ \Big(2 + 3 \ \Big|\ 0,\ 1,\ \frac{1}{2} - \frac{1}{4},\ \frac{1}{4},\ 0\Big) = \Big(5 \ \Big|\ 0, 1, \frac{1}{4}, \frac{1}{4}, 0\Big), \\[1mm]
+x_5&: \ \Big(14 - 6 \ \Big|\ 0,\ 0,\ \frac{1}{2},\ -\frac{1}{2},\ 1\Big) = \Big(8 \ \Big|\ 0, 0, \frac{1}{2}, -\frac{1}{2}, 1\Big), \\[1mm]
+z_j - c_j&: \ \Big(6 + 3 \ \Big|\ 0,\ 0,\ \frac{3}{2} - \frac{1}{4},\ \frac{1}{4},\ 0\Big) = \Big(9 \ \Big|\ 0, 0, \frac{5}{4}, \frac{1}{4}, 0\Big).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $-1$ | $3$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_2$ | $3$ | $5$ | $0$ | $1$ | $\frac{1}{4}$ | $\frac{1}{4}$ | $0$ |
+| $x_1'$ | $-1$ | $6$ | $1$ | $0$ | $-\frac{1}{2}$ | $\frac{1}{2}$ | $0$ |
+| $x_5$ | $0$ | $8$ | $0$ | $0$ | $\frac{1}{2}$ | $-\frac{1}{2}$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 9$ | $0$ | $0$ | $\frac{5}{4}$ | $\frac{1}{4}$ | $0$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-snd-o3-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir (@tbl-snd-o3-optimal).
+
+**Geri dönüş.** Tablodan $x_2 = 5$, $x_1' = 6$, $x_5 = 8$ okunur; $x_3 = x_4 = 0$'dır. $x_1' = x_1 + 4$ bağıntısından $6 = x_1 + 4$, yani $x_1 = 2$ bulunur. Tablodaki $z_0 = 9$'a ayrı tuttuğumuz sabiti ekleriz:
+
+$$X^{*} = (x_1, \dots, x_5) = (2, 5, 0, 0, 8), \qquad \max z = 9 + 4 = 13.$$
+
+Sağlama: $-2 + 2 \cdot 5 = 8$ ve $2 + 2 \cdot 5 = 12$; iki kısıt da eşitlikle sağlanır. $-4 \le 2 \le 10$ olduğundan sınır da sağlanır ve amaç değeri $-2 + 15 = 13$'tür. $x_1' = 6$, $x_1$'in alt sınırından $6$ birim yukarıda; $x_5 = 8$ de üst sınırından $8$ birim aşağıda olduğunu söyler. Sınırın iki yanı da etkin değildir.
+
+Uygun bölgenin köşeleri $(-4, 0)$, $(10, 0)$, $(10, 1)$, $(2, 5)$, $(-4, 2)$'dir; amaç değerleri $4$, $-10$, $-7$, $13$, $10$ olduğundan en büyüğü $(2, 5)$ köşesindeki $13$'tür.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 304.0" role="img" aria-label="Feasible pentagon (-4,0), (10,0), (10,1), (2,5), (-4,2) between the bound lines x1 = -4 and x1 = 10; two small triangles are cut off; x1 prime is measured from x1 = -4; dashed level lines z = 4 and z = 13; maximum at (2,5)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="92.6" y1="30.0" x2="92.6" y2="297.9"/><line x1="136.1" y1="30.0" x2="136.1" y2="297.9"/><line x1="179.6" y1="30.0" x2="179.6" y2="297.9"/><line x1="223.0" y1="30.0" x2="223.0" y2="297.9"/><line x1="310.0" y1="30.0" x2="310.0" y2="297.9"/><line x1="353.5" y1="30.0" x2="353.5" y2="297.9"/><line x1="397.0" y1="30.0" x2="397.0" y2="297.9"/><line x1="440.4" y1="30.0" x2="440.4" y2="297.9"/><line x1="483.9" y1="30.0" x2="483.9" y2="297.9"/><line x1="527.4" y1="30.0" x2="527.4" y2="297.9"/><line x1="60.0" y1="225.4" x2="560.0" y2="225.4"/><line x1="60.0" y1="193.9" x2="560.0" y2="193.9"/><line x1="60.0" y1="162.4" x2="560.0" y2="162.4"/><line x1="60.0" y1="130.9" x2="560.0" y2="130.9"/><line x1="60.0" y1="99.3" x2="560.0" y2="99.3"/><line x1="60.0" y1="67.8" x2="560.0" y2="67.8"/><line x1="60.0" y1="36.3" x2="560.0" y2="36.3"/></g>
+  <polygon points="179.6,257.0 483.9,257.0 483.9,225.4 310.0,99.3 179.6,193.9" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <polygon points="92.6,257.0 179.6,257.0 179.6,193.9" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.0" stroke-dasharray="3 3"/>
+  <polygon points="483.9,257.0 527.4,257.0 483.9,225.4" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.0" stroke-dasharray="3 3"/>
+  <path d="M60.0,280.6 L405.7,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M560.0,280.6 L214.3,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,220.2 L453.5,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M560.0,73.1 L94.8,297.9" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="257.0" x2="564.0" y2="257.0"/>
+  <line x1="266.5" y1="301.9" x2="266.5" y2="26.0"/>
+  <polygon points="564.0,257.0 556.0,253.5 556.0,260.5" stroke="none"/>
+  <polygon points="266.5,26.0 263.0,34.0 270.0,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="92.6" y1="254.0" x2="92.6" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.6" y="272.0" text-anchor="middle">-8</text>
+  <line x1="136.1" y1="254.0" x2="136.1" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="136.1" y="272.0" text-anchor="middle">-6</text>
+  <line x1="179.6" y1="254.0" x2="179.6" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="179.6" y="272.0" text-anchor="middle">-4</text>
+  <line x1="223.0" y1="254.0" x2="223.0" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="223.0" y="272.0" text-anchor="middle">-2</text>
+  <line x1="310.0" y1="254.0" x2="310.0" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="310.0" y="272.0" text-anchor="middle">2</text>
+  <line x1="353.5" y1="254.0" x2="353.5" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="353.5" y="272.0" text-anchor="middle">4</text>
+  <line x1="397.0" y1="254.0" x2="397.0" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="397.0" y="272.0" text-anchor="middle">6</text>
+  <line x1="440.4" y1="254.0" x2="440.4" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="440.4" y="272.0" text-anchor="middle">8</text>
+  <line x1="483.9" y1="254.0" x2="483.9" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="483.9" y="272.0" text-anchor="middle">10</text>
+  <line x1="527.4" y1="254.0" x2="527.4" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="527.4" y="272.0" text-anchor="middle">12</text>
+  <line x1="263.5" y1="225.4" x2="269.5" y2="225.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.5" y="229.4" text-anchor="end">1</text>
+  <line x1="263.5" y1="193.9" x2="269.5" y2="193.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.5" y="197.9" text-anchor="end">2</text>
+  <line x1="263.5" y1="162.4" x2="269.5" y2="162.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.5" y="166.4" text-anchor="end">3</text>
+  <line x1="263.5" y1="130.9" x2="269.5" y2="130.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.5" y="134.9" text-anchor="end">4</text>
+  <line x1="263.5" y1="99.3" x2="269.5" y2="99.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.5" y="103.3" text-anchor="end">5</text>
+  <line x1="263.5" y1="67.8" x2="269.5" y2="67.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.5" y="71.8" text-anchor="end">6</text>
+  <line x1="263.5" y1="36.3" x2="269.5" y2="36.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.5" y="40.3" text-anchor="end">7</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="272.0" text-anchor="end">x₁</text>
+  <text x="273.5" y="35.0">x₂</text>
+  </g>
+  <path d="M179.6,297.9 L179.6,30.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="185.6" y="46.0" fill="var(--color-practice)" font-size="12" text-anchor="start">x₁ = −4</text>
+  <path d="M483.9,297.9 L483.9,30.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="489.9" y="46.0" fill="var(--color-practice)" font-size="12" text-anchor="start">x₁ = 10</text>
+  <line x1="179.6" y1="80.4" x2="207.1" y2="80.4" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="214.3,80.4 205.3,84.2 205.3,76.7" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="171.6" y="84.4" fill="var(--color-practice)" font-size="12" text-anchor="end">x₁′ = x₁ + 4</text>
+  <line x1="405.7" y1="121.4" x2="391.7" y2="92.6" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="388.2,85.4 396.4,92.6 388.8,96.2" fill="var(--color-base)" opacity="1.0"/>
+  <text x="394.2" y="89.4" fill="var(--color-base)" font-size="12" text-anchor="start">z artar</text>
+  <circle cx="310.0" cy="99.3" r="5" fill="var(--color-practice)"/>
+  <text x="310.0" y="73.3" fill="var(--academic-text)" font-size="13" text-anchor="middle">(2, 5)</text>
+  <text x="101.3" y="212.8" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="510.0" y="216.0" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="66.5" y="193.9" fill="var(--color-base)" font-size="12" text-anchor="start">z = 13</text>
+  <text x="505.7" y="80.4" fill="var(--color-base)" font-size="12" text-anchor="start">z = 4</text>
+</svg>
+<figcaption>Uygun bölge (−4, 0), (10, 0), (10, 1), (2, 5), (−4, 2) köşeli beşgendir. −4 ≤ x₁ ≤ 10 sınırları, (1) −x₁ + 2x₂ = 8 ve (2) x₁ + 2x₂ = 12 doğrularıyla x₂ = 0'ın oluşturduğu üçgenin iki ucundan birer küçük üçgen (kesikli) atar. Yeni değişken x₁′ = x₁ + 4, x₁ = −4 doğrusundan başlayarak ölçülür. Kesikli doğrular z = −x₁ + 3x₂ = 4 ve z = 13 seviye doğrularıdır; maksimum (2, 5) köşesinde alınır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alttan Sınırlı Değişken
+
+Son durumda değişkenin yalnız bir alt sınırı vardır: $x_j \ge d_j$. Öteleme bu sınırı doğrudan negatif olmama koşuluna çevirir:
+
+$$x_j \ge d_j \ \Rightarrow\ 0 \le x_j - d_j = x_j' \ \Rightarrow\ x_j = x_j' + d_j.$$
+
+$x_j' \ge 0$ işaret koşullarına eklenir; üst sınır olmadığı için satır eklenmez. $d_j = 0$ ise hiçbir şey yapmaya gerek yoktur. $d_j < 0$ olduğunda $x_j$ negatif değerler de alabilir, ama işaret kısıtlaması olmayan bir değişkenin aksine tek bir yeni değişken yeter. $d_j > 0$ olduğunda ise öteleme, satır olarak yazılsa artık ve yapay değişken isteyecek bir $\ge$ kısıtından bizi kurtarır.
+
+:::: {#exm-snd-ornek4 name="Alttan sınırlı bir değişken"}
+Aşağıdaki problemi simpleks yöntemle çözünüz.
+
+$$
+\begin{aligned}
+-2x_1 + 3x_2 &\le 24 \\
+x_1 + 2x_2 &\le 8 \\
+x_1 \ge -8, \quad x_2 &\ge 0 \\
+\max z &= -x_1 + 3x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Dönüşüm.** $x_1$ değişkeni $x_1 \ge -8$ biçiminde alttan sınırlıdır. Bu nedenle
+
+$$x_1 \ge -8 \ \Rightarrow\ 0 \le x_1 + 8 = x_1' \ \Rightarrow\ x_1 = x_1' - 8$$
+
+dönüşümünü yaparız. $x_1$ yerine $x_1' - 8$ yazınca problem
+
+$$
+\begin{aligned}
+-2(x_1' - 8) + 3x_2 &\le 24 \\
+x_1' - 8 + 2x_2 &\le 8 \\
+x_1', x_2 &\ge 0 \\
+\max z &= -(x_1' - 8) + 3x_2
+\end{aligned}
+$$
+
+olur. Parantezleri açıp sabitleri sağa atarsak
+
+$$
+\begin{aligned}
+-2x_1' + 3x_2 &\le 8 \\
+x_1' + 2x_2 &\le 16 \\
+x_1', x_2 &\ge 0 \\
+\max z &= -x_1' + 3x_2 + 8
+\end{aligned}
+$$
+
+problemine ulaşırız. Amaçtaki $8$ sabittir; $z' = -x_1' + 3x_2$'yi maksimum yapacağız.
+
+**Standart form.** İki $\le$ kısıta $x_3$ ve $x_4$ aylak değişkenlerini ekleriz:
+
+$$
+\begin{aligned}
+-2x_1' + 3x_2 + x_3 &= 8 \\
+x_1' + 2x_2 + x_4 &= 16 \\
+x_1', x_2, x_3, x_4 &\ge 0 \\
+\max z &= -x_1' + 3x_2 + 0x_3 + 0x_4 + 8
+\end{aligned}
+$$
+
+Sağ taraflar $8$ ve $16$ negatif değildir; problem standart formdadır.
+
+**Çözülebilir hal.** $v_3$ ve $v_4$ sütunları $2 \times 2$ birim matrisi oluşturur; standart form simpleks yöntem ile çözülebilir haldedir.
+
+**Başlangıç tablosu.** $B_0 = (v_3, v_4)$, $z_0 = 0$ ve $z_j - c_j = -c_j$'dir: $v_1'$ için $1$, $v_2$ için $-3$. Maksimum probleminde en negatif kriter girer; $v_2$ baza girer. Oranlar $8/3$ ve $16/2 = 8$'dir; $\tfrac{8}{3} < 8$ olduğundan $v_3$ bazdan çıkar ve pivot $3$'tür.
+
+|   |   | $c_j$ | $-1$ | $3$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $8$ | $-2$ | $[3]$ | $1$ | $0$ | $\frac{8}{3} \Rightarrow$ |
+| $x_4$ | $0$ | $16$ | $1$ | $2$ | $0$ | $1$ | $\frac{16}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $1$ | $-3 \Uparrow$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-snd-o4-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $3$'e bölünür ve $c_B = 3$ ile $x_2$ satırı olur: $\big(\tfrac{8}{3} \mid -\tfrac{2}{3}, 1, \tfrac{1}{3}, 0\big)$. $x_4$ satırından bu satırın $2$ katı çıkarılır, $z_j - c_j$ satırına $3$ katı eklenir:
+
+$$
+\begin{aligned}
+x_4&: \ \Big(16 - \frac{16}{3} \ \Big|\ 1 + \frac{4}{3},\ 0,\ -\frac{2}{3},\ 1\Big) = \Big(\frac{32}{3} \ \Big|\ \frac{7}{3}, 0, -\frac{2}{3}, 1\Big), \\[1mm]
+z_j - c_j&: \ (0 + 8 \mid 1 - 2,\ 0,\ 1,\ 0) = (8 \mid -1, 0, 1, 0).
+\end{aligned}
+$$
+
+Tek negatif kriter $-1$ olduğundan $v_1'$ baza girer. $x_2$ satırının elemanı $-\tfrac{2}{3} < 0$ olduğundan tek oran
+
+$$\frac{32/3}{7/3} = \frac{32}{7}$$
+
+olur; $v_4$ bazdan çıkar ve pivot $\tfrac{7}{3}$'tür.
+
+|   |   | $c_j$ | $-1$ | $3$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_2$ | $3$ | $\frac{8}{3}$ | $-\frac{2}{3}$ | $1$ | $\frac{1}{3}$ | $0$ | $-$ |
+| $x_4$ | $0$ | $\frac{32}{3}$ | $\left[\frac{7}{3}\right]$ | $0$ | $-\frac{2}{3}$ | $1$ | $\frac{32/3}{7/3} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 8$ | $-1 \Uparrow$ | $0$ | $1$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-snd-o4-birinci .simpleks}
+
+**İkinci iterasyon.** Pivot satırı $\tfrac{7}{3}$'e bölünür, yani $\tfrac{3}{7}$ ile çarpılır ve $c_B = -1$ ile $x_1'$ satırı olur: $\big(\tfrac{32}{7} \mid 1, 0, -\tfrac{2}{7}, \tfrac{3}{7}\big)$. $x_2$ satırına bu satırın $\tfrac{2}{3}$ katı, $z_j - c_j$ satırına bir katı eklenir:
+
+$$
+\begin{aligned}
+x_2&: \ \Big(\frac{8}{3} + \frac{64}{21} \ \Big|\ 0,\ 1,\ \frac{1}{3} - \frac{4}{21},\ \frac{2}{7}\Big) = \Big(\frac{40}{7} \ \Big|\ 0, 1, \frac{1}{7}, \frac{2}{7}\Big), \\[1mm]
+z_j - c_j&: \ \Big(8 + \frac{32}{7} \ \Big|\ 0,\ 0,\ 1 - \frac{2}{7},\ \frac{3}{7}\Big) = \Big(\frac{88}{7} \ \Big|\ 0, 0, \frac{5}{7}, \frac{3}{7}\Big).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $-1$ | $3$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_2$ | $3$ | $\frac{40}{7}$ | $0$ | $1$ | $\frac{1}{7}$ | $\frac{2}{7}$ |
+| $x_1'$ | $-1$ | $\frac{32}{7}$ | $1$ | $0$ | $-\frac{2}{7}$ | $\frac{3}{7}$ |
+| $z_j - c_j$ |   | $z_0 = \frac{88}{7}$ | $0$ | $0$ | $\frac{5}{7}$ | $\frac{3}{7}$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-snd-o4-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir (@tbl-snd-o4-optimal).
+
+**Geri dönüş.** Tablodan $x_2 = \tfrac{40}{7}$, $x_1' = \tfrac{32}{7}$ okunur; $x_3 = x_4 = 0$'dır. Orijinal değişkene dönersek
+
+$$x_1 = x_1' - 8 = \frac{32}{7} - 8 = -\frac{24}{7}$$
+
+olur. Tablodaki $z_0 = \tfrac{88}{7}$'ye ayrı tuttuğumuz sabiti ekleriz:
+
+$$X^{*} = (x_1, x_2, x_3, x_4) = \Big(-\frac{24}{7}, \frac{40}{7}, 0, 0\Big), \qquad \max z = \frac{88}{7} + 8 = \frac{144}{7}.$$
+
+Sağlama: birinci kısıtın sol tarafı $\tfrac{48}{7} + \tfrac{120}{7} = 24$, ikincisininki $-\tfrac{24}{7} + \tfrac{80}{7} = 8$'dir; iki kısıt da eşitlikle sağlanır. $-\tfrac{24}{7} \ge -8$ olduğundan sınır da sağlanır ve amaç değeri $\tfrac{24}{7} + \tfrac{120}{7} = \tfrac{144}{7}$'dir. Optimumda $x_1$ negatiftir; alt sınır $-8$ bu değere izin verdiği için sorun yoktur.
+
+Uygun bölgenin köşeleri $(-8, 0)$, $(8, 0)$, $\big(-\tfrac{24}{7}, \tfrac{40}{7}\big)$, $\big(-8, \tfrac{8}{3}\big)$'tür; amaç değerleri $8$, $-8$, $\tfrac{144}{7}$, $16$ olduğundan en büyüğü $\tfrac{144}{7}$'dir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 301.0" role="img" aria-label="Feasible quadrilateral (-8,0), (8,0), (-24/7,40/7), (-8,8/3); the bound x1 = -8 cuts off the triangle (-12,0), (-8,0), (-8,8/3); x1 prime is measured from x1 = -8; dashed level lines z = 8 and z = 144/7; maximum at (-24/7,40/7)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="92.2" y1="30.0" x2="92.2" y2="295.0"/><line x1="135.1" y1="30.0" x2="135.1" y2="295.0"/><line x1="178.0" y1="30.0" x2="178.0" y2="295.0"/><line x1="220.9" y1="30.0" x2="220.9" y2="295.0"/><line x1="263.9" y1="30.0" x2="263.9" y2="295.0"/><line x1="306.8" y1="30.0" x2="306.8" y2="295.0"/><line x1="392.6" y1="30.0" x2="392.6" y2="295.0"/><line x1="435.5" y1="30.0" x2="435.5" y2="295.0"/><line x1="478.5" y1="30.0" x2="478.5" y2="295.0"/><line x1="521.4" y1="30.0" x2="521.4" y2="295.0"/><line x1="60.0" y1="230.9" x2="560.0" y2="230.9"/><line x1="60.0" y1="203.0" x2="560.0" y2="203.0"/><line x1="60.0" y1="175.1" x2="560.0" y2="175.1"/><line x1="60.0" y1="147.2" x2="560.0" y2="147.2"/><line x1="60.0" y1="119.3" x2="560.0" y2="119.3"/><line x1="60.0" y1="91.4" x2="560.0" y2="91.4"/><line x1="60.0" y1="63.5" x2="560.0" y2="63.5"/><line x1="60.0" y1="35.6" x2="560.0" y2="35.6"/></g>
+  <polygon points="178.0,258.8 521.4,258.8 276.1,99.3 178.0,184.4" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <polygon points="92.2,258.8 178.0,258.8 178.0,184.4" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.0" stroke-dasharray="3 3"/>
+  <path d="M60.0,286.7 L356.1,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M560.0,283.9 L169.4,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,193.0 L436.1,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M560.0,93.2 L94.3,295.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="258.8" x2="564.0" y2="258.8"/>
+  <line x1="349.7" y1="299.0" x2="349.7" y2="26.0"/>
+  <polygon points="564.0,258.8 556.0,255.3 556.0,262.3" stroke="none"/>
+  <polygon points="349.7,26.0 346.2,34.0 353.2,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="92.2" y1="255.8" x2="92.2" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.2" y="273.8" text-anchor="middle">-12</text>
+  <line x1="135.1" y1="255.8" x2="135.1" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="135.1" y="273.8" text-anchor="middle">-10</text>
+  <line x1="178.0" y1="255.8" x2="178.0" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="178.0" y="273.8" text-anchor="middle">-8</text>
+  <line x1="220.9" y1="255.8" x2="220.9" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="220.9" y="273.8" text-anchor="middle">-6</text>
+  <line x1="263.9" y1="255.8" x2="263.9" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="263.9" y="273.8" text-anchor="middle">-4</text>
+  <line x1="306.8" y1="255.8" x2="306.8" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="306.8" y="273.8" text-anchor="middle">-2</text>
+  <line x1="392.6" y1="255.8" x2="392.6" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="392.6" y="273.8" text-anchor="middle">2</text>
+  <line x1="435.5" y1="255.8" x2="435.5" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="435.5" y="273.8" text-anchor="middle">4</text>
+  <line x1="478.5" y1="255.8" x2="478.5" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="478.5" y="273.8" text-anchor="middle">6</text>
+  <line x1="521.4" y1="255.8" x2="521.4" y2="261.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="521.4" y="273.8" text-anchor="middle">8</text>
+  <line x1="346.7" y1="230.9" x2="352.7" y2="230.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="234.9" text-anchor="end">1</text>
+  <line x1="346.7" y1="203.0" x2="352.7" y2="203.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="207.0" text-anchor="end">2</text>
+  <line x1="346.7" y1="175.1" x2="352.7" y2="175.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="179.1" text-anchor="end">3</text>
+  <line x1="346.7" y1="147.2" x2="352.7" y2="147.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="151.2" text-anchor="end">4</text>
+  <line x1="346.7" y1="119.3" x2="352.7" y2="119.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="123.3" text-anchor="end">5</text>
+  <line x1="346.7" y1="91.4" x2="352.7" y2="91.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="95.4" text-anchor="end">6</text>
+  <line x1="346.7" y1="63.5" x2="352.7" y2="63.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="67.5" text-anchor="end">7</text>
+  <line x1="346.7" y1="35.6" x2="352.7" y2="35.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="342.7" y="39.6" text-anchor="end">8</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="273.8" text-anchor="end">x₁</text>
+  <text x="356.7" y="35.0">x₂</text>
+  </g>
+  <path d="M178.0,295.0 L178.0,30.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="184.0" y="95.4" fill="var(--color-practice)" font-size="12" text-anchor="start">x₁ = −8</text>
+  <line x1="178.0" y1="55.1" x2="194.4" y2="55.1" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="201.6,55.1 192.6,58.9 192.6,51.3" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="170.0" y="59.1" fill="var(--color-practice)" font-size="12" text-anchor="end">x₁′ = x₁ + 8</text>
+  <line x1="414.1" y1="127.6" x2="401.4" y2="98.3" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="398.2,90.9 406.0,98.4 398.3,101.8" fill="var(--color-base)" opacity="1.0"/>
+  <text x="404.2" y="94.9" fill="var(--color-base)" font-size="12" text-anchor="start">z artar</text>
+  <circle cx="276.1" cy="99.3" r="5" fill="var(--color-practice)"/>
+  <text x="266.1" y="139.3" fill="var(--academic-text)" font-size="13" text-anchor="middle">(&#8722;24/7, 40/7)</text>
+  <text x="72.9" y="214.1" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="478.5" y="211.3" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="439.8" y="38.4" fill="var(--color-base)" font-size="12" text-anchor="start">z = 144/7</text>
+  <text x="521.4" y="83.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = 8</text>
+</svg>
+<figcaption>Uygun bölge (−8, 0), (8, 0), (−24/7, 40/7), (−8, 8/3) köşeli dörtgendir. x₁ ≥ −8 sınırı, sınır olmasaydı bölgeye katılacak (−12, 0), (−8, 0), (−8, 8/3) üçgenini (kesikli) atar. Yeni değişken x₁′ = x₁ + 8, x₁ = −8 doğrusundan başlayarak ölçülür. Kesikli doğrular z = −x₁ + 3x₂ = 8 ve z = 144/7 seviye doğrularıdır; maksimum (−24/7, 40/7) köşesinde alınır. (1) −2x₁ + 3x₂ = 24, (2) x₁ + 2x₂ = 8.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Birden Çok Sınırlı Değişken
+
+Dönüşümler birbirinden bağımsızdır; bir problemde farklı türden birkaç sınırlı değişken bulunabilir. Aşağıdaki örnekte bir değişken alttan sınırlı, öteki ise negatif olmayan ve üstten sınırlıdır. Ötelemeden sonra bir kısıtın sağ tarafı negatif çıkacak ve bu yüzden yapay değişken gerekecek.
+
+:::: {#exm-snd-birlesik name="İki sınırlı değişkenli bir minimum problemi"}
+Aşağıdaki problemi simpleks yöntemle çözünüz.
+
+$$
+\begin{aligned}
+x_1 - x_2 &\le 3 \\
+x_1 + x_2 &\le 10 \\
+x_1 \ge 5, \quad 0 \le x_2 &\le 4 \\
+\min z &= x_1 + 2x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Dönüşüm.** $x_1$ alttan sınırlıdır: $x_1 \ge 5 \Rightarrow 0 \le x_1 - 5 = x_1'$, yani $x_1 = x_1' + 5$. $x_2$ negatif olmayan ve üstten sınırlıdır; $x_2 \le 4$ satır olarak kısıtlara eklenir. $x_1$ yerine $x_1' + 5$ yazınca
+
+$$
+\begin{aligned}
+x_1' + 5 - x_2 &\le 3 \\
+x_1' + 5 + x_2 &\le 10 \\
+x_2 &\le 4 \\
+x_1', x_2 &\ge 0 \\
+\min z &= x_1' + 5 + 2x_2
+\end{aligned}
+$$
+
+olur. Sabitleri sağa atınca birinci kısıt $x_1' - x_2 \le -2$ olur ve sağ tarafı negatiftir. Standart form $b_i \ge 0$ istediği için bu kısıtı $-1$ ile çarparız; eşitsizliğin yönü döner:
+
+$$
+\begin{aligned}
+-x_1' + x_2 &\ge 2 \\
+x_1' + x_2 &\le 5 \\
+x_2 &\le 4 \\
+x_1', x_2 &\ge 0 \\
+\min z &= x_1' + 2x_2 + 5
+\end{aligned}
+$$
+
+Amaçtaki $5$ sabittir; $z' = x_1' + 2x_2$'yi minimum yapacağız.
+
+**Standart form.** Birinci kısıt $\ge$ olduğundan $x_3$ artık değişkenini çıkarır, diğer iki $\le$ kısıta $x_4$ ve $x_5$ aylak değişkenlerini ekleriz:
+
+$$
+\begin{aligned}
+-x_1' + x_2 - x_3 &= 2 \\
+x_1' + x_2 + x_4 &= 5 \\
+x_2 + x_5 &= 4 \\
+x_1', x_2, x_3, x_4, x_5 &\ge 0 \\
+\min z &= x_1' + 2x_2 + 0x_3 + 0x_4 + 0x_5 + 5
+\end{aligned}
+$$
+
+**Çözülebilir hal.** $v_4$ ve $v_5$ ikinci ve üçüncü denklemin birim sütunlarıdır. Birinci denklemde ise $x_3$'ün katsayısı $-1$'dir. Standart form birim matris içermediği için henüz simpleks yöntem ile çözülebilir halde değildir. Birinci denkleme $x_{u_1}$ yapay değişkenini (@def-lpp-yapay-degisken) ekleriz; minimum problemi olduğundan amaç katsayısı $+M$'dir:
+
+$$
+\begin{aligned}
+-x_1' + x_2 - x_3 + x_{u_1} &= 2 \\
+x_1' + x_2 + x_4 &= 5 \\
+x_2 + x_5 &= 4 \\
+x_1', x_2, x_3, x_4, x_5, x_{u_1} &\ge 0 \\
+\min z &= x_1' + 2x_2 + 0x_3 + 0x_4 \\
+&\quad + 0x_5 + Mx_{u_1} + 5
+\end{aligned}
+$$
+
+Artık $v_{u_1}$, $v_4$, $v_5$ sütunları $3 \times 3$ birim matrisi oluşturur ve problemi [Büyük M yöntemi](buyuk-m-yontemi.qmd) ile çözeriz.
+
+**Başlangıç tablosu.** $B_0 = (v_{u_1}, v_4, v_5)$, $\vec{c}_B = (M, 0, 0)$ ve başlangıç çözümü $x_{u_1} = 2$, $x_4 = 5$, $x_5 = 4$'tür. Her sütun için $c_B$ sütunuyla karşılıklı çarpımları toplayıp $c_j$'yi çıkarırız:
+
+$$
+\begin{aligned}
+v_1'&: \ M \cdot (-1) + 0 \cdot 1 + 0 \cdot 0 - 1 = -M - 1, \\[1mm]
+v_2&: \ M \cdot 1 + 0 \cdot 1 + 0 \cdot 1 - 2 = M - 2, \\[1mm]
+v_3&: \ M \cdot (-1) + 0 \cdot 0 + 0 \cdot 0 - 0 = -M, \\[1mm]
+z_0&: \ M \cdot 2 + 0 \cdot 5 + 0 \cdot 4 = 2M.
+\end{aligned}
+$$
+
+Minimum probleminde en büyük pozitif $z_j - c_j$ baza girer; bütün $z_j - c_j \le 0$ olunca optimal çözüme ulaşılmıştır. $M$ çok büyük olduğundan (@prp-bym-karsilastirma) tek pozitif kriter $M - 2$'dir ve $v_2$ baza girer. Oranlar $2/1$, $5/1$, $4/1$'dir; en küçüğü $x_{u_1}$ satırındadır, $v_{u_1}$ bazdan çıkar ve pivot $1$'dir.
+
+|   |   | $c_j$ | $1$ | $2$ | $0$ | $0$ | $0$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_{u_1}$ | Oran |
+| $x_{u_1}$ | $M$ | $2$ | $-1$ | $[1]$ | $-1$ | $0$ | $0$ | $1$ | $\frac{2}{1} \Rightarrow$ |
+| $x_4$ | $0$ | $5$ | $1$ | $1$ | $0$ | $1$ | $0$ | $0$ | $\frac{5}{1}$ |
+| $x_5$ | $0$ | $4$ | $0$ | $1$ | $0$ | $0$ | $1$ | $0$ | $\frac{4}{1}$ |
+| $z_j - c_j$ |   | $z_0 = 2M$ | $-M-1$ | $M-2 \Uparrow$ | $-M$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-snd-ek-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot $1$ olduğundan pivot satırı aynen kalır ve $c_B = 2$ ile $x_2$ satırı olur: $(2 \mid -1, 1, -1, 0, 0)$. $x_{u_1}$ bazdan çıktığı için $v_{u_1}$ sütunu artık yazılmaz. $x_4$ ve $x_5$ satırlarının pivot sütunundaki elemanları $1$ olduğundan ikisinden de yeni satır bir kez çıkarılır:
+
+$$
+\begin{aligned}
+x_4&: \ (5 - 2 \mid 1 + 1,\ 0,\ 0 + 1,\ 1,\ 0) = (3 \mid 2, 0, 1, 1, 0), \\[1mm]
+x_5&: \ (4 - 2 \mid 0 + 1,\ 0,\ 0 + 1,\ 0,\ 1) = (2 \mid 1, 0, 1, 0, 1).
+\end{aligned}
+$$
+
+Kriterleri yeni $\vec{c}_B = (2, 0, 0)$ ile hesaplayalım:
+
+$$
+\begin{aligned}
+v_1'&: \ 2 \cdot (-1) + 0 \cdot 2 + 0 \cdot 1 - 1 = -3, \\[1mm]
+v_3&: \ 2 \cdot (-1) + 0 \cdot 1 + 0 \cdot 1 - 0 = -2, \\[1mm]
+z_0&: \ 2 \cdot 2 + 0 \cdot 3 + 0 \cdot 2 = 4.
+\end{aligned}
+$$
+
+Baz vektörleri $v_2$, $v_4$, $v_5$'in kriterleri $0$'dır.
+
+|   |   | $c_j$ | $1$ | $2$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1'$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_2$ | $2$ | $2$ | $-1$ | $1$ | $-1$ | $0$ | $0$ |
+| $x_4$ | $0$ | $3$ | $2$ | $0$ | $1$ | $1$ | $0$ |
+| $x_5$ | $0$ | $2$ | $1$ | $0$ | $1$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 4$ | $-3$ | $0$ | $-2$ | $0$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) {#tbl-snd-ek-optimal .simpleks .oransiz}
+
+Pozitif kriter kalmadı ve bazda yapay değişken yok; @thm-bym-optimal gereği tablo optimaldir (@tbl-snd-ek-optimal).
+
+**Geri dönüş.** Tablodan $x_2 = 2$, $x_4 = 3$, $x_5 = 2$ okunur; $x_1' = x_3 = 0$'dır. $x_1 = x_1' + 5 = 5$ olur. Tablodaki $z_0 = 4$'e sabiti ekleriz:
+
+$$X^{*} = (x_1, \dots, x_5) = (5, 2, 0, 3, 2), \qquad \min z = 4 + 5 = 9.$$
+
+Sağlama: $5 - 2 = 3$ olduğundan birinci kısıt eşitlikle sağlanır; $5 + 2 = 7 \le 10$ olup ikinci kısıtta $x_4 = 3$ birim, $x_2 = 2 \le 4$ olup sınır satırında $x_5 = 2$ birim boşluk kalır. Amaç değeri $5 + 2 \cdot 2 = 9$'dur. $x_1' = 0$ olduğundan $x_1$ alt sınırındadır: alt sınır etkindir.
+
+Dönüşüm burada da işi kısalttı. $x_1 \ge 5$ sınırını satır olarak yazsaydık dört kısıtlı bir problem elde eder, o satır için de artık ve yapay değişken gerekirdi. Öteleme o satırı kaldırdı; bedeli, birinci kısıtın yön değiştirip yapay değişken istemesi oldu. Uygun bölgenin köşeleri $(5, 2)$, $(5, 4)$, $(6, 4)$, $\big(\tfrac{13}{2}, \tfrac{7}{2}\big)$'dir ve amaç değerleri $9$, $13$, $14$, $\tfrac{27}{2}$ olduğundan en küçüğü gerçekten $9$'dur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 336.0" role="img" aria-label="Small feasible quadrilateral (5,2), (5,4), (6,4), (6.5,3.5) bounded by x1 = 5 and x2 = 4; the Big M start (5,0) lies outside and one iteration moves to the optimal corner (5,2); dashed level lines z = 9 and z = 13">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="135.0" y1="30.0" x2="135.0" y2="330.0"/><line x1="176.7" y1="30.0" x2="176.7" y2="330.0"/><line x1="218.3" y1="30.0" x2="218.3" y2="330.0"/><line x1="260.0" y1="30.0" x2="260.0" y2="330.0"/><line x1="301.7" y1="30.0" x2="301.7" y2="330.0"/><line x1="343.3" y1="30.0" x2="343.3" y2="330.0"/><line x1="385.0" y1="30.0" x2="385.0" y2="330.0"/><line x1="426.7" y1="30.0" x2="426.7" y2="330.0"/><line x1="468.3" y1="30.0" x2="468.3" y2="330.0"/><line x1="510.0" y1="30.0" x2="510.0" y2="330.0"/><line x1="551.7" y1="30.0" x2="551.7" y2="330.0"/><line x1="60.0" y1="250.8" x2="560.0" y2="250.8"/><line x1="60.0" y1="209.2" x2="560.0" y2="209.2"/><line x1="60.0" y1="167.5" x2="560.0" y2="167.5"/><line x1="60.0" y1="125.8" x2="560.0" y2="125.8"/><line x1="60.0" y1="84.2" x2="560.0" y2="84.2"/><line x1="60.0" y1="42.5" x2="560.0" y2="42.5"/></g>
+  <polygon points="301.7,209.2 301.7,125.8 343.3,125.8 364.2,146.7" fill="var(--color-theory)" fill-opacity="0.22" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M180.8,330.0 L480.8,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M547.5,330.0 L247.5,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,88.3 L543.3,330.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M560.0,255.0 L110.0,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="292.5" x2="564.0" y2="292.5"/>
+  <line x1="93.3" y1="334.0" x2="93.3" y2="26.0"/>
+  <polygon points="564.0,292.5 556.0,289.0 556.0,296.0" stroke="none"/>
+  <polygon points="93.3,26.0 89.8,34.0 96.8,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="135.0" y1="289.5" x2="135.0" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="135.0" y="307.5" text-anchor="middle">1</text>
+  <line x1="176.7" y1="289.5" x2="176.7" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="176.7" y="307.5" text-anchor="middle">2</text>
+  <line x1="218.3" y1="289.5" x2="218.3" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="218.3" y="307.5" text-anchor="middle">3</text>
+  <line x1="260.0" y1="289.5" x2="260.0" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="260.0" y="307.5" text-anchor="middle">4</text>
+  <line x1="301.7" y1="289.5" x2="301.7" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="301.7" y="307.5" text-anchor="middle">5</text>
+  <line x1="343.3" y1="289.5" x2="343.3" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="343.3" y="307.5" text-anchor="middle">6</text>
+  <line x1="385.0" y1="289.5" x2="385.0" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="385.0" y="307.5" text-anchor="middle">7</text>
+  <line x1="426.7" y1="289.5" x2="426.7" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="426.7" y="307.5" text-anchor="middle">8</text>
+  <line x1="468.3" y1="289.5" x2="468.3" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="468.3" y="307.5" text-anchor="middle">9</text>
+  <line x1="510.0" y1="289.5" x2="510.0" y2="295.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="510.0" y="307.5" text-anchor="middle">10</text>
+  <line x1="90.3" y1="250.8" x2="96.3" y2="250.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="86.3" y="254.8" text-anchor="end">1</text>
+  <line x1="90.3" y1="209.2" x2="96.3" y2="209.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="86.3" y="213.2" text-anchor="end">2</text>
+  <line x1="90.3" y1="167.5" x2="96.3" y2="167.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="86.3" y="171.5" text-anchor="end">3</text>
+  <line x1="90.3" y1="125.8" x2="96.3" y2="125.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="86.3" y="129.8" text-anchor="end">4</text>
+  <line x1="90.3" y1="84.2" x2="96.3" y2="84.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="86.3" y="88.2" text-anchor="end">5</text>
+  <line x1="90.3" y1="42.5" x2="96.3" y2="42.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="86.3" y="46.5" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="307.5" text-anchor="end">x₁</text>
+  <text x="100.3" y="35.0">x₂</text>
+  </g>
+  <path d="M301.7,330.0 L301.7,30.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="307.7" y="46.0" fill="var(--color-practice)" font-size="12" text-anchor="start">x₁ = 5</text>
+  <path d="M60.0,125.8 L560.0,125.8" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="464.2" y="118.8" fill="var(--color-practice)" font-size="12" text-anchor="start">x₂ = 4</text>
+  <line x1="197.5" y1="200.8" x2="183.2" y2="229.5" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="179.6,236.6 180.3,225.8 187.8,229.5" fill="var(--color-base)" opacity="1.0"/>
+  <text x="173.6" y="240.6" fill="var(--color-base)" font-size="12" text-anchor="end">z azalır</text>
+  <circle cx="301.7" cy="292.5" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <line x1="301.7" y1="292.5" x2="301.7" y2="225.5" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="301.7,217.5 305.9,227.5 297.5,227.5" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="301.7" cy="209.2" r="5" fill="var(--color-practice)"/>
+  <text x="291.7" y="286.5" fill="var(--academic-text)" font-size="13" text-anchor="end">(5, 0)</text>
+  <text x="293.7" y="213.2" fill="var(--academic-text)" font-size="13" text-anchor="end">(5, 2)</text>
+  <text x="476.7" y="67.5" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="480.8" y="234.2" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="101.7" y="80.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = 13</text>
+  <text x="101.7" y="155.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = 9</text>
+</svg>
+<figcaption>Uygun bölge (5, 2), (5, 4), (6, 4), (13/2, 7/2) köşeli küçük dörtgendir; x₁ ≥ 5 ve x₂ ≤ 4 sınırları onun iki kenarını oluşturur. Başlangıç tablosunun çözümü x₁′ = x₂ = 0, yani (5, 0) noktasıdır ve bölgenin dışındadır: (1) x₁ − x₂ = 3 kısıtı sağlanmaz, eksik kalan 2 birimi yapay değişken üstlenir. Tek iterasyon optimal (5, 2) köşesine gider. Kesikli doğrular z = x₁ + 2x₂ = 9 ve z = 13 seviye doğrularıdır. (2) x₁ + x₂ = 10.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde değişkenlerin alt ve üst sınırlarını iki yolla ele aldık: alt sınırı ötelemeyle, yalnız üst sınırı yansıtmayla $x_j' \ge 0$ koşuluna çevirdik; hem alt hem üst sınır olduğunda ise sınırın bir yanını satır olarak kısıtlara ekledik. @prp-snd-donusum bu dönüşümlerin uygun çözümleri birebir eşlediğini ve amacı yalnız bir sabit kadar kaydırdığını gösterdi; bu yüzden sonucu okurken dönüşümü tersine çevirmeyi ve amaçtaki sabiti eklemeyi unutmamak yeter. Bir sonraki bölümde, [Duyarlılık analizi](duyarlilik-analizi.qmd) bölümünde, optimal çözümün problemin verilerindeki değişikliklere nasıl tepki verdiğini inceleyeceğiz.

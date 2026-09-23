@@ -1,0 +1,1200 @@
+---
+title: "Sınırsız Çözüm ve Alternatif Optimal Çözüm"
+pagetitle: "Sınırsız Çözüm ve Alternatif Optimal Çözüm"
+description: "Simpleks tablosunda sınırsız çözümün tanınması ve yön vektörüyle gerekçesi, sınırsız uygun bölge ile sınırsız çözüm arasındaki fark, optimal tabloda sıfır simpleks kriterinden alternatif optimal çözüme geçiş, optimal çözümlerin konveks kombinasyonları ve optimal çözümlerin sınırsız bir ışın oluşturduğu durum."
+---
+
+Simpleks yöntem her iterasyonda iki soru sorar: Amacı iyileştiren bir vektör var mı, varsa onu baza alırken hangi vektör bazdan çıkar? [Simpleks yöntem](simpleks-yontem.qmd), [Büyük M yöntemi](buyuk-m-yontemi.qmd) ve [İki faz yöntemi](iki-faz-yontemi.qmd) bölümlerindeki örneklerde bu soruların cevabı hep sonunda tek bir optimal çözüme götürdü. Ama iki şey ters gidebilir. Birincisi, iyileştiren bir vektör bulunur ama oran testi yapılamaz, çünkü sütununda hiç pozitif eleman yoktur. İkincisi, optimal tabloya ulaşılır ama baz dışındaki bir vektörün simpleks kriteri sıfırdır.
+
+Bu bölümde bu iki durumu inceleyeceğiz. Birincisi **sınırsız çözüm** demektir: amaç fonksiyonu istenildiği kadar iyileştirilebilir ve optimal çözüm yoktur. İkincisi **alternatif optimal çözüm** demektir: aynı optimal değeri veren birden fazla, hatta sonsuz çok çözüm vardır. Her ikisini de önce tabloda nasıl tanıyacağımızı söyleyip sonra nedenini ispatlayacak, sonra da uygun bölgenin şekli üzerinde göreceğiz.
+
+## Tablodan Okunan İki Eşitlik {#sec-sao-tablo}
+
+İki durumun ispatında da aynı araç işimize yarayacak: Bir simpleks tablosu, yalnız o anki uygun temel çözümü değil, kısıtları sağlayan **her** çözümü baz dışındaki değişkenler cinsinden yazmamızı sağlar.
+
+[Simpleks yöntem](simpleks-yontem.qmd) bölümündeki gibi standart formdaki (@def-lpp-standart-form) problemi $x_1 v_1 + \dots + x_n v_n = v_0$, $x_j \ge 0$ biçiminde yazalım ve değişkenleri, bazın vektörleri ilk $m$ sütun olacak şekilde numaralandıralım: $B_0 = (v_1, \dots, v_m)$. Bu bazın uygun temel çözümü $X_0$, baz değişkenlerinin değerleri $x_i = y_{i0}$, amaç değeri $z_0$ olsun. Tablonun $v_j$ sütununda $v_j$'nin bu baza göre $y_{1j}, \dots, y_{mj}$ katsayıları, en alt satırda da $z_j - c_j$ simpleks kriteri durur.
+
+:::: {#lem-sao-tablo name="Tablodan okunan eşitlikler"}
+$\vec{u} = (u_1, \dots, u_n)$, $u_1 v_1 + \dots + u_n v_n = v_0$ eşitliğini sağlayan herhangi bir vektör olsun. Bu durumda her $i = \overline{1,m}$ için
+$$
+u_i = x_i - \sum_{j=m+1}^{n} y_{ij}\, u_j \tag{1}
+$$
+ve
+$$
+z(\vec{u}) = z_0 - \sum_{j=m+1}^{n} (z_j - c_j)\, u_j \tag{2}
+$$
+olur. Toplamlar yalnız baz dışındaki değişkenler üzerindendir.
+
+::: {.ispat}
+**(1) eşitliği.** Her $v_j$'yi baz cinsinden yazalım: $v_j = \sum_{i=1}^{m} y_{ij} v_i$. Baz vektörleri için bu yazım $v_i = 1 \cdot v_i$ yazılışıdır, yani $j \le m$ ise $y_{jj} = 1$ ve $i \ne j$ için $y_{ij} = 0$'dır. Yerine koyarsak
+$$
+v_0 = \sum_{j=1}^{n} u_j v_j = \sum_{i=1}^{m} \Big( \sum_{j=1}^{n} y_{ij}\, u_j \Big) v_i
+$$
+bulunur. Öte yandan $v_0 = \sum_{i=1}^{m} x_i v_i$'dir. Baz vektörleri lineer bağımsız olduğundan bir vektörün baz cinsinden yazılışı tektir; katsayıları eşitleriz:
+$$
+\sum_{j=1}^{n} y_{ij}\, u_j = x_i , \qquad i = \overline{1,m}.
+$$
+Soldaki toplamda $j \le m$ terimlerinden yalnız $j = i$ terimi kalır ve $u_i$'ye eşittir. Böylece $u_i + \sum_{j=m+1}^{n} y_{ij} u_j = x_i$, yani (1) elde edilir.
+
+**(2) eşitliği.** Amaç fonksiyonunu baz değişkenleri ve baz dışındaki değişkenler diye ikiye ayıralım, baz değişkenlerine (1)'i koyalım:
+$$
+\begin{aligned}
+z(\vec{u}) &= \sum_{i=1}^{m} c_i u_i + \sum_{j=m+1}^{n} c_j u_j \\[1mm]
+&= \sum_{i=1}^{m} c_i x_i - \sum_{j=m+1}^{n} \Big( \sum_{i=1}^{m} c_i y_{ij} \Big) u_j \\[1mm]
+&\quad + \sum_{j=m+1}^{n} c_j u_j .
+\end{aligned}
+$$
+İlk toplam $z_0$, parantez içindeki toplam da $z_j = \vec{c}_B^{\,T} \vec{y}_j$'dir. Son iki toplamı birleştirince (2) eşitliği elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani tablonun her satırı bir baz değişkenini, en alt satırı da amaç fonksiyonunu baz dışındaki değişkenler cinsinden verir. Baz dışındaki değişkenlerin hepsi sıfırken (1) ve (2) eşitlikleri $X_0$'ı ve $z_0$'ı geri verir. Baz dışındaki $x_j$ bir birim artırılırsa baz değişkeni $x_i$, $y_{ij}$ kadar azalır, amaç değeri de $z_j - c_j$ kadar azalır. Bu okuma bu bölümün bütün sonuçlarının anahtarıdır.
+
+## Sınırsız Çözüm {#sec-sao-sinirsiz}
+
+Önce amaç fonksiyonunun hiçbir sınır tanımadığı durumu tanımlayalım.
+
+::: {#def-sao-sinirsiz-cozum name="Sınırsız çözüm"}
+Uygun çözümü olan bir minimum probleminde amaç fonksiyonu alttan sınırlı değilse, yani her $K$ sayısı için $z(\vec{x}) < K$ olan bir uygun çözüm $\vec{x}$ varsa, problemin **sınırsız çözümü vardır** denir. Maksimum probleminde her $K$ için $z(\vec{x}) > K$ olan bir uygun çözüm varsa, yani amaç fonksiyonu üstten sınırlı değilse, yine problemin **sınırsız çözümü vardır** denir.
+:::
+
+Yani sınırsız çözümlü bir problemde uygun çözüm bol bol vardır, ama "en iyisi" yoktur: hangi uygun çözümü alırsak alalım, ondan daha iyi bir uygun çözüm bulunur. Bu yüzden sınırsız çözümlü problemin optimal çözümü yoktur. Uygun çözümü hiç olmayan problemle karıştırmamak gerekir; orada optimal çözümün yokluğu, aday bulunmamasından kaynaklanır.
+
+Amaç fonksiyonunu sınırsız iyileştirmek için uygun bölgede sonsuza kadar gidebilmek gerekir. Bunu bir vektörle ifade edelim.
+
+::: {#def-sao-yon name="Uygun bölgenin yön vektörü"}
+$A\vec{x} = \vec{b}$, $\vec{x} \ge 0$ uygun bölgesi için
+$$
+\vec{d} \ne \vec{0}, \qquad \vec{d} \ge 0, \qquad A\vec{d} = \vec{0}
+$$
+koşullarını sağlayan $\vec{d}$ vektörüne uygun bölgenin bir **yön vektörü** denir.
+:::
+
+Yani $\vec{d}$ bir yön vektörüyse, herhangi bir uygun $\vec{x}$ çözümünden $\vec{d}$ yönünde ne kadar gidersek gidelim uygun bölgede kalırız: her $\lambda \ge 0$ için $A(\vec{x} + \lambda \vec{d}) = A\vec{x} + \lambda A\vec{d} = \vec{b}$ ve $\vec{x} + \lambda \vec{d} \ge 0$'dır. Özellikle yön vektörü olan boş olmayan bir uygun bölge sınırsızdır. Amaç değeri bu yarı doğru boyunca $z(\vec{x} + \lambda \vec{d}) = z(\vec{x}) + \lambda\, \vec{c}^{\,T} \vec{d}$ biçiminde değişir; $\vec{c}^{\,T} \vec{d}$'nin işareti, bu yönde gidince amacın arttığını mı azaldığını mı söyler.
+
+[Simpleks yöntem](simpleks-yontem.qmd) bölümünde, baza girecek sütunda pozitif eleman yoksa oran testinin yapılamadığını ve problemin sınırsız olduğunu kısaca görmüştük. Aşağıdaki teorem bu durumu yön vektörüyle ifade ediyor ve tablodan gidilecek yönü doğrudan okumayı sağlıyor.
+
+:::: {#thm-sao-sinirsiz name="Sınırsız çözüm teoremi"}
+$X_0$, $B_0 = (v_1, \dots, v_m)$ bazına karşılık gelen bir uygun temel çözüm olsun. Baz dışındaki bir $v_k$ vektörünün sütununda hiç pozitif eleman bulunmasın: her $i = \overline{1,m}$ için $y_{ik} \le 0$. $\vec{d}$ vektörünün bileşenleri
+$$
+d_i = -y_{ik} \ (i = \overline{1,m}), \qquad d_k = 1,
+$$
+diğerleri $0$ olsun. Bu durumda:
+
+1. $\vec{d}$ uygun bölgenin bir yön vektörüdür ve her $\lambda \ge 0$ için $X(\lambda) = X_0 + \lambda \vec{d}$ uygun bir çözümdür. Bileşen bileşen $X(\lambda)$'da $x_k = \lambda$, her baz değişkeni $x_i - \lambda y_{ik}$, diğer değişkenler $0$'dır.
+2. $X(\lambda)$'nın amaç değeri $z_0 - \lambda (z_k - c_k)$'dır.
+3. Minimum probleminde $z_k - c_k > 0$ ise, maksimum probleminde $z_k - c_k < 0$ ise problemin sınırsız çözümü vardır.
+4. $X_0$ dejenere değilse her $\lambda > 0$ için $X(\lambda)$'nın tam $m + 1$ bileşeni pozitiftir; dolayısıyla $X(\lambda)$ bir temel çözüm değildir.
+
+::: {.ispat}
+**1.** $\vec{d} \ne \vec{0}$'dır, çünkü $d_k = 1$. Her $y_{ik} \le 0$ olduğundan $d_i = -y_{ik} \ge 0$; yani $\vec{d} \ge 0$. $A\vec{d}$, $A$'nın sütunlarının $\vec{d}$'nin bileşenleriyle ağırlıklı toplamıdır:
+$$
+A\vec{d} = \sum_{i=1}^{m} (-y_{ik})\, v_i + 1 \cdot v_k = v_k - \sum_{i=1}^{m} y_{ik}\, v_i = \vec{0},
+$$
+çünkü $y_{ik}$ sayıları tam olarak $v_k = \sum_{i=1}^{m} y_{ik} v_i$ eşitliğini sağlayan katsayılardır. Böylece $\vec{d}$ bir yön vektörüdür ve @def-sao-yon altındaki açıklama gereği her $\lambda \ge 0$ için $X(\lambda)$ uygundur. $X_0$'ın baz dışı bileşenleri $0$ olduğundan $X(\lambda)$'nın bileşenleri iddia edildiği gibidir.
+
+**2.** $X(\lambda)$'da baz dışındaki değişkenlerden yalnız $x_k = \lambda$ sıfırdan farklıdır. @lem-sao-tablo içindeki (2) eşitliğinde toplamdan yalnız $j = k$ terimi kalır: $z\big(X(\lambda)\big) = z_0 - \lambda (z_k - c_k)$.
+
+**3.** Minimum probleminde $z_k - c_k > 0$ olsun ve $K$ herhangi bir sayı olsun. $\lambda > (z_0 - K)/(z_k - c_k)$ ve $\lambda \ge 0$ seçersek $\lambda (z_k - c_k) > z_0 - K$, yani $z\big(X(\lambda)\big) < K$ olur. Amaç fonksiyonu alttan sınırlı değildir. Maksimumda $z_k - c_k < 0$ ise aynı hesap $-\lambda (z_k - c_k) = \lambda\, |z_k - c_k|$ terimini istenildiği kadar büyütür; amaç fonksiyonu üstten sınırlı değildir. İki durumda da @def-sao-sinirsiz-cozum gereği problemin sınırsız çözümü vardır.
+
+**4.** $X_0$ dejenere değilse her $x_i > 0$'dır. $\lambda > 0$ için $x_i - \lambda y_{ik} \ge x_i > 0$ ve $x_k = \lambda > 0$; bunlar $m + 1$ tane pozitif bileşendir, geri kalan bileşenler $0$'dır. Bir temel çözümün sıfırdan farklı bileşenleri bir baza ait olduğu için en fazla $m$ tanedir (@def-tck-temel-cozum). Demek ki $X(\lambda)$ temel çözüm değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani iyileştiren bir $v_k$ baza alınmak istendiğinde oran testi "$x_k$ en fazla ne kadar büyüyebilir?" sorusuna cevap verir. Sütunda pozitif eleman yoksa hiçbir baz değişkeni $x_k$ büyüdükçe azalmaz, hiçbiri sıfıra düşmez; $x_k$ sınırsız artırılabilir. Bu sırada amaç değeri, @lem-sao-tablo altında söylediğimiz gibi, $x_k$'nın her birim artışında $|z_k - c_k|$ kadar iyileşir. Geometrik olarak $X_0$ köşesinden uygun bölgenin sınırsız bir kenarı boyunca sonsuza gidilir. $X_0$ dejenere değilse bu kenar üzerindeki noktalar $m + 1$ pozitif bileşenli oldukları için köşe değildir; kenarın öbür ucunda bir köşe yoktur, simpleks yöntem de bu yüzden yeni bir tablo kuramaz.
+
+::: {.callout-tip title="Sınırsız çözümü tabloda üç adımda tanıma"}
+1. Baza girecek $v_k$ vektörünü her zamanki gibi seç: minimumda en büyük pozitif $z_j - c_j$, maksimumda en negatif $z_j - c_j$.
+2. Oran testinden önce $v_k$ sütununa bak. Hiç pozitif eleman yoksa dur: problemin sınırsız çözümü vardır (@thm-sao-sinirsiz).
+3. Sınırsızlığı göstermek için $x_k = \lambda$ al, baz değişkenlerini $x_i - \lambda y_{ik}$ olarak, amaç değerini $z_0 - \lambda (z_k - c_k)$ olarak yaz ve $\lambda \to \infty$ iken amacın $+\infty$ ya da $-\infty$'a gittiğini göster.
+:::
+
+:::: {#exm-sao-sinirsiz-basit name="İki değişkenli bir sınırsız çözüm"}
+$$
+\begin{aligned}
+x_1 - x_2 &\le 2 \\
+-2x_1 + x_2 &\le 2 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 2x_1 + x_2
+\end{aligned}
+$$
+problemini simpleks yöntemle çözünüz.
+
+::: {.cozum}
+**Standart form.** İki kısıt da $\le$ biçimindedir ve sağ tarafları negatif değildir. Problemi standart forma (@def-lpp-standart-form) getirmek için $x_3$ ve $x_4$ aylak değişkenlerini ekleriz:
+$$
+\begin{aligned}
+x_1 - x_2 + x_3 &= 2 \\
+-2x_1 + x_2 + x_4 &= 2 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\max z &= 2x_1 + x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+$v_3$ ve $v_4$ sütunları $2 \times 2$ birim matrisi oluşturduğu için bu standart form simpleks yöntem ile çözülebilir haldedir (@def-lpp-cozulebilir-hal). Başlangıç bazı $B_0 = (v_3, v_4)$'tür.
+
+**Başlangıç tablosu.** Maksimumda en negatif $z_j - c_j$ baza girer ve bütün $z_j - c_j \ge 0$ olunca durulur. Kriterler $z_1 - c_1 = -2$ ve $z_2 - c_2 = -1$'dir; $v_1$ baza girer. $v_1$ sütununda $x_4$ satırının elemanı $-2 < 0$ olduğundan oran yalnız $x_3$ satırında hesaplanır: $2/1 = 2$. $v_3$ bazdan çıkar, pivot $1$'dir.
+
+|   |   | $c_j$ | $2$ | $1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $2$ | $[1]$ | $-1$ | $1$ | $0$ | $\frac{2}{1} \Rightarrow$ |
+| $x_4$ | $0$ | $2$ | $-2$ | $1$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-2 \Uparrow$ | $-1$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-sao-basit-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot $1$ olduğundan $x_3$ satırı aynen kalır ve $x_1$ satırı olur: $(2 \mid 1, -1, 1, 0)$. $x_4$ satırına bu satırın $2$ katını, $z_j - c_j$ satırına da $2$ katını ekleriz (@sec-smp-donusum):
+$$
+\begin{aligned}
+x_4&: \ (2 + 4 \mid -2 + 2,\ 1 - 2,\ 0 + 2,\ 1) = (6 \mid 0, -1, 2, 1), \\
+z_j - c_j&: \ (0 + 4 \mid -2 + 2,\ -1 - 2,\ 0 + 2,\ 0) = (4 \mid 0, -3, 2, 0).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_1$ | $2$ | $2$ | $1$ | $-1$ | $1$ | $0$ | $-$ |
+| $x_4$ | $0$ | $6$ | $0$ | $-1$ | $2$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 4$ | $0$ | $-3 \Uparrow$ | $2$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-sao-basit-birinci .simpleks}
+
+Birinci iterasyon tablosunda (@tbl-sao-basit-birinci) $X_1 = (2, 0, 0, 6)$ ve $z = 4$'tür. Negatif kriter $z_2 - c_2 = -3$ kaldığı için optimal değiliz ve $v_2$ baza girmelidir. Ama $v_2$ sütununun elemanları $-1$ ve $-1$'dir; hiçbiri pozitif değildir ve oran testi yapılamaz. @thm-sao-sinirsiz gereği problemin sınırsız çözümü vardır.
+
+**Sınırsızlığın gösterilmesi.** $x_2 = \lambda \ge 0$ alalım; $x_3$ baz dışında $0$ kalır. Tablonun satırları (@lem-sao-tablo)
+$$
+x_1 = 2 - (-1)\lambda = 2 + \lambda, \qquad x_4 = 6 - (-1)\lambda = 6 + \lambda
+$$
+verir. Kontrol: $(2 + \lambda) - \lambda = 2$ ve $-2(2 + \lambda) + \lambda + (6 + \lambda) = 2$. Amaç değeri
+$$
+z = 2(2 + \lambda) + \lambda = 4 + 3\lambda
+$$
+olur; bu, $z_0 - \lambda (z_2 - c_2) = 4 - \lambda(-3)$ ile aynıdır. $\lambda \to \infty$ iken $z \to +\infty$; maksimum yoktur. Yön vektörü $\vec{d} = (1, 1, 0, 1)$'dir: $x_1$ ile $x_2$ aynı hızla artarken birinci kısıt hep eşitlikle sağlanır.
+
+Aşağıdaki şekilde uygun bölge ve bu yarı doğru görülüyor.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 496.0 496.0" role="img" aria-label="Unbounded feasible region between x1 - x2 = 2 and -2x1 + x2 = 2; simplex path from (0,0) to (2,0) and an arrow along the edge x1 - x2 = 2 to infinity; dashed level lines z = 4 and z = 10">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="165.1" y1="30.0" x2="165.1" y2="490.0"/><line x1="230.9" y1="30.0" x2="230.9" y2="490.0"/><line x1="296.6" y1="30.0" x2="296.6" y2="490.0"/><line x1="362.3" y1="30.0" x2="362.3" y2="490.0"/><line x1="428.0" y1="30.0" x2="428.0" y2="490.0"/><line x1="493.7" y1="30.0" x2="493.7" y2="490.0"/><line x1="60.0" y1="384.9" x2="520.0" y2="384.9"/><line x1="60.0" y1="319.1" x2="520.0" y2="319.1"/><line x1="60.0" y1="253.4" x2="520.0" y2="253.4"/><line x1="60.0" y1="187.7" x2="520.0" y2="187.7"/><line x1="60.0" y1="122.0" x2="520.0" y2="122.0"/><line x1="60.0" y1="56.3" x2="520.0" y2="56.3"/></g>
+  <polygon points="99.4,450.6 230.9,450.6 520.0,161.4 520.0,30.0 244.0,30.0 99.4,319.1" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M520.0,161.4 L191.4,490.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,398.0 L244.0,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,108.9 L250.6,490.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M447.7,490.0 L217.7,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="450.6" x2="524.0" y2="450.6"/>
+  <line x1="99.4" y1="494.0" x2="99.4" y2="26.0"/>
+  <polygon points="524.0,450.6 516.0,447.1 516.0,454.1" stroke="none"/>
+  <polygon points="99.4,26.0 95.9,34.0 102.9,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="165.1" y1="447.6" x2="165.1" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="165.1" y="465.6" text-anchor="middle">1</text>
+  <line x1="230.9" y1="447.6" x2="230.9" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="230.9" y="465.6" text-anchor="middle">2</text>
+  <line x1="296.6" y1="447.6" x2="296.6" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="296.6" y="465.6" text-anchor="middle">3</text>
+  <line x1="362.3" y1="447.6" x2="362.3" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="362.3" y="465.6" text-anchor="middle">4</text>
+  <line x1="428.0" y1="447.6" x2="428.0" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="428.0" y="465.6" text-anchor="middle">5</text>
+  <line x1="493.7" y1="447.6" x2="493.7" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="493.7" y="465.6" text-anchor="middle">6</text>
+  <line x1="96.4" y1="384.9" x2="102.4" y2="384.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="388.9" text-anchor="end">1</text>
+  <line x1="96.4" y1="319.1" x2="102.4" y2="319.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="323.1" text-anchor="end">2</text>
+  <line x1="96.4" y1="253.4" x2="102.4" y2="253.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="257.4" text-anchor="end">3</text>
+  <line x1="96.4" y1="187.7" x2="102.4" y2="187.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="191.7" text-anchor="end">4</text>
+  <line x1="96.4" y1="122.0" x2="102.4" y2="122.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="126.0" text-anchor="end">5</text>
+  <line x1="96.4" y1="56.3" x2="102.4" y2="56.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="60.3" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="522.0" y="465.6" text-anchor="end">x₁</text>
+  <text x="106.4" y="35.0">x₂</text>
+  </g>
+  <line x1="99.4" y1="450.6" x2="222.1" y2="450.6" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="230.9,450.6 219.9,455.2 219.9,446.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="230.9" y1="450.6" x2="460.6" y2="220.8" stroke="var(--color-practice)" stroke-width="3.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="467.4,214.0 462.5,226.0 455.4,218.9" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="99.4" cy="450.6" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="230.9" cy="450.6" r="4.5" fill="var(--color-practice)"/>
+  <text x="91.4" y="468.6" fill="var(--academic-text)" font-size="13" text-anchor="end">X₀</text>
+  <text x="238.9" y="441.6" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁ = (2, 0)</text>
+  <text x="401.7" y="322.4" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ &#8722; x₂ = 2</text>
+  <text x="253.9" y="53.0" fill="var(--color-remark)" font-size="12" text-anchor="start">&#8722;2x₁ + x₂ = 2</text>
+  <text x="109.3" y="145.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = 4</text>
+  <text x="444.4" y="427.6" fill="var(--color-base)" font-size="12" text-anchor="start">z = 10</text>
+  <text x="303.1" y="345.4" fill="var(--color-practice)" font-size="13" text-anchor="end">(2 + λ, λ)</text>
+  <line x1="382.0" y1="148.3" x2="439.5" y2="119.5" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="446.7,116.0 439.6,124.2 435.8,116.7" fill="var(--color-base)" opacity="1.0"/>
+  <text x="382.0" y="168.0" fill="var(--color-base)" font-size="12" text-anchor="start">z artar</text>
+  <text x="129.0" y="381.6" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>Uygun bölge sağa ve yukarı doğru sınırsızdır. Simpleks X₀ = (0, 0) köşesinden X₁ = (2, 0) köşesine geçer; oradan x₁ − x₂ = 2 kenarı boyunca (2 + λ, λ) yönünde sonsuza kadar gidilebilir. Kesikli doğrular z = 4 ve z = 10 seviye doğrularıdır; bu yönde z = 4 + 3λ sınırsız büyür.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi yapay değişken gerektiren bir problemde aynı durumu, iki faz yöntemiyle çözerken görelim.
+
+:::: {#exm-sao-sinirsiz name="İki faz yöntemiyle çözülen sınırsız bir problem"}
+$$
+\begin{aligned}
+-x_1 + x_2 &\le 2 \\
+x_1 + 4x_2 &\ge 4 \\
+x_1, x_2 &\ge 0 \\
+\min z &= -x_1 - 2x_2
+\end{aligned}
+$$
+problemini iki faz yöntemi ile çözünüz.
+
+::: {.cozum}
+**Standart form.** Birinci kısıta $x_3$ aylak değişkenini ekler, ikinci kısıttan $x_4$ artık değişkenini çıkarırız:
+$$
+\begin{aligned}
+-x_1 + x_2 + x_3 &= 2 \\
+x_1 + 4x_2 - x_4 &= 4 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\min z &= -x_1 - 2x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+Birinci denklemin birim sütunu $x_3$'tür, ama ikinci denklemde $x_4$'ün katsayısı $-1$'dir. Standart form birim matris içermediği için henüz simpleks yöntem ile çözülebilir halde değildir.
+
+**Çözülebilir hal.** İkinci denkleme $x_{u_1}$ yapay değişkenini ekleriz (@def-lpp-yapay-degisken):
+$$
+\begin{aligned}
+-x_1 + x_2 + x_3 + 0x_4 + 0x_{u_1} &= 2 \\
+x_1 + 4x_2 + 0x_3 - x_4 + x_{u_1} &= 4 \\
+x_1, x_2, x_3, x_4, x_{u_1} &\ge 0 \\
+\min z &= -x_1 - 2x_2 + 0(x_3 + x_4) \\
+&\quad + Mx_{u_1}
+\end{aligned}
+$$
+$v_3$ ve $v_{u_1}$ sütunları birim matrisi oluşturur. İki faz yönteminde $M$ ile hesap yapmayız: Faz 1'de yapay değişkeni sıfıra indirecek yardımcı problemi, Faz 2'de asıl amaç fonksiyonunu çözeriz ([İki faz yöntemi](iki-faz-yontemi.qmd)).
+
+**Faz 1.** Yardımcı problemin amaç fonksiyonu $\min g = x_{u_1}$'dir; tablonun en üst satırına bu fonksiyonun katsayıları, en alt satırına $g_j - c_j$ yazılır. Başlangıç bazı $(v_3, v_{u_1})$, maliyetleri $0$ ve $1$'dir. Kriterler, $x_{u_1}$ satırının $1$ katından ilgili $c_j$ çıkarılarak bulunur: örneğin $g_2 - c_2 = 0 \cdot 1 + 1 \cdot 4 - 0 = 4$. Minimumda en büyük pozitif kriter girer: $v_2$. Oranlar $2/1 = 2$ ve $4/4 = 1$'dir; en küçüğü $x_{u_1}$ satırındadır, $v_{u_1}$ bazdan çıkar ve pivot $4$'tür.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | Oran |
+| $x_3$ | $0$ | $2$ | $-1$ | $1$ | $1$ | $0$ | $0$ | $\frac{2}{1}$ |
+| $x_{u_1}$ | $1$ | $4$ | $1$ | $[4]$ | $0$ | $-1$ | $1$ | $\frac{4}{4} \Rightarrow$ |
+| $g_j - c_j$ |   | $g_0 = 4$ | $1$ | $4 \Uparrow$ | $0$ | $-1$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 1 {#tbl-sao-faz1-baslangic .simpleks}
+
+Pivot satırını $4$'e böleriz: $x_2$ satırı $\big(1 \mid \tfrac{1}{4}, 1, 0, -\tfrac{1}{4}\big)$ olur. $x_3$ satırından bu satırı çıkarırız, $g_j - c_j$ satırından da $4$ katını:
+$$
+\begin{aligned}
+x_3&: \ \big(2 - 1 \mid -1 - \tfrac{1}{4},\ 0,\ 1,\ 0 + \tfrac{1}{4}\big) = \big(1 \mid -\tfrac{5}{4}, 0, 1, \tfrac{1}{4}\big), \\[1mm]
+g_j - c_j&: \ (4 - 4 \mid 1 - 1,\ 0,\ 0,\ -1 + 1) = (0 \mid 0, 0, 0, 0).
+\end{aligned}
+$$
+Yapay değişken bazdan çıktığı için onun sütununu artık yazmıyoruz.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $0$ | $1$ | $-\frac{5}{4}$ | $0$ | $1$ | $\frac{1}{4}$ |
+| $x_2$ | $0$ | $1$ | $\frac{1}{4}$ | $1$ | $0$ | $-\frac{1}{4}$ |
+| $g_j - c_j$ |   | $g_0 = 0$ | $0$ | $0$ | $0$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 1 {#tbl-sao-faz1-son .simpleks .oransiz}
+
+Bütün $g_j - c_j \le 0$ ve $\min g = 0$'dır: yapay değişken sıfıra indi. Elimizde asıl problemin $(x_1, x_2, x_3, x_4) = (0, 1, 1, 0)$ uygun temel çözümü vardır.
+
+**Faz 2.** Aynı tabloyu asıl amaç katsayılarıyla yeniden yazarız: en üst satır $-1, -2, 0, 0$; $c_B$ sütunu $x_3$ için $0$, $x_2$ için $-2$ olur. Kriterler:
+$$
+\begin{aligned}
+z_1 - c_1 &= 0 \cdot \big(-\tfrac{5}{4}\big) + (-2) \cdot \tfrac{1}{4} - (-1) = \tfrac{1}{2}, \\[1mm]
+z_4 - c_4 &= 0 \cdot \tfrac{1}{4} + (-2) \cdot \big(-\tfrac{1}{4}\big) - 0 = \tfrac{1}{2},
+\end{aligned}
+$$
+$z_0 = (-2) \cdot 1 = -2$; baz vektörlerinin kriterleri $0$'dır.
+
+Minimumda en büyük pozitif kriter girer ve bütün $z_j - c_j \le 0$ olunca durulur. Burada iki kriter eşittir. Eşitlikte küçük indisli vektörü seçme alışkanlığımız $v_1$'i seçtirirdi, ama eşitlikte seçim serbesttir; ikisi de amacı iyileştirir. Önce $v_4$'ü seçelim, çözümün sonunda $v_1$'i seçmenin de aynı sonuca götürdüğünü göreceğiz. $v_4$ sütununda yalnız $x_3$ satırının elemanı pozitiftir; oran $\frac{1}{1/4} = 4$, $v_3$ bazdan çıkar ve pivot $\tfrac{1}{4}$'tür.
+
+|   |   | $c_j$ | $-1$ | $-2$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $1$ | $-\frac{5}{4}$ | $0$ | $1$ | $[\frac{1}{4}]$ | $\frac{1}{1/4} \Rightarrow$ |
+| $x_2$ | $-2$ | $1$ | $\frac{1}{4}$ | $1$ | $0$ | $-\frac{1}{4}$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -2$ | $\frac{1}{2}$ | $0$ | $0$ | $\frac{1}{2} \Uparrow$ |   |
+
+: Başlangıç tablosu — Faz 2 {#tbl-sao-faz2-baslangic .simpleks}
+
+Pivot satırını $\tfrac{1}{4}$'e bölmek $4$ ile çarpmaktır: $x_4$ satırı $(4 \mid -5, 0, 4, 1)$ olur. $x_2$ satırına bu satırın $\tfrac{1}{4}$ katını ekleriz, $z_j - c_j$ satırından $\tfrac{1}{2}$ katını çıkarırız:
+$$
+\begin{aligned}
+x_2&: \ \big(1 + 1 \mid \tfrac{1}{4} - \tfrac{5}{4},\ 1,\ 0 + 1,\ 0\big) = (2 \mid -1, 1, 1, 0), \\[1mm]
+z_j - c_j&: \ \big(-2 - 2 \mid \tfrac{1}{2} + \tfrac{5}{2},\ 0,\ 0 - 2,\ 0\big) = (-4 \mid 3, 0, -2, 0).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $-1$ | $-2$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_4$ | $0$ | $4$ | $-5$ | $0$ | $4$ | $1$ | $-$ |
+| $x_2$ | $-2$ | $2$ | $-1$ | $1$ | $1$ | $0$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -4$ | $3 \Uparrow$ | $0$ | $-2$ | $0$ |   |
+
+: Birinci iterasyon tablosu — Faz 2 {#tbl-sao-faz2-birinci .simpleks}
+
+**Sınırsızlık.** Birinci iterasyon tablosunda (@tbl-sao-faz2-birinci) $v_1$'in simpleks kriteri $3 > 0$'dır; $v_1$ baza girebilir. Fakat $v_1$ sütununun bileşenleri $-5$ ve $-1$'dir, hepsi negatiftir. Oran testi yapılamaz ve @thm-sao-sinirsiz gereği problemin sınırsız çözümü vardır.
+
+Bunu açıkça görelim. $x_1 = \lambda \ge 0$ değeriyle çözüme girer, $x_3 = 0$ kalır. Kısıtlardan
+$$
+\begin{aligned}
+-x_1 + x_2 + x_3 = 2 &\ \Longrightarrow\ x_2 = 2 + \lambda, \\
+x_1 + 4x_2 - x_4 = 4 &\ \Longrightarrow\ x_4 = 4 + 5\lambda
+\end{aligned}
+$$
+bulunur; bunlar tablonun satırlarının söylediği $x_2 = 2 - (-1)\lambda$ ve $x_4 = 4 - (-5)\lambda$ değerleridir. $\lambda > 0$ için üç değişkeni pozitif olan bir uygun çözüm elde ederiz:
+$$
+X(\lambda) = (\lambda,\ 2 + \lambda,\ 0,\ 4 + 5\lambda),
+$$
+$$
+z = -\lambda - 2(2 + \lambda) = -4 - 3\lambda .
+$$
+$\lambda > 0$ sayısı istenildiği kadar büyük seçilebildiğinden $z = -4 - 3\lambda$ istenildiği kadar küçük yapılabilir; amaç fonksiyonu alttan sınırlı değildir. Yön vektörü $\vec{d} = (1, 1, 0, 5)$'tir. $x_3 = 0$ kaldığı için bu yarı doğru $-x_1 + x_2 = 2$ doğrusu üzerindedir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 411.0" role="img" aria-label="Unbounded feasible region of -x1 + x2 at most 2, x1 + 4x2 at least 4 with corners (0,1), (0,2), (4,0); path from (0,1) to (0,2) then an arrow along -x1 + x2 = 2 to infinity; dashed level lines z = -4 and z = -10">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="160.0" y1="30.0" x2="160.0" y2="405.0"/><line x1="222.5" y1="30.0" x2="222.5" y2="405.0"/><line x1="285.0" y1="30.0" x2="285.0" y2="405.0"/><line x1="347.5" y1="30.0" x2="347.5" y2="405.0"/><line x1="410.0" y1="30.0" x2="410.0" y2="405.0"/><line x1="472.5" y1="30.0" x2="472.5" y2="405.0"/><line x1="535.0" y1="30.0" x2="535.0" y2="405.0"/><line x1="60.0" y1="305.0" x2="560.0" y2="305.0"/><line x1="60.0" y1="242.5" x2="560.0" y2="242.5"/><line x1="60.0" y1="180.0" x2="560.0" y2="180.0"/><line x1="60.0" y1="117.5" x2="560.0" y2="117.5"/><line x1="60.0" y1="55.0" x2="560.0" y2="55.0"/></g>
+  <polygon points="97.5,305.0 97.5,242.5 310.0,30.0 560.0,30.0 560.0,367.5 347.5,367.5" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M60.0,280.0 L310.0,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,295.6 L497.5,405.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,223.8 L422.5,405.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,36.2 L560.0,286.2" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="367.5" x2="564.0" y2="367.5"/>
+  <line x1="97.5" y1="409.0" x2="97.5" y2="26.0"/>
+  <polygon points="564.0,367.5 556.0,364.0 556.0,371.0" stroke="none"/>
+  <polygon points="97.5,26.0 94.0,34.0 101.0,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="160.0" y1="364.5" x2="160.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="160.0" y="382.5" text-anchor="middle">1</text>
+  <line x1="222.5" y1="364.5" x2="222.5" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="222.5" y="382.5" text-anchor="middle">2</text>
+  <line x1="285.0" y1="364.5" x2="285.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="285.0" y="382.5" text-anchor="middle">3</text>
+  <line x1="347.5" y1="364.5" x2="347.5" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="347.5" y="382.5" text-anchor="middle">4</text>
+  <line x1="410.0" y1="364.5" x2="410.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="410.0" y="382.5" text-anchor="middle">5</text>
+  <line x1="472.5" y1="364.5" x2="472.5" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="472.5" y="382.5" text-anchor="middle">6</text>
+  <line x1="535.0" y1="364.5" x2="535.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="535.0" y="382.5" text-anchor="middle">7</text>
+  <line x1="94.5" y1="305.0" x2="100.5" y2="305.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="309.0" text-anchor="end">1</text>
+  <line x1="94.5" y1="242.5" x2="100.5" y2="242.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="246.5" text-anchor="end">2</text>
+  <line x1="94.5" y1="180.0" x2="100.5" y2="180.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="184.0" text-anchor="end">3</text>
+  <line x1="94.5" y1="117.5" x2="100.5" y2="117.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="121.5" text-anchor="end">4</text>
+  <line x1="94.5" y1="55.0" x2="100.5" y2="55.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="59.0" text-anchor="end">5</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="382.5" text-anchor="end">x₁</text>
+  <text x="104.5" y="35.0">x₂</text>
+  </g>
+  <line x1="97.5" y1="305.0" x2="97.5" y2="251.3" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="97.5,242.5 102.1,253.5 92.9,253.5" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="97.5" y1="242.5" x2="284.5" y2="55.5" stroke="var(--color-practice)" stroke-width="3.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="291.2,48.8 286.3,60.8 279.2,53.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="422.5" y1="305.0" x2="455.3" y2="239.5" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="458.8,232.3 458.1,243.2 450.6,239.4" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="97.5" cy="305.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="97.5" cy="242.5" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="347.5" cy="367.5" r="4.5" fill="var(--color-practice)"/>
+  <text x="106.5" y="321.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀ = (0, 1)</text>
+  <text x="109.5" y="247.5" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁ = (0, 2)</text>
+  <text x="353.5" y="358.5" fill="var(--academic-text)" font-size="13" text-anchor="start">(4, 0)</text>
+  <text x="156.9" y="64.4" fill="var(--color-remark)" font-size="12" text-anchor="start">&#8722;x₁ + x₂ = 2</text>
+  <text x="172.5" y="362.5" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 4x₂ = 4</text>
+  <text x="169.4" y="260.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = &#8722;4</text>
+  <text x="475.6" y="220.6" fill="var(--color-base)" font-size="12" text-anchor="start">z = &#8722;10</text>
+  <text x="422.5" y="328.8" fill="var(--color-base)" font-size="12" text-anchor="middle">z azalır</text>
+  <text x="225.6" y="158.1" fill="var(--color-practice)" font-size="13" text-anchor="start">(λ, 2 + λ)</text>
+  <text x="360.0" y="98.8" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>−x₁ + x₂ ≤ 2, x₁ + 4x₂ ≥ 4 bölgesi sınırsızdır. Faz 2 X₀ = (0, 1) köşesinden X₁ = (0, 2) köşesine geçer; oradan −x₁ + x₂ = 2 kenarı boyunca (λ, 2 + λ) noktalarına gidildikçe z = −4 − 3λ sınırsız azalır. Kesikli doğrular z = −4 ve z = −10 seviye doğrularıdır, ok z'nin azaldığı yönü gösterir.</figcaption>
+</figure>
+```
+
+**Eşitlikte $v_1$ seçilseydi.** Faz 2 başlangıç tablosunda (@tbl-sao-faz2-baslangic) $v_1$'i baza alalım. $v_1$ sütununda yalnız $x_2$ satırının elemanı $\tfrac{1}{4}$ pozitiftir; oran $\frac{1}{1/4} = 4$, $v_2$ bazdan çıkar. Pivot satırı $4$ ile çarpılınca $x_1$ satırı $(4 \mid 1, 4, 0, -1)$ olur; $x_3$ satırına bunun $\tfrac{5}{4}$ katı eklenir, $z_j - c_j$ satırından $\tfrac{1}{2}$ katı çıkarılır:
+
+|   |   | $c_j$ | $-1$ | $-2$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $6$ | $0$ | $5$ | $1$ | $-1$ | $-$ |
+| $x_1$ | $-1$ | $4$ | $1$ | $4$ | $0$ | $-1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -4$ | $0$ | $-2$ | $0$ | $1 \Uparrow$ |   |
+
+: Birinci iterasyon tablosu — Faz 2, eşitlikte $v_1$ seçilirse {#tbl-sao-faz2-v1 .simpleks}
+
+Bu kez $z_4 - c_4 = 1 > 0$ ile $v_4$ baza girmek ister, ama sütunu $(-1, -1)$'dir. Yine sınırsız çözüm vardır: $x_4 = \lambda$ alınırsa $x_3 = 6 + \lambda$, $x_1 = 4 + \lambda$, $x_2 = 0$ ve $z = -4 - \lambda$ olur. Bu da uygun bölgenin öbür sınırsız kenarıdır: $(4, 0)$ köşesinden $x_1$ ekseni boyunca sağa gidilir. Hangi yoldan gidilirse gidilsin problemin minimumu yoktur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Sınırsız Bölge ile Sınırsız Çözüm Aynı Şey Değildir {#sec-sao-bolge}
+
+Son örnekte uygun bölge sınırsızdı ve amaç fonksiyonu da sınırsızdı. Bu ikisinin arasındaki bağ tek yönlüdür.
+
+:::: {#prp-sao-sinirli-bolge name="Sınırlı bölgede sınırsız çözüm olmaz"}
+Bir lineer programlama probleminin uygun bölgesi sınırlıysa, yani bütün uygun çözümler için $0 \le x_j \le K$ ($j = \overline{1,n}$) olacak şekilde bir $K$ sayısı varsa, problemin sınırsız çözümü yoktur. Başka bir deyişle, sınırsız çözümü olan bir problemin uygun bölgesi sınırsızdır.
+
+::: {.ispat}
+Her uygun çözüm için üçgen eşitsizliğiyle
+$$
+|z(\vec{x})| = \Big| \sum_{j=1}^{n} c_j x_j \Big| \le \sum_{j=1}^{n} |c_j|\, x_j \le K \sum_{j=1}^{n} |c_j|
+$$
+olur. Amaç fonksiyonu uygun bölgede hem alttan hem üstten $K \sum_j |c_j|$ ile sınırlıdır; dolayısıyla @def-sao-sinirsiz-cozum koşulu sağlanamaz. İkinci cümle birincinin karşıt tersidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani sınırsız çözüm için sınırsız bölge gereklidir, ama yeterli değildir. Bölge sonsuza uzansa bile amaç fonksiyonu o yönde kötüleşiyorsa, bölgenin sınırsızlığı optimumu etkilemez. Aşağıdaki örnekte bir önceki örneğin bölgesini değiştirmeden yalnız amaç fonksiyonunu değiştiriyoruz.
+
+:::: {#exm-sao-sonlu name="Sınırsız bölgede sonlu optimum"}
+$$
+\begin{aligned}
+-x_1 + x_2 &\le 2 \\
+x_1 + 4x_2 &\ge 4 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 - x_2
+\end{aligned}
+$$
+problemini iki faz yöntemi ile çözünüz.
+
+::: {.cozum}
+Kısıtlar bir önceki örnektekilerle (@exm-sao-sinirsiz) aynıdır; standart form ve çözülebilir hal de aynıdır. Faz 1 amaç fonksiyonuna hiç bakmaz, bu yüzden Faz 1 tabloları da aynen geçerlidir: Faz 1 optimal tablosunda (@tbl-sao-faz1-son) baz $(v_3, v_2)$ ve uygun temel çözüm $(0, 1, 1, 0)$'dır.
+
+**Faz 2.** Tabloyu yeni amaç katsayılarıyla yazarız: en üst satır $2, -1, 0, 0$; $c_B$ sütunu $x_3$ için $0$, $x_2$ için $-1$. Kriterler:
+$$
+\begin{aligned}
+z_1 - c_1 &= (-1) \cdot \tfrac{1}{4} - 2 = -\tfrac{9}{4}, \\[1mm]
+z_4 - c_4 &= (-1) \cdot \big(-\tfrac{1}{4}\big) - 0 = \tfrac{1}{4},
+\end{aligned}
+$$
+$z_0 = (-1) \cdot 1 = -1$. Minimumda en büyük pozitif kriter girer; tek pozitif kriter $\tfrac{1}{4}$ olduğundan $v_4$ girer. Oran yalnız $x_3$ satırında hesaplanır: $\frac{1}{1/4} = 4$; $v_3$ çıkar, pivot $\tfrac{1}{4}$'tür.
+
+|   |   | $c_j$ | $2$ | $-1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $1$ | $-\frac{5}{4}$ | $0$ | $1$ | $[\frac{1}{4}]$ | $\frac{1}{1/4} \Rightarrow$ |
+| $x_2$ | $-1$ | $1$ | $\frac{1}{4}$ | $1$ | $0$ | $-\frac{1}{4}$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -1$ | $-\frac{9}{4}$ | $0$ | $0$ | $\frac{1}{4} \Uparrow$ |   |
+
+: Başlangıç tablosu — Faz 2 {#tbl-sao-sonlu-baslangic .simpleks}
+
+Tablonun gövdesi bir önceki örnektekiyle aynı biçimde dönüşür: $x_4$ satırı $(4 \mid -5, 0, 4, 1)$, $x_2$ satırı $(2 \mid -1, 1, 1, 0)$ olur. $z_j - c_j$ satırından yeni $x_4$ satırının $\tfrac{1}{4}$ katını çıkarırız:
+$$
+\big(-1 - 1 \mid -\tfrac{9}{4} + \tfrac{5}{4},\ 0,\ 0 - 1,\ 0\big) = (-2 \mid -1, 0, -1, 0).
+$$
+
+|   |   | $c_j$ | $2$ | $-1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_4$ | $0$ | $4$ | $-5$ | $0$ | $4$ | $1$ |
+| $x_2$ | $-1$ | $2$ | $-1$ | $1$ | $1$ | $0$ |
+| $z_j - c_j$ |   | $z_0 = -2$ | $-1$ | $0$ | $-1$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 2 {#tbl-sao-sonlu-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \le 0$; tablo optimaldir. Optimal çözüm $x_1 = 0$, $x_2 = 2$ ve $\min z = -2$'dir.
+
+Bu tablonun gövdesi, sınırsız çözümlü örneğin birinci iterasyon tablosunun (@tbl-sao-faz2-birinci) gövdesinin aynısıdır. $v_1$ sütunu yine $(-5, -1)$'dir, yani @thm-sao-sinirsiz içindeki $\vec{d} = (1, 1, 0, 5)$ yine bir yön vektörüdür ve bölge yine sınırsızdır. Fark en alt satırdadır: $z_1 - c_1 = -1 < 0$. Bu yönde gidersek amaç değeri $z_0 - \lambda (z_1 - c_1) = -2 + \lambda$ olur, yani artar. Minimum probleminde bu yön işimize yaramaz. Sınırsız çözüm için "sütunda pozitif eleman yok" koşulu tek başına yetmez; o sütunun kriteri de iyileştiren yönde olmalıdır.
+
+Grafik bunu doğrular. Köşeler $(0, 1)$, $(0, 2)$ ve $(4, 0)$'dır; bunlarda $z$ sırasıyla $-1$, $-2$ ve $8$'dir. Bölgenin sınırsız iki kenarı boyunca, $(0, 2)$'den $(1, 1)$ yönünde ve $(4, 0)$'dan $(1, 0)$ yönünde, $z$ sırasıyla $1$ ve $2$ hızıyla artar.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 411.0" role="img" aria-label="The same unbounded region; dashed level lines 2x1 - x2 = -2 through (0,2) and 2x1 - x2 = 6; the optimum is the corner (0,2)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="160.0" y1="30.0" x2="160.0" y2="405.0"/><line x1="222.5" y1="30.0" x2="222.5" y2="405.0"/><line x1="285.0" y1="30.0" x2="285.0" y2="405.0"/><line x1="347.5" y1="30.0" x2="347.5" y2="405.0"/><line x1="410.0" y1="30.0" x2="410.0" y2="405.0"/><line x1="472.5" y1="30.0" x2="472.5" y2="405.0"/><line x1="535.0" y1="30.0" x2="535.0" y2="405.0"/><line x1="60.0" y1="305.0" x2="560.0" y2="305.0"/><line x1="60.0" y1="242.5" x2="560.0" y2="242.5"/><line x1="60.0" y1="180.0" x2="560.0" y2="180.0"/><line x1="60.0" y1="117.5" x2="560.0" y2="117.5"/><line x1="60.0" y1="55.0" x2="560.0" y2="55.0"/></g>
+  <polygon points="97.5,305.0 97.5,242.5 310.0,30.0 560.0,30.0 560.0,367.5 347.5,367.5" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M60.0,280.0 L310.0,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,295.6 L497.5,405.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,317.5 L203.8,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M266.2,405.0 L453.8,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="367.5" x2="564.0" y2="367.5"/>
+  <line x1="97.5" y1="409.0" x2="97.5" y2="26.0"/>
+  <polygon points="564.0,367.5 556.0,364.0 556.0,371.0" stroke="none"/>
+  <polygon points="97.5,26.0 94.0,34.0 101.0,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="160.0" y1="364.5" x2="160.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="160.0" y="382.5" text-anchor="middle">1</text>
+  <line x1="222.5" y1="364.5" x2="222.5" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="222.5" y="382.5" text-anchor="middle">2</text>
+  <line x1="285.0" y1="364.5" x2="285.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="285.0" y="382.5" text-anchor="middle">3</text>
+  <line x1="347.5" y1="364.5" x2="347.5" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="347.5" y="382.5" text-anchor="middle">4</text>
+  <line x1="410.0" y1="364.5" x2="410.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="410.0" y="382.5" text-anchor="middle">5</text>
+  <line x1="472.5" y1="364.5" x2="472.5" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="472.5" y="382.5" text-anchor="middle">6</text>
+  <line x1="535.0" y1="364.5" x2="535.0" y2="370.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="535.0" y="382.5" text-anchor="middle">7</text>
+  <line x1="94.5" y1="305.0" x2="100.5" y2="305.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="309.0" text-anchor="end">1</text>
+  <line x1="94.5" y1="242.5" x2="100.5" y2="242.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="246.5" text-anchor="end">2</text>
+  <line x1="94.5" y1="180.0" x2="100.5" y2="180.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="184.0" text-anchor="end">3</text>
+  <line x1="94.5" y1="117.5" x2="100.5" y2="117.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="121.5" text-anchor="end">4</text>
+  <line x1="94.5" y1="55.0" x2="100.5" y2="55.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="59.0" text-anchor="end">5</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="382.5" text-anchor="end">x₁</text>
+  <text x="104.5" y="35.0">x₂</text>
+  </g>
+  <line x1="97.5" y1="305.0" x2="97.5" y2="251.3" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="97.5,242.5 102.1,253.5 92.9,253.5" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="260.0" y1="292.5" x2="194.5" y2="259.7" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="187.3,256.2 198.2,256.9 194.4,264.4" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="97.5" cy="305.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="347.5" cy="367.5" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="97.5" cy="242.5" r="5.5" fill="var(--color-practice)"/>
+  <text x="106.5" y="321.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀ = (0, 1)</text>
+  <text x="109.5" y="247.5" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁ = (0, 2)</text>
+  <text x="353.5" y="358.5" fill="var(--academic-text)" font-size="13" text-anchor="start">(4, 0)</text>
+  <text x="316.2" y="55.0" fill="var(--color-remark)" font-size="12" text-anchor="start">&#8722;x₁ + x₂ = 2</text>
+  <text x="172.5" y="362.5" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 4x₂ = 4</text>
+  <text x="175.6" y="55.0" fill="var(--color-base)" font-size="12" text-anchor="end">z = &#8722;2</text>
+  <text x="466.2" y="98.8" fill="var(--color-base)" font-size="12" text-anchor="start">z = 6</text>
+  <text x="228.8" y="314.4" fill="var(--color-base)" font-size="12" text-anchor="middle">z azalır</text>
+  <text x="410.0" y="292.5" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>Aynı sınırsız bölgede min z = 2x₁ − x₂. Ok z'nin azaldığı yönü gösterir; bu yönde bölge sınırlıdır. Kesikli z = −2 doğrusu bölgeye yalnız X₁ = (0, 2) köşesinde değer, bölgenin geri kalanı z > −2 tarafındadır. Minimum −2'dir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alternatif Optimal Çözüm {#sec-sao-alternatif}
+
+Şimdi ikinci durumu, optimal tabloda baz dışındaki bir vektörün simpleks kriterinin sıfır olduğu durumu ele alalım.
+
+::: {#def-sao-alternatif name="Alternatif optimal çözüm"}
+Bir lineer programlama probleminin birden fazla optimal çözümü varsa, bulunan bir optimal çözümden farklı her optimal çözüme bir **alternatif optimal çözüm** denir.
+:::
+
+Yani alternatif optimal çözümler aynı optimal değeri veren farklı çözümlerdir. Karar verici açısından bu iyi bir haberdir: amacı feda etmeden, modelde yer almayan başka ölçütlere (kolaylık, güvenlik, alışkanlık) göre bir seçim yapma serbestliği vardır.
+
+Optimal tablodaki simpleks kriterleri, @lem-sao-tablo içindeki (2) eşitliği sayesinde, optimal çözümün tek olup olmadığını söyler.
+
+:::: {#thm-sao-alternatif name="Alternatif optimal çözüm teoremi"}
+Bir minimum probleminin tablosunda bütün $z_j - c_j \le 0$ (maksimum probleminde bütün $z_j - c_j \ge 0$) olsun; yani tablo optimal olsun. Baz dışındaki bir $v_k$ vektörü için $z_k - c_k = 0$ olsun ve $v_k$ sütununda en az bir pozitif eleman bulunsun. $v_k$ baza alınır ve bazdan çıkacak vektör oran testiyle seçilirse:
+
+1. yeni tablonun $z_j - c_j$ satırı eskisinin aynısıdır, dolayısıyla yeni tablo da optimaldir;
+2. yeni uygun temel çözümün amaç değeri eskisine eşittir;
+3. oran testinin verdiği $\lambda$ pozitifse (özellikle $X_0$ dejenere değilse) yeni çözüm eskisinden farklıdır; yani problemin alternatif optimal çözümü vardır.
+
+::: {.ispat}
+**Optimallik.** Önce, bütün kriterleri $\le 0$ olan bir tablonun gerçekten optimal olduğunu @lem-sao-tablo ile görelim. Her uygun $\vec{u}$ için $u_j \ge 0$ ve $z_j - c_j \le 0$ olduğundan (2) eşitliğindeki toplam $\le 0$'dır, yani $z(\vec{u}) \ge z_0$. Maksimumda eşitsizlikler döner ve $z(\vec{u}) \le z_0$ olur.
+
+**1 ve 2.** Pivot $y_{rk}$ olsun. Tablonun dönüşüm kuralına (@sec-smp-donusum) göre yeni kriterler ve yeni amaç değeri
+$$
+\begin{aligned}
+(z_j - c_j)' &= (z_j - c_j) - \frac{(z_k - c_k)\, y_{rj}}{y_{rk}}, \\[1mm]
+z_0' &= z_0 - \frac{(z_k - c_k)\, y_{r0}}{y_{rk}}
+\end{aligned}
+$$
+olur. $z_k - c_k = 0$ olduğundan çıkarılan terimler sıfırdır: $(z_j - c_j)' = z_j - c_j$ ve $z_0' = z_0$. Kriter satırı değişmediği için bütün kriterler yine $\le 0$ (maksimumda $\ge 0$) kalır ve yukarıdaki gözlem gereği yeni çözüm de optimaldir.
+
+**3.** Eski çözümde $x_k$ baz dışında olduğundan $x_k = 0$'dır. Yeni çözümde $x_k = \lambda = y_{r0}/y_{rk}$'dır. $\lambda > 0$ ise iki çözümün $k$. bileşenleri farklıdır. $X_0$ dejenere değilse $y_{r0} = x_r > 0$ ve $y_{rk} > 0$ olduğundan $\lambda > 0$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani optimal tabloda sıfır kriterli bir baz dışı vektör, "bu vektörü baza alırsan amaç değeri ne iyileşir ne kötüleşir" demektir. Onu baza almak bizi aynı amaç değerli yeni bir optimal uç noktaya götürür. Yeni tabloda bu kez bazdan çıkan $v_r$'nin kriteri sıfırdır, çünkü eski tabloda $v_r$ baz vektörüydü ve kriter satırı değişmedi. $X_0$ dejenere değilse, $v_r$ yeniden baza alındığında oran testi $v_k$'yı çıkarır ve ilk optimal uç noktaya geri dönülür.
+
+Tersine, baz dışındaki bütün kriterler sıfırdan farklıysa başka optimal çözüm aranmaz.
+
+:::: {#cor-sao-tek name="Optimal çözümün tekliği"}
+Bir minimum probleminin optimal tablosunda baz dışındaki bütün vektörler için $z_j - c_j < 0$ ise (maksimum probleminde $z_j - c_j > 0$ ise) optimal çözüm tektir.
+
+::: {.ispat}
+Minimum durumunu ele alalım. $\vec{u}$ optimal bir çözüm olsun: $z(\vec{u}) = z_0$. @lem-sao-tablo içindeki (2) eşitliğinden
+$$
+\sum_{j=m+1}^{n} (z_j - c_j)\, u_j = 0
+$$
+çıkar. Toplamın her terimi $\le 0$'dır, çünkü $z_j - c_j < 0$ ve $u_j \ge 0$. Terimleri pozitif olmayan bir toplam ancak her terimi sıfırsa sıfırdır; $z_j - c_j \ne 0$ olduğundan baz dışındaki her $j$ için $u_j = 0$ olur. Bu durumda (1) eşitliği $u_i = x_i$ verir. Demek ki $\vec{u} = X_0$'dır. Maksimum durumu aynı biçimde ispatlanır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İki optimal çözüm bulduktan sonra aralarında kalan her noktanın da optimal olduğunu görelim. Hatırlatalım: $X^{(1)}, \dots, X^{(p)}$ noktalarının bir **konveks kombinasyonu**, $t_i \ge 0$ ve $t_1 + \dots + t_p = 1$ olmak üzere $t_1 X^{(1)} + \dots + t_p X^{(p)}$ biçimindeki bir noktadır (bkz. [Temel çözümler ve konveks kümeler](temel-cozumler-ve-konveks-kumeler.qmd)). İki nokta için bunlar $0 \le t \le 1$ olmak üzere $t X^{(1)} + (1 - t) X^{(2)}$ noktalarıdır, yani iki noktayı birleştiren doğru parçası.
+
+:::: {#prp-sao-konveks name="Optimal çözümlerin konveks kombinasyonları"}
+$X^{(1)}, \dots, X^{(p)}$ bir lineer programlama probleminin optimal çözümleri, $z^*$ optimal değer olsun. $t_1, \dots, t_p \ge 0$ ve $t_1 + \dots + t_p = 1$ ise
+$$
+X = t_1 X^{(1)} + t_2 X^{(2)} + \dots + t_p X^{(p)}
+$$
+de bir optimal çözümdür. Özel olarak iki farklı optimal çözüm varsa sonsuz çok optimal çözüm vardır.
+
+::: {.ispat}
+**$X$ uygundur.** Her $X^{(i)}$ uygun olduğundan $AX^{(i)} = \vec{b}$ ve $X^{(i)} \ge 0$'dır. Buna göre
+$$
+AX = \sum_{i=1}^{p} t_i\, AX^{(i)} = \Big( \sum_{i=1}^{p} t_i \Big) \vec{b} = \vec{b}
+$$
+olur. Negatif olmayan sayıların negatif olmayan katsayılarla toplamı da negatif değildir: $X \ge 0$.
+
+**$X$ optimaldir.** Amaç fonksiyonu lineer olduğundan
+$$
+z(X) = \sum_{i=1}^{p} t_i\, z(X^{(i)}) = \Big( \sum_{i=1}^{p} t_i \Big) z^* = z^* .
+$$
+Uygun bir çözüm optimal değeri veriyorsa optimaldir.
+
+**Sonsuz çok çözüm.** $X^{(1)} \ne X^{(2)}$ ise $X(t) = t X^{(1)} + (1 - t) X^{(2)}$ noktaları, $0 \le t \le 1$ için, yukarıdakine göre optimaldir. $t \ne s$ ise
+$$
+X(t) - X(s) = (t - s)\big(X^{(1)} - X^{(2)}\big) \ne \vec{0};
+$$
+farklı $t$ değerleri farklı çözümler verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani optimal çözümler kümesi konvekstir. Simpleks yöntemle $X^{(1)}, \dots, X^{(p)}$ optimal uç noktaları bulununca, bunların bütün konveks kombinasyonlarını tek bir formülde toplayan
+$$
+X = \sum_{i=1}^{p} t_i X^{(i)}, \qquad t_i \ge 0, \quad \sum_{i=1}^{p} t_i = 1
+$$
+ifadesine problemin **genel optimal çözümü** denir. Uygulamada en sık karşılaşılan durum iki optimal uç noktadır; o zaman genel optimal çözüm $X = t X^{*} + (1 - t) X^{**}$, $0 \le t \le 1$ olur. Önerme bu noktaların optimal olduğunu söyler; optimal çözümlerin bunlardan ibaret olup olmadığını ise ayrıca kontrol etmek gerekir. Optimal çözümler kümesi sınırsız olabilir (@sec-sao-optimal-isin), o zaman hiçbir sonlu konveks kombinasyon onu tüketmez. Aşağıdaki örneklerde bu kontrolü @lem-sao-tablo içindeki (2) eşitliğiyle yapacağız.
+
+::: {.callout-tip title="Alternatif optimal çözümü dört adımda bulma"}
+1. Simpleks yöntemle optimal tabloya ulaş (minimumda bütün $z_j - c_j \le 0$, maksimumda bütün $z_j - c_j \ge 0$).
+2. Baz dışındaki vektörlerin kriterlerine bak. Hiçbiri sıfır değilse optimal çözüm tektir (@cor-sao-tek).
+3. Kriteri sıfır olan baz dışı bir $v_k$ varsa sütununa bak. Pozitif eleman varsa $v_k$'yı baza al, bazdan çıkacak vektörü oran testiyle seç ve pivot yap; yeni tablo aynı amaç değerli bir optimal uç nokta verir (@thm-sao-alternatif). Pozitif eleman yoksa optimal çözümler sınırsız bir ışın boyunca uzanır (@prp-sao-optimal-isin).
+4. Bulunan optimal uç noktaların konveks kombinasyonunu yazarak genel optimal çözümü ver (@prp-sao-konveks).
+:::
+
+:::: {#exm-sao-alternatif-basit name="İki değişkenli bir alternatif optimal çözüm"}
+$$
+\begin{aligned}
+x_1 + 2x_2 &\le 8 \\
+3x_1 + 2x_2 &\le 12 \\
+x_1, x_2 &\ge 0 \\
+\max z &= x_1 + 2x_2
+\end{aligned}
+$$
+problemini simpleks yöntemle çözünüz ve varsa alternatif optimal çözümleri bulunuz.
+
+::: {.cozum}
+**Standart form.** İki $\le$ kısıtına $x_3$ ve $x_4$ aylak değişkenlerini ekleriz:
+$$
+\begin{aligned}
+x_1 + 2x_2 + x_3 &= 8 \\
+3x_1 + 2x_2 + x_4 &= 12 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\max z &= x_1 + 2x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+$v_3$ ve $v_4$ birim matrisi oluşturur; problem simpleks yöntem ile çözülebilir haldedir.
+
+**Başlangıç tablosu.** Maksimumda en negatif kriter girer: $z_1 - c_1 = -1$, $z_2 - c_2 = -2$; $v_2$ girer. Oranlar $8/2 = 4$ ve $12/2 = 6$; en küçüğü $x_3$ satırındadır, $v_3$ çıkar, pivot $2$'dir.
+
+|   |   | $c_j$ | $1$ | $2$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $8$ | $1$ | $[2]$ | $1$ | $0$ | $\frac{8}{2} \Rightarrow$ |
+| $x_4$ | $0$ | $12$ | $3$ | $2$ | $0$ | $1$ | $\frac{12}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-1$ | $-2 \Uparrow$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-sao-alt-basit-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırını $2$'ye böleriz: $x_2$ satırı $\big(4 \mid \tfrac{1}{2}, 1, \tfrac{1}{2}, 0\big)$. $x_4$ satırından bunun $2$ katını çıkarır, $z_j - c_j$ satırına $2$ katını ekleriz:
+$$
+\begin{aligned}
+x_4&: \ \big(12 - 8 \mid 3 - 1,\ 0,\ 0 - 1,\ 1\big) = (4 \mid 2, 0, -1, 1), \\[1mm]
+z_j - c_j&: \ \big(0 + 8 \mid -1 + 1,\ 0,\ 0 + 1,\ 0\big) = (8 \mid 0, 0, 1, 0).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $1$ | $2$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_2$ | $2$ | $4$ | $\frac{1}{2}$ | $1$ | $\frac{1}{2}$ | $0$ | $\frac{4}{1/2}$ |
+| $x_4$ | $0$ | $4$ | $[2]$ | $0$ | $-1$ | $1$ | $\frac{4}{2} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 8$ | $0 \Uparrow$ | $0$ | $1$ | $0$ |   |
+
+: Birinci iterasyon tablosu (optimal tablo) {#tbl-sao-alt-basit-optimal .simpleks}
+
+Bütün $z_j - c_j \ge 0$; tablo optimaldir. Optimal çözüm $X^{*} = (0, 4, 0, 4)$, yani $x_1 = 0$, $x_2 = 4$ ve $\max z = 8$'dir.
+
+**Alternatif çözüm.** Baz dışındaki $v_1$'in kriteri $z_1 - c_1 = 0$'dır ve sütununda pozitif elemanlar vardır. @thm-sao-alternatif gereği $v_1$'i baza almak yeni bir optimal çözüm verir. Oranlar $\frac{4}{1/2} = 8$ ve $\frac{4}{2} = 2$; $v_4$ çıkar, pivot $2$'dir. Pivot satırını $2$'ye böleriz: $x_1$ satırı $\big(2 \mid 1, 0, -\tfrac{1}{2}, \tfrac{1}{2}\big)$. $x_2$ satırından bunun $\tfrac{1}{2}$ katını çıkarırız:
+$$
+\big(4 - 1 \mid 0,\ 1,\ \tfrac{1}{2} + \tfrac{1}{4},\ 0 - \tfrac{1}{4}\big) = \big(3 \mid 0, 1, \tfrac{3}{4}, -\tfrac{1}{4}\big).
+$$
+$z_j - c_j$ satırının pivot sütunundaki elemanı $0$ olduğundan bu satır değişmez.
+
+|   |   | $c_j$ | $1$ | $2$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_2$ | $2$ | $3$ | $0$ | $1$ | $\frac{3}{4}$ | $-\frac{1}{4}$ |
+| $x_1$ | $1$ | $2$ | $1$ | $0$ | $-\frac{1}{2}$ | $\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 8$ | $0$ | $0$ | $1$ | $0$ |
+
+: İkinci iterasyon tablosu (alternatif optimal tablo) {#tbl-sao-alt-basit-alternatif .simpleks .oransiz}
+
+Alternatif optimal çözüm $X^{**} = (2, 3, 0, 0)$, yani $x_1 = 2$, $x_2 = 3$; amaç değeri $2 + 2 \cdot 3 = 8$. Bu tabloda bu kez baz dışındaki $v_4$'ün kriteri sıfırdır; onu baza almak (oran $\frac{2}{1/2} = 4$, $v_1$ çıkar) bizi $X^{*}$'a geri götürür.
+
+**Genel optimal çözüm.** @prp-sao-konveks gereği $0 \le t \le 1$ için
+$$
+X = t\,(0, 4) + (1 - t)(2, 3) = (2 - 2t,\ 3 + t)
+$$
+noktalarının hepsi optimaldir: $z = (2 - 2t) + 2(3 + t) = 8$. Bu formül bütün optimal çözümleri verir. Gerçekten, optimal tabloda (@tbl-sao-alt-basit-optimal) @lem-sao-tablo içindeki (2) eşitliği $z = 8 - 0 \cdot x_1 - 1 \cdot x_3 = 8 - x_3$ verir; bir uygun çözüm ancak $x_3 = 0$ ise, yani $x_1 + 2x_2 = 8$ doğrusu üzerindeyse optimaldir. Bu doğrunun uygun bölgede kalan parçası tam olarak $X^{*}$ ile $X^{**}$ arasındaki kenardır.
+
+Geometrik olarak amaç fonksiyonunun seviye doğruları $x_1 + 2x_2 = \text{sabit}$, birinci kısıtın doğrusuna paraleldir. Seviye doğrusu $z$ artırılarak kaydırıldığında bölgeyi bir köşede değil, bütün bir kenar boyunca terk eder.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 496.0 509.5" role="img" aria-label="Feasible quadrilateral with corners (0,0), (4,0), (2,3), (0,4); the edge from (0,4) to (2,3) lies on x1 + 2x2 = 8 and is drawn thick as the set of optimal solutions; dashed level line z = 4">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="165.1" y1="30.0" x2="165.1" y2="503.1"/><line x1="230.9" y1="30.0" x2="230.9" y2="503.1"/><line x1="296.6" y1="30.0" x2="296.6" y2="503.1"/><line x1="362.3" y1="30.0" x2="362.3" y2="503.1"/><line x1="428.0" y1="30.0" x2="428.0" y2="503.1"/><line x1="493.7" y1="30.0" x2="493.7" y2="503.1"/><line x1="60.0" y1="398.0" x2="520.0" y2="398.0"/><line x1="60.0" y1="332.3" x2="520.0" y2="332.3"/><line x1="60.0" y1="266.6" x2="520.0" y2="266.6"/><line x1="60.0" y1="200.9" x2="520.0" y2="200.9"/><line x1="60.0" y1="135.1" x2="520.0" y2="135.1"/><line x1="60.0" y1="69.4" x2="520.0" y2="69.4"/></g>
+  <polygon points="99.4,463.7 362.3,463.7 230.9,266.6 99.4,200.9" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M60.0,181.1 L520.0,411.1" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M388.6,503.1 L73.1,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,312.6 L441.1,503.1" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="463.7" x2="524.0" y2="463.7"/>
+  <line x1="99.4" y1="507.1" x2="99.4" y2="26.0"/>
+  <polygon points="524.0,463.7 516.0,460.2 516.0,467.2" stroke="none"/>
+  <polygon points="99.4,26.0 95.9,34.0 102.9,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="165.1" y1="460.7" x2="165.1" y2="466.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="165.1" y="478.7" text-anchor="middle">1</text>
+  <line x1="230.9" y1="460.7" x2="230.9" y2="466.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="230.9" y="478.7" text-anchor="middle">2</text>
+  <line x1="296.6" y1="460.7" x2="296.6" y2="466.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="296.6" y="478.7" text-anchor="middle">3</text>
+  <line x1="362.3" y1="460.7" x2="362.3" y2="466.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="362.3" y="478.7" text-anchor="middle">4</text>
+  <line x1="428.0" y1="460.7" x2="428.0" y2="466.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="428.0" y="478.7" text-anchor="middle">5</text>
+  <line x1="493.7" y1="460.7" x2="493.7" y2="466.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="493.7" y="478.7" text-anchor="middle">6</text>
+  <line x1="96.4" y1="398.0" x2="102.4" y2="398.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="402.0" text-anchor="end">1</text>
+  <line x1="96.4" y1="332.3" x2="102.4" y2="332.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="336.3" text-anchor="end">2</text>
+  <line x1="96.4" y1="266.6" x2="102.4" y2="266.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="270.6" text-anchor="end">3</text>
+  <line x1="96.4" y1="200.9" x2="102.4" y2="200.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="204.9" text-anchor="end">4</text>
+  <line x1="96.4" y1="135.1" x2="102.4" y2="135.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="139.1" text-anchor="end">5</text>
+  <line x1="96.4" y1="69.4" x2="102.4" y2="69.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="73.4" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="522.0" y="478.7" text-anchor="end">x₁</text>
+  <text x="106.4" y="35.0">x₂</text>
+  </g>
+  <path d="M99.4,200.9 L230.9,266.6" fill="none" stroke="var(--color-practice)" stroke-width="5.0" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="99.4" y1="463.7" x2="99.4" y2="209.7" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="99.4,200.9 104.0,211.9 94.8,211.9" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="165.1" y1="371.7" x2="191.0" y2="320.1" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="194.5,312.9 193.8,323.8 186.3,320.0" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="99.4" cy="463.7" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="99.4" cy="200.9" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="230.9" cy="266.6" r="4.5" fill="var(--color-practice)"/>
+  <text x="91.4" y="481.7" fill="var(--academic-text)" font-size="13" text-anchor="end">X₀</text>
+  <text x="109.4" y="189.9" fill="var(--academic-text)" font-size="13" text-anchor="start">X* = (0, 4)</text>
+  <text x="240.9" y="262.6" fill="var(--academic-text)" font-size="13" text-anchor="start">X** = (2, 3)</text>
+  <text x="388.6" y="365.1" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 2x₂ = 8</text>
+  <text x="388.6" y="381.1" fill="var(--color-base)" font-size="12" text-anchor="start">(z = 8)</text>
+  <text x="368.9" y="427.6" fill="var(--color-remark)" font-size="12" text-anchor="start">3x₁ + 2x₂ = 12</text>
+  <text x="112.6" y="309.3" fill="var(--color-base)" font-size="12" text-anchor="start">z = 4</text>
+  <text x="204.6" y="325.7" fill="var(--color-base)" font-size="12" text-anchor="start">z artar</text>
+  <text x="122.4" y="417.7" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>Amaç doğrusu z = x₁ + 2x₂, x₁ + 2x₂ ≤ 8 kısıtının doğrusuna paraleldir. z artırıldıkça seviye doğrusu bölgeyi tek bir köşede değil, X* = (0, 4) ile X** = (2, 3) arasındaki kalın kenar boyunca terk eder; bu kenarın her noktası z = 8 verir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-sao-alternatif name="Üç değişkenli bir alternatif optimal çözüm"}
+$$
+\begin{aligned}
+x_1 + 2x_2 + x_3 &\le 1 \\
+-4x_1 - 2x_2 + 3x_3 &\le 2 \\
+x_1, x_2, x_3 &\ge 0 \\
+\min z &= 14x_1 + 4x_2 - 14x_3
+\end{aligned}
+$$
+lineer programlama problemini çözünüz ve varsa alternatif optimal çözümü bulunuz.
+
+::: {.cozum}
+**Standart form ve çözülebilir hal.** Önce problemi simpleks yöntem ile çözülebilir hale getirelim. İki kısıt da $\le$ biçiminde ve sağ tarafları negatif olmadığından $x_4$ ve $x_5$ aylak değişkenlerini eklemek yeter:
+$$
+\begin{aligned}
+x_1 + 2x_2 + x_3 + x_4 + 0x_5 &= 1 \\
+-4x_1 - 2x_2 + 3x_3 + 0x_4 + x_5 &= 2 \\
+x_1, x_2, x_3, x_4, x_5 &\ge 0 \\
+\min z &= 14x_1 + 4x_2 - 14x_3 \\
+&\quad + 0(x_4 + x_5)
+\end{aligned}
+$$
+$v_4$ ve $v_5$ birim matrisi oluşturur; başlangıç bazı $(v_4, v_5)$'tir.
+
+**Başlangıç tablosu.** $\vec{c}_B = \vec{0}$ olduğundan $z_j - c_j = -c_j$: kriterler $-14$, $-4$, $14$, $0$, $0$. Minimumda en büyük pozitif kriter girer ve bütün $z_j - c_j \le 0$ olunca durulur; tek pozitif kriter $14$ olduğundan $v_3$ girer. Oranlar $1/1 = 1$ ve $2/3$; en küçüğü $x_5$ satırındadır, $v_5$ çıkar, pivot $3$'tür.
+
+|   |   | $c_j$ | $14$ | $4$ | $-14$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_4$ | $0$ | $1$ | $1$ | $2$ | $1$ | $1$ | $0$ | $\frac{1}{1}$ |
+| $x_5$ | $0$ | $2$ | $-4$ | $-2$ | $[3]$ | $0$ | $1$ | $\frac{2}{3} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-14$ | $-4$ | $14 \Uparrow$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-sao-alt-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırını $3$'e böleriz: $x_3$ satırı $\big(\tfrac{2}{3} \mid -\tfrac{4}{3}, -\tfrac{2}{3}, 1, 0, \tfrac{1}{3}\big)$. $x_4$ satırından bu satırı çıkarırız, $z_j - c_j$ satırından da $14$ katını:
+$$
+\begin{aligned}
+x_4&: \ \big(1 - \tfrac{2}{3} \mid 1 + \tfrac{4}{3},\ 2 + \tfrac{2}{3},\ 0,\ 1,\ -\tfrac{1}{3}\big) \\[1mm]
+&\quad = \big(\tfrac{1}{3} \mid \tfrac{7}{3}, \tfrac{8}{3}, 0, 1, -\tfrac{1}{3}\big), \\[1mm]
+z_j - c_j&: \ \big(0 - \tfrac{28}{3} \mid -14 + \tfrac{56}{3},\ -4 + \tfrac{28}{3},\ 0,\ 0,\ -\tfrac{14}{3}\big) \\[1mm]
+&\quad = \big(-\tfrac{28}{3} \mid \tfrac{14}{3}, \tfrac{16}{3}, 0, 0, -\tfrac{14}{3}\big).
+\end{aligned}
+$$
+En büyük pozitif kriter $\tfrac{16}{3}$ olduğundan $v_2$ girer. $v_2$ sütununda yalnız $x_4$ satırının elemanı pozitiftir; oran $\frac{1/3}{8/3} = \frac{1}{8}$, $v_4$ çıkar, pivot $\tfrac{8}{3}$'tür.
+
+|   |   | $c_j$ | $14$ | $4$ | $-14$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_4$ | $0$ | $\frac{1}{3}$ | $\frac{7}{3}$ | $[\frac{8}{3}]$ | $0$ | $1$ | $-\frac{1}{3}$ | $\frac{1}{8} \Rightarrow$ |
+| $x_3$ | $-14$ | $\frac{2}{3}$ | $-\frac{4}{3}$ | $-\frac{2}{3}$ | $1$ | $0$ | $\frac{1}{3}$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -\frac{28}{3}$ | $\frac{14}{3}$ | $\frac{16}{3} \Uparrow$ | $0$ | $0$ | $-\frac{14}{3}$ |   |
+
+: Birinci iterasyon tablosu {#tbl-sao-alt-birinci .simpleks}
+
+**İkinci iterasyon.** Pivot satırını $\tfrac{8}{3}$'e bölmek $\tfrac{3}{8}$ ile çarpmaktır: $x_2$ satırı $\big(\tfrac{1}{8} \mid \tfrac{7}{8}, 1, 0, \tfrac{3}{8}, -\tfrac{1}{8}\big)$. $x_3$ satırına bunun $\tfrac{2}{3}$ katını ekleriz, $z_j - c_j$ satırından $\tfrac{16}{3}$ katını çıkarırız:
+$$
+\begin{aligned}
+x_3&: \ \big(\tfrac{2}{3} + \tfrac{1}{12} \mid -\tfrac{4}{3} + \tfrac{7}{12},\ 0,\ 1,\ \tfrac{1}{4},\ \tfrac{1}{3} - \tfrac{1}{12}\big) \\[1mm]
+&\quad = \big(\tfrac{3}{4} \mid -\tfrac{3}{4}, 0, 1, \tfrac{1}{4}, \tfrac{1}{4}\big), \\[1mm]
+z_j - c_j&: \ \big(-\tfrac{28}{3} - \tfrac{2}{3} \mid \tfrac{14}{3} - \tfrac{14}{3},\ 0,\ 0,\ -2,\ -\tfrac{14}{3} + \tfrac{2}{3}\big) \\[1mm]
+&\quad = (-10 \mid 0, 0, 0, -2, -4).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $14$ | $4$ | $-14$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_2$ | $4$ | $\frac{1}{8}$ | $[\frac{7}{8}]$ | $1$ | $0$ | $\frac{3}{8}$ | $-\frac{1}{8}$ | $\frac{1/8}{7/8} \Rightarrow$ |
+| $x_3$ | $-14$ | $\frac{3}{4}$ | $-\frac{3}{4}$ | $0$ | $1$ | $\frac{1}{4}$ | $\frac{1}{4}$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -10$ | $0 \Uparrow$ | $0$ | $0$ | $-2$ | $-4$ |   |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-sao-alt-optimal .simpleks}
+
+Simpleks kriterleri arasında pozitif olan kalmadığından optimal çözüme ulaşılmıştır:
+$$
+X^{*} = \big(0,\ \tfrac{1}{8},\ \tfrac{3}{4},\ 0,\ 0\big), \qquad z^{*} = -10 .
+$$
+Kontrol:
+$$
+14 \cdot 0 + 4 \cdot \tfrac{1}{8} - 14 \cdot \tfrac{3}{4} = \tfrac{1}{2} - \tfrac{21}{2} = -10 .
+$$
+
+**Alternatif çözüm.** İkinci iterasyon tablosunda (@tbl-sao-alt-optimal) baz dışındaki $x_1$ değişkeninin simpleks kriteri $0$'dır ve $v_1$ sütununda pozitif bir eleman ($\tfrac{7}{8}$) vardır. @thm-sao-alternatif gereği $v_1$ vektörünü baza alırsak, yani $x_1$'i temel değişken yaparsak yeni bir optimal çözüme geçeriz. Oran yalnız $x_2$ satırında hesaplanır: $\frac{1/8}{7/8} = \frac{1}{7}$; $v_2$ çıkar, pivot $\tfrac{7}{8}$'dir.
+
+Pivot satırını $\tfrac{8}{7}$ ile çarparız: $x_1$ satırı $\big(\tfrac{1}{7} \mid 1, \tfrac{8}{7}, 0, \tfrac{3}{7}, -\tfrac{1}{7}\big)$. $x_3$ satırına bunun $\tfrac{3}{4}$ katını ekleriz:
+$$
+\begin{aligned}
+x_3&: \ \big(\tfrac{3}{4} + \tfrac{3}{28} \mid 0,\ \tfrac{6}{7},\ 1,\ \tfrac{1}{4} + \tfrac{9}{28},\ \tfrac{1}{4} - \tfrac{3}{28}\big) \\[1mm]
+&\quad = \big(\tfrac{6}{7} \mid 0, \tfrac{6}{7}, 1, \tfrac{4}{7}, \tfrac{1}{7}\big).
+\end{aligned}
+$$
+$z_j - c_j$ satırı değişmez, çünkü pivot sütunundaki elemanı $0$'dır.
+
+|   |   | $c_j$ | $14$ | $4$ | $-14$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $14$ | $\frac{1}{7}$ | $1$ | $\frac{8}{7}$ | $0$ | $\frac{3}{7}$ | $-\frac{1}{7}$ |
+| $x_3$ | $-14$ | $\frac{6}{7}$ | $0$ | $\frac{6}{7}$ | $1$ | $\frac{4}{7}$ | $\frac{1}{7}$ |
+| $z_j - c_j$ |   | $z_0 = -10$ | $0$ | $0$ | $0$ | $-2$ | $-4$ |
+
+: Üçüncü iterasyon tablosu (alternatif optimal tablo) {#tbl-sao-alt-alternatif .simpleks .oransiz}
+
+Yeni optimal çözüm
+$$
+X^{**} = \big(\tfrac{1}{7},\ 0,\ \tfrac{6}{7},\ 0,\ 0\big), \qquad z^{**} = -10
+$$
+olarak bulunur. Kontrol: $14 \cdot \tfrac{1}{7} - 14 \cdot \tfrac{6}{7} = 2 - 12 = -10$. Buradaki $X^{**}$ çözümüne **alternatif** optimal çözüm denir.
+
+**Genel optimal çözüm.** @prp-sao-konveks gereği $X^{*}$ ve $X^{**}$ optimal çözümlerinin konveks kombinasyonlarının her biri de amaç fonksiyonunu minimum yapar. $0 \le t \le 1$ olmak üzere
+$$
+\begin{aligned}
+X &= t X^{*} + (1 - t) X^{**} \\[1mm]
+&= t \big(0, \tfrac{1}{8}, \tfrac{3}{4}, 0, 0\big) + (1 - t) \big(\tfrac{1}{7}, 0, \tfrac{6}{7}, 0, 0\big) \\[1mm]
+&= \Big(\frac{1 - t}{7},\ \frac{t}{8},\ \frac{24 - 3t}{28},\ 0,\ 0\Big).
+\end{aligned}
+$$
+Üçüncü bileşen $\tfrac{3t}{4} + \tfrac{6(1 - t)}{7} = \tfrac{21t + 24 - 24t}{28}$ hesabından gelir. Bu çözümlerin her birinde amaç fonksiyonu aynı değeri alır:
+$$
+\begin{aligned}
+\min z &= 14 \cdot \frac{1 - t}{7} + 4 \cdot \frac{t}{8} - 14 \cdot \frac{24 - 3t}{28} \\[1mm]
+&= (2 - 2t) + \frac{t}{2} - \Big(12 - \frac{3t}{2}\Big) = -10 .
+\end{aligned}
+$$
+
+Bu formül bütün optimal çözümleri verir. Optimal tabloda (@tbl-sao-alt-optimal) @lem-sao-tablo içindeki (2) eşitliği
+$$
+z = -10 - 0 \cdot x_1 - (-2)\, x_4 - (-4)\, x_5 = -10 + 2x_4 + 4x_5
+$$
+verir. Demek ki bir uygun çözüm ancak $x_4 = x_5 = 0$ ise optimaldir. O zaman (1) eşitlikleri $x_2 = \tfrac{1}{8} - \tfrac{7}{8} x_1$ ve $x_3 = \tfrac{3}{4} + \tfrac{3}{4} x_1$ verir; $x_2 \ge 0$ koşulu $0 \le x_1 \le \tfrac{1}{7}$ demektir. $x_1 = \tfrac{1 - t}{7}$ yazınca tam olarak yukarıdaki $X$ çıkar.
+
+Uygun bölge $\mathbb{R}^3$'te altı köşeli bir çokyüzlüdür. Simpleks $O$ köşesinden $C = (0, 0, \tfrac{2}{3})$ köşesine (birinci iterasyon), oradan $X^{*}$'a (ikinci iterasyon) gitmiştir. Amaç fonksiyonunun $14x_1 + 4x_2 - 14x_3 = -10$ seviye düzlemi bölgeye $X^{*} X^{**}$ kenarı boyunca değer.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="26.5 30.0 595.5 445.5" role="img" aria-label="Polytope in R3 with vertices O, A(1,0,0), B(0,1/2,0), C(0,0,2/3), X*(0,1/8,3/4), X**(1/7,0,6/7); hidden edges dashed; the optimal edge from X* to X** drawn thick; simplex path O to C to X*">
+  <polygon points="308.9,446.9 526.3,315.7 153.7,400.9" fill="var(--color-theory)" fill-opacity="0.05" stroke="none" stroke-width="1.2"/>
+  <polygon points="526.3,315.7 153.7,400.9 270.1,177.8 340.0,133.7" fill="var(--color-theory)" fill-opacity="0.05" stroke="none" stroke-width="1.2"/>
+  <polygon points="308.9,446.9 153.7,400.9 270.1,177.8 308.9,217.9" fill="var(--color-theory)" fill-opacity="0.2" stroke="none" stroke-width="1.2"/>
+  <polygon points="308.9,446.9 526.3,315.7 340.0,133.7 308.9,217.9" fill="var(--color-theory)" fill-opacity="0.2" stroke="none" stroke-width="1.2"/>
+  <polygon points="308.9,217.9 270.1,177.8 340.0,133.7" fill="var(--color-remark)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <line x1="308.9" y1="446.9" x2="586.7" y2="279.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="591.5,276.3 587.0,282.4 584.0,277.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="603.5" y="274.3" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x₁</text>
+  <line x1="308.9" y1="446.9" x2="65.9" y2="374.9" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="60.6,373.4 68.1,372.5 66.4,378.2" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="46.6" y="371.4" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x₂</text>
+  <line x1="308.9" y1="446.9" x2="308.9" y2="57.4" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="308.9,51.8 311.9,58.8 306.0,58.8" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="296.9" y="49.8" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x₃</text>
+  <path d="M308.9,446.9 L526.3,315.7" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M308.9,446.9 L153.7,400.9" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M308.9,446.9 L308.9,217.9" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M526.3,315.7 L153.7,400.9" fill="none" stroke="var(--color-theory)" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M153.7,400.9 L270.1,177.8" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M270.1,177.8 L308.9,217.9" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M526.3,315.7 L340.0,133.7" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M340.0,133.7 L308.9,217.9" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M270.1,177.8 L340.0,133.7" fill="none" stroke="var(--color-practice)" stroke-width="5.0" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="308.9" y1="446.9" x2="308.9" y2="225.9" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="308.9,217.9 313.1,227.9 304.7,227.9" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="308.9" y1="217.9" x2="275.7" y2="183.5" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="270.1,177.8 280.1,182.0 274.1,187.9" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="308.9" cy="446.9" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="526.3" cy="315.7" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="153.7" cy="400.9" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="308.9" cy="217.9" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="270.1" cy="177.8" r="4.8" fill="var(--color-practice)"/>
+  <circle cx="340.0" cy="133.7" r="4.8" fill="var(--color-practice)"/>
+  <text x="298.9" y="460.9" fill="var(--academic-text)" font-size="13" text-anchor="end">O</text>
+  <text x="528.3" y="337.7" fill="var(--academic-text)" font-size="13" text-anchor="middle">A</text>
+  <text x="159.7" y="416.9" fill="var(--academic-text)" font-size="13" text-anchor="start">B</text>
+  <text x="296.9" y="221.9" fill="var(--academic-text)" font-size="13" text-anchor="end">C</text>
+  <text x="258.1" y="173.8" fill="var(--academic-text)" font-size="14" text-anchor="end">X*</text>
+  <text x="352.0" y="127.7" fill="var(--academic-text)" font-size="14" text-anchor="start">X**</text>
+</svg>
+<figcaption>Uygun bölge köşeleri O, A(1, 0, 0), B(0, 1/2, 0), C(0, 0, 2/3), X*(0, 1/8, 3/4) ve X**(1/7, 0, 6/7) olan bir çokyüzlüdür. Simpleks O → C → X* yolunu izler (oklar). Amaç düzlemi 14x₁ + 4x₂ − 14x₃ = −10 bölgeye tek bir köşede değil, X*X** kenarı (kalın) boyunca değer: bu kenarın her noktası optimaldir. Köşelerdeki z değerleri O: 0, A: 14, B: 2, C: −28/3, X* ve X**: −10.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Optimal Çözümlerin Sınırsız Olduğu Durum {#sec-sao-optimal-isin}
+
+Alternatif optimal çözüm teoreminde (@thm-sao-alternatif) sıfır kriterli sütunda pozitif bir eleman olduğunu varsaydık. Pozitif eleman yoksa pivot yapılamaz; ama bu durumda alternatif optimal çözümler yine vardır, üstelik sonsuza uzanırlar.
+
+:::: {#prp-sao-optimal-isin name="Optimal ışın"}
+Bir problemin optimal tablosunda baz dışındaki bir $v_k$ için $z_k - c_k = 0$ olsun ve $v_k$ sütununda hiç pozitif eleman bulunmasın: her $i$ için $y_{ik} \le 0$. Bu durumda her $\lambda \ge 0$ için $x_k = \lambda$, her baz değişkeni $x_i - \lambda y_{ik}$ ($i = \overline{1,m}$) ve diğer değişkenler $0$ olan $X(\lambda)$ çözümü optimaldir. Optimal değer $z_0$ sonludur, ama optimal çözümler kümesi sınırsızdır.
+
+::: {.ispat}
+$v_k$ sütununda pozitif eleman olmadığı için @thm-sao-sinirsiz içindeki $\vec{d}$ vektörü bir yön vektörüdür ve her $\lambda \ge 0$ için $X(\lambda) = X_0 + \lambda \vec{d}$ uygundur. Aynı teoremin 2. maddesine göre amaç değeri
+$$
+z\big(X(\lambda)\big) = z_0 - \lambda (z_k - c_k) = z_0 - \lambda \cdot 0 = z_0
+$$
+olur. Tablo optimal olduğundan $z_0$ optimal değerdir; demek ki her $X(\lambda)$ optimaldir. $X(\lambda)$'nın $k$. bileşeni $\lambda$ olduğundan bu çözümler $\lambda$ büyüdükçe sınırsız büyür; optimal çözümler kümesi sınırlı değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani optimalde temel olmayan bir değişkenin simpleks kriteri sıfırsa ve bu değişkene ait sütunda pozitif eleman yoksa, optimal çözümler sınırsızdır: $X_0$ köşesinden başlayan bir ışının bütün noktaları optimaldir. Burada sınırsız olan amaç fonksiyonu **değildir**; optimal değer sonlu bir sayıdır ve bu yüzden bu durum sınırsız çözümden (@def-sao-sinirsiz-cozum) farklıdır. $v_k$ pivot yapılamadığı için yeni bir optimal uç nokta vermez, ama sonsuz çok alternatif optimal çözüm vardır. Baz dışında sıfır kriterli başka bir sütun yoksa, (2) eşitliği gereği optimal çözümler kümesi tam olarak bu ışındır.
+
+:::: {#exm-sao-optimal-isin name="Optimal çözümleri bir ışın oluşturan problem"}
+$$
+\begin{aligned}
+x_1 - x_2 &\le 1 \\
+-x_1 + x_2 &\le 2 \\
+x_1, x_2 &\ge 0 \\
+\max z &= x_1 - x_2
+\end{aligned}
+$$
+problemini simpleks yöntemle çözünüz ve bütün optimal çözümleri bulunuz.
+
+::: {.cozum}
+**Standart form.** $x_3$ ve $x_4$ aylak değişkenleriyle
+$$
+\begin{aligned}
+x_1 - x_2 + x_3 &= 1 \\
+-x_1 + x_2 + x_4 &= 2 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\max z &= x_1 - x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+olur; $v_3$ ve $v_4$ birim matrisi oluşturur ve problem simpleks yöntem ile çözülebilir haldedir.
+
+**Başlangıç tablosu.** Maksimumda en negatif kriter girer: $z_1 - c_1 = -1$, $z_2 - c_2 = 1$; $v_1$ girer. $v_1$ sütununda yalnız $x_3$ satırının elemanı pozitiftir; oran $1/1$, $v_3$ çıkar, pivot $1$'dir.
+
+|   |   | $c_j$ | $1$ | $-1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $1$ | $[1]$ | $-1$ | $1$ | $0$ | $\frac{1}{1} \Rightarrow$ |
+| $x_4$ | $0$ | $2$ | $-1$ | $1$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-1 \Uparrow$ | $1$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-sao-isin-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı aynen kalır ve $x_1$ satırı olur: $(1 \mid 1, -1, 1, 0)$. Bu satırı $x_4$ satırına da $z_j - c_j$ satırına da ekleriz:
+$$
+\begin{aligned}
+x_4&: \ (2 + 1 \mid -1 + 1,\ 1 - 1,\ 0 + 1,\ 1) = (3 \mid 0, 0, 1, 1), \\
+z_j - c_j&: \ (0 + 1 \mid -1 + 1,\ 1 - 1,\ 0 + 1,\ 0) = (1 \mid 0, 0, 1, 0).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $1$ | $-1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $1$ | $1$ | $1$ | $-1$ | $1$ | $0$ |
+| $x_4$ | $0$ | $3$ | $0$ | $0$ | $1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 1$ | $0$ | $0$ | $1$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) {#tbl-sao-isin-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$; tablo optimaldir: $X_1 = (1, 0, 0, 3)$ ve $\max z = 1$.
+
+**Alternatif çözümler.** Baz dışındaki $v_2$'nin kriteri $z_2 - c_2 = 0$'dır, ama sütunu $(-1, 0)$'dır; pozitif eleman yoktur ve pivot yapılamaz. @prp-sao-optimal-isin gereği her $\lambda \ge 0$ için $x_2 = \lambda$ ve
+$$
+x_1 = 1 - (-1)\lambda = 1 + \lambda, \qquad x_4 = 3 - 0 \cdot \lambda = 3
+$$
+olan çözüm optimaldir. Kontrol: $(1 + \lambda) - \lambda = 1$, $-(1 + \lambda) + \lambda + 3 = 2$ ve $z = (1 + \lambda) - \lambda = 1$.
+
+Başka optimal çözüm de yoktur. Optimal tabloda (2) eşitliği (@lem-sao-tablo) $z = 1 - 0 \cdot x_2 - 1 \cdot x_3 = 1 - x_3$ verir; bir uygun çözüm ancak $x_3 = 0$ ise optimaldir. $x_3 = 0$ iken (1) eşitlikleri $x_1 = 1 + x_2$ ve $x_4 = 3$ verir. Böylece bütün optimal çözümler
+$$
+(x_1, x_2) = (1 + \lambda,\ \lambda), \qquad \lambda \ge 0
+$$
+noktalarıdır. Bunlar $(1, 0)$ köşesinden başlayıp $x_1 - x_2 = 1$ doğrusu boyunca sonsuza uzanan bir ışın oluşturur. Amacın seviye doğruları $x_1 - x_2 = \text{sabit}$ bu kenara paraleldir; en büyük değer $1$ bu kenarın tamamında alınır. Optimal değer sonludur, optimal çözümler kümesi ise sınırsızdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 496.0 496.0" role="img" aria-label="Unbounded strip between x1 - x2 = 1 and -x1 + x2 = 2; the optimal solutions form the ray from (1,0) along x1 - x2 = 1, drawn thick with an arrow; dashed level line z = -1">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="165.1" y1="30.0" x2="165.1" y2="490.0"/><line x1="230.9" y1="30.0" x2="230.9" y2="490.0"/><line x1="296.6" y1="30.0" x2="296.6" y2="490.0"/><line x1="362.3" y1="30.0" x2="362.3" y2="490.0"/><line x1="428.0" y1="30.0" x2="428.0" y2="490.0"/><line x1="493.7" y1="30.0" x2="493.7" y2="490.0"/><line x1="60.0" y1="384.9" x2="520.0" y2="384.9"/><line x1="60.0" y1="319.1" x2="520.0" y2="319.1"/><line x1="60.0" y1="253.4" x2="520.0" y2="253.4"/><line x1="60.0" y1="187.7" x2="520.0" y2="187.7"/><line x1="60.0" y1="122.0" x2="520.0" y2="122.0"/><line x1="60.0" y1="56.3" x2="520.0" y2="56.3"/></g>
+  <polygon points="99.4,450.6 165.1,450.6 520.0,95.7 520.0,30.0 388.6,30.0 99.4,319.1" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M520.0,95.7 L125.7,490.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,358.6 L388.6,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,424.3 L454.3,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="450.6" x2="524.0" y2="450.6"/>
+  <line x1="99.4" y1="494.0" x2="99.4" y2="26.0"/>
+  <polygon points="524.0,450.6 516.0,447.1 516.0,454.1" stroke="none"/>
+  <polygon points="99.4,26.0 95.9,34.0 102.9,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="165.1" y1="447.6" x2="165.1" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="165.1" y="465.6" text-anchor="middle">1</text>
+  <line x1="230.9" y1="447.6" x2="230.9" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="230.9" y="465.6" text-anchor="middle">2</text>
+  <line x1="296.6" y1="447.6" x2="296.6" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="296.6" y="465.6" text-anchor="middle">3</text>
+  <line x1="362.3" y1="447.6" x2="362.3" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="362.3" y="465.6" text-anchor="middle">4</text>
+  <line x1="428.0" y1="447.6" x2="428.0" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="428.0" y="465.6" text-anchor="middle">5</text>
+  <line x1="493.7" y1="447.6" x2="493.7" y2="453.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="493.7" y="465.6" text-anchor="middle">6</text>
+  <line x1="96.4" y1="384.9" x2="102.4" y2="384.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="388.9" text-anchor="end">1</text>
+  <line x1="96.4" y1="319.1" x2="102.4" y2="319.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="323.1" text-anchor="end">2</text>
+  <line x1="96.4" y1="253.4" x2="102.4" y2="253.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="257.4" text-anchor="end">3</text>
+  <line x1="96.4" y1="187.7" x2="102.4" y2="187.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="191.7" text-anchor="end">4</text>
+  <line x1="96.4" y1="122.0" x2="102.4" y2="122.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="126.0" text-anchor="end">5</text>
+  <line x1="96.4" y1="56.3" x2="102.4" y2="56.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="92.4" y="60.3" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="522.0" y="465.6" text-anchor="end">x₁</text>
+  <text x="106.4" y="35.0">x₂</text>
+  </g>
+  <line x1="99.4" y1="450.6" x2="156.3" y2="450.6" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="165.1,450.6 154.1,455.2 154.1,446.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="165.1" y1="450.6" x2="479.8" y2="135.9" stroke="var(--color-practice)" stroke-width="4.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="487.1,128.6 481.8,141.6 474.1,133.9" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="375.4" y1="371.7" x2="416.2" y2="412.5" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="421.9,418.2 411.9,414.1 417.8,408.1" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="99.4" cy="450.6" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="165.1" cy="450.6" r="4.5" fill="var(--color-practice)"/>
+  <text x="91.4" y="468.6" fill="var(--academic-text)" font-size="13" text-anchor="end">X₀</text>
+  <text x="173.1" y="441.6" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁ = (1, 0)</text>
+  <text x="368.9" y="296.1" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ &#8722; x₂ = 1  (z = 1)</text>
+  <text x="267.0" y="102.3" fill="var(--color-remark)" font-size="12" text-anchor="end">&#8722;x₁ + x₂ = 2</text>
+  <text x="395.1" y="102.3" fill="var(--color-base)" font-size="12" text-anchor="start">z = &#8722;1</text>
+  <text x="428.0" y="394.7" fill="var(--color-base)" font-size="12" text-anchor="start">z artar</text>
+  <text x="309.7" y="352.0" fill="var(--color-practice)" font-size="13" text-anchor="start">(1 + λ, λ)</text>
+  <text x="224.3" y="299.4" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>İki paralel doğru arasındaki sınırsız şerit. Amaç z = x₁ − x₂ alttaki kenara paraleldir: bu kenar üzerindeki bütün (1 + λ, λ) noktaları z = 1 verir. Optimal değer sonludur, ama optimal çözümler X₁ = (1, 0) köşesinden başlayan sınırsız bir ışın oluşturur.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde gördüklerimizi, simpleks yöntemin son tablosunda karşılaşılabilecek durumlar olarak özetleyelim. Aşağıdaki tabloda "iyileştiren kriter" minimumda pozitif, maksimumda negatif $z_j - c_j$ demektir.
+
+| Son tablodaki belirti | Sonuç |
+|:--|:--|
+| İyileştiren kriterli bir $v_k$ var ve sütununda pozitif eleman yok | Sınırsız çözüm; optimal çözüm yok |
+| Tablo optimal, baz dışındaki bütün kriterler sıfırdan farklı | Optimal çözüm tek |
+| Tablo optimal, baz dışı bir $v_k$ için $z_k - c_k = 0$ ve sütununda pozitif eleman var | Alternatif optimal uç nokta (dejenere değilse); aradaki bütün noktalar optimal |
+| Tablo optimal, baz dışı bir $v_k$ için $z_k - c_k = 0$ ve sütununda pozitif eleman yok | Optimal çözümler bir ışın içerir (başka sıfır kriter yoksa tam olarak bu ışındır); optimal değer sonlu |
+
+: Son simpleks tablosunun okunuşu {#tbl-sao-durumlar}
+
+Şimdiye kadar bütün değişkenlerin negatif olmadığını varsaydık; simpleks yöntem de bu varsayıma dayanıyor. Oysa bazı problemlerde bir değişken negatif değerler de alabilir. Bir sonraki bölümde, [İşaret kısıtlaması olmayan değişkenler](isaret-kisitlamasiz-degiskenler.qmd) bölümünde, böyle değişkenleri negatif olmayan değişkenlerin farkı olarak yazıp problemi yine simpleks yöntemle çözmeyi göreceğiz.

@@ -1,0 +1,913 @@
+---
+title: "İki Faz Yöntemi"
+pagetitle: "İki Faz Yöntemi"
+description: "Yapay değişkenli lineer programlama problemlerinde yapay değişkenlerin toplamını küçülten yardımcı problemle birinci faz, birinci fazın sonundaki üç durum (uygun çözüm yok, doğrudan geçiş, sıfır değerle bazda kalan yapay değişken), gerçek amaç katsayılarıyla ikinci faz ve yöntemin Büyük M yöntemiyle karşılaştırılması."
+---
+
+Bir lineer programlama problemi $\ge$ ya da $=$ biçiminde kısıtlar içerdiğinde standart formu çoğunlukla birim matris taşımaz; problemi simpleks yöntem ile çözülebilir hale (@def-lpp-cozulebilir-hal) getirmek için bu kısıtlara yapay değişken (@def-lpp-yapay-degisken) ekleriz. [Büyük M yöntemi](buyuk-m-yontemi.qmd) bölümünde yapay değişkenleri amaç fonksiyonuna çok büyük bir $M$ cezasıyla koyup tek bir simpleks çözümünde sıfıra indirmiştik. Bu yöntemin iki zayıf yanı vardır: her tablo hücresinde $aM + b$ biçiminde iki parçalı ifadeler taşınır ve $M$'nin "yeterince büyük" bir sayı olarak seçilmesi gerekir.
+
+İki faz yöntemi aynı işi iki ayrı adımda, $M$ kullanmadan yapar. **Birinci fazda** gerçek amaç fonksiyonu bir kenara bırakılır ve yalnız yapay değişkenlerin toplamı küçültülür. Bu toplam sıfıra inerse problemin bir uygun temel çözümü elde edilmiş olur; inmezse problemin uygun çözümü yoktur. **İkinci fazda** birinci fazın son tablosu gerçek amaç fonksiyonuyla birleştirilir ve simpleks yöntem olağan biçimde sürdürülür. Bu bölümde yöntemin gerekçesini, adımlarını ve birinci fazın sonunda karşılaşılabilecek bütün durumları örneklerle göreceğiz.
+
+## Yöntemin Fikri
+
+Önce birinci fazda çözülen yardımcı problemi tanımlayalım ve neden işe yaradığını görelim.
+
+Problemi standart forma getirdikten sonra, birim sütunu olmayan denklemlere $x_{u_1}, \dots, x_{u_k}$ yapay değişkenlerini ekleriz. Yapay değişkenler dışındaki bütün değişkenlere (orijinal değişkenler ile aylak ve artık değişkenler) bu bölümde **gerçek değişkenler**, sütunlarına da **gerçek sütunlar** diyeceğiz.
+
+::: {#def-ifz-yardimci-problem name="Yardımcı problem"}
+Simpleks yöntem ile çözülebilir hale getirilmiş bir problemde kısıtlar ve işaret koşulları aynen korunup amaç fonksiyonu yerine
+
+$$
+\min g = x_{u_1} + x_{u_2} + \dots + x_{u_k}
+$$
+
+yazılarak elde edilen probleme **yardımcı problem**, $g$ fonksiyonuna **yardımcı amaç fonksiyonu** denir. $g$'de yapay değişkenlerin katsayısı $1$, gerçek değişkenlerin katsayısı $0$'dır. Orijinal problem maksimum problemiyse yardımcı amaç, aynı anlamda olmak üzere
+
+$$
+\max g = -x_{u_1} - x_{u_2} - \dots - x_{u_k}
+$$
+
+biçiminde yazılır; bu durumda yapay değişkenlerin katsayısı $-1$'dir.
+:::
+
+Yani yardımcı problem "gerçek amacı unut, yalnız yapay değişkenlerden kurtul" der. Yapay değişkenler negatif olamadığı için toplamları da negatif olamaz; toplamın en küçük değeri ancak bütün yapay değişkenler sıfırken $0$ olur. İki yazılış arasındaki fark yalnız işarettir: @prp-lpp-max-min gereği
+
+$$\max\,(-x_{u_1} - \dots - x_{u_k}) = -\min\,(x_{u_1} + \dots + x_{u_k})$$
+
+olur. Orijinal problem maksimumsa yardımcı problemi de maksimum olarak yazarız, böylece iki fazda aynı seçim kuralını kullanırız: maksimumda en negatif $z_j - c_j$ girer, minimumda en büyük pozitif $z_j - c_j$ girer. Büyük M yöntemindeki $\pm M$ katsayılarının yerini burada $\pm 1$ almıştır.
+
+:::: {#prp-ifz-uygunluk name="Yardımcı problem ve uygunluk"}
+Standart formdaki kısıtlar $A\vec{x} = \vec{b}$, $\vec{x} \ge 0$, $\vec{b} \ge 0$ olsun ve yapay değişkenler eklenmiş kısıtlar $A\vec{x} + E\vec{x}_u = \vec{b}$, $\vec{x} \ge 0$, $\vec{x}_u \ge 0$ biçiminde yazılsın. Burada $\vec{x}_u = (x_{u_1}, \dots, x_{u_k})$ yapay değişkenlerin vektörü, $E$ ise sütunları yapay değişkenlerin birim sütunları olan $m \times k$ matristir. $\min g = x_{u_1} + \dots + x_{u_k}$ yardımcı problemi için:
+
+1. Yardımcı problemin uygun çözümü vardır ve her uygun çözümde $g \ge 0$'dır; bu yüzden birinci faz sınırsız çözümle bitemez.
+2. Orijinal problemin uygun çözümü vardır $\iff$ yardımcı problemin minimum değeri $0$'dır.
+3. $\min g = 0$ ise yardımcı problemin optimal çözümünde $\vec{x}_u = \vec{0}$'dır ve $\vec{x}$ kısmı orijinal problemin bir uygun çözümüdür.
+
+::: {.ispat}
+**1.** Yapay değişkeni olmayan her denklemde, yalnız o denklemde katsayısı $1$ ile görünen bir gerçek değişken vardır (çoğunlukla bir aylak değişken). Bu değişkenlere ve yapay değişkenlere kendi denklemlerinin $b_i$ değerini, geri kalan bütün değişkenlere $0$ verelim. Bu, başlangıç tablosunun temel çözümüdür; $\vec{b} \ge 0$ olduğundan bütün değişkenler negatif değildir ve çözüm uygundur. Her uygun çözümde $x_{u_i} \ge 0$ olduğundan $g = x_{u_1} + \dots + x_{u_k} \ge 0$'dır. $g$ alttan $0$ ile sınırlı olduğu için yardımcı problem sınırsız olamaz.
+
+**2. ($\Rightarrow$)** $\vec{x}$ orijinal problemin bir uygun çözümü olsun. $A\vec{x} = \vec{b}$ ve $\vec{x} \ge 0$ olduğundan $(\vec{x}, \vec{x}_u) = (\vec{x}, \vec{0})$ yardımcı problemin kısıtlarını sağlar ve bu noktada $g = 0$'dır. 1. maddeye göre $g$ hiçbir uygun çözümde $0$'dan küçük olamaz; o halde yardımcı problemin minimum değeri $0$'dır.
+
+**($\Leftarrow$)** Yardımcı problemin minimum değeri $0$ olsun ve minimum $(\vec{x}^{*}, \vec{x}_u^{*})$ noktasında alınsın. $x_{u_1}^{*} + \dots + x_{u_k}^{*} = 0$ ve her terim negatif olmadığından her $x_{u_i}^{*} = 0$'dır. Kısıta yerine koyarsak $A\vec{x}^{*} + E\vec{0} = A\vec{x}^{*} = \vec{b}$ ve $\vec{x}^{*} \ge 0$ olur; yani $\vec{x}^{*}$ orijinal problemin bir uygun çözümüdür.
+
+**3.** Bu, bir önceki paragrafta gösterildi.
+
+$\max g = -x_{u_1} - \dots - x_{u_k}$ yazılışında her şey işaret değiştirerek aynen geçerlidir: $g \le 0$ olur ve koşul $\max g = 0$ biçimini alır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Önerme yöntemin bütün mantığını taşır. Birinci faz yardımcı problemi simpleks yöntemle çözer. Sonuçta $g \ne 0$ çıkarsa orijinal problemin hiç uygun çözümü yoktur; $g = 0$ çıkarsa birinci fazın son tablosu, orijinal problemin bir uygun temel çözümünü gösterir ve ikinci faz oradan başlar.
+
+Hesaplarda bir kısaltma daha yapacağız. Birinci fazda bir yapay vektör bazdan çıkınca onun değişkeni $0$ olur. Bu değişkeni bir daha baza sokmayız ve sütununu tablodan atarız. Bu, o yapay değişkeni kalıcı olarak $0$'a eşitlemek demektir. Önermedeki akıl yürütme bu küçülmüş yardımcı problem için de aynen geçerlidir: orijinal problemin her uygun çözümü, bütün yapay değişkenleri $0$ olan bir nokta olarak küçülmüş problemde de bulunur. Böylece her iterasyonda tablo biraz daralır.
+
+## Birinci Fazın Sonu: Üç Durum
+
+Birinci faz, yardımcı problemin optimal tablosuyla biter. Bu tabloda bakacağımız şey $g$'nin değeri ve yapay değişkenlerin bazda olup olmadığıdır.
+
+### Durum 1: $g \ne 0$
+
+Yardımcı amaç sıfıra inmemişse, @prp-ifz-uygunluk gereği **orijinal problemin uygun çözümü yoktur** ve ikinci faza geçilmez. Bu durumda en az bir yapay vektör bazdadır ve değişkeni pozitif bir değerle çözümde kalmıştır: simpleks yöntem, o yapay değişkenin karşıladığı kısıtı gerçek değişkenlerle sağlamanın bir yolunu bulamamıştır. Gerçek bir uygulamada bu, modelin kısıtlarının birbiriyle çeliştiğini gösterir; model kurulurken bir kısıt yanlış yazılmış olabilir.
+
+### Durum 2: $g = 0$ ve bazda yapay vektör yok
+
+En sık karşılaşılan durum budur. Bütün yapay vektörler bazdan çıkmıştır, dolayısıyla tablonun temel çözümü yalnız gerçek değişkenlerden oluşur ve orijinal problemin bir uygun temel çözümüdür. İkinci faza şöyle geçilir:
+
+1. Birinci fazın optimal tablosunda hâlâ duran (temel dışı) yapay değişkenlerin sütunları atılır.
+2. Orijinal amaç fonksiyonu ile birinci fazın optimal tablosu birleştirilerek ikinci fazın başlangıç tablosu kurulur: $c_j$ satırına orijinal amaç katsayıları, $c_B$ sütununa baz değişkenlerinin orijinal amaç katsayıları yazılır ve $z_j - c_j$ satırı ile $z_0$ yeniden hesaplanır.
+3. Simpleks yöntemin adımlarıyla devam edilir.
+
+Tablonun gövdesinin neden aynen kaldığını hatırlayalım. $y_{ij}$ sayıları, $v_j$ vektörünün baz vektörleri cinsinden yazılışındaki katsayılardır; $v_0$ sütunu da temel çözümdür (@sec-smp-tablo). Bunlar yalnız kısıtlara ve baza bağlıdır, amaç katsayılarına bağlı değildir. Amaç fonksiyonu değişince yalnız $c_j$, $c_B$ ve bunlardan hesaplanan $z_j = \vec{c}_B^{\,T} v_j$, $z_0 = \vec{c}_B^{\,T} v_0$ değerleri değişir.
+
+### Durum 3: $g = 0$ ama bir yapay vektör sıfır değerle bazda
+
+Bu durum dejenere (@def-tck-dejenere) tablolarda ortaya çıkar: $g = 0$ olduğu için bütün yapay değişkenler sıfırdır, ama bunlardan biri, örneğin $x_u$, $r$. satırda $y_{r0} = 0$ değeriyle hâlâ bazdadır. Yukarıdaki 1. adım yalnız temel **dışı** yapay sütunları atar; bazdaki $x_u$'nun sütunu atılamaz, çünkü o sütun baz matrisinin bir parçasıdır. Onu bazda bırakıp ikinci faza geçmek de güvenli değildir: ikinci fazda baza pozitif bir değerle giren bir vektörün $r$. satırdaki elemanı negatifse, dönüşüm sonrası $x_u$ pozitif bir değer alır ve bulunan nokta orijinal kısıtları sağlamaz. Bu yüzden ikinci faza geçmeden önce $x_u$'yu bazdan çıkarırız. Bunu iki önerme mümkün kılar.
+
+:::: {#prp-ifz-yapay-cikarma name="Sıfır değerli yapay değişkeni bazdan çıkarma"}
+Birinci fazın optimal tablosunda $x_u$ yapay değişkeni $r$. satırda $y_{r0} = 0$ değeriyle bazda olsun ve bir $v_k$ gerçek sütununda $y_{rk} \ne 0$ olsun. $y_{rk}$ pivot eleman alınarak (işareti ne olursa olsun) dönüşüm kuralı uygulanırsa $v_k$ baza, $x_k = 0$ değeriyle girer, $x_u$ bazdan çıkar ve $v_0$ sütunu değişmez. Yeni tablonun temel çözümü eskisiyle aynı noktadır; özellikle uygundur ve $g = 0$'dır.
+
+::: {.ispat}
+$v_k$ sütununun baz vektörleri cinsinden yazılışında $v_r$'nin (yani $x_u$'nun sütununun) katsayısı $y_{rk} \ne 0$'dır. Bu yüzden $v_r$ yerine $v_k$ konunca vektörler yine lineer bağımsız kalır ve yeni bir baz elde edilir; dönüşüm kuralı (@sec-smp-donusum) bu bazın tablosunu verir. Kuralı $v_0$ sütununa uygulayalım. Pivot satırı için
+
+$$y'_{k0} = \frac{y_{r0}}{y_{rk}} = \frac{0}{y_{rk}} = 0,$$
+
+diğer her $i$ satırı için
+
+$$y'_{i0} = y_{i0} - \frac{y_{ik}\, y_{r0}}{y_{rk}} = y_{i0} - 0 = y_{i0}$$
+
+bulunur. Demek ki bazda kalan değişkenlerin değerleri değişmez ve yeni giren $x_k$ değişkeni $0$ değerini alır. Değişkenlerin değerleri aynı kaldığı için nokta aynıdır; bütün değerler negatif olmadığından çözüm uygundur ve yapay değişkenlerin hepsi hâlâ sıfır olduğundan $g = 0$'dır.
+
+Simpleks yöntemde pivot elemanın pozitif olması, yeni $v_0$ sütununun negatif olmaması için gerekiyordu. Burada $y_{r0} = 0$ olduğu için $v_0$ sütunu hiç değişmez; bu yüzden negatif bir pivot da kullanılabilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani sıfır değerli yapay değişken, aynı noktada kalınarak yerini bir gerçek değişkene bırakır. Bu pivot, amaç fonksiyonunu iyileştirmek için değil, yalnız bazı temizlemek için yapılır; bu yüzden giren sütun $z_j - c_j$ değerine bakılmadan, $r$. satırda sıfırdan farklı elemanı olan herhangi bir gerçek sütun arasından seçilir.
+
+Geriye $r$. satırın bütün gerçek sütunlardaki elemanlarının sıfır olduğu durum kalıyor.
+
+:::: {#prp-ifz-gereksiz-kisit name="Gereksiz kısıt"}
+Birinci fazın optimal tablosunda $x_u$ yapay değişkeni $r$. satırda $y_{r0} = 0$ değeriyle bazda olsun ve her gerçek $v_j$ sütunu için $y_{rj} = 0$ olsun. O zaman orijinal kısıtlardan biri diğerlerinin lineer birleşimidir ve tablonun $r$. satırı ile $x_u$ değişkeni atılabilir; kalan tablo, orijinal problemin kısıtlarıyla aynı çözüm kümesini tanımlar.
+
+::: {.ispat}
+Tablo, yapay değişkenler eklenmiş $A\vec{x} + E\vec{x}_u = \vec{b}$ sisteminden elemanter satır işlemleriyle elde edilmiştir. Elemanter satır işlemleri tersinir olduğundan tablonun satırlarının belirttiği denklem sistemi bu sistemle aynı çözümlere sahiptir.
+
+Orijinal problemin çözümleri yapay değişkenlerin hepsinin sıfır olduğu çözümlerdir. $\vec{x}_u = \vec{0}$ yazınca tablonun $r$. satırı, bütün gerçek katsayıları ve sağ tarafı sıfır olduğundan
+
+$$0 \cdot x_1 + 0 \cdot x_2 + \dots = 0$$
+
+denklemine dönüşür. Bu denklemi her nokta sağlar; atılması çözüm kümesini değiştirmez. Öte yandan tablonun $r$. satırı, orijinal denklemlerin $\lambda_1, \dots, \lambda_m$ katsayılı bir lineer birleşimidir ve satır işlemleri tersinir olduğundan bu katsayıların hepsi birden sıfır olamaz. Gerçek sütunlarda ve sağ tarafta sıfır verdiğine göre, orijinal denklemlerin sıfır olmayan bir lineer birleşimi $0 = 0$ özdeşliğini verir. Katsayısı sıfırdan farklı olan denklemlerden biri, bu eşitlikten diğerleri cinsinden çözülebilir; yani o kısıt diğerlerinin lineer birleşimidir ve bilgi taşımaz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bu durumda kısıtlardan biri **gereksizdir** (fazladır): diğerleri sağlanınca kendiliğinden sağlanır. Örneğin üçüncü kısıt ilk iki kısıtın toplamıysa, birinci faz bunu bizim yerimize fark eder ve o satırı bütünüyle sıfırlar.
+
+Özetle Durum 3'te, sıfır değerle bazda kalan her yapay değişken ya @prp-ifz-yapay-cikarma ile bazdan çıkarılır ya da @prp-ifz-gereksiz-kisit ile satırıyla birlikte atılır. Bundan sonra bazda yapay vektör kalmaz ve Durum 2'deki adımlarla ikinci faza geçilir.
+
+## Yöntemin Adımları
+
+Şimdi yöntemi baştan sona bir reçete olarak toplayalım.
+
+::: {.callout-tip title="Altı adımda iki faz yöntemi"}
+1. **Sağ tarafları düzenle.** Sağ tarafı negatif olan kısıtları $-1$ ile çarp; eşitsizliğin yönü döner.
+2. **Standart forma getir.** $\le$ kısıtlara aylak değişken ekle, $\ge$ kısıtlardan artık değişken çıkar; amaçtaki katsayıları $0$'dır.
+3. **Yapay değişken ekle.** Birim sütunu olmayan her denkleme (çoğunlukla $\ge$ ve $=$ kısıtlarına) bir $x_{u_i} \ge 0$ yapay değişkeni ekle; problem artık simpleks yöntem ile çözülebilir haldedir.
+4. **Birinci faz.** Amaç fonksiyonunu yardımcı amaçla değiştir: minimumda $\min g = x_{u_1} + \dots + x_{u_k}$, maksimumda $\max g = -x_{u_1} - \dots - x_{u_k}$; gerçek değişkenlerin katsayısı $0$'dır. Bu problemi simpleks yöntemle çöz; bazdan çıkan yapay vektörün sütununu at.
+5. **Birinci fazın sonu.** $g \ne 0$ ise uygun çözüm yoktur, dur. $g = 0$ ise sıfır değerle bazda kalan yapay değişkenleri pivotla bazdan çıkar ya da gereksiz satırlarıyla birlikte at; sonra temel dışı yapay sütunları at.
+6. **İkinci faz.** $c_j$ satırına ve $c_B$ sütununa orijinal amaç katsayılarını yaz, $z_j - c_j$ ve $z_0$ değerlerini yeniden hesapla ve simpleks yöntemle optimal tabloya kadar devam et.
+:::
+
+## Uygun Çözümü Olan Problemler
+
+Reçeteyi önce küçük bir minimum probleminde, sonra üç değişkenli bir maksimum probleminde uygulayalım. İki örnekte de birinci faz Durum 2 ile biter.
+
+:::: {#exm-ifz-diyet name="İki değişkenli bir minimum problemi"}
+Aşağıdaki problemi iki faz yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\ge 6 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**1–3. adımlar.** Sağ taraflar $4$ ve $6$ negatif değildir. Önce problemi standart forma getirelim: iki $\ge$ kısıttan $x_3$ ve $x_4$ artık değişkenlerini çıkarırız. Artık değişkenlerin sütunları $-1$ içerdiğinden standart form birim matris taşımaz; henüz simpleks yöntem ile çözülebilir halde değildir. İki denkleme de birer yapay değişken ekleriz (bu problemin çözülebilir hale getirilişini @exm-lpp-zincir-min içinde görmüştük):
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 + x_{u_1} &= 4 \\
+x_1 + 3x_2 - x_4 + x_{u_2} &= 6 \\
+x_1, x_2, x_3, x_4, x_{u_1}, x_{u_2} &\ge 0
+\end{aligned}
+$$
+
+**Birinci faz.** Problem minimum problemi olduğundan yardımcı amaç $\min g = x_{u_1} + x_{u_2}$'dir: $c_j$ satırında yapay sütunların altına $1$, diğerlerinin altına $0$ yazılır. Başlangıç tablosunda $\vec{c}_B = (1, 1)$ olduğundan her sütunun kriteri iki satırın toplamı eksi $c_j$'dir; örneğin $g_2 - c_2 = 1 + 3 - 0 = 4$ ve $g_0 = 4 + 6 = 10$.
+
+Minimum probleminde en büyük pozitif kriter girer. $\max\{2, 4\} = 4$ olduğundan $v_2$ baza girer. Oranlar $\frac{4}{1} = 4$ ve $\frac{6}{3} = 2$'dir; en küçüğü $x_{u_2}$ satırındadır. $v_{u_2}$ bazdan çıkar ve pivot $3$'tür.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $1$ | $1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $x_{u_1}$ | $1$ | $4$ | $1$ | $1$ | $-1$ | $0$ | $1$ | $0$ | $\frac{4}{1}$ |
+| $x_{u_2}$ | $1$ | $6$ | $1$ | $[3]$ | $0$ | $-1$ | $0$ | $1$ | $\frac{6}{3} \Rightarrow$ |
+| $g_j - c_j$ |   | $g_0 = 10$ | $2$ | $4 \Uparrow$ | $-1$ | $-1$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 1 {#tbl-ifz-diyet-f1-baslangic .simpleks}
+
+Pivot satırı $3$'e bölünür ve $x_2$ satırı olur: $\big(2 \mid \tfrac{1}{3}, 1, 0, -\tfrac{1}{3}\big)$. $x_{u_1}$ satırından bu yeni satır bir kez, $g_j - c_j$ satırından $4$ kez çıkarılır. Örneğin $x_{u_1}$ satırının $v_0$ elemanı $4 - 2 = 2$, $v_1$ elemanı $1 - \tfrac{1}{3} = \tfrac{2}{3}$; $g_0 = 10 - 4 \cdot 2 = 2$ ve $g_1 - c_1 = 2 - \tfrac{4}{3} = \tfrac{2}{3}$ olur. Bazdan çıkan $v_{u_2}$ sütununu tablodan atıyoruz.
+
+Pozitif kriterler $\tfrac{2}{3}$ ve $\tfrac{1}{3}$'tür; en büyüğü $v_1$'inkidir ve $v_1$ baza girer. Oranlar $\frac{2}{2/3} = 3$ ve $\frac{2}{1/3} = 6$ olduğundan $v_{u_1}$ bazdan çıkar; pivot $\tfrac{2}{3}$'tür.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | Oran |
+| $x_{u_1}$ | $1$ | $2$ | $[\frac{2}{3}]$ | $0$ | $-1$ | $\frac{1}{3}$ | $1$ | $\frac{2}{2/3} \Rightarrow$ |
+| $x_2$ | $0$ | $2$ | $\frac{1}{3}$ | $1$ | $0$ | $-\frac{1}{3}$ | $0$ | $\frac{2}{1/3}$ |
+| $g_j - c_j$ |   | $g_0 = 2$ | $\frac{2}{3} \Uparrow$ | $0$ | $-1$ | $\frac{1}{3}$ | $0$ |   |
+
+: Birinci iterasyon tablosu — Faz 1 {#tbl-ifz-diyet-f1-birinci .simpleks}
+
+Pivot satırı $\tfrac{2}{3}$'e bölünür (yani $\tfrac{3}{2}$ ile çarpılır) ve $x_1$ satırı olur: $\big(3 \mid 1, 0, -\tfrac{3}{2}, \tfrac{1}{2}\big)$. $x_2$ satırından bu satırın $\tfrac{1}{3}$ katı çıkarılır: $v_0$ elemanı $2 - 1 = 1$, $v_3$ elemanı $0 + \tfrac{1}{2} = \tfrac{1}{2}$, $v_4$ elemanı $-\tfrac{1}{3} - \tfrac{1}{6} = -\tfrac{1}{2}$. $g_j - c_j$ satırından da $\tfrac{2}{3}$ katı çıkarılır; bütün kriterler ve $g_0$ sıfır olur. $v_{u_1}$ sütununu da atıyoruz.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $0$ | $3$ | $1$ | $0$ | $-\frac{3}{2}$ | $\frac{1}{2}$ |
+| $x_2$ | $0$ | $1$ | $0$ | $1$ | $\frac{1}{2}$ | $-\frac{1}{2}$ |
+| $g_j - c_j$ |   | $g_0 = 0$ | $0$ | $0$ | $0$ | $0$ |
+
+: İkinci iterasyon tablosu (optimal tablo) — Faz 1 {#tbl-ifz-diyet-f1-optimal .simpleks .oransiz}
+
+Pozitif kriter kalmadı; yardımcı problemin optimumuna ulaşıldı ve $\min g = 0$'dır. Bazda yapay vektör yoktur (Durum 2). Temel çözüm $x_1 = 3$, $x_2 = 1$, $x_3 = x_4 = 0$'dır; bu nokta iki kısıtı da eşitlikle sağlar: $3 + 1 = 4$, $3 + 3 = 6$.
+
+**İkinci faz.** $c_j$ satırına orijinal katsayıları ($2, 3, 0, 0$), $c_B$ sütununa baz değişkenlerinin katsayılarını ($c_1 = 2$, $c_2 = 3$) yazıp kriterleri yeniden hesaplarız:
+
+$$
+\begin{aligned}
+z_3 - c_3 &= 2 \cdot \left(-\tfrac{3}{2}\right) + 3 \cdot \tfrac{1}{2} - 0 = -\tfrac{3}{2}, \\[1mm]
+z_4 - c_4 &= 2 \cdot \tfrac{1}{2} + 3 \cdot \left(-\tfrac{1}{2}\right) - 0 = -\tfrac{1}{2}, \\[1mm]
+z_0 &= 2 \cdot 3 + 3 \cdot 1 = 9 .
+\end{aligned}
+$$
+
+Baz vektörlerinin kriterleri yine sıfırdır.
+
+|   |   | $c_j$ | $2$ | $3$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $2$ | $3$ | $1$ | $0$ | $-\frac{3}{2}$ | $\frac{1}{2}$ |
+| $x_2$ | $3$ | $1$ | $0$ | $1$ | $\frac{1}{2}$ | $-\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 9$ | $0$ | $0$ | $-\frac{3}{2}$ | $-\frac{1}{2}$ |
+
+: Başlangıç tablosu (optimal tablo) — Faz 2 {#tbl-ifz-diyet-f2-optimal .simpleks .oransiz}
+
+Minimum probleminde bütün $z_j - c_j \le 0$ olunca tablo optimaldir; ikinci fazın başlangıç tablosu zaten optimal çıktı. Optimal çözüm $x_1 = 3$, $x_2 = 1$ ve $\min z = 2 \cdot 3 + 3 \cdot 1 = 9$'dur.
+
+Sağlama için uygun bölgenin köşelerine bakalım: $(0, 4)$'te $z = 12$, $(3, 1)$'de $z = 9$, $(6, 0)$'da $z = 12$. En küçük değer gerçekten $(3, 1)$'dedir. Aşağıdaki şekilde birinci fazın izlediği yol görülüyor: ilk iki temel çözüm uygun bölgenin dışındadır, çünkü o noktalarda yapay değişkenler pozitiftir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 516.0 396.0" role="img" aria-label="Unbounded feasible region above x1 + x2 = 4 and x1 + 3x2 = 6 with corners (0,4), (3,1), (6,0); the phase one path goes from (0,0) to (0,2) to (3,1); dashed level lines z = 9 and z = 12">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="156.0" y1="30.0" x2="156.0" y2="390.0"/><line x1="216.0" y1="30.0" x2="216.0" y2="390.0"/><line x1="276.0" y1="30.0" x2="276.0" y2="390.0"/><line x1="336.0" y1="30.0" x2="336.0" y2="390.0"/><line x1="396.0" y1="30.0" x2="396.0" y2="390.0"/><line x1="456.0" y1="30.0" x2="456.0" y2="390.0"/><line x1="516.0" y1="30.0" x2="516.0" y2="390.0"/><line x1="60.0" y1="294.0" x2="540.0" y2="294.0"/><line x1="60.0" y1="234.0" x2="540.0" y2="234.0"/><line x1="60.0" y1="174.0" x2="540.0" y2="174.0"/><line x1="60.0" y1="114.0" x2="540.0" y2="114.0"/><line x1="60.0" y1="54.0" x2="540.0" y2="54.0"/></g>
+  <polygon points="96.0,30.0 96.0,114.0 276.0,294.0 456.0,354.0 540.0,354.0 540.0,30.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M96.0,114.0 L276.0,294.0 L456.0,354.0" fill="none" stroke="var(--color-theory)" stroke-width="1.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,78.0 L372.0,390.0" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,222.0 L540.0,382.0" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,150.0 L420.0,390.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,90.0 L510.0,390.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="354.0" x2="544.0" y2="354.0"/>
+  <line x1="96.0" y1="394.0" x2="96.0" y2="26.0"/>
+  <polygon points="544.0,354.0 536.0,350.5 536.0,357.5" stroke="none"/>
+  <polygon points="96.0,26.0 92.5,34.0 99.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="156.0" y1="351.0" x2="156.0" y2="357.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="156.0" y="369.0" text-anchor="middle">1</text>
+  <line x1="216.0" y1="351.0" x2="216.0" y2="357.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="216.0" y="369.0" text-anchor="middle">2</text>
+  <line x1="276.0" y1="351.0" x2="276.0" y2="357.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="276.0" y="369.0" text-anchor="middle">3</text>
+  <line x1="336.0" y1="351.0" x2="336.0" y2="357.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="336.0" y="369.0" text-anchor="middle">4</text>
+  <line x1="396.0" y1="351.0" x2="396.0" y2="357.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="396.0" y="369.0" text-anchor="middle">5</text>
+  <line x1="456.0" y1="351.0" x2="456.0" y2="357.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="456.0" y="369.0" text-anchor="middle">6</text>
+  <line x1="516.0" y1="351.0" x2="516.0" y2="357.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="516.0" y="369.0" text-anchor="middle">7</text>
+  <line x1="93.0" y1="294.0" x2="99.0" y2="294.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="89.0" y="298.0" text-anchor="end">1</text>
+  <line x1="93.0" y1="234.0" x2="99.0" y2="234.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="89.0" y="238.0" text-anchor="end">2</text>
+  <line x1="93.0" y1="174.0" x2="99.0" y2="174.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="89.0" y="178.0" text-anchor="end">3</text>
+  <line x1="93.0" y1="114.0" x2="99.0" y2="114.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="89.0" y="118.0" text-anchor="end">4</text>
+  <line x1="93.0" y1="54.0" x2="99.0" y2="54.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="89.0" y="58.0" text-anchor="end">5</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="542.0" y="369.0" text-anchor="end">x₁</text>
+  <text x="103.0" y="35.0">x₂</text>
+  </g>
+  <line x1="96.0" y1="354.0" x2="96.0" y2="242.8" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="96.0,234.0 100.6,245.0 91.4,245.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="96.0" y1="234.0" x2="267.7" y2="291.2" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="276.0,294.0 264.1,294.9 267.0,286.1" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="96.0" cy="354.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="96.0" cy="234.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="276.0" cy="294.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="96.0" cy="114.0" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="456.0" cy="354.0" r="4.0" fill="var(--color-theory)"/>
+  <text x="104.0" y="346.0" fill="var(--academic-text)" font-size="13" text-anchor="start">(0, 0)</text>
+  <text x="106.0" y="238.0" fill="var(--academic-text)" font-size="13" text-anchor="start">(0, 2)</text>
+  <text x="264.0" y="314.0" fill="var(--academic-text)" font-size="13" text-anchor="end">(3, 1)</text>
+  <text x="106.0" y="110.0" fill="var(--academic-text)" font-size="13" text-anchor="start">(0, 4)</text>
+  <text x="452.0" y="344.0" fill="var(--academic-text)" font-size="13" text-anchor="start">(6, 0)</text>
+  <text x="372.0" y="96.0" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+  <text x="171.0" y="159.0" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + x₂ = 4</text>
+  <text x="456.0" y="316.8" fill="var(--color-remark)" font-size="12" text-anchor="middle">x₁ + 3x₂ = 6</text>
+  <text x="426.0" y="384.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = 9</text>
+  <text x="156.0" y="129.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = 12</text>
+</svg>
+<figcaption>Birinci fazın izlediği yol: (0, 0) → (0, 2) → (3, 1). İlk iki nokta uygun bölgenin dışındadır (yapay değişkenler pozitiftir); (3, 1) köşesine gelindiğinde g = 0 olur. İkinci faz bu köşeden başlar ve kesikli z = 9 seviye doğrusu onun optimal olduğunu gösterir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ifz-maks name="Üç değişkenli bir maksimum problemi"}
+Aşağıdaki problemi iki faz yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 2 \\
+3x_1 - 2x_2 + 2x_3 &\le 3 \\
+x_1 + 2x_3 &\ge 3 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= x_1 + 2x_2 + 3x_3
+\end{aligned}
+$$
+
+::: {.cozum}
+**Standart form.** Sağ taraflar $2, 3, 3$ negatif değildir. İkinci kısıta $x_4$ aylak değişkenini ekler, üçüncü kısıttan $x_5$ artık değişkenini çıkarırız; birinci kısıt zaten eşitliktir:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 2 \\
+3x_1 - 2x_2 + 2x_3 + x_4 &= 3 \\
+x_1 + 2x_3 + 0x_4 - x_5 &= 3 \\
+x_1, x_2, x_3, x_4, x_5 &\ge 0 \\
+\max z &= x_1 + 2x_2 + 3x_3 + 0x_4 + 0x_5
+\end{aligned}
+$$
+
+**Simpleks yöntem ile çözülebilir hal.** İkinci denklemin birim sütunu $x_4$'tür. Birinci denklemde (eşitlik) ve üçüncü denklemde ($x_5$'in katsayısı $-1$) birim sütun yoktur; bu iki denkleme $x_{u_1}$ ve $x_{u_2}$ yapay değişkenlerini ekleriz:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 + x_{u_1} &= 2 \\
+3x_1 - 2x_2 + 2x_3 + x_4 &= 3 \\
+x_1 + 2x_3 - x_5 + x_{u_2} &= 3 \\
+x_1, \dots, x_5, x_{u_1}, x_{u_2} &\ge 0
+\end{aligned}
+$$
+
+Bu sistemle Büyük M yönteminde amaç
+
+$$\max z = x_1 + 2x_2 + 3x_3 - Mx_{u_1} - Mx_{u_2}$$
+
+olurdu. İki faz yönteminde ise önce yardımcı problemi çözeriz.
+
+**Birinci faz.** Orijinal problem maksimum problemi olduğundan yardımcı amaç
+
+$$\max g = -x_{u_1} - x_{u_2}$$
+
+biçimindedir: yapay sütunların $c_j$ değeri $-1$, diğerlerininki $0$'dır. Başlangıç tablosunda $\vec{c}_B = (-1, 0, -1)$ olduğundan her kriter, birinci ve üçüncü satırların toplamının eksisi eksi $c_j$'dir; örneğin $g_3 - c_3 = -(1 + 2) - 0 = -3$, $g_5 - c_5 = -(0 - 1) = 1$ ve $g_0 = -(2 + 3) = -5$.
+
+Maksimum probleminde en negatif kriter girer. $\min\{-2, -1, -3\} = -3$ olduğundan $v_3$ baza girer. Oranlar $\frac{2}{1} = 2$, $\frac{3}{2}$ ve $\frac{3}{2}$'dir. En küçük oran $x_4$ ve $x_{u_2}$ satırlarında eşittir; eşitlikte yapay değişkenin satırını seçeriz, çünkü amacımız yapay değişkenleri bir an önce bazdan çıkarmaktır. $v_{u_2}$ bazdan çıkar ve pivot $2$'dir.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $0$ | $-1$ | $-1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $x_{u_1}$ | $-1$ | $2$ | $1$ | $1$ | $1$ | $0$ | $0$ | $1$ | $0$ | $\frac{2}{1}$ |
+| $x_4$ | $0$ | $3$ | $3$ | $-2$ | $2$ | $1$ | $0$ | $0$ | $0$ | $\frac{3}{2}$ |
+| $x_{u_2}$ | $-1$ | $3$ | $1$ | $0$ | $[2]$ | $0$ | $-1$ | $0$ | $1$ | $\frac{3}{2} \Rightarrow$ |
+| $g_j - c_j$ |   | $g_0 = -5$ | $-2$ | $-1$ | $-3 \Uparrow$ | $0$ | $1$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 1 {#tbl-ifz-maks-f1-baslangic .simpleks}
+
+Pivot satırı $2$'ye bölünür ve $x_3$ satırı olur: $\big(\tfrac{3}{2} \mid \tfrac{1}{2}, 0, 1, 0, -\tfrac{1}{2}\big)$. $x_{u_1}$ satırından bu satır bir kez, $x_4$ satırından iki kez çıkarılır; $g_j - c_j$ satırına ise üç katı eklenir (kriter $-3$ olduğu için). Örneğin $x_4$ satırının $v_0$ elemanı $3 - 2 \cdot \tfrac{3}{2} = 0$, $v_5$ elemanı $0 - 2 \cdot \left(-\tfrac{1}{2}\right) = 1$; $g_0 = -5 + 3 \cdot \tfrac{3}{2} = -\tfrac{1}{2}$ olur. Bazdan çıkan $v_{u_2}$ sütununu atıyoruz.
+
+Yeni tabloda $x_4 = 0$ olduğuna dikkat edelim: oran testindeki eşitlik yüzünden temel çözüm dejenere oldu. En negatif kriter $-1$'dir ve $v_2$ baza girer. $v_2$ sütununda yalnız $x_{u_1}$ satırının elemanı pozitiftir ($x_4$ satırında $-2$, $x_3$ satırında $0$); oran $\frac{1/2}{1} = \tfrac{1}{2}$ ve $v_{u_1}$ bazdan çıkar. Pivot $1$'dir.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $0$ | $-1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_{u_1}$ | Oran |
+| $x_{u_1}$ | $-1$ | $\frac{1}{2}$ | $\frac{1}{2}$ | $[1]$ | $0$ | $0$ | $\frac{1}{2}$ | $1$ | $\frac{1/2}{1} \Rightarrow$ |
+| $x_4$ | $0$ | $0$ | $2$ | $-2$ | $0$ | $1$ | $1$ | $0$ | $-$ |
+| $x_3$ | $0$ | $\frac{3}{2}$ | $\frac{1}{2}$ | $0$ | $1$ | $0$ | $-\frac{1}{2}$ | $0$ | $-$ |
+| $g_j - c_j$ |   | $g_0 = -\frac{1}{2}$ | $-\frac{1}{2}$ | $-1 \Uparrow$ | $0$ | $0$ | $-\frac{1}{2}$ | $0$ |   |
+
+: Birinci iterasyon tablosu — Faz 1 {#tbl-ifz-maks-f1-birinci .simpleks}
+
+Pivot $1$ olduğundan $x_{u_1}$ satırı aynen kalır ve $x_2$ satırı olur. $x_4$ satırına bu satırın iki katı, $g_j - c_j$ satırına bir katı eklenir; $x_3$ satırının $v_2$ elemanı $0$ olduğundan o satır değişmez. Örneğin $x_4$ satırında $v_0$ elemanı $0 + 1 = 1$, $v_1$ elemanı $2 + 1 = 3$, $v_5$ elemanı $1 + 1 = 2$ olur ve satır $(1 \mid 3, 0, 0, 1, 2)$ biçimini alır. $v_{u_1}$ sütununu da atıyoruz.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_2$ | $0$ | $\frac{1}{2}$ | $\frac{1}{2}$ | $1$ | $0$ | $0$ | $\frac{1}{2}$ |
+| $x_4$ | $0$ | $1$ | $3$ | $0$ | $0$ | $1$ | $2$ |
+| $x_3$ | $0$ | $\frac{3}{2}$ | $\frac{1}{2}$ | $0$ | $1$ | $0$ | $-\frac{1}{2}$ |
+| $g_j - c_j$ |   | $g_0 = 0$ | $0$ | $0$ | $0$ | $0$ | $0$ |
+
+: İkinci iterasyon tablosu (optimal tablo) — Faz 1 {#tbl-ifz-maks-f1-optimal .simpleks .oransiz}
+
+Simpleks kriterleri arasında negatif olan kalmadı; yardımcı problemin maksimumuna ulaşıldı ve $\max g = 0$'dır. Bazda yapay vektör yoktur (Durum 2); birinci faz sona erer. Bulunan uygun temel çözüm $(x_1, \dots, x_5) = \left(0, \tfrac{1}{2}, \tfrac{3}{2}, 1, 0\right)$'dır.
+
+**İkinci faz.** $c_j$ satırına $1, 2, 3, 0, 0$; $c_B$ sütununa $x_2, x_4, x_3$ için $2, 0, 3$ yazılır. Kriterler $z_j = \vec{c}_B^{\,T} v_j$ ile yeniden hesaplanır:
+
+$$
+\begin{aligned}
+z_1 - c_1 &= 2 \cdot \tfrac{1}{2} + 0 \cdot 3 + 3 \cdot \tfrac{1}{2} - 1 = \tfrac{3}{2}, \\[1mm]
+z_5 - c_5 &= 2 \cdot \tfrac{1}{2} + 0 \cdot 2 + 3 \cdot \left(-\tfrac{1}{2}\right) - 0 = -\tfrac{1}{2}, \\[1mm]
+z_0 &= 2 \cdot \tfrac{1}{2} + 0 \cdot 1 + 3 \cdot \tfrac{3}{2} = \tfrac{11}{2} .
+\end{aligned}
+$$
+
+Maksimum probleminde en negatif kriter girer; tek negatif kriter $-\tfrac{1}{2}$ olduğundan $v_5$ baza girer. $v_5$ sütununda $x_3$ satırının elemanı $-\tfrac{1}{2} < 0$ olduğundan o satır teste girmez. Oranlar $\frac{1/2}{1/2} = 1$ ve $\frac{1}{2}$'dir; $x_4$ bazdan çıkar ve pivot $2$'dir.
+
+|   |   | $c_j$ | $1$ | $2$ | $3$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_2$ | $2$ | $\frac{1}{2}$ | $\frac{1}{2}$ | $1$ | $0$ | $0$ | $\frac{1}{2}$ | $\frac{1/2}{1/2}$ |
+| $x_4$ | $0$ | $1$ | $3$ | $0$ | $0$ | $1$ | $[2]$ | $\frac{1}{2} \Rightarrow$ |
+| $x_3$ | $3$ | $\frac{3}{2}$ | $\frac{1}{2}$ | $0$ | $1$ | $0$ | $-\frac{1}{2}$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = \frac{11}{2}$ | $\frac{3}{2}$ | $0$ | $0$ | $0$ | $-\frac{1}{2} \Uparrow$ |   |
+
+: Başlangıç tablosu — Faz 2 {#tbl-ifz-maks-f2-baslangic .simpleks}
+
+Pivot satırı $2$'ye bölünür ve $x_5$ satırı olur: $\big(\tfrac{1}{2} \mid \tfrac{3}{2}, 0, 0, \tfrac{1}{2}, 1\big)$. $x_2$ satırından bu satırın $\tfrac{1}{2}$ katı çıkarılır, $x_3$ satırına ve $z_j - c_j$ satırına $\tfrac{1}{2}$ katı eklenir. Örneğin $x_3$ satırının $v_0$ elemanı $\tfrac{3}{2} + \tfrac{1}{4} = \tfrac{7}{4}$ ve $z_0 = \tfrac{11}{2} + \tfrac{1}{4} = \tfrac{23}{4}$ olur.
+
+|   |   | $c_j$ | $1$ | $2$ | $3$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_2$ | $2$ | $\frac{1}{4}$ | $-\frac{1}{4}$ | $1$ | $0$ | $-\frac{1}{4}$ | $0$ |
+| $x_5$ | $0$ | $\frac{1}{2}$ | $\frac{3}{2}$ | $0$ | $0$ | $\frac{1}{2}$ | $1$ |
+| $x_3$ | $3$ | $\frac{7}{4}$ | $\frac{5}{4}$ | $0$ | $1$ | $\frac{1}{4}$ | $0$ |
+| $z_j - c_j$ |   | $z_0 = \frac{23}{4}$ | $\frac{9}{4}$ | $0$ | $0$ | $\frac{1}{4}$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 2 {#tbl-ifz-maks-f2-optimal .simpleks .oransiz}
+
+Simpleks kriterlerinde negatif olan kalmadı; optimal çözüme ulaşıldı:
+
+$$
+X^{*} = (x_1, \dots, x_5) = \left(0, \tfrac{1}{4}, \tfrac{7}{4}, 0, \tfrac{1}{2}\right), \qquad z^{*} = \tfrac{23}{4} .
+$$
+
+Sağlama: $0 + \tfrac{1}{4} + \tfrac{7}{4} = 2$; $0 - \tfrac{1}{2} + \tfrac{7}{2} = 3 \le 3$; $0 + \tfrac{7}{2} = \tfrac{7}{2} \ge 3$ (artık $x_5 = \tfrac{1}{2}$); amaç $\tfrac{2}{4} + \tfrac{21}{4} = \tfrac{23}{4}$. Bu problemin uygun temel çözümleri yalnız üç tanedir: $\left(\tfrac{1}{3}, \tfrac{1}{3}, \tfrac{4}{3}\right)$ noktasında $z = 5$, birinci fazın bulduğu $\left(0, \tfrac{1}{2}, \tfrac{3}{2}\right)$ noktasında $z = \tfrac{11}{2}$ ve optimal noktada $z = \tfrac{23}{4}$. İkinci faz, birinci fazın bıraktığı köşeden tek adımda en iyi köşeye geçti.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Uygun Çözümü Olmayan Problemler
+
+Birinci fazın asıl gücü, uygun çözümü olmayan bir problemi kendiliğinden fark etmesidir (Durum 1). Önce bunu şekille izleyebileceğimiz iki değişkenli bir problemde görelim.
+
+:::: {#exm-ifz-bos-bolge name="Kısıtları çelişen iki değişkenli problem"}
+Aşağıdaki problemi iki faz yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 2 \\
+x_1 + 2x_2 &\ge 6 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+Önce problemi standart forma getirelim: birinci kısıta $x_3$ aylak değişkenini ekler, ikinci kısıttan $x_4$ artık değişkenini çıkarırız. Birinci denklemin birim sütunu $x_3$'tür; ikinci denklemde birim sütun olmadığı için yalnız ona $x_{u_1}$ yapay değişkenini ekleriz:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 2 \\
+x_1 + 2x_2 - x_4 + x_{u_1} &= 6 \\
+x_1, x_2, x_3, x_4, x_{u_1} &\ge 0
+\end{aligned}
+$$
+
+**Birinci faz.** Problem maksimum problemi olduğundan yardımcı amaç $\max g = -x_{u_1}$'dir. $\vec{c}_B = (0, -1)$ olduğundan kriterler ikinci satırın eksisi eksi $c_j$'dir: $g_1 - c_1 = -1$, $g_2 - c_2 = -2$, $g_4 - c_4 = 1$, $g_0 = -6$.
+
+Maksimum probleminde en negatif kriter girer; $v_2$ baza girer. Oranlar $\frac{2}{1} = 2$ ve $\frac{6}{2} = 3$ olduğundan $x_3$ bazdan çıkar; pivot $1$'dir.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $-1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | Oran |
+| $x_3$ | $0$ | $2$ | $1$ | $[1]$ | $1$ | $0$ | $0$ | $\frac{2}{1} \Rightarrow$ |
+| $x_{u_1}$ | $-1$ | $6$ | $1$ | $2$ | $0$ | $-1$ | $1$ | $\frac{6}{2}$ |
+| $g_j - c_j$ |   | $g_0 = -6$ | $-1$ | $-2 \Uparrow$ | $0$ | $1$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 1 {#tbl-ifz-bos-f1-baslangic .simpleks}
+
+Pivot satırı aynen kalır ve $x_2$ satırı olur. $x_{u_1}$ satırından bu satırın iki katı çıkarılır:
+
+$$\big(6 - 4 \mid 1 - 2,\ 0,\ 0 - 2,\ -1,\ 1\big) = (2 \mid -1, 0, -2, -1, 1).$$
+
+ $g_j - c_j$ satırına iki katı eklenir: $g_0 = -6 + 4 = -2$, $g_1 - c_1 = -1 + 2 = 1$, $g_3 - c_3 = 0 + 2 = 2$.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $-1$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ |
+| $x_2$ | $0$ | $2$ | $1$ | $1$ | $1$ | $0$ | $0$ |
+| $x_{u_1}$ | $-1$ | $2$ | $-1$ | $0$ | $-2$ | $-1$ | $1$ |
+| $g_j - c_j$ |   | $g_0 = -2$ | $1$ | $0$ | $2$ | $1$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 1 {#tbl-ifz-bos-f1-optimal .simpleks .oransiz}
+
+Bütün kriterler negatif olmadığından yardımcı problemin optimumuna ulaşıldı. Ancak $\max g = -2 \ne 0$'dır: $x_{u_1}$ yapay vektörü bazdadır ve değişkeni $2$ değerindedir (Durum 1). @prp-ifz-uygunluk gereği problemin uygun çözümü yoktur; ikinci faza geçilmez.
+
+Sonucu doğrudan da görebiliriz. Değişkenler negatif olmadığından
+
+$$x_1 + 2x_2 \le 2x_1 + 2x_2 = 2(x_1 + x_2) \le 4$$
+
+tür; yani ikinci kısıtın sol tarafı hiçbir zaman $6$'ya ulaşamaz. Birinci fazın durduğu $(0, 2)$ noktasında sol taraf $4$'tür ve $6$'ya $x_{u_1} = 2$ birim eksiktir. Birinci faz, yapay değişkeni küçültebildiği kadar küçültmüş ve bu eksikten daha azına inememiştir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 516.0 352.0" role="img" aria-label="Triangle x1 + x2 at most 2 and the half plane x1 + 2x2 at least 6 are disjoint in the first quadrant; phase one moves from (0,0) to (0,2) and stops">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="161.1" y1="30.0" x2="161.1" y2="345.8"/><line x1="224.2" y1="30.0" x2="224.2" y2="345.8"/><line x1="287.4" y1="30.0" x2="287.4" y2="345.8"/><line x1="350.5" y1="30.0" x2="350.5" y2="345.8"/><line x1="413.7" y1="30.0" x2="413.7" y2="345.8"/><line x1="476.8" y1="30.0" x2="476.8" y2="345.8"/><line x1="540.0" y1="30.0" x2="540.0" y2="345.8"/><line x1="60.0" y1="244.7" x2="540.0" y2="244.7"/><line x1="60.0" y1="181.6" x2="540.0" y2="181.6"/><line x1="60.0" y1="118.4" x2="540.0" y2="118.4"/><line x1="60.0" y1="55.3" x2="540.0" y2="55.3"/></g>
+  <polygon points="97.9,307.9 224.2,307.9 97.9,181.6" fill="var(--color-theory)" fill-opacity="0.2" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <polygon points="97.9,118.4 476.8,307.9 540.0,307.9 540.0,30.0 97.9,30.0" fill="var(--color-remark)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M60.0,143.7 L262.1,345.8" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,99.5 L540.0,339.5" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="307.9" x2="544.0" y2="307.9"/>
+  <line x1="97.9" y1="349.8" x2="97.9" y2="26.0"/>
+  <polygon points="544.0,307.9 536.0,304.4 536.0,311.4" stroke="none"/>
+  <polygon points="97.9,26.0 94.4,34.0 101.4,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="161.1" y1="304.9" x2="161.1" y2="310.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="161.1" y="322.9" text-anchor="middle">1</text>
+  <line x1="224.2" y1="304.9" x2="224.2" y2="310.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="224.2" y="322.9" text-anchor="middle">2</text>
+  <line x1="287.4" y1="304.9" x2="287.4" y2="310.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="287.4" y="322.9" text-anchor="middle">3</text>
+  <line x1="350.5" y1="304.9" x2="350.5" y2="310.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="350.5" y="322.9" text-anchor="middle">4</text>
+  <line x1="413.7" y1="304.9" x2="413.7" y2="310.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="413.7" y="322.9" text-anchor="middle">5</text>
+  <line x1="476.8" y1="304.9" x2="476.8" y2="310.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="476.8" y="322.9" text-anchor="middle">6</text>
+  <line x1="94.9" y1="244.7" x2="100.9" y2="244.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.9" y="248.7" text-anchor="end">1</text>
+  <line x1="94.9" y1="181.6" x2="100.9" y2="181.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.9" y="185.6" text-anchor="end">2</text>
+  <line x1="94.9" y1="118.4" x2="100.9" y2="118.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.9" y="122.4" text-anchor="end">3</text>
+  <line x1="94.9" y1="55.3" x2="100.9" y2="55.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.9" y="59.3" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="542.0" y="322.9" text-anchor="end">x₁</text>
+  <text x="104.9" y="35.0">x₂</text>
+  </g>
+  <line x1="97.9" y1="307.9" x2="97.9" y2="190.4" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="97.9,181.6 102.5,192.6 93.3,192.6" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="97.9" cy="307.9" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="97.9" cy="181.6" r="4.5" fill="var(--color-practice)"/>
+  <text x="105.9" y="299.9" fill="var(--academic-text)" font-size="13" text-anchor="start">(0, 0)</text>
+  <text x="107.9" y="175.6" fill="var(--academic-text)" font-size="13" text-anchor="start">(0, 2)</text>
+  <text x="120.0" y="273.2" fill="var(--color-theory)" font-size="12" text-anchor="start">x₁ + x₂ ≤ 2</text>
+  <text x="344.2" y="99.5" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 2x₂ ≥ 6</text>
+</svg>
+<figcaption>x₁ + x₂ ≤ 2 üçgeni ile x₁ + 2x₂ ≥ 6 yarı düzlemi birinci bölgede kesişmez; uygun çözüm yoktur. Birinci faz (0, 0) noktasından (0, 2) köşesine gider ve orada durur: bu noktada x₁ + 2x₂ = 4 olup 6'ya 2 birim eksiktir, yani yapay değişken 2 değerinde kalır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi aynı durumu üç değişkenli, eşitlik kısıtı da içeren bir minimum probleminde görelim.
+
+:::: {#exm-ifz-uygunsuz name="Uygun çözümü olmayan üç değişkenli problem"}
+Aşağıdaki problemi iki faz yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+x_1 + 3x_2 + x_3 &\ge 30 \\
+x_1 + 2x_2 - 4x_3 &= 18 \\
+6x_1 + 9x_2 + 3x_3 &\le 50 \\
+x_1, x_2, x_3 &\ge 0 \\
+\min z &= 3x_1 + 5x_2 + 7x_3
+\end{aligned}
+$$
+
+::: {.cozum}
+Sağ taraflar negatif değildir. Birinci kısıttan $x_4$ artık değişkenini çıkarır, üçüncü kısıta $x_5$ aylak değişkenini ekleriz. Birim sütun yalnız üçüncü denklemde ($x_5$) vardır; birinci denkleme $x_{u_1}$, ikinci denkleme (eşitlik) $x_{u_2}$ yapay değişkenini ekleriz. Böylece simpleks yöntem ile çözülebilir hal
+
+$$
+\begin{aligned}
+x_1 + 3x_2 + x_3 - x_4 + x_{u_1} &= 30 \\
+x_1 + 2x_2 - 4x_3 + x_{u_2} &= 18 \\
+6x_1 + 9x_2 + 3x_3 + x_5 &= 50 \\
+x_1, \dots, x_5, x_{u_1}, x_{u_2} &\ge 0 \\
+\min z &= 3x_1 + 5x_2 + 7x_3 + 0x_4 + 0x_5 \\
+&\quad + Mx_{u_1} + Mx_{u_2}
+\end{aligned}
+$$
+
+olur. Bu, Büyük M yöntemiyle çözülecek esas problemdir. İki faz yönteminde amaç fonksiyonunu değiştirerek yardımcı problemi kurarız.
+
+**Birinci faz.** Problem minimum problemi olduğundan yardımcı amaç $\min g = x_{u_1} + x_{u_2}$'dir. $\vec{c}_B = (1, 1, 0)$ olduğundan kriterler ilk iki satırın toplamı eksi $c_j$'dir: örneğin $g_2 - c_2 = 3 + 2 = 5$, $g_3 - c_3 = 1 - 4 = -3$ ve $g_0 = 30 + 18 = 48$.
+
+Minimum probleminde en büyük pozitif kriter girer. Pozitif kriterler $2$ ve $5$'tir; $v_2$ baza girer. Oranlar $\frac{30}{3} = 10$, $\frac{18}{2} = 9$ ve $\frac{50}{9} \approx 5{,}56$'dır; en küçüğü $x_5$ satırındadır. $v_5$ bazdan çıkar ve pivot $9$'dur.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $0$ | $1$ | $1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $x_{u_1}$ | $1$ | $30$ | $1$ | $3$ | $1$ | $-1$ | $0$ | $1$ | $0$ | $\frac{30}{3}$ |
+| $x_{u_2}$ | $1$ | $18$ | $1$ | $2$ | $-4$ | $0$ | $0$ | $0$ | $1$ | $\frac{18}{2}$ |
+| $x_5$ | $0$ | $50$ | $6$ | $[9]$ | $3$ | $0$ | $1$ | $0$ | $0$ | $\frac{50}{9} \Rightarrow$ |
+| $g_j - c_j$ |   | $g_0 = 48$ | $2$ | $5 \Uparrow$ | $-3$ | $-1$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 1 {#tbl-ifz-uygunsuz-f1-baslangic .simpleks}
+
+Pivot satırı $9$'a bölünür ve $x_2$ satırı olur: $\big(\tfrac{50}{9} \mid \tfrac{2}{3}, 1, \tfrac{1}{3}, 0, \tfrac{1}{9}, 0, 0\big)$. $x_{u_1}$ satırından bu satırın $3$ katı, $x_{u_2}$ satırından $2$ katı, $g_j - c_j$ satırından $5$ katı çıkarılır. Örneğin:
+
+$$
+\begin{aligned}
+x_{u_1}, v_0&: \ 30 - 3 \cdot \tfrac{50}{9} = \tfrac{40}{3}, & x_{u_2}, v_0&: \ 18 - 2 \cdot \tfrac{50}{9} = \tfrac{62}{9}, \\[1mm]
+x_{u_2}, v_3&: \ -4 - 2 \cdot \tfrac{1}{3} = -\tfrac{14}{3}, & g_0&: \ 48 - 5 \cdot \tfrac{50}{9} = \tfrac{182}{9} .
+\end{aligned}
+$$
+
+Burada iki yapay vektör de bazda kaldığı için atılan sütun yoktur.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $0$ | $1$ | $1$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_{u_1}$ | $v_{u_2}$ |
+| $x_{u_1}$ | $1$ | $\frac{40}{3}$ | $-1$ | $0$ | $0$ | $-1$ | $-\frac{1}{3}$ | $1$ | $0$ |
+| $x_{u_2}$ | $1$ | $\frac{62}{9}$ | $-\frac{1}{3}$ | $0$ | $-\frac{14}{3}$ | $0$ | $-\frac{2}{9}$ | $0$ | $1$ |
+| $x_2$ | $0$ | $\frac{50}{9}$ | $\frac{2}{3}$ | $1$ | $\frac{1}{3}$ | $0$ | $\frac{1}{9}$ | $0$ | $0$ |
+| $g_j - c_j$ |   | $g_0 = \frac{182}{9}$ | $-\frac{4}{3}$ | $0$ | $-\frac{14}{3}$ | $-1$ | $-\frac{5}{9}$ | $0$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 1 {#tbl-ifz-uygunsuz-f1-optimal .simpleks .oransiz}
+
+Simpleks kriterleri içinde pozitif olan kalmadı; yardımcı problem için optimallik koşulu sağlandı. Fakat $\min g = \tfrac{182}{9} \ne 0$'dır ve iki yapay değişken de pozitif değerle bazdadır: $x_{u_1} = \tfrac{40}{3}$, $x_{u_2} = \tfrac{62}{9}$. @prp-ifz-uygunluk gereği esas problemin uygun çözümü yoktur (Durum 1).
+
+Bu sonucun sebebi birinci ve üçüncü kısıtların çelişmesidir. Değişkenler negatif olmadığından
+
+$$
+6x_1 + 9x_2 + 3x_3 \ge 3x_1 + 9x_2 + 3x_3 = 3(x_1 + 3x_2 + x_3)
+$$
+
+dir. Birinci kısıt sağlanırsa sağ taraf en az $3 \cdot 30 = 90$ olur; bu durumda üçüncü kısıtın sol tarafı da en az $90$'dır ve $50$'yi aşar. İki kısıt aynı anda sağlanamaz; ikinci kısıta bakmaya bile gerek yoktur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bazda Sıfır Değerli Yapay Değişken Kalması
+
+Durum 3'ü iki küçük örnekte görelim. Birincisinde yapay değişken bir pivotla bazdan çıkarılır (@prp-ifz-yapay-cikarma), ikincisinde satırı gereksiz çıkar ve atılır (@prp-ifz-gereksiz-kisit).
+
+:::: {#exm-ifz-yapay-cikarma name="Yapay değişkeni pivotla bazdan çıkarmak"}
+Aşağıdaki problemi iki faz yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+2x_1 + x_2 + x_3 &= 4 \\
+4x_1 + x_2 + 2x_3 &\ge 8 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= x_1 + 2x_2 + 3x_3
+\end{aligned}
+$$
+
+::: {.cozum}
+İkinci kısıttan $x_4$ artık değişkenini çıkarırız. İki denklemde de birim sütun yoktur (birincisi eşitlik, ikincisinde $x_4$'ün katsayısı $-1$); ikisine de yapay değişken ekleriz:
+
+$$
+\begin{aligned}
+2x_1 + x_2 + x_3 + x_{u_1} &= 4 \\
+4x_1 + x_2 + 2x_3 - x_4 + x_{u_2} &= 8 \\
+x_1, x_2, x_3, x_4, x_{u_1}, x_{u_2} &\ge 0
+\end{aligned}
+$$
+
+**Birinci faz.** Problem maksimum problemi olduğundan yardımcı amaç $\max g = -x_{u_1} - x_{u_2}$'dir. $\vec{c}_B = (-1, -1)$ olduğundan kriterler iki satırın toplamının eksisi eksi $c_j$'dir; örneğin $g_1 - c_1 = -(2 + 4) = -6$ ve $g_0 = -(4 + 8) = -12$.
+
+Maksimum probleminde en negatif kriter girer; $-6$ ile $v_1$ baza girer. Oranlar $\frac{4}{2} = 2$ ve $\frac{8}{4} = 2$ eşittir ve iki satır da yapay değişkene aittir; üstteki $x_{u_1}$ satırını seçeriz. $v_{u_1}$ bazdan çıkar ve pivot $2$'dir.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $-1$ | $-1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $x_{u_1}$ | $-1$ | $4$ | $[2]$ | $1$ | $1$ | $0$ | $1$ | $0$ | $\frac{4}{2} \Rightarrow$ |
+| $x_{u_2}$ | $-1$ | $8$ | $4$ | $1$ | $2$ | $-1$ | $0$ | $1$ | $\frac{8}{4}$ |
+| $g_j - c_j$ |   | $g_0 = -12$ | $-6 \Uparrow$ | $-2$ | $-3$ | $1$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 1 {#tbl-ifz-cikarma-f1-baslangic .simpleks}
+
+Pivot satırı $2$'ye bölünür ve $x_1$ satırı olur: $\big(2 \mid 1, \tfrac{1}{2}, \tfrac{1}{2}, 0\big)$. $x_{u_2}$ satırından bu satırın $4$ katı çıkarılır:
+
+$$\big(8 - 8 \mid 0,\ 1 - 2,\ 2 - 2,\ -1\big) = (0 \mid 0, -1, 0, -1).$$
+
+ $g_j - c_j$ satırına $6$ katı eklenir: $g_0 = -12 + 12 = 0$, $g_2 - c_2 = -2 + 3 = 1$, $g_3 - c_3 = -3 + 3 = 0$, $g_4 - c_4 = 1$. $v_{u_1}$ sütununu atıyoruz.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $0$ | $-1$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_2}$ |
+| $x_1$ | $0$ | $2$ | $1$ | $\frac{1}{2}$ | $\frac{1}{2}$ | $0$ | $0$ |
+| $x_{u_2}$ | $-1$ | $0$ | $0$ | $-1$ | $0$ | $[-1]$ | $1$ |
+| $g_j - c_j$ |   | $g_0 = 0$ | $0$ | $1$ | $0$ | $1$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 1 {#tbl-ifz-cikarma-f1-optimal .simpleks .oransiz}
+
+Bütün kriterler negatif olmadığından birinci fazın optimumuna ulaşıldı ve $\max g = 0$'dır; problemin uygun çözümü vardır. Ancak $x_{u_2}$ sıfır değerle bazdadır (Durum 3). Onu bazdan çıkarmak için satırında sıfırdan farklı bir gerçek eleman ararız: $v_2$ ve $v_4$ sütunlarında $-1$ vardır. Herhangi biri seçilebilir; $v_4$'ü seçelim. Tabloda köşeli parantezle gösterilen pivot $-1$'dir ve negatiftir, ama @prp-ifz-yapay-cikarma gereği bu bir sakınca oluşturmaz, çünkü satırın sağ tarafı $0$'dır.
+
+Pivot satırı $-1$'e bölünür ve $x_4$ satırı olur: $(0 \mid 0, 1, 0, 1)$. $x_1$ satırının $v_4$ elemanı $0$ olduğundan o satır değişmez. Değişkenlerin değerleri aynı kaldı: $x_1 = 2$, geri kalanlar $0$. Artık bazda yapay vektör yoktur; $v_{u_2}$ sütununu atıp ikinci faza geçeriz.
+
+Bu adımı atlayıp $x_{u_2}$'yu bazda bırakmak neden güvenli değildir, onu da görelim. $x_{u_2}$ satırının $v_2$ sütunundaki elemanı $-1$'dir. İkinci fazda $v_2$ baza pozitif bir $\lambda$ değeriyle girseydi, dönüşüm kuralı $x_{u_2}$'nun yeni değerini $0 - \lambda \cdot (-1) = \lambda > 0$ yapardı; bulunan nokta orijinal ikinci kısıtı sağlamazdı.
+
+**İkinci faz.** $c_j$ satırına $1, 2, 3, 0$ yazılır; $c_B$ sütununda $x_1$ için $1$, $x_4$ için $0$ bulunur. Kriterler: $z_2 - c_2 = \tfrac{1}{2} - 2 = -\tfrac{3}{2}$, $z_3 - c_3 = \tfrac{1}{2} - 3 = -\tfrac{5}{2}$, $z_0 = 1 \cdot 2 = 2$.
+
+Maksimum probleminde en negatif kriter girer; $v_3$ baza girer. $v_3$ sütununda $x_4$ satırının elemanı $0$ olduğundan yalnız $x_1$ satırının oranı hesaplanır: $\frac{2}{1/2} = 4$. $x_1$ bazdan çıkar ve pivot $\tfrac{1}{2}$'dir.
+
+|   |   | $c_j$ | $1$ | $2$ | $3$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_1$ | $1$ | $2$ | $1$ | $\frac{1}{2}$ | $[\frac{1}{2}]$ | $0$ | $\frac{2}{1/2} \Rightarrow$ |
+| $x_4$ | $0$ | $0$ | $0$ | $1$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 2$ | $0$ | $-\frac{3}{2}$ | $-\frac{5}{2} \Uparrow$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 2 {#tbl-ifz-cikarma-f2-baslangic .simpleks}
+
+Pivot satırı $\tfrac{1}{2}$'ye bölünür (iki ile çarpılır) ve $x_3$ satırı olur: $(4 \mid 2, 1, 1, 0)$. $x_4$ satırı değişmez. $z_j - c_j$ satırına bu satırın $\tfrac{5}{2}$ katı eklenir: $z_0 = 2 + 10 = 12$, $z_1 - c_1 = 0 + 5 = 5$, $z_2 - c_2 = -\tfrac{3}{2} + \tfrac{5}{2} = 1$.
+
+|   |   | $c_j$ | $1$ | $2$ | $3$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $3$ | $4$ | $2$ | $1$ | $1$ | $0$ |
+| $x_4$ | $0$ | $0$ | $0$ | $1$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 12$ | $5$ | $1$ | $0$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 2 {#tbl-ifz-cikarma-f2-optimal .simpleks .oransiz}
+
+Negatif kriter kalmadı; optimal çözüm $x_1 = x_2 = 0$, $x_3 = 4$ ve $\max z = 12$'dir. Sağlama: $0 + 0 + 4 = 4$ ve $0 + 0 + 8 = 8 \ge 8$.
+
+Problemin yapısı da bunu doğrular. Birinci kısıttan $x_3 = 4 - 2x_1 - x_2$ yazıp ikincide yerine koyarsak
+
+$$4x_1 + x_2 + 2(4 - 2x_1 - x_2) = 8 - x_2 \ge 8,$$
+
+yani $x_2 = 0$ çıkar. Uygun çözümler $2x_1 + x_3 = 4$ doğru parçasıdır; uç noktaları $(2, 0, 0)$ ($z = 2$) ve $(0, 0, 4)$ ($z = 12$) olup en büyük değer ikincisindedir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ifz-gereksiz-kisit name="Gereksiz kısıtı içeren problem"}
+Aşağıdaki problemi iki faz yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 4 \\
+x_1 + 2x_2 + 3x_3 &= 6 \\
+2x_1 + 3x_2 + 4x_3 &= 10 \\
+x_1, x_2, x_3 &\ge 0 \\
+\min z &= 2x_1 + x_2 + 3x_3
+\end{aligned}
+$$
+
+::: {.cozum}
+Üç kısıt da eşitliktir ve sağ tarafları negatif değildir; problem standart formdadır ama birim sütun yoktur. Üç denkleme de yapay değişken ekleriz:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 + x_{u_1} &= 4 \\
+x_1 + 2x_2 + 3x_3 + x_{u_2} &= 6 \\
+2x_1 + 3x_2 + 4x_3 + x_{u_3} &= 10 \\
+x_1, x_2, x_3, x_{u_1}, x_{u_2}, x_{u_3} &\ge 0
+\end{aligned}
+$$
+
+**Birinci faz.** Minimum problemi olduğundan $\min g = x_{u_1} + x_{u_2} + x_{u_3}$'tür. $\vec{c}_B = (1, 1, 1)$ olduğundan her kriter, sütunun üç elemanının toplamıdır: $4$, $6$, $8$ ve $g_0 = 20$.
+
+Minimum probleminde en büyük pozitif kriter girer; $8$ ile $v_3$ baza girer. Oranlar $\frac{4}{1} = 4$, $\frac{6}{3} = 2$ ve $\frac{10}{4} = \tfrac{5}{2}$'dir; $v_{u_2}$ bazdan çıkar ve pivot $3$'tür.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $1$ | $1$ | $1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_{u_1}$ | $v_{u_2}$ | $v_{u_3}$ | Oran |
+| $x_{u_1}$ | $1$ | $4$ | $1$ | $1$ | $1$ | $1$ | $0$ | $0$ | $\frac{4}{1}$ |
+| $x_{u_2}$ | $1$ | $6$ | $1$ | $2$ | $[3]$ | $0$ | $1$ | $0$ | $\frac{6}{3} \Rightarrow$ |
+| $x_{u_3}$ | $1$ | $10$ | $2$ | $3$ | $4$ | $0$ | $0$ | $1$ | $\frac{10}{4}$ |
+| $g_j - c_j$ |   | $g_0 = 20$ | $4$ | $6$ | $8 \Uparrow$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 1 {#tbl-ifz-gereksiz-f1-baslangic .simpleks}
+
+Pivot satırı $3$'e bölünür ve $x_3$ satırı olur: $\big(2 \mid \tfrac{1}{3}, \tfrac{2}{3}, 1\big)$. $x_{u_1}$ satırından bu satır bir kez, $x_{u_3}$ satırından $4$ kez, $g_j - c_j$ satırından $8$ kez çıkarılır. Örneğin $x_{u_3}$ satırı
+
+$$\big(10 - 8 \mid 2 - \tfrac{4}{3},\ 3 - \tfrac{8}{3},\ 4 - 4\big) = \big(2 \mid \tfrac{2}{3}, \tfrac{1}{3}, 0\big)$$
+
+olur. $v_{u_2}$ sütununu atıyoruz.
+
+En büyük pozitif kriter $\tfrac{4}{3}$'tür ve $v_1$ baza girer. Oranlar $\frac{2}{2/3} = 3$, $\frac{2}{1/3} = 6$ ve $\frac{2}{2/3} = 3$'tür. En küçük oran iki yapay satırda eşittir; üstteki $x_{u_1}$ satırını seçeriz. Pivot $\tfrac{2}{3}$'tür.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $1$ | $1$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_{u_1}$ | $v_{u_3}$ | Oran |
+| $x_{u_1}$ | $1$ | $2$ | $[\frac{2}{3}]$ | $\frac{1}{3}$ | $0$ | $1$ | $0$ | $\frac{2}{2/3} \Rightarrow$ |
+| $x_3$ | $0$ | $2$ | $\frac{1}{3}$ | $\frac{2}{3}$ | $1$ | $0$ | $0$ | $\frac{2}{1/3}$ |
+| $x_{u_3}$ | $1$ | $2$ | $\frac{2}{3}$ | $\frac{1}{3}$ | $0$ | $0$ | $1$ | $\frac{2}{2/3}$ |
+| $g_j - c_j$ |   | $g_0 = 4$ | $\frac{4}{3} \Uparrow$ | $\frac{2}{3}$ | $0$ | $0$ | $0$ |   |
+
+: Birinci iterasyon tablosu — Faz 1 {#tbl-ifz-gereksiz-f1-birinci .simpleks}
+
+Pivot satırı $\tfrac{2}{3}$'e bölünür ve $x_1$ satırı olur: $\big(3 \mid 1, \tfrac{1}{2}, 0\big)$. $x_3$ satırından bu satırın $\tfrac{1}{3}$ katı çıkarılır: $\big(2 - 1 \mid 0, \tfrac{2}{3} - \tfrac{1}{6}, 1\big) = \big(1 \mid 0, \tfrac{1}{2}, 1\big)$. $x_{u_3}$ satırından ve $g_j - c_j$ satırından sırasıyla $\tfrac{2}{3}$ ve $\tfrac{4}{3}$ katı çıkarılır; ikisi de gerçek sütunlarda tamamen sıfırlanır. $v_{u_1}$ sütununu atıyoruz.
+
+|   |   | $c_j$ | $0$ | $0$ | $0$ | $1$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_{u_3}$ |
+| $x_1$ | $0$ | $3$ | $1$ | $\frac{1}{2}$ | $0$ | $0$ |
+| $x_3$ | $0$ | $1$ | $0$ | $\frac{1}{2}$ | $1$ | $0$ |
+| $x_{u_3}$ | $1$ | $0$ | $0$ | $0$ | $0$ | $1$ |
+| $g_j - c_j$ |   | $g_0 = 0$ | $0$ | $0$ | $0$ | $0$ |
+
+: İkinci iterasyon tablosu (optimal tablo) — Faz 1 {#tbl-ifz-gereksiz-f1-optimal .simpleks .oransiz}
+
+Pozitif kriter kalmadı ve $\min g = 0$'dır; problemin uygun çözümü vardır. $x_{u_3}$ sıfır değerle bazdadır (Durum 3), ama satırının bütün gerçek elemanları sıfırdır; pivotla çıkarılamaz. @prp-ifz-gereksiz-kisit gereği kısıtlardan biri gereksizdir. Gerçekten de üçüncü kısıt ilk iki kısıtın toplamıdır:
+
+$$(x_1 + x_2 + x_3) + (x_1 + 2x_2 + 3x_3) = 2x_1 + 3x_2 + 4x_3, \qquad 4 + 6 = 10 .$$
+
+ $x_{u_3}$ satırını ve sütununu atarız.
+
+**İkinci faz.** Kalan tabloda baz $x_1, x_3$'tür. $c_j$ satırına $2, 1, 3$, $c_B$ sütununa $2$ ve $3$ yazılır. Kriter $z_2 - c_2 = 2 \cdot \tfrac{1}{2} + 3 \cdot \tfrac{1}{2} - 1 = \tfrac{3}{2}$ ve $z_0 = 2 \cdot 3 + 3 \cdot 1 = 9$'dur.
+
+Minimum probleminde en büyük pozitif kriter girer; $v_2$ baza girer. Oranlar $\frac{3}{1/2} = 6$ ve $\frac{1}{1/2} = 2$ olduğundan $x_3$ bazdan çıkar; pivot $\tfrac{1}{2}$'dir.
+
+|   |   | $c_j$ | $2$ | $1$ | $3$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | Oran |
+| $x_1$ | $2$ | $3$ | $1$ | $\frac{1}{2}$ | $0$ | $\frac{3}{1/2}$ |
+| $x_3$ | $3$ | $1$ | $0$ | $[\frac{1}{2}]$ | $1$ | $\frac{1}{1/2} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 9$ | $0$ | $\frac{3}{2} \Uparrow$ | $0$ |   |
+
+: Başlangıç tablosu — Faz 2 {#tbl-ifz-gereksiz-f2-baslangic .simpleks}
+
+Pivot satırı iki ile çarpılır ve $x_2$ satırı olur: $(2 \mid 0, 1, 2)$. $x_1$ satırından bu satırın $\tfrac{1}{2}$ katı çıkarılır: $(3 - 1 \mid 1, 0, 0 - 1) = (2 \mid 1, 0, -1)$. $z_j - c_j$ satırından $\tfrac{3}{2}$ katı çıkarılır: $z_0 = 9 - 3 = 6$, $z_3 - c_3 = 0 - 3 = -3$.
+
+|   |   | $c_j$ | $2$ | $1$ | $3$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ |
+| $x_1$ | $2$ | $2$ | $1$ | $0$ | $-1$ |
+| $x_2$ | $1$ | $2$ | $0$ | $1$ | $2$ |
+| $z_j - c_j$ |   | $z_0 = 6$ | $0$ | $0$ | $-3$ |
+
+: Birinci iterasyon tablosu (optimal tablo) — Faz 2 {#tbl-ifz-gereksiz-f2-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \le 0$ olduğundan tablo optimaldir: $x_1 = 2$, $x_2 = 2$, $x_3 = 0$ ve $\min z = 2 \cdot 2 + 2 = 6$. Sağlama: $2 + 2 + 0 = 4$, $2 + 4 + 0 = 6$, $4 + 6 + 0 = 10$. Uygun çözümler $(3, 0, 1)$ ile $(2, 2, 0)$ arasındaki doğru parçasıdır; uç noktalardaki amaç değerleri $9$ ve $6$ olduğundan minimum gerçekten $6$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Büyük M Yöntemiyle Karşılaştırma
+
+İki yöntem aynı yapay değişkenleri kullanır; fark yalnız bu değişkenlerin amaçta nasıl cezalandırıldığındadır. Bu yüzden iki yöntemin izlediği yolların çoğu zaman aynı çıkması şaşırtıcı değildir. Bunun nedenini simpleks kriterinin amaç katsayılarına doğrusal olarak bağlı olmasında görürüz.
+
+:::: {#prp-ifz-buyuk-m-bag name="Büyük M kriteri ile iki faz kriterinin bağı"}
+Minimum probleminde Büyük M yönteminin amaç katsayıları $c_j^{M} = c_j + M d_j$ olsun; burada $d_j$, yapay değişkenler için $1$, gerçek değişkenler için $0$'dır (yani $d_j$, birinci fazın katsayılarıdır). Aynı baz için
+
+$$
+z_j^{M} - c_j^{M} = (z_j - c_j) + M\,(g_j - d_j), \qquad z_0^{M} = z_0 + M g_0
+$$
+
+dir. Burada $z_j - c_j$, yapay sütunlara $c_j = 0$ verilerek orijinal katsayılarla hesaplanan kriter; $g_j - d_j$ ise birinci fazın katsayılarıyla hesaplanan kriterdir. Maksimum probleminde yapay değişkenlerin Büyük M katsayısı $-M$, birinci fazdaki katsayısı $-1$'dir; yapaylar için $d_j = -1$ alınınca aynı eşitlik geçerlidir.
+
+::: {.ispat}
+Aynı baz için tablonun gövdesi ($y_{ij}$ ve $v_0$) amaç katsayılarına bağlı değildir. Baz değişkenlerinin Büyük M katsayıları $\vec{c}_B^{\,M} = \vec{c}_B + M \vec{d}_B$ olduğundan
+
+$$
+\begin{aligned}
+z_j^{M} - c_j^{M} &= (\vec{c}_B + M \vec{d}_B)^T v_j - (c_j + M d_j) \\[1mm]
+&= (\vec{c}_B^{\,T} v_j - c_j) + M\,(\vec{d}_B^{\,T} v_j - d_j)
+\end{aligned}
+$$
+
+bulunur. Parantezlerin ilki $z_j - c_j$, ikincisi $g_j - d_j$'dir. $j = 0$ için ($c_0 = d_0 = 0$ alınarak) aynı hesap $z_0^{M} = z_0 + M g_0$ verir. Maksimum probleminde yapaylar için $d_j = -1$ alınınca $c_j^{M} = c_j + M d_j$ yazılışı yine geçerlidir ve hesap aynen tekrarlanır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani Büyük M tablosunun her kriteri iki parçadır: $M$'nin katsayısı, birinci fazın kriteridir; sabit kısım, orijinal amaç için hesaplanan kriterdir. $M$ çok büyük olduğundan $M$'nin katsayısı sıfırdan farklı olan her yerde işareti ve büyüklüğü o katsayı belirler. Oran testi ise amaç katsayılarına hiç bağlı değildir. Dolayısıyla birinci fazın kriterleri bir seçimi kesin olarak belirlediği sürece Büyük M aynı vektörü baza sokar ve aynı vektörü bazdan çıkarır: iki yöntem aynı köşelerden geçer. Uygun çözümü olan ve birinci fazı Durum 2 ile biten bir problemde ayrılık ancak birinci fazın kriterleri iki sütun arasında eşit çıktığında olabilir; Büyük M bu eşitliği sabit kısımla bozar. Yapay değişkenler bazdan çıktıktan sonra $M$'li kısımlar sıfırlanır ve Büyük M tablosunun kriterleri ikinci fazın kriterleriyle aynı olur.
+
+:::: {#exm-ifz-buyuk-m name="İki yöntemin yollarını karşılaştırmak"}
+@exm-ifz-diyet problemini ($x_1 + x_2 \ge 4$, $x_1 + 3x_2 \ge 6$, $x_1, x_2 \ge 0$, $\min z = 2x_1 + 3x_2$) Büyük M yöntemiyle çözdüğümüzde hangi temel çözümlerden geçeriz? İki fazın yoluyla karşılaştırınız.
+
+::: {.cozum}
+Büyük M'de amaç $\min z = 2x_1 + 3x_2 + Mx_{u_1} + Mx_{u_2}$'dir. Başlangıç tablosunun gövdesi birinci fazın başlangıç tablosuyla (@tbl-ifz-diyet-f1-baslangic) aynıdır. @prp-ifz-buyuk-m-bag gereği kriterler, birinci fazın kriterleri ($2, 4, -1, -1$) $M$ ile çarpılıp orijinal kriterlere ($-2, -3, 0, 0$) eklenerek bulunur:
+
+$$
+z_1^{M} - c_1^{M} = 2M - 2, \quad z_2^{M} - c_2^{M} = 4M - 3, \quad z_3^{M} - c_3^{M} = z_4^{M} - c_4^{M} = -M .
+$$
+
+Minimum probleminde en büyük pozitif kriter girer. $M$ çok büyük olduğundan $4M - 3 > 2M - 2$'dir ve $v_2$ girer; oran testi aynı olduğundan $v_{u_2}$ çıkar. Bir sonraki tabloda kriterler $\left(\tfrac{2}{3}M - 1\right)$, $0$, $-M$, $\left(\tfrac{1}{3}M - 1\right)$ olur; $M$'nin katsayıları yine birinci fazın kriterleridir (@tbl-ifz-diyet-f1-birinci). En büyüğü $\tfrac{2}{3}M - 1$ olduğundan $v_1$ girer ve $v_{u_1}$ çıkar. Bu tabloda $M$'li kısımlar yapay sütunlar dışında sıfırlanır ve kriterler $0, 0, -\tfrac{3}{2}, -\tfrac{1}{2}$ olur; bunlar ikinci fazın kriterleridir (@tbl-ifz-diyet-f2-optimal). İki yöntemin yolu şöyledir:
+
+| Tablo | Baz | $(x_1, x_2)$ | İki faz: $g$ | Büyük M: $z$ |
+|:--|:-:|:-:|:-:|:-:|
+| Başlangıç | $x_{u_1}, x_{u_2}$ | $(0, 0)$ | $10$ | $10M$ |
+| Birinci iterasyon | $x_{u_1}, x_2$ | $(0, 2)$ | $2$ | $2M + 6$ |
+| İkinci iterasyon | $x_1, x_2$ | $(3, 1)$ | $0$ | $9$ |
+
+: İki faz yöntemi ile Büyük M yönteminin aynı problemde izlediği yol {#tbl-ifz-karsilastirma}
+
+Tabloda (@tbl-ifz-karsilastirma) görüldüğü gibi iki yöntem aynı üç temel çözümden geçer. Büyük M'nin amaç değeri her adımda $z_0 + M g_0$'dır: örneğin birinci iterasyonda $x_2 = 2$, $x_{u_1} = 2$ olduğundan $z = 3 \cdot 2 + M \cdot 2 = 2M + 6$. İki fazda aynı yol ikiye bölünmüştür: ilk iki adım birinci fazdır, son tablo ikinci fazın başlangıç (ve optimal) tablosudur.
+
+@exm-ifz-maks probleminde de durum aynıdır. Büyük M'nin başlangıç kriterleri $-2M - 1$, $-M - 2$, $-3M - 3$, $0$, $M$ olur; en negatifi $-3M - 3$ olduğundan $v_3$ girer. Sonraki tabloda en negatif kriter $-M - 2$ olur ve $v_2$ girer; ardından $M$'li kısımlar sıfırlanır ve kriterler ikinci fazın başlangıç kriterleridir ($\tfrac{3}{2}, 0, 0, 0, -\tfrac{1}{2}$). Büyük M de $\left(0, \tfrac{1}{2}, \tfrac{3}{2}\right)$ ve $\left(0, \tfrac{1}{4}, \tfrac{7}{4}\right)$ köşelerinden geçerek $z^{*} = \tfrac{23}{4}$ değerine ulaşır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İki yöntem aynı köşelerden geçse de hesap yükleri ve güvenilirlikleri farklıdır.
+
+::: {.callout-note appearance="simple"}
+**Büyük M yöntemi** tek bir simpleks çözümüyle biter, ama her kriteri $aM + b$ biçiminde iki parçalı taşır. Daha önemlisi $M$ bir sayı olarak seçilmek zorundadır ve ne kadar büyük olması gerektiği önceden bilinmez. @exm-ifz-diyet probleminde $M = 1$ alınırsa $x_1 = 0$, $x_2 = 2$, $x_{u_1} = 2$ noktasında amaç $3 \cdot 2 + 1 \cdot 2 = 8$ olur. Bu değer gerçek optimum olan $9$'dan küçük olduğundan yöntem, yapay değişkeni pozitif kalan ve orijinal kısıtı sağlamayan bir "çözümle" biterdi. Bilgisayarda ise $M$'yi $10^{6}$ gibi çok büyük almak, $M$'nin yanında küçük kalan gerçek katsayıların yuvarlama hatalarında kaybolmasına yol açar.
+
+**İki faz yöntemi** $M$ kullanmaz; her hücre tek bir sayıdır ve birinci faz, uygun çözüm olup olmadığı sorusunu tek başına ve kesin olarak yanıtlar ($g = 0$ mı, değil mi). Bunun karşılığında kriterler iki kez hesaplanır ve birinci fazın sonunda sıfır değerle bazda kalan yapay değişkenlere dikkat etmek gerekir.
+:::
+
+Bu bölümde yapay değişkenli problemleri iki aşamada çözmeyi öğrendik: birinci faz uygun bir başlangıç köşesi bulur ya da böyle bir köşenin olmadığını gösterir, ikinci faz o köşeden optimuma gider. Şu ana kadar çözdüğümüz problemlerin hep tek bir optimal çözümü vardı. Simpleks tablosu, amaç fonksiyonunun sınırsız büyüyebildiği ya da optimal değerin birden fazla noktada alındığı durumları da kendi işaretleriyle gösterir. Bu durumları bir sonraki bölümde, [Sınırsız çözüm ve alternatif optimal çözüm](sinirsiz-ve-alternatif-optimal-cozum.qmd) bölümünde inceleyeceğiz.

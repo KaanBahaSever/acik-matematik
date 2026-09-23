@@ -1,0 +1,1164 @@
+---
+title: "Tam Sayılı Programlama ve Dal-Sınır Yöntemi"
+pagetitle: "Tam Sayılı Programlama ve Dal-Sınır Yöntemi"
+description: "Tam sayılı programlama problemi, rahatlatılmış LP problemi ve verdiği üst ya da alt sınır, yuvarlamanın neden işe yaramadığı, kesirli bir değişkenden dallanma, aday çözüm ve budama kuralları, yöntemin sonlu adımda doğru sonucu vermesi; alt problemleri grafikle çözülen örnekler ve dal-sınır ağaçları."
+---
+
+Şimdiye kadar çözdüğümüz bütün problemlerde değişkenler sürekli değerler alabiliyordu: $x_1 = 13/7$ ton hammadde ya da $x_2 = 9/4$ saat çalışma anlamlı cevaplardı. Oysa pek çok problemde değişken bir **sayım** sonucudur: kaç makine alınacağı, kaç kamyon gönderileceği, kaç kişinin işe alınacağı. Bu değişkenlerin tam sayı olması gerekir ve $2{,}25$ makine bir cevap değildir. [Dual simpleks algoritması](dual-simpleks-algoritmasi.qmd) bölümüyle simpleks ailesinin yöntemlerini tamamladık; bu son konu bölümünde tam sayı şartını da işin içine katıyoruz.
+
+İlk akla gelen yol tam sayı şartını unutup problemi alışık olduğumuz gibi çözmek, sonra da çıkan kesirli değerleri yuvarlamaktır. Bunun neden güvenilir olmadığını bir örnekle göreceğiz. Onun yerine **dal-sınır yöntemini** kuracağız: problem gittikçe küçülen alt problemlere bölünür (dallanma), her alt problemin varabileceği en iyi değer tam sayı şartı kaldırılarak hesaplanır (sınır) ve umut vermeyen alt problemler bir daha bakılmamak üzere atılır (budama).
+
+## Tam Sayılı Programlama Problemi {#sec-dsy-tp}
+
+Önce problemi tanımlayalım; kısıtlar ve amaç fonksiyonu tanıdıktır, yeni olan yalnız değişkenlere konan şarttır.
+
+::: {#def-dsy-tp name="Tam Sayılı Programlama Problemi"}
+Bir lineer programlama problemine (@def-lpp-lp-problemi) değişkenlerin tam sayı değer alması şartı da eklenirse elde edilen probleme **tam sayılı programlama (TP) problemi** denir. Bütün değişkenlerin tam sayı olması isteniyorsa probleme **pür (saf) TP problemi** denir. Örneğin
+$$
+\begin{aligned}
+x_1 + x_2 &\le 6 \\
+9x_1 + 5x_2 &\le 45 \\
+x_1, x_2 &\ge 0 \text{ ve tam sayı} \\
+\max z &= 8x_1 + 5x_2
+\end{aligned}
+$$
+bir pür TP problemidir.
+:::
+
+Yani TP problemi, işaret koşullarının yanına "ve tam sayı" ibaresi eklenmiş bir lineer programlama problemidir. Değişkenlerin yalnız bir kısmı tam sayı olmak zorundaysa problem karma TP problemi olur; bu bölümde yalnız pür TP problemleriyle çalışacağız ve kısaca TP diyeceğiz. Bir TP probleminin uygun çözümü, bütün kısıtları sağlayan ve bütün bileşenleri tam sayı olan bir $\vec{x}$ vektörüdür.
+
+Uygun bölge sınırlıysa bir TP probleminin uygun çözümleri sonlu sayıdadır; bu yüzden ilke olarak her birini tek tek deneyip önce uygun olup olmadığına, sonra amaç değerine bakabiliriz. Küçük bir problemde bu gerçekten işe yarar.
+
+:::: {#exm-dsy-sayma name="Uygun Çözümleri Tek Tek Denemek"}
+$$
+\begin{aligned}
+7x_1 + 4x_2 &\le 13 \\
+x_1, x_2 &\ge 0 \text{ ve tam sayı} \\
+\max z &= 21x_1 + 11x_2
+\end{aligned}
+$$
+TP probleminin bütün uygun çözümlerini yazarak optimal çözümünü bulunuz.
+
+::: {.cozum}
+$x_2 \ge 0$ olduğundan $7x_1 \le 13$, yani $x_1 \le 13/7 < 2$; tam sayı olduğu için $x_1 \in \{0, 1\}$.
+
+- $x_1 = 0$ ise $4x_2 \le 13$, yani $x_2 \le 13/4$ ve $x_2 \in \{0, 1, 2, 3\}$.
+- $x_1 = 1$ ise $4x_2 \le 6$, yani $x_2 \le 3/2$ ve $x_2 \in \{0, 1\}$.
+
+Altı uygun çözüm ve amaç değerleri şöyledir:
+
+| $(x_1, x_2)$ | $(0, 0)$ | $(0, 1)$ | $(0, 2)$ | $(0, 3)$ | $(1, 0)$ | $(1, 1)$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $z = 21x_1 + 11x_2$ | $0$ | $11$ | $22$ | $33$ | $21$ | $32$ |
+
+: Uygun çözümlerde amaç değerleri {#tbl-dsy-sayma}
+
+En büyük değer $(0, 3)$ noktasındadır: optimal çözüm $x_1 = 0$, $x_2 = 3$ ve $\max z = 33$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Ne var ki bu yol değişken sayısı arttıkça hızla imkânsız hâle gelir. Örneğin her değişkeni yalnız 0 ya da 1 değerini alabilen $n$ değişkenli bir TP probleminde denenecek $2^n$ aday vardır. Her yeni değişken aday sayısını iki katına çıkarır; 30 değişkende aday sayısı $2^{30} = 1\,073\,741\,824$, yani bir milyardan fazladır. Bu olguya problem zorluğunun **üstel büyümesi** denir. Dal-sınır yöntemi, uygun çözümlerin yalnız küçük bir kısmına açıkça bakarak bu engeli aşmaya çalışır.
+
+Yöntemin her adımında aynı yardımcı problemi kullanacağız: tam sayı şartı kaldırılmış problem.
+
+::: {#def-dsy-rahatlatilmis name="Rahatlatılmış LP Problemi"}
+Bir TP probleminde tam sayı şartları kaldırılarak elde edilen lineer programlama problemine **rahatlatılmış LP problemi** (ya da gevşetilmiş problem) denir.
+:::
+
+Yani rahatlatılmış problemin kısıtları, işaret koşulları ve amaç fonksiyonu TP probleminin aynısıdır; yalnız "ve tam sayı" ibaresi silinmiştir. Rahatlatılmış problem sıradan bir lineer programlama problemidir; iki değişkende grafik yöntemle ([Uç noktalar ve grafik yöntem](uc-noktalar-ve-grafik-yontem.qmd)), genel olarak simpleks yöntemle çözülür.
+
+:::: {#exm-dsy-rahatlatilmis name="Rahatlatılmış Problemin Çözümü"}
+Önceki örnekteki (@exm-dsy-sayma) TP probleminin rahatlatılmış LP problemini yazınız ve çözünüz.
+
+::: {.cozum}
+Tam sayı şartını kaldırırız:
+$$
+\begin{aligned}
+7x_1 + 4x_2 &\le 13 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 21x_1 + 11x_2
+\end{aligned}
+$$
+Uygun bölge $(0, 0)$, $(13/7, 0)$ ve $(0, 13/4)$ köşeli üçgendir. Köşelerde
+$$
+z(0, 0) = 0, \quad z\big(\tfrac{13}{7}, 0\big) = 21 \cdot \tfrac{13}{7} = 39, \quad z\big(0, \tfrac{13}{4}\big) = \tfrac{143}{4} = 35{,}75
+$$
+olur. Bölge sınırlı olduğundan optimum bir köşededir (@cor-ucg-uc-nokta-tarama): rahatlatılmış problemin optimal çözümü $x_1 = 13/7$, $x_2 = 0$ ve $\max z = 39$'dur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Yuvarlama Neden Yetmez {#sec-dsy-yuvarlama}
+
+Rahatlatılmış problemin çözümünü yuvarlamak cazip görünür. Aynı örnek bunun iki ayrı şekilde yanlış gidebileceğini gösteriyor.
+
+:::: {#exm-dsy-yuvarlama name="Yuvarlamanın Başarısız Olduğu Bir Problem"}
+$7x_1 + 4x_2 \le 13$, $x_1, x_2 \ge 0$ ve tam sayı kısıtları altında $\max z = 21x_1 + 11x_2$ problemini ele alalım. Rahatlatılmış problemin optimal çözümünü (@exm-dsy-rahatlatilmis) yuvarlayarak TP probleminin optimal çözümü bulunabilir mi?
+
+::: {.cozum}
+Rahatlatılmış problemin optimal çözümü $(13/7, 0)$, yani yaklaşık $(1{,}86;\ 0)$'dır.
+
+**En yakın tam sayıya yuvarlama.** $x_1 = 13/7$ en yakın tam sayıya yuvarlanırsa $(2, 0)$ elde edilir. Bu nokta kısıtı sağlamaz: $7 \cdot 2 + 4 \cdot 0 = 14 > 13$. Yuvarlanmış çözüm uygun bile değildir.
+
+**Aşağı yuvarlama.** Uygunluğu korumak için aşağı yuvarlayalım: $(1, 0)$ noktası uygundur ama $z = 21$ verir. Oysa @exm-dsy-sayma içinde TP probleminin optimumunu $(0, 3)$ noktasında $z = 33$ olarak bulduk. Aşağı yuvarlanmış çözüm optimumdan çok uzaktadır.
+
+Nedeni şekilde görülüyor: rahatlatılmış problemin optimumu $x_1$ ekseni üzerindeki köşededir, tam sayılı optimum ise bölgenin öbür ucunda, $x_2$ ekseni üzerindedir. İki nokta birbirine hiç yakın değildir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="43.0 -3.5 359.0 424.5" role="img" aria-label="Triangle 7x1 + 4x2 at most 13 with its integer points; LP optimum (13/7, 0), rounded point (2, 0) outside the region, truncated point (1, 0), integer optimum (0, 3).">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="162.0" y1="30.0" x2="162.0" y2="388.8"/><line x1="254.0" y1="30.0" x2="254.0" y2="388.8"/><line x1="346.0" y1="30.0" x2="346.0" y2="388.8"/><line x1="70.0" y1="296.8" x2="364.4" y2="296.8"/><line x1="70.0" y1="204.8" x2="364.4" y2="204.8"/><line x1="70.0" y1="112.8" x2="364.4" y2="112.8"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="388.8" x2="372.4" y2="388.8"/>
+  <line x1="70.0" y1="22.0" x2="70.0" y2="388.8"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="70.0" y="404.8" text-anchor="middle">0</text>
+  <text x="162.0" y="404.8" text-anchor="middle">1</text>
+  <text x="254.0" y="404.8" text-anchor="middle">2</text>
+  <text x="346.0" y="404.8" text-anchor="middle">3</text>
+  <text x="63.0" y="300.8" text-anchor="end">1</text>
+  <text x="63.0" y="208.8" text-anchor="end">2</text>
+  <text x="63.0" y="116.8" text-anchor="end">3</text>
+  <text x="378.4" y="392.8" font-style="italic">x&#8321;</text>
+  <text x="66.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="70.0,89.8 70.0,388.8 240.9,388.8" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M70.0,89.8 L240.9,388.8" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="171.4" y="223.6" fill="var(--color-base)" font-size="13" text-anchor="start">7x&#8321; + 4x&#8322; = 13</text>
+  <circle cx="162.0" cy="204.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="162.0" cy="112.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="388.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="296.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="204.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="112.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="388.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="296.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="204.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="112.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="70.0" cy="388.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="70.0" cy="296.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="70.0" cy="204.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="70.0" cy="112.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="162.0" cy="388.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="162.0" cy="296.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="240.9" cy="388.8" r="5.4" fill="var(--color-theory)"/>
+  <text x="254.9" y="376.8" fill="var(--color-theory)" font-size="13" text-anchor="start">(13/7, 0): z = 39</text>
+  <circle cx="254.0" cy="388.8" r="6.5" fill="none" stroke="var(--color-remark)" stroke-width="1.8"/>
+  <text x="264.0" y="354.8" fill="var(--color-remark)" font-size="13" text-anchor="start">(2, 0) uygun değil</text>
+  <circle cx="162.0" cy="388.8" r="6.5" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <text x="156.0" y="376.8" fill="var(--academic-text)" font-size="12.5" text-anchor="end">(1, 0): z = 21</text>
+  <circle cx="70.0" cy="112.8" r="5.6" fill="var(--color-practice)"/>
+  <text x="82.0" y="104.8" fill="var(--color-practice)" font-size="13.5" text-anchor="start" font-weight="600">(0, 3): z = 33</text>
+  <text x="172.0" y="288.8" fill="var(--academic-text)" font-size="12.5" text-anchor="start">(1, 1): z = 32</text>
+</svg>
+<figcaption>7x₁ + 4x₂ ≤ 13 bölgesi ve tam sayılı noktaları (koyu noktalar). Rahatlatılmış problemin optimumu (13/7, 0) noktasıdır. Yukarı yuvarlanan (2, 0) bölgenin dışında kalır, aşağı yuvarlanan (1, 0) ise z = 21 verir; tam sayılı optimum (0, 3) noktasında z = 33'tür ve LP optimumundan uzaktadır.</figcaption>
+</figure>
+```
+
+Demek ki yuvarlama ne uygun bir çözüm ne de iyi bir çözüm garanti eder. Çok değişkenli problemlerde durum daha da kötüdür: her değişken yukarı ya da aşağı yuvarlanabildiği için $2^n$ yuvarlama seçeneği vardır ve bunların hiçbiri uygun olmayabilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yine de rahatlatılmış problem boşa çözülmüş değildir: $z$ değeri TP probleminin optimumu hakkında kesin bir bilgi verir. Bu örnekte rahatlatılmış optimum $39$, TP optimumu $33$'tür ve $33 \le 39$ olduğuna dikkat edelim.
+
+## Rahatlatılmış Problem Bir Sınır Verir {#sec-dsy-sinir}
+
+Son gözlemin tesadüf olmadığını gösterelim. Bütün fikir, TP probleminin uygun çözümlerinin rahatlatılmış problemin uygun çözümleri arasında bulunmasıdır.
+
+:::: {#thm-dsy-sinir name="Rahatlatılmış Problemin Verdiği Sınır"}
+Bir TP problemi ve onun rahatlatılmış LP problemi verilsin.
+
+1. Rahatlatılmış problemin uygun çözümü yoksa TP probleminin de uygun çözümü yoktur.
+2. Maksimum probleminde rahatlatılmış problemin optimal değeri $z_R$ ise TP probleminin her uygun çözümü için $z \le z_R$'dir. Özellikle TP probleminin optimal değeri $z_T$ varsa $z_T \le z_R$ olur.
+3. Minimum probleminde aynı koşullarda TP probleminin her uygun çözümü için $z \ge z_R$, dolayısıyla $z_T \ge z_R$'dir.
+
+::: {.ispat}
+TP probleminin uygun çözümlerinin kümesini $S_T$, rahatlatılmış problemin uygun çözümlerinin kümesini $S_R$ ile gösterelim. $\vec{x} \in S_T$ ise $\vec{x}$ bütün kısıtları ve işaret koşullarını sağlar; tam sayı olması da ek bir bilgidir. O hâlde $\vec{x} \in S_R$'dir, yani
+$$
+S_T \subseteq S_R .
+$$
+
+**1.** $S_R = \varnothing$ ise $S_T \subseteq S_R$ gereği $S_T = \varnothing$ olur.
+
+**2.** $\vec{x} \in S_T$ olsun. $\vec{x} \in S_R$ olduğundan ve $z_R$, amaç fonksiyonunun $S_R$ üzerindeki en büyük değeri olduğundan $z(\vec{x}) \le z_R$'dir. TP probleminin optimal çözümü $\vec{x}^{\,*}$ ise $z_T = z(\vec{x}^{\,*})$ ve $\vec{x}^{\,*} \in S_T$ olduğundan $z_T \le z_R$ çıkar.
+
+**3.** Aynı akıl yürütme, $z_R$ bu kez $S_R$ üzerindeki en küçük değer olduğu için $z(\vec{x}) \ge z_R$ verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani daha az şart koyan problem daha çok çözüm arasından seçer ve bu yüzden en az onun kadar iyi bir değere ulaşır. Maksimumda "iyi" büyük demek olduğu için rahatlatılmış optimum TP optimumunun üstünde, minimumda altında kalır:
+$$
+\begin{pmatrix} \text{TP problemi için} \\ \text{optimal } z \text{ değeri} \end{pmatrix}
+\le
+\begin{pmatrix} \text{Rahatlatılmış LP problemi} \\ \text{için optimal } z \text{ değeri} \end{pmatrix}
+\quad (\max) .
+$$
+
+::: {#def-dsy-us-as name="Üst Sınır ve Alt Sınır"}
+Maksimum tipindeki bir TP probleminde rahatlatılmış LP probleminin optimal $z$ değerine TP problemi için **üst sınır** (Ü.S) denir. Minimum tipindeki bir TP probleminde aynı değere **alt sınır** (A.S) denir.
+:::
+
+Yani maksimum probleminde Ü.S, TP optimumunun asla aşamayacağı değerdir; minimum probleminde A.S, TP optimumunun asla altına inemeyeceği değerdir. @exm-dsy-rahatlatilmis içindeki problemde $\text{Ü.S} = 39$'dur.
+
+Sınır çoğu zaman aşılamaz bir tavandır ama bazen tam olarak ulaşılır. Bu durumda iş hemen biter.
+
+:::: {#cor-dsy-tam-sayi name="Tam Sayılı Rahatlatılmış Optimum"}
+Rahatlatılmış LP probleminin optimal çözümünde bütün değişkenler tam sayı değer alıyorsa bu çözüm TP probleminin de optimal çözümüdür.
+
+::: {.ispat}
+Rahatlatılmış problemin optimal çözümü $\vec{x}^{\,*}$ ve optimal değeri $z_R = z(\vec{x}^{\,*})$ olsun. $\vec{x}^{\,*}$ bütün kısıtları sağlar ve bileşenleri tam sayıdır; yani TP probleminin bir uygun çözümüdür. Maksimum probleminde @thm-dsy-sinir gereği TP probleminin her uygun $\vec{x}$ çözümü için $z(\vec{x}) \le z_R = z(\vec{x}^{\,*})$ olur. Demek ki $\vec{x}^{\,*}$ TP probleminin optimal çözümüdür. Minimum probleminde eşitsizlikler yön değiştirir, sonuç aynıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dsy-tam-sayi-kose name="Rahatlatılmış Optimumun Tam Sayı Çıkması"}
+$$
+\begin{aligned}
+x_1 + x_2 &\le 4 \\
+x_1 &\le 3 \\
+x_1, x_2 &\ge 0 \text{ ve tam sayı} \\
+\max z &= 2x_1 + x_2
+\end{aligned}
+$$
+TP problemini rahatlatılmış problemi yardımıyla çözünüz.
+
+::: {.cozum}
+Rahatlatılmış problemin uygun bölgesi $(0, 0)$, $(3, 0)$, $(3, 1)$ ve $(0, 4)$ köşeli dörtgendir. $(3, 1)$ köşesi $x_1 = 3$ ile $x_1 + x_2 = 4$ doğrularının kesişimidir. Köşelerde
+$$
+z(0, 0) = 0, \quad z(3, 0) = 6, \quad z(3, 1) = 7, \quad z(0, 4) = 4
+$$
+olur; rahatlatılmış optimum $x_1 = 3$, $x_2 = 1$, $z = 7$'dir. İki değişken de tam sayı olduğundan @cor-dsy-tam-sayi gereği TP probleminin optimal çözümü de $x_1 = 3$, $x_2 = 1$ ve $\max z = 7$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Dallanma ve Budama {#sec-dsy-dallanma}
+
+Rahatlatılmış optimum kesirliyse ne yapacağız? Dal-sınır yöntemi iki temel işleme dayanır.
+
+::: {#def-dsy-dallandirma name="Dallandırma"}
+TP probleminin rahatlatılmış LP problemine **Alt Problem 1** diyelim. Bir alt problemin rahatlatılmış optimal çözümünde bir $x_j$ değişkeni kesirli bir $a$ değeri alsın; $k = \lfloor a \rfloor$ ile $k + 1 = \lceil a \rceil$ arasında, yani $k < a < k + 1$ olsun. Bu alt problemden iki yeni alt problem kurulur:
+$$
+\begin{aligned}
+&\text{Alt problem} \cup \{x_j \le k\}, \\[1mm]
+&\text{Alt problem} \cup \{x_j \ge k + 1\}.
+\end{aligned}
+$$
+Yeni alt problemlere sıradaki numaralar verilir. Bu işleme $x_j$ değişkeninden **dallandırma** (dallanma) denir.
+:::
+
+Yani $x_j$ tam sayı olacaksa ya $k$'dan küçük eşit ya da $k + 1$'den büyük eşit olmak zorundadır; iki seçeneği iki ayrı dala ayırırız. "$\cup$" işareti, alt problemin kısıtlarına yeni kısıtın eklendiğini anlatır. Yeni alt problemler yine TP problemleridir ve onların da rahatlatılmış problemleri çözülür. Birden fazla kesirli değişken varsa hangisinden dallanılacağı keyfidir; hangi dala hangi numaranın verildiği de önemli değildir. Dallanmalar, kökünde Alt Problem 1 bulunan bir **ağaç** yapısıyla gösterilir.
+
+Dallanmanın hiçbir tam sayılı çözümü kaybetmediğini ama rahatlatılmış optimumu dışarıda bıraktığını gösterelim.
+
+:::: {#prp-dsy-dallanma name="Dallanmanın Özellikleri"}
+Bir alt problem, rahatlatılmış optimumunda $k < x_j = a < k + 1$ olan $x_j$ değişkeninden dallandırılsın.
+
+1. Alt problemin tam sayılı her uygun çözümü, iki yeni alt problemden tam olarak birinin uygun çözümüdür.
+2. Alt problemin rahatlatılmış optimal çözümü, yeni alt problemlerin hiçbirinin uygun çözümü değildir.
+3. Maksimum probleminde yeni alt problemlerin rahatlatılmış optimal $z$ değerleri, dallandırılan alt probleminkini aşamaz; minimum probleminde onun altına inemez.
+
+::: {.ispat}
+**1.** $\vec{x}$ alt problemin tam sayılı bir uygun çözümü olsun. $x_j$ bir tam sayıdır ve $k$ ile $k + 1$ ardışık tam sayılar olduğundan aralarında başka tam sayı yoktur. O hâlde ya $x_j \le k$ ya da $x_j \ge k + 1$'dir; ikisi birden olamaz, çünkü $k < k + 1$. $\vec{x}$ alt problemin bütün kısıtlarını zaten sağladığından, eklenen kısıtı sağladığı yeni alt problemin uygun çözümüdür, öbürünün değildir.
+
+**2.** Rahatlatılmış optimumda $x_j = a$ ve $k < a < k + 1$'dir. $a \le k$ ve $a \ge k + 1$ eşitsizliklerinin ikisi de yanlıştır; optimal çözüm eklenen kısıtların hiçbirini sağlamaz.
+
+**3.** Yeni alt problemin kısıtları eskisinin kısıtlarını ve bir kısıt daha içerir. Bu yüzden yeni rahatlatılmış problemin uygun çözümleri eskisinin uygun çözümleri arasındadır. Maksimum probleminde daha küçük bir küme üzerindeki en büyük değer, daha büyük küme üzerindeki en büyük değeri aşamaz; minimumda en küçük değer onun altına inemez. [$\blacksquare$]{.qed}
+:::
+::::
+
+Geometrik olarak dallanma, uygun bölgeden $k < x_j < k + 1$ şeridini kesip atar. Şeridin içinde hiç tam sayılı nokta yoktur, rahatlatılmış optimum ise tam bu şeridin içindedir.
+
+:::: {#exm-dsy-dallanma name="Bir Dallanma Adımı"}
+$7x_1 + 4x_2 \le 13$, $x_1, x_2 \ge 0$ ve tam sayı kısıtları altında $\max z = 21x_1 + 11x_2$ problemini ele alalım. Alt Problem 1'in (rahatlatılmış problemin) optimumu $x_1 = 13/7$, $x_2 = 0$ idi (@exm-dsy-rahatlatilmis). $x_1$ değişkeninden dallanarak iki alt problem kurunuz ve rahatlatılmış problemlerini çözünüz.
+
+::: {.cozum}
+$1 < 13/7 < 2$ olduğundan $k = 1$'dir:
+$$
+\begin{aligned}
+\text{Alt Problem 2} &= \text{Alt Problem 1} \cup \{x_1 \le 1\}, \\[1mm]
+\text{Alt Problem 3} &= \text{Alt Problem 1} \cup \{x_1 \ge 2\}.
+\end{aligned}
+$$
+
+**Alt Problem 3.** $x_1 \ge 2$ ise $7x_1 + 4x_2 \ge 14 > 13$ olur; kısıt sağlanamaz. Alt Problem 3'ün uygun çözümü yoktur.
+
+**Alt Problem 2.** Uygun bölge $(0, 0)$, $(1, 0)$, $(1, 3/2)$ ve $(0, 13/4)$ köşeli dörtgendir; $(1, 3/2)$ köşesi $x_1 = 1$ ile $7x_1 + 4x_2 = 13$ doğrularının kesişimidir. Köşelerde
+$$
+\begin{aligned}
+z(0, 0) &= 0, & z(1, 0) &= 21, \\[1mm]
+z\big(1, \tfrac32\big) &= 21 + \tfrac{33}{2} = \tfrac{75}{2}, & z\big(0, \tfrac{13}{4}\big) &= \tfrac{143}{4}
+\end{aligned}
+$$
+olur. $75/2 = 37{,}5$ en büyüğüdür; Alt Problem 2'nin rahatlatılmış optimumu $x_1 = 1$, $x_2 = 3/2$ ve $z = 75/2$'dir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="43.0 -3.5 359.0 424.5" role="img" aria-label="The triangle 7x1 + 4x2 at most 13 cut by the lines x1 = 1 and x1 = 2; the part x1 at most 1 is subproblem 2 with optimum (1, 3/2), the strip between is cut away, x1 at least 2 is empty.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="162.0" y1="30.0" x2="162.0" y2="388.8"/><line x1="254.0" y1="30.0" x2="254.0" y2="388.8"/><line x1="346.0" y1="30.0" x2="346.0" y2="388.8"/><line x1="70.0" y1="296.8" x2="364.4" y2="296.8"/><line x1="70.0" y1="204.8" x2="364.4" y2="204.8"/><line x1="70.0" y1="112.8" x2="364.4" y2="112.8"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="388.8" x2="372.4" y2="388.8"/>
+  <line x1="70.0" y1="22.0" x2="70.0" y2="388.8"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="70.0" y="404.8" text-anchor="middle">0</text>
+  <text x="162.0" y="404.8" text-anchor="middle">1</text>
+  <text x="254.0" y="404.8" text-anchor="middle">2</text>
+  <text x="346.0" y="404.8" text-anchor="middle">3</text>
+  <text x="63.0" y="300.8" text-anchor="end">1</text>
+  <text x="63.0" y="208.8" text-anchor="end">2</text>
+  <text x="63.0" y="116.8" text-anchor="end">3</text>
+  <text x="378.4" y="392.8" font-style="italic">x&#8321;</text>
+  <text x="66.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="162.0,250.8 70.0,89.8 70.0,388.8 162.0,388.8" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <polygon points="162.0,250.8 162.0,388.8 240.9,388.8" fill="var(--color-remark)" fill-opacity="0.22" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <path d="M70.0,89.8 L240.9,388.8" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M162.0,388.8 L162.0,30.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M254.0,388.8 L254.0,30.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="156.0" y="44.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8321; ≤ 1</text>
+  <text x="260.0" y="44.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8321; ≥ 2</text>
+  <circle cx="162.0" cy="204.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="162.0" cy="112.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="388.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="296.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="204.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="254.0" cy="112.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="388.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="296.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="204.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="346.0" cy="112.8" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="70.0" cy="388.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="70.0" cy="296.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="70.0" cy="204.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="70.0" cy="112.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="162.0" cy="388.8" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="162.0" cy="296.8" r="3.2" fill="var(--academic-text)"/>
+  <text x="116.0" y="324.4" fill="var(--color-theory)" font-size="13" text-anchor="middle">Alt Problem 2</text>
+  <text x="208.0" y="370.4" fill="var(--color-remark)" font-size="12" text-anchor="middle">atılan</text>
+  <text x="208.0" y="384.4" fill="var(--color-remark)" font-size="12" text-anchor="middle">şerit</text>
+  <circle cx="240.9" cy="388.8" r="4.0" fill="var(--academic-text)"/>
+  <text x="252.9" y="374.8" fill="var(--academic-text)" font-size="12.5" text-anchor="start">(13/7, 0)</text>
+  <circle cx="162.0" cy="250.8" r="5.4" fill="var(--color-practice)"/>
+  <text x="172.0" y="240.8" fill="var(--color-practice)" font-size="13" text-anchor="start" font-weight="600">(1, 3/2): z = 75/2</text>
+  <text x="304.6" y="154.2" fill="var(--color-remark)" font-size="12.5" text-anchor="middle">Alt Problem 3:</text>
+  <text x="304.6" y="170.2" fill="var(--color-remark)" font-size="12.5" text-anchor="middle">uygun çözüm yok</text>
+</svg>
+<figcaption>x₁ = 13/7 değişkeninden dallanma. x₁ ≤ 1 dalı (Alt Problem 2) bölgenin sol parçasını alır; 1 < x₁ < 2 şeridi atılır ve içinde tam sayılı nokta yoktur. x₁ ≥ 2 dalı (Alt Problem 3) bölgeyle kesişmez. Altı tam sayılı noktanın hepsi Alt Problem 2'de kalır.</figcaption>
+</figure>
+```
+
+@prp-dsy-dallanma burada gözle görülüyor: altı tam sayılı uygun çözümün (@tbl-dsy-sayma) hepsinde $x_1 \le 1$ olduğundan hepsi Alt Problem 2'dedir; $(13/7, 0)$ noktası iki alt problemin de dışında kalır; $75/2 \le 39$'dur. Alt Problem 2'nin optimumunda $x_2 = 3/2$ kesirli olduğu için yöntem bu kez $x_2$ değişkeninden dallanarak devam eder. [$\blacksquare$]{.qed}
+:::
+::::
+
+Dallanma tek başına ağacı durmadan büyütür. Onu durduran şey, bazı alt problemlerin bir daha dallandırılmamasıdır. Bunun için önce elimizdeki en iyi tam sayılı çözümü adlandıralım.
+
+::: {#def-dsy-aday name="Aday Çözüm"}
+Bir alt problemin rahatlatılmış optimal çözümünde bütün değişkenler tam sayı ise bu çözüm TP probleminin bir uygun çözümüdür; buna **aday çözüm** denir. Maksimum probleminde o ana kadar bulunan aday çözümlerin en büyük $z$ değeri TP optimumu için bir **alt sınırdır** (A.S). Henüz aday yoksa $\text{A.S} = -\infty$ alınır. Minimum probleminde adayların en küçük $z$ değeri bir **üst sınırdır** (Ü.S) ve başlangıçta $\text{Ü.S} = +\infty$ alınır.
+:::
+
+Yani aday çözüm, TP problemi için gerçekten kullanılabilecek bir cevaptır; optimal olup olmadığı henüz bilinmez. Maksimum probleminde optimal değer en iyi adayın değerinden küçük olamaz, rahatlatılmış problemin değerinden de büyük olamaz:
+$$
+\text{A.S} \le z_T \le \text{Ü.S} .
+$$
+Yöntem ilerledikçe daha iyi adaylar bulundukça A.S büyür ve iki sınır birbirine yaklaşır.
+
+::: {#def-dsy-budama name="Budama"}
+Bir alt problemin bir daha dallandırılmamasına alt problemin **budanması** denir. Maksimum probleminde bir alt problem şu durumlarda budanır:
+
+- **D1)** Alt problemin rahatlatılmış optimal $z$ değeri mevcut A.S değerini aşmıyorsa ($z \le \text{A.S}$). Minimum probleminde: $z$ değeri mevcut Ü.S değerinden küçük değilse ($z \ge \text{Ü.S}$).
+- **D2)** Alt problemin uygun çözümü yoksa.
+- **D3)** Alt problemin rahatlatılmış optimal çözümü tam sayılıysa. Bu çözüm bir aday çözümdür; $z$ değeri mevcut A.S değerinden büyükse yeni A.S olur ve en iyi aday bu çözüm olur.
+:::
+
+Yani budanan bir alt problemde, elimizdeki en iyi adaydan daha iyi bir tam sayılı çözüm bulunamayacağı bilindiği için arama sürdürülmez. D2'de alt problemde tam sayılı çözüm yoktur (@thm-dsy-sinir). D3'te alt problemin en iyi tam sayılı çözümü zaten elimizdedir: rahatlatılmış optimumun kendisi (@cor-dsy-tam-sayi). D1'de alt problemin tam sayılı çözümlerinin hiçbiri elimizdeki adaydan daha iyi olamaz, çünkü @thm-dsy-sinir gereği hepsinin $z$ değeri alt problemin rahatlatılmış $z$ değerini aşmaz. Tek bir alt problemi çözerek çok sayıda tam sayılı çözümü incelemeden eleriz; TP probleminin bütün uygun çözümleri böylece örtülü olarak, açıkça tek tek bakılmadan ele alınmış olur.
+
+Yöntemin gerçekten durduğunu ve durduğunda doğru cevabı verdiğini ispatlayalım.
+
+:::: {#prp-dsy-sonlu name="Dal-Sınır Yöntemi Sonlu Adımda Durur"}
+Rahatlatılmış LP probleminin uygun bölgesi sınırlıysa dal-sınır yöntemi sonlu sayıda alt problem çözdükten sonra durur.
+
+::: {.ispat}
+Uygun bölge sınırlı olduğundan her $j$ için bölgede $x_j \le U_j$ olacak şekilde bir $U_j$ sayısı vardır. Her alt problemin kısıtları Alt Problem 1'in kısıtlarını içerdiği için bu sınır bütün alt problemlerde geçerlidir.
+
+Bir alt problem, rahatlatılmış optimumunda $x_j = a$ kesirli olduğu için dallandırılsın. Eklenen kısıt ya $x_j \le \lfloor a \rfloor$ ya da $x_j \ge \lceil a \rceil$'dir. $0 \le a \le U_j$ olduğundan
+$$
+0 \le \lfloor a \rfloor \le \lfloor U_j \rfloor, \qquad 1 \le \lceil a \rceil \le \lfloor U_j \rfloor + 1
+$$
+olur. Demek ki ağaçta eklenebilecek bütün kısıtlar
+$$
+x_j \le t \ \ (0 \le t \le \lfloor U_j \rfloor), \qquad x_j \ge t \ \ (1 \le t \le \lfloor U_j \rfloor + 1)
+$$
+biçimindedir ve her $j$ için bunların sayısı $2(\lfloor U_j \rfloor + 1)$'dir; hepsinin sayısı sonludur. Buna $N$ diyelim.
+
+Ağacın kökten başlayan herhangi bir yolu boyunca eklenen kısıtların hepsi farklıdır. Gerçekten, bir alt problemde eklenen yeni kısıt, o alt problemin rahatlatılmış optimumu tarafından sağlanmaz (@prp-dsy-dallanma); alt problemin kendi kısıtlarını ise bu optimum sağlar. Öyleyse yeni kısıt alt problemin kısıtları arasında yoktu. Bu yüzden bir yol üzerinde en fazla $N$ dallanma olabilir, yani ağacın derinliği en fazla $N$'dir. Her alt problem en fazla iki yeni alt problem ürettiğinden ağaçta en fazla $1 + 2 + 2^2 + \dots + 2^N$ alt problem bulunur. Bu sayı sonludur ve yöntem sonlu adımda durur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#thm-dsy-dogruluk name="Dal-Sınır Yönteminin Doğruluğu"}
+Maksimum tipinde bir TP probleminin rahatlatılmış LP probleminin uygun bölgesi sınırlı olsun ve dal-sınır yöntemi bütün alt problemler budanınca dursun.
+
+1. Hiç aday çözüm bulunmamışsa TP probleminin uygun çözümü yoktur.
+2. Aday çözüm bulunmuşsa en büyük $z$ değerli aday TP probleminin optimal çözümüdür.
+
+::: {.ispat}
+Ağaçta dallandırılmamış, yani budanmış alt problemlere **yaprak** diyelim. $\vec{x}$ TP probleminin herhangi bir uygun çözümü olsun.
+
+**$\vec{x}$ bir yaprağın uygun çözümüdür.** $\vec{x}$, Alt Problem 1'in tam sayılı bir uygun çözümüdür. Tam sayılı uygun çözümü olduğu bir alt problem dallandırılmışsa @prp-dsy-dallanma gereği $\vec{x}$ yeni alt problemlerden birinin tam sayılı uygun çözümüdür. Kökten başlayıp her seferinde bu alt probleme inersek, ağaç sonlu olduğundan (@prp-dsy-sonlu) sonunda bir $L$ yaprağına varırız ve $\vec{x}$, $L$'nin uygun çözümüdür.
+
+**$z(\vec{x})$, son A.S değerini aşmaz.** $L$'nin rahatlatılmış optimal değeri $z_L$ olsun. @thm-dsy-sinir gereği $z(\vec{x}) \le z_L$'dir. $L$ üç durumdan biriyle budanmıştır:
+
+- D2 olamaz, çünkü $\vec{x}$, $L$'nin bir uygun çözümüdür.
+- D3 ise $L$'nin optimumu bir adaydır; $z_L$ bu adayın değeridir ve en iyi adayın değerini aşmaz.
+- D1 ise budama anındaki A.S için $z_L \le \text{A.S}$'dir. A.S yalnız büyüyebildiği için bu, son A.S değerini de aşmaz. D1'in uygulanabilmesi için o anda A.S sonlu olmalıdır, yani bir aday bulunmuş olmalıdır.
+
+Her durumda $z(\vec{x}) \le z_L \le$ (en iyi adayın değeri) olur ve bir aday bulunmuştur.
+
+**Sonuç.** Hiç aday bulunmamışsa yukarıdaki akıl yürütme bir çelişki verir; demek ki TP probleminin uygun çözümü yoktur. Aday bulunmuşsa en iyi aday TP probleminin uygun bir çözümüdür ve her uygun $\vec{x}$ için $z(\vec{x})$ onun değerini aşmaz; yani en iyi aday optimal çözümdür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Minimum probleminde aynı ispat, eşitsizlikler ters çevrilerek ve A.S yerine Ü.S kullanılarak yapılır.
+
+## Dal-Sınır Yöntemi {#sec-dsy-yontem}
+
+Buraya kadar söylenenleri bir reçetede toplayalım ve iki örnekte uygulayalım.
+
+::: {.callout-tip}
+## Dal-sınır yöntemi altı adımda (maksimum problemi)
+
+1. Tam sayı şartlarını kaldırıp Alt Problem 1'i, yani rahatlatılmış LP problemini çöz. Uygun çözümü yoksa TP probleminin de yoktur. Optimal $z$ değeri Ü.S'dir; $\text{A.S} = -\infty$ al.
+2. Optimal çözüm tam sayılıysa TP probleminin optimal çözümüdür; dur.
+3. Dallandırılacak bir alt problemde kesirli değer alan bir $x_j = a$ seç ve $x_j \le \lfloor a \rfloor$, $x_j \ge \lceil a \rceil$ kısıtlarıyla iki yeni alt problem kur; sıradaki numaraları ver.
+4. Her yeni alt problemin rahatlatılmış problemini çöz ve karar ver: uygun değilse budanır (D2); çözüm tam sayılıysa adaydır, gerekirse A.S güncellenir ve budanır (D3); $z \le \text{A.S}$ ise budanır (D1); hiçbiri değilse dallandırılmak üzere bekler.
+5. Bekleyen alt problem kaldıkça 3. ve 4. adımları tekrarla. Bekleyen bir alt problemi dallandırmadan önce, bu arada büyümüş olabilecek A.S ile yeniden karşılaştır.
+6. Bekleyen alt problem kalmayınca en iyi aday TP probleminin optimal çözümüdür; aday yoksa TP probleminin uygun çözümü yoktur.
+
+Minimum probleminde Ü.S ile A.S yer değiştirir: Alt Problem 1'in değeri A.S olur, başlangıçta $\text{Ü.S} = +\infty$ alınır, D1'de $z \ge \text{Ü.S}$ olan alt problem budanır ve en küçük $z$ değerli aday seçilir.
+:::
+
+:::: {#exm-dsy-kaynak name="Dal-Sınır Yöntemiyle Bir Maksimum Problemi"}
+$$
+\begin{aligned}
+x_1 + x_2 &\le 6 \\
+9x_1 + 5x_2 &\le 45 \\
+x_1, x_2 &\ge 0 \text{ ve tam sayı} \\
+\max z &= 8x_1 + 5x_2
+\end{aligned}
+$$
+problemini çözünüz.
+
+::: {.cozum}
+İşaret koşulunda tam sayı olma şartı da bulunduğuna dikkat edelim: problem bir TP problemidir ve dal-sınır yöntemiyle çözülecektir. Alt problemlerin hepsi iki değişkenlidir; her birinin rahatlatılmış problemini grafik yöntemle, uygun bölgenin köşelerini tarayarak çözeceğiz.
+
+**Alt Problem 1.** Rahatlatılmış problemin uygun bölgesi $(0, 0)$, $(5, 0)$, $(15/4, 9/4)$ ve $(0, 6)$ köşeli dörtgendir. $(15/4, 9/4)$ köşesi iki kısıt doğrusunun kesişimidir: $9x_1 + 5x_2 = 45$ denkleminden $5(x_1 + x_2) = 30$ denklemini çıkarırsak $4x_1 = 15$, yani $x_1 = 15/4$ ve $x_2 = 6 - 15/4 = 9/4$ bulunur. Köşelerde
+$$
+\begin{aligned}
+z(0, 0) &= 0, & z(5, 0) &= 40, \\[1mm]
+z\big(\tfrac{15}{4}, \tfrac94\big) &= 30 + \tfrac{45}{4} = \tfrac{165}{4}, & z(0, 6) &= 30
+\end{aligned}
+$$
+olur. Alt Problem 1'in optimal çözümü $x_1 = 15/4$, $x_2 = 9/4$ ve $z = 165/4 = 41{,}25$'tir. Pür TP problemi için $\text{Ü.S} = 165/4$'tür; henüz aday olmadığından $\text{A.S} = -\infty$'dur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="37.0 -3.5 456.5 457.5" role="img" aria-label="Feasible quadrilateral of x1 + x2 at most 6 and 9x1 + 5x2 at most 45 with its integer points; optimum (15/4, 9/4) of the relaxed problem.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="120.0" y1="30.0" x2="120.0" y2="422.0"/><line x1="176.0" y1="30.0" x2="176.0" y2="422.0"/><line x1="232.0" y1="30.0" x2="232.0" y2="422.0"/><line x1="288.0" y1="30.0" x2="288.0" y2="422.0"/><line x1="344.0" y1="30.0" x2="344.0" y2="422.0"/><line x1="400.0" y1="30.0" x2="400.0" y2="422.0"/><line x1="456.0" y1="30.0" x2="456.0" y2="422.0"/><line x1="64.0" y1="366.0" x2="456.0" y2="366.0"/><line x1="64.0" y1="310.0" x2="456.0" y2="310.0"/><line x1="64.0" y1="254.0" x2="456.0" y2="254.0"/><line x1="64.0" y1="198.0" x2="456.0" y2="198.0"/><line x1="64.0" y1="142.0" x2="456.0" y2="142.0"/><line x1="64.0" y1="86.0" x2="456.0" y2="86.0"/><line x1="64.0" y1="30.0" x2="456.0" y2="30.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="422.0" x2="464.0" y2="422.0"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="422.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="438.0" text-anchor="middle">0</text>
+  <text x="120.0" y="438.0" text-anchor="middle">1</text>
+  <text x="176.0" y="438.0" text-anchor="middle">2</text>
+  <text x="232.0" y="438.0" text-anchor="middle">3</text>
+  <text x="288.0" y="438.0" text-anchor="middle">4</text>
+  <text x="344.0" y="438.0" text-anchor="middle">5</text>
+  <text x="400.0" y="438.0" text-anchor="middle">6</text>
+  <text x="456.0" y="438.0" text-anchor="middle">7</text>
+  <text x="57.0" y="370.0" text-anchor="end">1</text>
+  <text x="57.0" y="314.0" text-anchor="end">2</text>
+  <text x="57.0" y="258.0" text-anchor="end">3</text>
+  <text x="57.0" y="202.0" text-anchor="end">4</text>
+  <text x="57.0" y="146.0" text-anchor="end">5</text>
+  <text x="57.0" y="90.0" text-anchor="end">6</text>
+  <text x="57.0" y="34.0" text-anchor="end">7</text>
+  <text x="470.0" y="426.0" font-style="italic">x&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="274.0,296.0 64.0,86.0 64.0,422.0 344.0,422.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M64.0,86.0 L400.0,422.0" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M126.2,30.0 L344.0,422.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="350.4" y="344.8" fill="var(--color-base)" font-size="13" text-anchor="start">x&#8321; + x&#8322; = 6</text>
+  <text x="148.5" y="56.4" fill="var(--color-practice)" font-size="13" text-anchor="start">9x&#8321; + 5x&#8322; = 45</text>
+  <circle cx="64.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="120.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="120.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="176.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="176.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="176.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="366.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="422.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="366.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="422.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="366.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="64.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="198.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="142.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="86.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="198.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="142.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="198.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="288.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="288.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="344.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="274.0" cy="296.0" r="5.6" fill="var(--color-practice)"/>
+  <text x="286.0" y="286.0" fill="var(--color-practice)" font-size="13.5" text-anchor="start" font-weight="600">(15/4, 9/4)</text>
+  <text x="153.6" y="352.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle">Alt Problem 1</text>
+</svg>
+<figcaption>Alt Problem 1, yani rahatlatılmış problem. Uygun bölge (0, 0), (5, 0), (15/4, 9/4), (0, 6) köşeli dörtgendir; koyu noktalar tam sayılı uygun noktalardır. Rahatlatılmış problemin optimumu (15/4, 9/4) köşesidir ve tam sayılı değildir.</figcaption>
+</figure>
+```
+
+Çözümde iki değişken de kesirlidir. Dallanan değişken keyfi seçilir; $x_1$'i seçelim. $3 < x_1 = 15/4 < 4$ olduğundan
+$$
+\begin{aligned}
+\text{Alt Problem 2} &= \text{Alt Problem 1} \cup \{x_1 \ge 4\}, \\[1mm]
+\text{Alt Problem 3} &= \text{Alt Problem 1} \cup \{x_1 \le 3\}
+\end{aligned}
+$$
+alt problemleri kurulur.
+
+| Alt Problem 2 | Alt Problem 3 |
+|:-:|:-:|
+| $x_1 + x_2 \le 6$ | $x_1 + x_2 \le 6$ |
+| $9x_1 + 5x_2 \le 45$ | $9x_1 + 5x_2 \le 45$ |
+| $x_1 \ge 4$ | $x_1 \le 3$ |
+| $x_1, x_2 \ge 0$ ve tam sayı | $x_1, x_2 \ge 0$ ve tam sayı |
+| $\max z = 8x_1 + 5x_2$ | $\max z = 8x_1 + 5x_2$ |
+| Rahatlatılmış optimum: $x_1 = 4$, $x_2 = \frac{9}{5}$, $\max z = 41$ | Rahatlatılmış optimum: $x_1 = 3$, $x_2 = 3$, $\max z = 39$ |
+
+: Alt Problem 2 ve Alt Problem 3 {#tbl-dsy-ap2-ap3}
+
+**Alt Problem 3.** $x_1 \le 3$ kısıtı bölgenin sol parçasını alır; köşeler $(0, 0)$, $(3, 0)$, $(3, 3)$ ve $(0, 6)$'dır. $(3, 3)$ noktası $x_1 = 3$ ile $x_1 + x_2 = 6$ doğrularının kesişimidir ve $9 \cdot 3 + 5 \cdot 3 = 42 \le 45$ olduğundan uygundur. Köşelerde $z$ değerleri sırasıyla $0$, $24$, $39$ ve $30$'dur. Optimum $x_1 = 3$, $x_2 = 3$, $z = 39$'dur. Bütün karar değişkenleri tam sayı olduğundan bu bir uygun çözüm ve **aday çözümdür**: $\text{A.S} = 39$ olur ve Alt Problem 3 budanır (D3).
+
+**Alt Problem 2.** $x_1 \ge 4$ kısıtı bölgenin sağındaki küçük üçgeni alır; köşeler $(4, 0)$, $(5, 0)$ ve $(4, 9/5)$'tir. $(4, 9/5)$ noktası $x_1 = 4$ ile $9x_1 + 5x_2 = 45$ doğrularının kesişimidir ($5x_2 = 9$) ve $4 + 9/5 = 29/5 \le 6$ olduğundan uygundur. Köşelerde
+$$
+z(4, 0) = 32, \quad z(5, 0) = 40, \quad z\big(4, \tfrac95\big) = 32 + 9 = 41
+$$
+olur. Optimum $x_1 = 4$, $x_2 = 9/5$, $z = 41$'dir. $41 > 39 = \text{A.S}$ olduğundan D1 uygulanmaz; $x_2$ kesirli olduğu için dallanmaya devam edilir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="37.0 -3.5 456.5 457.5" role="img" aria-label="The region of subproblem 1 split by x1 = 3 and x1 = 4: subproblem 3 on the left with optimum (3, 3), subproblem 2 the small triangle on the right with optimum (4, 9/5), the strip between cut away.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="120.0" y1="30.0" x2="120.0" y2="422.0"/><line x1="176.0" y1="30.0" x2="176.0" y2="422.0"/><line x1="232.0" y1="30.0" x2="232.0" y2="422.0"/><line x1="288.0" y1="30.0" x2="288.0" y2="422.0"/><line x1="344.0" y1="30.0" x2="344.0" y2="422.0"/><line x1="400.0" y1="30.0" x2="400.0" y2="422.0"/><line x1="456.0" y1="30.0" x2="456.0" y2="422.0"/><line x1="64.0" y1="366.0" x2="456.0" y2="366.0"/><line x1="64.0" y1="310.0" x2="456.0" y2="310.0"/><line x1="64.0" y1="254.0" x2="456.0" y2="254.0"/><line x1="64.0" y1="198.0" x2="456.0" y2="198.0"/><line x1="64.0" y1="142.0" x2="456.0" y2="142.0"/><line x1="64.0" y1="86.0" x2="456.0" y2="86.0"/><line x1="64.0" y1="30.0" x2="456.0" y2="30.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="422.0" x2="464.0" y2="422.0"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="422.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="438.0" text-anchor="middle">0</text>
+  <text x="120.0" y="438.0" text-anchor="middle">1</text>
+  <text x="176.0" y="438.0" text-anchor="middle">2</text>
+  <text x="232.0" y="438.0" text-anchor="middle">3</text>
+  <text x="288.0" y="438.0" text-anchor="middle">4</text>
+  <text x="344.0" y="438.0" text-anchor="middle">5</text>
+  <text x="400.0" y="438.0" text-anchor="middle">6</text>
+  <text x="456.0" y="438.0" text-anchor="middle">7</text>
+  <text x="57.0" y="370.0" text-anchor="end">1</text>
+  <text x="57.0" y="314.0" text-anchor="end">2</text>
+  <text x="57.0" y="258.0" text-anchor="end">3</text>
+  <text x="57.0" y="202.0" text-anchor="end">4</text>
+  <text x="57.0" y="146.0" text-anchor="end">5</text>
+  <text x="57.0" y="90.0" text-anchor="end">6</text>
+  <text x="57.0" y="34.0" text-anchor="end">7</text>
+  <text x="470.0" y="426.0" font-style="italic">x&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="274.0,296.0 64.0,86.0 64.0,422.0 344.0,422.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 4"/>
+  <polygon points="232.0,254.0 64.0,86.0 64.0,422.0 232.0,422.0" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <polygon points="288.0,321.2 288.0,422.0 344.0,422.0" fill="var(--color-practice)" fill-opacity="0.22" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="288.0,321.2 274.0,296.0 232.0,254.0 232.0,422.0 288.0,422.0" fill="var(--color-remark)" fill-opacity="0.22" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <path d="M64.0,86.0 L400.0,422.0" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M126.2,30.0 L344.0,422.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="64.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="120.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="120.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="176.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="176.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="176.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="232.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="288.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="366.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="344.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="422.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="366.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="400.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="422.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="366.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="310.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="254.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="198.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="142.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="86.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="456.0" cy="30.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="64.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="198.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="142.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="86.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="198.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="142.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="176.0" cy="198.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="310.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="232.0" cy="254.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="288.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="288.0" cy="366.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="344.0" cy="422.0" r="3.2" fill="var(--academic-text)"/>
+  <text x="148.0" y="354.8" fill="var(--color-theory)" font-size="13.5" text-anchor="middle">Alt Problem 3</text>
+  <text x="148.0" y="371.8" fill="var(--color-theory)" font-size="13" text-anchor="middle">x&#8321; ≤ 3</text>
+  <text x="303.2" y="378.8" fill="var(--color-remark)" font-size="12" text-anchor="end">atılan</text>
+  <text x="303.2" y="392.8" fill="var(--color-remark)" font-size="12" text-anchor="end">şerit</text>
+  <circle cx="232.0" cy="254.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="242.0" y="244.0" fill="var(--color-theory)" font-size="13" text-anchor="start" font-weight="600">(3, 3): z = 39</text>
+  <circle cx="288.0" cy="321.2" r="5.4" fill="var(--color-practice)"/>
+  <path d="M292.5,317.8 L339.5,286.5" fill="none" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="344.0" y="286.0" fill="var(--color-practice)" font-size="13" text-anchor="start" font-weight="600">(4, 9/5): z = 41</text>
+  <text x="360.8" y="340.8" fill="var(--color-practice)" font-size="13.5" text-anchor="start">Alt Problem 2</text>
+  <text x="360.8" y="355.8" fill="var(--color-practice)" font-size="13" text-anchor="start">x&#8321; ≥ 4</text>
+</svg>
+<figcaption>x₁ = 15/4 değişkeninden dallanma. Alt Problem 3 (x₁ ≤ 3) bölgenin sol parçası, Alt Problem 2 (x₁ ≥ 4) sağdaki küçük üçgendir; 3 < x₁ < 4 şeridi atılır ve içinde tam sayılı nokta yoktur. Kalın noktalar iki alt problemin optimumlarıdır.</figcaption>
+</figure>
+```
+
+$1 < x_2 = 9/5 < 2$ olduğundan yeni alt problemler şunlardır:
+$$
+\begin{aligned}
+\text{Alt Problem 4} &= \text{Alt Problem 2} \cup \{x_2 \ge 2\}, \\[1mm]
+\text{Alt Problem 5} &= \text{Alt Problem 2} \cup \{x_2 \le 1\}.
+\end{aligned}
+$$
+
+| Alt Problem 4 | Alt Problem 5 |
+|:-:|:-:|
+| $x_1 + x_2 \le 6$ | $x_1 + x_2 \le 6$ |
+| $9x_1 + 5x_2 \le 45$ | $9x_1 + 5x_2 \le 45$ |
+| $x_1 \ge 4$ | $x_1 \ge 4$ |
+| $x_2 \ge 2$ | $x_2 \le 1$ |
+| $x_1, x_2 \ge 0$ ve tam sayı | $x_1, x_2 \ge 0$ ve tam sayı |
+| $\max z = 8x_1 + 5x_2$ | $\max z = 8x_1 + 5x_2$ |
+| Uygun çözüm yok | Rahatlatılmış optimum: $x_1 = \frac{40}{9}$, $x_2 = 1$, $\max z = \frac{365}{9}$ |
+
+: Alt Problem 4 ve Alt Problem 5 {#tbl-dsy-ap4-ap5}
+
+**Alt Problem 4.** Alt Problem 2 için çizdiğimiz üçgenin en yüksek noktası $x_2 = 9/5$'tir; bu üçgen ile $x_2 \ge 2$ yarı düzleminin arakesiti boştur. Cebirle de görülür: $x_1 \ge 4$ ve $x_2 \ge 2$ ise $9x_1 + 5x_2 \ge 36 + 10 = 46 > 45$ olur. Alt Problem 4 uygun değildir, TP probleminin optimal çözümünü veremez ve bu yüzden budanır (D2).
+
+**Alt Problem 5.** Alt Problem 2'nin üçgeni ile $x_2 \le 1$ yarı düzleminin arakesiti $(4, 0)$, $(5, 0)$, $(40/9, 1)$ ve $(4, 1)$ köşeli dörtgendir. $(40/9, 1)$ noktası $x_2 = 1$ ile $9x_1 + 5x_2 = 45$ doğrularının kesişimidir: $9x_1 = 40$. Ayrıca $40/9 + 1 = 49/9 \le 6$'dır. Köşelerde
+$$
+\begin{aligned}
+z(4, 0) &= 32, & z(5, 0) &= 40, \\[1mm]
+z\big(\tfrac{40}{9}, 1\big) &= \tfrac{320}{9} + 5 = \tfrac{365}{9}, & z(4, 1) &= 37
+\end{aligned}
+$$
+olur. Optimum $x_1 = 40/9$, $x_2 = 1$, $z = 365/9 \approx 40{,}56$'dır. $365/9 > 39 = \text{A.S}$ olduğundan budanmaz; $x_1$ için bulunan değer tam sayı olmadığından $x_1$ seçilerek tekrar dallanma yapılır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="37.0 -3.5 484.5 485.5" role="img" aria-label="Close-up of the triangle of subproblem 2 cut by the lines x2 = 1 and x2 = 2: subproblem 5 below with optimum (40/9, 1), subproblem 4 above is empty.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="64.0" y1="30.0" x2="64.0" y2="450.0"/><line x1="214.0" y1="30.0" x2="214.0" y2="450.0"/><line x1="364.0" y1="30.0" x2="364.0" y2="450.0"/><line x1="64.0" y1="300.0" x2="484.0" y2="300.0"/><line x1="64.0" y1="150.0" x2="484.0" y2="150.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="450.0" x2="492.0" y2="450.0"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="450.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="466.0" text-anchor="middle">3</text>
+  <text x="214.0" y="466.0" text-anchor="middle">4</text>
+  <text x="364.0" y="466.0" text-anchor="middle">5</text>
+  <text x="57.0" y="304.0" text-anchor="end">1</text>
+  <text x="57.0" y="154.0" text-anchor="end">2</text>
+  <text x="498.0" y="454.0" font-style="italic">x&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="214.0,450.0 364.0,450.0 214.0,180.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 4"/>
+  <polygon points="214.0,300.0 214.0,450.0 364.0,450.0 280.7,300.0" fill="var(--color-practice)" fill-opacity="0.22" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="214.0,300.0 280.7,300.0 214.0,180.0" fill="var(--color-remark)" fill-opacity="0.22" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <path d="M130.7,30.0 L364.0,450.0" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.0,300.0 L484.0,300.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.0,150.0 L484.0,150.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="480.0" y="316.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8322; ≤ 1</text>
+  <text x="480.0" y="142.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8322; ≥ 2</text>
+  <circle cx="214.0" cy="150.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="364.0" cy="300.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="364.0" cy="150.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="64.0" cy="450.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="300.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="150.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="214.0" cy="450.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="214.0" cy="300.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="364.0" cy="450.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="214.0" cy="180.0" r="4.2" fill="var(--academic-text)"/>
+  <text x="204.0" y="174.0" fill="var(--academic-text)" font-size="12.5" text-anchor="end">(4, 9/5)</text>
+  <circle cx="280.7" cy="300.0" r="5.4" fill="var(--color-practice)"/>
+  <text x="292.7" y="290.0" fill="var(--color-practice)" font-size="13" text-anchor="start" font-weight="600">(40/9, 1): z = 365/9</text>
+  <text x="256.0" y="405.0" fill="var(--color-practice)" font-size="13" text-anchor="middle">Alt Problem 5</text>
+  <text x="229.0" y="75.0" fill="var(--color-remark)" font-size="12.5" text-anchor="start">Alt Problem 4 (x&#8322; ≥ 2):</text>
+  <text x="229.0" y="91.0" fill="var(--color-remark)" font-size="12.5" text-anchor="start">Alt Problem 2 ile kesişimi boş</text>
+  <text x="204.0" y="244.0" fill="var(--color-remark)" font-size="12" text-anchor="end">atılan şerit</text>
+</svg>
+<figcaption>Alt Problem 2'nin bölgesi (kesikli üçgen) x₂ = 9/5 değişkeninden bölünür. x₂ ≤ 1 dalı Alt Problem 5'in dörtgenini verir; 1 < x₂ < 2 şeridi atılır. Üçgenin en yüksek noktası x₂ = 9/5 olduğundan x₂ ≥ 2 dalı (Alt Problem 4) boştur.</figcaption>
+</figure>
+```
+
+$4 < x_1 = 40/9 < 5$ eşitsizliğinden yeni alt problemler oluşturulur:
+$$
+\begin{aligned}
+\text{Alt Problem 6} &= \text{Alt Problem 5} \cup \{x_1 \ge 5\}, \\[1mm]
+\text{Alt Problem 7} &= \text{Alt Problem 5} \cup \{x_1 \le 4\}.
+\end{aligned}
+$$
+
+| Alt Problem 6 | Alt Problem 7 |
+|:-:|:-:|
+| $x_1 + x_2 \le 6$ | $x_1 + x_2 \le 6$ |
+| $9x_1 + 5x_2 \le 45$ | $9x_1 + 5x_2 \le 45$ |
+| $x_1 \ge 4$ | $x_1 \ge 4$ |
+| $x_1 \ge 5$ | $x_1 \le 4$ |
+| $x_2 \le 1$ | $x_2 \le 1$ |
+| $x_1, x_2 \ge 0$ ve tam sayı | $x_1, x_2 \ge 0$ ve tam sayı |
+| $\max z = 8x_1 + 5x_2$ | $\max z = 8x_1 + 5x_2$ |
+| Rahatlatılmış optimum: $x_1 = 5$, $x_2 = 0$, $\max z = 40$ | Rahatlatılmış optimum: $x_1 = 4$, $x_2 = 1$, $\max z = 37$ |
+
+: Alt Problem 6 ve Alt Problem 7 {#tbl-dsy-ap6-ap7}
+
+**Alt Problem 7.** $x_1 \ge 4$ ve $x_1 \le 4$ birlikte $x_1 = 4$ demektir. O zaman $9x_1 + 5x_2 \le 45$ kısıtı $x_2 \le 9/5$, $x_1 + x_2 \le 6$ kısıtı $x_2 \le 2$ verir; bunlardan daha güçlüsü $x_2 \le 1$'dir. Uygun bölge $(4, 0)$ ile $(4, 1)$ arasındaki doğru parçasıdır. Uç noktalarda $z(4, 0) = 32$ ve $z(4, 1) = 37$'dir; optimum $x_1 = 4$, $x_2 = 1$, $z = 37$'dir. $x_1$ ve $x_2$ tam sayı olduğundan bu bir uygun çözümdür, optimal çözüm için adaydır. Ama $37 < 39 = \text{A.S}$ olduğundan elimizdeki adaydan kötüdür; A.S değişmez ve Alt Problem 7 budanır (D3).
+
+**Alt Problem 6.** $x_1 \ge 5$ ise $9x_1 \ge 45$ olur; $9x_1 + 5x_2 \le 45$ kısıtı ancak $x_1 = 5$ ve $x_2 = 0$ için sağlanır. Yani Alt Problem 5'in bölgesi ile $x_1 \ge 5$ yarı düzleminin arakesiti yalnız $(5, 0)$ noktasıdır. Bu bölge için optimum $x_1 = 5$, $x_2 = 0$, $z = 40$'tır. Bütün karar değişkenleri tam sayı olduğundan bu da bir aday çözümdür. $40 > 39$ olduğundan en iyi aday artık budur: $\text{A.S} = 40$. Alt Problem 6 budanır (D3).
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="37.0 -3.5 484.5 380.5" role="img" aria-label="Close-up of the quadrilateral of subproblem 5: subproblem 7 is the segment x1 = 4, x2 from 0 to 1 with optimum (4, 1); subproblem 6 is the single point (5, 0).">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="64.0" y1="30.0" x2="64.0" y2="345.0"/><line x1="214.0" y1="30.0" x2="214.0" y2="345.0"/><line x1="364.0" y1="30.0" x2="364.0" y2="345.0"/><line x1="64.0" y1="195.0" x2="484.0" y2="195.0"/><line x1="64.0" y1="45.0" x2="484.0" y2="45.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="345.0" x2="492.0" y2="345.0"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="345.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="361.0" text-anchor="middle">3</text>
+  <text x="214.0" y="361.0" text-anchor="middle">4</text>
+  <text x="364.0" y="361.0" text-anchor="middle">5</text>
+  <text x="57.0" y="199.0" text-anchor="end">1</text>
+  <text x="57.0" y="49.0" text-anchor="end">2</text>
+  <text x="498.0" y="349.0" font-style="italic">x&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="214.0,195.0 214.0,345.0 364.0,345.0 280.7,195.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 4"/>
+  <polygon points="214.0,195.0 214.0,345.0 364.0,345.0 280.7,195.0" fill="var(--color-remark)" fill-opacity="0.22" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <path d="M189.0,30.0 L364.0,345.0" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M214.0,345.0 L214.0,195.0" fill="none" stroke="var(--color-theory)" stroke-width="4.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="214.0" cy="45.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="364.0" cy="195.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="364.0" cy="45.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="64.0" cy="345.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="195.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="45.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="214.0" cy="345.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="214.0" cy="195.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="364.0" cy="345.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="280.7" cy="195.0" r="4.2" fill="var(--academic-text)"/>
+  <text x="288.7" y="185.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">(40/9, 1)</text>
+  <circle cx="214.0" cy="195.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="202.0" y="185.0" fill="var(--color-theory)" font-size="13" text-anchor="end" font-weight="600">(4, 1): z = 37</text>
+  <text x="202.0" y="274.0" fill="var(--color-theory)" font-size="13" text-anchor="end">Alt Problem 7</text>
+  <circle cx="364.0" cy="345.0" r="5.6" fill="var(--color-practice)"/>
+  <text x="376.0" y="335.0" fill="var(--color-practice)" font-size="13" text-anchor="start" font-weight="600">(5, 0): z = 40</text>
+  <text x="376.0" y="315.0" fill="var(--color-practice)" font-size="13" text-anchor="start">Alt Problem 6</text>
+  <text x="289.0" y="127.5" fill="var(--color-remark)" font-size="12.5" text-anchor="middle">atılan şerit: 4 &lt; x&#8321; &lt; 5</text>
+</svg>
+<figcaption>Alt Problem 5'in bölgesi (kesikli dörtgen) x₁ = 40/9 değişkeninden bölünür. x₁ ≤ 4 dalı (Alt Problem 7) x₁ = 4 üzerindeki kalın doğru parçasıdır, x₁ ≥ 5 dalı (Alt Problem 6) yalnız (5, 0) noktasıdır; aradaki 4 < x₁ < 5 şeridi atılır.</figcaption>
+</figure>
+```
+
+**Sonuç.** Bekleyen alt problem kalmadı. Üç aday çözüm bulundu: Alt Problem 3 ($z = 39$), Alt Problem 7 ($z = 37$) ve Alt Problem 6 ($z = 40$). En büyük değerli aday Alt Problem 6'dır ve @thm-dsy-dogruluk gereği TP probleminin optimal çözümüdür:
+$$
+x_1 = 5, \quad x_2 = 0, \quad \max z = 40 .
+$$
+Bu değer, beklendiği gibi $\text{Ü.S} = 165/4 = 41{,}25$ değerini geçmez. Bütün adımlar aşağıdaki ağaçta toplanmıştır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="-1.0 -1.0 567.0 476.0" role="img" aria-label="Branch and bound tree of the example with seven subproblems; subproblem 1 branches on x1 into 2 and 3, 2 branches on x2 into 4 (infeasible) and 5, 5 branches on x1 into 6 (optimal, z = 40) and 7 (z = 37).">
+  <line x1="284.6" y1="96.0" x2="205.8" y2="131.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="200.0,134.0 205.9,127.7 208.7,133.8" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="234.3" y="119.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8321; ≥ 4</text>
+  <line x1="375.4" y1="96.0" x2="464.1" y2="131.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="470.0,134.0 461.3,134.1 463.8,127.9" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="430.7" y="119.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8321; ≤ 3</text>
+  <line x1="154.6" y1="218.0" x2="100.4" y2="252.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="95.0,256.0 99.9,248.9 103.6,254.5" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="116.8" y="241.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8322; ≥ 2</text>
+  <line x1="245.4" y1="218.0" x2="304.5" y2="252.8" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="310.0,256.0 301.4,254.8 304.8,249.0" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="285.7" y="241.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8322; ≤ 1</text>
+  <line x1="264.6" y1="340.0" x2="210.4" y2="374.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="205.0,378.0 209.9,370.9 213.6,376.5" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="226.8" y="363.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8321; ≥ 5</text>
+  <line x1="355.4" y1="340.0" x2="414.5" y2="374.8" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="420.0,378.0 411.4,376.8 414.8,371.0" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="395.7" y="363.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8321; ≤ 4</text>
+  <rect x="249.0" y="14.0" width="162" height="80" rx="8" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="330.0" y="33.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 1</text>
+  <text x="330.0" y="51.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 15/4, x&#8322; = 9/4</text>
+  <text x="330.0" y="70.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 165/4 = Ü.S</text>
+  <text x="330.0" y="88.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">dallan: x&#8321;</text>
+  <rect x="119.0" y="136.0" width="162" height="80" rx="8" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="200.0" y="155.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 2</text>
+  <text x="200.0" y="173.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 4, x&#8322; = 9/5</text>
+  <text x="200.0" y="192.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 41</text>
+  <text x="200.0" y="210.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">dallan: x&#8322;</text>
+  <rect x="389.0" y="136.0" width="162" height="80" rx="8" fill="var(--color-base)" fill-opacity="0.10" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="470.0" y="155.0" fill="var(--color-base)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 3</text>
+  <text x="470.0" y="173.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 3, x&#8322; = 3</text>
+  <text x="470.0" y="192.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 39</text>
+  <text x="470.0" y="210.5" fill="var(--color-base)" font-size="13" text-anchor="middle">aday, A.S = 39</text>
+  <rect x="14.0" y="258.0" width="162" height="80" rx="8" fill="var(--color-remark)" fill-opacity="0.10" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="95.0" y="277.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 4</text>
+  <text x="95.0" y="295.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">uygun çözüm yok</text>
+  <text x="95.0" y="314.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"></text>
+  <text x="95.0" y="332.5" fill="var(--color-remark)" font-size="13" text-anchor="middle">budanır (D2)</text>
+  <rect x="229.0" y="258.0" width="162" height="80" rx="8" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="310.0" y="277.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 5</text>
+  <text x="310.0" y="295.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 40/9, x&#8322; = 1</text>
+  <text x="310.0" y="314.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 365/9</text>
+  <text x="310.0" y="332.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">dallan: x&#8321;</text>
+  <rect x="124.0" y="380.0" width="162" height="80" rx="8" fill="var(--color-practice)" fill-opacity="0.10" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="205.0" y="399.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 6</text>
+  <text x="205.0" y="417.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 5, x&#8322; = 0</text>
+  <text x="205.0" y="436.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 40</text>
+  <text x="205.0" y="454.5" fill="var(--color-practice)" font-size="13" text-anchor="middle">aday, optimal *</text>
+  <rect x="339.0" y="380.0" width="162" height="80" rx="8" fill="var(--color-remark)" fill-opacity="0.10" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="420.0" y="399.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 7</text>
+  <text x="420.0" y="417.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 4, x&#8322; = 1</text>
+  <text x="420.0" y="436.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 37</text>
+  <text x="420.0" y="454.5" fill="var(--color-remark)" font-size="13" text-anchor="middle">aday, 37 &lt; 39</text>
+</svg>
+<figcaption>Örneğin dal-sınır ağacı. Her kutuda alt problemin rahatlatılmış optimumu, z değeri ve verilen karar yazılıdır; oklarda eklenen kısıt durur. Alt Problem 4 uygun olmadığı, Alt Problem 3, 6 ve 7 tam sayılı çözüm verdiği için dallanmaz. En iyi aday Alt Problem 6'dır: x₁ = 5, x₂ = 0, z = 40.</figcaption>
+</figure>
+```
+
+**Sağlama.** Sonucu dal-sınır yönteminden bağımsız olarak da doğrulayalım. Tam sayılı noktalarda $z = 8x_1 + 5x_2$ bir tam sayıdır ve @thm-dsy-sinir gereği $z \le 165/4 = 41{,}25$'tir; yani $z \le 41$. $z = 41$ olabilir mi? $8x_1 = 41 - 5x_2$ eşitliğinde $x_2 = 0, 1, \dots, 8$ denenirse sağ taraf $41, 36, 31, 26, 21, 16, 11, 6, 1$ değerlerini alır; bunlardan yalnız $16$ sayısı 8'e bölünür. Tek aday $x_2 = 5$, $x_1 = 2$ noktasıdır, o da $2 + 5 = 7 > 6$ olduğundan uygun değildir. Demek ki tam sayılı uygun noktalarda $z \le 40$'tır ve $(5, 0)$ noktası bu değere ulaşır.
+
+Son olarak yuvarlamanın burada da işe yaramadığına dikkat edelim: Alt Problem 1'in optimumu $(15/4, 9/4)$ en yakın tam sayılara yuvarlanırsa $(4, 2)$ elde edilir, ama $9 \cdot 4 + 5 \cdot 2 = 46 > 45$ olduğundan bu nokta uygun değildir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu örnekte D1 kuralı hiç kullanılmadı: her alt problem ya uygun değildi ya tam sayılı çözüm verdi ya da mevcut adaydan daha büyük bir sınır verdi. Aşağıdaki küçük örnekte üç budama kuralının üçü de işe karışıyor.
+
+:::: {#exm-dsy-ek name="Üç Budama Kuralının Birlikte Kullanıldığı Bir Örnek"}
+$$
+\begin{aligned}
+2x_1 + 3x_2 &\le 6 \\
+2x_1 + x_2 &\le 5 \\
+x_1, x_2 &\ge 0 \text{ ve tam sayı} \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+TP problemini dal-sınır yöntemiyle çözünüz. Kesirli değişkenlerden önce $x_1$'i seçiniz.
+
+::: {.cozum}
+Alt problemleri numara sırasıyla çözeceğiz; her dallanmada önce $\le$, sonra $\ge$ dalına numara verelim.
+
+**Alt Problem 1.** Rahatlatılmış problemin köşeleri $(0, 0)$, $(5/2, 0)$, $(9/4, 1/2)$ ve $(0, 2)$'dir. $(9/4, 1/2)$ köşesi için $2x_1 + 3x_2 = 6$ denkleminden $2x_1 + x_2 = 5$ denklemini çıkarırsak $2x_2 = 1$, yani $x_2 = 1/2$ ve $x_1 = 9/4$ bulunur. Köşelerde
+$$
+\begin{aligned}
+z(0, 0) &= 0, & z\big(\tfrac52, 0\big) &= \tfrac{15}{2}, \\[1mm]
+z\big(\tfrac94, \tfrac12\big) &= \tfrac{27}{4} + 1 = \tfrac{31}{4}, & z(0, 2) &= 4
+\end{aligned}
+$$
+olur. Optimum $x_1 = 9/4$, $x_2 = 1/2$, $z = 31/4 = 7{,}75$'tir: $\text{Ü.S} = 31/4$, $\text{A.S} = -\infty$. $2 < 9/4 < 3$ olduğundan
+$$
+\begin{aligned}
+\text{Alt Problem 2} &= \text{Alt Problem 1} \cup \{x_1 \le 2\}, \\[1mm]
+\text{Alt Problem 3} &= \text{Alt Problem 1} \cup \{x_1 \ge 3\}.
+\end{aligned}
+$$
+
+**Alt Problem 2.** Köşeler $(0, 0)$, $(2, 0)$, $(2, 2/3)$ ve $(0, 2)$'dir; $(2, 2/3)$ noktası $x_1 = 2$ ile $2x_1 + 3x_2 = 6$ doğrularının kesişimidir ve $2 \cdot 2 + 2/3 = 14/3 \le 5$ olduğundan uygundur. $z$ değerleri sırasıyla $0$, $6$, $6 + 4/3 = 22/3$ ve $4$'tür. Optimum $x_1 = 2$, $x_2 = 2/3$, $z = 22/3 \approx 7{,}33$'tür. Henüz aday olmadığından dallanmaya devam edilir.
+
+**Alt Problem 3.** $2x_1 + x_2 \le 5$ ve $x_2 \ge 0$ kısıtlarından $x_1 \le 5/2 < 3$ çıkar; $x_1 \ge 3$ ile çelişir. Uygun çözüm yoktur ve Alt Problem 3 budanır (D2).
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="37.0 -3.5 472.5 377.5" role="img" aria-label="Region of 2x1 + 3x2 at most 6 and 2x1 + x2 at most 5 with its integer points, LP optimum (9/4, 1/2); subproblem 2 is the part x1 at most 2 with optimum (2, 2/3); x1 at least 3 is empty.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="184.0" y1="30.0" x2="184.0" y2="342.0"/><line x1="304.0" y1="30.0" x2="304.0" y2="342.0"/><line x1="424.0" y1="30.0" x2="424.0" y2="342.0"/><line x1="64.0" y1="222.0" x2="472.0" y2="222.0"/><line x1="64.0" y1="102.0" x2="472.0" y2="102.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="342.0" x2="480.0" y2="342.0"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="342.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="358.0" text-anchor="middle">0</text>
+  <text x="184.0" y="358.0" text-anchor="middle">1</text>
+  <text x="304.0" y="358.0" text-anchor="middle">2</text>
+  <text x="424.0" y="358.0" text-anchor="middle">3</text>
+  <text x="57.0" y="226.0" text-anchor="end">1</text>
+  <text x="57.0" y="106.0" text-anchor="end">2</text>
+  <text x="486.0" y="346.0" font-style="italic">x&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="334.0,282.0 64.0,102.0 64.0,342.0 364.0,342.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 4"/>
+  <polygon points="304.0,262.0 64.0,102.0 64.0,342.0 304.0,342.0" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <polygon points="334.0,282.0 304.0,262.0 304.0,342.0 364.0,342.0" fill="var(--color-remark)" fill-opacity="0.22" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <path d="M64.0,102.0 L424.0,342.0" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M208.0,30.0 L364.0,342.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="94.0" y="94.0" fill="var(--color-base)" font-size="13" text-anchor="start">2x&#8321; + 3x&#8322; = 6</text>
+  <text x="384.4" y="312.0" fill="var(--color-practice)" font-size="13" text-anchor="start">2x&#8321; + x&#8322; = 5</text>
+  <path d="M304.0,342.0 L304.0,30.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M424.0,342.0 L424.0,30.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="298.0" y="44.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8321; ≤ 2</text>
+  <text x="430.0" y="44.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8321; ≥ 3</text>
+  <circle cx="184.0" cy="102.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="304.0" cy="222.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="304.0" cy="102.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="424.0" cy="342.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="424.0" cy="222.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="424.0" cy="102.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="64.0" cy="342.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="222.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="102.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="184.0" cy="342.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="184.0" cy="222.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="304.0" cy="342.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="334.0" cy="282.0" r="4.4" fill="var(--academic-text)"/>
+  <text x="346.0" y="280.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">(9/4, 1/2)</text>
+  <circle cx="304.0" cy="262.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="294.0" y="282.0" fill="var(--color-theory)" font-size="13" text-anchor="end" font-weight="600">(2, 2/3): z = 22/3</text>
+  <text x="154.0" y="318.0" fill="var(--color-theory)" font-size="13" text-anchor="middle">Alt Problem 2</text>
+  <text x="416.0" y="150.0" fill="var(--color-remark)" font-size="12.5" text-anchor="end">Alt Problem 3:</text>
+  <text x="416.0" y="166.0" fill="var(--color-remark)" font-size="12.5" text-anchor="end">boş</text>
+</svg>
+<figcaption>Ek örnekte Alt Problem 1'in bölgesi (kesikli) ve x₁ = 9/4 değişkeninden dallanma. x₁ ≤ 2 dalı Alt Problem 2'dir; 2 < x₁ < 3 şeridi atılır; bölgede x₁ en fazla 5/2 olduğundan x₁ ≥ 3 dalı (Alt Problem 3) boştur.</figcaption>
+</figure>
+```
+
+Alt Problem 2'de $0 < x_2 = 2/3 < 1$ olduğundan $x_2$ değişkeninden dallanırız:
+$$
+\begin{aligned}
+\text{Alt Problem 4} &= \text{Alt Problem 2} \cup \{x_2 \le 0\}, \\[1mm]
+\text{Alt Problem 5} &= \text{Alt Problem 2} \cup \{x_2 \ge 1\}.
+\end{aligned}
+$$
+
+**Alt Problem 4.** $x_2 \ge 0$ ve $x_2 \le 0$ birlikte $x_2 = 0$ demektir; kısıtlar $2x_1 \le 6$, $2x_1 \le 5$ ve $x_1 \le 2$'ye iner. Uygun bölge $(0, 0)$ ile $(2, 0)$ arasındaki doğru parçasıdır ve optimum $x_1 = 2$, $x_2 = 0$, $z = 6$'dır. Çözüm tam sayılıdır; bu bir aday çözümdür ve $\text{A.S} = 6$ olur. Alt Problem 4 budanır (D3).
+
+**Alt Problem 5.** Köşeler $(0, 1)$, $(3/2, 1)$ ve $(0, 2)$'dir; $(3/2, 1)$ noktası $x_2 = 1$ ile $2x_1 + 3x_2 = 6$ doğrularının kesişimidir ve $2 \cdot \tfrac32 + 1 = 4 \le 5$'tir. $z$ değerleri $2$, $9/2 + 2 = 13/2$ ve $4$'tür. Optimum $x_1 = 3/2$, $x_2 = 1$, $z = 13/2 = 6{,}5$'tir. $13/2 > 6 = \text{A.S}$ olduğundan budanmaz; $1 < 3/2 < 2$ olduğundan $x_1$ değişkeninden dallanırız:
+$$
+\begin{aligned}
+\text{Alt Problem 6} &= \text{Alt Problem 5} \cup \{x_1 \le 1\}, \\[1mm]
+\text{Alt Problem 7} &= \text{Alt Problem 5} \cup \{x_1 \ge 2\}.
+\end{aligned}
+$$
+
+**Alt Problem 6.** Köşeler $(0, 1)$, $(1, 1)$, $(1, 4/3)$ ve $(0, 2)$'dir; $(1, 4/3)$ noktası $x_1 = 1$ ile $2x_1 + 3x_2 = 6$ doğrularının kesişimidir. $z$ değerleri $2$, $5$, $3 + 8/3 = 17/3$ ve $4$'tür. Optimum $x_1 = 1$, $x_2 = 4/3$, $z = 17/3 \approx 5{,}67$'dir. Çözüm kesirlidir ama $17/3 \le 6 = \text{A.S}$'dir: bu alt problemin hiçbir tam sayılı çözümü elimizdeki adaydan iyi olamaz. Alt Problem 6 budanır (D1). Böylece örneğin $(1, 1)$ noktasına ($z = 5$) hiç bakmadan elemiş olduk.
+
+**Alt Problem 7.** $x_1 \ge 2$ ve $x_2 \ge 1$ ise $2x_1 + 3x_2 \ge 4 + 3 = 7 > 6$ olur. Uygun çözüm yoktur; Alt Problem 7 budanır (D2).
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="37.0 -3.5 472.5 377.5" role="img" aria-label="Region of subproblem 2 split by x2: subproblem 4 is the segment from (0,0) to (2,0) with optimum (2,0), subproblem 5 is the part x2 at least 1 with optimum (3/2, 1); its part x1 at most 1 is subproblem 6 with optimum (1, 4/3).">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="184.0" y1="30.0" x2="184.0" y2="342.0"/><line x1="304.0" y1="30.0" x2="304.0" y2="342.0"/><line x1="424.0" y1="30.0" x2="424.0" y2="342.0"/><line x1="64.0" y1="222.0" x2="472.0" y2="222.0"/><line x1="64.0" y1="102.0" x2="472.0" y2="102.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="342.0" x2="480.0" y2="342.0"/>
+  <line x1="64.0" y1="22.0" x2="64.0" y2="342.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="64.0" y="358.0" text-anchor="middle">0</text>
+  <text x="184.0" y="358.0" text-anchor="middle">1</text>
+  <text x="304.0" y="358.0" text-anchor="middle">2</text>
+  <text x="424.0" y="358.0" text-anchor="middle">3</text>
+  <text x="57.0" y="226.0" text-anchor="end">1</text>
+  <text x="57.0" y="106.0" text-anchor="end">2</text>
+  <text x="486.0" y="346.0" font-style="italic">x&#8321;</text>
+  <text x="60.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="304.0,262.0 64.0,102.0 64.0,342.0 304.0,342.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 4"/>
+  <polygon points="304.0,262.0 244.0,222.0 64.0,222.0 64.0,342.0 304.0,342.0" fill="var(--color-remark)" fill-opacity="0.22" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <polygon points="184.0,222.0 184.0,182.0 64.0,102.0 64.0,222.0" fill="var(--color-theory)" fill-opacity="0.2" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <polygon points="184.0,222.0 244.0,222.0 184.0,182.0" fill="var(--color-remark)" fill-opacity="0.22" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <path d="M64.0,342.0 L304.0,342.0" fill="none" stroke="var(--color-practice)" stroke-width="4.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.0,102.0 L424.0,342.0" fill="none" stroke="var(--color-base)" stroke-width="1.6" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M184.0,222.0 L184.0,30.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="178.0" y="44.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8321; ≤ 1</text>
+  <circle cx="184.0" cy="102.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="304.0" cy="222.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="304.0" cy="102.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="424.0" cy="342.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="424.0" cy="222.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="424.0" cy="102.0" r="2.0" fill="var(--academic-text)" opacity="0.28"/>
+  <circle cx="64.0" cy="342.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="222.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="64.0" cy="102.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="184.0" cy="342.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="184.0" cy="222.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="304.0" cy="342.0" r="3.2" fill="var(--academic-text)"/>
+  <circle cx="244.0" cy="222.0" r="4.4" fill="var(--academic-text)"/>
+  <text x="256.0" y="214.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">(3/2, 1): z = 13/2</text>
+  <circle cx="184.0" cy="182.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="194.0" y="172.0" fill="var(--color-theory)" font-size="13" text-anchor="start" font-weight="600">(1, 4/3): z = 17/3</text>
+  <text x="118.0" y="190.0" fill="var(--color-theory)" font-size="13" text-anchor="middle">Alt Problem 6</text>
+  <circle cx="304.0" cy="342.0" r="5.6" fill="var(--color-practice)"/>
+  <text x="316.0" y="332.0" fill="var(--color-practice)" font-size="13" text-anchor="start" font-weight="600">(2, 0): z = 6</text>
+  <text x="184.0" y="330.0" fill="var(--color-practice)" font-size="13" text-anchor="middle">Alt Problem 4</text>
+  <text x="184.0" y="292.0" fill="var(--color-remark)" font-size="12.5" text-anchor="middle">atılan şerit</text>
+</svg>
+<figcaption>Ek örneğin sonraki adımları. Alt Problem 2'nin bölgesi (kesikli) x₂ = 2/3 değişkeninden bölünür: x₂ ≤ 0 dalı x₁ ekseni üzerindeki kalın doğru parçasıdır (Alt Problem 4), x₂ ≥ 1 dalı Alt Problem 5'tir. Alt Problem 5 de x₁ = 3/2 değişkeninden bölünür; x₁ ≤ 1 dalı Alt Problem 6'nın dörtgenidir, x₁ ≥ 2 dalı (Alt Problem 7) boştur. Gri şeritler (0 < x₂ < 1 ve 1 < x₁ < 2) atılan parçalardır.</figcaption>
+</figure>
+```
+
+**Sonuç.** Bekleyen alt problem kalmadı. Tek aday Alt Problem 4'ün çözümüdür; TP probleminin optimal çözümü
+$$
+x_1 = 2, \quad x_2 = 0, \quad \max z = 6
+$$
+olur ve $6 \le \text{Ü.S} = 31/4$'tür.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="-1.0 -1.0 567.0 476.0" role="img" aria-label="Branch and bound tree of the extra example with seven subproblems; subproblem 4 gives the optimum (2, 0) with z = 6, subproblems 3 and 7 are infeasible, subproblem 6 is pruned by its bound 17/3.">
+  <line x1="284.6" y1="96.0" x2="205.8" y2="131.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="200.0,134.0 205.9,127.7 208.7,133.8" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="234.3" y="119.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8321; ≤ 2</text>
+  <line x1="375.4" y1="96.0" x2="464.1" y2="131.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="470.0,134.0 461.3,134.1 463.8,127.9" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="430.7" y="119.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8321; ≥ 3</text>
+  <line x1="154.6" y1="218.0" x2="100.4" y2="252.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="95.0,256.0 99.9,248.9 103.6,254.5" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="116.8" y="241.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8322; ≤ 0</text>
+  <line x1="245.4" y1="218.0" x2="304.5" y2="252.8" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="310.0,256.0 301.4,254.8 304.8,249.0" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="285.7" y="241.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8322; ≥ 1</text>
+  <line x1="264.6" y1="340.0" x2="210.4" y2="374.6" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="205.0,378.0 209.9,370.9 213.6,376.5" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="226.8" y="363.0" fill="var(--academic-text)" font-size="13" text-anchor="end">x&#8321; ≤ 1</text>
+  <line x1="355.4" y1="340.0" x2="414.5" y2="374.8" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="420.0,378.0 411.4,376.8 414.8,371.0" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="395.7" y="363.0" fill="var(--academic-text)" font-size="13" text-anchor="start">x&#8321; ≥ 2</text>
+  <rect x="249.0" y="14.0" width="162" height="80" rx="8" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="330.0" y="33.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 1</text>
+  <text x="330.0" y="51.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 9/4, x&#8322; = 1/2</text>
+  <text x="330.0" y="70.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 31/4 = Ü.S</text>
+  <text x="330.0" y="88.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">dallan: x&#8321;</text>
+  <rect x="119.0" y="136.0" width="162" height="80" rx="8" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="200.0" y="155.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 2</text>
+  <text x="200.0" y="173.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 2, x&#8322; = 2/3</text>
+  <text x="200.0" y="192.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 22/3</text>
+  <text x="200.0" y="210.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">dallan: x&#8322;</text>
+  <rect x="389.0" y="136.0" width="162" height="80" rx="8" fill="var(--color-remark)" fill-opacity="0.10" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="470.0" y="155.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 3</text>
+  <text x="470.0" y="173.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">uygun çözüm yok</text>
+  <text x="470.0" y="192.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"></text>
+  <text x="470.0" y="210.5" fill="var(--color-remark)" font-size="13" text-anchor="middle">budanır (D2)</text>
+  <rect x="14.0" y="258.0" width="162" height="80" rx="8" fill="var(--color-practice)" fill-opacity="0.10" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="95.0" y="277.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 4</text>
+  <text x="95.0" y="295.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 2, x&#8322; = 0</text>
+  <text x="95.0" y="314.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 6</text>
+  <text x="95.0" y="332.5" fill="var(--color-practice)" font-size="13" text-anchor="middle">aday, optimal *</text>
+  <rect x="229.0" y="258.0" width="162" height="80" rx="8" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="310.0" y="277.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 5</text>
+  <text x="310.0" y="295.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 3/2, x&#8322; = 1</text>
+  <text x="310.0" y="314.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 13/2</text>
+  <text x="310.0" y="332.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">dallan: x&#8321;</text>
+  <rect x="124.0" y="380.0" width="162" height="80" rx="8" fill="var(--color-remark)" fill-opacity="0.10" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="205.0" y="399.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 6</text>
+  <text x="205.0" y="417.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">x&#8321; = 1, x&#8322; = 4/3</text>
+  <text x="205.0" y="436.0" fill="var(--academic-text)" font-size="13" text-anchor="middle">z = 17/3</text>
+  <text x="205.0" y="454.5" fill="var(--color-remark)" font-size="13" text-anchor="middle">budanır (D1)</text>
+  <rect x="339.0" y="380.0" width="162" height="80" rx="8" fill="var(--color-remark)" fill-opacity="0.10" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="420.0" y="399.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle" font-weight="600">Alt Problem 7</text>
+  <text x="420.0" y="417.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">uygun çözüm yok</text>
+  <text x="420.0" y="436.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"></text>
+  <text x="420.0" y="454.5" fill="var(--color-remark)" font-size="13" text-anchor="middle">budanır (D2)</text>
+</svg>
+<figcaption>Ek örneğin dal-sınır ağacı. Alt Problem 3 ve 7 uygun olmadığı için, Alt Problem 6 da z = 17/3 değeri mevcut aday değeri 6'yı geçemediği için budanır. Tek aday Alt Problem 4'tür: x₁ = 2, x₂ = 0, z = 6.</figcaption>
+</figure>
+```
+
+**Sağlama.** Uygun tam sayılı noktaları tek tek sayalım. $2x_1 + 3x_2 \le 6$ kısıtından $x_2 \le 2$; $x_2 = 0$ için $x_1 \le 2$, $x_2 = 1$ için $x_1 \le 3/2$, $x_2 = 2$ için $x_1 = 0$ bulunur. Uygun noktalar $(0, 0)$, $(1, 0)$, $(2, 0)$, $(0, 1)$, $(1, 1)$ ve $(0, 2)$'dir; $z$ değerleri sırasıyla $0$, $3$, $6$, $2$, $5$ ve $4$'tür. En büyüğü gerçekten $(2, 0)$ noktasındaki $6$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+İki örnekte de alt problemler iki değişkenli olduğu için grafikle çözüldü. Değişken sayısı arttığında her alt problemin rahatlatılmış problemi simpleks yöntemle çözülür. Bunu her seferinde baştan yapmak gerekmez: yeni alt problem, dallandırılan alt problemin optimal tablosuna tek bir kısıt eklenerek elde edilir. Eklenen kısıt eski optimumu uygunsuz yapar ama $z_j - c_j$ satırını bozmaz; tablo, [Dual simpleks algoritması](dual-simpleks-algoritmasi.qmd) bölümündeki yöntemle birkaç iterasyonda yeniden optimal hâle getirilir.
+
+Dallanan değişkenin ve alt problemlerin çözülme sırasının seçimi yalnız ağacın büyüklüğünü etkiler. @thm-dsy-dogruluk hangi seçim yapılırsa yapılsın yöntemin optimal değeri bulacağını garanti eder.
+
+Bu bölümle kitabın konu anlatımı tamamlandı. Model kurmaktan başlayıp kanonik ve standart formlara, simpleks, büyük M ve iki faz yöntemlerine, duyarlılık analizine, dualiteye ve son olarak tam sayılı programlamaya uzanan bütün yöntemleri [Alıştırmalar](alistirmalar.qmd) bölümündeki çözümlü problemlerle pekiştirebilirsiniz; orada bir dal-sınır problemi de bütün alt problemleri ve ağacıyla çözülüyor.

@@ -1,0 +1,1117 @@
+---
+title: "Büyük M Yöntemi"
+pagetitle: "Büyük M Yöntemi"
+description: "Büyük M yöntemiyle yapay değişkenli problemlerin simpleks tablosunda çözümü: M problemi, aM + b biçimindeki simpleks kriterlerinin karşılaştırılması, bazdan çıkan yapay değişkenin sütununun atılması, minimum ve maksimum problemlerinde bütün tablolarıyla örnekler, uygun çözümü olmayan problemin tanınması ve bazda sıfır değerle kalan yapay değişken."
+---
+
+[Simpleks yöntem](simpleks-yontem.qmd) bölümünde yalnız bütün kısıtları $\le$ olan ve sağ tarafları negatif olmayan problemleri çözdük. Böyle bir problemin standart formunda aylak değişkenlerin sütunları kendiliğinden bir birim matris oluşturur; başlangıç bazı ve başlangıç tablosu (@sec-smp-tablo) hiç hesap yapmadan yazılır. Kısıtlarda $\ge$ ya da $=$ bulununca bu kolaylık kaybolur. Artık değişkenin sütununda $-1$ vardır, eşitlik kısıtına ise hiç yeni değişken eklenmez. Standart form birim matris içermediği için problem henüz simpleks yöntem ile çözülebilir halde değildir.
+
+Bu durumda birim sütunu eksik olan denklemlere yapay değişkenler ekleyip başlangıç bazını kendimiz kurarız. Kurulan baz orijinal problemin bir çözümünü vermez, bu yüzden yapay değişkenlerden sonunda kurtulmamız gerekir. Bunun iki yolu vardır: Büyük M yöntemi ve [İki faz yöntemi](iki-faz-yontemi.qmd). Bu bölümde birincisini göreceğiz. Büyük M yöntemi simpleks yöntemin bir türüdür: tablolar, oran testi ve dönüşüm kuralı aynen kalır, yalnız amaç fonksiyonuna yapay değişkenler için çok büyük bir ceza eklenir.
+
+## Yapay Değişkenler ve M Problemi
+
+Önce yapay değişkenlerin problemi nasıl değiştirdiğine bakalım.
+
+Yapay değişkeni [Lineer programlama problemi](lineer-programlama-problemi.qmd) bölümünde tanımlamıştık (@def-lpp-yapay-degisken): birim sütunu olmayan bir denkleme, yalnız o denklemde katsayısı $1$ ile görünecek biçimde eklenen negatif olmayan değişkendir ve $x_{u_1}, x_{u_2}, \dots$ ile gösterilir. Yapay değişkenin problemin kendisinde bir anlamı yoktur. Aylak değişken kullanılmayan kaynağı, artık değişken aşılan gereksinimi ölçer; yapay değişken ise yalnız bir başlangıç çözümü kurabilmek için eklenen yardımcı bir değişkendir. Yapay değişkenleri eklenmiş probleme bir ad verelim.
+
+::: {#def-bym-m-problemi name="M problemi"}
+Standart formdaki
+
+$$
+\begin{aligned}
+A\vec{x} &= \vec{b} \\
+\vec{x} &\ge 0 \\
+\min z &= \vec{c}^{\,T}\vec{x}
+\end{aligned}
+$$
+
+problemine **orijinal problem** diyelim. Birim sütunu olmayan denklemlere $x_{u_1}, \dots, x_{u_p}$ yapay değişkenleri eklensin ve $R$, sütunları bu değişkenlerin $v_{u_1}, \dots, v_{u_p}$ sütunları olan $m \times p$ matris olsun. $M$ çok büyük bir pozitif sayı olmak üzere
+
+$$
+\begin{aligned}
+A\vec{x} + R\,\vec{x}_u &= \vec{b} \\
+\vec{x} \ge 0, \quad \vec{x}_u &\ge 0 \\
+\min z &= \vec{c}^{\,T}\vec{x} + M(x_{u_1} + \dots + x_{u_p})
+\end{aligned}
+$$
+
+problemine orijinal problemin **M problemi** denir; burada $\vec{x}_u = (x_{u_1}, \dots, x_{u_p})$'dir. Orijinal problem maksimum problemiyse M probleminin amacı $\max z = \vec{c}^{\,T}\vec{x} - M(x_{u_1} + \dots + x_{u_p})$ olur.
+:::
+
+Yani M problemi, orijinal problemin simpleks yöntem ile çözülebilir hale (@def-lpp-cozulebilir-hal) getirilmiş biçimidir: kısıtlarına yapay değişkenler, amacına da onların cezası eklenmiştir. Aylak ve artık değişkenler zaten $\vec{x}$'in içindedir, çünkü orijinal problem standart formdadır. $R$'nin her sütunu, eklendiği denklemde $1$, diğer denklemlerde $0$ taşır.
+
+İki problem arasındaki bağ, yapay değişkenlerin sıfır olduğu çözümlerden geçer.
+
+:::: {#prp-bym-esleme name="Orijinal problem ile M probleminin uygun çözümleri"}
+Bir $\vec{x}$ vektörü için şu iki ifade denktir:
+
+1. $\vec{x}$ orijinal problemin uygun çözümüdür;
+2. yapay değişkenlerin hepsi sıfır alınarak elde edilen $(\vec{x}, \vec{0})$, M probleminin uygun çözümüdür.
+
+Bu durumda M probleminin $(\vec{x}, \vec{0})$ noktasındaki amaç değeri, orijinal problemin $\vec{x}$ noktasındaki değeri olan $\vec{c}^{\,T}\vec{x}$'e eşittir.
+
+::: {.ispat}
+$\vec{x}_u = \vec{0}$ iken $R\,\vec{x}_u = \vec{0}$ olduğundan M probleminin kısıtları $A\vec{x} = \vec{b}$'ye, işaret koşulları da $\vec{x} \ge 0$'a iner. Bunlar tam olarak orijinal problemin kısıtlarıdır; dolayısıyla 1 ile 2 denktir. Amaçtaki ceza terimi $\pm M(x_{u_1} + \dots + x_{u_p})$ sıfır olduğundan amaç değeri $\vec{c}^{\,T}\vec{x}$'tir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani orijinal problemin çözümleri, M probleminin yapay değişkenleri sıfır olan çözümleridir. Başlangıç tablosunun çözümü genellikle bunlardan biri değildir: orada yapay değişkenler eklendikleri denklemlerin sağ taraflarını üstlenir ve sağ taraf sıfır olmadıkça pozitiftir. Simpleks yöntemden istediğimiz, yapay değişkenleri sıfıra indirip orijinal problemin bir çözümüne ulaşması ve oradan optimuma devam etmesidir.
+
+Amaçtaki ceza tam olarak bunu sağlar. Minimum probleminde her birim yapay değişken maliyete $M$ ekler. $M$ çok büyük olduğundan yapay değişkenlerin toplamını azaltmak, $\vec{c}^{\,T}\vec{x}$ üzerindeki her kazançtan daha değerlidir. Maksimum probleminde $-M$ katsayısı aynı işi kârdan düşerek yapar. Böylece simpleks yöntem kendi seçim kuralını izlerken önce yapay değişkenleri bazdan çıkarmaya yönelir.
+
+$M$ için belirli bir sayı seçmeyiz. Seçilen sayı yeterince büyük değilse ceza, amaçtaki gerçek katsayılar karşısında etkisiz kalabilir. Bu yüzden $M$ tabloda bir sembol olarak taşınır ve "karşılaştırıldığı her sayıdan büyük" diye yorumlanır. Bunun hesapta ne anlama geldiğini şimdi görelim.
+
+## $M$'li Simpleks Kriterleri
+
+M problemi çözülürken tabloya $M$ yalnız amaç katsayılarından girer.
+
+Tablonun gövdesi, yani $v_0$ sütunu ve bütün $y_{ij}$ değerleri, yalnız kısıtlara ve baza bağlıdır; amaç katsayılarını hiç kullanmaz. Dolayısıyla gövdede $M$ bulunmaz. $M$ yalnız en üstteki $c_j$ satırında ve $c_B$ sütununda görünür. $z_j = \vec{c}_B^{\,T} v_j$ çarpımında bazdaki her yapay değişken $\pm M$ katsayısını taşıdığı için her simpleks kriteri ve amaç değeri
+
+$$z_j - c_j = a_jM + b_j, \qquad z_0 = sM + q$$
+
+biçimindedir; $a_j$, $b_j$, $s$, $q$ sıradan sayılardır. Minimum probleminde $s$, bazdaki yapay değişkenlerin değerlerinin toplamıdır; maksimum probleminde bu toplamın $-1$ katıdır. Bir tablodan ötekine geçerken hangi kriterin daha büyük olduğuna karar vermemiz gerekir; bunun kuralı şudur.
+
+:::: {#prp-bym-karsilastirma name="M'li sayıların karşılaştırılması"}
+$a$, $b$, $a'$, $b'$ gerçel sayılar olsun. $M > M_0$ olan her $M$ için
+
+$$aM + b > a'M + b'$$
+
+eşitsizliğini sağlayan bir $M_0$ sayısının var olması için gerek ve yeter koşul, ya $a > a'$ ya da $a = a'$ ve $b > b'$ olmasıdır. Özel olarak $a' = b' = 0$ alınırsa: $aM + b$ sayısının yeterince büyük her $M$ için pozitif olması için gerek ve yeter koşul, $a > 0$ ya da $a = 0$ ve $b > 0$ olmasıdır.
+
+::: {.ispat}
+Farkı $d(M) = (a - a')M + (b - b')$ ile gösterelim ve üç durumu ayıralım.
+
+- $a > a'$ ise $M > \dfrac{b' - b}{a - a'}$ olan her $M$ için $d(M) > 0$'dır.
+- $a = a'$ ise $d(M) = b - b'$ sabittir; her $M$ için pozitif olması $b > b'$ demektir, aksi halde hiçbir $M$ için pozitif değildir.
+- $a < a'$ ise $M > \dfrac{b - b'}{a' - a}$ olan her $M$ için $d(M) < 0$'dır; yani eşitsizlik yeterince büyük hiçbir $M$ için sağlanmaz.
+
+Böylece $d(M) > 0$ eşitsizliği yeterince büyük her $M$ için tam olarak ifadedeki iki durumda sağlanır. Özel durum, $a' = b' = 0$ yazılarak hemen elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani iki $M$'li sayıyı karşılaştırırken **önce $M$'nin katsayılarına** bakarız; katsayısı büyük olan büyüktür. Katsayılar eşitse **sabit terimlere** bakarız. Örneğin $2M + 3 > M + 1000$'dir, çünkü $2 > 1$; $M$ büyüdükçe aradaki fark da büyür. Bir çözüm boyunca yalnız sonlu sayıda karşılaştırma yapıldığından hepsine birden yetecek bir $M_0$ vardır. Dolayısıyla sembolik $M$ ile yapılan her seçim, $M_0$'dan büyük herhangi bir sayının $M$ yerine konduğu simpleks yöntemin seçimiyle aynıdır.
+
+Optimallik de aynı anlamda okunur. Minimum probleminde bir tablonun her kriteri için ya $a_j < 0$ ya da $a_j = 0$ ve $b_j \le 0$ ise, yeterince büyük her $M$ için bütün $z_j - c_j \le 0$ olur. Maksimum probleminde her kriter için ya $a_j > 0$ ya da $a_j = 0$ ve $b_j \ge 0$ istenir. Böyle bir tabloya kısaca **optimal tablo** diyeceğiz. Tablonun gövdesi $M$'ye bağlı olmadığından, optimal tablonun temel çözümü yeterince büyük her $M$ için M probleminin optimal çözümüdür ([Simpleks yöntem](simpleks-yontem.qmd) bölümündeki optimallik koşulu). Yol boyunca yapay sütunlar atılmışsa bu, atılan yapay değişkenlerin kaldırıldığı küçültülmüş M problemi için geçerlidir; bunun neden yeterli olduğunu aşağıda göreceğiz.
+
+:::: {#exm-bym-siralama name="M'li kriterleri sıralamak"}
+Bir minimum probleminin tablosunda simpleks kriterleri
+
+$$
+\begin{aligned}
+z_1 - c_1 &= 2M - 5, & z_2 - c_2 &= \tfrac{1}{3}M - 1, \\
+z_3 - c_3 &= 100, & z_4 - c_4 &= 0, \\
+z_5 - c_5 &= -M + 50, & z_6 - c_6 &= 2M + 3
+\end{aligned}
+$$
+
+bulunmuş olsun. Bu sayıları yeterince büyük $M$ için büyükten küçüğe sıralayarak baza girecek vektörü belirleyiniz.
+
+::: {.cozum}
+Her sayıyı $aM + b$ biçiminde okuyup $M$'nin katsayılarını yazalım: sırasıyla $2$, $\tfrac{1}{3}$, $0$, $0$, $-1$, $2$.
+
+- En büyük katsayı $2$'dir ve iki kriterde görünür: $2M - 5$ ve $2M + 3$. Katsayılar eşit olduğu için sabit terimlere bakarız: $3 > -5$, dolayısıyla $2M + 3 > 2M - 5$.
+- Sonra katsayısı $\tfrac{1}{3}$ olan $\tfrac{1}{3}M - 1$ gelir.
+- Katsayısı $0$ olan iki sayı $100$ ve $0$'dır; $100 > 0$.
+- En küçüğü, katsayısı $-1$ olan $-M + 50$'dir.
+
+Sıralama
+
+$$2M + 3 > 2M - 5 > \tfrac{1}{3}M - 1 > 100 > 0 > -M + 50$$
+
+olur. $\tfrac{1}{3}M - 1$ sayısının $100$'den büyük olduğuna şaşırmamak gerekir: bu yalnız $M > 303$ için doğrudur, ama $M$ zaten karşılaştırıldığı her sayıdan büyük kabul ediliyor. $M = 1000$ alarak sağlayalım: sayılar sırasıyla $2003$, $1995$, $332{,}3\ldots$, $100$, $0$ ve $-950$ olur; sıralama aynıdır.
+
+Minimum probleminde en büyük pozitif kriterin sütunu baza girer. Pozitif kriterler ilk dördüdür ve en büyüğü $z_6 - c_6 = 2M + 3$'tür; $v_6$ baza girer. (Aynı kriterler bir maksimum probleminde bulunsaydı en negatif kriter, yani $-M + 50$ seçilir ve $v_5$ baza girerdi.)
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bazdan Çıkan Yapay Değişkenin Sütunu
+
+Simpleks yöntemden farklı olarak Büyük M yönteminde tablolar ilerledikçe daralır. Bir yapay değişken bazdan çıktığında değeri $0$ olur. Amacımız zaten onu sıfırda tutmak olduğundan, onu yeniden baza almanın hiçbir yararı yoktur.
+
+::: {.callout-note appearance="simple"}
+**Not.** Bazdan çıkan bir yapay değişkenin sütunu sonraki tablolarda yazılmaz.
+:::
+
+Bu kuralın gerekçesi şudur. Sütunu atmak, o yapay değişkeni kalıcı olarak $0$'a sabitlemek demektir. Geriye kalan tablo, bu yapay değişkenin hiç eklenmediği küçültülmüş M probleminin tablosudur: diğer sütunlar baz vektörleri cinsinden aynı biçimde yazılır ve atılan sütun hiçbir hesaba girmez. Orijinal problemin her uygun çözümü $\vec{x}$ için $(\vec{x}, \vec{0})$ bu küçültülmüş M probleminin de uygun çözümüdür (@prp-bym-esleme); dolayısıyla sütunu atmakla orijinal problemin hiçbir çözümünü kaybetmeyiz. Kazancımız, her tabloda bir sütun daha az hesaplamaktır.
+
+## Yöntemin Sonuçları
+
+Simpleks yöntem M problemini çözüp optimal tabloya ulaşınca yapay değişkenlerin durumuna bakılır. Üç durum vardır: yapay değişkenlerin hepsi bazdan çıkmıştır; bazda pozitif değerli bir yapay değişken kalmıştır; bazda yalnız sıfır değerli yapay değişkenler kalmıştır. Birinci ve üçüncü durum aşağıdaki teoremde birlikte ele alınır.
+
+:::: {#thm-bym-optimal name="Yapay değişkenleri sıfır olan optimal tablo"}
+M probleminin optimal tablosunda bütün yapay değişkenlerin değeri $0$ olsun; yani yapay değişkenler ya bazda değildir ya da bazda $0$ değeriyle bulunur. Bu tablonun temel çözümünden yapay değişkenler atılarak elde edilen $\hat{\vec{x}}$ orijinal problemin optimal çözümüdür ve optimal değer $\vec{c}^{\,T}\hat{\vec{x}} = z_0$'dır.
+
+::: {.ispat}
+Minimum problemi için yapalım. Tablonun temel çözümü $(\hat{\vec{x}}, \vec{0})$ M probleminin uygun çözümüdür. @prp-bym-esleme gereği $\hat{\vec{x}}$ orijinal problemin uygun çözümüdür ve amaç değeri $\vec{c}^{\,T}\hat{\vec{x}}$'tir. Bu değer $z_0$'a eşittir, çünkü $c_B$ sütunundaki $M$'ler sıfır değerli yapay değişkenlerle çarpılır ve $z_0$'da $M$ kalmaz.
+
+Şimdi $\bar{\vec{x}}$ orijinal problemin herhangi bir uygun çözümü olsun. @prp-bym-esleme gereği $(\bar{\vec{x}}, \vec{0})$ M probleminin uygun çözümüdür ve amaç değeri $\vec{c}^{\,T}\bar{\vec{x}}$'tir. Tablo optimal olduğundan yeterince büyük her $M$ için $(\hat{\vec{x}}, \vec{0})$ M probleminin (sütunlar atılmışsa küçültülmüş M probleminin; son paragrafa bakınız) optimal çözümüdür; o halde
+
+$$\vec{c}^{\,T}\hat{\vec{x}} \le \vec{c}^{\,T}\bar{\vec{x}}$$
+
+olur. $\bar{\vec{x}}$ keyfi olduğundan $\hat{\vec{x}}$ orijinal problemin optimal çözümüdür. Maksimum probleminde eşitsizlik ters yönde yazılır, gerisi aynıdır.
+
+Yol boyunca bazı yapay sütunlar atılmışsa, tablo bu yapay değişkenlerin kaldırıldığı küçültülmüş M probleminin tablosudur. $(\bar{\vec{x}}, \vec{0})$ o problemin de uygun çözümü olduğundan akıl yürütme değişmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani optimal tabloda yapay değişkenlerin hepsi sıfırsa iş bitmiştir: tablonun gösterdiği çözüm orijinal problemin optimal çözümüdür. İkinci durum ise tam tersini söyler.
+
+:::: {#thm-bym-uygunsuz name="Bazda pozitif yapay değişken kalması"}
+M probleminin optimal tablosunda bazda pozitif değerli bir yapay değişken varsa orijinal problemin uygun çözümü yoktur.
+
+::: {.ispat}
+Minimum problemi için yapalım. Tablonun temel çözümü $(\hat{\vec{x}}, \hat{\vec{x}}_u)$ olsun. Bu değerler $v_0$ sütununda durur ve $M$'ye bağlı değildir. Yapay değişkenlerin değerlerinin toplamını $s$ ile gösterelim; varsayım gereği $s > 0$'dır. Tablonun amaç değeri
+
+$$z_0 = \vec{c}^{\,T}\hat{\vec{x}} + Ms$$
+
+dir. Orijinal problemin bir $\bar{\vec{x}}$ uygun çözümü olduğunu varsayalım. @prp-bym-esleme gereği $(\bar{\vec{x}}, \vec{0})$, M probleminin amaç değeri $\vec{c}^{\,T}\bar{\vec{x}}$ olan bir uygun çözümüdür. Tablo optimal olduğundan bir $M_0$'dan büyük her $M$ için
+
+$$\vec{c}^{\,T}\hat{\vec{x}} + Ms \le \vec{c}^{\,T}\bar{\vec{x}}, \quad \text{yani} \quad M \le \frac{\vec{c}^{\,T}\bar{\vec{x}} - \vec{c}^{\,T}\hat{\vec{x}}}{s}$$
+
+olmalıdır. Sağ taraf $M$'den bağımsız bir sayıdır; $M$ onu aştığı anda eşitsizlik bozulur. Bu çelişki, orijinal problemin uygun çözümü olmadığını gösterir.
+
+Maksimum probleminde amaç değeri $\vec{c}^{\,T}\hat{\vec{x}} - Ms$'dir ve optimallik $\vec{c}^{\,T}\hat{\vec{x}} - Ms \ge \vec{c}^{\,T}\bar{\vec{x}}$ verir; bu da $M \le (\vec{c}^{\,T}\hat{\vec{x}} - \vec{c}^{\,T}\bar{\vec{x}})/s$ demektir ve aynı biçimde çelişkiye varılır. Atılmış yapay sütunlar varsa, @thm-bym-optimal ispatındaki gibi küçültülmüş M problemiyle aynı akıl yürütme yapılır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani yöntem, orijinal problemin uygun çözümü olup olmadığını kendiliğinden söyler. Optimal tabloda bazda pozitif bir yapay değişken kaldıysa, $M$'nin büyük cezasına rağmen yapay değişken sıfıra indirilememiştir; bunun tek nedeni kısıtların birlikte sağlanamamasıdır. Bu durumda en iyi çözümden söz edilemez. Böyle bir sonuçla karşılaşınca modelin kuruluşunu da gözden geçirmek gerekir: çoğu zaman bir kısıtın yönü yanlış yazılmıştır ya da veriler birbiriyle çelişir.
+
+Geriye üçüncü durum kalıyor: yapay değişken bazda, ama değeri $0$. @thm-bym-optimal bu durumda da çözümün optimal olduğunu söyler; tablonun gösterdiği çözüm dejenere bir temel çözümdür (@def-tck-dejenere). Aşağıdaki önerme, bazda kalan yapay değişkenden nasıl kurtulunacağını anlatır.
+
+:::: {#prp-bym-sifir-yapay name="Bazda sıfır değerli yapay değişken"}
+Bir tabloda $x_u$ yapay değişkeni $r$. satırda $y_{r0} = 0$ değeriyle bazda olsun.
+
+1. Yapay olmayan bir $v_k$ sütunu için $y_{rk} \ne 0$ ise $y_{rk}$ pivot alınarak $x_u$ bazdan çıkarılabilir. Yeni tablonun $v_0$ sütunu eskisiyle aynıdır; yani aynı çözüm, $x_u$'yu içermeyen bir bazla elde edilir.
+2. Yapay olmayan bütün $v_j$ sütunları için $y_{rj} = 0$ ise orijinal problemin kısıtlarından biri diğerlerinin lineer kombinasyonudur, yani gereksizdir. Yapay değişkenler sıfırken $r$. satır $0 = 0$ denklemine dönüşür ve tablodan silinebilir.
+
+::: {.ispat}
+**1\.** Pivot sıfırdan farklı olduğu için dönüşüm kuralı (@sec-smp-donusum) uygulanabilir. Yeni tabloda $x_k$ satırının değeri $y_{r0} / y_{rk} = 0$ olur. Diğer her $i$ satırının yeni değeri
+
+$$y_{i0} - \frac{y_{ik}\, y_{r0}}{y_{rk}} = y_{i0} - 0 = y_{i0}$$
+
+dır. Demek ki bütün değişkenlerin değerleri aynı kalır ve hiçbiri negatif olmaz. Oran testi pivotu pozitif seçiyordu, çünkü değerlerin negatif olmaması gerekiyordu; burada değerler hiç değişmediği için $y_{rk}$ negatif de olabilir.
+
+**2\.** Simpleks tablosunun her satırı, başlangıç tablosunun satırlarından elemanter satır işlemleriyle elde edilir. Bu yüzden $r$. satır, başlangıç tablosunun $m$ satırının $w_1, \dots, w_m$ katsayılı bir lineer kombinasyonudur. Bu katsayıların hepsi sıfır olamaz, çünkü $r$. satırın $x_u$ sütununda $1$ vardır. Başlangıç tablosunun $i$. satırının yapay olmayan sütunlardaki ve $v_0$ sütunundaki elemanları, orijinal problemin $i$. kısıtının katsayıları $a_{ij}$ ve sağ tarafı $b_i$'dir. $r$. satırın bu sütunlardaki bütün elemanları sıfır olduğundan
+
+$$\sum_{i=1}^{m} w_i\, a_{ij} = 0 \ \ \text{(her } j \text{ için)}, \qquad \sum_{i=1}^{m} w_i\, b_i = 0$$
+
+olur. $w_l \ne 0$ olan bir $l$ seçelim. $l$. kısıtın iki yanı, diğer kısıtların $-w_i / w_l$ katsayılarıyla toplamına eşittir; yani $l$. kısıt diğerlerinden kendiliğinden çıkar ve gereksizdir. Son olarak $r$. satırın yapay olmayan sütunlardaki elemanları ve $y_{r0}$ sıfır olduğundan, yapay değişkenler sıfır alınınca bu satır $0 = 0$ der; silinmesi hiçbir bilgiyi kaybettirmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bazda sıfır değerle kalan yapay değişken bir sorun değildir: çözüm uygundur ve optimaldir. İstenirse yapay değişken birinci maddedeki pivotla bazdan çıkarılır; bu mümkün değilse problemde gereksiz bir kısıt vardır ve onun satırı atılır. Birinci maddedeki pivot yalnız bazı değiştirir: yeni tablonun $z_j - c_j$ satırı optimallik biçimini korumayabilir, ama gösterdiği çözüm aynı olduğundan bu çözüm optimal kalır.
+
+## Büyük M Yöntemiyle Çözüm
+
+Şimdi yöntemi adım adım toplayalım ve örneklerde uygulayalım.
+
+::: {.callout-tip title="Altı adımda Büyük M yöntemi"}
+1. **Standart form.** Sağ tarafı negatif olan satırları $-1$ ile çarp. $\le$ kısıtlara aylak değişken ekle, $\ge$ kısıtlardan artık değişken çıkar (@def-lpp-aylak-artik); eşitliklere dokunma.
+2. **Yapay değişkenler.** Birim sütunu olmayan her denkleme bir yapay değişken ekle; amaç katsayısı minimumda $+M$, maksimumda $-M$'dir. Problem artık simpleks yöntem ile çözülebilir haldedir.
+3. **Başlangıç tablosu.** Birim sütunları veren değişkenler (aylaklar ve yapaylar) başlangıç bazıdır. $c_B$ sütununda $\pm M$ bulunduğu için $z_j - c_j$ satırı artık $-c_j$ değildir: her sütun için $z_j = \vec{c}_B^{\,T} v_j$ hesaplanır ve $c_j$ çıkarılır; ayrıca $z_0 = \vec{c}_B^{\,T} v_0$.
+4. **Giren vektör.** Minimum probleminde en büyük pozitif, maksimum probleminde en negatif $z_j - c_j$ girer. $aM + b$ biçimindeki kriterler karşılaştırılırken önce $M$'nin katsayısına, eşitse sabit terime bakılır (@prp-bym-karsilastirma).
+5. **Çıkan vektör ve yeni tablo.** Oran testi ve dönüşüm kuralı simpleks yöntemdekinin aynısıdır (@sec-smp-donusum). Bazdan çıkan yapay değişkenin sütunu yeni tabloda yazılmaz. Giren sütunda pozitif eleman yoksa oran testi yapılamaz; bu durum [Sınırsız çözüm ve alternatif optimal çözüm](sinirsiz-ve-alternatif-optimal-cozum.qmd) bölümünde incelenir.
+6. **Sonuç.** Optimal tabloda yapay değişkenlerin hepsi sıfırsa tablonun çözümü orijinal problemin optimal çözümüdür (@thm-bym-optimal). Bazda pozitif bir yapay değişken kaldıysa orijinal problemin uygun çözümü yoktur (@thm-bym-uygunsuz).
+:::
+
+:::: {#exm-bym-ornek name="Büyük M yöntemiyle bir minimum problemi"}
+Aşağıdaki problemi Büyük M yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+2x_1 + x_2 &\ge 2 \\
+x_1 + 3x_2 &\le 3 \\
+x_2 &\le 4 \\
+x_1, x_2 &\ge 0 \\
+\min z &= -3x_1 + x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Standart form.** Önce problemi standart forma getirelim. Birinci kısıt $\ge$ olduğundan $x_3$ artık değişkenini çıkarırız; ikinci ve üçüncü kısıtlar $\le$ olduğundan $x_4$ ve $x_5$ aylak değişkenlerini ekleriz. Sağ taraflar $2, 3, 4$ negatif değildir:
+
+$$
+\begin{aligned}
+2x_1 + x_2 - x_3 &= 2 \\
+x_1 + 3x_2 + x_4 &= 3 \\
+x_2 + x_5 &= 4 \\
+x_j \ge 0, \quad j &= \overline{1,5} \\
+\min z &= -3x_1 + x_2 + 0x_3 + 0x_4 + 0x_5
+\end{aligned}
+$$
+
+**Çözülebilir hal.** $x_4$ yalnız ikinci, $x_5$ yalnız üçüncü denklemde ve katsayısı $1$ ile görünür; bu iki denklemin birim sütunu hazırdır. Birinci denklemde ise $x_3$'ün katsayısı $-1$'dir. Standart form birim matris içermediği için henüz simpleks yöntem ile çözülebilir halde değildir. Yalnız birinci denkleme $x_{u_1}$ yapay değişkenini ekleriz; minimum problemi olduğundan amaç katsayısı $+M$'dir:
+
+$$
+\begin{aligned}
+2x_1 + x_2 - x_3 + x_{u_1} &= 2 \\
+x_1 + 3x_2 + x_4 &= 3 \\
+x_2 + x_5 &= 4 \\
+x_1, \dots, x_5, x_{u_1} &\ge 0 \\
+\min z &= -3x_1 + x_2 + 0x_3 + 0x_4 \\
+&\quad + 0x_5 + Mx_{u_1}
+\end{aligned}
+$$
+
+Artık $v_{u_1}$, $v_4$, $v_5$ sütunları $3 \times 3$ birim matrisi oluşturur. Başlangıç bazı $B_0 = (v_{u_1}, v_4, v_5)$, başlangıç çözümü $x_{u_1} = 2$, $x_4 = 3$, $x_5 = 4$ ve diğer değişkenler $0$'dır.
+
+**Simpleks kriterleri.** Baz maliyetleri $\vec{c}_B = (M, 0, 0)$'dır. Her sütun için $z_j = \vec{c}_B^{\,T} v_j$ çarpımını, $c_B$ sütunuyla $v_j$ sütununun karşılıklı çarpımlarını toplayarak hesaplar ve $c_j$'yi çıkarırız:
+
+$$
+\begin{aligned}
+z_1 - c_1 &= (M \cdot 2 + 0 \cdot 1 + 0 \cdot 0) - (-3) = 2M + 3, \\[1mm]
+z_2 - c_2 &= (M \cdot 1 + 0 \cdot 3 + 0 \cdot 1) - 1 = M - 1, \\[1mm]
+z_3 - c_3 &= (M \cdot (-1) + 0 \cdot 0 + 0 \cdot 0) - 0 = -M, \\[1mm]
+z_{u_1} - c_{u_1} &= (M \cdot 1 + 0 \cdot 0 + 0 \cdot 0) - M = 0, \\[1mm]
+z_0 &= M \cdot 2 + 0 \cdot 3 + 0 \cdot 4 = 2M.
+\end{aligned}
+$$
+
+$v_4$ ve $v_5$ de baz vektörleri olduğundan kriterleri $0$'dır. Amaç değerindeki $2M$, bazdaki yapay değişkenin değeri olan $2$'nin cezasıdır.
+
+**Giren ve çıkan vektör.** Minimum probleminde en büyük pozitif $z_j - c_j$ girer. Pozitif kriterler $2M + 3$ ve $M - 1$'dir. $M$'nin katsayıları $2 > 1$ olduğundan en büyüğü $2M + 3$'tür (@prp-bym-karsilastirma) ve $v_1$ baza girer. Oran testi $v_1$ sütununun pozitif elemanlarıyla yapılır; $x_5$ satırında eleman $0$ olduğundan o satır dikkate alınmaz:
+
+$$\min\left( \frac{2}{2}, \frac{3}{1} \right) = \min(1, 3) = 1.$$
+
+En küçük oran $x_{u_1}$ satırındadır; $v_{u_1}$ bazdan çıkar ve pivot $2$'dir.
+
+|   |   | $c_j$ | $-3$ | $1$ | $0$ | $0$ | $0$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_{u_1}$ | Oran |
+| $x_{u_1}$ | $M$ | $2$ | $[2]$ | $1$ | $-1$ | $0$ | $0$ | $1$ | $\frac{2}{2} \Rightarrow$ |
+| $x_4$ | $0$ | $3$ | $1$ | $3$ | $0$ | $1$ | $0$ | $0$ | $\frac{3}{1}$ |
+| $x_5$ | $0$ | $4$ | $0$ | $1$ | $0$ | $0$ | $1$ | $0$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 2M$ | $2M+3 \Uparrow$ | $M-1$ | $-M$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-bym-ornek-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $2$'ye bölünür ve $x_1$ satırı olur; $c_B$ değeri $c_1 = -3$'tür:
+
+$$(1 \mid 1,\ \tfrac{1}{2},\ -\tfrac{1}{2},\ 0,\ 0).$$
+
+$x_4$ satırının $v_1$ sütunundaki elemanı $1$ olduğundan bu satırdan yeni pivot satırı bir kez çıkarılır:
+
+$$
+\begin{aligned}
+&(3 - 1 \mid 1 - 1,\ 3 - \tfrac{1}{2},\ 0 + \tfrac{1}{2},\ 1,\ 0) \\[1mm]
+&\quad = (2 \mid 0,\ \tfrac{5}{2},\ \tfrac{1}{2},\ 1,\ 0).
+\end{aligned}
+$$
+
+$x_5$ satırının $v_1$ sütunundaki elemanı $0$ olduğundan bu satır değişmez. $x_{u_1}$ bazdan çıktığı için $v_{u_1}$ sütunu artık yazılmaz. $z_j - c_j$ satırını yeni $\vec{c}_B = (-3, 0, 0)$ ile yeniden hesaplayalım:
+
+$$
+\begin{aligned}
+z_2 - c_2 &= (-3) \cdot \tfrac{1}{2} + 0 \cdot \tfrac{5}{2} + 0 \cdot 1 - 1 = -\tfrac{5}{2}, \\[1mm]
+z_3 - c_3 &= (-3) \cdot \left(-\tfrac{1}{2}\right) + 0 \cdot \tfrac{1}{2} + 0 \cdot 0 - 0 = \tfrac{3}{2}, \\[1mm]
+z_0 &= (-3) \cdot 1 + 0 \cdot 2 + 0 \cdot 4 = -3.
+\end{aligned}
+$$
+
+Dönüşüm kuralı (@sec-smp-donusum) da aynı sayıları verir. Örneğin $v_2$ sütunu için eski kriterden, pivot sütunundaki $2M + 3$ ile yeni pivot satırındaki $\tfrac{1}{2}$'nin çarpımı çıkarılır: $(M - 1) - (2M + 3) \cdot \tfrac{1}{2} = -\tfrac{5}{2}$. Bazda yapay değişken kalmadığı için $M$'ler birbirini götürdü ve satırdan tamamen kayboldu.
+
+|   |   | $c_j$ | $-3$ | $1$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_1$ | $-3$ | $1$ | $1$ | $\frac{1}{2}$ | $-\frac{1}{2}$ | $0$ | $0$ | $-$ |
+| $x_4$ | $0$ | $2$ | $0$ | $\frac{5}{2}$ | $[\frac{1}{2}]$ | $1$ | $0$ | $\frac{2}{1/2} \Rightarrow$ |
+| $x_5$ | $0$ | $4$ | $0$ | $1$ | $0$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -3$ | $0$ | $-\frac{5}{2}$ | $\frac{3}{2} \Uparrow$ | $0$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-bym-ornek-birinci .simpleks}
+
+Birinci iterasyon tablosunda (@tbl-bym-ornek-birinci) $B_0$ bazından $B_1 = (v_1, v_4, v_5)$ bazına geçildi; çözüm $X_1 = (x_1, \dots, x_5) = (1, 0, 0, 2, 4)$'tür. Yapay değişken $0$ olduğu için bu, orijinal problemin uygun bir çözümüdür: $(x_1, x_2) = (1, 0)$ uygun bölgenin bir köşesidir.
+
+Pozitif kriter $z_3 - c_3 = \tfrac{3}{2}$ kaldığı için minimuma ulaşılmadı; en büyük (ve tek) pozitif kriter bu olduğundan $v_3$ baza girer. $v_3$ sütununda yalnız $x_4$ satırının elemanı pozitiftir. Oran $2 / \tfrac{1}{2} = 4$'tür; $v_4$ bazdan çıkar ve pivot $\tfrac{1}{2}$'dir.
+
+**İkinci iterasyon.** Pivot satırı $\tfrac{1}{2}$'ye bölünür, yani $2$ ile çarpılır ve $x_3$ satırı olur: $(4 \mid 0,\ 5,\ 1,\ 2,\ 0)$. $x_1$ satırının $v_3$ sütunundaki elemanı $-\tfrac{1}{2}$ olduğundan bu satıra yeni pivot satırının $\tfrac{1}{2}$ katı eklenir:
+
+$$
+\begin{aligned}
+&(1 + 2 \mid 1,\ \tfrac{1}{2} + \tfrac{5}{2},\ -\tfrac{1}{2} + \tfrac{1}{2},\ 0 + 1,\ 0) \\[1mm]
+&\quad = (3 \mid 1,\ 3,\ 0,\ 1,\ 0).
+\end{aligned}
+$$
+
+$x_5$ satırı yine değişmez. Kriterler $\vec{c}_B = (-3, 0, 0)$ ile:
+
+$$
+\begin{aligned}
+z_2 - c_2 &= (-3) \cdot 3 + 0 \cdot 5 + 0 \cdot 1 - 1 = -10, \\[1mm]
+z_4 - c_4 &= (-3) \cdot 1 + 0 \cdot 2 + 0 \cdot 0 - 0 = -3, \\[1mm]
+z_0 &= (-3) \cdot 3 + 0 \cdot 4 + 0 \cdot 4 = -9.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $-3$ | $1$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $-3$ | $3$ | $1$ | $3$ | $0$ | $1$ | $0$ |
+| $x_3$ | $0$ | $4$ | $0$ | $5$ | $1$ | $2$ | $0$ |
+| $x_5$ | $0$ | $4$ | $0$ | $1$ | $0$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = -9$ | $0$ | $-10$ | $0$ | $-3$ | $0$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-bym-ornek-optimal .simpleks .oransiz}
+
+İkinci iterasyon tablosunda (@tbl-bym-ornek-optimal) $B_2 = (v_1, v_3, v_5)$ bazına geçildi. Pozitif kriter kalmadı: bütün $z_j - c_j \le 0$, tablo optimaldir. Bazda yapay değişken bulunmadığından @thm-bym-optimal gereği optimal çözüm
+
+$$X^{*} = (x_1, x_2, x_3, x_4, x_5) = (3, 0, 4, 0, 4), \qquad \min z = -3 \cdot 3 + 0 = -9$$
+
+olur. Aylak ve artık değişkenler de anlamlıdır: birinci kısıtta $2 \cdot 3 + 0 = 6$ olup gereksinim $x_3 = 4$ birim aşılmıştır; ikinci kısıt $3 + 0 = 3$ ile tam sağlanır ($x_4 = 0$); üçüncü kısıtta $x_5 = 4$ birim boşluk vardır.
+
+Aşağıdaki şekil yöntemin izlediği yolu grafik yöntemle karşılaştırıyor. Başlangıç çözümü $(x_1, x_2) = (0, 0)$ uygun bölgenin dışındadır: $2x_1 + x_2 \ge 2$ kısıtı sağlanmaz ve eksik kalan $2$ birimi $x_{u_1} = 2$ üstlenir. Birinci iterasyon yapay değişkeni sıfıra indirip uygun bölgenin $(1, 0)$ köşesine, ikinci iterasyon optimal $(3, 0)$ köşesine gider. Uygun bölge üç köşeli bir üçgendir ve köşelerdeki amaç değerleri $(1, 0)$'da $-3$, $(3, 0)$'da $-9$, $(\tfrac{3}{5}, \tfrac{4}{5})$'te $-\tfrac{9}{5} + \tfrac{4}{5} = -1$'dir; en küçüğü gerçekten $-9$'dur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 516.0 341.5" role="img" aria-label="Feasible triangle with corners (1,0), (3,0), (3/5,4/5); the Big M path goes from the infeasible origin to (1,0) and then to the optimal corner (3,0); dashed level lines z = -3 and z = -9">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="223.6" y1="30.0" x2="223.6" y2="335.5"/><line x1="332.7" y1="30.0" x2="332.7" y2="335.5"/><line x1="441.8" y1="30.0" x2="441.8" y2="335.5"/><line x1="60.0" y1="171.8" x2="540.0" y2="171.8"/><line x1="60.0" y1="62.7" x2="540.0" y2="62.7"/></g>
+  <polygon points="223.6,280.9 441.8,280.9 180.0,193.6" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M250.9,335.5 L98.2,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,153.6 L540.0,313.6" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M205.5,335.5 L307.3,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M423.6,335.5 L525.5,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="280.9" x2="544.0" y2="280.9"/>
+  <line x1="114.5" y1="339.5" x2="114.5" y2="26.0"/>
+  <polygon points="544.0,280.9 536.0,277.4 536.0,284.4" stroke="none"/>
+  <polygon points="114.5,26.0 111.0,34.0 118.0,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="223.6" y1="277.9" x2="223.6" y2="283.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="223.6" y="295.9" text-anchor="middle">1</text>
+  <line x1="332.7" y1="277.9" x2="332.7" y2="283.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="332.7" y="295.9" text-anchor="middle">2</text>
+  <line x1="441.8" y1="277.9" x2="441.8" y2="283.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="441.8" y="295.9" text-anchor="middle">3</text>
+  <line x1="111.5" y1="171.8" x2="117.5" y2="171.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="107.5" y="175.8" text-anchor="end">1</text>
+  <line x1="111.5" y1="62.7" x2="117.5" y2="62.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="107.5" y="66.7" text-anchor="end">2</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="542.0" y="295.9" text-anchor="end">x₁</text>
+  <text x="121.5" y="35.0">x₂</text>
+  </g>
+  <line x1="114.5" y1="280.9" x2="214.8" y2="280.9" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="223.6,280.9 212.6,285.5 212.6,276.3" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="223.6" y1="280.9" x2="433.0" y2="280.9" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="441.8,280.9 430.8,285.5 430.8,276.3" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="114.5" cy="280.9" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="223.6" cy="280.9" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="441.8" cy="280.9" r="4.5" fill="var(--color-practice)"/>
+  <text x="92.5" y="272.9" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="191.6" y="274.9" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁</text>
+  <text x="417.8" y="270.9" fill="var(--academic-text)" font-size="13" text-anchor="start">X₂</text>
+  <text x="123.3" y="49.6" fill="var(--color-remark)" font-size="12" text-anchor="start">2x₁ + x₂ = 2</text>
+  <text x="327.3" y="220.9" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 3x₂ = 3</text>
+  <text x="302.2" y="90.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = &#8722;3</text>
+  <text x="493.1" y="171.8" fill="var(--color-base)" font-size="12" text-anchor="start">z = &#8722;9</text>
+  <text x="250.9" y="256.9" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>Örneğin uygun bölgesi (boyalı üçgen) ve Büyük M yönteminin yolu: X₀ = (0, 0) → X₁ = (1, 0) → X₂ = (3, 0). İçi boş çizilen X₀ uygun bölgenin dışındadır; orada 2x₁ + x₂ ≥ 2 kısıtı sağlanmaz ve eksik kalan 2 birimi yapay değişken üstlenir. Kesikli doğrular z = −3 ve z = −9 seviye doğrularıdır. x₂ ≤ 4 kısıtı şeklin üstünde kalır ve bölgeyi etkilemez.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İki yapay değişkenli bir örnekte $M$'nin katsayısının adım adım nasıl küçüldüğünü daha açık görürüz.
+
+:::: {#exm-bym-iki-yapay name="İki yapay değişkenli bir minimum problemi"}
+@exm-lpp-zincir-min diyetinin modelini Büyük M yöntemiyle çözünüz:
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\ge 6 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Çözülebilir hal.** Standart formda iki kısıttan da artık değişken çıkarılır ($x_3$ ve $x_4$). Artık değişkenler birim sütun vermediği için iki denkleme de yapay değişken ekleriz; minimum problemi olduğundan katsayıları $+M$'dir (bkz. @exm-lpp-zincir-min):
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 + x_{u_1} &= 4 \\
+x_1 + 3x_2 - x_4 + x_{u_2} &= 6 \\
+x_1, x_2, x_3, x_4, x_{u_1}, x_{u_2} &\ge 0 \\
+\min z &= 2x_1 + 3x_2 + 0x_3 + 0x_4 \\
+&\quad + Mx_{u_1} + Mx_{u_2}
+\end{aligned}
+$$
+
+Başlangıç bazı $B_0 = (v_{u_1}, v_{u_2})$, $\vec{c}_B = (M, M)$'dir.
+
+**Simpleks kriterleri.**
+
+$$
+\begin{aligned}
+z_1 - c_1 &= (M \cdot 1 + M \cdot 1) - 2 = 2M - 2, \\[1mm]
+z_2 - c_2 &= (M \cdot 1 + M \cdot 3) - 3 = 4M - 3, \\[1mm]
+z_3 - c_3 &= (M \cdot (-1) + M \cdot 0) - 0 = -M, \\[1mm]
+z_4 - c_4 &= (M \cdot 0 + M \cdot (-1)) - 0 = -M, \\[1mm]
+z_0 &= M \cdot 4 + M \cdot 6 = 10M.
+\end{aligned}
+$$
+
+Minimum probleminde en büyük pozitif kriter girer. Pozitif kriterler $2M - 2$ ve $4M - 3$'tür; $4 > 2$ olduğundan $v_2$ baza girer. Oranlar $\tfrac{4}{1} = 4$ ve $\tfrac{6}{3} = 2$'dir; $v_{u_2}$ bazdan çıkar ve pivot $3$'tür.
+
+|   |   | $c_j$ | $2$ | $3$ | $0$ | $0$ | $M$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $x_{u_1}$ | $M$ | $4$ | $1$ | $1$ | $-1$ | $0$ | $1$ | $0$ | $\frac{4}{1}$ |
+| $x_{u_2}$ | $M$ | $6$ | $1$ | $[3]$ | $0$ | $-1$ | $0$ | $1$ | $\frac{6}{3} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 10M$ | $2M-2$ | $4M-3 \Uparrow$ | $-M$ | $-M$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-bym-iki-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $3$'e bölünür ve $x_2$ satırı olur: $\big(2 \mid \tfrac{1}{3},\ 1,\ 0,\ -\tfrac{1}{3},\ 0\big)$; burada son eleman $v_{u_1}$ sütunundadır. $x_{u_1}$ satırından yeni pivot satırı bir kez çıkarılır:
+
+$$
+\begin{aligned}
+&(4 - 2 \mid 1 - \tfrac{1}{3},\ 0,\ -1,\ 0 + \tfrac{1}{3},\ 1) \\[1mm]
+&\quad = (2 \mid \tfrac{2}{3},\ 0,\ -1,\ \tfrac{1}{3},\ 1).
+\end{aligned}
+$$
+
+$v_{u_2}$ sütunu atılır. Yeni $\vec{c}_B = (M, 3)$ ile kriterler:
+
+$$
+\begin{aligned}
+z_1 - c_1 &= M \cdot \tfrac{2}{3} + 3 \cdot \tfrac{1}{3} - 2 = \tfrac{2}{3}M - 1, \\[1mm]
+z_3 - c_3 &= M \cdot (-1) + 3 \cdot 0 - 0 = -M, \\[1mm]
+z_4 - c_4 &= M \cdot \tfrac{1}{3} + 3 \cdot \left(-\tfrac{1}{3}\right) - 0 = \tfrac{1}{3}M - 1, \\[1mm]
+z_0 &= M \cdot 2 + 3 \cdot 2 = 2M + 6.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $3$ | $0$ | $0$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | Oran |
+| $x_{u_1}$ | $M$ | $2$ | $[\frac{2}{3}]$ | $0$ | $-1$ | $\frac{1}{3}$ | $1$ | $\frac{2}{2/3} \Rightarrow$ |
+| $x_2$ | $3$ | $2$ | $\frac{1}{3}$ | $1$ | $0$ | $-\frac{1}{3}$ | $0$ | $\frac{2}{1/3}$ |
+| $z_j - c_j$ |   | $z_0 = 2M+6$ | $\frac{2}{3}M-1 \Uparrow$ | $0$ | $-M$ | $\frac{1}{3}M-1$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-bym-iki-birinci .simpleks}
+
+Pozitif kriterler $\tfrac{2}{3}M - 1$ ve $\tfrac{1}{3}M - 1$'dir; $\tfrac{2}{3} > \tfrac{1}{3}$ olduğundan $v_1$ baza girer. Oranlar $2 / \tfrac{2}{3} = 3$ ve $2 / \tfrac{1}{3} = 6$'dır; $v_{u_1}$ bazdan çıkar ve pivot $\tfrac{2}{3}$'tür.
+
+**İkinci iterasyon.** Pivot satırı $\tfrac{2}{3}$'e bölünür, yani $\tfrac{3}{2}$ ile çarpılır ve $x_1$ satırı olur: $\big(3 \mid 1,\ 0,\ -\tfrac{3}{2},\ \tfrac{1}{2}\big)$. $x_2$ satırından yeni pivot satırının $\tfrac{1}{3}$ katı çıkarılır:
+
+$$
+\begin{aligned}
+&(2 - 1 \mid \tfrac{1}{3} - \tfrac{1}{3},\ 1,\ 0 + \tfrac{1}{2},\ -\tfrac{1}{3} - \tfrac{1}{6}) \\[1mm]
+&\quad = (1 \mid 0,\ 1,\ \tfrac{1}{2},\ -\tfrac{1}{2}).
+\end{aligned}
+$$
+
+$v_{u_1}$ sütunu da atılır. $\vec{c}_B = (2, 3)$ ile:
+
+$$
+\begin{aligned}
+z_3 - c_3 &= 2 \cdot \left(-\tfrac{3}{2}\right) + 3 \cdot \tfrac{1}{2} - 0 = -\tfrac{3}{2}, \\[1mm]
+z_4 - c_4 &= 2 \cdot \tfrac{1}{2} + 3 \cdot \left(-\tfrac{1}{2}\right) - 0 = -\tfrac{1}{2}, \\[1mm]
+z_0 &= 2 \cdot 3 + 3 \cdot 1 = 9.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $3$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $2$ | $3$ | $1$ | $0$ | $-\frac{3}{2}$ | $\frac{1}{2}$ |
+| $x_2$ | $3$ | $1$ | $0$ | $1$ | $\frac{1}{2}$ | $-\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 9$ | $0$ | $0$ | $-\frac{3}{2}$ | $-\frac{1}{2}$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-bym-iki-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \le 0$ olduğundan tablo optimaldir ve bazda yapay değişken yoktur. Optimal diyet $x_1 = 3$ kg $B_1$ ve $x_2 = 1$ kg $B_2$'dir; en küçük maliyet $\min z = 2 \cdot 3 + 3 \cdot 1 = 9$ TL'dir. Artık değişkenler $x_3 = x_4 = 0$ olduğundan iki vitamin gereksinimi de tam karşılanır: $3 + 1 = 4$ ve $3 + 3 = 6$.
+
+Amaç değerindeki $M$'nin katsayısı $10 \to 2 \to 0$ diye azaldı. Bu katsayı bazdaki yapay değişkenlerin toplamıdır, yani eksik kalan vitamin miktarıdır: başlangıçta $4 + 6 = 10$ birim, birinci iterasyonda yalnız $x_{u_1} = 2$ birim A vitamini eksiktir. Uygun bölgenin köşeleri $(0, 4)$, $(3, 1)$, $(6, 0)$'dır ve amaç değerleri $12$, $9$, $12$'dir; grafik yöntem de aynı sonucu verir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 516.0 393.0" role="img" aria-label="Unbounded feasible region above the lines x1 + x2 = 4 and x1 + 3x2 = 6 with corners (0,4), (3,1), (6,0); Big M path from (0,0) to (0,2) to (3,1); dashed level line z = 9">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="152.3" y1="30.0" x2="152.3" y2="386.9"/><line x1="213.8" y1="30.0" x2="213.8" y2="386.9"/><line x1="275.4" y1="30.0" x2="275.4" y2="386.9"/><line x1="336.9" y1="30.0" x2="336.9" y2="386.9"/><line x1="398.5" y1="30.0" x2="398.5" y2="386.9"/><line x1="460.0" y1="30.0" x2="460.0" y2="386.9"/><line x1="521.5" y1="30.0" x2="521.5" y2="386.9"/><line x1="60.0" y1="294.6" x2="540.0" y2="294.6"/><line x1="60.0" y1="233.1" x2="540.0" y2="233.1"/><line x1="60.0" y1="171.5" x2="540.0" y2="171.5"/><line x1="60.0" y1="110.0" x2="540.0" y2="110.0"/><line x1="60.0" y1="48.5" x2="540.0" y2="48.5"/></g>
+  <polygon points="90.8,110.0 90.8,30.0 540.0,30.0 540.0,356.2 460.0,356.2 275.4,294.6" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M90.8,30.0 L90.8,110.0 L275.4,294.6 L460.0,356.2 L540.0,356.2" fill="none" stroke="var(--color-theory)" stroke-width="1.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,79.2 L367.7,386.9" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,222.8 L540.0,382.8" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,151.0 L413.8,386.9" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="356.2" x2="544.0" y2="356.2"/>
+  <line x1="90.8" y1="390.9" x2="90.8" y2="26.0"/>
+  <polygon points="544.0,356.2 536.0,352.7 536.0,359.7" stroke="none"/>
+  <polygon points="90.8,26.0 87.3,34.0 94.3,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="152.3" y1="353.2" x2="152.3" y2="359.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="152.3" y="371.2" text-anchor="middle">1</text>
+  <line x1="213.8" y1="353.2" x2="213.8" y2="359.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="213.8" y="371.2" text-anchor="middle">2</text>
+  <line x1="275.4" y1="353.2" x2="275.4" y2="359.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="275.4" y="371.2" text-anchor="middle">3</text>
+  <line x1="336.9" y1="353.2" x2="336.9" y2="359.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="336.9" y="371.2" text-anchor="middle">4</text>
+  <line x1="398.5" y1="353.2" x2="398.5" y2="359.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="398.5" y="371.2" text-anchor="middle">5</text>
+  <line x1="460.0" y1="353.2" x2="460.0" y2="359.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="460.0" y="371.2" text-anchor="middle">6</text>
+  <line x1="521.5" y1="353.2" x2="521.5" y2="359.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="521.5" y="371.2" text-anchor="middle">7</text>
+  <line x1="87.8" y1="294.6" x2="93.8" y2="294.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="83.8" y="298.6" text-anchor="end">1</text>
+  <line x1="87.8" y1="233.1" x2="93.8" y2="233.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="83.8" y="237.1" text-anchor="end">2</text>
+  <line x1="87.8" y1="171.5" x2="93.8" y2="171.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="83.8" y="175.5" text-anchor="end">3</text>
+  <line x1="87.8" y1="110.0" x2="93.8" y2="110.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="83.8" y="114.0" text-anchor="end">4</text>
+  <line x1="87.8" y1="48.5" x2="93.8" y2="48.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="83.8" y="52.5" text-anchor="end">5</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="542.0" y="371.2" text-anchor="end">x₁</text>
+  <text x="97.8" y="35.0">x₂</text>
+  </g>
+  <line x1="90.8" y1="356.2" x2="90.8" y2="241.9" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="90.8,233.1 95.4,244.1 86.1,244.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="90.8" y1="233.1" x2="267.0" y2="291.8" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="275.4,294.6 263.5,295.5 266.4,286.8" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="90.8" cy="356.2" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="90.8" cy="233.1" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="275.4" cy="294.6" r="4.5" fill="var(--color-practice)"/>
+  <text x="98.8" y="348.2" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="100.8" y="227.1" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁</text>
+  <text x="287.4" y="298.6" fill="var(--academic-text)" font-size="13" text-anchor="start">X₂ = (3, 1)</text>
+  <text x="352.3" y="97.7" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+  <text x="109.2" y="91.5" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + x₂ = 4</text>
+  <text x="401.5" y="310.0" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 3x₂ = 6</text>
+  <text x="416.9" y="383.8" fill="var(--color-base)" font-size="12" text-anchor="start">z = 9</text>
+</svg>
+<figcaption>Diyet örneğinde Büyük M yolu: X₀ = (0, 0) → X₁ = (0, 2) → X₂ = (3, 1). İçi boş çizilen ilk iki nokta sınırsız uygun bölgenin (boyalı) dışındadır; yapay değişkenlerin toplamı 10'dan 2'ye, sonra 0'a iner. Kesikli doğru z = 2x₁ + 3x₂ = 9 seviye doğrusudur ve uygun bölgeye yalnız (3, 1) köşesinde değer.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Maksimum probleminde yöntem aynıdır; yalnız yapay değişkenlerin amaç katsayısı $-M$ olur ve seçim kuralı tersine döner.
+
+:::: {#exm-bym-max name="Eşitlik ve büyük-eşit kısıtlı bir maksimum problemi"}
+Aşağıdaki problemi Büyük M yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 3 \\
+x_1 - x_2 &= 1 \\
+x_1 + 2x_2 &\le 10 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 2x_1 + x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Standart form.** Birinci kısıttan $x_3$ artık değişkenini çıkarır, üçüncü kısıta $x_4$ aylak değişkenini ekleriz. İkinci kısıt eşitliktir ve sağ tarafı $1 \ge 0$'dır; olduğu gibi kalır:
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 &= 3 \\
+x_1 - x_2 &= 1 \\
+x_1 + 2x_2 + x_4 &= 10 \\
+x_j \ge 0, \quad j &= \overline{1,4} \\
+\max z &= 2x_1 + x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+
+**Çözülebilir hal.** Üçüncü denklemin birim sütunu $x_4$'tür. Birinci denklemde $x_3$'ün katsayısı $-1$'dir; ikinci denkleme ise hiç yeni değişken eklenmedi. Standart form birim matris içermediği için henüz simpleks yöntem ile çözülebilir halde değildir. Bu iki denkleme $x_{u_1}$ ve $x_{u_2}$ yapay değişkenlerini ekleriz; maksimum problemi olduğundan katsayıları $-M$'dir:
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 + x_{u_1} &= 3 \\
+x_1 - x_2 + x_{u_2} &= 1 \\
+x_1 + 2x_2 + x_4 &= 10 \\
+x_1, \dots, x_4, x_{u_1}, x_{u_2} &\ge 0 \\
+\max z &= 2x_1 + x_2 + 0x_3 + 0x_4 \\
+&\quad - Mx_{u_1} - Mx_{u_2}
+\end{aligned}
+$$
+
+Başlangıç bazı $B_0 = (v_{u_1}, v_{u_2}, v_4)$, $\vec{c}_B = (-M, -M, 0)$'dır.
+
+**Simpleks kriterleri.**
+
+$$
+\begin{aligned}
+z_1 - c_1 &= (-M \cdot 1 - M \cdot 1 + 0 \cdot 1) - 2 = -2M - 2, \\[1mm]
+z_2 - c_2 &= (-M \cdot 1 - M \cdot (-1) + 0 \cdot 2) - 1 = -1, \\[1mm]
+z_3 - c_3 &= (-M \cdot (-1) - M \cdot 0 + 0 \cdot 0) - 0 = M, \\[1mm]
+z_0 &= -M \cdot 3 - M \cdot 1 + 0 \cdot 10 = -4M.
+\end{aligned}
+$$
+
+$v_2$ sütununda iki yapay satırın elemanları $1$ ve $-1$ olduğundan $M$'ler birbirini götürdü.
+
+**Giren ve çıkan vektör.** Maksimum probleminde en negatif $z_j - c_j$ girer. Negatif kriterler $-2M - 2$ ve $-1$'dir. $M$'nin katsayıları $-2 < 0$ olduğundan en negatifi $-2M - 2$'dir ve $v_1$ baza girer. Oranlar $\tfrac{3}{1}$, $\tfrac{1}{1}$, $\tfrac{10}{1}$'dir; en küçüğü $1$ olduğundan $v_{u_2}$ bazdan çıkar ve pivot $1$'dir.
+
+|   |   | $c_j$ | $2$ | $1$ | $0$ | $0$ | $-M$ | $-M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $x_{u_1}$ | $-M$ | $3$ | $1$ | $1$ | $-1$ | $0$ | $1$ | $0$ | $\frac{3}{1}$ |
+| $x_{u_2}$ | $-M$ | $1$ | $[1]$ | $-1$ | $0$ | $0$ | $0$ | $1$ | $\frac{1}{1} \Rightarrow$ |
+| $x_4$ | $0$ | $10$ | $1$ | $2$ | $0$ | $1$ | $0$ | $0$ | $\frac{10}{1}$ |
+| $z_j - c_j$ |   | $z_0 = -4M$ | $-2M-2 \Uparrow$ | $-1$ | $M$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-bym-max-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot $1$ olduğundan $x_{u_2}$ satırı aynen kalır ve $x_1$ satırı olur: $(1 \mid 1,\ -1,\ 0,\ 0,\ 0)$; son eleman $v_{u_1}$ sütunundadır. $x_{u_1}$ ve $x_4$ satırlarının $v_1$ elemanları $1$ olduğundan ikisinden de yeni pivot satırı bir kez çıkarılır:
+
+$$
+\begin{aligned}
+x_{u_1}&: \ (3 - 1 \mid 0,\ 1 + 1,\ -1,\ 0,\ 1) = (2 \mid 0,\ 2,\ -1,\ 0,\ 1), \\[1mm]
+x_4&: \ (10 - 1 \mid 0,\ 2 + 1,\ 0,\ 1,\ 0) = (9 \mid 0,\ 3,\ 0,\ 1,\ 0).
+\end{aligned}
+$$
+
+$v_{u_2}$ sütunu atılır. $\vec{c}_B = (-M, 2, 0)$ ile:
+
+$$
+\begin{aligned}
+z_2 - c_2 &= -M \cdot 2 + 2 \cdot (-1) + 0 \cdot 3 - 1 = -2M - 3, \\[1mm]
+z_3 - c_3 &= -M \cdot (-1) + 2 \cdot 0 + 0 \cdot 0 - 0 = M, \\[1mm]
+z_0 &= -M \cdot 2 + 2 \cdot 1 + 0 \cdot 9 = -2M + 2.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $1$ | $0$ | $0$ | $-M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | Oran |
+| $x_{u_1}$ | $-M$ | $2$ | $0$ | $[2]$ | $-1$ | $0$ | $1$ | $\frac{2}{2} \Rightarrow$ |
+| $x_1$ | $2$ | $1$ | $1$ | $-1$ | $0$ | $0$ | $0$ | $-$ |
+| $x_4$ | $0$ | $9$ | $0$ | $3$ | $0$ | $1$ | $0$ | $\frac{9}{3}$ |
+| $z_j - c_j$ |   | $z_0 = -2M+2$ | $0$ | $-2M-3 \Uparrow$ | $M$ | $0$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-bym-max-birinci .simpleks}
+
+Tek negatif kriter $-2M - 3$'tür; $v_2$ baza girer. $x_1$ satırındaki $-1$ oran testine girmez; oranlar $\tfrac{2}{2} = 1$ ve $\tfrac{9}{3} = 3$'tür. $v_{u_1}$ bazdan çıkar ve pivot $2$'dir. Bu tablonun çözümü $(x_1, x_2) = (1, 0)$ henüz uygun değildir: $x_1 - x_2 = 1$ sağlanır ama $x_1 + x_2 = 1 < 3$'tür ve eksik $2$ birimi $x_{u_1} = 2$ taşır.
+
+**İkinci iterasyon.** Pivot satırı $2$'ye bölünür ve $x_2$ satırı olur: $\big(1 \mid 0,\ 1,\ -\tfrac{1}{2},\ 0\big)$. $x_1$ satırına yeni pivot satırı bir kez eklenir, $x_4$ satırından üç kez çıkarılır:
+
+$$
+\begin{aligned}
+x_1&: \ (1 + 1 \mid 1,\ 0,\ 0 - \tfrac{1}{2},\ 0) = (2 \mid 1,\ 0,\ -\tfrac{1}{2},\ 0), \\[1mm]
+x_4&: \ (9 - 3 \mid 0,\ 0,\ 0 + \tfrac{3}{2},\ 1) = (6 \mid 0,\ 0,\ \tfrac{3}{2},\ 1).
+\end{aligned}
+$$
+
+$v_{u_1}$ sütunu da atılır. $\vec{c}_B = (1, 2, 0)$ ile:
+
+$$
+\begin{aligned}
+z_3 - c_3 &= 1 \cdot \left(-\tfrac{1}{2}\right) + 2 \cdot \left(-\tfrac{1}{2}\right) + 0 \cdot \tfrac{3}{2} - 0 = -\tfrac{3}{2}, \\[1mm]
+z_0 &= 1 \cdot 1 + 2 \cdot 2 + 0 \cdot 6 = 5.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_2$ | $1$ | $1$ | $0$ | $1$ | $-\frac{1}{2}$ | $0$ | $-$ |
+| $x_1$ | $2$ | $2$ | $1$ | $0$ | $-\frac{1}{2}$ | $0$ | $-$ |
+| $x_4$ | $0$ | $6$ | $0$ | $0$ | $[\frac{3}{2}]$ | $1$ | $\frac{6}{3/2} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 5$ | $0$ | $0$ | $-\frac{3}{2} \Uparrow$ | $0$ |   |
+
+: İkinci iterasyon tablosu {#tbl-bym-max-ikinci .simpleks}
+
+Yapay değişkenlerin hepsi bazdan çıktı; $(x_1, x_2) = (2, 1)$ orijinal problemin uygun bir çözümüdür ve $z = 5$'tir. Ama $z_3 - c_3 = -\tfrac{3}{2} < 0$ olduğundan maksimuma ulaşılmadı; $v_3$ baza girer. $v_3$ sütununda yalnız $x_4$ satırının elemanı pozitiftir: oran $6 / \tfrac{3}{2} = 4$, $v_4$ bazdan çıkar ve pivot $\tfrac{3}{2}$'dir.
+
+**Üçüncü iterasyon.** Pivot satırı $\tfrac{2}{3}$ ile çarpılır ve $x_3$ satırı olur: $\big(4 \mid 0,\ 0,\ 1,\ \tfrac{2}{3}\big)$. $x_2$ ve $x_1$ satırlarının $v_3$ elemanları $-\tfrac{1}{2}$ olduğundan ikisine de yeni pivot satırının $\tfrac{1}{2}$ katı eklenir:
+
+$$
+\begin{aligned}
+x_2&: \ (1 + 2 \mid 0,\ 1,\ 0,\ 0 + \tfrac{1}{3}) = (3 \mid 0,\ 1,\ 0,\ \tfrac{1}{3}), \\[1mm]
+x_1&: \ (2 + 2 \mid 1,\ 0,\ 0,\ 0 + \tfrac{1}{3}) = (4 \mid 1,\ 0,\ 0,\ \tfrac{1}{3}).
+\end{aligned}
+$$
+
+$\vec{c}_B = (1, 2, 0)$ ile:
+
+$$
+\begin{aligned}
+z_4 - c_4 &= 1 \cdot \tfrac{1}{3} + 2 \cdot \tfrac{1}{3} + 0 \cdot \tfrac{2}{3} - 0 = 1, \\[1mm]
+z_0 &= 1 \cdot 3 + 2 \cdot 4 + 0 \cdot 4 = 11.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_2$ | $1$ | $3$ | $0$ | $1$ | $0$ | $\frac{1}{3}$ |
+| $x_1$ | $2$ | $4$ | $1$ | $0$ | $0$ | $\frac{1}{3}$ |
+| $x_3$ | $0$ | $4$ | $0$ | $0$ | $1$ | $\frac{2}{3}$ |
+| $z_j - c_j$ |   | $z_0 = 11$ | $0$ | $0$ | $0$ | $1$ |
+
+: Üçüncü iterasyon tablosu (optimal tablo) {#tbl-bym-max-optimal .simpleks .oransiz}
+
+Maksimum probleminde bütün $z_j - c_j \ge 0$ olunca tablo optimaldir; bu tabloda öyledir. Bazda yapay değişken olmadığından optimal çözüm
+
+$$X^{*} = (x_1, x_2, x_3, x_4) = (4, 3, 4, 0), \qquad \max z = 2 \cdot 4 + 3 = 11$$
+
+dir. Sağlama: $4 + 3 = 7 \ge 3$ (fazla $x_3 = 4$), $4 - 3 = 1$ ve $4 + 6 = 10$ ($x_4 = 0$).
+
+Eşitlik kısıtı yüzünden uygun çözümler bir doğru parçası oluşturur: $x_1 = x_2 + 1$ yazılırsa birinci kısıt $x_2 \ge 1$, üçüncü kısıt $x_2 \le 3$ verir. Parçanın uç noktaları $(2, 1)$ ve $(4, 3)$'tür ve amaç değerleri $5$ ile $11$'dir. Yöntem uygun olmayan iki noktadan geçip önce $(2, 1)$ ucuna, sonra optimal $(4, 3)$ ucuna ulaştı.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 516.0 436.0" role="img" aria-label="Feasible set is the segment from (2,1) to (4,3) on the line x1 - x2 = 1; Big M path from (0,0) to (1,0) to (2,1) to (4,3); dashed level line z = 11">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="180.0" y1="30.0" x2="180.0" y2="430.0"/><line x1="260.0" y1="30.0" x2="260.0" y2="430.0"/><line x1="340.0" y1="30.0" x2="340.0" y2="430.0"/><line x1="420.0" y1="30.0" x2="420.0" y2="430.0"/><line x1="500.0" y1="30.0" x2="500.0" y2="430.0"/><line x1="60.0" y1="310.0" x2="540.0" y2="310.0"/><line x1="60.0" y1="230.0" x2="540.0" y2="230.0"/><line x1="60.0" y1="150.0" x2="540.0" y2="150.0"/><line x1="60.0" y1="70.0" x2="540.0" y2="70.0"/></g>
+  <path d="M60.0,110.0 L380.0,430.0" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M540.0,30.0 L140.0,430.0" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M540.0,210.0 L180.0,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M540.0,390.0 L360.0,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M260.0,310.0 L420.0,150.0" fill="none" stroke="var(--color-theory)" stroke-width="6" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="390.0" x2="544.0" y2="390.0"/>
+  <line x1="100.0" y1="434.0" x2="100.0" y2="26.0"/>
+  <polygon points="544.0,390.0 536.0,386.5 536.0,393.5" stroke="none"/>
+  <polygon points="100.0,26.0 96.5,34.0 103.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="180.0" y1="387.0" x2="180.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="180.0" y="405.0" text-anchor="middle">1</text>
+  <line x1="260.0" y1="387.0" x2="260.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="260.0" y="405.0" text-anchor="middle">2</text>
+  <line x1="340.0" y1="387.0" x2="340.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="340.0" y="405.0" text-anchor="middle">3</text>
+  <line x1="420.0" y1="387.0" x2="420.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="420.0" y="405.0" text-anchor="middle">4</text>
+  <line x1="500.0" y1="387.0" x2="500.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="500.0" y="405.0" text-anchor="middle">5</text>
+  <line x1="97.0" y1="310.0" x2="103.0" y2="310.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.0" y="314.0" text-anchor="end">1</text>
+  <line x1="97.0" y1="230.0" x2="103.0" y2="230.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.0" y="234.0" text-anchor="end">2</text>
+  <line x1="97.0" y1="150.0" x2="103.0" y2="150.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.0" y="154.0" text-anchor="end">3</text>
+  <line x1="97.0" y1="70.0" x2="103.0" y2="70.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.0" y="74.0" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="542.0" y="405.0" text-anchor="end">x₁</text>
+  <text x="107.0" y="35.0">x₂</text>
+  </g>
+  <line x1="100.0" y1="390.0" x2="171.2" y2="390.0" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="180.0,390.0 169.0,394.6 169.0,385.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="180.0" y1="390.0" x2="253.8" y2="316.2" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="260.0,310.0 255.5,321.0 249.0,314.5" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="260.0" y1="310.0" x2="413.8" y2="156.2" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="420.0,150.0 415.5,161.0 409.0,154.5" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="100.0" cy="390.0" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="180.0" cy="390.0" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="260.0" cy="310.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="420.0" cy="150.0" r="4.5" fill="var(--color-practice)"/>
+  <text x="78.0" y="382.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="154.0" y="380.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁</text>
+  <text x="272.0" y="324.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₂ = (2, 1)</text>
+  <text x="334.0" y="142.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₃ = (4, 3)</text>
+  <text x="116.0" y="106.0" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + x₂ = 3</text>
+  <text x="480.0" y="114.0" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ − x₂ = 1</text>
+  <text x="124.0" y="46.0" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 2x₂ = 10</text>
+  <text x="400.0" y="274.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = 11</text>
+</svg>
+<figcaption>Maksimum örneğinde uygun çözümler kümesi x₁ − x₂ = 1 doğrusunun (2, 1) ile (4, 3) arasındaki parçasıdır (kalın). Büyük M yolu: X₀ = (0, 0) → X₁ = (1, 0) → X₂ = (2, 1) → X₃ = (4, 3); içi boş çizilen ilk iki nokta uygun değildir. Kesikli doğru z = 2x₁ + x₂ = 11 seviye doğrusudur.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Uygun Çözümü Olmayan Problem
+
+Şimdi @thm-bym-uygunsuz teoreminin öngördüğü durumu bir örnekte görelim.
+
+:::: {#exm-bym-uygunsuz name="Uygun çözümü olmayan bir maksimum problemi"}
+Aşağıdaki problemi Büyük M yöntemiyle çözmeye çalışınız.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 2 \\
+2x_1 + 3x_2 &\ge 12 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Standart form ve çözülebilir hal.** Birinci kısıta $x_3$ aylak değişkenini ekler, ikinci kısıttan $x_4$ artık değişkenini çıkarırız. İkinci denklemin birim sütunu olmadığı için ona $x_{u_1}$ yapay değişkenini ekleriz; maksimum problemi olduğundan katsayısı $-M$'dir:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 2 \\
+2x_1 + 3x_2 - x_4 + x_{u_1} &= 12 \\
+x_1, x_2, x_3, x_4, x_{u_1} &\ge 0 \\
+\max z &= 3x_1 + 2x_2 + 0x_3 + 0x_4 - Mx_{u_1}
+\end{aligned}
+$$
+
+Başlangıç bazı $B_0 = (v_3, v_{u_1})$, $\vec{c}_B = (0, -M)$'dir.
+
+**Simpleks kriterleri.**
+
+$$
+\begin{aligned}
+z_1 - c_1 &= (0 \cdot 1 - M \cdot 2) - 3 = -2M - 3, \\[1mm]
+z_2 - c_2 &= (0 \cdot 1 - M \cdot 3) - 2 = -3M - 2, \\[1mm]
+z_4 - c_4 &= (0 \cdot 0 - M \cdot (-1)) - 0 = M, \\[1mm]
+z_0 &= 0 \cdot 2 - M \cdot 12 = -12M.
+\end{aligned}
+$$
+
+Maksimum probleminde en negatif kriter girer. $M$'nin katsayıları $-3 < -2$ olduğundan en negatifi $-3M - 2$'dir ve $v_2$ baza girer. Oranlar $\tfrac{2}{1} = 2$ ve $\tfrac{12}{3} = 4$'tür; $v_3$ bazdan çıkar ve pivot $1$'dir.
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ | $-M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ | Oran |
+| $x_3$ | $0$ | $2$ | $1$ | $[1]$ | $1$ | $0$ | $0$ | $\frac{2}{1} \Rightarrow$ |
+| $x_{u_1}$ | $-M$ | $12$ | $2$ | $3$ | $0$ | $-1$ | $1$ | $\frac{12}{3}$ |
+| $z_j - c_j$ |   | $z_0 = -12M$ | $-2M-3$ | $-3M-2 \Uparrow$ | $0$ | $M$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-bym-uygunsuz-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot $1$ olduğundan $x_3$ satırı aynen kalır ve $x_2$ satırı olur: $(2 \mid 1,\ 1,\ 1,\ 0,\ 0)$. $x_{u_1}$ satırından yeni pivot satırının $3$ katı çıkarılır:
+
+$$
+\begin{aligned}
+&(12 - 6 \mid 2 - 3,\ 3 - 3,\ 0 - 3,\ -1 - 0,\ 1 - 0) \\[1mm]
+&\quad = (6 \mid -1,\ 0,\ -3,\ -1,\ 1).
+\end{aligned}
+$$
+
+$\vec{c}_B = (2, -M)$ ile:
+
+$$
+\begin{aligned}
+z_1 - c_1 &= 2 \cdot 1 - M \cdot (-1) - 3 = M - 1, \\[1mm]
+z_3 - c_3 &= 2 \cdot 1 - M \cdot (-3) - 0 = 3M + 2, \\[1mm]
+z_4 - c_4 &= 2 \cdot 0 - M \cdot (-1) - 0 = M, \\[1mm]
+z_0 &= 2 \cdot 2 - M \cdot 6 = -6M + 4.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ | $-M$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_{u_1}$ |
+| $x_2$ | $2$ | $2$ | $1$ | $1$ | $1$ | $0$ | $0$ |
+| $x_{u_1}$ | $-M$ | $6$ | $-1$ | $0$ | $-3$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = -6M+4$ | $M-1$ | $0$ | $3M+2$ | $M$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) {#tbl-bym-uygunsuz-optimal .simpleks .oransiz}
+
+Kriterlerde $M$'nin katsayıları $1$, $3$, $1$ pozitiftir; yeterince büyük $M$ için bütün $z_j - c_j \ge 0$'dır ve tablo optimaldir. Ama bazda $x_{u_1} = 6 > 0$ yapay değişkeni kaldı. @thm-bym-uygunsuz gereği **problemin uygun çözümü yoktur**; dolayısıyla optimal çözümden de söz edilemez.
+
+Bunu doğrudan da görebiliriz. $x_1, x_2 \ge 0$ iken birinci kısıttan
+
+$$2x_1 + 3x_2 \le 3x_1 + 3x_2 = 3(x_1 + x_2) \le 3 \cdot 2 = 6$$
+
+çıkar; oysa ikinci kısıt $2x_1 + 3x_2 \ge 12$ istiyor. Tablonun gösterdiği $(x_1, x_2) = (0, 2)$ noktasında $2x_1 + 3x_2 = 6$'dır ve eksik kalan $12 - 6 = 6$ birimi yapay değişken taşır. Yukarıdaki eşitsizlik bu eksiğin $6$'dan aşağı inemeyeceğini gösteriyor: yöntem, eksiği olabildiğince küçültüp durmuştur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 516.0 384.5" role="img" aria-label="Triangle x1 + x2 at most 2 and half plane 2x1 + 3x2 at least 12 do not meet; Big M path from (0,0) to (0,2) with a dashed gap of 6 units up to the line">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="158.6" y1="30.0" x2="158.6" y2="378.5"/><line x1="224.4" y1="30.0" x2="224.4" y2="378.5"/><line x1="290.1" y1="30.0" x2="290.1" y2="378.5"/><line x1="355.9" y1="30.0" x2="355.9" y2="378.5"/><line x1="421.6" y1="30.0" x2="421.6" y2="378.5"/><line x1="487.4" y1="30.0" x2="487.4" y2="378.5"/><line x1="60.0" y1="279.9" x2="540.0" y2="279.9"/><line x1="60.0" y1="214.1" x2="540.0" y2="214.1"/><line x1="60.0" y1="148.4" x2="540.0" y2="148.4"/><line x1="60.0" y1="82.6" x2="540.0" y2="82.6"/></g>
+  <polygon points="92.9,345.6 224.4,345.6 92.9,214.1" fill="var(--color-theory)" fill-opacity="0.2" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <polygon points="487.4,345.6 540.0,345.6 540.0,30.0 92.9,30.0 92.9,82.6" fill="var(--color-remark)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M60.0,181.2 L257.3,378.5" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,60.7 L536.7,378.5" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="345.6" x2="544.0" y2="345.6"/>
+  <line x1="92.9" y1="382.5" x2="92.9" y2="26.0"/>
+  <polygon points="544.0,345.6 536.0,342.1 536.0,349.1" stroke="none"/>
+  <polygon points="92.9,26.0 89.4,34.0 96.4,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="158.6" y1="342.6" x2="158.6" y2="348.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="158.6" y="360.6" text-anchor="middle">1</text>
+  <line x1="224.4" y1="342.6" x2="224.4" y2="348.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="224.4" y="360.6" text-anchor="middle">2</text>
+  <line x1="290.1" y1="342.6" x2="290.1" y2="348.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="290.1" y="360.6" text-anchor="middle">3</text>
+  <line x1="355.9" y1="342.6" x2="355.9" y2="348.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="355.9" y="360.6" text-anchor="middle">4</text>
+  <line x1="421.6" y1="342.6" x2="421.6" y2="348.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="421.6" y="360.6" text-anchor="middle">5</text>
+  <line x1="487.4" y1="342.6" x2="487.4" y2="348.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="487.4" y="360.6" text-anchor="middle">6</text>
+  <line x1="89.9" y1="279.9" x2="95.9" y2="279.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="85.9" y="283.9" text-anchor="end">1</text>
+  <line x1="89.9" y1="214.1" x2="95.9" y2="214.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="85.9" y="218.1" text-anchor="end">2</text>
+  <line x1="89.9" y1="148.4" x2="95.9" y2="148.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="85.9" y="152.4" text-anchor="end">3</text>
+  <line x1="89.9" y1="82.6" x2="95.9" y2="82.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="85.9" y="86.6" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="542.0" y="360.6" text-anchor="end">x₁</text>
+  <text x="99.9" y="35.0">x₂</text>
+  </g>
+  <line x1="92.9" y1="345.6" x2="92.9" y2="222.9" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="92.9,214.1 97.5,225.1 88.3,225.1" fill="var(--color-practice)" opacity="1.0"/>
+  <path d="M92.9,214.1 L92.9,82.6" fill="none" stroke="var(--color-base)" stroke-width="2.4" stroke-dasharray="5 4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="92.9" cy="345.6" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="92.9" cy="214.1" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <text x="100.9" y="337.6" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="102.9" y="208.1" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁</text>
+  <text x="102.9" y="152.4" fill="var(--color-base)" font-size="12" text-anchor="start">eksik: 6</text>
+  <text x="109.3" y="309.5" fill="var(--color-theory)" font-size="12" text-anchor="start">x₁ + x₂ ≤ 2</text>
+  <text x="316.4" y="115.5" fill="var(--color-remark)" font-size="12" text-anchor="start">2x₁ + 3x₂ ≥ 12</text>
+</svg>
+<figcaption>Kısıtların ikisini birden sağlayan nokta yoktur: x₁ + x₂ ≤ 2 üçgeni ile 2x₁ + 3x₂ ≥ 12 yarı düzlemi (ikisi de boyalı) kesişmez. Yöntem X₀ = (0, 0) noktasından üçgenin X₁ = (0, 2) köşesine gider ve durur; orada 2x₁ + 3x₂ = 6'dır ve eksik kalan 12 − 6 = 6 birimi (kesikli parça) yapay değişken taşır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+[Lineer programlama problemi](lineer-programlama-problemi.qmd) bölümündeki diyet problemi (@exm-lpp-diyet) de böyledir. Orada kolesterol sınırı yüzünden C vitamini gereksiniminin karşılanamayacağını elle göstermiştik. Büyük M yöntemi bunu kendiliğinden fark eder. A, C ve D vitamini kısıtları $\ge$ biçiminde olduğu için bu üç denkleme birer yapay değişken eklenir; kolesterol kısıtının aylak değişkeni ise hazır bir birim sütun verir. Üç iterasyon sonunda ulaşılan optimal tabloda $x_2 = \tfrac{8}{5}$ kg et bulunur ve A ile C vitamini satırlarının yapay değişkenleri $x_{u_1} = \tfrac{67}{5}$ ve $x_{u_2} = 14$ değerleriyle bazda kalır. @thm-bym-uygunsuz gereği diyetin uygun çözümü yoktur. Yapay değişkenler burada da eksik kalan vitamini ölçer: kolesterol sınırının izin verdiği $1{,}6$ kg et $1{,}6$ mg A ve $16$ mg C vitamini verir; A vitamininden $15 - 1{,}6 = 13{,}4$ mg, C vitamininden $30 - 16 = 14$ mg eksik kalır.
+
+## Bazda Sıfır Değerli Yapay Değişken
+
+Son olarak @prp-bym-sifir-yapay önermesinin ikinci maddesini, yani gereksiz bir kısıt yüzünden yapay değişkenin bazda sıfır değerle kaldığı durumu görelim.
+
+:::: {#exm-bym-sifir name="Gereksiz kısıtlı bir problem"}
+Aşağıdaki problemi Büyük M yöntemiyle çözünüz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &= 2 \\
+2x_1 + 2x_2 &= 4 \\
+x_1, x_2 &\ge 0 \\
+\min z &= x_1 + 2x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Çözülebilir hal.** İki kısıt da eşitliktir ve sağ tarafları negatif değildir; problem standart formdadır. Hiçbir denklemde birim sütun olmadığı için ikisine de yapay değişken ekleriz; minimum problemi olduğundan katsayıları $+M$'dir:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_{u_1} &= 2 \\
+2x_1 + 2x_2 + x_{u_2} &= 4 \\
+x_1, x_2, x_{u_1}, x_{u_2} &\ge 0 \\
+\min z &= x_1 + 2x_2 + Mx_{u_1} + Mx_{u_2}
+\end{aligned}
+$$
+
+**Simpleks kriterleri.** $\vec{c}_B = (M, M)$ ile
+
+$$
+\begin{aligned}
+z_1 - c_1 &= (M \cdot 1 + M \cdot 2) - 1 = 3M - 1, \\[1mm]
+z_2 - c_2 &= (M \cdot 1 + M \cdot 2) - 2 = 3M - 2, \\[1mm]
+z_0 &= M \cdot 2 + M \cdot 4 = 6M.
+\end{aligned}
+$$
+
+Minimum probleminde en büyük pozitif kriter girer. İki kriterde de $M$'nin katsayısı $3$'tür; sabit terimlerde $-1 > -2$ olduğundan $3M - 1$ daha büyüktür ve $v_1$ baza girer. Oranlar $\tfrac{2}{1} = 2$ ve $\tfrac{4}{2} = 2$ eşittir. Eşitlik durumunda iki satırdan biri seçilebilir; birinci satırı seçelim. $v_{u_1}$ bazdan çıkar ve pivot $1$'dir.
+
+|   |   | $c_j$ | $1$ | $2$ | $M$ | $M$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_{u_1}$ | $v_{u_2}$ | Oran |
+| $x_{u_1}$ | $M$ | $2$ | $[1]$ | $1$ | $1$ | $0$ | $\frac{2}{1} \Rightarrow$ |
+| $x_{u_2}$ | $M$ | $4$ | $2$ | $2$ | $0$ | $1$ | $\frac{4}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 6M$ | $3M-1 \Uparrow$ | $3M-2$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-bym-sifir-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot $1$ olduğundan $x_{u_1}$ satırı aynen kalır ve $x_1$ satırı olur: $(2 \mid 1,\ 1,\ 0)$; son eleman $v_{u_2}$ sütunundadır. $x_{u_2}$ satırından yeni pivot satırının $2$ katı çıkarılır:
+
+$$(4 - 4 \mid 2 - 2,\ 2 - 2,\ 1 - 0) = (0 \mid 0,\ 0,\ 1).$$
+
+$v_{u_1}$ sütunu atılır. $\vec{c}_B = (1, M)$ ile
+
+$$
+\begin{aligned}
+z_2 - c_2 &= 1 \cdot 1 + M \cdot 0 - 2 = -1, \\[1mm]
+z_0 &= 1 \cdot 2 + M \cdot 0 = 2.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $1$ | $2$ | $M$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_{u_2}$ |
+| $x_1$ | $1$ | $2$ | $1$ | $1$ | $0$ |
+| $x_{u_2}$ | $M$ | $0$ | $0$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 2$ | $0$ | $-1$ | $0$ |
+
+: Birinci iterasyon tablosu (optimal tablo) {#tbl-bym-sifir-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \le 0$ olduğundan tablo optimaldir. Bazda $x_{u_2}$ yapay değişkeni kaldı, ama değeri $0$'dır. @thm-bym-optimal gereği optimal çözüm $x_1 = 2$, $x_2 = 0$ ve $\min z = 2$'dir.
+
+$x_{u_2}$ satırının yapay olmayan $v_1$ ve $v_2$ sütunlarındaki elemanları sıfırdır; @prp-bym-sifir-yapay önermesinin ikinci maddesi gereği kısıtlardan biri gereksizdir. Gerçekten ikinci kısıt birincinin $2$ katıdır: $2(x_1 + x_2) = 2 \cdot 2$. Önermenin ispatındaki katsayılar da görünür: tablonun $x_{u_2}$ satırı, başlangıç tablosunun ikinci satırından birinci satırın $2$ katı çıkarılarak elde edildi, yani $w_1 = -2$, $w_2 = 1$'dir. $x_{u_2}$ satırı yapay değişkenler sıfırken $0 = 0$ der ve silinebilir; geriye tek denklemli $x_1 + x_2 = 2$ problemi kalır.
+
+Sonucu doğrudan da sağlayabiliriz: $x_1 + x_2 = 2$ üzerinde $z = x_1 + 2x_2 = 2 + x_2 \ge 2$'dir ve eşitlik yalnız $x_2 = 0$ için sağlanır. Oran testinde ikinci satırı seçseydik bu kez $x_{u_1}$ bazda $0$ değeriyle kalırdı; sonuç değişmezdi.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 506.0 469.0" role="img" aria-label="Both constraints give the line x1 + x2 = 2; the feasible set is the segment from (0,2) to (2,0); Big M path from (0,0) to (2,0); dashed level line z = 2">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="262.9" y1="30.0" x2="262.9" y2="462.9"/><line x1="398.2" y1="30.0" x2="398.2" y2="462.9"/><line x1="533.5" y1="30.0" x2="533.5" y2="462.9"/><line x1="60.0" y1="260.0" x2="520.0" y2="260.0"/><line x1="60.0" y1="124.7" x2="520.0" y2="124.7"/></g>
+  <path d="M60.0,57.1 L465.9,462.9" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,226.2 L520.0,456.2" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M127.6,124.7 L398.2,395.3" fill="none" stroke="var(--color-theory)" stroke-width="6" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="395.3" x2="524.0" y2="395.3"/>
+  <line x1="127.6" y1="466.9" x2="127.6" y2="26.0"/>
+  <polygon points="524.0,395.3 516.0,391.8 516.0,398.8" stroke="none"/>
+  <polygon points="127.6,26.0 124.1,34.0 131.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="262.9" y1="392.3" x2="262.9" y2="398.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="262.9" y="410.3" text-anchor="middle">1</text>
+  <line x1="398.2" y1="392.3" x2="398.2" y2="398.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="398.2" y="410.3" text-anchor="middle">2</text>
+  <line x1="124.6" y1="260.0" x2="130.6" y2="260.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="120.6" y="264.0" text-anchor="end">1</text>
+  <line x1="124.6" y1="124.7" x2="130.6" y2="124.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="120.6" y="128.7" text-anchor="end">2</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="522.0" y="410.3" text-anchor="end">x₁</text>
+  <text x="134.6" y="35.0">x₂</text>
+  </g>
+  <line x1="127.6" y1="395.3" x2="389.4" y2="395.3" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="398.2,395.3 387.2,399.9 387.2,390.7" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="127.6" cy="395.3" r="5" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="398.2" cy="395.3" r="4.5" fill="var(--color-practice)"/>
+  <text x="105.6" y="387.3" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="406.2" y="383.3" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁ = (2, 0)</text>
+  <text x="276.5" y="249.2" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + x₂ = 2</text>
+  <text x="276.5" y="219.4" fill="var(--color-remark)" font-size="12" text-anchor="start">2x₁ + 2x₂ = 4</text>
+  <text x="143.9" y="250.5" fill="var(--color-base)" font-size="12" text-anchor="start">z = 2</text>
+</svg>
+<figcaption>İki kısıt aynı doğruyu verir; uygun çözümler kümesi (0, 2) ile (2, 0) arasındaki kalın parçadır. Yöntem uygun olmayan X₀ = (0, 0) noktasından tek adımda optimal X₁ = (2, 0) köşesine gider. Kesikli doğru z = x₁ + 2x₂ = 2 seviye doğrusudur.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde Büyük M yöntemiyle, standart formu birim matris içermeyen problemleri simpleks tablosunda çözmeyi öğrendik. Yöntem yapay değişkenleri büyük bir cezayla bazdan çıkarır; optimal tabloda yapay değişken kalıp kalmadığına bakarak da problemin uygun çözümü olup olmadığını söyler. Yöntemin bir zorluğu, her kriteri $aM + b$ biçiminde iki parçalı taşımaktır; $M$ için büyük bir sayı seçip hesabı sayısal yapmak ise yuvarlama hatalarına yol açabilir. Bir sonraki bölümde, [İki faz yöntemi](iki-faz-yontemi.qmd) bölümünde, aynı işi $M$ kullanmadan iki ayrı aşamada yapmayı göreceğiz: önce yalnız yapay değişkenlerin toplamı sıfıra indirilir, sonra orijinal amaç fonksiyonuyla devam edilir.

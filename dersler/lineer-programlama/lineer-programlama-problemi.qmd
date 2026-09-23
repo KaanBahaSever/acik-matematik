@@ -1,0 +1,1248 @@
+---
+title: "Lineer Programlama Problemi, Kanonik ve Standart Formlar"
+pagetitle: "Lineer Programlama Problemi, Kanonik ve Standart Formlar"
+description: "Lineer programlama probleminin tanımı, varsayımları ve diyet, üretim ve karışım örnekleriyle model kurma; toplam, matris ve vektör gösterimleri; kanonik form, aylak ve artık değişkenli standart form, yapay değişkenli simpleks ile çözülebilir hal ve bir problemi bu formlara getiren dönüştürme kuralları."
+---
+
+Bir atölye elindeki sınırlı işçilik ve malzemeyle hangi üründen kaç tane üretmeli ki kârı en büyük olsun? Bir diyet hangi besinlerden ne kadar içermeli ki vitamin gereksinimleri karşılansın ve maliyet en küçük kalsın? Bu soruların ortak bir kalıbı var: birkaç bilinmeyen doğrusal eşitsizliklerle sınırlanıyor ve yine doğrusal bir ölçütün en iyi değeri aranıyor. Lineer programlama bu kalıptaki soruları modellemek ve çözmek için geliştirilmiş bir yöntemdir.
+
+Bu bölümde önce lineer programlama probleminin ne olduğunu ve hangi varsayımlara dayandığını göreceğiz, sonra sözel problemlerden model kurmayı öğreneceğiz. Bölümün ikinci yarısı, kitap boyunca sürekli kullanacağımız üç kavrama ayrılmıştır: **kanonik form**, **standart form** ve **simpleks yöntem ile çözülebilir hal**. Bu üçü birbirine çok benzediği için kolayca karışır. Bu yüzden her birini ayrı bir tanımla verecek, küçük örneklerle pekiştirecek, sonra bir problemi bu formlara getiren kuralları tek tek görecek ve en sonunda üçünü yan yana karşılaştıracağız.
+
+## Lineer Programlama Problemi
+
+Önce yöntemin ne yaptığını ve bir modelin hangi parçalardan oluştuğunu görelim.
+
+**Lineer programlama** (LP), belirli bir amaca ulaşmak için bazı kısıtlayıcı koşullar altında kıt kaynakların en verimli (optimal) biçimde kullanılmasını sağlayan bir yöntemdir. Adındaki "lineer" sözcüğü kullanılan fonksiyonların doğrusal olduğunu, "programlama" sözcüğü ise planlama işini anlatır; bilgisayar programlamasıyla bir ilgisi yoktur. Yani lineer programlama, bütün uygun seçenekler arasından en iyi (optimum) sonucu bulmaya yönelik bir planlama faaliyetidir. Böyle bir çalışmada önce gerekli veriler toplanır, sonra problem modellenir, en sonunda da modelin çözümü araştırılır.
+
+Bir lineer programlama modeli kurulurken değişkenler arasındaki ilişkiler ve kullanılacak kıt kaynaklar belirlenir. Bunun için üç şey yapılır:
+
+- **Karar değişkenleri belirlenir.** Karar verilecek sistem gözlemlenir; değeri bizim kontrolümüzde olan ve sistemin performansını etkileyen büyüklükler seçilir. Bu büyüklükler karar vericinin elindedir ve **karar değişkenleri** diye adlandırılır. Örneğin bir işletme A ve B tipinde iki farklı ürün üretmek istiyorsa karar değişkenleri, üretilecek A ve B miktarlarını gösteren $x_1$ ve $x_2$ olur.
+- **Kısıtlayıcı koşullar belirlenir.** Eldeki kaynaklar sınırlı olduğundan karar değişkenleri istediğimiz her değeri alamaz. Bu sınırlamalar karar değişkenlerinin lineer fonksiyonları cinsinden eşitlik ya da eşitsizlik olarak yazılır ve **kısıtlar** diye adlandırılır.
+- **Amaç fonksiyonu belirlenir.** Amaç en iyi dağılımı bulmak olduğundan, "iyiliği" ölçen büyüklük (kâr, maliyet, süre, …) karar değişkenlerinin lineer bir fonksiyonu olarak yazılır. Bu fonksiyona **amaç fonksiyonu** denir; problem onu en büyük (maksimum) ya da en küçük (minimum) yapmaktır.
+
+Bu üç parçayı genel olarak yazınca lineer programlama probleminin tanımına ulaşırız.
+
+::: {#def-lpp-lp-problemi name="Lineer programlama problemi"}
+$a_{ij}$, $b_i$ ve $c_j$ ($i = 1, 2, \dots, m$ ve $j = 1, 2, \dots, n$) bilinen sabitler olsun. Her satırda $\le$, $=$, $\ge$ bağıntılarından biri bulunmak üzere
+
+$$
+\begin{aligned}
+a_{11}x_1 + a_{12}x_2 + \dots + a_{1n}x_n &\begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} b_1 \\[1mm]
+a_{21}x_1 + a_{22}x_2 + \dots + a_{2n}x_n &\begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} b_2 \\[1mm]
+&\;\;\vdots \\[1mm]
+a_{m1}x_1 + a_{m2}x_2 + \dots + a_{mn}x_n &\begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} b_m
+\end{aligned}
+\tag{1}
+$$
+
+$$x_1 \ge 0, \ x_2 \ge 0, \ \dots, \ x_n \ge 0 \tag{2}$$
+
+kısıtları altında
+
+$$z = c_1x_1 + c_2x_2 + \dots + c_nx_n \tag{3}$$
+
+amaç fonksiyonunu minimum (ya da maksimum) yapan $x_1, x_2, \dots, x_n$ bilinmeyenlerini (değişkenlerini) belirleme problemine **lineer programlama problemi** denir. Ayrıca $m < n$ olduğu ve her $i = 1, 2, \dots, m$ için $b_i \ge 0$ olduğu varsayılır.
+:::
+
+Yani bir lineer programlama problemi üç bölümden oluşur:
+
+1. **(1) kısıtlar sistemi.** Karar değişkenlerinin alabileceği değerleri sınırlar. Her kısıt doğrusal bir eşitlik ya da eşitsizliktir.
+2. **(2) işaret koşulları.** Karar değişkenlerinin negatif olamayacağını söyler. Üretim miktarı, tüketilen besin, taşınan mal gibi büyüklükler zaten negatif olamaz.
+3. **(3) amaç fonksiyonu.** Karar değişkenlerinin doğrusal bir fonksiyonudur ve maksimum ya da minimum yapılmak istenir.
+
+İndislerin rolünü karıştırmamak için şunu akılda tutalım: $a_{ij}$ katsayısında **ilk indis $i$ kısıtın (satırın)**, **ikinci indis $j$ değişkenin (sütunun)** numarasıdır. $m$ kısıt sayısı, $n$ değişken sayısıdır.
+
+Tanımın sonundaki iki varsayım da kısıtlayıcı değildir. $b_i \ge 0$ varsayımı genelliği bozmaz: sağ tarafı negatif olan bir kısıtı $-1$ ile çarparsak eşitsizliğin yönü döner ve sağ taraf pozitif olur (bkz. @sec-lpp-donusturme). Yalnız kanonik formda, eşitsizliklerin yönünü düzeltirken bu varsayımı geçici olarak bırakacağız; standart forma geçerken yeniden sağlanacak. $m < n$ varsayımı ise asıl olarak kısıtların hepsi eşitlik olduğunda anlam taşır: denklem sayısı bilinmeyen sayısından az olunca sistemin genellikle sonsuz çözümü vardır ve bunlar arasından en iyisini seçmek anlamlı hale gelir. Eşitsizlikli bir problemde $m \ge n$ olabilir; ileride eşitsizlikleri eşitliğe çevirirken eklenen yeni değişkenler değişken sayısını artırır. Örneğin birazdan kuracağımız üretim modelinde $m = 3$ kısıt ve $n = 2$ değişken vardır, ama eşitlik haline getirilmiş biçiminde $3$ denklem ve $5$ değişken olur.
+
+:::: {#exm-lpp-katsayilar name="Katsayıları okumak"}
+Aşağıdaki problemde $m$, $n$ ve bütün $a_{ij}$, $b_i$, $c_j$ sabitlerini belirleyiniz:
+
+$$
+\begin{aligned}
+x_1 + 2x_2 + 3x_3 &\le 12 \\
+2x_1 - x_2 &= 4 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 5x_1 + 4x_2 - x_3
+\end{aligned}
+$$
+
+::: {.cozum}
+İki kısıt ve üç değişken var; $m = 2$ ve $n = 3$'tür.
+
+Birinci kısıttaki katsayılar $a_{11} = 1$, $a_{12} = 2$, $a_{13} = 3$'tür. İkinci kısıtta $x_3$ görünmüyor; görünmeyen değişkenin katsayısı sıfırdır. Böylece $a_{21} = 2$, $a_{22} = -1$, $a_{23} = 0$ olur. Sağ taraf sabitleri $b_1 = 12$ ve $b_2 = 4$'tür; ikisi de negatif değildir. Amaç fonksiyonunun katsayıları $c_1 = 5$, $c_2 = 4$, $c_3 = -1$'dir.
+
+Birinci kısıt $\le$, ikinci kısıt $=$ biçimindedir; amaç fonksiyonu maksimum yapılmak isteniyor. Tanımdaki (1), (2), (3) parçaları sırasıyla ilk iki satır, $x_1, x_2, x_3 \ge 0$ satırı ve son satırdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Programlama Probleminin Varsayımları
+
+Gerçek hayatta karşılaşılan çoğu karar problemi için, en azından uygun kabuller yapılarak, lineer bir model kurmak mümkündür. Model kurmak gerçek sistemi matematiksel olarak ifade etmek demektir. Modelden tutarlı sonuçlar alabilmek için aşağıdaki dört varsayımın geçerli olması gerekir.
+
+::: {#def-lpp-dogrusallik name="Doğrusallık (oranlılık) varsayımı"}
+Her karar değişkeninin amaç fonksiyonuna ve her kısıta katkısı, o değişkenin değeriyle **orantılıdır**: $x_j$ değişkeninin amaca katkısı $c_jx_j$, $i$. kısıta katkısı $a_{ij}x_j$'dir.
+:::
+
+Yani bir birim ürün 3 saat işçilik ve 50 TL kâr getiriyorsa, 10 birim ürün 30 saat işçilik ve 500 TL kâr getirir. Örneğin çok alana indirim yapılıyorsa birim fiyat miktara bağlı hale gelir ve bu varsayım bozulur.
+
+::: {#def-lpp-toplanabilirlik name="Toplanabilirlik varsayımı"}
+Amaç fonksiyonunun değeri ve her kısıtın sol tarafı, değişkenlerin ayrı ayrı katkılarının **toplamıdır**; değişkenler birbirinin katkısını artırmaz ya da azaltmaz.
+:::
+
+Yani bir masa 2 saat, bir sandalye 1 saat işçilik istiyorsa $x_1$ masa ve $x_2$ sandalye için toplam işçilik $2x_1 + x_2$ saattir. Örneğin masa ve sandalye birlikte üretilince makine ayarı paylaşıldığı için süre kısalıyorsa, işçiliğe $x_1x_2$ gibi doğrusal olmayan bir terim karışır ve bu varsayım bozulur.
+
+::: {#def-lpp-bolunebilirlik name="Bölünebilirlik varsayımı"}
+Karar değişkenleri yalnız tam sayı değil, **kesirli değerler** de alabilir.
+:::
+
+Yani çözüm $2{,}5$ litre süt ya da $12{,}4$ ton çelik çıkabilir ve bu anlamlıdır. Örneğin karar değişkeni satın alınacak kamyon sayısıysa $2{,}5$ kamyon anlamsızdır ve bu varsayım bozulur. Böyle problemlerle [Tam sayılı programlama ve dal-sınır yöntemi](dal-sinir-yontemi.qmd) bölümünde ilgileneceğiz.
+
+::: {#def-lpp-belirlilik name="Belirlilik (kesinlik) varsayımı"}
+Modeldeki bütün $a_{ij}$, $b_i$, $c_j$ parametreleri **kesin olarak bilinir** ve değişmez.
+:::
+
+Yani etin kilosunun 26 TL, eldeki işçiliğin 100 saat olduğu kesin olarak bilinir. Örneğin gelecek haftanın talebi tahminle belirleniyor ve rastgele değişiyorsa bu varsayım bozulur; böyle durumlarda parametrelerdeki küçük değişikliklerin çözümü nasıl etkilediğini [Duyarlılık analizi](duyarlilik-analizi.qmd) bölümünde inceleyeceğiz.
+
+Bir problemde karar değişkenleri ve parametrelerle ilgili doğrusallık, toplanabilirlik, bölünebilirlik ve belirlilik varsayımları geçerliyse, problem bir lineer programlama problemi olarak modellenip çözülebilir. Lineer programlamanın başlıca uygulama alanları şunlardır:
+
+- **Ulaştırma ve lojistik problemleri:** malı depolardan mağazalara en düşük taşıma maliyetiyle dağıtmak.
+- **Endüstriyel üretim planlaması ve stok kontrolü:** hangi üründen ne kadar üretileceğine, ne kadar stok tutulacağına karar vermek.
+- **Karışım problemleri:** yem, yakıt, alaşım gibi karışımları istenen özellikleri sağlayacak en ucuz oranlarda hazırlamak.
+- **Finansal planlama problemleri:** bir bütçeyi, getiri ve risk koşullarına uyarak yatırım seçenekleri arasında paylaştırmak.
+
+## Model Kurma {#sec-lpp-model-kurma}
+
+Sözel olarak verilen bir problemi lineer programlama problemine çevirmek, çözümün en önemli adımıdır; model yanlışsa en iyi çözüm yöntemi bile yanlış cevap verir. Aşağıdaki reçete bu işi düzene sokar.
+
+::: {.callout-tip title="Dört adımda model kurma"}
+1. **Karar değişkenlerini birimleriyle tanımla:** "$x_1$: bir günde tüketilecek süt miktarı (lt)" gibi.
+2. **Her kaynak ya da gereksinim için bir kısıt yaz:** "en az" $\to$ $\ge$, "en çok, geçmemeli" $\to$ $\le$, "tam olarak" $\to$ $=$. Kısıtın iki yanının birimi aynı olmalıdır.
+3. **İşaret koşullarını ekle:** $x_j \ge 0$.
+4. **Amaç fonksiyonunu yaz** ve maksimum mu minimum mu olduğunu belirt.
+
+Bu kitapta bir problemi hep bu sırayla yazacağız: önce kısıtlar, sonra işaret koşulları, en sonda amaç fonksiyonu.
+:::
+
+:::: {#exm-lpp-diyet name="Diyet problemi"}
+Bir kişi yalnız et, süt ve yumurta yiyerek diyet yapıyor. Günde en az 15 mg A vitamini, 30 mg C vitamini ve 10 mg D vitamini alması gerekiyor; buna karşılık besinlerden aldığı kolesterol günde 80 birimi geçmemeli.
+
+- 1 litre sütte 1 mg A, 100 mg D vitamini ve 70 birim kolesterol vardır; sütün litresi 2,25 TL'dir.
+- 1 kg ette 1 mg A, 10 mg C, 100 mg D vitamini ve 50 birim kolesterol vardır; etin kilosu 26 TL'dir.
+- Bir yumurtada 10 mg A, 10 mg C, 10 mg D vitamini ve 120 birim kolesterol vardır; yumurtanın tanesi 0,21 TL'dir.
+
+Kişi bu diyeti en ucuz yoldan gerçekleştirmek istiyor. Durumu bir lineer programlama problemi olarak ifade ediniz.
+
+::: {.cozum}
+Önce verileri bir tabloda toplayalım. Sütte C vitamini olmadığı için o hücreye $0$ yazıyoruz.
+
+| Gıda | A (mg) | C (mg) | D (mg) | Kolesterol (br) | Fiyat (TL/br) |
+|:--|:-:|:-:|:-:|:-:|:-:|
+| Süt (lt) | $1$ | $0$ | $100$ | $70$ | $2{,}25$ |
+| Et (kg) | $1$ | $10$ | $100$ | $50$ | $26$ |
+| Yumurta (adet) | $10$ | $10$ | $10$ | $120$ | $0{,}21$ |
+| Gereksinim | $\ge 15$ | $\ge 30$ | $\ge 10$ | $\le 80$ | |
+
+: Diyet probleminin verileri {#tbl-lpp-diyet}
+
+**Karar değişkenleri.** Kişinin karar vereceği şey, her besinden ne kadar tüketeceğidir:
+
+- $x_1$: bir günde tüketilecek süt miktarı (lt),
+- $x_2$: bir günde tüketilecek et miktarı (kg),
+- $x_3$: bir günde tüketilecek yumurta miktarı (adet).
+
+**Kısıtlar.** Tablodaki (bkz. @tbl-lpp-diyet) her besin öğesi sütunu bir kısıt verir. Örneğin A vitamini sütünü okuyalım: $x_1$ litre süt $1 \cdot x_1$ mg, $x_2$ kg et $1 \cdot x_2$ mg, $x_3$ yumurta $10x_3$ mg A vitamini verir. Toplam en az 15 mg olmalıdır: $x_1 + x_2 + 10x_3 \ge 15$. C ve D vitaminleri de aynı biçimde $\ge$ kısıtı verir. Kolesterol ise "geçmemeli" dendiği için $\le$ kısıtıdır.
+
+**Amaç.** Günlük maliyet $2{,}25x_1 + 26x_2 + 0{,}21x_3$ TL'dir ve en küçük yapılmak isteniyor.
+
+Böylece model şudur:
+
+$$
+\begin{aligned}
+x_1 + x_2 + 10x_3 &\ge 15 \\
+10x_2 + 10x_3 &\ge 30 \\
+100x_1 + 100x_2 + 10x_3 &\ge 10 \\
+70x_1 + 50x_2 + 120x_3 &\le 80 \\
+x_1, x_2, x_3 &\ge 0 \\
+\min z &= 2{,}25x_1 + 26x_2 + 0{,}21x_3
+\end{aligned}
+$$
+
+Modeli kurmak, bütün kısıtları sağlayan bir diyetin var olduğunu garanti etmez. Bu verilerde kolesterol kısıtı çok sıkıdır. Değişkenler negatif olmadığından
+
+$$50(x_2 + x_3) \le 50x_2 + 120x_3 \le 70x_1 + 50x_2 + 120x_3 \le 80$$
+
+olur, yani $x_2 + x_3 \le 1{,}6$'dır. O halde $10x_2 + 10x_3 \le 16$ çıkar ve C vitamini kısıtı ($\ge 30$) hiçbir biçimde sağlanamaz. Demek ki bu diyet verilen kolesterol sınırıyla gerçekleştirilemez. Simpleks yöntemin böyle durumları kendiliğinden nasıl fark ettiğini [Büyük M yöntemi](buyuk-m-yontemi.qmd) bölümünde göreceğiz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lpp-uretim name="Üretim planlaması"}
+Bir atölye masa ve sandalye üretiyor. Bir masa 2 saat, bir sandalye 1 saat işçilik istiyor ve haftada en çok 100 saat işçilik var. Masa da sandalye de birer birim ahşap istiyor ve haftada en çok 80 birim ahşap var. Pazar haftada en çok 40 masa alabiliyor, sandalye için bir sınır yok. Bir masadan 30 TL, bir sandalyeden 20 TL kâr ediliyor. Haftalık kârı en büyük yapan üretim planı için bir lineer programlama modeli kurunuz.
+
+::: {.cozum}
+**Karar değişkenleri.** $x_1$: haftada üretilecek masa sayısı, $x_2$: haftada üretilecek sandalye sayısı. (Bölünebilirlik varsayımıyla bunları haftalık ortalama üretim olarak düşünür, kesirli değerlere de izin veririz.)
+
+**Kısıtlar.** Her kaynak bir $\le$ kısıtı verir:
+
+- işçilik: $x_1$ masa $2x_1$ saat, $x_2$ sandalye $x_2$ saat ister ve toplam en çok 100 saattir: $2x_1 + x_2 \le 100$;
+- ahşap: $x_1 + x_2 \le 80$;
+- masa talebi: $x_1 \le 40$.
+
+**Amaç.** Haftalık kâr $30x_1 + 20x_2$ TL'dir ve en büyük yapılmak isteniyor.
+
+$$
+\begin{aligned}
+2x_1 + x_2 &\le 100 \\
+x_1 + x_2 &\le 80 \\
+x_1 &\le 40 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 30x_1 + 20x_2
+\end{aligned}
+$$
+
+Burada $m = 3$ kısıt ve $n = 2$ değişken vardır. Bu model bölümün geri kalanında birçok kez karşımıza çıkacak.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lpp-karisim name="Karışım problemi"}
+Bir çiftlik her gün tam 100 kg yem karışımı hazırlıyor. Karışımda mısır ve soya küspesi kullanılıyor. Mısırın %10'u, soya küspesinin %50'si proteindir; mısırın %2'si, soya küspesinin %6'sı liftir. Karışımın en az %30'u protein olmalı, en çok %5'i lif olabilir. Mısırın kilosu 4 TL, soya küspesinin kilosu 10 TL'dir. En ucuz karışım için bir lineer programlama modeli kurunuz.
+
+::: {.cozum}
+**Karar değişkenleri.** $x_1$: karışımdaki mısır miktarı (kg), $x_2$: karışımdaki soya küspesi miktarı (kg).
+
+**Kısıtlar.** Karışım tam 100 kg olduğundan ilk kısıt bir eşitliktir: $x_1 + x_2 = 100$.
+
+Protein miktarı $0{,}10x_1 + 0{,}50x_2$ kg'dır ve 100 kg'ın en az %30'u, yani en az 30 kg olmalıdır: $0{,}1x_1 + 0{,}5x_2 \ge 30$. İki yanı 10 ile çarparak ondalıklardan kurtulalım: $x_1 + 5x_2 \ge 300$.
+
+Lif miktarı $0{,}02x_1 + 0{,}06x_2$ kg'dır ve en çok 5 kg olabilir: $0{,}02x_1 + 0{,}06x_2 \le 5$. İki yanı 50 ile çarparsak $x_1 + 3x_2 \le 250$ olur.
+
+**Amaç.** Maliyet $4x_1 + 10x_2$ TL'dir ve en küçük yapılmak isteniyor.
+
+$$
+\begin{aligned}
+x_1 + x_2 &= 100 \\
+x_1 + 5x_2 &\ge 300 \\
+x_1 + 3x_2 &\le 250 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 4x_1 + 10x_2
+\end{aligned}
+$$
+
+Bu modelde üç tür kısıt da ($=$, $\ge$, $\le$) bir arada bulunuyor. Örneğin 50 kg mısır ile 50 kg soya küspesi bütün kısıtları sağlar: $50 + 50 = 100$, $50 + 250 = 300 \ge 300$, $50 + 150 = 200 \le 250$. Bu karışımın maliyeti $4 \cdot 50 + 10 \cdot 50 = 700$ TL'dir. En ucuz karışımın hangisi olduğunu ise ileride [Uç noktalar ve grafik yöntem](uc-noktalar-ve-grafik-yontem.qmd) bölümündeki yöntemlerle bulacağız.
+
+Karışımın toplamı sabit olmasaydı yüzdeleri toplam miktar cinsinden yazmamız gerekirdi. "Proteinin payı en az %30" koşulu o zaman
+
+$$0{,}1x_1 + 0{,}5x_2 \ge 0{,}3(x_1 + x_2)$$
+
+olur. Bütün değişkenleri sol tarafa toplarsak $-0{,}2x_1 + 0{,}2x_2 \ge 0$, yani $-x_1 + x_2 \ge 0$ elde ederiz. Kısıtın sağ tarafında değişken bırakmayız; sağ tarafta yalnız sabit kalır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Programlama Probleminin Diğer Gösterimleri
+
+Tanımdaki uzun yazım, özellikle genel teoremleri ifade ederken hantal kalır. Aynı problem üç kısa biçimde de yazılabilir; üçü de ileride sık kullanılacak.
+
+### Toplam operatörüyle gösterim
+
+Tanımda verilen (1), (2) ve (3) koşulları toplam sembolüyle
+
+$$
+\begin{aligned}
+\sum_{j=1}^{n} a_{ij}x_j &\begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} b_i, \qquad i = 1, 2, \dots, m && (1) \\[1mm]
+x_j &\ge 0, \qquad j = 1, 2, \dots, n && (2) \\[1mm]
+\min z &= \sum_{j=1}^{n} c_jx_j && (3)
+\end{aligned}
+$$
+
+biçiminde yazılır. Yani $i$ sabit tutulup $j$ üzerinden toplanınca $i$. kısıtın sol tarafı çıkar: örneğin $i = 1$ için $\sum_{j=1}^{n} a_{1j}x_j = a_{11}x_1 + \dots + a_{1n}x_n$. Maksimum probleminde (3) satırında $\min$ yerine $\max$ yazılır.
+
+### Matris gösterimi
+
+Katsayıları ve değişkenleri matrislerde toplayalım:
+
+$$
+A_{m \times n} = \begin{bmatrix} a_{11} & a_{12} & \dots & a_{1n} \\ a_{21} & a_{22} & \dots & a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ a_{m1} & a_{m2} & \dots & a_{mn} \end{bmatrix}, \qquad
+\vec{b} = \begin{bmatrix} b_1 \\ b_2 \\ \vdots \\ b_m \end{bmatrix}_{m \times 1},
+$$
+
+$$
+\vec{x} = \begin{bmatrix} x_1 \\ x_2 \\ \vdots \\ x_n \end{bmatrix}_{n \times 1}, \qquad
+\vec{c} = \begin{bmatrix} c_1 \\ c_2 \\ \vdots \\ c_n \end{bmatrix}_{n \times 1}.
+$$
+
+$A$ matrisine **katsayılar matrisi**, $\vec{b}$ vektörüne **sağ taraf vektörü**, $\vec{c}$ vektörüne **maliyet (amaç katsayıları) vektörü** denir. Bu matrislerle lineer programlama problemi
+
+$$
+\begin{aligned}
+A\vec{x} &\begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} \vec{b} && (1) \\[1mm]
+x_j &\ge 0, \quad j = \overline{1,n} && (2) \\[1mm]
+\min z &= \vec{c}^{\,T}\vec{x} && (3)
+\end{aligned}
+$$
+
+biçiminde yazılır. Buradaki $j = \overline{1,n}$ yazımı "$j = 1, 2, \dots, n$" demektir; kitap boyunca bu kısaltmayı kullanacağız. (2) koşulunu kısaca $\vec{x} \ge 0$ diye de yazarız: bir vektörün $\ge 0$ olması, bütün bileşenlerinin $\ge 0$ olması demektir. Aynı biçimde $A\vec{x} \le \vec{b}$ yazımı, $A\vec{x}$ vektörünün her bileşeninin $\vec{b}$'nin karşılık gelen bileşeninden küçük ya da ona eşit olduğunu söyler. $\vec{c}^{\,T}\vec{x} = c_1x_1 + \dots + c_nx_n$ ise iki vektörün iç çarpımıdır.
+
+:::: {#exm-lpp-matris name="Üretim modelinin matris gösterimi"}
+@exm-lpp-uretim modelini ($2x_1 + x_2 \le 100$, $x_1 + x_2 \le 80$, $x_1 \le 40$, $x_1, x_2 \ge 0$, $\max z = 30x_1 + 20x_2$) matris biçiminde yazınız.
+
+::: {.cozum}
+Üç kısıt ve iki değişken olduğundan $A$ matrisi $3 \times 2$ boyutludur. $A$'nın $i$. satırı $i$. kısıtın katsayılarıdır; üçüncü kısıtta $x_2$ görünmediği için oraya $0$ yazılır:
+
+$$
+A = \begin{bmatrix} 2 & 1 \\ 1 & 1 \\ 1 & 0 \end{bmatrix}, \qquad
+\vec{b} = \begin{bmatrix} 100 \\ 80 \\ 40 \end{bmatrix}, \qquad
+\vec{x} = \begin{bmatrix} x_1 \\ x_2 \end{bmatrix}, \qquad
+\vec{c} = \begin{bmatrix} 30 \\ 20 \end{bmatrix}.
+$$
+
+Model $A\vec{x} \le \vec{b}$, $\vec{x} \ge 0$, $\max z = \vec{c}^{\,T}\vec{x}$ olur. Sağlama olarak çarpımı açalım:
+
+$$
+A\vec{x} = \begin{bmatrix} 2x_1 + x_2 \\ x_1 + x_2 \\ x_1 \end{bmatrix} \le \begin{bmatrix} 100 \\ 80 \\ 40 \end{bmatrix}, \qquad \vec{c}^{\,T}\vec{x} = 30x_1 + 20x_2.
+$$
+
+Bileşen bileşen okununca üç kısıt ve amaç fonksiyonu aynen geri gelir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Vektörel gösterim
+
+Bu kez $A$ matrisini sütunlarına ayıralım. $j = \overline{1,n}$ için
+
+$$
+v_j = \begin{bmatrix} a_{1j} \\ a_{2j} \\ \vdots \\ a_{mj} \end{bmatrix} \qquad \text{ve} \qquad v_0 = \begin{bmatrix} b_1 \\ b_2 \\ \vdots \\ b_m \end{bmatrix}
+$$
+
+olsun. $v_j$, $A$'nın $j$. sütunudur, yani $x_j$ değişkeninin bütün kısıtlardaki katsayılarını toplar; $v_0$ ise sağ taraf vektörüdür. Bu vektörlerle lineer programlama problemi
+
+$$
+\begin{aligned}
+x_1v_1 + x_2v_2 + \dots + x_nv_n &\begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} v_0 \quad\Longleftrightarrow\quad \sum_{j=1}^{n} x_jv_j \begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} v_0 \\[1mm]
+x_j &\ge 0, \quad j = \overline{1,n} \\[1mm]
+\min z &= \sum_{j=1}^{n} c_jx_j
+\end{aligned}
+$$
+
+biçiminde ifade edilir. Yani kısıtlar sistemi, $A$'nın sütunlarının $x_j$ ağırlıklarıyla alınmış bir toplamının $v_0$ ile karşılaştırılmasıdır. Bu gösterim simpleks yöntemin dilidir: simpleks yöntemin başlangıç tablosunun sütunları tam olarak bu $v_0, v_1, \dots, v_n$ vektörleridir ([Simpleks yöntem](simpleks-yontem.qmd)).
+
+:::: {#exm-lpp-vektorel name="Üretim modelinin vektörel gösterimi"}
+@exm-lpp-uretim modelinin kısıtlarını ($2x_1 + x_2 \le 100$, $x_1 + x_2 \le 80$, $x_1 \le 40$) vektörel biçimde yazınız ve $v_1$ vektörünü yorumlayınız.
+
+::: {.cozum}
+$A$'nın sütunları ve sağ taraf vektörü
+
+$$
+v_1 = \begin{bmatrix} 2 \\ 1 \\ 1 \end{bmatrix}, \qquad v_2 = \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix}, \qquad v_0 = \begin{bmatrix} 100 \\ 80 \\ 40 \end{bmatrix}
+$$
+
+olduğundan kısıtlar
+
+$$
+x_1 \begin{bmatrix} 2 \\ 1 \\ 1 \end{bmatrix} + x_2 \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix} \le \begin{bmatrix} 100 \\ 80 \\ 40 \end{bmatrix}
+$$
+
+biçiminde yazılır. Sol tarafı toplarsak $(2x_1 + x_2,\ x_1 + x_2,\ x_1)$ vektörü çıkar; bileşen bileşen karşılaştırma üç kısıtı geri verir.
+
+$v_1$ vektörü **bir masanın** tükettiği kaynakları gösterir: 2 saat işçilik, 1 birim ahşap ve pazardaki 40 masalık talepten 1 birim. Benzer biçimde $v_2$ bir sandalyenin tükettiği kaynaklardır; sandalye masa talebini etkilemediği için son bileşeni $0$'dır. Vektörel gösterimde her sütun bir "faaliyeti", $v_0$ ise eldeki kaynakları temsil eder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kanonik ve Standart Formlar
+
+Aynı problem pek çok biçimde yazılabilir: bir kısıtı $-1$ ile çarpabilir, bir eşitsizliği yeni bir değişken ekleyerek eşitliğe çevirebiliriz. Çözüm yöntemleri ve teoriler ise problemi belirli kalıplarda ister. Aşağıda bu kalıpların üçünü tanımlayacağız.
+
+Bir lineer programlama probleminin genel şeklini matris yapısında
+
+$$
+\begin{aligned}
+A\vec{x} &\begin{Bmatrix} \le \\ = \\ \ge \end{Bmatrix} \vec{b} && (1) \\[1mm]
+x_j &\ge 0, \quad j = \overline{1,n} && (2) \\[1mm]
+\min z &= \vec{c}^{\,T}\vec{x} \quad (\text{veya } \max z = \vec{c}^{\,T}\vec{x}) && (3)
+\end{aligned}
+$$
+
+olarak alalım. Amaç fonksiyonunun maksimum ya da minimum olmasına bağlı olarak problemin kanonik ve standart formlarını inceleyeceğiz.
+
+### Kanonik form
+
+Kanonik form yalnız eşitsizliklerin **yönüyle** ilgili bir kalıptır. "Kanonik" sözcüğü "genel olarak kabul edilen, kurala uygun" anlamına gelir.
+
+::: {#def-lpp-kanonik-form name="Kanonik form"}
+Bütün değişkenleri negatif olmayan bir lineer programlama problemi
+
+- **maksimum problemiyse** ve bütün kısıtları $\le$ biçimindeyse,
+- **minimum problemiyse** ve bütün kısıtları $\ge$ biçimindeyse
+
+**kanonik formdadır**. Matris gösterimiyle maksimum ve minimum problemlerinin kanonik formları sırasıyla
+
+$$
+\begin{aligned}
+A\vec{x} &\le \vec{b} \\
+\vec{x} &\ge 0 \\
+\max z &= \vec{c}^{\,T}\vec{x}
+\end{aligned}
+\qquad\qquad
+\begin{aligned}
+A\vec{x} &\ge \vec{b} \\
+\vec{x} &\ge 0 \\
+\min z &= \vec{c}^{\,T}\vec{x}
+\end{aligned}
+$$
+
+biçimindedir.
+:::
+
+Yani kanonik formu tanımak için üç soruya bakarız: Amaç maksimum mu, minimum mu? Bütün kısıtlar amaca uygun yönde mi (maksimumda $\le$, minimumda $\ge$)? Bütün değişkenler $\ge 0$ mı? Kanonik formda **eşitlik kısıtı bulunmaz** ve **sağ tarafların işaretine bakılmaz**: $b_i$ negatif de olabilir. Bu kalıp doğaldır: kârı büyütmek isteyen, sınırlı kaynaklarla yukarıdan ($\le$) kısıtlanır; maliyeti küçültmek isteyen, karşılanması gereken ihtiyaçlarla aşağıdan ($\ge$) kısıtlanır. Kanonik formun asıl kullanıldığı yer dualitedir: bir problemin duali, kanonik formundan doğrudan yazılır ([Dualite](dualite.qmd)).
+
+:::: {#exm-lpp-kanonik-evet name="Kanonik formda olan bir problem"}
+@exm-lpp-uretim modeli ($2x_1 + x_2 \le 100$, $x_1 + x_2 \le 80$, $x_1 \le 40$, $x_1, x_2 \ge 0$, $\max z = 30x_1 + 20x_2$) kanonik formda mıdır?
+
+::: {.cozum}
+Üç soruya sırayla bakalım. Amaç maksimumdur. Üç kısıtın üçü de $\le$ biçimindedir; maksimum probleminde istenen yön budur. İki değişken de $\ge 0$'dır. O halde problem kanonik formdadır ve hiçbir değişiklik gerekmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lpp-kanonik-hayir name="Kanonik formda olmayan bir problem"}
+Aşağıdaki problem kanonik formda mıdır? Değilse kanonik forma getiriniz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\le 9 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+Amaç minimumdur, dolayısıyla bütün kısıtların $\ge$ olması gerekir. Birinci kısıt uygundur, ama ikinci kısıt $\le$ biçimindedir; problem kanonik formda değildir.
+
+İkinci kısıtın iki yanını $-1$ ile çarpalım. Bir eşitsizlik negatif bir sayıyla çarpılınca yönü döner:
+
+$$x_1 + 3x_2 \le 9 \quad\Longleftrightarrow\quad -x_1 - 3x_2 \ge -9.$$
+
+Böylece kanonik form
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+-x_1 - 3x_2 &\ge -9 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+olur. İkinci satırın sağ tarafı $-9$'dur; kanonik form sağ tarafın işaretiyle ilgilenmediği için bu bir sorun değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Standart form
+
+Çözüm yöntemleri eşitsizliklerle değil, denklem sistemleriyle çalışır; çünkü doğrusal denklem sistemlerini çözmeyi iyi biliyoruz. Standart form, problemi bir denklem sistemine çevirir.
+
+::: {#def-lpp-standart-form name="Standart form"}
+Bir lineer programlama probleminde
+
+- bütün kısıtlar **eşitlik** biçimindeyse,
+- bütün sağ taraf sabitleri $b_i \ge 0$ ise,
+- bütün değişkenler $\ge 0$ ise
+
+problem **standart formdadır**. Amaç fonksiyonu maksimum da minimum da olabilir. Matris gösterimiyle standart form $A\vec{x} = \vec{b}$, $\vec{b} \ge 0$, $\vec{x} \ge 0$, $\max$ (ya da $\min$) $z = \vec{c}^{\,T}\vec{x}$ biçimindedir.
+:::
+
+Yani standart formu tanımak için yine üç şeye bakarız: hepsi eşitlik mi, hepsinin sağ tarafı negatif olmayan mı, bütün değişkenler $\ge 0$ mı? Kanonik formun tersine, standart formda eşitsizliklerin yönü artık yoktur ama **sağ tarafların işareti önemlidir**. $b_i \ge 0$ koşulunun nedeni bir sonraki adımda ortaya çıkacak: simpleks yöntem başlangıçta bazı değişkenlere doğrudan $b_i$ değerini verir ve bu değerin negatif olmaması gerekir.
+
+Bir eşitsizliği eşitliğe çevirmek için ona yeni bir değişken ekleriz.
+
+::: {#def-lpp-aylak-artik name="Aylak ve artık değişkenler"}
+$\sum_{j=1}^{n} a_{ij}x_j \le b_i$ kısıtını eşitliğe çevirmek için sol tarafa **eklenen** negatif olmayan değişkene **aylak (slack) değişken**, $\sum_{j=1}^{n} a_{ij}x_j \ge b_i$ kısıtını eşitliğe çevirmek için sol taraftan **çıkarılan** negatif olmayan değişkene **artık (surplus) değişken** denir:
+
+$$
+\sum_{j=1}^{n} a_{ij}x_j + x_{n+i} = b_i, \qquad \sum_{j=1}^{n} a_{ij}x_j - x_{n+i} = b_i, \qquad x_{n+i} \ge 0.
+$$
+
+Aylak ve artık değişkenler sıradaki indisi alır ($x_{n+1}, x_{n+2}, \dots$) ve amaç fonksiyonundaki katsayıları $0$'dır. $x_{n+i}$ yazımı her kısıta bir değişken eklendiği durum içindir; bazı kısıtlar eşitlikse yeni değişkenler yine sırayla numaralanır.
+:::
+
+Yani aylak değişken $x_{n+i} = b_i - \sum_j a_{ij}x_j$, $\le$ kısıtında **kullanılmayan kaynak miktarıdır**; artık değişken $x_{n+i} = \sum_j a_{ij}x_j - b_i$, $\ge$ kısıtında **gereksinimin aşılan kısmıdır**. İkisinin de amaç katsayısı $0$'dır, çünkü boşta kalan kaynak ya da fazladan karşılanan gereksinim kâra ya da maliyete ayrıca bir şey eklemez. Yeni değişken eklemek problemi değiştirmez; bunu şimdi kesin olarak görelim.
+
+:::: {#prp-lpp-aylak-artik name="Aylak ve artık değişkenle eşdeğerlik"}
+$x_1, \dots, x_n$ sayıları için:
+
+- $\sum_{j=1}^{n} a_{ij}x_j \le b_i$ olması için gerek ve yeter koşul, $\sum_{j=1}^{n} a_{ij}x_j + x_{n+i} = b_i$ eşitliğini sağlayan bir $x_{n+i} \ge 0$ sayısının var olmasıdır;
+- $\sum_{j=1}^{n} a_{ij}x_j \ge b_i$ olması için gerek ve yeter koşul, $\sum_{j=1}^{n} a_{ij}x_j - x_{n+i} = b_i$ eşitliğini sağlayan bir $x_{n+i} \ge 0$ sayısının var olmasıdır.
+
+Bu sayı her iki durumda da tektir.
+
+::: {.ispat}
+Kısaca $s = \sum_{j=1}^{n} a_{ij}x_j$ yazalım.
+
+Birinci madde. $s \le b_i$ ise $x_{n+i} = b_i - s$ seçelim; $x_{n+i} \ge 0$'dır ve $s + x_{n+i} = b_i$ sağlanır. Tersine, $s + x_{n+i} = b_i$ ve $x_{n+i} \ge 0$ ise $s = b_i - x_{n+i} \le b_i$ olur. Eşitlik $x_{n+i}$'yi $x_{n+i} = b_i - s$ olarak tek biçimde belirler.
+
+İkinci madde. $s \ge b_i$ ise $x_{n+i} = s - b_i \ge 0$ seçilir ve $s - x_{n+i} = b_i$ olur. Tersine, $s - x_{n+i} = b_i$ ve $x_{n+i} \ge 0$ ise $s = b_i + x_{n+i} \ge b_i$'dir. Eşitlik $x_{n+i} = s - b_i$ değerini tek biçimde belirler.
+
+Aylak ve artık değişkenlerin amaç katsayısı $0$ olduğundan, eşitliğe çevrilmiş problemin her çözümünde amaç fonksiyonunun değeri, ilk $n$ değişkenden oluşan çözümdeki değerle aynıdır. Dolayısıyla iki problemin çözümleri birebir eşlenir ve optimal değerleri aynıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Önerme, kanonik formdaki bir problemin standart forma nasıl getirileceğini de söyler.
+
+**Maksimum problemi.** Kanonik formdaki $A\vec{x} \le \vec{b}$, $\vec{x} \ge 0$, $\max z = \vec{c}^{\,T}\vec{x}$ problemini (ve $\vec{b} \ge 0$ olduğunu) düşünelim. Standart forma getirmek için (1) kısıtlarındaki eşitsizlikleri kaldırmak gerekir. Bunun için her kısıta $x_{n+i}$, $i = 1, 2, \dots, m$ aylak değişkenleri eklenir; bu değişkenlerin amaç fonksiyonundaki katsayıları $0$'dır. Maksimum probleminin standart formu şudur:
+
+$$
+\begin{aligned}
+a_{11}x_1 + a_{12}x_2 + \dots + a_{1n}x_n + x_{n+1} &= b_1 \\
+a_{21}x_1 + a_{22}x_2 + \dots + a_{2n}x_n + x_{n+2} &= b_2 \\
+&\;\;\vdots \\
+a_{m1}x_1 + a_{m2}x_2 + \dots + a_{mn}x_n + x_{n+m} &= b_m \\
+x_1 \ge 0, \ \dots, \ x_n \ge 0, \ x_{n+1} \ge 0, \ \dots, \ x_{n+m} &\ge 0 \\
+\max z &= c_1x_1 + c_2x_2 + \dots + c_nx_n \\
+&\quad + 0x_{n+1} + 0x_{n+2} + \dots + 0x_{n+m}
+\end{aligned}
+$$
+
+**Minimum problemi.** Kanonik formdaki $A\vec{x} \ge \vec{b}$, $\vec{x} \ge 0$, $\min z = \vec{c}^{\,T}\vec{x}$ problemini ($\vec{b} \ge 0$ olmak üzere) standart forma getirmek için her kısıttan $x_{n+i}$, $i = 1, 2, \dots, m$ artık değişkenleri çıkarılır; amaç katsayıları yine $0$'dır. Minimum probleminin standart formu şudur:
+
+$$
+\begin{aligned}
+a_{11}x_1 + a_{12}x_2 + \dots + a_{1n}x_n - x_{n+1} &= b_1 \\
+a_{21}x_1 + a_{22}x_2 + \dots + a_{2n}x_n - x_{n+2} &= b_2 \\
+&\;\;\vdots \\
+a_{m1}x_1 + a_{m2}x_2 + \dots + a_{mn}x_n - x_{n+m} &= b_m \\
+x_1 \ge 0, \ \dots, \ x_n \ge 0, \ x_{n+1} \ge 0, \ \dots, \ x_{n+m} &\ge 0 \\
+\min z &= c_1x_1 + c_2x_2 + \dots + c_nx_n \\
+&\quad + 0x_{n+1} + 0x_{n+2} + \dots + 0x_{n+m}
+\end{aligned}
+$$
+
+Matris diliyle: maksimum probleminde $A\vec{x} + I\vec{x}_s = \vec{b}$, minimum probleminde $A\vec{x} - I\vec{x}_s = \vec{b}$ olur; burada $\vec{x}_s = (x_{n+1}, \dots, x_{n+m})$ eklenen değişkenlerin vektörü, $I$ ise $m \times m$ birim matristir. Bu işaret farkı (aylakta $+I$, artıkta $-I$) bir sonraki kavramın tam merkezindedir.
+
+:::: {#exm-lpp-aylak-anlami name="Aylak değişkenin anlamı"}
+@exm-lpp-uretim modelini ($2x_1 + x_2 \le 100$, $x_1 + x_2 \le 80$, $x_1 \le 40$, $x_1, x_2 \ge 0$, $\max z = 30x_1 + 20x_2$) standart forma getiriniz ve aylak değişkenlerin $P(20, 50)$ ile $Q(40, 20)$ üretim planlarındaki değerlerini yorumlayınız.
+
+::: {.cozum}
+Üç kısıtın üçü de $\le$ biçimindedir ve sağ tarafları negatif değildir. Her birine sırasıyla $x_3$, $x_4$, $x_5$ aylak değişkenlerini ekleriz:
+
+$$
+\begin{aligned}
+2x_1 + x_2 + x_3 &= 100 \\
+x_1 + x_2 + x_4 &= 80 \\
+x_1 + x_5 &= 40 \\
+x_1, x_2, x_3, x_4, x_5 &\ge 0 \\
+\max z &= 30x_1 + 20x_2 + 0x_3 + 0x_4 + 0x_5
+\end{aligned}
+$$
+
+Aylak değişkenler kısıtlardan hesaplanır: $x_3 = 100 - 2x_1 - x_2$, $x_4 = 80 - x_1 - x_2$, $x_5 = 40 - x_1$.
+
+**$P(20, 50)$ planı:** 20 masa ve 50 sandalye. İşçilik $2 \cdot 20 + 50 = 90$ saat kullanılır, $x_3 = 10$ saat boşta kalır. Ahşap $20 + 50 = 70$ birim kullanılır, $x_4 = 10$ birim artar. Masa talebinden $x_5 = 40 - 20 = 20$ masalık kısım karşılanmamış kalır.
+
+**$Q(40, 20)$ planı:** İşçilik $80 + 20 = 100$ saat, yani tamamen kullanılır: $x_3 = 0$. Ahşap $60$ birim kullanılır, $x_4 = 20$ birim artar. Masa talebi tamamen karşılanır: $x_5 = 0$.
+
+Bir aylak değişkenin sıfır olması, o kaynağın sonuna kadar kullanıldığı, yani noktanın o kısıtın doğrusu üzerinde bulunduğu anlamına gelir. Aylak değişken pozitifse nokta doğrunun "içeri" tarafındadır ve kaynaktan artan vardır. Aşağıdaki şekilde her kısıt doğrusu üzerinde ilgili aylak değişkenin sıfır olduğu görülüyor.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="19.5 -3.5 496.0 455.5" role="img" aria-label="Feasible region of the production example bounded by 2x1 + x2 = 100, x1 + x2 = 80 and x1 = 40; on each line the corresponding slack variable is zero; points P(20,50) and Q(40,20).">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="153.5" y1="30.0" x2="153.5" y2="420.0"/><line x1="248.9" y1="30.0" x2="248.9" y2="420.0"/><line x1="344.4" y1="30.0" x2="344.4" y2="420.0"/><line x1="439.8" y1="30.0" x2="439.8" y2="420.0"/><line x1="58.0" y1="347.8" x2="478.0" y2="347.8"/><line x1="58.0" y1="275.6" x2="478.0" y2="275.6"/><line x1="58.0" y1="203.3" x2="478.0" y2="203.3"/><line x1="58.0" y1="131.1" x2="478.0" y2="131.1"/><line x1="58.0" y1="58.9" x2="478.0" y2="58.9"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="58.0" y1="420.0" x2="486.0" y2="420.0"/>
+  <line x1="58.0" y1="22.0" x2="58.0" y2="420.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="58.0" y="436.0" text-anchor="middle">0</text>
+  <text x="153.5" y="436.0" text-anchor="middle">20</text>
+  <text x="248.9" y="436.0" text-anchor="middle">40</text>
+  <text x="344.4" y="436.0" text-anchor="middle">60</text>
+  <text x="439.8" y="436.0" text-anchor="middle">80</text>
+  <text x="51.0" y="351.8" text-anchor="end">20</text>
+  <text x="51.0" y="279.6" text-anchor="end">40</text>
+  <text x="51.0" y="207.3" text-anchor="end">60</text>
+  <text x="51.0" y="135.1" text-anchor="end">80</text>
+  <text x="51.0" y="62.9" text-anchor="end">100</text>
+  <text x="492.0" y="424.0" font-style="italic">x&#8321;</text>
+  <text x="54.0" y="16.0" text-anchor="middle" font-style="italic">x&#8322;</text>
+  </g>
+  <polygon points="58.0,420.0 248.9,420.0 248.9,347.8 153.5,203.3 58.0,131.1" fill="var(--color-theory)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M58.0,58.9 L296.6,420.0" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M58.0,131.1 L439.8,420.0" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M248.9,420.0 L248.9,37.2" fill="none" stroke="var(--color-remark)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="123.3" y="109.4" fill="var(--color-base)" font-size="13" text-anchor="start">2x&#8321; + x&#8322; = 100</text>
+  <text x="123.3" y="126.4" fill="var(--color-base)" font-size="13" text-anchor="start">(x&#8323; = 0)</text>
+  <text x="381.0" y="315.3" fill="var(--color-practice)" font-size="13" text-anchor="start">x&#8321; + x&#8322; = 80</text>
+  <text x="381.0" y="332.3" fill="var(--color-practice)" font-size="13" text-anchor="start">(x&#8324; = 0)</text>
+  <text x="256.9" y="55.3" fill="var(--color-remark)" font-size="13" text-anchor="start">x&#8321; = 40</text>
+  <text x="256.9" y="72.3" fill="var(--color-remark)" font-size="13" text-anchor="start">(x&#8325; = 0)</text>
+  <circle cx="153.5" cy="239.4" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="248.9" cy="347.8" r="4.5" fill="var(--color-practice)"/>
+  <text x="144.5" y="231.4" fill="var(--academic-text)" font-size="13.5" text-anchor="end">P(20, 50)</text>
+  <text x="257.9" y="365.8" fill="var(--academic-text)" font-size="13.5" text-anchor="start">Q(40, 20)</text>
+</svg>
+<figcaption>Üretim örneğinin kısıtları ve boyalı uygun bölge. Her kısıt doğrusu üzerinde o kısıtın aylak değişkeni sıfırdır. İçerideki P(20, 50) noktasında x₃ = 10, x₄ = 10, x₅ = 20; Q(40, 20) noktasında x₃ = 0, x₄ = 20, x₅ = 0.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lpp-artik-anlami name="Artık değişkenin anlamı"}
+İki besinden oluşan bir diyet düşünelim. $B_1$ besininin kilogramında 1 birim A ve 1 birim C vitamini, $B_2$ besininin kilogramında 1 birim A ve 3 birim C vitamini vardır. Günde en az 4 birim A ve 6 birim C vitamini alınmalıdır. $B_1$'in kilosu 2 TL, $B_2$'nin kilosu 3 TL'dir. $x_1$ ve $x_2$ sırasıyla tüketilecek $B_1$ ve $B_2$ miktarları (kg) olmak üzere modeli kurup standart forma getiriniz ve artık değişkenlerin $x_1 = 3$, $x_2 = 2$ diyetindeki değerlerini yorumlayınız.
+
+::: {.cozum}
+A vitamini $x_1 + x_2$, C vitamini $x_1 + 3x_2$ birimdir ve maliyet $2x_1 + 3x_2$ TL'dir. Model
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\ge 6 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+olur; minimum problemi ve bütün kısıtlar $\ge$ olduğundan kanonik formdadır. İki kısıttan da sırasıyla $x_3$ ve $x_4$ artık değişkenlerini çıkarırız:
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 &= 4 \\
+x_1 + 3x_2 - x_4 &= 6 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\min z &= 2x_1 + 3x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+
+Artık değişkenler $x_3 = x_1 + x_2 - 4$ ve $x_4 = x_1 + 3x_2 - 6$'dır. $x_1 = 3$, $x_2 = 2$ diyetinde $5$ birim A vitamini alınır; gereksinim $x_3 = 1$ birim aşılmıştır. C vitamini $3 + 6 = 9$ birimdir; gereksinim $x_4 = 3$ birim aşılmıştır. Bu diyetin maliyeti $2 \cdot 3 + 3 \cdot 2 = 12$ TL'dir.
+
+Artık değişken "fazladan alınan" miktardır. Artık değişken negatif olsaydı gereksinim karşılanmamış olurdu; $x_3, x_4 \ge 0$ koşulu tam olarak $\ge$ kısıtlarını ifade eder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Simpleks yöntem ile çözülebilir hal
+
+Standart form bir denklem sistemidir, ama simpleks yöntemin çalışmaya başlaması için bundan fazlası gerekir: sistemin bir başlangıç çözümünün **hiç hesap yapmadan okunabilmesi**. Bunu sağlayan yapı bir birim matristir.
+
+::: {#def-lpp-cozulebilir-hal name="Simpleks yöntem ile çözülebilir hal"}
+$m$ denklemli standart formdaki bir problemin katsayılar matrisi, sütunları arasında $m \times m$ birim matrisin bütün sütunlarını bulunduruyorsa, yani her $i = \overline{1,m}$ için **yalnız $i$. denklemde görünen ve orada katsayısı $1$ olan** bir değişken varsa, problem **simpleks yöntem ile çözülebilir haldedir**.
+:::
+
+Yani çözülebilir halde her denklemin "kendine ait" bir değişkeni vardır. Bu değişkenler dışındaki bütün değişkenlere $0$ verirsek, her denklem kendine ait değişkenin değerini doğrudan söyler: o değişken $b_i$'ye eşittir. Standart formda $b_i \ge 0$ olduğu için bu değerler negatif değildir ve elimizde kısıtların hepsini sağlayan bir başlangıç çözümü olur. Simpleks yöntem bu çözümden başlar ve adım adım daha iyi çözümlere geçer; birim sütunları veren değişkenler başlangıç **bazını** oluşturur ([Simpleks yöntem](simpleks-yontem.qmd)).
+
+Aylak değişkenlerin sütunları birim matrisin sütunlarıdır ($+I$); bu yüzden aylak değişkenler çözülebilir hal için hazır adaydır. Artık değişkenlerin sütunları ise $-I$'nın sütunlarıdır; katsayı $-1$ olduğu için birim sütun vermez. Birim sütunu olmayan denklemlere yardımcı bir değişken ekleriz.
+
+::: {#def-lpp-yapay-degisken name="Yapay değişken"}
+Standart formda birim sütunu bulunmayan bir denklemin sol tarafına, yalnız o denklemde görünecek biçimde katsayısı $1$ ile eklenen negatif olmayan değişkene **yapay (artificial) değişken** denir. Yapay değişkenler $x_{u_1}, x_{u_2}, \dots$, sütun vektörleri $v_{u_1}, v_{u_2}, \dots$ ile gösterilir. Amaç fonksiyonundaki katsayıları, $M$ çok büyük bir pozitif sayı olmak üzere, **minimum probleminde $+M$**, **maksimum probleminde $-M$**'dir.
+:::
+
+Yani yapay değişken, gerçek problemde karşılığı olmayan geçici bir "yer tutucudur". Eklendiği denklem değişir: örneğin $x_1 + x_2 - x_3 = 4$ denklemi $x_1 + x_2 - x_3 + x_{u_1} = 4$ olur. Bu yeni denklem orijinaliyle ancak $x_{u_1} = 0$ iken aynıdır. Amaçtaki büyük ceza, yapay değişkeni pozitif tutmayı çok pahalı kılar: minimumda $+M$ maliyeti büyütür, maksimumda $-M$ kârı düşürür. Böylece simpleks yöntem yapay değişkenleri sıfıra indirmeye zorlanır; bunun ayrıntıları [Büyük M yöntemi](buyuk-m-yontemi.qmd) ve [İki faz yöntemi](iki-faz-yontemi.qmd) bölümlerindedir. Zaten birim sütunu olan denkleme yapay değişken eklenmez.
+
+:::: {#prp-lpp-max-kanonik name="Aylak değişkenler birim matris verir"}
+Kanonik formdaki bir maksimum probleminde $\vec{b} \ge 0$ ise, aylak değişkenler eklenerek elde edilen standart form simpleks yöntem ile çözülebilir haldedir.
+
+::: {.ispat}
+Kanonik formdaki maksimum probleminin bütün kısıtları $\le$ biçimindedir. $\vec{b} \ge 0$ olduğundan hiçbir satırı $-1$ ile çarpmak gerekmez; her kısıta bir aylak değişken eklenince elde edilen sistem standart formdadır ve katsayılar matrisi $[\,A \;\; I\,]$ olur. Burada $I$ sütunları $x_{n+1}, \dots, x_{n+m}$ aylak değişkenlerine ait $m \times m$ birim matristir: $x_{n+i}$ yalnız $i$. denklemde ve katsayısı $1$ ile görünür. Bu, çözülebilir halin tanımındaki koşulun ta kendisidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu önermenin bir sonucu olarak, $\le$ kısıtlı ve sağ tarafları negatif olmayan bir maksimum probleminde yapay değişkene hiç gerek kalmaz. Kanonik formdaki bir minimum probleminde ise ($\vec{b} > 0$ iken) her denklemde bir artık değişken bulunur ve hiçbiri birim sütun vermez. Orijinal değişkenlerden biri bir denklem için birim sütun vermiyorsa o denkleme bir yapay değişken eklemek gerekir; uygulamada bu çoğunlukla her denklem demektir.
+
+:::: {#exm-lpp-cozulebilir-evet name="Çözülebilir halde olan bir problem"}
+Aşağıdaki problem simpleks yöntem ile çözülebilir halde midir? Öyleyse başlangıç çözümünü okuyunuz.
+
+$$
+\begin{aligned}
+x_1 - 2x_2 + x_3 &= 2 \\
+2x_1 + x_2 + x_4 &= 6 \\
+x_1 + 2x_2 + x_5 &= 5 \\
+-x_1 + x_2 + x_6 &= 2 \\
+x_j \ge 0, \quad j &= \overline{1,6} \\
+\min z &= -4x_1 - 5x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+Önce standart formda olup olmadığına bakalım: bütün kısıtlar eşitliktir, sağ taraflar $2, 6, 5, 2$ negatif değildir ve bütün değişkenler $\ge 0$'dır. Problem standart formdadır.
+
+Katsayılar matrisini yazalım:
+
+$$
+\begin{bmatrix}
+1 & -2 & 1 & 0 & 0 & 0 \\
+2 & 1 & 0 & 1 & 0 & 0 \\
+1 & 2 & 0 & 0 & 1 & 0 \\
+-1 & 1 & 0 & 0 & 0 & 1
+\end{bmatrix}.
+$$
+
+Son dört sütun ($x_3$, $x_4$, $x_5$, $x_6$) $4 \times 4$ birim matrisi oluşturur: $x_3$ yalnız birinci, $x_4$ yalnız ikinci, $x_5$ yalnız üçüncü, $x_6$ yalnız dördüncü denklemde ve katsayısı $1$ ile görünür. O halde problem simpleks yöntem ile çözülebilir haldedir; yapay değişkene gerek yoktur.
+
+Başlangıç çözümü için $x_1 = x_2 = 0$ alırız; denklemlerden $x_3 = 2$, $x_4 = 6$, $x_5 = 5$, $x_6 = 2$ okunur ve amaç değeri $z = 0$ olur. Bu problemi [Simpleks yöntem](simpleks-yontem.qmd) bölümünde bu başlangıç çözümünden yola çıkarak çözeceğiz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lpp-yapay-ekleme name="Yalnız gereken satıra yapay değişken"}
+Aşağıdaki problemi önce standart forma, sonra simpleks yöntem ile çözülebilir hale getiriniz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+2x_1 + x_2 &\le 10 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Standart form.** Birinci kısıt $\ge$ olduğundan $x_3$ artık değişkenini çıkarırız; ikinci kısıt $\le$ olduğundan $x_4$ aylak değişkenini ekleriz. Sağ taraflar $4$ ve $10$ negatif değildir:
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 &= 4 \\
+2x_1 + x_2 + x_4 &= 10 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\min z &= 2x_1 + 3x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+
+(Problem minimum problemi olduğu halde $\le$ kısıtı içerdiği için kanonik formda değildir; ama standart form için kısıtların yönü önemli değildir.)
+
+**Çözülebilir hal.** İkinci denklemde $x_4$ yalnız orada ve katsayısı $1$ ile görünür; ikinci denklemin birim sütunu hazırdır. Birinci denklemde ise $x_3$'ün katsayısı $-1$'dir ve başka uygun değişken yoktur. Yalnız birinci denkleme bir $x_{u_1}$ yapay değişkeni ekleriz; minimum problemi olduğu için amaç katsayısı $+M$'dir:
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 + x_{u_1} &= 4 \\
+2x_1 + x_2 + x_4 &= 10 \\
+x_1, x_2, x_3, x_4, x_{u_1} &\ge 0 \\
+\min z &= 2x_1 + 3x_2 + 0x_3 + 0x_4 + Mx_{u_1}
+\end{aligned}
+$$
+
+Artık $x_{u_1}$ ve $x_4$ sütunları $2 \times 2$ birim matrisi oluşturur. Başlangıç çözümü $x_1 = x_2 = x_3 = 0$, $x_{u_1} = 4$, $x_4 = 10$'dur.
+
+Birinci denklemi $-1$ ile çarparak $x_3$'e katsayı $1$ kazandırmak işe yaramaz: $-x_1 - x_2 + x_3 = -4$ denkleminde sağ taraf negatif olur, standart form bozulur ve $x_3 = -4$ başlangıç değeri $x_3 \ge 0$ koşulunu ihlal eder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Dönüştürme Kuralları {#sec-lpp-donusturme}
+
+Verilen bir problem çoğu zaman bu formların hiçbirinde değildir. Aşağıdaki kurallar problemi, çözümlerini ve optimal değerini koruyarak istenen forma getirir. Her kuralın başında hangi form için gerektiğini de belirtiyoruz.
+
+### Maksimum ve minimum arasında geçiş
+
+Hangi formda olursa olsun amaç fonksiyonunu maksimumdan minimuma (ya da tersine) çevirmek gerekebilir; örneğin bir yöntem yalnız minimum problemleri için anlatılmışsa. Bunu sağlayan kural şudur.
+
+:::: {#prp-lpp-max-min name="Minimum ve maksimum arasındaki bağ"}
+$S$ bir küme, $f$ de $S$ üzerinde tanımlı gerçel değerli bir fonksiyon olsun. $f$, $S$ üzerindeki minimum değerini $\vec{x}^{*}$ noktasında alıyorsa $-f$ de maksimum değerini aynı $\vec{x}^{*}$ noktasında alır ve
+
+$$\min_{S} f = -\max_{S}\,(-f)$$
+
+olur. Lineer programlama diliyle: $\min z = -\max(-z)$.
+
+::: {.ispat}
+$\vec{x}^{*}$ noktası $f$'nin minimum noktası olduğundan her $\vec{x} \in S$ için $f(\vec{x}) \ge f(\vec{x}^{*})$'dır. Bu eşitsizliği $-1$ ile çarparsak her $\vec{x} \in S$ için $-f(\vec{x}) \le -f(\vec{x}^{*})$ çıkar. Demek ki $-f$ fonksiyonu $S$ üzerindeki en büyük değerini $\vec{x}^{*}$ noktasında alır ve
+
+$$\max_{S}\,(-f) = -f(\vec{x}^{*}) = -\min_{S} f$$
+
+olur. İki yanı $-1$ ile çarpmak istenen eşitliği verir. Aynı akıl yürütme tersine de işler: $-f$'nin maksimum noktası $f$'nin minimum noktasıdır. Dolayısıyla birinin optimumu yoksa ötekinin de yoktur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $\min z = \vec{c}^{\,T}\vec{x}$ problemini çözmek yerine $\max w = -\vec{c}^{\,T}\vec{x}$ problemini çözebiliriz: amaç katsayılarının hepsi $-1$ ile çarpılır, kısıtlara dokunulmaz. Optimal nokta değişmez; yalnız optimal değerin işaretini sonunda geri çevirmeyi unutmamak gerekir.
+
+:::: {#exm-lpp-max-min name="Minimum problemini maksimuma çevirmek"}
+$x_1 + x_2 \le 4$, $x_1, x_2 \ge 0$ kısıtları altında $\min z = x_1 - 2x_2$ problemini bir maksimum problemine çeviriniz ve iki problemin optimal değerlerini karşılaştırınız.
+
+::: {.cozum}
+Amaç katsayılarını $-1$ ile çarparak $w = -z$ tanımlayalım. Karşılık gelen problem
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 4 \\
+x_1, x_2 &\ge 0 \\
+\max w &= -x_1 + 2x_2
+\end{aligned}
+$$
+
+olur. Bu küçük problemin optimumunu doğrudan bulabiliriz. $x_1 \ge 0$ olduğundan $w = -x_1 + 2x_2 \le 2x_2$'dir; kısıttan da $x_2 \le 4 - x_1 \le 4$ çıkar. O halde her uygun noktada $w \le 2 \cdot 4 = 8$ olur ve $x_1 = 0$, $x_2 = 4$ noktasında $w = 8$ değerine ulaşılır. Yani $\max w = 8$'dir.
+
+@prp-lpp-max-min gereği $\min z = -\max w = -8$'dir ve minimum aynı $(0, 4)$ noktasında alınır. Sağlama: $z(0, 4) = 0 - 8 = -8$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Eşitsizliğin yönünü çevirme (kanonik form için)
+
+Kanonik form maksimum probleminde bütün kısıtların $\le$, minimum probleminde bütün kısıtların $\ge$ olmasını ister. Yönü ters olan bir kısıtı iki yanını $-1$ ile çarparak düzeltiriz; bir eşitsizlik negatif sayıyla çarpılınca yönü döner:
+
+$$\sum_{j=1}^{n} a_{ij}x_j \ge b_i \quad\Longleftrightarrow\quad \sum_{j=1}^{n} (-a_{ij})x_j \le -b_i.$$
+
+İki eşitsizliği aynı $x_1, \dots, x_n$ sayıları sağladığı için problem değişmez. Bu işlem sağ tarafı negatif yapabilir; kanonik form buna izin verir.
+
+:::: {#exm-lpp-yon-cevirme name="Maksimum probleminde ters yönlü kısıt"}
+Aşağıdaki problemi kanonik forma getiriniz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 5 \\
+3x_1 - 2x_2 &\ge 2 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 4x_1 + x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+Maksimum probleminde bütün kısıtların $\le$ olması gerekir. Birinci kısıt uygundur. İkinci kısıtın iki yanını $-1$ ile çarparız: $3x_1 - 2x_2 \ge 2$ yerine $-3x_1 + 2x_2 \le -2$ yazılır. Kanonik form
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 5 \\
+-3x_1 + 2x_2 &\le -2 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 4x_1 + x_2
+\end{aligned}
+$$
+
+olur. İkinci satırın sağ tarafının $-2$ olması kanonik formu bozmaz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Sağ tarafı negatif olan kısıt (standart form için)
+
+Standart form bütün sağ tarafların negatif olmamasını ister. Sağ tarafı negatif olan bir kısıtın iki yanı $-1$ ile çarpılır. Kısıt eşitsizlikse yönü döner, eşitlikse eşitlik olarak kalır. Aylak ya da artık değişkeni bu çarpmadan **sonra**, kısıtın yeni yönüne göre ekleriz.
+
+:::: {#exm-lpp-negatif-sag name="Sağ tarafı negatif kısıtı standart forma getirmek"}
+$x_1 - 4x_2 \le -8$ kısıtını ($x_1, x_2 \ge 0$) standart forma uygun bir eşitliğe çeviriniz.
+
+::: {.cozum}
+Sağ taraf $-8 < 0$ olduğundan önce iki yanı $-1$ ile çarparız; eşitsizliğin yönü döner:
+
+$$-x_1 + 4x_2 \ge 8.$$
+
+Kısıt artık $\ge$ biçimindedir, dolayısıyla bir $x_3 \ge 0$ artık değişkeni çıkarılır:
+
+$$-x_1 + 4x_2 - x_3 = 8.$$
+
+Sağ taraf $8 \ge 0$ olduğu için bu eşitlik standart forma uygundur.
+
+Sıra değiştirilirse de aynı sonuca varılır. Önce aylak değişken eklersek $x_1 - 4x_2 + x_3 = -8$ çıkar; bu eşitlikte sağ taraf negatif olduğu için henüz standart form sayılmaz. İki yanı $-1$ ile çarpınca yine $-x_1 + 4x_2 - x_3 = 8$ elde edilir. Yani aynı değişken, $\le$ kısıtının aylağı olarak eklenip sonra $-1$ ile çarpılınca, $\ge$ kısıtının artığı gibi görünür. Aylağın ne olduğunu hatırlamak kolaydır: $x_3 = -8 - x_1 + 4x_2$, yani sağ tarafın sol taraftan ne kadar büyük olduğudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Eşitlik kısıtını iki eşitsizliğe ayırma (kanonik form için)
+
+Kanonik formda eşitlik bulunmaz. Bir sayı ancak hem ondan küçük-eşit hem büyük-eşit olan sayıya eşit olabileceği için
+
+$$\sum_{j=1}^{n} a_{ij}x_j = b_i \quad\Longleftrightarrow\quad \sum_{j=1}^{n} a_{ij}x_j \le b_i \ \ \text{ve} \ \ \sum_{j=1}^{n} a_{ij}x_j \ge b_i$$
+
+yazılır. Maksimum probleminde ikinci eşitsizlik $-1$ ile çarpılıp $\le$ yapılır; minimum probleminde birinci eşitsizlik $-1$ ile çarpılıp $\ge$ yapılır. Standart form için bu ayırmaya **gerek yoktur**: eşitlik zaten eşitliktir.
+
+:::: {#exm-lpp-esitlik name="Eşitlik kısıtlı problemi kanonik forma getirmek"}
+Aşağıdaki problemi kanonik forma getiriniz.
+
+$$
+\begin{aligned}
+2x_1 + x_2 &= 6 \\
+x_1 + 3x_2 &\le 9 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+Maksimum problemi olduğundan bütün kısıtların $\le$ olması gerekir. Eşitliği iki eşitsizliğe ayıralım: $2x_1 + x_2 \le 6$ ve $2x_1 + x_2 \ge 6$. İkincisini $-1$ ile çarparak $-2x_1 - x_2 \le -6$ yaparız. Kanonik form
+
+$$
+\begin{aligned}
+2x_1 + x_2 &\le 6 \\
+-2x_1 - x_2 &\le -6 \\
+x_1 + 3x_2 &\le 9 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+
+olur. İlk iki satır birlikte $6 \le 2x_1 + x_2 \le 6$, yani $2x_1 + x_2 = 6$ demektir. Kısıt sayısı $2$'den $3$'e çıktı; kanonik form bu bedeli öder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### İşaret kısıtlaması olmayan değişken
+
+Bütün formlar değişkenlerin $\ge 0$ olmasını ister. Bir $x_j$ değişkeni her gerçel değeri alabiliyorsa (işaret kısıtlaması yoksa) onu iki negatif olmayan değişkenin farkı olarak yazarız:
+
+$$x_j = x_j' - x_j'', \qquad x_j' \ge 0, \quad x_j'' \ge 0.$$
+
+Bu her zaman mümkündür: $x_j \ge 0$ ise $x_j' = x_j$, $x_j'' = 0$; $x_j < 0$ ise $x_j' = 0$, $x_j'' = -x_j$ alınabilir. Sonra $x_j$ her geçtiği yerde $x_j' - x_j''$ ile değiştirilir. Bu dönüşümün simpleks yöntemdeki ayrıntıları [İşaret kısıtlaması olmayan değişkenler](isaret-kisitlamasiz-degiskenler.qmd) bölümündedir.
+
+:::: {#exm-lpp-isaretsiz name="İşaretsiz değişkenli problemi kanonik forma getirmek"}
+$x_1 \ge 0$ ve $x_2$ işaretsiz olmak üzere aşağıdaki problemi kanonik forma getiriniz.
+
+$$
+\begin{aligned}
+x_1 + x_2 &\le 6 \\
+x_1 - x_2 &\ge -2 \\
+\max z &= x_1 + 3x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+$x_2 = x_2' - x_2''$, $x_2', x_2'' \ge 0$ yazıp her yerde yerine koyalım:
+
+$$
+\begin{aligned}
+x_1 + x_2' - x_2'' &\le 6 \\
+x_1 - x_2' + x_2'' &\ge -2 \\
+x_1, x_2', x_2'' &\ge 0 \\
+\max z &= x_1 + 3x_2' - 3x_2''
+\end{aligned}
+$$
+
+Artık bütün değişkenler $\ge 0$'dır. Maksimum probleminde ikinci kısıtın $\le$ olması gerektiğinden onu $-1$ ile çarparız: $-x_1 + x_2' - x_2'' \le 2$. Kanonik form
+
+$$
+\begin{aligned}
+x_1 + x_2' - x_2'' &\le 6 \\
+-x_1 + x_2' - x_2'' &\le 2 \\
+x_1, x_2', x_2'' &\ge 0 \\
+\max z &= x_1 + 3x_2' - 3x_2''
+\end{aligned}
+$$
+
+olur. Yeni problemin bir çözümünden eski problemin çözümü $x_2 = x_2' - x_2''$ ile geri okunur. Örneğin $x_2' = 0$, $x_2'' = 1$ çözümü $x_2 = -1$ demektir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Pozitif olmayan değişken
+
+Bir değişken için $x_j \le 0$ koşulu verilmişse onu $x_j = -x_j'$, $x_j' \ge 0$ ile değiştiririz. $x_j \le 0$ koşulunu sağlayan sayılar, tam olarak $x_j' \ge 0$ olmak üzere $-x_j'$ biçiminde yazılabilen sayılardır; bu kez tek bir yeni değişken yeter.
+
+:::: {#exm-lpp-pozitif-olmayan name="Pozitif olmayan değişkenli problem"}
+$x_1 \ge 0$, $x_2 \le 0$ olmak üzere aşağıdaki problemi kanonik forma getiriniz.
+
+$$
+\begin{aligned}
+2x_1 + x_2 &\ge 4 \\
+x_1 - x_2 &\le 5 \\
+\min z &= 3x_1 - x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+$x_2 = -x_2'$, $x_2' \ge 0$ yazalım. Birinci kısıt $2x_1 - x_2' \ge 4$, ikinci kısıt $x_1 + x_2' \le 5$, amaç $z = 3x_1 + x_2'$ olur.
+
+Minimum probleminde bütün kısıtların $\ge$ olması gerektiğinden ikinci kısıtı $-1$ ile çarparız: $-x_1 - x_2' \ge -5$. Kanonik form
+
+$$
+\begin{aligned}
+2x_1 - x_2' &\ge 4 \\
+-x_1 - x_2' &\ge -5 \\
+x_1, x_2' &\ge 0 \\
+\min z &= 3x_1 + x_2'
+\end{aligned}
+$$
+
+olur. Bulunan çözümde $x_2 = -x_2'$ ile orijinal değişkene dönülür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Üç Formun Karşılaştırılması
+
+Artık üç kavramın hepsini gördük; şimdi onları yan yana koyalım. Aşağıdaki tablo, bir problemin hangi formda olduğuna karar verirken bakılacak her şeyi toplar.
+
+| Form | Amaç | Kısıtlar | Sağ taraf | Değişkenler | Ne işe yarar |
+|:--|:--|:--|:--|:--|:--|
+| Kanonik | max ya da min | max: hepsi $\le$; min: hepsi $\ge$; eşitlik yok | işareti serbest | hepsi $\ge 0$ | Dual problem doğrudan yazılır ([Dualite](dualite.qmd)) |
+| Standart | max ya da min; aylak ve artıkların katsayısı $0$ | hepsi $=$ | hepsi $b_i \ge 0$ | orijinaller, aylaklar, artıklar; hepsi $\ge 0$ | Temel çözümler bu denklem sisteminden hesaplanır ([Temel çözümler](temel-cozumler-ve-konveks-kumeler.qmd)) |
+| Simpleks ile çözülebilir hal | standart formunki; yapaylar min'de $+M$, max'ta $-M$ | hepsi $=$ ve katsayılar matrisinde $m \times m$ birim matris | hepsi $b_i \ge 0$ | standart formunkiler ve gerekirse yapaylar; hepsi $\ge 0$ | Simpleks başlangıç tablosu doğrudan kurulur ([Simpleks yöntem](simpleks-yontem.qmd)) |
+
+: Kanonik form, standart form ve simpleks ile çözülebilir halin karşılaştırılması {#tbl-lpp-uc-form}
+
+Karşılaştırma tablosunda (@tbl-lpp-uc-form) dikkat edilecek iki nokta var. Birincisi, kanonik form **yöne**, standart form **eşitliğe ve sağ tarafın işaretine** bakar; bu yüzden bir problem kanonik olup standart olmayabilir, standart olup kanonik olmayabilir. İkincisi, çözülebilir hal standart formun bir özel durumudur: her çözülebilir hal standart formdadır, ama tersi doğru değildir. Aşağıdaki reçete bu formlar arasındaki yolu adım adım gösterir.
+
+::: {.callout-tip title="Üç adımda simpleks yöntem ile çözülebilir hale getirme"}
+1. **Kanonik form.** Değişkenleri $\ge 0$ yap ($x_j = x_j' - x_j''$ ya da $x_j = -x_j'$). Maksimumda $\ge$ kısıtları, minimumda $\le$ kısıtları $-1$ ile çarp; eşitlikleri iki eşitsizliğe ayır.
+2. **Standart form.** Sağ tarafı negatif olan satırları $-1$ ile çarp. Sonra $\le$ kısıtlara aylak değişken ekle, $\ge$ kısıtlardan artık değişken çıkar; eşitliklere dokunma. Aylak ve artıkların amaç katsayısı $0$'dır.
+3. **Çözülebilir hal.** Her denklemde katsayısı $1$ olan ve başka denklemde görünmeyen bir değişken ara. Bulamadığın her denkleme bir yapay değişken ekle; amaç katsayısı minimumda $+M$, maksimumda $-M$'dir.
+
+Standart form için kanonik formdan geçmek zorunlu değildir: eşitlikleri ikiye ayırmadan, verilen problemden doğrudan 2. adıma geçmek daha kısadır. Kanonik form asıl olarak dualite için gerekir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="5.0 -1.0 550.0 548.0" role="img" aria-label="Flowchart: general problem, then canonical form, then standard form, then the form solvable by the simplex method; the operations of each step are written next to the arrows.">
+  <rect x="20" y="14" width="520" height="62" rx="9" fill="var(--color-base)" fill-opacity="0.10" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="280.0" y="40.0" fill="var(--color-base)" font-size="15" text-anchor="middle" font-weight="600">Genel problem</text>
+  <text x="280.0" y="62.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">kısıtlar ≤, ≥, = karışık; sağ taraf negatif, değişken işaretsiz olabilir</text>
+  <rect x="20" y="166" width="520" height="62" rx="9" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="280.0" y="192.0" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600">Kanonik form</text>
+  <text x="280.0" y="214.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">max: bütün kısıtlar ≤;  min: bütün kısıtlar ≥;  bütün değişkenler ≥ 0</text>
+  <rect x="20" y="318" width="520" height="62" rx="9" fill="var(--color-practice)" fill-opacity="0.10" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="280.0" y="344.0" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">Standart form</text>
+  <text x="280.0" y="366.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">bütün kısıtlar eşitlik;  bütün sağ taraflar ≥ 0;  bütün değişkenler ≥ 0</text>
+  <rect x="20" y="470" width="520" height="62" rx="9" fill="var(--color-remark)" fill-opacity="0.10" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="280.0" y="496.0" fill="var(--color-remark)" font-size="15" text-anchor="middle" font-weight="600">Simpleks yöntem ile çözülebilir hal</text>
+  <text x="280.0" y="518.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">standart form + katsayılar matrisinde m × m birim matris</text>
+  <line x1="52.0" y1="80.0" x2="52.0" y2="155.0" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="52.0,163.0 47.8,153.0 56.2,153.0" fill="var(--academic-text)" opacity="0.75"/>
+  <text x="76.0" y="107.0" fill="var(--academic-text)" font-size="13" text-anchor="start">max'ta ≥ kısıtı, min'de ≤ kısıtı &#8722;1 ile çarpılır</text>
+  <text x="76.0" y="126.0" fill="var(--academic-text)" font-size="13" text-anchor="start">eşitlik kısıtı iki eşitsizliğe ayrılır</text>
+  <text x="76.0" y="145.0" fill="var(--academic-text)" font-size="13" text-anchor="start">işaretsiz değişken x' &#8722; x'' , x ≤ 0 olan değişken &#8722;x' yazılır</text>
+  <line x1="52.0" y1="232.0" x2="52.0" y2="307.0" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="52.0,315.0 47.8,305.0 56.2,305.0" fill="var(--academic-text)" opacity="0.75"/>
+  <text x="76.0" y="259.0" fill="var(--academic-text)" font-size="13" text-anchor="start">sağ tarafı negatif olan satır &#8722;1 ile çarpılır</text>
+  <text x="76.0" y="278.0" fill="var(--academic-text)" font-size="13" text-anchor="start">≤ kısıta aylak (slack) değişken eklenir</text>
+  <text x="76.0" y="297.0" fill="var(--academic-text)" font-size="13" text-anchor="start">≥ kısıttan artık (surplus) değişken çıkarılır</text>
+  <line x1="52.0" y1="384.0" x2="52.0" y2="459.0" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="52.0,467.0 47.8,457.0 56.2,457.0" fill="var(--academic-text)" opacity="0.75"/>
+  <text x="76.0" y="420.5" fill="var(--academic-text)" font-size="13" text-anchor="start">birim sütunu olmayan satıra yapay değişken eklenir</text>
+  <text x="76.0" y="439.5" fill="var(--academic-text)" font-size="13" text-anchor="start">yapay değişkenin amaç katsayısı: min için +M, max için &#8722;M</text>
+</svg>
+<figcaption>Bir lineer programlama problemini simpleks yöntem ile çözülebilir hale getirme. Okların yanında her geçişte yapılan işlemler yazılıdır.</figcaption>
+</figure>
+```
+:::
+
+Şimdi aynı reçeteyi üç tam örnekte uygulayalım: biri $\le$ kısıtlı bir maksimum, biri $\ge$ kısıtlı bir minimum, biri de her türden kısıt içeren karışık bir problem.
+
+:::: {#exm-lpp-zincir-max name="Maksimum problemi üç forma"}
+@exm-lpp-uretim modelini sırasıyla kanonik forma, standart forma ve simpleks yöntem ile çözülebilir hale getiriniz:
+
+$$
+\begin{aligned}
+2x_1 + x_2 &\le 100 \\
+x_1 + x_2 &\le 80 \\
+x_1 &\le 40 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 30x_1 + 20x_2
+\end{aligned}
+$$
+
+::: {.cozum}
+**Kanonik form.** Amaç maksimum, üç kısıt da $\le$, iki değişken de $\ge 0$. Problem zaten kanonik formdadır.
+
+**Standart form.** Sağ taraflar $100, 80, 40$ negatif değildir; $-1$ ile çarpılacak satır yok. Her $\le$ kısıta bir aylak değişken ekleriz: işçiliğe $x_3$, ahşaba $x_4$, masa talebine $x_5$.
+
+$$
+\begin{aligned}
+2x_1 + x_2 + x_3 &= 100 \\
+x_1 + x_2 + x_4 &= 80 \\
+x_1 + x_5 &= 40 \\
+x_1, x_2, x_3, x_4, x_5 &\ge 0 \\
+\max z &= 30x_1 + 20x_2 + 0x_3 + 0x_4 + 0x_5
+\end{aligned}
+$$
+
+**Çözülebilir hal.** Katsayılar matrisi
+
+$$
+\begin{bmatrix}
+2 & 1 & 1 & 0 & 0 \\
+1 & 1 & 0 & 1 & 0 \\
+1 & 0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+olup $x_3$, $x_4$, $x_5$ sütunları $3 \times 3$ birim matrisi oluşturur. Standart form **zaten** simpleks yöntem ile çözülebilir haldedir; yapay değişken gerekmez (bkz. @prp-lpp-max-kanonik).
+
+Başlangıç çözümü: $x_1 = x_2 = 0$, $x_3 = 100$, $x_4 = 80$, $x_5 = 40$ ve $z = 0$. Anlamı açıktır: hiç üretim yapılmıyor ve bütün kaynaklar boşta. Simpleks yöntem buradan başlayıp kârı artıran planlara geçecek.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lpp-zincir-min name="Minimum problemi üç forma"}
+@exm-lpp-artik-anlami diyetinin modelini ($x_1 + x_2 \ge 4$, $x_1 + 3x_2 \ge 6$, $x_1, x_2 \ge 0$, $\min z = 2x_1 + 3x_2$) sırasıyla kanonik forma, standart forma ve simpleks yöntem ile çözülebilir hale getiriniz.
+
+::: {.cozum}
+**Kanonik form.** Amaç minimum, iki kısıt da $\ge$, değişkenler $\ge 0$. Problem zaten kanonik formdadır.
+
+**Standart form.** Sağ taraflar $4$ ve $6$ negatif değildir. İki $\ge$ kısıttan da artık değişken çıkarırız:
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 &= 4 \\
+x_1 + 3x_2 - x_4 &= 6 \\
+x_1, x_2, x_3, x_4 &\ge 0 \\
+\min z &= 2x_1 + 3x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+
+**Çözülebilir hal.** Katsayılar matrisi
+
+$$
+\begin{bmatrix}
+1 & 1 & -1 & 0 \\
+1 & 3 & 0 & -1
+\end{bmatrix}
+$$
+
+dir. $x_3$ ve $x_4$'ün sütunları $(-1, 0)$ ve $(0, -1)$'dir; birim sütun değildir. Bunları başlangıçta kullanmaya kalkarsak $x_1 = x_2 = 0$ için denklemlerden $x_3 = -4$ ve $x_4 = -6$ çıkar; bu değerler $x_3, x_4 \ge 0$ koşulunu bozar. Anlamı da saçmadır: hiç yemek yemeyen biri vitamin gereksinimini "$-4$ birim aşmış" olur.
+
+Bu yüzden iki denkleme de birer yapay değişken ekleriz. Minimum problemi olduğundan amaç katsayıları $+M$'dir:
+
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 + x_{u_1} &= 4 \\
+x_1 + 3x_2 - x_4 + x_{u_2} &= 6 \\
+x_1, x_2, x_3, x_4, x_{u_1}, x_{u_2} &\ge 0 \\
+\min z &= 2x_1 + 3x_2 + 0x_3 + 0x_4 + Mx_{u_1} + Mx_{u_2}
+\end{aligned}
+$$
+
+Artık $v_{u_1}$ ve $v_{u_2}$ sütunları $2 \times 2$ birim matrisi oluşturur ve problem simpleks yöntem ile çözülebilir haldedir. Başlangıç çözümü $x_1 = x_2 = x_3 = x_4 = 0$, $x_{u_1} = 4$, $x_{u_2} = 6$ ve $z = 10M$'dir.
+
+Bu başlangıç noktası gerçek bir diyet değildir: hiçbir şey yenmiyor. Yapay değişkenler burada **eksik kalan vitamini** ölçer: $x_{u_1} = 4$ birim A, $x_{u_2} = 6$ birim C vitamini eksiktir. Amaçtaki büyük $M$ cezası, simpleks yöntemi bu eksikleri gerçek besinlerle kapatmaya zorlar. Optimal çözümde yapay değişkenlerin hepsi sıfır olmalıdır; ayrıntılar [Büyük M yöntemi](buyuk-m-yontemi.qmd) bölümündedir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lpp-zincir-karisik name="Karışık kısıtlı problem üç forma"}
+Aşağıdaki problemi sırasıyla kanonik forma, standart forma ve simpleks yöntem ile çözülebilir hale getiriniz.
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &\le 10 \\
+2x_1 - x_2 + x_3 &\ge 4 \\
+x_1 + 2x_2 - x_3 &= 3 \\
+x_1 - 3x_2 &\le -2 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 3x_1 + 2x_2 + x_3
+\end{aligned}
+$$
+
+::: {.cozum}
+**Kanonik form.** Maksimum problemi olduğundan bütün kısıtlar $\le$ olmalıdır. Satırlara tek tek bakalım:
+
+- birinci kısıt $\le$ biçimindedir, olduğu gibi kalır;
+- ikinci kısıt $\ge$ biçimindedir; $-1$ ile çarparak $-2x_1 + x_2 - x_3 \le -4$ yaparız;
+- üçüncü kısıt eşitliktir; $x_1 + 2x_2 - x_3 \le 3$ ve $x_1 + 2x_2 - x_3 \ge 3$ diye ikiye ayırıp ikincisini $-1$ ile çarparız: $-x_1 - 2x_2 + x_3 \le -3$;
+- dördüncü kısıt zaten $\le$ biçimindedir; sağ tarafı negatif ama kanonik form için bu önemli değildir.
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &\le 10 \\
+-2x_1 + x_2 - x_3 &\le -4 \\
+x_1 + 2x_2 - x_3 &\le 3 \\
+-x_1 - 2x_2 + x_3 &\le -3 \\
+x_1 - 3x_2 &\le -2 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 3x_1 + 2x_2 + x_3
+\end{aligned}
+$$
+
+**Standart form.** Standart formu kanonik formdan da elde edebilirdik, ama eşitliği ikiye ayırıp sonra iki yeni değişkenle yeniden eşitliğe çevirmek gereksiz iş olur. Bu yüzden standart formu verilen problemden yazıyoruz:
+
+- birinci kısıt $\le$: $x_4$ aylak değişkenini ekleriz, $x_1 + x_2 + x_3 + x_4 = 10$;
+- ikinci kısıt $\ge$: $x_5$ artık değişkenini çıkarırız, $2x_1 - x_2 + x_3 - x_5 = 4$;
+- üçüncü kısıt eşitliktir ve sağ tarafı $3 \ge 0$'dır; olduğu gibi kalır;
+- dördüncü kısıtın sağ tarafı $-2 < 0$'dır. Önce $-1$ ile çarparız: $-x_1 + 3x_2 \ge 2$. Artık $\ge$ biçiminde olduğu için $x_6$ artık değişkenini çıkarırız: $-x_1 + 3x_2 - x_6 = 2$.
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 + x_4 &= 10 \\
+2x_1 - x_2 + x_3 - x_5 &= 4 \\
+x_1 + 2x_2 - x_3 &= 3 \\
+-x_1 + 3x_2 - x_6 &= 2 \\
+x_1, x_2, \dots, x_6 &\ge 0 \\
+\max z &= 3x_1 + 2x_2 + x_3 + 0x_4 + 0x_5 + 0x_6
+\end{aligned}
+$$
+
+Bütün kısıtlar eşitlik, bütün sağ taraflar ($10, 4, 3, 2$) negatif değil ve bütün değişkenler $\ge 0$; problem standart formdadır.
+
+**Çözülebilir hal.** Katsayılar matrisi
+
+$$
+\begin{bmatrix}
+1 & 1 & 1 & 1 & 0 & 0 \\
+2 & -1 & 1 & 0 & -1 & 0 \\
+1 & 2 & -1 & 0 & 0 & 0 \\
+-1 & 3 & 0 & 0 & 0 & -1
+\end{bmatrix}
+$$
+
+dir. Birim sütun yalnız birinci denklemde vardır: $x_4$'ün sütunu $(1, 0, 0, 0)$'dır. Diğer denklemlerin durumu şöyledir:
+
+- ikinci denklemde $x_5$'in katsayısı $-1$'dir; artık değişken birim sütun vermez;
+- üçüncü denkleme hiç yeni değişken eklenmedi; eşitlik kısıtının "boşluğu" yoktur. $x_1 = x_2 = x_3 = 0$ alınca sol taraf $0$ olur ve $3$'e eşit olamaz; denklemi başlangıçta sağlayacak bir değişken yoktur;
+- dördüncü denklemde $x_6$'nın katsayısı yine $-1$'dir.
+
+Bu üç denkleme sırasıyla $x_{u_1}$, $x_{u_2}$, $x_{u_3}$ yapay değişkenlerini ekleriz. Maksimum problemi olduğundan amaç katsayıları $-M$'dir:
+
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 + x_4 &= 10 \\
+2x_1 - x_2 + x_3 - x_5 + x_{u_1} &= 4 \\
+x_1 + 2x_2 - x_3 + x_{u_2} &= 3 \\
+-x_1 + 3x_2 - x_6 + x_{u_3} &= 2 \\
+x_1, \dots, x_6, x_{u_1}, x_{u_2}, x_{u_3} &\ge 0 \\
+\max z &= 3x_1 + 2x_2 + x_3 + 0x_4 + 0x_5 + 0x_6 \\
+&\quad - Mx_{u_1} - Mx_{u_2} - Mx_{u_3}
+\end{aligned}
+$$
+
+$x_4$, $x_{u_1}$, $x_{u_2}$, $x_{u_3}$ sütunları $4 \times 4$ birim matrisi oluşturur; problem simpleks yöntem ile çözülebilir haldedir. Başlangıç çözümü
+
+$$x_4 = 10, \quad x_{u_1} = 4, \quad x_{u_2} = 3, \quad x_{u_3} = 2, \qquad z = -9M$$
+
+ve geri kalan değişkenler $0$'dır.
+
+Yapay değişkenin neden gerektiğini bu örnek iyi gösterir. Aylak değişken "kullanılmayan kaynak" olarak başlangıçta bütün sağ tarafı üstlenebilir. Artık değişken bunu yapamaz, çünkü sağ tarafı üstlenmesi için negatif olması gerekir. Eşitlik kısıtında ise üstlenecek bir değişken hiç yoktur. Yapay değişken bu işi geçici olarak üstlenir. Başlangıç çözümü orijinal problemi sağlamaz (örneğin $2 \cdot 0 - 0 + 0 = 0 \ge 4$ değildir). Simpleks yöntem, $-M$ cezası sayesinde yapay değişkenleri adım adım sıfıra indirir; hepsi sıfır olunca elde kalan çözüm orijinal problemin de çözümüdür. Bu sürecin nasıl işlediğini [Büyük M yöntemi](buyuk-m-yontemi.qmd) bölümünde göreceğiz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Sık Yapılan Hatalar
+
+Üç formu birbirinden ayırırken en çok şu noktalarda yanılırız.
+
+::: {.callout-warning title="Dikkat edilecek noktalar"}
+- **Standart form yöne bakmaz, kanonik form bakar.** Bir minimum probleminde $\le$ kısıta aylak değişken eklemek standart formu bozmaz (bkz. @exm-lpp-yapay-ekleme). Ama o problem kanonik formda değildir; kanonik form için o kısıt $-1$ ile çarpılıp $\ge$ yapılmalıdır.
+- **Kanonik formda sağ taraf negatif olabilir.** $-3x_1 + 2x_2 \le -2$ gibi bir satır kanonik formu bozmaz; standart formu ise bozar.
+- **$b_i < 0$ iken standart form olmaz.** $x_1 - 4x_2 + x_3 = -8$ bir eşitliktir ama standart form değildir; önce iki yan $-1$ ile çarpılır.
+- **Artık değişken birim sütun vermez.** $-x_{n+i}$'nin sütunu $-1$ içerir; denklemi $-1$ ile çarparak düzeltmeye çalışmak sağ tarafı negatif yapar. Doğru yol yapay değişken eklemektir.
+- **Eşitlik kısıtına aylak ya da artık değişken eklenmez.** Eşitlik zaten eşitliktir; çözülebilir hal için ona doğrudan yapay değişken eklenir.
+- **Katsayıların işaretleri karışmamalı.** Aylak ve artık değişkenlerin amaç katsayısı $0$'dır; yapay değişkenlerinki minimumda $+M$, maksimumda $-M$'dir.
+- **Maksimumu minimuma çevirince işaret geri çevrilir.** $\max w = -z$ problemi çözülünce $\min z = -\max w$ olur; sonucu yazarken işaretini değiştirmeyi unutmayın.
+- **Yapay değişken yalnız gereken satıra eklenir.** Birim sütunu zaten olan (aylak değişkenli) bir denkleme yapay değişken eklemek gereksizdir.
+:::
+
+Bu bölümde bir lineer programlama problemini kurmayı ve onu kanonik forma, standart forma ve simpleks yöntem ile çözülebilir hale getirmeyi öğrendik. Standart formdaki bir denklem sisteminin, bazı değişkenleri sıfır alınarak bulunan özel çözümleri bütün çözüm yöntemlerinin temelidir. Bir sonraki bölümde, [Temel çözümler ve konveks kümeler](temel-cozumler-ve-konveks-kumeler.qmd) bölümünde, bu **temel çözümleri** tanımlayacak ve uygun çözümlerin kümesinin geometrik yapısını inceleyeceğiz.

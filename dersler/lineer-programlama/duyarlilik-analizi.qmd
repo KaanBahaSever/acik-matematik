@@ -1,0 +1,1027 @@
+---
+title: "Duyarlılık Analizi"
+pagetitle: "Duyarlılık Analizi"
+description: "Optimal simpleks tablosunun baz matrisinin tersiyle doğrudan yazılması; temel dışı ve temelde olan değişkenlerin amaç katsayıları için optimumluğu bozmayan değişim aralıkları, sağ taraf sabitleri için temel çözümün negatif olmama koşulu; sembolik tablolar ve iki değişkenli örneklerin geometrik yorumu."
+---
+
+Buraya kadar bir lineer programlama problemini hep sabit verilerle çözdük: amaç katsayıları $c_j$, kısıt katsayıları $a_{ij}$ ve sağ taraflar $b_i$ kesin olarak biliniyordu. Gerçek bir modelde bu sayılar çoğu zaman tahmindir. Bir ürünün kârı piyasaya göre değişir, eldeki hammadde miktarı bir sonraki ay farklı olabilir. O zaman doğal bir soru ortaya çıkar: Bulduğumuz optimal çözüm bu sayılardaki değişimlere ne kadar dayanıklıdır? Kâr biraz artarsa aynı üretim planı yine en iyisi midir? Hammadde azalırsa hangi değişkenler üretilmeye devam eder?
+
+Bu soruları her seferinde problemi baştan çözerek cevaplamak gerekmez. Optimal tablo, değişimin etkisini okumak için gereken her şeyi zaten içerir. Bu bölümde önce optimal tablonun optimal bazın tersiyle nasıl doğrudan yazıldığını göreceğiz. Sonra amaç katsayılarındaki ve sağ taraf sabitlerindeki değişimlerin tabloda hangi sayıları etkilediğini bulup optimumluğu bozmayan değişim aralıklarını hesaplayacağız. Önceki bölümlerdeki simpleks yöntem ([Simpleks yöntem](simpleks-yontem.qmd), [Büyük M yöntemi](buyuk-m-yontemi.qmd)) burada başlangıç noktasıdır: duyarlılık analizi problem çözüldükten sonra yapılır.
+
+## Duyarlılık Analizi Nedir? {#sec-dya-nedir}
+
+Önce neyi incelediğimizi kesinleştirelim.
+
+::: {#def-dya-duyarlilik-analizi name="Duyarlılık analizi"}
+Bir lineer programlama probleminin optimal çözümünün, sağ taraf sabitlerinde ($b_i$) ve amaç fonksiyonu katsayılarında ($c_j$) meydana gelebilecek değişimler göz önüne alınarak incelenmesine **duyarlılık analizi** denir.
+:::
+
+Yani duyarlılık analizinde problemi çözdükten sonra verilerden birini değiştiririz ve "optimal tablo ne kadar değişir?" diye sorarız. En sık sorulan soru bir aralık sorusudur: Bir $c_j$ ya da bir $b_i$ hangi aralıkta değişirse **optimumluk bozulmaz**, yani optimal tablonun bazı (temeldeki değişkenler) aynı kalır? Bu aralığa o sayının **değişim aralığı** diyeceğiz.
+
+Bu bölümde iki tür değişimi inceleyeceğiz:
+
+1. **Amaç fonksiyonu katsayılarındaki ($c_j$) değişim.** Burada da iki durum ayrılır: değişen katsayı temel dışı (bazda olmayan) bir değişkene ya da temelde olan (bazdaki) bir değişkene ait olabilir.
+2. **Sağ taraf sabitlerindeki ($b_i$) değişim.**
+
+Değişimlerin her birinde yalnız bir sayının değiştiğini, diğer bütün verilerin sabit kaldığını varsayacağız.
+
+## Optimal Tablonun $B^{-1}$ ile Yazılması {#sec-dya-ters-matris}
+
+Duyarlılık analizinin anahtarı şu gözlemdir: bir baz seçildiği anda o baza ait simpleks tablosunun her sayısı, bazın sütunlarından kurulan matrisin tersiyle hesaplanabilir. Simpleks iterasyonlarını tekrar yapmaya gerek kalmaz.
+
+Problemin standart formu (@def-lpp-standart-form)
+$$
+\begin{aligned}
+A\vec{x} &= \vec{b} \\
+\vec{x} &\ge 0 \\
+\max \ (\text{ya da } \min) \ z &= \vec{c}^{\,T}\vec{x}
+\end{aligned}
+$$
+olsun. $A$'nın sütunları $v_1, \dots, v_n$, sağ taraf vektörü $v_0 = \vec{b}$'dir.
+
+::: {#def-dya-baz-matrisi name="Baz matrisi"}
+Bir simpleks tablosunun $x_B$ sütununda yukarıdan aşağı $x_{B_1}, x_{B_2}, \dots, x_{B_m}$ değişkenleri bulunsun. Standart formun bu değişkenlere ait $v_{B_1}, \dots, v_{B_m}$ sütunlarını **aynı sırayla** yan yana yazarak elde edilen $m \times m$ matrise tablonun **baz matrisi** denir ve $B$ ile gösterilir:
+$$
+B = \begin{bmatrix} v_{B_1} & v_{B_2} & \cdots & v_{B_m} \end{bmatrix}.
+$$
+Baz maliyetleri de aynı sırayla $\vec{c}_B = (c_{B_1}, \dots, c_{B_m})^T$ vektörünü oluşturur.
+:::
+
+Yani $B$, temel değişkenlerin **ilk baştaki** (standart formdaki) katsayılar matrisidir. Tablodaki $y_{ij}$ değerlerinden değil, problemin kendi katsayılarından kurulur. Baz vektörleri lineer bağımsız olduğundan $B$'nin tersi vardır. Sütunların sırası tablonun satır sırasını izler; sıra değişirse $B^{-1}$'in satırları da aynı biçimde yer değiştirir.
+
+:::: {#thm-dya-tablo name="Tablonun $B^{-1}$ ile hesabı"}
+Baz matrisi $B$ olan simpleks tablosunda
+
+1. tablonun $v_j$ sütunu $\vec{y}_j = B^{-1} v_j$ ($j = 1, \dots, n$) ve $v_0$ sütunu $B^{-1}\vec{b}$'dir;
+2. simpleks kriterleri $z_j - c_j = \vec{c}_B^{\,T} B^{-1} v_j - c_j$, amaç değeri $z_0 = \vec{c}_B^{\,T} B^{-1} \vec{b}$'dir.
+
+::: {.ispat}
+**1\.** Tablonun $v_j$ sütunundaki $y_{1j}, \dots, y_{mj}$ sayıları, $v_j$'nin baz vektörleri cinsinden yazılışının katsayılarıdır ([Simpleks yöntem](simpleks-yontem.qmd) bölümündeki tanım):
+$$
+v_j = y_{1j} v_{B_1} + y_{2j} v_{B_2} + \dots + y_{mj} v_{B_m}.
+$$
+Sağ taraf, sütunları $v_{B_i}$ olan $B$ matrisinin $\vec{y}_j = (y_{1j}, \dots, y_{mj})^T$ vektörüyle çarpımıdır; yani eşitlik $v_j = B\vec{y}_j$ demektir. $B$ tersinir olduğundan iki yanı soldan $B^{-1}$ ile çarparak $\vec{y}_j = B^{-1} v_j$ buluruz. Aynı akıl yürütme $j = 0$ için $v_0 = \vec{b}$'ye uygulanır ve $v_0$ sütunu $B^{-1}\vec{b}$ olur.
+
+**2\.** Tanım gereği $z_j = \vec{c}_B^{\,T} \vec{y}_j$ ve $z_0 = \vec{c}_B^{\,T} \vec{y}_0$'dır. Birinci kısımdaki ifadeleri yerine koymak yeter. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani optimal baz bir kez bilindiğinde tablonun **gövdesi** ($v_0$ sütunu ve bütün $y_{ij}$'ler) yalnız $B^{-1}$, $A$ ve $\vec{b}$'ye; **son satırı** ise bunlara ek olarak amaç katsayılarına bağlıdır. Duyarlılık analizinin bütün hesapları bu ayrıma dayanır.
+
+$B^{-1}$'i her seferinde ayrıca hesaplamak da gerekmeyebilir; çoğu zaman tablonun içinde hazır durur.
+
+:::: {#prp-dya-ters-tabloda name="$B^{-1}$ tablonun içinde"}
+Standart formda $v_{k_1}, \dots, v_{k_m}$ sütunları sırasıyla $m \times m$ birim matrisin $e_1, \dots, e_m$ sütunları olsun (örneğin $\le$ kısıtların aylak değişkenlerinin sütunları). Bu durumda herhangi bir tabloda $v_{k_1}, \dots, v_{k_m}$ sütunları, sırasıyla, o tablonun baz matrisinin tersi $B^{-1}$'in sütunlarıdır.
+
+Bir $\ge$ kısıtın artık değişkeninin sütunu $-e_i$ ise o tablodaki sütununun $-1$ katı $B^{-1}$'in $i$. sütunudur.
+
+::: {.ispat}
+@thm-dya-tablo gereği tablonun $v_{k_i}$ sütunu $B^{-1} v_{k_i} = B^{-1} e_i$'dir. Bir matrisi $e_i$ ile çarpmak onun $i$. sütununu verir; o hâlde bu sütun $B^{-1}$'in $i$. sütunudur. Artık değişken için tablonun sütunu $B^{-1}(-e_i) = -B^{-1}e_i$ olur; $-1$ ile çarpınca yine $B^{-1}$'in $i$. sütunu elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bütün kısıtları $\le$ olan bir problemde $B^{-1}$, optimal tablonun aylak değişken sütunlarında okunur. $\ge$ kısıtlı bir problemde yapay değişkenin sütunu bazdan çıkınca atıldığı için ([Büyük M yöntemi](buyuk-m-yontemi.qmd)) o kısıtın birim sütunu tabloda kalmaz; bu durumda $B^{-1}$ ya artık değişkenin sütunundan işaret değiştirilerek okunur ya da $B$'nin tersi doğrudan alınır. $2 \times 2$ bir matrisin tersi
+$$
+B = \begin{bmatrix} a & b \\ c & d \end{bmatrix}
+\ \Longrightarrow \
+B^{-1} = \frac{1}{ad - bc} \begin{bmatrix} d & -b \\ -c & a \end{bmatrix}, \quad ad - bc \ne 0
+$$
+formülüyle bulunur (bkz. [Lineer Cebir, tersin ek matrisle formülü](../lineer-cebir/determinantlar/kofaktor-ve-ters.html#cor-ek-ters)).
+
+::: {.callout-tip title="Optimal tablo dört adımda"}
+1. **Standart form.** Problemi standart forma getir; $A$'nın $v_j$ sütunlarını, $\vec{b}$'yi ve $c_j$'leri yaz. Yapay değişkenlere gerek yoktur.
+2. **Baz matrisi.** Optimal bazdaki değişkenlerin standart formdaki sütunlarını, tablonun satır sırasıyla yan yana yazarak $B$'yi kur ve $B^{-1}$'i hesapla.
+3. **Gövde.** $v_0$ sütunu $B^{-1}\vec{b}$, her $v_j$ sütunu $B^{-1}v_j$'dir. Baz vektörlerinin sütunları birim vektördür.
+4. **Son satır.** $z_j - c_j = \vec{c}_B^{\,T}\vec{y}_j - c_j$ ve $z_0 = \vec{c}_B^{\,T} B^{-1}\vec{b}$. Minimumda bütün $z_j - c_j \le 0$, maksimumda bütün $z_j - c_j \ge 0$ ise tablo optimaldir.
+:::
+
+Bölüm boyunca kullanacağımız problemi önce simpleks yöntemle çözelim, sonra optimal tablosunu $B^{-1}$ ile doğrudan yazalım.
+
+:::: {#exm-dya-simpleks name="Duyarlılık örneğinin simpleks çözümü"}
+$$
+\begin{aligned}
+\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 &\le 1 \\
+\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 &\le 3 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 2x_1 + 3x_2 + x_3
+\end{aligned}
+$$
+problemini simpleks yöntemle çözünüz.
+
+::: {.cozum}
+**Standart form.** İki $\le$ kısıtına $x_4$ ve $x_5$ aylak değişkenlerini ekleriz:
+$$
+\begin{aligned}
+\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 + x_4 &= 1 \\
+\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 + x_5 &= 3 \\
+x_j &\ge 0, \quad j = \overline{1,5} \\
+\max z &= 2x_1 + 3x_2 + x_3 + 0x_4 + 0x_5
+\end{aligned}
+$$
+Sağ taraflar negatif değildir ve $v_4$, $v_5$ birim matrisi oluşturur; standart form simpleks yöntem ile çözülebilir haldedir (@def-lpp-cozulebilir-hal). Başlangıç bazı $(v_4, v_5)$'tir ve $z_j - c_j = -c_j$ olur.
+
+**Başlangıç tablosu.** Maksimum probleminde en negatif $z_j - c_j$ girer, bütün $z_j - c_j \ge 0$ olunca optimal tabloya ulaşılır. En negatif kriter $-3$ olduğundan $v_2$ baza girer. Oranlar $1 / \tfrac{1}{3} = 3$ ve $3 / \tfrac{4}{3} = \tfrac{9}{4}$; en küçüğü $x_5$ satırındadır, $v_5$ bazdan çıkar ve pivot $\tfrac{4}{3}$'tür.
+
+|   |   | $c_j$ | $2$ | $3$ | $1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_4$ | $0$ | $1$ | $\frac{1}{3}$ | $\frac{1}{3}$ | $\frac{1}{3}$ | $1$ | $0$ | $\frac{1}{1/3} = 3$ |
+| $x_5$ | $0$ | $3$ | $\frac{1}{3}$ | $[\frac{4}{3}]$ | $\frac{7}{3}$ | $0$ | $1$ | $\frac{3}{4/3} = \frac{9}{4} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-2$ | $-3 \Uparrow$ | $-1$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-dya-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı $\tfrac{4}{3}$'e bölünür, yani $\tfrac{3}{4}$ ile çarpılır ve $x_2$ satırı olur:
+$$
+\big(3 \mid \tfrac{1}{3}, \tfrac{4}{3}, \tfrac{7}{3}, 0, 1\big) \cdot \tfrac{3}{4}
+= \big(\tfrac{9}{4} \mid \tfrac{1}{4}, 1, \tfrac{7}{4}, 0, \tfrac{3}{4}\big).
+$$
+$x_4$ satırından yeni satırın $\tfrac{1}{3}$ katını çıkarırız; $z_j - c_j$ satırına yeni satırın $3$ katını ekleriz. Örneğin $x_4$ satırının $v_0$ değeri $1 - \tfrac{1}{3} \cdot \tfrac{9}{4} = \tfrac{1}{4}$, $v_3$ sütununun kriteri $-1 + 3 \cdot \tfrac{7}{4} = \tfrac{17}{4}$ olur.
+
+Tek negatif kriter $-\tfrac{5}{4}$ olduğundan $v_1$ baza girer. Oranlar $\tfrac{1}{4} / \tfrac{1}{4} = 1$ ve $\tfrac{9}{4} / \tfrac{1}{4} = 9$; $v_4$ bazdan çıkar, pivot $\tfrac{1}{4}$'tür.
+
+|   |   | $c_j$ | $2$ | $3$ | $1$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_4$ | $0$ | $\frac{1}{4}$ | $[\frac{1}{4}]$ | $0$ | $-\frac{1}{4}$ | $1$ | $-\frac{1}{4}$ | $\frac{1/4}{1/4} = 1 \Rightarrow$ |
+| $x_2$ | $3$ | $\frac{9}{4}$ | $\frac{1}{4}$ | $1$ | $\frac{7}{4}$ | $0$ | $\frac{3}{4}$ | $\frac{9/4}{1/4} = 9$ |
+| $z_j - c_j$ |   | $z_0 = \frac{27}{4}$ | $-\frac{5}{4} \Uparrow$ | $0$ | $\frac{17}{4}$ | $0$ | $\frac{9}{4}$ |   |
+
+: Birinci iterasyon tablosu {#tbl-dya-birinci .simpleks}
+
+**İkinci iterasyon.** Pivot satırı $4$ ile çarpılır ve $x_1$ satırı olur: $(1 \mid 1, 0, -1, 4, -1)$. $x_2$ satırından bu satırın $\tfrac{1}{4}$ katını çıkarırız:
+$$
+\big(\tfrac{9}{4} - \tfrac{1}{4} \mid 0,\ 1,\ \tfrac{7}{4} + \tfrac{1}{4},\ -1,\ \tfrac{3}{4} + \tfrac{1}{4}\big) = (2 \mid 0, 1, 2, -1, 1).
+$$
+$z_j - c_j$ satırına bu satırın $\tfrac{5}{4}$ katını ekleriz: $z_0 = \tfrac{27}{4} + \tfrac{5}{4} = 8$, $v_3$ için $\tfrac{17}{4} - \tfrac{5}{4} = 3$, $v_4$ için $0 + 5 = 5$, $v_5$ için $\tfrac{9}{4} - \tfrac{5}{4} = 1$.
+
+|   |   | $c_j$ | $2$ | $3$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $2$ | $1$ | $1$ | $0$ | $-1$ | $4$ | $-1$ |
+| $x_2$ | $3$ | $2$ | $0$ | $1$ | $2$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 8$ | $0$ | $0$ | $3$ | $5$ | $1$ |
+
+: Optimal tablo {#tbl-dya-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir. Optimal çözüm $x_1 = 1$, $x_2 = 2$, $x_3 = x_4 = x_5 = 0$ ve $\max z = 2 \cdot 1 + 3 \cdot 2 = 8$'dir. Temel değişkenler $x_1$ ve $x_2$, temel dışı değişkenler $x_3$, $x_4$ ve $x_5$'tir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dya-dogrudan name="Optimal tablonun doğrudan yazılması"}
+Önceki örnekteki (@exm-dya-simpleks) problemin optimal bazının $(v_1, v_2)$ olduğu, $x_1$ satırının üstte, $x_2$ satırının altta yazıldığı biliniyor. Optimal tabloyu simpleks iterasyonları yapmadan, $B^{-1}$ ile yazınız.
+
+::: {.cozum}
+**Baz matrisi.** Temel değişkenler $x_1$ ve $x_2$'dir; standart formdaki sütunları $v_1 = (\tfrac{1}{3}, \tfrac{1}{3})^T$ ve $v_2 = (\tfrac{1}{3}, \tfrac{4}{3})^T$'tür. Tablonun satır sırasıyla
+$$
+B = \begin{bmatrix} v_1 & v_2 \end{bmatrix} = \begin{bmatrix} \tfrac{1}{3} & \tfrac{1}{3} \\[1mm] \tfrac{1}{3} & \tfrac{4}{3} \end{bmatrix}.
+$$
+$\det B = \tfrac{4}{9} - \tfrac{1}{9} = \tfrac{1}{3} \ne 0$ olduğundan
+$$
+B^{-1} = 3 \begin{bmatrix} \tfrac{4}{3} & -\tfrac{1}{3} \\[1mm] -\tfrac{1}{3} & \tfrac{1}{3} \end{bmatrix}
+= \begin{bmatrix} 4 & -1 \\ -1 & 1 \end{bmatrix}.
+$$
+Kontrol: $B B^{-1}$'in ilk satırı $\big(\tfrac{4}{3} - \tfrac{1}{3},\ -\tfrac{1}{3} + \tfrac{1}{3}\big) = (1, 0)$, ikinci satırı $\big(\tfrac{4}{3} - \tfrac{4}{3},\ -\tfrac{1}{3} + \tfrac{4}{3}\big) = (0, 1)$.
+
+**Gövde.** @thm-dya-tablo gereği:
+$$
+\begin{aligned}
+B^{-1}\vec{b} &= \begin{bmatrix} 4 & -1 \\ -1 & 1 \end{bmatrix} \begin{bmatrix} 1 \\ 3 \end{bmatrix} = \begin{bmatrix} 1 \\ 2 \end{bmatrix}, \\[2mm]
+B^{-1} v_3 &= \begin{bmatrix} 4 & -1 \\ -1 & 1 \end{bmatrix} \begin{bmatrix} \tfrac{1}{3} \\[1mm] \tfrac{7}{3} \end{bmatrix} = \begin{bmatrix} -1 \\ 2 \end{bmatrix}, \\[2mm]
+B^{-1} v_4 &= B^{-1} e_1 = \begin{bmatrix} 4 \\ -1 \end{bmatrix}, \qquad
+B^{-1} v_5 = B^{-1} e_2 = \begin{bmatrix} -1 \\ 1 \end{bmatrix}.
+\end{aligned}
+$$
+Örneğin $B^{-1}v_3$'ün ilk bileşeni $4 \cdot \tfrac{1}{3} - \tfrac{7}{3} = -1$, ikincisi $-\tfrac{1}{3} + \tfrac{7}{3} = 2$'dir. $v_1$ ve $v_2$ baz vektörleri olduğundan sütunları $(1, 0)^T$ ve $(0, 1)^T$'dir.
+
+**Son satır.** $\vec{c}_B = (2, 3)^T$ ile
+$$
+\begin{aligned}
+z_3 - c_3 &= (2,\ 3)\begin{pmatrix} -1 \\ 2 \end{pmatrix} - 1 = 4 - 1 = 3, \\[1mm]
+z_4 - c_4 &= (2,\ 3)\begin{pmatrix} 4 \\ -1 \end{pmatrix} - 0 = 5, \\[1mm]
+z_5 - c_5 &= (2,\ 3)\begin{pmatrix} -1 \\ 1 \end{pmatrix} - 0 = 1, \\[1mm]
+z_0 &= (2,\ 3)\begin{pmatrix} 1 \\ 2 \end{pmatrix} = 8 .
+\end{aligned}
+$$
+Bulunan sayılar optimal tablodaki (@tbl-dya-optimal) sayıların aynısıdır. Tabloya bakınca @prp-dya-ters-tabloda da doğrulanır: aylak değişkenlerin $v_4$ ve $v_5$ sütunları yan yana $B^{-1}$'i verir. Bütün $z_j - c_j \ge 0$ olduğundan bu tablonun optimal olduğunu iterasyonlara bakmadan da söyleyebiliriz. [$\blacksquare$]{.qed}
+:::
+::::
+
+Aynı yolu biri maksimum, biri minimum olan iki küçük problemde deneyelim.
+
+:::: {#exm-dya-ek-max name="İki değişkenli bir maksimum probleminin optimal tablosu"}
+$$
+\begin{aligned}
+x_1 + x_2 &\le 4 \\
+2x_1 + x_2 &\le 6 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+probleminin optimumu $(2, 2)$ köşesindedir. Optimal tabloyu $B^{-1}$ ile yazınız ve optimal olduğunu gösteriniz.
+
+::: {.cozum}
+**Standart form.** $x_3$, $x_4$ aylak değişkenleriyle
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 4 \\
+2x_1 + x_2 + x_4 &= 6 \\
+x_j &\ge 0, \quad j = \overline{1,4} \\
+\max z &= 3x_1 + 2x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+$(2, 2)$ köşesinde $x_1 = x_2 = 2$ ve iki kısıt da eşitlikle sağlanır ($2 + 2 = 4$, $4 + 2 = 6$), yani $x_3 = x_4 = 0$. Temel değişkenler $x_1$ ve $x_2$'dir.
+
+**Baz matrisi.** Satırları $x_1$, $x_2$ sırasıyla yazalım:
+$$
+B = \begin{bmatrix} 1 & 1 \\ 2 & 1 \end{bmatrix}, \quad \det B = 1 - 2 = -1, \quad
+B^{-1} = -\begin{bmatrix} 1 & -1 \\ -2 & 1 \end{bmatrix} = \begin{bmatrix} -1 & 1 \\ 2 & -1 \end{bmatrix}.
+$$
+
+**Gövde.** $B^{-1}\vec{b} = (2, 2)^T$ ($-4 + 6 = 2$ ve $8 - 6 = 2$). Aylak sütunlar $e_1$ ve $e_2$ olduğundan $B^{-1}v_3 = (-1, 2)^T$ ve $B^{-1}v_4 = (1, -1)^T$, yani $B^{-1}$'in sütunlarıdır (@prp-dya-ters-tabloda).
+
+**Son satır.** $\vec{c}_B = (3, 2)^T$:
+$$
+\begin{aligned}
+z_3 - c_3 &= (3,\ 2)\begin{pmatrix} -1 \\ 2 \end{pmatrix} - 0 = 1, &
+z_4 - c_4 &= (3,\ 2)\begin{pmatrix} 1 \\ -1 \end{pmatrix} - 0 = 1,
+\end{aligned}
+$$
+$z_0 = 3 \cdot 2 + 2 \cdot 2 = 10$.
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $3$ | $2$ | $1$ | $0$ | $-1$ | $1$ |
+| $x_2$ | $2$ | $2$ | $0$ | $1$ | $2$ | $-1$ |
+| $z_j - c_j$ |   | $z_0 = 10$ | $0$ | $0$ | $1$ | $1$ |
+
+: Optimal tablo {#tbl-dya-ek-max .simpleks .oransiz}
+
+Maksimum probleminde bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir: $x_1 = x_2 = 2$, $\max z = 10$. Köşelerle karşılaştıralım: uygun bölgenin köşeleri $(0, 0)$, $(3, 0)$, $(2, 2)$, $(0, 4)$'tür ve $z$ bunlarda sırasıyla $0$, $9$, $10$, $8$ değerini alır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dya-ek-min name="Artık değişkenli bir minimum probleminin optimal tablosu"}
+$$
+\begin{aligned}
+x_1 + x_2 &\ge 4 \\
+x_1 + 3x_2 &\ge 6 \\
+x_1, x_2 &\ge 0 \\
+\min z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+probleminin optimumu $(3, 1)$ köşesindedir (@exm-ucg-diyet-min). Optimal tabloyu $B^{-1}$ ile yazınız ve $B^{-1}$'in tabloda nerede göründüğünü belirtiniz.
+
+::: {.cozum}
+**Standart form.** $\ge$ kısıtlardan $x_3$, $x_4$ artık değişkenlerini çıkarırız:
+$$
+\begin{aligned}
+x_1 + x_2 - x_3 &= 4 \\
+x_1 + 3x_2 - x_4 &= 6 \\
+x_j &\ge 0, \quad j = \overline{1,4} \\
+\min z &= 2x_1 + 3x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+Bu standart form birim matris içermez; simpleks yöntemle çözerken yapay değişken gerekirdi. Optimal tabloyu $B^{-1}$ ile yazarken ise yapay değişkene hiç ihtiyaç yoktur. $(3, 1)$'de iki kısıt da eşitlikle sağlanır, $x_3 = x_4 = 0$; temel değişkenler $x_1$, $x_2$'dir.
+
+**Baz matrisi.**
+$$
+B = \begin{bmatrix} 1 & 1 \\ 1 & 3 \end{bmatrix}, \quad \det B = 3 - 1 = 2, \quad
+B^{-1} = \frac{1}{2}\begin{bmatrix} 3 & -1 \\ -1 & 1 \end{bmatrix} = \begin{bmatrix} \tfrac{3}{2} & -\tfrac{1}{2} \\[1mm] -\tfrac{1}{2} & \tfrac{1}{2} \end{bmatrix}.
+$$
+
+**Gövde.** $B^{-1}\vec{b} = (3, 1)^T$ ($6 - 3 = 3$ ve $-2 + 3 = 1$). Artık sütunları $v_3 = -e_1$, $v_4 = -e_2$ olduğundan
+$$
+B^{-1}v_3 = -B^{-1}e_1 = \begin{bmatrix} -\tfrac{3}{2} \\[1mm] \tfrac{1}{2} \end{bmatrix}, \qquad
+B^{-1}v_4 = -B^{-1}e_2 = \begin{bmatrix} \tfrac{1}{2} \\[1mm] -\tfrac{1}{2} \end{bmatrix}.
+$$
+
+**Son satır.** $\vec{c}_B = (2, 3)^T$:
+$$
+\begin{aligned}
+z_3 - c_3 &= (2,\ 3)\begin{pmatrix} -\tfrac{3}{2} \\[1mm] \tfrac{1}{2} \end{pmatrix} - 0 = -3 + \tfrac{3}{2} = -\tfrac{3}{2}, \\[1mm]
+z_4 - c_4 &= (2,\ 3)\begin{pmatrix} \tfrac{1}{2} \\[1mm] -\tfrac{1}{2} \end{pmatrix} - 0 = 1 - \tfrac{3}{2} = -\tfrac{1}{2},
+\end{aligned}
+$$
+$z_0 = 2 \cdot 3 + 3 \cdot 1 = 9$.
+
+|   |   | $c_j$ | $2$ | $3$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $2$ | $3$ | $1$ | $0$ | $-\frac{3}{2}$ | $\frac{1}{2}$ |
+| $x_2$ | $3$ | $1$ | $0$ | $1$ | $\frac{1}{2}$ | $-\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 9$ | $0$ | $0$ | $-\frac{3}{2}$ | $-\frac{1}{2}$ |
+
+: Optimal tablo {#tbl-dya-ek-min .simpleks .oransiz}
+
+Minimum probleminde bütün $z_j - c_j \le 0$ olduğundan tablo optimaldir: $x_1 = 3$, $x_2 = 1$, $\min z = 9$. Tabloda $B^{-1}$'in sütunları doğrudan görünmez; artık değişkenlerin $v_3$ ve $v_4$ sütunlarının $-1$ katları $B^{-1}$'i verir (@prp-dya-ters-tabloda). [$\blacksquare$]{.qed}
+:::
+::::
+
+@thm-dya-tablo'nun en önemli sonucu, hangi verinin tablonun hangi kısmını etkilediğini söylemesidir.
+
+:::: {#cor-dya-ne-degisir name="Değişimin tablodaki etkisi"}
+Bir optimal tabloda bazı değiştirmeden:
+
+1. Amaç katsayıları $c_j$ değişirse tablonun gövdesi ($v_0$ sütunu ve bütün $y_{ij}$'ler) aynı kalır; yalnız $z_j - c_j$ satırı ve $z_0$ değişir.
+2. Sağ taraf $\vec{b}$ değişirse bütün $y_{ij}$'ler ve bütün $z_j - c_j$ ($j \ge 1$) değerleri aynı kalır; yalnız $v_0$ sütunu ve $z_0$ değişir.
+
+::: {.ispat}
+@thm-dya-tablo gereği $y_{ij}$'ler $B^{-1}v_j$'den, $v_0$ sütunu $B^{-1}\vec{b}$'den gelir. Birincisinde $\vec{c}$ yoktur; ikincisinde yalnız $\vec{b}$ vardır. $z_j - c_j = \vec{c}_B^{\,T} B^{-1} v_j - c_j$ ifadesinde $\vec{b}$ bulunmaz, amaç katsayıları bulunur. $z_0 = \vec{c}_B^{\,T} B^{-1}\vec{b}$ ise ikisine de bağlıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani:
+
+- $c_j$ değişince **uygunluk** ($v_0 \ge 0$) bozulmaz, yalnız **optimallik** koşulu yeniden kontrol edilir.
+- $b_i$ değişince optimallik koşulu bozulmaz, yalnız **uygunluk** koşulu yeniden kontrol edilir.
+
+Bölümün geri kalanı bu iki kontrolden ibarettir.
+
+## Amaç Fonksiyonu Katsayılarındaki Değişim {#sec-dya-amac}
+
+Bir $c_j$ değişince tablonun gövdesi aynı kaldığı için optimal çözümün değişkenleri de aynı kalır; bu çözümün optimal olmaya devam edip etmediği yalnız son satıra bağlıdır. Değişen katsayının temel dışı ya da temelde olan bir değişkene ait olmasına göre son satırın ne kadarının değiştiği farklıdır.
+
+### Temel Dışı Değişkenlerin Katsayılarındaki Değişim {#sec-dya-temel-disi}
+
+Temel dışı bir değişkenin katsayısı $c_B$ vektöründe görünmez. Bu yüzden değişim yalnız kendi sütununa dokunur.
+
+:::: {#prp-dya-temel-disi name="Temel dışı değişkenin katsayısı"}
+Optimal tabloda $x_k$ temel dışı bir değişken olsun ve $c_k$ yerine $c_k'$ gelsin. Bu durumda yalnız $v_k$ sütununun simpleks kriteri değişir ve $z_k - c_k'$ olur; $z_0$ ve diğer bütün $z_j - c_j$ değerleri aynı kalır. Tablo
+
+1. maksimum probleminde $c_k' \le z_k$ iken,
+2. minimum probleminde $c_k' \ge z_k$ iken
+
+optimal kalır. Bu aralıkta optimal çözüm ve optimal değer değişmez.
+
+::: {.ispat}
+$c_k$, $x_k$ temel dışı olduğu için $\vec{c}_B$'nin bileşeni değildir. $z_j = \vec{c}_B^{\,T}\vec{y}_j$ değerleri ve $z_0 = \vec{c}_B^{\,T} B^{-1}\vec{b}$ yalnız $\vec{c}_B$'ye bağlı olduğundan hiçbiri değişmez. $z_j - c_j$ farkları arasında $c_k$'yı içeren tek fark $j = k$ olanıdır; o da $z_k - c_k'$ olur. Tablonun gövdesi zaten değişmez (@cor-dya-ne-degisir).
+
+Maksimum probleminde optimallik koşulu bütün $z_j - c_j \ge 0$'dır. Diğer kriterler optimal tablodakilerle aynı olduğundan zaten $\ge 0$'dır; geriye $z_k - c_k' \ge 0$, yani $c_k' \le z_k$ kalır. Minimumda koşul $z_k - c_k' \le 0$, yani $c_k' \ge z_k$'dır. Bu durumda tablonun temel çözümü @thm-smp-optimallik gereği optimaldir; çözüm ve $z_0$ değişmediği için optimal değer de aynıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani temel dışı bir değişkenin katsayısının sınırı, o sütunun $z_k$ değeridir. Maksimum probleminde $c_k$, $z_k$'yı aşarsa $x_k$'yı üretmek kârlı hâle gelir ve $v_k$ baza girmek ister; minimumda $c_k$, $z_k$'nın altına inerse aynı şey olur. Sınırın tam üstünde $z_k - c_k = 0$'dır; bulunan çözüm yine optimaldir; $v_k$ sütununda pozitif eleman varsa ve çözüm dejenere değilse alternatif optimal çözüm de vardır (@thm-sao-alternatif).
+
+::: {.callout-tip title="Temel dışı değişkenin değişim aralığı üç adımda"}
+1. Optimal tablonun $c_j$ satırında $c_k$ yerine sembol olarak $c_k$ yaz; tablonun geri kalanı aynen kalır.
+2. Yalnız $v_k$ sütununun kriterini hesapla: $z_k - c_k = \vec{c}_B^{\,T}\vec{y}_k - c_k$.
+3. Maksimumda $z_k - c_k \ge 0$, minimumda $z_k - c_k \le 0$ eşitsizliğini $c_k$ için çöz.
+:::
+
+:::: {#exm-dya-c3 name="Temel dışı $x_3$'ün katsayısının değişim aralığı"}
+Optimal tablosu @tbl-dya-optimal olan
+$$
+\begin{aligned}
+\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 &\le 1 \\
+\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 &\le 3 \\
+x_1, x_2, x_3 &\ge 0 \\
+\max z &= 2x_1 + 3x_2 + x_3
+\end{aligned}
+$$
+probleminde $c_3$ hangi aralıkta değişirse optimumluk bozulmaz, yani optimal çözümdeki temel değişkenlerin değerleri değişmez?
+
+::: {.cozum}
+Optimal tabloda temel dışı değişkenler $x_3$, $x_4$, $x_5$'tir; soru temel dışı $x_3$'ün $c_3$ katsayısıyla ilgilidir. $c_3$'ü artık $1$ olarak almayız, bir değişken olarak tabloya yazarız. Gövde değişmez; son satırda yalnız $v_3$'ün kriteri değişir:
+
+|   |   | $c_j$ | $2$ | $3$ | $c_3$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $2$ | $1$ | $1$ | $0$ | $-1$ | $4$ | $-1$ |
+| $x_2$ | $3$ | $2$ | $0$ | $1$ | $2$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 8$ | $0$ | $0$ | $4 - c_3$ | $5$ | $1$ |
+
+: Temel dışı bir değişkenin değişim aralığı {#tbl-dya-c3 .simpleks .oransiz}
+
+Problem maksimum problemi olduğu için optimal tabloda bütün $z_j - c_j \ge 0$ olmalıdır:
+$$
+z_3 - c_3 = (2,\ 3)\begin{pmatrix} -1 \\ 2 \end{pmatrix} - c_3 = 4 - c_3 \ge 0
+\ \Longrightarrow \ c_3 \le 4 .
+$$
+Diğer kriterler $0$, $0$, $5$, $1$'dir ve $c_3$'e bağlı değildir. Demek ki $c_3 \le 4$ olduğu sürece optimumluk bozulmaz: optimal çözüm $x_1 = 1$, $x_2 = 2$, $x_3 = 0$ ve $\max z = 8$ olarak kalır. $c_3 = 4$ iken $z_3 - c_3 = 0$ olur ve $v_3$ baza alınarak aynı $z = 8$ değerli alternatif bir optimal çözüm bulunur. $c_3 > 4$ olursa $z_3 - c_3 < 0$ olur, $v_3$ baza girer ve simpleks yöntem bu tablodan devam ettirilerek yeni optimum bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dya-ek-temel-disi name="Temel dışı bir değişkenin katsayısı ve amaç doğrusunun eğimi"}
+$$
+\begin{aligned}
+x_1 + x_2 &\le 4 \\
+2x_1 + x_2 &\le 6 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 5x_1 + 2x_2
+\end{aligned}
+$$
+probleminin optimal tablosunu $B^{-1}$ ile yazınız ve $c_2$'nin optimumluğu bozmayan değişim aralığını bulup grafik üzerinde yorumlayınız.
+
+::: {.cozum}
+**Optimal tablo.** Standart formda aylak değişkenler $x_3$, $x_4$'tür ($x_1 + x_2 + x_3 = 4$, $2x_1 + x_2 + x_4 = 6$). Köşelerdeki değerler $(0, 0)$: $0$, $(3, 0)$: $15$, $(2, 2)$: $14$, $(0, 4)$: $8$ olduğundan optimum $(3, 0)$'dadır. Burada $x_1 = 3$ ve birinci kısıtta $4 - 3 = 1$ birim boşluk kalır: $x_3 = 1$. Temel değişkenler $x_3$ ve $x_1$'dir. Satırları bu sırayla yazarsak
+$$
+B = \begin{bmatrix} v_3 & v_1 \end{bmatrix} = \begin{bmatrix} 1 & 1 \\ 0 & 2 \end{bmatrix}, \qquad
+B^{-1} = \frac{1}{2}\begin{bmatrix} 2 & -1 \\ 0 & 1 \end{bmatrix} = \begin{bmatrix} 1 & -\tfrac{1}{2} \\[1mm] 0 & \tfrac{1}{2} \end{bmatrix}.
+$$
+$B^{-1}\vec{b} = (4 - 3,\ 3)^T = (1, 3)^T$, $B^{-1}v_2 = \big(1 - \tfrac{1}{2},\ \tfrac{1}{2}\big)^T = \big(\tfrac{1}{2}, \tfrac{1}{2}\big)^T$ ve $B^{-1}v_4 = B^{-1}e_2 = \big(-\tfrac{1}{2}, \tfrac{1}{2}\big)^T$ bulunur.
+
+**Sembolik tablo.** $c_2$'yi sembol olarak yazalım; $\vec{c}_B = (0, 5)^T$ ve $x_2$ temel dışıdır:
+$$
+\begin{aligned}
+z_2 - c_2 &= (0,\ 5)\begin{pmatrix} \tfrac{1}{2} \\[1mm] \tfrac{1}{2} \end{pmatrix} - c_2 = \tfrac{5}{2} - c_2, \\[1mm]
+z_4 - c_4 &= (0,\ 5)\begin{pmatrix} -\tfrac{1}{2} \\[1mm] \tfrac{1}{2} \end{pmatrix} - 0 = \tfrac{5}{2}.
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $5$ | $c_2$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $0$ | $1$ | $0$ | $\frac{1}{2}$ | $1$ | $-\frac{1}{2}$ |
+| $x_1$ | $5$ | $3$ | $1$ | $\frac{1}{2}$ | $0$ | $\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 15$ | $0$ | $\frac{5}{2} - c_2$ | $0$ | $\frac{5}{2}$ |
+
+: Temel dışı bir değişkenin değişim aralığı {#tbl-dya-ek-c2 .simpleks .oransiz}
+
+$c_2 = 2$ için $z_2 - c_2 = \tfrac{1}{2} \ge 0$ ve tablo optimaldir. Maksimum problemi olduğundan koşul
+$$
+\tfrac{5}{2} - c_2 \ge 0 \ \Longrightarrow \ c_2 \le \tfrac{5}{2}
+$$
+olur. $c_2 \le \tfrac{5}{2}$ iken optimal çözüm $(3, 0)$ ve $\max z = 15$ olarak kalır.
+
+**Geometrik yorum.** $(3, 0)$ köşesinden geçen seviye doğrusu $5x_1 + c_2x_2 = 15$'tir. $c_2$ büyüdükçe bu doğru $(3, 0)$ etrafında dönerek yatıklaşır. $c_2 = \tfrac{5}{2}$ olunca doğru $5x_1 + \tfrac{5}{2}x_2 = 15$, yani $2x_1 + x_2 = 6$ olur ve bölgenin $(3, 0)$–$(2, 2)$ kenarının üzerine oturur. Bu kenarın her noktası optimaldir. $c_2 > \tfrac{5}{2}$ olunca $(2, 2)$ köşesinde $z = 10 + 2c_2$ olur ve bu değer $15$'i aşar; optimum $(2, 2)$'ye geçer ($c_2 > 5$ olunca da $(0, 4)$'e).
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 506.0 474.0" role="img" aria-label="Feasible quadrilateral (0,0), (3,0), (2,2), (0,4); level lines of 5x1 + c2 x2 through (3,0) for c2 = 2, c2 = 5/2 (on the edge 2x1 + x2 = 6) and c2 = 4">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="189.7" y1="30.0" x2="189.7" y2="467.6"/><line x1="270.7" y1="30.0" x2="270.7" y2="467.6"/><line x1="351.7" y1="30.0" x2="351.7" y2="467.6"/><line x1="432.8" y1="30.0" x2="432.8" y2="467.6"/><line x1="513.8" y1="30.0" x2="513.8" y2="467.6"/><line x1="60.0" y1="337.9" x2="530.0" y2="337.9"/><line x1="60.0" y1="256.9" x2="530.0" y2="256.9"/><line x1="60.0" y1="175.9" x2="530.0" y2="175.9"/><line x1="60.0" y1="94.8" x2="530.0" y2="94.8"/></g>
+  <polygon points="108.6,419.0 351.7,419.0 270.7,256.9 108.6,94.8" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M60.0,46.2 L481.4,467.6" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M376.0,467.6 L157.2,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M351.7,419.0 L270.7,256.9" fill="none" stroke="var(--color-practice)" stroke-width="3.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M371.2,467.6 L196.1,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,54.3 L390.6,467.6" fill="none" stroke="var(--color-theory)" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="419.0" x2="534.0" y2="419.0"/>
+  <line x1="108.6" y1="471.6" x2="108.6" y2="26.0"/>
+  <polygon points="534.0,419.0 526.0,415.5 526.0,422.5" stroke="none"/>
+  <polygon points="108.6,26.0 105.1,34.0 112.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="189.7" y1="416.0" x2="189.7" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="189.7" y="434.0" text-anchor="middle">1</text>
+  <line x1="270.7" y1="416.0" x2="270.7" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="270.7" y="434.0" text-anchor="middle">2</text>
+  <line x1="351.7" y1="416.0" x2="351.7" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="351.7" y="434.0" text-anchor="middle">3</text>
+  <line x1="432.8" y1="416.0" x2="432.8" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="432.8" y="434.0" text-anchor="middle">4</text>
+  <line x1="513.8" y1="416.0" x2="513.8" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="513.8" y="434.0" text-anchor="middle">5</text>
+  <line x1="105.6" y1="337.9" x2="111.6" y2="337.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="341.9" text-anchor="end">1</text>
+  <line x1="105.6" y1="256.9" x2="111.6" y2="256.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="260.9" text-anchor="end">2</text>
+  <line x1="105.6" y1="175.9" x2="111.6" y2="175.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="179.9" text-anchor="end">3</text>
+  <line x1="105.6" y1="94.8" x2="111.6" y2="94.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="98.8" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="532.0" y="434.0" text-anchor="end">x₁</text>
+  <text x="115.6" y="35.0">x₂</text>
+  </g>
+  <circle cx="351.7" cy="419.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="270.7" cy="256.9" r="4.0" fill="var(--color-theory)"/>
+  <text x="361.7" y="411.0" fill="var(--academic-text)" font-size="13" text-anchor="start">(3, 0)</text>
+  <text x="226.7" y="248.9" fill="var(--academic-text)" font-size="13" text-anchor="start">(2, 2)</text>
+  <text x="393.9" y="368.7" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + x₂ = 4</text>
+  <text x="149.1" y="370.3" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+  <path d="M331.5,62.4 L367.9,62.4" fill="none" stroke="var(--color-base)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="375.9" y="66.4" fill="var(--color-base)" font-size="12" text-anchor="start">c₂ = 2</text>
+  <path d="M331.5,96.4 L367.9,96.4" fill="none" stroke="var(--color-practice)" stroke-width="3.2" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="375.9" y="100.4" fill="var(--color-practice)" font-size="12" text-anchor="start">c₂ = 5/2 (kenar)</text>
+  <path d="M331.5,130.5 L367.9,130.5" fill="none" stroke="var(--color-theory)" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="375.9" y="134.5" fill="var(--color-theory)" font-size="12" text-anchor="start">c₂ = 4</text>
+</svg>
+<figcaption>z = 5x₁ + c₂x₂ amaç fonksiyonunun (3, 0) köşesinden geçen seviye doğruları. c₂ = 2 iken doğru bölgenin dışından geçer ve (3, 0) tek optimal köşedir. c₂ büyüdükçe doğru yatıklaşır; c₂ = 5/2 olunca 2x₁ + x₂ = 6 kenarının üzerine oturur (kalın kenar). c₂ = 4 iken doğru bölgeyi keser ve (2, 2) köşesi daha büyük z verir.</figcaption>
+</figure>
+```
+
+Böylece $c_2 > 0$ için $c_2$'nin değişim aralığı, amaç doğrusunun eğiminin $-5/c_2 \le -2$ kaldığı, yani doğrunun $2x_1 + x_2 = 6$ kenarından daha dik olduğu aralıktır. [$\blacksquare$]{.qed}
+:::
+::::
+
+### Temel Değişkenlerin Katsayılarındaki Değişim {#sec-dya-temelde}
+
+Temelde olan bir değişkenin katsayısı $c_B$ sütununda da görünür. $z_j = \vec{c}_B^{\,T}\vec{y}_j$ her sütunda $c_B$'yi kullandığı için değişim bu kez bütün temel dışı sütunlara yayılır.
+
+:::: {#prp-dya-temelde name="Temelde olan değişkenin katsayısı"}
+Optimal tabloda $x_r$ temelde olan bir değişken olsun, $r$. satırda bulunsun ve katsayısı $c_r$ yerine $c_r + \Delta$ olsun. Bu durumda
+
+1. temel değişkenlerin kriterleri $0$ kalır;
+2. temel dışı her $v_j$ için yeni kriter $(z_j - c_j) + \Delta\, y_{rj}$ olur;
+3. amaç değeri $z_0 + \Delta\, y_{r0}$ olur; burada $y_{r0}$, $x_r$'nin değeridir.
+
+Tablo maksimum probleminde temel dışı her $j$ için $(z_j - c_j) + \Delta\, y_{rj} \ge 0$ iken, minimum probleminde temel dışı her $j$ için $(z_j - c_j) + \Delta\, y_{rj} \le 0$ iken optimal kalır.
+
+::: {.ispat}
+Yeni baz maliyet vektörü $\vec{c}_B + \Delta\, e_r$'dir; $e_r$, $r$. bileşeni $1$ olan birim vektördür. Her $j = 0, 1, \dots, n$ için
+$$
+z_j' = (\vec{c}_B + \Delta e_r)^T \vec{y}_j = \vec{c}_B^{\,T}\vec{y}_j + \Delta\, e_r^T \vec{y}_j = z_j + \Delta\, y_{rj}.
+$$
+$j = 0$ için bu 3. maddedir. $j \ne r$ iken $c_j$ değişmediğinden yeni kriter $(z_j - c_j) + \Delta\, y_{rj}$ olur; bu 2. maddedir. Başka bir temel değişkenin sütunu, $r$. bileşeni $0$ olan bir birim vektördür, dolayısıyla $y_{rj} = 0$ ve kriteri $0$ kalır. $j = r$ için $y_{rr} = 1$'dir ve $c_r$ de $\Delta$ kadar artar: $(z_r + \Delta) - (c_r + \Delta) = 0$. Böylece 1. madde de gösterilmiş olur.
+
+Tablonun gövdesi değişmediğinden (@cor-dya-ne-degisir) temel çözüm uygun kalır. Temel değişkenlerin kriterleri sıfırdır; optimallik koşulu (@thm-smp-optimallik) yalnız temel dışı sütunlar için kontrol edilir ve ifadedeki eşitsizlikler elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani temelde olan bir değişkenin katsayısı değişince her temel dışı kriter, o değişkenin satırındaki $y_{rj}$ ile orantılı olarak kayar. Her temel dışı sütun $\Delta$ için bir eşitsizlik verir; değişim aralığı bu eşitsizliklerin hepsini birden sağlayan, yani bu eşitsizliklerin ortak kısmı olan aralıktır. Maksimum probleminde $y_{rj} > 0$ olan sütunlar $\Delta$'ya alt sınır, $y_{rj} < 0$ olanlar üst sınır koyar; $y_{rj} = 0$ olan sütun hiçbir sınır koymaz.
+
+Pratikte $\Delta$ yerine doğrudan $c_r$ sembolüyle çalışmak daha kolaydır: $c_B$ sütununa ve $c_j$ satırına $c_r$ yazılır, son satır $c_r$ cinsinden hesaplanır. İki yazım aynı aralığı verir, çünkü $c_r$ sembolü, eski değer artı $\Delta$'dır.
+
+::: {.callout-tip title="Temelde olan değişkenin değişim aralığı dört adımda"}
+1. Optimal tabloda $c_r$'yi hem $c_j$ satırına hem $x_r$ satırının $c_B$ hücresine sembol olarak yaz.
+2. Temel dışı her $v_j$ için $z_j - c_j = \vec{c}_B^{\,T}\vec{y}_j - c_j$'yi $c_r$ cinsinden hesapla; temel sütunların kriteri $0$'dır.
+3. Maksimumda her birinin $\ge 0$, minimumda $\le 0$ olmasını iste ve her eşitsizliği $c_r$ için çöz.
+4. Bulunan aralıkların kesişimini al. Amaç değeri $z_0 = \vec{c}_B^{\,T} B^{-1}\vec{b}$ de $c_r$'ye bağlı olarak yazılır.
+:::
+
+:::: {#exm-dya-c1 name="Temelde olan $x_1$'in katsayısının değişim aralığı"}
+Optimal tablosu @tbl-dya-optimal olan problemde ($\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 \le 1$, $\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 \le 3$, $x_j \ge 0$, $\max z = 2x_1 + 3x_2 + x_3$) temelde olan $x_1$ değişkeninin katsayısı $c_1$ hangi aralıkta değişirse optimumluk bozulmaz?
+
+::: {.cozum}
+Optimal tabloda temel değişkenler $x_1$ ve $x_2$'dir. $x_1$ temelde olduğu için $c_1$ hem $c_j$ satırına hem $c_B$ sütununa yazılır ve bütün temel dışı kriterleri etkiler; bu yüzden her bir $z_j - c_j$ değerine bakmak gerekir. $\vec{c}_B = (c_1, 3)^T$:
+$$
+\begin{aligned}
+z_1 - c_1 &= (c_1,\ 3)\begin{pmatrix} 1 \\ 0 \end{pmatrix} - c_1 = c_1 - c_1 = 0, \\[1mm]
+z_2 - c_2 &= (c_1,\ 3)\begin{pmatrix} 0 \\ 1 \end{pmatrix} - 3 = 3 - 3 = 0, \\[1mm]
+z_3 - c_3 &= (c_1,\ 3)\begin{pmatrix} -1 \\ 2 \end{pmatrix} - 1 = -c_1 + 5 \ge 0 \ \Longrightarrow \ c_1 \le 5, \\[1mm]
+z_4 - c_4 &= (c_1,\ 3)\begin{pmatrix} 4 \\ -1 \end{pmatrix} - 0 = 4c_1 - 3 \ge 0 \ \Longrightarrow \ c_1 \ge \tfrac{3}{4}, \\[1mm]
+z_5 - c_5 &= (c_1,\ 3)\begin{pmatrix} -1 \\ 1 \end{pmatrix} - 0 = -c_1 + 3 \ge 0 \ \Longrightarrow \ c_1 \le 3 .
+\end{aligned}
+$$
+Amaç değeri $z_0 = (c_1,\ 3)(1,\ 2)^T = c_1 + 6$'dır.
+
+|   |   | $c_j$ | $c_1$ | $3$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $c_1$ | $1$ | $1$ | $0$ | $-1$ | $4$ | $-1$ |
+| $x_2$ | $3$ | $2$ | $0$ | $1$ | $2$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = c_1 + 6$ | $0$ | $0$ | $5 - c_1$ | $4c_1 - 3$ | $3 - c_1$ |
+
+: Temelde olan $x_1$ değişkeninin değişim aralığı {#tbl-dya-c1 .simpleks .oransiz}
+
+Üç koşulu birden sağlayan aralık
+$$
+\tfrac{3}{4} \le c_1 \le 3
+$$
+olarak bulunur. Yani $c_1$, $\tfrac{3}{4}$ ile $3$ arasında değişirse optimumluk bozulmaz: temel değişkenler ve değerleri ($x_1 = 1$, $x_2 = 2$) aynı kalır, optimal değer $c_1 + 6$ olur. $c_1 \le 5$ koşulu $c_1 \le 3$'ün içinde kaldığı için aralığa bir şey eklemez.
+
+Aynı sonucu @prp-dya-temelde ile de bulalım. $c_1 = 2 + \Delta$ yazalım. $x_1$ satırında temel dışı sütunların elemanları $y_{13} = -1$, $y_{14} = 4$, $y_{15} = -1$, kriterleri $3$, $5$, $1$'dir. Koşullar $3 - \Delta \ge 0$, $5 + 4\Delta \ge 0$ ve $1 - \Delta \ge 0$, yani $-\tfrac{5}{4} \le \Delta \le 1$'dir. $c_1 = 2 + \Delta$ olduğundan yine $\tfrac{3}{4} \le c_1 \le 3$ bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dya-c2 name="Temelde olan $x_2$'nin katsayısının değişim aralığı"}
+Aynı problemde ($\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 \le 1$, $\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 \le 3$, $x_j \ge 0$, $\max z = 2x_1 + 3x_2 + x_3$; optimal tablo @tbl-dya-optimal) temelde olan $x_2$ değişkeninin katsayısı $c_2$ hangi aralıkta değişirse optimumluk bozulmaz?
+
+::: {.cozum}
+Bu kez $c_2$ sembolü $c_j$ satırına ve $x_2$ satırının $c_B$ hücresine yazılır; $\vec{c}_B = (2, c_2)^T$:
+$$
+\begin{aligned}
+z_1 - c_1 &= (2,\ c_2)\begin{pmatrix} 1 \\ 0 \end{pmatrix} - 2 = 2 - 2 = 0, \\[1mm]
+z_2 - c_2 &= (2,\ c_2)\begin{pmatrix} 0 \\ 1 \end{pmatrix} - c_2 = c_2 - c_2 = 0, \\[1mm]
+z_3 - c_3 &= (2,\ c_2)\begin{pmatrix} -1 \\ 2 \end{pmatrix} - 1 = -2 + 2c_2 - 1 \ge 0 \ \Longrightarrow \ c_2 \ge \tfrac{3}{2}, \\[1mm]
+z_4 - c_4 &= (2,\ c_2)\begin{pmatrix} 4 \\ -1 \end{pmatrix} - 0 = 8 - c_2 \ge 0 \ \Longrightarrow \ c_2 \le 8, \\[1mm]
+z_5 - c_5 &= (2,\ c_2)\begin{pmatrix} -1 \\ 1 \end{pmatrix} - 0 = -2 + c_2 \ge 0 \ \Longrightarrow \ c_2 \ge 2 .
+\end{aligned}
+$$
+Amaç değeri $z_0 = (2,\ c_2)(1,\ 2)^T = 2 + 2c_2$'dir.
+
+|   |   | $c_j$ | $2$ | $c_2$ | $1$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_1$ | $2$ | $1$ | $1$ | $0$ | $-1$ | $4$ | $-1$ |
+| $x_2$ | $c_2$ | $2$ | $0$ | $1$ | $2$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 2 + 2c_2$ | $0$ | $0$ | $2c_2 - 3$ | $8 - c_2$ | $c_2 - 2$ |
+
+: Temelde olan $x_2$ değişkeninin değişim aralığı {#tbl-dya-c2 .simpleks .oransiz}
+
+Üç koşulu birden sağlayan aralık
+$$
+2 \le c_2 \le 8
+$$
+olarak bulunur. Yani $c_2$, $2$ ile $8$ arasında değişirse optimumluk bozulmaz; optimal çözüm $x_1 = 1$, $x_2 = 2$ kalır ve optimal değer $2 + 2c_2$ olur. $c_2 \ge \tfrac{3}{2}$ koşulu $c_2 \ge 2$'nin içinde kalır. [$\blacksquare$]{.qed}
+:::
+::::
+
+İki değişkenli bir problemde bu aralığın geometrik anlamı açıktır: optimal köşe, amaç doğrusunun eğimi o köşede birleşen iki kenarın eğimleri arasında kaldıkça optimal kalır.
+
+:::: {#exm-dya-ek-temelde name="Temelde olan bir değişkenin katsayısı ve köşedeki yelpaze"}
+$x_1 + x_2 \le 4$, $2x_1 + x_2 \le 6$, $x_1, x_2 \ge 0$, $\max z = 3x_1 + 2x_2$ probleminin optimal tablosu @tbl-dya-ek-max'tır. Temelde olan $x_1$'in katsayısı $c_1$ hangi aralıkta değişirse optimumluk bozulmaz? Sonucu grafik üzerinde yorumlayınız.
+
+::: {.cozum}
+$\vec{c}_B = (c_1, 2)^T$ alıp temel dışı $v_3$ ve $v_4$ sütunlarının kriterlerini hesaplarız:
+$$
+\begin{aligned}
+z_3 - c_3 &= (c_1,\ 2)\begin{pmatrix} -1 \\ 2 \end{pmatrix} - 0 = 4 - c_1 \ge 0 \ \Longrightarrow \ c_1 \le 4, \\[1mm]
+z_4 - c_4 &= (c_1,\ 2)\begin{pmatrix} 1 \\ -1 \end{pmatrix} - 0 = c_1 - 2 \ge 0 \ \Longrightarrow \ c_1 \ge 2 .
+\end{aligned}
+$$
+Amaç değeri $z_0 = 2c_1 + 2 \cdot 2 = 2c_1 + 4$'tür.
+
+|   |   | $c_j$ | $c_1$ | $2$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $c_1$ | $2$ | $1$ | $0$ | $-1$ | $1$ |
+| $x_2$ | $2$ | $2$ | $0$ | $1$ | $2$ | $-1$ |
+| $z_j - c_j$ |   | $z_0 = 2c_1 + 4$ | $0$ | $0$ | $4 - c_1$ | $c_1 - 2$ |
+
+: Temelde olan $x_1$ değişkeninin değişim aralığı {#tbl-dya-ek-c1 .simpleks .oransiz}
+
+İki koşulu birden sağlayan aralık $2 \le c_1 \le 4$'tür. Bu aralıkta optimal çözüm $(2, 2)$ kalır ve optimal değer $2c_1 + 4$ olur.
+
+**Geometrik yorum.** $(2, 2)$ köşesinde $x_1 + x_2 = 4$ ve $2x_1 + x_2 = 6$ kenarları birleşir; eğimleri $-1$ ve $-2$'dir. $c_1x_1 + 2x_2 = k$ seviye doğrusunun eğimi $-c_1/2$'dir. $c_1 = 2$ iken eğim $-1$ olur ve seviye doğrusu birinci kenara, $c_1 = 4$ iken eğim $-2$ olur ve ikinci kenara oturur. Aradaki her $c_1$ için seviye doğrusu bölgeye yalnız $(2, 2)$'de değer. Aynı şeyi gradyanla da söyleyebiliriz: gradyan $\vec{c} = (c_1, 2)$, iki kenarın dik vektörleri $(1, 1)$ ve $(2, 1)$ arasında kaldıkça $(2, 2)$ optimaldir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 506.0 474.0" role="img" aria-label="Feasible quadrilateral with vertex (2,2) between the edges x1 + x2 = 4 and 2x1 + x2 = 6; dashed level line 3x1 + 2x2 = 10, gradient arrow (3,2) inside the shaded cone of the edge normals (1,1) and (2,1)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="189.7" y1="30.0" x2="189.7" y2="467.6"/><line x1="270.7" y1="30.0" x2="270.7" y2="467.6"/><line x1="351.7" y1="30.0" x2="351.7" y2="467.6"/><line x1="432.8" y1="30.0" x2="432.8" y2="467.6"/><line x1="513.8" y1="30.0" x2="513.8" y2="467.6"/><line x1="60.0" y1="337.9" x2="530.0" y2="337.9"/><line x1="60.0" y1="256.9" x2="530.0" y2="256.9"/><line x1="60.0" y1="175.9" x2="530.0" y2="175.9"/><line x1="60.0" y1="94.8" x2="530.0" y2="94.8"/></g>
+  <polygon points="108.6,419.0 351.7,419.0 270.7,256.9 108.6,94.8" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M60.0,46.2 L481.4,467.6" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M376.0,467.6 L157.2,30.0" fill="none" stroke="var(--color-remark)" stroke-width="2.4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M411.1,467.6 L119.4,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="270.7,256.9 348.0,179.5 349.1,180.6 350.1,181.6 351.1,182.7 352.1,183.8 353.1,184.9 354.0,186.0 355.0,187.1 355.9,188.3 356.8,189.4 357.7,190.6 358.6,191.7 359.4,192.9 360.3,194.1 361.1,195.3 361.9,196.6 362.7,197.8 363.5,199.0 364.3,200.3 365.0,201.5 365.8,202.8 366.5,204.1 367.2,205.4 367.9,206.7 368.5,208.0" fill="var(--color-practice)" fill-opacity="0.18" stroke="none" stroke-width="1.2"/>
+  <line x1="270.7" y1="256.9" x2="355.1" y2="200.7" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="361.7,196.2 355.7,205.3 351.1,198.3" fill="var(--color-base)" opacity="1.0"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="419.0" x2="534.0" y2="419.0"/>
+  <line x1="108.6" y1="471.6" x2="108.6" y2="26.0"/>
+  <polygon points="534.0,419.0 526.0,415.5 526.0,422.5" stroke="none"/>
+  <polygon points="108.6,26.0 105.1,34.0 112.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="189.7" y1="416.0" x2="189.7" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="189.7" y="434.0" text-anchor="middle">1</text>
+  <line x1="270.7" y1="416.0" x2="270.7" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="270.7" y="434.0" text-anchor="middle">2</text>
+  <line x1="351.7" y1="416.0" x2="351.7" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="351.7" y="434.0" text-anchor="middle">3</text>
+  <line x1="432.8" y1="416.0" x2="432.8" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="432.8" y="434.0" text-anchor="middle">4</text>
+  <line x1="513.8" y1="416.0" x2="513.8" y2="422.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="513.8" y="434.0" text-anchor="middle">5</text>
+  <line x1="105.6" y1="337.9" x2="111.6" y2="337.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="341.9" text-anchor="end">1</text>
+  <line x1="105.6" y1="256.9" x2="111.6" y2="256.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="260.9" text-anchor="end">2</text>
+  <line x1="105.6" y1="175.9" x2="111.6" y2="175.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="179.9" text-anchor="end">3</text>
+  <line x1="105.6" y1="94.8" x2="111.6" y2="94.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="101.6" y="98.8" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="532.0" y="434.0" text-anchor="end">x₁</text>
+  <text x="115.6" y="35.0">x₂</text>
+  </g>
+  <circle cx="270.7" cy="256.9" r="4.5" fill="var(--color-practice)"/>
+  <text x="220.7" y="252.9" fill="var(--academic-text)" font-size="13" text-anchor="start">(2, 2)</text>
+  <text x="372.0" y="179.9" fill="var(--color-base)" font-size="12" text-anchor="start">c = (3, 2)</text>
+  <path d="M315.3,58.4 L351.7,58.4" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="359.7" y="62.4" fill="var(--color-practice)" font-size="12" text-anchor="start">c₁ = 2:  x₁ + x₂ = 4</text>
+  <path d="M315.3,90.8 L351.7,90.8" fill="none" stroke="var(--color-base)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="359.7" y="94.8" fill="var(--color-base)" font-size="12" text-anchor="start">c₁ = 3:  3x₁ + 2x₂ = 10</text>
+  <path d="M315.3,123.2 L351.7,123.2" fill="none" stroke="var(--color-remark)" stroke-width="2.4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="359.7" y="127.2" fill="var(--color-remark)" font-size="12" text-anchor="start">c₁ = 4:  2x₁ + x₂ = 6</text>
+  <text x="149.1" y="370.3" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>z = c₁x₁ + 2x₂ için (2, 2) köşesi. c₁ = 3 iken kesikli seviye doğrusu bölgeye yalnız bu köşede değer. c₁ = 2 olunca seviye doğrusu x₁ + x₂ = 4 kenarına, c₁ = 4 olunca 2x₁ + x₂ = 6 kenarına oturur. Gradyan c = (c₁, 2) açık boyalı açının içinde kaldıkça, yani 2 ≤ c₁ ≤ 4 iken, (2, 2) optimal kalır.</figcaption>
+</figure>
+```
+
+Uç değerlerde alternatif optimal çözüm ortaya çıkar: $c_1 = 2$ iken $(0, 4)$–$(2, 2)$ kenarının, $c_1 = 4$ iken $(2, 2)$–$(3, 0)$ kenarının her noktası optimaldir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Temelde olan değişken bir aylak ya da artık değişken de olabilir. Bu değişkenlerin amaç katsayısı $0$'dır, ama aynı soru onlar için de sorulabilir: Kullanılmayan kaynağın birimine bir değer (ya da maliyet) biçilirse çözüm değişir mi?
+
+:::: {#exm-dya-ek-aylak name="Temelde olan bir aylak değişkenin katsayısı"}
+$x_1 + x_2 \le 4$, $2x_1 + x_2 \le 6$, $x_1, x_2 \ge 0$, $\max z = 5x_1 + 2x_2$ probleminin optimal tablosu @tbl-dya-ek-c2'dir ($c_2 = 2$ için); temelde $x_3 = 1$ ve $x_1 = 3$ vardır. Temelde olan $x_3$ aylak değişkeninin katsayısı $c_3$ hangi aralıkta değişirse optimumluk bozulmaz?
+
+::: {.cozum}
+$x_3$ birinci satırdadır; $\vec{c}_B = (c_3, 5)^T$. Temel dışı sütunlar $v_2$ ve $v_4$'tür:
+$$
+\begin{aligned}
+z_2 - c_2 &= (c_3,\ 5)\begin{pmatrix} \tfrac{1}{2} \\[1mm] \tfrac{1}{2} \end{pmatrix} - 2 = \frac{c_3 + 5}{2} - 2 = \frac{c_3 + 1}{2} \ge 0 \ \Longrightarrow \ c_3 \ge -1, \\[1mm]
+z_4 - c_4 &= (c_3,\ 5)\begin{pmatrix} -\tfrac{1}{2} \\[1mm] \tfrac{1}{2} \end{pmatrix} - 0 = \frac{5 - c_3}{2} \ge 0 \ \Longrightarrow \ c_3 \le 5 .
+\end{aligned}
+$$
+Amaç değeri $z_0 = c_3 \cdot 1 + 5 \cdot 3 = c_3 + 15$'tir.
+
+|   |   | $c_j$ | $5$ | $2$ | $c_3$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_3$ | $c_3$ | $1$ | $0$ | $\frac{1}{2}$ | $1$ | $-\frac{1}{2}$ |
+| $x_1$ | $5$ | $3$ | $1$ | $\frac{1}{2}$ | $0$ | $\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = c_3 + 15$ | $0$ | $\frac{c_3 + 1}{2}$ | $0$ | $\frac{5 - c_3}{2}$ |
+
+: Temelde olan $x_3$ değişkeninin değişim aralığı {#tbl-dya-ek-c3 .simpleks .oransiz}
+
+Değişim aralığı $-1 \le c_3 \le 5$'tir. Yorumu şöyledir: birinci kaynağın kullanılmayan her birimi için en fazla $1$ birim ceza ödenirse ($c_3 \ge -1$) ya da en fazla $5$ birim kazanılırsa ($c_3 \le 5$) üretim planı $x_1 = 3$, $x_2 = 0$ olarak kalır. Ceza $1$'i aşarsa kaynağın boşta kalan kısmını da kullanmak, yani $v_2$'yi baza almak kârlı olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Minimum probleminde eşitsizliklerin yönü ters döner; gerisi aynıdır.
+
+:::: {#exm-dya-ek-min-c1 name="Minimum probleminde temelde olan bir değişkenin katsayısı"}
+$x_1 + x_2 \ge 4$, $x_1 + 3x_2 \ge 6$, $x_1, x_2 \ge 0$, $\min z = 2x_1 + 3x_2$ probleminin optimal tablosu @tbl-dya-ek-min'dir. Temelde olan $x_1$'in katsayısı $c_1$ hangi aralıkta değişirse optimumluk bozulmaz?
+
+::: {.cozum}
+Minimum probleminde optimal tabloda bütün $z_j - c_j \le 0$ olmalıdır. $\vec{c}_B = (c_1, 3)^T$ ile temel dışı $v_3$ ve $v_4$ sütunları:
+$$
+\begin{aligned}
+z_3 - c_3 &= (c_1,\ 3)\begin{pmatrix} -\tfrac{3}{2} \\[1mm] \tfrac{1}{2} \end{pmatrix} - 0 = \frac{3 - 3c_1}{2} \le 0 \ \Longrightarrow \ c_1 \ge 1, \\[1mm]
+z_4 - c_4 &= (c_1,\ 3)\begin{pmatrix} \tfrac{1}{2} \\[1mm] -\tfrac{1}{2} \end{pmatrix} - 0 = \frac{c_1 - 3}{2} \le 0 \ \Longrightarrow \ c_1 \le 3 .
+\end{aligned}
+$$
+Amaç değeri $z_0 = 3c_1 + 3 \cdot 1 = 3c_1 + 3$'tür.
+
+|   |   | $c_j$ | $c_1$ | $3$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $c_1$ | $3$ | $1$ | $0$ | $-\frac{3}{2}$ | $\frac{1}{2}$ |
+| $x_2$ | $3$ | $1$ | $0$ | $1$ | $\frac{1}{2}$ | $-\frac{1}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 3c_1 + 3$ | $0$ | $0$ | $\frac{3 - 3c_1}{2}$ | $\frac{c_1 - 3}{2}$ |
+
+: Temelde olan $x_1$ değişkeninin değişim aralığı {#tbl-dya-ek-min-c1 .simpleks .oransiz}
+
+Değişim aralığı $1 \le c_1 \le 3$'tür; bu aralıkta optimal çözüm $(3, 1)$ ve $\min z = 3c_1 + 3$ olur. Geometrik olarak $c_1x_1 + 3x_2 = k$ seviye doğrusunun eğimi $-c_1/3$'tür ve $(3, 1)$'de birleşen $x_1 + 3x_2 = 6$ ile $x_1 + x_2 = 4$ kenarlarının eğimleri olan $-\tfrac{1}{3}$ ile $-1$ arasında kalmalıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 536.0 386.0" role="img" aria-label="Unbounded feasible region above the lines x1 + x2 = 4 and x1 + 3x2 = 6 with vertex (3,1); dashed level line 2x1 + 3x2 = 9 and the arrow -grad z = (-2,-3) inside the shaded cone">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="160.0" y1="30.0" x2="160.0" y2="380.0"/><line x1="222.5" y1="30.0" x2="222.5" y2="380.0"/><line x1="285.0" y1="30.0" x2="285.0" y2="380.0"/><line x1="347.5" y1="30.0" x2="347.5" y2="380.0"/><line x1="410.0" y1="30.0" x2="410.0" y2="380.0"/><line x1="472.5" y1="30.0" x2="472.5" y2="380.0"/><line x1="535.0" y1="30.0" x2="535.0" y2="380.0"/><line x1="60.0" y1="280.0" x2="560.0" y2="280.0"/><line x1="60.0" y1="217.5" x2="560.0" y2="217.5"/><line x1="60.0" y1="155.0" x2="560.0" y2="155.0"/><line x1="60.0" y1="92.5" x2="560.0" y2="92.5"/></g>
+  <polygon points="97.5,30.0 97.5,92.5 285.0,280.0 472.5,342.5 560.0,342.5 560.0,30.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M97.5,30.0 L97.5,92.5 L285.0,280.0 L472.5,342.5 L560.0,342.5" fill="none" stroke="var(--color-theory)" stroke-width="1.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,55.0 L385.0,380.0" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,205.0 L560.0,371.7" fill="none" stroke="var(--color-remark)" stroke-width="2.4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,130.0 L435.0,380.0" fill="none" stroke="var(--color-base)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="285.0,280.0 232.0,333.0 233.0,334.0 234.1,335.0 235.1,336.0 236.2,337.0 237.3,337.9 238.5,338.8 239.6,339.7 240.8,340.6 241.9,341.4 243.1,342.2 244.3,343.0 245.6,343.8 246.8,344.5 248.1,345.3 249.3,346.0 250.6,346.7 251.9,347.3 253.2,347.9 254.5,348.5 255.9,349.1 257.2,349.7 258.6,350.2 259.9,350.7 261.3,351.2" fill="var(--color-practice)" fill-opacity="0.18" stroke="none" stroke-width="1.2"/>
+  <line x1="285.0" y1="280.0" x2="247.8" y2="335.7" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="243.4,342.4 245.4,331.8 252.4,336.4" fill="var(--color-base)" opacity="1.0"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="342.5" x2="564.0" y2="342.5"/>
+  <line x1="97.5" y1="384.0" x2="97.5" y2="26.0"/>
+  <polygon points="564.0,342.5 556.0,339.0 556.0,346.0" stroke="none"/>
+  <polygon points="97.5,26.0 94.0,34.0 101.0,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="160.0" y1="339.5" x2="160.0" y2="345.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="160.0" y="357.5" text-anchor="middle">1</text>
+  <line x1="222.5" y1="339.5" x2="222.5" y2="345.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="222.5" y="357.5" text-anchor="middle">2</text>
+  <line x1="285.0" y1="339.5" x2="285.0" y2="345.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="285.0" y="357.5" text-anchor="middle">3</text>
+  <line x1="347.5" y1="339.5" x2="347.5" y2="345.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="347.5" y="357.5" text-anchor="middle">4</text>
+  <line x1="410.0" y1="339.5" x2="410.0" y2="345.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="410.0" y="357.5" text-anchor="middle">5</text>
+  <line x1="472.5" y1="339.5" x2="472.5" y2="345.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="472.5" y="357.5" text-anchor="middle">6</text>
+  <line x1="535.0" y1="339.5" x2="535.0" y2="345.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="535.0" y="357.5" text-anchor="middle">7</text>
+  <line x1="94.5" y1="280.0" x2="100.5" y2="280.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="284.0" text-anchor="end">1</text>
+  <line x1="94.5" y1="217.5" x2="100.5" y2="217.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="221.5" text-anchor="end">2</text>
+  <line x1="94.5" y1="155.0" x2="100.5" y2="155.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="159.0" text-anchor="end">3</text>
+  <line x1="94.5" y1="92.5" x2="100.5" y2="92.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="90.5" y="96.5" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="562.0" y="357.5" text-anchor="end">x₁</text>
+  <text x="104.5" y="35.0">x₂</text>
+  </g>
+  <circle cx="285.0" cy="280.0" r="4.5" fill="var(--color-practice)"/>
+  <text x="295.0" y="272.0" fill="var(--academic-text)" font-size="13" text-anchor="start">(3, 1)</text>
+  <text x="225.6" y="323.8" fill="var(--color-base)" font-size="12" text-anchor="end">−c = (−2, −3)</text>
+  <text x="410.0" y="205.0" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+  <path d="M331.9,58.1 L360.0,58.1" fill="none" stroke="var(--color-remark)" stroke-width="2.4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="368.0" y="62.1" fill="var(--color-remark)" font-size="12" text-anchor="start">c₁ = 1:  x₁ + 3x₂ = 6</text>
+  <path d="M331.9,84.4 L360.0,84.4" fill="none" stroke="var(--color-base)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="368.0" y="88.4" fill="var(--color-base)" font-size="12" text-anchor="start">c₁ = 2:  2x₁ + 3x₂ = 9</text>
+  <path d="M331.9,110.6 L360.0,110.6" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="368.0" y="114.6" fill="var(--color-practice)" font-size="12" text-anchor="start">c₁ = 3:  x₁ + x₂ = 4</text>
+</svg>
+<figcaption>min z = c₁x₁ + 3x₂ için (3, 1) köşesi. c₁ = 2 iken kesikli seviye doğrusu bölgeye yalnız bu köşede değer. c₁ = 3 olunca seviye doğrusu x₁ + x₂ = 4 kenarına, c₁ = 1 olunca x₁ + 3x₂ = 6 kenarına oturur. Minimumda seviye doğrusu gradyanın tersi −c = (−c₁, −3) yönünde kaydırılır; −c açık boyalı açının içinde kaldıkça, yani 1 ≤ c₁ ≤ 3 iken, (3, 1) optimal kalır.</figcaption>
+</figure>
+```
+
+$0 \le c_1 < 1$ olursa $x_1$ o kadar ucuzlar ki çözüm $x_1$ ekseni üzerindeki $(6, 0)$ köşesine kayar; $c_1 > 3$ olursa $(0, 4)$ köşesine kayar. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Sağ Taraf Sabitlerindeki Değişim {#sec-dya-sag-taraf}
+
+Şimdi soruyu sağ taraf sabitleri için soralım: Kısıtların sağ taraf değerleri hangi aralıkta değişirse mevcut temel değişkenler temel değişken olarak kalır? Burada "optimumluğun bozulmaması" farklı bir anlam taşır. Sağ taraf değişince çözümün değerleri de amaç fonksiyonunun değeri de değişir; aynı kalması istenen, **temeldeki değişkenlerin** kendisidir.
+
+:::: {#prp-dya-sag-taraf name="Sağ taraf sabitlerinin değişimi"}
+$B$, optimal tablonun baz matrisi olsun ve $\vec{b}$ yerine $\vec{b}\,'$ gelsin. Bu durumda
+
+1. $B^{-1}\vec{b}\,' \ge \vec{0}$ ise aynı baz optimal kalır; yeni optimal çözümde temel değişkenlerin değerleri $B^{-1}\vec{b}\,'$, temel dışı değişkenler $0$ ve optimal değer $z_0 = \vec{c}_B^{\,T} B^{-1}\vec{b}\,'$ olur;
+2. $B^{-1}\vec{b}\,'$'nün bir bileşeni negatifse bu bazın temel çözümü uygun değildir, yani optimal tablo bozulur.
+
+::: {.ispat}
+@cor-dya-ne-degisir gereği $\vec{b}$ değişince bütün $y_{ij}$'ler ve $j \ge 1$ için bütün $z_j - c_j$ değerleri aynı kalır; yalnız $v_0$ sütunu $B^{-1}\vec{b}\,'$ ve $z_0$ değeri $\vec{c}_B^{\,T} B^{-1}\vec{b}\,'$ olur (@thm-dya-tablo).
+
+**1\.** $B^{-1}\vec{b}\,' \ge \vec{0}$ ise tablonun temel çözümü uygun bir temel çözümdür. Son satır değişmediği için optimallik koşulu hâlâ sağlanır; @thm-smp-optimallik gereği bu çözüm yeni problemin optimal çözümüdür.
+
+**2\.** Bu bazın temel çözümünde temel değişkenlerin değerleri tek türlü $B^{-1}\vec{b}\,'$'dür; bir bileşeni negatifse çözüm $\vec{x} \ge 0$ koşulunu sağlamaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani sağ taraf değişiminde önemli olan tek koşul
+$$
+B^{-1}\vec{b} \ge \vec{0}
+$$
+eşitsizliğinin gerçekleşmesidir; burada $B^{-1}$, temel değişkenlerin ilk baştaki katsayılar matrisinin tersidir. Tek bir $b_i$ değişiyorsa, diğer sağ taraflar sabit tutularak $B^{-1}\vec{b} \ge \vec{0}$ sisteminin her satırı $b_i$ için bir eşitsizlik verir; değişim aralığı bunların kesişimidir.
+
+::: {.callout-tip title="Sağ tarafın değişim aralığı dört adımda"}
+1. Optimal tablodaki temel değişkenlerin standart formdaki sütunlarından $B$'yi kur ve $B^{-1}$'i bul (ya da aylak sütunlarından oku).
+2. $\vec{b}$'de incelenen $b_i$'yi sembol olarak bırak, diğerlerini yerine koy.
+3. $B^{-1}\vec{b} \ge \vec{0}$ eşitsizliğinin her satırını $b_i$ için çöz.
+4. Bulunan aralıkların ortak kısmını, yani hepsini birden sağlayan aralığı al. Bu aralıkta yeni çözüm $B^{-1}\vec{b}$, optimal değer $\vec{c}_B^{\,T} B^{-1}\vec{b}$'dir.
+:::
+
+:::: {#exm-dya-b1 name="Birinci kısıtın sağ tarafının değişim aralığı"}
+Optimal tablosu @tbl-dya-optimal olan problemde ($\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 \le b_1$, $\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 \le 3$, $x_j \ge 0$, $\max z = 2x_1 + 3x_2 + x_3$; başta $b_1 = 1$) $b_1$ hangi aralıkta değişirse mevcut temel değişkenler $x_1$ ve $x_2$ temel değişken olarak kalır?
+
+::: {.cozum}
+Temel değişkenler $x_1$ ve $x_2$'dir. Tablonun satır sırasıyla
+$$
+B = \begin{bmatrix} \tfrac{1}{3} & \tfrac{1}{3} \\[1mm] \tfrac{1}{3} & \tfrac{4}{3} \end{bmatrix}
+\ \Longrightarrow \
+B^{-1} = \begin{bmatrix} 4 & -1 \\ -1 & 1 \end{bmatrix}, \qquad
+\vec{b} = \begin{bmatrix} 1 \\ 3 \end{bmatrix} = \begin{bmatrix} b_1 \\ b_2 \end{bmatrix}
+$$
+şeklindedir (@exm-dya-dogrudan). $B^{-1}$, optimal tablonun $v_4$ ve $v_5$ sütunlarında da okunur. $b_2 = 3$ sabit tutulur:
+$$
+B^{-1}\vec{b} = \begin{bmatrix} 4 & -1 \\ -1 & 1 \end{bmatrix} \begin{bmatrix} b_1 \\ 3 \end{bmatrix}
+= \begin{bmatrix} 4b_1 - 3 \\ -b_1 + 3 \end{bmatrix} \ge \begin{bmatrix} 0 \\ 0 \end{bmatrix}.
+$$
+Birinci satırdan $4b_1 - 3 \ge 0$, yani $b_1 \ge \tfrac{3}{4}$; ikinci satırdan $-b_1 + 3 \ge 0$, yani $b_1 \le 3$ bulunur. İki aralığın ortak kısmı alınırsa
+$$
+\tfrac{3}{4} \le b_1 \le 3
+$$
+elde edilir. Yani $b_1$, $\tfrac{3}{4}$ ile $3$ arasında değişirse mevcut temel değişkenler $x_1$ ve $x_2$ temel değişken olarak kalır. Bu aralıkta optimal çözüm $x_1 = 4b_1 - 3$, $x_2 = 3 - b_1$ ve optimal değer
+$$
+z_0 = 2(4b_1 - 3) + 3(3 - b_1) = 5b_1 + 3
+$$
+olur; $b_1 = 1$ için $x_1 = 1$, $x_2 = 2$, $z_0 = 8$ bulunur. Aralığın uçlarında temel değişkenlerden biri sıfır olur ($b_1 = \tfrac{3}{4}$ iken $x_1 = 0$, $b_1 = 3$ iken $x_2 = 0$); çözüm dejenere olur ama baz hâlâ optimaldir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dya-b2 name="İkinci kısıtın sağ tarafının değişim aralığı"}
+Aynı problemde ($\tfrac{1}{3}x_1 + \tfrac{1}{3}x_2 + \tfrac{1}{3}x_3 \le 1$, $\tfrac{1}{3}x_1 + \tfrac{4}{3}x_2 + \tfrac{7}{3}x_3 \le b_2$, $x_j \ge 0$, $\max z = 2x_1 + 3x_2 + x_3$; başta $b_2 = 3$) $b_2$ hangi aralıkta değişirse optimumluğun bozulmadığı, yani $x_1$ ve $x_2$'nin temel değişken olarak kaldığı durumu inceleyiniz.
+
+::: {.cozum}
+$B^{-1}$ aynıdır (@exm-dya-b1); bu kez $b_1 = 1$ sabit tutulur:
+$$
+B^{-1}\vec{b} = \begin{bmatrix} 4 & -1 \\ -1 & 1 \end{bmatrix} \begin{bmatrix} 1 \\ b_2 \end{bmatrix}
+= \begin{bmatrix} 4 - b_2 \\ -1 + b_2 \end{bmatrix} \ge \begin{bmatrix} 0 \\ 0 \end{bmatrix}.
+$$
+Birinci satırdan $4 - b_2 \ge 0$, yani $b_2 \le 4$; ikinci satırdan $-1 + b_2 \ge 0$, yani $b_2 \ge 1$ bulunur. İki aralığın ortak kısmı alınırsa
+$$
+1 \le b_2 \le 4
+$$
+elde edilir. Yani $b_2$, $1$ ile $4$ arasında değişirse mevcut temel değişkenler $x_1$ ve $x_2$ temel değişken olarak kalır. Bu aralıkta optimal çözüm $x_1 = 4 - b_2$, $x_2 = b_2 - 1$ ve optimal değer
+$$
+z_0 = 2(4 - b_2) + 3(b_2 - 1) = b_2 + 5
+$$
+olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+İki değişkenli bir problemde sağ tarafın değişmesi, kısıt doğrusunun kendine paralel olarak kayması demektir. Optimal köşe de onunla birlikte yer değiştirir.
+
+:::: {#exm-dya-ek-b1 name="Sağ taraf değişince optimal köşenin kayması"}
+$x_1 + x_2 \le b_1$, $2x_1 + x_2 \le 6$, $x_1, x_2 \ge 0$, $\max z = 3x_1 + 2x_2$ problemi $b_1 = 4$ için çözülmüş, optimal tablosu @tbl-dya-ek-max bulunmuştur. $b_1$ hangi aralıkta değişirse temel değişkenler $x_1$, $x_2$ olarak kalır? Optimal çözümü ve optimal değeri $b_1$ cinsinden yazıp grafik üzerinde yorumlayınız.
+
+::: {.cozum}
+@exm-dya-ek-max'ta $B^{-1} = \begin{bmatrix} -1 & 1 \\ 2 & -1 \end{bmatrix}$ bulunmuştu; tablonun $v_3$, $v_4$ sütunlarında da görünür. $b_2 = 6$ sabit tutulur:
+$$
+B^{-1}\vec{b} = \begin{bmatrix} -1 & 1 \\ 2 & -1 \end{bmatrix} \begin{bmatrix} b_1 \\ 6 \end{bmatrix}
+= \begin{bmatrix} 6 - b_1 \\ 2b_1 - 6 \end{bmatrix} \ge \begin{bmatrix} 0 \\ 0 \end{bmatrix}.
+$$
+Birinci satır $b_1 \le 6$, ikinci satır $b_1 \ge 3$ verir; değişim aralığı $3 \le b_1 \le 6$'dır. Bu aralıkta
+$$
+x_1 = 6 - b_1, \quad x_2 = 2b_1 - 6, \quad z_0 = 3(6 - b_1) + 2(2b_1 - 6) = b_1 + 6 .
+$$
+Örneğin $b_1 = 5$ için $(1, 4)$ ve $z_0 = 11$ bulunur. Kontrol: $1 + 4 = 5$, $2 + 4 = 6$ ve $3 + 8 = 11$.
+
+**Geometrik yorum.** $b_1$ değişince $x_1 + x_2 = b_1$ doğrusu kendine paralel kayar; $2x_1 + x_2 = 6$ doğrusu yerinde kalır. Optimal köşe iki doğrunun kesişimi olan $(6 - b_1,\ 2b_1 - 6)$ noktasıdır ve $2x_1 + x_2 = 6$ doğrusu üzerinde yürür. $b_1 = 3$ iken köşe $(3, 0)$'a, $b_1 = 6$ iken $(0, 6)$'ya ulaşır. $b_1 < 3$ olursa kesişim noktasında $x_2 < 0$, $b_1 > 6$ olursa $x_1 < 0$ olur; kesişim uygun bölgenin dışına düşer ve optimum başka bir bazda bulunur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 456.0 468.0" role="img" aria-label="Feasible region for b1 = 4 and the parallel lines x1 + x2 = 3, 4, 6; the optimal vertex moves along 2x1 + x2 = 6 from (3,0) to (0,6)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="153.3" y1="30.0" x2="153.3" y2="461.7"/><line x1="211.7" y1="30.0" x2="211.7" y2="461.7"/><line x1="270.0" y1="30.0" x2="270.0" y2="461.7"/><line x1="328.3" y1="30.0" x2="328.3" y2="461.7"/><line x1="386.7" y1="30.0" x2="386.7" y2="461.7"/><line x1="445.0" y1="30.0" x2="445.0" y2="461.7"/><line x1="60.0" y1="368.3" x2="480.0" y2="368.3"/><line x1="60.0" y1="310.0" x2="480.0" y2="310.0"/><line x1="60.0" y1="251.7" x2="480.0" y2="251.7"/><line x1="60.0" y1="193.3" x2="480.0" y2="193.3"/><line x1="60.0" y1="135.0" x2="480.0" y2="135.0"/><line x1="60.0" y1="76.7" x2="480.0" y2="76.7"/></g>
+  <polygon points="95.0,426.7 270.0,426.7 211.7,310.0 95.0,193.3" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M287.5,461.7 L71.7,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,158.3 L363.3,461.7" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,216.7 L305.0,461.7" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,41.7 L480.0,461.7" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M270.0,426.7 L95.0,76.7" fill="none" stroke="var(--color-practice)" stroke-width="3.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="426.7" x2="484.0" y2="426.7"/>
+  <line x1="95.0" y1="465.7" x2="95.0" y2="26.0"/>
+  <polygon points="484.0,426.7 476.0,423.2 476.0,430.2" stroke="none"/>
+  <polygon points="95.0,26.0 91.5,34.0 98.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="153.3" y1="423.7" x2="153.3" y2="429.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="153.3" y="441.7" text-anchor="middle">1</text>
+  <line x1="211.7" y1="423.7" x2="211.7" y2="429.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="211.7" y="441.7" text-anchor="middle">2</text>
+  <line x1="270.0" y1="423.7" x2="270.0" y2="429.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="270.0" y="441.7" text-anchor="middle">3</text>
+  <line x1="328.3" y1="423.7" x2="328.3" y2="429.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="328.3" y="441.7" text-anchor="middle">4</text>
+  <line x1="386.7" y1="423.7" x2="386.7" y2="429.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="386.7" y="441.7" text-anchor="middle">5</text>
+  <line x1="445.0" y1="423.7" x2="445.0" y2="429.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="445.0" y="441.7" text-anchor="middle">6</text>
+  <line x1="92.0" y1="368.3" x2="98.0" y2="368.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.0" y="372.3" text-anchor="end">1</text>
+  <line x1="92.0" y1="310.0" x2="98.0" y2="310.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.0" y="314.0" text-anchor="end">2</text>
+  <line x1="92.0" y1="251.7" x2="98.0" y2="251.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.0" y="255.7" text-anchor="end">3</text>
+  <line x1="92.0" y1="193.3" x2="98.0" y2="193.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.0" y="197.3" text-anchor="end">4</text>
+  <line x1="92.0" y1="135.0" x2="98.0" y2="135.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.0" y="139.0" text-anchor="end">5</text>
+  <line x1="92.0" y1="76.7" x2="98.0" y2="76.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="88.0" y="80.7" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="482.0" y="441.7" text-anchor="end">x₁</text>
+  <text x="102.0" y="35.0">x₂</text>
+  </g>
+  <circle cx="270.0" cy="426.7" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="211.7" cy="310.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="95.0" cy="76.7" r="4.5" fill="var(--color-practice)"/>
+  <text x="258.0" y="420.7" fill="var(--academic-text)" font-size="13" text-anchor="end">b₁ = 3</text>
+  <text x="221.7" y="314.0" fill="var(--academic-text)" font-size="13" text-anchor="start">b₁ = 4</text>
+  <text x="105.0" y="70.7" fill="var(--academic-text)" font-size="13" text-anchor="start">b₁ = 6</text>
+  <text x="345.8" y="312.9" fill="var(--color-base)" font-size="12" text-anchor="start">x₁ + x₂ = 6</text>
+  <text x="302.1" y="382.9" fill="var(--color-theory)" font-size="12" text-anchor="start">x₁ + x₂ = 4</text>
+  <text x="99.7" y="452.9" fill="var(--color-base)" font-size="12" text-anchor="start">x₁ + x₂ = 3</text>
+  <text x="112.5" y="391.7" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>x₁ + x₂ ≤ b₁ kısıtının sağ tarafı değiştikçe kısıt doğrusu kendine paralel kayar. Optimal köşe (6 − b₁, 2b₁ − 6) noktasıdır ve 2x₁ + x₂ = 6 doğrusunun kalın çizilen parçası boyunca yürür: b₁ = 3 iken (3, 0), b₁ = 4 iken (2, 2), b₁ = 6 iken (0, 6). Bu aralığın dışında köşenin bir koordinatı negatif olur.</figcaption>
+</figure>
+```
+
+Aralığın içinde amaç değeri $b_1$'in her birim artışında $1$ artar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-dya-ek-b2 name="İkinci kısıtın sağ tarafı"}
+$x_1 + x_2 \le 4$, $2x_1 + x_2 \le b_2$, $x_1, x_2 \ge 0$, $\max z = 3x_1 + 2x_2$ problemi $b_2 = 6$ için çözülmüş, optimal tablosu @tbl-dya-ek-max bulunmuştur. $b_2$ hangi aralıkta değişirse temel değişkenler $x_1$, $x_2$ olarak kalır?
+
+::: {.cozum}
+$B^{-1} = \begin{bmatrix} -1 & 1 \\ 2 & -1 \end{bmatrix}$ ve $b_1 = 4$ sabit tutulur:
+$$
+B^{-1}\vec{b} = \begin{bmatrix} -1 & 1 \\ 2 & -1 \end{bmatrix} \begin{bmatrix} 4 \\ b_2 \end{bmatrix}
+= \begin{bmatrix} b_2 - 4 \\ 8 - b_2 \end{bmatrix} \ge \begin{bmatrix} 0 \\ 0 \end{bmatrix}.
+$$
+Birinci satır $b_2 \ge 4$, ikinci satır $b_2 \le 8$ verir; değişim aralığı $4 \le b_2 \le 8$'dir. Bu aralıkta $x_1 = b_2 - 4$, $x_2 = 8 - b_2$ ve $z_0 = 3(b_2 - 4) + 2(8 - b_2)$, yani $z_0 = b_2 + 4$ olur. Geometrik olarak $2x_1 + x_2 = b_2$ doğrusu kayar ve optimal köşe $x_1 + x_2 = 4$ doğrusu üzerinde $b_2 = 4$ iken $(0, 4)$'ten $b_2 = 8$ iken $(4, 0)$'a kadar yürür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Örneklerde optimal değerin sağ tarafa doğrusal olarak bağlı olduğunu gördük: @exm-dya-b1'de $z_0 = 5b_1 + 3$, @exm-dya-b2'de $z_0 = b_2 + 5$. Bu katsayıların, optimal tablonun aylak sütunlarındaki $z_4 - c_4 = 5$ ve $z_5 - c_5 = 1$ kriterleriyle aynı olması tesadüf değildir; bu sayıların anlamını [Dualite](dualite.qmd) bölümünde göreceğiz.
+
+Aralığın dışına çıkıldığında tablo optimal olmaktan çıkar ama bütünüyle işe yaramaz hâle gelmez. Amaç katsayısı aralığın dışına çıkarsa tablo uygun kalır, yalnız bir ya da birkaç kriter yanlış işaretli olur; simpleks yöntem bu tablodan devam ettirilir. Sağ taraf aralığın dışına çıkarsa kriterler doğru işaretli kalır ama $v_0$ sütununda negatif bir değer belirir; bu durumu [Dual simpleks algoritması](dual-simpleks-algoritmasi.qmd) çözer.
+
+## Özet {#sec-dya-ozet}
+
+Bu bölümün hesaplarını tek tabloda toplayalım.
+
+| Değişen veri | Tabloda değişen | Optimumluğun korunma koşulu |
+|:--|:--|:--|
+| Temel dışı $x_k$'nın $c_k$'sı | Yalnız $z_k - c_k$ | max: $c_k \le z_k$; min: $c_k \ge z_k$ |
+| Temelde olan $x_r$'nin $c_r$'si | Temel dışı bütün $z_j - c_j$ ve $z_0$ | Temel dışı her $j$ için max: $z_j - c_j \ge 0$; min: $z_j - c_j \le 0$ |
+| Sağ taraf $b_i$ | $v_0$ sütunu ve $z_0$ | $B^{-1}\vec{b} \ge \vec{0}$ |
+
+: Duyarlılık analizinde değişimin etkisi {#tbl-dya-ozet}
+
+Bölümün örneğinde (@exm-dya-simpleks) bulunan aralıklar da şöyledir:
+
+| Değişen | Değişim aralığı | Aralıkta optimal değer |
+|:-:|:-:|:-:|
+| $c_1$ (temelde) | $\tfrac{3}{4} \le c_1 \le 3$ | $c_1 + 6$ |
+| $c_2$ (temelde) | $2 \le c_2 \le 8$ | $2 + 2c_2$ |
+| $c_3$ (temel dışı) | $c_3 \le 4$ | $8$ |
+| $b_1$ | $\tfrac{3}{4} \le b_1 \le 3$ | $5b_1 + 3$ |
+| $b_2$ | $1 \le b_2 \le 4$ | $b_2 + 5$ |
+
+: Duyarlılık örneğinin değişim aralıkları {#tbl-dya-ornek-aralik}
+
+Duyarlılık analizi, optimal tablonun yalnız bir çözüm değil, problemin verileri hakkında bir bilgi kaynağı olduğunu gösterdi. Aynı tablonun içinde saklı olan bir başka problem daha vardır: her lineer programlama probleminin bir eşi, bir **dual problemi** bulunur ve optimal tablo onun da çözümünü taşır. Bir sonraki bölüm [Dualite](dualite.qmd) bu problemi inceliyor.

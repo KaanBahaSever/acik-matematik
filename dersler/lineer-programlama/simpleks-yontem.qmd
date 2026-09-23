@@ -1,0 +1,1266 @@
+---
+title: "Simpleks Yöntem"
+pagetitle: "Simpleks Yöntem"
+description: "Bir uygun temel çözümden komşusuna geçiş, y_ij katsayıları, z_j − c_j simpleks kriteri, oran testi, optimallik ve sınırsızlık koşulları, simpleks tablosunun kurulması ve pivot dönüşümüyle güncellenmesi; minimum ve maksimum problemleri için tablolarıyla çözülmüş örnekler."
+---
+
+[Uç noktalar ve grafik yöntem](uc-noktalar-ve-grafik-yontem.qmd) bölümünde iki önemli şey gördük: Optimal çözüm varsa uygun bölgenin bir uç noktasında bulunur, uç noktalar da uygun temel çözümlerdir. O hâlde bütün uygun temel çözümleri tek tek hesaplayıp amaç değerlerini karşılaştırmak ilk akla gelen yoldur. Ne var ki $m$ kısıtlı, $n$ değişkenli bir problemde baz adayı sayısı $\binom{n}{m}$'ye kadar çıkar; 10 kısıt ve 20 değişkenle bile bu 184 756 eder. Grafik yöntem ise yalnız iki değişkende işe yarar.
+
+Simpleks yöntem daha akıllıca davranır. Bir uç noktadan başlar, amaç değerini iyileştiren **komşu** bir uç noktaya geçer ve iyileştirme mümkün olmadığı anda durur. Bu bölümde önce bu geçişin cebirini kuracağız: hangi vektör baza girer, hangisi çıkar, amaç değeri ne kadar değişir, ne zaman durulur. Sonra bütün bu hesapları tek bir tabloda, **simpleks tablosunda** toplayacağız.
+
+## Bir Uç Noktadan Komşu Uç Noktaya {#sec-smp-komsu}
+
+Önce problemi vektör biçiminde yazalım; geçişin bütün cebiri bu yazımda görünür.
+
+Katsayılar matrisinin $j$. sütununu $v_j$ ile, sağ taraf vektörünü $v_0$ ile gösterelim. Standart formdaki (@def-lpp-standart-form) bir minimum problemi o zaman şöyle yazılır:
+$$
+\begin{aligned}
+x_1 v_1 + x_2 v_2 + \dots + x_n v_n &= v_0 \\
+x_j &\ge 0, \quad j = \overline{1,n} \\
+\min z &= c_1 x_1 + c_2 x_2 + \dots + c_n x_n
+\end{aligned}
+$$
+Burada $j = \overline{1,n}$ yazımı "$j = 1, 2, \dots, n$" demektir. $v_0, v_1, \dots, v_n$ vektörlerinin her biri $m$ bileşenlidir ($m$ kısıt sayısı) ve katsayılar matrisinin rankı $m$'dir.
+
+Bir uygun temel çözüm (@def-tck-uygun-temel-cozum) seçelim. Gösterimi sade tutmak için değişkenleri, bu çözümün baz vektörleri ilk $m$ sütun olacak şekilde numaralandıralım:
+$$
+B_0 = (v_1, v_2, \dots, v_r, \dots, v_m).
+$$
+$B_0$ lineer bağımsızdır; buna **başlangıç bazı** diyoruz. Baz dışındaki $n - m$ değişken sıfırdır, dolayısıyla çözüm
+$$
+X_0 = \big(x_1, x_2, \dots, x_m, \underbrace{0, 0, \dots, 0}_{n-m \text{ tane}}\big)
+$$
+biçimindedir. Baz değişkenlerinin bu çözümdeki değerlerini de $x_1, \dots, x_m$ ile yazıyoruz; uygun çözüm olduğu için hepsi $\ge 0$'dır. Kısıtlar ve amaç fonksiyonu bu çözümde
+$$
+v_0 = x_1 v_1 + x_2 v_2 + \dots + x_m v_m \tag{1}
+$$
+$$
+z_0 = c_1 x_1 + c_2 x_2 + \dots + c_m x_m \tag{2}
+$$
+şeklini alır. Uç noktalar uygun temel çözümlerdir; bu yüzden $X_0$'a **uç nokta çözümü** de diyeceğiz.
+
+::: {#def-smp-komsu name="Komşu Uygun Temel Çözümler"}
+Bazları yalnız bir vektörde farklı olan iki uygun temel çözüme **komşu** uygun temel çözümler denir. Yani bir bazdan komşu baza geçmek için bir vektör bazdan çıkarılır, yerine baz dışından bir vektör alınır.
+:::
+
+Yani komşu çözümler "tek hamlede" birbirine ulaşılan çözümlerdir. İki değişkenli örneklerde göreceğimiz gibi komşu uç noktalar uygun bölgenin bir kenarının iki ucudur; simpleks yöntem de bölgenin kenarları boyunca köşeden köşeye yürür.
+
+### Baz Dışındaki Vektörlerin Katsayıları
+
+$B_0$, $m$ boyutlu uzayda $m$ tane lineer bağımsız vektördür, yani uzayın bir tabanıdır. Her vektör bu tabanın vektörleri cinsinden tek bir şekilde yazılır; özellikle baz dışındaki her $v_k$ ($k = m+1, \dots, n$) için
+$$
+v_k = y_{1k} v_1 + y_{2k} v_2 + \dots + y_{rk} v_r + \dots + y_{mk} v_m \tag{3}
+$$
+olacak şekilde tek türlü belirli $y_{1k}, \dots, y_{mk}$ sayıları vardır.
+
+::: {#def-smp-yij name="Baza Göre Katsayılar"}
+$B = (v_1, \dots, v_m)$ bir baz olsun. Her $j = 0, 1, \dots, n$ için
+$$
+v_j = y_{1j} v_1 + y_{2j} v_2 + \dots + y_{mj} v_m
+$$
+eşitliğini sağlayan tek türlü belirli $y_{1j}, \dots, y_{mj}$ sayılarına $v_j$ vektörünün $B$ bazına göre **katsayıları** denir. Bunları sütun olarak $\vec{y}_j = (y_{1j}, \dots, y_{mj})^T$ ile gösteririz. $j = 0$ için $y_{i0} = x_i$ olur.
+:::
+
+Yani $y_{ij}$, $v_j$'yi baz vektörlerinden "üretmek" için $i$. baz vektöründen ne kadar alınacağını söyler. İlk indis baz vektörünü, ikinci indis yazılan vektörü gösterir. $j = 0$ için bu yazım (1) eşitliğinin ta kendisidir; bu yüzden $v_0$'ın katsayıları uygun temel çözümün baz değişkenleridir.
+
+::: {#def-smp-zj name="z_j Değeri"}
+$B = (v_1, \dots, v_m)$ bazındaki değişkenlerin amaç katsayıları $\vec{c}_B = (c_1, \dots, c_m)^T$ olsun. Her $j = 0, 1, \dots, n$ için
+$$
+z_j = c_1 y_{1j} + c_2 y_{2j} + \dots + c_m y_{mj} = \vec{c}_B^{\,T} \vec{y}_j
+$$
+sayısına $v_j$ vektörüne karşılık gelen **amaç fonksiyonu değeri** denir.
+:::
+
+Yani $z_j$, $v_j$'yi baz vektörleriyle ürettiğimizde bu üretimin amaç fonksiyonuna "maliyetidir": $v_j$ için baz vektörlerinden $y_{1j}, \dots, y_{mj}$ kadar harcanır ve bunların birim maliyetleri $c_1, \dots, c_m$'dir. $j = 0$ için $z_0 = \vec{c}_B^{\,T} \vec{y}_0$, (2) eşitliğindeki amaç değeridir.
+
+::: {#def-smp-simpleks-kriteri name="Simpleks Kriteri"}
+$z_j - c_j$ farkına $v_j$ vektörünün **simpleks kriteri** denir.
+:::
+
+Yani simpleks kriteri iki maliyeti karşılaştırır: $v_j$'yi baz vektörleriyle üretmenin maliyeti $z_j$, $x_j$'yi doğrudan kullanmanın maliyeti $c_j$. Aşağıda göreceğimiz gibi bu tek sayı, $v_j$ baza alınırsa amaç değerinin hangi yöne ve hangi hızla değişeceğini söyler.
+
+:::: {#prp-smp-baz-kriter-sifir name="Baz Vektörlerinin Simpleks Kriteri"}
+Bir baz vektörünün katsayı sütunu birim vektördür ve simpleks kriteri sıfırdır: $v_i$ bazdaysa $z_i - c_i = 0$.
+
+::: {.ispat}
+$v_i$ bazın $i$. vektörü olsun. $v_i = 1 \cdot v_i$ eşitliği $v_i$'yi baz vektörleri cinsinden yazar: $v_i$'nin katsayısı 1, diğer baz vektörlerininki 0'dır. Katsayılar tek türlü belirli olduğundan $\vec{y}_i$, $i$. bileşeni 1 olan birim vektördür. O hâlde
+$$
+z_i = c_1 \cdot 0 + \dots + c_i \cdot 1 + \dots + c_m \cdot 0 = c_i
+$$
+ve $z_i - c_i = 0$ olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-smp-koordinatlar name="Katsayıların ve Simpleks Kriterlerinin Hesabı"}
+$$
+\begin{aligned}
+x_1 + x_2 &\le 4 \\
+x_1 + 2x_2 &\le 6 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+problemi için $B = (v_1, v_2)$ bazına karşılık gelen uygun temel çözümü, baz dışındaki vektörlerin $y_{ij}$ katsayılarını ve bütün simpleks kriterlerini bulunuz.
+
+::: {.cozum}
+Önce problemi standart forma (@def-lpp-standart-form) getirelim: iki $\le$ kısıtına $x_3$ ve $x_4$ aylak değişkenlerini ekleriz, amaçtaki katsayıları 0'dır.
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 4 \\
+x_1 + 2x_2 + x_4 &= 6 \\
+x_j &\ge 0, \quad j = \overline{1,4} \\
+\max z &= 3x_1 + 2x_2 + 0x_3 + 0x_4
+\end{aligned}
+$$
+Sütunlar
+$$
+v_1 = \begin{bmatrix} 1 \\ 1 \end{bmatrix}, \quad
+v_2 = \begin{bmatrix} 1 \\ 2 \end{bmatrix}, \quad
+v_3 = \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \quad
+v_4 = \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \quad
+v_0 = \begin{bmatrix} 4 \\ 6 \end{bmatrix}
+$$
+şeklindedir. $v_1$ ile $v_2$ lineer bağımsızdır, çünkü $\det \begin{bmatrix} 1 & 1 \\ 1 & 2 \end{bmatrix} = 1 \ne 0$.
+
+**$v_0$'ın katsayıları.** $v_0 = y_{10} v_1 + y_{20} v_2$ eşitliği $y_{10} + y_{20} = 4$ ve $y_{10} + 2y_{20} = 6$ sistemini verir. İkinciden birinciyi çıkarınca $y_{20} = 2$, sonra $y_{10} = 2$ bulunur. Yani $x_1 = 2$, $x_2 = 2$ ve uygun temel çözüm
+$$
+X_0 = (x_1, x_2, x_3, x_4) = (2, 2, 0, 0).
+$$
+Bileşenler negatif olmadığı için bu gerçekten uygun bir temel çözümdür.
+
+**$v_3$'ün katsayıları.** $y_{13} + y_{23} = 1$ ve $y_{13} + 2y_{23} = 0$; buradan $y_{23} = -1$, $y_{13} = 2$. Kontrol: $2v_1 - v_2 = (1, 0)^T = v_3$.
+
+**$v_4$'ün katsayıları.** $y_{14} + y_{24} = 0$ ve $y_{14} + 2y_{24} = 1$; buradan $y_{24} = 1$, $y_{14} = -1$. Kontrol: $-v_1 + v_2 = (0, 1)^T = v_4$.
+
+**Simpleks kriterleri.** Baz maliyetleri $\vec{c}_B = (c_1, c_2)^T = (3, 2)^T$. @prp-smp-baz-kriter-sifir gereği $z_1 - c_1 = z_2 - c_2 = 0$. Baz dışındakiler için:
+$$
+\begin{aligned}
+z_3 &= 3 \cdot 2 + 2 \cdot (-1) = 4, & z_3 - c_3 &= 4 - 0 = 4, \\
+z_4 &= 3 \cdot (-1) + 2 \cdot 1 = -1, & z_4 - c_4 &= -1 - 0 = -1.
+\end{aligned}
+$$
+Amaç değeri $z_0 = 3 \cdot 2 + 2 \cdot 2 = 10$'dur. [$\blacksquare$]{.qed}
+:::
+::::
+
+### Bazdan Bir Vektör Çıkarıp Yerine Yenisini Almak
+
+Şimdi $B_0$ bazından bir $v_r$ vektörünü çıkarıp yerine baz dışındaki bir $v_k$ vektörünü almak istiyoruz. Fikir basit: (3) eşitliğini bir $\lambda > 0$ sayısıyla çarpıp (1) eşitliğinden çıkarırız:
+$$
+\begin{aligned}
+&(x_1 - \lambda y_{1k}) v_1 + (x_2 - \lambda y_{2k}) v_2 + \dots \\[1mm]
+&\quad + (x_m - \lambda y_{mk}) v_m + \lambda v_k = v_0 .
+\end{aligned} \tag{4}
+$$
+Sol taraf $\lambda$ ne olursa olsun $v_0$'a eşittir; yani (4)'ün katsayıları kısıt denklemlerini sağlar. Bunlardan uygun bir temel çözüm elde etmek için iki şey gerekir: Bütün katsayılar $\ge 0$ olmalı ve $v_r$'nin katsayısı $x_r - \lambda y_{rk}$ sıfır olmalıdır. $\lambda$ sıfırdan başlayıp büyüdükçe $y_{ik} > 0$ olan katsayılar küçülür; $y_{ik} \le 0$ olanlar ise hiç küçülmez. İlk sıfıra düşen katsayı hangisiyse o vektör bazdan çıkar.
+
+::: {#def-smp-oran-testi name="Oran Testi"}
+Baza girecek vektör $v_k$ olsun. Yalnız $y_{ik} > 0$ olan satırlar için $x_i / y_{ik}$ oranları hesaplanır ve
+$$
+\lambda = \min_{y_{ik} > 0} \left( \frac{x_i}{y_{ik}} \right) = \frac{x_r}{y_{rk}}
+$$
+alınır. En küçük oranı veren $v_r$ vektörü bazdan çıkar. Bu seçime **oran testi** denir.
+:::
+
+Yani oran testi, "baza giren değişkeni hiçbir baz değişkenini negatif yapmadan en fazla ne kadar büyütebiliriz?" sorusunun cevabıdır. $y_{ik} \le 0$ olan satırlar teste girmez, çünkü o satırdaki değişken $\lambda$ büyüdükçe azalmaz. En küçük oran birden fazla satırda gerçekleşirse bunlardan herhangi biri seçilebilir; o zaman yeni çözümde bir baz değişkeni sıfır olur, yani yeni çözüm dejeneredir (@def-tck-dejenere).
+
+:::: {#thm-smp-baz-degisimi name="Baz Değişimi"}
+$X_0$, $B_0 = (v_1, \dots, v_m)$ bazına karşılık gelen bir uygun temel çözüm; $v_k$ baz dışındaki bir vektör olsun ve en az bir $i$ için $y_{ik} > 0$ olsun. $\lambda = x_r / y_{rk}$ oran testiyle seçilsin. Bu durumda
+
+1. $B_1 = (v_1, \dots, v_{r-1}, v_k, v_{r+1}, \dots, v_m)$ lineer bağımsızdır, yani bir bazdır;
+2. $x_i - \lambda y_{ik}$ ($i \ne r$) değerleri ve $x_k = \lambda$ değeri, $B_1$ bazına karşılık gelen uygun temel çözümü verir:
+$$
+\begin{aligned}
+X_1 = \big(&x_1 - \lambda y_{1k}, \dots, x_{r-1} - \lambda y_{(r-1)k}, 0, \\
+&x_{r+1} - \lambda y_{(r+1)k}, \dots, x_m - \lambda y_{mk}, \\
+&0, \dots, \lambda, \dots, 0\big).
+\end{aligned}
+$$
+Burada $\lambda$, $X_1$'in $k$. bileşenidir; baz dışında kalan diğer bileşenler 0'dır.
+
+::: {.ispat}
+**$B_1$ lineer bağımsızdır.** $\alpha_i$ ($i \ne r$) ve $\beta$ sayıları için
+$$
+\sum_{i \ne r} \alpha_i v_i + \beta v_k = \vec{0}
+$$
+olsun. (3) eşitliğini yerine koyarsak
+$$
+\sum_{i \ne r} (\alpha_i + \beta y_{ik}) v_i + \beta y_{rk} v_r = \vec{0}
+$$
+elde ederiz. $B_0$ lineer bağımsız olduğundan bütün katsayılar sıfırdır. Özellikle $\beta y_{rk} = 0$ ve $y_{rk} > 0$ olduğundan $\beta = 0$. Bu durumda her $i \ne r$ için $\alpha_i = 0$ kalır. Demek ki $B_1$'in vektörleri lineer bağımsızdır.
+
+**$X_1$ kısıtları sağlar.** $X_1$'in bileşenleri (4) eşitliğinin katsayılarıdır; $\lambda = x_r / y_{rk}$ için $v_r$'nin katsayısı $x_r - \lambda y_{rk} = 0$ olur. (4) de (1)'den (3)'ün $\lambda$ katı çıkarılarak elde edildiği için doğrudur.
+
+**$X_1 \ge 0$.** $x_k = \lambda \ge 0$'dır, çünkü $x_r \ge 0$ ve $y_{rk} > 0$. $i \ne r$ için iki durum var:
+
+- $y_{ik} \le 0$ ise $x_i - \lambda y_{ik} \ge x_i \ge 0$.
+- $y_{ik} > 0$ ise $\lambda$ en küçük oran olduğundan $\lambda \le x_i / y_{ik}$, yani $\lambda y_{ik} \le x_i$ ve $x_i - \lambda y_{ik} \ge 0$.
+
+**$X_1$ temel çözümdür.** $X_1$'in sıfırdan farklı olabilen bileşenleri yalnız $B_1$'deki vektörlere aittir ve $B_1$ bir bazdır. Böylece $X_1$, $B_1$ bazına karşılık gelen uygun temel çözümdür. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-note appearance="simple"}
+**Not.** $v_r$ bazdan çıkıp $v_k$ baza girdiğinde $x_r$ değişkeni $x_r = 0$ değeriyle temel olmayan değişkene, $x_k$ değişkeni de $x_k = \lambda$ değeriyle temel değişkene dönüşür. $X_0$ dejenere değilse bütün $x_i > 0$ olduğundan $\lambda > 0$'dır.
+:::
+
+Baz değişiminde (@thm-smp-baz-degisimi) $\lambda$'yı oran testinden daha büyük seçseydik en küçük oranı veren satırdaki $x_r - \lambda y_{rk}$ negatif olurdu; $X_0$ dejenere değilken daha küçük bir $\lambda > 0$ seçseydik hiçbir katsayı sıfır olmaz, elimizde $m + 1$ pozitif bileşenli, temel olmayan bir çözüm kalırdı. Oran testi tam ortadaki doğru değeri verir.
+
+### Amaç Fonksiyonu Ne Kadar Değişir?
+
+Geçişin asıl amacı amaç değerini iyileştirmektir. Aşağıdaki teorem, bu değişimin simpleks kriteriyle ölçüldüğünü söylüyor.
+
+:::: {#thm-smp-amac-degisimi name="Amaç Değerinin Değişimi"}
+Baz değişimi teoreminin (@thm-smp-baz-degisimi) koşullarında $X_1$ çözümünün amaç değeri
+$$
+z_1 = z_0 - \lambda (z_k - c_k) \tag{5}
+$$
+olur.
+
+::: {.ispat}
+$X_1$'in bileşenlerini amaç fonksiyonunda yerine koyalım. $x_r$'nin yeni değeri 0'dır; baz dışındaki $v_k$ dışında kalan değişkenler de sıfırdır:
+$$
+\begin{aligned}
+z_1 &= c_1 (x_1 - \lambda y_{1k}) + \dots + c_{r-1} (x_{r-1} - \lambda y_{(r-1)k}) \\[1mm]
+&\quad + c_r \cdot 0 + c_{r+1} (x_{r+1} - \lambda y_{(r+1)k}) + \dots \\[1mm]
+&\quad + c_m (x_m - \lambda y_{mk}) + c_k \lambda .
+\end{aligned}
+$$
+$x_i$'li ve $\lambda$'lı terimleri ayırırsak
+$$
+\begin{aligned}
+z_1 &= \sum_{i \ne r} c_i x_i \\[1mm]
+&\quad - \lambda \Big( \sum_{i \ne r} c_i y_{ik} - c_k \Big)
+\end{aligned}
+$$
+bulunur. Şimdi eksik $i = r$ terimlerini ekleyelim. $\lambda = x_r / y_{rk}$ seçildiğinden $x_r = \lambda y_{rk}$, dolayısıyla
+$$
+c_r x_r - \lambda c_r y_{rk} = 0 .
+$$
+Bu sıfır ifadeyi $z_1$'in sağ yanına eklersek
+$$
+\begin{aligned}
+z_1 &= \underbrace{c_1 x_1 + \dots + c_m x_m}_{z_0} \\[1mm]
+&\quad - \lambda \big( \underbrace{c_1 y_{1k} + \dots + c_m y_{mk}}_{z_k} - c_k \big)
+\end{aligned}
+$$
+olur. Birinci toplam (2) gereği $z_0$, ikinci toplam da @def-smp-zj gereği $z_k$'dır. Böylece $z_1 = z_0 - \lambda (z_k - c_k)$. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $x_k$'yi sıfırdan $\lambda$'ya çıkardığımızda amaç değeri, $x_k$'nin her birim artışında $z_k - c_k$ kadar azalır. **İyileşme miktarı** $\lambda (z_k - c_k)$'dır.
+
+:::: {#cor-smp-iyilesme name="Simpleks Kriteri ve İyileşme"}
+Baz değişimi teoreminin (@thm-smp-baz-degisimi) koşullarında $\lambda > 0$ olsun.
+
+1. $z_k - c_k > 0$ ise $z_1 < z_0$ olur: Minimum probleminde amaç değeri daha küçük bir uygun temel çözüm bulunur.
+2. $z_k - c_k < 0$ ise $z_1 > z_0$ olur: Maksimum probleminde amaç değeri daha büyük bir uygun temel çözüm bulunur.
+
+::: {.ispat}
+(5\) eşitliğinde $\lambda > 0$'dır. $z_k - c_k > 0$ ise $\lambda (z_k - c_k) > 0$ ve $z_1 = z_0 - \lambda(z_k - c_k) < z_0$. $z_k - c_k < 0$ ise $\lambda (z_k - c_k) < 0$ ve $z_1 > z_0$. [$\blacksquare$]{.qed}
+:::
+::::
+
+$\lambda = 0$ olabilen tek durum dejenere çözümdür: O zaman baz değişir ama çözüm ve amaç değeri aynı kalır.
+
+::: {#def-smp-simpleks-yontem name="Simpleks Yöntem"}
+Bir uygun temel çözümden başlayıp @thm-smp-baz-degisimi ile, amaç değerini iyileştiren komşu uygun temel çözümlere adım adım geçerek lineer programlama problemini çözme yöntemine **simpleks yöntem** denir. Her geçişe bir **iterasyon** denir.
+:::
+
+Yani simpleks yöntemin her iterasyonu üç soruya cevap verir: Hangi vektör baza girer (simpleks kriteri), hangi vektör bazdan çıkar (oran testi), yeni çözüm ve amaç değeri nedir (@thm-smp-baz-degisimi ve @thm-smp-amac-degisimi).
+
+:::: {#exm-smp-komsu-gecis name="Komşu Uç Noktaya Bir Geçiş"}
+Önceki örnekteki (@exm-smp-koordinatlar) $\max z = 3x_1 + 2x_2$ problemini, $x_1 + x_2 \le 4$ ve $x_1 + 2x_2 \le 6$ kısıtlarıyla ele alalım. $B_0 = (v_1, v_2)$ bazında $X_0 = (2, 2, 0, 0)$, $z_0 = 10$ bulunmuştu. Amaç değerini artıran komşu uygun temel çözümü bulunuz.
+
+::: {.cozum}
+Önceki örneğin (@exm-smp-koordinatlar) sonuçları:
+$$
+\begin{aligned}
+y_{13} &= 2, & y_{23} &= -1, & z_3 - c_3 &= 4, \\
+y_{14} &= -1, & y_{24} &= 1, & z_4 - c_4 &= -1.
+\end{aligned}
+$$
+
+**Baza girecek vektör.** Problem maksimum problemidir; @cor-smp-iyilesme gereği amaç değerini artırmak için simpleks kriteri negatif olan bir vektör baza alınmalıdır. Yalnız $z_4 - c_4 = -1 < 0$ olduğundan $v_4$ baza girer. ($v_3$'ü almak amaç değerini $4\lambda$ kadar azaltırdı.)
+
+**Bazdan çıkacak vektör.** $v_4$ sütununda yalnız $y_{24} = 1$ pozitiftir; $y_{14} = -1$ teste girmez. Oran testi
+$$
+\lambda = \frac{x_2}{y_{24}} = \frac{2}{1} = 2
+$$
+verir, yani $v_2$ bazdan çıkar.
+
+**Yeni çözüm.** @thm-smp-baz-degisimi ile
+$$
+\begin{aligned}
+x_1 &= x_1 - \lambda y_{14} = 2 - 2 \cdot (-1) = 4, \\
+x_2 &= x_2 - \lambda y_{24} = 2 - 2 \cdot 1 = 0, \\
+x_4 &= \lambda = 2 .
+\end{aligned}
+$$
+Yeni baz $B_1 = (v_1, v_4)$, yeni çözüm
+$$
+X_1 = (x_1, x_2, x_3, x_4) = (4, 0, 0, 2).
+$$
+Kontrol: $4 + 0 + 0 = 4$ ve $4 + 2 \cdot 0 + 2 = 6$.
+
+**Yeni amaç değeri.** (5) eşitliğinden
+$$
+z_1 = z_0 - \lambda (z_4 - c_4) = 10 - 2 \cdot (-1) = 12 ,
+$$
+doğrudan hesapla da $3 \cdot 4 + 2 \cdot 0 = 12$. İyileşme miktarı $12 - 10 = 2$'dir.
+
+Geometrik olarak $X_0$ ve $X_1$ uygun bölgenin $(2, 2)$ ve $(4, 0)$ köşeleridir. $x_3 = 0$ kaldığı için hareket boyunca $x_1 + x_2 = 4$ doğrusu üzerinde kalınır; $x_4$ ise $0$'dan $2$'ye çıkar, yani ikinci kısıt doğrusundan uzaklaşılır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 496.0 361.0" role="img" aria-label="Feasible quadrilateral with corners (0,0), (4,0), (2,2), (0,3); an arrow along the edge x1 + x2 = 4 from (2,2) to (4,0)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="168.2" y1="30.0" x2="168.2" y2="354.7"/><line x1="235.9" y1="30.0" x2="235.9" y2="354.7"/><line x1="303.5" y1="30.0" x2="303.5" y2="354.7"/><line x1="371.2" y1="30.0" x2="371.2" y2="354.7"/><line x1="438.8" y1="30.0" x2="438.8" y2="354.7"/><line x1="506.5" y1="30.0" x2="506.5" y2="354.7"/><line x1="60.0" y1="246.5" x2="520.0" y2="246.5"/><line x1="60.0" y1="178.8" x2="520.0" y2="178.8"/><line x1="60.0" y1="111.2" x2="520.0" y2="111.2"/><line x1="60.0" y1="43.5" x2="520.0" y2="43.5"/></g>
+  <polygon points="100.6,314.1 371.2,314.1 235.9,178.8 100.6,111.2" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M411.8,354.7 L87.1,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,90.9 L520.0,320.9" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="314.1" x2="524.0" y2="314.1"/>
+  <line x1="100.6" y1="358.7" x2="100.6" y2="26.0"/>
+  <polygon points="524.0,314.1 516.0,310.6 516.0,317.6" stroke="none"/>
+  <polygon points="100.6,26.0 97.1,34.0 104.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="168.2" y1="311.1" x2="168.2" y2="317.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="168.2" y="329.1" text-anchor="middle">1</text>
+  <line x1="235.9" y1="311.1" x2="235.9" y2="317.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="235.9" y="329.1" text-anchor="middle">2</text>
+  <line x1="303.5" y1="311.1" x2="303.5" y2="317.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="303.5" y="329.1" text-anchor="middle">3</text>
+  <line x1="371.2" y1="311.1" x2="371.2" y2="317.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="371.2" y="329.1" text-anchor="middle">4</text>
+  <line x1="438.8" y1="311.1" x2="438.8" y2="317.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="438.8" y="329.1" text-anchor="middle">5</text>
+  <line x1="506.5" y1="311.1" x2="506.5" y2="317.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="506.5" y="329.1" text-anchor="middle">6</text>
+  <line x1="97.6" y1="246.5" x2="103.6" y2="246.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.6" y="250.5" text-anchor="end">1</text>
+  <line x1="97.6" y1="178.8" x2="103.6" y2="178.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.6" y="182.8" text-anchor="end">2</text>
+  <line x1="97.6" y1="111.2" x2="103.6" y2="111.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.6" y="115.2" text-anchor="end">3</text>
+  <line x1="97.6" y1="43.5" x2="103.6" y2="43.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="93.6" y="47.5" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="522.0" y="329.1" text-anchor="end">x₁</text>
+  <text x="107.6" y="35.0">x₂</text>
+  </g>
+  <line x1="235.9" y1="178.8" x2="365.0" y2="307.9" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="371.2,314.1 360.1,309.6 366.7,303.1" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="235.9" cy="178.8" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="371.2" cy="314.1" r="4.5" fill="var(--color-practice)"/>
+  <text x="245.9" y="168.8" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀ = (2, 2)</text>
+  <text x="377.2" y="302.1" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁ = (4, 0)</text>
+  <text x="137.8" y="60.4" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + x₂ = 4</text>
+  <text x="432.1" y="273.5" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 2x₂ = 6</text>
+  <text x="161.5" y="253.2" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+</svg>
+<figcaption>Baz değişimi uygun bölgenin bir kenarı boyunca yürümektir: x₄ baza girerken X₀ = (2, 2) köşesinden x₁ + x₂ = 4 kenarı üzerinde X₁ = (4, 0) köşesine gidilir.</figcaption>
+</figure>
+```
+
+Böylece amaç değerini 10'dan 12'ye çıkaran komşu uygun temel çözüm $X_1 = (4, 0, 0, 2)$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Optimallik ve Sınırsızlık {#sec-smp-optimallik}
+
+Simpleks kriteri iyileşmenin yönünü söylüyor. Peki hiçbir vektör iyileşme sağlamıyorsa? Aşağıdaki teorem, bu durumda elimizdeki çözümün yalnız komşularından değil, **bütün** uygun çözümlerden iyi olduğunu söylüyor.
+
+:::: {#thm-smp-optimallik name="Optimallik Koşulu"}
+$X_0$, $B_0 = (v_1, \dots, v_m)$ bazına karşılık gelen bir uygun temel çözüm olsun.
+
+1. Minimum probleminde her $j$ için $z_j - c_j \le 0$ ise $X_0$ optimal çözümdür.
+2. Maksimum probleminde her $j$ için $z_j - c_j \ge 0$ ise $X_0$ optimal çözümdür.
+
+::: {.ispat}
+$\vec{u} = (u_1, \dots, u_n)$ herhangi bir uygun çözüm olsun: $u_1 v_1 + \dots + u_n v_n = v_0$ ve her $u_j \ge 0$.
+
+**Adım 1.** Her $v_j$'yi baz cinsinden yazalım: $v_j = \sum_{i=1}^{m} y_{ij} v_i$. Baz vektörleri için de bu yazım geçerlidir (@prp-smp-baz-kriter-sifir). Yerine koyarsak
+$$
+\sum_{i=1}^{m} \Big( \sum_{j=1}^{n} y_{ij} u_j \Big) v_i = v_0 = \sum_{i=1}^{m} x_i v_i .
+$$
+Bir vektörün baz cinsinden yazılışı tek olduğundan her $i$ için
+$$
+\sum_{j=1}^{n} y_{ij} u_j = x_i .
+$$
+
+**Adım 2 (minimum).** Varsayım gereği her $j$ için $c_j \ge z_j$, ayrıca $u_j \ge 0$. O hâlde $c_j u_j \ge z_j u_j$ ve
+$$
+\begin{aligned}
+z(\vec{u}) &= \sum_{j=1}^{n} c_j u_j \ge \sum_{j=1}^{n} z_j u_j
+= \sum_{j=1}^{n} \sum_{i=1}^{m} c_i y_{ij} u_j \\[1mm]
+&= \sum_{i=1}^{m} c_i \Big( \sum_{j=1}^{n} y_{ij} u_j \Big) = \sum_{i=1}^{m} c_i x_i = z_0 .
+\end{aligned}
+$$
+Her uygun çözümün amaç değeri $z_0$'dan küçük olmadığına göre $X_0$ minimum çözümdür.
+
+**Adım 2 (maksimum).** Bu kez her $j$ için $c_j \le z_j$, dolayısıyla $c_j u_j \le z_j u_j$. Aynı hesap eşitsizliği ters çevirir: $z(\vec{u}) \le z_0$. Demek ki $X_0$ maksimum çözümdür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-smp-optimallik-kontrol name="Optimallik Kontrolü"}
+Komşu geçiş örneğinde (@exm-smp-komsu-gecis) $\max z = 3x_1 + 2x_2$ problemi için ($x_1 + x_2 + x_3 = 4$, $x_1 + 2x_2 + x_4 = 6$) $B_1 = (v_1, v_4)$ bazında $X_1 = (4, 0, 0, 2)$ ve $z = 12$ bulundu. $X_1$'in optimal olduğunu gösteriniz.
+
+::: {.cozum}
+Baz dışındaki $v_2 = (1, 2)^T$ ve $v_3 = (1, 0)^T$ vektörlerini $v_1 = (1, 1)^T$ ve $v_4 = (0, 1)^T$ cinsinden yazalım.
+
+**$v_2$.** $y_{12} v_1 + y_{42} v_4 = v_2$ eşitliği
+$$
+(y_{12},\ y_{12} + y_{42})^T = (1, 2)^T
+$$
+verir; buradan $y_{12} = 1$, $y_{42} = 1$. (Satırları baz değişkeninin indisiyle adlandırıyoruz: $x_4$ satırının katsayısı $y_{42}$'dir.)
+
+**$v_3$.** $(y_{13},\ y_{13} + y_{43})^T = (1, 0)^T$; buradan $y_{13} = 1$, $y_{43} = -1$.
+
+Baz maliyetleri $\vec{c}_B = (c_1, c_4)^T = (3, 0)^T$. Buna göre
+$$
+\begin{aligned}
+z_2 - c_2 &= (3 \cdot 1 + 0 \cdot 1) - 2 = 1, \\
+z_3 - c_3 &= (3 \cdot 1 + 0 \cdot (-1)) - 0 = 3 .
+\end{aligned}
+$$
+Baz vektörlerinin kriterleri sıfırdır (@prp-smp-baz-kriter-sifir). Bütün $z_j - c_j \ge 0$ olduğundan @thm-smp-optimallik gereği $X_1$ maksimum çözümdür: $x_1 = 4$, $x_2 = 0$ ve $\max z = 12$.
+
+Grafikle karşılaştıralım. Uygun bölgenin köşeleri $(0, 0)$, $(4, 0)$, $(2, 2)$ ve $(0, 3)$'tür; bunlarda $z$ sırasıyla $0$, $12$, $10$ ve $6$ değerini alır. En büyüğü gerçekten $(4, 0)$'daki $12$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Simpleks kriterinin iyileşme gösterdiği ama oran testinin yapılamadığı bir durum daha var: Baza girecek sütunda hiç pozitif $y_{ik}$ yoksa.
+
+:::: {#prp-smp-sinirsiz name="Sınırsızlık Belirtisi"}
+$X_0$, $B_0$ bazına karşılık gelen bir uygun temel çözüm; $v_k$ baz dışındaki bir vektör olsun ve her $i$ için $y_{ik} \le 0$ olsun.
+
+1. Minimum probleminde $z_k - c_k > 0$ ise amaç fonksiyonu uygun bölgede alttan sınırsızdır; minimum yoktur.
+2. Maksimum probleminde $z_k - c_k < 0$ ise amaç fonksiyonu uygun bölgede üstten sınırsızdır; maksimum yoktur.
+
+::: {.ispat}
+Her $\lambda \ge 0$ için (4) eşitliğinin katsayılarını alalım:
+$$
+X(\lambda) = \big(x_1 - \lambda y_{1k}, \dots, x_m - \lambda y_{mk}, 0, \dots, \lambda, \dots, 0\big),
+$$
+burada $\lambda$, $k$. bileşendir. (4) gereği $X(\lambda)$ kısıtları sağlar. Her $y_{ik} \le 0$ olduğundan $x_i - \lambda y_{ik} \ge x_i \ge 0$; ayrıca $\lambda \ge 0$. Demek ki her $\lambda \ge 0$ için $X(\lambda)$ uygun bir çözümdür. Amaç değeri
+$$
+\begin{aligned}
+z\big(X(\lambda)\big) &= \sum_{i=1}^{m} c_i (x_i - \lambda y_{ik}) + c_k \lambda \\[1mm]
+&= z_0 - \lambda (z_k - c_k)
+\end{aligned}
+$$
+olur. Minimum probleminde $z_k - c_k > 0$ olduğundan $\lambda \to \infty$ iken $z\big(X(\lambda)\big) \to -\infty$; maksimum probleminde $z_k - c_k < 0$ olduğundan $z\big(X(\lambda)\big) \to +\infty$. Her iki durumda da amaç değerleri arasında en iyisi yoktur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bu durumda iyileştiren yönde sonsuza kadar gidilebilir; hiçbir kısıt bizi durdurmaz. Sınırsız çözümün ayrıntıları ve tablodaki görünüşü [Sınırsız çözüm ve alternatif optimal çözüm](sinirsiz-ve-alternatif-optimal-cozum.qmd) bölümündedir.
+
+Buraya kadar söylenenleri iki kural hâlinde toplayalım.
+
+:::: {#cor-smp-sonuc-min name="Sonuç: Minimum Problemi"}
+Amaç fonksiyonunun minimum yapılması isteniyorsa:
+
+1. Simpleks kriteri pozitif olan vektörlerden en büyük $z_j - c_j$ değerine sahip $v_k$ baza girer; $v_k$ sütununda pozitif eleman varsa bazdan çıkacak vektör oran testiyle belirlenir. Böylece $B_0$ bazından amaç fonksiyonunu küçülten (dejenere durumda artırmayan) yeni bir $B_1$ bazına, yani yeni bir uygun temel çözüme geçilir.
+2. Simpleks kriteri pozitif olan vektör kalmamışsa, yani her $j$ için $z_j - c_j \le 0$ ise amaç fonksiyonu daha fazla küçültülemez: Minimum (optimal) çözüme ulaşılmıştır.
+
+::: {.ispat}
+(1\) Seçilen $v_k$ için $z_k - c_k > 0$'dır. Sütunda pozitif $y_{ik}$ varsa @thm-smp-baz-degisimi yeni bir uygun temel çözüm verir ve @cor-smp-iyilesme gereği $\lambda > 0$ iken $z_1 < z_0$ olur. (Sütunda pozitif eleman yoksa @prp-smp-sinirsiz gereği problem sınırsızdır.) (2) Optimallik koşulunun (@thm-smp-optimallik) birinci şıkkıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#cor-smp-sonuc-max name="Sonuç: Maksimum Problemi"}
+Amaç fonksiyonunun maksimum yapılması isteniyorsa:
+
+1. Simpleks kriteri negatif olan vektörlerden en küçük $z_j - c_j$ değerine sahip $v_k$ baza girer; $v_k$ sütununda pozitif eleman varsa bazdan çıkacak vektör oran testiyle belirlenir. Böylece $B_0$ bazından amaç fonksiyonunu büyüten (dejenere durumda azaltmayan) yeni bir $B_1$ bazına, yani yeni bir uygun temel çözüme geçilir.
+2. Simpleks kriteri negatif olan vektör kalmamışsa, yani her $j$ için $z_j - c_j \ge 0$ ise amaç fonksiyonu daha fazla büyütülemez: Maksimum (optimal) çözüme ulaşılmıştır.
+
+::: {.ispat}
+(1\) Seçilen $v_k$ için $z_k - c_k < 0$'dır. Sütunda pozitif $y_{ik}$ varsa @thm-smp-baz-degisimi yeni bir uygun temel çözüm verir ve @cor-smp-iyilesme gereği $\lambda > 0$ iken $z_1 > z_0$ olur. (Sütunda pozitif eleman yoksa @prp-smp-sinirsiz gereği problem sınırsızdır.) (2) Optimallik koşulunun (@thm-smp-optimallik) ikinci şıkkıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani kısaca: **minimumda en büyük pozitif $z_j - c_j$ girer ve bütün $z_j - c_j \le 0$ olunca durulur; maksimumda en negatif $z_j - c_j$ girer ve bütün $z_j - c_j \ge 0$ olunca durulur.**
+
+"En büyük" seçimi bir kuraldır, zorunluluk değildir. Kriteri iyileşme yönünde olan her vektör amaç değerini iyileştirir; en büyük kriter, $x_k$'nin birim artışı başına en büyük iyileşmeyi verir. Toplam iyileşme $\lambda (z_k - c_k)$ olduğu için her zaman en büyük toplam iyileşmeyi vermeyebilir, ama pratikte iyi çalışır ve kitap boyunca bu kuralı kullanacağız. Kriterlerde eşitlik olursa indisi küçük olanı seçeriz.
+
+:::: {#cor-smp-sonlu name="Simpleks Yöntemin Sonlu Adımda Bitmesi"}
+Problemin hiçbir uygun temel çözümü dejenere değilse simpleks yöntem sonlu sayıda iterasyondan sonra ya optimal bir çözümde ya da sınırsızlık belirtisinde durur.
+
+::: {.ispat}
+Dejenere çözüm olmadığından her iterasyonda $\lambda > 0$'dır ve @cor-smp-iyilesme gereği amaç değeri kesin olarak iyileşir (minimumda azalır, maksimumda artar). Bir baz, uygun temel çözümü ve dolayısıyla amaç değerini tek türlü belirler. Amaç değeri kesin olarak iyileştiğine göre aynı baza hiçbir zaman geri dönülmez. $n$ sütundan $m$ tanesini seçmenin en fazla $\binom{n}{m}$ yolu vardır; bu yüzden yöntem sonlu adımda bir yerde durmak zorundadır. Durduğu yerde ya iyileştiren kriter yoktur, o zaman @thm-smp-optimallik gereği çözüm optimaldir; ya da iyileştiren kriterli sütunda pozitif eleman yoktur, o zaman @prp-smp-sinirsiz gereği problem sınırsızdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Başlangıç Tablosunun Kurulması {#sec-smp-tablo}
+
+Bir iterasyonun bütün sayıları ($x_i$, $y_{ij}$, $z_j - c_j$, oranlar) tek bir tabloya sığar. Bu tabloya **simpleks tablosu** diyoruz.
+
+Tablonun düzeni şöyledir:
+
+- **En üst satır** amaç katsayılarıdır: $c_j$ başlığının yanında her $v_j$ sütununun üstüne $c_j$ yazılır.
+- **İkinci satır** sütun adlarıdır: $x_B$ (baz değişkenleri), $c_B$ (baz maliyetleri), $v_0$ (sağ taraf), $v_1, \dots, v_n$ ve Oran.
+- **Gövdedeki her satır** bir baz vektörüne aittir. $x_B$ sütununda baz değişkeninin adı, $c_B$ sütununda amaç katsayısı, $v_0$ sütununda değeri $x_i = y_{i0}$, $v_j$ sütununda $y_{ij}$ yazar. Satırları baz değişkeninin indisiyle adlandırırız: $x_3$ satırı ile $v_1$ sütununun kesişimindeki sayı $y_{31}$'dir.
+- **Oran sütununda** baza girecek $v_k$ için $y_{i0} / y_{ik}$ oranları yazılır; $y_{ik} \le 0$ olan satırlara $-$ konur.
+- **En alt satır** $z_j - c_j$ satırıdır. $z_j$, $c_B$ sütunuyla tablonun $v_j$ sütununun karşılıklı çarpımlarının toplamıdır, yani $z_j = \vec{c}_B^{\,T} \vec{y}_j$; ondan $c_j$ çıkarılır. $v_0$ sütununun altına aynı yolla hesaplanan amaç değeri $z_0 = \vec{c}_B^{\,T} \vec{y}_0$ yazılır.
+
+Dikkat: Tabloda $v_j$ başlığının altında $v_j$ vektörünün kendisi değil, o anki baza göre katsayıları $\vec{y}_j$ durur; kısaca "tablonun $v_j$ sütunu" diyeceğiz. İkisi yalnız baz birim matrisken aynıdır. Pivot eleman köşeli parantezle, bazdan çıkan satır $\Rightarrow$ ile, baza giren sütun $\Uparrow$ ile işaretlenir.
+
+Başlangıç tablosu için bir uygun temel çözüm ve onun $y_{ij}$ katsayıları gerekir. Bütün kısıtları $\le$ olan ve sağ tarafları negatif olmayan problemlerde bunlar hiç hesap yapmadan hazırdır.
+
+:::: {#prp-smp-birim-baz name="Birim Matrisli Başlangıç Bazı"}
+$A \vec{x} \le \vec{b}$, $\vec{x} \ge \vec{0}$ kısıtlı bir problemde $\vec{b} \ge \vec{0}$ olsun ve $m$ kısıta $x_{n+1}, \dots, x_{n+m}$ aylak değişkenleri eklensin. Bu durumda aylak değişkenlerin sütunları bir baz oluşturur ve bu bazda
+
+1. uygun temel çözüm $x_{n+i} = b_i$ ($i = 1, \dots, m$), diğer bütün değişkenler 0'dır;
+2. her $j = 1, \dots, n$ için $y_{ij} = a_{ij}$'dir, aylak sütunların katsayıları da birim vektörlerdir; yani tablonun gövdesi standart formdaki katsayıların aynısıdır;
+3. $z_0 = 0$ ve her $j$ için $z_j - c_j = -c_j$'dir.
+
+::: {.ispat}
+Aylak değişkenlerin sütunları $m \times m$ birim matrisin sütunları $e_1, \dots, e_m$'dir; bunlar lineer bağımsızdır, yani bir bazdır. Asıl değişkenlerin $v_j = (a_{1j}, \dots, a_{mj})^T$ sütunları ($j = 1, \dots, n$) için
+$$
+v_j = a_{1j} e_1 + a_{2j} e_2 + \dots + a_{mj} e_m
+$$
+olduğundan katsayılar $y_{ij} = a_{ij}$'dir; aylak sütunlar baz vektörleri olduğundan katsayıları birim vektörlerdir (@prp-smp-baz-kriter-sifir); $j = 0$ için de aynı hesap $y_{i0} = b_i$ verir. $\vec{b} \ge \vec{0}$ olduğundan bu temel çözüm uygundur. Aylak değişkenlerin amaç katsayıları 0 olduğu için $\vec{c}_B = \vec{0}$ ve her $j$ için $z_j = \vec{c}_B^{\,T} \vec{y}_j = 0$; dolayısıyla $z_0 = 0$, $z_j - c_j = -c_j$. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $\le$ kısıtlı bir problemi standart forma (@def-lpp-standart-form) getirirken eklediğimiz aylak değişkenler katsayılar matrisinde kendiliğinden bir birim matris oluşturur. Bu yüzden böyle bir problemin standart formu zaten simpleks yöntem ile çözülebilir haldedir (@def-lpp-cozulebilir-hal) ve başlangıç tablosu doğrudan yazılır.
+
+Bu bölüm yalnız bu tür problemleri çözer. Kısıtlarda $\ge$ ya da $=$ varsa standart form birim matris içermeyebilir; o zaman problem henüz simpleks yöntem ile çözülebilir halde değildir ve önce yapay değişkenler eklenir. Bu durum [Büyük M yöntemi](buyuk-m-yontemi.qmd) bölümünün konusudur.
+
+::: {.callout-tip}
+## Başlangıç tablosu dört adımda
+
+1. Her $\le$ kısıtına bir aylak değişken ekleyerek problemi standart forma getir; aylak değişkenlerin amaç katsayıları 0'dır.
+2. Aylak değişkenleri baz değişkenleri olarak $x_B$ sütununa, amaç katsayılarını (hepsi 0) $c_B$ sütununa, sağ tarafları $v_0$ sütununa yaz.
+3. Kısıt katsayılarını olduğu gibi $v_1, \dots, v_n$ sütunlarına, $c_j$ değerlerini en üst satıra yaz.
+4. En alt satıra $z_0 = 0$ ve $z_j - c_j = -c_j$ değerlerini yaz; baz vektörlerininki 0'dır.
+:::
+
+:::: {#exm-smp-ornek-baslangic name="Başlangıç Tablosu ve İlk Pivot"}
+$$
+\begin{aligned}
+x_1 - 2x_2 &\le 2 \\
+2x_1 + x_2 &\le 6 \\
+x_1 + 2x_2 &\le 5 \\
+-x_1 + x_2 &\le 2 \\
+x_j &\ge 0, \quad j = 1, 2 \\
+\min z &= -4x_1 - 5x_2
+\end{aligned}
+$$
+lineer programlama problemini simpleks yöntemle çözmek için başlangıç tablosunu kurunuz ve baza girecek ile bazdan çıkacak vektörleri belirleyiniz.
+
+::: {.cozum}
+**Standart form.** Problemi simpleks yöntemle çözebilmek için önce eşitsizlikleri kaldırıp standart forma (@def-lpp-standart-form) getirmeliyiz. Dört kısıta sırasıyla $x_3, x_4, x_5, x_6$ aylak değişkenlerini ekleriz:
+$$
+\begin{aligned}
+x_1 - 2x_2 + x_3 &= 2 \\
+2x_1 + x_2 + x_4 &= 6 \\
+x_1 + 2x_2 + x_5 &= 5 \\
+-x_1 + x_2 + x_6 &= 2 \\
+x_i &\ge 0, \quad i = \overline{1,6} \\
+\min z &= -4x_1 - 5x_2 + 0x_3 \\
+&\quad + 0x_4 + 0x_5 + 0x_6
+\end{aligned}
+$$
+Sağ taraflar negatif değildir ve $v_3, v_4, v_5, v_6$ sütunları $4 \times 4$ birim matrisi oluşturur. Demek ki bu standart form simpleks yöntem ile çözülebilir haldedir (@def-lpp-cozulebilir-hal).
+
+**Başlangıç bazı ve çözümü.** Başlangıç bazı olarak lineer bağımsız $B_0 = (v_3, v_4, v_5, v_6)$ vektörlerini seçeriz. @prp-smp-birim-baz gereği başlangıç çözümü
+$$
+X_0 = (x_1, x_2, x_3, x_4, x_5, x_6) = (0, 0, 2, 6, 5, 2)
+$$
+ve amaç değeri
+$$
+\begin{aligned}
+z_0 &= -4(0) - 5(0) + 0(2) \\
+&\quad + 0(6) + 0(5) + 0(2) = 0
+\end{aligned}
+$$
+olur. Tablonun gövdesi kısıt katsayılarıdır. Örneğin $B_0$'da bulunmayan $v_1$ vektörü baz vektörleri cinsinden
+$$
+\begin{aligned}
+v_1 &= y_{31} v_3 + y_{41} v_4 + y_{51} v_5 + y_{61} v_6 \\
+&= 1 \cdot v_3 + 2 \cdot v_4 + 1 \cdot v_5 - 1 \cdot v_6
+\end{aligned}
+$$
+biçiminde yazılır; bu katsayılar tablonun $v_1$ sütunudur.
+
+**Simpleks kriterleri.** $\vec{c}_B = \vec{0}$ olduğu için $z_j - c_j = -c_j$: $z_1 - c_1 = 0 - (-4) = 4$, $z_2 - c_2 = 0 - (-5) = 5$. Baz vektörlerinin kriterleri sıfırdır (@prp-smp-baz-kriter-sifir).
+
+**Baza girecek vektör.** Problem minimum problemidir; @cor-smp-sonuc-min gereği simpleks kriteri pozitif olanlardan en büyüğü baza girer. $\max\{4, 5\} = 5$ olduğundan $v_2$ baza girer.
+
+**Bazdan çıkacak vektör.** Oran testi yalnız $v_2$ sütununun pozitif elemanlarıyla yapılır. $y_{32} = -2 < 0$ olduğundan $x_3$ satırı dikkate alınmaz:
+$$
+\lambda = \min \left( \frac{x_4}{y_{42}}, \frac{x_5}{y_{52}}, \frac{x_6}{y_{62}} \right)
+= \min \left( \frac{6}{1}, \frac{5}{2}, \frac{2}{1} \right) = \frac{x_6}{y_{62}} = 2 .
+$$
+En küçük oran $x_6$ satırındadır; $v_6$ bazdan çıkar. Pivot eleman, $v_2$ sütunu ile $x_6$ satırının kesişimindeki $y_{62} = 1$'dir.
+
+|   |   | $c_j$ | $-4$ | $-5$ | $0$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | Oran |
+| $x_3$ | $0$ | $2$ | $1$ | $-2$ | $1$ | $0$ | $0$ | $0$ | $-$ |
+| $x_4$ | $0$ | $6$ | $2$ | $1$ | $0$ | $1$ | $0$ | $0$ | $\frac{6}{1}$ |
+| $x_5$ | $0$ | $5$ | $1$ | $2$ | $0$ | $0$ | $1$ | $0$ | $\frac{5}{2}$ |
+| $x_6$ | $0$ | $2$ | $-1$ | $[1]$ | $0$ | $0$ | $0$ | $1$ | $\frac{2}{1} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $4$ | $5 \Uparrow$ | $0$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-smp-baslangic .simpleks}
+
+Başlangıç tablosundaki (@tbl-smp-baslangic) $X_0$, uygun bölgenin $(x_1, x_2) = (0, 0)$ köşesidir. Yeni tablo bazdan $v_6$ çıkarılıp yerine $v_2$ alınarak düzenlenecek; bunun nasıl yapıldığını bir sonraki kısımda görüyoruz. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Yeni Tablonun Hesaplanması {#sec-smp-donusum}
+
+Baza giren ve bazdan çıkan vektörler belli olunca yeni tablonun bütün sayıları eski tablodan hesaplanır; hiçbir sistemi baştan çözmek gerekmez.
+
+::: {#def-smp-pivot name="Pivot Eleman"}
+Baza girecek $v_k$ vektörünün sütunu ile bazdan çıkacak $v_r$ vektörünün satırının kesişimindeki $y_{rk}$ sayısına **pivot eleman** denir. $v_k$ sütununa **pivot sütunu**, $v_r$ satırına **pivot satırı** denir.
+:::
+
+Yani pivot, tablodaki "dönüşümün merkezi"dir. Oran testi yalnız pozitif elemanlar arasından seçtiği için pivot eleman her zaman pozitiftir.
+
+:::: {#thm-smp-donusum name="Tablonun Dönüşüm Kuralı"}
+Pivot eleman $y_{rk}$ olsun ve yeni tablonun elemanlarını $y'_{ij}$ ile gösterelim. Her $j = 0, 1, \dots, n$ için:
+
+1. Pivot satırı (yeni tabloda $x_k$ satırı) pivot elemana bölünür:
+$$
+y'_{kj} = \frac{y_{rj}}{y_{rk}} .
+$$
+2. Diğer her $i \ne r$ satırı için
+$$
+y'_{ij} = y_{ij} - \frac{y_{ik}\, y_{rj}}{y_{rk}} .
+$$
+3. $z_j - c_j$ satırı da aynı kuralla güncellenir:
+$$
+(z_j - c_j)' = (z_j - c_j) - \frac{(z_k - c_k)\, y_{rj}}{y_{rk}} ,
+$$
+$j = 0$ için ($c_0 = 0$ alınarak) $z'_0 = z_0 - \dfrac{(z_k - c_k)\, y_{r0}}{y_{rk}}$.
+
+::: {.ispat}
+**Satırlar.** (3) eşitliğini $v_r$ için çözelim. $v_k = \sum_{i \ne r} y_{ik} v_i + y_{rk} v_r$ ve $y_{rk} > 0$ olduğundan
+$$
+v_r = \frac{1}{y_{rk}}\, v_k - \sum_{i \ne r} \frac{y_{ik}}{y_{rk}}\, v_i .
+$$
+Herhangi bir $v_j$ için eski yazılışta $v_r$'yi bununla değiştirelim:
+$$
+\begin{aligned}
+v_j &= \sum_{i \ne r} y_{ij} v_i + y_{rj} v_r \\[1mm]
+&= \sum_{i \ne r} \Big( y_{ij} - \frac{y_{ik}\, y_{rj}}{y_{rk}} \Big) v_i + \frac{y_{rj}}{y_{rk}}\, v_k .
+\end{aligned}
+$$
+Bu, $v_j$'nin yeni baz $B_1$ cinsinden yazılışıdır. $B_1$ bir baz olduğundan (@thm-smp-baz-degisimi) yazılış tektir; parantez içindekiler $y'_{ij}$, $v_k$'nın katsayısı da $y'_{kj}$'dir. $j = 0$ için bu formüller, baz değişimi teoremindeki $x_i - \lambda y_{ik}$ ve $\lambda$ değerlerini verir.
+
+**$z_j - c_j$ satırı.** Yeni bazın maliyetleri $c_i$ ($i \ne r$) ve $c_k$'dır:
+$$
+\begin{aligned}
+z'_j &= \sum_{i \ne r} c_i \Big( y_{ij} - \frac{y_{ik}\, y_{rj}}{y_{rk}} \Big) + c_k \frac{y_{rj}}{y_{rk}} \\[1mm]
+&= \sum_{i \ne r} c_i y_{ij} - \frac{y_{rj}}{y_{rk}} \Big( \sum_{i \ne r} c_i y_{ik} - c_k \Big) .
+\end{aligned}
+$$
+Toplamlara eksik $i = r$ terimini ekleyip çıkaralım: $\sum_{i \ne r} c_i y_{ij} = z_j - c_r y_{rj}$ ve $\sum_{i \ne r} c_i y_{ik} = z_k - c_r y_{rk}$. Yerine koyarsak
+$$
+\begin{aligned}
+z'_j &= z_j - c_r y_{rj} - \frac{y_{rj}}{y_{rk}} \big( z_k - c_k \big) + \frac{y_{rj}}{y_{rk}}\, c_r y_{rk} \\[1mm]
+&= z_j - \frac{y_{rj}}{y_{rk}} \big( z_k - c_k \big)
+\end{aligned}
+$$
+bulunur. İki taraftan $c_j$ çıkarınca iddia elde edilir. $j = 0$ için bu, $z'_0 = z_0 - \lambda (z_k - c_k)$ yani (5) eşitliğidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu kural iki farklı yoldan uygulanabilir.
+
+**1\. yöntem: elemanter satır işlemleri.** Yeni tabloda $v_k$ baz vektörü olacağından sütunu, pivotun bulunduğu yerde 1, diğer yerlerde 0 olan birim vektöre dönüşmelidir (@prp-smp-baz-kriter-sifir). Bunun için eski tabloya şu elemanter satır işlemleri uygulanır:
+
+- pivot satırı pivot elemana bölünür;
+- diğer her $i$ satırından, yeni pivot satırının $y_{ik}$ katı çıkarılır;
+- $z_j - c_j$ satırından, yeni pivot satırının $z_k - c_k$ katı çıkarılır.
+
+Bu işlemler tam olarak dönüşüm kuralının (@thm-smp-donusum) formüllerini verir: yeni pivot satırının $j$. elemanı $y_{rj} / y_{rk}$ olduğundan $i$. satırın yeni elemanı $y_{ij} - y_{ik}\, y_{rj} / y_{rk}$ olur.
+
+**2\. yöntem: dikdörtgen kuralı.** Yeni tablo doğrudan hesaplanır:
+
+a\) pivot elemanın bulunduğu satır pivot elemanın değerine bölünür;
+
+b\) diğer her eleman basit bir dikdörtgen hesabıyla bulunur.
+
+Değiştirilecek eleman $A$, pivot eleman $P$ olsun. $A$ ile $P$ bir dikdörtgenin karşılıklı köşeleridir; diğer iki köşe, $A$'nın satırı ile pivot sütununun kesişimi ve $A$'nın sütunu ile pivot satırının kesişimidir. Bunlara $B$ ve $C$ diyelim; formül $B$ ile $C$'nin çarpımını kullandığı için hangisine $B$ dendiği fark etmez. $P$'nin $A$'ya göre konumu ne olursa olsun kural aynıdır:
+$$
+\begin{array}{cc} B & A \\ {[P]} & C \end{array}
+\qquad
+\begin{array}{cc} {[P]} & C \\ B & A \end{array}
+\qquad
+\begin{array}{cc} A & C \\ B & {[P]} \end{array}
+\qquad
+\begin{array}{cc} B & {[P]} \\ A & C \end{array}
+$$
+$$
+\Longrightarrow \quad A^{*} = A - \frac{B\, C}{P} .
+$$
+Yani yeni değer, eski değerden "çapraz köşelerin çarpımı bölü pivot" çıkarılarak bulunur. $A = y_{ij}$, $P = y_{rk}$ ve $\{B, C\} = \{y_{ik}, y_{rj}\}$ alınırsa bu, dönüşüm kuralındaki (@thm-smp-donusum)
+$$
+y'_{ij} = y_{ij} - \frac{y_{ik}\, y_{rj}}{y_{rk}}
+$$
+formülünün ta kendisidir. Aynı kural $v_0$ sütununa ve $z_j - c_j$ satırına da uygulanır.
+
+Formülden hemen çıkan kısayollar hesabı çok kısaltır:
+
+- Pivot sütunu birim vektör olur: pivotun yeri 1, diğerleri 0; $z_k - c_k$ da 0 olur.
+- Pivot sütununda 0 bulunan bir satır ($y_{ik} = 0$) değişmeden kalır.
+- Pivot satırında 0 bulunan bir sütun ($y_{rj} = 0$) değişmeden kalır. Özellikle bazda kalan vektörlerin birim sütunları değişmez.
+
+:::: {#exm-smp-kucuk-donusum name="Küçük Bir Tablo Dönüşümü"}
+$\max z = 3x_1 + 2x_2$ problemini $x_1 + x_2 + x_3 = 4$, $x_1 + 2x_2 + x_4 = 6$ standart formuyla ele alalım (@exm-smp-koordinatlar). $B = (v_1, v_2)$ bazının tablosunu yazınız ve dikdörtgen kuralıyla $B_1 = (v_1, v_4)$ bazının tablosunu hesaplayınız.
+
+::: {.cozum}
+Katsayılar ve kriterler @exm-smp-koordinatlar içinde bulunmuştu; tablo şöyledir. Problem maksimum problemi olduğu için en negatif $z_j - c_j$ girer: $z_4 - c_4 = -1$, yani $v_4$. $v_4$ sütununda $y_{14} = -1 < 0$ olduğundan yalnız $x_2$ satırının oranı hesaplanır; $v_2$ bazdan çıkar ve pivot $y_{24} = 1$'dir.
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_1$ | $3$ | $2$ | $1$ | $0$ | $2$ | $-1$ | $-$ |
+| $x_2$ | $2$ | $2$ | $0$ | $1$ | $-1$ | $[1]$ | $\frac{2}{1} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 10$ | $0$ | $0$ | $4$ | $-1 \Uparrow$ |   |
+
+: $B = (v_1, v_2)$ bazının tablosu {#tbl-smp-kucuk-once .simpleks}
+
+**Pivot satırı.** Pivot 1 olduğundan $x_2$ satırı aynen kalır ama adı $x_4$, maliyeti $c_4 = 0$ olur: $(2 \mid 0,\ 1,\ -1,\ 1)$.
+
+**$x_1$ satırı.** Bu satırın pivot sütunundaki elemanı $B = y_{14} = -1$. Dikdörtgen kuralı $A^{*} = A - (-1) \cdot C / 1 = A + C$ verir; $C$, aynı sütunda pivot satırındaki elemandır:
+$$
+\begin{aligned}
+v_0&: \ 2 + 2 = 4, & v_1&: \ 1 + 0 = 1, & v_2&: \ 0 + 1 = 1, \\
+v_3&: \ 2 + (-1) = 1, & v_4&: \ -1 + 1 = 0 .
+\end{aligned}
+$$
+
+**$z_j - c_j$ satırı.** Pivot sütunundaki eleman $z_4 - c_4 = -1$; yine $A^{*} = A + C$:
+$$
+\begin{aligned}
+z_0&: \ 10 + 2 = 12, & v_2&: \ 0 + 1 = 1, \\
+v_3&: \ 4 + (-1) = 3, & v_4&: \ -1 + 1 = 0 ;
+\end{aligned}
+$$
+$v_1$ sütunu, pivot satırındaki elemanı 0 olduğu için değişmez.
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ |
+| $x_1$ | $3$ | $4$ | $1$ | $1$ | $1$ | $0$ |
+| $x_4$ | $0$ | $2$ | $0$ | $1$ | $-1$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 12$ | $0$ | $1$ | $3$ | $0$ |
+
+: $B_1 = (v_1, v_4)$ bazının tablosu (optimal tablo) {#tbl-smp-kucuk-sonra .simpleks .oransiz}
+
+Bulunan sayılar, iki önceki örnekte (@exm-smp-komsu-gecis ve @exm-smp-optimallik-kontrol) hesaplanan değerlerin aynısıdır: $X_1 = (4, 0, 0, 2)$, $z = 12$, $y_{12} = y_{42} = 1$, $y_{13} = 1$, $y_{43} = -1$, $z_2 - c_2 = 1$, $z_3 - c_3 = 3$. Bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi başlangıç tablosunu kurduğumuz problemin (@exm-smp-ornek-baslangic) çözümünü tamamlayabiliriz.
+
+:::: {#exm-smp-ornek-iterasyonlar name="Örneğin Optimal Tabloya Kadar Çözümü"}
+$x_1 - 2x_2 \le 2$, $2x_1 + x_2 \le 6$, $x_1 + 2x_2 \le 5$, $-x_1 + x_2 \le 2$, $x_1, x_2 \ge 0$ kısıtları altında $\min z = -4x_1 - 5x_2$ problemini, başlangıç tablosundan (@tbl-smp-baslangic) başlayarak simpleks yöntemle çözünüz.
+
+::: {.cozum}
+Başlangıç tablosunda (@tbl-smp-baslangic) $v_2$ baza giriyor, $v_6$ bazdan çıkıyordu; pivot $y_{62} = 1$.
+
+**Birinci iterasyon, 1. yöntem.** $v_2 = (-2, 1, 2, 1)^T$ sütununu $(0, 0, 0, 1)^T$ birim vektörüne dönüştüren elemanter satır işlemlerini uygularız. Satırları baz değişkenleriyle $S_3, S_4, S_5, S_6$ diye adlandıralım. Pivot 1 olduğundan $S_6$ aynen kalır ve $x_2$ satırı olur; diğerleri:
+$$
+\begin{aligned}
+S_3 &\leftarrow S_3 + 2 S_6, & S_4 &\leftarrow S_4 - S_6, \\
+S_5 &\leftarrow S_5 - 2 S_6, & (z_j - c_j) &\leftarrow (z_j - c_j) - 5 S_6 .
+\end{aligned}
+$$
+Örneğin $S_3 = (2 \mid 1, -2, 1, 0, 0, 0)$ satırı
+$$
+\begin{aligned}
+S_3 + 2S_6 &= (2 + 4 \mid 1 - 2,\ -2 + 2,\ 1,\ 0,\ 0,\ 0 + 2) \\[1mm]
+&= (6 \mid -1, 0, 1, 0, 0, 2)
+\end{aligned}
+$$
+olur.
+
+**Birinci iterasyon, 2. yöntem.** Aynı sayıları dikdörtgen kuralı da verir. Birkaç eleman:
+$$
+\begin{aligned}
+x_3, v_0&: \ 2 - \frac{(-2) \cdot 2}{1} = 6, & x_4, v_0&: \ 6 - \frac{1 \cdot 2}{1} = 4, \\[1mm]
+x_5, v_0&: \ 5 - \frac{2 \cdot 2}{1} = 1, & x_3, v_6&: \ 0 - \frac{(-2) \cdot 1}{1} = 2, \\[1mm]
+z_0&: \ 0 - \frac{5 \cdot 2}{1} = -10, & v_1&: \ 4 - \frac{5 \cdot (-1)}{1} = 9 .
+\end{aligned}
+$$
+Son satırdaki iki değer $z_j - c_j$ satırına aittir.
+
+|   |   | $c_j$ | $-4$ | $-5$ | $0$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | Oran |
+| $x_3$ | $0$ | $6$ | $-1$ | $0$ | $1$ | $0$ | $0$ | $2$ | $-$ |
+| $x_4$ | $0$ | $4$ | $3$ | $0$ | $0$ | $1$ | $0$ | $-1$ | $\frac{4}{3}$ |
+| $x_5$ | $0$ | $1$ | $[3]$ | $0$ | $0$ | $0$ | $1$ | $-2$ | $\frac{1}{3} \Rightarrow$ |
+| $x_2$ | $-5$ | $2$ | $-1$ | $1$ | $0$ | $0$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = -10$ | $9 \Uparrow$ | $0$ | $0$ | $0$ | $0$ | $-5$ |   |
+
+: Birinci iterasyon tablosu {#tbl-smp-birinci .simpleks}
+
+Birinci iterasyon tablosunda (@tbl-smp-birinci) $B_0$ bazından $B_1 = (v_2, v_3, v_4, v_5)$ bazına, $X_0$ çözümünden
+$$
+X_1 = (x_1, x_2, x_3, x_4, x_5, x_6) = (0, 2, 6, 4, 1, 0)
+$$
+uygun temel çözümüne geçildi. Amaç değeri $-4(0) - 5(2) = -10$'dur; bu, (5) eşitliğinin verdiği $0 - 2 \cdot 5 = -10$ ile aynıdır. $X_1$, uygun bölgenin $(0, 2)$ köşesidir: $x_1 = 0$ ve $x_6 = 0$ olduğundan bu nokta $x_2$ ekseni ile $-x_1 + x_2 = 2$ doğrusunun kesişimidir.
+
+Simpleks kriterleri arasında pozitif olan $z_1 - c_1 = 9$ kaldığından minimuma ulaşılmadı. Minimumda en büyük pozitif kriter girer; tek pozitif kriter 9 olduğu için $v_1$ baza girer. $v_1$ sütununda $y_{31} = -1 < 0$ ve $y_{21} = -1 < 0$ olduğundan bu satırlar teste girmez:
+$$
+\lambda = \min \left( \frac{4}{3}, \frac{1}{3} \right) = \frac{1}{3} = \frac{x_5}{y_{51}} .
+$$
+$v_5$ bazdan çıkar; pivot $y_{51} = 3$.
+
+**İkinci iterasyon.** Pivot satırı 3'e bölünür: $x_5$ satırı $\big(\tfrac{1}{3} \mid 1, 0, 0, 0, \tfrac{1}{3}, -\tfrac{2}{3}\big)$ olur ve $x_1$ satırı adını alır. Diğer elemanları dikdörtgen kuralıyla hesaplarız; $v_0$, $v_5$, $v_6$ sütunları ve $z_j - c_j$ satırı:
+$$
+\begin{aligned}
+x_3, v_0&: \ 6 - \frac{(-1) \cdot 1}{3} = \frac{19}{3}, & x_3, v_6&: \ 2 - \frac{(-1)(-2)}{3} = \frac{4}{3}, \\[1mm]
+x_4, v_0&: \ 4 - \frac{3 \cdot 1}{3} = 3, & x_4, v_6&: \ -1 - \frac{3 \cdot (-2)}{3} = 1, \\[1mm]
+x_2, v_0&: \ 2 - \frac{(-1) \cdot 1}{3} = \frac{7}{3}, & x_2, v_6&: \ 1 - \frac{(-1)(-2)}{3} = \frac{1}{3}, \\[1mm]
+x_3, v_5&: \ 0 - \frac{(-1) \cdot 1}{3} = \frac{1}{3}, & x_4, v_5&: \ 0 - \frac{3 \cdot 1}{3} = -1, \\[1mm]
+x_2, v_5&: \ 0 - \frac{(-1) \cdot 1}{3} = \frac{1}{3}, & z_0&: \ -10 - \frac{9 \cdot 1}{3} = -13, \\[1mm]
+v_5&: \ 0 - \frac{9 \cdot 1}{3} = -3, & v_6&: \ -5 - \frac{9 \cdot (-2)}{3} = 1 .
+\end{aligned}
+$$
+$v_2, v_3, v_4$ sütunları pivot satırında 0 taşıdığı için değişmez; $v_1$ birim vektör olur.
+
+|   |   | $c_j$ | $-4$ | $-5$ | $0$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | Oran |
+| $x_3$ | $0$ | $\frac{19}{3}$ | $0$ | $0$ | $1$ | $0$ | $\frac{1}{3}$ | $\frac{4}{3}$ | $\frac{19/3}{4/3}$ |
+| $x_4$ | $0$ | $3$ | $0$ | $0$ | $0$ | $1$ | $-1$ | $[1]$ | $\frac{3}{1} \Rightarrow$ |
+| $x_1$ | $-4$ | $\frac{1}{3}$ | $1$ | $0$ | $0$ | $0$ | $\frac{1}{3}$ | $-\frac{2}{3}$ | $-$ |
+| $x_2$ | $-5$ | $\frac{7}{3}$ | $0$ | $1$ | $0$ | $0$ | $\frac{1}{3}$ | $\frac{1}{3}$ | $\frac{7/3}{1/3}$ |
+| $z_j - c_j$ |   | $z_0 = -13$ | $0$ | $0$ | $0$ | $0$ | $-3$ | $1 \Uparrow$ |   |
+
+: İkinci iterasyon tablosu {#tbl-smp-ikinci .simpleks}
+
+İkinci iterasyon tablosunda (@tbl-smp-ikinci) $B_1$ bazından $B_2 = (v_1, v_2, v_3, v_4)$ bazına, $X_1$ çözümünden
+$$
+X_2 = (x_1, \dots, x_6) = \left( \frac{1}{3}, \frac{7}{3}, \frac{19}{3}, 3, 0, 0 \right)
+$$
+uygun temel çözümüne geçildi. Amaç değeri
+$$
+-4 \cdot \frac{1}{3} - 5 \cdot \frac{7}{3} = -\frac{39}{3} = -13
+$$
+olup (5) eşitliğinin verdiği $-10 - \tfrac{1}{3} \cdot 9 = -13$ ile aynıdır. $X_2$, uygun bölgenin $(\tfrac{1}{3}, \tfrac{7}{3})$ köşesidir: $x_5 = x_6 = 0$, yani $x_1 + 2x_2 = 5$ ile $-x_1 + x_2 = 2$ doğrularının kesişimi.
+
+Pozitif kriter $z_6 - c_6 = 1$ kaldığından minimuma ulaşılmadı; $v_6$ baza girer. $y_{16} = -\tfrac{2}{3} < 0$ olduğundan $x_1$ satırı teste girmez:
+$$
+\lambda = \min \left( \frac{19/3}{4/3}, \frac{3}{1}, \frac{7/3}{1/3} \right) = \min \left( \frac{19}{4}, 3, 7 \right) = 3 = \frac{x_4}{y_{46}} .
+$$
+$v_4$ bazdan çıkar; pivot $y_{46} = 1$.
+
+**Üçüncü iterasyon.** Pivot 1 olduğundan $x_4$ satırı aynen kalır ve $x_6$ satırı olur. $v_6$ sütununun diğer elemanları $\tfrac{4}{3}$, $-\tfrac{2}{3}$, $\tfrac{1}{3}$ ve $1$ olduğundan (1. yöntemle) $x_3$ satırından pivot satırının $\tfrac{4}{3}$ katı, $x_1$ satırından $-\tfrac{2}{3}$ katı, $x_2$ satırından $\tfrac{1}{3}$ katı, $z_j - c_j$ satırından da 1 katı çıkarılır. Pivot satırı $(3 \mid 0, 0, 0, 1, -1, 1)$ olduğundan yalnız $v_0$, $v_4$, $v_5$ sütunları değişir:
+$$
+\begin{aligned}
+x_3&: \ \frac{19}{3} - 4 = \frac{7}{3}, \quad 0 - \frac{4}{3} = -\frac{4}{3}, \quad \frac{1}{3} + \frac{4}{3} = \frac{5}{3}, \\[1mm]
+x_1&: \ \frac{1}{3} + 2 = \frac{7}{3}, \quad 0 + \frac{2}{3} = \frac{2}{3}, \quad \frac{1}{3} - \frac{2}{3} = -\frac{1}{3}, \\[1mm]
+x_2&: \ \frac{7}{3} - 1 = \frac{4}{3}, \quad 0 - \frac{1}{3} = -\frac{1}{3}, \quad \frac{1}{3} + \frac{1}{3} = \frac{2}{3}, \\[1mm]
+z_j - c_j&: \ -13 - 3 = -16, \quad 0 - 1 = -1, \quad -3 + 1 = -2 .
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $-4$ | $-5$ | $0$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ |
+| $x_3$ | $0$ | $\frac{7}{3}$ | $0$ | $0$ | $1$ | $-\frac{4}{3}$ | $\frac{5}{3}$ | $0$ |
+| $x_6$ | $0$ | $3$ | $0$ | $0$ | $0$ | $1$ | $-1$ | $1$ |
+| $x_1$ | $-4$ | $\frac{7}{3}$ | $1$ | $0$ | $0$ | $\frac{2}{3}$ | $-\frac{1}{3}$ | $0$ |
+| $x_2$ | $-5$ | $\frac{4}{3}$ | $0$ | $1$ | $0$ | $-\frac{1}{3}$ | $\frac{2}{3}$ | $0$ |
+| $z_j - c_j$ |   | $z_0 = -16$ | $0$ | $0$ | $0$ | $-1$ | $-2$ | $0$ |
+
+: Üçüncü iterasyon tablosu (optimal tablo) {#tbl-smp-optimal .simpleks .oransiz}
+
+Optimal tabloda (@tbl-smp-optimal) simpleks kriteri pozitif olan vektör kalmadı: Bütün $z_j - c_j \le 0$. @cor-smp-sonuc-min gereği optimal çözüme ulaşıldı. Optimal çözüm
+$$
+X_3 = (x_1, \dots, x_6) = \left( \frac{7}{3}, \frac{4}{3}, \frac{7}{3}, 0, 0, 3 \right)
+$$
+ve amaç fonksiyonunun minimum değeri
+$$
+\min z = -4 \cdot \frac{7}{3} - 5 \cdot \frac{4}{3} = -\frac{48}{3} = -16
+$$
+dır. $X_3$, $2x_1 + x_2 = 6$ ile $x_1 + 2x_2 = 5$ doğrularının kesiştiği $(\tfrac{7}{3}, \tfrac{4}{3})$ köşesidir ($x_4 = x_5 = 0$).
+
+Aşağıdaki şekil yöntemin izlediği yolu gösteriyor. Uygun bölge altı köşeli bir çokgendir; köşelerindeki amaç değerleri $(0,0)$'da $0$, $(2,0)$'da $-8$, $(\tfrac{14}{5}, \tfrac{2}{5})$'te $-\tfrac{66}{5}$, $(\tfrac{7}{3}, \tfrac{4}{3})$'te $-16$, $(\tfrac{1}{3}, \tfrac{7}{3})$'te $-13$ ve $(0, 2)$'de $-10$'dur. Simpleks yöntem bunlardan yalnız dördüne uğradı ve her adımda bir komşu köşeye geçerek amaç değerini $0 \to -10 \to -13 \to -16$ diye küçülttü.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 516.0 456.0" role="img" aria-label="Hexagonal feasible region of the worked example with the simplex path from (0,0) to (0,2) to (1/3,7/3) to (7/3,4/3) and dashed level lines z = -10 and z = -16">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="220.0" y1="30.0" x2="220.0" y2="450.0"/><line x1="320.0" y1="30.0" x2="320.0" y2="450.0"/><line x1="420.0" y1="30.0" x2="420.0" y2="450.0"/><line x1="520.0" y1="30.0" x2="520.0" y2="450.0"/><line x1="60.0" y1="290.0" x2="540.0" y2="290.0"/><line x1="60.0" y1="190.0" x2="540.0" y2="190.0"/><line x1="60.0" y1="90.0" x2="540.0" y2="90.0"/></g>
+  <polygon points="120.0,390.0 320.0,390.0 400.0,350.0 353.3,256.7 153.3,156.7 120.0,190.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M540.0,280.0 L200.0,450.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M450.0,450.0 L240.0,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,110.0 L540.0,350.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,250.0 L280.0,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,142.0 L445.0,450.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M540.0,406.0 L70.0,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="390.0" x2="544.0" y2="390.0"/>
+  <line x1="120.0" y1="454.0" x2="120.0" y2="26.0"/>
+  <polygon points="544.0,390.0 536.0,386.5 536.0,393.5" stroke="none"/>
+  <polygon points="120.0,26.0 116.5,34.0 123.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="220.0" y1="387.0" x2="220.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="220.0" y="405.0" text-anchor="middle">1</text>
+  <line x1="320.0" y1="387.0" x2="320.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="320.0" y="405.0" text-anchor="middle">2</text>
+  <line x1="420.0" y1="387.0" x2="420.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="420.0" y="405.0" text-anchor="middle">3</text>
+  <line x1="520.0" y1="387.0" x2="520.0" y2="393.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="520.0" y="405.0" text-anchor="middle">4</text>
+  <line x1="117.0" y1="290.0" x2="123.0" y2="290.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="113.0" y="294.0" text-anchor="end">1</text>
+  <line x1="117.0" y1="190.0" x2="123.0" y2="190.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="113.0" y="194.0" text-anchor="end">2</text>
+  <line x1="117.0" y1="90.0" x2="123.0" y2="90.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="113.0" y="94.0" text-anchor="end">3</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="542.0" y="405.0" text-anchor="end">x₁</text>
+  <text x="127.0" y="35.0">x₂</text>
+  </g>
+  <line x1="120.0" y1="390.0" x2="120.0" y2="198.8" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="120.0,190.0 124.6,201.0 115.4,201.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="120.0" y1="190.0" x2="147.1" y2="162.9" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="153.3,156.7 148.8,167.7 142.3,161.2" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="153.3" y1="156.7" x2="345.5" y2="252.7" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="353.3,256.7 341.4,255.9 345.6,247.6" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="120.0" cy="390.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="120.0" cy="190.0" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="153.3" cy="156.7" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="353.3" cy="256.7" r="4.5" fill="var(--color-practice)"/>
+  <text x="128.0" y="382.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="130.0" y="208.0" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁</text>
+  <text x="147.3" y="144.7" fill="var(--academic-text)" font-size="13" text-anchor="start">X₂</text>
+  <text x="363.3" y="252.7" fill="var(--academic-text)" font-size="13" text-anchor="start">X₃</text>
+  <text x="175.0" y="440.0" fill="var(--color-remark)" font-size="12" text-anchor="start">(1)</text>
+  <text x="450.0" y="425.0" fill="var(--color-remark)" font-size="12" text-anchor="start">(2)</text>
+  <text x="75.0" y="280.0" fill="var(--color-remark)" font-size="12" text-anchor="start">(4)</text>
+  <text x="70.0" y="95.0" fill="var(--color-remark)" font-size="12" text-anchor="start">(3)</text>
+  <text x="190.0" y="285.0" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+  <text x="132.0" y="60.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = &#8722;16</text>
+  <text x="250.0" y="370.0" fill="var(--color-base)" font-size="12" text-anchor="start">z = &#8722;10</text>
+</svg>
+<figcaption>Simpleks yolu: X₀ = (0, 0) → X₁ = (0, 2) → X₂ = (1/3, 7/3) → X₃ = (7/3, 4/3). Her adım komşu köşeye geçer ve z değeri 0, −10, −13, −16 diye azalır; kesikli doğrular z = −10 ve z = −16 seviye doğrularıdır. (1) x₁ − 2x₂ = 2, (2) 2x₁ + x₂ = 6, (3) x₁ + 2x₂ = 5, (4) −x₁ + x₂ = 2.</figcaption>
+</figure>
+```
+
+Sonuç olarak problemin optimal çözümü $x_1 = \tfrac{7}{3}$, $x_2 = \tfrac{4}{3}$ ve $\min z = -16$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Algoritmanın Adım Adım Özeti {#sec-smp-algoritma}
+
+Şimdiye kadar gördüklerimizi tek bir reçetede toplayalım; bundan sonraki bütün simpleks bölümleri bu adımları kullanır.
+
+::: {.callout-tip}
+## Simpleks yöntem yedi adımda
+
+1. Problemi standart forma getir. Birim matris varsa (bütün kısıtlar $\le$, sağ taraflar $\ge 0$) problem simpleks yöntem ile çözülebilir haldedir; yoksa önce yapay değişken ekle ([Büyük M yöntemi](buyuk-m-yontemi.qmd)).
+2. Başlangıç tablosunu kur (@sec-smp-tablo).
+3. $z_j - c_j$ satırını incele. Minimumda bütün $z_j - c_j \le 0$, maksimumda bütün $z_j - c_j \ge 0$ ise dur: tablo optimaldir.
+4. Baza girecek $v_k$'yı seç: minimumda en büyük pozitif, maksimumda en negatif $z_j - c_j$.
+5. $v_k$ sütununda pozitif eleman yoksa dur: problem sınırsızdır.
+6. Oran testiyle bazdan çıkacak $v_r$'yi seç; pivot $y_{rk}$'dır.
+7. Dönüşüm kuralıyla yeni tabloyu hesapla (@sec-smp-donusum) ve 3. adıma dön.
+:::
+
+:::: {#exm-smp-max-iki-degisken name="İki Değişkenli Bir Maksimum Problemi"}
+$$
+\begin{aligned}
+x_1 + x_2 &\le 4 \\
+x_1 + 2x_2 &\le 6 \\
+2x_1 + x_2 &\le 7 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 2x_2
+\end{aligned}
+$$
+problemini simpleks yöntemle çözünüz ve sonucu grafik yöntemle karşılaştırınız.
+
+::: {.cozum}
+**Standart form ve başlangıç tablosu.** Kısıtlara $x_3, x_4, x_5$ aylak değişkenlerini ekleriz:
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 4 \\
+x_1 + 2x_2 + x_4 &= 6 \\
+2x_1 + x_2 + x_5 &= 7 \\
+x_j &\ge 0, \quad j = \overline{1,5} \\
+\max z &= 3x_1 + 2x_2 + 0x_3 + 0x_4 + 0x_5
+\end{aligned}
+$$
+$v_3, v_4, v_5$ birim matrisi oluşturduğundan bu standart form simpleks yöntem ile çözülebilir haldedir. Başlangıç bazı $B_0 = (v_3, v_4, v_5)$, başlangıç çözümü $X_0 = (0, 0, 4, 6, 7)$, $z_0 = 0$; simpleks kriterleri $z_1 - c_1 = -3$, $z_2 - c_2 = -2$.
+
+Problem maksimum problemidir; en negatif $z_j - c_j$ girer. $-3 < -2$ olduğundan $v_1$ baza girer. Oranlar $\tfrac{4}{1}$, $\tfrac{6}{1}$, $\tfrac{7}{2}$; en küçüğü $\tfrac{7}{2}$ olduğundan $v_5$ bazdan çıkar, pivot $y_{51} = 2$.
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_3$ | $0$ | $4$ | $1$ | $1$ | $1$ | $0$ | $0$ | $\frac{4}{1}$ |
+| $x_4$ | $0$ | $6$ | $1$ | $2$ | $0$ | $1$ | $0$ | $\frac{6}{1}$ |
+| $x_5$ | $0$ | $7$ | $[2]$ | $1$ | $0$ | $0$ | $1$ | $\frac{7}{2} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-3 \Uparrow$ | $-2$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-smp-max2-baslangic .simpleks}
+
+**Birinci iterasyon.** Pivot satırı 2'ye bölünür: $x_1$ satırı $\big(\tfrac{7}{2} \mid 1, \tfrac{1}{2}, 0, 0, \tfrac{1}{2}\big)$. $x_3$ ve $x_4$ satırlarının pivot sütunundaki elemanı 1 olduğundan her birinden yeni pivot satırı çıkarılır; $z_j - c_j$ satırına ise yeni pivot satırının 3 katı eklenir. Örneğin
+$$
+\begin{aligned}
+x_3, v_0&: \ 4 - \frac{1 \cdot 7}{2} = \frac{1}{2}, & x_4, v_2&: \ 2 - \frac{1 \cdot 1}{2} = \frac{3}{2}, \\[1mm]
+z_0&: \ 0 - \frac{(-3) \cdot 7}{2} = \frac{21}{2}, & v_2&: \ -2 - \frac{(-3) \cdot 1}{2} = -\frac{1}{2} .
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_3$ | $0$ | $\frac{1}{2}$ | $0$ | $\left[\frac{1}{2}\right]$ | $1$ | $0$ | $-\frac{1}{2}$ | $\frac{1/2}{1/2} \Rightarrow$ |
+| $x_4$ | $0$ | $\frac{5}{2}$ | $0$ | $\frac{3}{2}$ | $0$ | $1$ | $-\frac{1}{2}$ | $\frac{5/2}{3/2}$ |
+| $x_1$ | $3$ | $\frac{7}{2}$ | $1$ | $\frac{1}{2}$ | $0$ | $0$ | $\frac{1}{2}$ | $\frac{7/2}{1/2}$ |
+| $z_j - c_j$ |   | $z_0 = \frac{21}{2}$ | $0$ | $-\frac{1}{2} \Uparrow$ | $0$ | $0$ | $\frac{3}{2}$ |   |
+
+: Birinci iterasyon tablosu {#tbl-smp-max2-birinci .simpleks}
+
+Çözüm $X_1 = (\tfrac{7}{2}, 0, \tfrac{1}{2}, \tfrac{5}{2}, 0)$, amaç değeri $\tfrac{21}{2}$; bu, uygun bölgenin $(\tfrac{7}{2}, 0)$ köşesidir. $z_2 - c_2 = -\tfrac{1}{2} < 0$ kaldığından maksimuma ulaşılmadı; $v_2$ baza girer. Oranlar $1$, $\tfrac{5}{3}$, $7$; en küçüğü 1 olduğundan $v_3$ bazdan çıkar, pivot $y_{32} = \tfrac{1}{2}$.
+
+**İkinci iterasyon.** Pivot satırı $\tfrac{1}{2}$'ye bölünür, yani 2 ile çarpılır: $x_2$ satırı $(1 \mid 0, 1, 2, 0, -1)$. Sonra $x_4$ satırından bu satırın $\tfrac{3}{2}$ katı, $x_1$ satırından $\tfrac{1}{2}$ katı çıkarılır, $z_j - c_j$ satırına $\tfrac{1}{2}$ katı eklenir:
+$$
+\begin{aligned}
+x_4&: \ \Big(\frac{5}{2} - \frac{3}{2} \ \Big|\ 0,\ 0,\ 0 - 3,\ 1,\ -\frac{1}{2} + \frac{3}{2}\Big) = (1 \mid 0, 0, -3, 1, 1), \\[1mm]
+x_1&: \ \Big(\frac{7}{2} - \frac{1}{2} \ \Big|\ 1,\ 0,\ 0 - 1,\ 0,\ \frac{1}{2} + \frac{1}{2}\Big) = (3 \mid 1, 0, -1, 0, 1), \\[1mm]
+z_j - c_j&: \ \Big(\frac{21}{2} + \frac{1}{2} \ \Big|\ 0,\ 0,\ 0 + 1,\ 0,\ \frac{3}{2} - \frac{1}{2}\Big) = (11 \mid 0, 0, 1, 0, 1).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $3$ | $2$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_2$ | $2$ | $1$ | $0$ | $1$ | $2$ | $0$ | $-1$ |
+| $x_4$ | $0$ | $1$ | $0$ | $0$ | $-3$ | $1$ | $1$ |
+| $x_1$ | $3$ | $3$ | $1$ | $0$ | $-1$ | $0$ | $1$ |
+| $z_j - c_j$ |   | $z_0 = 11$ | $0$ | $0$ | $1$ | $0$ | $1$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-smp-max2-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$ olduğundan @cor-smp-sonuc-max gereği tablo optimaldir. Optimal çözüm
+$$
+X_2 = (x_1, x_2, x_3, x_4, x_5) = (3, 1, 0, 1, 0), \qquad \max z = 3 \cdot 3 + 2 \cdot 1 = 11 .
+$$
+$x_4 = 1$ olması, ikinci kaynaktan 1 birim artakaldığını söyler: $3 + 2 \cdot 1 = 5 < 6$.
+
+**Grafikle karşılaştırma.** Uygun bölgenin köşeleri ve amaç değerleri:
+
+| Köşe | $(0, 0)$ | $(\frac{7}{2}, 0)$ | $(3, 1)$ | $(2, 2)$ | $(0, 3)$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $z = 3x_1 + 2x_2$ | $0$ | $\frac{21}{2}$ | $11$ | $10$ | $6$ |
+
+: Maksimum örneğinde köşelerdeki amaç değerleri {#tbl-smp-max2-koseler}
+
+En büyük değer $(3, 1)$ köşesindeki $11$'dir; simpleks yöntemin bulduğu sonuçla aynıdır. Yöntem beş köşeden üçüne uğradı: $(0, 0) \to (\tfrac{7}{2}, 0) \to (3, 1)$.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 496.0 419.5" role="img" aria-label="Feasible pentagon with corners (0,0), (3.5,0), (3,1), (2,2), (0,3); simplex path from (0,0) to (3.5,0) to (3,1) and the dashed level line z = 11">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="182.7" y1="30.0" x2="182.7" y2="413.3"/><line x1="259.3" y1="30.0" x2="259.3" y2="413.3"/><line x1="336.0" y1="30.0" x2="336.0" y2="413.3"/><line x1="412.7" y1="30.0" x2="412.7" y2="413.3"/><line x1="489.3" y1="30.0" x2="489.3" y2="413.3"/><line x1="60.0" y1="290.7" x2="520.0" y2="290.7"/><line x1="60.0" y1="214.0" x2="520.0" y2="214.0"/><line x1="60.0" y1="137.3" x2="520.0" y2="137.3"/><line x1="60.0" y1="60.7" x2="520.0" y2="60.7"/></g>
+  <polygon points="106.0,367.3 374.3,367.3 336.0,290.7 259.3,214.0 106.0,137.3" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M458.7,413.3 L75.3,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,114.3 L520.0,344.3" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M397.3,413.3 L205.7,30.0" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M417.8,413.3 L162.2,30.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="367.3" x2="524.0" y2="367.3"/>
+  <line x1="106.0" y1="417.3" x2="106.0" y2="26.0"/>
+  <polygon points="524.0,367.3 516.0,363.8 516.0,370.8" stroke="none"/>
+  <polygon points="106.0,26.0 102.5,34.0 109.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="182.7" y1="364.3" x2="182.7" y2="370.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="182.7" y="382.3" text-anchor="middle">1</text>
+  <line x1="259.3" y1="364.3" x2="259.3" y2="370.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.3" y="382.3" text-anchor="middle">2</text>
+  <line x1="336.0" y1="364.3" x2="336.0" y2="370.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="336.0" y="382.3" text-anchor="middle">3</text>
+  <line x1="412.7" y1="364.3" x2="412.7" y2="370.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="412.7" y="382.3" text-anchor="middle">4</text>
+  <line x1="489.3" y1="364.3" x2="489.3" y2="370.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="489.3" y="382.3" text-anchor="middle">5</text>
+  <line x1="103.0" y1="290.7" x2="109.0" y2="290.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="99.0" y="294.7" text-anchor="end">1</text>
+  <line x1="103.0" y1="214.0" x2="109.0" y2="214.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="99.0" y="218.0" text-anchor="end">2</text>
+  <line x1="103.0" y1="137.3" x2="109.0" y2="137.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="99.0" y="141.3" text-anchor="end">3</text>
+  <line x1="103.0" y1="60.7" x2="109.0" y2="60.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="99.0" y="64.7" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="522.0" y="382.3" text-anchor="end">x₁</text>
+  <text x="113.0" y="35.0">x₂</text>
+  </g>
+  <line x1="106.0" y1="367.3" x2="365.5" y2="367.3" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="374.3,367.3 363.3,372.0 363.3,362.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="374.3" y1="367.3" x2="339.9" y2="298.5" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="336.0,290.7 345.1,298.4 336.8,302.6" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="106.0" cy="367.3" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="374.3" cy="367.3" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="336.0" cy="290.7" r="4.5" fill="var(--color-practice)"/>
+  <circle cx="259.3" cy="214.0" r="3.5" fill="var(--color-theory)"/>
+  <circle cx="106.0" cy="137.3" r="3.5" fill="var(--color-theory)"/>
+  <text x="114.0" y="359.3" fill="var(--academic-text)" font-size="13" text-anchor="start">X₀</text>
+  <text x="382.3" y="359.3" fill="var(--academic-text)" font-size="13" text-anchor="start">X₁</text>
+  <text x="348.0" y="294.7" fill="var(--academic-text)" font-size="13" text-anchor="start">X₂ = (3, 1)</text>
+  <text x="458.7" y="405.7" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + x₂ = 4</text>
+  <text x="428.0" y="279.2" fill="var(--color-remark)" font-size="12" text-anchor="start">x₁ + 2x₂ = 6</text>
+  <text x="228.7" y="53.0" fill="var(--color-remark)" font-size="12" text-anchor="start">2x₁ + x₂ = 7</text>
+  <text x="152.0" y="290.7" fill="var(--color-theory)" font-size="12" text-anchor="start">uygun bölge</text>
+  <text x="140.5" y="91.3" fill="var(--color-base)" font-size="12" text-anchor="start">z = 11</text>
+</svg>
+<figcaption>Maksimum örneğinde simpleks yolu: X₀ = (0, 0) → X₁ = (7/2, 0) → X₂ = (3, 1). Kesikli doğru z = 3x₁ + 2x₂ = 11 seviye doğrusudur; uygun bölge bu doğrunun tamamen altında kalır ve ona yalnız X₂ köşesinde değer.</figcaption>
+</figure>
+```
+
+Sonuç olarak $x_1 = 3$, $x_2 = 1$ ve $\max z = 11$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-smp-max-uc-degisken name="Üç Değişkenli Bir Maksimum Problemi"}
+$$
+\begin{aligned}
+2x_1 + x_2 + x_3 &\le 8 \\
+2x_2 + x_3 &\le 11 \\
+x_1 + x_2 &\le 6 \\
+x_j &\ge 0, \quad j = \overline{1,3} \\
+\max z &= 2x_1 + 5x_2 + 2x_3
+\end{aligned}
+$$
+problemini simpleks yöntemle çözünüz.
+
+::: {.cozum}
+**Standart form.** $x_4, x_5, x_6$ aylak değişkenlerini ekleriz:
+$$
+\begin{aligned}
+2x_1 + x_2 + x_3 + x_4 &= 8 \\
+2x_2 + x_3 + x_5 &= 11 \\
+x_1 + x_2 + x_6 &= 6 \\
+x_j &\ge 0, \quad j = \overline{1,6} \\
+\max z &= 2x_1 + 5x_2 + 2x_3 \\
+&\quad + 0x_4 + 0x_5 + 0x_6
+\end{aligned}
+$$
+Aylak sütunları birim matris oluşturur; problem simpleks yöntem ile çözülebilir haldedir. Başlangıç bazı $B_0 = (v_4, v_5, v_6)$.
+
+**Başlangıç tablosu.** Maksimumda en negatif $z_j - c_j$ girer: $-5$, yani $v_2$. Oranlar $\tfrac{8}{1}$, $\tfrac{11}{2}$, $\tfrac{6}{1}$; en küçüğü $\tfrac{11}{2}$ olduğundan $v_5$ çıkar, pivot $y_{52} = 2$.
+
+|   |   | $c_j$ | $2$ | $5$ | $2$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | Oran |
+| $x_4$ | $0$ | $8$ | $2$ | $1$ | $1$ | $1$ | $0$ | $0$ | $\frac{8}{1}$ |
+| $x_5$ | $0$ | $11$ | $0$ | $[2]$ | $1$ | $0$ | $1$ | $0$ | $\frac{11}{2} \Rightarrow$ |
+| $x_6$ | $0$ | $6$ | $1$ | $1$ | $0$ | $0$ | $0$ | $1$ | $\frac{6}{1}$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-2$ | $-5 \Uparrow$ | $-2$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-smp-max3-baslangic .simpleks}
+
+**Birinci iterasyon.** $x_5$ satırı 2'ye bölünüp $x_2$ satırı olur: $\big(\tfrac{11}{2} \mid 0, 1, \tfrac{1}{2}, 0, \tfrac{1}{2}, 0\big)$. $x_4$ ve $x_6$ satırlarından bu satırın 1 katı çıkarılır, $z_j - c_j$ satırına 5 katı eklenir.
+
+|   |   | $c_j$ | $2$ | $5$ | $2$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | Oran |
+| $x_4$ | $0$ | $\frac{5}{2}$ | $2$ | $0$ | $\frac{1}{2}$ | $1$ | $-\frac{1}{2}$ | $0$ | $\frac{5/2}{2}$ |
+| $x_2$ | $5$ | $\frac{11}{2}$ | $0$ | $1$ | $\frac{1}{2}$ | $0$ | $\frac{1}{2}$ | $0$ | $-$ |
+| $x_6$ | $0$ | $\frac{1}{2}$ | $[1]$ | $0$ | $-\frac{1}{2}$ | $0$ | $-\frac{1}{2}$ | $1$ | $\frac{1/2}{1} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = \frac{55}{2}$ | $-2 \Uparrow$ | $0$ | $\frac{1}{2}$ | $0$ | $\frac{5}{2}$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-smp-max3-birinci .simpleks}
+
+Çözüm $X_1 = (0, \tfrac{11}{2}, 0, \tfrac{5}{2}, 0, \tfrac{1}{2})$, amaç değeri $\tfrac{55}{2}$. Tek negatif kriter $z_1 - c_1 = -2$ olduğundan $v_1$ girer. $x_2$ satırında $y_{21} = 0$ olduğu için oran hesaplanmaz; $\tfrac{5}{4} > \tfrac{1}{2}$ olduğundan $v_6$ çıkar, pivot $y_{61} = 1$.
+
+**İkinci iterasyon.** Pivot 1 olduğundan $x_6$ satırı aynen $x_1$ satırı olur. $x_4$ satırından bu satırın 2 katı çıkarılır, $z_j - c_j$ satırına 2 katı eklenir; $x_2$ satırı pivot sütununda 0 taşıdığı için değişmez. Örneğin
+$$
+\begin{aligned}
+x_4, v_3&: \ \frac{1}{2} - 2 \cdot \Big(-\frac{1}{2}\Big) = \frac{3}{2}, & x_4, v_6&: \ 0 - 2 \cdot 1 = -2, \\[1mm]
+z_j - c_j, v_3&: \ \frac{1}{2} + 2 \cdot \Big(-\frac{1}{2}\Big) = -\frac{1}{2}, & z_0&: \ \frac{55}{2} + 2 \cdot \frac{1}{2} = \frac{57}{2} .
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $5$ | $2$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ | Oran |
+| $x_4$ | $0$ | $\frac{3}{2}$ | $0$ | $0$ | $\left[\frac{3}{2}\right]$ | $1$ | $\frac{1}{2}$ | $-2$ | $\frac{3/2}{3/2} \Rightarrow$ |
+| $x_2$ | $5$ | $\frac{11}{2}$ | $0$ | $1$ | $\frac{1}{2}$ | $0$ | $\frac{1}{2}$ | $0$ | $\frac{11/2}{1/2}$ |
+| $x_1$ | $2$ | $\frac{1}{2}$ | $1$ | $0$ | $-\frac{1}{2}$ | $0$ | $-\frac{1}{2}$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = \frac{57}{2}$ | $0$ | $0$ | $-\frac{1}{2} \Uparrow$ | $0$ | $\frac{3}{2}$ | $2$ |   |
+
+: İkinci iterasyon tablosu {#tbl-smp-max3-ikinci .simpleks}
+
+Dikkat: $v_3$'ün kriteri bir önceki tabloda $+\tfrac{1}{2}$ iken şimdi $-\tfrac{1}{2}$ oldu. Kriterler her tabloda yeniden hesaplanır; bir kez "iyileştirmez" görünen bir vektör sonradan baza girebilir.
+
+Çözüm $X_2 = (\tfrac{1}{2}, \tfrac{11}{2}, 0, \tfrac{3}{2}, 0, 0)$, amaç değeri $\tfrac{57}{2}$. $v_3$ girer; oranlar $1$ ve $11$ olduğundan $v_4$ çıkar, pivot $y_{43} = \tfrac{3}{2}$.
+
+**Üçüncü iterasyon.** $x_4$ satırı $\tfrac{3}{2}$'ye bölünür: $x_3$ satırı $\big(1 \mid 0, 0, 1, \tfrac{2}{3}, \tfrac{1}{3}, -\tfrac{4}{3}\big)$. Sonra $x_2$ satırından bu satırın $\tfrac{1}{2}$ katı çıkarılır, $x_1$ satırına ve $z_j - c_j$ satırına $\tfrac{1}{2}$ katı eklenir:
+$$
+\begin{aligned}
+x_2&: \ \Big(\frac{11}{2} - \frac{1}{2} \ \Big|\ 0, 1, 0,\ -\frac{1}{3},\ \frac{1}{2} - \frac{1}{6},\ 0 + \frac{2}{3}\Big) = \Big(5 \ \Big|\ 0, 1, 0, -\frac{1}{3}, \frac{1}{3}, \frac{2}{3}\Big), \\[1mm]
+x_1&: \ \Big(\frac{1}{2} + \frac{1}{2} \ \Big|\ 1, 0, 0,\ \frac{1}{3},\ -\frac{1}{2} + \frac{1}{6},\ 1 - \frac{2}{3}\Big) = \Big(1 \ \Big|\ 1, 0, 0, \frac{1}{3}, -\frac{1}{3}, \frac{1}{3}\Big), \\[1mm]
+z_j - c_j&: \ \Big(\frac{57}{2} + \frac{1}{2} \ \Big|\ 0, 0, 0,\ \frac{1}{3},\ \frac{3}{2} + \frac{1}{6},\ 2 - \frac{2}{3}\Big) = \Big(29 \ \Big|\ 0, 0, 0, \frac{1}{3}, \frac{5}{3}, \frac{4}{3}\Big).
+\end{aligned}
+$$
+
+|   |   | $c_j$ | $2$ | $5$ | $2$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | $v_6$ |
+| $x_3$ | $2$ | $1$ | $0$ | $0$ | $1$ | $\frac{2}{3}$ | $\frac{1}{3}$ | $-\frac{4}{3}$ |
+| $x_2$ | $5$ | $5$ | $0$ | $1$ | $0$ | $-\frac{1}{3}$ | $\frac{1}{3}$ | $\frac{2}{3}$ |
+| $x_1$ | $2$ | $1$ | $1$ | $0$ | $0$ | $\frac{1}{3}$ | $-\frac{1}{3}$ | $\frac{1}{3}$ |
+| $z_j - c_j$ |   | $z_0 = 29$ | $0$ | $0$ | $0$ | $\frac{1}{3}$ | $\frac{5}{3}$ | $\frac{4}{3}$ |
+
+: Üçüncü iterasyon tablosu (optimal tablo) {#tbl-smp-max3-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$; @cor-smp-sonuc-max gereği tablo optimaldir. Optimal çözüm
+$$
+X_3 = (x_1, \dots, x_6) = (1, 5, 1, 0, 0, 0), \qquad \max z = 2 + 25 + 2 = 29 .
+$$
+Kontrol: $2 + 5 + 1 = 8$, $10 + 1 = 11$, $1 + 5 = 6$; üç kısıt da eşitlikle sağlanır, bu yüzden bütün aylak değişkenler sıfırdır. Amaç değeri her iterasyonda arttı: $0 \to \tfrac{55}{2} \to \tfrac{57}{2} \to 29$. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-smp-sinirsiz name="Sınırsızlık Belirtisi Veren Bir Tablo"}
+$$
+\begin{aligned}
+x_1 - x_2 &\le 1 \\
+x_1 &\le 3 \\
+x_1, x_2 &\ge 0 \\
+\max z &= x_1 + 2x_2
+\end{aligned}
+$$
+problemini simpleks yöntemle incelemeye başlayınız.
+
+::: {.cozum}
+$x_3$ ve $x_4$ aylak değişkenleriyle standart form $x_1 - x_2 + x_3 = 1$, $x_1 + x_4 = 3$, $\max z = x_1 + 2x_2 + 0x_3 + 0x_4$ olur ve başlangıç bazı $B_0 = (v_3, v_4)$'tür.
+
+|   |   | $c_j$ | $1$ | $2$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | Oran |
+| $x_3$ | $0$ | $1$ | $1$ | $-1$ | $1$ | $0$ | $-$ |
+| $x_4$ | $0$ | $3$ | $1$ | $0$ | $0$ | $1$ | $-$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-1$ | $-2 \Uparrow$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-smp-sinirsiz .simpleks}
+
+Maksimumda en negatif kriter girer: $z_2 - c_2 = -2$, yani $v_2$. Ama $v_2$ sütununun elemanları $y_{32} = -1$ ve $y_{42} = 0$; hiçbiri pozitif değildir, oran testi yapılamaz. @prp-smp-sinirsiz gereği amaç fonksiyonu üstten sınırsızdır.
+
+Bunu doğrudan da görebiliriz. Her $\lambda \ge 0$ için
+$$
+X(\lambda) = (x_1, x_2, x_3, x_4) = (0,\ \lambda,\ 1 + \lambda,\ 3)
+$$
+uygun bir çözümdür: $0 - \lambda + (1 + \lambda) = 1$ ve $0 + 3 = 3$. Amaç değeri $z = 2\lambda$ olup $\lambda \to \infty$ iken sonsuza gider. Yani $x_1 = 0$ tutulup $x_2$ istenildiği kadar büyütülebilir; hiçbir kısıt buna engel olmaz. Problemin maksimumu yoktur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde simpleks yöntemi, aylak değişkenlerin kendiliğinden birim matris verdiği problemler için kurduk: Başlangıç tablosu hazırdı, gerisi kriter, oran testi ve pivot dönüşümünden ibaretti. Kısıtlarda $\ge$ ya da $=$ bulunduğunda standart form birim matris içermez ve başlangıç için bir uygun temel çözüm kendiliğinden görünmez. Bir sonraki bölüm [Büyük M yöntemi](buyuk-m-yontemi.qmd), yapay değişkenlerle bu başlangıcın nasıl kurulduğunu ve aynı tabloların nasıl kullanıldığını gösteriyor.
