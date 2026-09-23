@@ -57,6 +57,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from export import export_course, publish_exports  # noqa: E402
 from stats import update_readme  # noqa: E402
+from seo import main as write_seo  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 COURSES = ROOT / "dersler"
@@ -430,6 +431,13 @@ def main() -> None:
             print("   " + update_readme(ROOT))
         except Exception as exc:                 # noqa: BLE001 - never fatal
             print(f"   ! README.md could not be updated: {exc}")
+
+    # Every run copies the books into _site again, so the sitemap and the
+    # canonical links are rewritten each time (see scripts/seo.py).
+    try:
+        print("   " + write_seo())
+    except Exception as exc:                     # noqa: BLE001 - never fatal
+        print(f"   ! sitemap could not be written: {exc}")
 
     pages = len(list(SITE.rglob("*.html"))) if SITE.exists() else 0
     downloads = sum(len(list(SITE.rglob(f"*.{ext}"))) for ext in ("pdf", "epub")) if SITE.exists() else 0
