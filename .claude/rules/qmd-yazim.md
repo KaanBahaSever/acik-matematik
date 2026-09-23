@@ -79,6 +79,7 @@ paths:
 ## Şekiller
 
 - Şekil, açıkladığı teorem, ispat, örnek, çözüm ya da callout kutusunun İÇİNDE durur: ilgili paragrafın hemen altında ve ortalı. Tanım kutusunun içine değil, hemen altına konur. Bir çözümün farklı adımları ayrı şekillerdir.
+  - lineer-programlama'da tek şekilli bir çözümün şekli çözümün en başında durur (okur önce resmi görür). Alt problemleri ya da iterasyonları adım adım izleyen şekiller ilgili adımın yanında kalır.
 - Derleme sırasında yürütülen kod hücresi (python, r, Jupyter) yoktur. Şekiller `scripts/*_figures.py` ile üretilip `.qmd`'ye gömülür; ayrıntılar `make-figures` becerisinde. Tek istisna diferansiyel-geometri'deki, tarayıcıda çalışan OJS 3B sahneleridir.
 - Gömülü SVG elle düzeltilmez: üretici betik düzeltilir ve şekil yeniden üretilir.
 

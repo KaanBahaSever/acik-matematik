@@ -25,7 +25,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Kriptografi](https://acik-matematik.com/dersler/kriptografi/) — 25 bölüm, 34 örnek ve alıştırma
 - [Kısmi Diferansiyel Denklemler](https://acik-matematik.com/dersler/kismi-diferansiyel-denklemler/) — 17 bölüm, 59 örnek ve alıştırma
 - [Lineer Cebir](https://acik-matematik.com/dersler/lineer-cebir/) — 43 bölüm, 195 örnek ve alıştırma
-- [Lineer Programlama](https://acik-matematik.com/dersler/lineer-programlama/) — 14 bölüm, 141 örnek ve alıştırma
+- [Lineer Programlama](https://acik-matematik.com/dersler/lineer-programlama/) — 15 bölüm, 147 örnek ve alıştırma
 - [Matematiksel İstatistik](https://acik-matematik.com/dersler/matematiksel-istatistik/) — 18 bölüm, 263 örnek ve alıştırma
 - [Matematiğin Temelleri ve Mantık](https://acik-matematik.com/dersler/matematigin-temelleri/) — 19 bölüm, 106 örnek ve alıştırma
 - [Olasılık Teorisi](https://acik-matematik.com/dersler/olasilik-teorisi/) — 23 bölüm, 154 örnek ve alıştırma
@@ -60,17 +60,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **456** |
+| 📖 Konu/Bölüm | **457** |
 | 📐 Teorem | **1.034** |
 | 🔹 Lemma | **109** |
 | 📝 Tanım | **1.293** |
 | ✅ İspat | **1.800** |
-| 🧮 Örnek ve alıştırma | **3.777** |
-| 💡 Çözüm | **3.504** |
-| 📊 Şekil | **1.270** |
-| ✍️ Kelime | **1.766.718** |
-| 🔤 Karakter | **12.442.285** |
-| 💾 Kaynak metin | **27,8 MB** |
+| 🧮 Örnek ve alıştırma | **3.783** |
+| 💡 Çözüm | **3.510** |
+| 📊 Şekil | **1.274** |
+| ✍️ Kelime | **1.773.060** |
+| 🔤 Karakter | **12.482.097** |
+| 💾 Kaynak metin | **27,9 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 

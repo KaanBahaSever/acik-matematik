@@ -1,0 +1,1303 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Lineer programlama sorularını çözmek için pratik algoritmalar ve kopya kâğıdı: soru tipine göre yöntem seçimi, model kurma sözlüğü, form ve değişken dönüşüm tabloları, tablo yöntemiyle temel çözümler, aday köşe noktalarıyla grafik yöntem, renkli şekillerle dikdörtgen kuralı, adım adım simpleks hesaplayıcı, Büyük M kısayolu, dual, dual simpleks, duyarlılık ve dal-sınır özeti."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulama sorularının çoğu "şu durumu modelleyiniz", "bütün temel çözümleri bulunuz", "grafik yöntemle çözünüz", "simpleks yöntemle çözünüz" ya da "dualini yazınız" biçimindedir. Sayfa, bu soru tiplerinin her biri için adım adım bir çözüm algoritması verir. Tek bir örnek problemi modelden grafiğe ve optimal tabloya kadar izleyeceğiz; simpleks kısmının sonunda kendi problemini tablo tablo çözen bir hesaplayıcı da var. Her kural, ayrıntısının ve gerekçesinin bulunduğu bölüme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, hangi yöntemin istendiğini ya da hangisinin en kısa yol olduğunu belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Kullanılacak yöntem | Bu sayfada |
+|:--|:--|:--|
+| Sözel bir durumu lineer programlama problemi olarak yaz | Model kurma | @sec-ozt-model |
+| Problemi kanonik ya da standart forma getir | Dönüştürme kuralları | @sec-ozt-formlar, @sec-ozt-degiskenler |
+| Bütün temel çözümleri bul, optimal olanı seç | Tablo yöntemi: $C(n, m)$ seçimi tek tek dene | @sec-ozt-temel |
+| İki değişkenli problemi grafikle çöz | Grafik yöntem: aday köşe noktalarını karşılaştır | @sec-ozt-grafik |
+| Simpleks yöntemle çöz; kısıtlar $\le$, sağ taraflar $\ge 0$ | Doğrudan simpleks | @sec-ozt-kurallar, @sec-ozt-dikdortgen |
+| Simpleks yöntemle çöz; $\ge$ ya da $=$ kısıt var | Büyük M ya da iki faz yöntemi | @sec-ozt-yapay |
+| Dualini yaz, dual çözümü bul | Dual yazma, optimal tablodan okuma | @sec-ozt-dual |
+| Sağ tarafı negatif ama kriterleri optimal bir tablo | Dual simpleks algoritması | @sec-ozt-dual-simpleks |
+| Bir katsayı ya da sağ taraf hangi aralıkta değişebilir? | Duyarlılık analizi | @sec-ozt-duyarlilik |
+| Değişkenler tam sayı olmalı | Dal-sınır yöntemi | @sec-ozt-dal-sinir |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt-yontem}
+
+## Model Kurma {#sec-ozt-model}
+
+Sözel bir problemden model kurmak, bütün çözümün temelidir; model yanlışsa sonraki hesapların hepsi boşa gider. Kitaptaki reçeteye (@sec-lpp-model-kurma) pratik bir ön adım ekleyerek şöyle çalışırız.
+
+::: {.callout-tip title="Beş adımda model kurma"}
+1. **Verileri tabloya diz.** Satırlara kaynakları ya da gereksinimleri, sütunlara ürünleri yaz; en sağa kapasiteyi ya da gereksinimi, en alta birim kâr ya da maliyeti koy.
+2. **Karar değişkenlerini birimleriyle tanımla:** "$x_1$: günde üretilen A miktarı (birim)" gibi. Tablonun her sütunu bir değişkendir.
+3. **Kısıtları yaz.** Tablonun her satırı bir kısıttır: satırdaki katsayılar ile değişkenlerin çarpımlarının toplamı, satırın sonundaki sayıyla karşılaştırılır. Karşılaştırmanın yönünü aşağıdaki sözlükten oku; iki yanın birimi aynı olmalıdır.
+4. **İşaret koşullarını ekle:** $x_j \ge 0$.
+5. **Amacı yaz:** en alttaki satır amaç fonksiyonudur; kâr ise $\max$, maliyet ise $\min$.
+:::
+
+Soru metnindeki kalıpların matematik karşılıkları şöyledir:
+
+| Soruda geçen ifade | Matematik karşılığı |
+|:--|:--|
+| "en az $a$", "$a$'dan az olmamalı", "gereksinim $a$" | $\ldots \ge a$ |
+| "en çok $a$", "en fazla", "geçmemeli", "aşmamalı", "kapasite $a$" | $\ldots \le a$ |
+| "tam olarak $a$", "tamamı kullanılmalı" | $\ldots = a$ |
+| "$x_1$, $x_2$'nin en az iki katı olmalı" | $x_1 \ge 2x_2$, yani $x_1 - 2x_2 \ge 0$ |
+| "$x_1$, toplamın en çok %40'ı olmalı" | $x_1 \le 0{,}4(x_1 + x_2)$, yani $0{,}6x_1 - 0{,}4x_2 \le 0$ |
+| "kâr, gelir en büyük olsun" | $\max z$ |
+| "maliyet, süre en küçük olsun", "en ucuz" | $\min z$ |
+| "adet", "kişi", "araç" gibi bölünemeyen miktarlar | tam sayı koşulu: dal-sınır yöntemi |
+
+: Sözel ifadeler ve kısıtlar {#tbl-ozt-sozluk}
+
+Oran içeren kısıtlarda değişkenleri hep sol tarafa toplayıp sağ tarafı sabit bırakırız; aksi hâlde standart forma geçerken karışıklık çıkar.
+
+:::: {#exm-ozt-model name="Atölye problemi"}
+Bir atölye A ve B ürünlerini üretiyor. Bir birim A için 1 saat makine ve 1 saat işçilik, bir birim B için 1 saat makine ve 3 saat işçilik gerekiyor. Günde en çok 4 saat makine ve 6 saat işçilik kullanılabiliyor. Bir birim A'dan 2 TL, bir birim B'den 3 TL kâr ediliyor. Günlük kârı en büyük yapacak üretim miktarlarını bulmak için problemi bir lineer programlama problemi olarak ifade ediniz.
+
+::: {.cozum}
+**Veri tablosu.** Kaynaklar satırlara, ürünler sütunlara yazılır:
+
+| | A | B | Kapasite |
+|:--|:-:|:-:|:-:|
+| Makine (saat) | $1$ | $1$ | $4$ |
+| İşçilik (saat) | $1$ | $3$ | $6$ |
+| Kâr (TL) | $2$ | $3$ | |
+
+**Karar değişkenleri.** $x_1$: günde üretilen A miktarı (birim), $x_2$: günde üretilen B miktarı (birim).
+
+**Kısıtlar.** Makine satırı: harcanan makine saati $x_1 + x_2$'dir ve "en çok 4" olmalıdır. İşçilik satırı: $x_1 + 3x_2$, "en çok 6" olmalıdır. Üretim negatif olamaz.
+
+**Amaç.** Kâr satırı $2x_1 + 3x_2$'dir ve en büyük yapılmak isteniyor. Model:
+$$
+\begin{aligned}
+x_1 + x_2 &\le 4 \\
+x_1 + 3x_2 &\le 6 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 2x_1 + 3x_2
+\end{aligned}
+$$
+Bu problemi sayfa boyunca önce tablo yöntemiyle, sonra grafik yöntemle çözeceğiz; simpleks hesaplayıcının ilk hazır örneği de budur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Hangi Forma Getiriyorum? {#sec-ozt-formlar}
+
+Üç formu birbirinden ayıran şey, her birinin probleme **neye baktığıdır**. Kanonik form eşitsizliklerin yönüne, standart form eşitliklere ve sağ tarafların işaretine, simpleks yöntem ile çözülebilir hal ise bir birim matrisin varlığına bakar. Tanımlar için bkz. @def-lpp-kanonik-form, @def-lpp-standart-form ve @def-lpp-cozulebilir-hal; ayrıntılı karşılaştırma için bkz. @tbl-lpp-uc-form.
+
+Pratikte her kısıta tek tek bakıp aşağıdaki tablodan ne yapılacağını okuruz. Sağ tarafı negatif bir kısıt varsa önce son satır uygulanır; kısıtın yönü döner ve kısıt, yeni yönüne karşılık gelen satıra göre işlenir.
+
+| Kısıt | Kanonik form (max) | Kanonik form (min) | Standart form | Çözülebilir hal |
+|:--|:--|:--|:--|:--|
+| $\le b_i$ | aynen kalır | $-1$ ile çarp: $\ge -b_i$ | aylak ekle: $+x_s$ | aylak birim sütun verir, ek yok |
+| $\ge b_i$ | $-1$ ile çarp: $\le -b_i$ | aynen kalır | artık çıkar: $-x_s$ | yapay ekle: $+x_{u}$ |
+| $= b_i$ | $\le b_i$ ve $\ge b_i$ diye ayır; $\ge$ olanı $-1$ ile çarp: $\le -b_i$ | $\le b_i$ ve $\ge b_i$ diye ayır; $\le$ olanı $-1$ ile çarp: $\ge -b_i$ | aynen kalır | yapay ekle: $+x_{u}$ |
+| $b_i < 0$ | dokunma | dokunma | önce $-1$ ile çarp, yön döner | standart formdaki gibi |
+
+: Kısıt türüne göre yapılacaklar {#tbl-ozt-kisitlar}
+
+Amaç fonksiyonu için üç kural yeter:
+
+- Aylak ve artık değişkenlerin amaç katsayısı $0$'dır.
+- Yapay değişkenin amaç katsayısı minimumda $+M$, maksimumda $-M$'dir (@def-lpp-yapay-degisken).
+- Maksimum ile minimum arasında $\min z = -\max(-z)$ ile geçilir: amaç katsayılarının hepsi $-1$ ile çarpılır, kısıtlara dokunulmaz ve sonunda optimal değerin işareti geri çevrilir (@prp-lpp-max-min).
+
+Dual yazarken eşitlik ikiye ayrılmadan da bırakılabilir; o zaman karşılık gelen dual değişken işaretsiz olur (@prp-dua-esitlik). Standart form için kanonik formdan geçmek gerekmez; eşitlikleri ikiye ayırmadan doğrudan standart forma geçmek daha kısadır. Kanonik form asıl olarak dual yazarken gerekir.
+
+## Değişken Kısıtları Tek Tabloda {#sec-ozt-degiskenler}
+
+Bütün yöntemler değişkenlerin $\ge 0$ olmasını ister. $x_j \ge 0$ dışındaki her koşul, $x_j$ yerine yeni bir değişken yazılarak bu kalıba getirilir. Aşağıdaki tablo [İşaret kısıtlaması olmayan değişkenler](isaret-kisitlamasiz-degiskenler.qmd) ve [Sınırlı değişkenler](sinirli-degiskenler.qmd) bölümlerindeki bütün durumları bir araya getirir (@tbl-snd-donusumler).
+
+| Verilen koşul | Yerine yaz | Yeni koşul | Kısıtlara eklenen satır | Sonunda geri dönüş |
+|:-:|:-:|:-:|:-:|:-:|
+| $x_j \ge 0$ | değişiklik yok | $x_j \ge 0$ | yok | yok |
+| $x_j \le 0$ | $x_j = -x_j'$ | $x_j' \ge 0$ | yok | $x_j = -x_j'$ |
+| işaretsiz | $x_j = x_j' - x_j''$ | $x_j', x_j'' \ge 0$ | yok | $x_j = x_j' - x_j''$ |
+| $x_j \ge d_j$ | $x_j = x_j' + d_j$ | $x_j' \ge 0$ | yok | $x_j = x_j' + d_j$ |
+| $x_j \le s_j$ | $x_j = -x_j' + s_j$ | $x_j' \ge 0$ | yok | $x_j = s_j - x_j'$ |
+| $0 \le x_j \le s_j$ | değişiklik yok | $x_j \ge 0$ | $x_j \le s_j$ | yok |
+| $d_j \le x_j \le s_j$ | $x_j = x_j' + d_j$ | $x_j' \ge 0$ | $x_j' \le s_j - d_j$ | $x_j = x_j' + d_j$ |
+
+: Değişken kısıtlarının dönüşümleri {#tbl-ozt-degiskenler}
+
+Yani kural hep aynıdır: alt sınırı olan değişken alt sınırı kadar **ötelenir**, yalnız üst sınırı olan değişken üst sınırından geriye doğru **yansıtılır**, hiç sınırı olmayan değişken iki negatif olmayan değişkenin farkı olarak yazılır. Tablonun yanında şu üç noktayı unutmamak gerekir:
+
+- **Sağ taraflar değişir.** Öteleme ve yansıtmada sabit terimler sağ tarafa geçer. Sağ taraf negatif çıkarsa kısıt $-1$ ile çarpılır ve yönü döner (@tbl-ozt-kisitlar).
+- **Amaçta sabit belirir.** Amaç $z = z' + k$ biçimine gelir. Tabloya yalnız $z'$'nün katsayıları yazılır ve asıl optimal değer sonunda $z_0 + k$ olarak hesaplanır.
+- **İşaretsiz değişken iki zıt sütun verir.** $x_j = x_j' - x_j''$ dönüşümünde $v_j'' = -v_j'$ ve $c_j'' = -c_j'$'dür. Her tabloda bu iki sütun birbirinin negatifidir ve ikisi aynı anda bazda bulunmaz (@prp-iks-zit-sutunlar).
+
+:::: {#exm-ozt-degisken name="Üç farklı değişken kısıtını birlikte dönüştürmek"}
+$x_1 \ge 2$, $x_2$ işaretsiz ve $1 \le x_3 \le 5$ olmak üzere
+$$
+\begin{aligned}
+x_1 + 2x_2 + x_3 &\le 8 \\
+2x_1 - x_2 + x_3 &\ge 1 \\
+\max z &= 3x_1 + x_2 - 2x_3
+\end{aligned}
+$$
+problemini bütün değişkenleri $\ge 0$ olan ve simpleks yöntem ile çözülebilir halde olan bir probleme dönüştürünüz.
+
+::: {.cozum}
+**Dönüşümler.** Değişken kısıtları tablosuna (@tbl-ozt-degiskenler) göre üç değişken üç farklı satıra girer:
+
+- $x_1 \ge 2$ alttan sınırlıdır: $x_1 = x_1' + 2$, $x_1' \ge 0$.
+- $x_2$ işaretsizdir: $x_2 = x_2' - x_2''$, $x_2', x_2'' \ge 0$.
+- $1 \le x_3 \le 5$ iki yanlı sınırlıdır: $x_3 = x_3' + 1$, $x_3' \ge 0$ ve üst sınır $x_3' \le 5 - 1 = 4$ satırı olarak eklenir.
+
+**Kısıtlar.** Yerine koyup sabitleri sağa atalım. Birinci kısıt
+$$
+\begin{aligned}
+&(x_1' + 2) + 2(x_2' - x_2'') + (x_3' + 1) \le 8 \\[1mm]
+&\quad \Longrightarrow \quad x_1' + 2x_2' - 2x_2'' + x_3' \le 5
+\end{aligned}
+$$
+olur. İkinci kısıt
+$$
+\begin{aligned}
+&2(x_1' + 2) - (x_2' - x_2'') + (x_3' + 1) \ge 1 \\[1mm]
+&\quad \Longrightarrow \quad 2x_1' - x_2' + x_2'' + x_3' \ge -4
+\end{aligned}
+$$
+olur. Sağ taraf negatif çıktığı için iki yanı $-1$ ile çarparız ve yön döner:
+$$
+-2x_1' + x_2' - x_2'' - x_3' \le 4 .
+$$
+
+**Amaç.** Amaç fonksiyonunda da yerine koyalım:
+$$
+\begin{aligned}
+z &= 3(x_1' + 2) + (x_2' - x_2'') - 2(x_3' + 1) \\[1mm]
+&= 3x_1' + x_2' - x_2'' - 2x_3' + 4 .
+\end{aligned}
+$$
+Sabit $4$ tabloya girmez: $z = z' + 4$.
+
+**Sonuç.** Üç kısıt da $\le$ biçiminde ve sağ tarafları negatif olmadığı için aylak değişkenler $x_4, x_5, x_6$ bir birim matris verir; yapay değişkene gerek yoktur:
+$$
+\begin{aligned}
+x_1' + 2x_2' - 2x_2'' + x_3' + x_4 &= 5 \\
+-2x_1' + x_2' - x_2'' - x_3' + x_5 &= 4 \\
+x_3' + x_6 &= 4 \\
+x_1', x_2', x_2'', x_3', x_4, x_5, x_6 &\ge 0 \\
+\max z' &= 3x_1' + x_2' - x_2'' - 2x_3'
+\end{aligned}
+$$
+Simpleks yöntemin verdiği optimal çözümden $x_1 = x_1' + 2$, $x_2 = x_2' - x_2''$, $x_3 = x_3' + 1$ ile orijinal değişkenlere dönülür; optimal değer $z_0 + 4$'tür.
+
+Dikkat edilirse ikinci kısıt başta $\ge$ idi ve yapay değişken gerektirecekti. Ötelemeden sonra sağ tarafı negatif çıktı, $-1$ ile çarpınca $\le$ oldu ve yapay değişken gereği ortadan kalktı. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Bütün Temel Çözümler: Tablo Yöntemi {#sec-ozt-temel}
+
+Standart formda $m$ denklem ve $n$ değişken varsa, $n - m$ değişken sıfırlanıp kalan kare sistem çözülerek bir temel çözüm bulunur (@def-tck-temel-cozum). Soru bütün temel çözümleri istiyorsa bütün seçimler bir tabloda denenir; optimal çözüm, uygun olanlar arasında amaç değeri en iyi olandır (@thm-ucg-temel-teorem).
+
+::: {.callout-tip title="Beş adımda tablo yöntemi"}
+1. **Standart form.** Aylak ve artık değişkenleri ekle; $m$ ve $n$'yi belirle.
+2. **Seçimleri say.** Temel değişken olacak $m$ değişkenin bütün seçimlerini sistemli sırayla yaz; en çok $C(n, m) = \dfrac{n!}{m!\,(n - m)!}$ seçim vardır (@prp-tck-ust-sinir).
+3. **Determinant.** Her seçimde temel değişkenlerin sütunlarından oluşan kare matrisin $\Delta$'sını hesapla. $\Delta = 0$ ise bu seçimden temel çözüm çıkmaz.
+4. **Çöz ve sınıflandır.** $\Delta \ne 0$ ise diğer değişkenleri $0$ alıp sistemi çöz. Negatif bileşen varsa çözüm uygun değildir; yoksa uygun temel çözümdür; bir temel değişken $0$ çıkmışsa dejeneredir (@def-tck-dejenere).
+5. **Optimum.** Yalnız uygun temel çözümlerde $z$'yi hesapla ve en iyisini seç.
+:::
+
+:::: {#exm-ozt-temel name="Atölye probleminin bütün temel çözümleri"}
+Atölye probleminin (@exm-ozt-model) bütün temel çözümlerini bulunuz ve optimal çözümü belirleyiniz.
+
+::: {.cozum}
+**Standart form.** İki kısıta $x_3$ ve $x_4$ aylak değişkenleri eklenir:
+$$
+\begin{aligned}
+x_1 + x_2 + x_3 &= 4 \\
+x_1 + 3x_2 + x_4 &= 6
+\end{aligned}
+$$
+$m = 2$, $n = 4$ olduğundan her seçimde iki değişken sıfırlanır ve en çok $C(4, 2) = 6$ seçim vardır.
+
+**Bir seçimin hesabı.** Temel değişkenler $x_1, x_2$ olsun; $x_3 = x_4 = 0$ alınır:
+$$
+\begin{cases} x_1 + x_2 = 4 \\ x_1 + 3x_2 = 6 \end{cases}, \qquad \Delta = \begin{vmatrix} 1 & 1 \\ 1 & 3 \end{vmatrix} = 2 \ne 0.
+$$
+İkinci denklemden birinciyi çıkarınca $2x_2 = 2$, yani $x_2 = 1$ ve $x_1 = 3$ bulunur. Çözüm $(3, 1, 0, 0)$'dır; negatif bileşeni olmadığı için uygundur ve $z = 2 \cdot 3 + 3 \cdot 1 = 9$'dur. Diğer beş seçim aynı yolla hesaplanır.
+
+| Temel değişkenler | $\Delta$ | $(x_1, x_2, x_3, x_4)$ | Uygun mu? | $z$ |
+|:-:|:-:|:-:|:-:|:-:|
+| $x_1, x_2$ | $2$ | $(3, 1, 0, 0)$ | evet | $9$ |
+| $x_1, x_3$ | $-1$ | $(6, 0, -2, 0)$ | hayır | $-$ |
+| $x_1, x_4$ | $1$ | $(4, 0, 0, 2)$ | evet | $8$ |
+| $x_2, x_3$ | $-3$ | $(0, 2, 2, 0)$ | evet | $6$ |
+| $x_2, x_4$ | $1$ | $(0, 4, 0, -6)$ | hayır | $-$ |
+| $x_3, x_4$ | $1$ | $(0, 0, 4, 6)$ | evet | $0$ |
+
+: Atölye probleminin temel çözümleri {#tbl-ozt-temel}
+
+**Sonuç.** Altı temel çözümün dördü uygundur ve hiçbiri dejenere değildir. Uygun olanlar arasında en büyük değer $z = 9$'dur: optimal çözüm $x_1 = 3$, $x_2 = 1$ ve $\max z = 9$'dur. Aylaklar $x_3 = x_4 = 0$ olduğundan makine ve işçilik saatlerinin hepsi kullanılır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Grafik Yöntem ve Aday Köşe Noktaları {#sec-ozt-grafik}
+
+Uygun bölge boş değil ve sınırlıysa optimum bir köşede alınır (@thm-ucg-uc-noktada-optimum). Bölge sınırsızken optimum varsa yine bir köşededir, ama önce var olup olmadığı seviye doğrusuyla denetlenir. Bu yüzden grafik yöntemin özü, **aday noktaları**, yani uygun bölgenin köşelerini eksiksiz bulup amaç değerlerini karşılaştırmaktır. Uygun temel çözümler de tam olarak bu köşelerdir (@thm-ucg-utc-uc-nokta); tablo yöntemindeki uygun satırlar, grafikte köşe olarak karşımıza çıkar.
+
+::: {.callout-tip title="Altı adımda grafik yöntem"}
+1. **Doğruları çiz.** Her kısıtı eşitlik olarak yaz ve doğruyu eksenleri kestiği iki noktadan çiz.
+2. **Yarı düzlemi seç.** Doğru üzerinde olmayan bir test noktası (çoğunlukla $O(0, 0)$) kısıtı sağlıyorsa o tarafı, sağlamıyorsa öbür tarafı al. $x_1, x_2 \ge 0$ birinci bölgeyi verir.
+3. **Uygun bölgeyi tara.** Bütün yarı düzlemlerin ortak kısmıdır. Ortak kısım boşsa uygun çözüm yoktur; dur.
+4. **Aday noktaları bul.** Bölgenin her köşesi iki sınır doğrusunun kesişimidir: iki denklemi çöz. Kesişim noktasının **bütün** kısıtları sağladığını kontrol et; sağlamayan kesişim bölgenin dışındadır ve aday değildir.
+5. **Karşılaştır.** Her aday noktada $z$'yi hesapla ve tabloya yaz. Maksimumda en büyük, minimumda en küçük değer optimaldir.
+6. **Seviye doğrusuyla doğrula.** $z = k$ doğrusunu maksimumda $\vec{c}$ yönünde, minimumda $-\vec{c}$ yönünde kaydır; bölgeye son değdiği nokta optimaldir. Bölge sınırsızsa köşe karşılaştırmasından önce bu adım zorunludur.
+:::
+
+:::: {#exm-ozt-grafik name="Atölye probleminin grafik çözümü"}
+Atölye problemini (@exm-ozt-model) grafik yöntemle çözünüz. Aday noktaları bir tabloda toplayınız ve sonucu tablo yöntemiyle karşılaştırınız.
+
+::: {.cozum}
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="42.0 12.0 506.0 370.0" role="img" aria-label="Feasible quadrilateral with corners O(0,0), A(4,0), B(3,1), C(0,2) labelled with z values 0, 8, 9, 6; dashed level line z = 9 through B; hollow points (6,0) and (0,4) outside the region; gradient arrow (2,3)">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="146.6" y1="30.0" x2="146.6" y2="363.9"/><line x1="208.4" y1="30.0" x2="208.4" y2="363.9"/><line x1="270.3" y1="30.0" x2="270.3" y2="363.9"/><line x1="332.1" y1="30.0" x2="332.1" y2="363.9"/><line x1="393.9" y1="30.0" x2="393.9" y2="363.9"/><line x1="455.8" y1="30.0" x2="455.8" y2="363.9"/><line x1="517.6" y1="30.0" x2="517.6" y2="363.9"/><line x1="60.0" y1="277.4" x2="530.0" y2="277.4"/><line x1="60.0" y1="215.5" x2="530.0" y2="215.5"/><line x1="60.0" y1="153.7" x2="530.0" y2="153.7"/><line x1="60.0" y1="91.8" x2="530.0" y2="91.8"/></g>
+  <polygon points="84.7,339.2 332.1,339.2 270.3,277.4 84.7,215.5" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <path d="M66.2,73.3 L356.8,363.9" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M66.2,209.3 L530.0,363.9" fill="none" stroke="var(--color-remark)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M66.2,141.3 L381.6,351.6" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="356.8" y1="190.8" x2="402.8" y2="121.9" stroke="var(--color-base)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="406.3,116.6 404.7,125.1 399.1,121.4" fill="var(--color-base)" opacity="1.0"/>
+  <text x="414.3" y="120.6" fill="var(--color-base)" font-size="12" text-anchor="start">c = (2, 3)</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="339.2" x2="534.0" y2="339.2"/>
+  <line x1="84.7" y1="367.9" x2="84.7" y2="26.0"/>
+  <polygon points="534.0,339.2 526.0,335.7 526.0,342.7" stroke="none"/>
+  <polygon points="84.7,26.0 81.2,34.0 88.2,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="146.6" y1="336.2" x2="146.6" y2="342.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="146.6" y="354.2" text-anchor="middle">1</text>
+  <line x1="208.4" y1="336.2" x2="208.4" y2="342.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="208.4" y="354.2" text-anchor="middle">2</text>
+  <line x1="270.3" y1="336.2" x2="270.3" y2="342.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="270.3" y="354.2" text-anchor="middle">3</text>
+  <line x1="332.1" y1="336.2" x2="332.1" y2="342.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="332.1" y="354.2" text-anchor="middle">4</text>
+  <line x1="393.9" y1="336.2" x2="393.9" y2="342.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="393.9" y="354.2" text-anchor="middle">5</text>
+  <line x1="455.8" y1="336.2" x2="455.8" y2="342.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="455.8" y="354.2" text-anchor="middle">6</text>
+  <line x1="81.7" y1="277.4" x2="87.7" y2="277.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="77.7" y="281.4" text-anchor="end">1</text>
+  <line x1="81.7" y1="215.5" x2="87.7" y2="215.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="77.7" y="219.5" text-anchor="end">2</text>
+  <line x1="81.7" y1="153.7" x2="87.7" y2="153.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="77.7" y="157.7" text-anchor="end">3</text>
+  <line x1="81.7" y1="91.8" x2="87.7" y2="91.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="77.7" y="95.8" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="532.0" y="354.2" text-anchor="end">x₁</text>
+  <text x="91.7" y="35.0">x₂</text>
+  </g>
+  <circle cx="84.7" cy="339.2" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="332.1" cy="339.2" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="270.3" cy="277.4" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="84.7" cy="215.5" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="455.8" cy="339.2" r="4.0" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="84.7" cy="91.8" r="4.0" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <text x="92.7" y="331.2" fill="var(--academic-text)" font-size="12" text-anchor="start">O: z = 0</text>
+  <text x="322.1" y="330.2" fill="var(--academic-text)" font-size="12" text-anchor="end">A: z = 8</text>
+  <text x="278.3" y="271.4" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600">B: z = 9</text>
+  <text x="92.7" y="207.5" fill="var(--academic-text)" font-size="12" text-anchor="start">C: z = 6</text>
+  <text x="449.8" y="327.2" fill="var(--academic-text)" font-size="11" text-anchor="middle">(6, 0) uygun değil</text>
+  <text x="94.7" y="95.8" fill="var(--academic-text)" font-size="11" text-anchor="start">(0, 4) uygun değil</text>
+  <text x="356.8" y="269.6" fill="var(--color-base)" font-size="12" text-anchor="start">z = 9</text>
+  <text x="195.9" y="172.2" fill="var(--color-remark)" font-size="11.5" text-anchor="start">x₁ + x₂ = 4</text>
+  <text x="428.9" y="300.3" fill="var(--color-remark)" font-size="11.5" text-anchor="start">x₁ + 3x₂ = 6</text>
+</svg>
+<figcaption>Grafik yöntem. Uygun bölge OABC dörtgenidir ve aday noktalar dört köşedir. Köşelerdeki z değerleri 0, 8, 9, 6 olduğundan optimum B(3, 1)'de, z = 9'dur. Kesikli seviye doğrusu 2x₁ + 3x₂ = 9 bölgeye yalnız B'de değer. İçi boş iki nokta kısıt doğrularının bölge dışındaki kesişimleridir; bunlar uygun olmayan temel çözümlerdir.</figcaption>
+</figure>
+```
+
+**Doğrular ve yarı düzlemler.** $x_1 + x_2 = 4$ doğrusu $(4, 0)$ ve $(0, 4)$'ten, $x_1 + 3x_2 = 6$ doğrusu $(6, 0)$ ve $(0, 2)$'den geçer. $O(0, 0)$ iki kısıtı da sağladığından ($0 \le 4$, $0 \le 6$) iki doğrunun da orijin tarafı alınır.
+
+**Aday noktalar.** Uygun bölgenin köşeleri eksenlerle ve iki doğruyla sınırlanan dört noktadır. $B$ köşesi iki kısıt doğrusunun kesişimidir: denklemler taraf tarafa çıkarılınca $2x_2 = 2$, yani $x_2 = 1$, $x_1 = 3$ bulunur.
+
+| Aday nokta | Kesişen doğrular | $z = 2x_1 + 3x_2$ |
+|:-:|:-:|:-:|
+| $O(0, 0)$ | $x_1 = 0$, $x_2 = 0$ | $0$ |
+| $A(4, 0)$ | $x_2 = 0$, $x_1 + x_2 = 4$ | $8$ |
+| $B(3, 1)$ | $x_1 + x_2 = 4$, $x_1 + 3x_2 = 6$ | $9$ |
+| $C(0, 2)$ | $x_1 = 0$, $x_1 + 3x_2 = 6$ | $6$ |
+
+: Atölye probleminin aday noktaları {#tbl-ozt-aday}
+
+**Aday olmayan kesişimler.** $x_2 = 0$ ile $x_1 + 3x_2 = 6$ doğrusu $(6, 0)$'da kesişir, ama $6 + 0 = 6 > 4$ olduğundan bu nokta birinci kısıtı sağlamaz. Aynı biçimde $(0, 4)$ ikinci kısıtı sağlamaz: $0 + 12 = 12 > 6$. Bu iki nokta, tablo yönteminde uygun çıkmayan iki temel çözümdür (@tbl-ozt-temel).
+
+**Sonuç.** En büyük değer $B(3, 1)$'dedir: $\max z = 9$. Seviye doğrusu $2x_1 + 3x_2 = 9$, $\vec{c} = (2, 3)$ yönünde kaydırıldığında bölgeye son olarak $B$'de değer. Tablo yöntemi de aynı cevabı vermişti; dört aday nokta, dört uygun temel çözümün ilk iki bileşenidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Grafikte bazen tek bir optimal köşe yerine başka bir sonuç görülür. Dört durumu şöyle tanırız (@sec-ucg-grafik):
+
+| Grafikte görülen | Sonuç |
+|:--|:--|
+| Yarı düzlemlerin ortak kısmı boş | Uygun çözüm yok |
+| Seviye doğrusu optimal yönde bir kenarla çakışıyor | Alternatif optimal çözüm: kenarın bütün noktaları optimaldir |
+| Bölge sınırsız ve seviye doğrusu iyileşme yönünde sonsuza kayabiliyor | Sınırsız çözüm |
+| Bölge sınırsız ama seviye doğrusu bir köşede takılıyor | Optimum vardır ve o köşededir |
+
+: Grafik yöntemde özel durumlar {#tbl-ozt-grafik-ozel}
+
+## Simpleks Tablosunun Okunuşu {#sec-ozt-tablo}
+
+Bütün simpleks tabloları aynı düzende yazılır (@sec-smp-tablo). Sembollerle tablo şöyledir; $v_k$ baza girecek vektördür.
+
+|   |   | $c_j$ | $c_1$ | $\cdots$ | $c_n$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $\cdots$ | $v_n$ | Oran |
+| $x_{B_1}$ | $c_{B_1}$ | $y_{10}$ | $y_{11}$ | $\cdots$ | $y_{1n}$ | $y_{10} / y_{1k}$ |
+| $\vdots$ | $\vdots$ | $\vdots$ | $\vdots$ |   | $\vdots$ | $\vdots$ |
+| $x_{B_m}$ | $c_{B_m}$ | $y_{m0}$ | $y_{m1}$ | $\cdots$ | $y_{mn}$ | $y_{m0} / y_{mk}$ |
+| $z_j - c_j$ |   | $z_0$ | $z_1 - c_1$ | $\cdots$ | $z_n - c_n$ |   |
+
+: Simpleks tablosunun genel düzeni {#tbl-ozt-genel-tablo .simpleks}
+
+Tablonun her parçası tek bir soruya cevap verir:
+
+- **$v_0$ sütunu:** Şu anki çözüm nedir? Baz değişkenlerinin değerleri buradadır; bazda olmayan değişkenler $0$'dır.
+- **$v_j$ sütunları:** $v_j$ vektörü baz vektörleri cinsinden nasıl yazılır? Bazdaki vektörlerin sütunları birim vektördür.
+- **Son satır:** Çözüm iyileşir mi? $z_j = \vec{c}_B^{\,T} \vec{y}_j$, yani $c_B$ sütunu ile $v_j$ sütununun karşılıklı çarpımlarının toplamıdır; ondan $c_j$ çıkarılır. $z_0 = \vec{c}_B^{\,T} \vec{y}_0$ amaç değeridir. Bazdaki vektörlerin kriteri $0$'dır.
+- **Oran sütunu:** Hangi vektör bazdan çıkar? Yalnız $y_{ik} > 0$ olan satırlar için $y_{i0} / y_{ik}$ yazılır, diğerlerine $-$ konur.
+
+Pivot köşeli parantezle, bazdan çıkan satır $\Rightarrow$ ile, baza giren sütun $\Uparrow$ ile işaretlenir.
+
+## Giren, Çıkan ve Durma Kuralları {#sec-ozt-kurallar}
+
+Maksimum ve minimum problemlerinde kurallar yalnız işaretlerde ayrılır. Yöntemin bütün adımları [Simpleks yöntem](simpleks-yontem.qmd) bölümündeki yedi adımlık reçetededir (@sec-smp-algoritma).
+
+| | Maksimum | Minimum |
+|:--|:--|:--|
+| Tablo optimaldir | bütün $z_j - c_j \ge 0$ | bütün $z_j - c_j \le 0$ |
+| Baza giren $v_k$ | en negatif $z_j - c_j$ | en büyük pozitif $z_j - c_j$ |
+| Bazdan çıkan $v_r$ | $y_{ik} > 0$ olanlar arasında en küçük $y_{i0} / y_{ik}$ | aynı |
+| Yapay değişkenin amaç katsayısı | $-M$ | $+M$ |
+| $aM + b$ biçimli kriterler | önce $M$'nin katsayısı, eşitse sabit terim karşılaştırılır | aynı |
+
+: Maksimum ve minimum problemlerinde seçim kuralları {#tbl-ozt-secim}
+
+Tablo bazen normal bir optimumdan farklı bir şey söyler. Hangi belirtinin neyi gösterdiği aşağıda toplanmıştır.
+
+| Tabloda görülen | Anlamı | Ayrıntı |
+|:--|:--|:--|
+| Giren $v_k$ sütununda hiç pozitif eleman yok, bazda pozitif yapay değişken yok | Sınırsız çözüm: amaç sonsuza gider | @thm-sao-sinirsiz |
+| Optimal tabloda baz dışı bir $v_k$ için $z_k - c_k = 0$ | Alternatif optimal çözüm olabilir: $v_k$'yı baza al | @thm-sao-alternatif |
+| Optimal tabloda bazda pozitif değerli yapay değişken | Uygun çözüm yok | @thm-bym-uygunsuz |
+| $v_0$ sütununda $0$ değerli baz değişkeni (oran testindeki eşitlik bunu doğurur) | Dejenere çözüm | @def-tck-dejenere |
+| Bazda $0$ değerli yapay değişken | Gerçek bir sütunla pivot yap; olmuyorsa satır gereksizdir | @prp-bym-sifir-yapay |
+
+: Özel durumların tablodaki belirtileri {#tbl-ozt-ozel}
+
+## Yeni İterasyon Tablosu: Dikdörtgen Kuralı {#sec-ozt-dikdortgen}
+
+Giren ve çıkan vektör belli olunca yeni tablonun bütün sayıları eski tablodan hesaplanır (@thm-smp-donusum). Elle hesapta en hızlı yol **dikdörtgen kuralıdır** ve aşağıdaki beş adımda uygulanır. Adımların sırası önemlidir: önce hiç hesap gerektirmeyen hücreler doldurulur, dikdörtgen kuralı yalnız geriye kalan hücrelere uygulanır.
+
+::: {.callout-tip title="Yeni tablo beş adımda"}
+1. **Pivot satırı.** Pivot satırını pivota böl. Satırın adı baza giren $x_k$, $c_B$ değeri de $c_k$ olur.
+2. **Pivot sütunu.** Pivot sütununu birim vektör yap: pivotun yerine $1$, diğer bütün hücrelere ($z_k - c_k$ dahil) $0$ yaz.
+3. **Sıfır kısayolu.** Pivot sütununda $0$ olan satırları ve pivot satırında $0$ olan sütunları aynen kopyala. Bazda kalan vektörlerin birim sütunları bu yüzden hiç değişmez.
+4. **Dikdörtgen kuralı.** Kalan her $A$ hücresi için $A^{*} = A - \dfrac{B\, C}{P}$ hesapla. Burada $P$ pivot, $B$ hücrenin satırının pivot sütunundaki elemanı, $C$ hücrenin sütununun pivot satırındaki elemanıdır. Kural $v_0$ sütununa ve $z_j - c_j$ satırına da uygulanır.
+5. **Sağlama.** $z_0 = \vec{c}_B^{\,T} \vec{y}_0$ ve birkaç $z_j - c_j$ değerini yeni $c_B$ sütunuyla yeniden hesapla. $v_0$ sütununda negatif sayı çıkmamalı, bazdaki vektörlerin kriteri $0$ olmalıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="56.5 12.5 420.5 288.5" role="img" aria-label="Grid with pivot P, element A at the opposite corner of a dashed rectangle, B in the row of A and the pivot column, C in the column of A and the pivot row; formula A star equals A minus B times C over P">
+  <rect x="150.0" y="92.0" width="62.0" height="42.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="212.0" y="92.0" width="62.0" height="42.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="274.0" y="92.0" width="62.0" height="42.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="336.0" y="92.0" width="62.0" height="42.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="398.0" y="92.0" width="62.0" height="42.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="212.0" y="50.0" width="62.0" height="42.0" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="212.0" y="92.0" width="62.0" height="42.0" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="212.0" y="134.0" width="62.0" height="42.0" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="212.0" y="176.0" width="62.0" height="42.0" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0" stroke-width="1.0"/>
+  <rect x="150.0" y="50.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="212.0" y="50.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="274.0" y="50.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="336.0" y="50.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="398.0" y="50.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="150.0" y="92.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="212.0" y="92.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="274.0" y="92.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="336.0" y="92.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="398.0" y="92.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="150.0" y="134.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="212.0" y="134.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="274.0" y="134.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="336.0" y="134.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="398.0" y="134.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="150.0" y="176.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="212.0" y="176.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="274.0" y="176.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="336.0" y="176.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="398.0" y="176.0" width="62.0" height="42.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="212.0" y="92.0" width="62.0" height="42.0" fill="var(--color-theory)" fill-opacity="0.4" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <rect x="398.0" y="176.0" width="62.0" height="42.0" fill="var(--color-practice)" fill-opacity="0.3" stroke="var(--color-practice)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <rect x="212.0" y="176.0" width="62.0" height="42.0" fill="var(--color-remark)" fill-opacity="0.28" stroke="var(--color-remark)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <rect x="398.0" y="92.0" width="62.0" height="42.0" fill="var(--color-remark)" fill-opacity="0.28" stroke="var(--color-remark)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <rect x="243.0" y="113.0" width="186.0" height="84.0" fill="none" stroke="var(--color-remark)" stroke-width="2.0" stroke-dasharray="6 4" rx="3"/>
+  <text x="243.0" y="119.0" fill="var(--academic-text)" font-size="17" text-anchor="middle" font-weight="600" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">P</text>
+  <text x="429.0" y="203.0" fill="var(--academic-text)" font-size="17" text-anchor="middle" font-weight="600" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">A</text>
+  <text x="243.0" y="203.0" fill="var(--academic-text)" font-size="17" text-anchor="middle" font-weight="600" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">B</text>
+  <text x="429.0" y="119.0" fill="var(--academic-text)" font-size="17" text-anchor="middle" font-weight="600" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">C</text>
+  <text x="138.0" y="117.0" fill="var(--color-theory)" font-size="12" text-anchor="end" font-weight="600">pivot satırı</text>
+  <text x="243.0" y="36.0" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">pivot sütunu</text>
+  <text x="138.0" y="201.0" fill="var(--academic-text)" font-size="12" text-anchor="end">A'nın satırı</text>
+  <text x="429.0" y="36.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">A'nın sütunu</text>
+  <text x="305.0" y="258.0" fill="var(--academic-text)" font-size="17" text-anchor="middle" font-weight="600">A* = A &#8722; (B · C) / P</text>
+  <text x="305.0" y="284.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">yeni = eski &#8722; çapraz köşelerin çarpımı / pivot</text>
+</svg>
+<figcaption>Dikdörtgen kuralı. Güncellenecek A elemanı ile pivot P bir dikdörtgenin karşılıklı köşeleridir. Öbür iki köşe B (A'nın satırı ile pivot sütununun kesişimi) ve C (A'nın sütunu ile pivot satırının kesişimi) olur. Yeni değer A − BC/P'dir.</figcaption>
+</figure>
+```
+:::
+
+Kuralın içinde hatırlamayı kolaylaştıran üç gözlem var:
+
+- $B = 0$ ya da $C = 0$ ise $BC/P = 0$ olur ve hücre değişmez. Üçüncü adımdaki sıfır kısayolu buradan gelir.
+- Aynı satırdaki bütün hücrelerde $B$ aynıdır ve $C / P$, yeni pivot satırındaki elemandır. Bu yüzden bir satırı tek hamlede de hesaplayabilirsin: **yeni satır = eski satır $-$ $B$ $\times$ yeni pivot satırı**. Bu, [Simpleks yöntem](simpleks-yontem.qmd) bölümündeki elemanter satır işlemleri yöntemidir; iki yol aynı sayıları verir.
+- Pivot $1$ ise kural $A^{*} = A - BC$'ye, ayrıca $B = -1$ ise $A^{*} = A + C$'ye iner.
+
+:::: {#exm-ozt-dikdortgen name="Dikdörtgen kuralıyla iki iterasyon"}
+$$
+\begin{aligned}
+x_1 &\le 4 \\
+2x_2 &\le 12 \\
+3x_1 + 2x_2 &\le 18 \\
+x_1, x_2 &\ge 0 \\
+\max z &= 3x_1 + 5x_2
+\end{aligned}
+$$
+problemini simpleks yöntemle çözünüz. Her yeni tabloyu beş adımlık reçeteyle, dikdörtgen kuralını yalnız gereken hücrelere uygulayarak hesaplayınız.
+
+::: {.cozum acik="true"}
+**Başlangıç tablosu.** Kısıtlar $\le$ ve sağ taraflar negatif olmadığı için $x_3, x_4, x_5$ aylak değişkenleri bir birim matris verir. $\vec{c}_B = \vec{0}$ olduğundan $z_j - c_j = -c_j$'dir. Maksimum probleminde en negatif kriter $-5$'tir, $v_2$ baza girer. Oranlar $12/2 = 6$ ve $18/2 = 9$'dur; $x_3$ satırında $v_2$ elemanı $0$ olduğundan o satıra $-$ yazılır. En küçük oran $x_4$ satırındadır: $v_4$ bazdan çıkar, pivot $2$'dir.
+
+|   |   | $c_j$ | $3$ | $5$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_3$ | $0$ | $4$ | $1$ | $0$ | $1$ | $0$ | $0$ | $-$ |
+| $x_4$ | $0$ | $12$ | $0$ | $[2]$ | $0$ | $1$ | $0$ | $\frac{12}{2} \Rightarrow$ |
+| $x_5$ | $0$ | $18$ | $3$ | $2$ | $0$ | $0$ | $1$ | $\frac{18}{2}$ |
+| $z_j - c_j$ |   | $z_0 = 0$ | $-3$ | $-5 \Uparrow$ | $0$ | $0$ | $0$ |   |
+
+: Başlangıç tablosu {#tbl-ozt-baslangic .simpleks}
+
+**Birinci iterasyon.** Aşağıdaki şekil başlangıç tablosunun her hücresini, yeni değerini bulmak için gereken işe göre boyuyor.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="5.5 26.0 669.0 323.5" role="img" aria-label="Initial tableau of max 3x1+5x2 coloured by the work each cell needs: pivot 2 in row x4 column v2, row x3 and columns v1 v3 v5 are copied, four cells use the rectangle rule">
+  <text x="198.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">c<tspan font-size="10" dy="3">j</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="282.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">3</text>
+  <text x="366.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">5</text>
+  <text x="450.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="534.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="618.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="62.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">x<tspan font-size="10" dy="3">B</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="130.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">c<tspan font-size="10" dy="3">B</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="198.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₀</text>
+  <text x="282.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₁</text>
+  <text x="366.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₂</text>
+  <text x="450.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₃</text>
+  <text x="534.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₄</text>
+  <text x="618.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₅</text>
+  <rect x="156.0" y="116.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="116.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="116.0" width="84.0" height="38.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="116.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="116.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="116.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="116.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="116.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">x₃</text>
+  <text x="130.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <rect x="156.0" y="154.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="154.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="154.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.45" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="154.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="154.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="154.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="154.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="154.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">x₄</text>
+  <text x="130.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <rect x="156.0" y="192.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="192.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="192.0" width="84.0" height="38.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="192.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="192.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="192.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="192.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="192.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">x₅</text>
+  <text x="130.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <rect x="156.0" y="230.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="230.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="230.0" width="84.0" height="38.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="230.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="230.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="230.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="230.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="230.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="255.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">z<tspan font-size="10" dy="3">j</tspan><tspan dy="-3">&#8203;</tspan> &#8722; c<tspan font-size="10" dy="3">j</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <line x1="20" y1="116" x2="660" y2="116" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.8"/>
+  <line x1="20" y1="230" x2="660" y2="230" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.8"/>
+  <line x1="156" y1="40" x2="156" y2="268" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.8"/>
+  <rect x="198.0" y="173.0" width="168.0" height="38.0" fill="none" stroke="var(--color-remark)" stroke-width="2.2" stroke-dasharray="6 4" rx="3"/>
+  <rect x="366.0" y="173.0" width="168.0" height="76.0" fill="none" stroke="var(--color-practice)" stroke-width="2.2" stroke-dasharray="6 4" rx="3"/>
+  <text x="198.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">4</text>
+  <text x="282.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="366.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="450.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="534.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="618.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="198.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">12</text>
+  <text x="282.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="366.0" y="179.0" fill="var(--academic-text)" font-size="15.5" text-anchor="middle" font-weight="600" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">[2]</text>
+  <text x="450.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="534.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="618.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="198.0" y="217.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">18 &#8594; 6</text>
+  <text x="282.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">3</text>
+  <text x="366.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">2</text>
+  <text x="450.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="534.0" y="217.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0 &#8594; &#8722;1</text>
+  <text x="618.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="198.0" y="255.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0 &#8594; 30</text>
+  <text x="282.0" y="255.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">&#8722;3</text>
+  <text x="366.0" y="255.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">&#8722;5</text>
+  <text x="450.0" y="255.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="534.0" y="255.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0 &#8594; 5/2</text>
+  <text x="618.0" y="255.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <rect x="26.0" y="288.0" width="16.0" height="16.0" fill="var(--color-theory)" fill-opacity="0.3" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="50.0" y="302.0" fill="var(--academic-text)" font-size="14" text-anchor="start">pivot satırı: 2'ye bölünür</text>
+  <rect x="350.0" y="288.0" width="16.0" height="16.0" fill="var(--color-base)" fill-opacity="0.3" stroke="var(--color-base)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="374.0" y="302.0" fill="var(--academic-text)" font-size="14" text-anchor="start">pivot sütunu: 1 ve 0'lar</text>
+  <rect x="26.0" y="318.0" width="16.0" height="16.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="50.0" y="332.0" fill="var(--academic-text)" font-size="14" text-anchor="start">0 kısayolu: aynen kalır</text>
+  <rect x="350.0" y="318.0" width="16.0" height="16.0" fill="var(--color-practice)" fill-opacity="0.35" stroke="var(--color-practice)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="374.0" y="332.0" fill="var(--academic-text)" font-size="14" text-anchor="start">dikdörtgen kuralı: eski &#8594; yeni</text>
+</svg>
+<figcaption>Birinci iterasyonun haritası. Pivot 2'dir. Pivot sütununda 0 olan x₃ satırı ile pivot satırında 0 olan v₁, v₃, v₅ sütunları aynen kalır. Dikdörtgen kuralı yalnız dört hücreye uygulanır. Kesikli dikdörtgenler iki örneği gösteriyor: 18 − 2·12/2 = 6 ve 0 − (−5)·1/2 = 5/2.</figcaption>
+</figure>
+```
+
+1. Pivot satırı $2$'ye bölünür ve $x_2$ satırı olur ($c_B = 5$): $(6 \mid 0,\ 1,\ 0,\ \tfrac{1}{2},\ 0)$.
+2. $v_2$ sütunu $(0, 1, 0)$ olur, kriteri $0$'dır.
+3. $x_3$ satırının pivot sütunundaki elemanı $0$ olduğundan bu satır aynen kalır. Pivot satırında $v_1$, $v_3$, $v_5$ sütunlarının elemanı $0$ olduğundan bu sütunlar da aynen kalır.
+4. Geriye yalnız dört hücre kalır. $x_5$ satırında $B = 2$, $z_j - c_j$ satırında $B = -5$'tir; $C$ değerleri pivot satırındaki $12$ ($v_0$) ve $1$ ($v_4$)'dir:
+$$
+\begin{aligned}
+x_5, v_0&: \ 18 - \frac{2 \cdot 12}{2} = 6, & x_5, v_4&: \ 0 - \frac{2 \cdot 1}{2} = -1, \\[1mm]
+z_0&: \ 0 - \frac{(-5) \cdot 12}{2} = 30, & z_4 - c_4&: \ 0 - \frac{(-5) \cdot 1}{2} = \frac{5}{2}.
+\end{aligned}
+$$
+5. Sağlama: $\vec{c}_B = (0, 5, 0)$ ile $z_0 = 5 \cdot 6 = 30$ ve $z_4 - c_4 = 5 \cdot \tfrac{1}{2} - 0 = \tfrac{5}{2}$.
+
+En negatif kriter $-3$ olduğundan $v_1$ baza girer. Oranlar $x_3$ satırında $4/1 = 4$, $x_5$ satırında $6/3 = 2$'dir; $x_2$ satırının elemanı $0$ olduğundan oran yazılmaz. $v_5$ bazdan çıkar, pivot $3$'tür.
+
+|   |   | $c_j$ | $3$ | $5$ | $0$ | $0$ | $0$ |   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ | Oran |
+| $x_3$ | $0$ | $4$ | $1$ | $0$ | $1$ | $0$ | $0$ | $\frac{4}{1}$ |
+| $x_2$ | $5$ | $6$ | $0$ | $1$ | $0$ | $\frac{1}{2}$ | $0$ | $-$ |
+| $x_5$ | $0$ | $6$ | $[3]$ | $0$ | $0$ | $-1$ | $1$ | $\frac{6}{3} \Rightarrow$ |
+| $z_j - c_j$ |   | $z_0 = 30$ | $-3 \Uparrow$ | $0$ | $0$ | $\frac{5}{2}$ | $0$ |   |
+
+: Birinci iterasyon tablosu {#tbl-ozt-birinci .simpleks}
+
+**İkinci iterasyon.** Aynı boyamayı birinci iterasyon tablosu için yapalım.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="5.5 26.0 669.0 323.5" role="img" aria-label="First iteration tableau coloured by the work each cell needs: pivot 3 in row x5 column v1, row x2 and columns v2 v3 are copied, six cells use the rectangle rule">
+  <text x="198.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">c<tspan font-size="10" dy="3">j</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="282.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">3</text>
+  <text x="366.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">5</text>
+  <text x="450.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="534.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="618.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <text x="62.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">x<tspan font-size="10" dy="3">B</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="130.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">c<tspan font-size="10" dy="3">B</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="198.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₀</text>
+  <text x="282.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₁</text>
+  <text x="366.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₂</text>
+  <text x="450.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₃</text>
+  <text x="534.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₄</text>
+  <text x="618.0" y="103.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">v₅</text>
+  <rect x="156.0" y="116.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="116.0" width="84.0" height="38.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="116.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="116.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="116.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="116.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="116.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="116.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">x₃</text>
+  <text x="130.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <rect x="156.0" y="154.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="154.0" width="84.0" height="38.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="154.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="154.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="154.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="154.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="154.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="154.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">x₂</text>
+  <text x="130.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">5</text>
+  <rect x="156.0" y="192.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="192.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.45" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="192.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="192.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="192.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="192.0" width="84.0" height="38.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="192.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="192.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">x₅</text>
+  <text x="130.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">0</text>
+  <rect x="156.0" y="230.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="240.0" y="230.0" width="84.0" height="38.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="324.0" y="230.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="408.0" y="230.0" width="84.0" height="38.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="492.0" y="230.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="576.0" y="230.0" width="84.0" height="38.0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="20.0" y="230.0" width="84.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <rect x="104.0" y="230.0" width="52.0" height="38.0" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1.0"/>
+  <text x="62.0" y="255.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">z<tspan font-size="10" dy="3">j</tspan><tspan dy="-3">&#8203;</tspan> &#8722; c<tspan font-size="10" dy="3">j</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <line x1="20" y1="116" x2="660" y2="116" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.8"/>
+  <line x1="20" y1="230" x2="660" y2="230" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.8"/>
+  <line x1="156" y1="40" x2="156" y2="268" stroke="var(--academic-text)" stroke-width="1.8" opacity="0.8"/>
+  <rect x="198.0" y="135.0" width="84.0" height="76.0" fill="none" stroke="var(--color-remark)" stroke-width="2.2" stroke-dasharray="6 4" rx="3"/>
+  <rect x="282.0" y="211.0" width="252.0" height="38.0" fill="none" stroke="var(--color-practice)" stroke-width="2.2" stroke-dasharray="6 4" rx="3"/>
+  <text x="198.0" y="141.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">4 &#8594; 2</text>
+  <text x="282.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="366.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="450.0" y="141.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="534.0" y="141.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0 &#8594; 1/3</text>
+  <text x="618.0" y="141.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0 &#8594; &#8722;1/3</text>
+  <text x="198.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">6</text>
+  <text x="282.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="366.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="450.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="534.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1/2</text>
+  <text x="618.0" y="179.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="198.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">6</text>
+  <text x="282.0" y="217.0" fill="var(--academic-text)" font-size="15.5" text-anchor="middle" font-weight="600" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">[3]</text>
+  <text x="366.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="450.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="534.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">&#8722;1</text>
+  <text x="618.0" y="217.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">1</text>
+  <text x="198.0" y="255.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">30 &#8594; 36</text>
+  <text x="282.0" y="255.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">&#8722;3</text>
+  <text x="366.0" y="255.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="450.0" y="255.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0</text>
+  <text x="534.0" y="255.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">5/2 &#8594; 3/2</text>
+  <text x="618.0" y="255.0" fill="var(--academic-text)" font-size="14" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3" stroke-opacity="0.9" paint-order="stroke">0 &#8594; 1</text>
+  <rect x="26.0" y="288.0" width="16.0" height="16.0" fill="var(--color-theory)" fill-opacity="0.3" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="50.0" y="302.0" fill="var(--academic-text)" font-size="14" text-anchor="start">pivot satırı: 3'ye bölünür</text>
+  <rect x="350.0" y="288.0" width="16.0" height="16.0" fill="var(--color-base)" fill-opacity="0.3" stroke="var(--color-base)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="374.0" y="302.0" fill="var(--academic-text)" font-size="14" text-anchor="start">pivot sütunu: 1 ve 0'lar</text>
+  <rect x="26.0" y="318.0" width="16.0" height="16.0" fill="var(--academic-text)" fill-opacity="0.0" stroke="var(--academic-text)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="50.0" y="332.0" fill="var(--academic-text)" font-size="14" text-anchor="start">0 kısayolu: aynen kalır</text>
+  <rect x="350.0" y="318.0" width="16.0" height="16.0" fill="var(--color-practice)" fill-opacity="0.35" stroke="var(--color-practice)" stroke-opacity="0.9" stroke-width="1.0"/>
+  <text x="374.0" y="332.0" fill="var(--academic-text)" font-size="14" text-anchor="start">dikdörtgen kuralı: eski &#8594; yeni</text>
+</svg>
+<figcaption>İkinci iterasyonun haritası. Pivot 3'tür. Pivot sütununda 0 olan x₂ satırı ile pivot satırında 0 olan v₂, v₃ sütunları aynen kalır ve altı hücre dikdörtgen kuralıyla bulunur. İki örnek: 4 − 1·6/3 = 2 ve 5/2 − (−3)(−1)/3 = 3/2.</figcaption>
+</figure>
+```
+
+1. Pivot satırı $3$'e bölünür ve $x_1$ satırı olur ($c_B = 3$): $(2 \mid 1,\ 0,\ 0,\ -\tfrac{1}{3},\ \tfrac{1}{3})$.
+2. $v_1$ sütunu $(0, 0, 1)$ olur, kriteri $0$'dır.
+3. $x_2$ satırının pivot sütunundaki elemanı $0$ olduğundan bu satır aynen kalır. Pivot satırında $v_2$ ve $v_3$ sütunlarının elemanı $0$ olduğundan bu sütunlar da aynen kalır.
+4. Geriye altı hücre kalır. $x_3$ satırında $B = 1$, $z_j - c_j$ satırında $B = -3$'tür; $C$ değerleri pivot satırındaki $6$, $-1$ ve $1$'dir:
+$$
+\begin{aligned}
+x_3, v_0&: \ 4 - \frac{1 \cdot 6}{3} = 2, & z_0&: \ 30 - \frac{(-3) \cdot 6}{3} = 36, \\[1mm]
+x_3, v_4&: \ 0 - \frac{1 \cdot (-1)}{3} = \frac{1}{3}, & z_4 - c_4&: \ \frac{5}{2} - \frac{(-3)(-1)}{3} = \frac{3}{2}, \\[1mm]
+x_3, v_5&: \ 0 - \frac{1 \cdot 1}{3} = -\frac{1}{3}, & z_5 - c_5&: \ 0 - \frac{(-3) \cdot 1}{3} = 1.
+\end{aligned}
+$$
+5. Sağlama: $\vec{c}_B = (0, 5, 3)$ ile $z_0 = 5 \cdot 6 + 3 \cdot 2 = 36$, $z_4 - c_4 = 5 \cdot \tfrac{1}{2} + 3 \cdot \left(-\tfrac{1}{3}\right) = \tfrac{3}{2}$, $z_5 - c_5 = 3 \cdot \tfrac{1}{3} = 1$.
+
+|   |   | $c_j$ | $3$ | $5$ | $0$ | $0$ | $0$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_B$ | $c_B$ | $v_0$ | $v_1$ | $v_2$ | $v_3$ | $v_4$ | $v_5$ |
+| $x_3$ | $0$ | $2$ | $0$ | $0$ | $1$ | $\frac{1}{3}$ | $-\frac{1}{3}$ |
+| $x_2$ | $5$ | $6$ | $0$ | $1$ | $0$ | $\frac{1}{2}$ | $0$ |
+| $x_1$ | $3$ | $2$ | $1$ | $0$ | $0$ | $-\frac{1}{3}$ | $\frac{1}{3}$ |
+| $z_j - c_j$ |   | $z_0 = 36$ | $0$ | $0$ | $0$ | $\frac{3}{2}$ | $1$ |
+
+: İkinci iterasyon tablosu (optimal tablo) {#tbl-ozt-optimal .simpleks .oransiz}
+
+Bütün $z_j - c_j \ge 0$ olduğundan tablo optimaldir. Optimal çözüm $x_1 = 2$, $x_2 = 6$ ve $\max z = 3 \cdot 2 + 5 \cdot 6 = 36$'dır. Aylak $x_3 = 2$, birinci kısıtta $2$ birim boşluk kaldığını söyler; ikinci ve üçüncü kısıtlar tam sağlanır.
+
+İki iterasyonda tablonun $4 \cdot 6 = 24$ sayısal hücresinden yalnız $4$ ve $6$ tanesi gerçek hesap istedi; geri kalanlar bölme, birim sütun ya da kopyalamayla doldu. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Simpleks Hesaplayıcı {#sec-ozt-hesaplayici}
+
+Aşağıdaki hesaplayıcı bir problemi kitabın tablo düzeninde adım adım çözer. Her tabloda pivotu köşeli parantezle, bazdan çıkan satırı $\Rightarrow$ ile, baza giren sütunu $\Uparrow$ ile işaretler; her iterasyonun altına giren ve çıkan vektörün neden seçildiğini yazar. Kesirlerle tam hesap yapar, ondalığa yuvarlamaz. $\ge$ ve $=$ kısıtlarında Büyük M yöntemini kullanır ve bazdan çıkan yapay değişkenin sütununu sonraki tablolarda yazmaz (@sec-ozt-yapay).
+
+Hesaplayıcıyı kendi çözümünü tablo tablo karşılaştırmak için kullan. Bir tabloda fark bulursan hatayı o iterasyonun dikdörtgen hesabında ara. Üç noktaya dikkat:
+
+- Bütün değişkenler $\ge 0$ kabul edilir. Başka bir değişken kısıtı varsa problemi önce @tbl-ozt-degiskenler ile dönüştür.
+- Katsayılar tam sayı ($-3$), kesir ($3/4$) ya da ondalık ($0{,}5$) olarak yazılabilir.
+- Kriterlerde ya da oranlarda eşitlik olursa hesaplayıcı soldaki sütunu ve üstteki satırı seçer. Elle çözümde öbür seçim de doğrudur; ara tablolar farklı çıkabilir ama optimal değer aynıdır.
+
+```{=html}
+<div class="calculator" id="lp-simplex-calculator">
+  <h4>Simpleks Hesaplayıcı</h4>
+  <div class="calc-row">
+    <label>
+      <span>Hazır örnek</span>
+      <select data-role="preset">
+        <option value="atolye">Atölye problemi (max, ≤)</option>
+        <option value="dikdortgen">Dikdörtgen kuralı örneği (max, ≤)</option>
+        <option value="diyet">Diyet problemi (min, ≥, Büyük M)</option>
+        <option value="esitlik">Eşitlik kısıtlı problem (max, =)</option>
+      </select>
+    </label>
+    <label>
+      <span>Amaç</span>
+      <select data-role="sense">
+        <option value="max">max z</option>
+        <option value="min">min z</option>
+      </select>
+    </label>
+    <label>
+      <span>Değişken sayısı</span>
+      <input type="number" data-role="n" min="1" max="6" value="2">
+    </label>
+    <label>
+      <span>Kısıt sayısı</span>
+      <input type="number" data-role="m" min="1" max="6" value="2">
+    </label>
+  </div>
+  <div class="calc-grid" data-role="grid"></div>
+  <p class="calc-note">Satırlar kısıtlardır; en üst satır amaç fonksiyonunun katsayılarıdır. Bütün değişkenler ≥ 0 kabul edilir.</p>
+  <button type="button" data-role="solve">Tabloları hesapla</button>
+  <div class="calc-steps" data-role="result"></div>
+</div>
+
+<script>
+(function () {
+  // ---- exact rational numbers (BigInt) ----------------------------------
+  const gcd = (a, b) => { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b) { [a, b] = [b, a % b]; } return a; };
+  function Q(n, d = 1n) {
+    if (d < 0n) { n = -n; d = -d; }
+    const g = gcd(n, d) || 1n;
+    return { n: n / g, d: d / g };
+  }
+  const ZERO = Q(0n), ONE = Q(1n);
+  const add = (a, b) => Q(a.n * b.d + b.n * a.d, a.d * b.d);
+  const sub = (a, b) => Q(a.n * b.d - b.n * a.d, a.d * b.d);
+  const mul = (a, b) => Q(a.n * b.n, a.d * b.d);
+  const div = (a, b) => Q(a.n * b.d, a.d * b.n);
+  const sgn = (a) => (a.n > 0n ? 1 : a.n < 0n ? -1 : 0);
+  const cmp = (a, b) => sgn(sub(a, b));
+
+  function parseQ(text) {
+    const s = String(text).trim().replace(",", ".").replace("−", "-");
+    if (s === "") return ZERO;
+    let m = s.match(/^([+-]?\d+)\s*\/\s*([+-]?\d+)$/);
+    if (m) {
+      if (BigInt(m[2]) === 0n) throw new Error("payda sıfır olamaz");
+      return Q(BigInt(m[1]), BigInt(m[2]));
+    }
+    m = s.match(/^([+-]?)(\d*)(?:\.(\d+))?$/);
+    if (m && (m[2] || m[3])) {
+      const frac = m[3] || "";
+      const n = BigInt((m[2] || "0") + frac) * (m[1] === "-" ? -1n : 1n);
+      return Q(n, 10n ** BigInt(frac.length));
+    }
+    throw new Error("“" + text + "” bir sayı değil");
+  }
+
+  // ---- numbers of the form aM + b (Big M) ---------------------------------
+  const MN = (m, k) => ({ m, k });
+  const mAdd = (x, y) => MN(add(x.m, y.m), add(x.k, y.k));
+  const mSub = (x, y) => MN(sub(x.m, y.m), sub(x.k, y.k));
+  const mScale = (x, q) => MN(mul(x.m, q), mul(x.k, q));
+  const mSgn = (x) => sgn(x.m) || sgn(x.k);
+  const mCmp = (x, y) => mSgn(mSub(x, y));
+
+  // ---- TeX output -----------------------------------------------------------
+  function texQ(a) {
+    const s = a.n < 0n ? "-" : "";
+    const n = a.n < 0n ? -a.n : a.n;
+    return a.d === 1n ? s + n : s + "\\frac{" + n + "}{" + a.d + "}";
+  }
+  function slashQ(a) {                // 2/3 instead of a nested fraction
+    return a.d === 1n ? texQ(a) : texQ(Q(a.n)) + "/" + a.d;
+  }
+  function texM(x) {
+    if (sgn(x.m) === 0) return texQ(x.k);
+    let out;
+    if (x.m.d === 1n && (x.m.n === 1n || x.m.n === -1n)) out = x.m.n === 1n ? "M" : "-M";
+    else out = texQ(x.m) + "M";
+    const s = sgn(x.k);
+    if (s > 0) out += "+" + texQ(x.k);
+    if (s < 0) out += texQ(x.k);
+    return out;
+  }
+
+  // ---- the solver -------------------------------------------------------------
+  // problem: {sense: "max"|"min", c: [Q], A: [[Q]], rel: ["<="|">="|"="], b: [Q]}
+  // returns {notes: [..], tables: [...], status, ...}; every table is a snapshot
+  function solve(problem) {
+    const n = problem.c.length, m = problem.b.length;
+    const notes = [];
+    const A = problem.A.map((row) => row.slice());
+    const rel = problem.rel.slice();
+    const b = problem.b.slice();
+    for (let i = 0; i < m; i++) {
+      if (sgn(b[i]) < 0) {
+        A[i] = A[i].map((a) => sub(ZERO, a));
+        b[i] = sub(ZERO, b[i]);
+        rel[i] = rel[i] === "<=" ? ">=" : rel[i] === ">=" ? "<=" : "=";
+        notes.push({ kind: "flip", row: i + 1 });
+      }
+    }
+    // columns: originals, then slack / surplus in row order, then artificials
+    const cols = [];
+    for (let j = 0; j < n; j++) cols.push({ name: "x_{" + (j + 1) + "}", v: "v_{" + (j + 1) + "}", cost: MN(ZERO, problem.c[j]), art: false, orig: j });
+    const basis = new Array(m);
+    let next = n + 1;
+    for (let i = 0; i < m; i++) {
+      if (rel[i] === "=") continue;
+      const col = { name: "x_{" + next + "}", v: "v_{" + next + "}", cost: MN(ZERO, ZERO), art: false, row: i, sign: rel[i] === "<=" ? 1 : -1 };
+      next++;
+      cols.push(col);
+      if (rel[i] === "<=") basis[i] = cols.length - 1;
+    }
+    const bigM = MN(problem.sense === "min" ? ONE : sub(ZERO, ONE), ZERO);
+    let u = 1;
+    for (let i = 0; i < m; i++) {
+      if (rel[i] === "<=") continue;
+      cols.push({ name: "x_{u_{" + u + "}}", v: "v_{u_{" + u + "}}", cost: bigM, art: true, row: i, sign: 1 });
+      u++;
+      basis[i] = cols.length - 1;
+    }
+    // body: T[i][j] for every column, y0 = b
+    const T = [];
+    for (let i = 0; i < m; i++) {
+      T.push(cols.map((col, j) => (j < n ? A[i][j] : col.row === i ? Q(BigInt(col.sign)) : ZERO)));
+    }
+    const y0 = b.slice();
+    const active = cols.map(() => true);
+
+    const tables = [];
+    const isMax = problem.sense === "max";
+    for (let iter = 0; iter < 40; iter++) {
+      // criteria row, computed from c_B every time
+      const crit = cols.map((col, j) => {
+        let z = MN(ZERO, ZERO);
+        for (let i = 0; i < m; i++) z = mAdd(z, mScale(cols[basis[i]].cost, T[i][j]));
+        return mSub(z, col.cost);
+      });
+      let z0 = MN(ZERO, ZERO);
+      for (let i = 0; i < m; i++) z0 = mAdd(z0, mScale(cols[basis[i]].cost, y0[i]));
+
+      // entering vector
+      let k = -1;
+      for (let j = 0; j < cols.length; j++) {
+        if (!active[j] || basis.includes(j)) continue;
+        const s = mSgn(crit[j]);
+        if (isMax ? s < 0 : s > 0) {
+          if (k < 0 || (isMax ? mCmp(crit[j], crit[k]) < 0 : mCmp(crit[j], crit[k]) > 0)) k = j;
+        }
+      }
+      const snap = { cols, active: active.slice(), basis: basis.slice(), T: T.map((r) => r.slice()), y0: y0.slice(), crit, z0, k, r: -1, ratios: null };
+      tables.push(snap);
+      if (k < 0) {
+        snap.status = "optimal";
+        break;
+      }
+      // ratio test
+      const ratios = y0.map((v, i) => (sgn(T[i][k]) > 0 ? div(v, T[i][k]) : null));
+      let r = -1;
+      ratios.forEach((q, i) => { if (q && (r < 0 || cmp(q, ratios[r]) < 0)) r = i; });
+      snap.ratios = ratios;
+      if (r < 0) {
+        // with a positive artificial still in the basis this means no feasible solution
+        snap.status = basis.some((j, i) => cols[j].art && sgn(y0[i]) > 0) ? "infeasible" : "unbounded";
+        break;
+      }
+      snap.r = r;
+      // tableau rule
+      const p = T[r][k];
+      T[r] = T[r].map((a) => div(a, p));
+      y0[r] = div(y0[r], p);
+      for (let i = 0; i < m; i++) {
+        if (i === r) continue;
+        const f = T[i][k];
+        if (sgn(f) === 0) continue;
+        T[i] = T[i].map((a, j) => sub(a, mul(f, T[r][j])));
+        y0[i] = sub(y0[i], mul(f, y0[r]));
+      }
+      const leaving = basis[r];
+      basis[r] = k;
+      if (cols[leaving].art) active[leaving] = false;   // its column is not written again
+      if (iter === 39) tables[tables.length - 1].status = "limit";
+    }
+    const last = tables[tables.length - 1];
+    const result = { notes, tables, status: last.status || "limit", n, isMax };
+    if (result.status === "optimal") {
+      const artInBasis = last.basis.map((j, i) => ({ j, i })).filter(({ j }) => cols[j].art);
+      if (artInBasis.some(({ i }) => sgn(last.y0[i]) > 0)) result.status = "infeasible";
+      else {
+        result.zeroArtificial = artInBasis.length > 0;
+        const x = new Array(cols.length).fill(ZERO);
+        last.basis.forEach((j, i) => { x[j] = last.y0[i]; });
+        result.x = x;
+        result.z = last.z0.k;
+        result.ray = cols.some((col, j) => last.active[j] && !col.art && !last.basis.includes(j) && mSgn(last.crit[j]) === 0 && !last.T.some((row) => sgn(row[j]) > 0));
+        result.alternative = cols.some((col, j) => last.active[j] && !col.art && !last.basis.includes(j) && mSgn(last.crit[j]) === 0 && last.T.some((row) => sgn(row[j]) > 0));
+      }
+    }
+    return result;
+  }
+  // ---- user interface ---------------------------------------------------------
+  const box = document.getElementById("lp-simplex-calculator");
+  const get = (role) => box.querySelector('[data-role="' + role + '"]');
+  const senseSel = get("sense"), nInput = get("n"), mInput = get("m");
+  const grid = get("grid"), result = get("result"), presetSel = get("preset");
+
+  const PRESETS = {
+    atolye: { sense: "max", c: ["2", "3"], A: [["1", "1"], ["1", "3"]], rel: ["<=", "<="], b: ["4", "6"] },
+    dikdortgen: { sense: "max", c: ["3", "5"], A: [["1", "0"], ["0", "2"], ["3", "2"]], rel: ["<=", "<=", "<="], b: ["4", "12", "18"] },
+    diyet: { sense: "min", c: ["2", "3"], A: [["1", "1"], ["1", "3"]], rel: [">=", ">="], b: ["4", "6"] },
+    esitlik: { sense: "max", c: ["3", "2"], A: [["2", "1"], ["1", "3"]], rel: ["=", "<="], b: ["6", "9"] },
+  };
+
+  const tex = (s) => "\\(" + s + "\\)";
+  const REL_TEX = { "<=": "\\le", ">=": "\\ge", "=": "=" };
+  const ORDINALS = ["Birinci", "İkinci", "Üçüncü", "Dördüncü", "Beşinci", "Altıncı", "Yedinci", "Sekizinci", "Dokuzuncu", "Onuncu"];
+
+  // keep typed values when the size changes
+  const values = {};
+  function remember() {
+    grid.querySelectorAll("[data-key]").forEach((el) => { values[el.dataset.key] = el.value; });
+  }
+  function field(key, def) {
+    const v = key in values ? values[key] : def;
+    return '<input type="text" inputmode="text" data-key="' + key + '" value="' + v + '" aria-label="' + key + '">';
+  }
+  function buildGrid() {
+    remember();
+    const n = Math.min(6, Math.max(1, Number(nInput.value) || 2));
+    const m = Math.min(6, Math.max(1, Number(mInput.value) || 2));
+    let h = "<" + "table><thead><tr><th></th>";
+    for (let j = 1; j <= n; j++) h += "<th>" + tex("x_{" + j + "}") + "</th>";
+    h += "<th></th><th>" + tex("b_i") + "</th></tr></thead><tbody>";
+    h += "<tr><th>" + tex("z") + "</th>";
+    for (let j = 1; j <= n; j++) h += "<td>" + field("c" + j, "0") + "</td>";
+    h += "<td></td><td></td></tr>";
+    for (let i = 1; i <= m; i++) {
+      h += "<tr><th>" + i + ".</th>";
+      for (let j = 1; j <= n; j++) h += "<td>" + field("a" + i + "_" + j, "0") + "</td>";
+      const r = values["r" + i] || "<=";
+      h += '<td><select data-key="r' + i + '" aria-label="r' + i + '">' +
+        ["<=", ">=", "="].map((o) => '<option value="' + o + '"' + (o === r ? " selected" : "") + ">" +
+          { "<=": "≤", ">=": "≥", "=": "=" }[o] + "</option>").join("") + "</select></td>";
+      h += "<td>" + field("b" + i, "0") + "</td></tr>";
+    }
+    h += "</tbody></table>";
+    grid.innerHTML = h;
+    typeset(grid);
+  }
+  function loadPreset(name) {
+    const p = PRESETS[name];
+    if (!p) return;
+    Object.keys(values).forEach((k) => delete values[k]);
+    senseSel.value = p.sense;
+    nInput.value = p.c.length;
+    mInput.value = p.b.length;
+    p.c.forEach((v, j) => { values["c" + (j + 1)] = v; });
+    p.A.forEach((row, i) => row.forEach((v, j) => { values["a" + (i + 1) + "_" + (j + 1)] = v; }));
+    p.rel.forEach((v, i) => { values["r" + (i + 1)] = v; });
+    p.b.forEach((v, i) => { values["b" + (i + 1)] = v; });
+    grid.innerHTML = "";
+    buildGrid();
+    result.innerHTML = "";
+  }
+  function readProblem() {
+    remember();
+    const n = Number(nInput.value), m = Number(mInput.value);
+    const q = (key) => parseQ(values[key] === undefined ? "0" : values[key]);
+    const c = [], A = [], rel = [], b = [];
+    for (let j = 1; j <= n; j++) c.push(q("c" + j));
+    for (let i = 1; i <= m; i++) {
+      const row = [];
+      for (let j = 1; j <= n; j++) row.push(q("a" + i + "_" + j));
+      A.push(row);
+      rel.push(values["r" + i] || "<=");
+      b.push(q("b" + i));
+    }
+    return { sense: senseSel.value, c, A, rel, b };
+  }
+
+  function typeset(el) {
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([el]).catch(() => {});
+  }
+
+  function tableHTML(snap, idx, isLast, status) {
+    const cols = snap.cols.map((c, j) => ({ c, j })).filter(({ j }) => snap.active[j]);
+    const withRatio = snap.ratios !== null;
+    let cap = idx === 0 ? "Başlangıç tablosu" : (ORDINALS[idx - 1] || idx + ".") + " iterasyon tablosu";
+    if (isLast && status === "optimal") cap += " (optimal tablo)";
+    let h = '<' + 'table class="simpleks table' + (withRatio ? "" : " oransiz") + '"><caption>' + cap + "</caption><thead><tr><th></th><th></th><th>" + tex("c_j") + "</th>";
+    cols.forEach(({ c }) => { h += "<th>" + tex(texM(c.cost)) + "</th>"; });
+    if (withRatio) h += "<th></th>";
+    h += "</tr></thead><tbody><tr><td>" + tex("x_B") + "</td><td>" + tex("c_B") + "</td><td>" + tex("v_0") + "</td>";
+    cols.forEach(({ c }) => { h += "<td>" + tex(c.v) + "</td>"; });
+    if (withRatio) h += "<td>Oran</td>";
+    h += "</tr>";
+    snap.basis.forEach((bj, i) => {
+      h += "<tr><td>" + tex(snap.cols[bj].name) + "</td><td>" + tex(texM(snap.cols[bj].cost)) + "</td><td>" + tex(texQ(snap.y0[i])) + "</td>";
+      cols.forEach(({ j }) => {
+        const t = texQ(snap.T[i][j]);
+        h += "<td>" + tex(i === snap.r && j === snap.k ? "[" + t + "]" : t) + "</td>";
+      });
+      if (withRatio) {
+        const q = snap.ratios[i];
+        h += "<td>" + (q ? tex("\\frac{" + texQ(snap.y0[i]) + "}{" + slashQ(snap.T[i][snap.k]) + "}" + (i === snap.r ? " \\Rightarrow" : "")) : tex("-")) + "</td>";
+      }
+      h += "</tr>";
+    });
+    h += "<tr><td>" + tex("z_j - c_j") + "</td><td></td><td>" + tex("z_0 = " + texM(snap.z0)) + "</td>";
+    cols.forEach(({ j }) => { h += "<td>" + tex(texM(snap.crit[j]) + (j === snap.k ? " \\Uparrow" : "")) + "</td>"; });
+    if (withRatio) h += "<td></td>";
+    return h + "</tr></tbody></table>";
+  }
+
+  function stepText(snap, isMax) {
+    if (snap.k < 0) return "";
+    const col = snap.cols[snap.k];
+    let s = tex(col.v) + " baza girer: " + (isMax ? "en negatif" : "en büyük pozitif") + " kriter " +
+      tex("z_j - c_j = " + texM(snap.crit[snap.k])) + ". ";
+    if (snap.r < 0) return s + tex(col.v) + " sütununda pozitif eleman yok, oran testi yapılamaz.";
+    const out = snap.cols[snap.basis[snap.r]];
+    s += "En küçük oran " + tex(texQ(snap.ratios[snap.r])) + " ile " + tex(out.name) + " satırında; " +
+      tex(out.v) + " bazdan çıkar, pivot " + tex(texQ(snap.T[snap.r][snap.k])) + ".";
+    if (out.art) s += " Çıkan yapay değişkenin sütunu sonraki tabloda yazılmaz.";
+    return s;
+  }
+
+  function setupText(res, problem) {
+    const cols = res.tables[0].cols;
+    const slack = cols.filter((c) => !c.art && c.row !== undefined && c.sign === 1).map((c) => c.name);
+    const surplus = cols.filter((c) => !c.art && c.row !== undefined && c.sign === -1).map((c) => c.name);
+    const art = cols.filter((c) => c.art).map((c) => c.name);
+    const parts = [];
+    res.notes.forEach((nt) => parts.push(nt.row + ". kısıtın sağ tarafı negatifti; iki yanı " + tex("-1") + " ile çarpıldı ve yönü döndü."));
+    if (slack.length) parts.push("Aylak değişkenler: " + slack.map(tex).join(", ") + ".");
+    if (surplus.length) parts.push("Artık değişkenler: " + surplus.map(tex).join(", ") + ".");
+    if (art.length) parts.push("Yapay değişkenler: " + art.map(tex).join(", ") + "; amaç katsayıları " +
+      tex(problem.sense === "min" ? "+M" : "-M") + " (Büyük M yöntemi).");
+    return parts.join(" ");
+  }
+
+  function conclusion(res, problem) {
+    const last = res.tables[res.tables.length - 1];
+    if (res.status === "unbounded") return "<strong>Sınırsız çözüm:</strong> giren sütunda pozitif eleman yok; amaç " + (res.isMax ? tex("+\\infty") : tex("-\\infty")) + "'a gider.";
+    if (res.status === "infeasible") return "<strong>Uygun çözüm yok:</strong> bazda pozitif değerli bir yapay değişken kaldı; kısıtlar birlikte sağlanamıyor.";
+    if (res.status === "limit") return '<span class="calc-error">Yöntem 40 iterasyonda durmadı; dejenere bir döngü olabilir.</span>';
+    const names = last.cols.filter((c) => !c.art).map((c) => c.name);
+    const vals = last.cols.map((c, j) => ({ c, j })).filter(({ c }) => !c.art).map(({ j }) => texQ(res.x[j]));
+    let s = "<strong>Optimal çözüm:</strong> " + tex("X^{*} = (" + names.join(", ") + ") = (" + vals.join(", ") + ")") +
+      ", " + tex((res.isMax ? "\\max" : "\\min") + " z = " + texQ(res.z)) + ".";
+    if (res.alternative) s += " Optimal tabloda kriteri " + tex("0") + " olan temel dışı bir vektör var; alternatif optimal çözüm olabilir.";
+    if (res.ray) s += " Kriteri " + tex("0") + " olan temel dışı bir sütunda pozitif eleman yok; optimal çözümler bir ışın boyunca uzanır.";
+    if (res.zeroArtificial) s += " Bazda " + tex("0") + " değerli bir yapay değişken kaldı; çözüm dejeneredir.";
+    return s;
+  }
+
+  function run() {
+    let problem;
+    try {
+      problem = readProblem();
+    } catch (e) {
+      result.innerHTML = '<p class="calc-error">' + e.message + "</p>";
+      return;
+    }
+    const res = solve(problem);
+    let h = '<p class="calc-note">' + setupText(res, problem) + "</p>";
+    res.tables.forEach((snap, idx) => {
+      const isLast = idx === res.tables.length - 1;
+      h += tableHTML(snap, idx, isLast, res.status);
+      if (!isLast || res.status === "unbounded") h += '<p class="calc-note">' + stepText(snap, res.isMax) + "</p>";
+    });
+    h += '<p class="calc-result">' + conclusion(res, problem) + "</p>";
+    result.innerHTML = h;
+    typeset(result);
+  }
+
+  nInput.addEventListener("change", buildGrid);
+  mInput.addEventListener("change", buildGrid);
+  presetSel.addEventListener("change", () => loadPreset(presetSel.value));
+  get("solve").addEventListener("click", run);
+  loadPreset("atolye");
+})();
+</script>
+```
+
+## Başlangıç Bazı Yoksa: Büyük M mi, İki Faz mı? {#sec-ozt-yapay}
+
+Kısıtlarda $\ge$ ya da $=$ varsa standart form birim matris içermeyebilir ve yapay değişken eklenir. Bundan sonra iki yol vardır; ikisi de aynı tabloları farklı bir amaçla yürütür. Büyük M yönteminde başlangıç tablosu şöyle kurulur.
+
+::: {.callout-tip title="Beş adımda Büyük M başlangıç tablosu"}
+1. **Standart form.** Sağ tarafı negatif satırı $-1$ ile çarp; $\le$ kısıta aylak ekle, $\ge$ kısıttan artık çıkar.
+2. **Yapaylar.** Birim sütunu olmayan her satıra ($\ge$ ve $=$ satırları) bir yapay değişken ekle; amaç katsayısı minimumda $+M$, maksimumda $-M$'dir.
+3. **Başlangıç bazı.** $\le$ satırlarında aylak, diğer satırlarda yapay değişken bazdadır; $c_B$ sütununa bunların katsayıları ($0$ ya da $\pm M$) yazılır.
+4. **Son satır kısayolu.** Aylakların maliyeti $0$ olduğundan yalnız yapaylı satırlar katkı verir: her sütun için
+$$
+\begin{aligned}
+z_j - c_j &= \pm M \cdot (\text{yapaylı satırlardaki elemanlar toplamı}) - c_j , \\[1mm]
+z_0 &= \pm M \cdot (\text{yapaylı satırların sağ tarafları toplamı});
+\end{aligned}
+$$
+işaret minimumda $+$, maksimumda $-$'dir.
+5. **İterasyonlar.** Kriterleri önce $M$'nin katsayısına göre karşılaştır; bazdan çıkan yapayın sütununu sil. Optimal tabloda bazda pozitif bir yapay kaldıysa uygun çözüm yoktur.
+:::
+
+Örneğin minimum probleminde tek yapaylı satır $(2 \mid 2,\ 1,\ -1,\ 0,\ 0)$ ve $c_1 = -3$, $c_2 = 1$ ise kriterler $z_1 - c_1 = 2M + 3$, $z_2 - c_2 = M - 1$, $z_3 - c_3 = -M$ ve $z_0 = 2M$'dir; @tbl-bym-ornek-baslangic ile karşılaştır.
+
+| | [Büyük M yöntemi](buyuk-m-yontemi.qmd) | [İki faz yöntemi](iki-faz-yontemi.qmd) |
+|:--|:--|:--|
+| Amaç | Orijinal amaç ve yapaylar için $+M$ (min) ya da $-M$ (max) | 1\. faz: $\min g = \sum x_{u_i}$ (max'ta $\max g = -\sum x_{u_i}$); 2. faz: orijinal amaç |
+| Kriterler | $aM + b$ biçiminde; önce $M$'nin katsayısı karşılaştırılır | Sayı; 1. fazda yapayların katsayısı $\pm 1$ |
+| Bazdan çıkan yapay | Sütunu sonraki tablolarda yazılmaz | Sütunu atılır |
+| Uygun çözüm yok | Optimal tabloda bazda pozitif yapay değişken kalır | 1\. fazın sonunda $g \ne 0$ |
+| Bazda $0$ değerli yapay | Gerçek bir sütundaki sıfır olmayan elemanla pivot yap; hepsi sıfırsa satır gereksizdir, silinir | Aynı; sonra 2. faza geçilir |
+| Geçiş | Yok, tek aşama | 1\. fazın optimal tablosunda $c_j$ satırı ve $c_B$ sütunu orijinal katsayılarla değiştirilir, son satır yeniden hesaplanır |
+
+: Büyük M ve iki faz yöntemlerinin karşılaştırması {#tbl-ozt-yapay}
+
+Yani iki faz yöntemi, Büyük M yöntemindeki "$M$ çok büyük" fikrini iki aşamaya böler: önce yalnız $M$'li kısım en iyilenir, sonra sabit kısım (@prp-ifz-buyuk-m-bag). Elle hesapta $M$'li ifadelerle uğraşmak istemiyorsan iki faz yöntemini seç.
+
+## Dual Problemi Yazmak {#sec-ozt-dual}
+
+Dual, kanonik formdaki primalin katsayı tablosunun sütun sütun okunmasıdır (@def-dua-dual-problem). Primal maksimum problemiyse karşılıklar aşağıdaki gibidir; primal minimumsa bütün eşitsizlik yönleri ters döner.
+
+| Maksimum primal | Minimum dual |
+|:--|:--|
+| $m$ kısıt, $n$ değişken | $n$ kısıt, $m$ değişken |
+| $i$. kısıt $\le b_i$ | $y_i \ge 0$ |
+| $i$. kısıt $\ge b_i$ | önce $-1$ ile çarp ($\le -b_i$), sonra $y_i \ge 0$ |
+| $i$. kısıt $= b_i$ | $y_i$ işaretsiz (@prp-dua-esitlik) |
+| $x_j \ge 0$ | $j$. dual kısıt $a_{1j}y_1 + \dots + a_{mj}y_m \ge c_j$ |
+| $x_j$ işaretsiz | $j$. dual kısıt eşitlik: $\dots = c_j$ (@prp-dua-esitlik) |
+| $x_j \le 0$ | önce $x_j = -x_j'$ yaz, sonra tanımı uygula |
+| Amaç katsayıları $c_j$ | Dual kısıtların sağ tarafları |
+| Sağ taraflar $b_i$ | Dual amacın katsayıları: $\min g = b_1y_1 + \dots + b_my_m$ |
+
+: Primal ile dual arasındaki karşılıklar {#tbl-ozt-dual}
+
+Sağ tarafları negatif olmayan bir problemde primalin optimal tablosu dualin çözümünü de verir (@prp-dua-tablodan-okuma). Primal maksimumsa $i$. kısıtın dual değişkeni, o kısıtın aylak sütununun kriteridir: $y_i^{*} = z_{n+i} - c_{n+i}$. Primal minimumsa dual değişken, artık sütununun kriterinin negatifidir: $y_i^{*} = -(z_{n+i} - c_{n+i})$. Güçlü dualite gereği iki optimal değer eşittir (@thm-dua-guclu).
+
+:::: {#exm-ozt-dual name="Dual çözümü optimal tablodan okumak"}
+Dikdörtgen kuralı örneğindeki (@exm-ozt-dikdortgen) problemin dualini yazınız ve dual optimal çözümü o örneğin optimal tablosundan (@tbl-ozt-optimal) okuyunuz.
+
+::: {.cozum}
+**Dual.** Primal kanonik formdaki bir maksimum problemidir; üç kısıtına $y_1, y_2, y_3 \ge 0$ karşılık gelir. Katsayı tablosunu sütun sütun okursak
+$$
+\begin{aligned}
+y_1 + 3y_3 &\ge 3 \\
+2y_2 + 2y_3 &\ge 5 \\
+y_1, y_2, y_3 &\ge 0 \\
+\min g &= 4y_1 + 12y_2 + 18y_3
+\end{aligned}
+$$
+bulunur.
+
+**Tablodan okuma.** Aylak değişkenler $x_3, x_4, x_5$ sırasıyla birinci, ikinci ve üçüncü kısıta aittir. Optimal tablodaki kriterleri $0$, $\tfrac{3}{2}$ ve $1$'dir. Buna göre
+$$
+y_1^{*} = 0, \qquad y_2^{*} = \frac{3}{2}, \qquad y_3^{*} = 1 .
+$$
+
+**Sağlama.** Dual kısıtlar $0 + 3 \cdot 1 = 3 \ge 3$ ve $2 \cdot \tfrac{3}{2} + 2 \cdot 1 = 5 \ge 5$ ile sağlanır. Amaç değeri $g = 4 \cdot 0 + 12 \cdot \tfrac{3}{2} + 18 \cdot 1 = 36$'dır ve primalin $\max z = 36$ değerine eşittir. $y_1^{*} = 0$ olmasının nedeni de tablodadır: aylak $x_3$ bazdadır ($x_3 = 2$), bazdaki vektörlerin kriteri $0$ olduğundan (@prp-smp-baz-kriter-sifir) $y_1^{*} = z_3 - c_3 = 0$ çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Dual Simpleks Algoritması {#sec-ozt-dual-simpleks}
+
+Dual simpleks algoritması simpleks yöntemin aynasıdır: önce satır, sonra sütun seçer (@def-dsa-kurallar). İki yöntemi yan yana koyalım.
+
+| | Simpleks yöntem | Dual simpleks algoritması |
+|:--|:--|:--|
+| Tablonun durumu | Uygun: $v_0$ sütunu $\ge 0$ | Dual uygun: kriterler optimal işaretli, $v_0$'da negatif olabilir |
+| Önce seçilen | Giren sütun: kritere göre | Çıkan satır: en negatif $x_{Bi}$ |
+| Sonra seçilen | Çıkan satır: $y_{ik} > 0$ olanlarda en küçük $y_{i0} / y_{ik}$ | Giren sütun: $y_{rj} < 0$ olanlarda en küçük $\left\lvert (z_j - c_j) / y_{rj} \right\rvert$ |
+| Pivot | Pozitif | Negatif |
+| Oranların yeri | Sağda, Oran sütunu | Altta, Oran satırı |
+| Durma | Kriterler optimal işaretli | $v_0$ sütunu $\ge 0$ |
+| Olumsuz sonuç | Giren sütunda pozitif eleman yok: sınırsız | Pivot satırında negatif eleman yok: uygun çözüm yok |
+
+: Simpleks yöntem ile dual simpleks algoritmasının karşılaştırması {#tbl-ozt-dual-simpleks}
+
+Dual simpleks iki yerde işe yarar. Birincisi, maliyetleri negatif olmayan ve $\ge$ kısıtlı bir minimum probleminde $\ge$ kısıtları $-1$ ile çarpılınca yapay değişkene gerek kalmadan dual uygun bir başlangıç tablosu elde edilir (@prp-dsa-baslangic). İkincisi, duyarlılık analizinde sağ taraf değişince optimal tablonun $v_0$ sütunu negatif olabilir; tablo hâlâ dual uygun olduğundan dual simpleks kaldığı yerden devam eder (@sec-dsa-duyarlilik). Yeni tablo yine dikdörtgen kuralıyla hesaplanır.
+
+## Duyarlılık Analizi Formülleri {#sec-ozt-duyarlilik}
+
+Duyarlılık analizinin bütün hesapları optimal bazın $B$ matrisine dayanır (@def-dya-baz-matrisi). $B$, optimal tablodaki baz değişkenlerinin **standart formdaki** sütunlarından tablonun satır sırasıyla kurulur ve tablonun her parçası onunla yazılır (@thm-dya-tablo):
+$$
+\vec{y}_j = B^{-1} v_j, \qquad v_0 \text{ sütunu} = B^{-1}\vec{b}, \qquad z_0 = \vec{c}_B^{\,T} B^{-1} \vec{b}.
+$$
+Bütün kısıtlar $\le$ ise $B^{-1}$'i hesaplamaya gerek yoktur: optimal tablonun aylak sütunlarında hazır durur (@prp-dya-ters-tabloda). Örneğin @tbl-ozt-optimal tablosunda $v_3, v_4, v_5$ sütunları $B^{-1}$'in sütunlarıdır.
+
+| Değişen veri | Ne hesaplanır | Optimallik korunur, eğer |
+|:--|:--|:--|
+| Temel dışı $x_k$'nın $c_k$'sı | Yalnız $z_k - c_k$ | max: $c_k \le z_k$; min: $c_k \ge z_k$ |
+| Temelde olan $x_r$'nin $c_r$'si | $c_r$'yi sembol bırak, temel dışı bütün kriterleri $c_r$ cinsinden yaz | Hepsi max'ta $\ge 0$, min'de $\le 0$; aralıkların kesişimi |
+| Sağ taraf $b_i$ | $b_i$'yi sembol bırak, $B^{-1}\vec{b}$'yi hesapla | $B^{-1}\vec{b} \ge \vec{0}$; aralıkların kesişimi |
+
+: Duyarlılık analizinde hesap ve koşul {#tbl-ozt-duyarlilik}
+
+Aralığın dışına çıkılırsa tablo bozulur: kriter bozulduysa simpleks yöntemle, $v_0$ bozulduysa dual simpleks algoritmasıyla devam edilir.
+
+## Dal-Sınır Yöntemi Kısaca {#sec-ozt-dal-sinir}
+
+Tam sayılı bir problem, tam sayı şartı kaldırılmış LP problemleri çözülerek adım adım daraltılır (@sec-dsy-yontem). Maksimum probleminde:
+
+- **Başla.** Rahatlatılmış problemi çöz. Değeri Ü.S olur; başta $\text{A.S} = -\infty$.
+- **Dallandır.** Kesirli bir $x_j = a$ seç ve iki alt problem kur: birine $x_j \le \lfloor a \rfloor$, öbürüne $x_j \ge \lceil a \rceil$ kısıtını ekle.
+- **Buda.** Her alt problemin rahatlatılmış çözümüne bak (@def-dsy-budama):
+
+| Durum | Karar |
+|:--|:--|
+| Uygun çözüm yok | Buda (D2) |
+| Çözüm tam sayılı | Aday; $z > \text{A.S}$ ise yeni A.S olur; buda (D3) |
+| $z \le \text{A.S}$ | Buda (D1) |
+| Hiçbiri | Dallandırmak üzere beklet |
+
+: Maksimum probleminde alt problem kararları {#tbl-ozt-budama}
+
+- **Bitir.** Bekleyen alt problem kalmayınca en iyi aday optimaldir; aday yoksa uygun tam sayılı çözüm yoktur.
+
+Minimum probleminde Ü.S ile A.S yer değiştirir: rahatlatılmış değer A.S olur, başta $\text{Ü.S} = +\infty$ alınır ve $z \ge \text{Ü.S}$ olan alt problem budanır.
+
+## Son Kontrol Listesi {#sec-ozt-kontrol}
+
+Bir çözümü bitirmeden önce şu soruları sor:
+
+1. Modelde her kısıtın iki yanının birimi aynı mı? "En az" ve "en çok" yönleri doğru mu?
+2. Tablo yönteminde $C(n, m)$ seçimin hepsini yazdın mı, $\Delta = 0$ olanları ayırdın mı?
+3. Grafik yöntemde bütün aday köşeleri buldun mu? Her kesişim noktasının bütün kısıtları sağladığını kontrol ettin mi?
+4. Standart formda bütün sağ taraflar $\ge 0$ mı? Sağ taraf negatifse satırı $-1$ ile çarpıp yapay değişkenden önce düzelttin mi?
+5. Yapay değişkenin katsayısı doğru mu: minimumda $+M$, maksimumda $-M$?
+6. Giren vektörü doğru işaretle mi seçtin: maksimumda en negatif, minimumda en büyük pozitif kriter?
+7. Oran testinde yalnız pozitif elemanları mı kullandın?
+8. Her yeni tabloda baz sütunları birim vektör, kriterleri $0$ mı? $z_0 = \vec{c}_B^{\,T}\vec{y}_0$ sağlamasını yaptın mı?
+9. Dönüştürülmüş değişkenlerden ($x_j'$, $x_j''$) orijinal değişkenlere döndün mü, amaçtaki sabiti optimal değere ekledin mi?
+
+Kuralları bir bütün hâlinde uygulamak için [Alıştırmalar](alistirmalar.qmd) bölümündeki çözümlü problemlere dönebilirsin.
