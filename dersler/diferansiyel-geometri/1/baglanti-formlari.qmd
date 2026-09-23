@@ -1,0 +1,1500 @@
+---
+title: "Bağlantı Formları"
+pagetitle: "Bağlantı Formları"
+description: "Bir çatı alanının kovaryant türevlerini çatının kendisi cinsinden yazan katsayılar ve bağlantı formları; bağlantı formlarının ters simetrik 1-formlar oluşu ve dönme hızı olarak anlamı; bağlantı denklemleri ve Frenet formülleriyle karşılaştırma; bir eğri boyunca bağlantı denklemleri ve helisin eğrilik ile burulmasının bağlantı formlarından okunması; çatı alanının duruş matrisi ve bağlantı formlarını ondan veren formül; silindirik, küresel ve toroidal çatı alanlarının bağlantı formları; çözümlü alıştırmalar."
+---
+
+Önceki bölümde ([Çatı Alanları](cati-alanlari.qmd)) uzayın her noktasına bir çatı yerleştiren çatı alanlarını tanımladık ve iki önemli örneği, silindirik ve küresel çatı alanlarını kurduk. O bölümün son alıştırmalarında silindirik çatının kovaryant türevlerini hesaplamış ve dikkat çekici bir tabloyla karşılaşmıştık: $\nabla_{\mathbf{v}} E_1$ yalnızca $E_2$ yönündeydi, $\nabla_{\mathbf{v}} E_2$ yalnızca $E_1$ yönündeydi, iki katsayı birbirinin ters işaretlisiydi ve $E_3$ hiç değişmiyordu. Bu tablo Frenet formüllerine çok benziyordu. Bu bölümde benzerliğin tesadüf olmadığını, her çatı alanında karşımıza çıkan bir yapının parçası olduğunu göreceğiz.
+
+Frenet formüllerinin gücü, $T', N', B'$ türevlerinin ne olduğunu söylemelerinden değil, bu türevleri $T, N, B$'nin kendisi cinsinden yazmalarından gelir; eğrilik ve burulma zaten bu yazılışın katsayıları olarak ortaya çıkmıştı (@thm-frenet-formulleri). Aynı işi keyfi bir $E_1, E_2, E_3$ çatı alanı için yapacağız: çatının kovaryant türevlerini çatının kendisi cinsinden yazacağız. Eğride katsayılar iki fonksiyondu, çünkü eğrinin üzerinde ilerlenecek tek bir yön vardı. Uzayda ise her noktadan her yöne gidilebilir; katsayılar gidilen yöne bağlı olacak ve bu bağımlılık bizi yeniden 1-formlara götürecek. Bu 1-formlara çatı alanının bağlantı formları diyeceğiz.
+
+Bölümün planı şöyledir. Önce bağlantı formlarını tanımlayıp bunların ters simetrik 1-formlar olduğunu ispatlayacağız. Ardından çatının kovaryant türevlerini bağlantı formlarıyla veren bağlantı denklemlerini çıkarıp Frenet formülleriyle karşılaştıracak ve bir eğri boyunca bu denklemlerin tam olarak Frenet formüllerine dönüştüğünü göreceğiz. Son olarak bağlantı formlarını çatının duruş matrisinden mekanik bir çarpımla hesaplayan formülü ispatlayıp silindirik, küresel ve toroidal çatı alanlarına uygulayacağız.
+
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, fmt, sceneLayout, path, point, label, segment, arrow, cylinder, render } from "../ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
+## Çatının Türevleri Çatının Kendisi Cinsinden
+
+İşe tek bir teğet vektörle başlayalım. $E_1, E_2, E_3$, $\mathbb{R}^3$ üzerinde (ya da $\mathbb{R}^3$'ün bir açık kümesinde) bir çatı alanı, $\mathbf{v}$ de bir $\mathbf{p}$ noktasında teğet bir vektör olsun. $\nabla_{\mathbf{v}} E_1$, $\nabla_{\mathbf{v}} E_2$, $\nabla_{\mathbf{v}} E_3$ kovaryant türevleri $\mathbf{p}$'de uygulanmış teğet vektörlerdir (@def-kovaryant-turev) ve aynı noktada $E_1(\mathbf{p}), E_2(\mathbf{p}), E_3(\mathbf{p})$ bir çatıdır. Bir noktadaki her teğet vektör o noktadaki bir çatıya göre ortonormal açılımla yazılabildiğinden (@thm-iccarpim-ortonormal-acilim)
+
+$$\begin{aligned}
+\nabla_{\mathbf{v}} E_1 &= c_{11} E_1(\mathbf{p}) + c_{12} E_2(\mathbf{p}) + c_{13} E_3(\mathbf{p}),\\
+\nabla_{\mathbf{v}} E_2 &= c_{21} E_1(\mathbf{p}) + c_{22} E_2(\mathbf{p}) + c_{23} E_3(\mathbf{p}),\\
+\nabla_{\mathbf{v}} E_3 &= c_{31} E_1(\mathbf{p}) + c_{32} E_2(\mathbf{p}) + c_{33} E_3(\mathbf{p})
+\end{aligned}$$
+
+olur ve katsayılar iç çarpımla bulunur:
+
+$$c_{ij} = \nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p}), \qquad 1 \le i, j \le 3.$$
+
+Yani $c_{ij}$, $\mathbf{p}$ noktası $\mathbf{v}$ yönünde harekete geçtiğinde $i$-inci okun değişiminin $j$-inci ok doğrultusundaki bileşenidir. Önce iki çatı alanında bu dokuz sayıyı hesaplayalım.
+
+:::: {#exm-baglanti-silindirik-katsayilar name="Silindirik Çatının Bir Noktadaki Katsayıları"}
+$E_1, E_2, E_3$ silindirik çatı alanı, $\mathbf{p} = (3, 4, 2)$ ve $\mathbf{v} = (1, 2, 5)_{\mathbf{p}}$ olsun. Dokuz $c_{ij}$ katsayısını bulalım.
+
+::: {.cozum}
+@exr-cati-silindirik-kovaryant-b'de bu nokta ve bu vektör için
+
+$$\nabla_{\mathbf{v}} E_1 = \dfrac{2}{25}\, E_2(\mathbf{p}), \qquad \nabla_{\mathbf{v}} E_2 = -\dfrac{2}{25}\, E_1(\mathbf{p}), \qquad \nabla_{\mathbf{v}} E_3 = \mathbf{0}$$
+
+bulmuştuk. Katsayıları iç çarpımla okuruz. Örneğin $E_2(\mathbf{p})$ birim ve $E_1(\mathbf{p})$ ile $E_3(\mathbf{p})$'ye dik olduğundan
+
+$$c_{12} = \dfrac{2}{25}\, E_2(\mathbf{p}) \cdot E_2(\mathbf{p}) = \dfrac{2}{25}, \qquad c_{11} = \dfrac{2}{25}\, E_2(\mathbf{p}) \cdot E_1(\mathbf{p}) = 0$$
+
+olur; öteki yedi katsayı aynı biçimde bulunur. Hepsini bir matrise dizelim:
+
+$$(c_{ij}) = \begin{pmatrix} 0 & 2/25 & 0 \\ -2/25 & 0 & 0 \\ 0 & 0 & 0 \end{pmatrix}.$$
+
+Dokuz sayıdan yalnızca ikisi sıfırdan farklıdır ve bu ikisi birbirinin ters işaretlisidir; köşegen tamamen sıfırdır. Bu iki gözlemin, yani köşegenin sıfır ve matrisin ters simetrik olmasının, her çatı alanında ve her yönde geçerli olduğunu birazdan ispatlayacağız.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-baglanti-vida-katsayilar name="Yükseklikle Dönen Çatının Katsayıları"}
+$E_1 = \cos z\, U_1 + \sin z\, U_2$, $E_2 = -\sin z\, U_1 + \cos z\, U_2$, $E_3 = U_3$ çatı alanı (@exm-cati-bukulen-cati), bir $\mathbf{p}$ noktası ve $\mathbf{v} = (v_1, v_2, v_3)_{\mathbf{p}}$ teğet vektörü için $c_{ij}$ katsayılarını bulalım.
+
+::: {.cozum}
+Kovaryant türevleri koordinat formülüyle (@lem-kovaryant-koordinat-formulu) hesaplarız. $E_1$'in koordinat fonksiyonları $\cos z$, $\sin z$ ve $0$'dır; yalnızca $z$'ye bağlı olduklarından @lem-yonlu-kismi-turev-formulu ile
+
+$$\mathbf{v}[\cos z] = -v_3 \sin z, \qquad \mathbf{v}[\sin z] = v_3 \cos z$$
+
+bulunur; burada $z$, $\mathbf{p}$'nin üçüncü koordinatıdır. Dolayısıyla
+
+$$\nabla_{\mathbf{v}} E_1 = v_3\bigl(-\sin z\, U_1(\mathbf{p}) + \cos z\, U_2(\mathbf{p})\bigr) = v_3\, E_2(\mathbf{p}).$$
+
+Aynı biçimde $E_2$'nin koordinat fonksiyonları $-\sin z$, $\cos z$, $0$ olduğundan
+
+$$\nabla_{\mathbf{v}} E_2 = v_3\bigl(-\cos z\, U_1(\mathbf{p}) - \sin z\, U_2(\mathbf{p})\bigr) = -v_3\, E_1(\mathbf{p})$$
+
+olur ve $E_3 = U_3$'ün koordinatları sabit olduğundan $\nabla_{\mathbf{v}} E_3 = \mathbf{0}$'dır. Katsayılar $c_{12} = v_3$, $c_{21} = -v_3$; öteki yedisi sıfırdır.
+
+Sonuç $\mathbf{v}$'nin yalnızca üçüncü bileşenine bağlıdır ve $\mathbf{p}$'ye hiç bağlı değildir. Yatay bir düzlemde kalarak ilerlersek ($v_3 = 0$) çatı hiç değişmez; bu, çatının her yatay düzlemde sabit olmasının türev dilindeki karşılığıdır. Yukarı doğru birim hızla çıkarsak ($\mathbf{v} = U_3(\mathbf{p})$) $\nabla_{\mathbf{v}} E_1 = E_2(\mathbf{p})$ olur: $E_1$, $E_2$'ye doğru birim hızla döner. Bu da $z$ yüksekliğindeki çatının doğal çatıya göre tam $z$ radyan dönmüş olmasıyla uyumludur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="72.5 22.5 214.5 354.0" role="img" aria-label="The z axis with the rotating frame E1 = (cos z, sin z, 0), E2 = (-sin z, cos z, 0) drawn at heights 0, pi/4, pi/2, 3pi/4, pi; the frame turns by the height; the tips of E1 lie on a dashed helix; E3 = U3 drawn once at the top">
+  <path d="M151.4,361.9 L151.4,60.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="151.4" y1="66.8" x2="151.4" y2="47.8" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="151.4,42.2 154.4,49.2 148.5,49.2" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="159.4" y="42.2" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">z</text>
+  <path d="M114.6,340.4 L118.1,341.1 L121.7,341.7 L125.5,342.2 L129.4,342.7 L133.4,343.0 L137.5,343.3 L141.6,343.6 L145.8,343.7 L150.0,343.8 L154.2,343.8 L158.4,343.7 L162.6,343.5 L166.7,343.3 L170.8,342.9 L174.7,342.5 L178.6,342.0 L182.3,341.5 L186.0,340.9 L189.4,340.2 L192.8,339.4 L195.9,338.6 L198.8,337.7 L201.6,336.8 L204.1,335.8 L206.4,334.8 L208.5,333.7 L210.3,332.6 L211.8,331.4 L213.1,330.3 L214.2,329.1 L215.0,327.9 L215.5,326.6 L215.7,325.4 L215.7,324.2 L215.3,323.0 L214.7,321.7 L213.9,320.5 L212.7,319.3 L211.3,318.2 L209.7,317.1 L207.8,316.0 L205.6,314.9 L203.3,313.9 L200.7,312.9 L197.9,312.0 L194.9,311.1 L191.7,310.3 L188.3,309.6 L184.8,308.9 L181.1,308.3 L177.3,307.8 L173.4,307.3 L169.4,307.0 L165.3,306.7 L161.2,306.4 L157.0,306.3 L152.8,306.2 L148.6,306.2 L144.4,306.3 L140.3,306.5 L136.1,306.7 L132.1,307.1 L128.1,307.5 L124.3,308.0 L120.5,308.5 L116.9,309.1 L113.4,309.8 L110.1,310.6 L107.0,311.4 L104.0,312.3 L101.3,313.2 L98.8,314.2 L96.5,315.2 L94.4,316.3 L92.6,317.4 L91.0,318.6 L89.7,319.7 L88.7,320.9 L87.9,322.1 L87.4,323.4 L87.2,324.6 L87.2,325.8 L87.5,327.0 L88.1,328.3 L89.0,329.5 L90.1,330.7 L91.5,331.8 L93.2,332.9 L95.1,334.0 L97.2,335.1 L99.6,336.1 L102.2,337.1 L105.0,338.0 L108.0,338.9 L111.2,339.7 L114.6,340.4" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.28" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M114.6,292.1 L118.1,292.8 L121.7,293.4 L125.5,293.9 L129.4,294.4 L133.4,294.8 L137.5,295.1 L141.6,295.3 L145.8,295.4 L150.0,295.5 L154.2,295.5 L158.4,295.4 L162.6,295.2 L166.7,295.0 L170.8,294.6 L174.7,294.2 L178.6,293.8 L182.3,293.2 L186.0,292.6 L189.4,291.9 L192.8,291.1 L195.9,290.3 L198.8,289.4 L201.6,288.5 L204.1,287.5 L206.4,286.5 L208.5,285.4 L210.3,284.3 L211.8,283.1 L213.1,282.0 L214.2,280.8 L215.0,279.6 L215.5,278.4 L215.7,277.1 L215.7,275.9 L215.3,274.7 L214.7,273.5 L213.9,272.2 L212.7,271.1 L211.3,269.9 L209.7,268.8 L207.8,267.7 L205.6,266.6 L203.3,265.6 L200.7,264.6 L197.9,263.7 L194.9,262.9 L191.7,262.1 L188.3,261.3 L184.8,260.6 L181.1,260.0 L177.3,259.5 L173.4,259.1 L169.4,258.7 L165.3,258.4 L161.2,258.1 L157.0,258.0 L152.8,257.9 L148.6,257.9 L144.4,258.0 L140.3,258.2 L136.1,258.5 L132.1,258.8 L128.1,259.2 L124.3,259.7 L120.5,260.2 L116.9,260.9 L113.4,261.6 L110.1,262.3 L107.0,263.1 L104.0,264.0 L101.3,265.0 L98.8,265.9 L96.5,267.0 L94.4,268.0 L92.6,269.1 L91.0,270.3 L89.7,271.5 L88.7,272.6 L87.9,273.9 L87.4,275.1 L87.2,276.3 L87.2,277.5 L87.5,278.8 L88.1,280.0 L89.0,281.2 L90.1,282.4 L91.5,283.5 L93.2,284.7 L95.1,285.8 L97.2,286.8 L99.6,287.8 L102.2,288.8 L105.0,289.7 L108.0,290.6 L111.2,291.4 L114.6,292.1" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.28" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M114.6,243.8 L118.1,244.5 L121.7,245.1 L125.5,245.6 L129.4,246.1 L133.4,246.5 L137.5,246.8 L141.6,247.0 L145.8,247.2 L150.0,247.2 L154.2,247.2 L158.4,247.1 L162.6,246.9 L166.7,246.7 L170.8,246.4 L174.7,245.9 L178.6,245.5 L182.3,244.9 L186.0,244.3 L189.4,243.6 L192.8,242.8 L195.9,242.0 L198.8,241.1 L201.6,240.2 L204.1,239.2 L206.4,238.2 L208.5,237.1 L210.3,236.0 L211.8,234.9 L213.1,233.7 L214.2,232.5 L215.0,231.3 L215.5,230.1 L215.7,228.8 L215.7,227.6 L215.3,226.4 L214.7,225.2 L213.9,224.0 L212.7,222.8 L211.3,221.6 L209.7,220.5 L207.8,219.4 L205.6,218.3 L203.3,217.3 L200.7,216.4 L197.9,215.4 L194.9,214.6 L191.7,213.8 L188.3,213.0 L184.8,212.4 L181.1,211.8 L177.3,211.2 L173.4,210.8 L169.4,210.4 L165.3,210.1 L161.2,209.9 L157.0,209.7 L152.8,209.6 L148.6,209.7 L144.4,209.7 L140.3,209.9 L136.1,210.2 L132.1,210.5 L128.1,210.9 L124.3,211.4 L120.5,212.0 L116.9,212.6 L113.4,213.3 L110.1,214.0 L107.0,214.9 L104.0,215.7 L101.3,216.7 L98.8,217.7 L96.5,218.7 L94.4,219.8 L92.6,220.9 L91.0,222.0 L89.7,223.2 L88.7,224.4 L87.9,225.6 L87.4,226.8 L87.2,228.0 L87.2,229.3 L87.5,230.5 L88.1,231.7 L89.0,232.9 L90.1,234.1 L91.5,235.2 L93.2,236.4 L95.1,237.5 L97.2,238.5 L99.6,239.5 L102.2,240.5 L105.0,241.4 L108.0,242.3 L111.2,243.1 L114.6,243.8" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.28" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M114.6,195.5 L118.1,196.2 L121.7,196.8 L125.5,197.4 L129.4,197.8 L133.4,198.2 L137.5,198.5 L141.6,198.7 L145.8,198.9 L150.0,198.9 L154.2,198.9 L158.4,198.8 L162.6,198.7 L166.7,198.4 L170.8,198.1 L174.7,197.7 L178.6,197.2 L182.3,196.6 L186.0,196.0 L189.4,195.3 L192.8,194.5 L195.9,193.7 L198.8,192.8 L201.6,191.9 L204.1,190.9 L206.4,189.9 L208.5,188.8 L210.3,187.7 L211.8,186.6 L213.1,185.4 L214.2,184.2 L215.0,183.0 L215.5,181.8 L215.7,180.6 L215.7,179.3 L215.3,178.1 L214.7,176.9 L213.9,175.7 L212.7,174.5 L211.3,173.3 L209.7,172.2 L207.8,171.1 L205.6,170.1 L203.3,169.0 L200.7,168.1 L197.9,167.2 L194.9,166.3 L191.7,165.5 L188.3,164.8 L184.8,164.1 L181.1,163.5 L177.3,162.9 L173.4,162.5 L169.4,162.1 L165.3,161.8 L161.2,161.6 L157.0,161.4 L152.8,161.4 L148.6,161.4 L144.4,161.5 L140.3,161.6 L136.1,161.9 L132.1,162.2 L128.1,162.6 L124.3,163.1 L120.5,163.7 L116.9,164.3 L113.4,165.0 L110.1,165.8 L107.0,166.6 L104.0,167.5 L101.3,168.4 L98.8,169.4 L96.5,170.4 L94.4,171.5 L92.6,172.6 L91.0,173.7 L89.7,174.9 L88.7,176.1 L87.9,177.3 L87.4,178.5 L87.2,179.7 L87.2,181.0 L87.5,182.2 L88.1,183.4 L89.0,184.6 L90.1,185.8 L91.5,187.0 L93.2,188.1 L95.1,189.2 L97.2,190.2 L99.6,191.3 L102.2,192.2 L105.0,193.1 L108.0,194.0 L111.2,194.8 L114.6,195.5" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.28" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M114.6,147.3 L118.1,147.9 L121.7,148.5 L125.5,149.1 L129.4,149.5 L133.4,149.9 L137.5,150.2 L141.6,150.4 L145.8,150.6 L150.0,150.7 L154.2,150.6 L158.4,150.5 L162.6,150.4 L166.7,150.1 L170.8,149.8 L174.7,149.4 L178.6,148.9 L182.3,148.3 L186.0,147.7 L189.4,147.0 L192.8,146.3 L195.9,145.4 L198.8,144.6 L201.6,143.6 L204.1,142.6 L206.4,141.6 L208.5,140.5 L210.3,139.4 L211.8,138.3 L213.1,137.1 L214.2,135.9 L215.0,134.7 L215.5,133.5 L215.7,132.3 L215.7,131.0 L215.3,129.8 L214.7,128.6 L213.9,127.4 L212.7,126.2 L211.3,125.1 L209.7,123.9 L207.8,122.8 L205.6,121.8 L203.3,120.8 L200.7,119.8 L197.9,118.9 L194.9,118.0 L191.7,117.2 L188.3,116.5 L184.8,115.8 L181.1,115.2 L177.3,114.7 L173.4,114.2 L169.4,113.8 L165.3,113.5 L161.2,113.3 L157.0,113.1 L152.8,113.1 L148.6,113.1 L144.4,113.2 L140.3,113.4 L136.1,113.6 L132.1,113.9 L128.1,114.3 L124.3,114.8 L120.5,115.4 L116.9,116.0 L113.4,116.7 L110.1,117.5 L107.0,118.3 L104.0,119.2 L101.3,120.1 L98.8,121.1 L96.5,122.1 L94.4,123.2 L92.6,124.3 L91.0,125.4 L89.7,126.6 L88.7,127.8 L87.9,129.0 L87.4,130.2 L87.2,131.5 L87.2,132.7 L87.5,133.9 L88.1,135.1 L89.0,136.3 L90.1,137.5 L91.5,138.7 L93.2,139.8 L95.1,140.9 L97.2,142.0 L99.6,143.0 L102.2,143.9 L105.0,144.9 L108.0,145.7 L111.2,146.5 L114.6,147.3" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.28" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M107.1,347.8 L108.1,346.8 L109.1,345.7 L110.2,344.7 L111.3,343.6 L112.4,342.5 L113.5,341.5 L114.6,340.4 L115.7,339.3 L116.9,338.2 L118.1,337.1 L119.2,335.9 L120.5,334.8 L121.7,333.7 L122.9,332.6 L124.2,331.4 L125.4,330.3 L126.7,329.1 L128.0,327.9 L129.3,326.7 L130.6,325.6 L131.9,324.4 L133.2,323.2 L134.5,321.9 L135.9,320.7 L137.2,319.5 L138.6,318.3 L139.9,317.0 L141.3,315.8 L142.6,314.5 L144.0,313.2 L145.4,311.9 L146.8,310.7 L148.1,309.4 L149.5,308.0 L150.9,306.7 L152.3,305.4 L153.7,304.1 L155.1,302.7 L156.4,301.4 L157.8,300.0 L159.2,298.7 L160.6,297.3 L161.9,295.9 L163.3,294.5 L164.6,293.1 L166.0,291.7 L167.3,290.3 L168.7,288.9 L170.0,287.4 L171.3,286.0 L172.6,284.5 L173.9,283.1 L175.2,281.6 L176.5,280.1 L177.8,278.6 L179.0,277.1 L180.3,275.6 L181.5,274.1 L182.7,272.6 L183.9,271.1 L185.1,269.6 L186.3,268.0 L187.4,266.5 L188.6,264.9 L189.7,263.4 L190.8,261.8 L191.9,260.2 L192.9,258.7 L194.0,257.1 L195.0,255.5 L196.0,253.9 L197.0,252.3 L198.0,250.7 L198.9,249.0 L199.8,247.4 L200.7,245.8 L201.6,244.2 L202.5,242.5 L203.3,240.9 L204.1,239.2 L204.9,237.6 L205.6,235.9 L206.4,234.2 L207.1,232.6 L207.7,230.9 L208.4,229.2 L209.0,227.5 L209.6,225.8 L210.2,224.1 L210.7,222.5 L211.3,220.8 L211.8,219.1 L212.2,217.4 L212.7,215.6 L213.1,213.9 L213.4,212.2 L213.8,210.5 L214.1,208.8 L214.4,207.1 L214.7,205.4 L214.9,203.6 L215.1,201.9 L215.3,200.2 L215.4,198.5 L215.5,196.7 L215.6,195.0 L215.7,193.3 L215.7,191.6 L215.7,189.8 L215.7,188.1 L215.6,186.4 L215.5,184.7 L215.4,182.9 L215.2,181.2 L215.1,179.5 L214.9,177.8 L214.6,176.0 L214.3,174.3 L214.1,172.6 L213.7,170.9 L213.4,169.2 L213.0,167.5 L212.6,165.8 L212.1,164.1 L211.7,162.4 L211.2,160.7 L210.6,159.0 L210.1,157.3 L209.5,155.6 L208.9,153.9 L208.3,152.2 L207.6,150.5 L206.9,148.9 L206.2,147.2 L205.5,145.5 L204.7,143.9 L203.9,142.2 L203.1,140.6 L202.3,138.9 L201.4,137.3 L200.5,135.6 L199.6,134.0 L198.7,132.4 L197.8,130.8 L196.8,129.2 L195.8,127.6 L194.8,126.0 L193.8,124.4 L192.7,122.8 L191.6,121.2 L190.6,119.6 L189.5,118.1 L188.3,116.5 L187.2,115.0 L186.0,113.4 L184.9,111.9 L183.7,110.4 L182.5,108.8 L181.2,107.3 L180.0,105.8" fill="none" stroke="var(--color-practice)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="151.4" y1="325.0" x2="120.1" y2="338.1" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="114.6,340.4 120.3,334.6 122.7,340.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="151.4" y1="325.0" x2="198.2" y2="334.6" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="204.1,335.8 196.1,337.4 197.4,331.2" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="151.4" cy="325.0" r="3.0" fill="var(--academic-text)"/>
+  <text x="231.8" y="329.0" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">z</tspan> = 0</text>
+  <line x1="151.4" y1="276.7" x2="159.5" y2="290.1" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="162.6,295.2 156.0,290.4 161.4,287.2" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="151.4" y1="276.7" x2="208.7" y2="273.8" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="214.7,273.5 207.4,277.0 207.1,270.7" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="151.4" cy="276.7" r="3.0" fill="var(--academic-text)"/>
+  <text x="231.8" y="280.7" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">z</tspan> = &#960;/4</text>
+  <line x1="151.4" y1="228.4" x2="198.2" y2="238.0" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="204.1,239.2 196.1,240.8 197.4,234.6" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="151.4" y1="228.4" x2="182.8" y2="215.3" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="188.3,213.0 182.6,218.8 180.2,213.0" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="151.4" cy="228.4" r="3.0" fill="var(--academic-text)"/>
+  <text x="231.8" y="232.4" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">z</tspan> = &#960;/2</text>
+  <line x1="151.4" y1="180.1" x2="208.7" y2="177.2" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="214.7,176.9 207.4,180.4 207.1,174.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="151.4" y1="180.1" x2="143.4" y2="166.8" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="140.3,161.6 146.8,166.4 141.4,169.7" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="151.4" cy="180.1" r="3.0" fill="var(--academic-text)"/>
+  <text x="231.8" y="184.1" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">z</tspan> = 3&#960;/4</text>
+  <line x1="151.4" y1="131.9" x2="182.8" y2="118.8" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="188.3,116.5 182.6,122.3 180.2,116.5" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="151.4" y1="131.9" x2="104.6" y2="122.3" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="98.8,121.1 106.7,119.5 105.5,125.7" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="151.4" cy="131.9" r="3.0" fill="var(--academic-text)"/>
+  <text x="231.8" y="135.9" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">z</tspan> = &#960;</text>
+  <line x1="151.4" y1="131.9" x2="151.4" y2="76.4" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="151.4,70.4 154.6,77.9 148.3,77.9" fill="var(--color-theory)" opacity="1.0"/>
+  <text x="159.4" y="74.4" fill="var(--color-theory)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="108.6" y="352.4" fill="var(--color-practice)" font-size="11.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="208.1" y="349.8" fill="var(--color-base)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+</svg>
+<figcaption>Yükseklikle dönen çatı alanı <em>z</em> ekseninin beş noktasında: <em>z</em> = 0, &#960;/4, &#960;/2, 3&#960;/4, &#960;. Her yatay düzlemde çatı sabittir; yukarı çıktıkça <em>E</em><sub>1</sub> (turuncu) ile <em>E</em><sub>2</sub> (yeşil) birlikte, yükseklik kadar açıyla döner: her &#960;/4 yükselişte turun sekizde biri. <em>E</em><sub>1</sub>&#8217;in uçları kesikli helis üzerindedir. <em>U</em><sub>3</sub> yönünde birim hızla çıkarken <em>E</em><sub>1</sub>, <em>E</em><sub>2</sub>&#8217;ye doğru birim hızla döner: <em>&#969;</em><sub>12</sub>(<em>U</em><sub>3</sub>) = <em>dz</em>(<em>U</em><sub>3</sub>) = 1. <em>E</em><sub>3</sub> (mavi) her yerde aynıdır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Her iki örnekte de $c_{ij}$ katsayıları $\mathbf{v}$'ye bağlıydı: aynı noktada başka bir yön seçseydik başka sayılar elde ederdik. Bu bağımlılığı gösterimde açıkça taşımak için $c_{ij}$ yerine $\omega_{ij}(\mathbf{v})$ yazalım. Böylece her $i, j$ çifti için $\omega_{ij}$, bütün teğet vektörler üzerinde tanımlı, gerçel değerli bir fonksiyon olur. Bu türden fonksiyonları tanıyoruz: 1-formlar da tam olarak teğet vektörlere sayı karşılık getiren fonksiyonlardı (@def-form-bir-form).
+
+::: {#def-baglanti-baglanti-formlari name="Bağlantı Formları"}
+$E_1, E_2, E_3$ bir çatı alanı olsun. $1 \le i, j \le 3$ için, bir $\mathbf{p}$ noktasındaki her $\mathbf{v}$ teğet vektörüne
+
+$$\omega_{ij}(\mathbf{v}) = \nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p})$$
+
+sayısını karşılık getiren $\omega_{ij}$ fonksiyonlarına $E_1, E_2, E_3$ çatı alanının **bağlantı formları** (connection forms) denir.
+:::
+
+Yani $\omega_{ij}(\mathbf{v})$, $\mathbf{p}$ noktası $\mathbf{v}$ yönünde harekete geçtiği ilk anda $E_i$ okunun değişiminin $E_j$ doğrultusundaki bileşenidir. "Form" adı bir öngörüdür: aşağıdaki lemma bu dokuz fonksiyonun gerçekten 1-form olduğunu ve aralarında sıkı bir bağ bulunduğunu söyler.
+
+:::: {#lem-baglanti-bir-form name="Bağlantı Formları Ters Simetrik 1-Formlardır"}
+$E_1, E_2, E_3$ bir çatı alanı ve $\omega_{ij}$ onun bağlantı formları olsun. O zaman her $\omega_{ij}$ bir 1-formdur ve
+
+$$\omega_{ij} = -\omega_{ji}, \qquad 1 \le i, j \le 3.$$
+
+::: {.ispat}
+*Her noktada lineerlik.* Tanım gereği $\omega_{ij}$, teğet vektörler üzerinde gerçel değerli bir fonksiyondur; 1-form olması için her noktada lineer olduğunu göstermek yeter (@def-form-bir-form). $\mathbf{v}$ ve $\mathbf{w}$ aynı $\mathbf{p}$ noktasında teğet vektörler, $a$ ve $b$ sayılar olsun. Kovaryant türevin teğet vektörde lineerliği (@thm-kovaryant-ozellikleri, (1)) ve iç çarpımın bilineerliğiyle
+
+$$\begin{aligned}
+\omega_{ij}(a\mathbf{v} + b\mathbf{w}) &= \nabla_{a\mathbf{v} + b\mathbf{w}} E_i \cdot E_j(\mathbf{p})\\
+&= \bigl(a\,\nabla_{\mathbf{v}} E_i + b\,\nabla_{\mathbf{w}} E_i\bigr) \cdot E_j(\mathbf{p})\\
+&= a\,\nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p}) + b\,\nabla_{\mathbf{w}} E_i \cdot E_j(\mathbf{p})\\
+&= a\,\omega_{ij}(\mathbf{v}) + b\,\omega_{ij}(\mathbf{w}).
+\end{aligned}$$
+
+*Diferansiyellenebilirlik.* "1-form" sözünden diferansiyellenebilir 1-form anlıyoruz (@def-form-diferansiyellenebilir): her $V$ vektör alanı için $\omega_{ij}(V)$ fonksiyonu diferansiyellenebilir olmalıdır. Her $\mathbf{p}$ noktasında
+
+$$\omega_{ij}(V)(\mathbf{p}) = \omega_{ij}\bigl(V(\mathbf{p})\bigr) = \nabla_{V(\mathbf{p})} E_i \cdot E_j(\mathbf{p}) = (\nabla_V E_i)(\mathbf{p}) \cdot E_j(\mathbf{p})$$
+
+olduğundan $\omega_{ij}(V) = \nabla_V E_i \cdot E_j$ fonksiyon eşitliği geçerlidir. $\nabla_V E_i$ bir vektör alanıdır (@lem-kovaryant-vektor-alani-koordinat-formulu) ve iki vektör alanının iç çarpımı diferansiyellenebilir bir fonksiyondur (@lem-cati-ic-carpim-formulu).
+
+*Ters simetri.* Her $\mathbf{v}$ teğet vektörü için $\omega_{ij}(\mathbf{v}) = -\omega_{ji}(\mathbf{v})$ olduğunu göstermeliyiz. Çatı alanının tanımı gereği $E_i \cdot E_j = \delta_{ij}$'dir (@def-cati-cati-alani). $\delta_{ij}$ sabit bir fonksiyon ($0$ ya da $1$) olduğundan her yönlü türevi sıfırdır. Kovaryant türevin iç çarpım için Leibniz kuralı (@thm-kovaryant-ozellikleri, (4)) bu yüzden
+
+$$0 = \mathbf{v}[E_i \cdot E_j] = \nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p}) + E_i(\mathbf{p}) \cdot \nabla_{\mathbf{v}} E_j$$
+
+verir. İlk terim tanım gereği $\omega_{ij}(\mathbf{v})$'dir. İç çarpım simetrik olduğundan son terim $\nabla_{\mathbf{v}} E_j \cdot E_i(\mathbf{p})$, yani $\omega_{ji}(\mathbf{v})$'dir. Böylece $0 = \omega_{ij}(\mathbf{v}) + \omega_{ji}(\mathbf{v})$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Ters simetrinin $i = j$ durumu $\omega_{ii} = -\omega_{ii}$ der; dolayısıyla
+
+$$\omega_{11} = \omega_{22} = \omega_{33} = 0.$$
+
+Yani her $\mathbf{v}$ için $\nabla_{\mathbf{v}} E_i \cdot E_i(\mathbf{p}) = 0$: birim uzunluktaki bir okun değişimi kendisine diktir, ok uzayıp kısalamaz, yalnızca döner (@exr-kovaryant-sabit-uzunluk). Bu koşul dokuz 1-formu özünde üçe indirir: $\omega_{12}$, $\omega_{13}$ ve $\omega_{23}$ bilinince ötekiler $\omega_{21} = -\omega_{12}$, $\omega_{31} = -\omega_{13}$, $\omega_{32} = -\omega_{23}$ ve sıfır köşegenle belirlenir.
+
+Bağlantı formlarının geometrik anlamı da tanımdan okunur. $\omega_{ij}(\mathbf{v}) = \nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p})$ sayısı, **$\mathbf{p}$ noktası $\mathbf{v}$ yönünde hareket ederken $E_i$'nin $E_j$'ye doğru dönmeye başlama hızıdır.** Ters simetri bu dönmenin karşılıklı olduğunu söyler: $E_i$, $E_j$'ye doğru hangi hızla dönüyorsa $E_j$ de aynı hızla $E_i$'den uzaklaşır; birbirine dik iki ok, bir kâğıt üzerindeki bir dik açı gibi, birlikte döner. $\omega_{ij}$ 1-formu bu bilgiyi tek bir yön için değil, $\mathbb{R}^3$'e teğet bütün vektörler için bir arada taşır. Bu anlamı en açık biçimde, çatının tek bir açıyla döndüğü durumda görürüz.
+
+:::: {#exm-baglanti-duzlemde-donen name="Tek Bir Açıyla Dönen Çatı Alanları"}
+$\psi$, $\mathbb{R}^3$'ün bir açık kümesinde diferansiyellenebilir bir fonksiyon olsun ve bu kümede
+
+$$E_1 = \cos\psi\, U_1 + \sin\psi\, U_2, \qquad E_2 = -\sin\psi\, U_1 + \cos\psi\, U_2, \qquad E_3 = U_3$$
+
+çatı alanını alalım. Bağlantı formlarının $\omega_{12} = d\psi$ ve $\omega_{13} = \omega_{23} = 0$ olduğunu gösterelim.
+
+::: {.cozum}
+Bu üçlü her $\mathbf{p}$ noktasında doğal çatının $z$ ekseni etrafında $\psi(\mathbf{p})$ açısıyla döndürülmüşüdür; bir çatı alanı olduğu, @exm-cati-bukulen-cati'deki hesapta $z$ yerine $\psi$ yazılarak görülür.
+
+Bir $\mathbf{p}$ noktasında bir $\mathbf{v}$ teğet vektörü alalım. Yönlü türev diferansiyelin değeridir, $\mathbf{v}[f] = df(\mathbf{v})$ (@def-form-diferansiyel), ve bileşke kuralı (@lem-form-bileske-kurali) $d(\cos\psi) = -\sin\psi\, d\psi$ ile $d(\sin\psi) = \cos\psi\, d\psi$ verir. Koordinat formülüyle (@lem-kovaryant-koordinat-formulu), $\psi$'yi ve $U_i$'leri $\mathbf{p}$'de değerlendirerek,
+
+$$\begin{aligned}
+\nabla_{\mathbf{v}} E_1 &= d\psi(\mathbf{v})\,\bigl(-\sin\psi\, U_1 + \cos\psi\, U_2\bigr) = d\psi(\mathbf{v})\, E_2(\mathbf{p}),\\
+\nabla_{\mathbf{v}} E_2 &= d\psi(\mathbf{v})\,\bigl(-\cos\psi\, U_1 - \sin\psi\, U_2\bigr) = -d\psi(\mathbf{v})\, E_1(\mathbf{p})
+\end{aligned}$$
+
+bulunur ve $\nabla_{\mathbf{v}} E_3 = \mathbf{0}$'dır. Bağlantı formlarının tanımıyla
+
+$$\begin{aligned}
+\omega_{12}(\mathbf{v}) &= d\psi(\mathbf{v})\, E_2(\mathbf{p}) \cdot E_2(\mathbf{p}) = d\psi(\mathbf{v}),\\
+\omega_{13}(\mathbf{v}) &= d\psi(\mathbf{v})\, E_2(\mathbf{p}) \cdot E_3(\mathbf{p}) = 0,\\
+\omega_{23}(\mathbf{v}) &= -d\psi(\mathbf{v})\, E_1(\mathbf{p}) \cdot E_3(\mathbf{p}) = 0.
+\end{aligned}$$
+
+Bu eşitlikler her teğet vektör için doğru olduğundan $\omega_{12} = d\psi$ ve $\omega_{13} = \omega_{23} = 0$'dır.
+
+Yani çatı tek bir açıyla dönüyorsa bağlantı formu o açının diferansiyelidir: $\mathbf{v}$ yönünde $E_1$'in $E_2$'ye doğru dönme hızı, dönme açısının $\mathbf{v}$ yönündeki değişim hızıdır. Düzlemde durum hep böyledir: düzlemdeki bir çatı alanı yalnızca iki oktan oluşur, (yerel olarak) tek bir açı fonksiyonuyla yazılır ve tek bağlantı formu o açının diferansiyelidir. Uzayda ise çatı üç ayrı koordinat düzleminde dönebildiği için üç bağlantı formu gerekir; bu örnekte yalnızca $E_1 E_2$ düzlemindeki dönme vardır ve üçüncü ok $E_3 = U_3$ işe hiç karışmaz.
+
+İki özel durum tanıdıktır. $\psi = z$ alınırsa yükseklikle dönen çatı çıkar ve $\omega_{12} = dz$ olur; @exm-baglanti-vida-katsayilar'daki $c_{12} = v_3$ sayısı tam olarak $dz(\mathbf{v})$'dir. $\psi = \vartheta$ alınırsa silindirik çatı alanı çıkar:
+
+$$\omega_{12} = d\vartheta, \qquad \omega_{13} = \omega_{23} = 0.$$
+
+$\vartheta$ fonksiyonunun kendisi yalnızca bir yarım düzlemin dışında tanımlıdır (@def-cati-silindirik-koordinatlar); ama diferansiyeli $z$ ekseni dışındaki her yerde anlamlıdır. Gerçekten $x = r\cos\vartheta$ ve $y = r\sin\vartheta$ eşitliklerinin diferansiyelleri
+
+$$dx = \cos\vartheta\, dr - r\sin\vartheta\, d\vartheta, \qquad dy = \sin\vartheta\, dr + r\cos\vartheta\, d\vartheta$$
+
+olduğundan $-\sin\vartheta\, dx + \cos\vartheta\, dy = r\, d\vartheta$ ve
+
+$$d\vartheta = \dfrac{-\sin\vartheta\, dx + \cos\vartheta\, dy}{r} = \dfrac{-y\, dx + x\, dy}{x^2 + y^2}$$
+
+bulunur. Sağ taraf hangi yarım düzlemi dışarıda bırakırsak bırakalım aynıdır ve $z$ ekseni dışında her yerde tanımlıdır. Buradan $\mathbf{v} = (v_1, v_2, v_3)_{\mathbf{p}}$ için
+
+$$\omega_{12}(\mathbf{v}) = d\vartheta(\mathbf{v}) = \dfrac{-y v_1 + x v_2}{r^2} = \dfrac{\mathbf{v} \cdot E_2(\mathbf{p})}{r}$$
+
+olur; bu, @exr-cati-silindirik-kovaryant-a'da bulduğumuz katsayının ta kendisidir. $\mathbf{p} = (3, 4, 2)$ ve $\mathbf{v} = (1, 2, 5)$ için $(-4 + 6)/25 = 2/25$ çıkar, @exm-baglanti-silindirik-katsayilar ile aynı.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="17.5 5.5 366.5 350.0" role="img" aria-label="Top view of the xy plane. Points p and q on the circle r = 3 at polar angles 30 and 65 degrees, s on the ray of p at r = 5. Cylindrical frame E1 orange and E2 green at each point. A dashed copy of E1(q) at p makes the same angle delta theta with E1(p) as the angle at O; the frame at s equals the frame at p">
+  <line x1="32.2" y1="307.7" x2="362.9" y2="307.7" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="368.5,307.7 361.5,310.6 361.5,304.7" fill="var(--academic-text)" opacity="0.5"/>
+  <line x1="74.8" y1="340.8" x2="74.8" y2="29.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="74.8,23.5 77.8,30.5 71.9,30.5" fill="var(--academic-text)" opacity="0.5"/>
+  <text x="366.5" y="323.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x</text>
+  <text x="82.8" y="25.5" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">y</text>
+  <path d="M215.6,327.5 L216.2,321.9 L216.7,316.4 L216.9,310.8 L216.9,305.2 L216.7,299.6 L216.3,294.1 L215.6,288.5 L214.8,283.0 L213.7,277.5 L212.4,272.1 L210.9,266.7 L209.2,261.4 L207.3,256.2 L205.2,251.0 L202.8,245.9 L200.3,241.0 L197.6,236.1 L194.7,231.3 L191.6,226.7 L188.3,222.2 L184.9,217.8 L181.3,213.5 L177.5,209.4 L173.6,205.5 L169.5,201.7 L165.2,198.0 L160.9,194.6 L156.4,191.3 L151.7,188.2 L147.0,185.2 L142.1,182.5 L137.1,180.0 L132.1,177.6 L126.9,175.5 L121.7,173.5 L116.4,171.8 L111.0,170.3 L105.6,168.9 L100.1,167.8 L94.6,167.0 L89.1,166.3 L83.5,165.8 L77.9,165.6 L72.4,165.6 L66.8,165.8 L61.2,166.2 L55.7,166.9 L50.2,167.7" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M74.8,307.7 L316.9,167.9" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M74.8,307.7 L134.9,178.9" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M120.0,281.6 L119.6,281.1 L119.3,280.5 L118.9,279.9 L118.6,279.4 L118.2,278.8 L117.8,278.3 L117.5,277.7 L117.1,277.2 L116.7,276.6 L116.3,276.1 L115.9,275.6 L115.5,275.1 L115.1,274.6 L114.6,274.0 L114.2,273.5 L113.8,273.0 L113.3,272.6 L112.9,272.1 L112.4,271.6 L112.0,271.1 L111.5,270.6 L111.0,270.2 L110.5,269.7 L110.0,269.3 L109.6,268.8 L109.1,268.4 L108.6,268.0 L108.0,267.5 L107.5,267.1 L107.0,266.7 L106.5,266.3 L106.0,265.9 L105.4,265.5 L104.9,265.1 L104.3,264.7 L103.8,264.4 L103.2,264.0 L102.7,263.6 L102.1,263.3 L101.5,262.9 L101.0,262.6 L100.4,262.3 L99.8,262.0 L99.2,261.6 L98.6,261.3 L98.1,261.0 L97.5,260.7 L96.9,260.5" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="121.2" y="261.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#916;<tspan font-style="italic">&#977;</tspan></text>
+  <line x1="197.9" y1="236.6" x2="233.0" y2="216.3" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="238.9,212.9 233.4,220.3 229.8,214.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="197.9" y1="236.6" x2="177.6" y2="201.5" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="174.2,195.6 181.6,201.2 175.4,204.8" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="134.9" y1="178.9" x2="152.0" y2="142.1" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="154.9,136.0 154.6,145.2 148.1,142.2" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="134.9" y1="178.9" x2="98.1" y2="161.7" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="92.0,158.9 101.2,159.2 98.2,165.7" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="280.0" y1="189.3" x2="315.1" y2="169.0" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="321.0,165.6 315.4,172.9 311.8,166.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="280.0" y1="189.3" x2="259.7" y2="154.1" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="256.3,148.2 263.6,153.8 257.4,157.4" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="197.9" y1="236.6" x2="215.4" y2="199.1" stroke="var(--color-practice)" stroke-width="1.4" stroke-dasharray="3 2.5" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="217.9,193.7 217.6,201.8 211.9,199.2" fill="var(--color-practice)" opacity="0.8"/>
+  <path d="M223.3,221.9 L223.2,221.6 L223.0,221.3 L222.8,221.0 L222.6,220.7 L222.4,220.4 L222.1,220.0 L221.9,219.7 L221.7,219.4 L221.5,219.1 L221.3,218.8 L221.0,218.5 L220.8,218.2 L220.6,218.0 L220.3,217.7 L220.1,217.4 L219.8,217.1 L219.6,216.8 L219.3,216.6 L219.1,216.3 L218.8,216.0 L218.6,215.8 L218.3,215.5 L218.0,215.2 L217.7,215.0 L217.5,214.7 L217.2,214.5 L216.9,214.2 L216.6,214.0 L216.3,213.8 L216.0,213.5 L215.7,213.3 L215.4,213.1 L215.1,212.9 L214.8,212.6 L214.5,212.4 L214.2,212.2 L213.9,212.0 L213.6,211.8 L213.3,211.6 L213.0,211.4 L212.6,211.2 L212.3,211.0 L212.0,210.9 L211.7,210.7 L211.3,210.5 L211.0,210.3 L210.7,210.2 L210.3,210.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="226.1" y="209.9" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#916;<tspan font-style="italic">&#977;</tspan></text>
+  <circle cx="197.9" cy="236.6" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="134.9" cy="178.9" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="280.0" cy="189.3" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="74.8" cy="307.7" r="3.0" fill="var(--academic-text)"/>
+  <text x="67.8" y="322.7" fill="var(--academic-text)" font-size="11.5" text-anchor="end">O</text>
+  <text x="201.9" y="253.6" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-weight="700">p</tspan></text>
+  <text x="126.9" y="182.9" fill="var(--academic-text)" font-size="12" text-anchor="end"><tspan font-weight="700">q</tspan></text>
+  <text x="286.0" y="205.3" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-weight="700">s</tspan></text>
+  <text x="160.9" y="138.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="86.0" y="160.9" fill="var(--color-base)" font-size="11.5" text-anchor="end"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="327.0" y="169.6" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="250.3" y="148.2" fill="var(--color-base)" font-size="11.5" text-anchor="end"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="246.9" y="222.9" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="166.2" y="197.6" fill="var(--color-base)" font-size="11.5" text-anchor="end"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="84.3" y="44.8" fill="var(--academic-text)" font-size="11" text-anchor="start"><tspan font-style="italic">r</tspan> = 3 çemberi boyunca: çatı &#916;<tspan font-style="italic">&#977;</tspan> kadar döner</text>
+  <text x="84.3" y="68.5" fill="var(--academic-text)" font-size="11" text-anchor="start">ışın boyunca (<tspan font-weight="700">p</tspan> &#8594; <tspan font-weight="700">s</tspan>): çatı değişmez</text>
+</svg>
+<figcaption><em>xy</em> düzlemine üstten bakış: silindirik çatının <em>E</em><sub>1</sub> (turuncu) ve <em>E</em><sub>2</sub> (yeşil) okları <strong>p</strong>, <strong>q</strong> ve <strong>s</strong> noktalarında. <strong>p</strong>&#8217;den <strong>q</strong>&#8217;ya <em>r</em> = 3 çemberi üzerinde giderken çatı, noktanın <em>O</em> etrafındaki açısı <em>&#916;&#977;</em> kadar döner: kesikli turuncu ok <em>E</em><sub>1</sub>(<strong>q</strong>)&#8217;nun <strong>p</strong>&#8217;ye taşınmış kopyasıdır ve <em>E</em><sub>1</sub>(<strong>p</strong>) ile arasındaki açı <em>O</em>&#8217;daki açıyla aynıdır. Işın boyunca, <strong>p</strong>&#8217;den <strong>s</strong>&#8217;ye giderken açı ve çatı değişmez. Dönme hızı <em>&#969;</em><sub>12</sub>(<strong>v</strong>) = <em>d&#977;</em>(<strong>v</strong>)&#8217;dir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bağlantı Denklemleri
+
+Bağlantı formlarını tanımlarken yaptığımız tek şey, ortonormal açılımın katsayılarına ad vermekti. Bu yüzden aşağıdaki temel sonuç tanımın vektör alanları diliyle yeniden söylenmesinden ibarettir; ama bu bölümün ve bir sonraki bölümün bütün hesapları bu eşitliklere dayanır.
+
+:::: {#thm-baglanti-baglanti-denklemleri name="Bağlantı Denklemleri"}
+$\omega_{ij}$ ($1 \le i, j \le 3$), bir $E_1, E_2, E_3$ çatı alanının bağlantı formları olsun. O zaman her $V$ vektör alanı için
+
+$$\nabla_V E_i = \sum_{j=1}^{3} \omega_{ij}(V)\, E_j, \qquad 1 \le i \le 3.$$
+
+Bu üç eşitliğe $E_1, E_2, E_3$ çatı alanının **bağlantı denklemleri** (connection equations) denir.
+
+::: {.ispat}
+$i$'yi sabitleyelim. İki taraf da vektör alanıdır: sol taraf $E_i$'nin $V$'ye göre kovaryant türevidir (@def-kovaryant-vektor-alanina-gore-turev), sağ taraf ise $\omega_{ij}(V)$ fonksiyonlarıyla (@def-form-alanda-deger) çarpılmış $E_j$ alanlarının toplamıdır. İki vektör alanı her noktada aynı değeri alıyorlarsa eşittir. Bir $\mathbf{p}$ noktasında sol tarafın değeri $\nabla_{V(\mathbf{p})} E_i$'dir; sağ tarafın değeri ise, alanlar üzerindeki işlemlerin noktasal tanımı gereği,
+
+$$\sum_{j=1}^{3} \omega_{ij}(V)(\mathbf{p})\, E_j(\mathbf{p}) = \sum_{j=1}^{3} \omega_{ij}\bigl(V(\mathbf{p})\bigr)\, E_j(\mathbf{p})$$
+
+vektörüdür. $\nabla_{V(\mathbf{p})} E_i$, $T_{\mathbf{p}}(\mathbb{R}^3)$'te bir vektördür ve $E_1(\mathbf{p}), E_2(\mathbf{p}), E_3(\mathbf{p})$ bu uzayda bir çatıdır. Ortonormal açılım (@thm-iccarpim-ortonormal-acilim)
+
+$$\nabla_{V(\mathbf{p})} E_i = \sum_{j=1}^{3} \Bigl(\nabla_{V(\mathbf{p})} E_i \cdot E_j(\mathbf{p})\Bigr)\, E_j(\mathbf{p})$$
+
+verir ve parantez içindeki katsayı, bağlantı formunun tanımı gereği tam olarak $\omega_{ij}\bigl(V(\mathbf{p})\bigr)$'dir. İki taraf her noktada eşittir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bağlantı formlarını bir matrisin girdileri olarak düşünmek en kullanışlı yoldur. Ters simetri sayesinde bu matris üç 1-formla belirlenir:
+
+$$\omega = \begin{pmatrix} \omega_{11} & \omega_{12} & \omega_{13} \\ \omega_{21} & \omega_{22} & \omega_{23} \\ \omega_{31} & \omega_{32} & \omega_{33} \end{pmatrix} = \begin{pmatrix} 0 & \omega_{12} & \omega_{13} \\ -\omega_{12} & 0 & \omega_{23} \\ -\omega_{13} & -\omega_{23} & 0 \end{pmatrix}.$$
+
+$\omega$, girdileri 1-form olan ters simetrik bir matristir. Açık yazılışta bağlantı denklemleri
+
+$$\begin{aligned}
+\nabla_V E_1 &= \omega_{12}(V)\, E_2 + \omega_{13}(V)\, E_3,\\
+\nabla_V E_2 &= -\omega_{12}(V)\, E_1 + \omega_{23}(V)\, E_3,\\
+\nabla_V E_3 &= -\omega_{13}(V)\, E_1 - \omega_{23}(V)\, E_2
+\end{aligned}$$
+
+biçimini alır. Bunları Frenet formülleriyle yan yana koyalım:
+
+$$T' = \kappa N, \qquad N' = -\kappa T + \tau B, \qquad B' = -\tau N.$$
+
+Frenet formüllerinin katsayı matrisi ile bağlantı formlarının matrisi aynı kalıptadır:
+
+$$\begin{pmatrix} 0 & \kappa & 0 \\ -\kappa & 0 & \tau \\ 0 & -\tau & 0 \end{pmatrix} \qquad \text{ve} \qquad \begin{pmatrix} 0 & \omega_{12} & \omega_{13} \\ -\omega_{12} & 0 & \omega_{23} \\ -\omega_{13} & -\omega_{23} & 0 \end{pmatrix}.$$
+
+İkisi de ters simetriktir, köşegenleri sıfırdır. Aralarındaki farklar da öğreticidir.
+
+**Birinci fark: $\omega_{13}$'ün karşılığı yoktur.** Frenet formüllerinde $\omega_{13}(V)\, E_3$ ve $-\omega_{13}(V)\, E_1$ terimlerine karşılık gelen terimler bulunmaz. Bunun nedeni Frenet çatısının eğriye özel bir biçimde uyarlanmış olmasıdır. $T$ ($E_1$'in yerinde) seçildikten sonra $N$ ($E_2$'nin yerinde), $T'$ türevi yalnızca $N$'nin bir katı olacak biçimde seçilmişti; dolayısıyla $T'$'nün $B$ ($E_3$'ün yerinde) doğrultusunda bileşeni yoktur. Keyfi bir çatı alanında böyle bir seçim yapılmadığı için üç form da sıfırdan farklı olabilir.
+
+**İkinci fark: fonksiyon yerine 1-form.** Bir eğrinin tek boyutu vardır, $\mathbb{R}^3$'ün üç. Frenet formüllerindeki eğrilik $\kappa$ ve burulma $\tau$, $T, N, B$ çatısının yalnızca eğri boyunca, yani yalnızca $T$ yönündeki değişim hızını ölçer; bu yüzden birer fonksiyondurlar. Bağlantı denklemlerinin katsayıları ise $E_1, E_2, E_3$'ün değişimini $\mathbb{R}^3$'teki her yönde ölçebilmelidir. Bu ölçümü her teğet vektör için lineer biçimde yapan nesne tam olarak bir 1-formdur.
+
+**Daha derin fark: neyi anlattıkları.** Frenet çatısı eğriye uyarlandığı için Frenet formülleri eğrinin kendisi hakkında bilgi verir: eğrilik ve burulma eğrinin şeklini belirler. Yukarıdaki $E_1, E_2, E_3$ ise tamamen keyfi bir çatı alanıdır; bağlantı denklemleri $\mathbb{R}^3$ hakkında doğrudan bir şey söylemez, yalnızca o çatı alanının "dönme hızlarını" kaydeder. Bu bir zayıflık değil, bir güçtür: $\mathbb{R}^3$'te ortaya çıkan geometrik bir probleme uyarlanmış bir çatı alanı seçebilirsek bağlantı denklemleri o problem hakkında doğrudan bilgi verir. Bu bölümün sonlarında helisler ve daha sonra yüzeyler için yapacağımız tam olarak budur; Frenet formüllerinin de bağlantı denklemlerinden elde edildiğini göreceğiz.
+
+:::: {#exm-baglanti-silindirik-denklemler name="Silindirik Çatının Bağlantı Denklemleri"}
+$E_1, E_2, E_3$ silindirik çatı alanı olsun. Bağlantı denklemlerini yazıp yorumlayalım.
+
+::: {.cozum}
+@exm-baglanti-duzlemde-donen'e göre $\omega_{12} = d\vartheta$ ve $\omega_{13} = \omega_{23} = 0$'dır. $d\vartheta(V)$ fonksiyonunu kısaca $V[\vartheta]$ ile gösterelim; $\vartheta$'nın tanımlı olduğu yerde bu gerçekten $\vartheta$'nın $V$ boyunca türevidir. Bağlantı denklemleri
+
+$$\nabla_V E_1 = V[\vartheta]\, E_2, \qquad \nabla_V E_2 = -V[\vartheta]\, E_1, \qquad \nabla_V E_3 = \mathbf{0}$$
+
+olur. Üçüncü denklem, $V$ keyfi olduğundan, $E_3$'ün her yönde türevinin sıfır olduğunu söyler; bunu zaten biliyorduk, çünkü $E_3 = U_3$'tür. İlk iki denklem ise $E_1$ ile $E_2$'nin $V$ yönündeki değişiminin yalnızca $\vartheta$ açısının $V$ yönündeki değişim hızına bağlı olduğunu söyler.
+
+*Bir yarım düzlem boyunca.* $V$, her noktada $z$ ekseninden geçen bir düzleme teğet olan bir alan olsun; örneğin $V = E_1$, $V = E_3$ ya da bunların fonksiyon katsayılı herhangi bir toplamı. Böyle bir $V$ boyunca $\vartheta$ değişmez: $V[\vartheta] = d\vartheta(V) = (V \cdot E_2)/r = 0$. Bağlantı denklemleri $\nabla_V E_1 = \nabla_V E_2 = \mathbf{0}$ öngörür. Gerçekten $z$ ekseninden geçen $\vartheta = \vartheta_0$ yarım düzleminin her noktasında $E_1$'in vektör kısmı aynı $(\cos\vartheta_0, \sin\vartheta_0, 0)$, $E_2$'ninki aynı $(-\sin\vartheta_0, \cos\vartheta_0, 0)$'dır: çatı, bu yarım düzlem üzerinde hareket ettikçe hiç değişmez.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="-19.0 25.5 471.5 280.0" role="img" aria-label="Two vertical half planes through the z axis at theta = 330 and 100 degrees. A dashed path inside the first carries three identical cylindrical frames E1 orange, E2 green, E3 blue; the second half plane carries one frame turned by 130 degrees">
+  <path d="M217.2,252.0 L217.2,53.9" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="217.2" y1="62.7" x2="217.2" y2="50.7" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="217.2,45.1 220.2,52.1 214.3,52.1" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="225.2" y="45.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">z</text>
+  <polygon points="217.2,247.6 391.9,280.8 391.9,104.7 217.2,71.5" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="0.8"/>
+  <line x1="322.1" y1="179.5" x2="355.9" y2="185.9" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="361.4,186.9 353.9,188.5 355.0,182.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="322.1" y1="179.5" x2="336.2" y2="167.2" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="340.4,163.5 337.0,170.3 333.2,165.9" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="322.1" y1="179.5" x2="322.1" y2="145.4" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="322.1,139.8 325.0,146.8 319.1,146.8" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="322.1" cy="179.5" r="3.0" fill="var(--academic-text)"/>
+  <path d="M160.4,258.4 L162.0,259.7 L163.8,260.9 L165.8,262.2 L167.9,263.3 L170.1,264.4 L172.5,265.5 L175.1,266.5 L177.8,267.4 L180.6,268.3 L183.6,269.1 L186.6,269.9 L189.8,270.5 L193.0,271.1 L196.3,271.7 L199.7,272.1 L203.1,272.5 L206.6,272.7 L210.1,272.9 L213.7,273.1 L217.2,273.1 L220.8,273.1 L224.3,272.9 L227.8,272.7 L231.3,272.5 L234.8,272.1 L238.1,271.7 L241.5,271.1 L244.7,270.5 L247.8,269.9 L250.9,269.1 L253.8,268.3 L256.7,267.4 L259.4,266.5 L261.9,265.5 L264.3,264.4 L266.6,263.3 L268.7,262.2 L270.6,260.9 L272.4,259.7 L274.0,258.4" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="217.2" y="289.1" fill="var(--academic-text)" font-size="11" text-anchor="middle" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke">130°</text>
+  <polygon points="217.2,247.6 42.5,280.8 42.5,104.7 217.2,71.5" fill="var(--academic-text)" fill-opacity="0.11" stroke="var(--academic-text)" stroke-width="0.8"/>
+  <path d="M182.3,214.6 L180.4,212.2 L178.5,209.8 L176.6,207.4 L174.7,204.9 L172.8,202.5 L170.9,200.2 L169.0,197.8 L167.1,195.4 L165.3,193.1 L163.4,190.8 L161.5,188.5 L159.6,186.3 L157.7,184.0 L155.8,181.9 L153.9,179.7 L152.0,177.6 L150.1,175.5 L148.2,173.5 L146.3,171.5 L144.4,169.5 L142.5,167.6 L140.6,165.8 L138.8,164.0 L136.9,162.2 L135.0,160.5 L133.1,158.9 L131.2,157.3 L129.3,155.7 L127.4,154.2 L125.5,152.8 L123.6,151.4 L121.7,150.1 L119.8,148.8 L117.9,147.6 L116.0,146.5 L114.2,145.4 L112.3,144.3 L110.4,143.3 L108.5,142.4 L106.6,141.5 L104.7,140.6 L102.8,139.8 L100.9,139.1 L99.0,138.4 L97.1,137.7 L95.2,137.1 L93.3,136.5 L91.4,136.0 L89.5,135.5 L87.7,135.0 L85.8,134.6 L83.9,134.2 L82.0,133.8 L80.1,133.5 L78.2,133.2 L76.3,132.9 L74.4,132.6 L72.5,132.3 L70.6,132.0 L68.7,131.8" fill="none" stroke="var(--academic-text)" stroke-width="1.4" stroke-dasharray="5 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="170.9" y1="200.2" x2="137.1" y2="206.6" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="131.6,207.6 138.0,203.4 139.0,209.2" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="170.9" y1="200.2" x2="185.0" y2="212.5" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="189.3,216.1 182.1,213.8 185.9,209.3" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="170.9" y1="200.2" x2="170.9" y2="166.1" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="170.9,160.5 173.9,167.5 168.0,167.5" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="170.9" cy="200.2" r="3.0" fill="var(--academic-text)"/>
+  <line x1="125.5" y1="152.8" x2="91.7" y2="159.2" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="86.2,160.3 92.5,156.1 93.6,161.9" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="125.5" y1="152.8" x2="139.6" y2="165.1" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="143.8,168.8 136.6,166.4 140.5,162.0" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="125.5" y1="152.8" x2="125.5" y2="118.8" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="125.5,113.2 128.4,120.2 122.6,120.2" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="125.5" cy="152.8" r="3.0" fill="var(--academic-text)"/>
+  <line x1="80.1" y1="133.5" x2="46.3" y2="139.9" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="40.8,140.9 47.1,136.7 48.2,142.5" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="80.1" y1="133.5" x2="94.2" y2="145.8" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="98.4,149.5 91.2,147.1 95.1,142.6" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="80.1" y1="133.5" x2="80.1" y2="99.5" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="80.1,93.9 83.0,100.9 77.1,100.9" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="80.1" cy="133.5" r="3.0" fill="var(--academic-text)"/>
+  <text x="46.8" y="148.9" fill="var(--color-practice)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="92.4" y="161.5" fill="var(--color-base)" font-size="11.5" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="86.1" y="95.9" fill="var(--color-theory)" font-size="11.5" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="38.5" y="98.7" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#977;</tspan> = 330°</text>
+  <text x="395.9" y="98.7" fill="var(--academic-text)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">&#977;</tspan> = 100°</text>
+</svg>
+<figcaption><em>z</em> ekseninden geçen <em>&#977;</em> = 330° yarım düzlemi içindeki bir yol (kesikli) ve yolun üç noktasında silindirik çatı: <em>E</em><sub>1</sub> (turuncu), <em>E</em><sub>2</sub> (yeşil), <em>E</em><sub>3</sub> (mavi). Yol boyunca <em>&#977;</em> değişmediği için <em>V</em>[<em>&#977;</em>] = 0 ve üç çatı aynıdır: &#8711;<sub><em>V</em></sub><em>E</em><sub>1</sub> = &#8711;<sub><em>V</em></sub><em>E</em><sub>2</sub> = 0. Sağdaki <em>&#977;</em> = 100° yarım düzlemindeki çatı ise 130° dönmüştür; çatı yalnızca <em>&#977;</em>&#8217;ya bağlıdır.</figcaption>
+</figure>
+```
+
+*Dönme alanı boyunca.* $V = -y\, U_1 + x\, U_2$ dönme alanını alalım; @exm-cati-donme-alani'nde $V = rE_2$ bulmuştuk. Buradan
+
+$$V[\vartheta] = d\vartheta(V) = \dfrac{-y \cdot (-y) + x \cdot x}{x^2 + y^2} = 1,$$
+
+dolayısıyla $\nabla_V E_1 = E_2$ ve $\nabla_V E_2 = -E_1$. Doğrudan hesapla denetleyelim. $E_1$'in koordinat fonksiyonları $x/r$ ve $y/r$'dir; @exr-cati-silindirik-kovaryant-a'daki kısmi türevlerle
+
+$$V\!\left[\dfrac{x}{r}\right] = -y\,\dfrac{y^2}{r^3} + x\left(-\dfrac{xy}{r^3}\right) = -\dfrac{y}{r}, \qquad V\!\left[\dfrac{y}{r}\right] = -y\left(-\dfrac{xy}{r^3}\right) + x\,\dfrac{x^2}{r^3} = \dfrac{x}{r}$$
+
+bulunur; $\nabla_V E_1$'in koordinatları $(-y/r, x/r, 0)$, yani $E_2$'ninkilerdir. Yorum: $V$ her noktayı $z$ ekseni etrafında birim açısal hızla döndürür, çatı da onunla birlikte aynı açısal hızla döner.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bağlantı denklemlerinin bir eğri boyunca ne söylediğine bakalım. @exr-kovaryant-kisitlanis-a'da, bir alanın bir eğrinin hız vektörüne göre kovaryant türevinin, alanın o eğriye kısıtlanışının türevi olduğunu görmüştük. Bu gözlem bağlantı denklemlerini bir eğri boyunca Frenet biçimine getirir.
+
+:::: {#cor-baglanti-egri-boyunca name="Bir Eğri Boyunca Bağlantı Denklemleri"}
+$E_1, E_2, E_3$, bağlantı formları $\omega_{ij}$ olan bir çatı alanı ve $\alpha : I \to \mathbb{R}^3$, çatı alanının tanım kümesinde kalan bir eğri olsun. $E_i$'nin $\alpha$'ya kısıtlanışını $(E_i)_\alpha$ ile gösterelim (@def-kovaryant-kisitlanis). O zaman her $t \in I$ için
+
+$$(E_i)_\alpha'(t) = \sum_{j=1}^{3} \omega_{ij}\bigl(\alpha'(t)\bigr)\, (E_j)_\alpha(t), \qquad 1 \le i \le 3.$$
+
+::: {.ispat}
+$t \in I$ sabit olsun. @exr-kovaryant-kisitlanis-a'ya göre $(E_i)_\alpha'(t) = \nabla_{\alpha'(t)} E_i$'dir. $\alpha'(t)$, $\alpha(t)$ noktasında bir teğet vektördür; bu noktadaki $E_1(\alpha(t)), E_2(\alpha(t)), E_3(\alpha(t))$ çatısına göre ortonormal açılım ve bağlantı formlarının tanımı, @thm-baglanti-baglanti-denklemleri'nin ispatındaki gibi,
+
+$$\nabla_{\alpha'(t)} E_i = \sum_{j=1}^{3} \Bigl(\nabla_{\alpha'(t)} E_i \cdot E_j(\alpha(t))\Bigr)\, E_j(\alpha(t)) = \sum_{j=1}^{3} \omega_{ij}\bigl(\alpha'(t)\bigr)\, E_j(\alpha(t))$$
+
+verir. Son olarak $E_j(\alpha(t)) = (E_j)_\alpha(t)$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bir eğri boyunca çatı alanı eğri üzerinde üç vektör alanına dönüşür ve bu alanların türevleri, katsayıları $t \mapsto \omega_{ij}(\alpha'(t))$ fonksiyonları olan ters simetrik bir sistemle verilir. Bu tam olarak Frenet formüllerinin biçimidir; tek fark, bir de $\omega_{13}(\alpha')$ katsayısının bulunabilmesidir. Çatı alanı eğri boyunca Frenet çatısıyla çakışıyorsa $\omega_{12}(T) = \kappa$, $\omega_{13}(T) = 0$ ve $\omega_{23}(T) = \tau$ olur (@exr-baglanti-frenet). Bunu somut bir eğride görelim.
+
+:::: {#exm-baglanti-helis name="Helisin Frenet Çatısını Uzaya Yaymak"}
+$a > 0$, $b \neq 0$ ve $c = \sqrt{a^2 + b^2}$ olsun;
+
+$$\beta(s) = \bigl(a\cos(s/c),\ a\sin(s/c),\ bs/c\bigr)$$
+
+birim hızlı helisini alalım (@exm-frenet-helis). $E_1, E_2, E_3$ silindirik çatı alanı olmak üzere $z$ ekseni dışında
+
+$$H_1 = \dfrac{a}{c}\, E_2 + \dfrac{b}{c}\, E_3, \qquad H_2 = -E_1, \qquad H_3 = -\dfrac{b}{c}\, E_2 + \dfrac{a}{c}\, E_3$$
+
+olsun. $H_1, H_2, H_3$'ün bir çatı alanı olduğunu, $\beta$ boyunca helisin Frenet çatısıyla çakıştığını gösterelim; bağlantı formlarını bulup helisin eğrilik ve burulmasını onlardan okuyalım.
+
+::: {.cozum}
+*Çatı alanı.* Katsayılar sabittir ve $a^2/c^2 + b^2/c^2 = 1$'dir. Silindirik çatının ortonormalliğiyle
+
+$$\begin{aligned}
+H_1 \cdot H_1 &= \dfrac{a^2 + b^2}{c^2} = 1, \qquad H_3 \cdot H_3 = \dfrac{b^2 + a^2}{c^2} = 1,\\
+H_1 \cdot H_3 &= -\dfrac{ab}{c^2} + \dfrac{ba}{c^2} = 0;
+\end{aligned}$$
+
+$H_2 = -E_1$ birimdir ve $E_2$ ile $E_3$'e dik olduğundan $H_1$'e ve $H_3$'e de diktir.
+
+*Helis boyunca.* $u = s/c$ yazalım. $\beta(s)$ noktasında $r = a$, $\cos\vartheta = \cos u$, $\sin\vartheta = \sin u$ olduğundan $E_1$ ve $E_2$'nin vektör kısımları $(\cos u, \sin u, 0)$ ve $(-\sin u, \cos u, 0)$'dır. Buradan
+
+$$\begin{aligned}
+H_1(\beta(s)) &= \left(-\dfrac{a}{c}\sin u,\ \dfrac{a}{c}\cos u,\ \dfrac{b}{c}\right) = T(s),\\
+H_2(\beta(s)) &= (-\cos u,\ -\sin u,\ 0) = N(s),\\
+H_3(\beta(s)) &= \left(\dfrac{b}{c}\sin u,\ -\dfrac{b}{c}\cos u,\ \dfrac{a}{c}\right) = B(s)
+\end{aligned}$$
+
+bulunur; sağ taraflar @exm-frenet-helis'te hesapladığımız Frenet çatısıdır.
+
+*Bağlantı formları.* Silindirik çatının bağlantı denklemleri (@exm-baglanti-silindirik-denklemler) ve kovaryant türevin lineerliği (@cor-kovaryant-vektor-alani, (2)) ile
+
+$$\begin{aligned}
+\nabla_V H_1 &= \dfrac{a}{c}\,\nabla_V E_2 + \dfrac{b}{c}\,\nabla_V E_3 = -\dfrac{a}{c}\, d\vartheta(V)\, E_1 = \dfrac{a}{c}\, d\vartheta(V)\, H_2,\\
+\nabla_V H_2 &= -\nabla_V E_1 = -d\vartheta(V)\, E_2.
+\end{aligned}$$
+
+$E_2$'yi $H_1$ ve $H_3$ cinsinden yazmak için $H_1$'i $a/c$, $H_3$'ü $-b/c$ ile çarpıp toplarız: $E_3$ terimleri yok olur ve $E_2 = (a/c)\, H_1 - (b/c)\, H_3$ kalır. Dolayısıyla
+
+$$\nabla_V H_2 = -\dfrac{a}{c}\, d\vartheta(V)\, H_1 + \dfrac{b}{c}\, d\vartheta(V)\, H_3.$$
+
+İç çarpımla katsayıları okursak
+
+$$\omega_{12} = \dfrac{a}{c}\, d\vartheta, \qquad \omega_{13} = 0, \qquad \omega_{23} = \dfrac{b}{c}\, d\vartheta.$$
+
+Denetim olarak
+
+$$\nabla_V H_3 = -\dfrac{b}{c}\,\nabla_V E_2 = \dfrac{b}{c}\, d\vartheta(V)\, E_1 = -\dfrac{b}{c}\, d\vartheta(V)\, H_2$$
+
+bulunur; bu, $\omega_{31} = -\omega_{13} = 0$ ve $\omega_{32} = -\omega_{23}$ ile uyumludur.
+
+*Eğrilik ve burulma.* $\beta$ boyunca $T$ yönündeki değerler gerekir. $d\vartheta = (-y\,dx + x\,dy)/r^2$ formülünde $x = a\cos u$, $y = a\sin u$, $r = a$ ve $T$'nin ilk iki bileşeni yazılınca
+
+$$d\vartheta(T) = \dfrac{-a\sin u \cdot \bigl(-\tfrac{a}{c}\sin u\bigr) + a\cos u \cdot \tfrac{a}{c}\cos u}{a^2} = \dfrac{1}{c}$$
+
+çıkar; helis boyunca $\vartheta$ açısı $u = s/c$ olarak artar. Dolayısıyla
+
+$$\omega_{12}(T) = \dfrac{a}{c^2} = \kappa, \qquad \omega_{13}(T) = 0, \qquad \omega_{23}(T) = \dfrac{b}{c^2} = \tau;$$
+
+bunlar @exm-frenet-helis'teki eğrilik ve burulmadır. @cor-baglanti-egri-boyunca bu değerlerle $T' = \kappa N$, $N' = -\kappa T + \tau B$, $B' = -\tau N$ Frenet formüllerini verir.
+
+Dikkat edilecek nokta şudur: $H_1, H_2, H_3$ bütün uzaya ($z$ ekseni dışına) yayılmış bir çatı alanıdır ve bağlantı formları helisi "bilmez"; eğrilik ve burulma ancak formlar helisin $T$ vektörüne uygulandığında ortaya çıkar. Başka yönlerde çatı başka hızlarla döner: örneğin $z$ ekseninden dışa ($E_1$ yönünde) ya da yukarı ($E_3$ yönünde) ilerlerken $d\vartheta = 0$ olduğundan çatı hiç dönmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: helis boyunca bağlantı formları.** Sahneyi sürükleyerek döndürebilirsiniz. $a = 4$, $b = 3$ için kurulan $H_1, H_2, H_3$ çatı alanı, yarıçapı $R$ ve eğimi aynı ($b/a = 3/4$) olan her helis boyunca o helisin Frenet çatısıdır: $H_1$ (turuncu) teğet $T$, $H_2$ (yeşil) asli normal $N$, $H_3$ (mavi) binormal $B$. $R$ kaydırıcısı helisi daraltıp genişletir, $t$ kaydırıcısı noktayı helis üzerinde taşır. Okların yönü yalnızca noktanın $z$ ekseni etrafındaki açısına bağlıdır; $R$'yi değiştirmek okları hiç döndürmez. Değişen, $d\vartheta(T) = 4/(5R)$ sayısıdır: dar helislerde nokta eksen etrafında daha hızlı döner. Değer satırı $\omega_{12}(T) = \tfrac{4}{5}\, d\vartheta(T)$ ve $\omega_{23}(T) = \tfrac{3}{5}\, d\vartheta(T)$ sayılarını helis formülündeki $\kappa$ ve $\tau$ ile karşılaştırır; $\omega_{13}(T)$ hep sıfırdır.
+
+```{ojs}
+//| echo: false
+viewof helixFrameControls = Inputs.form({
+  R: Inputs.range([1, 4], { value: 4, step: 0.1, label: "R" }),
+  t: Inputs.range([-2.5, 2.5], { value: 0.6, step: 0.01, label: "t" })
+})
+```
+
+```{ojs}
+//| echo: false
+helixFramePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: yaricapi R olan silindir uzerinde egimi 3/4 olan helis, helis uzerindeki noktada H1, H2, H3 cati oklari; bu oklar helisin T, N, B Frenet catisidir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { R, t } = helixFrameControls;
+  // Helix of radius R and slope b/a = 3/4: (R cos u, R sin u, 3Ru/4); its unit speed constant is c' = 5R/4.
+  const lift = 0.75 * R;
+  const helix = (u) => [R * Math.cos(u), R * Math.sin(u), lift * u];
+  const uMax = Math.min(2 * Math.PI, 7.5 / lift);
+  const p = helix(t);
+  const cosT = Math.cos(t);
+  const sinT = Math.sin(t);
+  const e1 = [cosT, sinT, 0];
+  const e2 = [-sinT, cosT, 0];
+  // H1 = (4/5)E2 + (3/5)E3, H2 = -E1, H3 = -(3/5)E2 + (4/5)E3 with a = 4, b = 3, c = 5.
+  const h1 = [0.8 * e2[0], 0.8 * e2[1], 0.6];
+  const h2 = [-e1[0], -e1[1], 0];
+  const h3 = [-0.6 * e2[0], -0.6 * e2[1], 0.8];
+  // Unit tangent of this helix, (-R sin u, R cos u, 3R/4) divided by 5R/4, which equals h1.
+  const tangent = [-0.8 * sinT, 0.8 * cosT, 0.6];
+  // dtheta(T) = (-y T1 + x T2) / r^2 at p.
+  const dTheta = (-p[1] * tangent[0] + p[0] * tangent[1]) / (R * R);
+  const w12 = 0.8 * dTheta;
+  const w23 = 0.6 * dTheta;
+  const kappa = 16 / (25 * R);
+  const tau = 12 / (25 * R);
+  const traces = [
+    cylinder(R, -7.6, 7.6, theme.surface, { opacity: 0.08 }),
+    segment([0, 0, -7.6], [0, 0, 7.6], theme.axis, { width: 2, dash: "dot" }),
+    path(helix, -uMax, uMax, theme.theory, "helis", { width: 4 }),
+    ...arrow(p, h1, theme.practice, "H₁ = T"),
+    ...arrow(p, h2, theme.base, "H₂ = N"),
+    ...arrow(p, h3, theme.theory, "H₃ = B"),
+    point(p, theme.text, "p", { legend: false }),
+    label(p, "p", theme.text, { position: "bottom center" })
+  ];
+  render(Plotly, helixFramePlot, traces, sceneLayout(theme, { x: [-5.2, 5.2], y: [-5.2, 5.2], z: [-8, 8], eye: { x: 1.6, y: 1.2, z: 0.55 } }));
+  return html`<div class="scene3d-readout">R = ${fmt(R)} &nbsp;·&nbsp; dϑ(T) = 4/(5R) = ${fmt(dTheta, 3)}<br>ω₁₂(T) = (4/5)·dϑ(T) = ${fmt(w12, 3)} &nbsp;|&nbsp; κ = 16/(25R) = ${fmt(kappa, 3)}<br>ω₂₃(T) = (3/5)·dϑ(T) = ${fmt(w23, 3)} &nbsp;|&nbsp; τ = 12/(25R) = ${fmt(tau, 3)} &nbsp;|&nbsp; ω₁₃(T) = ${fmt(0, 3)}</div>`;
+}
+```
+:::
+::::
+
+:::: {#exm-baglanti-helis-ailesi name="Aynı Çatı Alanı, Başka Bir Helis"}
+$a = 4$, $b = 3$ alalım; $c = 5$ olur ve @exm-baglanti-helis'teki çatı alanı $H_1 = \tfrac{4}{5} E_2 + \tfrac{3}{5} E_3$, $H_2 = -E_1$, $H_3 = -\tfrac{3}{5} E_2 + \tfrac{4}{5} E_3$'tür. Yarıçapı $2$ olan
+
+$$\gamma(s) = \bigl(2\cos(2s/5),\ 2\sin(2s/5),\ 3s/5\bigr)$$
+
+helisinin eğrilik ve burulmasını bu çatı alanının bağlantı formlarından bulalım.
+
+::: {.cozum}
+$\gamma$, @exm-frenet-helis'teki helisin $a' = 2$, $b' = 3/2$ için yazılmışıdır: $c' = \sqrt{4 + 9/4} = 5/2$ ve
+
+$$\gamma(s) = \bigl(a'\cos(s/c'),\ a'\sin(s/c'),\ b's/c'\bigr).$$
+
+Oranlar $a'/c' = 4/5$ ve $b'/c' = 3/5$, yani $H$ çatısının katsayılarıyla aynıdır. @exm-baglanti-helis'teki "helis boyunca" hesabı, $a, b, c$ yerine $a', b', c'$ yazılınca kelimesi kelimesine tekrarlanır: $H_1, H_2, H_3$ alanları $\gamma$ boyunca da $\gamma$'nın Frenet çatısıdır. Bağlantı formları noktaya değil yalnızca çatı alanına bağlıdır: $\omega_{12} = \tfrac{4}{5}\, d\vartheta$, $\omega_{13} = 0$, $\omega_{23} = \tfrac{3}{5}\, d\vartheta$.
+
+$\gamma$ boyunca $\vartheta = s/c' = 2s/5$ olarak artar; aynı hesapla $d\vartheta(T) = 1/c' = 2/5$ bulunur. Buradan
+
+$$\kappa = \omega_{12}(T) = \dfrac{4}{5} \cdot \dfrac{2}{5} = \dfrac{8}{25}, \qquad \tau = \omega_{23}(T) = \dfrac{3}{5} \cdot \dfrac{2}{5} = \dfrac{6}{25}.$$
+
+@exm-frenet-helis'teki formüllerle denetleyelim:
+
+$$\kappa = \dfrac{a'}{c'^2} = \dfrac{2}{25/4} = \dfrac{8}{25}, \qquad \tau = \dfrac{b'}{c'^2} = \dfrac{3/2}{25/4} = \dfrac{6}{25}.$$
+
+İki yol aynı sonucu verir.
+
+Tek bir çatı alanı böylece eğimi $3/4$ olan bütün helislere birden uyarlanmıştır. Yarıçapı $R$ olan helis için $c' = 5R/4$, $d\vartheta(T) = 4/(5R)$, dolayısıyla $\kappa = 16/(25R)$ ve $\tau = 12/(25R)$ olur. Çatının kendisi yarıçaptan bağımsızdır; yarıçap yalnızca $T$ yönünde yürürken eksen etrafında ne kadar hızlı dönüldüğünü, yani $d\vartheta(T)$'yi belirler.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="36.5 28.0 403.0 408.0" role="img" aria-label="Two helices of slope 3/4 around the z axis, radius 4 and radius 2, with the frame field H1 orange, H2 green, H3 blue drawn at two points of the large helix and one point of the small helix; at the same polar angle the frames coincide; they are the Frenet frames T, N, B">
+  <path d="M215.8,388.2 L215.8,58.8" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="215.8" y1="62.6" x2="215.8" y2="53.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="215.8,47.6 218.7,54.6 212.9,54.6" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="223.8" y="47.6" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">z</text>
+  <path d="M131.9,375.4 L131.8,375.1 L131.8,374.7 L131.8,374.4 L131.9,374.0 L131.9,373.7 L132.0,373.3 L132.2,373.0 L132.3,372.6 L132.5,372.3 L132.8,371.9 L133.0,371.6 L133.3,371.2 L133.6,370.9 L134.0,370.5 L134.4,370.1 L134.8,369.8 L135.2,369.4 L135.7,369.0 L136.2,368.6 L136.7,368.3 L137.3,367.9 L137.8,367.5 L138.5,367.1 L139.1,366.7 L139.8,366.2 L140.5,365.8 L141.2,365.4 L141.9,365.0 L142.7,364.5 L143.5,364.1 L144.4,363.6 L145.2,363.2 L146.1,362.7 L147.0,362.2 L148.0,361.8 L148.9,361.3 L149.9,360.8 L150.9,360.3 L152.0,359.8 L153.0,359.2 L154.1,358.7 L155.2,358.2 L156.3,357.6 L157.5,357.0 L158.6,356.5 L159.8,355.9 L161.0,355.3 L162.3,354.7 L163.5,354.1 L164.8,353.4 L166.1,352.8 L167.4,352.2 L168.7,351.5 L170.1,350.8 L171.4,350.1 L172.8,349.4 L174.2,348.7 L175.6,348.0 L177.0,347.3 L178.4,346.5 L179.9,345.8 L181.4,345.0 L182.8,344.2 L184.3,343.4 L185.8,342.6 L187.3,341.8 L188.8,341.0 L190.4,340.1 L191.9,339.3 L193.5,338.4 L195.0,337.5 L196.6,336.6 L198.1,335.7 L199.7,334.7 L201.3,333.8 L202.9,332.8 L204.5,331.9 L206.1,330.9 L207.7,329.9 L209.3,328.9 L210.9,327.9 L212.5,326.8 L214.1,325.8 L215.7,324.7 L217.3,323.6 L218.9,322.5 L220.6,321.4 L222.2,320.3 L223.8,319.1 L225.4,318.0 L227.0,316.8 L228.6,315.6 L230.1,314.5 L231.7,313.2 L233.3,312.0 L234.9,310.8 L236.4,309.5 L238.0,308.3 L239.5,307.0 L241.1,305.7 L242.6,304.4 L244.1,303.1 L245.7,301.8 L247.1,300.4 L248.6,299.1 L250.1,297.7 L251.6,296.3 L253.0,294.9 L254.5,293.5 L255.9,292.1 L257.3,290.7 L258.7,289.2 L260.1,287.8 L261.4,286.3 L262.8,284.8 L264.1,283.3 L265.4,281.8 L266.7,280.3 L268.0,278.8 L269.2,277.3 L270.4,275.7 L271.7,274.2 L272.9,272.6 L274.0,271.0 L275.2,269.4 L276.3,267.8 L277.4,266.2 L278.5,264.6 L279.5,263.0 L280.6,261.3 L281.6,259.7 L282.6,258.0 L283.6,256.4 L284.5,254.7 L285.4,253.0 L286.3,251.4 L287.2,249.7 L288.0,248.0 L288.8,246.3 L289.6,244.5 L290.3,242.8 L291.1,241.1 L291.8,239.4 L292.4,237.6 L293.1,235.9 L293.7,234.1 L294.3,232.4 L294.9,230.6 L295.4,228.8 L295.9,227.1 L296.4,225.3 L296.8,223.5 L297.2,221.7 L297.6,219.9 L297.9,218.2 L298.3,216.4 L298.6,214.6 L298.8,212.8 L299.0,211.0 L299.2,209.2 L299.4,207.4 L299.6,205.6 L299.7,203.8 L299.7,201.9 L299.8,200.1 L299.8,198.3 L299.8,196.5 L299.7,194.7 L299.7,192.9 L299.6,191.1 L299.4,189.3 L299.2,187.5 L299.0,185.7 L298.8,183.9 L298.6,182.1 L298.3,180.3 L297.9,178.5 L297.6,176.7 L297.2,174.9 L296.8,173.2 L296.4,171.4 L295.9,169.6 L295.4,167.8 L294.9,166.1 L294.3,164.3 L293.7,162.6 L293.1,160.8 L292.4,159.1 L291.8,157.3 L291.1,155.6 L290.3,153.9 L289.6,152.1 L288.8,150.4 L288.0,148.7 L287.2,147.0 L286.3,145.3 L285.4,143.6 L284.5,142.0 L283.6,140.3 L282.6,138.6 L281.6,137.0 L280.6,135.3 L279.5,133.7 L278.5,132.1 L277.4,130.5 L276.3,128.8 L275.2,127.2 L274.0,125.7 L272.8,124.1 L271.7,122.5 L270.4,121.0 L269.2,119.4 L268.0,117.9 L266.7,116.4 L265.4,114.8 L264.1,113.3 L262.8,111.8 L261.4,110.4 L260.1,108.9 L258.7,107.4 L257.3,106.0 L255.9,104.6 L254.5,103.2 L253.0,101.7 L251.6,100.4 L250.1,99.0 L248.6,97.6 L247.1,96.3 L245.6,94.9 L244.1,93.6 L242.6,92.3 L241.1,91.0 L239.5,89.7 L238.0,88.4 L236.4,87.1 L234.9,85.9 L233.3,84.6 L231.7,83.4 L230.1,82.2 L228.6,81.0" fill="none" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M51.5,420.9 L51.9,420.4 L52.4,419.9 L52.9,419.4 L53.5,419.0 L54.0,418.5 L54.6,418.0 L55.2,417.5 L55.9,417.0 L56.6,416.5 L57.3,416.0 L58.0,415.4 L58.7,414.9 L59.5,414.4 L60.3,413.9 L61.1,413.3 L61.9,412.8 L62.8,412.3 L63.7,411.7 L64.6,411.2 L65.6,410.6 L66.5,410.0 L67.5,409.5 L68.5,408.9 L69.6,408.3 L70.6,407.7 L71.7,407.1 L72.8,406.5 L74.0,405.9 L75.1,405.3 L76.3,404.7 L77.5,404.1 L78.7,403.4 L80.0,402.8 L81.3,402.2 L82.5,401.5 L83.9,400.8 L85.2,400.2 L86.5,399.5 L87.9,398.8 L89.3,398.1 L90.7,397.4 L92.2,396.7 L93.6,396.0 L95.1,395.3 L96.6,394.5 L98.1,393.8 L99.6,393.0 L101.2,392.3 L102.7,391.5 L104.3,390.7 L105.9,389.9 L107.6,389.1 L109.2,388.3 L110.9,387.5 L112.5,386.7 L114.2,385.9 L115.9,385.0 L117.7,384.2 L119.4,383.3 L121.2,382.4 L122.9,381.5 L124.7,380.6 L126.5,379.7 L128.3,378.8 L130.2,377.9 L132.0,376.9 L133.9,376.0 L135.7,375.0 L137.6,374.1 L139.5,373.1 L141.4,372.1 L143.4,371.1 L145.3,370.1 L147.2,369.1 L149.2,368.0 L151.1,367.0 L153.1,365.9 L155.1,364.8 L157.1,363.8 L159.1,362.7 L161.1,361.6 L163.1,360.4 L165.2,359.3 L167.2,358.2 L169.3,357.0 L171.3,355.9 L173.4,354.7 L175.5,353.5 L177.5,352.3 L179.6,351.1 L181.7,349.9 L183.8,348.6 L185.9,347.4 L188.0,346.1 L190.1,344.8 L192.2,343.5 L194.3,342.3 L196.4,340.9 L198.6,339.6 L200.7,338.3 L202.8,336.9 L205.0,335.6 L207.1,334.2 L209.2,332.8 L211.4,331.4 L213.5,330.0 L215.6,328.6 L217.8,327.2 L219.9,325.7 L222.0,324.3 L224.2,322.8 L226.3,321.3 L228.4,319.8 L230.5,318.3 L232.7,316.8 L234.8,315.3 L236.9,313.7 L239.0,312.2 L241.1,310.6 L243.3,309.0 L245.4,307.4 L247.5,305.8 L249.5,304.2 L251.6,302.6 L253.7,301.0 L255.8,299.3 L257.9,297.6 L259.9,296.0 L262.0,294.3 L264.0,292.6 L266.1,290.9 L268.1,289.2 L270.1,287.4 L272.2,285.7 L274.2,283.9 L276.2,282.1 L278.1,280.4 L280.1,278.6 L282.1,276.8 L284.0,275.0 L286.0,273.1 L287.9,271.3 L289.8,269.4 L291.8,267.6 L293.7,265.7 L295.5,263.8 L297.4,261.9 L299.3,260.0 L301.1,258.1 L302.9,256.2 L304.8,254.3 L306.6,252.3 L308.4,250.4 L310.1,248.4 L311.9,246.4 L313.6,244.4 L315.4,242.4 L317.1,240.4 L318.8,238.4 L320.5,236.4 L322.1,234.4 L323.8,232.3 L325.4,230.3 L327.0,228.2 L328.6,226.1 L330.2,224.0 L331.7,221.9 L333.2,219.8 L334.8,217.7 L336.3,215.6 L337.7,213.5 L339.2,211.4 L340.6,209.2 L342.1,207.1 L343.5,204.9 L344.8,202.7 L346.2,200.6 L347.5,198.4 L348.8,196.2 L350.1,194.0 L351.4,191.8 L352.7,189.6 L353.9,187.4 L355.1,185.1 L356.3,182.9 L357.4,180.7 L358.6,178.4 L359.7,176.2 L360.8,173.9 L361.8,171.6 L362.9,169.4 L363.9,167.1 L364.9,164.8 L365.9,162.5 L366.8,160.2 L367.7,157.9 L368.6,155.6 L369.5,153.3 L370.4,151.0 L371.2,148.7 L372.0,146.3 L372.8,144.0 L373.5,141.7 L374.2,139.3 L374.9,137.0 L375.6,134.6 L376.2,132.3 L376.9,129.9 L377.5,127.6 L378.0,125.2 L378.6,122.8 L379.1,120.5 L379.6,118.1 L380.0,115.7 L380.5,113.4 L380.9,111.0 L381.3,108.6 L381.6,106.2 L382.0,103.8 L382.3,101.4 L382.5,99.1 L382.8,96.7 L383.0,94.3 L383.2,91.9 L383.4,89.5 L383.5,87.1 L383.6,84.7 L383.7,82.3 L383.8,79.9 L383.8,77.5 L383.8,75.1 L383.8,72.7 L383.7,70.3 L383.7,67.9 L383.5,65.5 L383.4,63.1 L383.3,60.8 L383.1,58.4 L382.9,56.0 L382.6,53.6" fill="none" stroke="var(--academic-text)" stroke-width="1.5" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="296.5" y1="224.7" x2="304.4" y2="193.5" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="305.8,187.6 307.1,195.7 300.9,194.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="296.5" y1="224.7" x2="262.1" y2="220.2" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="256.1,219.4 264.0,217.3 263.2,223.5" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="296.5" y1="224.7" x2="291.6" y2="211.4" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="289.5,205.8 295.0,211.7 289.1,213.9" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="296.5" cy="224.7" r="3.2" fill="var(--academic-text)"/>
+  <line x1="83.1" y1="401.2" x2="98.3" y2="393.5" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="103.7,390.8 98.4,397.0 95.6,391.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="83.1" y1="401.2" x2="110.6" y2="391.5" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="116.3,389.5 110.2,395.0 108.1,389.1" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="83.1" y1="401.2" x2="69.8" y2="367.8" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="67.6,362.3 73.3,368.1 67.5,370.4" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="83.1" cy="401.2" r="3.2" fill="var(--academic-text)"/>
+  <line x1="377.2" y1="128.7" x2="385.1" y2="97.4" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="386.5,91.6 387.7,99.6 381.6,98.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="377.2" y1="128.7" x2="342.8" y2="124.2" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="336.8,123.4 344.7,121.2 343.9,127.5" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="377.2" y1="128.7" x2="372.3" y2="115.4" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="370.2,109.7 375.7,115.7 369.8,117.9" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="377.2" cy="128.7" r="3.2" fill="var(--academic-text)"/>
+  <text x="392.5" y="93.6" fill="var(--color-practice)" font-size="11" text-anchor="start" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">H</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> = <tspan font-style="italic">T</tspan></text>
+  <text x="332.8" y="137.4" fill="var(--color-base)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">H</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan> = <tspan font-style="italic">N</tspan></text>
+  <text x="364.2" y="105.7" fill="var(--color-theory)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">H</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan> = <tspan font-style="italic">B</tspan></text>
+  <text x="374.6" y="55.6" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">R</tspan> = 4:  <tspan font-style="italic">&#954;</tspan> = 4/25</text>
+  <text x="220.6" y="77.0" fill="var(--academic-text)" font-size="11" text-anchor="end" stroke="var(--academic-bg)" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">R</tspan> = 2:  <tspan font-style="italic">&#954;</tspan> = 8/25</text>
+</svg>
+<figcaption>Eğimi 3/4 olan iki helis: yarıçapı 4 olan (4 cos <em>u</em>, 4 sin <em>u</em>, 3<em>u</em>) ve yarıçapı 2 olan (2 cos <em>u</em>, 2 sin <em>u</em>, 1,5<em>u</em>). <em>H</em><sub>1</sub> = (4/5)<em>E</em><sub>2</sub> + (3/5)<em>E</em><sub>3</sub> (turuncu), <em>H</em><sub>2</sub> = &#8722;<em>E</em><sub>1</sub> (yeşil), <em>H</em><sub>3</sub> = &#8722;(3/5)<em>E</em><sub>2</sub> + (4/5)<em>E</em><sub>3</sub> (mavi) çatı alanı her iki helis boyunca helisin Frenet çatısı <em>T</em>, <em>N</em>, <em>B</em>&#8217;dir. Aynı <em>&#977;</em> açısındaki iki noktada çatılar tamamen aynıdır; farklı olan, <em>T</em> yönünde yürürken <em>&#977;</em>&#8217;nın artma hızıdır. Bu yüzden bağlantı formları <em>&#969;</em><sub>12</sub> = (4/5) <em>d&#977;</em> ve <em>&#969;</em><sub>23</sub> = (3/5) <em>d&#977;</em> iki helise farklı eğrilik ve burulma verir: <em>&#954;</em> = 4/25 ile 8/25, <em>&#964;</em> = 3/25 ile 6/25.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Duruş Matrisi ve Bağlantı Formlarının Hesabı
+
+Şimdiye kadar bağlantı formlarını tanımdan, yani kovaryant türevleri hesaplayıp iç çarpım alarak bulduk. Bu her zaman mümkündür ama her çatı alanı için yeniden düşünmeyi gerektirir. Bu kısımda aynı işi tamamen mekanik yapan bir formül çıkaracağız. İlk adım, çatı alanını doğal çatı cinsinden yazmaktır. Ortonormal açılımla (@lem-cati-ortonormal-acilim)
+
+$$\begin{aligned}
+E_1 &= a_{11} U_1 + a_{12} U_2 + a_{13} U_3,\\
+E_2 &= a_{21} U_1 + a_{22} U_2 + a_{23} U_3,\\
+E_3 &= a_{31} U_1 + a_{32} U_2 + a_{33} U_3
+\end{aligned}$$
+
+olur; burada her $a_{ij} = E_i \cdot U_j$, $\mathbb{R}^3$ (ya da çatı alanının tanım kümesi) üzerinde diferansiyellenebilir bir fonksiyondur.
+
+::: {#def-baglanti-durus-matrisi name="Bir Çatı Alanının Duruş Matrisi"}
+$E_1, E_2, E_3$ bir çatı alanı ve $a_{ij} = E_i \cdot U_j$ ($1 \le i, j \le 3$) olsun. Girdileri bu fonksiyonlar olan
+
+$$A = (a_{ij}) = \begin{pmatrix} a_{11} & a_{12} & a_{13} \\ a_{21} & a_{22} & a_{23} \\ a_{31} & a_{32} & a_{33} \end{pmatrix}$$
+
+matrisine $E_1, E_2, E_3$ çatı alanının **duruş matrisi** (attitude matrix) denir.
+:::
+
+Yani $A$'nın $i$-inci satırı, $E_i$'nin Öklid koordinat fonksiyonlarıdır. Her $\mathbf{p}$ noktasında $A(\mathbf{p}) = \bigl(a_{ij}(\mathbf{p})\bigr)$ sayı matrisi, $E_1(\mathbf{p}), E_2(\mathbf{p}), E_3(\mathbf{p})$ çatısının duruş matrisidir (@def-iccarpim-durus-matrisi). Bir çatının duruş matrisi ortogonal olduğundan (@prp-iccarpim-durus-matrisi-ortogonal, @cor-iccarpim-durus-matrisi-tersi) her noktada $A A^{\mathsf{T}} = I$ ve $A^{\mathsf{T}} = A^{-1}$'dir. Bunu fonksiyon matrisleri için tek bir eşitlik olarak da okuyabiliriz: $A A^{\mathsf{T}}$ çarpımı, her noktada birim matrisi veren sabit bir fonksiyon matrisidir.
+
+:::: {#exm-baglanti-durus-matrisleri name="Silindirik ve Küresel Çatının Duruş Matrisleri"}
+Silindirik çatı alanı $E_1, E_2, E_3$ ile küresel çatı alanı $F_1, F_2, F_3$'ün duruş matrislerini yazalım.
+
+::: {.cozum}
+Satırlara alanların $U_1, U_2, U_3$ katsayılarını yazmak yeter. Silindirik çatı için (@exm-cati-silindirik)
+
+$$A = \begin{pmatrix} \cos\vartheta & \sin\vartheta & 0 \\ -\sin\vartheta & \cos\vartheta & 0 \\ 0 & 0 & 1 \end{pmatrix},$$
+
+küresel çatı için (@exm-cati-kuresel)
+
+$$B = \begin{pmatrix} \cos\varphi\cos\vartheta & \cos\varphi\sin\vartheta & \sin\varphi \\ -\sin\vartheta & \cos\vartheta & 0 \\ -\sin\varphi\cos\vartheta & -\sin\varphi\sin\vartheta & \cos\varphi \end{pmatrix}.$$
+
+İki matrisin de satırları ortonormaldir; bu, önceki bölümde bu üçlülerin çatı alanı olduğunu gösterirken yaptığımız hesabın matris diliyle söylenişidir. Örneğin $A A^{\mathsf{T}}$'nin $(1, 1)$ ve $(1, 2)$ girdileri
+
+$$\cos^2\vartheta + \sin^2\vartheta = 1, \qquad \cos\vartheta\,(-\sin\vartheta) + \sin\vartheta\cos\vartheta + 0 = 0$$
+
+olur. $\mathbf{p} = (3, 4, 2)$ noktasında $A(\mathbf{p})$'nin satırları $(3/5, 4/5, 0)$, $(-4/5, 3/5, 0)$ ve $(0, 0, 1)$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Duruş matrisinin girdileri fonksiyon olduğundan diferansiyellerini alabiliriz. Sonuç, girdileri 1-form olan bir matris olacaktır; bu tür matrisleri fonksiyon matrisleriyle çarpmamız gerekecek.
+
+::: {#def-baglanti-matris-diferansiyeli name="Bir Fonksiyon Matrisinin Diferansiyeli"}
+$A = (a_{ij})$, girdileri diferansiyellenebilir fonksiyonlar olan bir matris olsun. Girdileri $a_{ij}$'lerin diferansiyelleri olan $dA = (da_{ij})$ matrisine $A$'nın **diferansiyeli** denir. Girdileri 1-form olan bir $\Phi = (\phi_{ik})$ matrisi ile girdileri fonksiyon olan bir $C = (c_{kj})$ matrisinin çarpımı, girdileri
+
+$$(\Phi C)_{ij} = \sum_{k} \phi_{ik}\, c_{kj}$$
+
+1-formları olan matristir; burada $\phi_{ik}\, c_{kj} = c_{kj}\, \phi_{ik}$ bir fonksiyonla bir 1-formun çarpımıdır (@def-form-islemler). Ters sıradaki $C\Phi$ çarpımı da aynı kuralla, $(C\Phi)_{ij} = \sum_k c_{ik}\, \phi_{kj}$ olarak tanımlanır.
+:::
+
+Yani $dA$, $A$'yı girdi girdi türetir; matris çarpımı da sayı matrislerindeki satır-sütun kuralıyla yapılır, yalnız bu kez toplanan terimler birer 1-formdur. Artık bağlantı formlarını duruş matrisinden veren formülü yazabiliriz.
+
+:::: {#thm-baglanti-durus-matrisi-formulu name="Bağlantı Formları Duruş Matrisinden"}
+$A = (a_{ij})$, bir $E_1, E_2, E_3$ çatı alanının duruş matrisi ve $\omega = (\omega_{ij})$ bağlantı formlarının matrisi olsun. O zaman
+
+$$\omega = dA\, A^{\mathsf{T}}$$
+
+olur; girdilerle yazılınca
+
+$$\omega_{ij} = \sum_{k=1}^{3} a_{jk}\, da_{ik}, \qquad 1 \le i, j \le 3.$$
+
+::: {.ispat}
+*İki yazılışın denkliği.* $A^{\mathsf{T}}$'nin $(k, j)$ girdisi $a_{jk}$ olduğundan @def-baglanti-matris-diferansiyeli'ndeki çarpım kuralı
+
+$$(dA\, A^{\mathsf{T}})_{ij} = \sum_{k=1}^{3} da_{ik}\, a_{jk} = \sum_{k=1}^{3} a_{jk}\, da_{ik}$$
+
+verir. Dolayısıyla matris eşitliği, girdilerle yazılan dokuz eşitliğin kısa yazılışıdır.
+
+*Girdilerin eşitliği.* İki 1-form, her teğet vektörde aynı değeri alıyorlarsa eşittir. Bir $\mathbf{p}$ noktasında bir $\mathbf{v}$ teğet vektörü alalım. $E_i = \sum_k a_{ik} U_k$ olduğundan kovaryant türevin koordinat formülü (@lem-kovaryant-koordinat-formulu) ve diferansiyelin tanımı (@def-form-diferansiyel) ile
+
+$$\nabla_{\mathbf{v}} E_i = \sum_{k=1}^{3} \mathbf{v}[a_{ik}]\, U_k(\mathbf{p}) = \sum_{k=1}^{3} da_{ik}(\mathbf{v})\, U_k(\mathbf{p})$$
+
+olur. Öte yandan $E_j(\mathbf{p}) = \sum_k a_{jk}(\mathbf{p})\, U_k(\mathbf{p})$'dir. Doğal çatıda koordinatları bilinen iki teğet vektörün iç çarpımı karşılıklı koordinatların çarpımlarının toplamı olduğundan
+
+$$\omega_{ij}(\mathbf{v}) = \nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p}) = \sum_{k=1}^{3} da_{ik}(\mathbf{v})\, a_{jk}(\mathbf{p})$$
+
+bulunur. Sağ taraf, @def-form-islemler gereği $\sum_k a_{jk}\, da_{ik}$ 1-formunun $\mathbf{v}$'deki değeridir. Eşitlik her teğet vektör için geçerli olduğundan $\omega_{ij} = \sum_k a_{jk}\, da_{ik}$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Formülün söylediği şudur: $\omega_{ij}$'yi bulmak için $E_i$'nin koordinat fonksiyonlarının diferansiyellerini, $E_j$'nin koordinat fonksiyonlarıyla "iç çarparız". Kısaca $\omega_{ij} = dE_i \cdot E_j$ diye akılda tutulabilir; bu, $\omega_{ij}(\mathbf{v}) = \nabla_{\mathbf{v}} E_i \cdot E_j(\mathbf{p})$ tanımının koordinatlarla yazılışıdır.
+
+::: {.callout-tip title="Bağlantı formlarını üç adımda hesaplamak"}
+1. Çatı alanının her üyesini doğal çatı cinsinden yazın; katsayıları satır satır dizerek duruş matrisi $A$'yı elde edin.
+2. $A$'nın her girdisinin diferansiyelini alarak $dA$'yı bulun.
+3. Yalnızca köşegenin üstündeki üç formu hesaplayın: $\omega_{ij}$, $dA$'nın $i$-inci satırı ile $A$'nın $j$-inci satırının "iç çarpımıdır", $\omega_{ij} = \sum_k a_{jk}\, da_{ik}$. Ötekiler $\omega_{ii} = 0$ ve $\omega_{ji} = -\omega_{ij}$ ile gelir.
+
+Sonucu bir noktada bir teğet vektör seçip tanımdan, yani kovaryant türev ve iç çarpımla, denetlemek iyi bir alışkanlıktır.
+:::
+
+:::: {#exm-baglanti-silindirik-matrisle name="Silindirik Çatı: Duruş Matrisiyle Hesap"}
+Silindirik çatı alanının bağlantı formlarını @thm-baglanti-durus-matrisi-formulu ile hesaplayalım.
+
+::: {.cozum}
+*Birinci adım.* Duruş matrisi @exm-baglanti-durus-matrisleri'nde yazıldı:
+
+$$A = \begin{pmatrix} \cos\vartheta & \sin\vartheta & 0 \\ -\sin\vartheta & \cos\vartheta & 0 \\ 0 & 0 & 1 \end{pmatrix}.$$
+
+*İkinci adım.* Bileşke kuralıyla (@lem-form-bileske-kurali) $d(\cos\vartheta) = -\sin\vartheta\, d\vartheta$ ve $d(\sin\vartheta) = \cos\vartheta\, d\vartheta$; sabitlerin diferansiyeli sıfırdır. Böylece
+
+$$dA = \begin{pmatrix} -\sin\vartheta\, d\vartheta & \cos\vartheta\, d\vartheta & 0 \\ -\cos\vartheta\, d\vartheta & -\sin\vartheta\, d\vartheta & 0 \\ 0 & 0 & 0 \end{pmatrix}.$$
+
+*Üçüncü adım.* Önce tam çarpımı yapalım; $A^{\mathsf{T}}$'nin sütunları $A$'nın satırlarıdır. $dA$'nın birinci satırı ile $A$'nın üç satırının "iç çarpımları"
+
+$$\begin{aligned}
+\omega_{11} &= (-\sin\vartheta\cos\vartheta + \cos\vartheta\sin\vartheta)\, d\vartheta = 0,\\
+\omega_{12} &= (\sin^2\vartheta + \cos^2\vartheta)\, d\vartheta = d\vartheta,\\
+\omega_{13} &= 0,
+\end{aligned}$$
+
+ikinci satırı ile
+
+$$\begin{aligned}
+\omega_{21} &= (-\cos^2\vartheta - \sin^2\vartheta)\, d\vartheta = -d\vartheta,\\
+\omega_{22} &= (\cos\vartheta\sin\vartheta - \sin\vartheta\cos\vartheta)\, d\vartheta = 0,\\
+\omega_{23} &= 0
+\end{aligned}$$
+
+olur; üçüncü satırı sıfırdır. Böylece
+
+$$\omega = dA\, A^{\mathsf{T}} = \begin{pmatrix} 0 & d\vartheta & 0 \\ -d\vartheta & 0 & 0 \\ 0 & 0 & 0 \end{pmatrix}.$$
+
+Sonuç @exm-baglanti-duzlemde-donen'de tanımdan bulduğumuzla aynıdır: tek sıfırdan farklı bağlantı formu $\omega_{12} = d\vartheta$ (ve elbette $\omega_{21} = -d\vartheta$). Hesabın beklendiği gibi ters simetrik bir matris vermesi de bir denetimdir; aslında yalnızca $\omega_{12}$, $\omega_{13}$ ve $\omega_{23}$'ü hesaplamak yeterdi.
+
+Ara adımda $\vartheta$'nın kendisini kullandık, ama sonuç $z$ ekseni dışındaki her yerde geçerlidir: $\cos\vartheta = x/r$ ve $\sin\vartheta = y/r$ fonksiyonları orada tanımlıdır ve $d\vartheta = (-y\,dx + x\,dy)/r^2$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-baglanti-ters-simetri-matrisle name="Ters Simetriye Matrislerle Bakış"}
+$A$ bir çatı alanının duruş matrisi ve $\omega = dA\, A^{\mathsf{T}}$ olsun. $A A^{\mathsf{T}} = I$ eşitliğinin diferansiyelini alarak $\omega$'nın ters simetrik olduğunu yeniden görelim; ayrıca $dA = \omega A$ olduğunu gösterelim.
+
+::: {.cozum}
+$A A^{\mathsf{T}}$'nin $(i, j)$ girdisi $\sum_k a_{ik} a_{jk}$'dir ve bu fonksiyon sabit $\delta_{ij}$'ye eşittir. Sabit fonksiyonun diferansiyeli sıfır olduğundan, çarpım kuralı (@lem-form-carpim-kurali) ile
+
+$$0 = d\Bigl(\sum_{k=1}^{3} a_{ik} a_{jk}\Bigr) = \sum_{k=1}^{3} a_{jk}\, da_{ik} + \sum_{k=1}^{3} a_{ik}\, da_{jk}.$$
+
+@thm-baglanti-durus-matrisi-formulu'ne göre ilk toplam $\omega_{ij}$, ikinci toplam ise $i$ ile $j$'nin yeri değişmiş hâliyle $\omega_{ji}$'dir. Demek ki $\omega_{ij} + \omega_{ji} = 0$. Matris diliyle bu hesap $0 = dA\, A^{\mathsf{T}} + A\, d(A^{\mathsf{T}})$ eşitliğidir ve ikinci terim $\omega$'nın transpozudur: $\omega + \omega^{\mathsf{T}} = 0$. @lem-baglanti-bir-form'daki ters simetri böylece "duruş matrisi ortogonaldir" gerçeğinin türevidir.
+
+$\omega = dA\, A^{\mathsf{T}}$ eşitliğini sağdan $A$ ile çarpalım. @cor-iccarpim-durus-matrisi-tersi gereği $A^{\mathsf{T}} A = I$ olduğundan $\omega A = dA\, (A^{\mathsf{T}} A) = dA$ bulunur; girdilerle
+
+$$da_{ik} = \sum_{j=1}^{3} \omega_{ij}\, a_{jk}.$$
+
+Bu, bağlantı denklemlerinin koordinatlarla yazılışıdır: $\nabla_V E_i = \sum_j \omega_{ij}(V)\, E_j$ eşitliğinin iki yanının $k$-inci Öklid koordinatı, sırasıyla $V[a_{ik}] = da_{ik}(V)$ ve $\sum_j \omega_{ij}(V)\, a_{jk}$'dir.
+
+Silindirik çatıda denetleyelim: $\omega A$'nın ilk satırı, $A$'nın ikinci satırının $d\vartheta$ katıdır, yani $(-\sin\vartheta\, d\vartheta, \cos\vartheta\, d\vartheta, 0)$; bu tam olarak $dA$'nın ilk satırıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-baglanti-sabit-cati name="Bağlantı Formları Sıfır Olan Çatı Alanları"}
+@exm-cati-sabit-cati'deki döndürülmüş sabit çatı alanının bağlantı formlarını bulalım. Ardından $\mathbb{R}^3$ üzerinde tanımlı bir çatı alanının bütün bağlantı formlarının sıfır olmasının, çatının her noktada aynı olması demek olduğunu gösterelim.
+
+::: {.cozum}
+Döndürülmüş sabit çatının duruş matrisi
+
+$$A = \dfrac{1}{3}\begin{pmatrix} 2 & 2 & 1 \\ -2 & 1 & 2 \\ 1 & -2 & 2 \end{pmatrix}$$
+
+sabit girdilidir; dolayısıyla $dA = 0$ ve $\omega = dA\, A^{\mathsf{T}} = 0$. Bütün bağlantı formları sıfırdır: hangi yöne gidersek gidelim çatı hiç dönmez.
+
+Tersine, $\mathbb{R}^3$ üzerindeki bir çatı alanının bütün bağlantı formları sıfır olsun. @exm-baglanti-ters-simetri-matrisle'de gördüğümüz $dA = \omega A$ eşitliği $dA = 0$ verir: duruş matrisinin her girdisinin diferansiyeli sıfırdır. Diferansiyeli sıfır olan bir fonksiyon $\mathbb{R}^3$ üzerinde sabittir (@exr-form-sifir-diferansiyel). Dolayısıyla her $a_{ij}$ sabittir ve çatı alanı her noktada aynı çatıyı verir. Aynı sonuç bağlantı denklemlerinden de okunur: $\omega = 0$ ise her $V$ için $\nabla_V E_i = \mathbf{0}$'dır ve her yönde türevi sıfır olan alanın koordinatları sabittir (@exr-kovaryant-paralel-alan).
+
+Yani bağlantı formları, çatı alanının sabit bir çatıdan ne kadar saptığını ölçer; hepsi sıfırsa sapma yoktur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-baglanti-verilen-e1 name="Birinci Alanı Verilen Çatının Bağlantı Formları"}
+@exr-cati-verilen-e1'de bulduğumuz
+
+$$\begin{aligned}
+E_1 &= \cos x\, U_1 + \sin x\cos z\, U_2 + \sin x\sin z\, U_3,\\
+E_2 &= -\sin x\, U_1 + \cos x\cos z\, U_2 + \cos x\sin z\, U_3,\\
+E_3 &= -\sin z\, U_2 + \cos z\, U_3
+\end{aligned}$$
+
+çatı alanının bağlantı formlarını hesaplayalım.
+
+::: {.cozum}
+*Duruş matrisi ve diferansiyeli.* Satırlar şunlardır:
+
+$$\begin{aligned}
+a_1 &= (\cos x,\ \sin x\cos z,\ \sin x\sin z),\\
+a_2 &= (-\sin x,\ \cos x\cos z,\ \cos x\sin z),\\
+a_3 &= (0,\ -\sin z,\ \cos z).
+\end{aligned}$$
+
+Çarpım ve bileşke kurallarıyla
+
+$$\begin{aligned}
+da_1 &= \bigl(-\sin x\, dx,\ \cos x\cos z\, dx - \sin x\sin z\, dz,\\
+&\qquad\ \cos x\sin z\, dx + \sin x\cos z\, dz\bigr),\\
+da_2 &= \bigl(-\cos x\, dx,\ -\sin x\cos z\, dx - \cos x\sin z\, dz,\\
+&\qquad\ -\sin x\sin z\, dx + \cos x\cos z\, dz\bigr).
+\end{aligned}$$
+
+*$\omega_{12}$.* $da_1$ ile $a_2$'nin "iç çarpımı":
+
+$$\begin{aligned}
+\omega_{12} &= \sin^2 x\, dx + \cos x\cos z\,(\cos x\cos z\, dx - \sin x\sin z\, dz)\\
+&\quad + \cos x\sin z\,(\cos x\sin z\, dx + \sin x\cos z\, dz)\\
+&= (\sin^2 x + \cos^2 x\cos^2 z + \cos^2 x\sin^2 z)\, dx = dx;
+\end{aligned}$$
+
+$dz$ terimleri $-\cos x\sin x\cos z\sin z$ ve $+\cos x\sin x\sin z\cos z$ olarak birbirini götürür.
+
+*$\omega_{13}$.* $da_1$ ile $a_3$:
+
+$$\begin{aligned}
+\omega_{13} &= -\sin z\,(\cos x\cos z\, dx - \sin x\sin z\, dz)\\
+&\quad + \cos z\,(\cos x\sin z\, dx + \sin x\cos z\, dz)\\
+&= \sin x\,(\sin^2 z + \cos^2 z)\, dz = \sin x\, dz.
+\end{aligned}$$
+
+*$\omega_{23}$.* $da_2$ ile $a_3$:
+
+$$\begin{aligned}
+\omega_{23} &= -\sin z\,(-\sin x\cos z\, dx - \cos x\sin z\, dz)\\
+&\quad + \cos z\,(-\sin x\sin z\, dx + \cos x\cos z\, dz)\\
+&= \cos x\,(\sin^2 z + \cos^2 z)\, dz = \cos x\, dz.
+\end{aligned}$$
+
+Sonuç: $\omega_{12} = dx$, $\omega_{13} = \sin x\, dz$, $\omega_{23} = \cos x\, dz$. Bu kez üç form da sıfırdan farklıdır.
+
+*Yorum ve denetim.* $x$ yönünde ($U_1$ yönünde) ilerlerken yalnızca $\omega_{12}(U_1) = 1$ sıfırdan farklıdır: $E_1$, $E_2$'ye doğru birim hızla döner, $E_3$ yerinde kalır. $z$ yönünde ilerlerken $\omega_{12}(U_3) = 0$ ama $\omega_{13}(U_3) = \sin x$, $\omega_{23}(U_3) = \cos x$: bu kez çatı $U_1$ ekseni etrafında döner ve $E_1$ ile $E_2$ bu dönmeye, $U_1$'den ne kadar uzak durduklarıyla orantılı olarak katılır. Bunu tanımdan denetleyelim: $E_1$'in koordinatlarının $z$'ye göre türevleri $(0, -\sin x\sin z, \sin x\cos z)$'dir, yani $\nabla_{U_3} E_1 = \sin x\, E_3$; bu da $\omega_{12}(U_3) = 0$ ve $\omega_{13}(U_3) = \sin x$ demektir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Küresel ve Toroidal Çatılar
+
+Küresel çatı alanı, silindirik çatının $E_1$ ile $E_3$'ünün her noktada kendi düzlemlerinde $\varphi$ açısıyla döndürülmesiyle elde edilmişti (@exm-cati-kuresel); toroidal çatı da aynı biçimde $\psi$ açısıyla (@exr-cati-toroidal-b). İki hesabı ayrı ayrı yapmak yerine, bu yapının genel biçimini bir kez hesaplayalım. Yöntem de yeni olacak: duruş matrisi yerine silindirik çatının bağlantı denklemlerini ve Leibniz kuralını kullanacağız.
+
+:::: {#prp-baglanti-egik-cati name="Silindirik Çatıyı Bir Fonksiyonla Eğmek"}
+$E_1, E_2, E_3$ silindirik çatı alanı ve $g$, $z$ ekseni dışındaki bir açık kümede diferansiyellenebilir bir fonksiyon olsun. Bu kümede
+
+$$G_1 = \cos g\, E_1 + \sin g\, E_3, \qquad G_2 = E_2, \qquad G_3 = -\sin g\, E_1 + \cos g\, E_3$$
+
+bir çatı alanıdır ve bağlantı formları
+
+$$\omega_{12} = \cos g\, d\vartheta, \qquad \omega_{13} = dg, \qquad \omega_{23} = \sin g\, d\vartheta$$
+
+olur.
+
+::: {.ispat}
+*Çatı alanı.* Hesap, @exm-cati-kuresel'deki "silindirik çatı üzerinden" hesabın $\varphi$ yerine $g$ yazılmış hâlidir: $G_1 \cdot G_1 = \cos^2 g + \sin^2 g = 1$, $G_3 \cdot G_3 = 1$ ve
+
+$$G_1 \cdot G_3 = -\cos g\sin g + \sin g\cos g = 0;$$
+
+$G_2 = E_2$ birimdir ve $E_1$ ile $E_3$'e dik olduğundan $G_1$ ile $G_3$'e de diktir. Katsayılar diferansiyellenebilirdir.
+
+*Ters çevirme.* $G_1$'i $\cos g$, $G_3$'ü $-\sin g$ ile çarpıp toplayınca $E_3$ terimleri yok olur; $G_1$'i $\sin g$, $G_3$'ü $\cos g$ ile çarpıp toplayınca $E_1$ terimleri yok olur:
+
+$$E_1 = \cos g\, G_1 - \sin g\, G_3, \qquad E_3 = \sin g\, G_1 + \cos g\, G_3.$$
+
+*$G_1$'in türevi.* Silindirik çatının bağlantı denklemleri $\nabla_V E_1 = d\vartheta(V)\, E_2$, $\nabla_V E_3 = \mathbf{0}$'dır (@exm-baglanti-silindirik-denklemler). Fonksiyonla çarpım için Leibniz kuralı (@cor-kovaryant-vektor-alani, (3)) ve $V[\cos g] = -\sin g\, dg(V)$, $V[\sin g] = \cos g\, dg(V)$ eşitlikleriyle (@lem-form-bileske-kurali)
+
+$$\begin{aligned}
+\nabla_V G_1 &= V[\cos g]\, E_1 + \cos g\,\nabla_V E_1 + V[\sin g]\, E_3 + \sin g\,\nabla_V E_3\\
+&= dg(V)\,\bigl(-\sin g\, E_1 + \cos g\, E_3\bigr) + \cos g\, d\vartheta(V)\, E_2\\
+&= \cos g\, d\vartheta(V)\, G_2 + dg(V)\, G_3.
+\end{aligned}$$
+
+Bağlantı denklemlerindeki katsayılar tektir (@lem-cati-ortonormal-acilim); dolayısıyla $\omega_{12}(V) = \cos g\, d\vartheta(V)$ ve $\omega_{13}(V) = dg(V)$.
+
+*$G_2$'nin türevi.* $\nabla_V G_2 = \nabla_V E_2 = -d\vartheta(V)\, E_1$'dir. Ters çevirme formülüyle
+
+$$\nabla_V G_2 = -\cos g\, d\vartheta(V)\, G_1 + \sin g\, d\vartheta(V)\, G_3;$$
+
+buradan $\omega_{23}(V) = \sin g\, d\vartheta(V)$ okunur. Bir denetim olarak $\omega_{21}(V) = -\cos g\, d\vartheta(V)$ çıkar ve bu, $-\omega_{12}(V)$'ye eşittir.
+
+Bu eşitlikler her $V$ vektör alanı için doğru olduğundan, ve bir 1-form bütün teğet vektörlerdeki değerleriyle belirlendiğinden (her teğet vektör, örneğin sabit katsayılı bir alanın bir noktadaki değeridir), iddia edilen form eşitlikleri geçerlidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani silindirik çatıyı $E_1 E_3$ düzleminde $g$ açısıyla eğmek, $\omega_{13}$'e bu açının diferansiyelini ekler ve silindirik çatının tek dönmesini, $d\vartheta$'yı, $\cos g$ ve $\sin g$ oranlarında $\omega_{12}$ ile $\omega_{23}$ arasında paylaştırır. $g = 0$ alınırsa silindirik çatı ve $\omega_{12} = d\vartheta$ geri gelir.
+
+:::: {#exm-baglanti-kuresel name="Küresel Çatının Bağlantı Formları"}
+Küresel çatı alanı $F_1, F_2, F_3$'ün bağlantı formlarını bulalım, anlamlarını yorumlayalım ve bir noktada tanımdan denetleyelim.
+
+::: {.cozum}
+Küresel çatı, @prp-baglanti-egik-cati'deki yapının $g = \varphi$ için yazılmışıdır (@exm-cati-kuresel). Dolayısıyla
+
+$$\omega_{12} = \cos\varphi\, d\vartheta, \qquad \omega_{13} = d\varphi, \qquad \omega_{23} = \sin\varphi\, d\vartheta.$$
+
+*Yorum.* $F_1$ dışa, $F_2$ doğuya, $F_3$ kuzeye bakar.
+
+- Bir meridyen boyunca kuzeye yürürken ($\vartheta$ sabit) yalnızca $\omega_{13} = d\varphi$ çalışır: dışa bakan $F_1$, kuzeye bakan $F_3$'e doğru, enlemin değişim hızıyla döner. Bu, meridyen düzleminde bir çember boyunca yürümektir ve o düzlemde gördüğümüz bir dönmedir.
+- Bir paralel boyunca doğuya yürürken ($\varphi$ sabit) $\omega_{13} = 0$ olur ama $\omega_{12}$ ve $\omega_{23}$ çalışır. Doğuya bakan $F_2 = E_2$, silindirik çatıda olduğu gibi $z$ eksenine doğru, yani $-E_1$ yönüne döner. $-E_1$ ise meridyen düzleminde $-\cos\varphi\, F_1 + \sin\varphi\, F_3$'tür: bu dönmenin $\cos\varphi$ kadarı $F_1$'e, $\sin\varphi$ kadarı $F_3$'e yöneliktir.
+- Ekvatorda ($\varphi = 0$) $\omega_{23} = 0$: ekvator bir büyük çemberdir ve boyunca doğuya bakan ok kuzeye sapmaz. Kutuplara yaklaştıkça $\sin\varphi$ büyür: paraleller küçük çemberlerdir ve doğuya bakan ok kuzeye doğru hızla döner.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="16.5 -1.0 661.0 327.0" role="img" aria-label="Two panels in the meridian half plane with axes r and z. Left: points of the circle rho = 4 at latitudes 25 and 55 degrees with F1 outward orange and F3 north blue; a dashed copy of the lower F1 at the upper point makes the angle delta phi with the upper F1, the same as the angle at O. Right: at latitude 40 degrees F1, F3 and the vector -E1 toward the z axis, decomposed into -cos phi F1 and sin phi F3; F2 points out of the page">
+  <line x1="31.4" y1="283.1" x2="307.0" y2="283.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="312.6,283.1 305.6,286.1 305.6,280.2" fill="var(--academic-text)" opacity="0.5"/>
+  <line x1="59.5" y1="311.3" x2="59.5" y2="45.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="59.5,39.4 62.4,46.4 56.6,46.4" fill="var(--academic-text)" opacity="0.5"/>
+  <text x="310.6" y="299.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">r</text>
+  <text x="67.5" y="41.4" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">z</text>
+  <path d="M245.2,309.2 L246.0,302.5 L246.6,295.7 L246.9,288.9 L247.0,282.0 L246.8,275.2 L246.4,268.4 L245.8,261.6 L244.9,254.9 L243.7,248.2 L242.3,241.5 L240.7,234.9 L238.8,228.3 L236.7,221.8 L234.4,215.4 L231.8,209.1 L229.0,202.9 L225.9,196.8 L222.7,190.8 L219.2,184.9 L215.6,179.2 L211.7,173.6 L207.6,168.1 L203.3,162.8 L198.8,157.7 L194.2,152.7 L189.4,147.9 L184.4,143.2 L179.2,138.8 L173.9,134.5 L168.4,130.5 L162.8,126.6 L157.0,123.0 L151.1,119.5 L145.1,116.3 L139.0,113.3 L132.8,110.5 L126.4,108.0 L120.0,105.7 L113.5,103.6 L107.0,101.7 L100.3,100.1 L93.7,98.8 L86.9,97.6 L80.2,96.8 L73.4,96.1 L66.6,95.8 L59.8,95.6 L53.0,95.7" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="59.5" cy="283.1" r="3.0" fill="var(--academic-text)"/>
+  <text x="52.5" y="298.1" fill="var(--academic-text)" font-size="11.5" text-anchor="end">O</text>
+  <path d="M59.5,283.1 L229.4,203.9" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="229.4" y1="203.9" x2="265.8" y2="186.9" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="271.9,184.1 265.7,190.9 262.7,184.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="229.4" y1="203.9" x2="212.5" y2="167.6" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="209.6,161.4 216.5,167.6 210.0,170.6" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="229.4" cy="203.9" r="3.4" fill="var(--academic-text)"/>
+  <path d="M59.5,283.1 L167.0,129.5" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="167.0" y1="129.5" x2="190.0" y2="96.7" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="193.9,91.1 192.0,100.1 186.1,96.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="167.0" y1="129.5" x2="134.2" y2="106.5" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="128.6,102.6 137.7,104.6 133.6,110.4" fill="var(--color-theory)" opacity="1.0"/>
+  <circle cx="167.0" cy="129.5" r="3.4" fill="var(--academic-text)"/>
+  <line x1="167.0" y1="129.5" x2="204.1" y2="112.3" stroke="var(--color-practice)" stroke-width="1.4" stroke-dasharray="3 2.5" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="209.5,109.7 204.1,115.7 201.4,110.0" fill="var(--color-practice)" opacity="0.8"/>
+  <path d="M192.5,117.6 L192.4,117.4 L192.3,117.1 L192.1,116.8 L192.0,116.5 L191.8,116.3 L191.7,116.0 L191.6,115.7 L191.4,115.5 L191.2,115.2 L191.1,114.9 L190.9,114.7 L190.8,114.4 L190.6,114.2 L190.4,113.9 L190.3,113.7 L190.1,113.4 L189.9,113.2 L189.7,112.9 L189.5,112.7 L189.4,112.4 L189.2,112.2 L189.0,111.9 L188.8,111.7 L188.6,111.5 L188.4,111.2 L188.2,111.0 L188.0,110.8 L187.8,110.5 L187.6,110.3 L187.4,110.1 L187.1,109.9 L186.9,109.6 L186.7,109.4 L186.5,109.2 L186.3,109.0 L186.0,108.8 L185.8,108.6 L185.6,108.4 L185.4,108.2 L185.1,108.0 L184.9,107.8 L184.6,107.6 L184.4,107.4 L184.2,107.2 L183.9,107.0 L183.7,106.9 L183.4,106.7 L183.2,106.5" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="197.9" y="107.6" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#916;<tspan font-style="italic">&#966;</tspan></text>
+  <path d="M110.5,259.4 L110.2,258.8 L109.9,258.2 L109.7,257.7 L109.4,257.2 L109.1,256.6 L108.8,256.1 L108.5,255.5 L108.2,255.0 L107.9,254.5 L107.6,253.9 L107.3,253.4 L106.9,252.9 L106.6,252.4 L106.3,251.9 L105.9,251.4 L105.6,250.9 L105.2,250.4 L104.9,249.9 L104.5,249.4 L104.1,248.9 L103.7,248.4 L103.4,247.9 L103.0,247.4 L102.6,247.0 L102.2,246.5 L101.8,246.0 L101.4,245.6 L101.0,245.1 L100.6,244.7 L100.1,244.2 L99.7,243.8 L99.3,243.4 L98.8,242.9 L98.4,242.5 L98.0,242.1 L97.5,241.7 L97.0,241.2 L96.6,240.8 L96.1,240.4 L95.7,240.0 L95.2,239.6 L94.7,239.3 L94.2,238.9 L93.7,238.5 L93.3,238.1 L92.8,237.8 L92.3,237.4 L91.8,237.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="115.2" y="240.4" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#916;<tspan font-style="italic">&#966;</tspan></text>
+  <text x="277.9" y="190.1" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="207.6" y="155.4" fill="var(--color-theory)" font-size="11.5" text-anchor="end"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="199.9" y="91.1" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="122.6" y="104.6" fill="var(--color-theory)" font-size="11.5" text-anchor="end"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="172.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">kuzeye yürürken: <tspan font-style="italic">&#969;</tspan><tspan font-size="9" dy="4">13</tspan><tspan dy="-4">&#8203;</tspan> = <tspan font-style="italic">d&#966;</tspan></text>
+  <line x1="381.4" y1="283.1" x2="657.0" y2="283.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="662.6,283.1 655.6,286.1 655.6,280.2" fill="var(--academic-text)" opacity="0.5"/>
+  <line x1="409.5" y1="311.3" x2="409.5" y2="45.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" stroke-linecap="round"/>
+  <polygon points="409.5,39.4 412.4,46.4 406.6,46.4" fill="var(--academic-text)" opacity="0.5"/>
+  <text x="660.6" y="299.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">r</text>
+  <text x="417.5" y="41.4" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">z</text>
+  <path d="M595.2,309.2 L596.0,302.5 L596.6,295.7 L596.9,288.9 L597.0,282.0 L596.8,275.2 L596.4,268.4 L595.8,261.6 L594.9,254.9 L593.7,248.2 L592.3,241.5 L590.7,234.9 L588.8,228.3 L586.7,221.8 L584.4,215.4 L581.8,209.1 L579.0,202.9 L575.9,196.8 L572.7,190.8 L569.2,184.9 L565.6,179.2 L561.7,173.6 L557.6,168.1 L553.3,162.8 L548.8,157.7 L544.2,152.7 L539.4,147.9 L534.4,143.2 L529.2,138.8 L523.9,134.5 L518.4,130.5 L512.8,126.6 L507.0,123.0 L501.1,119.5 L495.1,116.3 L489.0,113.3 L482.8,110.5 L476.4,108.0 L470.0,105.7 L463.5,103.6 L457.0,101.7 L450.3,100.1 L443.7,98.8 L436.9,97.6 L430.2,96.8 L423.4,96.1 L416.6,95.8 L409.8,95.6 L403.0,95.7" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="409.5" cy="283.1" r="3.0" fill="var(--academic-text)"/>
+  <text x="402.5" y="298.1" fill="var(--academic-text)" font-size="11.5" text-anchor="end">O</text>
+  <path d="M409.5,283.1 L553.1,162.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M509.1,199.5 L478.1,162.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="3 2.5" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M522.1,125.7 L478.1,162.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="3 2.5" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="553.1" y1="162.6" x2="513.7" y2="195.7" stroke="var(--color-practice)" stroke-width="1.6" stroke-dasharray="4 2.5" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="509.1,199.5 512.8,192.3 516.9,197.1" fill="var(--color-practice)" opacity="0.9"/>
+  <line x1="553.1" y1="162.6" x2="526.0" y2="130.3" stroke="var(--color-theory)" stroke-width="1.6" stroke-dasharray="4 2.5" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="522.1,125.7 529.4,129.4 524.6,133.4" fill="var(--color-theory)" opacity="0.9"/>
+  <line x1="553.1" y1="162.6" x2="605.4" y2="118.8" stroke="var(--color-practice)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="610.6,114.4 606.4,122.6 601.8,117.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="553.1" y1="162.6" x2="509.3" y2="110.4" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="504.9,105.1 513.1,109.4 507.7,114.0" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="553.1" y1="162.6" x2="484.9" y2="162.6" stroke="var(--color-base)" stroke-width="2.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="478.1,162.6 486.6,159.0 486.6,166.2" fill="var(--color-base)" opacity="1.0"/>
+  <circle cx="553.1" cy="162.6" r="6.5" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <circle cx="553.1" cy="162.6" r="2.2" fill="var(--color-base)"/>
+  <text x="616.6" y="118.4" fill="var(--color-practice)" font-size="11.5" text-anchor="start"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="500.9" y="99.1" fill="var(--color-theory)" font-size="11.5" text-anchor="end"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="472.1" y="166.6" fill="var(--color-base)" font-size="11.5" text-anchor="end">&#8722;<tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="513.1" y="216.5" fill="var(--color-practice)" font-size="11" text-anchor="middle">&#8722;cos <tspan font-style="italic">&#966;</tspan> <tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="510.1" y="127.7" fill="var(--color-theory)" font-size="11" text-anchor="end">sin <tspan font-style="italic">&#966;</tspan> <tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">3</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="563.1" y="182.6" fill="var(--color-base)" font-size="11.5" text-anchor="start"><tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="563.1" y="196.6" fill="var(--color-base)" font-size="10.5" text-anchor="start">(sayfadan dışarı)</text>
+  <text x="522.0" y="22.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">doğuya yürürken <tspan font-style="italic">F</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan>, &#8722;<tspan font-style="italic">E</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan> yönüne döner</text>
+</svg>
+<figcaption>Küresel çatının bağlantı formları, meridyen yarım düzleminde (yatay eksen <em>r</em>, düşey eksen <em>z</em>). Solda: <em>&#961;</em> = 4 çemberi üzerinde kuzeye yürürken dışa bakan <em>F</em><sub>1</sub> (turuncu), kuzeye bakan <em>F</em><sub>3</sub>&#8217;e (mavi) doğru, enlemdeki artış <em>&#916;&#966;</em> kadar döner; kesikli ok alttaki <em>F</em><sub>1</sub>&#8217;in taşınmış kopyasıdır. Bu, <em>&#969;</em><sub>13</sub> = <em>d&#966;</em> demektir. Sağda: doğuya bakan <em>F</em><sub>2</sub> (yeşil, sayfadan dışarı) doğuya yürürken <em>z</em> eksenine doğru, &#8722;<em>E</em><sub>1</sub> yönüne döner ve &#8722;<em>E</em><sub>1</sub> = &#8722;cos <em>&#966;</em> <em>F</em><sub>1</sub> + sin <em>&#966;</em> <em>F</em><sub>3</sub>&#8217;tür; dönmenin cos <em>&#966;</em> kadarı <em>F</em><sub>1</sub>&#8217;e, sin <em>&#966;</em> kadarı <em>F</em><sub>3</sub>&#8217;e yöneliktir: <em>&#969;</em><sub>12</sub> = cos <em>&#966;</em> <em>d&#977;</em>, <em>&#969;</em><sub>23</sub> = sin <em>&#966;</em> <em>d&#977;</em>.</figcaption>
+</figure>
+```
+
+*Sayısal denetim.* $\mathbf{p} = (3, 0, 4)$ ve $\mathbf{v} = (1, 3, 2)_{\mathbf{p}}$ alalım. $\mathbf{p}$'de $r = 3$, $\rho = 5$, $\vartheta = 0$, $\cos\varphi = 3/5$, $\sin\varphi = 4/5$'tir. $d\vartheta(\mathbf{v}) = (-0 \cdot 1 + 3 \cdot 3)/9 = 1$. $d\varphi$ için $r = \rho\cos\varphi$, $z = \rho\sin\varphi$ eşitliklerinden, $d\vartheta$'yı bulduğumuz yolla, $-\sin\varphi\, dr + \cos\varphi\, dz = \rho\, d\varphi$, yani
+
+$$d\varphi = \dfrac{r\, dz - z\, dr}{r^2 + z^2}, \qquad dr = \dfrac{x\, dx + y\, dy}{r}$$
+
+bulunur. $dr(\mathbf{v}) = (3 \cdot 1 + 0 \cdot 3)/3 = 1$ ve $d\varphi(\mathbf{v}) = (3 \cdot 2 - 4 \cdot 1)/25 = 2/25$. Buradan
+
+$$\omega_{12}(\mathbf{v}) = \dfrac{3}{5}, \qquad \omega_{13}(\mathbf{v}) = \dfrac{2}{25}, \qquad \omega_{23}(\mathbf{v}) = \dfrac{4}{5}.$$
+
+Tanımdan denetim için $\nabla_{\mathbf{v}} F_1$'i hesaplayalım. $F_1$'in koordinat fonksiyonları $x/\rho$, $y/\rho$, $z/\rho$'dur ve
+
+$$\mathbf{v}[\rho] = \dfrac{x v_1 + y v_2 + z v_3}{\rho} = \dfrac{3 + 0 + 8}{5} = \dfrac{11}{5}.$$
+
+Bölüm kuralıyla $\mathbf{v}[x_i/\rho] = v_i/\rho - x_i\,\mathbf{v}[\rho]/\rho^2$, yani
+
+$$\nabla_{\mathbf{v}} F_1 = \dfrac{1}{5}(1, 3, 2) - \dfrac{11}{125}(3, 0, 4) = \left(-\dfrac{8}{125},\ \dfrac{3}{5},\ \dfrac{6}{125}\right).$$
+
+Bağlantı denklemi ise $F_2(\mathbf{p}) = (0, 1, 0)$ ve $F_3(\mathbf{p}) = (-4/5, 0, 3/5)$ ile
+
+$$\omega_{12}(\mathbf{v})\, F_2(\mathbf{p}) + \omega_{13}(\mathbf{v})\, F_3(\mathbf{p}) = \dfrac{3}{5}(0, 1, 0) + \dfrac{2}{25}\left(-\dfrac{4}{5}, 0, \dfrac{3}{5}\right) = \left(-\dfrac{8}{125},\ \dfrac{3}{5},\ \dfrac{6}{125}\right)$$
+
+verir. İki sonuç aynıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-baglanti-toroidal name="Toroidal Çatının Bağlantı Formları"}
+$a > 0$ ve $T_1, T_2, T_3$, @exr-cati-toroidal-b'deki toroidal çatı alanı olsun: $s = \sqrt{(r - a)^2 + z^2}$, $\cos\psi = (r - a)/s$, $\sin\psi = z/s$ ve
+
+$$T_1 = \cos\psi\, E_1 + \sin\psi\, E_3, \qquad T_2 = E_2, \qquad T_3 = -\sin\psi\, E_1 + \cos\psi\, E_3.$$
+
+Bağlantı formlarını bulalım ve $a = 1$, $\mathbf{p} = (3, 4, 3)$, $\mathbf{v} = U_3(\mathbf{p})$ için değerlerini yorumlayalım.
+
+::: {.cozum}
+Toroidal çatı @prp-baglanti-egik-cati'nin $g = \psi$ durumudur:
+
+$$\omega_{12} = \cos\psi\, d\vartheta, \qquad \omega_{13} = d\psi, \qquad \omega_{23} = \sin\psi\, d\vartheta.$$
+
+$a = 0$ alınırsa $s = \rho$, $\psi = \varphi$ olur ve küresel çatının bağlantı formları geri gelir.
+
+$d\psi$'yi $d\varphi$ gibi buluruz: $r - a = s\cos\psi$ ve $z = s\sin\psi$ eşitliklerinden $-\sin\psi\, dr + \cos\psi\, dz = s\, d\psi$, yani
+
+$$d\psi = \dfrac{(r - a)\, dz - z\, dr}{s^2}.$$
+
+Burada bir inceliğe dikkat edelim. $\psi$ açısı, $\vartheta$ gibi, her yerde tek değerli değildir: bir meridyen düzleminde $C$'nin çevresinde bir tur atınca $2\pi$ artar. $\psi$, ancak bir kesit dışarıda bırakılınca, örneğin $z = 0$, $r < a$ diski çıkarılınca, tek değerli ve diferansiyellenebilir bir fonksiyon olur; @prp-baglanti-egik-cati böyle her kümede uygulanır. Yukarıdaki $d\psi$ ifadesi ise kesitin seçiminden bağımsızdır ve $z$ ekseni ile $C$ dışında her yerde tanımlıdır; dolayısıyla bağlantı formlarının formülleri çatı alanının bütün tanım kümesinde geçerlidir.
+
+$a = 1$ ve $\mathbf{p} = (3, 4, 3)$ için $r = 5$, $r - a = 4$, $z = 3$, $s = 5$ (@exr-cati-toroidal-a). $\mathbf{v} = U_3(\mathbf{p})$ için $dr(\mathbf{v}) = 0$ ve $d\vartheta(\mathbf{v}) = 0$ olduğundan
+
+$$\omega_{12}(\mathbf{v}) = 0, \qquad \omega_{13}(\mathbf{v}) = d\psi(\mathbf{v}) = \dfrac{4 \cdot 1 - 3 \cdot 0}{25} = \dfrac{4}{25}, \qquad \omega_{23}(\mathbf{v}) = 0.$$
+
+Yorum: yukarı doğru birim hızla ilerlerken yalnızca $T_1$ ile $T_3$ döner; $C$ çemberinden dışa bakan $T_1$, $C$'yi çevreleyen küçük çember yönündeki $T_3$'e doğru $4/25$ hızla döner. Bu sayı, yukarı hareketin $\mathbf{p}$'den geçen küçük çembere teğet bileşeni ($\cos\psi = 4/5$) ile o çemberin yarıçapının ($s = 5$) oranıdır: $\cos\psi / s = 4/25$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+:::: {#exr-baglanti-ornek-cati-a name="Bir Fonksiyonla Kurulan Çatı Alanı"}
+$f$, $\mathbb{R}^3$ üzerinde diferansiyellenebilir bir fonksiyon olsun.
+
+$$\begin{aligned}
+E_1 &= \tfrac{1}{\sqrt{2}}\,(\sin f\, U_1 + U_2 - \cos f\, U_3),\\
+E_2 &= \tfrac{1}{\sqrt{2}}\,(\sin f\, U_1 - U_2 - \cos f\, U_3),\\
+E_3 &= \cos f\, U_1 + \sin f\, U_3
+\end{aligned}$$
+
+alanlarının bir çatı alanı oluşturduğunu gösteriniz.
+
+::: {.cozum}
+Katsayılar $\sin f$, $\cos f$ ve sabitlerden oluşur; bileşke kuralı gereği hepsi diferansiyellenebilirdir, dolayısıyla üç alan da vektör alanıdır. Vektör kısımları $\tfrac{1}{\sqrt{2}}(\sin f, 1, -\cos f)$, $\tfrac{1}{\sqrt{2}}(\sin f, -1, -\cos f)$ ve $(\cos f, 0, \sin f)$'dir. @lem-cati-ic-carpim-formulu ile
+
+$$\begin{aligned}
+E_1 \cdot E_1 &= \tfrac{1}{2}(\sin^2 f + 1 + \cos^2 f) = 1, & E_1 \cdot E_2 &= \tfrac{1}{2}(\sin^2 f - 1 + \cos^2 f) = 0,\\
+E_2 \cdot E_2 &= \tfrac{1}{2}(\sin^2 f + 1 + \cos^2 f) = 1, & E_1 \cdot E_3 &= \tfrac{1}{\sqrt{2}}(\sin f\cos f - \cos f\sin f) = 0,\\
+E_3 \cdot E_3 &= \cos^2 f + \sin^2 f = 1, & E_2 \cdot E_3 &= \tfrac{1}{\sqrt{2}}(\sin f\cos f - \cos f\sin f) = 0.
+\end{aligned}$$
+
+Altı koşul sağlanır; $E_1, E_2, E_3$ bir çatı alanıdır.
+
+Çatının geometrisi şöyle görülür: $\tfrac{1}{\sqrt{2}}(E_1 - E_2) = U_2$ ve $\tfrac{1}{\sqrt{2}}(E_1 + E_2) = \sin f\, U_1 - \cos f\, U_3$'tür. Yani $E_1$ ile $E_2$, $U_2$ ile $xz$ düzlemindeki $\sin f\, U_1 - \cos f\, U_3$ birim vektörünün arasına $45°$ açıyla yerleştirilmiştir; $E_3$ de $xz$ düzleminde bu vektöre diktir. Nokta değiştikçe yalnızca $xz$ düzlemindeki kısım, $f$ açısıyla, $U_2$ ekseni etrafında döner. Örneğin $f = 0$ olan bir noktada vektör kısımları $\tfrac{1}{\sqrt{2}}(0, 1, -1)$, $\tfrac{1}{\sqrt{2}}(0, -1, -1)$, $(1, 0, 0)$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-ornek-cati-b name="Bir Fonksiyonla Kurulan Çatının Bağlantı Formları"}
+$f$, $\mathbb{R}^3$ üzerinde diferansiyellenebilir bir fonksiyon ve $E_1, E_2, E_3$, @exr-baglanti-ornek-cati-a'daki
+
+$$\begin{aligned}
+E_1 &= \tfrac{1}{\sqrt{2}}\,(\sin f\, U_1 + U_2 - \cos f\, U_3),\\
+E_2 &= \tfrac{1}{\sqrt{2}}\,(\sin f\, U_1 - U_2 - \cos f\, U_3),\\
+E_3 &= \cos f\, U_1 + \sin f\, U_3
+\end{aligned}$$
+
+çatı alanı olsun. Bağlantı formlarını bulunuz.
+
+::: {.cozum}
+@thm-baglanti-durus-matrisi-formulu'nü kullanırız. Duruş matrisinin satırları
+
+$$\begin{aligned}
+a_1 &= \tfrac{1}{\sqrt{2}}(\sin f,\ 1,\ -\cos f), \qquad a_2 = \tfrac{1}{\sqrt{2}}(\sin f,\ -1,\ -\cos f),\\
+a_3 &= (\cos f,\ 0,\ \sin f)
+\end{aligned}$$
+
+ve bileşke kuralıyla
+
+$$da_1 = \tfrac{1}{\sqrt{2}}(\cos f\, df,\ 0,\ \sin f\, df) = da_2.$$
+
+İlginç biçimde $da_1 = da_2 = \tfrac{1}{\sqrt{2}}\, a_3\, df$'dir. Buradan
+
+$$\begin{aligned}
+\omega_{12} &= \textstyle\sum_k a_{2k}\, da_{1k} = \tfrac{1}{2}(\sin f\cos f + 0 - \cos f\sin f)\, df = 0,\\
+\omega_{13} &= \textstyle\sum_k a_{3k}\, da_{1k} = \tfrac{1}{\sqrt{2}}(\cos^2 f + 0 + \sin^2 f)\, df = \tfrac{1}{\sqrt{2}}\, df,\\
+\omega_{23} &= \textstyle\sum_k a_{3k}\, da_{2k} = \tfrac{1}{\sqrt{2}}(\cos^2 f + \sin^2 f)\, df = \tfrac{1}{\sqrt{2}}\, df.
+\end{aligned}$$
+
+Sonuç: $\omega_{12} = 0$ ve $\omega_{13} = \omega_{23} = df/\sqrt{2}$.
+
+Yorum: $E_1$ ile $E_2$ birbirine göre hiç dönmez; ikisi de $E_3$'e doğru, $f$'nin değişim hızının $1/\sqrt{2}$ katıyla döner. Bu, @exr-baglanti-ornek-cati-a'daki resimle uyumludur: çatının tamamı $U_2$ ekseni etrafında $f$ açısıyla dönmektedir; $E_3$ bu eksene dik olduğundan tam hızla, $E_1$ ile $E_2$ ise eksene $45°$ eğik durduklarından $\cos 45° = 1/\sqrt{2}$ oranında dönmeye katılır.
+
+Bir denetim: $f = x$ alalım ve $\mathbf{v} = U_1(\mathbf{p})$ olsun. $E_1$'in koordinatlarının $x$'e göre türevleri $\tfrac{1}{\sqrt{2}}(\cos x, 0, \sin x)$'tir, yani $\nabla_{U_1} E_1 = \tfrac{1}{\sqrt{2}}\, E_3$; bu da $\omega_{12}(U_1) = 0$ ve $\omega_{13}(U_1) = 1/\sqrt{2} = dx(U_1)/\sqrt{2}$ ile uyumludur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-dogal-cati name="Doğal Çatının Bağlantı Formları"}
+Doğal çatı alanı $U_1, U_2, U_3$'ün bağlantı formlarını bulunuz.
+
+::: {.cozum}
+*Tanımdan.* Her $U_i$'nin koordinat fonksiyonları sabittir, dolayısıyla her $\mathbf{v}$ için $\nabla_{\mathbf{v}} U_i = \mathbf{0}$'dır (@exm-kovaryant-sabit-alan). Tanım gereği
+
+$$\omega_{ij}(\mathbf{v}) = \nabla_{\mathbf{v}} U_i \cdot U_j(\mathbf{p}) = \mathbf{0} \cdot U_j(\mathbf{p}) = 0.$$
+
+*Duruş matrisiyle.* Doğal çatının duruş matrisi birim matris $I$'dır: $a_{ij} = U_i \cdot U_j = \delta_{ij}$. Girdileri sabit olduğundan $dI = 0$ ve $\omega = dI\, I^{\mathsf{T}} = 0$.
+
+İki yol da aynı sonucu verir: doğal çatının bütün bağlantı formları sıfırdır. Bağlantı denklemleri $\nabla_V U_i = \mathbf{0}$ biçimini alır; doğal çatı hiçbir yönde dönmez. @exm-baglanti-sabit-cati'ye göre de $\mathbb{R}^3$ üzerinde bağlantı formları sıfır olan çatı alanları tam olarak sabit çatılardır; doğal çatı bunların en basitidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-durus-matrisi-a name="Bir Fonksiyon Matrisinin Duruş Matrisi Oluşu"}
+$f$, $\mathbb{R}^3$ üzerinde diferansiyellenebilir bir fonksiyon olsun.
+
+$$A = \begin{pmatrix} \cos^2 f & \cos f\sin f & \sin f \\ \sin f\cos f & \sin^2 f & -\cos f \\ -\sin f & \cos f & 0 \end{pmatrix}$$
+
+matrisinin bir çatı alanının duruş matrisi olduğunu gösteriniz.
+
+::: {.cozum}
+Satırları $E_1, E_2, E_3$'ün katsayıları olarak okuyalım: $E_i = \sum_j a_{ij} U_j$. Girdiler $\sin f$ ile $\cos f$'nin çarpımlarıdır ve diferansiyellenebilirdir; dolayısıyla $E_i$'ler vektör alanıdır ve $a_{ij} = E_i \cdot U_j$ olduğundan $A$ onların duruş matrisidir. Geriye $E_i \cdot E_j = \delta_{ij}$, yani $A A^{\mathsf{T}} = I$ kalır (@prp-iccarpim-durus-matrisi-ortogonal). $c = \cos f$ ve $s = \sin f$ kısaltmalarıyla:
+
+$$\begin{aligned}
+E_1 \cdot E_1 &= c^4 + c^2 s^2 + s^2 = c^2(c^2 + s^2) + s^2 = 1,\\
+E_2 \cdot E_2 &= s^2 c^2 + s^4 + c^2 = s^2(c^2 + s^2) + c^2 = 1,\\
+E_3 \cdot E_3 &= s^2 + c^2 = 1,\\
+E_1 \cdot E_2 &= c^3 s + c s^3 - s c = cs\,(c^2 + s^2 - 1) = 0,\\
+E_1 \cdot E_3 &= -c^2 s + c^2 s + 0 = 0,\\
+E_2 \cdot E_3 &= -s^2 c + s^2 c + 0 = 0.
+\end{aligned}$$
+
+Dolayısıyla $E_1, E_2, E_3$ bir çatı alanıdır ve $A$ onun duruş matrisidir.
+
+Ek bir gözlem: $A$'nın determinantı üçüncü satıra göre açılınca
+
+$$\begin{aligned}
+\det A &= -s\,\bigl(cs \cdot (-c) - s \cdot s^2\bigr) - c\,\bigl(c^2 \cdot (-c) - s \cdot sc\bigr)\\
+&= s^2(c^2 + s^2) + c^2(c^2 + s^2) = 1
+\end{aligned}$$
+
+bulunur. Bu determinant $E_1 \cdot E_2 \times E_3$ üçlü çarpımıdır (@exr-iccarpim-uclu-carpim-determinant); $1$ olması $E_2 \times E_3 = E_1$ demektir, yani çatı sağ el kuralına uyar. $f = 0$ olan bir noktada satırlar $(1, 0, 0)$, $(0, 0, -1)$, $(0, 1, 0)$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-durus-matrisi-b name="Bu Duruş Matrisinden Bağlantı Formları"}
+$f$, $\mathbb{R}^3$ üzerinde diferansiyellenebilir bir fonksiyon ve
+
+$$A = \begin{pmatrix} \cos^2 f & \cos f\sin f & \sin f \\ \sin f\cos f & \sin^2 f & -\cos f \\ -\sin f & \cos f & 0 \end{pmatrix}$$
+
+duruş matrisi olan çatı alanı (@exr-baglanti-durus-matrisi-a) olsun. Bağlantı formlarını hesaplayınız.
+
+::: {.cozum}
+$c = \cos f$, $s = \sin f$ yazalım; bileşke ve çarpım kurallarıyla $dc = -s\, df$, $ds = c\, df$, $d(c^2) = -2cs\, df$, $d(cs) = (c^2 - s^2)\, df$, $d(s^2) = 2sc\, df$. Satırların diferansiyelleri
+
+$$da_1 = \bigl(-2cs,\ c^2 - s^2,\ c\bigr)\, df, \qquad da_2 = \bigl(c^2 - s^2,\ 2sc,\ s\bigr)\, df$$
+
+olur (her bileşen $df$ ile çarpılmıştır). @thm-baglanti-durus-matrisi-formulu ile:
+
+$$\begin{aligned}
+\omega_{12} &= \bigl(sc \cdot (-2cs) + s^2 (c^2 - s^2) + (-c) \cdot c\bigr)\, df\\
+&= (-s^2 c^2 - s^4 - c^2)\, df = \bigl(-s^2(c^2 + s^2) - c^2\bigr)\, df = -df,\\
+\omega_{13} &= \bigl((-s)(-2cs) + c\,(c^2 - s^2) + 0\bigr)\, df = (cs^2 + c^3)\, df = \cos f\, df,\\
+\omega_{23} &= \bigl((-s)(c^2 - s^2) + c \cdot 2sc + 0\bigr)\, df = (sc^2 + s^3)\, df = \sin f\, df.
+\end{aligned}$$
+
+Sonuç:
+
+$$\omega = \begin{pmatrix} 0 & -df & \cos f\, df \\ df & 0 & \sin f\, df \\ -\cos f\, df & -\sin f\, df & 0 \end{pmatrix}.$$
+
+Denetim olarak bir köşegen girdisini hesaplayalım:
+
+$$\begin{aligned}
+\omega_{11} &= \textstyle\sum_k a_{1k}\, da_{1k} = \bigl(c^2(-2cs) + cs\,(c^2 - s^2) + sc\bigr)\, df\\
+&= cs\,(-2c^2 + c^2 - s^2 + 1)\, df = 0,
+\end{aligned}$$
+
+beklendiği gibi.
+
+Üç form da $df$'nin katlarıdır. Dolayısıyla $df(\mathbf{v}) = 0$ olan her yönde, yani $f$'nin seviye yüzeylerine teğet her yönde, üç form da sıfırdır: çatı bir seviye yüzeyi üzerinde hareket ederken hiç dönmez ve yalnızca $f$'nin değiştiği yönlerde döner.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-kuresel name="Küresel Çatının Bağlantı Formları Duruş Matrisinden"}
+Küresel çatı alanının bağlantı formlarının
+
+$$\omega_{12} = \cos\varphi\, d\vartheta, \qquad \omega_{13} = d\varphi, \qquad \omega_{23} = \sin\varphi\, d\vartheta$$
+
+olduğunu @thm-baglanti-durus-matrisi-formulu ile ispatlayınız.
+
+::: {.cozum}
+Duruş matrisinin satırları (@exm-baglanti-durus-matrisleri) şunlardır:
+
+$$\begin{aligned}
+b_1 &= (\cos\varphi\cos\vartheta,\ \cos\varphi\sin\vartheta,\ \sin\varphi),\\
+b_2 &= (-\sin\vartheta,\ \cos\vartheta,\ 0),\\
+b_3 &= (-\sin\varphi\cos\vartheta,\ -\sin\varphi\sin\vartheta,\ \cos\varphi).
+\end{aligned}$$
+
+Çarpım ve bileşke kurallarıyla ilk iki satırın diferansiyelleri:
+
+$$\begin{aligned}
+db_1 &= \bigl(-\sin\varphi\cos\vartheta\, d\varphi - \cos\varphi\sin\vartheta\, d\vartheta,\\
+&\qquad\ -\sin\varphi\sin\vartheta\, d\varphi + \cos\varphi\cos\vartheta\, d\vartheta,\ \cos\varphi\, d\varphi\bigr),\\
+db_2 &= \bigl(-\cos\vartheta\, d\vartheta,\ -\sin\vartheta\, d\vartheta,\ 0\bigr).
+\end{aligned}$$
+
+Dikkat: $db_1 = d\varphi\, b_3 + \cos\varphi\, d\vartheta\, b_2$ biçiminde yazılabilir; aşağıdaki hesap bunu doğrular.
+
+*$\omega_{12} = \sum_k b_{2k}\, db_{1k}$:*
+
+$$\begin{aligned}
+\omega_{12} &= -\sin\vartheta\,(-\sin\varphi\cos\vartheta\, d\varphi - \cos\varphi\sin\vartheta\, d\vartheta)\\
+&\quad + \cos\vartheta\,(-\sin\varphi\sin\vartheta\, d\varphi + \cos\varphi\cos\vartheta\, d\vartheta)\\
+&= (\sin\varphi\sin\vartheta\cos\vartheta - \sin\varphi\sin\vartheta\cos\vartheta)\, d\varphi + \cos\varphi\,(\sin^2\vartheta + \cos^2\vartheta)\, d\vartheta\\
+&= \cos\varphi\, d\vartheta.
+\end{aligned}$$
+
+*$\omega_{13} = \sum_k b_{3k}\, db_{1k}$:* $d\varphi$ terimlerinin katsayısı
+
+$$\sin^2\varphi\cos^2\vartheta + \sin^2\varphi\sin^2\vartheta + \cos^2\varphi = \sin^2\varphi + \cos^2\varphi = 1,$$
+
+$d\vartheta$ terimlerininki
+
+$$\sin\varphi\cos\vartheta\cos\varphi\sin\vartheta - \sin\varphi\sin\vartheta\cos\varphi\cos\vartheta = 0$$
+
+olduğundan $\omega_{13} = d\varphi$.
+
+*$\omega_{23} = \sum_k b_{3k}\, db_{2k}$:*
+
+$$\omega_{23} = (-\sin\varphi\cos\vartheta)(-\cos\vartheta\, d\vartheta) + (-\sin\varphi\sin\vartheta)(-\sin\vartheta\, d\vartheta) + 0 = \sin\varphi\, d\vartheta.$$
+
+Üç form da iddia edildiği gibidir ve @exm-baglanti-kuresel'de silindirik çatının bağlantı denklemlerinden bulduğumuz sonuçla örtüşür. Hesap, $\vartheta$ ile $\varphi$'nin tanımlı olduğu her açık kümede yapılabilir; sonuçtaki $\cos\varphi$, $\sin\varphi$, $d\vartheta$ ve $d\varphi$ ise $z$ ekseni dışında her yerde tanımlıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-kovaryant-turev-formulu name="Çatıya Göre Kovaryant Türev Formülü"}
+$E_1, E_2, E_3$, bağlantı formları $\omega_{ij}$ olan bir çatı alanı ve $W = \sum_i f_i E_i$ bir vektör alanı olsun. Her $V$ vektör alanı için
+
+$$\nabla_V W = \sum_{j=1}^{3} \Bigl\{ V[f_j] + \sum_{i=1}^{3} f_i\, \omega_{ij}(V) \Bigr\}\, E_j$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Kovaryant türevin lineerliği ve fonksiyonla çarpım için Leibniz kuralı (@cor-kovaryant-vektor-alani, (2) ve (3)) ile
+
+$$\nabla_V W = \sum_{i=1}^{3} \nabla_V (f_i E_i) = \sum_{i=1}^{3} \bigl(V[f_i]\, E_i + f_i\, \nabla_V E_i\bigr).$$
+
+(Lineerlik kuralı sayı katsayılar için yazılmıştı; burada toplamın terimlerini ayırmak için yalnızca $a = b = 1$ durumunu kullanıyoruz.) İkinci terime bağlantı denklemlerini (@thm-baglanti-baglanti-denklemleri) uygularız:
+
+$$\sum_{i=1}^{3} f_i\, \nabla_V E_i = \sum_{i=1}^{3} f_i \sum_{j=1}^{3} \omega_{ij}(V)\, E_j = \sum_{j=1}^{3} \Bigl(\sum_{i=1}^{3} f_i\, \omega_{ij}(V)\Bigr) E_j.$$
+
+İlk terimde toplama indisini $j$ diye adlandırırsak $\sum_j V[f_j]\, E_j$ olur. İki toplam aynı $E_j$'ler üzerinden olduğundan birleştirilir ve iddia edilen formül çıkar.
+
+Yani bir alanın çatıya göre koordinatları $f_j$ ise kovaryant türevin koordinatları iki parçadan oluşur: $V[f_j]$, katsayıların kendi değişimidir; $\sum_i f_i\, \omega_{ij}(V)$ ise çatının dönmesinden gelen düzeltmedir. Doğal çatıda $\omega = 0$ olduğundan yalnızca ilk parça kalır ve @lem-kovaryant-vektor-alani-koordinat-formulu geri gelir. Açık yazılışta, ters simetri kullanılarak:
+
+$$\begin{aligned}
+\nabla_V W &= \bigl(V[f_1] - f_2\,\omega_{12}(V) - f_3\,\omega_{13}(V)\bigr)\, E_1\\
+&\quad + \bigl(V[f_2] + f_1\,\omega_{12}(V) - f_3\,\omega_{23}(V)\bigr)\, E_2\\
+&\quad + \bigl(V[f_3] + f_1\,\omega_{13}(V) + f_2\,\omega_{23}(V)\bigr)\, E_3.
+\end{aligned}$$
+
+Küçük bir denetim: silindirik çatıda $W = r E_2$ dönme alanıdır (@exm-cati-donme-alani) ve $V = E_2$ olsun. $f_2 = r$, öteki katsayılar sıfır; $E_2[r] = dr(E_2) = 0$ ve $\omega_{12}(E_2) = d\vartheta(E_2) = 1/r$. Formül $\nabla_{E_2} W = -r \cdot \tfrac{1}{r}\, E_1 = -E_1$ verir: dönme alanı çember boyunca yürürken merkeze doğru döner.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-silindirik-hesap name="Silindirik Çatıda Bir Kovaryant Türev"}
+$E_1, E_2, E_3$ silindirik çatı alanı ve $V$, $V[r] = r$ ile $V[\vartheta] = 1$ koşullarını sağlayan bir vektör alanı olsun. $\nabla_V (r\cos\vartheta\, E_1 + r\sin\vartheta\, E_3)$'ü hesaplayınız.
+
+::: {.cozum}
+$W = r\cos\vartheta\, E_1 + r\sin\vartheta\, E_3$ yazalım; silindirik çatıya göre koordinatları $f_1 = r\cos\vartheta$, $f_2 = 0$, $f_3 = r\sin\vartheta$'dır. Silindirik çatıda tek sıfırdan farklı bağlantı formu $\omega_{12} = d\vartheta$'dır ve $\omega_{12}(V) = V[\vartheta] = 1$. @exr-baglanti-kovaryant-turev-formulu'nün açık yazılışında $\omega_{13} = \omega_{23} = 0$ ve $f_2 = 0$ koyarız:
+
+$$\nabla_V W = V[f_1]\, E_1 + f_1\,\omega_{12}(V)\, E_2 + V[f_3]\, E_3.$$
+
+Leibniz kuralı ve bileşke kuralıyla
+
+$$\begin{aligned}
+V[r\cos\vartheta] &= V[r]\cos\vartheta - r\sin\vartheta\, V[\vartheta] = r\cos\vartheta - r\sin\vartheta,\\
+V[r\sin\vartheta] &= V[r]\sin\vartheta + r\cos\vartheta\, V[\vartheta] = r\sin\vartheta + r\cos\vartheta.
+\end{aligned}$$
+
+Dolayısıyla
+
+$$\nabla_V W = r(\cos\vartheta - \sin\vartheta)\, E_1 + r\cos\vartheta\, E_2 + r(\sin\vartheta + \cos\vartheta)\, E_3.$$
+
+*Denetim.* Koşulları sağlayan bir alan bulalım. $dr = (x\,dx + y\,dy)/r$ olduğundan $V[r] = V \cdot E_1$, ve $V[\vartheta] = (V \cdot E_2)/r$'dir (@exm-baglanti-duzlemde-donen). Koşullar $V \cdot E_1 = r$ ve $V \cdot E_2 = r$ olur; örneğin $V = rE_1 + rE_2$, yani $V = (x - y)\, U_1 + (x + y)\, U_2$. Öte yandan $W = x\,(x/r, y/r, 0) + y\,(0, 0, 1)$, yani $W = (x^2/r)\, U_1 + (xy/r)\, U_2 + y\, U_3$. $\mathbf{p} = (3, 4, 0)$ noktasında $r = 5$, $V(\mathbf{p}) = (-1, 7, 0)$ ve koordinat formülüyle
+
+$$\begin{aligned}
+V\!\left[\dfrac{x^2}{r}\right] &= -1 \cdot \dfrac{x(x^2 + 2y^2)}{r^3} + 7 \cdot \left(-\dfrac{x^2 y}{r^3}\right) = \dfrac{-123 - 252}{125} = -3,\\
+V\!\left[\dfrac{xy}{r}\right] &= -1 \cdot \dfrac{y^3}{r^3} + 7 \cdot \dfrac{x^3}{r^3} = \dfrac{-64 + 189}{125} = 1,\\
+V[y] &= 7
+\end{aligned}$$
+
+bulunur; $\nabla_V W = (-3, 1, 7)_{\mathbf{p}}$. Formülümüz ise $\cos\vartheta = 3/5$, $\sin\vartheta = 4/5$ ile $-E_1 + 3E_2 + 7E_3$ verir; bu da
+
+$$-\left(\dfrac{3}{5}, \dfrac{4}{5}, 0\right) + 3\left(-\dfrac{4}{5}, \dfrac{3}{5}, 0\right) + 7\,(0, 0, 1) = (-3, 1, 7)$$
+
+vektörüdür. İki hesap uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-bilgisayar-a name="Bağlantı Formlarını Hesaplayan Bir Komut"}
+Bir çatı alanının duruş matrisi $A$ verildiğinde bağlantı formlarının matrisi $\omega = dA\, A^{\mathsf{T}}$'yi döndüren bir bilgisayar komutu yazınız.
+
+::: {.cozum}
+Komutun yapacağı iş, @thm-baglanti-durus-matrisi-formulu'nün üç adımıdır: girdilerin diferansiyelini almak, transpozla çarpmak ve sonucu sadeleştirmek. Bir 1-formu $f_1\,dx + f_2\,dy + f_3\,dz$ biçiminde, katsayılarıyla tutarız (@lem-form-koordinat-fonksiyonlari). Bir fonksiyonun diferansiyeli $df = \sum_i (\partial f/\partial x_i)\, dx_i$ formülüyle (@cor-form-df-formulu) hesaplanır. Aşağıdaki Python komutu sembolik hesap kütüphanesi SymPy ile bunu yapar; $dx$, $dy$, $dz$ biçimsel semboller olarak tutulur. Bu hesapta 1-formlar yalnızca toplanıp fonksiyonlarla çarpıldığı, birbirleriyle hiç çarpılmadığı için bu yeterlidir.
+
+```python
+import sympy as sp
+
+x, y, z = sp.symbols("x y z", real=True)
+dx, dy, dz = sp.symbols("dx dy dz")  # formal symbols for dx, dy, dz
+
+
+def d(f):
+    """Differential of a function: df = f_x dx + f_y dy + f_z dz."""
+    return sp.diff(f, x) * dx + sp.diff(f, y) * dy + sp.diff(f, z) * dz
+
+
+def connection_forms(A):
+    """Connection forms omega = dA * A^T of the frame field with attitude matrix A."""
+    A = sp.Matrix(A)
+    omega = A.applyfunc(d) * A.T
+    return omega.applyfunc(
+        lambda w: sp.collect(sp.simplify(sp.expand(w)), [dx, dy, dz]))
+```
+
+`A.applyfunc(d)` girdi girdi diferansiyel alarak $dA$'yı, `A.T` transpozu verir; `*` matris çarpımıdır. Son satır her girdiyi sadeleştirip $dx$, $dy$, $dz$ katsayılarına göre toplar. Duruş matrisi, girdileri $x, y, z$ cinsinden yazılmış bir $3 \times 3$ liste olarak verilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-bilgisayar-b name="Komutun Silindirik Çatıda Denenmesi"}
+@exr-baglanti-bilgisayar-a'daki komutu silindirik çatı alanında deneyiniz ve sonucu @exm-baglanti-silindirik-matrisle ile karşılaştırınız.
+
+::: {.cozum}
+Komut Öklid koordinatlarıyla çalıştığından duruş matrisini $\cos\vartheta = x/r$, $\sin\vartheta = y/r$ ile yazarız:
+
+```python
+r = sp.sqrt(x**2 + y**2)
+cylindrical = [[x / r, y / r, 0],
+               [-y / r, x / r, 0],
+               [0, 0, 1]]
+omega = connection_forms(cylindrical)
+```
+
+Çıktı, köşegeni ve üçüncü satırı ile üçüncü sütunu sıfır olan ters simetrik bir matristir; tek sıfırdan farklı üst girdi
+
+$$\omega_{12} = \dfrac{-y\, dx + x\, dy}{x^2 + y^2}$$
+
+ve $\omega_{21} = -\omega_{12}$'dir. @exm-baglanti-duzlemde-donen'e göre sağ taraf tam olarak $d\vartheta$'dır. Sonuç @exm-baglanti-silindirik-matrisle'deki $\omega_{12} = d\vartheta$, $\omega_{13} = \omega_{23} = 0$ ile aynıdır.
+
+Elle hesapla da doğrulayabiliriz: $d(x/r) = (y^2\, dx - xy\, dy)/r^3$ ve $d(y/r) = (-xy\, dx + x^2\, dy)/r^3$ olduğundan (@exr-cati-silindirik-kovaryant-a'daki kısmi türevler)
+
+$$\begin{aligned}
+\omega_{12} &= -\dfrac{y}{r}\cdot\dfrac{y^2\, dx - xy\, dy}{r^3} + \dfrac{x}{r}\cdot\dfrac{-xy\, dx + x^2\, dy}{r^3}\\
+&= \dfrac{-y(x^2 + y^2)\, dx + x(x^2 + y^2)\, dy}{r^4},
+\end{aligned}$$
+
+yani $(-y\,dx + x\,dy)/r^2$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-bilgisayar-c name="Komutun Küresel Çatıda Denenmesi"}
+@exr-baglanti-bilgisayar-a'daki komutu küresel çatı alanında deneyiniz ve sonucu @exr-baglanti-kuresel ile karşılaştırınız.
+
+::: {.cozum}
+$\rho = \sqrt{x^2 + y^2 + z^2}$ ve $r = \sqrt{x^2 + y^2}$ ile $\cos\varphi = r/\rho$, $\sin\varphi = z/\rho$, $\cos\vartheta = x/r$, $\sin\vartheta = y/r$'dir; duruş matrisinin satırları
+
+$$F_1:\ \left(\dfrac{x}{\rho}, \dfrac{y}{\rho}, \dfrac{z}{\rho}\right), \qquad F_2:\ \left(-\dfrac{y}{r}, \dfrac{x}{r}, 0\right), \qquad F_3:\ \left(-\dfrac{xz}{r\rho}, -\dfrac{yz}{r\rho}, \dfrac{r}{\rho}\right)$$
+
+olur:
+
+```python
+rho = sp.sqrt(x**2 + y**2 + z**2)
+spherical = [[x / rho, y / rho, z / rho],
+             [-y / r, x / r, 0],
+             [-x * z / (r * rho), -y * z / (r * rho), r / rho]]
+omega = connection_forms(spherical)
+```
+
+Komutun verdiği üst girdiler (sadeleştirilmiş biçimde)
+
+$$\begin{aligned}
+\omega_{12} &= \dfrac{-y\, dx + x\, dy}{r\rho},\\
+\omega_{13} &= \dfrac{-xz\, dx - yz\, dy + r^2\, dz}{r\rho^2},\\
+\omega_{23} &= \dfrac{z\,(-y\, dx + x\, dy)}{r^2\rho}
+\end{aligned}$$
+
+olur. Bunları tanıyalım. $d\vartheta = (-y\,dx + x\,dy)/r^2$, $\cos\varphi = r/\rho$ ve $\sin\varphi = z/\rho$ olduğundan
+
+$$\cos\varphi\, d\vartheta = \dfrac{-y\,dx + x\,dy}{r\rho} = \omega_{12}, \qquad \sin\varphi\, d\vartheta = \dfrac{z\,(-y\,dx + x\,dy)}{r^2\rho} = \omega_{23}.$$
+
+Son olarak @exm-baglanti-kuresel'deki formülde $dr = (x\,dx + y\,dy)/r$ yazılınca
+
+$$d\varphi = \dfrac{r\, dz - z\, dr}{\rho^2} = \dfrac{r^2\, dz - xz\, dx - yz\, dy}{r\rho^2},$$
+
+yani $\omega_{13}$. Komut, @exr-baglanti-kuresel'deki $\omega_{12} = \cos\varphi\, d\vartheta$, $\omega_{13} = d\varphi$, $\omega_{23} = \sin\varphi\, d\vartheta$ sonucunu Öklid koordinatlarıyla yeniden üretir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-baglanti-frenet name="Bağlantı Formlarından Frenet Formüllerine"}
+$\beta$, $\kappa > 0$ olan birim hızlı bir eğri ve $E_1, E_2, E_3$, $\mathbb{R}^3$ üzerinde, kısıtlanışları $\beta$ boyunca $\beta$'nın Frenet çatısı $T, N, B$'yi veren bir çatı alanı olsun: her $s$ için $E_1(\beta(s)) = T(s)$, $E_2(\beta(s)) = N(s)$, $E_3(\beta(s)) = B(s)$. Her $s$ için
+
+$$\omega_{12}(T) = \kappa, \qquad \omega_{13}(T) = 0, \qquad \omega_{23}(T) = \tau$$
+
+olduğunu ispatlayınız; burada $\omega_{ij}(T)$, $s \mapsto \omega_{ij}\bigl(T(s)\bigr)$ fonksiyonudur.
+
+::: {.cozum}
+$\beta$ birim hızlı olduğundan $\beta'(s) = T(s)$'dir. Varsayım gereği $(E_1)_\beta = T$, $(E_2)_\beta = N$, $(E_3)_\beta = B$'dir. @cor-baglanti-egri-boyunca'yı $\alpha = \beta$ ile uygularsak, ters simetri ve $\omega_{ii} = 0$ ile,
+
+$$\begin{aligned}
+T' &= \omega_{12}(T)\, N + \omega_{13}(T)\, B,\\
+N' &= -\omega_{12}(T)\, T + \omega_{23}(T)\, B
+\end{aligned}$$
+
+bulunur. Öte yandan Frenet formüllerine (@thm-frenet-formulleri) göre
+
+$$T' = \kappa N, \qquad N' = -\kappa T + \tau B.$$
+
+Her $s$'de $T(s), N(s), B(s)$ bir çatıdır (@lem-frenet-cati-alani) ve bir vektörün bir çatıya göre açılımındaki katsayılar tektir (@thm-iccarpim-ortonormal-acilim): katsayılar, vektörün çatı üyeleriyle iç çarpımlarıdır. $T'$'nün iki açılımını karşılaştırınca $N$ katsayılarından $\omega_{12}(T) = \kappa$, $B$ katsayılarından $\omega_{13}(T) = 0$ çıkar. $N'$'nün iki açılımında $B$ katsayıları $\omega_{23}(T) = \tau$ verir ($T$ katsayıları $-\omega_{12}(T) = -\kappa$ ile tutarlıdır).
+
+$B' = -\tau N$ formülü üçüncü bağlantı denkleminden de okunur:
+
+$$B' = -\omega_{13}(T)\, T - \omega_{23}(T)\, N = -\tau N.$$
+
+Yani Frenet formülleri, eğriye uyarlanmış bir çatı alanının bağlantı denklemlerinin eğri boyunca yazılışıdır; eğrilik ve burulma, bağlantı formlarının birim teğete uygulanmasıyla okunur. @exm-baglanti-helis bunun somut bir örneğiydi: orada $\omega_{12}(T) = a/c^2$ ve $\omega_{23}(T) = b/c^2$ bulmuştuk.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde bir çatı alanının kovaryant türevlerini çatının kendisi cinsinden yazan bağlantı formlarını tanımladık, bunların ters simetrik 1-formlar olduğunu ve bağlantı denklemleriyle çatının bütün dönme hızlarını taşıdığını gördük, Frenet formüllerini bu denklemlerin bir eğri boyunca yazılışı olarak yeniden bulduk ve bağlantı formlarını duruş matrisinden $\omega = dA\, A^{\mathsf{T}}$ formülüyle hesapladık. Sıradaki bölümde ([Cartan Yapı Denklemleri](yapi-denklemleri.qmd)) çatı alanının dual 1-formlarını tanımlayacak ve bağlantı formlarının dış türevlerinin bunlarla nasıl bağlandığını gösteren yapı denklemlerini çıkaracağız.

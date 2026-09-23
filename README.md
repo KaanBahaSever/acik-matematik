@@ -19,7 +19,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
 - [Analiz 2: Türev ve İntegral](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
 - [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 8 bölüm, 116 örnek ve alıştırma
-- [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 14 bölüm, 556 örnek ve alıştırma
+- [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 17 bölüm, 611 örnek ve alıştırma
 - [Kompleks Analiz](https://acik-matematik.com/dersler/kompleks-analiz/) — 45 bölüm, 173 örnek ve alıştırma
 - [Konveks Analiz](https://acik-matematik.com/dersler/konveks-analiz/) — 13 bölüm, 70 örnek ve alıştırma
 - [Kriptografi](https://acik-matematik.com/dersler/kriptografi/) — 25 bölüm, 34 örnek ve alıştırma
@@ -60,17 +60,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **439** |
-| 📐 Teorem | **1.010** |
-| 🔹 Lemma | **103** |
-| 📝 Tanım | **1.239** |
-| ✅ İspat | **1.710** |
-| 🧮 Örnek ve alıştırma | **3.581** |
-| 💡 Çözüm | **3.308** |
-| 📊 Şekil | **1.189** |
-| ✍️ Kelime | **1.625.181** |
-| 🔤 Karakter | **11.520.603** |
-| 💾 Kaynak metin | **26,4 MB** |
+| 📖 Konu/Bölüm | **442** |
+| 📐 Teorem | **1.013** |
+| 🔹 Lemma | **107** |
+| 📝 Tanım | **1.244** |
+| ✅ İspat | **1.722** |
+| 🧮 Örnek ve alıştırma | **3.636** |
+| 💡 Çözüm | **3.363** |
+| 📊 Şekil | **1.201** |
+| ✍️ Kelime | **1.647.131** |
+| 🔤 Karakter | **11.696.659** |
+| 💾 Kaynak metin | **26,7 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 

@@ -29,6 +29,7 @@ description: Ders şekillerini (ders-grafik SVG) ekler, düzeltir, siler ya da y
 | `real_analysis_figures.py` | `real-` |
 | `analytic_figures/<anahtar>.py` | `analytic-<anahtar>-` |
 | `statistics_figures/<anahtar>.py` | `statistics-<anahtar>-` |
+| `diffgeo_figures_extra/<anahtar>.py` | `diffgeo-<anahtar>-` (bağlantı formlarından sonraki DG bölümleri; `diffgeo_figures.py`'ye yeni şekil eklenmez) |
 
 Yeni bir ders için `scripts/<konu>_figures.py` dosyasını İngilizce yaz:
 
