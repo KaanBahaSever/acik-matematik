@@ -26,6 +26,9 @@ description: Ders şekillerini (ders-grafik SVG) ekler, düzeltir, siler ya da y
 | `probability_figures.py` | `probability-` |
 | `topology_figures.py` | `topology-` |
 | `stochastic_figures.py` | `figA`…`figG` (ortalanmaz) |
+| `real_analysis_figures.py` | `real-` |
+| `analytic_figures/<anahtar>.py` | `analytic-<anahtar>-` |
+| `statistics_figures/<anahtar>.py` | `statistics-<anahtar>-` |
 
 Yeni bir ders için `scripts/<konu>_figures.py` dosyasını İngilizce yaz:
 

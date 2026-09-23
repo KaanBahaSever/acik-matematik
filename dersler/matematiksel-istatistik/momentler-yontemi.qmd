@@ -1,0 +1,743 @@
+---
+title: "Momentler Yöntemi"
+pagetitle: "Momentler Yöntemi"
+description: "Parametre, tahmin edici ve tahmin kavramlarıyla nokta tahminine giriş; kitle momentlerini örneklem momentlerine eşitleyen momentler yöntemi ve üstel, normal, Poisson, gamma dağılımlarında çözümlü örnekler."
+---
+
+Buraya kadar dağılımların parametrelerini biliyormuş gibi davrandık: $\lambda$ verildiğinde Poisson olasılıklarını, $\mu$ ile $\sigma^2$ verildiğinde normal alanları hesapladık. İstatistikte durum tersine döner. Elimizde veri vardır, dağılımın biçimini de çoğu zaman biliriz; bilmediğimiz şey parametrenin kendisidir. Bu kısmın konusu, veriden parametre için tek bir sayısal değer üretmektir. Bu bölümde önce temel kavramları kuracak, sonra ilk ve en eski tahmin yöntemini, momentler yöntemini öğreneceğiz.
+
+## Tahmin Teorisine Giriş
+
+Bir kitleyi incelerken genellikle "bu kitle hangi aileden bir dağılıma uyar?" sorusunun cevabını biliriz; ailenin hangi üyesi olduğu ise bir ya da birkaç sayıya bağlıdır. Bu sayılara bir ad verelim.
+
+::: {#def-mom-parametre name="Parametre ve Parametre Kümesi"}
+$X$ rastgele değişkeninin dağılımı $f_X(x;\theta)$ olasılık (yoğunluk) fonksiyonu ile verilsin; burada $\theta \in \Theta$'dır. $\theta$'ya dağılımın **parametresi**, $\theta$'nın alabileceği bütün değerlerin kümesi $\Theta$'ya da **parametre kümesi** denir. Parametre birden çok sayıdan oluşabilir; o zaman $\theta = (\theta_1, \ldots, \theta_m)$ bir vektör ve $\Theta \subset \mathbb{R}^m$ olur.
+:::
+
+Yani $f_X(x;\theta)$ tek bir dağılım değil, $\theta$ değiştikçe değişen bir dağılımlar ailesidir. Parametre kümesi de bu ailenin hangi üyelerinin "izinli" olduğunu söyler: $f_X(\,\cdot\,;\theta)$'nın gerçekten bir olasılık (yoğunluk) fonksiyonu olduğu $\theta$ değerleri.
+
+::: {#exm-mom-parametre-kumeleri name="Bilinen Dağılımların Parametre Kümeleri"}
+Önceki bölümlerde gördüğümüz dağılımların parametreleri ve parametre kümeleri şunlardır.
+
+- [Bernoulli dağılımı](../olasilik-teorisi/bernoulli-ve-binom-dagilimlari.html#def-bernoulli-dagilimi) $\operatorname{Binom}(1,p)$: parametre $p$, parametre kümesi $\Theta = (0,1) \subset \mathbb{R}$.
+- [Poisson dağılımı](../olasilik-teorisi/poisson-dagilimi.html#def-poisson-dagilimi) $\operatorname{Poisson}(\lambda)$: parametre $\lambda$, parametre kümesi $\Theta = (0,\infty) \subset \mathbb{R}$.
+- Gamma dağılımı (@def-osd-gamma-dagilimi) $\operatorname{Gamma}(r,\alpha)$: parametreler $r$ ve $\alpha$, parametre kümesi $\Theta = (0,\infty) \times (0,\infty) \subset \mathbb{R}^2$.
+- [Normal dağılım](../olasilik-teorisi/temel-surekli-dagilimlar.html#def-normal-dagilim) $N(\mu,\sigma^2)$: parametreler $\mu$ ve $\sigma^2$, parametre kümesi $\Theta = (-\infty,\infty) \times (0,\infty) \subset \mathbb{R}^2$.
+
+Son örnekte $\mu$ her reel değeri alabilir, ama varyans pozitif olmak zorundadır; parametre kümesinin ikinci çarpanının $(0,\infty)$ olması bundandır.
+:::
+
+## Nokta Tahmini
+
+Parametreyi bilmediğimizde elimizdeki tek bilgi kaynağı kitleden çekilen örneklemdir. Örneklemin bir fonksiyonunu, yani bir [istatistiği](orneklem-ve-istatistikler.qmd), parametrenin yerine koymak en doğal fikirdir. Parametre için tek bir sayı önermeye **nokta tahmini** denir.
+
+::: {#def-mom-tahmin-edici name="Tahmin Edici ve Tahmin"}
+Bilinmeyen bir $\theta$ parametresini (ya da $\theta$'nın bir $g(\theta)$ fonksiyonunu) belirlemek amacıyla kullanılan bir örneklem istatistiğine $\theta$'nın **tahmin edicisi** (kestirici, estimatör) denir ve $\hat\theta = T(X_1, \ldots, X_n)$ ile gösterilir. Tahmin edicinin gözlenen örneklemde aldığı sayısal değere **tahmin** (kestirim) denir.
+:::
+
+Yani tahmin edici bir kuraldır: "gözlemleri topla, $n$'ye böl" gibi. Gözlemler rastgele olduğundan tahmin edici de bir rastgele değişkendir ve kendi dağılımı vardır; bu yüzden onu $\bar X$, $S^2$, $T$ gibi büyük harflerle yazarız. Tahmin ise bu kuralın elimizdeki veriye uygulanmasıyla çıkan tek bir sayıdır, örneğin $\bar x = 3{,}12$. Aynı tahmin edici, başka bir örneklemde başka bir tahmin verir. Gösterimi yüklememek için ikisine de çoğu zaman $\hat\theta$ denir; hangisinin kastedildiği bağlamdan anlaşılır.
+
+:::: {#exm-mom-tahmin-edici-ve-tahmin name="Bir Paranın Yazı Olasılığı"}
+Yazı gelme olasılığı $p$ bilinmeyen bir para 10 kez atılıyor. $i$. atışta yazı gelirse $X_i = 1$, tura gelirse $X_i = 0$ olsun; böylece $X_1, \ldots, X_{10}$ bir $\operatorname{Binom}(1,p)$ kitlesinden alınmış bir örneklemdir. $p$ için $\hat p = \bar X$ tahmin edicisi kullanılıyor ve atışlar $0, 1, 0, 0, 1, 1, 0, 0, 1, 0$ sonucunu veriyor. Paranın gerçek yazı olasılığı (istatistikçinin bilmediği) $p = 0{,}3$ olsun. Gözlenen tahmini, $\hat p$ tahmin edicisinin olasılık fonksiyonu içinde yorumlayınız.
+
+::: {.cozum}
+Gözlenen örneklemde 4 yazı vardır. Tahmin edicinin bu örneklemdeki değeri
+$$
+\hat p = \bar x = \frac{0+1+0+0+1+1+0+0+1+0}{10} = \frac{4}{10} = 0{,}4
+$$
+olur. Bu sayı bir **tahmindir**.
+
+Şimdi $\hat p = \bar X$'in kendisine bakalım. $Y = X_1 + \cdots + X_{10}$ yazı sayısıdır ve $Y \sim \operatorname{Binom}(10; 0{,}3)$'tür. $\hat p = Y/10$ olduğundan tahmin edici yalnız $0;\ 0{,}1;\ \ldots;\ 1$ değerlerini alır ve $k = 0, 1, \ldots, 10$ için
+$$
+P\!\left(\hat p = \frac{k}{10}\right) = P(Y = k) = \binom{10}{k}(0{,}3)^k(0{,}7)^{10-k}
+$$
+olur. Örneğin
+$$
+\begin{aligned}
+P(\hat p = 0{,}3) &= \binom{10}{3}(0{,}3)^3(0{,}7)^7 \approx 0{,}2668,\\[1mm]
+P(\hat p = 0{,}4) &= \binom{10}{4}(0{,}3)^4(0{,}7)^6 \approx 0{,}2001 .
+\end{aligned}
+$$
+Yani tahmin edici gerçek değeri ($0{,}3$) en yüksek olasılıkla verir, ama bu olasılık yalnızca yaklaşık $0{,}27$'dir; bizim gözlediğimiz $0{,}4$ gibi komşu değerler de sık sık çıkar. Tahmin edicinin iyiliği tek bir tahmine bakarak değil, bu dağılıma bakarak değerlendirilir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="25.5 16.5 520.5 290.5" role="img" aria-label="Bar chart of the distribution of the sample proportion for n 10 and p 0.3; the bar at 0.4 is highlighted">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="62.0" y1="188.4" x2="522.0" y2="188.4"/><line x1="62.0" y1="122.8" x2="522.0" y2="122.8"/><line x1="62.0" y1="57.1" x2="522.0" y2="57.1"/></g>
+  <rect x="70.9" y="235.5" width="24" height="18.5" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="112.7" y="174.6" width="24" height="79.4" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="154.5" y="100.8" width="24" height="153.2" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="196.4" y="78.9" width="24" height="175.1" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="280.0" y="186.5" width="24" height="67.5" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="321.8" y="229.9" width="24" height="24.1" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="363.6" y="248.1" width="24" height="5.9" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="405.5" y="253.1" width="24" height="0.9" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="447.3" y="253.9" width="24" height="0.1" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="489.1" y="254.0" width="24" height="0.0" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="238.2" y="122.7" width="24" height="131.3" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <line x1="208.4" y1="78.9" x2="208.4" y2="47.3" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="5 3" opacity="0.95"/>
+  <text x="200.4" y="51.3" fill="var(--color-theory)" font-size="13" text-anchor="end">gerçek <tspan font-style="italic">p</tspan> = 0,3</text>
+  <text x="266.2" y="118.7" fill="var(--color-practice)" font-size="13" text-anchor="start">gözlenen tahmin: 0,4</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="58.0" y1="254.0" x2="532.0" y2="254.0"/><polygon points="532.0,254.0 524.0,250.5 524.0,257.5" stroke="none"/></g>
+  <line x1="82.9" y1="251.0" x2="82.9" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="82.9" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,0</text>
+  <line x1="124.7" y1="251.0" x2="124.7" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="124.7" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,1</text>
+  <line x1="166.5" y1="251.0" x2="166.5" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="166.5" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,2</text>
+  <line x1="208.4" y1="251.0" x2="208.4" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="208.4" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,3</text>
+  <line x1="250.2" y1="251.0" x2="250.2" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="250.2" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,4</text>
+  <line x1="292.0" y1="251.0" x2="292.0" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="292.0" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,5</text>
+  <line x1="333.8" y1="251.0" x2="333.8" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="333.8" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,6</text>
+  <line x1="375.6" y1="251.0" x2="375.6" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="375.6" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,7</text>
+  <line x1="417.5" y1="251.0" x2="417.5" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="417.5" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,8</text>
+  <line x1="459.3" y1="251.0" x2="459.3" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="459.3" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,9</text>
+  <line x1="501.1" y1="251.0" x2="501.1" y2="257.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="501.1" y="270.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">1,0</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="62.0" y1="254.0" x2="62.0" y2="34.0"/><polygon points="62.0,34.0 58.5,42.0 65.5,42.0" stroke="none"/></g>
+  <line x1="59.0" y1="188.4" x2="65.0" y2="188.4" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="192.4" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,1</text>
+  <line x1="59.0" y1="122.8" x2="65.0" y2="122.8" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="126.8" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,2</text>
+  <line x1="59.0" y1="57.1" x2="65.0" y2="57.1" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="61.1" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,3</text>
+  <text x="70.0" y="40.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85">olasılık</text>
+  <text x="292.0" y="290.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">tahmin edicinin alabileceği değerler <tspan font-style="italic">k</tspan>/10</text>
+</svg>
+<figcaption>p = 0,3 iken 10 atışlık örneklemden hesaplanan p̂ = X̄ tahmin edicisinin olasılık fonksiyonu. Tahmin edici 0; 0,1; …; 1 değerlerinden birini rastgele alır; bu örneklemde gözlenen değer 0,4'tür.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bir parametre için akla birçok tahmin edici gelebilir. Bunların hangisinin daha iyi olduğunu (yansızlık, etkinlik, tutarlılık gibi ölçütlerle) [Tahmin Edicilerin Özellikleri](tahmin-edicilerin-ozellikleri.qmd) bölümünde tartışacağız. Önce tahmin edicileri sistemli olarak **üretmenin** yollarına bakalım; bunların ilki momentler yöntemidir.
+
+## Momentler Yöntemi
+
+Yöntemin fikri çok basittir. Kitle momentleri parametrelere bağlıdır; örneklem momentleri ise veriden hesaplanır ve [büyük sayılar yasası](yakinsama-ve-merkezi-limit-teoremi.qmd) gereği örneklem büyüdükçe karşılık gelen kitle momentine yaklaşır. O hâlde ikisini eşitleyip parametreyi çözebiliriz.
+
+$X$'in olasılık (yoğunluk) fonksiyonu $f(x;\theta_1, \ldots, \theta_m)$ olsun; yani dağılım $m$ tane parametreye bağlı. $X$'in $k$. mertebeden [momenti](../olasilik-teorisi/beklenen-deger-ve-varyans.html#def-momentler) kesikli hâlde
+$$
+E(X^k) = \sum_{x \in D_X} x^k f(x;\theta_1, \ldots, \theta_m),
+$$
+sürekli hâlde
+$$
+E(X^k) = \int_{D_X} x^k f(x;\theta_1, \ldots, \theta_m)\,dx
+$$
+ile verilir; burada $D_X$, $X$'in değer kümesidir. Her iki hâlde de sonuç $\theta_1, \ldots, \theta_m$ parametrelerinin bir fonksiyonudur. Bu fonksiyona bir ad verelim:
+$$
+E(X^k) = \Psi_k(\theta_1, \ldots, \theta_m), \qquad k = 1, 2, \ldots
+$$
+Bu sayılara **kitle momentleri** de denir. Örneklem tarafındaki karşılıkları, @def-ois-orneklem-momenti ile tanımladığımız örneklem momentleridir:
+$$
+M_k = \frac{1}{n}\sum_{i=1}^{n} X_i^k, \qquad k = 1, 2, \ldots
+$$
+$M_k$, gözlemlerin $k$. kuvvetlerinin aritmetik ortalamasıdır; özel olarak $M_1 = \bar X$'tir. $E|X|^k < \infty$ olduğunda $E(X_i^k) = E(X^k)$ olduğundan beklenen değerin doğrusallığıyla $E(M_k) = E(X^k)$ bulunur; yani $M_k$ ortalamada tam olarak kitle momentini verir.
+
+::: {#def-mom-momentler-yontemi name="Momentler Yöntemi"}
+$X$'in dağılımı $\theta_1, \ldots, \theta_m$ parametrelerine bağlı ve $E(X^k) = \Psi_k(\theta_1, \ldots, \theta_m)$ olsun. İlk $m$ kitle momentini ilk $m$ örneklem momentine eşitleyen
+$$
+M_k = \Psi_k(\theta_1, \ldots, \theta_m), \qquad k = 1, 2, \ldots, m
+$$
+denklem sisteminin $\theta_1, \ldots, \theta_m$ için çözümü $\hat\theta_1, \ldots, \hat\theta_m$'ye parametrelerin **momentler yöntemi tahmin edicileri** (moment tahmin edicileri) denir.
+:::
+
+Yani bilinmeyen sayısı kadar denklem kurarız: tek parametre için yalnız $\bar X = E(X)$ denklemi, iki parametre için bunun yanına $M_2 = E(X^2)$ denklemi yeterlidir. Uygulamada ilk $m$ moment yerine parametreleri belirleyen başka $m$ moment denklemi de (örneğin varyans denklemi) kullanılır; bu geniş anlamda aynı parametre için farklı tahmin ediciler çıkabilir. Çözümde bulunan ifade gözlemlerin bir fonksiyonu, yani bir istatistiktir; bu yüzden onu büyük harflerle yazarız.
+
+İki parametreli dağılımlarda ikinci denklemi $E(X^2)$ yerine varyansla kurmak çoğu zaman hesabı kısaltır. Bunun meşru olduğunu şu özdeşlik gösterir.
+
+:::: {#prp-mom-ikinci-merkezi-moment name="Örneklem Varyansı Özdeşliği"}
+Her $X_1, \ldots, X_n$ için
+$$
+M_2 - \bar X^2 = \frac{1}{n}\sum_{i=1}^{n}(X_i - \bar X)^2 .
+$$
+
+::: {.ispat}
+Kareyi açıp toplamı terim terim dağıtalım:
+$$
+\sum_{i=1}^{n}(X_i - \bar X)^2 = \sum_{i=1}^{n} X_i^2 - 2\bar X\sum_{i=1}^{n} X_i + n\bar X^2 .
+$$
+$\sum_{i=1}^{n} X_i = n\bar X$ olduğundan ortadaki terim $-2n\bar X^2$'dir; son terimle birleşince
+$$
+\sum_{i=1}^{n}(X_i - \bar X)^2 = \sum_{i=1}^{n} X_i^2 - n\bar X^2
+$$
+kalır. İki yanı $n$'ye bölünce sol taraf $\frac{1}{n}\sum (X_i - \bar X)^2$, sağ taraf $M_2 - \bar X^2$ olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Kitle tarafında da [varyans hesap formülü](../olasilik-teorisi/beklenen-deger-ve-varyans.html#prp-varyans-hesap-formulu) $\operatorname{Var}(X) = E(X^2) - \big(E(X)\big)^2$ der. Dolayısıyla $\bar X = E(X)$ denklemi yanında $M_2 = E(X^2)$ yazmak ile
+$$
+\frac{1}{n}\sum_{i=1}^{n}(X_i - \bar X)^2 = \operatorname{Var}(X)
+$$
+yazmak aynı sonucu verir.
+
+Yöntemle ilgili iki gözlem, örneklere geçmeden önce akılda tutulmalı:
+
+- Tahmin edilecek parametre sayısı kadar moment kullanılır; daha azı sistemi belirsiz bırakır.
+- Momentler yöntemi bir parametre için tek bir tahmin edici vermek zorunda değildir. Hangi momentlerin eşitlendiğine göre aynı parametre için birbirinden farklı tahmin ediciler çıkabilir. Aşağıdaki Poisson örneği bunu açıkça gösterecek.
+
+::: {.callout-tip}
+## Momentler yöntemi üç adımda
+
+1. Parametre sayısı $m$ ise $E(X), E(X^2), \ldots, E(X^m)$ momentlerini parametreler cinsinden hesaplayın.
+2. Her $E(X^k)$'yi karşılık gelen örneklem momenti $M_k$'ye eşitleyin ($M_1 = \bar X$).
+3. Elde edilen sistemi parametreler için çözün ve sonucu gözlemlerin fonksiyonu olarak yazın.
+:::
+
+:::: {#exm-mom-kuvvet-a name="Kuvvet Yoğunluğunda Moment Tahmin Edicisi"}
+$X$'in olasılık yoğunluk fonksiyonu
+$$
+f(x;\theta) = (1+\theta)\,x^{\theta}, \qquad 0 \le x \le 1,\ \theta > -1
+$$
+olsun. Bu dağılıma sahip bir kitleden $n$ büyüklüğünde bir rastgele örneklem alındığında $\theta$ parametresinin tahmin edicisini momentler yöntemiyle bulunuz.
+
+::: {.cozum}
+Tek parametre olduğu için yalnız birinci momente ihtiyaç var.
+
+**Adım 1.** $\theta > -1$ iken $\theta + 2 > 0$ olduğundan integral yakınsaktır ve
+$$
+E(X) = \int_0^1 x\,(1+\theta)x^{\theta}\,dx
+= (1+\theta)\int_0^1 x^{\theta+1}\,dx
+= (1+\theta)\left[\frac{x^{\theta+2}}{\theta+2}\right]_0^1
+= \frac{1+\theta}{\theta+2}.
+$$
+
+**Adım 2.** Bunu örneklem ortalamasına eşitleyelim:
+$$
+\bar X = \frac{1+\theta}{\theta+2}.
+$$
+
+**Adım 3.** Paydayı karşıya atıp $\theta$'lı terimleri bir tarafa toplayalım:
+$$
+\bar X\theta + 2\bar X = 1 + \theta
+\quad\Longrightarrow\quad
+\theta(\bar X - 1) = 1 - 2\bar X .
+$$
+$0 \le X_i \le 1$ olduğundan $\bar X \le 1$'dir ve sürekli bir dağılımda bütün gözlemlerin tam $1$ çıkma olasılığı sıfırdır; yani $\bar X - 1 \neq 0$ ve bölebiliriz:
+$$
+\hat\theta = \frac{1 - 2\bar X}{\bar X - 1} = \frac{2\bar X - 1}{1 - \bar X}.
+$$
+
+Bulunan tahmin parametre kümesinin içinde mi? $1 - \bar X > 0$ olduğundan
+$$
+\hat\theta > -1
+\iff 2\bar X - 1 > -(1 - \bar X)
+\iff \bar X > 0
+$$
+olur ve bütün gözlemlerin $0$ çıkma olasılığı da sıfırdır. Demek ki $\hat\theta$ her zaman $(-1,\infty)$ içinde kalır.
+
+Aşağıdaki şekil neden $\bar X$'in $\theta$ hakkında bilgi taşıdığını gösteriyor: $\theta$ büyüdükçe kütle $1$'e doğru kayar ve beklenen değer artar.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="35.0 12.5 511.5 289.5" role="img" aria-label="Densities (1+theta) x to the theta for theta -0.5, 0, 1, 3 with their means marked on the axis">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="174.5" y1="40.0" x2="174.5" y2="270.0"/><line x1="287.0" y1="40.0" x2="287.0" y2="270.0"/><line x1="399.5" y1="40.0" x2="399.5" y2="270.0"/><line x1="62.0" y1="212.5" x2="512.0" y2="212.5"/><line x1="62.0" y1="155.0" x2="512.0" y2="155.0"/><line x1="62.0" y1="97.5" x2="512.0" y2="97.5"/></g>
+  <path d="M69.7,50.5 L70.5,60.5 L71.2,69.2 L72.0,76.9 L72.7,83.7 L73.5,89.9 L74.2,95.5 L75.0,100.6 L75.7,105.3 L76.5,109.7 L77.2,113.7 L78.0,117.4 L78.7,120.8 L79.5,124.1 L80.2,127.1 L81.0,130.0 L81.7,132.6 L82.5,135.2 L83.2,137.6 L84.0,139.9 L84.7,142.0 L85.5,144.1 L86.2,146.1 L87.0,147.9 L87.7,149.7 L88.5,151.4 L89.2,153.1 L90.0,154.7 L90.7,156.2 L91.5,157.6 L92.2,159.0 L93.0,160.4 L93.7,161.7 L94.5,163.0 L95.2,164.2 L96.0,165.3 L96.7,166.5 L97.5,167.6 L98.2,168.6 L99.0,169.7 L99.7,170.7 L100.5,171.7 L101.2,172.6 L102.0,173.5 L102.7,174.4 L103.5,175.3 L104.2,176.1 L105.0,176.9 L105.7,177.7 L106.5,178.5 L107.2,179.3 L108.0,180.0 L108.7,180.8 L109.5,181.5 L110.2,182.2 L111.0,182.8 L111.7,183.5 L112.4,184.1 L113.2,184.8 L113.9,185.4 L114.7,186.0 L115.4,186.6 L116.2,187.2 L116.9,187.7 L117.7,188.3 L118.4,188.8 L119.2,189.4 L119.9,189.9 L120.7,190.4 L121.4,190.9 L122.2,191.4 L122.9,191.9 L123.7,192.4 L124.4,192.8 L125.2,193.3 L125.9,193.7 L126.7,194.2 L127.4,194.6 L128.2,195.0 L128.9,195.5 L129.7,195.9 L130.4,196.3 L131.2,196.7 L131.9,197.1 L132.7,197.5 L133.4,197.8 L134.2,198.2 L134.9,198.6 L135.7,199.0 L136.4,199.3 L137.2,199.7 L137.9,200.0 L138.7,200.4 L139.4,200.7 L140.2,201.0 L140.9,201.4 L141.7,201.7 L142.4,202.0 L143.2,202.3 L143.9,202.6 L144.7,202.9 L145.4,203.2 L146.2,203.5 L146.9,203.8 L147.7,204.1 L148.4,204.4 L149.2,204.7 L149.9,205.0 L150.7,205.2 L151.4,205.5 L152.2,205.8 L152.9,206.0 L153.7,206.3 L154.4,206.6 L155.2,206.8 L155.9,207.1 L156.7,207.3 L157.4,207.6 L158.2,207.8 L158.9,208.1 L159.7,208.3 L160.4,208.5 L161.2,208.8 L161.9,209.0 L162.7,209.2 L163.4,209.4 L164.2,209.7 L164.9,209.9 L165.7,210.1 L166.4,210.3 L167.2,210.5 L167.9,210.7 L168.7,211.0 L169.4,211.2 L170.2,211.4 L170.9,211.6 L171.7,211.8 L172.4,212.0 L173.2,212.2 L173.9,212.4 L174.7,212.5 L175.4,212.7 L176.2,212.9 L176.9,213.1 L177.7,213.3 L178.4,213.5 L179.2,213.7 L179.9,213.8 L180.7,214.0 L181.4,214.2 L182.2,214.4 L182.9,214.5 L183.7,214.7 L184.4,214.9 L185.2,215.0 L185.9,215.2 L186.7,215.4 L187.4,215.5 L188.2,215.7 L188.9,215.9 L189.7,216.0 L190.4,216.2 L191.2,216.3 L191.9,216.5 L192.7,216.6 L193.4,216.8 L194.2,216.9 L194.9,217.1 L195.7,217.2 L196.4,217.4 L197.2,217.5 L197.9,217.7 L198.7,217.8 L199.4,218.0 L200.2,218.1 L200.9,218.3 L201.7,218.4 L202.4,218.5 L203.2,218.7 L203.9,218.8 L204.7,218.9 L205.4,219.1 L206.2,219.2 L206.9,219.3 L207.7,219.5 L208.4,219.6 L209.2,219.7 L209.9,219.9 L210.7,220.0 L211.4,220.1 L212.2,220.2 L212.9,220.4 L213.6,220.5 L214.4,220.6 L215.1,220.7 L215.9,220.8 L216.6,221.0 L217.4,221.1 L218.1,221.2 L218.9,221.3 L219.6,221.4 L220.4,221.5 L221.1,221.7 L221.9,221.8 L222.6,221.9 L223.4,222.0 L224.1,222.1 L224.9,222.2 L225.6,222.3 L226.4,222.4 L227.1,222.5 L227.9,222.6 L228.6,222.8 L229.4,222.9 L230.1,223.0 L230.9,223.1 L231.6,223.2 L232.4,223.3 L233.1,223.4 L233.9,223.5 L234.6,223.6 L235.4,223.7 L236.1,223.8 L236.9,223.9 L237.6,224.0 L238.4,224.1 L239.1,224.2 L239.9,224.3 L240.6,224.4 L241.4,224.5 L242.1,224.6 L242.9,224.7 L243.6,224.7 L244.4,224.8 L245.1,224.9 L245.9,225.0 L246.6,225.1 L247.4,225.2 L248.1,225.3 L248.9,225.4 L249.6,225.5 L250.4,225.6 L251.1,225.7 L251.9,225.7 L252.6,225.8 L253.4,225.9 L254.1,226.0 L254.9,226.1 L255.6,226.2 L256.4,226.3 L257.1,226.3 L257.9,226.4 L258.6,226.5 L259.4,226.6 L260.1,226.7 L260.9,226.8 L261.6,226.8 L262.4,226.9 L263.1,227.0 L263.9,227.1 L264.6,227.2 L265.4,227.2 L266.1,227.3 L266.9,227.4 L267.6,227.5 L268.4,227.5 L269.1,227.6 L269.9,227.7 L270.6,227.8 L271.4,227.9 L272.1,227.9 L272.9,228.0 L273.6,228.1 L274.4,228.1 L275.1,228.2 L275.9,228.3 L276.6,228.4 L277.4,228.4 L278.1,228.5 L278.9,228.6 L279.6,228.7 L280.4,228.7 L281.1,228.8 L281.9,228.9 L282.6,228.9 L283.4,229.0 L284.1,229.1 L284.9,229.1 L285.6,229.2 L286.4,229.3 L287.1,229.4 L287.9,229.4 L288.6,229.5 L289.4,229.6 L290.1,229.6 L290.9,229.7 L291.6,229.8 L292.4,229.8 L293.1,229.9 L293.9,229.9 L294.6,230.0 L295.4,230.1 L296.1,230.1 L296.9,230.2 L297.6,230.3 L298.4,230.3 L299.1,230.4 L299.9,230.5 L300.6,230.5 L301.4,230.6 L302.1,230.6 L302.9,230.7 L303.6,230.8 L304.4,230.8 L305.1,230.9 L305.9,230.9 L306.6,231.0 L307.4,231.1 L308.1,231.1 L308.9,231.2 L309.6,231.2 L310.4,231.3 L311.1,231.4 L311.9,231.4 L312.6,231.5 L313.3,231.5 L314.1,231.6 L314.8,231.6 L315.6,231.7 L316.3,231.8 L317.1,231.8 L317.8,231.9 L318.6,231.9 L319.3,232.0 L320.1,232.0 L320.8,232.1 L321.6,232.1 L322.3,232.2 L323.1,232.3 L323.8,232.3 L324.6,232.4 L325.3,232.4 L326.1,232.5 L326.8,232.5 L327.6,232.6 L328.3,232.6 L329.1,232.7 L329.8,232.7 L330.6,232.8 L331.3,232.8 L332.1,232.9 L332.8,232.9 L333.6,233.0 L334.3,233.0 L335.1,233.1 L335.8,233.1 L336.6,233.2 L337.3,233.2 L338.1,233.3 L338.8,233.3 L339.6,233.4 L340.3,233.4 L341.1,233.5 L341.8,233.5 L342.6,233.6 L343.3,233.6 L344.1,233.7 L344.8,233.7 L345.6,233.8 L346.3,233.8 L347.1,233.9 L347.8,233.9 L348.6,234.0 L349.3,234.0 L350.1,234.1 L350.8,234.1 L351.6,234.2 L352.3,234.2 L353.1,234.3 L353.8,234.3 L354.6,234.3 L355.3,234.4 L356.1,234.4 L356.8,234.5 L357.6,234.5 L358.3,234.6 L359.1,234.6 L359.8,234.7 L360.6,234.7 L361.3,234.7 L362.1,234.8 L362.8,234.8 L363.6,234.9 L364.3,234.9 L365.1,235.0 L365.8,235.0 L366.6,235.1 L367.3,235.1 L368.1,235.1 L368.8,235.2 L369.6,235.2 L370.3,235.3 L371.1,235.3 L371.8,235.4 L372.6,235.4 L373.3,235.4 L374.1,235.5 L374.8,235.5 L375.6,235.6 L376.3,235.6 L377.1,235.6 L377.8,235.7 L378.6,235.7 L379.3,235.8 L380.1,235.8 L380.8,235.8 L381.6,235.9 L382.3,235.9 L383.1,236.0 L383.8,236.0 L384.6,236.0 L385.3,236.1 L386.1,236.1 L386.8,236.2 L387.6,236.2 L388.3,236.2 L389.1,236.3 L389.8,236.3 L390.6,236.4 L391.3,236.4 L392.1,236.4 L392.8,236.5 L393.6,236.5 L394.3,236.5 L395.1,236.6 L395.8,236.6 L396.6,236.7 L397.3,236.7 L398.1,236.7 L398.8,236.8 L399.6,236.8 L400.3,236.8 L401.1,236.9 L401.8,236.9 L402.6,237.0 L403.3,237.0 L404.1,237.0 L404.8,237.1 L405.6,237.1 L406.3,237.1 L407.1,237.2 L407.8,237.2 L408.6,237.2 L409.3,237.3 L410.1,237.3 L410.8,237.3 L411.6,237.4 L412.3,237.4 L413.0,237.4 L413.8,237.5 L414.5,237.5 L415.3,237.6 L416.0,237.6 L416.8,237.6 L417.5,237.7 L418.3,237.7 L419.0,237.7 L419.8,237.8 L420.5,237.8 L421.3,237.8 L422.0,237.9 L422.8,237.9 L423.5,237.9 L424.3,238.0 L425.0,238.0 L425.8,238.0 L426.5,238.1 L427.3,238.1 L428.0,238.1 L428.8,238.2 L429.5,238.2 L430.3,238.2 L431.0,238.3 L431.8,238.3 L432.5,238.3 L433.3,238.3 L434.0,238.4 L434.8,238.4 L435.5,238.4 L436.3,238.5 L437.0,238.5 L437.8,238.5 L438.5,238.6 L439.3,238.6 L440.0,238.6 L440.8,238.7 L441.5,238.7 L442.3,238.7 L443.0,238.8 L443.8,238.8 L444.5,238.8 L445.3,238.8 L446.0,238.9 L446.8,238.9 L447.5,238.9 L448.3,239.0 L449.0,239.0 L449.8,239.0 L450.5,239.1 L451.3,239.1 L452.0,239.1 L452.8,239.1 L453.5,239.2 L454.3,239.2 L455.0,239.2 L455.8,239.3 L456.5,239.3 L457.3,239.3 L458.0,239.4 L458.8,239.4 L459.5,239.4 L460.3,239.4 L461.0,239.5 L461.8,239.5 L462.5,239.5 L463.3,239.6 L464.0,239.6 L464.8,239.6 L465.5,239.6 L466.3,239.7 L467.0,239.7 L467.8,239.7 L468.5,239.8 L469.3,239.8 L470.0,239.8 L470.8,239.8 L471.5,239.9 L472.3,239.9 L473.0,239.9 L473.8,239.9 L474.5,240.0 L475.3,240.0 L476.0,240.0 L476.8,240.1 L477.5,240.1 L478.3,240.1 L479.0,240.1 L479.8,240.2 L480.5,240.2 L481.3,240.2 L482.0,240.2 L482.8,240.3 L483.5,240.3 L484.3,240.3 L485.0,240.3 L485.8,240.4 L486.5,240.4 L487.3,240.4 L488.0,240.5 L488.8,240.5 L489.5,240.5 L490.3,240.5 L491.0,240.6 L491.8,240.6 L492.5,240.6 L493.3,240.6 L494.0,240.7 L494.8,240.7 L495.5,240.7 L496.3,240.7 L497.0,240.8 L497.8,240.8 L498.5,240.8 L499.3,240.8 L500.0,240.9 L500.8,240.9 L501.5,240.9 L502.3,240.9 L503.0,241.0 L503.8,241.0 L504.5,241.0 L505.3,241.0 L506.0,241.1 L506.8,241.1 L507.5,241.1 L508.3,241.1 L509.0,241.2 L509.8,241.2 L510.5,241.2 L511.3,241.2 L512.0,241.2" fill="none" stroke="var(--color-remark)" stroke-width="2.2" stroke-dasharray="7 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.2,212.5 L63.0,212.5 L63.7,212.5 L64.5,212.5 L65.2,212.5 L66.0,212.5 L66.7,212.5 L67.5,212.5 L68.2,212.5 L69.0,212.5 L69.7,212.5 L70.5,212.5 L71.2,212.5 L72.0,212.5 L72.7,212.5 L73.5,212.5 L74.2,212.5 L75.0,212.5 L75.7,212.5 L76.5,212.5 L77.2,212.5 L78.0,212.5 L78.7,212.5 L79.5,212.5 L80.2,212.5 L81.0,212.5 L81.7,212.5 L82.5,212.5 L83.2,212.5 L84.0,212.5 L84.7,212.5 L85.5,212.5 L86.2,212.5 L87.0,212.5 L87.7,212.5 L88.5,212.5 L89.2,212.5 L90.0,212.5 L90.7,212.5 L91.5,212.5 L92.2,212.5 L93.0,212.5 L93.7,212.5 L94.5,212.5 L95.2,212.5 L96.0,212.5 L96.7,212.5 L97.5,212.5 L98.2,212.5 L99.0,212.5 L99.7,212.5 L100.5,212.5 L101.2,212.5 L102.0,212.5 L102.7,212.5 L103.5,212.5 L104.2,212.5 L105.0,212.5 L105.7,212.5 L106.5,212.5 L107.2,212.5 L108.0,212.5 L108.7,212.5 L109.5,212.5 L110.2,212.5 L111.0,212.5 L111.7,212.5 L112.4,212.5 L113.2,212.5 L113.9,212.5 L114.7,212.5 L115.4,212.5 L116.2,212.5 L116.9,212.5 L117.7,212.5 L118.4,212.5 L119.2,212.5 L119.9,212.5 L120.7,212.5 L121.4,212.5 L122.2,212.5 L122.9,212.5 L123.7,212.5 L124.4,212.5 L125.2,212.5 L125.9,212.5 L126.7,212.5 L127.4,212.5 L128.2,212.5 L128.9,212.5 L129.7,212.5 L130.4,212.5 L131.2,212.5 L131.9,212.5 L132.7,212.5 L133.4,212.5 L134.2,212.5 L134.9,212.5 L135.7,212.5 L136.4,212.5 L137.2,212.5 L137.9,212.5 L138.7,212.5 L139.4,212.5 L140.2,212.5 L140.9,212.5 L141.7,212.5 L142.4,212.5 L143.2,212.5 L143.9,212.5 L144.7,212.5 L145.4,212.5 L146.2,212.5 L146.9,212.5 L147.7,212.5 L148.4,212.5 L149.2,212.5 L149.9,212.5 L150.7,212.5 L151.4,212.5 L152.2,212.5 L152.9,212.5 L153.7,212.5 L154.4,212.5 L155.2,212.5 L155.9,212.5 L156.7,212.5 L157.4,212.5 L158.2,212.5 L158.9,212.5 L159.7,212.5 L160.4,212.5 L161.2,212.5 L161.9,212.5 L162.7,212.5 L163.4,212.5 L164.2,212.5 L164.9,212.5 L165.7,212.5 L166.4,212.5 L167.2,212.5 L167.9,212.5 L168.7,212.5 L169.4,212.5 L170.2,212.5 L170.9,212.5 L171.7,212.5 L172.4,212.5 L173.2,212.5 L173.9,212.5 L174.7,212.5 L175.4,212.5 L176.2,212.5 L176.9,212.5 L177.7,212.5 L178.4,212.5 L179.2,212.5 L179.9,212.5 L180.7,212.5 L181.4,212.5 L182.2,212.5 L182.9,212.5 L183.7,212.5 L184.4,212.5 L185.2,212.5 L185.9,212.5 L186.7,212.5 L187.4,212.5 L188.2,212.5 L188.9,212.5 L189.7,212.5 L190.4,212.5 L191.2,212.5 L191.9,212.5 L192.7,212.5 L193.4,212.5 L194.2,212.5 L194.9,212.5 L195.7,212.5 L196.4,212.5 L197.2,212.5 L197.9,212.5 L198.7,212.5 L199.4,212.5 L200.2,212.5 L200.9,212.5 L201.7,212.5 L202.4,212.5 L203.2,212.5 L203.9,212.5 L204.7,212.5 L205.4,212.5 L206.2,212.5 L206.9,212.5 L207.7,212.5 L208.4,212.5 L209.2,212.5 L209.9,212.5 L210.7,212.5 L211.4,212.5 L212.2,212.5 L212.9,212.5 L213.6,212.5 L214.4,212.5 L215.1,212.5 L215.9,212.5 L216.6,212.5 L217.4,212.5 L218.1,212.5 L218.9,212.5 L219.6,212.5 L220.4,212.5 L221.1,212.5 L221.9,212.5 L222.6,212.5 L223.4,212.5 L224.1,212.5 L224.9,212.5 L225.6,212.5 L226.4,212.5 L227.1,212.5 L227.9,212.5 L228.6,212.5 L229.4,212.5 L230.1,212.5 L230.9,212.5 L231.6,212.5 L232.4,212.5 L233.1,212.5 L233.9,212.5 L234.6,212.5 L235.4,212.5 L236.1,212.5 L236.9,212.5 L237.6,212.5 L238.4,212.5 L239.1,212.5 L239.9,212.5 L240.6,212.5 L241.4,212.5 L242.1,212.5 L242.9,212.5 L243.6,212.5 L244.4,212.5 L245.1,212.5 L245.9,212.5 L246.6,212.5 L247.4,212.5 L248.1,212.5 L248.9,212.5 L249.6,212.5 L250.4,212.5 L251.1,212.5 L251.9,212.5 L252.6,212.5 L253.4,212.5 L254.1,212.5 L254.9,212.5 L255.6,212.5 L256.4,212.5 L257.1,212.5 L257.9,212.5 L258.6,212.5 L259.4,212.5 L260.1,212.5 L260.9,212.5 L261.6,212.5 L262.4,212.5 L263.1,212.5 L263.9,212.5 L264.6,212.5 L265.4,212.5 L266.1,212.5 L266.9,212.5 L267.6,212.5 L268.4,212.5 L269.1,212.5 L269.9,212.5 L270.6,212.5 L271.4,212.5 L272.1,212.5 L272.9,212.5 L273.6,212.5 L274.4,212.5 L275.1,212.5 L275.9,212.5 L276.6,212.5 L277.4,212.5 L278.1,212.5 L278.9,212.5 L279.6,212.5 L280.4,212.5 L281.1,212.5 L281.9,212.5 L282.6,212.5 L283.4,212.5 L284.1,212.5 L284.9,212.5 L285.6,212.5 L286.4,212.5 L287.1,212.5 L287.9,212.5 L288.6,212.5 L289.4,212.5 L290.1,212.5 L290.9,212.5 L291.6,212.5 L292.4,212.5 L293.1,212.5 L293.9,212.5 L294.6,212.5 L295.4,212.5 L296.1,212.5 L296.9,212.5 L297.6,212.5 L298.4,212.5 L299.1,212.5 L299.9,212.5 L300.6,212.5 L301.4,212.5 L302.1,212.5 L302.9,212.5 L303.6,212.5 L304.4,212.5 L305.1,212.5 L305.9,212.5 L306.6,212.5 L307.4,212.5 L308.1,212.5 L308.9,212.5 L309.6,212.5 L310.4,212.5 L311.1,212.5 L311.9,212.5 L312.6,212.5 L313.3,212.5 L314.1,212.5 L314.8,212.5 L315.6,212.5 L316.3,212.5 L317.1,212.5 L317.8,212.5 L318.6,212.5 L319.3,212.5 L320.1,212.5 L320.8,212.5 L321.6,212.5 L322.3,212.5 L323.1,212.5 L323.8,212.5 L324.6,212.5 L325.3,212.5 L326.1,212.5 L326.8,212.5 L327.6,212.5 L328.3,212.5 L329.1,212.5 L329.8,212.5 L330.6,212.5 L331.3,212.5 L332.1,212.5 L332.8,212.5 L333.6,212.5 L334.3,212.5 L335.1,212.5 L335.8,212.5 L336.6,212.5 L337.3,212.5 L338.1,212.5 L338.8,212.5 L339.6,212.5 L340.3,212.5 L341.1,212.5 L341.8,212.5 L342.6,212.5 L343.3,212.5 L344.1,212.5 L344.8,212.5 L345.6,212.5 L346.3,212.5 L347.1,212.5 L347.8,212.5 L348.6,212.5 L349.3,212.5 L350.1,212.5 L350.8,212.5 L351.6,212.5 L352.3,212.5 L353.1,212.5 L353.8,212.5 L354.6,212.5 L355.3,212.5 L356.1,212.5 L356.8,212.5 L357.6,212.5 L358.3,212.5 L359.1,212.5 L359.8,212.5 L360.6,212.5 L361.3,212.5 L362.1,212.5 L362.8,212.5 L363.6,212.5 L364.3,212.5 L365.1,212.5 L365.8,212.5 L366.6,212.5 L367.3,212.5 L368.1,212.5 L368.8,212.5 L369.6,212.5 L370.3,212.5 L371.1,212.5 L371.8,212.5 L372.6,212.5 L373.3,212.5 L374.1,212.5 L374.8,212.5 L375.6,212.5 L376.3,212.5 L377.1,212.5 L377.8,212.5 L378.6,212.5 L379.3,212.5 L380.1,212.5 L380.8,212.5 L381.6,212.5 L382.3,212.5 L383.1,212.5 L383.8,212.5 L384.6,212.5 L385.3,212.5 L386.1,212.5 L386.8,212.5 L387.6,212.5 L388.3,212.5 L389.1,212.5 L389.8,212.5 L390.6,212.5 L391.3,212.5 L392.1,212.5 L392.8,212.5 L393.6,212.5 L394.3,212.5 L395.1,212.5 L395.8,212.5 L396.6,212.5 L397.3,212.5 L398.1,212.5 L398.8,212.5 L399.6,212.5 L400.3,212.5 L401.1,212.5 L401.8,212.5 L402.6,212.5 L403.3,212.5 L404.1,212.5 L404.8,212.5 L405.6,212.5 L406.3,212.5 L407.1,212.5 L407.8,212.5 L408.6,212.5 L409.3,212.5 L410.1,212.5 L410.8,212.5 L411.6,212.5 L412.3,212.5 L413.0,212.5 L413.8,212.5 L414.5,212.5 L415.3,212.5 L416.0,212.5 L416.8,212.5 L417.5,212.5 L418.3,212.5 L419.0,212.5 L419.8,212.5 L420.5,212.5 L421.3,212.5 L422.0,212.5 L422.8,212.5 L423.5,212.5 L424.3,212.5 L425.0,212.5 L425.8,212.5 L426.5,212.5 L427.3,212.5 L428.0,212.5 L428.8,212.5 L429.5,212.5 L430.3,212.5 L431.0,212.5 L431.8,212.5 L432.5,212.5 L433.3,212.5 L434.0,212.5 L434.8,212.5 L435.5,212.5 L436.3,212.5 L437.0,212.5 L437.8,212.5 L438.5,212.5 L439.3,212.5 L440.0,212.5 L440.8,212.5 L441.5,212.5 L442.3,212.5 L443.0,212.5 L443.8,212.5 L444.5,212.5 L445.3,212.5 L446.0,212.5 L446.8,212.5 L447.5,212.5 L448.3,212.5 L449.0,212.5 L449.8,212.5 L450.5,212.5 L451.3,212.5 L452.0,212.5 L452.8,212.5 L453.5,212.5 L454.3,212.5 L455.0,212.5 L455.8,212.5 L456.5,212.5 L457.3,212.5 L458.0,212.5 L458.8,212.5 L459.5,212.5 L460.3,212.5 L461.0,212.5 L461.8,212.5 L462.5,212.5 L463.3,212.5 L464.0,212.5 L464.8,212.5 L465.5,212.5 L466.3,212.5 L467.0,212.5 L467.8,212.5 L468.5,212.5 L469.3,212.5 L470.0,212.5 L470.8,212.5 L471.5,212.5 L472.3,212.5 L473.0,212.5 L473.8,212.5 L474.5,212.5 L475.3,212.5 L476.0,212.5 L476.8,212.5 L477.5,212.5 L478.3,212.5 L479.0,212.5 L479.8,212.5 L480.5,212.5 L481.3,212.5 L482.0,212.5 L482.8,212.5 L483.5,212.5 L484.3,212.5 L485.0,212.5 L485.8,212.5 L486.5,212.5 L487.3,212.5 L488.0,212.5 L488.8,212.5 L489.5,212.5 L490.3,212.5 L491.0,212.5 L491.8,212.5 L492.5,212.5 L493.3,212.5 L494.0,212.5 L494.8,212.5 L495.5,212.5 L496.3,212.5 L497.0,212.5 L497.8,212.5 L498.5,212.5 L499.3,212.5 L500.0,212.5 L500.8,212.5 L501.5,212.5 L502.3,212.5 L503.0,212.5 L503.8,212.5 L504.5,212.5 L505.3,212.5 L506.0,212.5 L506.8,212.5 L507.5,212.5 L508.3,212.5 L509.0,212.5 L509.8,212.5 L510.5,212.5 L511.3,212.5 L512.0,212.5" fill="none" stroke="var(--color-base)" stroke-width="2.2" stroke-dasharray="2 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.2,269.9 L63.0,269.8 L63.7,269.6 L64.5,269.4 L65.2,269.2 L66.0,269.0 L66.7,268.8 L67.5,268.6 L68.2,268.4 L69.0,268.2 L69.7,268.0 L70.5,267.8 L71.2,267.6 L72.0,267.5 L72.7,267.3 L73.5,267.1 L74.2,266.9 L75.0,266.7 L75.7,266.5 L76.5,266.3 L77.2,266.1 L78.0,265.9 L78.7,265.7 L79.5,265.5 L80.2,265.3 L81.0,265.2 L81.7,265.0 L82.5,264.8 L83.2,264.6 L84.0,264.4 L84.7,264.2 L85.5,264.0 L86.2,263.8 L87.0,263.6 L87.7,263.4 L88.5,263.2 L89.2,263.0 L90.0,262.9 L90.7,262.7 L91.5,262.5 L92.2,262.3 L93.0,262.1 L93.7,261.9 L94.5,261.7 L95.2,261.5 L96.0,261.3 L96.7,261.1 L97.5,260.9 L98.2,260.7 L99.0,260.6 L99.7,260.4 L100.5,260.2 L101.2,260.0 L102.0,259.8 L102.7,259.6 L103.5,259.4 L104.2,259.2 L105.0,259.0 L105.7,258.8 L106.5,258.6 L107.2,258.4 L108.0,258.3 L108.7,258.1 L109.5,257.9 L110.2,257.7 L111.0,257.5 L111.7,257.3 L112.4,257.1 L113.2,256.9 L113.9,256.7 L114.7,256.5 L115.4,256.3 L116.2,256.1 L116.9,256.0 L117.7,255.8 L118.4,255.6 L119.2,255.4 L119.9,255.2 L120.7,255.0 L121.4,254.8 L122.2,254.6 L122.9,254.4 L123.7,254.2 L124.4,254.0 L125.2,253.9 L125.9,253.7 L126.7,253.5 L127.4,253.3 L128.2,253.1 L128.9,252.9 L129.7,252.7 L130.4,252.5 L131.2,252.3 L131.9,252.1 L132.7,251.9 L133.4,251.7 L134.2,251.6 L134.9,251.4 L135.7,251.2 L136.4,251.0 L137.2,250.8 L137.9,250.6 L138.7,250.4 L139.4,250.2 L140.2,250.0 L140.9,249.8 L141.7,249.6 L142.4,249.4 L143.2,249.3 L143.9,249.1 L144.7,248.9 L145.4,248.7 L146.2,248.5 L146.9,248.3 L147.7,248.1 L148.4,247.9 L149.2,247.7 L149.9,247.5 L150.7,247.3 L151.4,247.1 L152.2,247.0 L152.9,246.8 L153.7,246.6 L154.4,246.4 L155.2,246.2 L155.9,246.0 L156.7,245.8 L157.4,245.6 L158.2,245.4 L158.9,245.2 L159.7,245.0 L160.4,244.8 L161.2,244.7 L161.9,244.5 L162.7,244.3 L163.4,244.1 L164.2,243.9 L164.9,243.7 L165.7,243.5 L166.4,243.3 L167.2,243.1 L167.9,242.9 L168.7,242.7 L169.4,242.5 L170.2,242.4 L170.9,242.2 L171.7,242.0 L172.4,241.8 L173.2,241.6 L173.9,241.4 L174.7,241.2 L175.4,241.0 L176.2,240.8 L176.9,240.6 L177.7,240.4 L178.4,240.2 L179.2,240.1 L179.9,239.9 L180.7,239.7 L181.4,239.5 L182.2,239.3 L182.9,239.1 L183.7,238.9 L184.4,238.7 L185.2,238.5 L185.9,238.3 L186.7,238.1 L187.4,238.0 L188.2,237.8 L188.9,237.6 L189.7,237.4 L190.4,237.2 L191.2,237.0 L191.9,236.8 L192.7,236.6 L193.4,236.4 L194.2,236.2 L194.9,236.0 L195.7,235.8 L196.4,235.7 L197.2,235.5 L197.9,235.3 L198.7,235.1 L199.4,234.9 L200.2,234.7 L200.9,234.5 L201.7,234.3 L202.4,234.1 L203.2,233.9 L203.9,233.7 L204.7,233.5 L205.4,233.4 L206.2,233.2 L206.9,233.0 L207.7,232.8 L208.4,232.6 L209.2,232.4 L209.9,232.2 L210.7,232.0 L211.4,231.8 L212.2,231.6 L212.9,231.4 L213.6,231.2 L214.4,231.1 L215.1,230.9 L215.9,230.7 L216.6,230.5 L217.4,230.3 L218.1,230.1 L218.9,229.9 L219.6,229.7 L220.4,229.5 L221.1,229.3 L221.9,229.1 L222.6,228.9 L223.4,228.8 L224.1,228.6 L224.9,228.4 L225.6,228.2 L226.4,228.0 L227.1,227.8 L227.9,227.6 L228.6,227.4 L229.4,227.2 L230.1,227.0 L230.9,226.8 L231.6,226.6 L232.4,226.5 L233.1,226.3 L233.9,226.1 L234.6,225.9 L235.4,225.7 L236.1,225.5 L236.9,225.3 L237.6,225.1 L238.4,224.9 L239.1,224.7 L239.9,224.5 L240.6,224.3 L241.4,224.2 L242.1,224.0 L242.9,223.8 L243.6,223.6 L244.4,223.4 L245.1,223.2 L245.9,223.0 L246.6,222.8 L247.4,222.6 L248.1,222.4 L248.9,222.2 L249.6,222.0 L250.4,221.9 L251.1,221.7 L251.9,221.5 L252.6,221.3 L253.4,221.1 L254.1,220.9 L254.9,220.7 L255.6,220.5 L256.4,220.3 L257.1,220.1 L257.9,219.9 L258.6,219.8 L259.4,219.6 L260.1,219.4 L260.9,219.2 L261.6,219.0 L262.4,218.8 L263.1,218.6 L263.9,218.4 L264.6,218.2 L265.4,218.0 L266.1,217.8 L266.9,217.6 L267.6,217.5 L268.4,217.3 L269.1,217.1 L269.9,216.9 L270.6,216.7 L271.4,216.5 L272.1,216.3 L272.9,216.1 L273.6,215.9 L274.4,215.7 L275.1,215.5 L275.9,215.3 L276.6,215.2 L277.4,215.0 L278.1,214.8 L278.9,214.6 L279.6,214.4 L280.4,214.2 L281.1,214.0 L281.9,213.8 L282.6,213.6 L283.4,213.4 L284.1,213.2 L284.9,213.0 L285.6,212.9 L286.4,212.7 L287.1,212.5 L287.9,212.3 L288.6,212.1 L289.4,211.9 L290.1,211.7 L290.9,211.5 L291.6,211.3 L292.4,211.1 L293.1,210.9 L293.9,210.7 L294.6,210.6 L295.4,210.4 L296.1,210.2 L296.9,210.0 L297.6,209.8 L298.4,209.6 L299.1,209.4 L299.9,209.2 L300.6,209.0 L301.4,208.8 L302.1,208.6 L302.9,208.4 L303.6,208.3 L304.4,208.1 L305.1,207.9 L305.9,207.7 L306.6,207.5 L307.4,207.3 L308.1,207.1 L308.9,206.9 L309.6,206.7 L310.4,206.5 L311.1,206.3 L311.9,206.1 L312.6,206.0 L313.3,205.8 L314.1,205.6 L314.8,205.4 L315.6,205.2 L316.3,205.0 L317.1,204.8 L317.8,204.6 L318.6,204.4 L319.3,204.2 L320.1,204.0 L320.8,203.9 L321.6,203.7 L322.3,203.5 L323.1,203.3 L323.8,203.1 L324.6,202.9 L325.3,202.7 L326.1,202.5 L326.8,202.3 L327.6,202.1 L328.3,201.9 L329.1,201.7 L329.8,201.6 L330.6,201.4 L331.3,201.2 L332.1,201.0 L332.8,200.8 L333.6,200.6 L334.3,200.4 L335.1,200.2 L335.8,200.0 L336.6,199.8 L337.3,199.6 L338.1,199.4 L338.8,199.3 L339.6,199.1 L340.3,198.9 L341.1,198.7 L341.8,198.5 L342.6,198.3 L343.3,198.1 L344.1,197.9 L344.8,197.7 L345.6,197.5 L346.3,197.3 L347.1,197.1 L347.8,197.0 L348.6,196.8 L349.3,196.6 L350.1,196.4 L350.8,196.2 L351.6,196.0 L352.3,195.8 L353.1,195.6 L353.8,195.4 L354.6,195.2 L355.3,195.0 L356.1,194.8 L356.8,194.7 L357.6,194.5 L358.3,194.3 L359.1,194.1 L359.8,193.9 L360.6,193.7 L361.3,193.5 L362.1,193.3 L362.8,193.1 L363.6,192.9 L364.3,192.7 L365.1,192.5 L365.8,192.4 L366.6,192.2 L367.3,192.0 L368.1,191.8 L368.8,191.6 L369.6,191.4 L370.3,191.2 L371.1,191.0 L371.8,190.8 L372.6,190.6 L373.3,190.4 L374.1,190.2 L374.8,190.1 L375.6,189.9 L376.3,189.7 L377.1,189.5 L377.8,189.3 L378.6,189.1 L379.3,188.9 L380.1,188.7 L380.8,188.5 L381.6,188.3 L382.3,188.1 L383.1,188.0 L383.8,187.8 L384.6,187.6 L385.3,187.4 L386.1,187.2 L386.8,187.0 L387.6,186.8 L388.3,186.6 L389.1,186.4 L389.8,186.2 L390.6,186.0 L391.3,185.8 L392.1,185.7 L392.8,185.5 L393.6,185.3 L394.3,185.1 L395.1,184.9 L395.8,184.7 L396.6,184.5 L397.3,184.3 L398.1,184.1 L398.8,183.9 L399.6,183.7 L400.3,183.5 L401.1,183.4 L401.8,183.2 L402.6,183.0 L403.3,182.8 L404.1,182.6 L404.8,182.4 L405.6,182.2 L406.3,182.0 L407.1,181.8 L407.8,181.6 L408.6,181.4 L409.3,181.2 L410.1,181.1 L410.8,180.9 L411.6,180.7 L412.3,180.5 L413.0,180.3 L413.8,180.1 L414.5,179.9 L415.3,179.7 L416.0,179.5 L416.8,179.3 L417.5,179.1 L418.3,178.9 L419.0,178.8 L419.8,178.6 L420.5,178.4 L421.3,178.2 L422.0,178.0 L422.8,177.8 L423.5,177.6 L424.3,177.4 L425.0,177.2 L425.8,177.0 L426.5,176.8 L427.3,176.6 L428.0,176.5 L428.8,176.3 L429.5,176.1 L430.3,175.9 L431.0,175.7 L431.8,175.5 L432.5,175.3 L433.3,175.1 L434.0,174.9 L434.8,174.7 L435.5,174.5 L436.3,174.3 L437.0,174.2 L437.8,174.0 L438.5,173.8 L439.3,173.6 L440.0,173.4 L440.8,173.2 L441.5,173.0 L442.3,172.8 L443.0,172.6 L443.8,172.4 L444.5,172.2 L445.3,172.0 L446.0,171.9 L446.8,171.7 L447.5,171.5 L448.3,171.3 L449.0,171.1 L449.8,170.9 L450.5,170.7 L451.3,170.5 L452.0,170.3 L452.8,170.1 L453.5,169.9 L454.3,169.8 L455.0,169.6 L455.8,169.4 L456.5,169.2 L457.3,169.0 L458.0,168.8 L458.8,168.6 L459.5,168.4 L460.3,168.2 L461.0,168.0 L461.8,167.8 L462.5,167.6 L463.3,167.5 L464.0,167.3 L464.8,167.1 L465.5,166.9 L466.3,166.7 L467.0,166.5 L467.8,166.3 L468.5,166.1 L469.3,165.9 L470.0,165.7 L470.8,165.5 L471.5,165.3 L472.3,165.2 L473.0,165.0 L473.8,164.8 L474.5,164.6 L475.3,164.4 L476.0,164.2 L476.8,164.0 L477.5,163.8 L478.3,163.6 L479.0,163.4 L479.8,163.2 L480.5,163.0 L481.3,162.9 L482.0,162.7 L482.8,162.5 L483.5,162.3 L484.3,162.1 L485.0,161.9 L485.8,161.7 L486.5,161.5 L487.3,161.3 L488.0,161.1 L488.8,160.9 L489.5,160.7 L490.3,160.6 L491.0,160.4 L491.8,160.2 L492.5,160.0 L493.3,159.8 L494.0,159.6 L494.8,159.4 L495.5,159.2 L496.3,159.0 L497.0,158.8 L497.8,158.6 L498.5,158.4 L499.3,158.3 L500.0,158.1 L500.8,157.9 L501.5,157.7 L502.3,157.5 L503.0,157.3 L503.8,157.1 L504.5,156.9 L505.3,156.7 L506.0,156.5 L506.8,156.3 L507.5,156.1 L508.3,156.0 L509.0,155.8 L509.8,155.6 L510.5,155.4 L511.3,155.2 L512.0,155.0" fill="none" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.2,270.0 L63.0,270.0 L63.7,270.0 L64.5,270.0 L65.2,270.0 L66.0,270.0 L66.7,270.0 L67.5,270.0 L68.2,270.0 L69.0,270.0 L69.7,270.0 L70.5,270.0 L71.2,270.0 L72.0,270.0 L72.7,270.0 L73.5,270.0 L74.2,270.0 L75.0,270.0 L75.7,270.0 L76.5,270.0 L77.2,270.0 L78.0,270.0 L78.7,270.0 L79.5,270.0 L80.2,270.0 L81.0,270.0 L81.7,270.0 L82.5,270.0 L83.2,270.0 L84.0,270.0 L84.7,270.0 L85.5,270.0 L86.2,270.0 L87.0,270.0 L87.7,270.0 L88.5,270.0 L89.2,269.9 L90.0,269.9 L90.7,269.9 L91.5,269.9 L92.2,269.9 L93.0,269.9 L93.7,269.9 L94.5,269.9 L95.2,269.9 L96.0,269.9 L96.7,269.9 L97.5,269.9 L98.2,269.9 L99.0,269.9 L99.7,269.9 L100.5,269.9 L101.2,269.8 L102.0,269.8 L102.7,269.8 L103.5,269.8 L104.2,269.8 L105.0,269.8 L105.7,269.8 L106.5,269.8 L107.2,269.8 L108.0,269.8 L108.7,269.7 L109.5,269.7 L110.2,269.7 L111.0,269.7 L111.7,269.7 L112.4,269.7 L113.2,269.7 L113.9,269.6 L114.7,269.6 L115.4,269.6 L116.2,269.6 L116.9,269.6 L117.7,269.6 L118.4,269.5 L119.2,269.5 L119.9,269.5 L120.7,269.5 L121.4,269.5 L122.2,269.4 L122.9,269.4 L123.7,269.4 L124.4,269.4 L125.2,269.4 L125.9,269.3 L126.7,269.3 L127.4,269.3 L128.2,269.3 L128.9,269.2 L129.7,269.2 L130.4,269.2 L131.2,269.2 L131.9,269.1 L132.7,269.1 L133.4,269.1 L134.2,269.1 L134.9,269.0 L135.7,269.0 L136.4,269.0 L137.2,268.9 L137.9,268.9 L138.7,268.9 L139.4,268.8 L140.2,268.8 L140.9,268.8 L141.7,268.7 L142.4,268.7 L143.2,268.6 L143.9,268.6 L144.7,268.6 L145.4,268.5 L146.2,268.5 L146.9,268.5 L147.7,268.4 L148.4,268.4 L149.2,268.3 L149.9,268.3 L150.7,268.2 L151.4,268.2 L152.2,268.1 L152.9,268.1 L153.7,268.1 L154.4,268.0 L155.2,268.0 L155.9,267.9 L156.7,267.9 L157.4,267.8 L158.2,267.8 L158.9,267.7 L159.7,267.6 L160.4,267.6 L161.2,267.5 L161.9,267.5 L162.7,267.4 L163.4,267.4 L164.2,267.3 L164.9,267.2 L165.7,267.2 L166.4,267.1 L167.2,267.1 L167.9,267.0 L168.7,266.9 L169.4,266.9 L170.2,266.8 L170.9,266.7 L171.7,266.7 L172.4,266.6 L173.2,266.5 L173.9,266.5 L174.7,266.4 L175.4,266.3 L176.2,266.2 L176.9,266.2 L177.7,266.1 L178.4,266.0 L179.2,265.9 L179.9,265.9 L180.7,265.8 L181.4,265.7 L182.2,265.6 L182.9,265.5 L183.7,265.5 L184.4,265.4 L185.2,265.3 L185.9,265.2 L186.7,265.1 L187.4,265.0 L188.2,264.9 L188.9,264.8 L189.7,264.7 L190.4,264.7 L191.2,264.6 L191.9,264.5 L192.7,264.4 L193.4,264.3 L194.2,264.2 L194.9,264.1 L195.7,264.0 L196.4,263.9 L197.2,263.8 L197.9,263.7 L198.7,263.6 L199.4,263.5 L200.2,263.3 L200.9,263.2 L201.7,263.1 L202.4,263.0 L203.2,262.9 L203.9,262.8 L204.7,262.7 L205.4,262.6 L206.2,262.4 L206.9,262.3 L207.7,262.2 L208.4,262.1 L209.2,262.0 L209.9,261.8 L210.7,261.7 L211.4,261.6 L212.2,261.5 L212.9,261.3 L213.6,261.2 L214.4,261.1 L215.1,260.9 L215.9,260.8 L216.6,260.7 L217.4,260.5 L218.1,260.4 L218.9,260.3 L219.6,260.1 L220.4,260.0 L221.1,259.8 L221.9,259.7 L222.6,259.5 L223.4,259.4 L224.1,259.2 L224.9,259.1 L225.6,258.9 L226.4,258.8 L227.1,258.6 L227.9,258.5 L228.6,258.3 L229.4,258.2 L230.1,258.0 L230.9,257.8 L231.6,257.7 L232.4,257.5 L233.1,257.3 L233.9,257.2 L234.6,257.0 L235.4,256.8 L236.1,256.7 L236.9,256.5 L237.6,256.3 L238.4,256.1 L239.1,256.0 L239.9,255.8 L240.6,255.6 L241.4,255.4 L242.1,255.2 L242.9,255.1 L243.6,254.9 L244.4,254.7 L245.1,254.5 L245.9,254.3 L246.6,254.1 L247.4,253.9 L248.1,253.7 L248.9,253.5 L249.6,253.3 L250.4,253.1 L251.1,252.9 L251.9,252.7 L252.6,252.5 L253.4,252.3 L254.1,252.1 L254.9,251.9 L255.6,251.7 L256.4,251.5 L257.1,251.2 L257.9,251.0 L258.6,250.8 L259.4,250.6 L260.1,250.4 L260.9,250.1 L261.6,249.9 L262.4,249.7 L263.1,249.5 L263.9,249.2 L264.6,249.0 L265.4,248.8 L266.1,248.5 L266.9,248.3 L267.6,248.1 L268.4,247.8 L269.1,247.6 L269.9,247.3 L270.6,247.1 L271.4,246.8 L272.1,246.6 L272.9,246.3 L273.6,246.1 L274.4,245.8 L275.1,245.6 L275.9,245.3 L276.6,245.0 L277.4,244.8 L278.1,244.5 L278.9,244.3 L279.6,244.0 L280.4,243.7 L281.1,243.4 L281.9,243.2 L282.6,242.9 L283.4,242.6 L284.1,242.3 L284.9,242.1 L285.6,241.8 L286.4,241.5 L287.1,241.2 L287.9,240.9 L288.6,240.6 L289.4,240.3 L290.1,240.0 L290.9,239.7 L291.6,239.4 L292.4,239.1 L293.1,238.8 L293.9,238.5 L294.6,238.2 L295.4,237.9 L296.1,237.6 L296.9,237.3 L297.6,237.0 L298.4,236.7 L299.1,236.4 L299.9,236.0 L300.6,235.7 L301.4,235.4 L302.1,235.1 L302.9,234.7 L303.6,234.4 L304.4,234.1 L305.1,233.7 L305.9,233.4 L306.6,233.1 L307.4,232.7 L308.1,232.4 L308.9,232.0 L309.6,231.7 L310.4,231.3 L311.1,231.0 L311.9,230.6 L312.6,230.3 L313.3,229.9 L314.1,229.6 L314.8,229.2 L315.6,228.8 L316.3,228.5 L317.1,228.1 L317.8,227.7 L318.6,227.4 L319.3,227.0 L320.1,226.6 L320.8,226.2 L321.6,225.8 L322.3,225.5 L323.1,225.1 L323.8,224.7 L324.6,224.3 L325.3,223.9 L326.1,223.5 L326.8,223.1 L327.6,222.7 L328.3,222.3 L329.1,221.9 L329.8,221.5 L330.6,221.1 L331.3,220.7 L332.1,220.3 L332.8,219.9 L333.6,219.4 L334.3,219.0 L335.1,218.6 L335.8,218.2 L336.6,217.7 L337.3,217.3 L338.1,216.9 L338.8,216.4 L339.6,216.0 L340.3,215.6 L341.1,215.1 L341.8,214.7 L342.6,214.2 L343.3,213.8 L344.1,213.3 L344.8,212.9 L345.6,212.4 L346.3,212.0 L347.1,211.5 L347.8,211.1 L348.6,210.6 L349.3,210.1 L350.1,209.7 L350.8,209.2 L351.6,208.7 L352.3,208.2 L353.1,207.8 L353.8,207.3 L354.6,206.8 L355.3,206.3 L356.1,205.8 L356.8,205.3 L357.6,204.8 L358.3,204.3 L359.1,203.8 L359.8,203.3 L360.6,202.8 L361.3,202.3 L362.1,201.8 L362.8,201.3 L363.6,200.8 L364.3,200.3 L365.1,199.7 L365.8,199.2 L366.6,198.7 L367.3,198.2 L368.1,197.6 L368.8,197.1 L369.6,196.6 L370.3,196.0 L371.1,195.5 L371.8,194.9 L372.6,194.4 L373.3,193.8 L374.1,193.3 L374.8,192.7 L375.6,192.2 L376.3,191.6 L377.1,191.1 L377.8,190.5 L378.6,189.9 L379.3,189.4 L380.1,188.8 L380.8,188.2 L381.6,187.6 L382.3,187.0 L383.1,186.5 L383.8,185.9 L384.6,185.3 L385.3,184.7 L386.1,184.1 L386.8,183.5 L387.6,182.9 L388.3,182.3 L389.1,181.7 L389.8,181.1 L390.6,180.5 L391.3,179.9 L392.1,179.2 L392.8,178.6 L393.6,178.0 L394.3,177.4 L395.1,176.7 L395.8,176.1 L396.6,175.5 L397.3,174.8 L398.1,174.2 L398.8,173.6 L399.6,172.9 L400.3,172.3 L401.1,171.6 L401.8,171.0 L402.6,170.3 L403.3,169.7 L404.1,169.0 L404.8,168.3 L405.6,167.7 L406.3,167.0 L407.1,166.3 L407.8,165.6 L408.6,165.0 L409.3,164.3 L410.1,163.6 L410.8,162.9 L411.6,162.2 L412.3,161.5 L413.0,160.8 L413.8,160.1 L414.5,159.4 L415.3,158.7 L416.0,158.0 L416.8,157.3 L417.5,156.6 L418.3,155.8 L419.0,155.1 L419.8,154.4 L420.5,153.7 L421.3,152.9 L422.0,152.2 L422.8,151.5 L423.5,150.7 L424.3,150.0 L425.0,149.2 L425.8,148.5 L426.5,147.7 L427.3,147.0 L428.0,146.2 L428.8,145.4 L429.5,144.7 L430.3,143.9 L431.0,143.1 L431.8,142.4 L432.5,141.6 L433.3,140.8 L434.0,140.0 L434.8,139.2 L435.5,138.4 L436.3,137.7 L437.0,136.9 L437.8,136.1 L438.5,135.3 L439.3,134.4 L440.0,133.6 L440.8,132.8 L441.5,132.0 L442.3,131.2 L443.0,130.4 L443.8,129.5 L444.5,128.7 L445.3,127.9 L446.0,127.0 L446.8,126.2 L447.5,125.4 L448.3,124.5 L449.0,123.7 L449.8,122.8 L450.5,122.0 L451.3,121.1 L452.0,120.2 L452.8,119.4 L453.5,118.5 L454.3,117.6 L455.0,116.8 L455.8,115.9 L456.5,115.0 L457.3,114.1 L458.0,113.2 L458.8,112.3 L459.5,111.4 L460.3,110.5 L461.0,109.6 L461.8,108.7 L462.5,107.8 L463.3,106.9 L464.0,106.0 L464.8,105.1 L465.5,104.2 L466.3,103.2 L467.0,102.3 L467.8,101.4 L468.5,100.4 L469.3,99.5 L470.0,98.5 L470.8,97.6 L471.5,96.7 L472.3,95.7 L473.0,94.7 L473.8,93.8 L474.5,92.8 L475.3,91.8 L476.0,90.9 L476.8,89.9 L477.5,88.9 L478.3,87.9 L479.0,87.0 L479.8,86.0 L480.5,85.0 L481.3,84.0 L482.0,83.0 L482.8,82.0 L483.5,81.0 L484.3,80.0 L485.0,78.9 L485.8,77.9 L486.5,76.9 L487.3,75.9 L488.0,74.9 L488.8,73.8 L489.5,72.8 L490.3,71.7 L491.0,70.7 L491.8,69.7 L492.5,68.6 L493.3,67.6 L494.0,66.5 L494.8,65.4 L495.5,64.4 L496.3,63.3 L497.0,62.2 L497.8,61.2 L498.5,60.1 L499.3,59.0 L500.0,57.9 L500.8,56.8 L501.5,55.7 L502.3,54.6 L503.0,53.5 L503.8,52.4 L504.5,51.3 L505.3,50.2 L506.0,49.1 L506.8,48.0 L507.5,46.8 L508.3,45.7 L509.0,44.6 L509.8,43.4 L510.5,42.3 L511.3,41.1 L512.0,40.0" fill="none" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="212.0,267.0 207.0,258.0 217.0,258.0" fill="var(--color-remark)"/>
+  <polygon points="287.0,267.0 282.0,258.0 292.0,258.0" fill="var(--color-base)"/>
+  <polygon points="362.0,267.0 357.0,258.0 367.0,258.0" fill="var(--color-theory)"/>
+  <polygon points="422.0,267.0 417.0,258.0 427.0,258.0" fill="var(--color-practice)"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="58.0" y1="270.0" x2="522.0" y2="270.0"/><polygon points="522.0,270.0 514.0,266.5 514.0,273.5" stroke="none"/></g>
+  <line x1="62.0" y1="267.0" x2="62.0" y2="273.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="62.0" y="286.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,00</text>
+  <line x1="174.5" y1="267.0" x2="174.5" y2="273.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="174.5" y="286.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,25</text>
+  <line x1="287.0" y1="267.0" x2="287.0" y2="273.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="287.0" y="286.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,50</text>
+  <line x1="399.5" y1="267.0" x2="399.5" y2="273.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="399.5" y="286.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0,75</text>
+  <line x1="512.0" y1="267.0" x2="512.0" y2="273.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="512.0" y="286.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">1,00</text>
+  <text x="526.0" y="274.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">x</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="62.0" y1="270.0" x2="62.0" y2="30.0"/><polygon points="62.0,30.0 58.5,38.0 65.5,38.0" stroke="none"/></g>
+  <line x1="59.0" y1="212.5" x2="65.0" y2="212.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="216.5" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1</text>
+  <line x1="59.0" y1="155.0" x2="65.0" y2="155.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="159.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">2</text>
+  <line x1="59.0" y1="97.5" x2="65.0" y2="97.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="101.5" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">3</text>
+  <line x1="59.0" y1="40.0" x2="65.0" y2="40.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="44.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">4</text>
+  <text x="70.0" y="36.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>; &#952;)</text>
+  <line x1="152.0" y1="54.4" x2="176.0" y2="54.4" stroke="var(--color-remark)" stroke-width="2.4" stroke-dasharray="7 4" stroke-linecap="round"/>
+  <text x="183.0" y="58.9" fill="var(--academic-text)" font-size="12.5" text-anchor="start">&#952; = &#8722;0,5</text>
+  <line x1="152.0" y1="73.4" x2="176.0" y2="73.4" stroke="var(--color-base)" stroke-width="2.4" stroke-dasharray="2 4" stroke-linecap="round"/>
+  <text x="183.0" y="77.9" fill="var(--academic-text)" font-size="12.5" text-anchor="start">&#952; = 0</text>
+  <line x1="152.0" y1="92.4" x2="176.0" y2="92.4" stroke="var(--color-theory)" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="183.0" y="96.9" fill="var(--academic-text)" font-size="12.5" text-anchor="start">&#952; = 1</text>
+  <line x1="152.0" y1="111.4" x2="176.0" y2="111.4" stroke="var(--color-practice)" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="183.0" y="115.9" fill="var(--academic-text)" font-size="12.5" text-anchor="start">&#952; = 3</text>
+</svg>
+<figcaption>Kuvvet ailesinden dört yoğunluk. θ büyüdükçe kütle 1'e doğru kayar; eksenin üstündeki üçgenler beklenen değerleri 1/3, 1/2, 2/3 ve 4/5'i gösterir. Bu yüzden X̄ bize θ hakkında bilgi verir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-mom-kuvvet-b name="Kuvvet Yoğunluğunda Sayısal Tahmin"}
+Olasılık yoğunluk fonksiyonu $f(x;\theta) = (1+\theta)x^{\theta}$ ($0 \le x \le 1$, $\theta > -1$) olan kitleden $n = 5$ büyüklüğünde bir örneklem çekilmiş ve $0{,}3;\ 0{,}5;\ 0{,}1;\ 0{,}1;\ 0{,}2$ gözlemleri elde edilmiştir. $\theta$'nın momentler yöntemiyle elde edilen tahminini bulunuz.
+
+::: {.cozum}
+Tahmin ediciyi @exm-mom-kuvvet-a içinde $\hat\theta = \dfrac{2\bar X - 1}{1 - \bar X}$ olarak bulduk. Önce örneklem ortalamasını hesaplayalım:
+$$
+\bar x = \frac{0{,}3 + 0{,}5 + 0{,}1 + 0{,}1 + 0{,}2}{5} = \frac{1{,}2}{5} = 0{,}24 .
+$$
+Bunu tahmin edicide yerine koyalım:
+$$
+\hat\theta = \frac{2(0{,}24) - 1}{1 - 0{,}24} = \frac{-0{,}52}{0{,}76} = -\frac{13}{19} \approx -0{,}684 .
+$$
+Sağlama: $\theta = -\tfrac{13}{19}$ için $\dfrac{1+\theta}{\theta+2} = \dfrac{6/19}{25/19} = \dfrac{6}{25} = 0{,}24$ olur; yani bu değer kitle ortalamasını gerçekten gözlenen ortalamaya eşitler.
+
+Negatif bir $\theta$, yoğunluğun azalan olduğu, yani kütlenin $0$ yakınında toplandığı anlamına gelir. Gözlemlerin hepsinin $0{,}5$'ten küçük olması bununla uyumludur. Şekilde çözdüğümüz denklemi görüyoruz.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="19.0 13.0 528.0 279.0" role="img" aria-label="Increasing curve of the mean against theta; the horizontal line at 0.24 meets it above theta hat -0.684">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="126.3" y1="40.0" x2="126.3" y2="260.0"/><line x1="254.9" y1="40.0" x2="254.9" y2="260.0"/><line x1="383.4" y1="40.0" x2="383.4" y2="260.0"/><line x1="512.0" y1="40.0" x2="512.0" y2="260.0"/><line x1="62.0" y1="150.0" x2="512.0" y2="150.0"/><line x1="62.0" y1="95.0" x2="512.0" y2="95.0"/></g>
+  <path d="M62.0,40.0 L512.0,40.0" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="3 4" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.1,259.8 L63.2,256.0 L64.3,252.4 L65.4,248.8 L66.6,245.4 L67.7,242.1 L68.8,238.9 L69.9,235.8 L71.1,232.8 L72.2,229.9 L73.3,227.1 L74.4,224.3 L75.6,221.7 L76.7,219.1 L77.8,216.6 L78.9,214.1 L80.1,211.7 L81.2,209.4 L82.3,207.2 L83.4,205.0 L84.6,202.8 L85.7,200.8 L86.8,198.7 L87.9,196.8 L89.1,194.8 L90.2,192.9 L91.3,191.1 L92.4,189.3 L93.6,187.6 L94.7,185.8 L95.8,184.2 L96.9,182.5 L98.1,180.9 L99.2,179.4 L100.3,177.9 L101.4,176.4 L102.6,174.9 L103.7,173.5 L104.8,172.1 L105.9,170.7 L107.1,169.3 L108.2,168.0 L109.3,166.7 L110.4,165.5 L111.6,164.2 L112.7,163.0 L113.8,161.8 L114.9,160.7 L116.1,159.5 L117.2,158.4 L118.3,157.3 L119.4,156.2 L120.6,155.1 L121.7,154.1 L122.8,153.1 L123.9,152.1 L125.1,151.1 L126.2,150.1 L127.3,149.1 L128.4,148.2 L129.6,147.3 L130.7,146.4 L131.8,145.5 L132.9,144.6 L134.1,143.7 L135.2,142.9 L136.3,142.0 L137.4,141.2 L138.6,140.4 L139.7,139.6 L140.8,138.8 L141.9,138.1 L143.1,137.3 L144.2,136.6 L145.3,135.8 L146.4,135.1 L147.6,134.4 L148.7,133.7 L149.8,133.0 L150.9,132.3 L152.1,131.6 L153.2,131.0 L154.3,130.3 L155.4,129.7 L156.6,129.0 L157.7,128.4 L158.8,127.8 L159.9,127.2 L161.1,126.6 L162.2,126.0 L163.3,125.4 L164.4,124.8 L165.5,124.3 L166.7,123.7 L167.8,123.2 L168.9,122.6 L170.0,122.1 L171.2,121.5 L172.3,121.0 L173.4,120.5 L174.5,120.0 L175.7,119.5 L176.8,119.0 L177.9,118.5 L179.0,118.0 L180.2,117.5 L181.3,117.0 L182.4,116.6 L183.5,116.1 L184.7,115.6 L185.8,115.2 L186.9,114.7 L188.0,114.3 L189.2,113.9 L190.3,113.4 L191.4,113.0 L192.5,112.6 L193.7,112.2 L194.8,111.8 L195.9,111.4 L197.0,111.0 L198.2,110.6 L199.3,110.2 L200.4,109.8 L201.5,109.4 L202.7,109.0 L203.8,108.6 L204.9,108.3 L206.0,107.9 L207.2,107.5 L208.3,107.2 L209.4,106.8 L210.5,106.5 L211.7,106.1 L212.8,105.8 L213.9,105.4 L215.0,105.1 L216.2,104.7 L217.3,104.4 L218.4,104.1 L219.5,103.8 L220.7,103.4 L221.8,103.1 L222.9,102.8 L224.0,102.5 L225.2,102.2 L226.3,101.9 L227.4,101.6 L228.5,101.3 L229.7,101.0 L230.8,100.7 L231.9,100.4 L233.0,100.1 L234.2,99.8 L235.3,99.5 L236.4,99.2 L237.5,99.0 L238.7,98.7 L239.8,98.4 L240.9,98.2 L242.0,97.9 L243.2,97.6 L244.3,97.4 L245.4,97.1 L246.5,96.8 L247.7,96.6 L248.8,96.3 L249.9,96.1 L251.0,95.8 L252.2,95.6 L253.3,95.3 L254.4,95.1 L255.5,94.9 L256.7,94.6 L257.8,94.4 L258.9,94.1 L260.0,93.9 L261.2,93.7 L262.3,93.5 L263.4,93.2 L264.5,93.0 L265.7,92.8 L266.8,92.6 L267.9,92.3 L269.0,92.1 L270.2,91.9 L271.3,91.7 L272.4,91.5 L273.5,91.3 L274.7,91.1 L275.8,90.9 L276.9,90.7 L278.0,90.5 L279.2,90.3 L280.3,90.1 L281.4,89.9 L282.5,89.7 L283.7,89.5 L284.8,89.3 L285.9,89.1 L287.0,88.9 L288.2,88.7 L289.3,88.5 L290.4,88.3 L291.5,88.1 L292.7,88.0 L293.8,87.8 L294.9,87.6 L296.0,87.4 L297.2,87.2 L298.3,87.1 L299.4,86.9 L300.5,86.7 L301.7,86.5 L302.8,86.4 L303.9,86.2 L305.0,86.0 L306.2,85.9 L307.3,85.7 L308.4,85.5 L309.5,85.4 L310.7,85.2 L311.8,85.0 L312.9,84.9 L314.0,84.7 L315.2,84.6 L316.3,84.4 L317.4,84.2 L318.5,84.1 L319.7,83.9 L320.8,83.8 L321.9,83.6 L323.0,83.5 L324.2,83.3 L325.3,83.2 L326.4,83.0 L327.5,82.9 L328.7,82.7 L329.8,82.6 L330.9,82.4 L332.0,82.3 L333.2,82.2 L334.3,82.0 L335.4,81.9 L336.5,81.7 L337.6,81.6 L338.8,81.5 L339.9,81.3 L341.0,81.2 L342.1,81.1 L343.3,80.9 L344.4,80.8 L345.5,80.7 L346.6,80.5 L347.8,80.4 L348.9,80.3 L350.0,80.1 L351.1,80.0 L352.3,79.9 L353.4,79.8 L354.5,79.6 L355.6,79.5 L356.8,79.4 L357.9,79.3 L359.0,79.1 L360.1,79.0 L361.3,78.9 L362.4,78.8 L363.5,78.7 L364.6,78.5 L365.8,78.4 L366.9,78.3 L368.0,78.2 L369.1,78.1 L370.3,78.0 L371.4,77.8 L372.5,77.7 L373.6,77.6 L374.8,77.5 L375.9,77.4 L377.0,77.3 L378.1,77.2 L379.3,77.1 L380.4,77.0 L381.5,76.8 L382.6,76.7 L383.8,76.6 L384.9,76.5 L386.0,76.4 L387.1,76.3 L388.3,76.2 L389.4,76.1 L390.5,76.0 L391.6,75.9 L392.8,75.8 L393.9,75.7 L395.0,75.6 L396.1,75.5 L397.3,75.4 L398.4,75.3 L399.5,75.2 L400.6,75.1 L401.8,75.0 L402.9,74.9 L404.0,74.8 L405.1,74.7 L406.3,74.6 L407.4,74.5 L408.5,74.4 L409.6,74.3 L410.8,74.2 L411.9,74.1 L413.0,74.1 L414.1,74.0 L415.3,73.9 L416.4,73.8 L417.5,73.7 L418.6,73.6 L419.8,73.5 L420.9,73.4 L422.0,73.3 L423.1,73.2 L424.3,73.2 L425.4,73.1 L426.5,73.0 L427.6,72.9 L428.8,72.8 L429.9,72.7 L431.0,72.6 L432.1,72.6 L433.3,72.5 L434.4,72.4 L435.5,72.3 L436.6,72.2 L437.8,72.1 L438.9,72.1 L440.0,72.0 L441.1,71.9 L442.3,71.8 L443.4,71.7 L444.5,71.7 L445.6,71.6 L446.8,71.5 L447.9,71.4 L449.0,71.3 L450.1,71.3 L451.3,71.2 L452.4,71.1 L453.5,71.0 L454.6,71.0 L455.8,70.9 L456.9,70.8 L458.0,70.7 L459.1,70.7 L460.3,70.6 L461.4,70.5 L462.5,70.4 L463.6,70.4 L464.8,70.3 L465.9,70.2 L467.0,70.1 L468.1,70.1 L469.3,70.0 L470.4,69.9 L471.5,69.9 L472.6,69.8 L473.8,69.7 L474.9,69.6 L476.0,69.6 L477.1,69.5 L478.3,69.4 L479.4,69.4 L480.5,69.3 L481.6,69.2 L482.8,69.2 L483.9,69.1 L485.0,69.0 L486.1,69.0 L487.3,68.9 L488.4,68.8 L489.5,68.8 L490.6,68.7 L491.8,68.6 L492.9,68.6 L494.0,68.5 L495.1,68.4 L496.3,68.4 L497.4,68.3 L498.5,68.2 L499.6,68.2 L500.8,68.1 L501.9,68.1 L503.0,68.0 L504.1,67.9 L505.3,67.9 L506.4,67.8 L507.5,67.7 L508.6,67.7 L509.8,67.6 L510.9,67.6 L512.0,67.5" fill="none" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.0,207.2 L82.3,207.2" fill="none" stroke="var(--color-practice)" stroke-width="1.6" stroke-dasharray="5 3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M82.3,207.2 L82.3,260.0" fill="none" stroke="var(--color-practice)" stroke-width="1.6" stroke-dasharray="5 3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="82.3" cy="207.2" r="4.5" fill="var(--color-practice)"/>
+  <text x="55.0" y="211.2" fill="var(--color-practice)" font-size="11" text-anchor="end">0,24</text>
+  <text x="94.3" y="229.2" fill="var(--color-practice)" font-size="13" text-anchor="start"><tspan font-style="italic">x&#773;</tspan> = 0,24</text>
+  <text x="94.3" y="249.2" fill="var(--color-practice)" font-size="13" text-anchor="start"><tspan font-style="italic">&#952;</tspan> &#8776; &#8722;0,684</text>
+  <path d="M94.8,238.8 L98.2,236.2 L101.6,238.8" fill="none" stroke="var(--color-practice)" stroke-width="1.1" stroke-linejoin="round"/>
+  <text x="332.0" y="70.3" fill="var(--color-theory)" font-size="13" text-anchor="middle"><tspan font-style="italic">E</tspan>(<tspan font-style="italic">X</tspan>) = (1 + &#952;)/(&#952; + 2)</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="58.0" y1="260.0" x2="522.0" y2="260.0"/><polygon points="522.0,260.0 514.0,256.5 514.0,263.5" stroke="none"/></g>
+  <line x1="62.0" y1="257.0" x2="62.0" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="62.0" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#8722;1</text>
+  <line x1="126.3" y1="257.0" x2="126.3" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="126.3" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0</text>
+  <line x1="190.6" y1="257.0" x2="190.6" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="190.6" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">1</text>
+  <line x1="254.9" y1="257.0" x2="254.9" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="254.9" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">2</text>
+  <line x1="319.1" y1="257.0" x2="319.1" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="319.1" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">3</text>
+  <line x1="383.4" y1="257.0" x2="383.4" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="383.4" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4</text>
+  <line x1="447.7" y1="257.0" x2="447.7" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="447.7" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5</text>
+  <line x1="512.0" y1="257.0" x2="512.0" y2="263.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="512.0" y="276.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">6</text>
+  <text x="526.0" y="264.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85">&#952;</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="62.0" y1="260.0" x2="62.0" y2="30.0"/><polygon points="62.0,30.0 58.5,38.0 65.5,38.0" stroke="none"/></g>
+  <line x1="59.0" y1="150.0" x2="65.0" y2="150.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="154.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,50</text>
+  <line x1="59.0" y1="95.0" x2="65.0" y2="95.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="99.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,75</text>
+  <line x1="59.0" y1="40.0" x2="65.0" y2="40.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="44.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1,00</text>
+  <text x="70.0" y="36.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">E</tspan>(<tspan font-style="italic">X</tspan>)</text>
+</svg>
+<figcaption>E(X) = (1 + θ)/(θ + 2) eğrisi artandır ve 0 ile 1 arasındaki her değeri bir kez alır. Yatay x̄ = 0,24 çizgisi eğriyi tek bir noktada keser; o noktanın apsisi θ̂ = −13/19 ≈ −0,684 tahminidir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bilinen Dağılımlarda Moment Tahmin Edicileri
+
+Şimdi yöntemi önceki bölümlerde tanıdığımız dağılımlara uygulayalım. Her örnekte gereken kitle momentleri ya kardeş kitapta ya da bu kitabın ilk kısmında hesaplanmıştır; biz yalnız eşitleme ve çözme adımlarını yapacağız.
+
+:::: {#exm-mom-ustel name="Üstel Dağılımın Oran Parametresi"}
+[$\operatorname{Üstel}(\lambda)$](../olasilik-teorisi/temel-surekli-dagilimlar.html#def-ustel-dagilim) dağılımına sahip bir kitleden alınmış $n$ boyutlu bir örnekleme dayanarak $\lambda$ parametresinin momentler yöntemine göre tahmin edicisini bulunuz.
+
+::: {.cozum}
+Tek parametre vardır. Üstel dağılımın [momentlerinden](../olasilik-teorisi/temel-surekli-dagilimlar.html#thm-ustel-momentleri-mgf) $E(X) = \dfrac{1}{\lambda}$'dır. Bunu $\bar X$'e eşitleyelim:
+$$
+\bar X = \frac{1}{\lambda}
+\quad\Longrightarrow\quad
+\hat\lambda = \frac{1}{\bar X}.
+$$
+Gözlemler pozitif olduğundan $\bar X > 0$'dır ve bölme her zaman tanımlıdır.
+
+Aynı parametre için ikinci momentten de bir denklem kurulabilir. Varyans hesap formülünden
+$$
+E(X^2) = \operatorname{Var}(X) + \big(E(X)\big)^2 = \frac{1}{\lambda^2} + \frac{1}{\lambda^2} = \frac{2}{\lambda^2}
+$$
+olduğundan $M_2 = \dfrac{2}{\lambda^2}$ denklemi, $\lambda > 0$ olduğu hesaba katılınca,
+$$
+\tilde\lambda = \sqrt{\frac{2}{M_2}}
+$$
+tahmin edicisini verir. Tek parametre için birinci moment yeterli olduğundan olağan seçim $\hat\lambda = 1/\bar X$'tir; $\tilde\lambda$, momentler yönteminin aynı parametreye farklı tahmin ediciler verebileceğinin bir örneğidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-mom-normal name="Normal Dağılımın İki Parametresi"}
+$N(\mu,\sigma^2)$ dağılımına sahip bir kitleden çekilen $n$ boyutlu bir örnekleme dayanarak $\mu$ ve $\sigma^2$ parametrelerinin momentler yöntemiyle tahmin edicilerini bulunuz.
+
+::: {.cozum}
+İki parametre olduğu için iki moment gerekir. [Normal dağılımın momentlerinden](../olasilik-teorisi/temel-surekli-dagilimlar.html#thm-normal-momentleri-mgf) $E(X) = \mu$ ve $\operatorname{Var}(X) = \sigma^2$'dir; buradan
+$$
+E(X^2) = \operatorname{Var}(X) + \big(E(X)\big)^2 = \sigma^2 + \mu^2
+$$
+bulunur. Momentleri eşitleyelim:
+$$
+\bar X = \mu, \qquad M_2 = \sigma^2 + \mu^2 .
+$$
+İlk denklem doğrudan $\hat\mu = \bar X$ verir. Bunu ikincide yerine koyarsak $\sigma^2 = M_2 - \bar X^2$ olur ve @prp-mom-ikinci-merkezi-moment ile
+$$
+\hat\mu = \bar X, \qquad
+\hat\sigma^2 = M_2 - \bar X^2 = \frac{1}{n}\sum_{i=1}^{n}(X_i - \bar X)^2
+$$
+elde edilir.
+
+Dikkat: $\hat\sigma^2$'nin paydası $n$'dir; örneklem varyansı $S^2$'nin paydası ise $n-1$'dir. İkisi arasındaki farkın ne anlama geldiğini, yani $\hat\sigma^2$'nin $\sigma^2$'yi ortalamada biraz küçük tahmin ettiğini, [Tahmin Edicilerin Özellikleri](tahmin-edicilerin-ozellikleri.qmd) bölümünde göreceğiz. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-mom-normal-sayisal name="Paket Ağırlıkları İçin Normal Model"}
+Bir makinenin doldurduğu paketlerin ağırlığı (kg) normal dağılımlı kabul ediliyor. Rastgele seçilen 10 paketin ağırlıkları
+$$
+4{,}8;\ 5{,}2;\ 5{,}0;\ 4{,}6;\ 5{,}4;\ 5{,}1;\ 4{,}9;\ 5{,}3;\ 4{,}7;\ 5{,}0
+$$
+olarak ölçülmüştür. $\mu$ ve $\sigma^2$ için momentler yöntemiyle elde edilen tahminleri bulunuz.
+
+::: {.cozum}
+Normal kitle örneğinde (@exm-mom-normal) bulduğumuz gibi $\hat\mu = \bar X$ ve $\hat\sigma^2 = M_2 - \bar X^2$'dir.
+
+Gözlemlerin toplamı $50$ olduğundan $\bar x = 50/10 = 5$'tir. Gözlemlerin karelerinin toplamı
+$$
+\begin{aligned}
+\sum x_i^2 &= 23{,}04 + 27{,}04 + 25 + 21{,}16 + 29{,}16\\
+&\quad + 26{,}01 + 24{,}01 + 28{,}09 + 22{,}09 + 25 = 250{,}6
+\end{aligned}
+$$
+olur; buradan $m_2 = 250{,}6/10 = 25{,}06$ ve
+$$
+\hat\mu = 5, \qquad \hat\sigma^2 = 25{,}06 - 5^2 = 0{,}06
+$$
+bulunur. Sağlama olarak sapmalarla hesaplayalım. $x_i - \bar x$ değerleri sırasıyla
+$$
+\begin{aligned}
+&-0{,}2;\ \ 0{,}2;\ \ 0;\ \ -0{,}4;\ \ 0{,}4;\\[1mm]
+&\ \ \ 0{,}1;\ \ -0{,}1;\ \ 0{,}3;\ \ -0{,}3;\ \ 0
+\end{aligned}
+$$
+olup kareleri toplamı
+$$
+0{,}04 + 0{,}04 + 0 + 0{,}16 + 0{,}16 + 0{,}01 + 0{,}01 + 0{,}09 + 0{,}09 + 0 = 0{,}60
+$$
+olur; $0{,}60/10 = 0{,}06$ aynı sonucu verir. Standart sapmanın tahmini $\hat\sigma = \sqrt{0{,}06} \approx 0{,}245$ kg'dır. Karşılaştırma için örneklem varyansı $s^2 = 0{,}60/9 \approx 0{,}0667$'dir.
+
+Tahmin edilen $N(5;\ 0{,}06)$ modeli ve gözlemler aşağıda görülüyor.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="26.0 12.5 520.5 269.5" role="img" aria-label="Ten observations as dots on the axis and the fitted normal density with mean 5 and variance 0.06">
+  <polygon points="218.1,250.0 218.1,140.8 218.8,139.7 219.5,138.6 220.2,137.5 220.9,136.5 221.6,135.4 222.2,134.3 222.9,133.2 223.6,132.1 224.3,131.0 225.0,129.9 225.7,128.9 226.4,127.8 227.1,126.7 227.8,125.6 228.4,124.6 229.1,123.5 229.8,122.4 230.5,121.4 231.2,120.3 231.9,119.3 232.6,118.2 233.3,117.2 234.0,116.2 234.6,115.1 235.3,114.1 236.0,113.1 236.7,112.1 237.4,111.1 238.1,110.1 238.8,109.1 239.5,108.1 240.2,107.1 240.8,106.2 241.5,105.2 242.2,104.3 242.9,103.3 243.6,102.4 244.3,101.5 245.0,100.5 245.7,99.6 246.4,98.7 247.0,97.9 247.7,97.0 248.4,96.1 249.1,95.3 249.8,94.4 250.5,93.6 251.2,92.8 251.9,91.9 252.6,91.1 253.2,90.4 253.9,89.6 254.6,88.8 255.3,88.1 256.0,87.3 256.7,86.6 257.4,85.9 258.1,85.2 258.8,84.5 259.4,83.8 260.1,83.2 260.8,82.5 261.5,81.9 262.2,81.3 262.9,80.7 263.6,80.1 264.3,79.5 265.0,79.0 265.6,78.4 266.3,77.9 267.0,77.4 267.7,76.9 268.4,76.4 269.1,76.0 269.8,75.5 270.5,75.1 271.2,74.7 271.8,74.3 272.5,73.9 273.2,73.6 273.9,73.2 274.6,72.9 275.3,72.6 276.0,72.3 276.7,72.0 277.4,71.7 278.0,71.5 278.7,71.3 279.4,71.1 280.1,70.9 280.8,70.7 281.5,70.6 282.2,70.4 282.9,70.3 283.6,70.2 284.2,70.1 284.9,70.1 285.6,70.0 286.3,70.0 287.0,70.0 287.7,70.0 288.4,70.0 289.1,70.1 289.8,70.1 290.4,70.2 291.1,70.3 291.8,70.4 292.5,70.6 293.2,70.7 293.9,70.9 294.6,71.1 295.3,71.3 296.0,71.5 296.6,71.7 297.3,72.0 298.0,72.3 298.7,72.6 299.4,72.9 300.1,73.2 300.8,73.6 301.5,73.9 302.2,74.3 302.8,74.7 303.5,75.1 304.2,75.5 304.9,76.0 305.6,76.4 306.3,76.9 307.0,77.4 307.7,77.9 308.4,78.4 309.0,79.0 309.7,79.5 310.4,80.1 311.1,80.7 311.8,81.3 312.5,81.9 313.2,82.5 313.9,83.2 314.6,83.8 315.2,84.5 315.9,85.2 316.6,85.9 317.3,86.6 318.0,87.3 318.7,88.1 319.4,88.8 320.1,89.6 320.8,90.4 321.4,91.1 322.1,91.9 322.8,92.8 323.5,93.6 324.2,94.4 324.9,95.3 325.6,96.1 326.3,97.0 327.0,97.9 327.6,98.7 328.3,99.6 329.0,100.5 329.7,101.5 330.4,102.4 331.1,103.3 331.8,104.3 332.5,105.2 333.2,106.2 333.8,107.1 334.5,108.1 335.2,109.1 335.9,110.1 336.6,111.1 337.3,112.1 338.0,113.1 338.7,114.1 339.4,115.1 340.0,116.2 340.7,117.2 341.4,118.2 342.1,119.3 342.8,120.3 343.5,121.4 344.2,122.4 344.9,123.5 345.6,124.6 346.2,125.6 346.9,126.7 347.6,127.8 348.3,128.9 349.0,129.9 349.7,131.0 350.4,132.1 351.1,133.2 351.8,134.3 352.4,135.4 353.1,136.5 353.8,137.5 354.5,138.6 355.2,139.7 355.9,140.8 355.9,250.0" fill="var(--color-theory)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M62.0,249.1 L63.1,249.1 L64.2,249.0 L65.4,249.0 L66.5,248.9 L67.6,248.9 L68.8,248.8 L69.9,248.7 L71.0,248.7 L72.1,248.6 L73.3,248.5 L74.4,248.5 L75.5,248.4 L76.6,248.3 L77.8,248.2 L78.9,248.1 L80.0,248.0 L81.1,247.9 L82.3,247.8 L83.4,247.7 L84.5,247.6 L85.6,247.5 L86.8,247.4 L87.9,247.2 L89.0,247.1 L90.1,247.0 L91.3,246.8 L92.4,246.7 L93.5,246.5 L94.6,246.4 L95.8,246.2 L96.9,246.0 L98.0,245.8 L99.1,245.6 L100.3,245.4 L101.4,245.2 L102.5,245.0 L103.6,244.8 L104.8,244.6 L105.9,244.3 L107.0,244.1 L108.1,243.8 L109.3,243.5 L110.4,243.3 L111.5,243.0 L112.6,242.7 L113.8,242.4 L114.9,242.1 L116.0,241.7 L117.1,241.4 L118.3,241.0 L119.4,240.7 L120.5,240.3 L121.6,239.9 L122.8,239.5 L123.9,239.1 L125.0,238.7 L126.1,238.2 L127.3,237.8 L128.4,237.3 L129.5,236.8 L130.6,236.3 L131.8,235.8 L132.9,235.3 L134.0,234.7 L135.1,234.2 L136.3,233.6 L137.4,233.0 L138.5,232.4 L139.6,231.7 L140.8,231.1 L141.9,230.4 L143.0,229.7 L144.1,229.0 L145.3,228.3 L146.4,227.6 L147.5,226.8 L148.6,226.1 L149.8,225.3 L150.9,224.4 L152.0,223.6 L153.1,222.8 L154.3,221.9 L155.4,221.0 L156.5,220.1 L157.6,219.1 L158.8,218.2 L159.9,217.2 L161.0,216.2 L162.1,215.2 L163.3,214.1 L164.4,213.1 L165.5,212.0 L166.6,210.9 L167.8,209.8 L168.9,208.6 L170.0,207.4 L171.1,206.3 L172.3,205.0 L173.4,203.8 L174.5,202.5 L175.6,201.3 L176.8,200.0 L177.9,198.7 L179.0,197.3 L180.1,196.0 L181.3,194.6 L182.4,193.2 L183.5,191.8 L184.6,190.3 L185.8,188.9 L186.9,187.4 L188.0,185.9 L189.1,184.4 L190.2,182.9 L191.4,181.3 L192.5,179.7 L193.6,178.2 L194.7,176.6 L195.9,174.9 L197.0,173.3 L198.1,171.7 L199.2,170.0 L200.4,168.3 L201.5,166.7 L202.6,165.0 L203.7,163.3 L204.9,161.5 L206.0,159.8 L207.1,158.1 L208.2,156.3 L209.4,154.6 L210.5,152.8 L211.6,151.1 L212.7,149.3 L213.9,147.5 L215.0,145.7 L216.1,144.0 L217.2,142.2 L218.4,140.4 L219.5,138.6 L220.6,136.8 L221.7,135.1 L222.9,133.3 L224.0,131.5 L225.1,129.7 L226.2,128.0 L227.4,126.2 L228.5,124.5 L229.6,122.7 L230.7,121.0 L231.9,119.3 L233.0,117.6 L234.1,115.9 L235.2,114.2 L236.4,112.6 L237.5,110.9 L238.6,109.3 L239.7,107.7 L240.9,106.1 L242.0,104.6 L243.1,103.0 L244.2,101.5 L245.4,100.0 L246.5,98.6 L247.6,97.1 L248.7,95.7 L249.9,94.3 L251.0,93.0 L252.1,91.6 L253.2,90.3 L254.4,89.1 L255.5,87.9 L256.6,86.7 L257.8,85.5 L258.9,84.4 L260.0,83.3 L261.1,82.2 L262.2,81.2 L263.4,80.3 L264.5,79.3 L265.6,78.4 L266.8,77.6 L267.9,76.8 L269.0,76.0 L270.1,75.3 L271.2,74.6 L272.4,74.0 L273.5,73.4 L274.6,72.9 L275.8,72.4 L276.9,71.9 L278.0,71.5 L279.1,71.2 L280.2,70.9 L281.4,70.6 L282.5,70.4 L283.6,70.2 L284.8,70.1 L285.9,70.0 L287.0,70.0 L288.1,70.0 L289.2,70.1 L290.4,70.2 L291.5,70.4 L292.6,70.6 L293.8,70.9 L294.9,71.2 L296.0,71.5 L297.1,71.9 L298.2,72.4 L299.4,72.9 L300.5,73.4 L301.6,74.0 L302.8,74.6 L303.9,75.3 L305.0,76.0 L306.1,76.8 L307.2,77.6 L308.4,78.4 L309.5,79.3 L310.6,80.3 L311.8,81.2 L312.9,82.2 L314.0,83.3 L315.1,84.4 L316.2,85.5 L317.4,86.7 L318.5,87.9 L319.6,89.1 L320.8,90.3 L321.9,91.6 L323.0,93.0 L324.1,94.3 L325.3,95.7 L326.4,97.1 L327.5,98.6 L328.6,100.0 L329.8,101.5 L330.9,103.0 L332.0,104.6 L333.1,106.1 L334.3,107.7 L335.4,109.3 L336.5,110.9 L337.6,112.6 L338.8,114.2 L339.9,115.9 L341.0,117.6 L342.1,119.3 L343.3,121.0 L344.4,122.7 L345.5,124.5 L346.6,126.2 L347.8,128.0 L348.9,129.7 L350.0,131.5 L351.1,133.3 L352.3,135.1 L353.4,136.8 L354.5,138.6 L355.6,140.4 L356.8,142.2 L357.9,144.0 L359.0,145.7 L360.1,147.5 L361.3,149.3 L362.4,151.1 L363.5,152.8 L364.6,154.6 L365.7,156.3 L366.9,158.1 L368.0,159.8 L369.1,161.5 L370.3,163.3 L371.4,165.0 L372.5,166.7 L373.6,168.3 L374.7,170.0 L375.9,171.7 L377.0,173.3 L378.1,174.9 L379.2,176.6 L380.4,178.2 L381.5,179.7 L382.6,181.3 L383.7,182.9 L384.9,184.4 L386.0,185.9 L387.1,187.4 L388.2,188.9 L389.4,190.3 L390.5,191.8 L391.6,193.2 L392.7,194.6 L393.9,196.0 L395.0,197.3 L396.1,198.7 L397.2,200.0 L398.4,201.3 L399.5,202.5 L400.6,203.8 L401.7,205.0 L402.9,206.3 L404.0,207.4 L405.1,208.6 L406.2,209.8 L407.4,210.9 L408.5,212.0 L409.6,213.1 L410.7,214.1 L411.9,215.2 L413.0,216.2 L414.1,217.2 L415.2,218.2 L416.4,219.1 L417.5,220.1 L418.6,221.0 L419.7,221.9 L420.9,222.8 L422.0,223.6 L423.1,224.4 L424.2,225.3 L425.4,226.1 L426.5,226.8 L427.6,227.6 L428.7,228.3 L429.9,229.0 L431.0,229.7 L432.1,230.4 L433.2,231.1 L434.4,231.7 L435.5,232.4 L436.6,233.0 L437.7,233.6 L438.9,234.2 L440.0,234.7 L441.1,235.3 L442.2,235.8 L443.4,236.3 L444.5,236.8 L445.6,237.3 L446.7,237.8 L447.9,238.2 L449.0,238.7 L450.1,239.1 L451.2,239.5 L452.4,239.9 L453.5,240.3 L454.6,240.7 L455.7,241.0 L456.9,241.4 L458.0,241.7 L459.1,242.1 L460.2,242.4 L461.4,242.7 L462.5,243.0 L463.6,243.3 L464.7,243.5 L465.9,243.8 L467.0,244.1 L468.1,244.3 L469.2,244.6 L470.4,244.8 L471.5,245.0 L472.6,245.2 L473.7,245.4 L474.9,245.6 L476.0,245.8 L477.1,246.0 L478.2,246.2 L479.4,246.4 L480.5,246.5 L481.6,246.7 L482.8,246.8 L483.9,247.0 L485.0,247.1 L486.1,247.2 L487.2,247.4 L488.4,247.5 L489.5,247.6 L490.6,247.7 L491.8,247.8 L492.9,247.9 L494.0,248.0 L495.1,248.1 L496.2,248.2 L497.4,248.3 L498.5,248.4 L499.6,248.5 L500.8,248.5 L501.9,248.6 L503.0,248.7 L504.1,248.7 L505.2,248.8 L506.4,248.9 L507.5,248.9 L508.6,249.0 L509.8,249.0 L510.9,249.1 L512.0,249.1" fill="none" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="287.0" y1="250.0" x2="287.0" y2="70.0" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="5 3" opacity="0.8"/>
+  <circle cx="230.7" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="343.3" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="287.0" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="174.5" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="399.5" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="315.1" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="258.9" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="371.4" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="202.6" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="287.0" cy="231.0" r="4.6" fill="var(--color-practice)"/>
+  <text x="295.0" y="62.0" fill="var(--color-theory)" font-size="13" text-anchor="start"><tspan font-style="italic">&#956;</tspan> = 5</text>
+  <path d="M295.5,51.6 L298.9,49.0 L302.3,51.6" fill="none" stroke="var(--color-theory)" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M287.0,214.6 L355.9,214.6" fill="none" stroke="var(--color-theory)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="295.0" y="206.6" fill="var(--color-theory)" font-size="12" text-anchor="start"><tspan font-style="italic">&#963;</tspan> &#8776; 0,245</text>
+  <path d="M295.5,197.0 L298.6,194.6 L301.7,197.0" fill="none" stroke="var(--color-theory)" stroke-width="1.1" stroke-linejoin="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="58.0" y1="250.0" x2="522.0" y2="250.0"/><polygon points="522.0,250.0 514.0,246.5 514.0,253.5" stroke="none"/></g>
+  <line x1="62.0" y1="247.0" x2="62.0" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="62.0" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4,2</text>
+  <line x1="118.3" y1="247.0" x2="118.3" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="118.3" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4,4</text>
+  <line x1="174.5" y1="247.0" x2="174.5" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="174.5" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4,6</text>
+  <line x1="230.7" y1="247.0" x2="230.7" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="230.7" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4,8</text>
+  <line x1="287.0" y1="247.0" x2="287.0" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="287.0" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5,0</text>
+  <line x1="343.3" y1="247.0" x2="343.3" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="343.3" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5,2</text>
+  <line x1="399.5" y1="247.0" x2="399.5" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="399.5" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5,4</text>
+  <line x1="455.7" y1="247.0" x2="455.7" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="455.7" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5,6</text>
+  <line x1="512.0" y1="247.0" x2="512.0" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="512.0" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5,8</text>
+  <text x="526.0" y="254.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">x</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="62.0" y1="250.0" x2="62.0" y2="30.0"/><polygon points="62.0,30.0 58.5,38.0 65.5,38.0" stroke="none"/></g>
+  <line x1="59.0" y1="194.7" x2="65.0" y2="194.7" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="198.7" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,5</text>
+  <line x1="59.0" y1="139.5" x2="65.0" y2="139.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="143.5" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1,0</text>
+  <line x1="59.0" y1="84.2" x2="65.0" y2="84.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="88.2" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1,5</text>
+  <text x="70.0" y="36.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>)</text>
+  <circle cx="405.9" cy="51.1" r="4.2" fill="var(--color-practice)"/>
+  <text x="424.9" y="55.6" fill="var(--academic-text)" font-size="12.5" text-anchor="start">gözlemler</text>
+</svg>
+<figcaption>On paketin ağırlıkları (noktalar; 5,0 iki kez gözlendi) ve momentler yöntemiyle kurulan N(5; 0,06) yoğunluğu. Taralı şerit μ̂ ± σ̂ aralığıdır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-mom-poisson name="Poisson Parametresi İçin İki Tahmin Edici"}
+$\lambda > 0$ parametreli bir Poisson kitlesinden $X_1, X_2, \ldots, X_n$ rastgele örneklemi alınsın. $\lambda$ parametresinin momentler yöntemiyle iki farklı tahmin edicisini elde ediniz.
+
+::: {.cozum}
+Poisson dağılımının momentlerine göre (@thm-pkd-poisson-momentleri) $E(X) = \lambda$ ve $\operatorname{Var}(X) = \lambda$'dır. Ortalama ile varyansın aynı parametreye eşit olması, iki ayrı denklem kurmamıza izin verir.
+
+**Birinci yol (birinci moment).** $E(X) = \lambda$'yı $\bar X$'e eşitlersek
+$$
+\hat\lambda_1 = \bar X
+$$
+bulunur.
+
+**İkinci yol (varyans).** Varyans hesap formülünden $E(X^2) = \operatorname{Var}(X) + \big(E(X)\big)^2$, yani $E(X^2) = \lambda + \lambda^2$'dir. Buradan $\operatorname{Var}(X) = E(X^2) - \big(E(X)\big)^2 = \lambda$ olur. Birinci moment yerine bu varyans denklemini kullanalım: kitle varyansı $\lambda$'yı örneklemin (paydası $n$ olan) varyansına eşitleriz. @prp-mom-ikinci-merkezi-moment ile
+$$
+\hat\lambda_2 = M_2 - \bar X^2 = \frac{1}{n}\sum_{i=1}^{n}(X_i - \bar X)^2
+$$
+elde edilir.
+
+İki tahmin edici genellikle farklı değerler verir: $\hat\lambda_1$ verinin merkezine, $\hat\lambda_2$ yayılımına bakar. Yalnız ikinci momenti kullanıp $M_2 = \lambda + \lambda^2$ ikinci derece denklemini $\lambda > 0$ için çözmek de üçüncü bir tahmin edici verir:
+$$
+\hat\lambda_3 = \frac{\sqrt{1 + 4M_2} - 1}{2}.
+$$
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-mom-poisson-sayisal name="Çağrı Sayıları İçin Poisson Tahminleri"}
+Bir çağrı merkezine gelen çağrı sayısı Poisson dağılımlı kabul ediliyor. Rastgele seçilen 20 dakikada gelen çağrı sayılarının dağılımı aşağıdaki gibidir.
+
+| Çağrı sayısı $k$ | 0 | 1 | 2 | 3 | 4 |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Dakika sayısı | 3 | 5 | 6 | 4 | 2 |
+
+$\lambda$ için $\hat\lambda_1 = \bar X$ ve $\hat\lambda_2 = M_2 - \bar X^2$ tahminlerini hesaplayınız.
+
+::: {.cozum}
+Toplam gözlem sayısı $n = 3 + 5 + 6 + 4 + 2 = 20$'dir. Toplamları frekanslarla ağırlıklandırarak hesaplayalım:
+$$
+\begin{aligned}
+\sum x_i &= 0 \cdot 3 + 1 \cdot 5 + 2 \cdot 6 + 3 \cdot 4 + 4 \cdot 2 = 37,\\[1mm]
+\sum x_i^2 &= 0 \cdot 3 + 1 \cdot 5 + 4 \cdot 6 + 9 \cdot 4 + 16 \cdot 2 = 97 .
+\end{aligned}
+$$
+Buradan $\bar x = 37/20 = 1{,}85$ ve $m_2 = 97/20 = 4{,}85$ olur. Tahminler
+$$
+\begin{aligned}
+\hat\lambda_1 &= \bar x = 1{,}85,\\[1mm]
+\hat\lambda_2 &= m_2 - \bar x^2 = 4{,}85 - 3{,}4225 = 1{,}4275
+\end{aligned}
+$$
+bulunur. Aynı veri ve aynı yöntem, hangi momentin kullanıldığına göre farklı sayılar vermiştir. (Üçüncü tahmin edici de $\hat\lambda_3 = \big(\sqrt{1 + 19{,}4} - 1\big)/2 \approx 1{,}758$ verir.)
+
+Şekil iki modelin veriyle nasıl karşılaştığını gösteriyor: $\hat\lambda_1$ ile kurulan model gözlenen oranlara daha yakın durur. Bu veride varyans ortalamadan küçüktür; Poisson modelinde ise ikisi eşit olmalıydı. Farkın ne kadarının rastlantıdan geldiği sorusu hipotez testlerinin konusudur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="25.5 12.5 541.0 269.5" role="img" aria-label="Grouped bars: observed proportions of call counts and Poisson probabilities with lambda 1.85 and 1.4275">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="62.0" y1="197.5" x2="532.0" y2="197.5"/><line x1="62.0" y1="145.0" x2="532.0" y2="145.0"/><line x1="62.0" y1="92.5" x2="532.0" y2="92.5"/><line x1="62.0" y1="40.0" x2="532.0" y2="40.0"/></g>
+  <rect x="80.3" y="171.2" width="13" height="78.8" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="145.6" y="118.8" width="13" height="131.2" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="210.9" y="92.5" width="13" height="157.5" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="276.1" y="145.0" width="13" height="105.0" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="341.4" y="197.5" width="13" height="52.5" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="406.7" y="250.0" width="13" height="0.0" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="472.0" y="250.0" width="13" height="0.0" fill="var(--color-base)" opacity="0.75" rx="1.5"/>
+  <rect x="94.7" y="167.5" width="13" height="82.5" fill="var(--color-theory)" opacity="0.9" rx="1.5"/>
+  <rect x="159.9" y="97.3" width="13" height="152.7" fill="var(--color-theory)" opacity="0.9" rx="1.5"/>
+  <rect x="225.2" y="108.7" width="13" height="141.3" fill="var(--color-theory)" opacity="0.9" rx="1.5"/>
+  <rect x="290.5" y="162.9" width="13" height="87.1" fill="var(--color-theory)" opacity="0.9" rx="1.5"/>
+  <rect x="355.8" y="209.7" width="13" height="40.3" fill="var(--color-theory)" opacity="0.9" rx="1.5"/>
+  <rect x="421.1" y="235.1" width="13" height="14.9" fill="var(--color-theory)" opacity="0.9" rx="1.5"/>
+  <rect x="486.3" y="245.4" width="13" height="4.6" fill="var(--color-theory)" opacity="0.9" rx="1.5"/>
+  <rect x="109.0" y="124.0" width="13" height="126.0" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <rect x="174.3" y="70.2" width="13" height="179.8" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <rect x="239.6" y="121.7" width="13" height="128.3" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <rect x="304.9" y="188.9" width="13" height="61.1" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <rect x="370.1" y="228.2" width="13" height="21.8" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <rect x="435.4" y="243.8" width="13" height="6.2" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <rect x="500.7" y="248.5" width="13" height="1.5" fill="var(--color-practice)" opacity="0.9" rx="1.5"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="58.0" y1="250.0" x2="542.0" y2="250.0"/><polygon points="542.0,250.0 534.0,246.5 534.0,253.5" stroke="none"/></g>
+  <line x1="101.2" y1="247.0" x2="101.2" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="101.2" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0</text>
+  <line x1="166.4" y1="247.0" x2="166.4" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="166.4" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">1</text>
+  <line x1="231.7" y1="247.0" x2="231.7" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="231.7" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">2</text>
+  <line x1="297.0" y1="247.0" x2="297.0" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="297.0" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">3</text>
+  <line x1="362.3" y1="247.0" x2="362.3" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="362.3" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4</text>
+  <line x1="427.6" y1="247.0" x2="427.6" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="427.6" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5</text>
+  <line x1="492.8" y1="247.0" x2="492.8" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="492.8" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">6</text>
+  <text x="546.0" y="254.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">k</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="62.0" y1="250.0" x2="62.0" y2="30.0"/><polygon points="62.0,30.0 58.5,38.0 65.5,38.0" stroke="none"/></g>
+  <line x1="59.0" y1="197.5" x2="65.0" y2="197.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="201.5" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,1</text>
+  <line x1="59.0" y1="145.0" x2="65.0" y2="145.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="149.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,2</text>
+  <line x1="59.0" y1="92.5" x2="65.0" y2="92.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="96.5" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,3</text>
+  <line x1="59.0" y1="40.0" x2="65.0" y2="40.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="44.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,4</text>
+  <text x="70.0" y="36.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85">oran / olasılık</text>
+  <rect x="348.7" y="39.2" width="12" height="12" fill="var(--color-base)" opacity="0.85" rx="1.5"/>
+  <text x="373.7" y="49.8" fill="var(--academic-text)" font-size="12.5" text-anchor="start">gözlenen oran</text>
+  <rect x="348.7" y="58.2" width="12" height="12" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <text x="373.7" y="68.8" fill="var(--academic-text)" font-size="12.5" text-anchor="start">Poisson(1,85)</text>
+  <rect x="348.7" y="77.2" width="12" height="12" fill="var(--color-practice)" opacity="0.85" rx="1.5"/>
+  <text x="373.7" y="87.8" fill="var(--academic-text)" font-size="12.5" text-anchor="start">Poisson(1,4275)</text>
+</svg>
+<figcaption>Yirmi dakikada gözlenen çağrı sayılarının oranları ile iki moment tahmininden kurulan Poisson olasılıkları. Ortalamadan gelen λ̂₁ = 1,85 ile varyanstan gelen λ̂₂ = 1,4275 farklı modeller verir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-mom-gamma name="Gamma Dağılımının İki Parametresi"}
+Olasılık yoğunluk fonksiyonu
+$$
+f(x) = \frac{\alpha}{\Gamma(r)}(\alpha x)^{r-1}e^{-\alpha x}, \qquad x > 0,\ \alpha > 0,\ r > 0
+$$
+olan $\operatorname{Gamma}(r,\alpha)$ dağılımlı bir kitleden $n$ büyüklüğünde bir rastgele örneklem alınıyor. $r$ ve $\alpha$ parametrelerinin tahmin edicilerini momentler yöntemiyle bulunuz.
+
+::: {.cozum}
+İki parametre olduğu için ilk iki moment gerekir. Gamma dağılımının momentlerinden (@thm-osd-gamma-momentleri)
+$$
+E(X) = \frac{r}{\alpha}, \qquad \operatorname{Var}(X) = \frac{r}{\alpha^2}
+$$
+olduğunu biliyoruz; buradan
+$$
+E(X^2) = \operatorname{Var}(X) + \big(E(X)\big)^2 = \frac{r}{\alpha^2} + \frac{r^2}{\alpha^2} = \frac{r(r+1)}{\alpha^2}
+$$
+bulunur.
+
+**Eşitleme ve çözüm.** Denklemler
+$$
+\bar X = \frac{r}{\alpha}, \qquad M_2 = \frac{r(r+1)}{\alpha^2} = \frac{r^2}{\alpha^2} + \frac{r}{\alpha^2}
+$$
+olur. Birinci denklemin karesi $\bar X^2 = r^2/\alpha^2$ olduğundan ikinciden çıkarınca
+$$
+M_2 - \bar X^2 = \frac{r}{\alpha^2} = \frac{r}{\alpha}\cdot\frac{1}{\alpha} = \frac{\bar X}{\alpha}
+$$
+kalır. Buradan önce $\alpha$, sonra $r = \alpha\bar X$ bulunur:
+$$
+\hat\alpha = \frac{\bar X}{M_2 - \bar X^2}, \qquad
+\hat r = \frac{\bar X^2}{M_2 - \bar X^2}.
+$$
+@prp-mom-ikinci-merkezi-moment gereği payda $\frac{1}{n}\sum (X_i - \bar X)^2$'dir; gözlemlerin hepsi eşit olmadıkça pozitiftir, dolayısıyla iki tahmin de pozitif çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Yöntemin Bir Zayıflığı
+
+Momentler yöntemi hesap açısından çok rahattır, ama bulduğu tahmin her zaman veriyle uyumlu olmayabilir. Bunu, değer kümesi parametreye bağlı olan bir dağılımda görelim.
+
+:::: {#exm-mom-ucgen name="Üçgen Yoğunluğun Uç Noktası"}
+Olasılık yoğunluk fonksiyonu
+$$
+f(x;\theta) = \frac{2(\theta - x)}{\theta^2}, \qquad 0 < x < \theta
+$$
+olan bir kitleden alınmış $n$ hacimli bir örneklem yardımıyla $\theta$ parametresinin tahmin edicisini momentler yöntemiyle bulunuz.
+
+::: {.cozum}
+Tek parametre vardır; birinci momenti hesaplayalım:
+$$
+\begin{aligned}
+E(X) &= \int_0^\theta x\,\frac{2(\theta - x)}{\theta^2}\,dx
+= \frac{2}{\theta^2}\int_0^\theta \left(\theta x - x^2\right)dx\\[1mm]
+&= \frac{2}{\theta^2}\left(\frac{\theta^3}{2} - \frac{\theta^3}{3}\right)
+= \frac{2}{\theta^2}\cdot\frac{\theta^3}{6} = \frac{\theta}{3}.
+\end{aligned}
+$$
+Bu sonuç sezgiyle de uyumludur: yoğunluğun grafiği köşeleri $(0,\,2/\theta)$, $(0,0)$ ve $(\theta,0)$ olan bir üçgendir ve bir üçgenin ağırlık merkezinin apsisi köşelerin apsislerinin ortalaması $(0 + 0 + \theta)/3$'tür.
+
+$\bar X = \theta/3$ denklemi
+$$
+\hat\theta = 3\bar X
+$$
+tahmin edicisini verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-mom-ucgen-celiski name="Veriyle Çelişen Bir Moment Tahmini"}
+Üçgen yoğunluklu kitleden (@exm-mom-ucgen) $n = 6$ gözlem alınmış ve $0{,}2;\ 0{,}1;\ 0{,}4;\ 0{,}3;\ 0{,}2;\ 1{,}6$ değerleri gözlenmiştir. $\hat\theta = 3\bar X$ tahminini hesaplayıp veriyle karşılaştırınız.
+
+::: {.cozum}
+Gözlemlerin toplamı $2{,}8$ olduğundan
+$$
+\bar x = \frac{2{,}8}{6} = \frac{7}{15}, \qquad \hat\theta = 3 \cdot \frac{7}{15} = \frac{7}{5} = 1{,}4
+$$
+bulunur. Oysa $\theta = 1{,}4$ olsaydı yoğunluk $x \ge 1{,}4$ için sıfır olurdu; yani $1{,}4$'ten büyük bir gözlem imkânsız olurdu. Hâlbuki gözlemlerden biri $1{,}6$'dır. Başka bir deyişle, momentler yöntemi tam da gözlediğimiz veriyi üretemeyecek bir model önermiştir. Veriyle uyumlu her $\theta$ en büyük gözlemden büyük, yani $\theta > 1{,}6$ olmalıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="26.0 12.5 520.5 282.0" role="img" aria-label="Triangular density on 0 to 1.4 with the observations as dots; one observation at 1.6 lies outside the support">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="187.0" y1="40.0" x2="187.0" y2="250.0"/><line x1="312.0" y1="40.0" x2="312.0" y2="250.0"/><line x1="437.0" y1="40.0" x2="437.0" y2="250.0"/><line x1="62.0" y1="184.4" x2="512.0" y2="184.4"/><line x1="62.0" y1="118.8" x2="512.0" y2="118.8"/><line x1="62.0" y1="53.1" x2="512.0" y2="53.1"/></g>
+  <polygon points="62.0,250.0 62.0,62.5 412.0,250.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="none" stroke-width="1.2"/>
+  <path d="M62.0,62.5 L412.0,250.0" fill="none" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M412.0,250.0 L512.0,250.0" fill="none" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="412.0" y1="250.0" x2="412.0" y2="92.5" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="5 3" opacity="0.8"/>
+  <text x="354.0" y="86.5" fill="var(--color-theory)" font-size="13" text-anchor="start"><tspan font-style="italic">&#952;</tspan> = 1,4</text>
+  <path d="M354.5,76.1 L357.9,73.5 L361.3,76.1" fill="none" stroke="var(--color-theory)" stroke-width="1.1" stroke-linejoin="round"/>
+  <polygon points="178.7,254.0 173.7,263.0 183.7,263.0" fill="var(--academic-text)" opacity="0.8"/>
+  <circle cx="112.0" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="87.0" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="162.0" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="137.0" cy="243.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="112.0" cy="231.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="462.0" cy="243.0" r="4.6" fill="var(--color-remark)"/>
+  <text x="462.0" y="230.0" fill="var(--color-remark)" font-size="13" text-anchor="middle">gözlem 1,6</text>
+  <text x="225.0" y="137.5" fill="var(--color-theory)" font-size="13" text-anchor="start"><tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>) = 2(1,4 &#8722; <tspan font-style="italic">x</tspan>)/1,96</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="58.0" y1="250.0" x2="522.0" y2="250.0"/><polygon points="522.0,250.0 514.0,246.5 514.0,253.5" stroke="none"/></g>
+  <line x1="187.0" y1="247.0" x2="187.0" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <line x1="312.0" y1="247.0" x2="312.0" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="312.0" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">1,0</text>
+  <line x1="437.0" y1="247.0" x2="437.0" y2="253.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="437.0" y="266.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">1,5</text>
+  <text x="526.0" y="254.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">x</tspan></text>
+  <text x="178.7" y="278.0" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">x&#773;</tspan> = 7/15</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="62.0" y1="250.0" x2="62.0" y2="30.0"/><polygon points="62.0,30.0 58.5,38.0 65.5,38.0" stroke="none"/></g>
+  <line x1="59.0" y1="184.4" x2="65.0" y2="184.4" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="188.4" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,5</text>
+  <line x1="59.0" y1="118.8" x2="65.0" y2="118.8" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="122.8" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1,0</text>
+  <line x1="59.0" y1="53.1" x2="65.0" y2="53.1" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="55.0" y="57.1" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1,5</text>
+  <text x="70.0" y="36.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>)</text>
+</svg>
+<figcaption>θ̂ = 3x̄ = 1,4 ile kurulan üçgen yoğunluk 1,4'ün sağında sıfırdır; oysa gözlemlerden biri 1,6'dır. Moment tahmini, verinin kendisiyle çelişen bir model üretebilir.</figcaption>
+</figure>
+```
+
+Bunun nedeni, momentler yönteminin veriyi yalnızca $\bar X$ gibi özetler üzerinden görmesidir; $\bar X$ en büyük gözlemin parametre hakkında taşıdığı bilgiyi kullanmaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+Momentler yöntemi kolaydır ve çoğu zaman makul tahminler verir; ama tahmin edici tek değildir ve son örnekte gördüğümüz gibi veriyle çelişebilir. Bir sonraki bölümde parametreyi "gözlenen veriyi en olası kılan değer" olarak seçen ve bu sorunları büyük ölçüde gideren yöntemi inceleyeceğiz: [En Çok Olabilirlik Yöntemi](en-cok-olabilirlik-yontemi.qmd).

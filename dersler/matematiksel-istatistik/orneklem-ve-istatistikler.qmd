@@ -1,0 +1,965 @@
+---
+title: "Örneklem ve İstatistikler"
+pagetitle: "Örneklem ve İstatistikler"
+description: "Rastgele örneklem, örneklem uzayı ve istatistik kavramları; örneklem ortalamasının beklenen değeri, varyansı ve standart hatası, iadeli ve iadesiz çekilişte sonlu kitle düzeltme çarpanı, normal kitlede örneklem ortalamasının dağılımı ve Chebyshev eşitsizliğinin örneklem ortalamasına uygulanması."
+---
+
+İstatistikte asıl merak ettiğimiz şey kitlenin kendisidir: bir ülkedeki bütün yetişkinlerin ortalama boyu, bir fabrikanın ürettiği bütün ampullerin ömrü. Kitlenin tamamını ölçmek çoğu zaman olanaksızdır; bu yüzden kitleden birkaç birim seçer, onları ölçer ve bu ölçümlerden kitle hakkında sonuç çıkarırız. [İstatistiğe Giriş](istatistige-giris.qmd) bölümünde kitle, örneklem ve parametre kavramlarını sözel olarak tanıdık. Bu bölümde aynı kavramlara olasılık diliyle kesin bir biçim veriyor, ardından en önemli istatistik olan örneklem ortalamasının davranışını inceliyoruz.
+
+## Örneklem ve Örneklem Uzayı
+
+Kitlede incelediğimiz özellik (boy, ömür, puan) rastgele seçilen bir birim için bir rastgele değişkendir. Örneklemi, bu değişkenin birbirini etkilemeyen kopyaları olarak düşüneceğiz.
+
+::: {#def-ois-orneklem name="Örneklem"}
+Kitledeki tek bir özelliğin ölçümüne karşılık gelen rastgele değişken $X$ olsun. Her biri $X$ ile aynı dağılıma sahip ve birbirinden bağımsız $X_1, X_2, \ldots, X_n$ rastgele değişkenlerine ya da $(X_1, X_2, \ldots, X_n)$ rastgele vektörüne **$n$ birimlik (rastgele) örneklem** denir. $n$ sayısına **örneklem hacmi** (örneklem büyüklüğü) denir.
+:::
+
+Yani $X_i$, $i$-inci seçilecek birimde yapılacak ölçümdür. Ölçüm henüz yapılmadığı için değeri belli değildir; bu yüzden bir rastgele değişkendir. "Aynı dağılım" her ölçümün aynı kitleden geldiğini, "bağımsızlık" ise bir ölçümün sonucunun diğerlerini etkilemediğini söyler. $X$'in dağılımına **kitle dağılımı** diyeceğiz. Bağımsızlığın ([Olasılık Teorisi'ndeki tanım](../olasilik-teorisi/bagimsizlik-ve-kosullu-dagilimlar.html#def-bagimsiz-rastgele-degiskenler)) sonlu bir kitleden iadesiz çekilişte bozulduğunu aşağıda göreceğiz; o durumda da seçilen birimlerin değerlerine, alışılageldiği gibi, örneklem demeye devam edeceğiz.
+
+::: {#def-ois-gozlem-degerleri name="Gözlem Değerleri"}
+Ölçüm yapıldıktan sonra $X_1, X_2, \ldots, X_n$ örnekleminin aldığı $x_1, x_2, \ldots, x_n$ sayılarına **gözlem değerleri** ya da kısaca **örnek** denir.
+:::
+
+Yani büyük harf ($X_i$) ölçümden önceki belirsiz niceliği, küçük harf ($x_i$) ölçümden sonra elimize geçen sayıyı gösterir. Aynı kitleden ikinci kez örneklem alırsak $X_i$'ler aynı kalır ama gözlem değerleri büyük olasılıkla değişir.
+
+::: {#def-ois-orneklem-uzayi name="Örneklem Uzayı"}
+Elde edilebilecek bütün $(x_1, x_2, \ldots, x_n) \in \mathbb{R}^n$ gözlem noktalarının kümesine **örneklem uzayı** denir ve $\Xi \subset \mathbb{R}^n$ ile gösterilir.
+:::
+
+Yani örneklem uzayı, $(X_1, \ldots, X_n)$ vektörünün alabileceği bütün değerlerin kümesidir; her gözlem bu kümenin bir noktasıdır.
+
+::: {#exm-ois-zar name="Üç Zar Atışından Oluşan Örneklem"}
+Hilesiz bir zar üç kez atılsın ve $X_i$, $i$-inci atışta gelen sayı olsun. Atışlar birbirini etkilemediği ve her atışta $1, \ldots, 6$ sayılarının her biri $\frac{1}{6}$ olasılıkla geldiği için $(X_1, X_2, X_3)$, kitle dağılımı $\{1, \ldots, 6\}$ üzerinde kesikli düzgün dağılım olan $3$ birimlik bir örneklemdir. Örneklem uzayı
+
+$$\Xi = \{1, 2, 3, 4, 5, 6\}^3 \subset \mathbb{R}^3$$
+
+kümesidir ve $6^3 = 216$ noktadan oluşur. Atışlar sırasıyla $2$, $5$, $5$ gelirse gözlem değerleri $x_1 = 2$, $x_2 = 5$, $x_3 = 5$ olur; bu, $\Xi$'nin $(2, 5, 5)$ noktasıdır.
+:::
+
+## İstatistik
+
+Örneklemden kitle hakkında bilgi çıkarmak için gözlemleri bir formülde birleştiririz: toplarız, ortalamasını alırız, en büyüğünü seçeriz. Bu formüllerin tek şartı, gözlemler geldiğinde gerçekten hesaplanabilmeleridir.
+
+::: {#def-ois-istatistik name="İstatistik"}
+$X_1, X_2, \ldots, X_n$ örnekleminin bilinmeyen parametre içermeyen herhangi bir $T = T(X_1, X_2, \ldots, X_n)$ fonksiyonuna **örneklem istatistiği** ya da kısaca **istatistik** denir.
+:::
+
+Yani istatistik, gözlem değerleri elimize geçer geçmez sayısal değeri hesaplanabilen bir formüldür. Örneğin $X_1 + X_2 + \cdots + X_n$, $\max\{X_1, \ldots, X_n\}$ ve yalnızca $X_1$ birer istatistiktir. Kitle ortalaması $\mu$ bilinmiyorsa $\bar X - \mu$ bir istatistik değildir, çünkü gözlemler gelse bile $\mu$ bilinmeden değeri hesaplanamaz. Bir örneklemle sonsuz çoklukta istatistik tanımlanabilir.
+
+Bir istatistik örneklemin fonksiyonu olduğundan kendisi de bir rastgele değişkendir: örneklem değiştikçe değeri değişir. Bu değişimi dağılımıyla betimleriz.
+
+::: {#def-ois-ornekleme-dagilimi name="Örnekleme Dağılımı"}
+Bir $T$ istatistiğinin olasılık dağılımına $T$'nin **örnekleme dağılımı** denir.
+:::
+
+Yani örnekleme dağılımı, aynı kitleden aynı hacimde örneklemler tekrar tekrar alındığında $T$'nin hangi değerleri hangi olasılıklarla aldığını söyler. Bölümün ilerleyen kısmında bir sonlu kitlede bu dağılımı bütün örneklemleri sayarak kuracağız.
+
+Bazı istatistikler o kadar sık kullanılır ki özel adları vardır.
+
+::: {#def-ois-orneklem-ortalamasi name="Örneklem Ortalaması"}
+$X_1, X_2, \ldots, X_n$ örnekleminin **örneklem ortalaması**
+
+$$\bar X = \bar X_n = \frac{1}{n} \sum_{i=1}^{n} X_i$$
+
+istatistiğidir.
+:::
+
+::: {#def-ois-orneklem-varyansi name="Örneklem Varyansı"}
+$X_1, X_2, \ldots, X_n$ örnekleminin ($n \ge 2$) **örneklem varyansı**
+
+$$S^2 = \frac{1}{n - 1} \sum_{i=1}^{n} \left( X_i - \bar X \right)^2$$
+
+istatistiğidir.
+:::
+
+::: {#def-ois-orneklem-momenti name="Örneklem Momenti"}
+$k = 1, 2, 3, \ldots$ için $X_1, X_2, \ldots, X_n$ örnekleminin **$k$-inci örneklem momenti**
+
+$$M_k = \frac{1}{n} \sum_{i=1}^{n} X_i^k$$
+
+istatistiğidir.
+:::
+
+Yani $\bar X$ gözlemlerin merkezini, $S^2$ gözlemlerin bu merkez çevresindeki yayılımını ölçer; $M_k$ ise gözlemlerin $k$-inci kuvvetlerinin ortalamasıdır. [İstatistiğe Giriş](istatistige-giris.qmd) bölümünde bir veri kümesi için hesapladığımız aritmetik ortalama ve örneklem varyansı, bu istatistiklerin gözlem değerlerindeki değerleridir. $S^2$'de $n$ yerine $n - 1$ ile bölmenin nedenini aşağıdaki bir örnekte somut olarak göreceğiz; genel açıklama [Tahmin Edicilerin Özellikleri](tahmin-edicilerin-ozellikleri.qmd) bölümündedir.
+
+Birinci örneklem momenti örneklem ortalamasıdır: $M_1 = \bar X$. İkinci moment ise ortalamanın karesi değildir. $M_2$ önce kareleri alıp sonra ortalar, $\bar X^2$ önce ortalayıp sonra karesini alır:
+
+$$M_2 = \frac{X_1^2 + \cdots + X_n^2}{n}, \qquad \bar X^2 = \left( \frac{X_1 + \cdots + X_n}{n} \right)^2.$$
+
+İkisi arasındaki fark tam olarak yayılımı verir.
+
+:::: {#prp-ois-varyans-hesabi name="Örneklem Varyansının Hesap Formülü"}
+$n \ge 2$ için
+
+$$\sum_{i=1}^{n} \left( X_i - \bar X \right)^2 = \sum_{i=1}^{n} X_i^2 - n \bar X^2$$
+
+ve dolayısıyla
+
+$$S^2 = \frac{n}{n-1} \left( M_2 - \bar X^2 \right)$$
+
+olur.
+
+::: {.ispat}
+Kareyi açıp toplamı terimlere dağıtalım:
+
+$$\sum_{i=1}^{n} \left( X_i - \bar X \right)^2 = \sum_{i=1}^{n} X_i^2 - 2 \bar X \sum_{i=1}^{n} X_i + n \bar X^2.$$
+
+$\bar X$ toplama indisine bağlı olmadığı için toplamın dışına çıktı. Tanım gereği $\sum_{i=1}^{n} X_i = n \bar X$ olduğundan ortadaki terim $-2n\bar X^2$'dir ve
+
+$$\sum_{i=1}^{n} \left( X_i - \bar X \right)^2 = \sum_{i=1}^{n} X_i^2 - 2n \bar X^2 + n \bar X^2 = \sum_{i=1}^{n} X_i^2 - n \bar X^2$$
+
+bulunur. $\sum X_i^2 = n M_2$ yazıp $n - 1$'e bölersek ikinci eşitlik çıkar:
+
+$$S^2 = \frac{n M_2 - n \bar X^2}{n - 1} = \frac{n}{n-1} \left( M_2 - \bar X^2 \right).$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Sol taraf negatif olmayan terimlerin toplamı olduğundan $M_2 \ge \bar X^2$'dir; eşitlik ancak bütün gözlemler aynıyken sağlanır.
+
+:::: {#exm-ois-istatistik-hesabi name="Bir Örnekte Ortalama, Varyans ve İkinci Moment"}
+Dört birimlik bir örneklemin gözlem değerleri $3$, $5$, $6$, $10$ olsun. Örneklem ortalamasının, örneklem varyansının ve ikinci örneklem momentinin bu gözlemlerdeki değerlerini hesaplayınız.
+
+::: {.cozum}
+Ortalama:
+
+$$\bar x = \frac{3 + 5 + 6 + 10}{4} = \frac{24}{4} = 6.$$
+
+Ortalamadan sapmalar $3 - 6 = -3$, $5 - 6 = -1$, $6 - 6 = 0$ ve $10 - 6 = 4$'tür. Karelerinin toplamı $9 + 1 + 0 + 16 = 26$ olduğundan
+
+$$s^2 = \frac{26}{4 - 1} = \frac{26}{3} \approx 8{,}67.$$
+
+İkinci moment karelerin ortalamasıdır:
+
+$$m_2 = \frac{9 + 25 + 36 + 100}{4} = \frac{170}{4} = 42{,}5.$$
+
+$m_2 = 42{,}5$ ile $\bar x^2 = 36$ birbirinden farklıdır. @prp-ois-varyans-hesabi ile sağlama yapalım:
+
+$$\frac{n}{n-1} \left( m_2 - \bar x^2 \right) = \frac{4}{3} \left( 42{,}5 - 36 \right) = \frac{4}{3} \cdot 6{,}5 = \frac{26}{3}.$$
+
+Bu, doğrudan bulduğumuz $s^2$ değeriyle aynıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Örneklem Ortalamasının Beklenen Değeri ve Varyansı
+
+Örneklem ortalaması kitle ortalaması $\mu$'yü tahmin etmek için kullanılan en doğal istatistiktir. Bu tahminin ne kadar güvenilir olduğunu anlamak için $\bar X$'in merkezine ve yayılımına bakacağız. Bir $Y$ rastgele değişkeni için $\mu_Y = E(Y)$ ve $\sigma_Y^2 = \operatorname{Var}(Y)$ kısaltmalarını kullanacağız; örneğin $\mu_{\bar X} = E(\bar X)$ ve $\sigma_{\bar X}^2 = \operatorname{Var}(\bar X)$.
+
+:::: {#thm-ois-ortalama-bagimsiz name="Bağımsız Gözlemlerde Örneklem Ortalaması"}
+$X_1, X_2, \ldots, X_n$, her $i = 1, \ldots, n$ için $E(X_i) = \mu$ ve $\operatorname{Var}(X_i) = \sigma^2$ olan bağımsız rastgele değişkenler olsun. Bu durum, örneğin sonsuz bir kitleden alınan bir örneklemde geçerlidir. O zaman
+
+$$\mu_{\bar X} = E(\bar X) = \mu, \qquad \sigma_{\bar X}^2 = \operatorname{Var}(\bar X) = \frac{\sigma^2}{n}$$
+
+olur.
+
+::: {.ispat}
+**Beklenen değer.** Beklenen değer lineer olduğundan ([Olasılık Teorisi'ndeki teorem](../olasilik-teorisi/beklenen-deger-ve-varyans.html#thm-beklenen-deger-lineerlik)) sabit $\frac{1}{n}$ dışarı çıkar ve toplamın beklenen değeri beklenen değerlerin toplamı olur:
+
+$$E(\bar X) = E\left( \frac{1}{n} \sum_{i=1}^{n} X_i \right) = \frac{1}{n} \sum_{i=1}^{n} E(X_i) = \frac{1}{n} \cdot n\mu = \mu.$$
+
+**Varyans.** Bir sabitle çarpılan rastgele değişkenin varyansı, sabitin karesiyle çarpılır: $\operatorname{Var}(aY) = a^2 \operatorname{Var}(Y)$ ([Olasılık Teorisi'ndeki teorem](../olasilik-teorisi/beklenen-deger-ve-varyans.html#thm-dogrusal-donusum-beklenen-varyans)). Bağımsız rastgele değişkenlerin toplamının varyansı da varyansların toplamıdır, çünkü bağımsız değişkenler arasındaki kovaryanslar sıfırdır ([Olasılık Teorisi'ndeki sonuç](../olasilik-teorisi/rastgele-vektorlerde-beklenen-deger.html#cor-bagimsiz-toplam-varyansi)). Bu iki kuralla
+
+$$\operatorname{Var}(\bar X) = \frac{1}{n^2} \operatorname{Var}\left( \sum_{i=1}^{n} X_i \right) = \frac{1}{n^2} \sum_{i=1}^{n} \operatorname{Var}(X_i) = \frac{n \sigma^2}{n^2} = \frac{\sigma^2}{n}$$
+
+bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani örneklem ortalaması ortalamada kitle ortalamasını tutturur ve yayılımı örneklem hacmiyle ters orantılı olarak azalır: gözlem sayısını dört katına çıkarmak $\bar X$'in varyansını dörtte birine, standart sapmasını yarıya indirir.
+
+Teoremin varsayımları boşuna değildir. Beklenen değeri olmayan bir kitlede, örneğin [Önemli Sürekli Dağılımlar](onemli-surekli-dagilimlar.qmd) bölümündeki Cauchy dağılımında, $\mu$ ve $\sigma^2$ tanımlı değildir; standart Cauchy kitlesinde $\bar X$ her $n$ için tek bir gözlemle aynı dağılıma sahiptir ve $n$ büyüdükçe hiç daralmaz. Bağımsızlık kalktığında varyans formülünün nasıl değiştiğini ise aşağıda iadesiz çekilişte göreceğiz. Ayrıca teorem yalnızca $\bar X$'in beklenen değerini ve varyansını verir, dağılımının biçimini söylemez. Biçim, kitle normalse aşağıda tam olarak, genel kitlelerde ise [Yakınsama ve Merkezi Limit Teoremi](yakinsama-ve-merkezi-limit-teoremi.qmd) bölümünde büyük $n$ için yaklaşık olarak belirlenecek.
+
+### Sonlu Kitleler
+
+Şimdi kitlenin $N$ birimden oluştuğunu ve birimlerin ölçülen değerlerinin $c_1, c_2, \ldots, c_N$ olduğunu varsayalım. [İstatistiğe Giriş](istatistige-giris.qmd) bölümündeki gibi kitle ortalaması ve kitle varyansı
+
+$$\mu = \frac{1}{N} \sum_{j=1}^{N} c_j, \qquad \sigma^2 = \frac{1}{N} \sum_{j=1}^{N} \left( c_j - \mu \right)^2$$
+
+sayılarıdır. Kitleden rastgele seçilen tek bir birimin değeri $X$ ise her birim $\frac{1}{N}$ olasılıkla seçildiği için $E(X) = \mu$ ve $\operatorname{Var}(X) = \sigma^2$ olur; değerler farklıysa $X$, $\{c_1, \ldots, c_N\}$ üzerinde [kesikli düzgün dağılımlıdır](../olasilik-teorisi/geometrik-negatif-binom-ve-hipergeometrik.html#def-kesikli-duzgun-dagilim). $n$ birimi iki farklı yolla seçebiliriz: seçilen birimi her çekilişten sonra kitleye geri koyarak (**iadeli**) ya da geri koymadan (**iadesiz**).
+
+:::: {#thm-ois-iadeli name="İadeli Çekilişte Örneklem Ortalaması"}
+$N$ birimlik sonlu bir kitleden iadeli olarak $n$ birimlik bir örneklem seçilirse
+
+$$\mu_{\bar X} = E(\bar X) = \mu, \qquad \sigma_{\bar X}^2 = \operatorname{Var}(\bar X) = \frac{\sigma^2}{n}$$
+
+olur.
+
+::: {.ispat}
+İadeli çekilişte her çekilişten önce kitle ilk hâline döner. Bu yüzden her çekilişte her birim $\frac{1}{N}$ olasılıkla seçilir ve bir çekilişin sonucu diğerlerini etkilemez. Dolayısıyla $X_1, \ldots, X_n$ bağımsızdır ve her biri tek birimlik seçimle aynı dağılıma sahiptir: $E(X_i) = \mu$, $\operatorname{Var}(X_i) = \sigma^2$. @thm-ois-ortalama-bagimsiz doğrudan uygulanır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İadesiz çekilişte ise durum değişir: ilk çekilişte büyük bir değer gelirse o birim kitleden çıkar ve sonraki çekilişlerde büyük değer gelme olasılığı azalır. Gözlemler artık bağımsız değildir ve aralarındaki negatif ilişki varyansı küçültür.
+
+:::: {#thm-ois-iadesiz name="İadesiz Çekilişte Örneklem Ortalaması"}
+$N \ge 2$ birimlik sonlu bir kitleden iadesiz olarak $n \le N$ birim seçilsin ve $X_i$, $i$-inci seçilen birimin değeri olsun ($X_1, \ldots, X_n$ bu durumda bağımsız değildir). O zaman
+
+$$\mu_{\bar X} = E(\bar X) = \mu, \qquad \sigma_{\bar X}^2 = \operatorname{Var}(\bar X) = \frac{N - n}{N - 1} \cdot \frac{\sigma^2}{n}$$
+
+olur.
+
+::: {.ispat}
+Birimleri $1, 2, \ldots, N$ ile numaralayalım ve $i$-inci çekilişte seçilen birimin numarasına $U_i$ diyelim; böylece $X_i = c_{U_i}$ olur. İadesiz rastgele çekilişte, birbirinden farklı birimlerden oluşan her sıralı $(u_1, \ldots, u_n)$ dizisi aynı olasılıkla ortaya çıkar. Bu dizilerin sayısı $N(N-1)\cdots(N-n+1)$'dir. ($\bar X$ sıraya bağlı olmadığından, sırasız $\binom{N}{n}$ örneklemin eşit olasılıklı olması da aynı sonucu verir.)
+
+**Adım 1: Her $X_i$ kitle dağılımına sahiptir.** $i$-inci yere belirli bir $a$ birimini koyarsak kalan $n - 1$ yer, kalan $N - 1$ birimden $(N-1)(N-2)\cdots(N-n+1)$ farklı biçimde doldurulur. Bu sayıyı toplam dizi sayısına bölersek
+
+$$P(U_i = a) = \frac{(N-1)\cdots(N-n+1)}{N(N-1)\cdots(N-n+1)} = \frac{1}{N}$$
+
+bulunur. Demek ki $i$-inci çekilişte, önceki çekilişlerin sonucunu bilmiyorsak, her birim eşit olasılıklıdır. Dolayısıyla her $i$ için $E(X_i) = \mu$ ve $\operatorname{Var}(X_i) = \sigma^2$'dir.
+
+**Adım 2: İki gözlemin kovaryansı.** $n \ge 2$ ve $i \ne j$ olsun. $i$-inci ve $j$-inci yerlere farklı $a$ ve $b$ birimleri konursa kalan yerler $(N-2)\cdots(N-n+1)$ biçimde doldurulur, dolayısıyla
+
+$$P(U_i = a,\ U_j = b) = \frac{1}{N(N-1)} \qquad (a \ne b)$$
+
+ve $a = b$ için bu olasılık sıfırdır. $d_a = c_a - \mu$ yazalım. Kitle ortalamasının tanımı gereği $\sum_{a} d_a = 0$ ve kitle varyansının tanımı gereği $\sum_a d_a^2 = N\sigma^2$'dir. Buna göre
+
+$$\operatorname{Cov}(X_i, X_j) = E\big[ (X_i - \mu)(X_j - \mu) \big] = \frac{1}{N(N-1)} \sum_{a \ne b} d_a d_b$$
+
+olur. $a \ne b$ olan çarpımların toplamı, bütün çarpımların toplamından köşegen terimlerinin çıkarılmasıyla elde edilir:
+
+$$\sum_{a \ne b} d_a d_b = \Big( \sum_{a} d_a \Big)^2 - \sum_{a} d_a^2 = 0 - N\sigma^2.$$
+
+Böylece $\operatorname{Cov}(X_i, X_j) = -\dfrac{\sigma^2}{N - 1}$ bulunur.
+
+**Adım 3: Beklenen değer ve varyans.** Beklenen değerin lineerliği bağımsızlık gerektirmez; Adım 1 ile $E(\bar X) = \frac{1}{n} \cdot n\mu = \mu$ olur. Toplamın varyansı, varyansların toplamı ile bütün $i \ne j$ sıralı çiftlerinin kovaryanslarının toplamıdır ([Olasılık Teorisi'ndeki formül](../olasilik-teorisi/rastgele-vektorlerde-beklenen-deger.html#cor-bagimsiz-toplam-varyansi) ve hemen altındaki not). $n$ tane varyans ve $n(n-1)$ tane sıralı çift olduğundan
+
+$$
+\begin{aligned}
+\operatorname{Var}\Big( \sum_{i=1}^{n} X_i \Big) &= n\sigma^2 + n(n-1) \left( -\frac{\sigma^2}{N-1} \right) \\[1mm]
+&= n\sigma^2 \left( 1 - \frac{n-1}{N-1} \right) = n\sigma^2 \cdot \frac{N - n}{N - 1}
+\end{aligned}
+$$
+
+olur. $n = 1$ iken kovaryans terimi yoktur ve aynı sonuç kalır. Son olarak $n^2$'ye bölersek
+
+$$\operatorname{Var}(\bar X) = \frac{1}{n^2} \cdot n\sigma^2 \cdot \frac{N-n}{N-1} = \frac{N - n}{N - 1} \cdot \frac{\sigma^2}{n}$$
+
+elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+İki teorem arasındaki tek fark varyanstaki çarpandır.
+
+::: {#def-ois-duzeltme-carpani name="Sonlu Kitle Düzeltme Çarpanı"}
+$N$ birimlik bir kitleden iadesiz $n$ birimlik örneklem seçildiğinde
+
+$$\frac{N - n}{N - 1}$$
+
+sayısına **sonlu kitle düzeltme çarpanı** denir.
+:::
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="13.0 -3.0 532.0 255.0" role="img" aria-label="Graph of the square root of the finite population correction factor for N 100 as a function of n, close to 1 for n below 5 and zero at n 100">
+  <polygon points="50.0,220.0 73.0,220.0 73.0,40.0 50.0,40.0" fill="var(--color-base)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M54.6,53.3 L55.7,53.5 L56.9,53.8 L58.0,54.0 L59.2,54.2 L60.3,54.4 L61.4,54.6 L62.6,54.8 L63.7,55.0 L64.8,55.2 L66.0,55.4 L67.1,55.6 L68.3,55.9 L69.4,56.1 L70.5,56.3 L71.7,56.5 L72.8,56.7 L74.0,56.9 L75.1,57.1 L76.2,57.3 L77.4,57.6 L78.5,57.8 L79.6,58.0 L80.8,58.2 L81.9,58.4 L83.1,58.6 L84.2,58.8 L85.3,59.1 L86.5,59.3 L87.6,59.5 L88.8,59.7 L89.9,59.9 L91.0,60.1 L92.2,60.4 L93.3,60.6 L94.4,60.8 L95.6,61.0 L96.7,61.2 L97.9,61.4 L99.0,61.7 L100.1,61.9 L101.3,62.1 L102.4,62.3 L103.6,62.5 L104.7,62.8 L105.8,63.0 L107.0,63.2 L108.1,63.4 L109.2,63.7 L110.4,63.9 L111.5,64.1 L112.7,64.3 L113.8,64.5 L114.9,64.8 L116.1,65.0 L117.2,65.2 L118.4,65.4 L119.5,65.7 L120.6,65.9 L121.8,66.1 L122.9,66.3 L124.0,66.6 L125.2,66.8 L126.3,67.0 L127.5,67.2 L128.6,67.5 L129.7,67.7 L130.9,67.9 L132.0,68.2 L133.2,68.4 L134.3,68.6 L135.4,68.8 L136.6,69.1 L137.7,69.3 L138.8,69.5 L140.0,69.8 L141.1,70.0 L142.3,70.2 L143.4,70.5 L144.5,70.7 L145.7,70.9 L146.8,71.2 L148.0,71.4 L149.1,71.6 L150.2,71.9 L151.4,72.1 L152.5,72.3 L153.6,72.6 L154.8,72.8 L155.9,73.0 L157.1,73.3 L158.2,73.5 L159.3,73.8 L160.5,74.0 L161.6,74.2 L162.8,74.5 L163.9,74.7 L165.0,74.9 L166.2,75.2 L167.3,75.4 L168.4,75.7 L169.6,75.9 L170.7,76.1 L171.9,76.4 L173.0,76.6 L174.1,76.9 L175.3,77.1 L176.4,77.4 L177.6,77.6 L178.7,77.8 L179.8,78.1 L181.0,78.3 L182.1,78.6 L183.3,78.8 L184.4,79.1 L185.5,79.3 L186.7,79.6 L187.8,79.8 L188.9,80.1 L190.1,80.3 L191.2,80.6 L192.4,80.8 L193.5,81.1 L194.6,81.3 L195.8,81.6 L196.9,81.8 L198.1,82.1 L199.2,82.3 L200.3,82.6 L201.5,82.8 L202.6,83.1 L203.7,83.3 L204.9,83.6 L206.0,83.8 L207.2,84.1 L208.3,84.3 L209.4,84.6 L210.6,84.9 L211.7,85.1 L212.9,85.4 L214.0,85.6 L215.1,85.9 L216.3,86.1 L217.4,86.4 L218.5,86.7 L219.7,86.9 L220.8,87.2 L222.0,87.5 L223.1,87.7 L224.2,88.0 L225.4,88.2 L226.5,88.5 L227.7,88.8 L228.8,89.0 L229.9,89.3 L231.1,89.6 L232.2,89.8 L233.3,90.1 L234.5,90.4 L235.6,90.6 L236.8,90.9 L237.9,91.2 L239.0,91.4 L240.2,91.7 L241.3,92.0 L242.5,92.3 L243.6,92.5 L244.7,92.8 L245.9,93.1 L247.0,93.3 L248.1,93.6 L249.3,93.9 L250.4,94.2 L251.6,94.4 L252.7,94.7 L253.8,95.0 L255.0,95.3 L256.1,95.6 L257.3,95.8 L258.4,96.1 L259.5,96.4 L260.7,96.7 L261.8,97.0 L262.9,97.2 L264.1,97.5 L265.2,97.8 L266.4,98.1 L267.5,98.4 L268.6,98.7 L269.8,99.0 L270.9,99.2 L272.1,99.5 L273.2,99.8 L274.3,100.1 L275.5,100.4 L276.6,100.7 L277.7,101.0 L278.9,101.3 L280.0,101.6 L281.2,101.9 L282.3,102.1 L283.4,102.4 L284.6,102.7 L285.7,103.0 L286.9,103.3 L288.0,103.6 L289.1,103.9 L290.3,104.2 L291.4,104.5 L292.5,104.8 L293.7,105.1 L294.8,105.4 L296.0,105.7 L297.1,106.0 L298.2,106.3 L299.4,106.7 L300.5,107.0 L301.7,107.3 L302.8,107.6 L303.9,107.9 L305.1,108.2 L306.2,108.5 L307.3,108.8 L308.5,109.1 L309.6,109.4 L310.8,109.8 L311.9,110.1 L313.0,110.4 L314.2,110.7 L315.3,111.0 L316.5,111.3 L317.6,111.7 L318.7,112.0 L319.9,112.3 L321.0,112.6 L322.1,113.0 L323.3,113.3 L324.4,113.6 L325.6,113.9 L326.7,114.3 L327.8,114.6 L329.0,114.9 L330.1,115.3 L331.3,115.6 L332.4,115.9 L333.5,116.3 L334.7,116.6 L335.8,116.9 L336.9,117.3 L338.1,117.6 L339.2,117.9 L340.4,118.3 L341.5,118.6 L342.6,119.0 L343.8,119.3 L344.9,119.7 L346.1,120.0 L347.2,120.3 L348.3,120.7 L349.5,121.0 L350.6,121.4 L351.7,121.8 L352.9,122.1 L354.0,122.5 L355.2,122.8 L356.3,123.2 L357.4,123.5 L358.6,123.9 L359.7,124.3 L360.9,124.6 L362.0,125.0 L363.1,125.4 L364.3,125.7 L365.4,126.1 L366.5,126.5 L367.7,126.8 L368.8,127.2 L370.0,127.6 L371.1,128.0 L372.2,128.3 L373.4,128.7 L374.5,129.1 L375.7,129.5 L376.8,129.9 L377.9,130.2 L379.1,130.6 L380.2,131.0 L381.3,131.4 L382.5,131.8 L383.6,132.2 L384.8,132.6 L385.9,133.0 L387.0,133.4 L388.2,133.8 L389.3,134.2 L390.5,134.6 L391.6,135.0 L392.7,135.4 L393.9,135.8 L395.0,136.3 L396.1,136.7 L397.3,137.1 L398.4,137.5 L399.6,137.9 L400.7,138.4 L401.8,138.8 L403.0,139.2 L404.1,139.6 L405.3,140.1 L406.4,140.5 L407.5,140.9 L408.7,141.4 L409.8,141.8 L411.0,142.3 L412.1,142.7 L413.2,143.2 L414.4,143.6 L415.5,144.1 L416.6,144.5 L417.8,145.0 L418.9,145.5 L420.1,145.9 L421.2,146.4 L422.3,146.9 L423.5,147.4 L424.6,147.8 L425.8,148.3 L426.9,148.8 L428.0,149.3 L429.2,149.8 L430.3,150.3 L431.4,150.8 L432.6,151.3 L433.7,151.8 L434.9,152.3 L436.0,152.8 L437.1,153.3 L438.3,153.9 L439.4,154.4 L440.6,154.9 L441.7,155.5 L442.8,156.0 L444.0,156.5 L445.1,157.1 L446.2,157.6 L447.4,158.2 L448.5,158.8 L449.7,159.3 L450.8,159.9 L451.9,160.5 L453.1,161.1 L454.2,161.7 L455.4,162.3 L456.5,162.9 L457.6,163.5 L458.8,164.1 L459.9,164.7 L461.0,165.4 L462.2,166.0 L463.3,166.6 L464.5,167.3 L465.6,168.0 L466.7,168.6 L467.9,169.3 L469.0,170.0 L470.2,170.7 L471.3,171.4 L472.4,172.1 L473.6,172.9 L474.7,173.6 L475.8,174.4 L477.0,175.1 L478.1,175.9 L479.3,176.7 L480.4,177.5 L481.5,178.3 L482.7,179.2 L483.8,180.0 L485.0,180.9 L486.1,181.8 L487.2,182.7 L488.4,183.7 L489.5,184.6 L490.6,185.6 L491.8,186.7 L492.9,187.7 L494.1,188.8 L495.2,190.0 L496.3,191.1 L497.5,192.4 L498.6,193.6 L499.8,195.0 L500.9,196.4 L502.0,198.0 L503.2,199.6 L504.3,201.4 L505.4,203.3 L506.6,205.6 L507.7,208.2 L508.9,211.7 L510.0,220.0" fill="none" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="46.0" y1="220.0" x2="520.0" y2="220.0"/><polygon points="520.0,220.0 512.0,216.5 512.0,223.5" stroke="none"/></g>
+  <line x1="50.0" y1="217.0" x2="50.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="50.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0</text>
+  <line x1="73.0" y1="217.0" x2="73.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="73.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">5</text>
+  <line x1="142.0" y1="217.0" x2="142.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="142.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">20</text>
+  <line x1="234.0" y1="217.0" x2="234.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="234.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">40</text>
+  <line x1="326.0" y1="217.0" x2="326.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="326.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">60</text>
+  <line x1="418.0" y1="217.0" x2="418.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="418.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">80</text>
+  <line x1="510.0" y1="217.0" x2="510.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="510.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">100</text>
+  <text x="524.0" y="224.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">n</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="50.0" y1="220.0" x2="50.0" y2="30.0"/><polygon points="50.0,30.0 46.5,38.0 53.5,38.0" stroke="none"/></g>
+  <line x1="47.0" y1="186.7" x2="53.0" y2="186.7" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="190.7" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,2</text>
+  <line x1="47.0" y1="153.3" x2="53.0" y2="153.3" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="157.3" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,4</text>
+  <line x1="47.0" y1="120.0" x2="53.0" y2="120.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="124.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,6</text>
+  <line x1="47.0" y1="86.7" x2="53.0" y2="86.7" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="90.7" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,8</text>
+  <line x1="47.0" y1="53.3" x2="53.0" y2="53.3" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="57.3" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1,0</text>
+  <circle cx="73.0" cy="56.7" r="4" fill="var(--color-practice)"/>
+  <text x="83.0" y="82.7" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600">n = 5 için 0,98</text>
+  <circle cx="280.0" cy="101.6" r="4" fill="var(--color-practice)"/>
+  <text x="288.0" y="89.6" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600">n = 50 için 0,71</text>
+  <text x="86.8" y="166.7" fill="var(--color-base)" font-size="12.5" text-anchor="start" font-weight="600">n &lt; 0,05N</text>
+  <text x="62.0" y="22.0" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600">&#8730;((N &#8722; n)/(N &#8722; 1)),  N = 100</text>
+</svg>
+<figcaption>N = 100 birimlik bir kitlede standart hatayı düzelten √((N − n)/(N − 1)) çarpanı. Örneklem kitlenin %5'inden küçükken (taralı şerit) çarpan 1'e çok yakındır; n büyüdükçe küçülür ve n = N olduğunda sıfır olur.</figcaption>
+</figure>
+```
+
+Yani iadesiz çekilişte $\bar X$'in varyansı, iadeli çekilişteki $\frac{\sigma^2}{n}$ değerinin bu çarpanla küçültülmüş hâlidir. $n \ge 1$ için çarpan en çok $1$'dir; $n = N$ olduğunda sıfır olur, çünkü o zaman bütün kitle seçilmiştir ve $\bar X = \mu$ kesin olarak bilinir. $N$ sabit bir $n$ için sonsuza giderken çarpan $1$'e yakınsar. Bu yüzden kitle sonsuzsa ya da örneklem kitlenin %5'inden küçükse ($n < 0{,}05N$) çarpan kullanılmaz; bu durumda çarpanın karekökü $\sqrt{0{,}95} \approx 0{,}975$'ten büyüktür ve standart hatayı en fazla yaklaşık %2,5 değiştirir.
+
+::: {#def-ois-standart-hata name="Standart Hata"}
+Örneklem ortalamasının varyansının kareköküne, yani $\sigma_{\bar X} = \sqrt{\operatorname{Var}(\bar X)}$ sayısına, örneklem ortalamasının **standart hatası** denir. Daha genel olarak bir $T$ istatistiğinin standart hatası $\sigma_T = \sqrt{\operatorname{Var}(T)}$ sayısıdır.
+:::
+
+Yani standart hata, istatistiğin kendi standart sapmasıdır ve tahminin tipik olarak ne kadar şaştığını, kitlenin kendi biriminde ölçer. Bağımsız gözlemlerde ve iadeli çekilişte $\sigma_{\bar X} = \frac{\sigma}{\sqrt{n}}$, iadesiz çekilişte $\sigma_{\bar X} = \frac{\sigma}{\sqrt{n}} \sqrt{\frac{N-n}{N-1}}$'dir.
+
+:::: {#exm-ois-standart-hata-a name="Düzeltme Çarpanının Gerektiği Bir Durum"}
+$N = 1000$ öğrencinin sınav puanlarının standart sapması $\sigma = 15$'tir. Bu öğrencilerden iadesiz olarak $n = 100$ öğrenci seçiliyor. Örneklem ortalamasının standart hatasını hesaplayınız.
+
+::: {.cozum}
+Örneklem kitlenin $\frac{100}{1000} = 0{,}10$'u, yani %10'udur. Bu oran $0{,}05$'ten büyük olduğundan düzeltme çarpanı kullanılmalıdır. @thm-ois-iadesiz ile
+
+$$\sigma_{\bar X} = \frac{\sigma}{\sqrt{n}} \sqrt{\frac{N - n}{N - 1}} = \frac{15}{\sqrt{100}} \sqrt{\frac{900}{999}} = 1{,}5 \cdot 0{,}9492 \approx 1{,}4237.$$
+
+Çarpan kullanılmasaydı $1{,}5$ bulunurdu; bu yaklaşık %5 fazladır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-standart-hata-b name="Düzeltme Çarpanının İhmal Edilebildiği Bir Durum"}
+$N = 1000$ öğrencinin sınav puanlarının standart sapması $\sigma = 15$'tir. Bu öğrencilerden iadesiz olarak $n = 40$ öğrenci seçiliyor. Örneklem ortalamasının standart hatasını hesaplayınız ve düzeltme çarpanının ihmal edilip edilemeyeceğini inceleyiniz.
+
+::: {.cozum}
+Örneklem kitlenin $\frac{40}{1000} = 0{,}04$'üdür; bu oran $0{,}05$'ten küçük olduğundan çarpan ihmal edilebilir:
+
+$$\sigma_{\bar X} \approx \frac{15}{\sqrt{40}} \approx 2{,}3717.$$
+
+Çarpanla birlikte tam değer
+
+$$\sigma_{\bar X} = \frac{15}{\sqrt{40}} \sqrt{\frac{960}{999}} \approx 2{,}3717 \cdot 0{,}9803 \approx 2{,}3250$$
+
+olur. İki değer arasındaki fark yaklaşık %2'dir; bu yüzden çarpanı ihmal etmek pratikte bir şey kaybettirmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bir Sonlu Kitlede Örnekleme Dağılımı
+
+Teoremleri somut bir kitlede, bütün olası örneklemleri tek tek yazarak doğrulayalım. Aşağıdaki örneklerin hepsi aynı küçük kitleyi kullanır.
+
+:::: {#exm-ois-xbar-dagilimi name="Örneklem Ortalamasının Örnekleme Dağılımı"}
+$2$, $4$, $10$, $12$ ve $18$ sayılarından oluşan bir kitleden iadesiz olarak $n = 3$ birimlik rastgele örneklemler çekiliyor. Örneklem ortalaması $\bar X$'in örnekleme dağılımını oluşturunuz.
+
+::: {.cozum}
+Kitle $N = 5$ birimlidir. İadesiz çekilişte $3$ birimlik örneklemlerin sayısı
+
+$$\binom{5}{3} = \frac{5!}{3!\, 2!} = 10$$
+
+olup her biri $\frac{1}{10}$ olasılıkla seçilir. Bütün örneklemleri ve ortalamalarını yazalım:
+
+| Örneklem | $\bar x$ | Örneklem | $\bar x$ |
+|:--:|:--:|:--:|:--:|
+| $2, 4, 10$ | $16/3$ | $2, 12, 18$ | $32/3$ |
+| $2, 4, 12$ | $18/3$ | $4, 10, 12$ | $26/3$ |
+| $2, 4, 18$ | $24/3$ | $4, 10, 18$ | $32/3$ |
+| $2, 10, 12$ | $24/3$ | $4, 12, 18$ | $34/3$ |
+| $2, 10, 18$ | $30/3$ | $10, 12, 18$ | $40/3$ |
+
+Karşılaştırmayı kolaylaştırmak için bütün ortalamaları paydası $3$ olacak biçimde yazdık. $24/3$ ve $32/3$ değerleri ikişer örneklemde, diğerleri birer örneklemde ortaya çıkar. Buna göre $\bar X$'in olasılık fonksiyonu şöyledir:
+
+| $x$ | $16/3$ | $18/3$ | $24/3$ | $26/3$ | $30/3$ | $32/3$ | $34/3$ | $40/3$ |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| $P(\bar X = x)$ | $\frac{1}{10}$ | $\frac{1}{10}$ | $\frac{2}{10}$ | $\frac{1}{10}$ | $\frac{1}{10}$ | $\frac{2}{10}$ | $\frac{1}{10}$ | $\frac{1}{10}$ |
+
+Olasılıkların toplamı $\frac{10}{10} = 1$'dir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="13.5 3.0 531.0 259.0" role="img" aria-label="Bar chart of the sampling distribution of the mean of 3 draws without replacement from 2, 4, 10, 12, 18, with the population values and the mean 9.2 marked">
+  <rect x="155.2" y="190.0" width="11" height="40.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <rect x="172.3" y="190.0" width="11" height="40.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <rect x="223.4" y="150.0" width="11" height="80.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <rect x="274.5" y="190.0" width="11" height="40.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <rect x="291.5" y="150.0" width="11" height="80.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <rect x="240.4" y="190.0" width="11" height="40.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <rect x="308.6" y="190.0" width="11" height="40.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <rect x="359.7" y="190.0" width="11" height="40.0" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="46.0" y1="230.0" x2="520.0" y2="230.0"/><polygon points="520.0,230.0 512.0,226.5 512.0,233.5" stroke="none"/></g>
+  <line x1="75.6" y1="227.0" x2="75.6" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="75.6" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">2</text>
+  <line x1="126.7" y1="227.0" x2="126.7" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="126.7" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4</text>
+  <line x1="177.8" y1="227.0" x2="177.8" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="177.8" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">6</text>
+  <line x1="228.9" y1="227.0" x2="228.9" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="228.9" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">8</text>
+  <line x1="280.0" y1="227.0" x2="280.0" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="280.0" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">10</text>
+  <line x1="331.1" y1="227.0" x2="331.1" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="331.1" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">12</text>
+  <line x1="382.2" y1="227.0" x2="382.2" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="382.2" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">14</text>
+  <line x1="433.3" y1="227.0" x2="433.3" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="433.3" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">16</text>
+  <line x1="484.4" y1="227.0" x2="484.4" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="484.4" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">18</text>
+  <text x="524.0" y="234.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">x</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="50.0" y1="230.0" x2="50.0" y2="40.0"/><polygon points="50.0,40.0 46.5,48.0 53.5,48.0" stroke="none"/></g>
+  <line x1="47.0" y1="190.0" x2="53.0" y2="190.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="194.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,1</text>
+  <line x1="47.0" y1="150.0" x2="53.0" y2="150.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="154.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,2</text>
+  <line x1="47.0" y1="110.0" x2="53.0" y2="110.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="114.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,3</text>
+  <line x1="47.0" y1="70.0" x2="53.0" y2="70.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="74.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,4</text>
+  <circle cx="75.6" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="126.7" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="280.0" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="331.1" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="484.4" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <line x1="259.6" y1="230.0" x2="259.6" y2="86.0" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="5 4" opacity="0.9"/>
+  <text x="259.6" y="80.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">&#956; = 9,2</text>
+  <text x="58.0" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="start">P(<tspan font-style="italic">X&#772;</tspan> = <tspan font-style="italic">x</tspan>)</text>
+  <rect x="330.0" y="19.0" width="11" height="11" fill="var(--color-theory)" opacity="0.85" rx="1.5"/>
+  <text x="347.0" y="29.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">X&#772;</tspan> olasılıkları</text>
+  <circle cx="335.5" cy="46.5" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <text x="347.0" y="51.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">kitle değerleri</text>
+</svg>
+<figcaption>Kitle değerleri 2, 4, 10, 12 ve 18 (halkalar) 2 ile 18 arasına yayılmışken, iadesiz çekilen 3 birimlik örneklemlerin ortalamaları (çubuklar) 16/3 ile 40/3 arasında kalır ve kitle ortalaması μ = 9,2 çevresinde toplanır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-xbar-beklenen name="Örneklem Ortalamasının Beklenen Değeri"}
+$2$, $4$, $10$, $12$, $18$ kitlesinden iadesiz çekilen $n = 3$ birimlik örneklemlerin ortalaması $\bar X$ olsun. $E(\bar X)$'i örnekleme dağılımından hesaplayıp kitle ortalamasıyla karşılaştırınız.
+
+::: {.cozum}
+Kitle ortalaması
+
+$$\mu = \frac{1}{5} \left( 2 + 4 + 10 + 12 + 18 \right) = \frac{46}{5} = 9{,}2$$
+
+olur. Örnekleme dağılımındaki (@exm-ois-xbar-dagilimi) her değeri olasılığıyla çarpıp toplayalım. Bütün terimlerin paydası $3 \cdot 10 = 30$'dur:
+
+$$E(\bar X) = \frac{16 + 18 + 2 \cdot 24 + 26 + 30 + 2 \cdot 32 + 34 + 40}{30} = \frac{276}{30} = 9{,}2.$$
+
+Bulduğumuz değer kitle ortalamasına eşittir; böylece $E(\bar X) = \mu$ eşitliği (@thm-ois-iadesiz) bu kitlede doğrulanmış olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-xbar-varyans name="Örneklem Ortalamasının Varyansı"}
+$2$, $4$, $10$, $12$, $18$ kitlesinden iadesiz çekilen $n = 3$ birimlik örneklemlerin ortalaması $\bar X$ olsun. $\operatorname{Var}(\bar X)$'i iki yoldan hesaplayınız.
+
+::: {.cozum}
+Önce kitle varyansını bulalım. $\mu = 9{,}2$'den sapmaların kareleri $(2 - 9{,}2)^2 = 51{,}84$, $(4 - 9{,}2)^2 = 27{,}04$, $(10 - 9{,}2)^2 = 0{,}64$, $(12 - 9{,}2)^2 = 7{,}84$ ve $(18 - 9{,}2)^2 = 77{,}44$'tür. Toplamları $164{,}8$ olduğundan
+
+$$\sigma^2 = \frac{164{,}8}{5} = 32{,}96$$
+
+bulunur.
+
+**Birinci yol: teoremle.** Çekiliş iadesiz olduğundan @thm-ois-iadesiz kullanılır:
+
+$$\operatorname{Var}(\bar X) = \frac{N - n}{N - 1} \cdot \frac{\sigma^2}{n} = \frac{5 - 3}{5 - 1} \cdot \frac{32{,}96}{3} = \frac{1}{2} \cdot \frac{32{,}96}{3} = \frac{412}{75} \approx 5{,}4933.$$
+
+**İkinci yol: dağılımdan.** $\operatorname{Var}(\bar X) = E(\bar X^2) - [E(\bar X)]^2$ formülünü ([Olasılık Teorisi'ndeki hesap formülü](../olasilik-teorisi/beklenen-deger-ve-varyans.html#prp-varyans-hesap-formulu)) kullanalım. $\bar X^2$'nin değerleri, dağılımdaki değerlerin kareleridir ve paydaları $9 \cdot 10 = 90$ olur:
+
+$$
+\begin{aligned}
+E(\bar X^2) &= \frac{16^2 + 18^2 + 2 \cdot 24^2 + 26^2 + 30^2 + 2 \cdot 32^2 + 34^2 + 40^2}{90} \\[1mm]
+&= \frac{256 + 324 + 1152 + 676 + 900 + 2048 + 1156 + 1600}{90} = \frac{8112}{90}.
+\end{aligned}
+$$
+
+Beklenen değer $E(\bar X) = 9{,}2 = \frac{46}{5}$ olduğundan (@exm-ois-xbar-beklenen)
+
+$$\operatorname{Var}(\bar X) = \frac{8112}{90} - \left( \frac{46}{5} \right)^2 = \frac{1352}{15} - \frac{2116}{25} = \frac{6760 - 6348}{75} = \frac{412}{75} \approx 5{,}4933.$$
+
+İki yol aynı sonucu verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Örneklem ortalamasının varyansı ($5{,}49$), kitle varyansından ($32{,}96$) çok küçüktür: ortalama alma, uç değerlerin etkisini yumuşatır. Örneklem büyüdükçe bu etki artar. Aynı kitlede @thm-ois-iadesiz ile $n = 1, 2, 3, 4, 5$ için
+
+$$\operatorname{Var}(\bar X) = 32{,}96; \quad 12{,}36; \quad 5{,}4933; \quad 2{,}06; \quad 0$$
+
+bulunur. $n = 5$ iken bütün kitle seçilir, $\bar X$ her zaman $9{,}2$'dir ve varyansı sıfırdır.
+
+Örneklem ortalaması, kitlenin merkezini tahmin etmek için akla gelen tek istatistik değildir. Aynı örneklemlerle medyanın davranışına bakalım.
+
+:::: {#exm-ois-medyan name="Örneklem Medyanının Beklenen Değeri ve Varyansı"}
+$2$, $4$, $10$, $12$, $18$ kitlesinden iadesiz olarak $n = 3$ birimlik örneklemler çekiliyor. Örneklemin ortanca değerine, yani örneklem medyanına $Y$ diyelim. $Y$'nin örnekleme dağılımını bulunuz; $E(Y)$ ve $\operatorname{Var}(Y)$'yi hesaplayınız.
+
+::: {.cozum}
+Üç sayının medyanı, sıralandığında ortada kalan sayıdır. On örneklemin medyanları şöyledir:
+
+| Örneklem | $y$ | Örneklem | $y$ |
+|:--:|:--:|:--:|:--:|
+| $2, 4, 10$ | $4$ | $2, 12, 18$ | $12$ |
+| $2, 4, 12$ | $4$ | $4, 10, 12$ | $10$ |
+| $2, 4, 18$ | $4$ | $4, 10, 18$ | $10$ |
+| $2, 10, 12$ | $10$ | $4, 12, 18$ | $12$ |
+| $2, 10, 18$ | $10$ | $10, 12, 18$ | $12$ |
+
+$4$ üç örneklemde, $10$ dört örneklemde, $12$ üç örneklemde ortaya çıkar:
+
+| $y$ | $4$ | $10$ | $12$ |
+|:--:|:--:|:--:|:--:|
+| $P(Y = y)$ | $\frac{3}{10}$ | $\frac{4}{10}$ | $\frac{3}{10}$ |
+
+Beklenen değer:
+
+$$E(Y) = 4 \cdot \frac{3}{10} + 10 \cdot \frac{4}{10} + 12 \cdot \frac{3}{10} = \frac{12 + 40 + 36}{10} = \frac{88}{10} = 8{,}8.$$
+
+Varyans için önce ikinci momenti bulalım:
+
+$$E(Y^2) = 16 \cdot \frac{3}{10} + 100 \cdot \frac{4}{10} + 144 \cdot \frac{3}{10} = \frac{48 + 400 + 432}{10} = 88.$$
+
+Buradan
+
+$$\operatorname{Var}(Y) = E(Y^2) - [E(Y)]^2 = 88 - 8{,}8^2 = 88 - 77{,}44 = 10{,}56$$
+
+bulunur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="13.5 3.0 531.0 259.0" role="img" aria-label="Bar chart of the sampling distribution of the median of 3 draws without replacement from 2, 4, 10, 12, 18: values 4, 10, 12 with probabilities 3/10, 4/10, 3/10">
+  <rect x="118.7" y="110.0" width="16" height="120.0" fill="var(--color-remark)" opacity="0.85" rx="1.5"/>
+  <rect x="272.0" y="70.0" width="16" height="160.0" fill="var(--color-remark)" opacity="0.85" rx="1.5"/>
+  <rect x="323.1" y="110.0" width="16" height="120.0" fill="var(--color-remark)" opacity="0.85" rx="1.5"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="46.0" y1="230.0" x2="520.0" y2="230.0"/><polygon points="520.0,230.0 512.0,226.5 512.0,233.5" stroke="none"/></g>
+  <line x1="75.6" y1="227.0" x2="75.6" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="75.6" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">2</text>
+  <line x1="126.7" y1="227.0" x2="126.7" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="126.7" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">4</text>
+  <line x1="177.8" y1="227.0" x2="177.8" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="177.8" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">6</text>
+  <line x1="228.9" y1="227.0" x2="228.9" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="228.9" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">8</text>
+  <line x1="280.0" y1="227.0" x2="280.0" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="280.0" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">10</text>
+  <line x1="331.1" y1="227.0" x2="331.1" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="331.1" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">12</text>
+  <line x1="382.2" y1="227.0" x2="382.2" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="382.2" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">14</text>
+  <line x1="433.3" y1="227.0" x2="433.3" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="433.3" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">16</text>
+  <line x1="484.4" y1="227.0" x2="484.4" y2="233.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="484.4" y="246.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">18</text>
+  <text x="524.0" y="234.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">y</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="50.0" y1="230.0" x2="50.0" y2="40.0"/><polygon points="50.0,40.0 46.5,48.0 53.5,48.0" stroke="none"/></g>
+  <line x1="47.0" y1="190.0" x2="53.0" y2="190.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="194.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,1</text>
+  <line x1="47.0" y1="150.0" x2="53.0" y2="150.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="154.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,2</text>
+  <line x1="47.0" y1="110.0" x2="53.0" y2="110.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="114.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,3</text>
+  <line x1="47.0" y1="70.0" x2="53.0" y2="70.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="74.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,4</text>
+  <circle cx="75.6" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="126.7" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="280.0" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="331.1" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <circle cx="484.4" cy="229.9" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <text x="126.7" y="104.0" fill="var(--color-remark)" font-size="12" text-anchor="middle" font-weight="600">3/10</text>
+  <text x="280.0" y="64.0" fill="var(--color-remark)" font-size="12" text-anchor="middle" font-weight="600">4/10</text>
+  <text x="331.1" y="104.0" fill="var(--color-remark)" font-size="12" text-anchor="middle" font-weight="600">3/10</text>
+  <line x1="249.3" y1="230.0" x2="249.3" y2="142.0" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="5 4" opacity="0.9"/>
+  <line x1="259.6" y1="230.0" x2="259.6" y2="110.0" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="5 4" opacity="0.9"/>
+  <text x="241.3" y="146.0" fill="var(--color-theory)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">E</tspan>(<tspan font-style="italic">Y</tspan>) = 8,8</text>
+  <text x="241.3" y="114.0" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600">&#956; = 9,2</text>
+  <line x1="243.3" y1="110.0" x2="259.6" y2="110.0" stroke="var(--color-practice)" stroke-width="1" opacity="0.8"/>
+  <text x="58.0" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="start">P(<tspan font-style="italic">Y</tspan> = <tspan font-style="italic">y</tspan>)</text>
+  <rect x="330.0" y="19.0" width="11" height="11" fill="var(--color-remark)" opacity="0.85" rx="1.5"/>
+  <text x="347.0" y="29.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">medyan <tspan font-style="italic">Y</tspan> olasılıkları</text>
+  <circle cx="335.5" cy="46.5" r="4" fill="none" stroke="var(--color-base)" stroke-width="1.8"/>
+  <text x="347.0" y="51.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">kitle değerleri</text>
+</svg>
+<figcaption>Aynı örneklemlerin medyanı Y yalnız 4, 10 ve 12 değerlerini alır. Beklenen değeri E(Y) = 8,8, kitle ortalaması 9,2'den farklıdır; olasılıklar da örneklem ortalamasınınkinden daha geniş bir aralığa yayılmıştır.</figcaption>
+</figure>
+```
+
+İki sonuç dikkat çekicidir. Birincisi, $E(Y) = 8{,}8$ ne kitle ortalaması $9{,}2$'ye ne de kitlenin medyanı $10$'a eşittir; örneklem medyanı bu kitlede ortalamada hedefi tutturmaz. İkincisi, $\operatorname{Var}(Y) = 10{,}56$, örneklem ortalamasının varyansı $5{,}49$'un yaklaşık iki katıdır; örneklem ortalaması örneklemden örnekleme daha az değişir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Son olarak, iadeli çekilişi ve örneklem varyansını en küçük bir kitlede inceleyelim.
+
+:::: {#exm-ois-iadeli-varyans name="İadeli Çekilişte Varyansın Doğrulanması"}
+$5$ ve $7$ sayılarından oluşan iki birimlik bir kitleden iadeli olarak $n = 2$ birimlik örneklemler çekiliyor. $\operatorname{Var}(\bar X) = \frac{\sigma^2}{n}$ olduğunu bütün örneklemleri yazarak doğrulayınız.
+
+::: {.cozum}
+Kitle ortalaması $\mu = \frac{5 + 7}{2} = 6$, kitle varyansı
+
+$$\sigma^2 = \frac{1}{2} \left[ (5 - 6)^2 + (7 - 6)^2 \right] = \frac{1 + 1}{2} = 1$$
+
+olur. İadeli çekilişte her çekilişte iki birim de $\frac{1}{2}$ olasılıkla gelir ve çekilişler bağımsızdır. Dört sıralı örneklem $(5, 5)$, $(5, 7)$, $(7, 5)$, $(7, 7)$'nin her biri $\frac{1}{4}$ olasılıklıdır. Ortalamaları sırasıyla $5$, $6$, $6$, $7$'dir. Dolayısıyla
+
+$$E(\bar X) = \frac{5 + 6 + 6 + 7}{4} = 6 = \mu$$
+
+ve
+
+$$\operatorname{Var}(\bar X) = \frac{(5 - 6)^2 + 0^2 + 0^2 + (7 - 6)^2}{4} = \frac{2}{4} = \frac{1}{2}$$
+
+bulunur. Bu değer $\frac{\sigma^2}{n} = \frac{1}{2}$'ye eşittir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-s2-beklenen name="Örneklem Varyansının Beklenen Değeri"}
+$5$ ve $7$ sayılarından oluşan iki birimlik bir kitleden iadeli olarak $n = 2$ birimlik örneklemler çekiliyor. Örneklem varyansı $S^2$'nin beklenen değerinin kitle varyansına eşit olduğunu gösteriniz.
+
+::: {.cozum}
+Kitle varyansı $\sigma^2 = 1$'dir (@exm-ois-iadeli-varyans); dört sıralı örneklemin her biri $\frac{1}{4}$ olasılıklıdır. $n = 2$ için $S^2 = \frac{1}{2-1} \sum_{i=1}^{2} (X_i - \bar X)^2$'dir.
+
+- $(5, 5)$ ve $(7, 7)$ örneklemlerinde iki gözlem ortalamaya eşittir, sapmalar sıfırdır ve $S^2 = 0$ olur.
+- $(5, 7)$ ve $(7, 5)$ örneklemlerinde $\bar x = 6$, sapmalar $\mp 1$'dir ve $S^2 = \frac{1 + 1}{1} = 2$ olur.
+
+Buna göre
+
+$$E(S^2) = 0 \cdot \frac{1}{2} + 2 \cdot \frac{1}{2} = 1 = \sigma^2.$$
+
+$n - 1$ yerine $n$ ile bölseydik değerler $0$ ve $1$ olur, beklenen değer $\frac{1}{2}$ çıkardı; bu, kitle varyansını sistematik olarak küçük tahmin etmek demektir. $S^2$'nin tanımındaki $n - 1$ tam olarak bu kaymayı düzeltir.
+
+Eşitlik gözlemlerin bağımsızlığına dayanır. Aynı kitleden iadesiz $2$ birim çekilseydi tek örneklem $\{5, 7\}$ olurdu, $S^2$ her zaman $2$ olur ve $E(S^2) = 2 \ne \sigma^2$ çıkardı.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Normal Kitleden Alınan Örneklem
+
+@thm-ois-ortalama-bagimsiz, $\bar X$'in beklenen değerini ve varyansını verir ama dağılımının biçimini vermez. Kitle normal dağılımlıysa biçim de tam olarak belirlenir. Normal dağılımın tanımı için [Olasılık Teorisi'ndeki tanıma](../olasilik-teorisi/temel-surekli-dagilimlar.html#def-normal-dagilim), moment üreten fonksiyonu için [oradaki teoreme](../olasilik-teorisi/temel-surekli-dagilimlar.html#thm-normal-momentleri-mgf) bakılabilir.
+
+:::: {#thm-ois-normal-ortalama name="Normal Kitlede Örneklem Ortalamasının Dağılımı"}
+$\mu \in \mathbb{R}$ ve $\sigma^2 \in (0, \infty)$ olmak üzere $X_1, X_2, \ldots, X_n$, $N(\mu, \sigma^2)$ dağılımlı bir kitleden alınan bir örneklem olsun. O zaman
+
+$$\bar X \sim N\!\left( \mu, \frac{\sigma^2}{n} \right)$$
+
+olur.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 33.0 522.0 239.5" role="img" aria-label="Three normal densities centred at mu with standard deviations sigma, sigma over 2 and sigma over 4 for sample sizes 1, 4 and 16">
+  <polygon points="40.0,240.0 40.0,239.9 41.2,239.8 42.4,239.8 43.6,239.8 44.8,239.8 46.0,239.8 47.2,239.8 48.4,239.8 49.6,239.8 50.8,239.8 52.0,239.7 53.2,239.7 54.4,239.7 55.6,239.7 56.8,239.7 58.0,239.7 59.2,239.6 60.4,239.6 61.6,239.6 62.8,239.6 64.0,239.6 65.2,239.5 66.4,239.5 67.6,239.5 68.8,239.5 70.0,239.4 71.2,239.4 72.4,239.4 73.6,239.3 74.8,239.3 76.0,239.3 77.2,239.2 78.4,239.2 79.6,239.2 80.8,239.1 82.0,239.1 83.2,239.0 84.4,239.0 85.6,238.9 86.8,238.9 88.0,238.8 89.2,238.8 90.4,238.7 91.6,238.7 92.8,238.6 94.0,238.5 95.2,238.5 96.4,238.4 97.6,238.3 98.8,238.3 100.0,238.2 101.2,238.1 102.4,238.0 103.6,237.9 104.8,237.8 106.0,237.8 107.2,237.7 108.4,237.6 109.6,237.5 110.8,237.3 112.0,237.2 113.2,237.1 114.4,237.0 115.6,236.9 116.8,236.8 118.0,236.6 119.2,236.5 120.4,236.4 121.6,236.2 122.8,236.1 124.0,235.9 125.2,235.8 126.4,235.6 127.6,235.4 128.8,235.3 130.0,235.1 131.2,234.9 132.4,234.7 133.6,234.5 134.8,234.3 136.0,234.1 137.2,233.9 138.4,233.7 139.6,233.5 140.8,233.3 142.0,233.1 143.2,232.8 144.4,232.6 145.6,232.3 146.8,232.1 148.0,231.8 149.2,231.6 150.4,231.3 151.6,231.0 152.8,230.7 154.0,230.5 155.2,230.2 156.4,229.9 157.6,229.6 158.8,229.3 160.0,228.9 161.2,228.6 162.4,228.3 163.6,227.9 164.8,227.6 166.0,227.3 167.2,226.9 168.4,226.6 169.6,226.2 170.8,225.8 172.0,225.4 173.2,225.1 174.4,224.7 175.6,224.3 176.8,223.9 178.0,223.5 179.2,223.1 180.4,222.7 181.6,222.2 182.8,221.8 184.0,221.4 185.2,221.0 186.4,220.5 187.6,220.1 188.8,219.6 190.0,219.2 191.2,218.7 192.4,218.3 193.6,217.8 194.8,217.3 196.0,216.9 197.2,216.4 198.4,215.9 199.6,215.5 200.8,215.0 202.0,214.5 203.2,214.0 204.4,213.6 205.6,213.1 206.8,212.6 208.0,212.1 209.2,211.6 210.4,211.1 211.6,210.7 212.8,210.2 214.0,209.7 215.2,209.2 216.4,208.7 217.6,208.2 218.8,207.8 220.0,207.3 221.2,206.8 222.4,206.4 223.6,205.9 224.8,205.4 226.0,205.0 227.2,204.5 228.4,204.1 229.6,203.6 230.8,203.2 232.0,202.8 233.2,202.3 234.4,201.9 235.6,201.5 236.8,201.1 238.0,200.7 239.2,200.3 240.4,199.9 241.6,199.5 242.8,199.2 244.0,198.8 245.2,198.4 246.4,198.1 247.6,197.8 248.8,197.4 250.0,197.1 251.2,196.8 252.4,196.5 253.6,196.2 254.8,196.0 256.0,195.7 257.2,195.5 258.4,195.2 259.6,195.0 260.8,194.8 262.0,194.6 263.2,194.4 264.4,194.2 265.6,194.0 266.8,193.9 268.0,193.7 269.2,193.6 270.4,193.5 271.6,193.4 272.8,193.3 274.0,193.2 275.2,193.2 276.4,193.1 277.6,193.1 278.8,193.1 280.0,193.1 281.2,193.1 282.4,193.1 283.6,193.1 284.8,193.2 286.0,193.2 287.2,193.3 288.4,193.4 289.6,193.5 290.8,193.6 292.0,193.7 293.2,193.9 294.4,194.0 295.6,194.2 296.8,194.4 298.0,194.6 299.2,194.8 300.4,195.0 301.6,195.2 302.8,195.5 304.0,195.7 305.2,196.0 306.4,196.2 307.6,196.5 308.8,196.8 310.0,197.1 311.2,197.4 312.4,197.8 313.6,198.1 314.8,198.4 316.0,198.8 317.2,199.2 318.4,199.5 319.6,199.9 320.8,200.3 322.0,200.7 323.2,201.1 324.4,201.5 325.6,201.9 326.8,202.3 328.0,202.8 329.2,203.2 330.4,203.6 331.6,204.1 332.8,204.5 334.0,205.0 335.2,205.4 336.4,205.9 337.6,206.4 338.8,206.8 340.0,207.3 341.2,207.8 342.4,208.2 343.6,208.7 344.8,209.2 346.0,209.7 347.2,210.2 348.4,210.7 349.6,211.1 350.8,211.6 352.0,212.1 353.2,212.6 354.4,213.1 355.6,213.6 356.8,214.0 358.0,214.5 359.2,215.0 360.4,215.5 361.6,215.9 362.8,216.4 364.0,216.9 365.2,217.3 366.4,217.8 367.6,218.3 368.8,218.7 370.0,219.2 371.2,219.6 372.4,220.1 373.6,220.5 374.8,221.0 376.0,221.4 377.2,221.8 378.4,222.2 379.6,222.7 380.8,223.1 382.0,223.5 383.2,223.9 384.4,224.3 385.6,224.7 386.8,225.1 388.0,225.4 389.2,225.8 390.4,226.2 391.6,226.6 392.8,226.9 394.0,227.3 395.2,227.6 396.4,227.9 397.6,228.3 398.8,228.6 400.0,228.9 401.2,229.3 402.4,229.6 403.6,229.9 404.8,230.2 406.0,230.5 407.2,230.7 408.4,231.0 409.6,231.3 410.8,231.6 412.0,231.8 413.2,232.1 414.4,232.3 415.6,232.6 416.8,232.8 418.0,233.1 419.2,233.3 420.4,233.5 421.6,233.7 422.8,233.9 424.0,234.1 425.2,234.3 426.4,234.5 427.6,234.7 428.8,234.9 430.0,235.1 431.2,235.3 432.4,235.4 433.6,235.6 434.8,235.8 436.0,235.9 437.2,236.1 438.4,236.2 439.6,236.4 440.8,236.5 442.0,236.6 443.2,236.8 444.4,236.9 445.6,237.0 446.8,237.1 448.0,237.2 449.2,237.3 450.4,237.5 451.6,237.6 452.8,237.7 454.0,237.8 455.2,237.8 456.4,237.9 457.6,238.0 458.8,238.1 460.0,238.2 461.2,238.3 462.4,238.3 463.6,238.4 464.8,238.5 466.0,238.5 467.2,238.6 468.4,238.7 469.6,238.7 470.8,238.8 472.0,238.8 473.2,238.9 474.4,238.9 475.6,239.0 476.8,239.0 478.0,239.1 479.2,239.1 480.4,239.2 481.6,239.2 482.8,239.2 484.0,239.3 485.2,239.3 486.4,239.3 487.6,239.4 488.8,239.4 490.0,239.4 491.2,239.5 492.4,239.5 493.6,239.5 494.8,239.5 496.0,239.6 497.2,239.6 498.4,239.6 499.6,239.6 500.8,239.6 502.0,239.7 503.2,239.7 504.4,239.7 505.6,239.7 506.8,239.7 508.0,239.7 509.2,239.8 510.4,239.8 511.6,239.8 512.8,239.8 514.0,239.8 515.2,239.8 516.4,239.8 517.6,239.8 518.8,239.8 520.0,239.9 520.0,240.0" fill="var(--color-base)" fill-opacity="0.1" stroke="none" stroke-width="1.2"/>
+  <path d="M40.0,239.9 L41.2,239.8 L42.4,239.8 L43.6,239.8 L44.8,239.8 L46.0,239.8 L47.2,239.8 L48.4,239.8 L49.6,239.8 L50.8,239.8 L52.0,239.7 L53.2,239.7 L54.4,239.7 L55.6,239.7 L56.8,239.7 L58.0,239.7 L59.2,239.6 L60.4,239.6 L61.6,239.6 L62.8,239.6 L64.0,239.6 L65.2,239.5 L66.4,239.5 L67.6,239.5 L68.8,239.5 L70.0,239.4 L71.2,239.4 L72.4,239.4 L73.6,239.3 L74.8,239.3 L76.0,239.3 L77.2,239.2 L78.4,239.2 L79.6,239.2 L80.8,239.1 L82.0,239.1 L83.2,239.0 L84.4,239.0 L85.6,238.9 L86.8,238.9 L88.0,238.8 L89.2,238.8 L90.4,238.7 L91.6,238.7 L92.8,238.6 L94.0,238.5 L95.2,238.5 L96.4,238.4 L97.6,238.3 L98.8,238.3 L100.0,238.2 L101.2,238.1 L102.4,238.0 L103.6,237.9 L104.8,237.8 L106.0,237.8 L107.2,237.7 L108.4,237.6 L109.6,237.5 L110.8,237.3 L112.0,237.2 L113.2,237.1 L114.4,237.0 L115.6,236.9 L116.8,236.8 L118.0,236.6 L119.2,236.5 L120.4,236.4 L121.6,236.2 L122.8,236.1 L124.0,235.9 L125.2,235.8 L126.4,235.6 L127.6,235.4 L128.8,235.3 L130.0,235.1 L131.2,234.9 L132.4,234.7 L133.6,234.5 L134.8,234.3 L136.0,234.1 L137.2,233.9 L138.4,233.7 L139.6,233.5 L140.8,233.3 L142.0,233.1 L143.2,232.8 L144.4,232.6 L145.6,232.3 L146.8,232.1 L148.0,231.8 L149.2,231.6 L150.4,231.3 L151.6,231.0 L152.8,230.7 L154.0,230.5 L155.2,230.2 L156.4,229.9 L157.6,229.6 L158.8,229.3 L160.0,228.9 L161.2,228.6 L162.4,228.3 L163.6,227.9 L164.8,227.6 L166.0,227.3 L167.2,226.9 L168.4,226.6 L169.6,226.2 L170.8,225.8 L172.0,225.4 L173.2,225.1 L174.4,224.7 L175.6,224.3 L176.8,223.9 L178.0,223.5 L179.2,223.1 L180.4,222.7 L181.6,222.2 L182.8,221.8 L184.0,221.4 L185.2,221.0 L186.4,220.5 L187.6,220.1 L188.8,219.6 L190.0,219.2 L191.2,218.7 L192.4,218.3 L193.6,217.8 L194.8,217.3 L196.0,216.9 L197.2,216.4 L198.4,215.9 L199.6,215.5 L200.8,215.0 L202.0,214.5 L203.2,214.0 L204.4,213.6 L205.6,213.1 L206.8,212.6 L208.0,212.1 L209.2,211.6 L210.4,211.1 L211.6,210.7 L212.8,210.2 L214.0,209.7 L215.2,209.2 L216.4,208.7 L217.6,208.2 L218.8,207.8 L220.0,207.3 L221.2,206.8 L222.4,206.4 L223.6,205.9 L224.8,205.4 L226.0,205.0 L227.2,204.5 L228.4,204.1 L229.6,203.6 L230.8,203.2 L232.0,202.8 L233.2,202.3 L234.4,201.9 L235.6,201.5 L236.8,201.1 L238.0,200.7 L239.2,200.3 L240.4,199.9 L241.6,199.5 L242.8,199.2 L244.0,198.8 L245.2,198.4 L246.4,198.1 L247.6,197.8 L248.8,197.4 L250.0,197.1 L251.2,196.8 L252.4,196.5 L253.6,196.2 L254.8,196.0 L256.0,195.7 L257.2,195.5 L258.4,195.2 L259.6,195.0 L260.8,194.8 L262.0,194.6 L263.2,194.4 L264.4,194.2 L265.6,194.0 L266.8,193.9 L268.0,193.7 L269.2,193.6 L270.4,193.5 L271.6,193.4 L272.8,193.3 L274.0,193.2 L275.2,193.2 L276.4,193.1 L277.6,193.1 L278.8,193.1 L280.0,193.1 L281.2,193.1 L282.4,193.1 L283.6,193.1 L284.8,193.2 L286.0,193.2 L287.2,193.3 L288.4,193.4 L289.6,193.5 L290.8,193.6 L292.0,193.7 L293.2,193.9 L294.4,194.0 L295.6,194.2 L296.8,194.4 L298.0,194.6 L299.2,194.8 L300.4,195.0 L301.6,195.2 L302.8,195.5 L304.0,195.7 L305.2,196.0 L306.4,196.2 L307.6,196.5 L308.8,196.8 L310.0,197.1 L311.2,197.4 L312.4,197.8 L313.6,198.1 L314.8,198.4 L316.0,198.8 L317.2,199.2 L318.4,199.5 L319.6,199.9 L320.8,200.3 L322.0,200.7 L323.2,201.1 L324.4,201.5 L325.6,201.9 L326.8,202.3 L328.0,202.8 L329.2,203.2 L330.4,203.6 L331.6,204.1 L332.8,204.5 L334.0,205.0 L335.2,205.4 L336.4,205.9 L337.6,206.4 L338.8,206.8 L340.0,207.3 L341.2,207.8 L342.4,208.2 L343.6,208.7 L344.8,209.2 L346.0,209.7 L347.2,210.2 L348.4,210.7 L349.6,211.1 L350.8,211.6 L352.0,212.1 L353.2,212.6 L354.4,213.1 L355.6,213.6 L356.8,214.0 L358.0,214.5 L359.2,215.0 L360.4,215.5 L361.6,215.9 L362.8,216.4 L364.0,216.9 L365.2,217.3 L366.4,217.8 L367.6,218.3 L368.8,218.7 L370.0,219.2 L371.2,219.6 L372.4,220.1 L373.6,220.5 L374.8,221.0 L376.0,221.4 L377.2,221.8 L378.4,222.2 L379.6,222.7 L380.8,223.1 L382.0,223.5 L383.2,223.9 L384.4,224.3 L385.6,224.7 L386.8,225.1 L388.0,225.4 L389.2,225.8 L390.4,226.2 L391.6,226.6 L392.8,226.9 L394.0,227.3 L395.2,227.6 L396.4,227.9 L397.6,228.3 L398.8,228.6 L400.0,228.9 L401.2,229.3 L402.4,229.6 L403.6,229.9 L404.8,230.2 L406.0,230.5 L407.2,230.7 L408.4,231.0 L409.6,231.3 L410.8,231.6 L412.0,231.8 L413.2,232.1 L414.4,232.3 L415.6,232.6 L416.8,232.8 L418.0,233.1 L419.2,233.3 L420.4,233.5 L421.6,233.7 L422.8,233.9 L424.0,234.1 L425.2,234.3 L426.4,234.5 L427.6,234.7 L428.8,234.9 L430.0,235.1 L431.2,235.3 L432.4,235.4 L433.6,235.6 L434.8,235.8 L436.0,235.9 L437.2,236.1 L438.4,236.2 L439.6,236.4 L440.8,236.5 L442.0,236.6 L443.2,236.8 L444.4,236.9 L445.6,237.0 L446.8,237.1 L448.0,237.2 L449.2,237.3 L450.4,237.5 L451.6,237.6 L452.8,237.7 L454.0,237.8 L455.2,237.8 L456.4,237.9 L457.6,238.0 L458.8,238.1 L460.0,238.2 L461.2,238.3 L462.4,238.3 L463.6,238.4 L464.8,238.5 L466.0,238.5 L467.2,238.6 L468.4,238.7 L469.6,238.7 L470.8,238.8 L472.0,238.8 L473.2,238.9 L474.4,238.9 L475.6,239.0 L476.8,239.0 L478.0,239.1 L479.2,239.1 L480.4,239.2 L481.6,239.2 L482.8,239.2 L484.0,239.3 L485.2,239.3 L486.4,239.3 L487.6,239.4 L488.8,239.4 L490.0,239.4 L491.2,239.5 L492.4,239.5 L493.6,239.5 L494.8,239.5 L496.0,239.6 L497.2,239.6 L498.4,239.6 L499.6,239.6 L500.8,239.6 L502.0,239.7 L503.2,239.7 L504.4,239.7 L505.6,239.7 L506.8,239.7 L508.0,239.7 L509.2,239.8 L510.4,239.8 L511.6,239.8 L512.8,239.8 L514.0,239.8 L515.2,239.8 L516.4,239.8 L517.6,239.8 L518.8,239.8 L520.0,239.9" fill="none" stroke="var(--color-base)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="40.0,240.0 40.0,240.0 41.2,240.0 42.4,240.0 43.6,240.0 44.8,240.0 46.0,240.0 47.2,240.0 48.4,240.0 49.6,240.0 50.8,240.0 52.0,240.0 53.2,240.0 54.4,240.0 55.6,240.0 56.8,240.0 58.0,240.0 59.2,240.0 60.4,240.0 61.6,240.0 62.8,240.0 64.0,240.0 65.2,240.0 66.4,240.0 67.6,240.0 68.8,240.0 70.0,240.0 71.2,240.0 72.4,240.0 73.6,240.0 74.8,240.0 76.0,240.0 77.2,240.0 78.4,240.0 79.6,240.0 80.8,240.0 82.0,240.0 83.2,240.0 84.4,240.0 85.6,240.0 86.8,240.0 88.0,240.0 89.2,240.0 90.4,240.0 91.6,240.0 92.8,240.0 94.0,240.0 95.2,240.0 96.4,240.0 97.6,240.0 98.8,240.0 100.0,240.0 101.2,240.0 102.4,240.0 103.6,240.0 104.8,240.0 106.0,240.0 107.2,240.0 108.4,240.0 109.6,240.0 110.8,240.0 112.0,240.0 113.2,240.0 114.4,240.0 115.6,240.0 116.8,240.0 118.0,240.0 119.2,240.0 120.4,240.0 121.6,240.0 122.8,240.0 124.0,240.0 125.2,240.0 126.4,240.0 127.6,240.0 128.8,240.0 130.0,240.0 131.2,240.0 132.4,240.0 133.6,240.0 134.8,240.0 136.0,240.0 137.2,240.0 138.4,240.0 139.6,240.0 140.8,240.0 142.0,240.0 143.2,239.9 144.4,239.9 145.6,239.9 146.8,239.9 148.0,239.9 149.2,239.9 150.4,239.9 151.6,239.9 152.8,239.9 154.0,239.8 155.2,239.8 156.4,239.8 157.6,239.8 158.8,239.7 160.0,239.7 161.2,239.7 162.4,239.6 163.6,239.6 164.8,239.5 166.0,239.5 167.2,239.4 168.4,239.4 169.6,239.3 170.8,239.2 172.0,239.1 173.2,239.0 174.4,238.9 175.6,238.8 176.8,238.7 178.0,238.6 179.2,238.4 180.4,238.2 181.6,238.1 182.8,237.9 184.0,237.7 185.2,237.5 186.4,237.2 187.6,237.0 188.8,236.7 190.0,236.4 191.2,236.0 192.4,235.7 193.6,235.3 194.8,234.9 196.0,234.5 197.2,234.0 198.4,233.5 199.6,233.0 200.8,232.4 202.0,231.8 203.2,231.2 204.4,230.5 205.6,229.8 206.8,229.1 208.0,228.3 209.2,227.4 210.4,226.6 211.6,225.6 212.8,224.7 214.0,223.7 215.2,222.6 216.4,221.5 217.6,220.3 218.8,219.1 220.0,217.9 221.2,216.6 222.4,215.2 223.6,213.8 224.8,212.4 226.0,210.9 227.2,209.3 228.4,207.8 229.6,206.1 230.8,204.5 232.0,202.8 233.2,201.0 234.4,199.3 235.6,197.5 236.8,195.6 238.0,193.8 239.2,191.9 240.4,190.0 241.6,188.1 242.8,186.1 244.0,184.2 245.2,182.3 246.4,180.3 247.6,178.4 248.8,176.5 250.0,174.6 251.2,172.7 252.4,170.9 253.6,169.0 254.8,167.3 256.0,165.5 257.2,163.8 258.4,162.2 259.6,160.6 260.8,159.0 262.0,157.6 263.2,156.2 264.4,154.9 265.6,153.6 266.8,152.5 268.0,151.4 269.2,150.4 270.4,149.5 271.6,148.8 272.8,148.1 274.0,147.5 275.2,147.0 276.4,146.6 277.6,146.3 278.8,146.2 280.0,146.1 281.2,146.2 282.4,146.3 283.6,146.6 284.8,147.0 286.0,147.5 287.2,148.1 288.4,148.8 289.6,149.5 290.8,150.4 292.0,151.4 293.2,152.5 294.4,153.6 295.6,154.9 296.8,156.2 298.0,157.6 299.2,159.0 300.4,160.6 301.6,162.2 302.8,163.8 304.0,165.5 305.2,167.3 306.4,169.0 307.6,170.9 308.8,172.7 310.0,174.6 311.2,176.5 312.4,178.4 313.6,180.3 314.8,182.3 316.0,184.2 317.2,186.1 318.4,188.1 319.6,190.0 320.8,191.9 322.0,193.8 323.2,195.6 324.4,197.5 325.6,199.3 326.8,201.0 328.0,202.8 329.2,204.5 330.4,206.1 331.6,207.8 332.8,209.3 334.0,210.9 335.2,212.4 336.4,213.8 337.6,215.2 338.8,216.6 340.0,217.9 341.2,219.1 342.4,220.3 343.6,221.5 344.8,222.6 346.0,223.7 347.2,224.7 348.4,225.6 349.6,226.6 350.8,227.4 352.0,228.3 353.2,229.1 354.4,229.8 355.6,230.5 356.8,231.2 358.0,231.8 359.2,232.4 360.4,233.0 361.6,233.5 362.8,234.0 364.0,234.5 365.2,234.9 366.4,235.3 367.6,235.7 368.8,236.0 370.0,236.4 371.2,236.7 372.4,237.0 373.6,237.2 374.8,237.5 376.0,237.7 377.2,237.9 378.4,238.1 379.6,238.2 380.8,238.4 382.0,238.6 383.2,238.7 384.4,238.8 385.6,238.9 386.8,239.0 388.0,239.1 389.2,239.2 390.4,239.3 391.6,239.4 392.8,239.4 394.0,239.5 395.2,239.5 396.4,239.6 397.6,239.6 398.8,239.7 400.0,239.7 401.2,239.7 402.4,239.8 403.6,239.8 404.8,239.8 406.0,239.8 407.2,239.9 408.4,239.9 409.6,239.9 410.8,239.9 412.0,239.9 413.2,239.9 414.4,239.9 415.6,239.9 416.8,239.9 418.0,240.0 419.2,240.0 420.4,240.0 421.6,240.0 422.8,240.0 424.0,240.0 425.2,240.0 426.4,240.0 427.6,240.0 428.8,240.0 430.0,240.0 431.2,240.0 432.4,240.0 433.6,240.0 434.8,240.0 436.0,240.0 437.2,240.0 438.4,240.0 439.6,240.0 440.8,240.0 442.0,240.0 443.2,240.0 444.4,240.0 445.6,240.0 446.8,240.0 448.0,240.0 449.2,240.0 450.4,240.0 451.6,240.0 452.8,240.0 454.0,240.0 455.2,240.0 456.4,240.0 457.6,240.0 458.8,240.0 460.0,240.0 461.2,240.0 462.4,240.0 463.6,240.0 464.8,240.0 466.0,240.0 467.2,240.0 468.4,240.0 469.6,240.0 470.8,240.0 472.0,240.0 473.2,240.0 474.4,240.0 475.6,240.0 476.8,240.0 478.0,240.0 479.2,240.0 480.4,240.0 481.6,240.0 482.8,240.0 484.0,240.0 485.2,240.0 486.4,240.0 487.6,240.0 488.8,240.0 490.0,240.0 491.2,240.0 492.4,240.0 493.6,240.0 494.8,240.0 496.0,240.0 497.2,240.0 498.4,240.0 499.6,240.0 500.8,240.0 502.0,240.0 503.2,240.0 504.4,240.0 505.6,240.0 506.8,240.0 508.0,240.0 509.2,240.0 510.4,240.0 511.6,240.0 512.8,240.0 514.0,240.0 515.2,240.0 516.4,240.0 517.6,240.0 518.8,240.0 520.0,240.0 520.0,240.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="none" stroke-width="1.2"/>
+  <path d="M40.0,240.0 L41.2,240.0 L42.4,240.0 L43.6,240.0 L44.8,240.0 L46.0,240.0 L47.2,240.0 L48.4,240.0 L49.6,240.0 L50.8,240.0 L52.0,240.0 L53.2,240.0 L54.4,240.0 L55.6,240.0 L56.8,240.0 L58.0,240.0 L59.2,240.0 L60.4,240.0 L61.6,240.0 L62.8,240.0 L64.0,240.0 L65.2,240.0 L66.4,240.0 L67.6,240.0 L68.8,240.0 L70.0,240.0 L71.2,240.0 L72.4,240.0 L73.6,240.0 L74.8,240.0 L76.0,240.0 L77.2,240.0 L78.4,240.0 L79.6,240.0 L80.8,240.0 L82.0,240.0 L83.2,240.0 L84.4,240.0 L85.6,240.0 L86.8,240.0 L88.0,240.0 L89.2,240.0 L90.4,240.0 L91.6,240.0 L92.8,240.0 L94.0,240.0 L95.2,240.0 L96.4,240.0 L97.6,240.0 L98.8,240.0 L100.0,240.0 L101.2,240.0 L102.4,240.0 L103.6,240.0 L104.8,240.0 L106.0,240.0 L107.2,240.0 L108.4,240.0 L109.6,240.0 L110.8,240.0 L112.0,240.0 L113.2,240.0 L114.4,240.0 L115.6,240.0 L116.8,240.0 L118.0,240.0 L119.2,240.0 L120.4,240.0 L121.6,240.0 L122.8,240.0 L124.0,240.0 L125.2,240.0 L126.4,240.0 L127.6,240.0 L128.8,240.0 L130.0,240.0 L131.2,240.0 L132.4,240.0 L133.6,240.0 L134.8,240.0 L136.0,240.0 L137.2,240.0 L138.4,240.0 L139.6,240.0 L140.8,240.0 L142.0,240.0 L143.2,239.9 L144.4,239.9 L145.6,239.9 L146.8,239.9 L148.0,239.9 L149.2,239.9 L150.4,239.9 L151.6,239.9 L152.8,239.9 L154.0,239.8 L155.2,239.8 L156.4,239.8 L157.6,239.8 L158.8,239.7 L160.0,239.7 L161.2,239.7 L162.4,239.6 L163.6,239.6 L164.8,239.5 L166.0,239.5 L167.2,239.4 L168.4,239.4 L169.6,239.3 L170.8,239.2 L172.0,239.1 L173.2,239.0 L174.4,238.9 L175.6,238.8 L176.8,238.7 L178.0,238.6 L179.2,238.4 L180.4,238.2 L181.6,238.1 L182.8,237.9 L184.0,237.7 L185.2,237.5 L186.4,237.2 L187.6,237.0 L188.8,236.7 L190.0,236.4 L191.2,236.0 L192.4,235.7 L193.6,235.3 L194.8,234.9 L196.0,234.5 L197.2,234.0 L198.4,233.5 L199.6,233.0 L200.8,232.4 L202.0,231.8 L203.2,231.2 L204.4,230.5 L205.6,229.8 L206.8,229.1 L208.0,228.3 L209.2,227.4 L210.4,226.6 L211.6,225.6 L212.8,224.7 L214.0,223.7 L215.2,222.6 L216.4,221.5 L217.6,220.3 L218.8,219.1 L220.0,217.9 L221.2,216.6 L222.4,215.2 L223.6,213.8 L224.8,212.4 L226.0,210.9 L227.2,209.3 L228.4,207.8 L229.6,206.1 L230.8,204.5 L232.0,202.8 L233.2,201.0 L234.4,199.3 L235.6,197.5 L236.8,195.6 L238.0,193.8 L239.2,191.9 L240.4,190.0 L241.6,188.1 L242.8,186.1 L244.0,184.2 L245.2,182.3 L246.4,180.3 L247.6,178.4 L248.8,176.5 L250.0,174.6 L251.2,172.7 L252.4,170.9 L253.6,169.0 L254.8,167.3 L256.0,165.5 L257.2,163.8 L258.4,162.2 L259.6,160.6 L260.8,159.0 L262.0,157.6 L263.2,156.2 L264.4,154.9 L265.6,153.6 L266.8,152.5 L268.0,151.4 L269.2,150.4 L270.4,149.5 L271.6,148.8 L272.8,148.1 L274.0,147.5 L275.2,147.0 L276.4,146.6 L277.6,146.3 L278.8,146.2 L280.0,146.1 L281.2,146.2 L282.4,146.3 L283.6,146.6 L284.8,147.0 L286.0,147.5 L287.2,148.1 L288.4,148.8 L289.6,149.5 L290.8,150.4 L292.0,151.4 L293.2,152.5 L294.4,153.6 L295.6,154.9 L296.8,156.2 L298.0,157.6 L299.2,159.0 L300.4,160.6 L301.6,162.2 L302.8,163.8 L304.0,165.5 L305.2,167.3 L306.4,169.0 L307.6,170.9 L308.8,172.7 L310.0,174.6 L311.2,176.5 L312.4,178.4 L313.6,180.3 L314.8,182.3 L316.0,184.2 L317.2,186.1 L318.4,188.1 L319.6,190.0 L320.8,191.9 L322.0,193.8 L323.2,195.6 L324.4,197.5 L325.6,199.3 L326.8,201.0 L328.0,202.8 L329.2,204.5 L330.4,206.1 L331.6,207.8 L332.8,209.3 L334.0,210.9 L335.2,212.4 L336.4,213.8 L337.6,215.2 L338.8,216.6 L340.0,217.9 L341.2,219.1 L342.4,220.3 L343.6,221.5 L344.8,222.6 L346.0,223.7 L347.2,224.7 L348.4,225.6 L349.6,226.6 L350.8,227.4 L352.0,228.3 L353.2,229.1 L354.4,229.8 L355.6,230.5 L356.8,231.2 L358.0,231.8 L359.2,232.4 L360.4,233.0 L361.6,233.5 L362.8,234.0 L364.0,234.5 L365.2,234.9 L366.4,235.3 L367.6,235.7 L368.8,236.0 L370.0,236.4 L371.2,236.7 L372.4,237.0 L373.6,237.2 L374.8,237.5 L376.0,237.7 L377.2,237.9 L378.4,238.1 L379.6,238.2 L380.8,238.4 L382.0,238.6 L383.2,238.7 L384.4,238.8 L385.6,238.9 L386.8,239.0 L388.0,239.1 L389.2,239.2 L390.4,239.3 L391.6,239.4 L392.8,239.4 L394.0,239.5 L395.2,239.5 L396.4,239.6 L397.6,239.6 L398.8,239.7 L400.0,239.7 L401.2,239.7 L402.4,239.8 L403.6,239.8 L404.8,239.8 L406.0,239.8 L407.2,239.9 L408.4,239.9 L409.6,239.9 L410.8,239.9 L412.0,239.9 L413.2,239.9 L414.4,239.9 L415.6,239.9 L416.8,239.9 L418.0,240.0 L419.2,240.0 L420.4,240.0 L421.6,240.0 L422.8,240.0 L424.0,240.0 L425.2,240.0 L426.4,240.0 L427.6,240.0 L428.8,240.0 L430.0,240.0 L431.2,240.0 L432.4,240.0 L433.6,240.0 L434.8,240.0 L436.0,240.0 L437.2,240.0 L438.4,240.0 L439.6,240.0 L440.8,240.0 L442.0,240.0 L443.2,240.0 L444.4,240.0 L445.6,240.0 L446.8,240.0 L448.0,240.0 L449.2,240.0 L450.4,240.0 L451.6,240.0 L452.8,240.0 L454.0,240.0 L455.2,240.0 L456.4,240.0 L457.6,240.0 L458.8,240.0 L460.0,240.0 L461.2,240.0 L462.4,240.0 L463.6,240.0 L464.8,240.0 L466.0,240.0 L467.2,240.0 L468.4,240.0 L469.6,240.0 L470.8,240.0 L472.0,240.0 L473.2,240.0 L474.4,240.0 L475.6,240.0 L476.8,240.0 L478.0,240.0 L479.2,240.0 L480.4,240.0 L481.6,240.0 L482.8,240.0 L484.0,240.0 L485.2,240.0 L486.4,240.0 L487.6,240.0 L488.8,240.0 L490.0,240.0 L491.2,240.0 L492.4,240.0 L493.6,240.0 L494.8,240.0 L496.0,240.0 L497.2,240.0 L498.4,240.0 L499.6,240.0 L500.8,240.0 L502.0,240.0 L503.2,240.0 L504.4,240.0 L505.6,240.0 L506.8,240.0 L508.0,240.0 L509.2,240.0 L510.4,240.0 L511.6,240.0 L512.8,240.0 L514.0,240.0 L515.2,240.0 L516.4,240.0 L517.6,240.0 L518.8,240.0 L520.0,240.0" fill="none" stroke="var(--color-practice)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="40.0,240.0 40.0,240.0 41.2,240.0 42.4,240.0 43.6,240.0 44.8,240.0 46.0,240.0 47.2,240.0 48.4,240.0 49.6,240.0 50.8,240.0 52.0,240.0 53.2,240.0 54.4,240.0 55.6,240.0 56.8,240.0 58.0,240.0 59.2,240.0 60.4,240.0 61.6,240.0 62.8,240.0 64.0,240.0 65.2,240.0 66.4,240.0 67.6,240.0 68.8,240.0 70.0,240.0 71.2,240.0 72.4,240.0 73.6,240.0 74.8,240.0 76.0,240.0 77.2,240.0 78.4,240.0 79.6,240.0 80.8,240.0 82.0,240.0 83.2,240.0 84.4,240.0 85.6,240.0 86.8,240.0 88.0,240.0 89.2,240.0 90.4,240.0 91.6,240.0 92.8,240.0 94.0,240.0 95.2,240.0 96.4,240.0 97.6,240.0 98.8,240.0 100.0,240.0 101.2,240.0 102.4,240.0 103.6,240.0 104.8,240.0 106.0,240.0 107.2,240.0 108.4,240.0 109.6,240.0 110.8,240.0 112.0,240.0 113.2,240.0 114.4,240.0 115.6,240.0 116.8,240.0 118.0,240.0 119.2,240.0 120.4,240.0 121.6,240.0 122.8,240.0 124.0,240.0 125.2,240.0 126.4,240.0 127.6,240.0 128.8,240.0 130.0,240.0 131.2,240.0 132.4,240.0 133.6,240.0 134.8,240.0 136.0,240.0 137.2,240.0 138.4,240.0 139.6,240.0 140.8,240.0 142.0,240.0 143.2,240.0 144.4,240.0 145.6,240.0 146.8,240.0 148.0,240.0 149.2,240.0 150.4,240.0 151.6,240.0 152.8,240.0 154.0,240.0 155.2,240.0 156.4,240.0 157.6,240.0 158.8,240.0 160.0,240.0 161.2,240.0 162.4,240.0 163.6,240.0 164.8,240.0 166.0,240.0 167.2,240.0 168.4,240.0 169.6,240.0 170.8,240.0 172.0,240.0 173.2,240.0 174.4,240.0 175.6,240.0 176.8,240.0 178.0,240.0 179.2,240.0 180.4,240.0 181.6,240.0 182.8,240.0 184.0,240.0 185.2,240.0 186.4,240.0 187.6,240.0 188.8,240.0 190.0,240.0 191.2,240.0 192.4,240.0 193.6,240.0 194.8,240.0 196.0,240.0 197.2,240.0 198.4,240.0 199.6,240.0 200.8,240.0 202.0,240.0 203.2,240.0 204.4,240.0 205.6,240.0 206.8,240.0 208.0,240.0 209.2,239.9 210.4,239.9 211.6,239.9 212.8,239.9 214.0,239.8 215.2,239.8 216.4,239.7 217.6,239.6 218.8,239.5 220.0,239.4 221.2,239.3 222.4,239.1 223.6,238.9 224.8,238.6 226.0,238.3 227.2,237.9 228.4,237.4 229.6,236.8 230.8,236.1 232.0,235.4 233.2,234.4 234.4,233.3 235.6,232.1 236.8,230.6 238.0,228.9 239.2,227.0 240.4,224.9 241.6,222.4 242.8,219.6 244.0,216.6 245.2,213.1 246.4,209.4 247.6,205.2 248.8,200.7 250.0,195.7 251.2,190.4 252.4,184.7 253.6,178.7 254.8,172.3 256.0,165.5 257.2,158.5 258.4,151.2 259.6,143.8 260.8,136.1 262.0,128.4 263.2,120.7 264.4,113.0 265.6,105.4 266.8,98.1 268.0,91.0 269.2,84.3 270.4,78.1 271.6,72.4 272.8,67.3 274.0,62.8 275.2,59.1 276.4,56.1 277.6,54.0 278.8,52.7 280.0,52.3 281.2,52.7 282.4,54.0 283.6,56.1 284.8,59.1 286.0,62.8 287.2,67.3 288.4,72.4 289.6,78.1 290.8,84.3 292.0,91.0 293.2,98.1 294.4,105.4 295.6,113.0 296.8,120.7 298.0,128.4 299.2,136.1 300.4,143.8 301.6,151.2 302.8,158.5 304.0,165.5 305.2,172.3 306.4,178.7 307.6,184.7 308.8,190.4 310.0,195.7 311.2,200.7 312.4,205.2 313.6,209.4 314.8,213.1 316.0,216.6 317.2,219.6 318.4,222.4 319.6,224.9 320.8,227.0 322.0,228.9 323.2,230.6 324.4,232.1 325.6,233.3 326.8,234.4 328.0,235.4 329.2,236.1 330.4,236.8 331.6,237.4 332.8,237.9 334.0,238.3 335.2,238.6 336.4,238.9 337.6,239.1 338.8,239.3 340.0,239.4 341.2,239.5 342.4,239.6 343.6,239.7 344.8,239.8 346.0,239.8 347.2,239.9 348.4,239.9 349.6,239.9 350.8,239.9 352.0,240.0 353.2,240.0 354.4,240.0 355.6,240.0 356.8,240.0 358.0,240.0 359.2,240.0 360.4,240.0 361.6,240.0 362.8,240.0 364.0,240.0 365.2,240.0 366.4,240.0 367.6,240.0 368.8,240.0 370.0,240.0 371.2,240.0 372.4,240.0 373.6,240.0 374.8,240.0 376.0,240.0 377.2,240.0 378.4,240.0 379.6,240.0 380.8,240.0 382.0,240.0 383.2,240.0 384.4,240.0 385.6,240.0 386.8,240.0 388.0,240.0 389.2,240.0 390.4,240.0 391.6,240.0 392.8,240.0 394.0,240.0 395.2,240.0 396.4,240.0 397.6,240.0 398.8,240.0 400.0,240.0 401.2,240.0 402.4,240.0 403.6,240.0 404.8,240.0 406.0,240.0 407.2,240.0 408.4,240.0 409.6,240.0 410.8,240.0 412.0,240.0 413.2,240.0 414.4,240.0 415.6,240.0 416.8,240.0 418.0,240.0 419.2,240.0 420.4,240.0 421.6,240.0 422.8,240.0 424.0,240.0 425.2,240.0 426.4,240.0 427.6,240.0 428.8,240.0 430.0,240.0 431.2,240.0 432.4,240.0 433.6,240.0 434.8,240.0 436.0,240.0 437.2,240.0 438.4,240.0 439.6,240.0 440.8,240.0 442.0,240.0 443.2,240.0 444.4,240.0 445.6,240.0 446.8,240.0 448.0,240.0 449.2,240.0 450.4,240.0 451.6,240.0 452.8,240.0 454.0,240.0 455.2,240.0 456.4,240.0 457.6,240.0 458.8,240.0 460.0,240.0 461.2,240.0 462.4,240.0 463.6,240.0 464.8,240.0 466.0,240.0 467.2,240.0 468.4,240.0 469.6,240.0 470.8,240.0 472.0,240.0 473.2,240.0 474.4,240.0 475.6,240.0 476.8,240.0 478.0,240.0 479.2,240.0 480.4,240.0 481.6,240.0 482.8,240.0 484.0,240.0 485.2,240.0 486.4,240.0 487.6,240.0 488.8,240.0 490.0,240.0 491.2,240.0 492.4,240.0 493.6,240.0 494.8,240.0 496.0,240.0 497.2,240.0 498.4,240.0 499.6,240.0 500.8,240.0 502.0,240.0 503.2,240.0 504.4,240.0 505.6,240.0 506.8,240.0 508.0,240.0 509.2,240.0 510.4,240.0 511.6,240.0 512.8,240.0 514.0,240.0 515.2,240.0 516.4,240.0 517.6,240.0 518.8,240.0 520.0,240.0 520.0,240.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="none" stroke-width="1.2"/>
+  <path d="M40.0,240.0 L41.2,240.0 L42.4,240.0 L43.6,240.0 L44.8,240.0 L46.0,240.0 L47.2,240.0 L48.4,240.0 L49.6,240.0 L50.8,240.0 L52.0,240.0 L53.2,240.0 L54.4,240.0 L55.6,240.0 L56.8,240.0 L58.0,240.0 L59.2,240.0 L60.4,240.0 L61.6,240.0 L62.8,240.0 L64.0,240.0 L65.2,240.0 L66.4,240.0 L67.6,240.0 L68.8,240.0 L70.0,240.0 L71.2,240.0 L72.4,240.0 L73.6,240.0 L74.8,240.0 L76.0,240.0 L77.2,240.0 L78.4,240.0 L79.6,240.0 L80.8,240.0 L82.0,240.0 L83.2,240.0 L84.4,240.0 L85.6,240.0 L86.8,240.0 L88.0,240.0 L89.2,240.0 L90.4,240.0 L91.6,240.0 L92.8,240.0 L94.0,240.0 L95.2,240.0 L96.4,240.0 L97.6,240.0 L98.8,240.0 L100.0,240.0 L101.2,240.0 L102.4,240.0 L103.6,240.0 L104.8,240.0 L106.0,240.0 L107.2,240.0 L108.4,240.0 L109.6,240.0 L110.8,240.0 L112.0,240.0 L113.2,240.0 L114.4,240.0 L115.6,240.0 L116.8,240.0 L118.0,240.0 L119.2,240.0 L120.4,240.0 L121.6,240.0 L122.8,240.0 L124.0,240.0 L125.2,240.0 L126.4,240.0 L127.6,240.0 L128.8,240.0 L130.0,240.0 L131.2,240.0 L132.4,240.0 L133.6,240.0 L134.8,240.0 L136.0,240.0 L137.2,240.0 L138.4,240.0 L139.6,240.0 L140.8,240.0 L142.0,240.0 L143.2,240.0 L144.4,240.0 L145.6,240.0 L146.8,240.0 L148.0,240.0 L149.2,240.0 L150.4,240.0 L151.6,240.0 L152.8,240.0 L154.0,240.0 L155.2,240.0 L156.4,240.0 L157.6,240.0 L158.8,240.0 L160.0,240.0 L161.2,240.0 L162.4,240.0 L163.6,240.0 L164.8,240.0 L166.0,240.0 L167.2,240.0 L168.4,240.0 L169.6,240.0 L170.8,240.0 L172.0,240.0 L173.2,240.0 L174.4,240.0 L175.6,240.0 L176.8,240.0 L178.0,240.0 L179.2,240.0 L180.4,240.0 L181.6,240.0 L182.8,240.0 L184.0,240.0 L185.2,240.0 L186.4,240.0 L187.6,240.0 L188.8,240.0 L190.0,240.0 L191.2,240.0 L192.4,240.0 L193.6,240.0 L194.8,240.0 L196.0,240.0 L197.2,240.0 L198.4,240.0 L199.6,240.0 L200.8,240.0 L202.0,240.0 L203.2,240.0 L204.4,240.0 L205.6,240.0 L206.8,240.0 L208.0,240.0 L209.2,239.9 L210.4,239.9 L211.6,239.9 L212.8,239.9 L214.0,239.8 L215.2,239.8 L216.4,239.7 L217.6,239.6 L218.8,239.5 L220.0,239.4 L221.2,239.3 L222.4,239.1 L223.6,238.9 L224.8,238.6 L226.0,238.3 L227.2,237.9 L228.4,237.4 L229.6,236.8 L230.8,236.1 L232.0,235.4 L233.2,234.4 L234.4,233.3 L235.6,232.1 L236.8,230.6 L238.0,228.9 L239.2,227.0 L240.4,224.9 L241.6,222.4 L242.8,219.6 L244.0,216.6 L245.2,213.1 L246.4,209.4 L247.6,205.2 L248.8,200.7 L250.0,195.7 L251.2,190.4 L252.4,184.7 L253.6,178.7 L254.8,172.3 L256.0,165.5 L257.2,158.5 L258.4,151.2 L259.6,143.8 L260.8,136.1 L262.0,128.4 L263.2,120.7 L264.4,113.0 L265.6,105.4 L266.8,98.1 L268.0,91.0 L269.2,84.3 L270.4,78.1 L271.6,72.4 L272.8,67.3 L274.0,62.8 L275.2,59.1 L276.4,56.1 L277.6,54.0 L278.8,52.7 L280.0,52.3 L281.2,52.7 L282.4,54.0 L283.6,56.1 L284.8,59.1 L286.0,62.8 L287.2,67.3 L288.4,72.4 L289.6,78.1 L290.8,84.3 L292.0,91.0 L293.2,98.1 L294.4,105.4 L295.6,113.0 L296.8,120.7 L298.0,128.4 L299.2,136.1 L300.4,143.8 L301.6,151.2 L302.8,158.5 L304.0,165.5 L305.2,172.3 L306.4,178.7 L307.6,184.7 L308.8,190.4 L310.0,195.7 L311.2,200.7 L312.4,205.2 L313.6,209.4 L314.8,213.1 L316.0,216.6 L317.2,219.6 L318.4,222.4 L319.6,224.9 L320.8,227.0 L322.0,228.9 L323.2,230.6 L324.4,232.1 L325.6,233.3 L326.8,234.4 L328.0,235.4 L329.2,236.1 L330.4,236.8 L331.6,237.4 L332.8,237.9 L334.0,238.3 L335.2,238.6 L336.4,238.9 L337.6,239.1 L338.8,239.3 L340.0,239.4 L341.2,239.5 L342.4,239.6 L343.6,239.7 L344.8,239.8 L346.0,239.8 L347.2,239.9 L348.4,239.9 L349.6,239.9 L350.8,239.9 L352.0,240.0 L353.2,240.0 L354.4,240.0 L355.6,240.0 L356.8,240.0 L358.0,240.0 L359.2,240.0 L360.4,240.0 L361.6,240.0 L362.8,240.0 L364.0,240.0 L365.2,240.0 L366.4,240.0 L367.6,240.0 L368.8,240.0 L370.0,240.0 L371.2,240.0 L372.4,240.0 L373.6,240.0 L374.8,240.0 L376.0,240.0 L377.2,240.0 L378.4,240.0 L379.6,240.0 L380.8,240.0 L382.0,240.0 L383.2,240.0 L384.4,240.0 L385.6,240.0 L386.8,240.0 L388.0,240.0 L389.2,240.0 L390.4,240.0 L391.6,240.0 L392.8,240.0 L394.0,240.0 L395.2,240.0 L396.4,240.0 L397.6,240.0 L398.8,240.0 L400.0,240.0 L401.2,240.0 L402.4,240.0 L403.6,240.0 L404.8,240.0 L406.0,240.0 L407.2,240.0 L408.4,240.0 L409.6,240.0 L410.8,240.0 L412.0,240.0 L413.2,240.0 L414.4,240.0 L415.6,240.0 L416.8,240.0 L418.0,240.0 L419.2,240.0 L420.4,240.0 L421.6,240.0 L422.8,240.0 L424.0,240.0 L425.2,240.0 L426.4,240.0 L427.6,240.0 L428.8,240.0 L430.0,240.0 L431.2,240.0 L432.4,240.0 L433.6,240.0 L434.8,240.0 L436.0,240.0 L437.2,240.0 L438.4,240.0 L439.6,240.0 L440.8,240.0 L442.0,240.0 L443.2,240.0 L444.4,240.0 L445.6,240.0 L446.8,240.0 L448.0,240.0 L449.2,240.0 L450.4,240.0 L451.6,240.0 L452.8,240.0 L454.0,240.0 L455.2,240.0 L456.4,240.0 L457.6,240.0 L458.8,240.0 L460.0,240.0 L461.2,240.0 L462.4,240.0 L463.6,240.0 L464.8,240.0 L466.0,240.0 L467.2,240.0 L468.4,240.0 L469.6,240.0 L470.8,240.0 L472.0,240.0 L473.2,240.0 L474.4,240.0 L475.6,240.0 L476.8,240.0 L478.0,240.0 L479.2,240.0 L480.4,240.0 L481.6,240.0 L482.8,240.0 L484.0,240.0 L485.2,240.0 L486.4,240.0 L487.6,240.0 L488.8,240.0 L490.0,240.0 L491.2,240.0 L492.4,240.0 L493.6,240.0 L494.8,240.0 L496.0,240.0 L497.2,240.0 L498.4,240.0 L499.6,240.0 L500.8,240.0 L502.0,240.0 L503.2,240.0 L504.4,240.0 L505.6,240.0 L506.8,240.0 L508.0,240.0 L509.2,240.0 L510.4,240.0 L511.6,240.0 L512.8,240.0 L514.0,240.0 L515.2,240.0 L516.4,240.0 L517.6,240.0 L518.8,240.0 L520.0,240.0" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="290.0" y="56.3" fill="var(--color-theory)" font-size="13" text-anchor="start" font-weight="600">n = 16</text>
+  <text x="319.8" y="173.4" fill="var(--color-practice)" font-size="13" text-anchor="start" font-weight="600">n = 4</text>
+  <text x="374.2" y="212.5" fill="var(--color-base)" font-size="13" text-anchor="start" font-weight="600">n = 1</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="36.0" y1="240.0" x2="530.0" y2="240.0"/><polygon points="530.0,240.0 522.0,236.5 522.0,243.5" stroke="none"/></g>
+  <line x1="68.2" y1="237.0" x2="68.2" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="68.2" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#956;&#8722;3&#963;</text>
+  <line x1="138.8" y1="237.0" x2="138.8" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="138.8" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#956;&#8722;2&#963;</text>
+  <line x1="209.4" y1="237.0" x2="209.4" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="209.4" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#956;&#8722;&#963;</text>
+  <line x1="280.0" y1="237.0" x2="280.0" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="280.0" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#956;</text>
+  <line x1="350.6" y1="237.0" x2="350.6" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="350.6" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#956;+&#963;</text>
+  <line x1="421.2" y1="237.0" x2="421.2" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="421.2" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#956;+2&#963;</text>
+  <line x1="491.8" y1="237.0" x2="491.8" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="491.8" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">&#956;+3&#963;</text>
+</svg>
+<figcaption>N(μ, σ²) kitlesinden alınan örneklemin ortalaması N(μ, σ²/n) dağılımlıdır. n = 1, 4 ve 16 için standart sapma σ, σ/2 ve σ/4 olur: eğri μ'de kalır ama n büyüdükçe daralır ve yükselir.</figcaption>
+</figure>
+```
+
+::: {.ispat}
+Moment üreten fonksiyonlarla gösterelim. Her $X_i$'nin moment üreten fonksiyonu
+
+$$M_{X_i}(t) = E\big( e^{tX_i} \big) = \exp\!\left( \mu t + \frac{\sigma^2 t^2}{2} \right), \qquad t \in \mathbb{R}$$
+
+olur. $\bar X$'in moment üreten fonksiyonunda üsteki toplamı çarpıma ayıralım:
+
+$$M_{\bar X}(t) = E\big( e^{t\bar X} \big) = E\left( e^{\frac{t}{n} X_1} \cdots e^{\frac{t}{n} X_n} \right).$$
+
+$X_1, \ldots, X_n$ bağımsız olduğundan $e^{\frac{t}{n} X_1}, \ldots, e^{\frac{t}{n} X_n}$ de bağımsızdır ve çarpımın beklenen değeri beklenen değerlerin çarpımıdır ([Olasılık Teorisi'ndeki teorem](../olasilik-teorisi/rastgele-vektorlerde-beklenen-deger.html#thm-bagimsiz-carpim-beklenen)). Her çarpan $M_{X_i}$'nin $\frac{t}{n}$ noktasındaki değeridir:
+
+$$M_{\bar X}(t) = \prod_{i=1}^{n} M_{X_i}\!\left( \frac{t}{n} \right) = \left[ \exp\!\left( \frac{\mu t}{n} + \frac{\sigma^2 t^2}{2n^2} \right) \right]^n = \exp\!\left( \mu t + \frac{\sigma^2}{n} \cdot \frac{t^2}{2} \right).$$
+
+Bu, $N\!\left( \mu, \frac{\sigma^2}{n} \right)$ dağılımının moment üreten fonksiyonudur. Moment üreten fonksiyon dağılımı tek türlü belirlediği için ([Olasılık Teorisi'ndeki teklik teoremi](../olasilik-teorisi/karakteristik-ve-moment-ureten-fonksiyonlar.html#thm-mgf-teklik)) $\bar X \sim N\!\left( \mu, \frac{\sigma^2}{n} \right)$'dir. Aynı sonuç, bağımsız normal değişkenlerin toplamının normal olduğunu söyleyen [Olasılık Teorisi'ndeki teoremin](../olasilik-teorisi/temel-surekli-dagilimlar.html#thm-normal-toplami) özel bir durumudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani normal bir kitlede örneklem ortalaması da normaldir, merkezi kitleninkiyle aynıdır, standart sapması ise $\sqrt{n}$ kat küçüktür. Bu sayede $\bar X$ ile ilgili olasılıklar standartlaştırma ve [standart normal tablosu](tablolar.qmd#sec-tablo-normal) ile hesaplanır: $Z = \dfrac{\bar X - \mu}{\sigma / \sqrt{n}} \sim N(0, 1)$.
+
+:::: {#exm-ois-normal-olasilik name="Normal Kitlede Ortalamanın Bir Aralığa Düşmesi"}
+Bir kitlede ölçülen özellik $N(50, 36)$ dağılımlıdır. Bu kitleden $n = 9$ birimlik bir örneklem alınıyor. $P(48 \le \bar X \le 53)$ olasılığını hesaplayınız ve tek bir gözlemin aynı aralığa düşme olasılığıyla karşılaştırınız.
+
+::: {.cozum}
+@thm-ois-normal-ortalama gereği $\bar X \sim N\!\left( 50, \frac{36}{9} \right) = N(50, 4)$, yani standart hata $\sigma_{\bar X} = 2$'dir. Aralığın uçlarını standartlaştıralım:
+
+$$\frac{48 - 50}{2} = -1, \qquad \frac{53 - 50}{2} = 1{,}5.$$
+
+Standart normal eğri $0$'a göre simetrik olduğundan $P(-1 \le Z \le 0) = P(0 \le Z \le 1)$'dir. [Standart normal tablosundan](tablolar.qmd#sec-tablo-normal) $P(0 \le Z \le 1) = 0{,}3413$ ve $P(0 \le Z \le 1{,}5) = 0{,}4332$ okunur:
+
+$$P(48 \le \bar X \le 53) = P(-1 \le Z \le 1{,}5) = 0{,}3413 + 0{,}4332 = 0{,}7745.$$
+
+Tek bir gözlem için standart sapma $6$'dır ve uçlar $\frac{48 - 50}{6} \approx -0{,}33$ ile $\frac{53 - 50}{6} = 0{,}5$'e dönüşür. Tablodan $P(0 \le Z \le 0{,}33) = 0{,}1293$ ve $P(0 \le Z \le 0{,}5) = 0{,}1915$ okunur:
+
+$$P(48 \le X \le 53) \approx 0{,}1293 + 0{,}1915 = 0{,}3208.$$
+
+Dokuz gözlemin ortalaması, tek bir gözleme göre bu aralığa iki kattan fazla olasılıkla düşer.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="12.0 2.5 702.5 249.5" role="img" aria-label="Two normal densities with mean 50 and standard deviations 6 and 2; the area between 48 and 53 is 0.3208 on the left and 0.7745 on the right">
+  <polygon points="158.9,220.0 158.9,169.1 159.1,169.0 159.3,168.9 159.5,168.9 159.7,168.8 159.9,168.7 160.1,168.7 160.3,168.6 160.5,168.5 160.7,168.5 160.9,168.4 161.1,168.4 161.3,168.3 161.5,168.2 161.7,168.2 161.9,168.1 162.1,168.1 162.3,168.0 162.5,167.9 162.7,167.9 162.9,167.8 163.1,167.8 163.3,167.7 163.5,167.7 163.7,167.6 163.9,167.6 164.1,167.5 164.3,167.5 164.5,167.4 164.7,167.4 164.9,167.3 165.1,167.3 165.3,167.2 165.5,167.2 165.7,167.2 165.9,167.1 166.1,167.1 166.3,167.0 166.5,167.0 166.7,167.0 166.9,166.9 167.1,166.9 167.3,166.8 167.5,166.8 167.8,166.8 168.0,166.7 168.2,166.7 168.4,166.7 168.6,166.7 168.8,166.6 169.0,166.6 169.2,166.6 169.4,166.5 169.6,166.5 169.8,166.5 170.0,166.5 170.2,166.4 170.4,166.4 170.6,166.4 170.8,166.4 171.0,166.4 171.2,166.3 171.4,166.3 171.6,166.3 171.8,166.3 172.0,166.3 172.2,166.3 172.4,166.3 172.6,166.2 172.8,166.2 173.0,166.2 173.2,166.2 173.4,166.2 173.6,166.2 173.8,166.2 174.0,166.2 174.2,166.2 174.4,166.2 174.6,166.2 174.8,166.2 175.0,166.2 175.2,166.2 175.4,166.2 175.6,166.2 175.8,166.2 176.0,166.2 176.2,166.2 176.4,166.2 176.6,166.2 176.8,166.2 177.0,166.2 177.2,166.2 177.4,166.2 177.6,166.3 177.8,166.3 178.0,166.3 178.2,166.3 178.4,166.3 178.6,166.3 178.8,166.3 179.0,166.4 179.2,166.4 179.4,166.4 179.6,166.4 179.8,166.4 180.0,166.5 180.2,166.5 180.4,166.5 180.6,166.5 180.8,166.6 181.0,166.6 181.2,166.6 181.4,166.7 181.6,166.7 181.8,166.7 182.0,166.7 182.2,166.8 182.5,166.8 182.7,166.8 182.9,166.9 183.1,166.9 183.3,167.0 183.5,167.0 183.7,167.0 183.9,167.1 184.1,167.1 184.3,167.2 184.5,167.2 184.7,167.2 184.9,167.3 185.1,167.3 185.3,167.4 185.5,167.4 185.7,167.5 185.9,167.5 186.1,167.6 186.3,167.6 186.5,167.7 186.7,167.7 186.9,167.8 187.1,167.8 187.3,167.9 187.5,167.9 187.7,168.0 187.9,168.1 188.1,168.1 188.3,168.2 188.5,168.2 188.7,168.3 188.9,168.4 189.1,168.4 189.3,168.5 189.5,168.5 189.7,168.6 189.9,168.7 190.1,168.7 190.3,168.8 190.5,168.9 190.7,168.9 190.9,169.0 191.1,169.1 191.3,169.2 191.5,169.2 191.7,169.3 191.9,169.4 192.1,169.4 192.3,169.5 192.5,169.6 192.7,169.7 192.9,169.8 193.1,169.8 193.3,169.9 193.5,170.0 193.7,170.1 193.9,170.1 194.1,170.2 194.3,170.3 194.5,170.4 194.7,170.5 194.9,170.6 195.1,170.6 195.3,170.7 195.5,170.8 195.7,170.9 195.9,171.0 196.1,171.1 196.3,171.2 196.5,171.3 196.8,171.4 197.0,171.4 197.2,171.5 197.4,171.6 197.6,171.7 197.8,171.8 198.0,171.9 198.2,172.0 198.4,172.1 198.6,172.2 198.8,172.3 199.0,172.4 199.2,172.5 199.2,220.0" fill="var(--color-practice)" fill-opacity="0.32" stroke="none" stroke-width="1.2"/>
+  <path d="M30.0,219.4 L30.7,219.4 L31.4,219.3 L32.2,219.3 L32.9,219.3 L33.6,219.3 L34.3,219.2 L35.1,219.2 L35.8,219.1 L36.5,219.1 L37.2,219.1 L38.0,219.0 L38.7,219.0 L39.4,218.9 L40.1,218.9 L40.9,218.9 L41.6,218.8 L42.3,218.8 L43.0,218.7 L43.8,218.6 L44.5,218.6 L45.2,218.5 L45.9,218.5 L46.7,218.4 L47.4,218.3 L48.1,218.3 L48.9,218.2 L49.6,218.1 L50.3,218.1 L51.0,218.0 L51.8,217.9 L52.5,217.8 L53.2,217.8 L53.9,217.7 L54.7,217.6 L55.4,217.5 L56.1,217.4 L56.8,217.3 L57.6,217.2 L58.3,217.1 L59.0,217.0 L59.7,216.9 L60.5,216.8 L61.2,216.6 L61.9,216.5 L62.6,216.4 L63.4,216.3 L64.1,216.1 L64.8,216.0 L65.5,215.9 L66.2,215.7 L67.0,215.6 L67.7,215.4 L68.4,215.3 L69.1,215.1 L69.9,214.9 L70.6,214.8 L71.3,214.6 L72.0,214.4 L72.8,214.3 L73.5,214.1 L74.2,213.9 L74.9,213.7 L75.7,213.5 L76.4,213.3 L77.1,213.1 L77.8,212.9 L78.6,212.6 L79.3,212.4 L80.0,212.2 L80.7,212.0 L81.5,211.7 L82.2,211.5 L82.9,211.2 L83.6,211.0 L84.4,210.7 L85.1,210.5 L85.8,210.2 L86.5,209.9 L87.3,209.6 L88.0,209.3 L88.7,209.1 L89.5,208.8 L90.2,208.5 L90.9,208.2 L91.6,207.8 L92.4,207.5 L93.1,207.2 L93.8,206.9 L94.5,206.5 L95.3,206.2 L96.0,205.9 L96.7,205.5 L97.4,205.2 L98.2,204.8 L98.9,204.4 L99.6,204.1 L100.3,203.7 L101.0,203.3 L101.8,202.9 L102.5,202.5 L103.2,202.1 L104.0,201.7 L104.7,201.3 L105.4,200.9 L106.1,200.5 L106.8,200.1 L107.6,199.7 L108.3,199.2 L109.0,198.8 L109.7,198.4 L110.5,197.9 L111.2,197.5 L111.9,197.0 L112.6,196.6 L113.4,196.1 L114.1,195.7 L114.8,195.2 L115.5,194.7 L116.3,194.3 L117.0,193.8 L117.7,193.3 L118.5,192.9 L119.2,192.4 L119.9,191.9 L120.6,191.4 L121.4,190.9 L122.1,190.4 L122.8,190.0 L123.5,189.5 L124.3,189.0 L125.0,188.5 L125.7,188.0 L126.4,187.5 L127.2,187.0 L127.9,186.5 L128.6,186.0 L129.3,185.6 L130.1,185.1 L130.8,184.6 L131.5,184.1 L132.2,183.6 L133.0,183.1 L133.7,182.7 L134.4,182.2 L135.1,181.7 L135.8,181.2 L136.6,180.8 L137.3,180.3 L138.0,179.8 L138.8,179.4 L139.5,178.9 L140.2,178.5 L140.9,178.0 L141.7,177.6 L142.4,177.1 L143.1,176.7 L143.8,176.3 L144.5,175.9 L145.3,175.4 L146.0,175.0 L146.7,174.6 L147.4,174.2 L148.2,173.9 L148.9,173.5 L149.6,173.1 L150.3,172.7 L151.1,172.4 L151.8,172.0 L152.5,171.7 L153.2,171.4 L154.0,171.0 L154.7,170.7 L155.4,170.4 L156.1,170.1 L156.9,169.8 L157.6,169.6 L158.3,169.3 L159.0,169.0 L159.8,168.8 L160.5,168.5 L161.2,168.3 L161.9,168.1 L162.7,167.9 L163.4,167.7 L164.1,167.5 L164.8,167.3 L165.6,167.2 L166.3,167.0 L167.0,166.9 L167.8,166.8 L168.5,166.7 L169.2,166.6 L169.9,166.5 L170.7,166.4 L171.4,166.3 L172.1,166.3 L172.8,166.2 L173.6,166.2 L174.3,166.2 L175.0,166.2 L175.7,166.2 L176.4,166.2 L177.2,166.2 L177.9,166.3 L178.6,166.3 L179.3,166.4 L180.1,166.5 L180.8,166.6 L181.5,166.7 L182.2,166.8 L183.0,166.9 L183.7,167.0 L184.4,167.2 L185.2,167.3 L185.9,167.5 L186.6,167.7 L187.3,167.9 L188.1,168.1 L188.8,168.3 L189.5,168.5 L190.2,168.8 L191.0,169.0 L191.7,169.3 L192.4,169.6 L193.1,169.8 L193.9,170.1 L194.6,170.4 L195.3,170.7 L196.0,171.0 L196.8,171.4 L197.5,171.7 L198.2,172.0 L198.9,172.4 L199.7,172.7 L200.4,173.1 L201.1,173.5 L201.8,173.9 L202.6,174.2 L203.3,174.6 L204.0,175.0 L204.7,175.4 L205.4,175.9 L206.2,176.3 L206.9,176.7 L207.6,177.1 L208.3,177.6 L209.1,178.0 L209.8,178.5 L210.5,178.9 L211.2,179.4 L212.0,179.8 L212.7,180.3 L213.4,180.8 L214.2,181.2 L214.9,181.7 L215.6,182.2 L216.3,182.7 L217.1,183.1 L217.8,183.6 L218.5,184.1 L219.2,184.6 L219.9,185.1 L220.7,185.6 L221.4,186.0 L222.1,186.5 L222.8,187.0 L223.6,187.5 L224.3,188.0 L225.0,188.5 L225.7,189.0 L226.5,189.5 L227.2,190.0 L227.9,190.4 L228.6,190.9 L229.4,191.4 L230.1,191.9 L230.8,192.4 L231.5,192.9 L232.3,193.3 L233.0,193.8 L233.7,194.3 L234.4,194.7 L235.2,195.2 L235.9,195.7 L236.6,196.1 L237.3,196.6 L238.1,197.0 L238.8,197.5 L239.5,197.9 L240.3,198.4 L241.0,198.8 L241.7,199.2 L242.4,199.7 L243.2,200.1 L243.9,200.5 L244.6,200.9 L245.3,201.3 L246.1,201.7 L246.8,202.1 L247.5,202.5 L248.2,202.9 L248.9,203.3 L249.7,203.7 L250.4,204.1 L251.1,204.4 L251.8,204.8 L252.6,205.2 L253.3,205.5 L254.0,205.9 L254.7,206.2 L255.5,206.5 L256.2,206.9 L256.9,207.2 L257.7,207.5 L258.4,207.8 L259.1,208.2 L259.8,208.5 L260.6,208.8 L261.3,209.1 L262.0,209.3 L262.7,209.6 L263.5,209.9 L264.2,210.2 L264.9,210.5 L265.6,210.7 L266.4,211.0 L267.1,211.2 L267.8,211.5 L268.5,211.7 L269.2,212.0 L270.0,212.2 L270.7,212.4 L271.4,212.6 L272.2,212.9 L272.9,213.1 L273.6,213.3 L274.3,213.5 L275.1,213.7 L275.8,213.9 L276.5,214.1 L277.2,214.3 L277.9,214.4 L278.7,214.6 L279.4,214.8 L280.1,214.9 L280.9,215.1 L281.6,215.3 L282.3,215.4 L283.0,215.6 L283.8,215.7 L284.5,215.9 L285.2,216.0 L285.9,216.1 L286.6,216.3 L287.4,216.4 L288.1,216.5 L288.8,216.6 L289.6,216.8 L290.3,216.9 L291.0,217.0 L291.7,217.1 L292.4,217.2 L293.2,217.3 L293.9,217.4 L294.6,217.5 L295.3,217.6 L296.1,217.7 L296.8,217.8 L297.5,217.8 L298.2,217.9 L299.0,218.0 L299.7,218.1 L300.4,218.1 L301.1,218.2 L301.9,218.3 L302.6,218.3 L303.3,218.4 L304.1,218.5 L304.8,218.5 L305.5,218.6 L306.2,218.6 L306.9,218.7 L307.7,218.8 L308.4,218.8 L309.1,218.9 L309.9,218.9 L310.6,218.9 L311.3,219.0 L312.0,219.0 L312.7,219.1 L313.5,219.1 L314.2,219.1 L314.9,219.2 L315.7,219.2 L316.4,219.3 L317.1,219.3 L317.8,219.3 L318.5,219.3 L319.3,219.4 L320.0,219.4" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="158.9" y1="220.0" x2="158.9" y2="169.1" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/>
+  <line x1="199.2" y1="220.0" x2="199.2" y2="172.5" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="26.0" y1="220.0" x2="330.0" y2="220.0"/><polygon points="330.0,220.0 322.0,216.5 322.0,223.5" stroke="none"/></g>
+  <line x1="54.2" y1="217.0" x2="54.2" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="54.2" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">35</text>
+  <line x1="94.4" y1="217.0" x2="94.4" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="94.4" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">40</text>
+  <line x1="134.7" y1="217.0" x2="134.7" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="134.7" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">45</text>
+  <line x1="175.0" y1="217.0" x2="175.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="175.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">50</text>
+  <line x1="215.3" y1="217.0" x2="215.3" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="215.3" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">55</text>
+  <line x1="255.6" y1="217.0" x2="255.6" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="255.6" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">60</text>
+  <line x1="295.8" y1="217.0" x2="295.8" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="295.8" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">65</text>
+  <text x="334.0" y="224.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">x</tspan></text>
+  <text x="179.0" y="202.2" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">0,3208</text>
+  <text x="175.0" y="26.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">Tek gözlem: <tspan font-style="italic">X</tspan> ~ <tspan font-style="italic">N</tspan>(50, 36)</text>
+  <polygon points="518.9,220.0 518.9,122.1 519.1,120.8 519.3,119.6 519.5,118.4 519.7,117.2 519.9,115.9 520.1,114.7 520.3,113.5 520.5,112.3 520.7,111.1 520.9,109.9 521.1,108.7 521.3,107.5 521.5,106.3 521.7,105.1 521.9,103.9 522.1,102.7 522.3,101.6 522.5,100.4 522.7,99.3 522.9,98.1 523.1,97.0 523.3,95.8 523.5,94.7 523.7,93.6 523.9,92.5 524.1,91.4 524.3,90.3 524.5,89.3 524.7,88.2 524.9,87.2 525.1,86.1 525.3,85.1 525.5,84.1 525.7,83.1 525.9,82.2 526.1,81.2 526.3,80.2 526.5,79.3 526.7,78.4 526.9,77.5 527.1,76.6 527.3,75.7 527.5,74.9 527.8,74.1 528.0,73.3 528.2,72.5 528.4,71.7 528.6,70.9 528.8,70.2 529.0,69.5 529.2,68.8 529.4,68.1 529.6,67.5 529.8,66.8 530.0,66.2 530.2,65.6 530.4,65.1 530.6,64.5 530.8,64.0 531.0,63.5 531.2,63.0 531.4,62.6 531.6,62.1 531.8,61.7 532.0,61.3 532.2,61.0 532.4,60.6 532.6,60.3 532.8,60.0 533.0,59.8 533.2,59.5 533.4,59.3 533.6,59.1 533.8,59.0 534.0,58.8 534.2,58.7 534.4,58.6 534.6,58.6 534.8,58.5 535.0,58.5 535.2,58.5 535.4,58.6 535.6,58.6 535.8,58.7 536.0,58.8 536.2,59.0 536.4,59.1 536.6,59.3 536.8,59.5 537.0,59.8 537.2,60.0 537.4,60.3 537.6,60.6 537.8,61.0 538.0,61.3 538.2,61.7 538.4,62.1 538.6,62.6 538.8,63.0 539.0,63.5 539.2,64.0 539.4,64.5 539.6,65.1 539.8,65.6 540.0,66.2 540.2,66.8 540.4,67.5 540.6,68.1 540.8,68.8 541.0,69.5 541.2,70.2 541.4,70.9 541.6,71.7 541.8,72.5 542.0,73.3 542.2,74.1 542.5,74.9 542.7,75.7 542.9,76.6 543.1,77.5 543.3,78.4 543.5,79.3 543.7,80.2 543.9,81.2 544.1,82.2 544.3,83.1 544.5,84.1 544.7,85.1 544.9,86.1 545.1,87.2 545.3,88.2 545.5,89.3 545.7,90.3 545.9,91.4 546.1,92.5 546.3,93.6 546.5,94.7 546.7,95.8 546.9,97.0 547.1,98.1 547.3,99.3 547.5,100.4 547.7,101.6 547.9,102.7 548.1,103.9 548.3,105.1 548.5,106.3 548.7,107.5 548.9,108.7 549.1,109.9 549.3,111.1 549.5,112.3 549.7,113.5 549.9,114.7 550.1,115.9 550.3,117.2 550.5,118.4 550.7,119.6 550.9,120.8 551.1,122.1 551.3,123.3 551.5,124.5 551.7,125.7 551.9,127.0 552.1,128.2 552.3,129.4 552.5,130.6 552.7,131.8 552.9,133.0 553.1,134.2 553.3,135.4 553.5,136.6 553.7,137.8 553.9,139.0 554.1,140.2 554.3,141.4 554.5,142.6 554.7,143.7 554.9,144.9 555.1,146.1 555.3,147.2 555.5,148.4 555.7,149.5 555.9,150.6 556.1,151.8 556.3,152.9 556.5,154.0 556.8,155.1 557.0,156.2 557.2,157.3 557.4,158.3 557.6,159.4 557.8,160.5 558.0,161.5 558.2,162.5 558.4,163.6 558.6,164.6 558.8,165.6 559.0,166.6 559.2,167.6 559.2,220.0" fill="var(--color-practice)" fill-opacity="0.32" stroke="none" stroke-width="1.2"/>
+  <path d="M390.0,220.0 L390.7,220.0 L391.4,220.0 L392.2,220.0 L392.9,220.0 L393.6,220.0 L394.3,220.0 L395.1,220.0 L395.8,220.0 L396.5,220.0 L397.2,220.0 L398.0,220.0 L398.7,220.0 L399.4,220.0 L400.1,220.0 L400.9,220.0 L401.6,220.0 L402.3,220.0 L403.0,220.0 L403.8,220.0 L404.5,220.0 L405.2,220.0 L405.9,220.0 L406.7,220.0 L407.4,220.0 L408.1,220.0 L408.9,220.0 L409.6,220.0 L410.3,220.0 L411.0,220.0 L411.8,220.0 L412.5,220.0 L413.2,220.0 L413.9,220.0 L414.7,220.0 L415.4,220.0 L416.1,220.0 L416.8,220.0 L417.6,220.0 L418.3,220.0 L419.0,220.0 L419.7,220.0 L420.4,220.0 L421.2,220.0 L421.9,220.0 L422.6,220.0 L423.4,220.0 L424.1,220.0 L424.8,220.0 L425.5,220.0 L426.2,220.0 L427.0,220.0 L427.7,220.0 L428.4,220.0 L429.1,220.0 L429.9,220.0 L430.6,220.0 L431.3,220.0 L432.1,220.0 L432.8,220.0 L433.5,220.0 L434.2,220.0 L434.9,220.0 L435.7,220.0 L436.4,220.0 L437.1,220.0 L437.8,220.0 L438.6,220.0 L439.3,220.0 L440.0,220.0 L440.8,220.0 L441.5,220.0 L442.2,220.0 L442.9,220.0 L443.6,220.0 L444.4,220.0 L445.1,220.0 L445.8,220.0 L446.5,220.0 L447.3,220.0 L448.0,220.0 L448.7,220.0 L449.5,220.0 L450.2,220.0 L450.9,220.0 L451.6,220.0 L452.4,220.0 L453.1,220.0 L453.8,220.0 L454.5,220.0 L455.2,220.0 L456.0,220.0 L456.7,220.0 L457.4,220.0 L458.1,220.0 L458.9,220.0 L459.6,220.0 L460.3,220.0 L461.1,220.0 L461.8,220.0 L462.5,220.0 L463.2,220.0 L463.9,220.0 L464.7,220.0 L465.4,220.0 L466.1,220.0 L466.9,220.0 L467.6,220.0 L468.3,220.0 L469.0,220.0 L469.8,220.0 L470.5,219.9 L471.2,219.9 L471.9,219.9 L472.6,219.9 L473.4,219.9 L474.1,219.9 L474.8,219.8 L475.5,219.8 L476.3,219.8 L477.0,219.8 L477.7,219.7 L478.5,219.7 L479.2,219.6 L479.9,219.5 L480.6,219.5 L481.4,219.4 L482.1,219.3 L482.8,219.2 L483.5,219.0 L484.2,218.9 L485.0,218.7 L485.7,218.5 L486.4,218.3 L487.2,218.0 L487.9,217.8 L488.6,217.4 L489.3,217.1 L490.1,216.7 L490.8,216.3 L491.5,215.8 L492.2,215.2 L493.0,214.6 L493.7,214.0 L494.4,213.3 L495.1,212.4 L495.9,211.6 L496.6,210.6 L497.3,209.6 L498.0,208.4 L498.8,207.2 L499.5,205.8 L500.2,204.3 L500.9,202.8 L501.6,201.0 L502.4,199.2 L503.1,197.3 L503.8,195.2 L504.5,192.9 L505.3,190.6 L506.0,188.0 L506.7,185.4 L507.4,182.6 L508.2,179.6 L508.9,176.5 L509.6,173.3 L510.3,169.9 L511.1,166.4 L511.8,162.7 L512.5,159.0 L513.2,155.1 L514.0,151.1 L514.7,147.0 L515.4,142.8 L516.1,138.6 L516.9,134.2 L517.6,129.9 L518.3,125.5 L519.0,121.1 L519.8,116.7 L520.5,112.3 L521.2,108.0 L521.9,103.7 L522.7,99.5 L523.4,95.4 L524.1,91.4 L524.8,87.6 L525.6,83.9 L526.3,80.4 L527.0,77.1 L527.8,74.1 L528.5,71.2 L529.2,68.7 L529.9,66.3 L530.6,64.3 L531.4,62.6 L532.1,61.1 L532.8,60.0 L533.5,59.2 L534.3,58.7 L535.0,58.5 L535.7,58.7 L536.5,59.2 L537.2,60.0 L537.9,61.1 L538.6,62.6 L539.4,64.3 L540.1,66.3 L540.8,68.7 L541.5,71.2 L542.2,74.1 L543.0,77.1 L543.7,80.4 L544.4,83.9 L545.2,87.6 L545.9,91.4 L546.6,95.4 L547.3,99.5 L548.1,103.7 L548.8,108.0 L549.5,112.3 L550.2,116.7 L551.0,121.1 L551.7,125.5 L552.4,129.9 L553.1,134.2 L553.9,138.6 L554.6,142.8 L555.3,147.0 L556.0,151.1 L556.8,155.1 L557.5,159.0 L558.2,162.7 L558.9,166.4 L559.7,169.9 L560.4,173.3 L561.1,176.5 L561.8,179.6 L562.5,182.6 L563.3,185.4 L564.0,188.0 L564.7,190.6 L565.5,192.9 L566.2,195.2 L566.9,197.3 L567.6,199.2 L568.4,201.0 L569.1,202.8 L569.8,204.3 L570.5,205.8 L571.2,207.2 L572.0,208.4 L572.7,209.6 L573.4,210.6 L574.1,211.6 L574.9,212.4 L575.6,213.3 L576.3,214.0 L577.0,214.6 L577.8,215.2 L578.5,215.8 L579.2,216.3 L580.0,216.7 L580.7,217.1 L581.4,217.4 L582.1,217.8 L582.8,218.0 L583.6,218.3 L584.3,218.5 L585.0,218.7 L585.8,218.9 L586.5,219.0 L587.2,219.2 L587.9,219.3 L588.6,219.4 L589.4,219.5 L590.1,219.5 L590.8,219.6 L591.5,219.7 L592.3,219.7 L593.0,219.8 L593.7,219.8 L594.4,219.8 L595.2,219.8 L595.9,219.9 L596.6,219.9 L597.3,219.9 L598.1,219.9 L598.8,219.9 L599.5,219.9 L600.2,220.0 L601.0,220.0 L601.7,220.0 L602.4,220.0 L603.1,220.0 L603.9,220.0 L604.6,220.0 L605.3,220.0 L606.0,220.0 L606.8,220.0 L607.5,220.0 L608.2,220.0 L609.0,220.0 L609.7,220.0 L610.4,220.0 L611.1,220.0 L611.9,220.0 L612.6,220.0 L613.3,220.0 L614.0,220.0 L614.8,220.0 L615.5,220.0 L616.2,220.0 L616.9,220.0 L617.7,220.0 L618.4,220.0 L619.1,220.0 L619.8,220.0 L620.6,220.0 L621.3,220.0 L622.0,220.0 L622.7,220.0 L623.5,220.0 L624.2,220.0 L624.9,220.0 L625.6,220.0 L626.4,220.0 L627.1,220.0 L627.8,220.0 L628.5,220.0 L629.2,220.0 L630.0,220.0 L630.7,220.0 L631.4,220.0 L632.2,220.0 L632.9,220.0 L633.6,220.0 L634.3,220.0 L635.0,220.0 L635.8,220.0 L636.5,220.0 L637.2,220.0 L638.0,220.0 L638.7,220.0 L639.4,220.0 L640.1,220.0 L640.9,220.0 L641.6,220.0 L642.3,220.0 L643.0,220.0 L643.8,220.0 L644.5,220.0 L645.2,220.0 L645.9,220.0 L646.6,220.0 L647.4,220.0 L648.1,220.0 L648.8,220.0 L649.5,220.0 L650.3,220.0 L651.0,220.0 L651.7,220.0 L652.5,220.0 L653.2,220.0 L653.9,220.0 L654.6,220.0 L655.3,220.0 L656.1,220.0 L656.8,220.0 L657.5,220.0 L658.2,220.0 L659.0,220.0 L659.7,220.0 L660.4,220.0 L661.1,220.0 L661.9,220.0 L662.6,220.0 L663.3,220.0 L664.1,220.0 L664.8,220.0 L665.5,220.0 L666.2,220.0 L666.9,220.0 L667.7,220.0 L668.4,220.0 L669.1,220.0 L669.9,220.0 L670.6,220.0 L671.3,220.0 L672.0,220.0 L672.8,220.0 L673.5,220.0 L674.2,220.0 L674.9,220.0 L675.7,220.0 L676.4,220.0 L677.1,220.0 L677.8,220.0 L678.5,220.0 L679.3,220.0 L680.0,220.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="518.9" y1="220.0" x2="518.9" y2="122.1" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/>
+  <line x1="559.2" y1="220.0" x2="559.2" y2="167.6" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="386.0" y1="220.0" x2="690.0" y2="220.0"/><polygon points="690.0,220.0 682.0,216.5 682.0,223.5" stroke="none"/></g>
+  <line x1="414.2" y1="217.0" x2="414.2" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="414.2" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">35</text>
+  <line x1="454.4" y1="217.0" x2="454.4" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="454.4" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">40</text>
+  <line x1="494.7" y1="217.0" x2="494.7" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="494.7" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">45</text>
+  <line x1="535.0" y1="217.0" x2="535.0" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="535.0" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">50</text>
+  <line x1="575.3" y1="217.0" x2="575.3" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="575.3" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">55</text>
+  <line x1="615.6" y1="217.0" x2="615.6" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="615.6" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">60</text>
+  <line x1="655.8" y1="217.0" x2="655.8" y2="223.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="655.8" y="236.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">65</text>
+  <text x="694.0" y="224.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">x</tspan></text>
+  <text x="623.6" y="122.9" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">0,7745</text>
+  <line x1="603.5" y1="126.9" x2="547.1" y2="171.4" stroke="var(--color-practice)" stroke-width="1" opacity="0.8"/>
+  <text x="535.0" y="26.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">X&#772;</tspan> ~ <tspan font-style="italic">N</tspan>(50, 4), n = 9</text>
+</svg>
+<figcaption>Aynı aralık, iki farklı dağılım: 48 ile 53 arasına tek bir gözlemin düşme olasılığı yaklaşık 0,3208 iken, 9 gözlemin ortalamasının düşme olasılığı 0,7745'tir. Ortalamanın dağılımı μ = 50 çevresinde üç kat daha dardır (standart sapma 6 yerine 2).</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Kitle normal değilse $\bar X$'in dağılımı genellikle tam olarak normal değildir. Yine de örneklem hacmi büyüdükçe dağılımı $N\!\left( \mu, \frac{\sigma^2}{n} \right)$'ye yaklaşır; bu, bir sonraki bölümde ele alacağımız merkezi limit teoremidir.
+
+## Markov ve Chebyshev Eşitsizlikleri
+
+Kitlenin dağılımını bilmiyorsak $\bar X$ ile ilgili olasılıkları tam olarak hesaplayamayız. Yine de yalnızca varyansı kullanarak bu olasılıklara kaba ama her durumda geçerli sınırlar koyabiliriz. Bunun için Olasılık Teorisi'nde ispatlanan iki eşitsizliği hatırlayalım.
+
+**Markov eşitsizliği** ([Olasılık Teorisi'ndeki teorem](../olasilik-teorisi/beklenen-deger-ve-varyans.html#thm-markov-esitsizligi)): $Y$ negatif değer almayan ve beklenen değeri olan bir rastgele değişkense her $c > 0$ için
+
+$$P(Y \ge c) \le \frac{E(Y)}{c}$$
+
+olur. İspatın özü şudur: $E(Y) = \sum_y y f(y)$ toplamından $y < c$ olan negatif olmayan terimleri atıp kalan terimlerde $y$ yerine daha küçük olan $c$'yi yazarsak $E(Y) \ge c\, P(Y \ge c)$ bulunur; sürekli durumda toplam yerine integral kullanılır. Sınır yalnızca $c > E(Y)$ olduğunda bilgi verir; $c \le E(Y)$ için sağ taraf en az $1$'dir ve her olasılık zaten $1$'den küçük ya da eşittir.
+
+**Chebyshev eşitsizliği** ([Olasılık Teorisi'ndeki teorem](../olasilik-teorisi/beklenen-deger-ve-varyans.html#thm-chebyshev-esitsizligi)): $X$ varyansı var olan ($\sigma_X^2 < \infty$) bir rastgele değişkense her $c > 0$ için
+
+$$P\big( |X - E(X)| \ge c \big) \le \frac{\operatorname{Var}(X)}{c^2}$$
+
+olur. Bu, Markov eşitsizliğinin $Y = (X - E(X))^2$ değişkenine ve $c^2$ eşiğine uygulanmasıdır: $|X - E(X)| \ge c$ olayı $Y \ge c^2$ olayıyla aynıdır ve $E(Y) = \operatorname{Var}(X)$'tir. $\sigma_X > 0$ iken $c = k\sigma_X$ ($k > 0$) alınırsa dışarıda kalma olasılığı için bir üst sınır, tümleyen olaya geçilirse içeride kalma olasılığı için bir alt sınır elde edilir:
+
+$$P\big( |X - E(X)| \ge k\sigma_X \big) \le \frac{1}{k^2}, \qquad P\big( |X - E(X)| < k\sigma_X \big) \ge 1 - \frac{1}{k^2}.$$
+
+$0 < k \le 1$ için bu sınırlar bilgi vermez: üst sınır en az $1$, alt sınır en çok $0$'dır.
+
+:::: {#exm-ois-markov name="Markov Eşitsizliğiyle Bir Üst Sınır"}
+Bir çağrı merkezine bir saatte gelen çağrı sayısı $Y$'nin beklenen değeri $20$'dir; dağılımı hakkında başka bilgi yoktur. Bir saatte en az $50$ çağrı gelme olasılığı için bir üst sınır bulunuz.
+
+::: {.cozum}
+Çağrı sayısı negatif olamaz, bu yüzden Markov eşitsizliği $c = 50$ ile uygulanabilir:
+
+$$P(Y \ge 50) \le \frac{E(Y)}{50} = \frac{20}{50} = 0{,}4.$$
+
+Yani dağılım ne olursa olsun, bir saatte $50$ ya da daha fazla çağrı gelme olasılığı en çok $0{,}4$'tür. Aynı yöntem $c = 15$ için $\frac{20}{15} > 1$ verir; bu sınır bir şey söylemez, çünkü $15 < E(Y)$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-markov-chebyshev name="Varyans Bilinince Sınırın İyileşmesi"}
+Bir çağrı merkezine bir saatte gelen çağrı sayısı $Y$'nin beklenen değeri $20$, varyansı $20$'dir. Bir saatte en az $50$ çağrı gelme olasılığı için Chebyshev eşitsizliğiyle bir üst sınır bulunuz.
+
+::: {.cozum}
+$Y \ge 50$ ise $Y - 20 \ge 30$'dur, dolayısıyla $|Y - 20| \ge 30$ olur. Yani $(Y \ge 50)$ olayı $\big( |Y - 20| \ge 30 \big)$ olayının içindedir ve olasılığı ondan büyük olamaz. Chebyshev eşitsizliği $c = 30$ ile
+
+$$P(Y \ge 50) \le P\big( |Y - 20| \ge 30 \big) \le \frac{20}{30^2} = \frac{20}{900} = \frac{1}{45} \approx 0{,}0222$$
+
+verir. Varyans bilgisi, yalnız beklenen değeri kullanan Markov sınırı $0{,}4$'ü yaklaşık on sekiz kat iyileştirmiştir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Chebyshev eşitsizliğini örneklem ortalamasına uyguladığımızda, $\bar X$'in varyansı $n$ ile küçüldüğü için çok daha güçlü bir sonuç elde ederiz.
+
+:::: {#thm-ois-chebyshev-ortalama name="Örneklem Ortalaması için Chebyshev Eşitsizliği"}
+$X_1, X_2, \ldots, X_n$, beklenen değeri $\mu$ ve varyansı $0 < \sigma^2 < \infty$ olan bir kitleden alınan bir örneklem olsun. Her $\varepsilon > 0$ için
+
+$$P\big( |\bar X - \mu| \ge \varepsilon \big) \le \frac{\sigma^2}{n \varepsilon^2}$$
+
+olur. Ayrıca her $k > 0$ için
+
+$$P\big( |\bar X - \mu| < k\sigma_{\bar X} \big) \ge 1 - \frac{1}{k^2}, \qquad \sigma_{\bar X} = \frac{\sigma}{\sqrt{n}}$$
+
+olur.
+
+::: {.ispat}
+@thm-ois-ortalama-bagimsiz gereği $E(\bar X) = \mu$ ve $\operatorname{Var}(\bar X) = \frac{\sigma^2}{n}$'dir. Chebyshev eşitsizliğini $\bar X$ değişkenine $c = \varepsilon$ ile uygularsak
+
+$$P\big( |\bar X - \mu| \ge \varepsilon \big) \le \frac{\operatorname{Var}(\bar X)}{\varepsilon^2} = \frac{\sigma^2}{n\varepsilon^2}$$
+
+bulunur. $c = k\sigma_{\bar X}$ alıp tümleyen olaya geçersek
+
+$$P\big( |\bar X - \mu| < k\sigma_{\bar X} \big) = 1 - P\big( |\bar X - \mu| \ge k\sigma_{\bar X} \big) \ge 1 - \frac{\sigma_{\bar X}^2}{k^2 \sigma_{\bar X}^2} = 1 - \frac{1}{k^2}$$
+
+elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani örneklem ortalamasının kitle ortalamasından $\varepsilon$ kadar sapma olasılığı, sabit bir $\varepsilon$ için $n$ büyüdükçe $\frac{1}{n}$ hızıyla sıfıra iner. Sonlu bir kitleden iadesiz çekilişte $\operatorname{Var}(\bar X)$ daha da küçük olduğundan aynı sınırlar orada da geçerlidir.
+
+:::: {#exm-ois-paket-a name="Paket Ağırlıklarında Chebyshev Sınırı"}
+Bir makinenin doldurduğu paketlerin ağırlıklarının standart sapması $\sigma = 10$ gramdır; ağırlıkların dağılımı bilinmiyor. $100$ paketlik bir örneklemin ortalama ağırlığının kitle ortalamasından $2$ gramdan az sapma olasılığı için bir alt sınır bulunuz.
+
+::: {.cozum}
+Standart hata $\sigma_{\bar X} = \frac{10}{\sqrt{100}} = 1$ gramdır. $2$ gram $= 2\sigma_{\bar X}$ olduğundan @thm-ois-chebyshev-ortalama $k = 2$ ile uygulanır:
+
+$$P\big( |\bar X - \mu| < 2 \big) \ge 1 - \frac{1}{2^2} = 0{,}75.$$
+
+Yani örneklem ortalaması en az $0{,}75$ olasılıkla kitle ortalamasının $2$ gram yakınındadır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-paket-b name="Normal Kitlede Aynı Olasılığın Tam Değeri"}
+Bir makinenin doldurduğu paketlerin ağırlıkları $\sigma = 10$ gram standart sapmalı normal dağılıma sahiptir. $100$ paketlik bir örneklemin ortalama ağırlığının kitle ortalamasından $2$ gramdan az sapma olasılığını hesaplayınız.
+
+::: {.cozum}
+@thm-ois-normal-ortalama gereği $\bar X \sim N(\mu, 1)$'dir, yani $Z = \bar X - \mu$ standart normaldir. Simetri ve [standart normal tablosu](tablolar.qmd#sec-tablo-normal) ile
+
+$$P\big( |\bar X - \mu| < 2 \big) = P(-2 < Z < 2) = 2\, P(0 \le Z < 2) = 2 \cdot 0{,}4772 = 0{,}9544$$
+
+bulunur. Gerçek olasılık, Chebyshev eşitsizliğinin verdiği $0{,}75$ alt sınırından (@exm-ois-paket-a) oldukça büyüktür. Chebyshev sınırı her dağılım için geçerli olmanın bedelini bu kabalıkla öder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-orneklem-buyuklugu-a name="Chebyshev ile Örneklem Hacmi"}
+Bir kitlenin standart sapması $\sigma$ biliniyor, dağılımı bilinmiyor. Örneklem ortalamasının kitle ortalamasına $0{,}5\sigma$'dan daha yakın olma olasılığının en az $0{,}95$ olmasını güvenceye almak için örneklem hacmi en az kaç olmalıdır?
+
+::: {.cozum}
+@thm-ois-chebyshev-ortalama $\varepsilon = 0{,}5\sigma$ ile
+
+$$P\big( |\bar X - \mu| \ge 0{,}5\sigma \big) \le \frac{\sigma^2}{n \cdot 0{,}25\,\sigma^2} = \frac{4}{n}$$
+
+verir, dolayısıyla $P\big( |\bar X - \mu| < 0{,}5\sigma \big) \ge 1 - \frac{4}{n}$'dir. Bu alt sınırın en az $0{,}95$ olması için
+
+$$1 - \frac{4}{n} \ge 0{,}95 \iff \frac{4}{n} \le 0{,}05 \iff n \ge 80$$
+
+gerekir. Yani $n = 80$ birimlik bir örneklem, dağılım ne olursa olsun istenen güvenceyi verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ois-orneklem-buyuklugu-b name="Normal Kitlede Örneklem Hacmi"}
+Bir kitle $N(\mu, \sigma^2)$ dağılımlıdır. Örneklem ortalamasının kitle ortalamasına $0{,}5\sigma$'dan daha yakın olma olasılığının en az $0{,}95$ olması için örneklem hacmi en az kaç olmalıdır?
+
+::: {.cozum}
+@thm-ois-normal-ortalama gereği $Z = \dfrac{\bar X - \mu}{\sigma / \sqrt{n}}$ standart normaldir. $|\bar X - \mu| < 0{,}5\sigma$ eşitsizliğini $\frac{\sigma}{\sqrt{n}}$'ye bölersek $|Z| < 0{,}5\sqrt{n}$ olur. Simetri ile
+
+$$P\big( |\bar X - \mu| < 0{,}5\sigma \big) = 2\, P\big( 0 \le Z < 0{,}5\sqrt{n} \big).$$
+
+Bunun en az $0{,}95$ olması için $P\big( 0 \le Z < 0{,}5\sqrt{n} \big) \ge 0{,}475$ gerekir. [Standart normal tablosunda](tablolar.qmd#sec-tablo-normal) $0{,}4750$ alanı $z = 1{,}96$'ya karşılık gelir ve alan $z$ ile birlikte artar. Dolayısıyla
+
+$$0{,}5\sqrt{n} \ge 1{,}96 \iff \sqrt{n} \ge 3{,}92 \iff n \ge 15{,}3664$$
+
+olmalıdır; en küçük tam sayı $n = 16$'dır. Kitlenin normal olduğunu bilmek, gereken örneklem hacmini $80$'den $16$'ya indirir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="13.0 3.0 532.0 269.0" role="img" aria-label="Chebyshev lower bound 1 - 4/n and the normal probability for the mean to be within half a sigma of mu as functions of n, with the level 0.95 reached at n 80 and n 16">
+  <line x1="50.0" y1="68.1" x2="510.0" y2="68.1" stroke="var(--color-base)" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <text x="510.0" y="84.1" fill="var(--color-base)" font-size="12" text-anchor="end" font-weight="600">0,95</text>
+  <path d="M54.6,170.7 L55.7,163.4 L56.9,156.9 L58.0,151.2 L59.2,146.0 L60.3,141.3 L61.4,137.0 L62.6,133.0 L63.7,129.3 L64.8,125.8 L66.0,122.6 L67.1,119.6 L68.3,116.8 L69.4,114.1 L70.5,111.7 L71.7,109.3 L72.8,107.1 L74.0,105.0 L75.1,103.0 L76.2,101.1 L77.4,99.3 L78.5,97.6 L79.6,96.0 L80.8,94.5 L81.9,93.0 L83.1,91.6 L84.2,90.3 L85.3,89.0 L86.5,87.8 L87.6,86.7 L88.8,85.6 L89.9,84.5 L91.0,83.5 L92.2,82.6 L93.3,81.7 L94.4,80.8 L95.6,79.9 L96.7,79.1 L97.9,78.4 L99.0,77.6 L100.1,76.9 L101.3,76.2 L102.4,75.6 L103.6,75.0 L104.7,74.4 L105.8,73.8 L107.0,73.2 L108.1,72.7 L109.2,72.2 L110.4,71.7 L111.5,71.3 L112.7,70.8 L113.8,70.4 L114.9,70.0 L116.1,69.6 L117.2,69.2 L118.4,68.8 L119.5,68.5 L120.6,68.1 L121.8,67.8 L122.9,67.5 L124.0,67.2 L125.2,66.9 L126.3,66.6 L127.5,66.3 L128.6,66.1 L129.7,65.8 L130.9,65.6 L132.0,65.3 L133.2,65.1 L134.3,64.9 L135.4,64.7 L136.6,64.5 L137.7,64.3 L138.8,64.1 L140.0,63.9 L141.1,63.8 L142.3,63.6 L143.4,63.4 L144.5,63.3 L145.7,63.1 L146.8,63.0 L148.0,62.9 L149.1,62.7 L150.2,62.6 L151.4,62.5 L152.5,62.4 L153.6,62.2 L154.8,62.1 L155.9,62.0 L157.1,61.9 L158.2,61.8 L159.3,61.7 L160.5,61.6 L161.6,61.5 L162.8,61.5 L163.9,61.4 L165.0,61.3 L166.2,61.2 L167.3,61.1 L168.4,61.1 L169.6,61.0 L170.7,60.9 L171.9,60.9 L173.0,60.8 L174.1,60.7 L175.3,60.7 L176.4,60.6 L177.6,60.6 L178.7,60.5 L179.8,60.5 L181.0,60.4 L182.1,60.4 L183.3,60.3 L184.4,60.3 L185.5,60.3 L186.7,60.2 L187.8,60.2 L188.9,60.1 L190.1,60.1 L191.2,60.1 L192.4,60.0 L193.5,60.0 L194.6,60.0 L195.8,59.9 L196.9,59.9 L198.1,59.9 L199.2,59.8 L200.3,59.8 L201.5,59.8 L202.6,59.8 L203.7,59.7 L204.9,59.7 L206.0,59.7 L207.2,59.7 L208.3,59.7 L209.4,59.6 L210.6,59.6 L211.7,59.6 L212.9,59.6 L214.0,59.6 L215.1,59.5 L216.3,59.5 L217.4,59.5 L218.5,59.5 L219.7,59.5 L220.8,59.5 L222.0,59.5 L223.1,59.4 L224.2,59.4 L225.4,59.4 L226.5,59.4 L227.7,59.4 L228.8,59.4 L229.9,59.4 L231.1,59.4 L232.2,59.3 L233.3,59.3 L234.5,59.3 L235.6,59.3 L236.8,59.3 L237.9,59.3 L239.0,59.3 L240.2,59.3 L241.3,59.3 L242.5,59.3 L243.6,59.3 L244.7,59.3 L245.9,59.2 L247.0,59.2 L248.1,59.2 L249.3,59.2 L250.4,59.2 L251.6,59.2 L252.7,59.2 L253.8,59.2 L255.0,59.2 L256.1,59.2 L257.3,59.2 L258.4,59.2 L259.5,59.2 L260.7,59.2 L261.8,59.2 L262.9,59.2 L264.1,59.2 L265.2,59.2 L266.4,59.2 L267.5,59.2 L268.6,59.2 L269.8,59.1 L270.9,59.1 L272.1,59.1 L273.2,59.1 L274.3,59.1 L275.5,59.1 L276.6,59.1 L277.7,59.1 L278.9,59.1 L280.0,59.1 L281.2,59.1 L282.3,59.1 L283.4,59.1 L284.6,59.1 L285.7,59.1 L286.9,59.1 L288.0,59.1 L289.1,59.1 L290.3,59.1 L291.4,59.1 L292.5,59.1 L293.7,59.1 L294.8,59.1 L296.0,59.1 L297.1,59.1 L298.2,59.1 L299.4,59.1 L300.5,59.1 L301.7,59.1 L302.8,59.1 L303.9,59.1 L305.1,59.1 L306.2,59.1 L307.3,59.1 L308.5,59.1 L309.6,59.1 L310.8,59.1 L311.9,59.1 L313.0,59.1 L314.2,59.1 L315.3,59.1 L316.5,59.1 L317.6,59.1 L318.7,59.1 L319.9,59.1 L321.0,59.1 L322.1,59.1 L323.3,59.1 L324.4,59.1 L325.6,59.1 L326.7,59.1 L327.8,59.1 L329.0,59.1 L330.1,59.1 L331.3,59.1 L332.4,59.1 L333.5,59.1 L334.7,59.1 L335.8,59.1 L336.9,59.1 L338.1,59.1 L339.2,59.1 L340.4,59.1 L341.5,59.1 L342.6,59.1 L343.8,59.1 L344.9,59.1 L346.1,59.1 L347.2,59.1 L348.3,59.1 L349.5,59.1 L350.6,59.1 L351.7,59.1 L352.9,59.1 L354.0,59.1 L355.2,59.1 L356.3,59.1 L357.4,59.1 L358.6,59.1 L359.7,59.1 L360.9,59.1 L362.0,59.1 L363.1,59.1 L364.3,59.1 L365.4,59.1 L366.5,59.1 L367.7,59.1 L368.8,59.1 L370.0,59.1 L371.1,59.1 L372.2,59.1 L373.4,59.1 L374.5,59.1 L375.7,59.1 L376.8,59.1 L377.9,59.1 L379.1,59.1 L380.2,59.1 L381.3,59.1 L382.5,59.1 L383.6,59.1 L384.8,59.1 L385.9,59.1 L387.0,59.1 L388.2,59.1 L389.3,59.1 L390.5,59.1 L391.6,59.1 L392.7,59.1 L393.9,59.1 L395.0,59.1 L396.1,59.1 L397.3,59.1 L398.4,59.1 L399.6,59.0 L400.7,59.0 L401.8,59.0 L403.0,59.0 L404.1,59.0 L405.3,59.0 L406.4,59.0 L407.5,59.0 L408.7,59.0 L409.8,59.0 L411.0,59.0 L412.1,59.0 L413.2,59.0 L414.4,59.0 L415.5,59.0 L416.6,59.0 L417.8,59.0 L418.9,59.0 L420.1,59.0 L421.2,59.0 L422.3,59.0 L423.5,59.0 L424.6,59.0 L425.8,59.0 L426.9,59.0 L428.0,59.0 L429.2,59.0 L430.3,59.0 L431.4,59.0 L432.6,59.0 L433.7,59.0 L434.9,59.0 L436.0,59.0 L437.1,59.0 L438.3,59.0 L439.4,59.0 L440.6,59.0 L441.7,59.0 L442.8,59.0 L444.0,59.0 L445.1,59.0 L446.2,59.0 L447.4,59.0 L448.5,59.0 L449.7,59.0 L450.8,59.0 L451.9,59.0 L453.1,59.0 L454.2,59.0 L455.4,59.0 L456.5,59.0 L457.6,59.0 L458.8,59.0 L459.9,59.0 L461.0,59.0 L462.2,59.0 L463.3,59.0 L464.5,59.0 L465.6,59.0 L466.7,59.0 L467.9,59.0 L469.0,59.0 L470.2,59.0 L471.3,59.0 L472.4,59.0 L473.6,59.0 L474.7,59.0 L475.8,59.0 L477.0,59.0 L478.1,59.0 L479.3,59.0 L480.4,59.0 L481.5,59.0 L482.7,59.0 L483.8,59.0 L485.0,59.0 L486.1,59.0 L487.2,59.0 L488.4,59.0 L489.5,59.0 L490.6,59.0 L491.8,59.0 L492.9,59.0 L494.1,59.0 L495.2,59.0 L496.3,59.0 L497.5,59.0 L498.6,59.0 L499.8,59.0 L500.9,59.0 L502.0,59.0 L503.2,59.0 L504.3,59.0 L505.4,59.0 L506.6,59.0 L507.7,59.0 L508.9,59.0 L510.0,59.0" fill="none" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M68.4,240.0 L69.5,229.8 L70.6,220.6 L71.7,212.4 L72.8,205.0 L73.9,198.2 L75.0,192.1 L76.1,186.5 L77.2,181.3 L78.3,176.5 L79.4,172.1 L80.5,168.1 L81.6,164.3 L82.8,160.7 L83.9,157.4 L85.0,154.3 L86.1,151.4 L87.2,148.6 L88.3,146.0 L89.4,143.6 L90.5,141.3 L91.6,139.1 L92.7,137.0 L93.8,135.1 L94.9,133.2 L96.0,131.4 L97.1,129.7 L98.2,128.1 L99.3,126.6 L100.4,125.1 L101.5,123.7 L102.6,122.3 L103.7,121.0 L104.8,119.8 L105.9,118.6 L107.0,117.4 L108.1,116.3 L109.2,115.2 L110.4,114.2 L111.5,113.2 L112.6,112.3 L113.7,111.3 L114.8,110.5 L115.9,109.6 L117.0,108.8 L118.1,108.0 L119.2,107.2 L120.3,106.4 L121.4,105.7 L122.5,105.0 L123.6,104.3 L124.7,103.6 L125.8,103.0 L126.9,102.3 L128.0,101.7 L129.1,101.1 L130.2,100.6 L131.3,100.0 L132.4,99.4 L133.5,98.9 L134.6,98.4 L135.7,97.9 L136.8,97.4 L138.0,96.9 L139.1,96.4 L140.2,96.0 L141.3,95.5 L142.4,95.1 L143.5,94.7 L144.6,94.3 L145.7,93.8 L146.8,93.4 L147.9,93.1 L149.0,92.7 L150.1,92.3 L151.2,91.9 L152.3,91.6 L153.4,91.2 L154.5,90.9 L155.6,90.6 L156.7,90.2 L157.8,89.9 L158.9,89.6 L160.0,89.3 L161.1,89.0 L162.2,88.7 L163.3,88.4 L164.4,88.1 L165.6,87.9 L166.7,87.6 L167.8,87.3 L168.9,87.1 L170.0,86.8 L171.1,86.5 L172.2,86.3 L173.3,86.1 L174.4,85.8 L175.5,85.6 L176.6,85.3 L177.7,85.1 L178.8,84.9 L179.9,84.7 L181.0,84.5 L182.1,84.2 L183.2,84.0 L184.3,83.8 L185.4,83.6 L186.5,83.4 L187.6,83.2 L188.7,83.0 L189.8,82.9 L190.9,82.7 L192.0,82.5 L193.2,82.3 L194.3,82.1 L195.4,82.0 L196.5,81.8 L197.6,81.6 L198.7,81.4 L199.8,81.3 L200.9,81.1 L202.0,81.0 L203.1,80.8 L204.2,80.6 L205.3,80.5 L206.4,80.3 L207.5,80.2 L208.6,80.0 L209.7,79.9 L210.8,79.8 L211.9,79.6 L213.0,79.5 L214.1,79.3 L215.2,79.2 L216.3,79.1 L217.4,78.9 L218.5,78.8 L219.6,78.7 L220.8,78.5 L221.9,78.4 L223.0,78.3 L224.1,78.2 L225.2,78.1 L226.3,77.9 L227.4,77.8 L228.5,77.7 L229.6,77.6 L230.7,77.5 L231.8,77.4 L232.9,77.3 L234.0,77.1 L235.1,77.0 L236.2,76.9 L237.3,76.8 L238.4,76.7 L239.5,76.6 L240.6,76.5 L241.7,76.4 L242.8,76.3 L243.9,76.2 L245.0,76.1 L246.1,76.0 L247.2,75.9 L248.4,75.8 L249.5,75.7 L250.6,75.6 L251.7,75.6 L252.8,75.5 L253.9,75.4 L255.0,75.3 L256.1,75.2 L257.2,75.1 L258.3,75.0 L259.4,74.9 L260.5,74.9 L261.6,74.8 L262.7,74.7 L263.8,74.6 L264.9,74.5 L266.0,74.5 L267.1,74.4 L268.2,74.3 L269.3,74.2 L270.4,74.2 L271.5,74.1 L272.6,74.0 L273.7,73.9 L274.8,73.9 L276.0,73.8 L277.1,73.7 L278.2,73.6 L279.3,73.6 L280.4,73.5 L281.5,73.4 L282.6,73.4 L283.7,73.3 L284.8,73.2 L285.9,73.2 L287.0,73.1 L288.1,73.0 L289.2,73.0 L290.3,72.9 L291.4,72.8 L292.5,72.8 L293.6,72.7 L294.7,72.7 L295.8,72.6 L296.9,72.5 L298.0,72.5 L299.1,72.4 L300.2,72.4 L301.3,72.3 L302.4,72.2 L303.6,72.2 L304.7,72.1 L305.8,72.1 L306.9,72.0 L308.0,72.0 L309.1,71.9 L310.2,71.8 L311.3,71.8 L312.4,71.7 L313.5,71.7 L314.6,71.6 L315.7,71.6 L316.8,71.5 L317.9,71.5 L319.0,71.4 L320.1,71.4 L321.2,71.3 L322.3,71.3 L323.4,71.2 L324.5,71.2 L325.6,71.1 L326.7,71.1 L327.8,71.0 L328.9,71.0 L330.0,70.9 L331.2,70.9 L332.3,70.8 L333.4,70.8 L334.5,70.8 L335.6,70.7 L336.7,70.7 L337.8,70.6 L338.9,70.6 L340.0,70.5 L341.1,70.5 L342.2,70.4 L343.3,70.4 L344.4,70.4 L345.5,70.3 L346.6,70.3 L347.7,70.2 L348.8,70.2 L349.9,70.1 L351.0,70.1 L352.1,70.1 L353.2,70.0 L354.3,70.0 L355.4,69.9 L356.5,69.9 L357.6,69.9 L358.8,69.8 L359.9,69.8 L361.0,69.8 L362.1,69.7 L363.2,69.7 L364.3,69.6 L365.4,69.6 L366.5,69.6 L367.6,69.5 L368.7,69.5 L369.8,69.5 L370.9,69.4 L372.0,69.4 L373.1,69.4 L374.2,69.3 L375.3,69.3 L376.4,69.2 L377.5,69.2 L378.6,69.2 L379.7,69.1 L380.8,69.1 L381.9,69.1 L383.0,69.0 L384.1,69.0 L385.2,69.0 L386.4,68.9 L387.5,68.9 L388.6,68.9 L389.7,68.9 L390.8,68.8 L391.9,68.8 L393.0,68.8 L394.1,68.7 L395.2,68.7 L396.3,68.7 L397.4,68.6 L398.5,68.6 L399.6,68.6 L400.7,68.5 L401.8,68.5 L402.9,68.5 L404.0,68.5 L405.1,68.4 L406.2,68.4 L407.3,68.4 L408.4,68.3 L409.5,68.3 L410.6,68.3 L411.7,68.3 L412.8,68.2 L414.0,68.2 L415.1,68.2 L416.2,68.1 L417.3,68.1 L418.4,68.1 L419.5,68.1 L420.6,68.0 L421.7,68.0 L422.8,68.0 L423.9,68.0 L425.0,67.9 L426.1,67.9 L427.2,67.9 L428.3,67.8 L429.4,67.8 L430.5,67.8 L431.6,67.8 L432.7,67.7 L433.8,67.7 L434.9,67.7 L436.0,67.7 L437.1,67.6 L438.2,67.6 L439.3,67.6 L440.4,67.6 L441.6,67.6 L442.7,67.5 L443.8,67.5 L444.9,67.5 L446.0,67.5 L447.1,67.4 L448.2,67.4 L449.3,67.4 L450.4,67.4 L451.5,67.3 L452.6,67.3 L453.7,67.3 L454.8,67.3 L455.9,67.3 L457.0,67.2 L458.1,67.2 L459.2,67.2 L460.3,67.2 L461.4,67.1 L462.5,67.1 L463.6,67.1 L464.7,67.1 L465.8,67.1 L466.9,67.0 L468.0,67.0 L469.2,67.0 L470.3,67.0 L471.4,66.9 L472.5,66.9 L473.6,66.9 L474.7,66.9 L475.8,66.9 L476.9,66.8 L478.0,66.8 L479.1,66.8 L480.2,66.8 L481.3,66.8 L482.4,66.7 L483.5,66.7 L484.6,66.7 L485.7,66.7 L486.8,66.7 L487.9,66.7 L489.0,66.6 L490.1,66.6 L491.2,66.6 L492.3,66.6 L493.4,66.6 L494.5,66.5 L495.6,66.5 L496.8,66.5 L497.9,66.5 L499.0,66.5 L500.1,66.4 L501.2,66.4 L502.3,66.4 L503.4,66.4 L504.5,66.4 L505.6,66.4 L506.7,66.3 L507.8,66.3 L508.9,66.3 L510.0,66.3" fill="none" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="123.6" cy="67.3" r="4.2" fill="var(--color-theory)"/>
+  <line x1="123.6" y1="240.0" x2="123.6" y2="67.3" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+  <circle cx="418.0" cy="68.1" r="4.2" fill="var(--color-practice)"/>
+  <line x1="418.0" y1="240.0" x2="418.0" y2="68.1" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="46.0" y1="240.0" x2="520.0" y2="240.0"/><polygon points="520.0,240.0 512.0,236.5 512.0,243.5" stroke="none"/></g>
+  <line x1="50.0" y1="237.0" x2="50.0" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="50.0" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">0</text>
+  <line x1="123.6" y1="237.0" x2="123.6" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="123.6" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">16</text>
+  <line x1="234.0" y1="237.0" x2="234.0" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="234.0" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">40</text>
+  <line x1="326.0" y1="237.0" x2="326.0" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="326.0" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">60</text>
+  <line x1="418.0" y1="237.0" x2="418.0" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="418.0" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">80</text>
+  <line x1="510.0" y1="237.0" x2="510.0" y2="243.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="510.0" y="256.0" fill="var(--academic-text)" font-size="11" text-anchor="middle" opacity="0.8">100</text>
+  <text x="524.0" y="244.0" fill="var(--academic-text)" font-size="12" font-style="italic" opacity="0.85"><tspan font-style="italic">n</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)"><line x1="50.0" y1="240.0" x2="50.0" y2="40.0"/><polygon points="50.0,40.0 46.5,48.0 53.5,48.0" stroke="none"/></g>
+  <line x1="47.0" y1="203.8" x2="53.0" y2="203.8" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="207.8" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,2</text>
+  <line x1="47.0" y1="167.6" x2="53.0" y2="167.6" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="171.6" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,4</text>
+  <line x1="47.0" y1="131.4" x2="53.0" y2="131.4" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="135.4" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,6</text>
+  <line x1="47.0" y1="95.2" x2="53.0" y2="95.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="99.2" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">0,8</text>
+  <line x1="47.0" y1="59.0" x2="53.0" y2="59.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.7"/>
+  <text x="43.0" y="63.0" fill="var(--academic-text)" font-size="11" text-anchor="end" opacity="0.8">1,0</text>
+  <line x1="243.2" y1="160.0" x2="263.2" y2="160.0" stroke="var(--color-theory)" stroke-width="2"/>
+  <text x="269.2" y="165.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start">normal kitlede gerçek olasılık</text>
+  <line x1="243.2" y1="181.7" x2="263.2" y2="181.7" stroke="var(--color-practice)" stroke-width="2"/>
+  <text x="269.2" y="186.7" fill="var(--academic-text)" font-size="12.5" text-anchor="start">Chebyshev alt sınırı 1 &#8722; 4/n</text>
+  <text x="58.0" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="start">P(|<tspan font-style="italic">X&#772;</tspan> &#8722; &#956;| &lt; 0,5&#963;)</text>
+</svg>
+<figcaption>Örneklem ortalamasının μ'ye 0,5σ'dan daha yakın olma olasılığı. Chebyshev alt sınırı (turuncu) her dağılım için geçerlidir ve 0,95'e ancak n = 80'de ulaşır; kitle normalse gerçek olasılık (mavi) 0,95'i n = 16'da geçer.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde örneklem ortalamasının kitle ortalaması çevresinde toplandığını ve yayılımının $\frac{\sigma}{\sqrt{n}}$ hızıyla küçüldüğünü gördük. $n$ sonsuza giderken bu toplanmanın ne anlama geldiğini ve $\bar X$'in dağılımının neden normale yaklaştığını [Yakınsama ve Merkezi Limit Teoremi](yakinsama-ve-merkezi-limit-teoremi.qmd) bölümünde inceleyeceğiz.
