@@ -74,7 +74,7 @@ def content_bbox(svg, vb, colors, bg):
             probe[0] + box[2] * sc, probe[1] + box[3] * sc)
 
 
-def set_width_class(body, ratio):
+def set_width_class(body, ratio, narrow=True):
     """Give nearly square drawings the narrow column, wide strips the wide one.
 
     The SVG fills its figure's width, so the rendered height is that width
@@ -86,13 +86,17 @@ def set_width_class(body, ratio):
     if not m:
         return body
     names = [c for c in m.group(1).split() if c != "ders-grafik-dar"]
-    if "ders-grafik-genis" not in names and ratio >= TALL:
+    if narrow and "ders-grafik-genis" not in names and ratio >= TALL:
         names.append("ders-grafik-dar")
     return body.replace(m.group(0), '<figure class="%s">' % " ".join(names), 1)
 
 
 def main():
-    pattern = sys.argv[1] if len(sys.argv) > 1 else "complex-*.md"
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    # --keep-width: never give tall drawings the narrow column (books whose
+    # square plots must stay large, e.g. analitik-geometri).
+    narrow = "--keep-width" not in sys.argv[1:]
+    pattern = args[0] if args else "complex-*.md"
     changed = 0
     for f in sorted(FIG_DIR.glob(pattern)):
         body = f.read_text(encoding="utf-8")
@@ -113,7 +117,7 @@ def main():
         new = f'viewBox="{x0:.1f} {y0:.1f} {x1 - x0:.1f} {y1 - y0:.1f}"'
         old = m.group(0)
         out = body.replace(old, new, 1) if new != old else body
-        out = set_width_class(out, (y1 - y0) / (x1 - x0))
+        out = set_width_class(out, (y1 - y0) / (x1 - x0), narrow)
         if out != body:
             f.write_text(out, encoding="utf-8")
             changed += 1

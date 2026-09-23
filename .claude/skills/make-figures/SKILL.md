@@ -53,7 +53,8 @@ Yeni bir ders için `scripts/<konu>_figures.py` dosyasını İngilizce yaz:
 ## 5. Üret ve ortala
 
 1. `python scripts/<x>_figures.py`
-2. Ardından HER seferinde `python scripts/center_figures.py "<önek>-*.md"`. Desen verilmezse yalnız `complex-*.md` işlenir.
+2. Ardından HER seferinde `python scripts/center_figures.py "<önek>-*.md"`. Desen verilmezse yalnız `complex-*.md` işlenir. Kare şekillerin dar sütuna (24rem) düşmemesi gereken kitaplarda (ör. analitik-geometri) `--keep-width` ekle.
+3. `python scripts/check_figure_labels.py "scripts/_figures/<önek>-*.md"` sonucu `problems: 0` olmalı: çakışan etiketleri, noktayı örten etiketi, tuvalden taşan ve 10 px'ten küçük yazıyı bulur. Çizgi–etiket çakışmasını görmez; onu gözle kontrol et.
 
 center_figures viewBox'ı içeriğe 14 birim pay bırakarak kırpar. Oran ≥ 0,72 olan geniş olmayan şekle `ders-grafik-dar` ekler.
 

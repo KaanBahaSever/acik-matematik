@@ -229,6 +229,16 @@ DISPLAY = re.compile(r"\$\$(.+?)\$\$", re.S)
 INLINE = re.compile(r"(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)\$(?!\$)", re.S)
 
 
+ENVIRONMENT = re.compile(r"\\(?:begin|end)\{[a-zA-Z*]+\}(?:\{[^}]*\})?")
+ROW_BREAK = re.compile(r"\\\\(?:\[[^\]]*\])?")
+
+
+def display_width(tex: str) -> float:
+    """Width of a display formula: its widest row, not the sum of its rows."""
+    rows = ROW_BREAK.split(ENVIRONMENT.sub(" ", tex))
+    return max((width(r.replace("&", " ")) for r in rows if r.strip()), default=0.0)
+
+
 def scan_file(path: pathlib.Path):
     """Yield findings: (line, kind, width_em, budget, formula)."""
     text = path.read_text(encoding="utf-8")
@@ -259,18 +269,20 @@ def scan_file(path: pathlib.Path):
         if buf:
             if stripped.endswith("$$") or stripped == "$$":
                 buf.append(stripped[:-2] if stripped.endswith("$$") else "")
-                out.append((buf_start, "display", width("\n".join(buf)), DISPLAY_BUDGET,
+                out.append((buf_start, "display", display_width("\n".join(buf)), DISPLAY_BUDGET,
                             " ".join(x.strip() for x in buf if x.strip())))
                 buf = []
             else:
                 buf.append(line)
             continue
-        if stripped.startswith("$$") and not stripped.endswith("$$"):
+        # A block opens on a line that starts with $$ and does not close on
+        # it; a bare "$$" line both starts and ends with $$, so test it first.
+        if stripped == "$$" or (stripped.startswith("$$") and not stripped.endswith("$$")):
             buf = [stripped[2:]]
             buf_start = n
             continue
         for m in DISPLAY.finditer(line):
-            out.append((n, "display", width(m.group(1)), DISPLAY_BUDGET, m.group(1).strip()))
+            out.append((n, "display", display_width(m.group(1)), DISPLAY_BUDGET, m.group(1).strip()))
         rest = DISPLAY.sub(" ", line)
         for m in INLINE.finditer(rest):
             budget = INLINE_BOX_BUDGET if depth else INLINE_BUDGET
