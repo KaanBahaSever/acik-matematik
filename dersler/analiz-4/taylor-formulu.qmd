@@ -1,0 +1,1201 @@
+---
+title: "Taylor Formülü"
+pagetitle: "Taylor Formülü"
+description: "Hessian matrisi ve simetrisi, ikinci ve yüksek mertebeden toplam diferansiyeller, çok değişkenli Taylor teoremi ve ispatı, iki değişkenli açık biçim, integral biçimli kalan ve kalanın mertebesi, gradyan ve Hessian ile ikinci mertebeden Taylor formülü, Taylor serisi ve reel analitik fonksiyonlar; çözümlü örnekler ve alıştırmalar."
+---
+
+Tek değişkenli analizde Taylor formülü, bir fonksiyonu bir noktanın yakınında bir polinomla değiştirir ve yapılan hatayı bir üst mertebeden türevin ara bir noktadaki değeriyle tam olarak verir (bkz. [Analiz 2](../analiz-2/taylor-formulu.html#thm-taylor-lagrange)). Formülün en alt basamağı ortalama değer teoremidir. [Yönlü Türev ve Ortalama Değer Teoremi](yonlu-turev-ve-ortalama-deger-teoremi.qmd) bölümünde bu basamağı $\mathbb{R}^n$'ye taşımıştık: $a$ ile $x$'i birleştiren doğru parçası tanım kümesinin içinde kalıyorsa, bu doğru parçası üzerindeki bir $c$ noktası için
+
+$$f(x) - f(a) = \langle \nabla f(c), x - a \rangle$$
+
+olur (@thm-yon-odt).
+
+Bu bölümde merdivenin üst basamaklarını çıkıyoruz. Yöntem ortalama değer teoremindekiyle aynıdır: $f$, $a$'dan $x$'e giden doğru parçası üzerine kısıtlanır, $g(t) = f\big(a + t(x - a)\big)$ tek değişkenli fonksiyonu elde edilir ve ona tek değişkenli Taylor formülü uygulanır. Asıl iş, $g$'nin yüksek mertebeden türevlerini $f$'nin kısmi türevleri cinsinden yazmaktır. Bu yüzden önce ikinci mertebeden kısmi türevleri bir araya getiren Hessian matrisini, ardından ikinci ve daha yüksek mertebeden toplam diferansiyelleri tanımlayacağız.
+
+Bölümün sonunda elimizde üç araç olacak: kalanı bir ara noktada ya da bir integral olarak veren Taylor formülü, kalanın $h \to 0$ iken ne hızla söndüğünü söyleyen kestirim ve bir fonksiyonun Taylor serisiyle temsil edildiği durumları ayıran reel analitiklik kavramı. Bunlardan en sık kullanılacak olanı, gradyan ve Hessian matrisiyle yazılan ikinci mertebeden Taylor formülüdür.
+
+## Hessian Matrisi
+
+Gradyan, birinci mertebeden kısmi türevleri bir vektörde toplar; ikinci mertebeden kısmi türevlerin doğal yeri ise bir kare matristir.
+
+Bölüm boyunca $C^k(U)$ ve $C^\infty(U)$ sınıflarını (@def-yuk-ck-sinifi) sık kullanacağız. $f \in C^k(U)$ ise $k$. mertebeye kadar bütün kısmi türevler $U$ üzerinde süreklidir ve karışık türevlerde türev alma sırası önemsizdir (@cor-yuk-yuksek-mertebe). Örneklerdeki polinomlar ve $e^{xy}$, $\sin(x - y)$ gibi temel fonksiyonlardan kurulan fonksiyonlar tanımlı oldukları açık kümelerde düzgündür, yani $C^\infty$ sınıfındandır.
+
+::: {#def-tay-hessian name="Hessian Matrisi"}
+$U \subseteq \mathbb{R}^n$ açık küme, $a \in U$ ve $f : U \to \mathbb{R}$ olsun. $f$'nin birinci mertebeden kısmi türevleri $U$ üzerinde, ikinci mertebeden kısmi türevleri de $a$ noktasında var olsun. $(i, j)$ girdisi
+
+$$\frac{\partial^2 f}{\partial x_i\, \partial x_j}(a) = \frac{\partial}{\partial x_i}\left( \frac{\partial f}{\partial x_j} \right)(a)$$
+
+olan $n \times n$ matrise $f$'nin $a$ noktasındaki **Hessian matrisi** denir ve $H_f(a)$ ile gösterilir:
+
+$$
+H_f(a) = \begin{pmatrix}
+\dfrac{\partial^2 f}{\partial x_1^2} & \dfrac{\partial^2 f}{\partial x_1\, \partial x_2} & \cdots & \dfrac{\partial^2 f}{\partial x_1\, \partial x_n} \\[3mm]
+\dfrac{\partial^2 f}{\partial x_2\, \partial x_1} & \dfrac{\partial^2 f}{\partial x_2^2} & \cdots & \dfrac{\partial^2 f}{\partial x_2\, \partial x_n} \\[1mm]
+\vdots & \vdots & \ddots & \vdots \\[1mm]
+\dfrac{\partial^2 f}{\partial x_n\, \partial x_1} & \dfrac{\partial^2 f}{\partial x_n\, \partial x_2} & \cdots & \dfrac{\partial^2 f}{\partial x_n^2}
+\end{pmatrix}.
+$$
+
+Matristeki bütün türevler $a$ noktasında hesaplanır.
+:::
+
+Yani Hessian matrisi, $f$'nin ikinci mertebeden bütün kısmi türevlerini tek bir tabloda toplar: köşegende $\dfrac{\partial^2 f}{\partial x_i^2}$ saf türevleri, köşegen dışında karışık türevler durur. $j$. sütun, $\dfrac{\partial f}{\partial x_j}$ fonksiyonunun gradyanıdır. İki değişkende, $f_{xy} = (f_x)_y$ gösterimiyle
+
+$$H_f(a) = \begin{pmatrix} f_{xx}(a) & f_{yx}(a) \\ f_{xy}(a) & f_{yy}(a) \end{pmatrix}$$
+
+olur. Karışık türevler eşit olduğunda matris simetriktir; aşağıdaki önerme bunun $C^2$ fonksiyonlarda her zaman gerçekleştiğini söyler.
+
+:::: {#prp-tay-hessian-simetri name="Hessian Matrisinin Simetrisi"}
+$U \subseteq \mathbb{R}^n$ açık küme ve $f \in C^2(U)$ olsun. Her $a \in U$ için $H_f(a)$ simetrik bir matristir, yani $H_f(a)^{T} = H_f(a)$'dır. Ayrıca $\nabla f : U \to \mathbb{R}^n$ gradyan fonksiyonunun $a$'daki Jacobi matrisi $J_{\nabla f}(a)$ ile gösterilirse
+
+$$H_f(a) = J_{\nabla f}(a)$$
+
+olur.
+
+::: {.ispat}
+**Simetri.** $i \ne j$ olsun. $H_f(a)$'nın $(i, j)$ girdisi önce $x_j$'ye sonra $x_i$'ye göre, $(j, i)$ girdisi ise önce $x_i$'ye sonra $x_j$'ye göre türev alınarak bulunur. İkisi de aynı iki değişkene göre alınmış, yalnızca sırası farklı karışık türevlerdir. $f \in C^2(U)$ olduğundan Clairaut teoreminin $n$ değişkenli biçimi (@cor-yuk-n-degisken) gereği bu iki türev eşittir.
+
+**Jacobi matrisiyle ilişki.** $\nabla f$ fonksiyonunun bileşenleri $\varphi_i = \dfrac{\partial f}{\partial x_i}$ ($i = 1, \dots, n$) fonksiyonlarıdır. Jacobi matrisinin tanımı (@def-zin-jacobi-matrisi) gereği $J_{\nabla f}(a)$'nın $(i, j)$ girdisi
+
+$$\frac{\partial \varphi_i}{\partial x_j}(a) = \frac{\partial}{\partial x_j}\left( \frac{\partial f}{\partial x_i} \right)(a) = \frac{\partial^2 f}{\partial x_j\, \partial x_i}(a)$$
+
+sayısıdır; bu da $H_f(a)$'nın $(j, i)$ girdisidir. Demek ki $J_{\nabla f}(a) = H_f(a)^{T}$'dir ve simetri gereği $H_f(a) = J_{\nabla f}(a)$ olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+İspatın ikinci kısmı süreklilik kullanmaz: ikinci mertebeden kısmi türevler var olduğu sürece $J_{\nabla f}(a)$, $H_f(a)$'nın devriğidir (transpozudur). Karışık türevleri eşit olmayan bir fonksiyonda (@exm-yuk-karisik-farkli) iki matris birbirinin devriğidir ama birbirine eşit değildir; $C^2$ varsayımı bu farkı ortadan kaldırır.
+
+Şimdiye kadar karşılaştığımız türev matrislerini yan yana koyalım.
+
+| Matris | Fonksiyon | Boyut | $(i, j)$ girdisi |
+|:--|:--|:-:|:--|
+| Gradyan $\nabla f(a)$ | $f : U \to \mathbb{R}$ | $1 \times n$ | $\dfrac{\partial f}{\partial x_j}(a)$ (tek satır) |
+| Jacobi $J_f(a)$ | $f : U \to \mathbb{R}^m$ | $m \times n$ | $\dfrac{\partial f_i}{\partial x_j}(a)$ |
+| Hessian $H_f(a)$ | $f : U \to \mathbb{R}$ | $n \times n$ | $\dfrac{\partial^2 f}{\partial x_i\, \partial x_j}(a)$ |
+
+: Birinci ve ikinci mertebeden türev matrisleri {#tbl-tay-turev-matrisleri}
+
+Gradyan ve Jacobi matrisi birinci, Hessian matrisi ikinci mertebeden türevlerden oluşur. Reel değerli bir fonksiyonun Jacobi matrisi, gradyanını satır olarak yazmaktan ibarettir. Hessian matrisi yalnız reel değerli fonksiyonlar için tanımlıdır; vektör değerli bir fonksiyonda her bileşenin ayrı bir Hessian matrisi vardır.
+
+:::: {#exm-tay-jacobi-uc-bilesen name="Üç Bileşenli Bir Fonksiyonun Türev Matrisleri"}
+$f(x, y) = (\sin x,\; xy,\; \cos y)$ fonksiyonunun Jacobi matrisini ve bileşenlerinin Hessian matrislerini bulunuz.
+
+::: {.cozum}
+$f : \mathbb{R}^2 \to \mathbb{R}^3$ fonksiyonunun bileşenleri $f_1(x, y) = \sin x$, $f_2(x, y) = xy$ ve $f_3(x, y) = \cos y$'dir. Jacobi matrisinin $i$. satırı $f_i$'nin gradyanıdır:
+
+$$J_f(x, y) = \begin{pmatrix} \dfrac{\partial f_1}{\partial x} & \dfrac{\partial f_1}{\partial y} \\[3mm] \dfrac{\partial f_2}{\partial x} & \dfrac{\partial f_2}{\partial y} \\[3mm] \dfrac{\partial f_3}{\partial x} & \dfrac{\partial f_3}{\partial y} \end{pmatrix} = \begin{pmatrix} \cos x & 0 \\ y & x \\ 0 & -\sin y \end{pmatrix}.$$
+
+Bu, $3 \times 2$ boyutlu bir matristir. Hessian matrisleri bileşen bileşen hesaplanır. $f_1 = \sin x$ için $(f_1)_{xx} = -\sin x$ olur, öbür ikinci türevler $0$'dır. $f_2 = xy$ için $(f_2)_{xx} = (f_2)_{yy} = 0$ ve $(f_2)_{xy} = (f_2)_{yx} = 1$'dir. $f_3 = \cos y$ için $(f_3)_{yy} = -\cos y$ olur, öbürleri $0$'dır:
+
+$$
+\begin{aligned}
+H_{f_1}(x, y) &= \begin{pmatrix} -\sin x & 0 \\ 0 & 0 \end{pmatrix}, \\[1mm]
+H_{f_2}(x, y) &= \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}, \\[1mm]
+H_{f_3}(x, y) &= \begin{pmatrix} 0 & 0 \\ 0 & -\cos y \end{pmatrix}.
+\end{aligned}
+$$
+
+Bileşenler $C^\infty(\mathbb{R}^2)$ sınıfından olduğundan üç matrisin de simetrik çıkması @prp-tay-hessian-simetri ile uyumludur. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-tip title="Üç adımda Hessian matrisi"}
+1. **Gradyanı yaz.** $\nabla f = \left( \dfrac{\partial f}{\partial x_1}, \dots, \dfrac{\partial f}{\partial x_n} \right)$ hesaplanır.
+2. **Gradyanın Jacobi matrisini kur.** $i$. satıra $\dfrac{\partial f}{\partial x_i}$ fonksiyonunun gradyanı yazılır. $f \in C^2$ ise elde edilen matris $H_f$'dir (@prp-tay-hessian-simetri).
+3. **Simetriyi sağlama olarak kullan.** Köşegene göre simetrik konumdaki girdiler aynı çıkmalıdır; çıkmıyorsa bir hesap hatası vardır.
+:::
+
+:::: {#exm-tay-hessian-ustel name="Gradyanın Jacobi Matrisiyle Hessian"}
+$f(x, y, z) = e^{xyz}$ fonksiyonunun Hessian matrisini $H_f = J_{\nabla f}$ eşitliğinden yararlanarak bulunuz.
+
+::: {.cozum}
+**Gradyan.** Zincir kuralıyla
+
+$$\nabla f(x, y, z) = \big( yz\, e^{xyz},\; xz\, e^{xyz},\; xy\, e^{xyz} \big)$$
+
+bulunur. Bileşenleri $\varphi_1 = yz\, e^{xyz}$, $\varphi_2 = xz\, e^{xyz}$ ve $\varphi_3 = xy\, e^{xyz}$ ile gösterelim.
+
+**Gradyanın Jacobi matrisi.** Birinci satır $\varphi_1$'in gradyanıdır; çarpım kuralıyla
+
+$$
+\begin{aligned}
+\frac{\partial \varphi_1}{\partial x} &= yz \cdot yz\, e^{xyz} = y^2 z^2\, e^{xyz}, \\[1mm]
+\frac{\partial \varphi_1}{\partial y} &= z\, e^{xyz} + yz \cdot xz\, e^{xyz} = z(1 + xyz)\, e^{xyz}, \\[1mm]
+\frac{\partial \varphi_1}{\partial z} &= y\, e^{xyz} + yz \cdot xy\, e^{xyz} = y(1 + xyz)\, e^{xyz}
+\end{aligned}
+$$
+
+olur. Öbür iki satır, $x$, $y$ ve $z$'nin rolleri değiştirilerek aynı biçimde bulunur:
+
+$$
+\begin{aligned}
+\nabla \varphi_2 &= \big( z(1 + xyz),\; x^2 z^2,\; x(1 + xyz) \big)\, e^{xyz}, \\[1mm]
+\nabla \varphi_3 &= \big( y(1 + xyz),\; x(1 + xyz),\; x^2 y^2 \big)\, e^{xyz}.
+\end{aligned}
+$$
+
+$f \in C^\infty(\mathbb{R}^3)$ olduğundan @prp-tay-hessian-simetri gereği $H_f = J_{\nabla f}$'dir:
+
+$$H_f(x, y, z) = e^{xyz} \begin{pmatrix} y^2 z^2 & z(1 + xyz) & y(1 + xyz) \\ z(1 + xyz) & x^2 z^2 & x(1 + xyz) \\ y(1 + xyz) & x(1 + xyz) & x^2 y^2 \end{pmatrix}.$$
+
+**Sağlama.** Matris simetriktir; örneğin $\dfrac{\partial \varphi_1}{\partial y}$ ile $\dfrac{\partial \varphi_2}{\partial x}$'in ikisi de $z(1 + xyz)\, e^{xyz}$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## İkinci Mertebeden Toplam Diferansiyel
+
+Hessian matrisinin girdileri, toplam diferansiyel bir kez daha diferansiyellendiğinde ortaya çıkan katsayılardır.
+
+Toplam diferansiyel (@def-dif-toplam-diferansiyel), $f$'nin $a$ noktasındaki artışının lineer kısmıdır. Artımları bir $h = (h_1, \dots, h_n)$ vektörünün bileşenleri olarak yazarsak
+
+$$df(a)(h) = \sum_{i=1}^{n} \frac{\partial f}{\partial x_i}(a)\, h_i = \langle \nabla f(a), h \rangle$$
+
+olur. Klasik yazımda $h_i$ yerine $dx_i$ konur ve $df = f_{x_1}\, dx_1 + \cdots + f_{x_n}\, dx_n$ yazılır. $dx_i$ artımlarını sabit tutup $df$'yi bir kez daha diferansiyellediğimizde ne olduğunu önce iki değişkende görelim:
+
+$$
+\begin{aligned}
+d(df) &= d\big( f_x\, dx + f_y\, dy \big) \\[1mm]
+&= \frac{\partial}{\partial x}\big( f_x\, dx + f_y\, dy \big)\, dx + \frac{\partial}{\partial y}\big( f_x\, dx + f_y\, dy \big)\, dy \\[1mm]
+&= f_{xx}\, dx^2 + f_{yx}\, dx\, dy + f_{xy}\, dx\, dy + f_{yy}\, dy^2.
+\end{aligned}
+$$
+
+Katsayılar tam olarak Hessian matrisinin girdileridir. Bu hesabı $n$ değişkene genelleştiren tanım şudur.
+
+::: {#def-tay-ikinci-diferansiyel name="İkinci Mertebeden Toplam Diferansiyel"}
+$U \subseteq \mathbb{R}^n$ açık küme, $a \in U$ ve $f : U \to \mathbb{R}$ olsun. $f$ ile birinci mertebeden kısmi türevleri $U$ üzerinde sürekli, birinci mertebeden kısmi türevleri de $a$ noktasında türevlenebilir olsun (örneğin $f \in C^2(U)$). Her $h = (h_1, \dots, h_n) \in \mathbb{R}^n$ için
+
+$$d^2 f(a)(h) = \sum_{i=1}^{n} \sum_{j=1}^{n} \frac{\partial^2 f}{\partial x_i\, \partial x_j}(a)\, h_i\, h_j$$
+
+sayısına $f$'nin $a$ noktasındaki **ikinci mertebeden toplam diferansiyeli** denir. Klasik yazımda
+
+$$d^2 f = \sum_{i=1}^{n} \sum_{j=1}^{n} f_{x_i x_j}\, dx_i\, dx_j$$
+
+biçiminde yazılır.
+:::
+
+Yani $d^2 f(a)(h)$, Hessian matrisinin belirlediği ikinci dereceden formdur. Bir matrisin girdileri $H_{ij}$ ise $h^{T} H h = \sum_{i, j} H_{ij}\, h_i h_j$ olduğundan ($h$ sütun, $h^{T}$ satır vektörü olarak)
+
+$$d^2 f(a)(h) = h^{T} H_f(a)\, h$$
+
+olur. $a$ sabitken $h \mapsto d^2 f(a)(h)$, $h_1, \dots, h_n$ değişkenlerinin ikinci dereceden homojen bir polinomudur.
+
+Tanım gerçekten "diferansiyelin diferansiyeli"dir: $h$ sabit tutulup $\varphi(x) = df(x)(h) = \sum_i \dfrac{\partial f}{\partial x_i}(x)\, h_i$ fonksiyonu yazılırsa, bu fonksiyon $a$'da türevlenebilirdir ve
+
+$$d\varphi(a)(h) = \sum_{j=1}^{n} \frac{\partial \varphi}{\partial x_j}(a)\, h_j = \sum_{j=1}^{n} \sum_{i=1}^{n} \frac{\partial^2 f}{\partial x_j\, \partial x_i}(a)\, h_i\, h_j = d^2 f(a)(h)$$
+
+bulunur; son eşitlikte $i$ ile $j$'nin adları değiştirilmiştir. İki değişkende, $f \in C^2$ ise $f_{xy} = f_{yx}$ olduğundan
+
+$$d^2 f(a)(h) = f_{xx}(a)\, h_1^2 + 2 f_{xy}(a)\, h_1 h_2 + f_{yy}(a)\, h_2^2$$
+
+olur; klasik yazımla $d^2 f = f_{xx}\, dx^2 + 2 f_{xy}\, dx\, dy + f_{yy}\, dy^2$.
+
+Örneğin $f(x, y, z) = e^{xyz}$ fonksiyonu için (@exm-tay-hessian-ustel) $(1, 1, 1)$ noktasında $1 + xyz = 2$ olur ve
+
+$$H_f(1, 1, 1) = e \begin{pmatrix} 1 & 2 & 2 \\ 2 & 1 & 2 \\ 2 & 2 & 1 \end{pmatrix}$$
+
+bulunur. Buradan
+
+$$d^2 f(1, 1, 1)(h) = e\big( h_1^2 + h_2^2 + h_3^2 + 4 h_1 h_2 + 4 h_1 h_3 + 4 h_2 h_3 \big)$$
+
+elde edilir; köşegen dışındaki her girdi, simetrik eşiyle birlikte iki kez sayıldığından karışık terimlerin katsayısı $2 \cdot 2e = 4e$ olur.
+
+:::: {#exm-tay-xy-kare name="Bir Çarpımın İkinci Diferansiyeli"}
+$f(x, y) = (xy)^2$ fonksiyonunun ikinci mertebeden toplam diferansiyelini bulunuz.
+
+::: {.cozum}
+$f(x, y) = x^2 y^2$ bir polinomdur, dolayısıyla $f \in C^\infty(\mathbb{R}^2)$'dir. Birinci mertebeden türevler $f_x = 2xy^2$ ve $f_y = 2x^2 y$, ikinci mertebeden türevler
+
+$$
+\begin{aligned}
+f_{xx} &= 2y^2, \\[1mm]
+f_{xy} = f_{yx} &= 4xy, \\[1mm]
+f_{yy} &= 2x^2
+\end{aligned}
+$$
+
+olur. İki değişkenli formülle
+
+$$d^2 f = 2y^2\, dx^2 + 2 \cdot 4xy\, dx\, dy + 2x^2\, dy^2 = 2y^2\, dx^2 + 8xy\, dx\, dy + 2x^2\, dy^2$$
+
+bulunur. Aynı sonuç $df = 2xy^2\, dx + 2x^2 y\, dy$ ifadesinin diferansiyeli alınarak da görülür:
+
+$$d(df) = \big( 2y^2\, dx + 4xy\, dy \big)\, dx + \big( 4xy\, dx + 2x^2\, dy \big)\, dy.$$
+
+Belirli bir noktada, örneğin $(1, -1)$'de, $H_f(1, -1) = \begin{pmatrix} 2 & -4 \\ -4 & 2 \end{pmatrix}$ ve
+
+$$d^2 f(1, -1)(h) = 2 h_1^2 - 8 h_1 h_2 + 2 h_2^2$$
+
+olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Yüksek Mertebeden Diferansiyeller
+
+Diferansiyel alma işlemi art arda uygulanarak her mertebeden diferansiyel tanımlanır.
+
+::: {#def-tay-k-diferansiyel name="Yüksek Mertebeden Toplam Diferansiyel"}
+$k \in \mathbb{N}$, $U \subseteq \mathbb{R}^n$ açık küme, $a \in U$ ve $f : U \to \mathbb{R}$ olsun. $f$'nin $(k-1)$. mertebeye kadar bütün kısmi türevleri $U$ üzerinde var ve sürekli, $(k-1)$. mertebeden kısmi türevleri de $a$ noktasında türevlenebilir olsun (örneğin $f \in C^k(U)$). Her $h = (h_1, \dots, h_n) \in \mathbb{R}^n$ için
+
+$$d^k f(a)(h) = \sum_{i_1 = 1}^{n} \cdots \sum_{i_k = 1}^{n} \frac{\partial^k f}{\partial x_{i_1} \cdots \partial x_{i_k}}(a)\, h_{i_1} \cdots h_{i_k}$$
+
+sayısına $f$'nin $a$ noktasındaki **$k$. mertebeden toplam diferansiyeli** denir. Ayrıca $d^0 f(a)(h) = f(a)$ kabul edilir. Klasik yazımda $h$ yerine $dx = (dx_1, \dots, dx_n)$ yazılır.
+:::
+
+Yani $d^k f(a)(h)$, $k$. mertebeden bütün kısmi türevlerin, her birine karşılık gelen $h$ bileşenlerinin çarpımıyla ağırlıklandırılmış toplamıdır; toplamda $n^k$ terim vardır. $k = 1$ ve $k = 2$ için önceki tanımlar elde edilir: $d^1 f = df$ ve $d^2 f$. Bundan sonra kısalık için $\sum_{i_1, \dots, i_k}$ yazısı, her indisin $1$'den $n$'ye kadar değiştiği $k$ katlı toplamı gösterecek.
+
+Tanım özyinelidir: $d^k f = d\big( d^{k-1} f \big)$. Gerçekten $h$ sabit tutulup $\varphi(x) = d^{k-1} f(x)(h)$ yazılırsa her $j$ için
+
+$$\frac{\partial \varphi}{\partial x_j}(a) = \sum_{i_1, \dots, i_{k-1}} \frac{\partial^k f}{\partial x_j\, \partial x_{i_1} \cdots \partial x_{i_{k-1}}}(a)\, h_{i_1} \cdots h_{i_{k-1}}$$
+
+olur. Bunu $h_j$ ile çarpıp $j$ üzerinden toplayınca $d\varphi(a)(h)$ bulunur. $(j, i_1, \dots, i_{k-1})$ indis dizisi bütün $n^k$ değeri aldığından, bu diziye yeniden $(i_1, \dots, i_k)$ adı verilince toplam tam olarak $d^k f(a)(h)$ olur.
+
+Tanımdaki toplamda $h$'nin $k$ kopyası ayrı yuvalara girer. Bu kopyaları $k$ ayrı vektörle değiştirirsek her bir değişkeninde lineer olan, yani $k$-lineer bir fonksiyon elde ederiz:
+
+$$D^k f(a)\big( v^{(1)}, \dots, v^{(k)} \big) = \sum_{i_1, \dots, i_k} \frac{\partial^k f}{\partial x_{i_1} \cdots \partial x_{i_k}}(a)\, v^{(1)}_{i_1} \cdots v^{(k)}_{i_k}.$$
+
+Buradan $d^k f(a)(h) = D^k f(a)(h, \dots, h)$ olur. $k = 1$'de $D^1 f(a)$ türevin kendisidir. $k = 2$'de $D^2 f(a)(u, v) = u^{T} H_f(a)\, v$, Hessian matrisinin belirlediği iki-lineer formdur ve $d^2 f(a)(h) = h^{T} H_f(a)\, h$ bunun köşegen değeridir.
+
+Tanımdaki toplam bütün sıralı indis dizileri üzerinden alındığından, kısmi türevlerde hangi sıra kuralının kullanıldığı toplamı değiştirmez: bir diziyi ters çevirmek dizilerin kümesinde birebir bir eşleme olur ve $h_{i_1} \cdots h_{i_k}$ çarpımı bundan etkilenmez. $f \in C^k(U)$ ise daha fazlası doğrudur: $k$. mertebeye kadar her kısmi türev yalnızca hangi değişkene göre kaçar kez türev alındığına bağlıdır (@cor-yuk-yuksek-mertebe). Bu, $d^k f$'deki $n^k$ terimin çoğunun birbirine eşit olması demektir ve iki değişkende $d^k f$'yi derli toplu yazmayı sağlar.
+
+:::: {#prp-tay-binom name="İki Değişkende Binom Biçimi"}
+$p \in \mathbb{N}$, $U \subseteq \mathbb{R}^2$ açık küme, $f \in C^p(U)$, $a \in U$ ve $h = (h_1, h_2) \in \mathbb{R}^2$ olsun. O zaman
+
+$$d^p f(a)(h) = \sum_{j=0}^{p} \binom{p}{j} \frac{\partial^p f}{\partial x^j\, \partial y^{p-j}}(a)\, h_1^{\,j}\, h_2^{\,p-j}$$
+
+olur.
+
+::: {.ispat}
+$x_1 = x$ ve $x_2 = y$ yazalım. Tanımdaki toplam, her $i_r$ indisi $1$ ya da $2$ olan $2^p$ tane $(i_1, \dots, i_p)$ dizisi üzerinden alınır. Tam $j$ tanesi $1$, geri kalan $p - j$ tanesi $2$ olan bir dizi düşünelim. Bu dizinin karşılık geldiği kısmi türevde $x$'e göre $j$ kez, $y$'ye göre $p - j$ kez türev alınır. $f \in C^p(U)$ olduğundan türevlerin sırası önemsizdir (@cor-yuk-yuksek-mertebe) ve bu türev $\dfrac{\partial^p f}{\partial x^j\, \partial y^{p-j}}(a)$'ya eşittir. Aynı dizide $h_{i_1} \cdots h_{i_p} = h_1^{\,j}\, h_2^{\,p-j}$ olur.
+
+Tam $j$ tanesi $1$ olan dizilerin sayısı, $p$ konumdan $1$ yazılacak $j$ tanesini seçme sayısıdır, yani $\binom{p}{j}$'dir (bkz. [Analiz 1](../analiz-1/dogal-sayilar-ve-tumevarim.html#def-binom-katsayisi)). Toplamı $j = 0, 1, \dots, p$ değerlerine göre gruplayınca iddia edilen eşitlik elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Formül, binom teoremiyle (bkz. [Analiz 1](../analiz-1/dogal-sayilar-ve-tumevarim.html#thm-binom-teoremi)) aynı katsayıları taşır. Bu yüzden simgesel olarak
+
+$$d^p f(a)(h) = \left( h_1 \frac{\partial}{\partial x} + h_2 \frac{\partial}{\partial y} \right)^{p} f(a)$$
+
+yazılır: kuvvet binom teoremiyle açılır ve $\dfrac{\partial^j}{\partial x^j} \dfrac{\partial^{p-j}}{\partial y^{p-j}}$ çarpımı ilgili kısmi türev olarak okunur. İlk üç mertebe şöyledir ($f_{xxy}$ gibi yazımlarda sıra önemsizdir):
+
+$$
+\begin{aligned}
+df(a)(h) &= f_x\, h_1 + f_y\, h_2, \\[1mm]
+d^2 f(a)(h) &= f_{xx}\, h_1^2 + 2 f_{xy}\, h_1 h_2 + f_{yy}\, h_2^2, \\[1mm]
+d^3 f(a)(h) &= f_{xxx}\, h_1^3 + 3 f_{xxy}\, h_1^2 h_2 + 3 f_{xyy}\, h_1 h_2^2 + f_{yyy}\, h_2^3.
+\end{aligned}
+$$
+
+Burada bütün türevler $a$ noktasında hesaplanır. Aynı sayma, $n$ değişkende çoklu indis gösterimiyle çok terimli katsayıları verir: $x_i$'ye göre $p_i$ kez türev alınan ($p_1 + \cdots + p_n = p$) dizilerin sayısı $\dfrac{p!}{p_1! \cdots p_n!}$ olduğundan
+
+$$d^p f(a)(h) = \sum_{p_1 + \cdots + p_n = p} \frac{p!}{p_1! \cdots p_n!}\, \frac{\partial^p f}{\partial x_1^{p_1} \cdots \partial x_n^{p_n}}(a)\, h_1^{p_1} \cdots h_n^{p_n}$$
+
+olur.
+
+## Taylor Teoremi
+
+Şimdi $f$'yi bir doğru parçası üzerine kısıtlayıp tek değişkenli Taylor formülünü uygulayacağız. İlk adım, kısıtlanmış fonksiyonun türevlerini hesaplamaktır.
+
+:::: {#lem-tay-dogru-boyunca name="Doğru Boyunca Türevler"}
+$k \in \mathbb{N}$, $U \subseteq \mathbb{R}^n$ açık küme, $f \in C^k(U)$, $a \in U$ ve $h \in \mathbb{R}^n$ olsun. $I \subseteq \mathbb{R}$ açık bir aralık ve her $t \in I$ için $a + th \in U$ olsun. $g(t) = f(a + th)$ ($t \in I$) ile tanımlanan $g : I \to \mathbb{R}$ fonksiyonu $I$ üzerinde $k$ kez türevlenebilirdir, $g^{(k)}$ süreklidir ve her $j = 0, 1, \dots, k$ ile her $t \in I$ için
+
+$$g^{(j)}(t) = d^j f(a + th)(h)$$
+
+olur.
+
+::: {.ispat}
+**Bir adımlık türev.** $\varphi \in C^1(U)$ olsun ve $\psi(t) = \varphi(a + th)$ ($t \in I$) diyelim. $\gamma(t) = a + th$ fonksiyonunun bileşenleri $a_i + t h_i$ olduğundan $\gamma$ türevlenebilirdir ve Jacobi matrisi $h_1, \dots, h_n$ girdili sütun matrisidir. Kısmi türevleri sürekli olan $\varphi$, $U$'nun her noktasında türevlenebilirdir (@thm-dif-yeter-kosul) ve Jacobi matrisi $\nabla \varphi$ satırıdır. Zincir kuralı (@thm-zin-zincir-kurali) gereği $\psi = \varphi \circ \gamma$ türevlenebilirdir ve
+
+$$\psi'(t) = J_\varphi\big( \gamma(t) \big)\, J_\gamma(t) = \sum_{i=1}^{n} \frac{\partial \varphi}{\partial x_i}(a + th)\, h_i \tag{1}$$
+
+olur.
+
+**Tümevarım.** $j = 0$ için iddia $g(t) = f(a + th)$ eşitliğidir ve $d^0 f = f$ anlaşmasıyla doğrudur. İddia bir $j \in \{0, 1, \dots, k - 1\}$ için doğru olsun:
+
+$$g^{(j)}(t) = \sum_{i_1, \dots, i_j} \frac{\partial^j f}{\partial x_{i_1} \cdots \partial x_{i_j}}(a + th)\, h_{i_1} \cdots h_{i_j}.$$
+
+Toplamdaki her $\varphi = \dfrac{\partial^j f}{\partial x_{i_1} \cdots \partial x_{i_j}}$ fonksiyonunun kısmi türevleri $f$'nin $(j+1)$. mertebeden kısmi türevleridir. $j + 1 \le k$ olduğundan bunlar süreklidir, yani $\varphi \in C^1(U)$'dur. $h_{i_1} \cdots h_{i_j}$ çarpanları $t$'ye bağlı olmayan sabitler olduğundan (1) her terime ayrı ayrı uygulanabilir:
+
+$$g^{(j+1)}(t) = \sum_{i_1, \dots, i_j} \sum_{i=1}^{n} \frac{\partial^{j+1} f}{\partial x_i\, \partial x_{i_1} \cdots \partial x_{i_j}}(a + th)\, h_i\, h_{i_1} \cdots h_{i_j}.$$
+
+Çift toplam, $(i, i_1, \dots, i_j)$ indis dizisinin aldığı bütün $n^{j+1}$ değer üzerinden alınmıştır. Bu diziye $(i_1, \dots, i_{j+1})$ adını verirsek toplam tam olarak $d^{j+1} f(a + th)(h)$ olur. İddia $j + 1$ için de doğrudur; tümevarım gereği $g$, $I$ üzerinde $k$ kez türevlenebilirdir ve formül her $j \le k$ için geçerlidir.
+
+**Süreklilik.** $g^{(k)}(t)$, $\dfrac{\partial^k f}{\partial x_{i_1} \cdots \partial x_{i_k}}(a + th)$ biçimindeki fonksiyonların sabitlerle çarpılıp toplanmasıyla elde edilir. Bunların her biri sürekli bir kısmi türev ile sürekli $t \mapsto a + th$ fonksiyonunun bileşkesidir, dolayısıyla süreklidir (@thm-srk-bileske). Sonlu bir toplam olan $g^{(k)}$ da süreklidir (@thm-srk-cebir). [$\blacksquare$]{.qed}
+:::
+::::
+
+Lemmanın $t = 0$ hâli, diferansiyellerin geometrik anlamını verir: $d^j f(a)(h)$, $f$'nin $a$'dan geçen ve $h$ doğrultusundaki doğru üzerindeki kısıtlamasının $j$. türevidir. $u$ birim vektörse $g'(0) = \langle \nabla f(a), u \rangle$ yönlü türevdir (@def-yon-yonlu-turev), $g''(0) = d^2 f(a)(u) = u^{T} H_f(a)\, u$ ise $u$ yönündeki ikinci türevdir.
+
+Tek değişkenli Taylor polinomunun (bkz. [Analiz 2](../analiz-2/taylor-formulu.html#def-taylor-polinomu)) çok değişkenli karşılığını da tanımlayalım.
+
+::: {#def-tay-taylor-polinomu name="Taylor Polinomu ve Kalan Terim"}
+$k \ge 0$ bir tam sayı, $U \subseteq \mathbb{R}^n$ açık küme, $f \in C^k(U)$ ve $a \in U$ olsun.
+
+$$T_k(x; a) = \sum_{j=0}^{k} \frac{1}{j!}\, d^j f(a)(x - a)$$
+
+polinomuna $f$'nin $a$ noktasındaki **$k$. mertebeden Taylor polinomu**, $x \in U$ için
+
+$$R_k(x; a) = f(x) - T_k(x; a)$$
+
+farkına da **$k$. mertebeden kalan terim** denir.
+:::
+
+Yani $T_k(x; a)$, $x_1, \dots, x_n$ değişkenlerinin derecesi en çok $k$ olan bir polinomudur: $d^j f(a)(x - a)$ terimi, $x - a$'nın bileşenlerinin $j$. dereceden homojen bir polinomudur. İlk iki basamak tanıdıktır. $T_0(x; a) = f(a)$ sabittir. $T_1(x; a) = f(a) + \langle \nabla f(a), x - a \rangle$ ise afin yaklaşımdır; iki değişkende $z = T_1(x, y; a)$ grafiği teğet düzlemdir (@def-dif-teget-duzlem). $T_2$ buna Hessian matrisiyle yazılan $\dfrac{1}{2} (x - a)^{T} H_f(a)\, (x - a)$ terimini ekler.
+
+:::: {#thm-tay-taylor name="Taylor Teoremi"}
+$k \in \mathbb{N}$, $U \subseteq \mathbb{R}^n$ boş olmayan açık küme ve $f \in C^k(U)$ olsun. $a, x \in U$ noktalarını birleştiren
+
+$$L(a; x) = \{ a + t(x - a) : t \in [0, 1] \}$$
+
+doğru parçası $U$ içinde kalsın. O zaman bu doğru parçası üzerinde öyle bir $c$ noktası vardır ki
+
+$$f(x) = f(a) + \sum_{j=1}^{k-1} \frac{1}{j!}\, d^j f(a)(x - a) + \frac{1}{k!}\, d^k f(c)(x - a)$$
+
+olur; burada
+
+$$d^j f(a)(x - a) = \sum_{i_1, \dots, i_j} \frac{\partial^j f}{\partial x_{i_1} \cdots \partial x_{i_j}}(a)\, (x_{i_1} - a_{i_1}) \cdots (x_{i_j} - a_{i_j})$$
+
+olarak yazılır. Başka bir deyişle $R_{k-1}(x; a) = \dfrac{1}{k!}\, d^k f(c)(x - a)$'dır. $x \ne a$ ise $c = a + \theta(x - a)$, $0 < \theta < 1$ biçiminde seçilebilir.
+
+::: {.ispat}
+$h = x - a$ yazalım. $x = a$ ise $h = 0$'dır, $j \ge 1$ için $d^j f(a)(0) = 0$ olur ve eşitlik $c = a$ ile sağlanır. Bundan sonra $x \ne a$, yani $h \ne 0$ olsun.
+
+**Doğru parçasını biraz uzatmak.** $T = \{ t \in \mathbb{R} : a + th \in U \}$ kümesi varsayım gereği $[0, 1]$ aralığını içerir. $T$ açıktır: $t_0 \in T$ ise $U$ açık olduğundan bir $r > 0$ için $B(a + t_0 h, r) \subseteq U$ olur ve $|t - t_0| < \dfrac{r}{\|h\|}$ olan her $t$ için
+
+$$\big\| (a + th) - (a + t_0 h) \big\| = |t - t_0|\, \|h\| < r$$
+
+olduğundan $t \in T$'dir. $0$ ve $1$ noktaları $T$'nin elemanı olduğundan öyle $\delta_0, \delta_1 > 0$ vardır ki $(-\delta_0, \delta_0) \subseteq T$ ve $(1 - \delta_1, 1 + \delta_1) \subseteq T$ olur. $\delta = \min\{\delta_0, \delta_1\}$ alınırsa $I_\delta = (-\delta, 1 + \delta) \subseteq T$ olur, yani her $t \in I_\delta$ için $a + th \in U$'dur.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="15.5 21.0 611.0 241.5" role="img" aria-label="An open set U with the segment from a to x, dashed extensions to a - delta h and x + delta h, the point c = a + theta h, and on the right the interval from -delta to 1 + delta with the points 0, theta, 1 and a curved arrow t to a + t h">
+  <polygon points="361.9,147.1 358.4,141.7 354.8,136.6 351.2,131.6 347.7,126.7 344.3,122.0 341.0,117.3 337.8,112.7 334.6,108.1 331.2,103.6 327.7,99.1 323.9,94.7 319.7,90.4 315.0,86.3 309.9,82.4 304.4,78.8 298.4,75.4 292.0,72.4 285.4,69.6 278.5,67.2 271.4,64.9 264.3,62.9 257.1,60.9 250.0,59.1 242.8,57.2 235.5,55.2 228.2,53.2 220.7,51.0 213.0,48.8 205.0,46.6 196.7,44.5 188.1,42.5 179.1,40.8 169.9,39.5 160.4,38.7 150.9,38.6 141.4,39.0 132.1,40.3 123.2,42.3 114.8,45.0 107.0,48.5 100.0,52.6 93.8,57.2 88.3,62.2 83.7,67.5 79.8,72.9 76.5,78.4 73.6,83.8 71.0,89.1 68.5,94.3 66.0,99.2 63.3,104.0 60.4,108.6 57.3,113.1 53.8,117.6 50.2,122.2 46.5,126.8 42.8,131.6 39.3,136.6 36.2,141.8 33.6,147.1 31.8,152.6 30.8,158.2 30.7,163.8 31.6,169.4 33.5,174.8 36.3,180.2 39.9,185.3 44.3,190.2 49.2,194.8 54.6,199.2 60.3,203.3 66.2,207.3 72.3,211.0 78.4,214.7 84.5,218.3 90.7,221.8 97.0,225.2 103.4,228.6 109.9,231.9 116.7,235.1 123.7,238.0 131.1,240.6 138.7,242.9 146.7,244.8 154.9,246.2 163.2,247.1 171.7,247.4 180.1,247.2 188.5,246.5 196.7,245.4 204.7,243.9 212.5,242.2 220.0,240.4 227.3,238.5 234.5,236.6 241.6,234.9 248.8,233.3 256.2,231.9 263.8,230.7 271.7,229.5 280.0,228.5 288.6,227.4 297.6,226.1 306.7,224.6 315.9,222.8 325.0,220.4 333.8,217.6 342.1,214.2 349.7,210.2 356.3,205.6 361.9,200.5 366.3,195.0 369.5,189.2 371.4,183.1 372.1,176.9 371.6,170.7 370.2,164.5 368.0,158.5 365.2,152.7" fill="var(--color-theory)" fill-opacity="0.13" stroke="none" stroke-width="1.2"/>
+  <path d="M361.9,147.1 L358.4,141.7 L354.8,136.6 L351.2,131.6 L347.7,126.7 L344.3,122.0 L341.0,117.3 L337.8,112.7 L334.6,108.1 L331.2,103.6 L327.7,99.1 L323.9,94.7 L319.7,90.4 L315.0,86.3 L309.9,82.4 L304.4,78.8 L298.4,75.4 L292.0,72.4 L285.4,69.6 L278.5,67.2 L271.4,64.9 L264.3,62.9 L257.1,60.9 L250.0,59.1 L242.8,57.2 L235.5,55.2 L228.2,53.2 L220.7,51.0 L213.0,48.8 L205.0,46.6 L196.7,44.5 L188.1,42.5 L179.1,40.8 L169.9,39.5 L160.4,38.7 L150.9,38.6 L141.4,39.0 L132.1,40.3 L123.2,42.3 L114.8,45.0 L107.0,48.5 L100.0,52.6 L93.8,57.2 L88.3,62.2 L83.7,67.5 L79.8,72.9 L76.5,78.4 L73.6,83.8 L71.0,89.1 L68.5,94.3 L66.0,99.2 L63.3,104.0 L60.4,108.6 L57.3,113.1 L53.8,117.6 L50.2,122.2 L46.5,126.8 L42.8,131.6 L39.3,136.6 L36.2,141.8 L33.6,147.1 L31.8,152.6 L30.8,158.2 L30.7,163.8 L31.6,169.4 L33.5,174.8 L36.3,180.2 L39.9,185.3 L44.3,190.2 L49.2,194.8 L54.6,199.2 L60.3,203.3 L66.2,207.3 L72.3,211.0 L78.4,214.7 L84.5,218.3 L90.7,221.8 L97.0,225.2 L103.4,228.6 L109.9,231.9 L116.7,235.1 L123.7,238.0 L131.1,240.6 L138.7,242.9 L146.7,244.8 L154.9,246.2 L163.2,247.1 L171.7,247.4 L180.1,247.2 L188.5,246.5 L196.7,245.4 L204.7,243.9 L212.5,242.2 L220.0,240.4 L227.3,238.5 L234.5,236.6 L241.6,234.9 L248.8,233.3 L256.2,231.9 L263.8,230.7 L271.7,229.5 L280.0,228.5 L288.6,227.4 L297.6,226.1 L306.7,224.6 L315.9,222.8 L325.0,220.4 L333.8,217.6 L342.1,214.2 L349.7,210.2 L356.3,205.6 L361.9,200.5 L366.3,195.0 L369.5,189.2 L371.4,183.1 L372.1,176.9 L371.6,170.7 L370.2,164.5 L368.0,158.5 L365.2,152.7 L361.9,147.1" fill="none" stroke="var(--color-theory)" stroke-width="1.5" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M109.9,188.2 L137.8,175.0" fill="none" stroke="var(--academic-text)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M249.4,122.3 L277.3,109.1" fill="none" stroke="var(--academic-text)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M137.8,175.0 L249.4,122.3" fill="none" stroke="var(--academic-text)" stroke-width="2.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="109.9" cy="188.2" r="3.4" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.6"/>
+  <circle cx="277.3" cy="109.1" r="3.4" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.6"/>
+  <line x1="131.4" y1="161.5" x2="238.0" y2="111.2" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="243.0,108.8 238.0,114.5 235.5,109.2" fill="var(--academic-text)" opacity="0.75"/>
+  <text x="179.2" y="121.2" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">h</tspan> = <tspan font-style="italic">x</tspan> &#8722; <tspan font-style="italic">a</tspan></text>
+  <circle cx="137.8" cy="175.0" r="4.2" fill="var(--color-theory)"/>
+  <circle cx="176.9" cy="156.6" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="249.4" cy="122.3" r="4.2" fill="var(--color-base)"/>
+  <text x="140.8" y="193.0" fill="var(--color-theory)" font-size="13.5" text-anchor="start"><tspan font-style="italic">a</tspan></text>
+  <text x="251.4" y="140.3" fill="var(--color-base)" font-size="13.5" text-anchor="start"><tspan font-style="italic">x</tspan></text>
+  <text x="178.9" y="176.6" fill="var(--color-practice)" font-size="12.5" text-anchor="start"><tspan font-style="italic">c</tspan> = <tspan font-style="italic">a</tspan> + <tspan font-style="italic">&#952;</tspan><tspan font-style="italic">h</tspan></text>
+  <text x="101.9" y="192.2" fill="var(--academic-text)" font-size="12" text-anchor="end"><tspan font-style="italic">a</tspan> &#8722; <tspan font-style="italic">&#948;</tspan><tspan font-style="italic">h</tspan></text>
+  <text x="285.3" y="113.1" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">x</tspan> + <tspan font-style="italic">&#948;</tspan><tspan font-style="italic">h</tspan></text>
+  <text x="119.2" y="88.2" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">U</tspan></text>
+  <line x1="384.2" y1="181.2" x2="606.5" y2="181.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="612.1,181.2 605.1,184.1 605.1,178.3" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="612.1" y="198.2" fill="var(--academic-text)" font-size="12.5" text-anchor="end"><tspan font-style="italic">t</tspan></text>
+  <path d="M411.4,181.2 L574.1,181.2" fill="none" stroke="var(--academic-text)" stroke-width="3.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="411.4" cy="181.2" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.6"/>
+  <circle cx="574.1" cy="181.2" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.6"/>
+  <circle cx="438.5" cy="181.2" r="4.2" fill="var(--color-theory)"/>
+  <circle cx="476.5" cy="181.2" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="547.0" cy="181.2" r="4.2" fill="var(--color-base)"/>
+  <text x="411.4" y="201.2" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">&#8722;<tspan font-style="italic">&#948;</tspan></text>
+  <text x="438.5" y="201.2" fill="var(--color-theory)" font-size="12.5" text-anchor="middle">0</text>
+  <text x="476.5" y="201.2" fill="var(--color-practice)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">&#952;</tspan></text>
+  <text x="547.0" y="201.2" fill="var(--color-base)" font-size="12.5" text-anchor="middle">1</text>
+  <text x="574.1" y="201.2" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">1 + <tspan font-style="italic">&#948;</tspan></text>
+  <path d="M492.8,167.6 L490.8,163.8 L488.8,160.2 L486.8,156.6 L484.8,153.0 L482.9,149.5 L480.9,146.1 L478.9,142.8 L476.9,139.5 L474.9,136.3 L473.0,133.1 L471.0,130.0 L469.0,127.0 L467.0,124.0 L465.0,121.2 L463.1,118.3 L461.1,115.6 L459.1,112.9 L457.1,110.2 L455.1,107.6 L453.1,105.1 L451.1,102.7 L449.2,100.3 L447.2,98.0 L445.2,95.7 L443.2,93.6 L441.2,91.4 L439.2,89.4 L437.2,87.4 L435.2,85.5 L433.2,83.6 L431.3,81.8 L429.3,80.1 L427.3,78.4 L425.3,76.8 L423.3,75.3 L421.3,73.8 L419.3,72.4 L417.3,71.0 L415.3,69.7 L413.3,68.5 L411.3,67.4 L409.3,66.3 L407.3,65.2 L405.3,64.3 L403.3,63.4 L401.3,62.6 L399.3,61.8 L397.3,61.1 L395.3,60.5 L393.3,59.9 L391.3,59.4 L389.3,58.9 L387.3,58.6 L385.3,58.2 L383.3,58.0 L381.3,57.8 L379.3,57.7 L377.3,57.6 L375.3,57.6 L373.3,57.7 L371.3,57.8 L369.3,58.0 L367.3,58.3 L365.3,58.6 L363.3,59.0 L361.3,59.5 L359.3,60.0 L357.2,60.6 L355.2,61.3 L353.2,62.0 L351.2,62.8 L349.2,63.6 L347.2,64.5 L345.2,65.5 L343.2,66.5 L341.2,67.6 L339.1,68.8" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.85" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="339.1" y1="68.8" x2="338.5" y2="69.2" stroke="var(--academic-text)" stroke-width="1.4" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="333.1,72.7 338.0,65.5 341.6,71.2" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="429.0" y="44.8" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">t</tspan> |<tspan dx="-2.2">&#8594;</tspan> <tspan font-style="italic">a</tspan> + <tspan font-style="italic">t</tspan><tspan font-style="italic">h</tspan></text>
+</svg>
+<figcaption>Açık <em>U</em> kümesinde <em>a</em> ile <em>x</em>'i birleştiren <em>L</em>(<em>a</em>; <em>x</em>) doğru parçası ve <em>h</em> = <em>x</em> &#8722; <em>a</em>. <em>t</em> &#8614; <em>a</em> + <em>th</em> eşlemesi (&#8722;<em>&#948;</em>, 1 + <em>&#948;</em>) aralığını, iki ucundan kesikli uzatılmış parçaya götürür ve parça hâlâ <em>U</em>'nun içindedir; 0, <em>&#952;</em> ve 1 sırasıyla <em>a</em>, <em>c</em> = <em>a</em> + <em>&#952;h</em> ve <em>x</em> noktalarına gider (aynı renkler).</figcaption>
+</figure>
+```
+
+**Tek değişkene indirgeme.** $g(t) = f(a + th)$ ($t \in I_\delta$) fonksiyonuna @lem-tay-dogru-boyunca uygulanabilir: $g$, $I_\delta$ üzerinde $k$ kez türevlenebilirdir ve $g^{(j)}(t) = d^j f(a + th)(h)$'dir. Özel olarak $g, g', \dots, g^{(k-1)}$ türevlenebilir oldukları için $[0, 1]$ üzerinde süreklidir ve $g^{(k)}$ türevi $(0, 1)$'in her noktasında vardır. Lagrange kalanlı tek değişkenli Taylor teoremi (bkz. [Analiz 2](../analiz-2/taylor-formulu.html#thm-taylor-lagrange)), $n = k - 1$, $x_0 = 0$ ve $x = 1$ ile uygulandığında öyle bir $\theta \in (0, 1)$ verir ki
+
+$$g(1) = \sum_{j=0}^{k-1} \frac{g^{(j)}(0)}{j!} + \frac{g^{(k)}(\theta)}{k!}$$
+
+olur.
+
+**Geri çeviri.** $g(1) = f(a + h) = f(x)$, $g(0) = f(a)$, $j = 1, \dots, k - 1$ için $g^{(j)}(0) = d^j f(a)(h)$ ve $g^{(k)}(\theta) = d^k f(a + \theta h)(h)$'dir. $c = a + \theta h$ dersek $c \in L(a; x)$ olur ve
+
+$$f(x) = f(a) + \sum_{j=1}^{k-1} \frac{1}{j!}\, d^j f(a)(h) + \frac{1}{k!}\, d^k f(c)(h)$$
+
+elde edilir. $h = x - a$ olduğundan bu, iddia edilen eşitliktir. [$\blacksquare$]{.qed}
+:::
+::::
+
+$L(a; x)$ kümesi, doğru parçası tanımındaki (@def-kon-dogru-parcasi) kümeyle aynıdır; parametrede $t$ yerine $1 - t$ yazmak kümeyi değiştirmez. $U$ konveksse, örneğin bir yuvarsa (@thm-kon-yuvar-konveks), doğru parçası koşulu her $a, x \in U$ için kendiliğinden sağlanır. Ara nokta $c$, hem $x$'e hem $k$'ya bağlıdır; teorem onun varlığını söyler, yerini söylemez.
+
+$k = 1$ alalım. Toplam boştur ve formül
+
+$$f(x) = f(a) + df(c)(x - a) = f(a) + \langle \nabla f(c), x - a \rangle$$
+
+biçimini alır. Bu, ortalama değer teoremidir (@thm-yon-odt). Demek ki **Taylor teoremi, ortalama değer teoreminin genel hâlidir**. Tek fark varsayımdadır: ortalama değer teoremi yalnızca türevlenebilirlik ister, burada $f \in C^1$ varsaydık.
+
+İki değişkende @prp-tay-binom ile formül açıkça yazılabilir.
+
+:::: {#cor-tay-iki-degisken name="İki Değişkenli Taylor Formülü"}
+$k \in \mathbb{N}$, $U \subseteq \mathbb{R}^2$ açık küme, $f \in C^k(U)$, $r > 0$ ve $B\big( (x_0, y_0), r \big) \subseteq U$ olsun. Her $(x, y) \in B\big( (x_0, y_0), r \big)$ için, $(x_0, y_0)$ ile $(x, y)$'yi birleştiren doğru parçası üzerinde öyle bir $(c_1, c_2)$ noktası vardır ki $h_1 = x - x_0$ ve $h_2 = y - y_0$ olmak üzere
+
+$$
+\begin{aligned}
+f(x, y) &= f(x_0, y_0) + \sum_{p=1}^{k-1} \frac{1}{p!} \sum_{j=0}^{p} \binom{p}{j} \frac{\partial^p f}{\partial x^j\, \partial y^{p-j}}(x_0, y_0)\, h_1^{\,j} h_2^{\,p-j} \\[1mm]
+&\quad + \frac{1}{k!} \sum_{j=0}^{k} \binom{k}{j} \frac{\partial^k f}{\partial x^j\, \partial y^{k-j}}(c_1, c_2)\, h_1^{\,j} h_2^{\,k-j}
+\end{aligned}
+$$
+
+olur.
+
+::: {.ispat}
+Yuvar konveks olduğundan (@thm-kon-yuvar-konveks) $(x_0, y_0)$ ile $(x, y)$'yi birleştiren doğru parçası yuvarın, dolayısıyla $U$'nun içindedir. @thm-tay-taylor bu doğru parçası üzerinde bir $c = (c_1, c_2)$ noktası verir. Formüldeki $d^p f(x_0, y_0)(h)$ ($1 \le p \le k - 1$) ve $d^k f(c)(h)$ diferansiyelleri @prp-tay-binom ile yazılınca iddia elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Uygulamada en sık $k = 3$ hâli kullanılır:
+
+$$
+\begin{aligned}
+f(x, y) &= f + f_x\, h_1 + f_y\, h_2 + \tfrac{1}{2}\big( f_{xx}\, h_1^2 + 2 f_{xy}\, h_1 h_2 + f_{yy}\, h_2^2 \big) \\[1mm]
+&\quad + \tfrac{1}{6}\big( f_{xxx}\, h_1^3 + 3 f_{xxy}\, h_1^2 h_2 + 3 f_{xyy}\, h_1 h_2^2 + f_{yyy}\, h_2^3 \big).
+\end{aligned}
+$$
+
+Birinci satırdaki $f$ ve türevler $(x_0, y_0)$ noktasında, ikinci satırdaki üçüncü mertebeden türevler ise $(c_1, c_2)$ noktasında hesaplanır.
+
+::: {.callout-tip title="Dört adımda Taylor formülü"}
+1. **Artımı yaz.** $h = x - a$; iki değişkende $h_1 = x - x_0$ ve $h_2 = y - y_0$ alınır. Doğru parçasının tanım kümesinde kaldığı denetlenir.
+2. **Türevleri hesapla.** $k$. mertebeye kadar kısmi türevler bulunur. $f \in C^k$ olduğundan karışık türevlerden her grupta yalnızca biri hesaplanır. $(k-1)$. mertebeye kadar olanlar $a$ noktasında değerlendirilir; $k$. mertebedekiler genel noktada bırakılır.
+3. **Diferansiyelleri kur.** Her $d^j f(a)(h)$ binom biçimiyle (@prp-tay-binom) yazılır.
+4. **Formülü birleştir.** Terimler $\dfrac{1}{j!}$ katsayılarıyla toplanır ve kalan terimi $c = a + \theta h$ noktasında yazılır; istenirse $h$ yerine $x - a$ konur.
+:::
+
+:::: {#exm-tay-ustel-kosinus name="Üçüncü Mertebeden Kalanlı Taylor Formülü"}
+$f(x, y) = e^y \cos x$ fonksiyonunun $a = \left( \dfrac{\pi}{2}, 0 \right)$ noktasındaki Taylor formülünü $k = 3$ için yazınız.
+
+::: {.cozum}
+**Artım.** $f \in C^\infty(\mathbb{R}^2)$'dir ve $\mathbb{R}^2$ konveks olduğundan formül her $(x, y)$ için geçerlidir. $h_1 = x - \dfrac{\pi}{2}$ ve $h_2 = y$ yazalım.
+
+**Türevler.** $\cos \dfrac{\pi}{2} = 0$, $\sin \dfrac{\pi}{2} = 1$ ve $e^0 = 1$ olduğundan
+
+$$
+\begin{aligned}
+f &= e^y \cos x, & f(a) &= 0, \\[1mm]
+f_x &= -e^y \sin x, & f_x(a) &= -1, \\[1mm]
+f_y &= e^y \cos x, & f_y(a) &= 0, \\[1mm]
+f_{xx} &= -e^y \cos x, & f_{xx}(a) &= 0, \\[1mm]
+f_{xy} = f_{yx} &= -e^y \sin x, & f_{xy}(a) &= -1, \\[1mm]
+f_{yy} &= e^y \cos x, & f_{yy}(a) &= 0
+\end{aligned}
+$$
+
+bulunur. Kalan teriminde genel bir noktada gereken üçüncü mertebeden türevler, sıraları önemsiz olmak üzere
+
+$$
+\begin{aligned}
+f_{xxx} &= e^y \sin x, & f_{xxy} &= -e^y \cos x, \\[1mm]
+f_{xyy} &= -e^y \sin x, & f_{yyy} &= e^y \cos x
+\end{aligned}
+$$
+
+olur.
+
+**Diferansiyeller.**
+
+$$
+\begin{aligned}
+df(a)(h) &= -h_1, \\[1mm]
+d^2 f(a)(h) &= 0 \cdot h_1^2 + 2 \cdot (-1)\, h_1 h_2 + 0 \cdot h_2^2 = -2 h_1 h_2.
+\end{aligned}
+$$
+
+$c = (c_1, c_2)$ noktasında üçüncü diferansiyel
+
+$$
+\begin{aligned}
+d^3 f(c)(h) &= e^{c_2} \sin c_1\, h_1^3 - 3 e^{c_2} \cos c_1\, h_1^2 h_2 \\[1mm]
+&\quad - 3 e^{c_2} \sin c_1\, h_1 h_2^2 + e^{c_2} \cos c_1\, h_2^3
+\end{aligned}
+$$
+
+olur.
+
+**Formül.** $\dfrac{1}{2!} d^2 f(a)(h) = -h_1 h_2$ olduğundan
+
+$$e^y \cos x = -\left( x - \frac{\pi}{2} \right) - \left( x - \frac{\pi}{2} \right) y + R_2(x, y)$$
+
+ve
+
+$$
+\begin{aligned}
+R_2(x, y) &= \frac{e^{c_2}}{6} \bigg[ \sin c_1 \left( x - \frac{\pi}{2} \right)^3 - 3 \cos c_1 \left( x - \frac{\pi}{2} \right)^2 y \\[1mm]
+&\qquad - 3 \sin c_1 \left( x - \frac{\pi}{2} \right) y^2 + \cos c_1\, y^3 \bigg]
+\end{aligned}
+$$
+
+bulunur; burada $(c_1, c_2)$, $\left( \dfrac{\pi}{2}, 0 \right)$ ile $(x, y)$'yi birleştiren doğru parçası üzerindedir.
+
+Formülü bir doğru boyunca okuyalım. $h = (t, t)$, yani $(x, y) = \left( \dfrac{\pi}{2} + t,\ t \right)$ alınırsa
+
+$$f\left( \frac{\pi}{2} + t,\ t \right) = e^t \cos\left( \frac{\pi}{2} + t \right) = -e^t \sin t$$
+
+olur ve ikinci mertebeden Taylor polinomu $-t - t^2$ değerini alır. Bu, $g(t) = -e^t \sin t$ fonksiyonunun $0$'daki ikinci mertebeden Taylor polinomunun ta kendisidir; @lem-tay-dogru-boyunca tam olarak bunu söyler.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="40.5 12.0 478.0 366.0" role="img" aria-label="Graph of g(t) = -e^t sin t for t between -1 and 1 with the dashed line -t and the dotted parabola -t - t^2, all three passing through the origin">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" fill="var(--academic-text)">
+  <line x1="56.0" y1="137.0" x2="494.0" y2="137.0"/>
+  <line x1="260.0" y1="364.0" x2="260.0" y2="26.0"/>
+  <polygon points="494.0,137.0 486.0,133.5 486.0,140.5" stroke="none"/>
+  <polygon points="260.0,26.0 256.5,34.0 263.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="60.0" y1="134.0" x2="60.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="60.0" y="152.0" text-anchor="middle">&#8722;1</text>
+  <line x1="160.0" y1="134.0" x2="160.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="160.0" y="152.0" text-anchor="middle">&#8722;0,5</text>
+  <line x1="360.0" y1="134.0" x2="360.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="360.0" y="152.0" text-anchor="middle">0,5</text>
+  <line x1="460.0" y1="134.0" x2="460.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="460.0" y="152.0" text-anchor="middle">1</text>
+  <line x1="257.0" y1="315.4" x2="263.0" y2="315.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="253.0" y="319.4" text-anchor="end">&#8722;2</text>
+  <line x1="257.0" y1="226.2" x2="263.0" y2="226.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="253.0" y="230.2" text-anchor="end">&#8722;1</text>
+  <line x1="257.0" y1="47.8" x2="263.0" y2="47.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="253.0" y="51.8" text-anchor="end">1</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="492.0" y="152.0" text-anchor="end"><tspan font-style="italic">t</tspan></text>
+  </g>
+  <path d="M60.0,47.8 L62.0,48.7 L64.0,49.6 L66.0,50.5 L68.0,51.4 L70.0,52.3 L72.0,53.2 L74.0,54.1 L76.0,55.0 L78.0,55.9 L80.0,56.8 L82.0,57.6 L84.0,58.5 L86.0,59.4 L88.0,60.3 L90.0,61.2 L92.0,62.1 L94.0,63.0 L96.0,63.9 L98.0,64.8 L100.0,65.7 L102.0,66.6 L104.0,67.5 L106.0,68.4 L108.0,69.2 L110.0,70.1 L112.0,71.0 L114.0,71.9 L116.0,72.8 L118.0,73.7 L120.0,74.6 L122.0,75.5 L124.0,76.4 L126.0,77.3 L128.0,78.2 L130.0,79.1 L132.0,79.9 L134.0,80.8 L136.0,81.7 L138.0,82.6 L140.0,83.5 L142.0,84.4 L144.0,85.3 L146.0,86.2 L148.0,87.1 L150.0,88.0 L152.0,88.9 L154.0,89.8 L156.0,90.6 L158.0,91.5 L160.0,92.4 L162.0,93.3 L164.0,94.2 L166.0,95.1 L168.0,96.0 L170.0,96.9 L172.0,97.8 L174.0,98.7 L176.0,99.6 L178.0,100.5 L180.0,101.4 L182.0,102.2 L184.0,103.1 L186.0,104.0 L188.0,104.9 L190.0,105.8 L192.0,106.7 L194.0,107.6 L196.0,108.5 L198.0,109.4 L200.0,110.3 L202.0,111.2 L204.0,112.1 L206.0,112.9 L208.0,113.8 L210.0,114.7 L212.0,115.6 L214.0,116.5 L216.0,117.4 L218.0,118.3 L220.0,119.2 L222.0,120.1 L224.0,121.0 L226.0,121.9 L228.0,122.8 L230.0,123.6 L232.0,124.5 L234.0,125.4 L236.0,126.3 L238.0,127.2 L240.0,128.1 L242.0,129.0 L244.0,129.9 L246.0,130.8 L248.0,131.7 L250.0,132.6 L252.0,133.5 L254.0,134.4 L256.0,135.2 L258.0,136.1 L260.0,137.0 L262.0,137.9 L264.0,138.8 L266.0,139.7 L268.0,140.6 L270.0,141.5 L272.0,142.4 L274.0,143.3 L276.0,144.2 L278.0,145.1 L280.0,145.9 L282.0,146.8 L284.0,147.7 L286.0,148.6 L288.0,149.5 L290.0,150.4 L292.0,151.3 L294.0,152.2 L296.0,153.1 L298.0,154.0 L300.0,154.9 L302.0,155.8 L304.0,156.6 L306.0,157.5 L308.0,158.4 L310.0,159.3 L312.0,160.2 L314.0,161.1 L316.0,162.0 L318.0,162.9 L320.0,163.8 L322.0,164.7 L324.0,165.6 L326.0,166.5 L328.0,167.4 L330.0,168.2 L332.0,169.1 L334.0,170.0 L336.0,170.9 L338.0,171.8 L340.0,172.7 L342.0,173.6 L344.0,174.5 L346.0,175.4 L348.0,176.3 L350.0,177.2 L352.0,178.1 L354.0,178.9 L356.0,179.8 L358.0,180.7 L360.0,181.6 L362.0,182.5 L364.0,183.4 L366.0,184.3 L368.0,185.2 L370.0,186.1 L372.0,187.0 L374.0,187.9 L376.0,188.8 L378.0,189.6 L380.0,190.5 L382.0,191.4 L384.0,192.3 L386.0,193.2 L388.0,194.1 L390.0,195.0 L392.0,195.9 L394.0,196.8 L396.0,197.7 L398.0,198.6 L400.0,199.5 L402.0,200.4 L404.0,201.2 L406.0,202.1 L408.0,203.0 L410.0,203.9 L412.0,204.8 L414.0,205.7 L416.0,206.6 L418.0,207.5 L420.0,208.4 L422.0,209.3 L424.0,210.2 L426.0,211.1 L428.0,211.9 L430.0,212.8 L432.0,213.7 L434.0,214.6 L436.0,215.5 L438.0,216.4 L440.0,217.3 L442.0,218.2 L444.0,219.1 L446.0,220.0 L448.0,220.9 L450.0,221.8 L452.0,222.6 L454.0,223.5 L456.0,224.4 L458.0,225.3 L460.0,226.2" fill="none" stroke="var(--color-practice)" stroke-width="1.8" stroke-dasharray="7 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,137.0 L62.0,136.1 L64.0,135.3 L66.0,134.4 L68.0,133.6 L70.0,132.8 L72.0,132.0 L74.0,131.2 L76.0,130.5 L78.0,129.7 L80.0,129.0 L82.0,128.3 L84.0,127.6 L86.0,126.9 L88.0,126.3 L90.0,125.7 L92.0,125.0 L94.0,124.4 L96.0,123.9 L98.0,123.3 L100.0,122.8 L102.0,122.2 L104.0,121.7 L106.0,121.2 L108.0,120.8 L110.0,120.3 L112.0,119.9 L114.0,119.4 L116.0,119.0 L118.0,118.7 L120.0,118.3 L122.0,117.9 L124.0,117.6 L126.0,117.3 L128.0,117.0 L130.0,116.7 L132.0,116.5 L134.0,116.2 L136.0,116.0 L138.0,115.8 L140.0,115.6 L142.0,115.5 L144.0,115.3 L146.0,115.2 L148.0,115.1 L150.0,115.0 L152.0,114.9 L154.0,114.8 L156.0,114.8 L158.0,114.7 L160.0,114.7 L162.0,114.7 L164.0,114.8 L166.0,114.8 L168.0,114.9 L170.0,115.0 L172.0,115.1 L174.0,115.2 L176.0,115.3 L178.0,115.5 L180.0,115.6 L182.0,115.8 L184.0,116.0 L186.0,116.2 L188.0,116.5 L190.0,116.7 L192.0,117.0 L194.0,117.3 L196.0,117.6 L198.0,117.9 L200.0,118.3 L202.0,118.7 L204.0,119.0 L206.0,119.4 L208.0,119.9 L210.0,120.3 L212.0,120.8 L214.0,121.2 L216.0,121.7 L218.0,122.2 L220.0,122.8 L222.0,123.3 L224.0,123.9 L226.0,124.4 L228.0,125.0 L230.0,125.7 L232.0,126.3 L234.0,126.9 L236.0,127.6 L238.0,128.3 L240.0,129.0 L242.0,129.7 L244.0,130.5 L246.0,131.2 L248.0,132.0 L250.0,132.8 L252.0,133.6 L254.0,134.4 L256.0,135.3 L258.0,136.1 L260.0,137.0 L262.0,137.9 L264.0,138.8 L266.0,139.8 L268.0,140.7 L270.0,141.7 L272.0,142.7 L274.0,143.7 L276.0,144.7 L278.0,145.8 L280.0,146.8 L282.0,147.9 L284.0,149.0 L286.0,150.1 L288.0,151.3 L290.0,152.4 L292.0,153.6 L294.0,154.8 L296.0,156.0 L298.0,157.2 L300.0,158.4 L302.0,159.7 L304.0,161.0 L306.0,162.3 L308.0,163.6 L310.0,164.9 L312.0,166.2 L314.0,167.6 L316.0,169.0 L318.0,170.4 L320.0,171.8 L322.0,173.2 L324.0,174.7 L326.0,176.2 L328.0,177.7 L330.0,179.2 L332.0,180.7 L334.0,182.2 L336.0,183.8 L338.0,185.4 L340.0,187.0 L342.0,188.6 L344.0,190.2 L346.0,191.9 L348.0,193.5 L350.0,195.2 L352.0,196.9 L354.0,198.6 L356.0,200.4 L358.0,202.1 L360.0,203.9 L362.0,205.7 L364.0,207.5 L366.0,209.4 L368.0,211.2 L370.0,213.1 L372.0,214.9 L374.0,216.8 L376.0,218.8 L378.0,220.7 L380.0,222.6 L382.0,224.6 L384.0,226.6 L386.0,228.6 L388.0,230.6 L390.0,232.7 L392.0,234.7 L394.0,236.8 L396.0,238.9 L398.0,241.0 L400.0,243.2 L402.0,245.3 L404.0,247.5 L406.0,249.7 L408.0,251.9 L410.0,254.1 L412.0,256.3 L414.0,258.6 L416.0,260.9 L418.0,263.1 L420.0,265.5 L422.0,267.8 L424.0,270.1 L426.0,272.5 L428.0,274.9 L430.0,277.3 L432.0,279.7 L434.0,282.1 L436.0,284.6 L438.0,287.1 L440.0,289.5 L442.0,292.0 L444.0,294.6 L446.0,297.1 L448.0,299.7 L450.0,302.2 L452.0,304.8 L454.0,307.5 L456.0,310.1 L458.0,312.7 L460.0,315.4" fill="none" stroke="var(--color-base)" stroke-width="2.3" stroke-dasharray="0.5 4.5" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,109.4 L62.0,109.3 L64.0,109.2 L66.0,109.1 L68.0,109.1 L70.0,109.0 L72.0,108.9 L74.0,108.8 L76.0,108.7 L78.0,108.7 L80.0,108.6 L82.0,108.6 L84.0,108.5 L86.0,108.5 L88.0,108.4 L90.0,108.4 L92.0,108.4 L94.0,108.3 L96.0,108.3 L98.0,108.3 L100.0,108.3 L102.0,108.3 L104.0,108.3 L106.0,108.3 L108.0,108.3 L110.0,108.3 L112.0,108.3 L114.0,108.4 L116.0,108.4 L118.0,108.4 L120.0,108.5 L122.0,108.6 L124.0,108.6 L126.0,108.7 L128.0,108.8 L130.0,108.8 L132.0,108.9 L134.0,109.0 L136.0,109.1 L138.0,109.3 L140.0,109.4 L142.0,109.5 L144.0,109.7 L146.0,109.8 L148.0,110.0 L150.0,110.1 L152.0,110.3 L154.0,110.5 L156.0,110.7 L158.0,110.9 L160.0,111.1 L162.0,111.3 L164.0,111.5 L166.0,111.8 L168.0,112.0 L170.0,112.3 L172.0,112.6 L174.0,112.8 L176.0,113.1 L178.0,113.4 L180.0,113.7 L182.0,114.1 L184.0,114.4 L186.0,114.7 L188.0,115.1 L190.0,115.5 L192.0,115.9 L194.0,116.2 L196.0,116.7 L198.0,117.1 L200.0,117.5 L202.0,117.9 L204.0,118.4 L206.0,118.9 L208.0,119.3 L210.0,119.8 L212.0,120.4 L214.0,120.9 L216.0,121.4 L218.0,122.0 L220.0,122.5 L222.0,123.1 L224.0,123.7 L226.0,124.3 L228.0,124.9 L230.0,125.6 L232.0,126.2 L234.0,126.9 L236.0,127.6 L238.0,128.3 L240.0,129.0 L242.0,129.7 L244.0,130.4 L246.0,131.2 L248.0,132.0 L250.0,132.8 L252.0,133.6 L254.0,134.4 L256.0,135.3 L258.0,136.1 L260.0,137.0 L262.0,137.9 L264.0,138.8 L266.0,139.8 L268.0,140.7 L270.0,141.7 L272.0,142.7 L274.0,143.7 L276.0,144.7 L278.0,145.8 L280.0,146.9 L282.0,148.0 L284.0,149.1 L286.0,150.2 L288.0,151.3 L290.0,152.5 L292.0,153.7 L294.0,154.9 L296.0,156.1 L298.0,157.4 L300.0,158.7 L302.0,160.0 L304.0,161.3 L306.0,162.6 L308.0,164.0 L310.0,165.4 L312.0,166.8 L314.0,168.2 L316.0,169.6 L318.0,171.1 L320.0,172.6 L322.0,174.1 L324.0,175.7 L326.0,177.2 L328.0,178.8 L330.0,180.4 L332.0,182.1 L334.0,183.7 L336.0,185.4 L338.0,187.1 L340.0,188.8 L342.0,190.6 L344.0,192.4 L346.0,194.2 L348.0,196.0 L350.0,197.9 L352.0,199.7 L354.0,201.7 L356.0,203.6 L358.0,205.5 L360.0,207.5 L362.0,209.5 L364.0,211.6 L366.0,213.6 L368.0,215.7 L370.0,217.8 L372.0,220.0 L374.0,222.1 L376.0,224.3 L378.0,226.5 L380.0,228.8 L382.0,231.1 L384.0,233.4 L386.0,235.7 L388.0,238.0 L390.0,240.4 L392.0,242.8 L394.0,245.3 L396.0,247.7 L398.0,250.2 L400.0,252.7 L402.0,255.3 L404.0,257.8 L406.0,260.4 L408.0,263.1 L410.0,265.7 L412.0,268.4 L414.0,271.1 L416.0,273.9 L418.0,276.6 L420.0,279.4 L422.0,282.2 L424.0,285.1 L426.0,288.0 L428.0,290.9 L430.0,293.8 L432.0,296.8 L434.0,299.7 L436.0,302.8 L438.0,305.8 L440.0,308.9 L442.0,312.0 L444.0,315.1 L446.0,318.2 L448.0,321.4 L450.0,324.6 L452.0,327.8 L454.0,331.1 L456.0,334.4 L458.0,337.7 L460.0,341.0" fill="none" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="260.0" cy="137.0" r="4.0" fill="var(--academic-text)"/>
+  <text x="468.0" y="230.2" fill="var(--color-practice)" font-size="12.5" text-anchor="start">&#8722;<tspan font-style="italic">t</tspan></text>
+  <text x="468.0" y="316.4" fill="var(--color-base)" font-size="12.5" text-anchor="start">&#8722;<tspan font-style="italic">t</tspan> &#8722; <tspan font-style="italic">t</tspan>²</text>
+  <text x="448.0" y="353.0" fill="var(--color-theory)" font-size="12.5" text-anchor="end"><tspan font-style="italic">g</tspan>(<tspan font-style="italic">t</tspan>) = &#8722;<tspan font-style="italic">e</tspan><tspan font-size="8.5" dy="-5"><tspan font-style="italic">t</tspan></tspan><tspan dy="5">&#8203;</tspan> sin <tspan font-style="italic">t</tspan></text>
+</svg>
+<figcaption><em>f</em>(<em>x</em>, <em>y</em>) = <em>e<sup>y</sup></em> cos <em>x</em> fonksiyonunun (<em>&#960;</em>/2 + <em>t</em>, <em>t</em>) doğrusu boyunca kesiti <em>g</em>(<em>t</em>) = &#8722;<em>e<sup>t</sup></em> sin <em>t</em> (düz), birinci mertebeden Taylor polinomu &#8722;<em>t</em> (kesikli) ve ikinci mertebeden Taylor polinomu &#8722;<em>t</em> &#8722; <em>t</em>² (noktalı). İkinci mertebeden polinom <em>t</em> = 0 civarında eğriye çok daha iyi yapışır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-tay-polinom-acilim name="Bir Polinomun Taylor Açılımı"}
+$f(x, y) = x^2 + 3x + 5y - y^2$ polinomunu $(x + 1)$ ve $(y - 1)$'in kuvvetleri cinsinden, yani $(-1, 1)$ noktası civarındaki Taylor açılımı biçiminde yazınız.
+
+::: {.cozum}
+$h_1 = x + 1$ ve $h_2 = y - 1$ yazalım; $f \in C^\infty(\mathbb{R}^2)$'dir.
+
+**Türevler.** $f(-1, 1) = 1 - 3 + 5 - 1 = 2$ ve
+
+$$
+\begin{aligned}
+f_x &= 2x + 3, & f_x(-1, 1) &= 1, \\[1mm]
+f_y &= 5 - 2y, & f_y(-1, 1) &= 3, \\[1mm]
+f_{xx} &= 2, & f_{xy} &= 0, \\[1mm]
+f_{yy} &= -2
+\end{aligned}
+$$
+
+olur. İkinci türevler sabit olduğundan üçüncü mertebeden bütün kısmi türevler sıfırdır.
+
+**Kalan sıfırdır.** @thm-tay-taylor, $k = 3$ ile kalan için $R_2 = \dfrac{1}{3!}\, d^3 f(c)(h) = 0$ verir. Dolayısıyla $f$, ikinci mertebeden Taylor polinomuna eşittir:
+
+$$
+\begin{aligned}
+f(x, y) &= 2 + (x + 1) + 3(y - 1) + \frac{1}{2}\Big[ 2(x + 1)^2 - 2(y - 1)^2 \Big] \\[1mm]
+&= 2 + (x + 1) + 3(y - 1) + (x + 1)^2 - (y - 1)^2.
+\end{aligned}
+$$
+
+**Sağlama.** $(x + 1)^2 = x^2 + 2x + 1$ ve $(y - 1)^2 = y^2 - 2y + 1$ yerine yazılırsa
+
+$$2 + x + 1 + 3y - 3 + x^2 + 2x + 1 - y^2 + 2y - 1 = x^2 + 3x + 5y - y^2$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Örnek genel bir gerçeği gösterir. Derecesi $m$ olan bir polinomun $(m+1)$. mertebeden bütün kısmi türevleri sıfırdır. Taylor teoremi $k = m + 1$ ile kalanın sıfır olduğunu verir; dolayısıyla bir polinom, her noktadaki $m$. mertebeden Taylor polinomuna eşittir. Bir polinomun Taylor açılımı, onu yeni bir merkeze göre yeniden yazmaktan ibarettir.
+
+:::: {#exm-tay-ustel-carpim name="Üçüncü Mertebeden Taylor Polinomu"}
+$f(x, y) = e^{xy} + xy$ fonksiyonunun $(0, 1)$ noktasındaki üçüncü mertebeden Taylor polinomunu yazınız.
+
+::: {.cozum}
+$h_1 = x$ ve $h_2 = y - 1$ yazalım; $f \in C^\infty(\mathbb{R}^2)$'dir.
+
+**Türevler ve değerleri.** $(0, 1)$ noktasında $xy = 0$ ve $e^{xy} = 1$ olur.
+
+$$
+\begin{aligned}
+f &= e^{xy} + xy, & f(0, 1) &= 1, \\[1mm]
+f_x &= y\, e^{xy} + y, & f_x(0, 1) &= 2, \\[1mm]
+f_y &= x\, e^{xy} + x, & f_y(0, 1) &= 0, \\[1mm]
+f_{xx} &= y^2 e^{xy}, & f_{xx}(0, 1) &= 1, \\[1mm]
+f_{xy} &= (1 + xy)\, e^{xy} + 1, & f_{xy}(0, 1) &= 2, \\[1mm]
+f_{yy} &= x^2 e^{xy}, & f_{yy}(0, 1) &= 0.
+\end{aligned}
+$$
+
+Üçüncü mertebeden türevler:
+
+$$
+\begin{aligned}
+f_{xxx} &= y^3 e^{xy}, & f_{xxx}(0, 1) &= 1, \\[1mm]
+f_{xxy} &= (2y + xy^2)\, e^{xy}, & f_{xxy}(0, 1) &= 2, \\[1mm]
+f_{xyy} &= (2x + x^2 y)\, e^{xy}, & f_{xyy}(0, 1) &= 0, \\[1mm]
+f_{yyy} &= x^3 e^{xy}, & f_{yyy}(0, 1) &= 0.
+\end{aligned}
+$$
+
+**Polinom.** $T_3 = f + df + \dfrac{1}{2!} d^2 f + \dfrac{1}{3!} d^3 f$ olduğundan (bütün diferansiyeller $(0, 1)$ noktasında ve $h = (x, y - 1)$ artımında)
+
+$$
+\begin{aligned}
+T_3(x, y) &= 1 + 2x + \frac{1}{2}\Big[ x^2 + 2 \cdot 2\, x(y - 1) \Big] + \frac{1}{6}\Big[ x^3 + 3 \cdot 2\, x^2 (y - 1) \Big] \\[1mm]
+&= 1 + 2x + \frac{x^2}{2} + 2x(y - 1) + \frac{x^3}{6} + x^2 (y - 1)
+\end{aligned}
+$$
+
+bulunur.
+
+**Sağlama.** $y = 1 + h_2$ ile $xy = x + x h_2$ olur. $e^u = 1 + u + \dfrac{u^2}{2} + \dfrac{u^3}{6} + \cdots$ açılımında $u = x + x h_2$ koyup derecesi $3$'ten büyük terimleri atınca
+
+$$e^{xy} \approx 1 + x + x h_2 + \frac{x^2}{2} + x^2 h_2 + \frac{x^3}{6}$$
+
+kalır. Buna $xy = x + x h_2$ eklenince aynı polinom çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Kalan Terim: İntegral Biçimi ve Mertebesi
+
+Taylor teoremindeki kalan, ara bir noktadaki türevle verilir. Kalanı bir integral olarak tam yazmak ve $h \to 0$ iken ne hızla söndüğünü bilmek de işe yarar.
+
+:::: {#thm-tay-integral-kalan name="İntegral Biçimli Kalan"}
+Taylor teoreminin (@thm-tay-taylor) varsayımları altında $h = x - a$ olmak üzere
+
+$$R_{k-1}(x; a) = \int_0^1 \frac{(1 - t)^{k-1}}{(k-1)!}\, d^k f(a + th)(h)\, dt$$
+
+olur. Açıkça yazılırsa
+
+$$R_{k-1}(x; a) = \sum_{i_1, \dots, i_k} h_{i_1} \cdots h_{i_k} \int_0^1 \frac{(1 - t)^{k-1}}{(k-1)!}\, \frac{\partial^k f}{\partial x_{i_1} \cdots \partial x_{i_k}}(a + th)\, dt.$$
+
+::: {.ispat}
+**Tek değişkenli özdeşlik.** Önce şunu gösterelim: $m \in \mathbb{N}$, $I$ bir açık aralık, $[0, 1] \subseteq I$ ve $g : I \to \mathbb{R}$ fonksiyonu $m$ kez türevlenebilir, $g^{(m)}$ sürekli olsun. O zaman
+
+$$g(1) = \sum_{j=0}^{m-1} \frac{g^{(j)}(0)}{j!} + \int_0^1 \frac{(1 - t)^{m-1}}{(m-1)!}\, g^{(m)}(t)\, dt \tag{2}$$
+
+olur. $m$ üzerinden tümevarım yapalım. $m = 1$ için (2), $g(1) - g(0) = \int_0^1 g'(t)\, dt$ eşitliğidir; $g'$ sürekli olduğundan Newton–Leibniz formülünden çıkar (bkz. [Analiz 2](../analiz-2/analizin-temel-teoremleri.html#thm-temel-teorem-birinci)).
+
+Özdeşlik bir $m$ için doğru olsun ve $g$, $m + 1$ kez türevlenebilir, $g^{(m+1)}$ sürekli olsun. $g^{(m)}$ türevlenebilir olduğundan süreklidir; dolayısıyla (2) $m$ için uygulanabilir. $u(t) = g^{(m)}(t)$ ve $v(t) = -\dfrac{(1 - t)^m}{m!}$ alalım; $v'(t) = \dfrac{(1 - t)^{m-1}}{(m-1)!}$ olur. $u$ ve $v$, $[0, 1]$ üzerinde türevlenebilir ve türevleri süreklidir. Belirli integralde kısmi integrasyon (bkz. [Analiz 2](../analiz-2/belirli-integralde-yontemler.html#thm-belirli-kismi-integrasyon)) ile
+
+$$
+\begin{aligned}
+\int_0^1 v'(t)\, u(t)\, dt &= \Big[ v(t)\, u(t) \Big]_0^1 - \int_0^1 v(t)\, u'(t)\, dt \\[1mm]
+&= \frac{g^{(m)}(0)}{m!} + \int_0^1 \frac{(1 - t)^m}{m!}\, g^{(m+1)}(t)\, dt
+\end{aligned}
+$$
+
+bulunur; çünkü $v(1) = 0$ ve $v(0) = -\dfrac{1}{m!}$'dir. Sol yan, (2)'deki integraldir. Bunu (2)'de yerine yazınca toplama $j = m$ terimi eklenir ve (2), $m + 1$ için elde edilir.
+
+**Uygulama.** @thm-tay-taylor ispatındaki gibi bir $\delta > 0$ için her $t \in I_\delta = (-\delta, 1 + \delta)$ noktasında $a + th \in U$ olur ($h = 0$ ise her $t$ için). $g(t) = f(a + th)$ fonksiyonu @lem-tay-dogru-boyunca gereği $I_\delta$ üzerinde $k$ kez türevlenebilir, $g^{(k)}$ süreklidir ve $g^{(j)}(t) = d^j f(a + th)(h)$'dir. (2), $m = k$ ile uygulanırsa
+
+$$f(x) = \sum_{j=0}^{k-1} \frac{1}{j!}\, d^j f(a)(h) + \int_0^1 \frac{(1 - t)^{k-1}}{(k-1)!}\, d^k f(a + th)(h)\, dt$$
+
+olur. Toplam $T_{k-1}(x; a)$ olduğundan integral $R_{k-1}(x; a)$'ya eşittir. Açık biçim, $d^k f(a + th)(h)$ sonlu toplamının terim terim integrallenmesiyle elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+İntegral biçiminden Lagrange biçimine geri dönmek kolaydır. $w(t) = \dfrac{(1 - t)^{k-1}}{(k-1)!}$ ağırlığı $[0, 1]$ üzerinde negatif değildir ve $\int_0^1 w(t)\, dt = \dfrac{1}{k!}$'dir. $G(t) = d^k f(a + th)(h)$ ise $[0, 1]$ üzerinde süreklidir. İntegraller için birinci ortalama değer teoremi (bkz. [Analiz 2](../analiz-2/integral-icin-ortalama-deger-teoremleri.html#thm-integral-omt-birinci)) integrali, $G$'nin en küçük ve en büyük değeri arasındaki bir $\mu$ sayısı için $\mu \int_0^1 w = \dfrac{\mu}{k!}$ biçiminde yazar. Ara değer teoremi (bkz. [Analiz 1](../analiz-1/ara-deger-ve-weierstrass-teoremleri.html#thm-ara-deger)) gereği bir $\theta \in [0, 1]$ için $\mu = G(\theta)$ olur ve yeniden $R_{k-1}(x; a) = \dfrac{1}{k!}\, d^k f(a + \theta h)(h)$ bulunur.
+
+Kalanın hangi hızla söndüğünü şimdi inceleyelim. Tek değişkende Peano kalanı bu soruyu yanıtlıyordu (bkz. [Analiz 2](../analiz-2/taylor-formulu.html#thm-taylor-peano)).
+
+:::: {#thm-tay-kalan-mertebesi name="Kalan Teriminin Mertebesi"}
+$k \in \mathbb{N}$, $U \subseteq \mathbb{R}^n$ açık küme, $f \in C^k(U)$ ve $a \in U$ olsun.
+
+**(a)** Öyle $r > 0$ ve $M \ge 0$ sayıları vardır ki $\|h\| \le r$ olan her $h$ için $|R_{k-1}(a + h; a)| \le M\, \|h\|^k$ olur. Özel olarak
+
+$$\lim_{h \to 0} \frac{R_{k-1}(a + h; a)}{\|h\|^{k-1}} = 0.$$
+
+**(b)** Daha güçlü olarak
+
+$$\lim_{h \to 0} \frac{R_k(a + h; a)}{\|h\|^{k}} = 0.$$
+
+::: {.ispat}
+**Hazırlık.** $U$ açık olduğundan bir $\rho > 0$ için $B(a, \rho) \subseteq U$'dur. $r = \dfrac{\rho}{2}$ ve $K = B[a, r]$ alalım; $K \subseteq B(a, \rho) \subseteq U$ olur. $K$ kapalı ve sınırlıdır, dolayısıyla kompakttır (@thm-kmp-heine-borel). $k$. mertebeden her kısmi türev $K$ üzerinde sürekli olduğundan orada sınırlıdır (@thm-glo-uc-deger). Bu türevler sonlu sayıda ($n^k$ tane) olduğundan, $K$ üzerinde hepsinin mutlak değerini aşmayan bir $M_k$ sayısı vardır. $\|h\| \le r$ ise $a + h \in K$ olur ve $K$ konveks olduğundan (@thm-kon-yuvar-konveks) $L(a; a + h) \subseteq K \subseteq U$'dur.
+
+**Temel kestirim.** Her $y \in K$ için
+
+$$|d^k f(y)(h)| \le \sum_{i_1, \dots, i_k} M_k\, |h_{i_1}| \cdots |h_{i_k}| = M_k \big( |h_1| + \cdots + |h_n| \big)^k = M_k\, \|h\|_1^k$$
+
+olur. Ortadaki eşitlik, $k$ tane özdeş $\big( |h_1| + \cdots + |h_n| \big)$ toplamının çarpımı açıldığında her $(i_1, \dots, i_k)$ dizisinin tam bir kez görünmesinden gelir. Normların denkliği (@thm-nrm-norm-denkligi) $\|h\|_1 \le \sqrt{n}\, \|h\|$ verdiğinden
+
+$$|d^k f(y)(h)| \le M_k\, n^{k/2}\, \|h\|^k$$
+
+bulunur.
+
+**(a)** $\|h\| \le r$ olsun. @thm-tay-taylor, $L(a; a + h) \subseteq K$ üzerinde bir $c$ noktası için $R_{k-1}(a + h; a) = \dfrac{1}{k!}\, d^k f(c)(h)$ verir. Temel kestirimle
+
+$$|R_{k-1}(a + h; a)| \le \frac{M_k\, n^{k/2}}{k!}\, \|h\|^k$$
+
+olur; $M = \dfrac{M_k\, n^{k/2}}{k!}$ almak yeter. $0 < \|h\| \le r$ için buradan $\dfrac{|R_{k-1}(a + h; a)|}{\|h\|^{k-1}} \le M\, \|h\|$ çıkar ve sağ yan $h \to 0$ iken $0$'a gittiğinden sıkıştırma teoremi (@thm-lim-sikistirma) limitin $0$ olduğunu verir.
+
+**(b)** $0 < \|h\| \le r$ olsun ve $c_h$, (a) şıkkındaki gibi $L(a; a + h)$ üzerinde seçilen nokta olsun. $R_k = R_{k-1} - \dfrac{1}{k!}\, d^k f(a)(h)$ olduğundan
+
+$$R_k(a + h; a) = \frac{1}{k!}\Big( d^k f(c_h)(h) - d^k f(a)(h) \Big)$$
+
+olur. Her $i$ için $|h_i| \le \|h\|$ olduğundan
+
+$$\big| R_k(a + h; a) \big| \le \frac{\|h\|^k}{k!} \sum_{i_1, \dots, i_k} \left| \frac{\partial^k f}{\partial x_{i_1} \cdots \partial x_{i_k}}(c_h) - \frac{\partial^k f}{\partial x_{i_1} \cdots \partial x_{i_k}}(a) \right|$$
+
+bulunur. $\varepsilon > 0$ verilsin. $k$. mertebeden kısmi türevlerin her biri $a$'da sürekli olduğundan öyle bir $\eta \in (0, r]$ vardır ki $\|y - a\| < \eta$ olduğunda sağdaki toplamın $n^k$ teriminin her biri $\dfrac{\varepsilon\, k!}{n^k}$'dan küçük olur. $c_h = a + \theta h$ ($0 \le \theta \le 1$) olduğundan $\|c_h - a\| \le \|h\|$'dir. Dolayısıyla $0 < \|h\| < \eta$ için
+
+$$\frac{|R_k(a + h; a)|}{\|h\|^k} < \frac{1}{k!} \cdot n^k \cdot \frac{\varepsilon\, k!}{n^k} = \varepsilon$$
+
+olur. Bu, istenen limittir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $C^k$ bir fonksiyonda $(k-1)$. mertebeden Taylor polinomunun hatası $\|h\|^k$ ile orantılı bir sınırı aşmaz, $k$. mertebeden Taylor polinomunun hatası ise $\|h\|^k$'dan da hızlı söner. $k = 1$ hâlinde ikinci limit $\dfrac{f(a + h) - f(a) - \langle \nabla f(a), h \rangle}{\|h\|} \to 0$ demektir; bu, $C^1$ fonksiyonların türevlenebilir olduğunu söyleyen @thm-dif-yeter-kosul ile uyumludur (ispatımız o teoremi kullandığından bağımsız bir kanıt değildir). $k = 2$ hâli bir sonraki kesimin konusudur.
+
+## İkinci Mertebeden Taylor Formülü
+
+Yerel ekstremum problemlerinde en çok kullanılan hâl $k = 2$'dir. Bu hâlde birinci mertebe terimi gradyanla, ikinci mertebe terimi Hessian matrisiyle yazılır.
+
+:::: {#cor-tay-ikinci-mertebe name="İkinci Mertebeden Taylor Formülü"}
+$U \subseteq \mathbb{R}^n$ açık küme ve $f \in C^2(U)$ olsun. $x \in U$, $h \in \mathbb{R}^n$ ve $\{ x + th : t \in [0, 1] \} \subseteq U$ olsun. O zaman öyle bir $\theta \in (0, 1)$ vardır ki
+
+$$
+\begin{aligned}
+f(x + h) &= f(x) + \langle \nabla f(x), h \rangle + \frac{1}{2}\, h^{T} H_f(x + \theta h)\, h \\[1mm]
+&= f(x) + df(x)(h) + \frac{1}{2}\, d^2 f(x + \theta h)(h)
+\end{aligned}
+$$
+
+olur; burada $h^{T}$ satır, $h$ sütun vektörüdür. Ayrıca
+
+$$f(x + h) = f(x) + \langle \nabla f(x), h \rangle + \frac{1}{2}\, h^{T} H_f(x)\, h + R_2(x + h; x)$$
+
+yazılırsa $h \to 0$ iken $\dfrac{R_2(x + h; x)}{\|h\|^2} \to 0$ olur.
+
+::: {.ispat}
+$h = 0$ ise iki yan da $f(x)$'tir ve her $\theta$ uygundur. $h \ne 0$ olsun. @thm-tay-taylor, $k = 2$ ile $a = x$ ve $x + h$ noktalarına uygulanırsa bir $\theta \in (0, 1)$ için
+
+$$f(x + h) = f(x) + df(x)(h) + \frac{1}{2}\, d^2 f(x + \theta h)(h)$$
+
+verir. $df(x)(h) = \langle \nabla f(x), h \rangle$ ve her $y \in U$ için $d^2 f(y)(h) = h^{T} H_f(y)\, h$ olduğundan birinci iddia çıkar. İkinci iddia, @thm-tay-kalan-mertebesi içindeki (b) şıkkının $k = 2$ ve $a = x$ ile yazılmış biçimidir; $T_2(x + h; x)$ tam olarak sağ yandaki ilk üç terimdir. [$\blacksquare$]{.qed}
+:::
+::::
+
+İki değişkende, $h = (h_1, h_2)$ ile ikinci mertebe terimi
+
+$$\frac{1}{2}\, h^{T} H_f\, h = \frac{1}{2}\Big( f_{xx}\, h_1^2 + 2 f_{xy}\, h_1 h_2 + f_{yy}\, h_2^2 \Big)$$
+
+olur. Formülün değeri şuradadır: $\nabla f(x) = 0$ olan bir noktada $f(x + h) - f(x)$ farkı tamamen ikinci mertebe terimine bağlıdır. Bu farkın işareti Hessian matrisinin belirlediği ikinci dereceden formun işaretiyle yönetilir; bu işaretin nasıl okunacağı bir sonraki bölümün konusudur.
+
+## Taylor Serisi ve Reel Analitik Fonksiyonlar
+
+$f \in C^\infty(U)$ ise Taylor teoremi her $k$ için geçerlidir ve $k \to \infty$ limitine bakabiliriz.
+
+::: {#def-tay-taylor-serisi name="Taylor Serisi"}
+$U \subseteq \mathbb{R}^n$ açık küme, $f \in C^\infty(U)$ ve $a \in U$ olsun. Her $x \in \mathbb{R}^n$ için
+
+$$\sum_{j=0}^{\infty} \frac{1}{j!}\, d^j f(a)(x - a) = f(a) + df(a)(x - a) + \frac{1}{2!}\, d^2 f(a)(x - a) + \cdots$$
+
+serisine $f$'nin $a$ noktası civarındaki (ya da $a$ merkezli) **Taylor serisi** denir.
+:::
+
+Yani Taylor serisi, terimleri homojen derecelere göre gruplanmış bir reel sayı serisidir ve $k$. kısmi toplamı $T_k(x; a)$ Taylor polinomudur. $n = 1$ için tek değişkenli Taylor serisi elde edilir (bkz. [Analiz 2](../analiz-2/taylor-ve-maclaurin-serileri.html#def-taylor-serisi)). Tek değişkende olduğu gibi burada da iki ayrı soru vardır: seri yakınsak mıdır ve yakınsaksa toplamı $f(x)$ midir? Seri hiç yakınsamayabilir; $f \in C^\infty$ olsa bile yakınsayıp $f(x)$'ten farklı bir sayıya gidebilir.
+
+::: {#def-tay-analitik name="Reel Analitik Fonksiyon"}
+$U \subseteq \mathbb{R}^n$ açık küme, $f \in C^\infty(U)$ ve $a \in U$ olsun. Öyle bir $r > 0$ varsa ki $B(a, r) \subseteq U$ olsun ve her $x \in B(a, r)$ için $f$'nin $a$ merkezli Taylor serisi yakınsak ve toplamı $f(x)$ olsun, $f$'ye $a$ noktasında **reel analitik** denir. $f$, $U$'nun her noktasında reel analitikse $f$'ye $U$ üzerinde reel analitik denir.
+:::
+
+Yani reel analitik bir fonksiyon, bir noktanın yakınında kendi Taylor serisinin toplamıdır. Tanımda serinin yakınsaması yetmez, toplamının $f(x)$ olması istenir. $n = 1$ için bu, tek değişkenli analitiklik tanımıyla aynıdır (bkz. [Analiz 2](../analiz-2/taylor-ve-maclaurin-serileri.html#def-analitik-fonksiyon)).
+
+:::: {#thm-tay-analitik-olcut name="Taylor Serisinin Fonksiyona Yakınsaması"}
+$U \subseteq \mathbb{R}^n$ açık küme, $f \in C^\infty(U)$, $a, x \in U$ ve $L(a; x) \subseteq U$ olsun. $f$'nin $a$ merkezli Taylor serisinin $x$ noktasında yakınsak ve toplamının $f(x)$ olması için gerek ve yeter koşul
+
+$$\lim_{k \to \infty} R_k(x; a) = 0$$
+
+olmasıdır. Taylor teoremi gereği her $k$ için $R_{k-1}(x; a) = \dfrac{1}{k!}\, d^k f(c_k)(x - a)$ olacak biçimde bir $c_k \in L(a; x)$ noktası vardır; dolayısıyla koşul
+
+$$\lim_{k \to \infty} \frac{1}{k!}\, d^k f(c_k)(x - a) = 0$$
+
+biçiminde de yazılabilir.
+
+::: {.ispat}
+Serinin $k$. kısmi toplamı $T_k(x; a)$'dır. Serinin $x$'te yakınsak ve toplamının $f(x)$ olması, $T_k(x; a) \to f(x)$ demektir. $f(x)$ sabit bir sayı olduğundan bu, $R_k(x; a) = f(x) - T_k(x; a) \to 0$ olmasına denktir. İkinci biçim, $R_{k-1}(x; a)$ dizisinin $R_k(x; a)$ dizisinin bir kaydırılmışı olmasından ve Taylor teoreminden (@thm-tay-taylor) gelir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Kalanın sıfıra gittiğini göstermenin en kullanışlı yolu, türevleri mertebeden bağımsız biçimde sınırlamaktır; tek değişkenli karşılığı Analiz 2'deki düzgün sınırlı türevler ölçütüdür (bkz. [Analiz 2](../analiz-2/taylor-ve-maclaurin-serileri.html#cor-turev-sinirli-analitik)).
+
+:::: {#cor-tay-sinirli-turevler name="Sınırlı Türevler Ölçütü"}
+$U \subseteq \mathbb{R}^n$ açık küme, $f \in C^\infty(U)$, $a \in U$, $r > 0$ ve $B(a, r) \subseteq U$ olsun. Öyle $M, C \ge 0$ sabitleri bulunsun ki her $k \ge 0$, her $i_1, \dots, i_k$ indis dizisi ve her $y \in B(a, r)$ için
+
+$$\left| \frac{\partial^k f}{\partial x_{i_1} \cdots \partial x_{i_k}}(y) \right| \le M\, C^k$$
+
+olsun. O zaman $f$, $a$ noktasında reel analitiktir; Taylor serisi her $x \in B(a, r)$ için $f(x)$'e yakınsar.
+
+::: {.ispat}
+$x \in B(a, r)$ ve $h = x - a$ olsun. Yuvar konveks olduğundan $L(a; x) \subseteq B(a, r) \subseteq U$'dur (@thm-kon-yuvar-konveks). Her $k \ge 1$ için @thm-tay-taylor bir $c_k \in L(a; x)$ verir ve @thm-tay-kalan-mertebesi ispatındaki temel kestirim gibi
+
+$$|R_{k-1}(x; a)| = \frac{|d^k f(c_k)(h)|}{k!} \le \frac{1}{k!} \sum_{i_1, \dots, i_k} M\, C^k\, |h_{i_1}| \cdots |h_{i_k}| = M\, \frac{\big( C\, \|h\|_1 \big)^k}{k!}$$
+
+olur. Her $b \in \mathbb{R}$ için $\dfrac{b^k}{k!} \to 0$ olduğundan (bkz. [Analiz 1](../analiz-1/sonsuz-limitler-ve-ozel-limitler.html#thm-buyume-hizlari)) sağ yan $0$'a gider. Demek ki $R_{k-1}(x; a) \to 0$, dolayısıyla $R_k(x; a) \to 0$'dır ve @thm-tay-analitik-olcut sonucu verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Örneğin $e^y \cos x$ fonksiyonunun (@exm-tay-ustel-kosinus) her kısmi türevi $\pm e^y \sin x$ ya da $\pm e^y \cos x$ biçimindedir. $B(a, r)$ üzerinde $|y| < |a_2| + r$ olduğundan bu türevler $M = e^{|a_2| + r}$ ve $C = 1$ ile sınırlanır; fonksiyon $\mathbb{R}^2$ üzerinde reel analitiktir. Polinomlar da her yerde reel analitiktir: @exm-tay-polinom-acilim ardından gördüğümüz gibi Taylor serileri sonlu bir toplamdır ve polinomun kendisine eşittir.
+
+:::: {#exm-tay-sinus-fark name="Bütün Düzlemde Yakınsayan Taylor Serisi"}
+$f(x, y) = \sin(x - y)$ fonksiyonunun $\left( \dfrac{\pi}{4}, \dfrac{\pi}{2} \right)$ noktası civarındaki Taylor serisini bulunuz ve serinin $f$'ye yakınsadığı $D$ bölgesini belirleyiniz.
+
+::: {.cozum}
+**Türevler.** $u = x - y$ diyelim. Zincir kuralı gereği $\dfrac{\partial}{\partial x} \sin^{(m)}(u) = \sin^{(m+1)}(u)$ ve $\dfrac{\partial}{\partial y} \sin^{(m)}(u) = -\sin^{(m+1)}(u)$'dur; burada $\sin^{(m)}$, sinüsün $m$. türevidir. Dolayısıyla
+
+$$\frac{\partial^p f}{\partial x^j\, \partial y^{p-j}}(x, y) = (-1)^{p-j} \sin^{(p)}(x - y)$$
+
+olur. $a = \left( \dfrac{\pi}{4}, \dfrac{\pi}{2} \right)$ noktasında $x - y = -\dfrac{\pi}{4}$'tür.
+
+**Diferansiyeller.** $h_1 = x - \dfrac{\pi}{4}$ ve $h_2 = y - \dfrac{\pi}{2}$ olsun. @prp-tay-binom ve binom teoremiyle
+
+$$
+\begin{aligned}
+d^p f(a)(h) &= \sin^{(p)}\left( -\frac{\pi}{4} \right) \sum_{j=0}^{p} \binom{p}{j} h_1^{\,j} (-h_2)^{p-j} \\[1mm]
+&= \sin^{(p)}\left( -\frac{\pi}{4} \right) (h_1 - h_2)^p
+\end{aligned}
+$$
+
+bulunur. $h_1 - h_2 = x - y + \dfrac{\pi}{4}$'tür. $\sin^{(p)}$ türevleri $p$'nin $4$'e bölümünden kalana göre sırasıyla $\sin$, $\cos$, $-\sin$, $-\cos$ olduğundan ve $\sin\left( -\dfrac{\pi}{4} \right) = -\dfrac{\sqrt{2}}{2}$, $\cos\left( -\dfrac{\pi}{4} \right) = \dfrac{\sqrt{2}}{2}$ olduğundan bu katsayılar $p = 0, 1, 2, 3$ için sırasıyla $-\dfrac{\sqrt{2}}{2}$, $\dfrac{\sqrt{2}}{2}$, $\dfrac{\sqrt{2}}{2}$, $-\dfrac{\sqrt{2}}{2}$ olur ve dörder dörder yinelenir.
+
+**Seri.** $s = x - y + \dfrac{\pi}{4}$ yazarsak Taylor serisi
+
+$$\sum_{p=0}^{\infty} \frac{\sin^{(p)}(-\pi/4)}{p!}\, s^p = -\frac{\sqrt{2}}{2} + \frac{\sqrt{2}}{2}\, s + \frac{\sqrt{2}}{4}\, s^2 - \frac{\sqrt{2}}{12}\, s^3 - \frac{\sqrt{2}}{48}\, s^4 + \cdots$$
+
+olur. $k = 3$ için Taylor formülü, $(c_1, c_2)$ noktası $a$ ile $(x, y)$ arasındaki doğru parçası üzerinde olmak üzere
+
+$$\sin(x - y) = -\frac{\sqrt{2}}{2} + \frac{\sqrt{2}}{2}\, s + \frac{\sqrt{2}}{4}\, s^2 - \frac{\cos(c_1 - c_2)}{6}\, s^3$$
+
+biçimindedir; çünkü $\sin^{(3)} = -\cos$'tur.
+
+**Yakınsaklık bölgesi.** Her mertebeden her kısmi türev $\pm \sin(x - y)$ ya da $\pm \cos(x - y)$ biçimindedir ve mutlak değeri $1$'i aşmaz. Her $r > 0$ için $B(a, r)$ üzerinde @cor-tay-sinirli-turevler koşulu $M = C = 1$ ile sağlanır; seri $B(a, r)$'deki her noktada $f$'ye yakınsar. $r$ keyfi olduğundan $D = \mathbb{R}^2$'dir.
+
+Sonuç şaşırtıcı değildir: seri, sinüsün $-\dfrac{\pi}{4}$ merkezli tek değişkenli Taylor serisinin $u = x - y$ noktasındaki değeridir ve o seri her $u$ için $\sin u$'ya yakınsar. [$\blacksquare$]{.qed}
+:::
+::::
+
+Sonsuz kez türevlenebilir her fonksiyon reel analitik değildir; tek değişkenli karşı örnek iki değişkene de taşınır.
+
+:::: {#exm-tay-analitik-olmayan name="Düzgün Ama Analitik Olmayan Fonksiyon"}
+$\phi(t) = e^{-1/t^2}$ ($t \ne 0$) ve $\phi(0) = 0$ olmak üzere $f(x, y) = \phi(x)$ fonksiyonunun $C^\infty(\mathbb{R}^2)$ sınıfından olduğunu, ama $(0, 0)$ noktasında reel analitik olmadığını gösteriniz.
+
+::: {.cozum}
+**Düzgünlük.** $\phi$, $\mathbb{R}$ üzerinde her mertebeden türevlenebilirdir ve her $p \ge 0$ için $\phi^{(p)}(0) = 0$'dır (bkz. [Analiz 2](../analiz-2/taylor-ve-maclaurin-serileri.html#exm-analitik-olmayan-ornek)). $f$, $y$'ye bağlı olmadığından $y$'ye göre en az bir kez türev alınan her kısmi türev özdeş olarak $0$'dır; geri kalan kısmi türevler $\dfrac{\partial^p f}{\partial x^p}(x, y) = \phi^{(p)}(x)$'tir. Bunların hepsi süreklidir, dolayısıyla $f \in C^\infty(\mathbb{R}^2)$'dir.
+
+**Taylor serisi.** $(0, 0)$ noktasında bütün kısmi türevler sıfırdır: $y$'li olanlar özdeş olarak, öbürleri $\phi^{(p)}(0) = 0$ olduğu için. Öyleyse her $j$ için $d^j f(0, 0)(h) = 0$'dır ve $f$'nin $(0, 0)$ merkezli Taylor serisi her noktada $0$'a yakınsar.
+
+**Analitik değil.** Her $r > 0$ için $\left( \dfrac{r}{2}, 0 \right) \in B\big( (0, 0), r \big)$ olur ve bu noktada $f = e^{-4/r^2} > 0$'dır. Yani hiçbir yuvarda seri $f$'ye yakınsamaz; $f$, $(0, 0)$ noktasında reel analitik değildir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+:::: {#exr-tay-dort-degisken name="Dört Değişkenli Bir Fonksiyonun Türev Matrisleri"}
+$f(x, y, z, t) = (xy + z^2,\; zt - x^2)$ fonksiyonunun Jacobi matrisini ve bileşenlerinin Hessian matrislerini bulunuz.
+
+::: {.cozum}
+$f : \mathbb{R}^4 \to \mathbb{R}^2$ fonksiyonunun bileşenleri $f_1 = xy + z^2$ ve $f_2 = zt - x^2$'dir. Değişkenleri $(x, y, z, t)$ sırasıyla alalım.
+
+**Jacobi matrisi.** $\nabla f_1 = (y, x, 2z, 0)$ ve $\nabla f_2 = (-2x, 0, t, z)$ olduğundan
+
+$$J_f(x, y, z, t) = \begin{pmatrix} y & x & 2z & 0 \\ -2x & 0 & t & z \end{pmatrix}$$
+
+bulunur; bu $2 \times 4$ boyutlu bir matristir.
+
+**Hessian matrisleri.** Her bileşenin gradyanının Jacobi matrisini alalım. $\nabla f_1 = (y, x, 2z, 0)$'ın satırları sırasıyla $\nabla y = (0, 1, 0, 0)$, $\nabla x = (1, 0, 0, 0)$, $\nabla(2z) = (0, 0, 2, 0)$ ve $\nabla 0 = 0$'dır. $\nabla f_2 = (-2x, 0, t, z)$ için de aynı biçimde
+
+$$H_{f_1} = \begin{pmatrix} 0 & 1 & 0 & 0 \\ 1 & 0 & 0 & 0 \\ 0 & 0 & 2 & 0 \\ 0 & 0 & 0 & 0 \end{pmatrix}$$
+
+ve
+
+$$H_{f_2} = \begin{pmatrix} -2 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 1 & 0 \end{pmatrix}$$
+
+bulunur. Bileşenler ikinci dereceden polinomlar olduğundan Hessian matrisleri sabittir ve ikisi de simetriktir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-tay-kutupsal name="Kutupsal Dönüşümün Türev Matrisleri"}
+$f(u, w) = (u \cos w,\; u \sin w)$ fonksiyonunun Jacobi matrisini, Jacobi determinantını ve bileşenlerinin Hessian matrislerini bulunuz.
+
+::: {.cozum}
+**Jacobi matrisi ve determinantı.** $f_1 = u \cos w$ ve $f_2 = u \sin w$ için
+
+$$J_f(u, w) = \begin{pmatrix} \cos w & -u \sin w \\ \sin w & u \cos w \end{pmatrix}$$
+
+ve
+
+$$\frac{\partial(f_1, f_2)}{\partial(u, w)} = \cos w \cdot u \cos w - (-u \sin w) \sin w = u\big( \cos^2 w + \sin^2 w \big) = u$$
+
+bulunur.
+
+**Hessian matrisleri.** $f_1$ için $(f_1)_{uu} = 0$, $(f_1)_{uw} = (f_1)_{wu} = -\sin w$ ve $(f_1)_{ww} = -u \cos w$'dir. $f_2$ için $(f_2)_{uu} = 0$, $(f_2)_{uw} = (f_2)_{wu} = \cos w$ ve $(f_2)_{ww} = -u \sin w$'dir:
+
+$$
+\begin{aligned}
+H_{f_1}(u, w) &= \begin{pmatrix} 0 & -\sin w \\ -\sin w & -u \cos w \end{pmatrix}, \\[1mm]
+H_{f_2}(u, w) &= \begin{pmatrix} 0 & \cos w \\ \cos w & -u \sin w \end{pmatrix}.
+\end{aligned}
+$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-tay-hessian-trig name="Trigonometrik Bir Fonksiyonun Hessian Matrisi"}
+$f(x, y) = x \cos y + y \sin x$ fonksiyonunun Jacobi matrisini ve Hessian matrisini bulunuz.
+
+::: {.cozum}
+**Jacobi matrisi.** $f$ reel değerli olduğundan Jacobi matrisi gradyanın satır olarak yazılışıdır:
+
+$$J_f(x, y) = \big( \cos y + y \cos x,\;\; -x \sin y + \sin x \big).$$
+
+**Hessian matrisi.** İkinci türevler
+
+$$
+\begin{aligned}
+f_{xx} &= -y \sin x, \\[1mm]
+f_{xy} &= (\cos y + y \cos x)_y = -\sin y + \cos x, \\[1mm]
+f_{yx} &= (-x \sin y + \sin x)_x = -\sin y + \cos x, \\[1mm]
+f_{yy} &= -x \cos y
+\end{aligned}
+$$
+
+olur. Karışık türevlerin eşit çıkması $f \in C^\infty(\mathbb{R}^2)$ ile uyumludur ve
+
+$$H_f(x, y) = \begin{pmatrix} -y \sin x & \cos x - \sin y \\ \cos x - \sin y & -x \cos y \end{pmatrix}$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-tay-hessian-ustel-kosinus name="Üstel Kosinüslü Bir Fonksiyonun Hessian Matrisi"}
+$f(x, y) = x\, e^{\cos y}$ fonksiyonunun Jacobi matrisini ve Hessian matrisini bulunuz.
+
+::: {.cozum}
+**Jacobi matrisi.** Zincir kuralıyla $\dfrac{\partial}{\partial y} e^{\cos y} = -\sin y\; e^{\cos y}$ olduğundan
+
+$$J_f(x, y) = \big( e^{\cos y},\;\; -x \sin y\; e^{\cos y} \big)$$
+
+bulunur.
+
+**Hessian matrisi.** $f_{xx} = 0$ ve $f_{xy} = f_{yx} = -\sin y\; e^{\cos y}$'dir. $f_y$'nin $y$'ye göre türevinde çarpım kuralıyla
+
+$$f_{yy} = -x \cos y\; e^{\cos y} - x \sin y \cdot (-\sin y)\, e^{\cos y} = x\big( \sin^2 y - \cos y \big)\, e^{\cos y}$$
+
+olur. Dolayısıyla
+
+$$H_f(x, y) = e^{\cos y} \begin{pmatrix} 0 & -\sin y \\ -\sin y & x\big( \sin^2 y - \cos y \big) \end{pmatrix}$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-tay-kare-form name="İkinci Dereceden Bir Polinomun Açılımı"}
+$f(x, y) = x^2 + xy + y^2$ fonksiyonunun $(-1, 1)$ noktası civarındaki Taylor açılımını bulunuz.
+
+::: {.cozum}
+$h_1 = x + 1$ ve $h_2 = y - 1$ yazalım.
+
+**Türevler.** $f(-1, 1) = 1 - 1 + 1 = 1$ olur. $f_x = 2x + y$ ve $f_y = x + 2y$ olduğundan $f_x(-1, 1) = -1$ ve $f_y(-1, 1) = 1$'dir. İkinci türevler sabittir: $f_{xx} = 2$, $f_{xy} = 1$, $f_{yy} = 2$. Üçüncü mertebeden türevlerin hepsi sıfırdır.
+
+**Açılım.** Üçüncü mertebeden türevler sıfır olduğundan kalan da sıfırdır (gerekçe @exm-tay-polinom-acilim ile aynıdır); dolayısıyla $f = T_2$'dir:
+
+$$
+\begin{aligned}
+f(x, y) &= 1 - (x + 1) + (y - 1) + \frac{1}{2}\Big[ 2(x + 1)^2 + 2(x + 1)(y - 1) + 2(y - 1)^2 \Big] \\[1mm]
+&= 1 - (x + 1) + (y - 1) + (x + 1)^2 + (x + 1)(y - 1) + (y - 1)^2.
+\end{aligned}
+$$
+
+**Sağlama.** Parantezler açılınca
+
+$$
+\begin{aligned}
+&1 - x - 1 + y - 1 + x^2 + 2x + 1 \\[1mm]
+&\quad + xy - x + y - 1 + y^2 - 2y + 1 = x^2 + xy + y^2
+\end{aligned}
+$$
+
+bulunur.
+
+Hessian matrisi $H_f = \begin{pmatrix} 2 & 1 \\ 1 & 2 \end{pmatrix}$ sabit olduğundan @cor-tay-ikinci-mertebe içindeki $\theta$ sayısının burada hiçbir önemi yoktur: her $x$ ve $h$ için
+
+$$f(x + h) = f(x) + \langle \nabla f(x), h \rangle + \frac{1}{2}\, h^{T} H_f\, h$$
+
+tam olarak sağlanır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-tay-karekok name="Karekök Toplamının Kalanlı Taylor Formülü"}
+$f(x, y) = \sqrt{x} + \sqrt{y}$ fonksiyonunun $(1, 4)$ noktasındaki Taylor formülünü $k = 3$ için kalan terimiyle yazınız.
+
+::: {.cozum}
+**Tanım kümesi.** $f$, $U = \{ (x, y) : x > 0,\ y > 0 \}$ açık kümesinde $C^\infty$ sınıfındandır. $U$ konvekstir: pozitif sayıların $tx + (1 - t)x'$ biçimindeki bileşimleri ($t \in [0, 1]$) pozitiftir. Dolayısıyla $(1, 4)$ ile $U$'daki her $(x, y)$ arasındaki doğru parçası $U$ içindedir. $h_1 = x - 1$ ve $h_2 = y - 4$ yazalım.
+
+**Türevler.** $f$, her biri tek bir değişkene bağlı iki fonksiyonun toplamı olduğundan bütün karışık türevler sıfırdır.
+
+$$
+\begin{aligned}
+f_x &= \frac{1}{2\sqrt{x}}, & f_x(1, 4) &= \frac{1}{2}, \\[1mm]
+f_y &= \frac{1}{2\sqrt{y}}, & f_y(1, 4) &= \frac{1}{4}, \\[1mm]
+f_{xx} &= -\frac{1}{4 x^{3/2}}, & f_{xx}(1, 4) &= -\frac{1}{4}, \\[1mm]
+f_{yy} &= -\frac{1}{4 y^{3/2}}, & f_{yy}(1, 4) &= -\frac{1}{32}
+\end{aligned}
+$$
+
+olur; $4^{3/2} = 8$ olduğundan son değer $-\dfrac{1}{32}$'dir. Üçüncü mertebeden saf türevler
+
+$$
+\begin{aligned}
+f_{xxx} &= \frac{3}{8 x^{5/2}}, \\[1mm]
+f_{yyy} &= \frac{3}{8 y^{5/2}}
+\end{aligned}
+$$
+
+olur.
+
+**Formül.** $f(1, 4) = 1 + 2 = 3$'tür. $(c_1, c_2)$ noktası $(1, 4)$ ile $(x, y)$'yi birleştiren doğru parçası üzerinde olmak üzere
+
+$$
+\begin{aligned}
+\sqrt{x} + \sqrt{y} &= 3 + \frac{1}{2}(x - 1) + \frac{1}{4}(y - 4) - \frac{1}{8}(x - 1)^2 - \frac{1}{64}(y - 4)^2 \\[1mm]
+&\quad + \frac{1}{16}\left[ \frac{(x - 1)^3}{c_1^{5/2}} + \frac{(y - 4)^3}{c_2^{5/2}} \right]
+\end{aligned}
+$$
+
+bulunur. Katsayılar şöyle elde edilir: $\dfrac{1}{2} \cdot \left( -\dfrac{1}{4} \right) = -\dfrac{1}{8}$, $\dfrac{1}{2} \cdot \left( -\dfrac{1}{32} \right) = -\dfrac{1}{64}$ ve $\dfrac{1}{6} \cdot \dfrac{3}{8} = \dfrac{1}{16}$.
+
+**Sağlama.** $f$ iki tek değişkenli fonksiyonun toplamıdır; formül, $\sqrt{x}$'in $1$'deki ve $\sqrt{y}$'nin $4$'teki tek değişkenli Taylor formüllerinin toplamıyla aynı katsayıları verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-tay-kosinus-sinus name="Bir Çarpımın Kalanlı Taylor Formülü"}
+$f(x, y) = \cos x \sin y$ fonksiyonunun $(0, 0)$ noktasındaki Taylor formülünü $k = 3$ için kalan terimiyle yazınız.
+
+::: {.cozum}
+$f \in C^\infty(\mathbb{R}^2)$'dir; $h_1 = x$ ve $h_2 = y$ olur.
+
+**Türevler.** $\sin 0 = 0$ ve $\cos 0 = 1$ olduğundan
+
+$$
+\begin{aligned}
+f_x &= -\sin x \sin y, & f_x(0, 0) &= 0, \\[1mm]
+f_y &= \cos x \cos y, & f_y(0, 0) &= 1, \\[1mm]
+f_{xx} &= -\cos x \sin y, & f_{xx}(0, 0) &= 0, \\[1mm]
+f_{xy} &= -\sin x \cos y, & f_{xy}(0, 0) &= 0, \\[1mm]
+f_{yy} &= -\cos x \sin y, & f_{yy}(0, 0) &= 0
+\end{aligned}
+$$
+
+bulunur. Üçüncü mertebeden türevler:
+
+$$
+\begin{aligned}
+f_{xxx} &= \sin x \sin y, & f_{xxy} &= -\cos x \cos y, \\[1mm]
+f_{xyy} &= \sin x \sin y, & f_{yyy} &= -\cos x \cos y.
+\end{aligned}
+$$
+
+**Formül.** $f(0, 0) = 0$, $df(0, 0)(h) = y$ ve $d^2 f(0, 0)(h) = 0$'dır. $(c_1, c_2)$, $(0, 0)$ ile $(x, y)$ arasındaki doğru parçası üzerinde olmak üzere
+
+$$
+\begin{aligned}
+\cos x \sin y &= y + \frac{1}{6}\Big[ \sin c_1 \sin c_2\, x^3 - 3 \cos c_1 \cos c_2\, x^2 y \\[1mm]
+&\qquad + 3 \sin c_1 \sin c_2\, x y^2 - \cos c_1 \cos c_2\, y^3 \Big]
+\end{aligned}
+$$
+
+olur.
+
+**Üçüncü mertebeden polinom.** Üçüncü türevler $(0, 0)$'da hesaplanırsa $f_{xxx} = f_{xyy} = 0$ ve $f_{xxy} = f_{yyy} = -1$ bulunur; buradan
+
+$$T_3(x, y) = y - \frac{1}{2}\, x^2 y - \frac{1}{6}\, y^3$$
+
+çıkar. Sağlama olarak $\cos x \approx 1 - \dfrac{x^2}{2}$ ve $\sin y \approx y - \dfrac{y^3}{6}$ çarpılıp derecesi $3$'ü aşan terimler atıldığında da aynı polinom elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-tay-kalanli-uc-terim name="Üç Terime Kadar Kalanlı Taylor Formülü"}
+$f(x, y) = yx^3 - \sin(xy)$ fonksiyonunun $\left( 1, \dfrac{\pi}{2} \right)$ noktası civarındaki Taylor formülünü üç terime kadar ($k = 3$), kalan terimiyle yazınız.
+
+::: {.cozum}
+$f \in C^\infty(\mathbb{R}^2)$'dir. $h_1 = x - 1$ ve $h_2 = y - \dfrac{\pi}{2}$ yazalım. $a = \left( 1, \dfrac{\pi}{2} \right)$ noktasında $xy = \dfrac{\pi}{2}$, $\sin(xy) = 1$ ve $\cos(xy) = 0$ olur.
+
+**Birinci mertebe.**
+
+$$
+\begin{aligned}
+f_x &= 3x^2 y - y \cos(xy), & f_x(a) &= \frac{3\pi}{2}, \\[1mm]
+f_y &= x^3 - x \cos(xy), & f_y(a) &= 1.
+\end{aligned}
+$$
+
+**İkinci mertebe.**
+
+$$
+\begin{aligned}
+f_{xx} &= 6xy + y^2 \sin(xy), & f_{xx}(a) &= 3\pi + \frac{\pi^2}{4}, \\[1mm]
+f_{xy} &= 3x^2 - \cos(xy) + xy \sin(xy), & f_{xy}(a) &= 3 + \frac{\pi}{2}, \\[1mm]
+f_{yy} &= x^2 \sin(xy), & f_{yy}(a) &= 1.
+\end{aligned}
+$$
+
+Öbür sırayla türev alınınca da $(f_y)_x$ için aynı ifade bulunur; karışık türevler eşittir.
+
+**Üçüncü mertebe** (genel noktada):
+
+$$
+\begin{aligned}
+f_{xxx} &= 6y + y^3 \cos(xy), \\[1mm]
+f_{xxy} &= 6x + 2y \sin(xy) + xy^2 \cos(xy), \\[1mm]
+f_{xyy} &= 2x \sin(xy) + x^2 y \cos(xy), \\[1mm]
+f_{yyy} &= x^3 \cos(xy).
+\end{aligned}
+$$
+
+**Formül.** $f(a) = \dfrac{\pi}{2} - 1$ ve
+
+$$\frac{1}{2}\, d^2 f(a)(h) = \frac{1}{2}\left( 3\pi + \frac{\pi^2}{4} \right) h_1^2 + \left( 3 + \frac{\pi}{2} \right) h_1 h_2 + \frac{1}{2}\, h_2^2$$
+
+olduğundan
+
+$$
+\begin{aligned}
+yx^3 - \sin(xy) &= \frac{\pi}{2} - 1 + \frac{3\pi}{2}\, h_1 + h_2 + \left( \frac{3\pi}{2} + \frac{\pi^2}{8} \right) h_1^2 \\[1mm]
+&\quad + \left( 3 + \frac{\pi}{2} \right) h_1 h_2 + \frac{1}{2}\, h_2^2 + R_2
+\end{aligned}
+$$
+
+bulunur. Kalan terim, $(c_1, c_2)$ noktası $a$ ile $(x, y)$'yi birleştiren doğru parçası üzerinde olmak üzere
+
+$$
+\begin{aligned}
+R_2 = \frac{1}{6}\Big[ &\big( 6c_2 + c_2^3 \cos(c_1 c_2) \big)\, h_1^3 \\[1mm]
+&+ 3\big( 6c_1 + 2c_2 \sin(c_1 c_2) + c_1 c_2^2 \cos(c_1 c_2) \big)\, h_1^2 h_2 \\[1mm]
+&+ 3\big( 2c_1 \sin(c_1 c_2) + c_1^2 c_2 \cos(c_1 c_2) \big)\, h_1 h_2^2 \\[1mm]
+&+ c_1^3 \cos(c_1 c_2)\, h_2^3 \Big]
+\end{aligned}
+$$
+
+olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Taylor formülü, bir fonksiyonun bir nokta yakınındaki davranışını, o noktadaki türevlerinden kurulan bir polinomla ve denetim altındaki bir kalanla anlatır. İkinci mertebeden formülde gradyan sıfır olduğunda geriye yalnızca Hessian matrisiyle yazılan ikinci dereceden form kalır. [Yerel Ekstremumlar](yerel-ekstremumlar.qmd) bölümünde bu gözlemi kullanarak kritik noktalarda fonksiyonun yerel maksimum mu, yerel minimum mu olduğuna, yoksa bir eyer noktası mı bulunduğuna karar vereceğiz.

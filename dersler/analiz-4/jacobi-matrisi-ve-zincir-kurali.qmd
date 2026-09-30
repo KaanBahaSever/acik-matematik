@@ -1,0 +1,1764 @@
+---
+title: "Jacobi Matrisi ve Zincir Kuralı"
+pagetitle: "Jacobi Matrisi ve Zincir Kuralı"
+description: "Vektör değerli fonksiyonlarda türevin lineer dönüşüm olarak tanımı, türevin tekliği, bileşenlerle türevlenebilme, Jacobi matrisi ve Jacobi determinantı, sürekli kısmi türevlerle yeter koşul, afin yaklaşım, türevin cebirsel özellikleri, zincir kuralı ve ispatı, kutupsal koordinatlar ve ağaç diyagramlarıyla kısmi türev hesabı; çözümlü örnekler ve alıştırmalar."
+---
+
+Tek değişkenli bir fonksiyonun türevi bir sayıdır, ama bu sayının asıl işi bir yaklaşım kurmaktır: $f$, $a$ noktasında türevlenebilirse $a$ yakınında $f(a + h) - f(a) \approx f'(a)\,h$ olur ve $h \mapsto f'(a)\,h$ lineer fonksiyonu artıma en iyi uyan doğrusal yaklaşımdır (bkz. [Analiz 2](../analiz-2/turev-kavrami.html#def-dogrusallastirma)). [Türevlenebilme ve Toplam Diferansiyel](turevlenebilme-ve-toplam-diferansiyel.qmd) bölümünde bu fikri reel değerli çok değişkenli fonksiyonlara taşıdık: $f : D \subseteq \mathbb{R}^n \to \mathbb{R}$ için artıma yaklaşan lineer fonksiyon $h \mapsto \langle \nabla f(a), h \rangle$ oldu.
+
+Bu bölümde değer uzayını da büyütüyor ve $f : D \subseteq \mathbb{R}^n \to \mathbb{R}^m$ fonksiyonlarını ele alıyoruz. Artık $f(a + h) - f(a)$ artımı $\mathbb{R}^m$'de bir vektördür; ona yaklaşan nesne $\mathbb{R}^n$'den $\mathbb{R}^m$'ye bir lineer dönüşüm, yani $m \times n$ tipinde bir matris olacak. Bu matrisin satırları bileşen fonksiyonların gradyanlarıdır ve ona **Jacobi matrisi** denir. Türevi bir lineer dönüşüm olarak görmenin karşılığını bileşke fonksiyonlarda alacağız: bileşkenin türevi türevlerin bileşkesidir, matris diliyle Jacobi matrisleri çarpılır. **Zincir kuralı** adını taşıyan bu sonuç, tek değişkenli $(f \circ g)'(a) = f'\big(g(a)\big)\,g'(a)$ formülünün doğal genellemesidir ve çok değişkenli hesabın en sık kullanılan aracıdır.
+
+Matris çarpımı içeren her formülde $\mathbb{R}^n$'nin elemanlarını sütun vektörü olarak düşüneceğiz: $h = (h_1, \dots, h_n)$ vektörü bir matrisle çarpılırken $n \times 1$ tipinde bir matristir.
+
+## Vektör Değerli Fonksiyonlarda Türevlenebilme
+
+Tanıma, reel değerli durumdaki yaklaşımı bileşen bileşen yazarak ulaşalım.
+
+$f = (f_1, \dots, f_m) : D \to \mathbb{R}^m$, $a \in D^\circ$ olsun ve her $f_i$ bileşeni $a$ noktasında türevlenebilsin. @prp-dif-denk-bicimler ve @thm-dif-kismi-turevler gereği her $i = 1, \dots, m$ için
+
+$$f_i(a + h) - f_i(a) = \langle \nabla f_i(a), h \rangle + \|h\|\,\eta_i(h)$$
+
+yazılabilir; burada $h \to 0$ iken $\eta_i(h) \to 0$ olur. Bu $m$ eşitliği alt alta yazıp $\eta = (\eta_1, \dots, \eta_m)$ dersek
+
+$$f(a + h) - f(a) = J\,h + \|h\|\,\eta(h)$$
+
+elde edilir. Burada $J$, $i$-inci satırı $\nabla f_i(a)$ olan $m \times n$ tipindeki matristir:
+
+$$J = \begin{pmatrix} \dfrac{\partial f_1}{\partial x_1}(a) & \cdots & \dfrac{\partial f_1}{\partial x_n}(a) \\ \vdots & & \vdots \\ \dfrac{\partial f_m}{\partial x_1}(a) & \cdots & \dfrac{\partial f_m}{\partial x_n}(a) \end{pmatrix}.$$
+
+$h \mapsto J h$ bir lineer dönüşümdür ve bileşenlerle limit teoremi (@thm-lim-bilesen) gereği $h \to 0$ iken $\eta(h) \to 0$ olur. Demek ki vektör değerli bir fonksiyonun artımı da bir lineer dönüşümle yaklaşılır ve yapılan hata $\|h\|$ ile kıyaslanınca küçüktür. Tanım, kısmi türevlere hiç başvurmadan bu özelliği esas alır.
+
+Lineer cebirden hatırlayalım: $T : \mathbb{R}^n \to \mathbb{R}^m$ fonksiyonu her $x, y \in \mathbb{R}^n$ ve $\alpha, \beta \in \mathbb{R}$ için $T(\alpha x + \beta y) = \alpha T(x) + \beta T(y)$ koşulunu sağlıyorsa bir **lineer dönüşümdür**. Her lineer dönüşüm tek bir $m \times n$ matrisle $T(h) = A h$ biçiminde yazılır; $A$ matrisinin $j$-inci sütunu $T(e_j)$ vektörüdür (@def-nrm-dogal-taban). Özel olarak $T(0) = 0$'dır.
+
+::: {#def-zin-turev name="Vektör Değerli Fonksiyonun Türevi"}
+$D \subseteq \mathbb{R}^n$, $f : D \to \mathbb{R}^m$ ve $a \in D^\circ$ olsun. Öyle bir $T : \mathbb{R}^n \to \mathbb{R}^m$ lineer dönüşümü varsa ki
+
+$$\lim_{h \to 0} \frac{\|f(a + h) - f(a) - T(h)\|}{\|h\|} = 0$$
+
+olsun, $f$'ye $a$ noktasında **türevlenebilir** (diferansiyellenebilir) denir. Bu durumda $T$ dönüşümüne $f$'nin $a$ noktasındaki **türevi** denir ve $Df(a)$ ya da $f'(a)$ ile gösterilir. $x = a + h$ yazılırsa koşul
+
+$$\lim_{x \to a} \frac{\|f(x) - f(a) - T(x - a)\|}{\|x - a\|} = 0$$
+
+biçimini alır. $f$, bir $U \subseteq D$ açık kümesinin her noktasında türevlenebiliyorsa $f$'ye **$U$ üzerinde türevlenebilir** denir.
+:::
+
+Yani $f(a + h) - f(a)$ artımına $T(h)$ ile yaklaşıyoruz ve yaklaşımın hatası, $h$ hangi yoldan $0$'a giderse gitsin, $h$ vektörünün uzunluğundan daha hızlı sıfıra gidiyor. Paydaki norm $\mathbb{R}^m$'nin, paydadaki norm $\mathbb{R}^n$'nin Öklid normudur. Türev bir sayı ya da vektör değil, bir lineer dönüşümdür; $Df(a)$ dönüşümünün $h$'deki değerini $Df(a)(h)$ ya da kısaca $Df(a)h$ ile yazacağız. $T$'nin tek olduğunu @thm-zin-teklik ile göreceğiz.
+
+Birkaç ayrıntı:
+
+- $a \in D^\circ$ olduğundan $B(a, r) \subseteq D$ olacak bir $r > 0$ vardır ve kesir $0 < \|h\| < r$ olan her $h$ için tanımlıdır.
+- $h \ne 0$ için normun içindeki vektörü $\|h\|$'ye bölerek $\eta(h) = \dfrac{f(a + h) - f(a) - T(h)}{\|h\|}$ tanımlayalım ve $\eta(0) = 0$ diyelim. O zaman koşul, $h \to 0$ iken $\eta(h) \to 0$ olmak üzere
+
+  $$f(a + h) = f(a) + T(h) + \|h\|\,\eta(h)$$
+
+  biçiminde yazılır. Kalan terim $\|h\|\,\eta(h)$, $\mathbb{R}^m$'de bir vektördür.
+- Kısmi türevlenebilmeden ayırt etmek için bu kavrama **tam türevlenebilme** de denir. Tanımın gücü, yaklaşımın bütün doğrultularda aynı anda iyi olmasını istemesindedir; bu yüzden kısmi türevlerin var olması türevlenebilme için yetmez.
+
+Tanım, önceki bölümdeki türevi özel hâl olarak içerir.
+
+- **$m = 1$.** $\mathbb{R}^n$'den $\mathbb{R}$'ye her lineer dönüşüm $T(h) = \langle A, h \rangle$ biçimindedir ve $\mathbb{R}$'de norm mutlak değerdir. Bir reel sayının mutlak değeri $0$'a gittiğinde sayının kendisi de $0$'a gider; dolayısıyla $m = 1$ iken @def-zin-turev ile @def-dif-turevlenebilme aynı şeyi söyler ve @thm-dif-kismi-turevler gereği $Df(a)h = \langle \nabla f(a), h \rangle$ olur.
+- **$n = 1$.** $\mathbb{R}$'den $\mathbb{R}^m$'ye her lineer dönüşüm $T(h) = h\,T(1) = h\,c$ biçimindedir; burada $c = T(1) \in \mathbb{R}^m$'dir. $h \ne 0$ için
+
+  $$\left\| \frac{f(a + h) - f(a)}{h} - c \right\| = \frac{\|f(a + h) - f(a) - hc\|}{|h|}$$
+
+  olduğundan $f$'nin $a$'da türevlenebilmesi, fark oranının $\mathbb{R}^m$'de $c$ limitine sahip olmasıdır. Bu limit, $f$'nin tek kısmi türevi olan hız vektörüdür (@def-kis-vektor-degerli, @thm-kis-bilesen): $c = f'(a) = \big( f_1'(a), \dots, f_m'(a) \big)$. Böylece $Df(a)h = h\,f'(a)$ olur.
+- **$n = m = 1$.** $Df(a)h = f'(a)\,h$; türev, Analiz 2'deki türev sayısıyla çarpma dönüşümüdür (bkz. [Analiz 2](../analiz-2/turev-kavrami.html#def-turev-noktada)).
+
+:::: {#exm-zin-tanimla name="Tanımla Türev Hesabı"}
+$f : \mathbb{R}^2 \to \mathbb{R}^2$, $f(x, y) = (x^2, xy)$ fonksiyonunun $(1, 2)$ noktasında türevlenebilir olduğunu tanımla gösteriniz ve $Df(1, 2)$ dönüşümünü bulunuz.
+
+::: {.cozum}
+**Artım.** $h = (h_1, h_2)$ için
+
+$$
+\begin{aligned}
+f(1 + h_1, 2 + h_2) - f(1, 2) &= \big( (1 + h_1)^2 - 1,\ (1 + h_1)(2 + h_2) - 2 \big) \\[1mm]
+&= \big( 2h_1 + h_1^2,\ 2h_1 + h_2 + h_1 h_2 \big)
+\end{aligned}
+$$
+
+olur.
+
+**Aday.** Her bileşenin $h$'ye göre lineer kısmını ayıralım: $T(h_1, h_2) = (2h_1,\ 2h_1 + h_2)$. Bu dönüşüm lineerdir; $h$ sütun vektörünü
+
+$$\begin{pmatrix} 2 & 0 \\ 2 & 1 \end{pmatrix}$$
+
+matrisiyle çarpar. Geriye kalan terim $(h_1^2,\ h_1 h_2)$ vektörüdür.
+
+**Kalan.**
+
+$$\|(h_1^2, h_1 h_2)\| = \sqrt{h_1^4 + h_1^2 h_2^2} = |h_1|\,\sqrt{h_1^2 + h_2^2} = |h_1|\,\|h\|$$
+
+olduğundan $h \ne 0$ için
+
+$$\frac{\|f(1 + h_1, 2 + h_2) - f(1, 2) - T(h)\|}{\|h\|} = |h_1| \le \|h\|$$
+
+olur ve sıkıştırmayla (@thm-lim-sikistirma) oran $0$'a gider. $f$, $(1, 2)$'de türevlenebilirdir ve
+
+$$Df(1, 2)(h_1, h_2) = (2h_1,\ 2h_1 + h_2).$$
+
+Matrisin satırları, $\nabla(x^2) = (2x, 0)$ ve $\nabla(xy) = (y, x)$ gradyanlarının $(1, 2)$ noktasındaki değerleri olan $(2, 0)$ ve $(2, 1)$ vektörleridir. Bunun rastlantı olmadığını @thm-zin-jacobi gösterecek. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-zin-afin-fonksiyon name="Afin Fonksiyonların Türevi"}
+$L : \mathbb{R}^n \to \mathbb{R}^m$ lineer bir dönüşüm, $b \in \mathbb{R}^m$ ve $f(x) = L(x) + b$ olsun. $f$'nin her $a \in \mathbb{R}^n$ noktasında türevlenebilir olduğunu ve $Df(a) = L$ olduğunu gösteriniz.
+
+::: {.cozum}
+$L$ lineer olduğundan her $h$ için
+
+$$f(a + h) - f(a) = L(a + h) + b - L(a) - b = L(h)$$
+
+olur. $T = L$ seçilirse tanımdaki kesrin payı özdeş olarak $0$'dır; limit de $0$'dır. Demek ki $Df(a) = L$'dir ve türev $a$ noktasına bağlı değildir.
+
+İki özel durum önemlidir. $L = 0$ ise $f$ sabit fonksiyondur ve türevi her noktada sıfır dönüşümdür; matrisi $m \times n$ tipindeki sıfır matristir. $b = 0$ ise $f = L$ lineerdir ve her noktadaki türevi kendisidir: bir lineer dönüşüme en iyi uyan lineer dönüşüm kendisidir. $m = 1$ için bu, @exm-dif-afin sonucudur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Türevin Tekliği ve Süreklilik
+
+Tanımda "bir $T$ varsa" dedik. Türevden söz edebilmek için bu dönüşümün tek olması gerekir.
+
+:::: {#thm-zin-teklik name="Türevin Tekliği"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $f : D \to \mathbb{R}^m$ olsun. $f$, $a$ noktasında türevlenebilirse @def-zin-turev koşulunu sağlayan $T$ lineer dönüşümü tektir.
+
+::: {.ispat}
+$a$ iç nokta olduğundan $B(a, r) \subseteq D$ olacak bir $r > 0$ vardır. $T_1$ ve $T_2$ lineer dönüşümlerinin ikisi de koşulu sağlasın. $i = 1, 2$ ve $0 < \|h\| < r$ için
+
+$$q_i(h) = \frac{\|f(a + h) - f(a) - T_i(h)\|}{\|h\|}$$
+
+diyelim; varsayım gereği $h \to 0$ iken $q_1(h) \to 0$ ve $q_2(h) \to 0$ olur.
+
+**Bir doğrultuda karşılaştırma.** $\|e\| = 1$ olan bir $e \in \mathbb{R}^n$ vektörü sabitleyelim ve $0 < |\lambda| < r$ olsun. $T_1$, $T_2$ lineer olduğundan $T_1(\lambda e) - T_2(\lambda e)$ farkı $\lambda\big( T_1(e) - T_2(e) \big)$ vektörüne eşittir; ayrıca $\|\lambda e\| = |\lambda|$'dır. Öte yandan
+
+$$
+\begin{aligned}
+T_1(\lambda e) - T_2(\lambda e) &= \big[ f(a + \lambda e) - f(a) - T_2(\lambda e) \big] \\[1mm]
+&\quad - \big[ f(a + \lambda e) - f(a) - T_1(\lambda e) \big]
+\end{aligned}
+$$
+
+yazılabilir. Üçgen eşitsizliği (@thm-nrm-norm-ozellikleri) ile
+
+$$\|T_1(e) - T_2(e)\| = \frac{\|T_1(\lambda e) - T_2(\lambda e)\|}{|\lambda|} \le q_2(\lambda e) + q_1(\lambda e)$$
+
+bulunur.
+
+**Limit.** $\varepsilon > 0$ verilsin. Öyle bir $\delta \in (0, r]$ vardır ki $0 < \|h\| < \delta$ iken $q_1(h) < \dfrac{\varepsilon}{2}$ ve $q_2(h) < \dfrac{\varepsilon}{2}$ olur. $\lambda = \dfrac{\delta}{2}$ seçersek $\|\lambda e\| < \delta$ olduğundan $\|T_1(e) - T_2(e)\| < \varepsilon$ bulunur. Sol taraf $\varepsilon$'a bağlı değildir ve $\varepsilon > 0$ keyfidir; öyleyse $T_1(e) = T_2(e)$'dir.
+
+**Bütün vektörler.** $y \in \mathbb{R}^n$, $y \ne 0$ ise $e = \dfrac{y}{\|y\|}$ birim vektördür ve lineerlikten
+
+$$T_1(y) = \|y\|\,T_1(e) = \|y\|\,T_2(e) = T_2(y)$$
+
+olur; $y = 0$ için de $T_1(0) = 0 = T_2(0)$'dır. Öyleyse $T_1 = T_2$. [$\blacksquare$]{.qed}
+:::
+::::
+
+Teklik sayesinde "türev" demek anlamlıdır. İspatta $a$'nın iç nokta olması kilit rol oynadı: $a$'dan her $e$ doğrultusunda küçük adımlar atabildik. $m = 1$ iken teklik @thm-dif-kismi-turevler ile de görülmüştü; orada tek aday gradyandı.
+
+Türevlenebilir fonksiyonların sürekli olduğunu ve zincir kuralını ispatlarken, bir lineer dönüşümün vektörlerin boyunu en çok sabit bir çarpan kadar büyüttüğünü kullanacağız.
+
+:::: {#lem-zin-lineer-sinir name="Lineer Dönüşümün Sınırlılığı"}
+$T : \mathbb{R}^n \to \mathbb{R}^m$, matrisi $A = (a_{ij})$ olan bir lineer dönüşüm ve
+
+$$M_T = \Big( \sum_{i=1}^{m} \sum_{j=1}^{n} a_{ij}^2 \Big)^{1/2}$$
+
+olsun. Her $h \in \mathbb{R}^n$ için $\|T(h)\| \le M_T\,\|h\|$ olur. Özel olarak $h \to 0$ iken $T(h) \to 0$'dır.
+
+::: {.ispat}
+$A$'nın $i$-inci satırını $a_i = (a_{i1}, \dots, a_{in})$ ile gösterelim. $T(h) = Ah$ vektörünün $i$-inci bileşeni
+
+$$a_{i1} h_1 + \dots + a_{in} h_n = \langle a_i, h \rangle$$
+
+sayısıdır. Cauchy–Schwarz eşitsizliği (@thm-nrm-cauchy-schwarz) gereği $|\langle a_i, h \rangle| \le \|a_i\|\,\|h\|$ olduğundan
+
+$$\|T(h)\|^2 = \sum_{i=1}^{m} \langle a_i, h \rangle^2 \le \sum_{i=1}^{m} \|a_i\|^2\,\|h\|^2 = M_T^2\,\|h\|^2$$
+
+olur; son adımda $\|a_1\|^2 + \dots + \|a_m\|^2$ toplamının bütün $a_{ij}^2$ sayılarının toplamı olduğunu kullandık. Karekök alınırsa istenen eşitsizlik çıkar. $h \to 0$ iken $0 \le \|T(h)\| \le M_T\,\|h\| \to 0$ olduğundan sıkıştırmayla (@thm-lim-sikistirma) $\|T(h)\| \to 0$, yani $T(h) \to 0$ olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#cor-zin-surekli name="Türevlenebilen Fonksiyon Süreklidir"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $f : D \to \mathbb{R}^m$ fonksiyonu $a$ noktasında türevlenebilir olsun. O zaman $f$, $a$ noktasında süreklidir.
+
+::: {.ispat}
+$T = Df(a)$ olsun ve $\eta$, yukarıdaki ayrıntılarda tanımlanan kalan fonksiyonu olsun: $0 < \|h\| < r$ için
+
+$$f(a + h) - f(a) = T(h) + \|h\|\,\eta(h)$$
+
+ve $h \to 0$ iken $\eta(h) \to 0$. Üçgen eşitsizliği ve @lem-zin-lineer-sinir ile
+
+$$\|f(a + h) - f(a)\| \le \|T(h)\| + \|h\|\,\|\eta(h)\| \le \big( M_T + \|\eta(h)\| \big)\,\|h\|$$
+
+bulunur. $h \to 0$ iken sağ taraftaki ilk çarpan $M_T$'ye, ikinci çarpan $0$'a gider; sıkıştırmayla $\|f(a + h) - f(a)\| \to 0$ olur. Bu, $\lim_{x \to a} f(x) = f(a)$ demektir; $f$, $a$'da süreklidir (@def-srk-sureklilik). [$\blacksquare$]{.qed}
+:::
+::::
+
+Sonucun karşıt tersi kullanışlıdır: $a$'da sürekli olmayan bir fonksiyon $a$'da türevlenemez. $m = 1$ için bu, @thm-dif-surekli ve @cor-dif-sureksiz ile bildiğimiz şeydir. Tersi doğru değildir; tek değişkende bile $|x|$ fonksiyonu $0$'da sürekli olduğu hâlde türevlenemez.
+
+## Bileşenlerle Türevlenebilme
+
+Vektör değerli bir fonksiyonun türevlenebilirliği, bileşenlerininkine indirgenir. Böylece reel değerli fonksiyonlar için bildiğimiz her şey bileşen bileşen kullanılabilir.
+
+:::: {#thm-zin-bilesen name="Bileşenlerle Türevlenebilme"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $f = (f_1, \dots, f_m) : D \to \mathbb{R}^m$ olsun. $f$'nin $a$ noktasında türevlenebilir olması için gerek ve yeter koşul, her $f_i$ bileşeninin reel değerli bir fonksiyon olarak $a$ noktasında türevlenebilir olmasıdır. Bu durumda her $h \in \mathbb{R}^n$ için
+
+$$Df(a)h = \big( Df_1(a)h, \dots, Df_m(a)h \big)$$
+
+olur.
+
+::: {.ispat}
+**Hazırlık.** Her $T : \mathbb{R}^n \to \mathbb{R}^m$ fonksiyonu $T = (T_1, \dots, T_m)$ bileşenleriyle yazılır. Vektörlerde toplama ve skalerle çarpma bileşen bileşen yapıldığından $T$'nin lineer olması, her $T_i : \mathbb{R}^n \to \mathbb{R}$ bileşeninin lineer olmasıyla aynı şeydir.
+
+Ayrıca her $y = (y_1, \dots, y_m) \in \mathbb{R}^m$ için
+
+$$|y_i| \le \|y\| \le |y_1| + \dots + |y_m|$$
+
+olur: sol eşitsizlik $y_i^2 \le y_1^2 + \dots + y_m^2$ eşitsizliğinden, sağdaki ise $y = y_1 e_1 + \dots + y_m e_m$ yazıp üçgen eşitsizliğini uygulamaktan gelir.
+
+$T = (T_1, \dots, T_m)$ lineer olsun ve $0 < \|h\| < r$ için
+
+$$q(h) = \frac{f(a + h) - f(a) - T(h)}{\|h\|} \in \mathbb{R}^m$$
+
+diyelim. $q(h)$ vektörünün $i$-inci bileşeni
+
+$$q_i(h) = \frac{f_i(a + h) - f_i(a) - T_i(h)}{\|h\|}$$
+
+sayısıdır ve yukarıdaki eşitsizlik gereği
+
+$$|q_i(h)| \le \|q(h)\| \le |q_1(h)| + \dots + |q_m(h)|$$
+
+olur.
+
+**($\Rightarrow$)** $f$, $T = Df(a)$ ile türevlenebilir olsun. $h \to 0$ iken $\|q(h)\| \to 0$ olduğundan soldaki eşitsizlik ve sıkıştırma gereği her $i$ için $|q_i(h)| \to 0$ olur. Bu, $f_i$'nin $a$'da $T_i$ lineer dönüşümüyle türevlenebilir olması demektir; teklik (@thm-zin-teklik) gereği $Df_i(a) = T_i$'dir.
+
+**($\Leftarrow$)** Her $f_i$, $a$'da türevlenebilir olsun ve $T_i = Df_i(a)$ diyelim. $T = (T_1, \dots, T_m)$ lineerdir. Her $i$ için $|q_i(h)| \to 0$ olduğundan sağdaki eşitsizlik gereği $\|q(h)\| \to 0$ olur. Öyleyse $f$, $a$'da türevlenebilirdir ve $Df(a) = T$'dir; yani $Df(a)h = \big( Df_1(a)h, \dots, Df_m(a)h \big)$. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani vektör değerli durum yeni bir zorluk getirmez: $f$ türevlenebilirse her bileşeni türevlenebilirdir, bir bileşeni bile türevlenemiyorsa $f$ türevlenemez. $m = 1$ için $Df_i(a)h = \langle \nabla f_i(a), h \rangle$ olduğundan (@thm-dif-kismi-turevler) formül
+
+$$Df(a)h = \big( \langle \nabla f_1(a), h \rangle, \dots, \langle \nabla f_m(a), h \rangle \big)$$
+
+biçimini alır. Teorem @cor-zin-surekli için ikinci bir yol da verir: türevlenebilir $f$'nin her bileşeni @thm-dif-surekli gereği süreklidir, dolayısıyla @thm-srk-bilesen gereği $f$ süreklidir.
+
+## Jacobi Matrisi
+
+Türevin var olduğu biliniyorsa onu limit hesaplamadan, yalnız kısmi türevlerle bulabiliriz. Önce kısmi türevleri bir matriste toplayalım.
+
+::: {#def-zin-jacobi-matrisi name="Jacobi Matrisi"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $f = (f_1, \dots, f_m) : D \to \mathbb{R}^m$ olsun. Bütün $\dfrac{\partial f_i}{\partial x_j}(a)$ kısmi türevleri ($i = 1, \dots, m$, $j = 1, \dots, n$) varsa
+
+$$J_f(a) = \left( \frac{\partial f_i}{\partial x_j}(a) \right)_{m \times n} = \begin{pmatrix} \dfrac{\partial f_1}{\partial x_1}(a) & \cdots & \dfrac{\partial f_1}{\partial x_n}(a) \\ \vdots & & \vdots \\ \dfrac{\partial f_m}{\partial x_1}(a) & \cdots & \dfrac{\partial f_m}{\partial x_n}(a) \end{pmatrix}$$
+
+matrisine $f$'nin $a$ noktasındaki **Jacobi matrisi** denir.
+:::
+
+Yani Jacobi matrisinin $i$-inci satırında $i$-inci bileşenin bütün değişkenlere göre kısmi türevleri, $j$-inci sütununda bütün bileşenlerin $j$-inci değişkene göre kısmi türevleri durur. Satırlar bileşenlerin gradyanları (@def-kis-gradyan), sütunlar ise $f$'nin vektör değerli kısmi türevleridir (@def-kis-vektor-degerli, @thm-kis-bilesen):
+
+$$J_f(a) = \begin{pmatrix} \nabla f_1(a) \\ \vdots \\ \nabla f_m(a) \end{pmatrix} = \begin{pmatrix} \dfrac{\partial f}{\partial x_1}(a) & \cdots & \dfrac{\partial f}{\partial x_n}(a) \end{pmatrix}.$$
+
+Bileşenler ve değişkenler adlarıyla yazıldığında da kural aynıdır. Örneğin $f(x, y) = \big( u(x, y), v(x, y), w(x, y) \big)$ için
+
+$$J_f = \begin{pmatrix} u_x & u_y \\ v_x & v_y \\ w_x & w_y \end{pmatrix}$$
+
+olur. Jacobi matrisinin tanımı yalnız kısmi türevlerin varlığını ister, türevlenebilirliği istemez.
+
+:::: {#thm-zin-jacobi name="Türevin Matris Temsili"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $f = (f_1, \dots, f_m) : D \to \mathbb{R}^m$ olsun. $f$, $a$ noktasında türevlenebilirse $f$'nin $a$'da bütün birinci kısmi türevleri vardır ve her $h \in \mathbb{R}^n$ için
+
+$$Df(a)h = J_f(a)\,h$$
+
+olur; yani $Df(a)$ lineer dönüşümünün matrisi Jacobi matrisidir.
+
+::: {.ispat}
+$T = Df(a)$ ve $B(a, r) \subseteq D$ olsun; $j \in \{1, \dots, n\}$ sabitlensin.
+
+**Bir sütun.** $0 < |t| < r$ için $h = te_j$ alalım. $\|te_j\| = |t|$ ve $T(te_j) = t\,T(e_j)$ olduğundan
+
+$$\left\| \frac{f(a + te_j) - f(a)}{t} - T(e_j) \right\| = \frac{\|f(a + te_j) - f(a) - T(te_j)\|}{\|te_j\|}$$
+
+olur. $\varepsilon > 0$ verilsin ve $0 < \|h\| < \delta$ iken tanımdaki kesir $\varepsilon$'dan küçük olacak bir $\delta \in (0, r]$ seçilsin. $0 < |t| < \delta$ ise $0 < \|te_j\| < \delta$ olduğundan sağ taraf $\varepsilon$'dan küçüktür. Demek ki
+
+$$\lim_{t \to 0} \frac{f(a + te_j) - f(a)}{t} = T(e_j)$$
+
+vardır. Soldaki limit $f$'nin $x_j$'ye göre kısmi türevidir (@def-kis-vektor-degerli). @thm-kis-bilesen gereği her $i$ için $\dfrac{\partial f_i}{\partial x_j}(a)$ vardır ve $T(e_j)$ vektörünün $i$-inci bileşenine eşittir:
+
+$$T(e_j) = \begin{pmatrix} \dfrac{\partial f_1}{\partial x_j}(a) \\ \vdots \\ \dfrac{\partial f_m}{\partial x_j}(a) \end{pmatrix}.$$
+
+Bu, $J_f(a)$ matrisinin $j$-inci sütunudur.
+
+**Bütün vektörler.** $h = h_1 e_1 + \dots + h_n e_n$ için $T$'nin lineerliğinden
+
+$$T(h) = h_1\,T(e_1) + \dots + h_n\,T(e_n) = J_f(a)\,h$$
+
+bulunur; çünkü bir matrisin bir sütun vektörüyle çarpımı, sütunlarının o vektörün bileşenleriyle kurulan toplamıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani türevlenebilir bir fonksiyonun türevini bulmak için limit hesaplamak gerekmez: kısmi türevler hesaplanır ve matrise dizilir. Bu yüzden $Df(a)$ lineer dönüşümü ile onun **matris temsili** olan $J_f(a)$ çoğu zaman özdeşleştirilir ve $Df(a) = J_f(a)$ ya da $f'(a) = J_f(a)$ yazılır. Özel durumlarda:
+
+- $m = 1$ iken $J_f(a)$, $1 \times n$ tipindeki $\nabla f(a)$ satırıdır ve $J_f(a)\,h = \langle \nabla f(a), h \rangle$ olur.
+- $n = m = 1$ iken $J_f(a)$, tek girdisi $f'(a)$ olan $1 \times 1$ matristir.
+
+Teoremin tersi doğru değildir. Jacobi matrisini kuran kısmi türevler, $f$ türevlenebilir olmadığında da var olabilir. Örneğin @exm-yuk-kesirli içindeki $\dfrac{xy}{x^2 + y^2}$ fonksiyonunun (orijinde $0$ tanımlanarak) orijinde iki kısmi türevi de vardır, ama fonksiyon orada süreksiz olduğundan türevlenemez (@cor-zin-surekli). Örneğin $F(x, y) = \Big( \dfrac{xy}{x^2 + y^2},\ x + y \Big)$ (orijinde ilk bileşen $0$) fonksiyonunun orijinde Jacobi matrisi vardır, ama @thm-zin-bilesen gereği $F$ orada türevlenemez. Türevlenebilme, $J_f(a)$'nın var olmasını değil, küçük $h$ vektörleri için $J_f(a)\,h$ çarpımının $f(a + h) - f(a)$ artımına iyi bir yaklaşım olmasını ister. Teoremin söylediği şudur: türev varsa $J_f(a)$'dan başkası olamaz; $J_f(a)$ yalnız bir adaydır.
+
+Reel değerli fonksiyonlar için toplam diferansiyeli $df(a) = \langle \nabla f(a), dx \rangle$ olarak tanımlamıştık (@def-dif-toplam-diferansiyel). Vektör değerli fonksiyonda gradyanın yerini Jacobi matrisi alır.
+
+::: {#def-zin-toplam-diferansiyel name="Vektör Değerli Fonksiyonun Toplam Diferansiyeli"}
+$D \subseteq \mathbb{R}^n$, $f = (f_1, \dots, f_m) : D \to \mathbb{R}^m$ fonksiyonu $a \in D^\circ$ noktasında türevlenebilir ve $dx = (dx_1, \dots, dx_n)$ bağımsız artımlar olsun.
+
+$$df(a) = Df(a)(dx) = J_f(a)\,dx$$
+
+vektörüne $f$'nin $a$ noktasındaki **toplam diferansiyeli** denir.
+:::
+
+Yani toplam diferansiyel, türev dönüşümünün $dx$ artımına uygulanmasıdır ve $i$-inci bileşeni, $f_i$'nin önceki bölümdeki toplam diferansiyeli $df_i(a)$'dır. Örneğin iki değişkenli ve üç bileşenli $f(x, y) = \big( f_1(x, y), f_2(x, y), f_3(x, y) \big)$ fonksiyonu için
+
+$$df = \begin{pmatrix} df_1 \\ df_2 \\ df_3 \end{pmatrix} = \begin{pmatrix} \dfrac{\partial f_1}{\partial x}\,dx + \dfrac{\partial f_1}{\partial y}\,dy \\ \dfrac{\partial f_2}{\partial x}\,dx + \dfrac{\partial f_2}{\partial y}\,dy \\ \dfrac{\partial f_3}{\partial x}\,dx + \dfrac{\partial f_3}{\partial y}\,dy \end{pmatrix}$$
+
+ve
+
+$$df = \begin{pmatrix} \dfrac{\partial f_1}{\partial x} & \dfrac{\partial f_1}{\partial y} \\ \dfrac{\partial f_2}{\partial x} & \dfrac{\partial f_2}{\partial y} \\ \dfrac{\partial f_3}{\partial x} & \dfrac{\partial f_3}{\partial y} \end{pmatrix} \begin{pmatrix} dx \\ dy \end{pmatrix}$$
+
+olur; $df$, Jacobi matrisinin $(dx, dy)$ sütunuyla çarpımıdır. $n = m = 1$ iken tanım $df = f'(x)\,dx$, $n = 1$ iken $df = f'(t)\,dt$ formülüne dönüşür. $w = f(x)$ yazılırsa $dw = f'(x)\,dx = J_f(x)\,dx$ biçimi de kullanılır.
+
+Tanım ve değer uzaylarının boyutu aynıysa Jacobi matrisi karedir ve determinantı alınabilir.
+
+::: {#def-zin-jacobi-determinanti name="Jacobi Determinantı"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $f = (f_1, \dots, f_n) : D \to \mathbb{R}^n$ fonksiyonunun $a$'da bütün birinci kısmi türevleri bulunsun. $J_f(a)$ kare matrisinin determinantına $f$'nin $a$ noktasındaki **Jacobi determinantı** denir ve
+
+$$\det J_f(a) = \frac{\partial(f_1, \dots, f_n)}{\partial(x_1, \dots, x_n)}(a)$$
+
+ile gösterilir.
+:::
+
+Yani Jacobi determinantı yalnız $m = n$ iken anlamlıdır. Bileşenler ve değişkenler adlarıyla yazıldığında, örneğin $u = u(x, y)$ ve $v = v(x, y)$ için
+
+$$\frac{\partial(u, v)}{\partial(x, y)} = \begin{vmatrix} u_x & u_y \\ v_x & v_y \end{vmatrix} = u_x v_y - u_y v_x$$
+
+olur. Jacobi determinantının mutlak değeri, $f$'nin $a$ yakınındaki küçük alan ve hacimleri yaklaşık kaç katına çıkardığını gösterir; sıfırdan farklı olması [Ters ve Kapalı Fonksiyon Teoremleri](ters-ve-kapali-fonksiyon-teoremleri.qmd) bölümünde kilit koşul olacak.
+
+:::: {#exm-zin-kutupsal-jacobi name="Kutupsal Koordinatların Jacobi Determinantı"}
+$g(r, \theta) = (r\cos\theta, r\sin\theta)$ kutupsal koordinat dönüşümünün Jacobi matrisini ve Jacobi determinantını bulunuz.
+
+::: {.cozum}
+**Jacobi matrisi.** $x = r\cos\theta$ ve $y = r\sin\theta$ bileşenlerdir. Sütunlar $\dfrac{\partial g}{\partial r} = (\cos\theta, \sin\theta)$ ve $\dfrac{\partial g}{\partial \theta} = (-r\sin\theta, r\cos\theta)$ vektörleridir (@exr-kis-kutupsal):
+
+$$J_g(r, \theta) = \begin{pmatrix} \cos\theta & -r\sin\theta \\ \sin\theta & r\cos\theta \end{pmatrix}.$$
+
+**Determinant.**
+
+$$\frac{\partial(x, y)}{\partial(r, \theta)} = r\cos^2\theta - (-r\sin\theta)\sin\theta = r\big( \cos^2\theta + \sin^2\theta \big) = r$$
+
+bulunur. $r > 0$ iken determinant sıfırdan farklıdır. $r = 0$ iken sıfırdır; nitekim $r = 0$ doğrusunun bütün $(0, \theta)$ noktaları tek bir noktaya, orijine gider. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Sürekli Kısmi Türevlerle Yeter Koşul
+
+@thm-zin-jacobi kısmi türevlerin varlığını gerek koşul olarak verir ama bu koşul yeter değildir. Reel değerli fonksiyonlarda en kullanışlı yeter koşul kısmi türevlerin sürekliliğiydi (@thm-dif-yeter-kosul); bileşenler yardımıyla bu koşul vektör değerli fonksiyonlara geçer.
+
+:::: {#thm-zin-yeter-kosul name="Vektör Değerli Fonksiyonlar için Yeter Koşul"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $f = (f_1, \dots, f_m) : D \to \mathbb{R}^m$ olsun. Bütün $\dfrac{\partial f_i}{\partial x_j}$ kısmi türevleri bir $B(a, r) \subseteq D$ yuvarının her noktasında var ve $a$ noktasında sürekliyse $f$, $a$'da türevlenebilirdir ve $Df(a) = J_f(a)$ olur. Özel olarak $U \subseteq \mathbb{R}^n$ açık ve $f \in C^1(U)$ ise $f$, $U$'nun her noktasında türevlenebilirdir.
+
+::: {.ispat}
+Her $i$ için $f_i$'nin birinci kısmi türevleri $B(a, r)$'de var ve $a$'da süreklidir; @thm-dif-yeter-kosul gereği $f_i$, $a$'da türevlenebilirdir. Bütün bileşenler türevlenebilir olduğundan @thm-zin-bilesen gereği $f$ de $a$'da türevlenebilirdir ve @thm-zin-jacobi gereği türevin matrisi $J_f(a)$'dır.
+
+$f \in C^1(U)$ ise (@def-yuk-ck-sinifi) her $f_i$ bileşeni $C^1(U)$ sınıfındadır. $a \in U$ için $B(a, r) \subseteq U$ olacak bir $r > 0$ vardır; kısmi türevler bu yuvarda var ve $a$'da süreklidir. İlk kısım gereği $f$, $a$'da türevlenebilirdir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani somut fonksiyonların çoğunda türevi bulmak, kısmi türevleri hesaplayıp Jacobi matrisine dizmekten ibarettir. $f \in C^1(U)$ iken $x \mapsto J_f(x)$ matrisinin her girdisi $U$ üzerinde süreklidir; türev noktadan noktaya sürekli değişir. $C^1$ sınıfındaki fonksiyonlara **sürekli türevlenebilir** denmesinin nedeni budur. Koşul yeterdir ama gerekli değildir: türevlenebilir olup kısmi türevleri sürekli olmayan fonksiyonlar vardır (@exm-dif-sin-ters-kare-b) ve böyle bir fonksiyonu bileşen olarak alan, öbür bileşenleri türevlenebilir seçilmiş vektör değerli fonksiyon da aynı özelliği taşır.
+
+::: {.callout-tip title="Üç adımda türev hesabı"}
+1. **Bileşenler.** $f = (f_1, \dots, f_m)$ bileşenleri ayrı ayrı yazılır.
+2. **Jacobi matrisi.** Bütün $\dfrac{\partial f_i}{\partial x_j}$ kısmi türevleri hesaplanır ve $i$-inci satıra $\nabla f_i$ gelecek biçimde $m \times n$ tipindeki $J_f$ matrisine dizilir. Bir kısmi türev yoksa $f$ türevlenemez (@thm-zin-jacobi).
+3. **Karar.** Kısmi türevler noktanın bir yuvarında var ve noktada sürekliyse $Df(a) = J_f(a)$'dır (@thm-zin-yeter-kosul). Değilse tek aday $J_f(a)$'dır; kalan terimin $\|h\|$ ile bölümünün $0$'a gidip gitmediği tanımla incelenir, gerekirse bileşen bileşen (@thm-zin-bilesen).
+:::
+
+:::: {#exm-zin-jacobi-hesabi name="Üç Bileşenli Bir Fonksiyonun Türevi"}
+$f : \mathbb{R}^2 \to \mathbb{R}^3$, $f(x_1, x_2) = \big( x_1^2,\ x_1^3 x_2,\ x_1^4 x_2^2 \big)$ olsun. $Df(x_1, x_2)$ türevini bulunuz.
+
+::: {.cozum}
+**Bileşenler.** $f_1 = x_1^2$, $f_2 = x_1^3 x_2$, $f_3 = x_1^4 x_2^2$'dir. $n = 2$, $m = 3$ olduğundan türev $3 \times 2$ tipinde bir matrisle temsil edilir.
+
+**Jacobi matrisi.**
+
+$$J_f(x_1, x_2) = \begin{pmatrix} \dfrac{\partial f_1}{\partial x_1} & \dfrac{\partial f_1}{\partial x_2} \\ \dfrac{\partial f_2}{\partial x_1} & \dfrac{\partial f_2}{\partial x_2} \\ \dfrac{\partial f_3}{\partial x_1} & \dfrac{\partial f_3}{\partial x_2} \end{pmatrix} = \begin{pmatrix} 2x_1 & 0 \\ 3x_1^2 x_2 & x_1^3 \\ 4x_1^3 x_2^2 & 2x_1^4 x_2 \end{pmatrix}.$$
+
+**Karar.** Bütün girdiler polinomdur, dolayısıyla $\mathbb{R}^2$'de süreklidir (@thm-srk-polinom). @thm-zin-yeter-kosul gereği $f$ her noktada türevlenebilirdir ve $Df(x_1, x_2) = J_f(x_1, x_2)$'dir. Örneğin $(1, -1)$ noktasında
+
+$$Df(1, -1)(h_1, h_2) = \begin{pmatrix} 2 & 0 \\ -3 & 1 \\ 4 & -2 \end{pmatrix} \begin{pmatrix} h_1 \\ h_2 \end{pmatrix} = \begin{pmatrix} 2h_1 \\ -3h_1 + h_2 \\ 4h_1 - 2h_2 \end{pmatrix}$$
+
+olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-zin-r3-r4 name="Türev ve Toplam Diferansiyel"}
+$f : \mathbb{R}^3 \to \mathbb{R}^4$,
+
+$$f(x, y, z) = \big( x^2 + 5xyz,\ 2x - 3z,\ 4y + 2z - z^2,\ y^2 + 6z \big)$$
+
+olsun. $f'$ türevini ve $df$ toplam diferansiyelini bulunuz.
+
+::: {.cozum}
+**Türev.** Bileşenler polinom olduğundan kısmi türevleri de polinomdur ve süreklidir; @thm-zin-yeter-kosul gereği türev Jacobi matrisidir. Her satır bir bileşenin $(x, y, z)$'ye göre kısmi türevlerinden oluşur:
+
+$$f'(x, y, z) = J_f(x, y, z) = \begin{pmatrix} 2x + 5yz & 5xz & 5xy \\ 2 & 0 & -3 \\ 0 & 4 & 2 - 2z \\ 0 & 2y & 6 \end{pmatrix}.$$
+
+**Toplam diferansiyel.** Diferansiyel vektörü $(dx, dy, dz)$ olmak üzere
+
+$$df = \begin{pmatrix} 2x + 5yz & 5xz & 5xy \\ 2 & 0 & -3 \\ 0 & 4 & 2 - 2z \\ 0 & 2y & 6 \end{pmatrix} \begin{pmatrix} dx \\ dy \\ dz \end{pmatrix}$$
+
+olur ve matris çarpımı satır satır yapılınca
+
+$$df = \begin{pmatrix} (2x + 5yz)\,dx + 5xz\,dy + 5xy\,dz \\ 2\,dx - 3\,dz \\ 4\,dy + (2 - 2z)\,dz \\ 2y\,dy + 6\,dz \end{pmatrix}$$
+
+bulunur. $f'$ bir matrisle temsil edilen lineer dönüşümdür; $df$ ise bu dönüşümün $(dx, dy, dz)$ vektörüne uygulanmasıyla elde edilen vektördür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-zin-paraboloit name="Paraboloit Parametrizasyonunun Türevi"}
+$f : \mathbb{R}^2 \to \mathbb{R}^3$, $f(x, y) = (x, y, x^2 + y^2)$ fonksiyonunun türevlenebilir olduğunu gösteriniz ve $Df(0, 0)$, $Df(0, 1)$, $Df(1, 1)$ dönüşümlerini yazınız.
+
+::: {.cozum}
+**Türevlenebilirlik.** Bileşenler $f_1 = x$, $f_2 = y$, $f_3 = x^2 + y^2$ polinomlarıdır. Kısmi türevler
+
+$$
+\begin{aligned}
+\frac{\partial f}{\partial x} &= (1, 0, 2x), \\[1mm]
+\frac{\partial f}{\partial y} &= (0, 1, 2y)
+\end{aligned}
+$$
+
+olup bileşenleri süreklidir. @thm-zin-yeter-kosul gereği $f$ her noktada türevlenebilirdir, yani türevin bir matris temsili vardır:
+
+$$Df(x, y) = J_f(x, y) = \begin{pmatrix} 1 & 0 \\ 0 & 1 \\ 2x & 2y \end{pmatrix}.$$
+
+**Üç noktada.** $h = (h_1, h_2)$ için
+
+$$
+\begin{aligned}
+Df(0, 0)(h_1, h_2) &= (h_1,\ h_2,\ 0), \\[1mm]
+Df(0, 1)(h_1, h_2) &= (h_1,\ h_2,\ 2h_2), \\[1mm]
+Df(1, 1)(h_1, h_2) &= (h_1,\ h_2,\ 2h_1 + 2h_2)
+\end{aligned}
+$$
+
+olur. Afin fonksiyonlardan (@exm-zin-afin-fonksiyon) farklı olarak bu fonksiyonun türevi noktadan noktaya değişir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-zin-tanimla-kontrol name="Matris Temsilini Tanımla Doğrulamak"}
+$$f(x, y) = \begin{cases} \dfrac{x^2 y^2}{x^2 + y^2}, & (x, y) \ne (0, 0), \\[2mm] 0, & (x, y) = (0, 0) \end{cases}$$
+
+fonksiyonunun $(0, 0)$ noktasında türevlenebilir olduğunu gösteriniz ve $J_f(0, 0)$ matrisini bulunuz.
+
+::: {.cozum}
+**Kısmi türevler.** Eksenler üzerinde $f(t, 0) = f(0, t) = 0$ olduğundan fark oranları sıfırdır: $f_x(0, 0) = f_y(0, 0) = 0$. Tek aday, $1 \times 2$ tipindeki $J_f(0, 0) = (0 \ \ 0)$ matrisi, yani sıfır dönüşümüdür.
+
+**Kalan.** $h = (h_1, h_2) \ne 0$ olsun. $(h_1^2 - h_2^2)^2 \ge 0$ eşitsizliği açılınca $4h_1^2 h_2^2 \le (h_1^2 + h_2^2)^2$ verir. Dolayısıyla
+
+$$\frac{|f(h_1, h_2) - 0 - 0|}{\|h\|} = \frac{h_1^2 h_2^2}{(h_1^2 + h_2^2)^{3/2}} \le \frac{(h_1^2 + h_2^2)^2}{4\,(h_1^2 + h_2^2)^{3/2}} = \frac{\|h\|}{4}$$
+
+olur ve sıkıştırmayla oran $0$'a gider.
+
+**Sonuç.** $f$, $(0, 0)$'da türevlenebilirdir, $Df(0, 0)$ sıfır dönüşümüdür ve $J_f(0, 0) = (0 \ \ 0)$'dır. Kısmi türevlerin orijin yakınındaki davranışını incelemeden, doğrudan tanımla karar verdik. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Afin Yaklaşım
+
+Türevlenebilme, $f$'nin $a$ yakınında bir sabit vektör ile bir lineer dönüşümün toplamına çok benzediğini söyler. Reel değerli fonksiyonlarda bu toplamı doğrusallaştırma adıyla tanımlamıştık (@def-dif-dogrusallastirma); aynı tanım vektör değerli fonksiyonlara geçer.
+
+::: {#def-zin-afin-yaklasim name="Afin Yaklaşım"}
+$D \subseteq \mathbb{R}^n$, $f : D \to \mathbb{R}^m$ ve $f$, $a \in D^\circ$ noktasında türevlenebilir olsun.
+
+$$L_a(x) = f(a) + Df(a)(x - a) = f(a) + J_f(a)\,(x - a)$$
+
+kuralıyla tanımlanan $L_a : \mathbb{R}^n \to \mathbb{R}^m$ fonksiyonuna $f$'nin $a$ noktasındaki **afin yaklaşımı** (doğrusallaştırması) denir. $x$, $a$'ya yakınken kullanılan $f(x) \approx L_a(x)$ yaklaşımı, $h = x - a$ ile $f(a + h) \approx f(a) + Df(a)h$ biçiminde de yazılır.
+:::
+
+Yani $L_a$, bir sabit vektör ile bir lineer dönüşümün toplamı olan afin bir fonksiyondur ve $a$ noktasında $f$ ile aynı değeri alır. Türevlenebilme tanımı, yaklaşımın hatasının $a$'ya uzaklıktan daha hızlı sıfıra gittiğini söyler:
+
+$$\lim_{x \to a} \frac{\|f(x) - L_a(x)\|}{\|x - a\|} = 0.$$
+
+$a$ noktasında $f(a)$ değerini alan afin fonksiyonlar arasında bu özelliği taşıyan tek fonksiyon $L_a$'dır: $\ell(x) = f(a) + S(x - a)$ ($S$ lineer) bu özelliği taşıyorsa $S$ türevlenebilme koşulunu sağlar ve teklik (@thm-zin-teklik) gereği $S = Df(a)$ olur. $m = 1$ iken bu, @prp-dif-en-iyi-afin sonucudur. $L_a$'nın bileşenleri, $f$'nin bileşenlerinin doğrusallaştırmalarıdır. Geometrik olarak
+
+$$f(a) + Df(a)(\mathbb{R}^n) = \{ f(a) + Df(a)h : h \in \mathbb{R}^n \}$$
+
+afin kümesi, $f$'nin görüntü kümesine $f(a)$ noktasında teğet olarak düşünülür.
+
+:::: {#exm-zin-paraboloit-afin name="Paraboloidin Teğet Düzlemleri"}
+$f(x, y) = (x, y, x^2 + y^2)$ olsun (@exm-zin-paraboloit). $f$'nin $(0, 0)$ ve $(1, 1)$ noktalarındaki afin yaklaşımlarını bulunuz ve bu yaklaşımların görüntü kümelerini betimleyiniz.
+
+::: {.cozum}
+**Görüntü kümesi.** $f(x, y) = (x, y, x^2 + y^2)$ noktaları tam olarak $z = x^2 + y^2$ paraboloidinin noktalarıdır; $f$ bu yüzeyi parametrize eder.
+
+**$(0, 0)$ noktasında.** $f(0, 0) = (0, 0, 0)$ ve $Df(0, 0)(h_1, h_2) = (h_1, h_2, 0)$ olduğundan
+
+$$L_{(0, 0)}(x, y) = (0, 0, 0) + (x, y, 0) = (x, y, 0)$$
+
+bulunur. Görüntü kümesi $\{ (h_1, h_2, 0) : h_1, h_2 \in \mathbb{R} \}$, yani $z = 0$ düzlemidir: paraboloidin en alt noktasındaki teğet düzlem.
+
+**$(1, 1)$ noktasında.** $f(1, 1) = (1, 1, 2)$ ve $Df(1, 1)(h_1, h_2) = (h_1, h_2, 2h_1 + 2h_2)$ olduğundan
+
+$$
+\begin{aligned}
+L_{(1, 1)}(x, y) &= \big( x,\ y,\ 2 + 2(x - 1) + 2(y - 1) \big) \\[1mm]
+&= (x,\ y,\ 2x + 2y - 2)
+\end{aligned}
+$$
+
+olur. Görüntü kümesi $z = 2x + 2y - 2$ düzlemidir. Bu, $g(x, y) = x^2 + y^2$ fonksiyonunun grafiğinin $(1, 1, 2)$ noktasındaki teğet düzlemidir (@def-dif-teget-duzlem): $g_x(1, 1) = g_y(1, 1) = 2$ olduğundan teğet düzlem $z = 2 + 2(x - 1) + 2(y - 1)$'dir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="122.0 43.5 411.0 507.0" role="img" aria-label="Paraboloid z = x^2 + y^2 over the disc of radius 2 with a small patch of the plane z = 0 at the vertex and a patch of the plane z = 2x + 2y - 2 touching it at (1, 1, 2)">
+  <line x1="293.2" y1="443.4" x2="366.6" y2="519.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="370.5,523.0 363.5,520.0 367.7,515.9" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="366.5" y="536.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x</text>
+  <line x1="293.2" y1="443.4" x2="500.2" y2="415.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="505.7,414.4 499.2,418.2 498.4,412.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="515.7" y="418.4" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">y</text>
+  <line x1="293.2" y1="443.4" x2="293.2" y2="72.9" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="293.2,67.3 296.1,74.3 290.2,74.3" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="283.2" y="63.3" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">z</text>
+  <polygon points="310.5,342.6 314.8,294.8 293.2,293.8 293.2,341.8" fill="var(--color-theory)" fill-opacity="0.118" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,341.8 293.2,293.8 271.5,294.8 275.8,342.6" fill="var(--color-theory)" fill-opacity="0.111" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="314.8,294.8 319.2,237.9 293.2,236.8 293.2,293.8" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,293.8 293.2,236.8 267.1,237.9 271.5,294.8" fill="var(--color-theory)" fill-opacity="0.108" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="306.2,381.3 310.5,342.6 293.2,341.8 293.2,380.8" fill="var(--color-theory)" fill-opacity="0.122" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,380.8 293.2,341.8 275.8,342.6 280.1,381.3" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="327.0,344.7 335.5,297.5 314.8,294.8 310.5,342.6" fill="var(--color-theory)" fill-opacity="0.126" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="275.8,342.6 271.5,294.8 250.8,297.5 259.3,344.7" fill="var(--color-theory)" fill-opacity="0.105" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="319.2,237.9 323.5,172.0 293.2,170.8 293.2,236.8" fill="var(--color-theory)" fill-opacity="0.114" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,236.8 293.2,170.8 262.8,172.0 267.1,237.9" fill="var(--color-theory)" fill-opacity="0.106" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="335.5,297.5 343.9,241.2 319.2,237.9 314.8,294.8" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="271.5,294.8 267.1,237.9 242.4,241.2 250.8,297.5" fill="var(--color-theory)" fill-opacity="0.109" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="318.5,382.9 327.0,344.7 310.5,342.6 306.2,381.3" fill="var(--color-theory)" fill-opacity="0.129" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="280.1,381.3 275.8,342.6 259.3,344.7 267.8,382.9" fill="var(--color-theory)" fill-opacity="0.109" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="301.8,411.0 306.2,381.3 293.2,380.8 293.2,410.7" fill="var(--color-theory)" fill-opacity="0.128" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,410.7 293.2,380.8 280.1,381.3 284.5,411.0" fill="var(--color-theory)" fill-opacity="0.122" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="343.9,241.2 352.4,175.8 323.5,172.0 319.2,237.9" fill="var(--color-theory)" fill-opacity="0.121" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="267.1,237.9 262.8,172.0 233.9,175.8 242.4,241.2" fill="var(--color-theory)" fill-opacity="0.111" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="341.8,348.2 353.9,301.8 335.5,297.5 327.0,344.7" fill="var(--color-theory)" fill-opacity="0.133" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="259.3,344.7 250.8,297.5 232.4,301.8 244.5,348.2" fill="var(--color-theory)" fill-opacity="0.111" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="323.5,172.0 327.9,97.1 293.2,95.6 293.2,170.8" fill="var(--color-theory)" fill-opacity="0.112" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,170.8 293.2,95.6 258.4,97.1 262.8,172.0" fill="var(--color-theory)" fill-opacity="0.106" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="310.1,412.1 318.5,382.9 306.2,381.3 301.8,411.0" fill="var(--color-theory)" fill-opacity="0.134" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="284.5,411.0 280.1,381.3 267.8,382.9 276.2,412.1" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="329.6,385.6 341.8,348.2 327.0,344.7 318.5,382.9" fill="var(--color-theory)" fill-opacity="0.136" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="267.8,382.9 259.3,344.7 244.5,348.2 256.7,385.6" fill="var(--color-theory)" fill-opacity="0.106" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="353.9,301.8 366.1,246.4 343.9,241.2 335.5,297.5" fill="var(--color-theory)" fill-opacity="0.131" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="250.8,297.5 242.4,241.2 220.2,246.4 232.4,301.8" fill="var(--color-theory)" fill-opacity="0.114" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="317.5,413.9 329.6,385.6 318.5,382.9 310.1,412.1" fill="var(--color-theory)" fill-opacity="0.140" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="276.2,412.1 267.8,382.9 256.7,385.6 268.8,413.9" fill="var(--color-theory)" fill-opacity="0.111" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="352.4,175.8 360.8,101.4 327.9,97.1 323.5,172.0" fill="var(--color-theory)" fill-opacity="0.120" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="262.8,172.0 258.4,97.1 225.5,101.4 233.9,175.8" fill="var(--color-theory)" fill-opacity="0.113" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="297.5,431.7 301.8,411.0 293.2,410.7 293.2,431.5" fill="var(--color-theory)" fill-opacity="0.136" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,431.5 293.2,410.7 284.5,411.0 288.8,431.7" fill="var(--color-theory)" fill-opacity="0.131" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="338.9,389.0 354.1,352.8 341.8,348.2 329.6,385.6" fill="var(--color-theory)" fill-opacity="0.142" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="256.7,385.6 244.5,348.2 232.2,352.8 247.4,389.0" fill="var(--color-theory)" fill-opacity="0.111" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="366.1,246.4 378.3,181.9 352.4,175.8 343.9,241.2" fill="var(--color-theory)" fill-opacity="0.129" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="242.4,241.2 233.9,175.8 208.0,181.9 220.2,246.4" fill="var(--color-theory)" fill-opacity="0.117" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="301.6,432.3 310.1,412.1 301.8,411.0 297.5,431.7" fill="var(--color-theory)" fill-opacity="0.141" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="288.8,431.7 284.5,411.0 276.2,412.1 284.7,432.3" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="323.6,416.2 338.9,389.0 329.6,385.6 317.5,413.9" fill="var(--color-theory)" fill-opacity="0.146" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="268.8,413.9 256.7,385.6 247.4,389.0 262.7,416.2" fill="var(--color-theory)" fill-opacity="0.107" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="354.1,352.8 369.4,307.6 353.9,301.8 341.8,348.2" fill="var(--color-theory)" fill-opacity="0.139" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="244.5,348.2 232.4,301.8 216.9,307.6 232.2,352.8" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="305.3,433.1 317.5,413.9 310.1,412.1 301.6,432.3" fill="var(--color-theory)" fill-opacity="0.146" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="284.7,432.3 276.2,412.1 268.8,413.9 281.0,433.1" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="308.4,434.3 323.6,416.2 317.5,413.9 305.3,433.1" fill="var(--color-theory)" fill-opacity="0.150" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="281.0,433.1 268.8,413.9 262.7,416.2 277.9,434.3" fill="var(--color-theory)" fill-opacity="0.120" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="369.4,307.6 384.6,253.3 366.1,246.4 353.9,301.8" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="232.4,301.8 220.2,246.4 201.7,253.3 216.9,307.6" fill="var(--color-theory)" fill-opacity="0.119" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="328.3,418.9 345.9,393.2 338.9,389.0 323.6,416.2" fill="var(--color-theory)" fill-opacity="0.151" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="262.7,416.2 247.4,389.0 240.4,393.2 258.0,418.9" fill="var(--color-theory)" fill-opacity="0.105" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="378.3,181.9 390.4,108.4 360.8,101.4 352.4,175.8" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="233.9,175.8 225.5,101.4 195.9,108.4 208.0,181.9" fill="var(--color-theory)" fill-opacity="0.119" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="345.9,393.2 363.4,358.4 354.1,352.8 338.9,389.0" fill="var(--color-theory)" fill-opacity="0.148" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="247.4,389.0 232.2,352.8 222.9,358.4 240.4,393.2" fill="var(--color-theory)" fill-opacity="0.114" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="310.7,435.7 328.3,418.9 323.6,416.2 308.4,434.3" fill="var(--color-theory)" fill-opacity="0.154" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="277.9,434.3 262.7,416.2 258.0,418.9 275.6,435.7" fill="var(--color-theory)" fill-opacity="0.118" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 297.5,431.7 293.2,431.5 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.145" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 293.2,431.5 288.8,431.7 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.143" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 301.6,432.3 297.5,431.7 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.147" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 288.8,431.7 284.7,432.3 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.141" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 305.3,433.1 301.6,432.3 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.148" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 284.7,432.3 281.0,433.1 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.139" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="363.4,358.4 381.0,314.5 369.4,307.6 354.1,352.8" fill="var(--color-theory)" fill-opacity="0.145" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="232.2,352.8 216.9,307.6 205.3,314.5 222.9,358.4" fill="var(--color-theory)" fill-opacity="0.119" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 308.4,434.3 305.3,433.1 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.150" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 281.0,433.1 277.9,434.3 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.138" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="384.6,253.3 399.9,190.0 378.3,181.9 366.1,246.4" fill="var(--color-theory)" fill-opacity="0.136" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="220.2,246.4 208.0,181.9 186.4,190.0 201.7,253.3" fill="var(--color-theory)" fill-opacity="0.122" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="312.2,437.2 331.2,422.0 328.3,418.9 310.7,435.7" fill="var(--color-theory)" fill-opacity="0.157" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="275.6,435.7 258.0,418.9 255.1,422.0 274.1,437.2" fill="var(--color-theory)" fill-opacity="0.117" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 310.7,435.7 308.4,434.3 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.152" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 277.9,434.3 275.6,435.7 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="331.2,422.0 350.2,397.8 345.9,393.2 328.3,418.9" fill="var(--color-theory)" fill-opacity="0.155" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="258.0,418.9 240.4,393.2 236.1,397.8 255.1,422.0" fill="var(--color-theory)" fill-opacity="0.107" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 312.2,437.2 310.7,435.7 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.153" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 275.6,435.7 274.1,437.2 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 312.7,438.8 312.2,437.2 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.154" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 274.1,437.2 273.7,438.8 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="312.7,438.8 332.2,425.3 331.2,422.0 312.2,437.2" fill="var(--color-theory)" fill-opacity="0.159" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="274.1,437.2 255.1,422.0 254.2,425.3 273.7,438.8" fill="var(--color-theory)" fill-opacity="0.117" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="350.2,397.8 369.2,364.5 363.4,358.4 345.9,393.2" fill="var(--color-theory)" fill-opacity="0.152" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="240.4,393.2 222.9,358.4 217.1,364.5 236.1,397.8" fill="var(--color-theory)" fill-opacity="0.115" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="381.0,314.5 398.6,261.6 384.6,253.3 369.4,307.6" fill="var(--color-theory)" fill-opacity="0.143" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="216.9,307.6 201.7,253.3 187.7,261.6 205.3,314.5" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="255.1,422.0 236.1,397.8 234.7,402.7 254.2,425.3" fill="var(--color-theory)" fill-opacity="0.107" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="332.2,425.3 351.7,402.7 350.2,397.8 331.2,422.0" fill="var(--color-theory)" fill-opacity="0.157" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="208.0,181.9 195.9,108.4 171.2,117.6 186.4,190.0" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="399.9,190.0 415.1,117.6 390.4,108.4 378.3,181.9" fill="var(--color-theory)" fill-opacity="0.134" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="369.2,364.5 388.2,322.2 381.0,314.5 363.4,358.4" fill="var(--color-theory)" fill-opacity="0.150" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="222.9,358.4 205.3,314.5 198.1,322.2 217.1,364.5" fill="var(--color-theory)" fill-opacity="0.121" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="398.6,261.6 416.1,199.7 399.9,190.0 384.6,253.3" fill="var(--color-theory)" fill-opacity="0.142" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="201.7,253.3 186.4,190.0 170.2,199.7 187.7,261.6" fill="var(--color-theory)" fill-opacity="0.125" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="236.1,397.8 217.1,364.5 215.2,371.0 234.7,402.7" fill="var(--color-theory)" fill-opacity="0.115" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="351.7,402.7 371.2,371.0 369.2,364.5 350.2,397.8" fill="var(--color-theory)" fill-opacity="0.155" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="388.2,322.2 407.2,270.9 398.6,261.6 381.0,314.5" fill="var(--color-theory)" fill-opacity="0.148" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="205.3,314.5 187.7,261.6 179.1,270.9 198.1,322.2" fill="var(--color-theory)" fill-opacity="0.124" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="371.2,371.0 390.7,330.4 388.2,322.2 369.2,364.5" fill="var(--color-theory)" fill-opacity="0.153" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="217.1,364.5 198.1,322.2 195.7,330.4 215.2,371.0" fill="var(--color-theory)" fill-opacity="0.121" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="416.1,199.7 433.7,128.7 415.1,117.6 399.9,190.0" fill="var(--color-theory)" fill-opacity="0.140" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="186.4,190.0 171.2,117.6 152.6,128.7 170.2,199.7" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="407.2,270.9 426.2,210.5 416.1,199.7 398.6,261.6" fill="var(--color-theory)" fill-opacity="0.146" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="187.7,261.6 170.2,199.7 160.1,210.5 179.1,270.9" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="390.7,330.4 410.2,280.6 407.2,270.9 388.2,322.2" fill="var(--color-theory)" fill-opacity="0.151" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="198.1,322.2 179.1,270.9 176.2,280.6 195.7,330.4" fill="var(--color-theory)" fill-opacity="0.124" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="426.2,210.5 445.2,141.1 433.7,128.7 416.1,199.7" fill="var(--color-theory)" fill-opacity="0.145" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="170.2,199.7 152.6,128.7 141.1,141.1 160.1,210.5" fill="var(--color-theory)" fill-opacity="0.129" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="179.1,270.9 160.1,210.5 156.7,221.9 176.2,280.6" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="410.2,280.6 429.7,221.9 426.2,210.5 407.2,270.9" fill="var(--color-theory)" fill-opacity="0.150" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="429.7,221.9 449.2,154.1 445.2,141.1 426.2,210.5" fill="var(--color-theory)" fill-opacity="0.148" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <polygon points="160.1,210.5 141.1,141.1 137.2,154.1 156.7,221.9" fill="var(--color-theory)" fill-opacity="0.129" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.3" stroke-linejoin="round"/>
+  <path d="M449.2,154.1 L449.0,151.8 L448.7,149.5 L448.1,147.2 L447.2,144.9 L446.2,142.7 L444.8,140.4 L443.3,138.2 L441.5,136.0 L439.5,133.9 L437.3,131.7 L434.8,129.6 L432.1,127.6 L429.3,125.5 L426.2,123.6 L422.9,121.6 L419.4,119.7 L415.7,117.9 L411.8,116.1 L407.7,114.4 L403.5,112.8 L399.0,111.2 L394.5,109.6 L389.7,108.2 L384.8,106.8 L379.8,105.5 L374.7,104.3 L369.4,103.1 L364.0,102.0 L358.5,101.0 L352.9,100.1 L347.1,99.3 L341.4,98.5 L335.5,97.8 L329.6,97.3 L323.6,96.8 L317.6,96.4 L311.5,96.1 L305.4,95.8 L299.3,95.7 L293.2,95.6 L287.0,95.7 L280.9,95.8 L274.8,96.1 L268.7,96.4 L262.7,96.8 L256.7,97.3 L250.8,97.8 L244.9,98.5 L239.2,99.3 L233.5,100.1 L227.8,101.0 L222.3,102.0 L216.9,103.1 L211.6,104.3 L206.5,105.5 L201.5,106.8 L196.6,108.2 L191.8,109.6 L187.3,111.2 L182.8,112.8 L178.6,114.4 L174.5,116.1 L170.6,117.9 L166.9,119.7 L163.4,121.6 L160.1,123.6 L157.0,125.5 L154.2,127.6 L151.5,129.6 L149.0,131.7 L146.8,133.9 L144.8,136.0 L143.0,138.2 L141.5,140.4 L140.1,142.7 L139.1,144.9 L138.2,147.2 L137.6,149.5 L137.3,151.8 L137.2,154.1" fill="none" stroke="var(--color-theory)" stroke-width="1.1" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="223.2,431.1 260.5,469.6 363.1,455.6 325.8,417.2" fill="var(--color-base)" fill-opacity="0.22" stroke="none" stroke-width="1.2"/>
+  <path d="M223.2,431.1 L260.5,469.6 L363.1,455.6 L325.8,417.2 L223.2,431.1" fill="none" stroke="var(--color-base)" stroke-width="1.4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="293.2,443.4 312.2,440.5 312.7,438.8 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.173" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 273.7,438.8 274.1,440.5 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.153" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 310.7,442.0 312.2,440.5 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.173" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 274.1,440.5 275.6,442.0 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.154" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 275.6,442.0 277.9,443.4 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.155" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 308.4,443.4 310.7,442.0 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.173" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 277.9,443.4 281.0,444.6 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.157" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 305.3,444.6 308.4,443.4 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.172" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="312.2,440.5 331.2,428.5 332.2,425.3 312.7,438.8" fill="var(--color-theory)" fill-opacity="0.180" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="273.7,438.8 254.2,425.3 255.1,428.5 274.1,440.5" fill="var(--color-theory)" fill-opacity="0.130" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 281.0,444.6 284.7,445.4 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.159" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 301.6,445.4 305.3,444.6 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.170" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 284.7,445.4 288.8,446.0 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.162" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 297.5,446.0 301.6,445.4 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.168" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 288.8,446.0 293.2,446.2 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.164" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,443.4 293.2,446.2 297.5,446.0 293.2,443.4" fill="var(--color-theory)" fill-opacity="0.166" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="310.7,442.0 328.3,431.6 331.2,428.5 312.2,440.5" fill="var(--color-theory)" fill-opacity="0.180" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="274.1,440.5 255.1,428.5 258.0,431.6 275.6,442.0" fill="var(--color-theory)" fill-opacity="0.133" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="331.2,428.5 350.2,407.6 351.7,402.7 332.2,425.3" fill="var(--color-theory)" fill-opacity="0.179" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="254.2,425.3 234.7,402.7 236.1,407.6 255.1,428.5" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="275.6,442.0 258.0,431.6 262.7,434.4 277.9,443.4" fill="var(--color-theory)" fill-opacity="0.136" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="308.4,443.4 323.6,434.4 328.3,431.6 310.7,442.0" fill="var(--color-theory)" fill-opacity="0.178" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="277.9,443.4 262.7,434.4 268.8,436.7 281.0,444.6" fill="var(--color-theory)" fill-opacity="0.141" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="305.3,444.6 317.5,436.7 323.6,434.4 308.4,443.4" fill="var(--color-theory)" fill-opacity="0.176" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="328.3,431.6 345.9,412.2 350.2,407.6 331.2,428.5" fill="var(--color-theory)" fill-opacity="0.179" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="255.1,428.5 236.1,407.6 240.4,412.2 258.0,431.6" fill="var(--color-theory)" fill-opacity="0.118" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="281.0,444.6 268.8,436.7 276.2,438.4 284.7,445.4" fill="var(--color-theory)" fill-opacity="0.146" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="301.6,445.4 310.1,438.4 317.5,436.7 305.3,444.6" fill="var(--color-theory)" fill-opacity="0.172" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="350.2,407.6 369.2,377.5 371.2,371.0 351.7,402.7" fill="var(--color-theory)" fill-opacity="0.176" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="234.7,402.7 215.2,371.0 217.1,377.5 236.1,407.6" fill="var(--color-theory)" fill-opacity="0.125" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="284.7,445.4 276.2,438.4 284.5,439.5 288.8,446.0" fill="var(--color-theory)" fill-opacity="0.151" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="297.5,446.0 301.8,439.5 310.1,438.4 301.6,445.4" fill="var(--color-theory)" fill-opacity="0.168" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="288.8,446.0 284.5,439.5 293.2,439.9 293.2,446.2" fill="var(--color-theory)" fill-opacity="0.157" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,446.2 293.2,439.9 301.8,439.5 297.5,446.0" fill="var(--color-theory)" fill-opacity="0.163" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="258.0,431.6 240.4,412.2 247.4,416.3 262.7,434.4" fill="var(--color-theory)" fill-opacity="0.122" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="323.6,434.4 338.9,416.3 345.9,412.2 328.3,431.6" fill="var(--color-theory)" fill-opacity="0.177" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="236.1,407.6 217.1,377.5 222.9,383.7 240.4,412.2" fill="var(--color-theory)" fill-opacity="0.122" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="345.9,412.2 363.4,383.7 369.2,377.5 350.2,407.6" fill="var(--color-theory)" fill-opacity="0.176" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="262.7,434.4 247.4,416.3 256.7,419.8 268.8,436.7" fill="var(--color-theory)" fill-opacity="0.128" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="317.5,436.7 329.6,419.8 338.9,416.3 323.6,434.4" fill="var(--color-theory)" fill-opacity="0.174" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="369.2,377.5 388.2,338.5 390.7,330.4 371.2,371.0" fill="var(--color-theory)" fill-opacity="0.173" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="215.2,371.0 195.7,330.4 198.1,338.5 217.1,377.5" fill="var(--color-theory)" fill-opacity="0.132" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="268.8,436.7 256.7,419.8 267.8,422.4 276.2,438.4" fill="var(--color-theory)" fill-opacity="0.135" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="310.1,438.4 318.5,422.4 329.6,419.8 317.5,436.7" fill="var(--color-theory)" fill-opacity="0.169" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="276.2,438.4 267.8,422.4 280.1,424.1 284.5,439.5" fill="var(--color-theory)" fill-opacity="0.142" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="301.8,439.5 306.2,424.1 318.5,422.4 310.1,438.4" fill="var(--color-theory)" fill-opacity="0.163" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="240.4,412.2 222.9,383.7 232.2,389.3 247.4,416.3" fill="var(--color-theory)" fill-opacity="0.117" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="338.9,416.3 354.1,389.3 363.4,383.7 345.9,412.2" fill="var(--color-theory)" fill-opacity="0.174" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="284.5,439.5 280.1,424.1 293.2,424.6 293.2,439.9" fill="var(--color-theory)" fill-opacity="0.149" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,439.9 293.2,424.6 306.2,424.1 301.8,439.5" fill="var(--color-theory)" fill-opacity="0.156" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="363.4,383.7 381.0,346.2 388.2,338.5 369.2,377.5" fill="var(--color-theory)" fill-opacity="0.173" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="217.1,377.5 198.1,338.5 205.3,346.2 222.9,383.7" fill="var(--color-theory)" fill-opacity="0.128" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="195.7,330.4 176.2,280.6 179.1,290.4 198.1,338.5" fill="var(--color-theory)" fill-opacity="0.136" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="388.2,338.5 407.2,290.4 410.2,280.6 390.7,330.4" fill="var(--color-theory)" fill-opacity="0.171" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="247.4,416.3 232.2,389.3 244.5,393.9 256.7,419.8" fill="var(--color-theory)" fill-opacity="0.120" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="329.6,419.8 341.8,393.9 354.1,389.3 338.9,416.3" fill="var(--color-theory)" fill-opacity="0.170" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="256.7,419.8 244.5,393.9 259.3,397.4 267.8,422.4" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="318.5,422.4 327.0,397.4 341.8,393.9 329.6,419.8" fill="var(--color-theory)" fill-opacity="0.165" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="222.9,383.7 205.3,346.2 216.9,353.1 232.2,389.3" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="354.1,389.3 369.4,353.1 381.0,346.2 363.4,383.7" fill="var(--color-theory)" fill-opacity="0.171" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="267.8,422.4 259.3,397.4 275.8,399.5 280.1,424.1" fill="var(--color-theory)" fill-opacity="0.135" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="306.2,424.1 310.5,399.5 327.0,397.4 318.5,422.4" fill="var(--color-theory)" fill-opacity="0.159" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="280.1,424.1 275.8,399.5 293.2,400.3 293.2,424.6" fill="var(--color-theory)" fill-opacity="0.143" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,424.6 293.2,400.3 310.5,399.5 306.2,424.1" fill="var(--color-theory)" fill-opacity="0.151" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="198.1,338.5 179.1,290.4 187.7,299.7 205.3,346.2" fill="var(--color-theory)" fill-opacity="0.132" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="381.0,346.2 398.6,299.7 407.2,290.4 388.2,338.5" fill="var(--color-theory)" fill-opacity="0.171" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="176.2,280.6 156.7,221.9 160.1,233.3 179.1,290.4" fill="var(--color-theory)" fill-opacity="0.139" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="407.2,290.4 426.2,233.3 429.7,221.9 410.2,280.6" fill="var(--color-theory)" fill-opacity="0.170" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="232.2,389.3 216.9,353.1 232.4,358.9 244.5,393.9" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="341.8,393.9 353.9,358.9 369.4,353.1 354.1,389.3" fill="var(--color-theory)" fill-opacity="0.168" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="244.5,393.9 232.4,358.9 250.8,363.3 259.3,397.4" fill="var(--color-theory)" fill-opacity="0.122" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="327.0,397.4 335.5,363.3 353.9,358.9 341.8,393.9" fill="var(--color-theory)" fill-opacity="0.162" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="205.3,346.2 187.7,299.7 201.7,308.0 216.9,353.1" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="369.4,353.1 384.6,308.0 398.6,299.7 381.0,346.2" fill="var(--color-theory)" fill-opacity="0.169" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="259.3,397.4 250.8,363.3 271.5,366.0 275.8,399.5" fill="var(--color-theory)" fill-opacity="0.130" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="310.5,399.5 314.8,366.0 335.5,363.3 327.0,397.4" fill="var(--color-theory)" fill-opacity="0.155" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="398.6,299.7 416.1,244.1 426.2,233.3 407.2,290.4" fill="var(--color-theory)" fill-opacity="0.170" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="179.1,290.4 160.1,233.3 170.2,244.1 187.7,299.7" fill="var(--color-theory)" fill-opacity="0.135" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="275.8,399.5 271.5,366.0 293.2,366.9 293.2,400.3" fill="var(--color-theory)" fill-opacity="0.139" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,400.3 293.2,366.9 314.8,366.0 310.5,399.5" fill="var(--color-theory)" fill-opacity="0.147" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="156.7,221.9 137.2,154.1 141.1,167.1 160.1,233.3" fill="var(--color-theory)" fill-opacity="0.141" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="426.2,233.3 445.2,167.1 449.2,154.1 429.7,221.9" fill="var(--color-theory)" fill-opacity="0.168" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="216.9,353.1 201.7,308.0 220.2,314.9 232.4,358.9" fill="var(--color-theory)" fill-opacity="0.120" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="353.9,358.9 366.1,314.9 384.6,308.0 369.4,353.1" fill="var(--color-theory)" fill-opacity="0.165" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="232.4,358.9 220.2,314.9 242.4,320.1 250.8,363.3" fill="var(--color-theory)" fill-opacity="0.118" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="335.5,363.3 343.9,320.1 366.1,314.9 353.9,358.9" fill="var(--color-theory)" fill-opacity="0.160" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="187.7,299.7 170.2,244.1 186.4,253.8 201.7,308.0" fill="var(--color-theory)" fill-opacity="0.129" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="384.6,308.0 399.9,253.8 416.1,244.1 398.6,299.7" fill="var(--color-theory)" fill-opacity="0.168" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="416.1,244.1 433.7,179.4 445.2,167.1 426.2,233.3" fill="var(--color-theory)" fill-opacity="0.168" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="160.1,233.3 141.1,167.1 152.6,179.4 170.2,244.1" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="250.8,363.3 242.4,320.1 267.1,323.4 271.5,366.0" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="314.8,366.0 319.2,323.4 343.9,320.1 335.5,363.3" fill="var(--color-theory)" fill-opacity="0.153" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="271.5,366.0 267.1,323.4 293.2,324.5 293.2,366.9" fill="var(--color-theory)" fill-opacity="0.136" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,366.9 293.2,324.5 319.2,323.4 314.8,366.0" fill="var(--color-theory)" fill-opacity="0.145" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="201.7,308.0 186.4,253.8 208.0,261.9 220.2,314.9" fill="var(--color-theory)" fill-opacity="0.122" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="366.1,314.9 378.3,261.9 399.9,253.8 384.6,308.0" fill="var(--color-theory)" fill-opacity="0.164" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="170.2,244.1 152.6,179.4 171.2,190.5 186.4,253.8" fill="var(--color-theory)" fill-opacity="0.131" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="399.9,253.8 415.1,190.5 433.7,179.4 416.1,244.1" fill="var(--color-theory)" fill-opacity="0.166" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="220.2,314.9 208.0,261.9 233.9,268.0 242.4,320.1" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="343.9,320.1 352.4,268.0 378.3,261.9 366.1,314.9" fill="var(--color-theory)" fill-opacity="0.158" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="242.4,320.1 233.9,268.0 262.8,271.7 267.1,323.4" fill="var(--color-theory)" fill-opacity="0.125" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="319.2,323.4 323.5,271.7 352.4,268.0 343.9,320.1" fill="var(--color-theory)" fill-opacity="0.151" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,324.5 293.2,273.0 323.5,271.7 319.2,323.4" fill="var(--color-theory)" fill-opacity="0.143" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="267.1,323.4 262.8,271.7 293.2,273.0 293.2,324.5" fill="var(--color-theory)" fill-opacity="0.134" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="186.4,253.8 171.2,190.5 195.9,199.8 208.0,261.9" fill="var(--color-theory)" fill-opacity="0.124" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="378.3,261.9 390.4,199.8 415.1,190.5 399.9,253.8" fill="var(--color-theory)" fill-opacity="0.162" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="208.0,261.9 195.9,199.8 225.5,206.7 233.9,268.0" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="352.4,268.0 360.8,206.7 390.4,199.8 378.3,261.9" fill="var(--color-theory)" fill-opacity="0.156" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="233.9,268.0 225.5,206.7 258.4,211.1 262.8,271.7" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="323.5,271.7 327.9,211.1 360.8,206.7 352.4,268.0" fill="var(--color-theory)" fill-opacity="0.149" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="293.2,273.0 293.2,212.5 327.9,211.1 323.5,271.7" fill="var(--color-theory)" fill-opacity="0.141" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <polygon points="262.8,271.7 258.4,211.1 293.2,212.5 293.2,273.0" fill="var(--color-theory)" fill-opacity="0.132" stroke="var(--color-theory)" stroke-width="0.5" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <path d="M137.2,154.1 L137.3,156.4 L137.6,158.7 L138.2,161.0 L139.1,163.2 L140.1,165.5 L141.5,167.7 L143.0,169.9 L144.8,172.1 L146.8,174.3 L149.0,176.4 L151.5,178.6 L154.2,180.6 L157.0,182.6 L160.1,184.6 L163.4,186.6 L166.9,188.4 L170.6,190.3 L174.5,192.0 L178.6,193.8 L182.8,195.4 L187.3,197.0 L191.8,198.5 L196.6,200.0 L201.5,201.4 L206.5,202.7 L211.6,203.9 L216.9,205.1 L222.3,206.2 L227.8,207.2 L233.5,208.1 L239.2,208.9 L244.9,209.7 L250.8,210.3 L256.7,210.9 L262.7,211.4 L268.7,211.8 L274.8,212.1 L280.9,212.3 L287.0,212.5 L293.2,212.5 L299.3,212.5 L305.4,212.3 L311.5,212.1 L317.6,211.8 L323.6,211.4 L329.6,210.9 L335.5,210.3 L341.4,209.7 L347.1,208.9 L352.9,208.1 L358.5,207.2 L364.0,206.2 L369.4,205.1 L374.7,203.9 L379.8,202.7 L384.8,201.4 L389.7,200.0 L394.5,198.5 L399.0,197.0 L403.5,195.4 L407.7,193.8 L411.8,192.0 L415.7,190.3 L419.4,188.4 L422.9,186.6 L426.2,184.6 L429.3,182.6 L432.1,180.6 L434.8,178.6 L437.3,176.4 L439.5,174.3 L441.5,172.1 L443.3,169.9 L444.8,167.7 L446.2,165.5 L447.2,163.2 L448.1,161.0 L448.7,158.7 L449.0,156.4 L449.2,154.1" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="0.85" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="395.2,364.2 339.2,409.2 391.0,268.2 447.1,223.2" fill="var(--color-practice)" fill-opacity="0.2" stroke="none" stroke-width="1.2"/>
+  <path d="M395.2,364.2 L339.2,409.2 L391.0,268.2 L447.1,223.2 L395.2,364.2" fill="none" stroke="var(--color-practice)" stroke-width="1.4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="293.2" cy="443.4" r="4.0" fill="var(--color-base)"/>
+  <circle cx="393.1" cy="316.2" r="4.2" fill="var(--color-practice)"/>
+  <rect x="239.7" y="436.8" width="47.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.88"/>
+  <text x="284.2" y="447.4" fill="var(--color-base)" font-size="12" text-anchor="end"><tspan font-style="italic">f</tspan>(0, 0)</text>
+  <rect x="399.6" y="299.6" width="47.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.88"/>
+  <text x="402.1" y="310.2" fill="var(--color-practice)" font-size="12" text-anchor="start"><tspan font-style="italic">f</tspan>(1, 1)</text>
+  <rect x="264.0" y="469.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.88"/>
+  <text x="266.5" y="479.6" fill="var(--color-base)" font-size="12" text-anchor="start"><tspan font-style="italic">z</tspan> = 0</text>
+  <rect x="400.7" y="365.6" width="95.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.88"/>
+  <text x="403.2" y="376.2" fill="var(--color-practice)" font-size="12" text-anchor="start"><tspan font-style="italic">z</tspan> = 2<tspan font-style="italic">x</tspan> + 2<tspan font-style="italic">y</tspan> &#8722; 2</text>
+  <rect x="454.7" y="147.5" width="71.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.88"/>
+  <text x="457.2" y="158.1" fill="var(--color-theory)" font-size="12" text-anchor="start"><tspan font-style="italic">z</tspan> = <tspan font-style="italic">x</tspan>² + <tspan font-style="italic">y</tspan>²</text>
+</svg>
+<figcaption><em>z</em> = <em>x</em>² + <em>y</em>² paraboloidi (<em>x</em>² + <em>y</em>² &#8804; 4 kısmı) ve afin yaklaşımların görüntü kümeleri. Tepedeki <em>f</em>(0, 0) = (0, 0, 0) noktasında teğet düzlem <em>z</em> = 0'dır (yeşil); <em>f</em>(1, 1) = (1, 1, 2) noktasında ise <em>z</em> = 2<em>x</em> + 2<em>y</em> &#8722; 2 düzlemidir (turuncu). İki düzlem yüzeye yalnız bu noktalarda değer ve yüzeyin altında kalır.</figcaption>
+</figure>
+```
+
+**Hata.** Üçüncü bileşenlerin farkı
+
+$$(x^2 + y^2) - (2x + 2y - 2) = (x - 1)^2 + (y - 1)^2$$
+
+olduğundan
+
+$$\big\| f(x, y) - L_{(1, 1)}(x, y) \big\| = \big\| (x, y) - (1, 1) \big\|^2$$
+
+olur; hatanın uzaklığa oranı uzaklığın kendisine eşittir ve $0$'a gider. Örneğin $(1{,}1;\ 0{,}9)$ noktasında üçüncü bileşenler $2{,}02$ ve $2$'dir; hata $0{,}02$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Cebirsel İşlemler
+
+Tek değişkendeki türev kuralları (bkz. [Analiz 2](../analiz-2/turev-kurallari.html#thm-turev-aritmetigi)) vektör değerli fonksiyonlara taşınır. İki vektör çarpılıp yine bir vektör elde edilemediğinden çarpım kuralının iki biçimi vardır: reel değerli bir fonksiyonla çarpım ve iç çarpım.
+
+:::: {#thm-zin-cebir name="Türevin Cebirsel Özellikleri"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$ ve $\alpha, \beta \in \mathbb{R}$ olsun. $f, g : D \to \mathbb{R}^m$ ve $\varphi : D \to \mathbb{R}$ fonksiyonları $a$ noktasında türevlenebilir olsun. O zaman aşağıdaki fonksiyonlar $a$ noktasında türevlenebilirdir ve her $h \in \mathbb{R}^n$ için verilen eşitlikler sağlanır.
+
+1. **Lineer birleşim.** $\alpha f + \beta g$ için
+
+   $$D(\alpha f + \beta g)(a) = \alpha\,Df(a) + \beta\,Dg(a).$$
+
+2. **Reel fonksiyonla çarpım.** $(\varphi f)(x) = \varphi(x) f(x)$ ile tanımlanan $\varphi f : D \to \mathbb{R}^m$ için
+
+   $$D(\varphi f)(a)h = \big( D\varphi(a)h \big)\,f(a) + \varphi(a)\,Df(a)h.$$
+
+3. **İç çarpım.** $x \mapsto \langle f(x), g(x) \rangle$ ile tanımlanan $\langle f, g \rangle : D \to \mathbb{R}$ için
+
+   $$D\langle f, g \rangle(a)h = \langle Df(a)h, g(a) \rangle + \langle f(a), Dg(a)h \rangle.$$
+
+::: {.ispat}
+$B(a, r) \subseteq D$ olsun. Her fonksiyonun kalanını, türevin artımdan çıkarılmasıyla tanımlayalım: $0 < \|h\| < r$ için
+
+$$
+\begin{aligned}
+r_f(h) &= f(a + h) - f(a) - Df(a)h, \\[1mm]
+r_g(h) &= g(a + h) - g(a) - Dg(a)h, \\[1mm]
+\rho(h) &= \varphi(a + h) - \varphi(a) - D\varphi(a)h.
+\end{aligned}
+$$
+
+Varsayım gereği $h \to 0$ iken $\dfrac{\|r_f(h)\|}{\|h\|}$, $\dfrac{\|r_g(h)\|}{\|h\|}$ ve $\dfrac{|\rho(h)|}{\|h\|}$ oranları $0$'a gider. Bunlar kalanların kendilerinin de $0$'a gittiğini verir; örneğin
+
+$$\|r_f(h)\| = \|h\| \cdot \frac{\|r_f(h)\|}{\|h\|} \longrightarrow 0 \cdot 0 = 0.$$
+
+**1.** $\alpha\,Df(a) + \beta\,Dg(a)$ dönüşümü lineerdir ve
+
+$$
+\begin{aligned}
+&(\alpha f + \beta g)(a + h) - (\alpha f + \beta g)(a) - \big( \alpha\,Df(a) + \beta\,Dg(a) \big)h \\[1mm]
+&\quad = \alpha\,r_f(h) + \beta\,r_g(h)
+\end{aligned}
+$$
+
+olur. Üçgen eşitsizliğiyle
+
+$$\frac{\|\alpha\,r_f(h) + \beta\,r_g(h)\|}{\|h\|} \le |\alpha|\,\frac{\|r_f(h)\|}{\|h\|} + |\beta|\,\frac{\|r_g(h)\|}{\|h\|} \longrightarrow 0$$
+
+bulunur.
+
+**2.** $c(h) = D\varphi(a)h$ reel sayısını ve $T = Df(a)$ dönüşümünü kısaltma olarak kullanalım. $\varphi(a + h) = \varphi(a) + c(h) + \rho(h)$ ve $f(a + h) = f(a) + T(h) + r_f(h)$ eşitliklerini çarpıp $\varphi(a) f(a)$'yı çıkarırsak
+
+$$\varphi(a + h) f(a + h) - \varphi(a) f(a) = c(h)\,f(a) + \varphi(a)\,T(h) + R(h)$$
+
+elde edilir; burada
+
+$$R(h) = \rho(h)\,f(a) + \varphi(a)\,r_f(h) + \big( c(h) + \rho(h) \big)\big( T(h) + r_f(h) \big)$$
+
+dir. $h \mapsto c(h)\,f(a) + \varphi(a)\,T(h)$ lineerdir, çünkü $c$ ve $T$ lineerdir. $R(h)$ teriminin üç parçasını ayrı ayrı inceleyelim:
+
+- İlk iki parça için
+
+  $$
+  \begin{aligned}
+  \frac{\|\rho(h)\,f(a)\|}{\|h\|} &= \frac{|\rho(h)|}{\|h\|}\,\|f(a)\| \longrightarrow 0, \\[1mm]
+  \frac{\|\varphi(a)\,r_f(h)\|}{\|h\|} &= |\varphi(a)|\,\frac{\|r_f(h)\|}{\|h\|} \longrightarrow 0
+  \end{aligned}
+  $$
+
+  olur.
+- Üçüncü parça için @lem-zin-lineer-sinir gereği $\|T(h)\| \le M_T\,\|h\|$ olduğundan
+
+  $$\frac{\big\| \big( c(h) + \rho(h) \big)\big( T(h) + r_f(h) \big) \big\|}{\|h\|} \le \big| c(h) + \rho(h) \big| \left( M_T + \frac{\|r_f(h)\|}{\|h\|} \right)$$
+
+  olur. Parantez $M_T$'ye gider, dolayısıyla $0$'ın yakınında sınırlıdır. $c$ lineer olduğundan @lem-zin-lineer-sinir gereği $c(h) \to 0$, ayrıca $\rho(h) \to 0$'dır. Çarpım $0$'a gider.
+
+Üçgen eşitsizliğiyle $\dfrac{\|R(h)\|}{\|h\|} \to 0$ olur; $\varphi f$, $a$'da türevlenebilirdir ve türevi $h \mapsto c(h)\,f(a) + \varphi(a)\,T(h)$ dönüşümüdür.
+
+**3.** İç çarpımı bileşenlerle yazalım:
+
+$$\langle f, g \rangle(x) = f_1(x) g_1(x) + \dots + f_m(x) g_m(x).$$
+
+@thm-zin-bilesen gereği her $f_i$ ve $g_i$, $a$'da türevlenebilirdir. 2. madde $m = 1$, $\varphi = f_i$ ve $f = g_i$ ile uygulanırsa her $f_i g_i$ çarpımı $a$'da türevlenebilir ve
+
+$$D(f_i g_i)(a)h = \big( Df_i(a)h \big)\,g_i(a) + f_i(a)\,\big( Dg_i(a)h \big)$$
+
+olur. 1. madde gereği bu çarpımların toplamı da türevlenebilirdir ve
+
+$$D\langle f, g \rangle(a)h = \sum_{i=1}^{m} \big( Df_i(a)h \big)\,g_i(a) + \sum_{i=1}^{m} f_i(a)\,\big( Dg_i(a)h \big)$$
+
+bulunur. @thm-zin-bilesen gereği $Df(a)h = \big( Df_1(a)h, \dots, Df_m(a)h \big)$ olduğundan birinci toplam $\langle Df(a)h, g(a) \rangle$, ikinci toplam $\langle f(a), Dg(a)h \rangle$ iç çarpımıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani türev lineerdir ve çarpımlar için tanıdık Leibniz kuralı geçerlidir: çarpanların türevi sırayla alınır, öbür çarpan $a$ noktasındaki değerinde bırakılır. Jacobi matrisleriyle ilk iki madde
+
+$$
+\begin{aligned}
+J_{\alpha f + \beta g}(a) &= \alpha\,J_f(a) + \beta\,J_g(a), \\[1mm]
+J_{\varphi f}(a) &= f(a)\,\nabla\varphi(a) + \varphi(a)\,J_f(a)
+\end{aligned}
+$$
+
+biçimini alır; ikinci satırdaki $f(a)\,\nabla\varphi(a)$, $m \times 1$ tipindeki bir sütun ile $1 \times n$ tipindeki bir satırın çarpımıdır. $m = 1$ iken 2. madde iki reel fonksiyonun çarpımı için $\nabla(\varphi\psi) = \psi\,\nabla\varphi + \varphi\,\nabla\psi$ formülünü, $n = m = 1$ iken Analiz 2'deki çarpım kuralını verir. 3. maddede $g = f$ alınırsa
+
+$$D\big( \|f\|^2 \big)(a)h = 2\,\langle f(a), Df(a)h \rangle$$
+
+bulunur.
+
+:::: {#exm-zin-norm-sabit name="Sabit Uzunluklu Vektör Fonksiyonu"}
+$U \subseteq \mathbb{R}^n$ açık, $f : U \to \mathbb{R}^m$ türevlenebilir ve her $x \in U$ için $\|f(x)\| = 1$ olsun. Her $a \in U$ ve her $h \in \mathbb{R}^n$ için $\langle f(a), Df(a)h \rangle = 0$ olduğunu gösteriniz.
+
+::: {.cozum}
+**Sabit fonksiyon.** $\psi(x) = \langle f(x), f(x) \rangle = \|f(x)\|^2$ fonksiyonu $U$ üzerinde sabit $1$'dir. $a \in U$ ve $B(a, r) \subseteq U$ ise $\|h\| < r$ için $\psi(a + h) - \psi(a) - 0 = 0$ olur; $T = 0$ tanımdaki koşulu sağlar ve türevin tekliği gereği $D\psi(a) = 0$'dır (karşılaştırın: @exm-zin-afin-fonksiyon).
+
+**İç çarpım kuralı.** @thm-zin-cebir 3. maddesi $g = f$ ile uygulanırsa
+
+$$0 = D\psi(a)h = \langle Df(a)h, f(a) \rangle + \langle f(a), Df(a)h \rangle = 2\,\langle f(a), Df(a)h \rangle$$
+
+bulunur; iç çarpımın simetrisi kullanıldı (@prp-nrm-ic-carpim-ozellikleri). Demek ki $\langle f(a), Df(a)h \rangle = 0$'dır.
+
+**Yorum.** $n = 1$, $m = 2$ ve $f(t) = (\cos t, \sin t)$ alalım; $f$ birim çemberi dolaşır. $Df(t)h = h\,f'(t)$ ve $f'(t) = (-\sin t, \cos t)$ olduğundan
+
+$$\langle f(t), f'(t) \rangle = -\cos t\sin t + \sin t\cos t = 0$$
+
+olur: çember üzerinde hareket eden noktanın hız vektörü, konum vektörüne, yani yarıçapa diktir. Genel durumda da $Df(a)$ dönüşümünün bütün değerleri $f(a)$ vektörüne diktir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Zincir Kuralı
+
+Tek değişkende $(f \circ g)'(a) = f'\big(g(a)\big)\,g'(a)$ idi (bkz. [Analiz 2](../analiz-2/zincir-kurali-ve-ters-fonksiyonun-turevi.html#thm-zincir-kurali)). Türevleri lineer dönüşüm olarak gördüğümüzde bu formül kelimesi kelimesine genelleşir: sayıların çarpımının yerini lineer dönüşümlerin bileşkesi, yani matrislerin çarpımı alır.
+
+:::: {#thm-zin-zincir-kurali name="Zincir Kuralı"}
+$U \subseteq \mathbb{R}^n$ ve $V \subseteq \mathbb{R}^m$ boş olmayan açık kümeler, $g : U \to \mathbb{R}^m$ ve $f : V \to \mathbb{R}^p$ fonksiyonlar ve $g(U) \subseteq V$ olsun. $g$, $a \in U$ noktasında ve $f$, $b = g(a)$ noktasında türevlenebilirse $f \circ g : U \to \mathbb{R}^p$ bileşke fonksiyonu $a$ noktasında türevlenebilirdir ve
+
+$$D(f \circ g)(a) = Df\big( g(a) \big) \circ Dg(a)$$
+
+olur. Matris diliyle
+
+$$J_{f \circ g}(a) = J_f\big( g(a) \big)\,J_g(a)$$
+
+yazılır; sağdaki çarpım $p \times m$ ve $m \times n$ tipindeki iki matrisin çarpımıdır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="10.0 7.0 620.0 406.5" role="img" aria-label="Top row: the point a in U in R^n, g maps it to b = g(a) in V in R^m, f maps b to (f o g)(a) in R^p, and a long arrow f o g. Bottom row: coordinate frames R^n, R^m, R^p joined by the arrows Dg(a) of type m x n and Df(g(a)) of type p x m, and the long arrow D(f o g)(a) of type p x n">
+  <rect x="25.0" y="70" width="170" height="120" rx="10" fill="var(--academic-text)" fill-opacity="0.035" stroke="var(--academic-text)" stroke-opacity="0.45" stroke-width="1.1"/>
+  <text x="110.0" y="210.0" fill="var(--academic-text)" font-size="13.5" text-anchor="middle">&#8477;<tspan font-size="9.5" dy="-5"><tspan font-style="italic">n</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+  <rect x="235.0" y="70" width="170" height="120" rx="10" fill="var(--academic-text)" fill-opacity="0.035" stroke="var(--academic-text)" stroke-opacity="0.45" stroke-width="1.1"/>
+  <text x="320.0" y="210.0" fill="var(--academic-text)" font-size="13.5" text-anchor="middle">&#8477;<tspan font-size="9.5" dy="-5"><tspan font-style="italic">m</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+  <rect x="445.0" y="70" width="170" height="120" rx="10" fill="var(--academic-text)" fill-opacity="0.035" stroke="var(--academic-text)" stroke-opacity="0.45" stroke-width="1.1"/>
+  <text x="530.0" y="210.0" fill="var(--academic-text)" font-size="13.5" text-anchor="middle">&#8477;<tspan font-size="9.5" dy="-5"><tspan font-style="italic">p</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+  <polygon points="158.9,132.0 158.1,134.4 157.2,136.7 156.2,139.0 155.0,141.1 153.9,143.2 152.6,145.2 151.4,147.1 150.1,149.0 148.8,150.7 147.4,152.4 146.1,154.1 144.7,155.7 143.3,157.3 141.8,158.9 140.4,160.4 138.9,161.9 137.3,163.3 135.7,164.7 134.1,166.0 132.4,167.3 130.6,168.5 128.7,169.6 126.8,170.6 124.9,171.6 122.8,172.4 120.7,173.1 118.6,173.7 116.4,174.1 114.2,174.4 112.0,174.6 109.8,174.6 107.5,174.5 105.3,174.3 103.1,173.9 100.9,173.4 98.7,172.8 96.6,172.1 94.5,171.3 92.5,170.4 90.4,169.4 88.4,168.3 86.5,167.1 84.6,165.8 82.7,164.5 80.9,163.1 79.1,161.6 77.3,160.1 75.6,158.4 74.0,156.7 72.4,154.9 70.8,153.0 69.4,151.0 68.0,148.9 66.8,146.7 65.7,144.4 64.7,142.0 63.9,139.6 63.3,137.1 62.9,134.6 62.6,132.0 62.6,129.4 62.8,126.8 63.2,124.3 63.8,121.8 64.7,119.3 65.8,117.0 67.0,114.7 68.5,112.6 70.1,110.6 71.9,108.8 73.8,107.2 75.8,105.7 77.8,104.3 80.0,103.2 82.1,102.1 84.3,101.3 86.5,100.5 88.7,99.9 90.8,99.3 92.9,98.9 94.9,98.5 96.9,98.1 98.9,97.7 100.8,97.4 102.6,97.0 104.5,96.6 106.3,96.2 108.2,95.8 110.1,95.3 112.0,94.9 114.0,94.4 116.0,93.9 118.1,93.4 120.3,93.0 122.6,92.6 124.9,92.3 127.3,92.1 129.8,92.1 132.3,92.2 134.8,92.5 137.4,93.0 139.9,93.6 142.4,94.5 144.8,95.6 147.1,96.9 149.3,98.4 151.3,100.1 153.2,102.1 154.9,104.1 156.4,106.4 157.6,108.8 158.7,111.2 159.4,113.8 160.0,116.4 160.3,119.1 160.4,121.7 160.3,124.3 160.0,127.0 159.5,129.5" fill="var(--color-theory)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M158.9,132.0 L158.1,134.4 L157.2,136.7 L156.2,139.0 L155.0,141.1 L153.9,143.2 L152.6,145.2 L151.4,147.1 L150.1,149.0 L148.8,150.7 L147.4,152.4 L146.1,154.1 L144.7,155.7 L143.3,157.3 L141.8,158.9 L140.4,160.4 L138.9,161.9 L137.3,163.3 L135.7,164.7 L134.1,166.0 L132.4,167.3 L130.6,168.5 L128.7,169.6 L126.8,170.6 L124.9,171.6 L122.8,172.4 L120.7,173.1 L118.6,173.7 L116.4,174.1 L114.2,174.4 L112.0,174.6 L109.8,174.6 L107.5,174.5 L105.3,174.3 L103.1,173.9 L100.9,173.4 L98.7,172.8 L96.6,172.1 L94.5,171.3 L92.5,170.4 L90.4,169.4 L88.4,168.3 L86.5,167.1 L84.6,165.8 L82.7,164.5 L80.9,163.1 L79.1,161.6 L77.3,160.1 L75.6,158.4 L74.0,156.7 L72.4,154.9 L70.8,153.0 L69.4,151.0 L68.0,148.9 L66.8,146.7 L65.7,144.4 L64.7,142.0 L63.9,139.6 L63.3,137.1 L62.9,134.6 L62.6,132.0 L62.6,129.4 L62.8,126.8 L63.2,124.3 L63.8,121.8 L64.7,119.3 L65.8,117.0 L67.0,114.7 L68.5,112.6 L70.1,110.6 L71.9,108.8 L73.8,107.2 L75.8,105.7 L77.8,104.3 L80.0,103.2 L82.1,102.1 L84.3,101.3 L86.5,100.5 L88.7,99.9 L90.8,99.3 L92.9,98.9 L94.9,98.5 L96.9,98.1 L98.9,97.7 L100.8,97.4 L102.6,97.0 L104.5,96.6 L106.3,96.2 L108.2,95.8 L110.1,95.3 L112.0,94.9 L114.0,94.4 L116.0,93.9 L118.1,93.4 L120.3,93.0 L122.6,92.6 L124.9,92.3 L127.3,92.1 L129.8,92.1 L132.3,92.2 L134.8,92.5 L137.4,93.0 L139.9,93.6 L142.4,94.5 L144.8,95.6 L147.1,96.9 L149.3,98.4 L151.3,100.1 L153.2,102.1 L154.9,104.1 L156.4,106.4 L157.6,108.8 L158.7,111.2 L159.4,113.8 L160.0,116.4 L160.3,119.1 L160.4,121.7 L160.3,124.3 L160.0,127.0 L159.5,129.5 L158.9,132.0" fill="none" stroke="var(--color-theory)" stroke-width="1.4" stroke-dasharray="5 3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="368.2,132.0 367.5,134.4 366.7,136.7 365.7,138.9 364.5,141.0 363.3,143.1 362.0,145.0 360.7,146.9 359.3,148.6 357.9,150.3 356.5,151.9 355.1,153.5 353.7,155.0 352.3,156.5 350.9,158.0 349.5,159.5 348.1,161.0 346.7,162.6 345.3,164.1 343.9,165.7 342.4,167.3 340.8,168.9 339.2,170.6 337.4,172.2 335.6,173.8 333.6,175.4 331.5,176.9 329.3,178.3 327.0,179.6 324.6,180.7 322.0,181.7 319.4,182.5 316.6,183.1 313.9,183.4 311.1,183.5 308.3,183.3 305.5,182.9 302.7,182.2 300.1,181.2 297.5,180.0 295.1,178.6 292.9,176.9 290.8,175.0 288.8,172.9 287.1,170.7 285.6,168.4 284.3,165.9 283.2,163.4 282.3,160.8 281.6,158.2 281.0,155.7 280.6,153.1 280.4,150.5 280.3,148.0 280.2,145.6 280.3,143.2 280.4,140.8 280.6,138.6 280.8,136.3 281.0,134.1 281.3,132.0 281.6,129.9 281.9,127.8 282.2,125.7 282.5,123.6 282.9,121.5 283.3,119.4 283.7,117.3 284.2,115.2 284.8,113.0 285.5,110.9 286.3,108.8 287.1,106.7 288.2,104.6 289.3,102.5 290.6,100.6 292.0,98.6 293.5,96.8 295.2,95.1 296.9,93.4 298.9,91.9 300.9,90.5 303.0,89.3 305.2,88.2 307.5,87.2 309.8,86.5 312.2,85.8 314.6,85.3 317.1,84.9 319.5,84.7 322.0,84.6 324.5,84.7 327.0,84.9 329.4,85.1 331.9,85.5 334.3,86.1 336.7,86.7 339.1,87.4 341.5,88.2 343.8,89.2 346.1,90.2 348.4,91.4 350.6,92.7 352.7,94.1 354.8,95.6 356.8,97.2 358.7,99.0 360.5,100.9 362.1,102.9 363.6,105.0 365.0,107.2 366.2,109.5 367.2,111.9 368.0,114.3 368.7,116.8 369.1,119.4 369.3,121.9 369.3,124.5 369.2,127.0 368.8,129.5" fill="var(--color-base)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M368.2,132.0 L367.5,134.4 L366.7,136.7 L365.7,138.9 L364.5,141.0 L363.3,143.1 L362.0,145.0 L360.7,146.9 L359.3,148.6 L357.9,150.3 L356.5,151.9 L355.1,153.5 L353.7,155.0 L352.3,156.5 L350.9,158.0 L349.5,159.5 L348.1,161.0 L346.7,162.6 L345.3,164.1 L343.9,165.7 L342.4,167.3 L340.8,168.9 L339.2,170.6 L337.4,172.2 L335.6,173.8 L333.6,175.4 L331.5,176.9 L329.3,178.3 L327.0,179.6 L324.6,180.7 L322.0,181.7 L319.4,182.5 L316.6,183.1 L313.9,183.4 L311.1,183.5 L308.3,183.3 L305.5,182.9 L302.7,182.2 L300.1,181.2 L297.5,180.0 L295.1,178.6 L292.9,176.9 L290.8,175.0 L288.8,172.9 L287.1,170.7 L285.6,168.4 L284.3,165.9 L283.2,163.4 L282.3,160.8 L281.6,158.2 L281.0,155.7 L280.6,153.1 L280.4,150.5 L280.3,148.0 L280.2,145.6 L280.3,143.2 L280.4,140.8 L280.6,138.6 L280.8,136.3 L281.0,134.1 L281.3,132.0 L281.6,129.9 L281.9,127.8 L282.2,125.7 L282.5,123.6 L282.9,121.5 L283.3,119.4 L283.7,117.3 L284.2,115.2 L284.8,113.0 L285.5,110.9 L286.3,108.8 L287.1,106.7 L288.2,104.6 L289.3,102.5 L290.6,100.6 L292.0,98.6 L293.5,96.8 L295.2,95.1 L296.9,93.4 L298.9,91.9 L300.9,90.5 L303.0,89.3 L305.2,88.2 L307.5,87.2 L309.8,86.5 L312.2,85.8 L314.6,85.3 L317.1,84.9 L319.5,84.7 L322.0,84.6 L324.5,84.7 L327.0,84.9 L329.4,85.1 L331.9,85.5 L334.3,86.1 L336.7,86.7 L339.1,87.4 L341.5,88.2 L343.8,89.2 L346.1,90.2 L348.4,91.4 L350.6,92.7 L352.7,94.1 L354.8,95.6 L356.8,97.2 L358.7,99.0 L360.5,100.9 L362.1,102.9 L363.6,105.0 L365.0,107.2 L366.2,109.5 L367.2,111.9 L368.0,114.3 L368.7,116.8 L369.1,119.4 L369.3,121.9 L369.3,124.5 L369.2,127.0 L368.8,129.5 L368.2,132.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="5 3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="112.0" y="168.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600"><tspan font-style="italic">U</tspan></text>
+  <text x="300.0" y="104.0" fill="var(--color-base)" font-size="14" text-anchor="middle" font-weight="600"><tspan font-style="italic">V</tspan></text>
+  <circle cx="98.0" cy="140.0" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="318.0" cy="140.0" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="536.0" cy="140.0" r="3.8" fill="var(--academic-text)"/>
+  <text x="90.0" y="134.0" fill="var(--academic-text)" font-size="13" text-anchor="end"><tspan font-style="italic">a</tspan></text>
+  <text x="318.0" y="160.0" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">b</tspan> = <tspan font-style="italic">g</tspan>(<tspan font-style="italic">a</tspan>)</text>
+  <text x="536.0" y="160.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">(<tspan font-style="italic">f</tspan> &#9702; <tspan font-style="italic">g</tspan>)(<tspan font-style="italic">a</tspan>)</text>
+  <path d="M105.3,136.0 L107.2,135.0 L109.0,134.1 L110.8,133.2 L112.7,132.3 L114.5,131.4 L116.3,130.5 L118.2,129.7 L120.0,128.8 L121.8,128.0 L123.7,127.2 L125.5,126.4 L127.3,125.7 L129.2,124.9 L131.0,124.2 L132.8,123.5 L134.7,122.8 L136.5,122.1 L138.3,121.4 L140.2,120.8 L142.0,120.2 L143.8,119.5 L145.7,119.0 L147.5,118.4 L149.3,117.8 L151.2,117.3 L153.0,116.8 L154.8,116.2 L156.7,115.8 L158.5,115.3 L160.3,114.8 L162.2,114.4 L164.0,114.0 L165.8,113.6 L167.7,113.2 L169.5,112.8 L171.3,112.4 L173.2,112.1 L175.0,111.8 L176.8,111.5 L178.7,111.2 L180.5,110.9 L182.3,110.7 L184.2,110.5 L186.0,110.2 L187.8,110.0 L189.7,109.9 L191.5,109.7 L193.3,109.6 L195.2,109.4 L197.0,109.3 L198.8,109.2 L200.7,109.1 L202.5,109.1 L204.3,109.0 L206.2,109.0 L208.0,109.0 L209.8,109.0 L211.7,109.0 L213.5,109.1 L215.3,109.1 L217.2,109.2 L219.0,109.3 L220.8,109.4 L222.7,109.6 L224.5,109.7 L226.3,109.9 L228.2,110.0 L230.0,110.2 L231.8,110.5 L233.7,110.7 L235.5,110.9 L237.3,111.2 L239.2,111.5 L241.0,111.8 L242.8,112.1 L244.7,112.4 L246.5,112.8 L248.3,113.2 L250.2,113.6 L252.0,114.0 L253.8,114.4 L255.7,114.8 L257.5,115.3 L259.3,115.8 L261.2,116.2 L263.0,116.8 L264.8,117.3 L266.7,117.8 L268.5,118.4 L270.3,119.0 L272.2,119.5 L274.0,120.2 L275.8,120.8 L277.7,121.4 L279.5,122.1 L281.3,122.8 L283.2,123.5 L285.0,124.2 L286.8,124.9 L288.7,125.7 L290.5,126.4 L292.3,127.2 L294.2,128.0 L296.0,128.8 L297.8,129.7 L299.7,130.5 L301.5,131.4 L303.3,132.3" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="303.3" y1="132.3" x2="305.0" y2="133.1" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="310.7,136.0 302.0,135.4 305.1,129.4" fill="var(--color-theory)" opacity="1.0"/>
+  <path d="M325.3,136.0 L327.1,135.0 L328.9,134.1 L330.7,133.2 L332.5,132.3 L334.4,131.4 L336.2,130.5 L338.0,129.7 L339.8,128.8 L341.6,128.0 L343.4,127.2 L345.2,126.4 L347.1,125.7 L348.9,124.9 L350.7,124.2 L352.5,123.5 L354.3,122.8 L356.1,122.1 L358.0,121.4 L359.8,120.8 L361.6,120.2 L363.4,119.5 L365.2,119.0 L367.0,118.4 L368.9,117.8 L370.7,117.3 L372.5,116.8 L374.3,116.2 L376.1,115.8 L378.0,115.3 L379.8,114.8 L381.6,114.4 L383.4,114.0 L385.2,113.6 L387.0,113.2 L388.9,112.8 L390.7,112.4 L392.5,112.1 L394.3,111.8 L396.1,111.5 L397.9,111.2 L399.8,110.9 L401.6,110.7 L403.4,110.5 L405.2,110.2 L407.0,110.0 L408.8,109.9 L410.6,109.7 L412.5,109.6 L414.3,109.4 L416.1,109.3 L417.9,109.2 L419.7,109.1 L421.6,109.1 L423.4,109.0 L425.2,109.0 L427.0,109.0 L428.8,109.0 L430.6,109.0 L432.4,109.1 L434.3,109.1 L436.1,109.2 L437.9,109.3 L439.7,109.4 L441.5,109.6 L443.4,109.7 L445.2,109.9 L447.0,110.0 L448.8,110.2 L450.6,110.5 L452.4,110.7 L454.2,110.9 L456.1,111.2 L457.9,111.5 L459.7,111.8 L461.5,112.1 L463.3,112.4 L465.1,112.8 L467.0,113.2 L468.8,113.6 L470.6,114.0 L472.4,114.4 L474.2,114.8 L476.1,115.3 L477.9,115.8 L479.7,116.2 L481.5,116.8 L483.3,117.3 L485.1,117.8 L487.0,118.4 L488.8,119.0 L490.6,119.5 L492.4,120.2 L494.2,120.8 L496.0,121.4 L497.8,122.1 L499.7,122.8 L501.5,123.5 L503.3,124.2 L505.1,124.9 L506.9,125.7 L508.8,126.4 L510.6,127.2 L512.4,128.0 L514.2,128.8 L516.0,129.7 L517.8,130.5 L519.7,131.4 L521.5,132.3" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="521.5" y1="132.3" x2="523.0" y2="133.1" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="528.7,136.0 520.1,135.3 523.1,129.4" fill="var(--color-base)" opacity="1.0"/>
+  <path d="M105.3,133.5 L108.9,130.3 L112.6,127.2 L116.3,124.2 L119.9,121.2 L123.6,118.2 L127.2,115.4 L130.8,112.5 L134.5,109.8 L138.2,107.0 L141.8,104.4 L145.4,101.7 L149.1,99.2 L152.8,96.7 L156.4,94.2 L160.1,91.8 L163.7,89.5 L167.3,87.2 L171.0,85.0 L174.6,82.8 L178.3,80.7 L181.9,78.6 L185.6,76.6 L189.2,74.7 L192.9,72.8 L196.6,70.9 L200.2,69.2 L203.8,67.4 L207.5,65.8 L211.2,64.1 L214.8,62.6 L218.5,61.0 L222.1,59.6 L225.8,58.2 L229.4,56.8 L233.1,55.5 L236.7,54.3 L240.4,53.1 L244.0,52.0 L247.7,50.9 L251.3,49.9 L254.9,48.9 L258.6,48.0 L262.2,47.2 L265.9,46.4 L269.6,45.6 L273.2,45.0 L276.8,44.3 L280.5,43.8 L284.1,43.2 L287.8,42.8 L291.4,42.3 L295.1,42.0 L298.8,41.7 L302.4,41.4 L306.0,41.2 L309.7,41.1 L313.3,41.0 L317.0,41.0 L320.6,41.0 L324.3,41.1 L328.0,41.2 L331.6,41.4 L335.2,41.7 L338.9,42.0 L342.5,42.3 L346.2,42.8 L349.9,43.2 L353.5,43.8 L357.1,44.3 L360.8,45.0 L364.4,45.6 L368.1,46.4 L371.8,47.2 L375.4,48.0 L379.1,48.9 L382.7,49.9 L386.4,50.9 L390.0,52.0 L393.6,53.1 L397.3,54.3 L400.9,55.5 L404.6,56.8 L408.2,58.2 L411.9,59.6 L415.6,61.0 L419.2,62.6 L422.9,64.1 L426.5,65.8 L430.1,67.4 L433.8,69.2 L437.5,70.9 L441.1,72.8 L444.8,74.7 L448.4,76.6 L452.0,78.6 L455.7,80.7 L459.3,82.8 L463.0,85.0 L466.7,87.2 L470.3,89.5 L473.9,91.8 L477.6,94.2 L481.2,96.7 L484.9,99.2 L488.5,101.7 L492.2,104.4 L495.9,107.0 L499.5,109.8 L503.2,112.5 L506.8,115.4 L510.4,118.2 L514.1,121.2" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="514.1" y1="121.2" x2="523.8" y2="129.4" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="528.7,133.5 520.4,130.9 524.8,125.8" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="208.0" y="99.0" fill="var(--color-theory)" font-size="14" text-anchor="middle"><tspan font-style="italic">g</tspan></text>
+  <text x="427.0" y="99.0" fill="var(--color-base)" font-size="14" text-anchor="middle"><tspan font-style="italic">f</tspan></text>
+  <text x="317.0" y="32.0" fill="var(--color-practice)" font-size="14" text-anchor="middle"><tspan font-style="italic">f</tspan> &#9702; <tspan font-style="italic">g</tspan></text>
+  <line x1="84.0" y1="305.0" x2="134.8" y2="305.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="140.0,305.0 133.5,307.7 133.5,302.3" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="84.0" y1="305.0" x2="84.0" y2="262.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="84.0,257.0 86.7,263.5 81.3,263.5" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="84.0" y1="305.0" x2="104.8" y2="279.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="108.0,275.0 106.1,281.8 101.8,278.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="110.0" y="327.0" fill="var(--academic-text)" font-size="13.5" text-anchor="middle">&#8477;<tspan font-size="9.5" dy="-5"><tspan font-style="italic">n</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="294.0" y1="305.0" x2="344.8" y2="305.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="350.0,305.0 343.5,307.7 343.5,302.3" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="294.0" y1="305.0" x2="294.0" y2="262.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="294.0,257.0 296.7,263.5 291.3,263.5" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="294.0" y1="305.0" x2="314.8" y2="279.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="318.0,275.0 316.1,281.8 311.8,278.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="320.0" y="327.0" fill="var(--academic-text)" font-size="13.5" text-anchor="middle">&#8477;<tspan font-size="9.5" dy="-5"><tspan font-style="italic">m</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="504.0" y1="305.0" x2="554.8" y2="305.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="560.0,305.0 553.5,307.7 553.5,302.3" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="504.0" y1="305.0" x2="504.0" y2="262.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="504.0,257.0 506.7,263.5 501.3,263.5" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="504.0" y1="305.0" x2="524.8" y2="279.1" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="528.0,275.0 526.1,281.8 521.8,278.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="530.0" y="327.0" fill="var(--academic-text)" font-size="13.5" text-anchor="middle">&#8477;<tspan font-size="9.5" dy="-5"><tspan font-style="italic">p</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="162.0" y1="285.0" x2="265.6" y2="285.0" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="272.0,285.0 264.0,288.4 264.0,281.6" fill="var(--color-theory)" opacity="1.0"/>
+  <text x="217.0" y="276.0" fill="var(--color-theory)" font-size="12" text-anchor="middle"><tspan font-style="italic">D</tspan><tspan font-style="italic">g</tspan>(<tspan font-style="italic">a</tspan>)</text>
+  <text x="217.0" y="302.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">m</tspan> &#215; <tspan font-style="italic">n</tspan></text>
+  <line x1="372.0" y1="285.0" x2="475.6" y2="285.0" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="482.0,285.0 474.0,288.4 474.0,281.6" fill="var(--color-base)" opacity="1.0"/>
+  <text x="427.0" y="276.0" fill="var(--color-base)" font-size="12" text-anchor="middle"><tspan font-style="italic">D</tspan><tspan font-style="italic">f</tspan>(<tspan font-style="italic">g</tspan>(<tspan font-style="italic">a</tspan>))</text>
+  <text x="427.0" y="302.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">p</tspan> &#215; <tspan font-style="italic">m</tspan></text>
+  <line x1="110.0" y1="360.0" x2="523.6" y2="360.0" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="530.0,360.0 522.0,363.4 522.0,356.6" fill="var(--color-practice)" opacity="1.0"/>
+  <path d="M110.0,355.0 L110.0,365.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="320.0" y="380.0" fill="var(--color-practice)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">D</tspan>(<tspan font-style="italic">f</tspan> &#9702; <tspan font-style="italic">g</tspan>)(<tspan font-style="italic">a</tspan>) = <tspan font-style="italic">D</tspan><tspan font-style="italic">f</tspan>(<tspan font-style="italic">g</tspan>(<tspan font-style="italic">a</tspan>)) &#9702; <tspan font-style="italic">D</tspan><tspan font-style="italic">g</tspan>(<tspan font-style="italic">a</tspan>)</text>
+  <text x="320.0" y="397.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">p</tspan> &#215; <tspan font-style="italic">n</tspan></text>
+</svg>
+<figcaption>Zincir kuralının şeması. Üstte <em>g</em>, <em>a</em> noktasını <em>b</em> = <em>g</em>(<em>a</em>) noktasına, <em>f</em> de <em>b</em>'yi (<em>f</em> &#8728; <em>g</em>)(<em>a</em>) noktasına götürür. Altta türevler aynı sırayla bileşir: <em>m</em> &#215; <em>n</em> tipindeki <em>Dg</em>(<em>a</em>) ile <em>p</em> &#215; <em>m</em> tipindeki <em>Df</em>(<em>g</em>(<em>a</em>)) matrislerinin çarpımı <em>p</em> &#215; <em>n</em> tipindeki <em>D</em>(<em>f</em> &#8728; <em>g</em>)(<em>a</em>) matrisidir.</figcaption>
+</figure>
+```
+
+::: {.ispat}
+$S = Dg(a)$ ve $T = Df(b)$ diyelim; $S : \mathbb{R}^n \to \mathbb{R}^m$ ve $T : \mathbb{R}^m \to \mathbb{R}^p$ lineerdir. $U$ açık olduğundan $0 < \|h\|$ küçükken $a + h \in U$ olur.
+
+**İki kalan.** $a + h \in U$ için
+
+$$r(h) = g(a + h) - g(a) - S(h)$$
+
+diyelim; $h \to 0$ iken $\dfrac{\|r(h)\|}{\|h\|} \to 0$'dır. $b + w \in V$ olan $w \in \mathbb{R}^m$ için
+
+$$\rho(w) = f(b + w) - f(b) - T(w)$$
+
+ve $w \ne 0$ iken $\eta(w) = \dfrac{\rho(w)}{\|w\|}$, $w = 0$ iken $\eta(0) = 0$ diyelim. $\rho(0) = f(b) - f(b) - T(0) = 0$ olduğundan her $w$ için
+
+$$\rho(w) = \|w\|\,\eta(w)$$
+
+olur ve $f$'nin türevlenebilirliği gereği $w \to 0$ iken $\eta(w) \to 0 = \eta(0)$'dır; yani $\eta$, $0$ noktasında süreklidir.
+
+**Bileşkenin artımı.** $w(h) = g(a + h) - g(a)$ diyelim. $b + w(h) = g(a + h) \in V$ olduğundan
+
+$$
+\begin{aligned}
+(f \circ g)(a + h) - (f \circ g)(a) &= f\big( b + w(h) \big) - f(b) \\[1mm]
+&= T\big( w(h) \big) + \|w(h)\|\,\eta\big( w(h) \big)
+\end{aligned}
+$$
+
+yazılır. $w(h) = S(h) + r(h)$ ve $T$ lineer olduğundan $T\big( w(h) \big) = T\big( S(h) \big) + T\big( r(h) \big)$'dir. Dolayısıyla
+
+$$(f \circ g)(a + h) - (f \circ g)(a) - (T \circ S)(h) = R(h)$$
+
+olur; burada
+
+$$R(h) = T\big( r(h) \big) + \|w(h)\|\,\eta\big( w(h) \big)$$
+
+dir.
+
+**Kalanın tahmini.** @lem-zin-lineer-sinir gereği $\|S(h)\| \le M_S\,\|h\|$ ve $\|T(w)\| \le M_T\,\|w\|$ olacak $M_S$, $M_T$ sabitleri vardır.
+
+- Birinci terim için $\dfrac{\|T(r(h))\|}{\|h\|} \le M_T\,\dfrac{\|r(h)\|}{\|h\|} \to 0$.
+- İkinci terim için önce $\|w(h)\| \le \|S(h)\| + \|r(h)\|$ eşitsizliğinden
+
+  $$\frac{\|w(h)\|\,\|\eta(w(h))\|}{\|h\|} \le \left( M_S + \frac{\|r(h)\|}{\|h\|} \right) \|\eta(w(h))\|$$
+
+  bulunur. $g$, $a$'da türevlenebilir olduğundan süreklidir (@cor-zin-surekli); bu yüzden $h \mapsto w(h)$ fonksiyonu $h = 0$'da süreklidir ve $w(0) = 0$'dır. $\eta$ da $0$'da sürekli olduğundan bileşkenin sürekliliği (@thm-srk-bileske) gereği $h \to 0$ iken $\eta\big( w(h) \big) \to \eta(0) = 0$ olur. Paranteze alınan çarpan $M_S$'ye gider, yani $0$'ın yakınında sınırlıdır; çarpım $0$'a gider.
+
+Üçgen eşitsizliğiyle $\dfrac{\|R(h)\|}{\|h\|} \to 0$ bulunur.
+
+**Sonuç.** $T \circ S$ iki lineer dönüşümün bileşkesi olarak lineerdir ve yukarıdaki limit, $f \circ g$'nin $a$'da $T \circ S$ ile türevlenebilir olduğunu söyler. Teklik (@thm-zin-teklik) gereği $D(f \circ g)(a) = T \circ S = Df(b) \circ Dg(a)$'dır. İki lineer dönüşümün bileşkesinin matrisi, matrislerinin çarpımıdır; @thm-zin-jacobi gereği bu matrisler $J_f(b)$ ve $J_g(a)$, bileşkeninki de $J_{f \circ g}(a)$'dır. Öyleyse $J_{f \circ g}(a) = J_f(b)\,J_g(a)$. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bileşkenin türevi, türevlerin bileşkesidir. İspatın fikri kısaca şudur: $g$ küçük bir $h$ artımını yaklaşık olarak $Dg(a)h$ artımına, $f$ de bu artımı yaklaşık olarak $Df(b)\big( Dg(a)h \big)$ artımına götürür; iki yaklaşımın hataları üst üste binse de $\|h\|$'den hızlı sönmeye devam eder. $n = m = p$ ise determinantın çarpımsallığından
+
+$$\det J_{f \circ g}(a) = \det J_f\big( g(a) \big) \cdot \det J_g(a)$$
+
+olur; Jacobi determinantları da çarpılır.
+
+Matris çarpımını girdi girdi yazmak, zincir kuralını kısmi türevlerle ifade eder.
+
+:::: {#cor-zin-kismi-turevler name="Zincir Kuralının Kısmi Türevlerle Yazılışı"}
+@thm-zin-zincir-kurali koşulları altında $f = (f_1, \dots, f_p)$ fonksiyonunun değişkenleri $y = (y_1, \dots, y_m)$ ile gösterilsin. Her $i = 1, \dots, p$ ve $j = 1, \dots, n$ için
+
+$$\frac{\partial (f_i \circ g)}{\partial x_j}(a) = \sum_{l=1}^{m} \frac{\partial f_i}{\partial y_l}\big( g(a) \big)\, \frac{\partial g_l}{\partial x_j}(a)$$
+
+olur.
+
+::: {.ispat}
+$f \circ g = (f_1 \circ g, \dots, f_p \circ g)$ fonksiyonu $a$'da türevlenebilir olduğundan @thm-zin-jacobi gereği sol taraf $J_{f \circ g}(a)$ matrisinin $(i, j)$ girdisidir. @thm-zin-zincir-kurali gereği bu girdi, $J_f\big( g(a) \big)$ matrisinin $i$-inci satırı ile $J_g(a)$ matrisinin $j$-inci sütununun çarpımıdır. Satırın $l$-inci girdisi $\dfrac{\partial f_i}{\partial y_l}\big( g(a) \big)$, sütunun $l$-inci girdisi $\dfrac{\partial g_l}{\partial x_j}(a)$ olduğundan çarpım sağ taraftaki toplamdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Uygulamada Leibniz yazımı kullanılır: $z = f(y)$ ve $y = g(x)$ ise
+
+$$\frac{\partial z_i}{\partial x_j} = \sum_{l=1}^{m} \frac{\partial z_i}{\partial y_l}\,\frac{\partial y_l}{\partial x_j}$$
+
+yazılır. Solda $z_i$, $x$'in fonksiyonu olarak; sağda önce $y$'nin fonksiyonu olarak türetilir. Formül sözle şöyle okunur: $x_j$'deki küçük bir değişim her $y_l$ ara değişkenini değiştirir, her $y_l$ değişimi de $z_i$'yi değiştirir; bütün ara değişkenlerden gelen katkılar toplanır.
+
+:::: {#exm-zin-matris-carpimi name="Matris Çarpımıyla Zincir Kuralı"}
+$g : \mathbb{R}^2 \to \mathbb{R}^2$, $g(x, y) = (x + y, x - y)$ ve $f : \mathbb{R}^2 \to \mathbb{R}^3$, $f(u, v) = (uv, u^2, v^2)$ olsun. $J_{f \circ g}(1, 0)$ matrisini zincir kuralıyla bulunuz ve sonucu doğrudan hesapla denetleyiniz.
+
+::: {.cozum}
+**Jacobi matrisleri.** $f$ ve $g$ polinom bileşenlidir, dolayısıyla her yerde türevlenebilir (@thm-zin-yeter-kosul). $g(1, 0) = (1, 1)$'dir ve
+
+$$
+\begin{aligned}
+J_g(x, y) &= \begin{pmatrix} 1 & 1 \\ 1 & -1 \end{pmatrix}, \\[1mm]
+J_f(u, v) &= \begin{pmatrix} v & u \\ 2u & 0 \\ 0 & 2v \end{pmatrix}
+\end{aligned}
+$$
+
+olduğundan $J_f(1, 1)$ matrisinin satırları $(1, 1)$, $(2, 0)$ ve $(0, 2)$'dir.
+
+**Zincir kuralı.**
+
+$$
+\begin{aligned}
+J_{f \circ g}(1, 0) &= J_f(1, 1)\,J_g(1, 0) \\[1mm]
+&= \begin{pmatrix} 1 & 1 \\ 2 & 0 \\ 0 & 2 \end{pmatrix} \begin{pmatrix} 1 & 1 \\ 1 & -1 \end{pmatrix} = \begin{pmatrix} 2 & 0 \\ 2 & 2 \\ 2 & -2 \end{pmatrix}.
+\end{aligned}
+$$
+
+**Denetim.** Bileşke açıkça
+
+$$(f \circ g)(x, y) = \big( x^2 - y^2,\ (x + y)^2,\ (x - y)^2 \big)$$
+
+olur ve Jacobi matrisi
+
+$$J_{f \circ g}(x, y) = \begin{pmatrix} 2x & -2y \\ 2(x + y) & 2(x + y) \\ 2(x - y) & -2(x - y) \end{pmatrix}$$
+
+matrisidir. $(1, 0)$ noktasında satırlar $(2, 0)$, $(2, 2)$ ve $(2, -2)$'dir; iki yol uyuşur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-zin-kosul-gerekli name="Dış Fonksiyonun Türevlenebilmesi Gereklidir"}
+$$f(x, y) = \begin{cases} \dfrac{x^2 y}{x^2 + y^2}, & (x, y) \ne (0, 0), \\[2mm] 0, & (x, y) = (0, 0) \end{cases}$$
+
+ve $g(t) = (t, t)$ olsun. $(f \circ g)'(0)$ sayısının $J_f(0, 0)\,J_g(0)$ çarpımına eşit olmadığını gösteriniz.
+
+::: {.cozum}
+**Formülün önerdiği değer.** Eksenler üzerinde $f(t, 0) = f(0, t) = 0$ olduğundan $f_x(0, 0) = f_y(0, 0) = 0$ ve $J_f(0, 0) = (0 \ \ 0)$'dır. $g'(t) = (1, 1)$ olduğundan $J_g(0)$, girdileri $1$ ve $1$ olan sütundur. Çarpım
+
+$$J_f(0, 0)\,J_g(0) = 0 \cdot 1 + 0 \cdot 1 = 0$$
+
+olur.
+
+**Gerçek değer.** $t \ne 0$ için
+
+$$(f \circ g)(t) = f(t, t) = \frac{t^2 \cdot t}{t^2 + t^2} = \frac{t}{2}$$
+
+ve $(f \circ g)(0) = f(0, 0) = 0$'dır. Demek ki her $t$ için $(f \circ g)(t) = \dfrac{t}{2}$ ve $(f \circ g)'(0) = \dfrac{1}{2} \ne 0$'dır.
+
+**Yorum.** $g$ türevlenebilirdir ve $f$'nin orijinde kısmi türevleri vardır; üstelik $f$ süreklidir. Yine de formül yanlış sonuç verdi, çünkü $f$ orijinde türevlenemez (@exm-dif-x2y). Zincir kuralında dış fonksiyonun yalnız kısmi türevlerinin var olması yetmez, türevlenebilir olması gerekir. Bu hesap, $f$'nin türevlenemediğinin başka bir kanıtıdır: $f$ türevlenebilseydi @thm-zin-zincir-kurali eşitliği sağlanırdı. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Zincir Kuralının Özel Hâlleri
+
+Boyutlar küçük seçildiğinde zincir kuralı tanıdık formüllere dönüşür; uygulamada en çok bu özel hâller kullanılır.
+
+İlk özel hâl, çok değişkenli bir fonksiyonu bir eğri boyunca izlemektir ($n = 1$, $p = 1$).
+
+:::: {#cor-zin-egri name="Bir Eğri Boyunca Değişim Hızı"}
+$I \subseteq \mathbb{R}$ açık bir aralık, $V \subseteq \mathbb{R}^m$ açık bir küme, $\gamma = (\gamma_1, \dots, \gamma_m) : I \to \mathbb{R}^m$ ve $f : V \to \mathbb{R}$ fonksiyonlar ve $\gamma(I) \subseteq V$ olsun. $\gamma$, $t_0 \in I$ noktasında ve $f$, $\gamma(t_0)$ noktasında türevlenebilirse $F(t) = f\big( \gamma(t) \big)$ fonksiyonu $t_0$'da türevlenebilirdir ve
+
+$$
+\begin{aligned}
+F'(t_0) &= \big\langle \nabla f\big( \gamma(t_0) \big), \gamma'(t_0) \big\rangle \\[1mm]
+&= \sum_{l=1}^{m} \frac{\partial f}{\partial x_l}\big( \gamma(t_0) \big)\,\gamma_l'(t_0)
+\end{aligned}
+$$
+
+olur.
+
+::: {.ispat}
+@thm-zin-zincir-kurali gereği $F$, $t_0$'da türevlenebilirdir ve $J_F(t_0) = J_f\big( \gamma(t_0) \big)\,J_\gamma(t_0)$'dır. $n = 1$ olduğundan $J_\gamma(t_0)$, girdileri $\gamma_1'(t_0), \dots, \gamma_m'(t_0)$ olan $m \times 1$ tipindeki sütundur; $J_f\big( \gamma(t_0) \big)$ ise $1 \times m$ tipindeki $\nabla f\big( \gamma(t_0) \big)$ satırıdır. Bir satır ile bir sütunun çarpımı iç çarpımdır ve $1 \times 1$ tipindeki $J_F(t_0)$ matrisinin tek girdisi $F'(t_0)$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bir fonksiyonun bir eğri boyunca değişim hızı, gradyan ile eğrinin hız vektörünün iç çarpımıdır. İki değişkende, $F(t) = f\big( x(t), y(t) \big)$ için formül
+
+$$\frac{dF}{dt} = \frac{\partial f}{\partial x}\,\frac{dx}{dt} + \frac{\partial f}{\partial y}\,\frac{dy}{dt} = \begin{pmatrix} \dfrac{\partial f}{\partial x} & \dfrac{\partial f}{\partial y} \end{pmatrix} \begin{pmatrix} \dfrac{dx}{dt} \\ \dfrac{dy}{dt} \end{pmatrix}$$
+
+biçimini alır. Solda adi türev durur, çünkü $F$ tek değişkenlidir; sağda $f$'nin kısmi türevleri $\big( x(t), y(t) \big)$ noktasında hesaplanır. $m = 1$ alınırsa ($n = m = p = 1$) sonuç $(f \circ \gamma)'(t_0) = f'\big( \gamma(t_0) \big)\,\gamma'(t_0)$ olur; bu, Analiz 2'deki zincir kuralıdır ve Leibniz yazımıyla $\dfrac{dz}{dx} = \dfrac{dz}{dy}\,\dfrac{dy}{dx}$ diye okunur.
+
+:::: {#exm-zin-egri-somut name="Bir Eğri Boyunca Türev"}
+$f(x, y) = x^2 y$, $x(t) = e^t$ ve $y(t) = t^2$ olsun. $F(t) = f\big( x(t), y(t) \big)$ için $F'(t)$ türevini zincir kuralıyla bulunuz.
+
+::: {.cozum}
+**Zincir kuralı.** $f$ polinom olduğundan türevlenebilirdir; $x$ ve $y$ de türevlenebilirdir. $f_x = 2xy$, $f_y = x^2$, $x'(t) = e^t$, $y'(t) = 2t$ olduğundan @cor-zin-egri gereği
+
+$$
+\begin{aligned}
+F'(t) &= 2xy \cdot e^t + x^2 \cdot 2t \\[1mm]
+&= 2e^t t^2 \cdot e^t + e^{2t} \cdot 2t = 2t(t + 1)\,e^{2t}
+\end{aligned}
+$$
+
+bulunur; ikinci adımda $x = e^t$ ve $y = t^2$ yerine konuldu.
+
+**Denetim.** $F(t) = e^{2t} t^2$ olduğundan tek değişkenli çarpım kuralı
+
+$$F'(t) = 2e^{2t} t^2 + 2t\,e^{2t} = 2t(t + 1)\,e^{2t}$$
+
+verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+İkinci özel hâlde iki değişkenli bir fonksiyonun değişkenleri, iki değişkenli başka fonksiyonlarla değiştirilir ($n = m = 2$, $p = 1$).
+
+:::: {#cor-zin-iki-ara-degisken name="İki Ara Değişkenli Zincir Kuralı"}
+$U, V \subseteq \mathbb{R}^2$ açık kümeler, $u, v : U \to \mathbb{R}$ ve $f : V \to \mathbb{R}$ fonksiyonlar olsun ve her $(x, y) \in U$ için $\big( u(x, y), v(x, y) \big) \in V$ olsun. $u$ ve $v$, $(x_0, y_0) \in U$ noktasında, $f$ de $(u_0, v_0) = \big( u(x_0, y_0), v(x_0, y_0) \big)$ noktasında türevlenebilirse
+
+$$F(x, y) = f\big( u(x, y), v(x, y) \big)$$
+
+fonksiyonu $(x_0, y_0)$'da türevlenebilirdir ve
+
+$$
+\begin{aligned}
+\frac{\partial F}{\partial x} &= \frac{\partial f}{\partial u}\,\frac{\partial u}{\partial x} + \frac{\partial f}{\partial v}\,\frac{\partial v}{\partial x}, \\[1mm]
+\frac{\partial F}{\partial y} &= \frac{\partial f}{\partial u}\,\frac{\partial u}{\partial y} + \frac{\partial f}{\partial v}\,\frac{\partial v}{\partial y}
+\end{aligned}
+$$
+
+olur; burada $F$, $u$ ve $v$'nin kısmi türevleri $(x_0, y_0)$'da, $f$'ninkiler $(u_0, v_0)$'da hesaplanır.
+
+::: {.ispat}
+$g = (u, v) : U \to \mathbb{R}^2$ fonksiyonu, bileşenleri $(x_0, y_0)$'da türevlenebilir olduğundan orada türevlenebilirdir (@thm-zin-bilesen) ve $F = f \circ g$'dir. @thm-zin-zincir-kurali gereği $F$, $(x_0, y_0)$'da türevlenebilirdir ve $J_F = J_f\,J_g$ olur:
+
+$$\begin{pmatrix} \dfrac{\partial F}{\partial x} & \dfrac{\partial F}{\partial y} \end{pmatrix} = \begin{pmatrix} \dfrac{\partial f}{\partial u} & \dfrac{\partial f}{\partial v} \end{pmatrix} \begin{pmatrix} \dfrac{\partial u}{\partial x} & \dfrac{\partial u}{\partial y} \\ \dfrac{\partial v}{\partial x} & \dfrac{\partial v}{\partial y} \end{pmatrix}.$$
+
+Satırın iki sütunla çarpımı iki formülü verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Kutupsal koordinatlar bu özel hâlin en sık karşılaşılan örneğidir.
+
+:::: {#exm-zin-kutupsal name="Kutupsal Koordinatlarda Kısmi Türevler"}
+$f : \mathbb{R}^2 \to \mathbb{R}$ türevlenebilir ve $F(r, \theta) = f(r\cos\theta, r\sin\theta)$ olsun. $\dfrac{\partial F}{\partial r}$ ve $\dfrac{\partial F}{\partial \theta}$ kısmi türevlerini $f_x$ ve $f_y$ cinsinden yazınız.
+
+::: {.cozum}
+**Ara değişkenler.** $x = r\cos\theta$ ve $y = r\sin\theta$ ara değişkenlerdir; @exm-zin-kutupsal-jacobi gereği
+
+$$
+\begin{aligned}
+x_r &= \cos\theta, & y_r &= \sin\theta, \\[1mm]
+x_\theta &= -r\sin\theta, & y_\theta &= r\cos\theta
+\end{aligned}
+$$
+
+olur.
+
+**Formüller.** @cor-zin-iki-ara-degisken, $u, v$ yerine $x, y$ ve $x, y$ yerine $r, \theta$ yazılarak uygulanırsa
+
+$$
+\begin{aligned}
+\frac{\partial F}{\partial r} &= f_x \cos\theta + f_y \sin\theta, \\[1mm]
+\frac{\partial F}{\partial \theta} &= -f_x\, r\sin\theta + f_y\, r\cos\theta
+\end{aligned}
+$$
+
+bulunur; $f_x$ ve $f_y$, $(r\cos\theta, r\sin\theta)$ noktasında hesaplanır.
+
+**Denetim.** $f(x, y) = xy$ için $F(r, \theta) = r^2\sin\theta\cos\theta = \dfrac{r^2}{2}\sin 2\theta$ olur; doğrudan türevle $F_r = r\sin 2\theta$ ve $F_\theta = r^2\cos 2\theta$'dır. Formüllerle, $f_x = y = r\sin\theta$ ve $f_y = x = r\cos\theta$ olduğundan
+
+$$
+\begin{aligned}
+F_r &= r\sin\theta\cos\theta + r\cos\theta\sin\theta = r\sin 2\theta, \\[1mm]
+F_\theta &= -r^2\sin^2\theta + r^2\cos^2\theta = r^2\cos 2\theta
+\end{aligned}
+$$
+
+bulunur; iki yol uyuşur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Ara değişken sayısı arttıkça @cor-zin-kismi-turevler içindeki toplamı doğrudan yazmak yerine değişkenlerin birbirine bağlılığını bir **ağaç diyagramıyla** göstermek işi kolaylaştırır. Leibniz yazımında toplamın her terimi, ağaçta tepeden aranan değişkene inen bir yola karşılık gelir.
+
+::: {.callout-tip title="Üç adımda ağaç diyagramıyla zincir kuralı"}
+1. **Ağacı çiz.** En üste bağımlı değişken, ortaya ara değişkenler, en alta bağımsız değişkenler yazılır. Her değişken, doğrudan bağlı olduğu değişkenlere birer dalla bağlanır ve dalın üzerine ilgili kısmi türev yazılır.
+2. **Yolları çarp.** Aranan kısmi türev için tepeden ilgili bağımsız değişkene inen bütün yollar bulunur; her yol boyunca dallardaki kısmi türevler çarpılır.
+3. **Topla ve yerine koy.** Yolların katkıları toplanır. Değer bir noktada isteniyorsa önce ara değişkenlerin o noktadaki değerleri hesaplanır, sonra hepsi yerine konur.
+:::
+
+:::: {#exm-zin-dort-ara name="Dört Ara Değişkenli Zincir Kuralı"}
+$u = f(x, y, z, w)$ türevlenebilir bir fonksiyon, $x, y, z, w$ de $(s, t)$ değişkenlerinin türevlenebilir fonksiyonları olsun. $\dfrac{\partial u}{\partial s}$ ve $\dfrac{\partial u}{\partial t}$ kısmi türevlerini zincir kuralıyla yazınız.
+
+::: {.cozum}
+**Ağaç.** En üstte $u$, ortada $x, y, z, w$ ara değişkenleri, en altta her ara değişkenin altında $s$ ve $t$ durur. $u$'dan $s$'ye dört yol iner: $u \to x \to s$, $u \to y \to s$, $u \to z \to s$ ve $u \to w \to s$. $t$ için de dört yol vardır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="18.0 4.0 624.0 274.0" role="img" aria-label="Tree diagram: u on top, x, y, z, w in the middle, and the leaves s and t under each of them; the four paths from u down to the s leaves are highlighted">
+  <path d="M318.1,37.2 L101.9,130.8" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="192.5" y="77.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="210.0" y="87.6" fill="var(--color-practice)" font-size="12.0" text-anchor="middle">&#8706;<tspan font-style="italic">u</tspan>/&#8706;<tspan font-style="italic">x</tspan></text>
+  <path d="M85.3,148.1 L50.7,237.9" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="50.2" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="67.1" y="198.7" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">x</tspan>/&#8706;<tspan font-style="italic">s</tspan></text>
+  <path d="M94.7,148.1 L129.3,237.9" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="96.0" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="112.9" y="198.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">x</tspan>/&#8706;<tspan font-style="italic">t</tspan></text>
+  <path d="M322.1,42.3 L257.9,125.7" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="272.5" y="77.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="290.0" y="87.6" fill="var(--color-practice)" font-size="12.0" text-anchor="middle">&#8706;<tspan font-style="italic">u</tspan>/&#8706;<tspan font-style="italic">y</tspan></text>
+  <path d="M245.3,148.1 L210.7,237.9" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="210.2" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="227.1" y="198.7" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">y</tspan>/&#8706;<tspan font-style="italic">s</tspan></text>
+  <path d="M254.7,148.1 L289.3,237.9" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="256.0" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="272.9" y="198.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">y</tspan>/&#8706;<tspan font-style="italic">t</tspan></text>
+  <path d="M337.9,42.3 L402.1,125.7" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="352.5" y="77.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="370.0" y="87.6" fill="var(--color-practice)" font-size="12.0" text-anchor="middle">&#8706;<tspan font-style="italic">u</tspan>/&#8706;<tspan font-style="italic">z</tspan></text>
+  <path d="M405.3,148.1 L370.7,237.9" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="370.2" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="387.1" y="198.7" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">z</tspan>/&#8706;<tspan font-style="italic">s</tspan></text>
+  <path d="M414.7,148.1 L449.3,237.9" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="416.0" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="432.9" y="198.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">z</tspan>/&#8706;<tspan font-style="italic">t</tspan></text>
+  <path d="M341.9,37.2 L558.1,130.8" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="432.5" y="77.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="450.0" y="87.6" fill="var(--color-practice)" font-size="12.0" text-anchor="middle">&#8706;<tspan font-style="italic">u</tspan>/&#8706;<tspan font-style="italic">w</tspan></text>
+  <path d="M565.3,148.1 L530.7,237.9" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="530.2" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="547.1" y="198.7" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">w</tspan>/&#8706;<tspan font-style="italic">s</tspan></text>
+  <path d="M574.7,148.1 L609.3,237.9" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="576.0" y="188.5" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="592.9" y="198.7" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">w</tspan>/&#8706;<tspan font-style="italic">t</tspan></text>
+  <circle cx="330.0" cy="32.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="330.0" y="37.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">u</tspan></text>
+  <circle cx="90.0" cy="136.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="90.0" y="141.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">x</tspan></text>
+  <circle cx="46.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="46.0" y="255.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <circle cx="134.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="134.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+  <circle cx="250.0" cy="136.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="250.0" y="141.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">y</tspan></text>
+  <circle cx="206.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="206.0" y="255.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <circle cx="294.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="294.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+  <circle cx="410.0" cy="136.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="410.0" y="141.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">z</tspan></text>
+  <circle cx="366.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="366.0" y="255.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <circle cx="454.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="454.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+  <circle cx="570.0" cy="136.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="570.0" y="141.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">w</tspan></text>
+  <circle cx="526.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="526.0" y="255.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <circle cx="614.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="614.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+</svg>
+<figcaption><em>u</em> = <em>f</em>(<em>x</em>, <em>y</em>, <em>z</em>, <em>w</em>) için ağaç diyagramı: her dalın üzerinde ilgili kısmi türev yazılıdır. <em>u</em>'dan <em>s</em> yapraklarına inen dört yol (renkli) &#8706;<em>u</em>/&#8706;<em>s</em> toplamının dört terimini verir; <em>t</em> yaprakları da &#8706;<em>u</em>/&#8706;<em>t</em> için aynı işi görür.</figcaption>
+</figure>
+```
+
+**Yolların toplamı.** Her yol boyunca kısmi türevleri çarpıp toplarsak
+
+$$
+\begin{aligned}
+\frac{\partial u}{\partial s} &= \frac{\partial u}{\partial x}\frac{\partial x}{\partial s} + \frac{\partial u}{\partial y}\frac{\partial y}{\partial s} + \frac{\partial u}{\partial z}\frac{\partial z}{\partial s} + \frac{\partial u}{\partial w}\frac{\partial w}{\partial s}, \\[1mm]
+\frac{\partial u}{\partial t} &= \frac{\partial u}{\partial x}\frac{\partial x}{\partial t} + \frac{\partial u}{\partial y}\frac{\partial y}{\partial t} + \frac{\partial u}{\partial z}\frac{\partial z}{\partial t} + \frac{\partial u}{\partial w}\frac{\partial w}{\partial t}
+\end{aligned}
+$$
+
+bulunur. Bu, @cor-zin-kismi-turevler formülünün $n = 2$, $m = 4$, $p = 1$ hâlidir. Matris biçiminde
+
+$$\begin{pmatrix} u_s & u_t \end{pmatrix} = \begin{pmatrix} u_x & u_y & u_z & u_w \end{pmatrix} \begin{pmatrix} x_s & x_t \\ y_s & y_t \\ z_s & z_t \\ w_s & w_t \end{pmatrix}$$
+
+yazılır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-zin-rst name="Üç Ara Değişkenli Bir Hesap"}
+$x = rse^t$, $y = 2re^{st}$, $z = r^2\sin(st)$ ve $u = x^4 y + y^2 z^3$ olsun. $r = 2$, $s = 1$, $t = 0$ için $\dfrac{\partial u}{\partial s}$ değerini bulunuz.
+
+::: {.cozum}
+**Ağaç ve genel formüller.** $u$, $x, y, z$ ara değişkenlerine, bunların her biri de $r, s, t$ bağımsız değişkenlerine bağlıdır. Bütün fonksiyonlar polinom, üstel ve sinüs fonksiyonlarından kurulduğu için $C^1$ sınıfındadır ve zincir kuralı uygulanabilir. Tepeden her bağımsız değişkene üç yol iner:
+
+$$
+\begin{aligned}
+\frac{\partial u}{\partial r} &= \frac{\partial u}{\partial x}\frac{\partial x}{\partial r} + \frac{\partial u}{\partial y}\frac{\partial y}{\partial r} + \frac{\partial u}{\partial z}\frac{\partial z}{\partial r}, \\[1mm]
+\frac{\partial u}{\partial s} &= \frac{\partial u}{\partial x}\frac{\partial x}{\partial s} + \frac{\partial u}{\partial y}\frac{\partial y}{\partial s} + \frac{\partial u}{\partial z}\frac{\partial z}{\partial s}, \\[1mm]
+\frac{\partial u}{\partial t} &= \frac{\partial u}{\partial x}\frac{\partial x}{\partial t} + \frac{\partial u}{\partial y}\frac{\partial y}{\partial t} + \frac{\partial u}{\partial z}\frac{\partial z}{\partial t}.
+\end{aligned}
+$$
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="36.0 4.0 608.0 274.0" role="img" aria-label="Tree diagram: u on top, x, y, z in the middle, and the leaves r, s, t under each of them; the three paths from u down to the s leaves are highlighted">
+  <path d="M328.4,37.8 L141.6,130.2" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="217.5" y="77.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="235.0" y="87.6" fill="var(--color-practice)" font-size="12.0" text-anchor="middle">&#8706;<tspan font-style="italic">u</tspan>/&#8706;<tspan font-style="italic">x</tspan></text>
+  <path d="M123.5,147.3 L70.5,238.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="84.1" y="179.4" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="101.0" y="189.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">x</tspan>/&#8706;<tspan font-style="italic">r</tspan></text>
+  <path d="M130.0,149.0 L130.0,237.0" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="113.1" y="202.2" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="130.0" y="212.4" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">x</tspan>/&#8706;<tspan font-style="italic">s</tspan></text>
+  <path d="M136.5,147.3 L189.5,238.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="142.2" y="179.4" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="159.0" y="189.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">x</tspan>/&#8706;<tspan font-style="italic">t</tspan></text>
+  <path d="M340.0,45.0 L340.0,123.0" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="322.5" y="77.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="340.0" y="87.6" fill="var(--color-practice)" font-size="12.0" text-anchor="middle">&#8706;<tspan font-style="italic">u</tspan>/&#8706;<tspan font-style="italic">y</tspan></text>
+  <path d="M333.5,147.3 L280.5,238.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="294.1" y="179.4" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="311.0" y="189.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">y</tspan>/&#8706;<tspan font-style="italic">r</tspan></text>
+  <path d="M340.0,149.0 L340.0,237.0" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="323.1" y="202.2" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="340.0" y="212.4" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">y</tspan>/&#8706;<tspan font-style="italic">s</tspan></text>
+  <path d="M346.5,147.3 L399.5,238.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="352.2" y="179.4" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="369.0" y="189.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">y</tspan>/&#8706;<tspan font-style="italic">t</tspan></text>
+  <path d="M351.6,37.8 L538.4,130.2" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="427.5" y="77.0" width="35.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="445.0" y="87.6" fill="var(--color-practice)" font-size="12.0" text-anchor="middle">&#8706;<tspan font-style="italic">u</tspan>/&#8706;<tspan font-style="italic">z</tspan></text>
+  <path d="M543.5,147.3 L490.5,238.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="504.1" y="179.4" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="521.0" y="189.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">z</tspan>/&#8706;<tspan font-style="italic">r</tspan></text>
+  <path d="M550.0,149.0 L550.0,237.0" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="533.1" y="202.2" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="550.0" y="212.4" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">z</tspan>/&#8706;<tspan font-style="italic">s</tspan></text>
+  <path d="M556.5,147.3 L609.5,238.7" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="562.2" y="179.4" width="33.8" height="14.5" rx="3" fill="var(--academic-bg)" opacity="1.0"/>
+  <text x="579.0" y="189.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8706;<tspan font-style="italic">z</tspan>/&#8706;<tspan font-style="italic">t</tspan></text>
+  <circle cx="340.0" cy="32.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="340.0" y="37.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">u</tspan></text>
+  <circle cx="130.0" cy="136.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="130.0" y="141.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">x</tspan></text>
+  <circle cx="64.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="64.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">r</tspan></text>
+  <circle cx="130.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="130.0" y="255.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <circle cx="196.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="196.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+  <circle cx="340.0" cy="136.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="340.0" y="141.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">y</tspan></text>
+  <circle cx="274.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="274.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">r</tspan></text>
+  <circle cx="340.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="340.0" y="255.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <circle cx="406.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="406.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+  <circle cx="550.0" cy="136.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="550.0" y="141.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">z</tspan></text>
+  <circle cx="484.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="484.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">r</tspan></text>
+  <circle cx="550.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8" stroke-opacity="1.0"/>
+  <text x="550.0" y="255.0" fill="var(--color-practice)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <circle cx="616.0" cy="250.0" r="13.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="616.0" y="255.0" fill="var(--academic-text)" font-size="14.5" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+</svg>
+<figcaption><em>u</em>'nun <em>x</em>, <em>y</em>, <em>z</em> ara değişkenlerine, bunların da <em>r</em>, <em>s</em>, <em>t</em> bağımsız değişkenlerine bağlılığını gösteren ağaç. &#8706;<em>u</em>/&#8706;<em>s</em> için <em>u</em> &#8594; <em>x</em> &#8594; <em>s</em>, <em>u</em> &#8594; <em>y</em> &#8594; <em>s</em> ve <em>u</em> &#8594; <em>z</em> &#8594; <em>s</em> yolları (renkli) izlenir.</figcaption>
+</figure>
+```
+
+**Kısmi türevler.** Dış ve iç türevler
+
+$$
+\begin{aligned}
+\frac{\partial u}{\partial x} &= 4x^3 y, & \frac{\partial u}{\partial y} &= x^4 + 2yz^3, & \frac{\partial u}{\partial z} &= 3y^2 z^2, \\[1mm]
+\frac{\partial x}{\partial s} &= re^t, & \frac{\partial y}{\partial s} &= 2rt\,e^{st}, & \frac{\partial z}{\partial s} &= r^2 t\cos(st)
+\end{aligned}
+$$
+
+olduğundan
+
+$$
+\begin{aligned}
+\frac{\partial u}{\partial s} &= 4x^3 y \cdot re^t + \big( x^4 + 2yz^3 \big) \cdot 2rt\,e^{st} \\[1mm]
+&\quad + 3y^2 z^2 \cdot r^2 t\cos(st)
+\end{aligned}
+$$
+
+bulunur.
+
+**Nokta.** $r = 2$, $s = 1$, $t = 0$ için $x = 2 \cdot 1 \cdot e^0 = 2$, $y = 2 \cdot 2 \cdot e^0 = 4$ ve $z = 4\sin 0 = 0$ olur. $t = 0$ olduğundan son iki terim sıfırdır ve
+
+$$\frac{\partial u}{\partial s} = 4 \cdot 2^3 \cdot 4 \cdot 2 \cdot e^0 = 256$$
+
+bulunur. $u$'yu $r, s, t$ cinsinden açıkça yazmaya gerek kalmadı; zincir kuralı yalnız ara değişkenlerin o noktadaki değerlerini istedi. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-zin-ustel-logaritma name="Üstel Koordinatlarda Logaritma"}
+$x = e^u\cos v$, $y = e^u\sin v$ ve $z = \ln(x^2 + y^2)$ olsun. $\dfrac{\partial z}{\partial u}$ ve $\dfrac{\partial z}{\partial v}$ kısmi türevlerini bulunuz.
+
+::: {.cozum}
+**Tanım ve türevlenebilirlik.**
+
+$$x^2 + y^2 = e^{2u}(\cos^2 v + \sin^2 v) = e^{2u} > 0$$
+
+olduğundan $z$ her $(u, v)$ için tanımlıdır. $x$ ve $y$, $(u, v)$'nin $C^1$ fonksiyonlarıdır. $\ln(x^2 + y^2)$ fonksiyonunun kısmi türevleri $\mathbb{R}^2 \setminus \{(0, 0)\}$ açık kümesinde süreklidir, dolayısıyla bu fonksiyon orada türevlenebilirdir (@cor-dif-c1):
+
+$$
+\begin{aligned}
+\frac{\partial z}{\partial x} &= \frac{2x}{x^2 + y^2}, \\[1mm]
+\frac{\partial z}{\partial y} &= \frac{2y}{x^2 + y^2}.
+\end{aligned}
+$$
+
+**İç türevler.** $x_u = e^u\cos v = x$, $y_u = e^u\sin v = y$, $x_v = -e^u\sin v = -y$ ve $y_v = e^u\cos v = x$'tir.
+
+**Zincir kuralı.** @cor-zin-iki-ara-degisken (harflerin rolleri değişmiş olarak) gereği
+
+$$
+\begin{aligned}
+\frac{\partial z}{\partial u} &= \frac{2x}{x^2 + y^2}\,x + \frac{2y}{x^2 + y^2}\,y = \frac{2(x^2 + y^2)}{x^2 + y^2} = 2, \\[1mm]
+\frac{\partial z}{\partial v} &= \frac{2x}{x^2 + y^2}\,(-y) + \frac{2y}{x^2 + y^2}\,x = 0
+\end{aligned}
+$$
+
+bulunur.
+
+**Denetim.** $x^2 + y^2 = e^{2u}$ olduğundan $z = \ln e^{2u} = 2u$'dur; gerçekten $z_u = 2$ ve $z_v = 0$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Alıştırmalarda tanımla türev, Jacobi matrisi ve determinantı, cebirsel kurallar ve zincir kuralının farklı biçimleri birlikte kullanılır.
+
+:::: {#exr-zin-tanimla name="Tanımla Türev: Toplam ve Çarpım"}
+$f(x, y) = (x + y, xy)$ fonksiyonunun $(1, 1)$ noktasında türevlenebilir olduğunu tanımla gösteriniz ve $Df(1, 1)$ dönüşümünü yazınız.
+
+::: {.cozum}
+**Artım.** $h = (h_1, h_2)$ için
+
+$$f(1 + h_1, 1 + h_2) - f(1, 1) = \big( h_1 + h_2,\ h_1 + h_2 + h_1 h_2 \big)$$
+
+olur; ikinci bileşen $(1 + h_1)(1 + h_2) - 1$ çarpımı açılarak bulundu.
+
+**Aday ve kalan.** Lineer kısım $T(h_1, h_2) = (h_1 + h_2,\ h_1 + h_2)$, kalan $(0,\ h_1 h_2)$'dir. $|h_1 h_2| \le \dfrac{h_1^2 + h_2^2}{2}$ olduğundan
+
+$$\frac{\|(0, h_1 h_2)\|}{\|h\|} = \frac{|h_1 h_2|}{\|h\|} \le \frac{\|h\|^2}{2\,\|h\|} = \frac{\|h\|}{2} \longrightarrow 0$$
+
+bulunur.
+
+**Sonuç.** $f$, $(1, 1)$'de türevlenebilirdir ve
+
+$$Df(1, 1)(h_1, h_2) = \begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} h_1 \\ h_2 \end{pmatrix} = (h_1 + h_2,\ h_1 + h_2)$$
+
+olur. Satırlar $\nabla(x + y) = (1, 1)$ ve $\nabla(xy) = (y, x)$ gradyanlarının $(1, 1)$'deki değerleridir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-kuresel name="Küresel Koordinatların Jacobi Determinantı"}
+$g(\rho, \varphi, \theta) = (x, y, z)$ küresel koordinat dönüşümü
+
+$$
+\begin{aligned}
+x &= \rho\sin\varphi\cos\theta, \\[1mm]
+y &= \rho\sin\varphi\sin\theta, \\[1mm]
+z &= \rho\cos\varphi
+\end{aligned}
+$$
+
+ile verilsin. $\dfrac{\partial(x, y, z)}{\partial(\rho, \varphi, \theta)} = \rho^2 \sin\varphi$ olduğunu gösteriniz.
+
+::: {.cozum}
+**Jacobi matrisi.** Her bileşeni sırayla $\rho$, $\varphi$ ve $\theta$'ya göre türetirsek
+
+$$J_g = \begin{pmatrix} \sin\varphi\cos\theta & \rho\cos\varphi\cos\theta & -\rho\sin\varphi\sin\theta \\ \sin\varphi\sin\theta & \rho\cos\varphi\sin\theta & \rho\sin\varphi\cos\theta \\ \cos\varphi & -\rho\sin\varphi & 0 \end{pmatrix}$$
+
+bulunur.
+
+**Üçüncü satıra göre açılım.** Üçüncü satırın son girdisi $0$ olduğundan iki terim kalır:
+
+$$
+\begin{aligned}
+\det J_g &= \cos\varphi \begin{vmatrix} \rho\cos\varphi\cos\theta & -\rho\sin\varphi\sin\theta \\ \rho\cos\varphi\sin\theta & \rho\sin\varphi\cos\theta \end{vmatrix} \\[1mm]
+&\quad + \rho\sin\varphi \begin{vmatrix} \sin\varphi\cos\theta & -\rho\sin\varphi\sin\theta \\ \sin\varphi\sin\theta & \rho\sin\varphi\cos\theta \end{vmatrix}.
+\end{aligned}
+$$
+
+İkinci terimin işareti: $(3, 2)$ girdisi $-\rho\sin\varphi$'dir ve kofaktör işareti $(-1)^{3+2} = -1$'dir; çarpımları $+\rho\sin\varphi$ verir.
+
+**Küçük determinantlar.** Birincisi
+
+$$
+\begin{aligned}
+&\rho\cos\varphi\cos\theta \cdot \rho\sin\varphi\cos\theta + \rho\sin\varphi\sin\theta \cdot \rho\cos\varphi\sin\theta \\[1mm]
+&\quad = \rho^2 \sin\varphi\cos\varphi\,(\cos^2\theta + \sin^2\theta) = \rho^2 \sin\varphi\cos\varphi,
+\end{aligned}
+$$
+
+ikincisi
+
+$$
+\begin{aligned}
+&\sin\varphi\cos\theta \cdot \rho\sin\varphi\cos\theta + \rho\sin\varphi\sin\theta \cdot \sin\varphi\sin\theta \\[1mm]
+&\quad = \rho\sin^2\varphi\,(\cos^2\theta + \sin^2\theta) = \rho\sin^2\varphi
+\end{aligned}
+$$
+
+olur.
+
+**Sonuç.**
+
+$$\det J_g = \rho^2 \sin\varphi\cos^2\varphi + \rho^2 \sin^3\varphi = \rho^2 \sin\varphi\,(\cos^2\varphi + \sin^2\varphi) = \rho^2 \sin\varphi.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-ic-carpim name="İç Çarpım Kuralıyla Türev"}
+$f(x, y) = (x, y, 1)$ ve $g(x, y) = (y, x^2, xy)$ olsun. $\langle f, g \rangle$ fonksiyonunun $(1, 2)$ noktasındaki türevini @thm-zin-cebir ile bulunuz ve sonucu doğrudan hesapla denetleyiniz.
+
+::: {.cozum}
+**Değerler.** $a = (1, 2)$ için $f(a) = (1, 2, 1)$ ve $g(a) = (2, 1, 2)$'dir.
+
+**Türevler.** Jacobi matrisleri
+
+$$
+\begin{aligned}
+J_f &= \begin{pmatrix} 1 & 0 \\ 0 & 1 \\ 0 & 0 \end{pmatrix}, \\[1mm]
+J_g(x, y) &= \begin{pmatrix} 0 & 1 \\ 2x & 0 \\ y & x \end{pmatrix}
+\end{aligned}
+$$
+
+olduğundan $h = (h_1, h_2)$ için $Df(a)h = (h_1, h_2, 0)$ ve $Dg(a)h = (h_2,\ 2h_1,\ 2h_1 + h_2)$'dir.
+
+**Kural.** @thm-zin-cebir 3. maddesi gereği
+
+$$
+\begin{aligned}
+D\langle f, g \rangle(a)h &= \langle (h_1, h_2, 0), (2, 1, 2) \rangle \\[1mm]
+&\quad + \langle (1, 2, 1), (h_2, 2h_1, 2h_1 + h_2) \rangle \\[1mm]
+&= (2h_1 + h_2) + (6h_1 + 2h_2) = 8h_1 + 3h_2
+\end{aligned}
+$$
+
+bulunur; yani $\nabla\langle f, g \rangle(1, 2) = (8, 3)$'tür.
+
+**Denetim.** $\langle f, g \rangle = xy + x^2 y + xy$, yani $x^2 y + 2xy$ olduğundan gradyan $(2xy + 2y,\ x^2 + 2x)$'tir ve $(1, 2)$'de $(8, 3)$ olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-bolum name="Bölümün Türevi"}
+$D \subseteq \mathbb{R}^n$, $a \in D^\circ$, $\varphi : D \to \mathbb{R}$ fonksiyonu $a$'da türevlenebilir ve $\varphi(a) \ne 0$ olsun. $\dfrac{1}{\varphi}$ fonksiyonunun $a$'da türevlenebilir olduğunu ve her $h$ için
+
+$$D\Big( \frac{1}{\varphi} \Big)(a)h = -\frac{D\varphi(a)h}{\varphi(a)^2}$$
+
+olduğunu zincir kuralıyla gösteriniz.
+
+::: {.cozum}
+**Payda sıfırlanmaz.** $\varphi$, $a$'da süreklidir (@cor-zin-surekli). Süreklilik tanımı $\varepsilon = |\varphi(a)| > 0$ ile uygulanırsa öyle bir $r > 0$ bulunur ki $B(a, r) \subseteq D$ olur ve her $x \in B(a, r)$ için $|\varphi(x) - \varphi(a)| < |\varphi(a)|$ sağlanır. Ters üçgen eşitsizliğiyle
+
+$$|\varphi(x)| \ge |\varphi(a)| - |\varphi(x) - \varphi(a)| > 0$$
+
+olur. $U = B(a, r)$ açık kümesinde $\dfrac{1}{\varphi}$ tanımlıdır ve $\varphi(U) \subseteq V = \mathbb{R} \setminus \{0\}$'dır.
+
+**Bileşke.** $q : V \to \mathbb{R}$, $q(t) = \dfrac{1}{t}$ fonksiyonu $V$'nin her noktasında türevlenebilirdir ve bölüm kuralı gereği $q'(t) = -\dfrac{1}{t^2}$'dir (bkz. [Analiz 2](../analiz-2/turev-kurallari.html#thm-turev-aritmetigi)). $U$ üzerinde $\dfrac{1}{\varphi} = q \circ \varphi$'dir. Türevlenebilme yalnız $a$'nın yakınındaki değerlere bağlı olduğundan $\varphi$'nin $U$'ya kısıtlanışı $a$'da türevlenebilirdir.
+
+**Zincir kuralı.** @thm-zin-zincir-kurali ($m = 1$, $p = 1$) gereği $q \circ \varphi$, $a$'da türevlenebilirdir ve
+
+$$D(q \circ \varphi)(a)h = q'\big( \varphi(a) \big)\,D\varphi(a)h = -\frac{D\varphi(a)h}{\varphi(a)^2}$$
+
+olur. Gradyanlarla yazılırsa
+
+$$\nabla\Big( \frac{1}{\varphi} \Big)(a) = -\frac{\nabla\varphi(a)}{\varphi(a)^2}$$
+
+bulunur. Bu sonuç @thm-zin-cebir ile birleştirilince $\dfrac{f}{\varphi} = \dfrac{1}{\varphi}\,f$ bölümünün de $a$'da türevlenebilir olduğu çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-uc-ara-a name="Ara Değişkenlerle Kısmi Türev: s'ye Göre"}
+$x = rse^t$, $y = rs^2e^{-t}$, $z = r^2 s\sin t$ ve $u = x^4 y + y^2 z^3$ olsun. $r = 2$, $s = 1$, $t = 0$ için $\dfrac{\partial u}{\partial s}$ değerini bulunuz.
+
+::: {.cozum}
+**Nokta.** $r = 2$, $s = 1$, $t = 0$ için $x = 2$, $y = 2$ ve $z = 0$'dır.
+
+**Dış türevler.** Bu noktada $u_x = 4x^3 y = 64$, $u_y = x^4 + 2yz^3 = 16$ ve $u_z = 3y^2 z^2 = 0$'dır.
+
+**İç türevler.** $x_s = re^t = 2$, $y_s = 2rse^{-t} = 4$ ve $z_s = r^2\sin t = 0$'dır.
+
+**Zincir kuralı.** @exm-zin-rst içindeki ağaçla
+
+$$\frac{\partial u}{\partial s} = u_x\,x_s + u_y\,y_s + u_z\,z_s = 64 \cdot 2 + 16 \cdot 4 + 0 \cdot 0 = 192$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-uc-ara-b name="Ara Değişkenlerle Kısmi Türev: r'ye Göre"}
+$x = rse^t$, $y = rs^2e^{-t}$, $z = r^2 s\sin t$ ve $u = x^4 y + y^2 z^3$ olsun. $r = 2$, $s = 1$, $t = 0$ için $\dfrac{\partial u}{\partial r}$ değerini bulunuz.
+
+::: {.cozum}
+**Nokta ve dış türevler.** $r = 2$, $s = 1$, $t = 0$ için $x = 2$, $y = 2$, $z = 0$ ve $u_x = 64$, $u_y = 16$, $u_z = 0$'dır (@exr-zin-uc-ara-a).
+
+**İç türevler.** $x_r = se^t = 1$, $y_r = s^2 e^{-t} = 1$ ve $z_r = 2rs\sin t = 0$'dır.
+
+**Zincir kuralı.**
+
+$$\frac{\partial u}{\partial r} = u_x\,x_r + u_y\,y_r + u_z\,z_r = 64 \cdot 1 + 16 \cdot 1 + 0 \cdot 0 = 80$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-uc-ara-c name="Ara Değişkenlerle Kısmi Türev: t'ye Göre"}
+$x = rse^t$, $y = rs^2e^{-t}$, $z = r^2 s\sin t$ ve $u = x^4 y + y^2 z^3$ olsun. $r = 2$, $s = 1$, $t = 0$ için $\dfrac{\partial u}{\partial t}$ değerini bulunuz.
+
+::: {.cozum}
+**Nokta ve dış türevler.** $r = 2$, $s = 1$, $t = 0$ için $x = 2$, $y = 2$, $z = 0$ ve $u_x = 64$, $u_y = 16$, $u_z = 0$'dır (@exr-zin-uc-ara-a).
+
+**İç türevler.** $x_t = rse^t = 2$, $y_t = -rs^2 e^{-t} = -2$ ve $z_t = r^2 s\cos t = 4$'tür.
+
+**Zincir kuralı.**
+
+$$\frac{\partial u}{\partial t} = u_x\,x_t + u_y\,y_t + u_z\,z_t = 64 \cdot 2 + 16 \cdot (-2) + 0 \cdot 4 = 96$$
+
+bulunur. $z_t \ne 0$ olduğu hâlde $u_z = 0$ olduğundan $z$ üzerinden geçen yol katkı vermez. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-kutupsal-ozdeslik name="Gradyanın Kutupsal Koordinatlarda Uzunluğu"}
+$f : \mathbb{R}^2 \to \mathbb{R}$ türevlenebilir, $F(r, \theta) = f(r\cos\theta, r\sin\theta)$ ve $r > 0$ olsun.
+
+$$f_x^2 + f_y^2 = F_r^2 + \frac{1}{r^2}\,F_\theta^2$$
+
+olduğunu gösteriniz; $f_x$ ve $f_y$, $(r\cos\theta, r\sin\theta)$ noktasında hesaplanır.
+
+::: {.cozum}
+**Formüller.** @exm-zin-kutupsal gereği
+
+$$
+\begin{aligned}
+F_r &= f_x\cos\theta + f_y\sin\theta, \\[1mm]
+\frac{1}{r}\,F_\theta &= -f_x\sin\theta + f_y\cos\theta
+\end{aligned}
+$$
+
+olur.
+
+**Kareler.**
+
+$$
+\begin{aligned}
+F_r^2 &= f_x^2\cos^2\theta + 2f_x f_y\sin\theta\cos\theta + f_y^2\sin^2\theta, \\[1mm]
+\frac{1}{r^2}\,F_\theta^2 &= f_x^2\sin^2\theta - 2f_x f_y\sin\theta\cos\theta + f_y^2\cos^2\theta.
+\end{aligned}
+$$
+
+**Toplam.** Toplarken karışık terimler birbirini götürür ve $\cos^2\theta + \sin^2\theta = 1$ kullanılır:
+
+$$F_r^2 + \frac{1}{r^2}\,F_\theta^2 = f_x^2 + f_y^2 = \|\nabla f\|^2.$$
+
+Gradyanın uzunluğu Kartezyen ya da kutupsal koordinatlarla hesaplanabilir ve iki hesap aynı sonucu verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-zin-fark-degiskenleri name="Farklara Bağlı Bir Fonksiyon"}
+$f : \mathbb{R}^3 \to \mathbb{R}$ türevlenebilir ve $w(x, y, z) = f(x - y, y - z, z - x)$ olsun.
+
+$$\frac{\partial w}{\partial x} + \frac{\partial w}{\partial y} + \frac{\partial w}{\partial z} = 0$$
+
+olduğunu gösteriniz.
+
+::: {.cozum}
+**İç fonksiyon.** $f$'nin değişkenlerini $(u, v, s)$ ile gösterelim ve $g(x, y, z) = (x - y, y - z, z - x)$ diyelim. $g$ lineer olduğundan türevlenebilirdir (@exm-zin-afin-fonksiyon) ve
+
+$$J_g = \begin{pmatrix} 1 & -1 & 0 \\ 0 & 1 & -1 \\ -1 & 0 & 1 \end{pmatrix}$$
+
+olur.
+
+**Zincir kuralı.** $w = f \circ g$ olduğundan @thm-zin-zincir-kurali gereği $\nabla w = \nabla f\big( g(x, y, z) \big)\,J_g$'dir:
+
+$$\begin{pmatrix} w_x & w_y & w_z \end{pmatrix} = \begin{pmatrix} f_u & f_v & f_s \end{pmatrix} J_g = \begin{pmatrix} f_u - f_s & -f_u + f_v & -f_v + f_s \end{pmatrix}.$$
+
+**Toplam.** Üç girdiyi toplarsak
+
+$$w_x + w_y + w_z = (f_u - f_s) + (-f_u + f_v) + (-f_v + f_s) = 0$$
+
+bulunur. Bunun nedeni, $J_g$ matrisinin her satırındaki girdilerin toplamının $0$ olmasıdır: $(x, y, z)$ üç değişkeni aynı miktarda artırıldığında $x - y$, $y - z$ ve $z - x$ farkları değişmez. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde vektör değerli bir fonksiyonun türevini bir lineer dönüşüm olarak kurduk, onu Jacobi matrisiyle hesapladık ve zincir kuralıyla bileşkelerin türevini matris çarpımına indirdik. Zincir kuralının en önemli uygulamalarından biri, bir fonksiyonu bir noktadan geçen $t \mapsto a + tu$ doğrusu boyunca izlemektir: @cor-zin-egri gereği bu doğru boyunca değişim hızı $\langle \nabla f(a), u \rangle$ olur. [Yönlü Türev ve Ortalama Değer Teoremi](yonlu-turev-ve-ortalama-deger-teoremi.qmd) bölümünde bu değişim hızını yönlü türev adıyla inceliyor, gradyanın en hızlı artış doğrultusunu gösterdiğini ve çok değişkenli ortalama değer teoremini kanıtlıyoruz.

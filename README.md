@@ -13,11 +13,13 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 <!-- BOOKS-START -->
 
 <details>
-<summary><strong>Arşivdeki 33 ders</strong> — 20 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
+<summary><strong>Arşivdeki 33 ders</strong> — 22 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
 
 - [Analitik Geometri](https://acik-matematik.com/dersler/analitik-geometri/) — 23 bölüm, 569 örnek ve alıştırma
 - [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
 - [Analiz 2: Türev ve İntegral](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
+- [Analiz 3: Fonksiyon Dizileri ve Seriler](https://acik-matematik.com/dersler/analiz-3/) — 20 bölüm, 268 örnek ve alıştırma
+- [Analiz 4: Çok Değişkenli Fonksiyonlar](https://acik-matematik.com/dersler/analiz-4/) — 20 bölüm, 466 örnek ve alıştırma
 - [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 8 bölüm, 116 örnek ve alıştırma
 - [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 17 bölüm, 611 örnek ve alıştırma
 - [Kompleks Analiz](https://acik-matematik.com/dersler/kompleks-analiz/) — 45 bölüm, 173 örnek ve alıştırma
@@ -35,8 +37,6 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Soyut Cebir 1: Gruplar](https://acik-matematik.com/dersler/soyut-cebir-1/) — 25 bölüm, 64 örnek ve alıştırma
 - [Temel Finans Matematiği](https://acik-matematik.com/dersler/finans-matematigi/) — 11 bölüm, 101 örnek ve alıştırma
 - [Topoloji](https://acik-matematik.com/dersler/topoloji/) — 11 bölüm, 74 örnek ve alıştırma
-- Analiz 3: Fonksiyon Dizileri ve Seriler — müfredatı hazır, bölümleri yazılıyor
-- Analiz 4: Çok Değişkenli Fonksiyonlar — müfredatı hazır, bölümleri yazılıyor
 - Bilgisayarda Matematik Uygulamaları — müfredatı hazır, bölümleri yazılıyor
 - Eliptik Eğriler — müfredatı hazır, bölümleri yazılıyor
 - Fonksiyonel Analiz — müfredatı hazır, bölümleri yazılıyor
@@ -60,17 +60,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **457** |
-| 📐 Teorem | **1.034** |
-| 🔹 Lemma | **109** |
-| 📝 Tanım | **1.293** |
-| ✅ İspat | **1.800** |
-| 🧮 Örnek ve alıştırma | **3.783** |
-| 💡 Çözüm | **3.510** |
-| 📊 Şekil | **1.274** |
-| ✍️ Kelime | **1.773.060** |
-| 🔤 Karakter | **12.482.097** |
-| 💾 Kaynak metin | **27,9 MB** |
+| 📖 Konu/Bölüm | **497** |
+| 📐 Teorem | **1.184** |
+| 🔹 Lemma | **127** |
+| 📝 Tanım | **1.446** |
+| ✅ İspat | **2.086** |
+| 🧮 Örnek ve alıştırma | **4.517** |
+| 💡 Çözüm | **4.244** |
+| 📊 Şekil | **1.362** |
+| ✍️ Kelime | **2.036.547** |
+| 🔤 Karakter | **14.347.708** |
+| 💾 Kaynak metin | **31,6 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 
