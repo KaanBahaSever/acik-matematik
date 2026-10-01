@@ -68,8 +68,8 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | 🧮 Örnek ve alıştırma | **4.571** |
 | 💡 Çözüm | **4.298** |
 | 📊 Şekil | **1.362** |
-| ✍️ Kelime | **2.059.051** |
-| 🔤 Karakter | **14.503.765** |
+| ✍️ Kelime | **2.059.449** |
+| 🔤 Karakter | **14.506.424** |
 | 💾 Kaynak metin | **31,7 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
