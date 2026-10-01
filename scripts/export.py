@@ -135,6 +135,9 @@ def flatten_chapters(entries) -> list[str]:
 
 _H2 = re.compile(r"^##\s+(.*?)\s*(\{[^}]*\})?\s*$")
 _LINK = re.compile(r"\]\(([^)\s#]+\.qmd)(?:#[^)]*)?\)")
+# The summary panel (::: {.summary-panel}) closes the curriculum page; its
+# links belong to no "##" heading even though they follow the last one.
+_SUMMARY_PANEL = re.compile(r"^:{3,}\s*\{\s*\.summary-panel\b")
 
 
 def parse_sub_courses(index_qmd: Path) -> list[tuple[str, list[str]]]:
@@ -145,6 +148,9 @@ def parse_sub_courses(index_qmd: Path) -> list[tuple[str, list[str]]]:
     in_code = False
     in_front_matter = False
     for i, line in enumerate(index_qmd.read_text(encoding="utf-8").splitlines()):
+        if _SUMMARY_PANEL.match(line):
+            current = None
+            continue
         if line.strip() == "---" and (i == 0 or in_front_matter):
             in_front_matter = not in_front_matter     # YAML header may hold "#" comments
             continue
@@ -170,6 +176,24 @@ def parse_sub_courses(index_qmd: Path) -> list[tuple[str, list[str]]]:
     return units
 
 
+def parse_summary_links(index_qmd: Path) -> list[str]:
+    """Chapter files linked inside the summary panel of the curriculum page."""
+    if not index_qmd.exists():
+        return []
+    links: list[str] = []
+    depth = 0                              # colon fence length of the open panel
+    for line in index_qmd.read_text(encoding="utf-8").splitlines():
+        if depth == 0:
+            if _SUMMARY_PANEL.match(line):
+                depth = len(line) - len(line.lstrip(":"))
+            continue
+        if re.fullmatch(r":{%d}\s*" % depth, line):
+            depth = 0
+            continue
+        links += [t.replace("\\", "/") for t in _LINK.findall(line)]
+    return links
+
+
 @dataclass
 class Unit:
     stem: str                     # output file name without extension
@@ -181,6 +205,23 @@ class Unit:
     @property
     def label(self) -> str:
         return self.subtitle or self.title
+
+
+def summarised_unit(course: Path, summary: str, units: list[Unit]) -> Unit | None:
+    """The unit owning the first chapter that the summary page links to."""
+    page = course / summary
+    if not page.exists():
+        return None
+    for target in _LINK.findall(page.read_text(encoding="utf-8")):
+        chapter = (page.parent / target).resolve()
+        try:
+            rel = chapter.relative_to(course.resolve()).as_posix()
+        except ValueError:
+            continue                       # a link into another book
+        for unit in units:
+            if rel in unit.chapters:
+                return unit
+    return None
 
 
 def plan_units(course: Path, config: dict) -> list[Unit]:
@@ -207,6 +248,16 @@ def plan_units(course: Path, config: dict) -> list[Unit]:
         covered.update(members)
 
     if units:
+        # A summary page sits at the end of the book and is linked from the
+        # summary panel, not under a heading. It joins the sub-course whose
+        # chapters it links to first, i.e. the part it summarises.
+        for summary in parse_summary_links(course / "index.qmd"):
+            if summary not in chapters or summary in covered:
+                continue
+            owner = summarised_unit(course, summary, units)
+            if owner is not None:
+                owner.chapters = [c for c in chapters if c in owner.chapters or c == summary]
+                covered.add(summary)
         stray = [c for c in chapters if c not in covered]
         if stray:
             print(f"   ! {course.name}: {len(stray)} chapter(s) are not linked under any "
