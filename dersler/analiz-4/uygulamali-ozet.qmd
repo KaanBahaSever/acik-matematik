@@ -1,0 +1,1298 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Çok değişkenli analiz sorularını çözmek için pratik algoritmalar ve kopya kâğıdı: soru tipine göre yöntem seçimi, normlar ve denklik sabitleri, iç, kapanış, sınır ve yığılma noktası bulma, açıklık, kompaktlık ve bağlantılılık denetimi, ℝⁿ'de dizi limitleri, tanım kümesi, limitin yokluğu için yollar ve varlığı için sıkıştırma ile kutupsal koordinatlar, ardışık limitler, süreklilik ve sürekli genişleme, tanımdan kısmi türev, Clairaut teoremi, türevlenebilirlik incelemesi, toplam diferansiyelle yaklaşık hesap, Jacobi matrisi ve zincir kuralı, yönlü türev ve en hızlı artış yönü, teğet düzlem, kalanlı Taylor formülü, Hessian ve Sylvester ölçütüyle kritik nokta sınıflandırma, kapalı bölgede mutlak ekstremum, Lagrange çarpanları, kapalı ve ters fonksiyonların türevleri."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık karşılaşılan sorular şunlardır: parçalı tanımlı bir fonksiyonun bir noktadaki limiti, sürekliliği, kısmi türevleri ve türevlenebilirliği; kritik noktaların sınıflandırılması; bir nokta civarında Taylor formülü; yönlü türev, gradyan ve teğet düzlem; Lagrange çarpanları. Bunların yanında kümelerin açık, kapalı, kompakt ya da konveks olup olmadığını, bir dizinin limitini ya da bir fonksiyonun tanım kümesini soran kısa sorular da sık gelir. Sayfa her soru tipi için adım adım bir algoritma, gerekli formül tablolarını, sık yapılan hataları ve kısa ama tam çözümlü örnekleri verir. Her kural, ayrıntısının ve gerekçesinin bulunduğu tanıma ya da teoreme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, sorunun hangi kalıba girdiğini ve hangi aracın en kısa yol olduğunu belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Kullanılacak yöntem | Bu sayfada |
+|:--|:--|:--|
+| Bir fonksiyon norm ya da iç çarpım mı? Normlar denk mi? | Aksiyomları tek tek denetle; iç çarpımdan gelip gelmediği için paralelkenar özdeşliği | @sec-ozt-norm |
+| Kümeyi çiz; içini, kapanışını, sınırını, yığılma noktalarını bul | Eşitsizlikleri kesinleştir ya da gevşet, sonra yuvarlarla doğrula | @sec-ozt-kumeler |
+| Küme açık, kapalı, sınırlı, konveks, kompakt, bağlantılı mı? | Ters görüntü, Heine–Borel, konvekslik | @sec-ozt-kompakt |
+| $\mathbb{R}^n$'de bir dizinin limiti ya da yakınsaklığı | Koordinat yakınsaklık | @sec-ozt-diziler |
+| Tanım kümesini bul ve çiz | Koşul tablosu, koşulların kesişimi | @sec-ozt-tanim-kumesi |
+| Limit var mı? (yok) | İki farklı yol, parabolik yollar, diziler | @sec-ozt-limit-yok |
+| Limitin $L$ olduğunu göster | Sıkıştırma, kutupsal koordinat, $\varepsilon$–$\delta$ | @sec-ozt-limit-var |
+| Ardışık limitleri bul | İç limit, sonra dış limit | @sec-ozt-ardisik |
+| Sürekli mi? Sürekli genişletilebilir mi? | Limit ile fonksiyon değerini karşılaştır | @sec-ozt-sureklilik |
+| Bir noktada kısmi türevleri bul | Tanımdan fark bölümü | @sec-ozt-kismi |
+| $f_{xy}(0, 0)$ ve $f_{yx}(0, 0)$'ı karşılaştır | Önce $f_x(0, y)$, sonra fark bölümü | @sec-ozt-clairaut |
+| Bir noktada türevlenebilir mi? | Dört adımlık inceleme, kalan oranı | @sec-ozt-turevlenebilirlik |
+| Toplam diferansiyel, yaklaşık değer | $f(a + h) \approx f(a) + \langle \nabla f(a), h \rangle$ | @sec-ozt-diferansiyel |
+| Jacobi ya da Hessian matrisi, zincir kuralı | Matris çarpımı, ağaç diyagramı | @sec-ozt-zincir |
+| Yönlü türev, en hızlı artış yönü | $D_u f(a) = \langle \nabla f(a), u \rangle$, $\lVert u \rVert = 1$ | @sec-ozt-yonlu |
+| Teğet düzlem, normal doğru | Gradyan normal vektördür | @sec-ozt-teget |
+| Bir nokta civarında Taylor formülü | Binom biçimli diferansiyeller | @sec-ozt-taylor |
+| Yerel ekstremum ve eyer noktaları | Hessian, $D = f_{xx} f_{yy} - f_{xy}^2$, Sylvester | @sec-ozt-yerel |
+| Kapalı, sınırlı bölgede en büyük ve en küçük değer | İç kritik noktalar, sınır, köşeler | @sec-ozt-mutlak |
+| Bir ya da iki kısıt altında ekstremum | Lagrange çarpanları | @sec-ozt-lagrange |
+| Kapalı fonksiyonun türevi, ters fonksiyon, Jacobi determinantı | $-F_x / F_z$ ve Jacobi oranları | @sec-ozt-kapali |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt-yontem}
+
+## Normlar ve İç Çarpım {#sec-ozt-norm}
+
+Norm sorularının hepsi aynı iskeletle çözülür: tanımdaki koşullar tek tek denetlenir, biri bozuluyorsa somut bir karşı örnek verilir. Norm tanımı (N1)–(N4) koşullarından (@def-nrm-norm), iç çarpım tanımı (İ1)–(İ4) koşullarından (@def-nrm-ic-carpim) oluşur.
+
+::: {.callout-tip title="Dört adımda norm denetimi"}
+1. **(N1) ve (N2).** Değerin negatif olmadığını ve yalnız $x = 0$'da sıfır olduğunu göster. Çoğu zaman "negatif olmayan sayıların toplamı ya da en büyüğü $0$ ise hepsi $0$'dır" gözlemi yeter.
+2. **(N3).** $N(\lambda x)$ yazılır ve $\lvert \lambda \rvert$ dışarı alınır.
+3. **(N4).** Bileşen bileşen $\lvert a + b \rvert \le \lvert a \rvert + \lvert b \rvert$ yazılıp toplanır ya da en büyüğü alınır; karekök içeren normlarda Minkowski eşitsizliği (@thm-nrm-minkowski) kullanılır.
+4. **Karar.** Bir koşul bozuluyorsa bunu sayılarla gösteren iki vektör seçilir. İç çarpım için aynı akış (İ1)–(İ4) ile yürür.
+:::
+
+Kitapta üç norm kullanılır. Düzlemdeki birim yuvarları, bir sorunun "çiziniz" kısmı için akılda tutulmalıdır (@def-kon-norm-yuvari).
+
+| Norm | Formül | Düzlemde $B(0, 1)$ |
+|:--|:--|:--|
+| Öklid normu | $\lVert x \rVert = \sqrt{x_1^2 + \cdots + x_n^2}$ | açık birim daire |
+| 1-normu | $\lVert x \rVert_1 = \lvert x_1 \rvert + \cdots + \lvert x_n \rvert$ | köşeleri $(\pm 1, 0)$, $(0, \pm 1)$ olan kare |
+| Maksimum normu | $\lVert x \rVert_\infty = \max_k \lvert x_k \rvert$ | kenarları eksenlere paralel $(-1, 1)^2$ karesi |
+
+: Üç norm ve birim yuvarları {#tbl-ozt-normlar}
+
+$B_N(x_0, r)$ yuvarı, birim yuvarın $r$ katının $x_0$ kadar ötelenmişidir. Örneğin $B_1\big( (2, 2), 1 \big)$ kümesi $\lvert x - 2 \rvert + \lvert y - 2 \rvert < 1$ eşitsizliğiyle verilir ve köşeleri $(1, 2)$, $(3, 2)$, $(2, 1)$, $(2, 3)$ olan karedir. Üç normun denkliği şu sabitlerle ifade edilir (@thm-nrm-norm-denkligi):
+
+$$
+\begin{aligned}
+\lVert x \rVert_\infty &\le \lVert x \rVert \le \sqrt{n}\, \lVert x \rVert_\infty, \\[1mm]
+\lVert x \rVert &\le \lVert x \rVert_1 \le \sqrt{n}\, \lVert x \rVert, \\[1mm]
+\lVert x \rVert_\infty &\le \lVert x \rVert_1 \le n\, \lVert x \rVert_\infty .
+\end{aligned}
+$$
+
+Bu eşitsizlikler limit ve yakınsaklık sorularında da işe yarar: bir dizinin ya da fonksiyonun hangi normda yakınsadığı önemli değildir, çünkü hepsi aynı sonucu verir. İç çarpımla ilgili üç formül daha sık kullanılır:
+
+- Cauchy–Schwarz eşitsizliği: $\lvert \langle x, y \rangle \rvert \le \lVert x \rVert\, \lVert y \rVert$ (@thm-nrm-cauchy-schwarz).
+- Açı: $\cos\theta = \dfrac{\langle x, y \rangle}{\lVert x \rVert\, \lVert y \rVert}$ (@def-nrm-aci); $\langle x, y \rangle = 0$ ise vektörler diktir (@def-nrm-diklik).
+- Bir iç çarpımdan gelen her norm paralelkenar özdeşliğini sağlar (@prp-nrm-paralelkenar):
+
+$$\lVert x + y \rVert^2 + \lVert x - y \rVert^2 = 2\big( \lVert x \rVert^2 + \lVert y \rVert^2 \big).$$
+
+Özdeşliği bozan iki vektör bulunursa norm hiçbir iç çarpımdan gelmez.
+
+:::: {#exm-ozt-paralelkenar name="1-Normu Bir İç Çarpımdan Gelmez"}
+$\mathbb{R}^2$'deki $\lVert \cdot \rVert_1$ normunun hiçbir iç çarpımdan elde edilemediğini gösteriniz.
+
+::: {.cozum}
+Norm bir iç çarpımdan geliyorsa paralelkenar özdeşliğini sağlamak zorundadır (@prp-nrm-paralelkenar). Özdeşliği bozan iki vektör bulmak yeter. $x = (1, 0)$ ve $y = (0, 1)$ alalım:
+
+$$
+\begin{aligned}
+\lVert x + y \rVert_1 &= \lVert (1, 1) \rVert_1 = 2, \\[1mm]
+\lVert x - y \rVert_1 &= \lVert (1, -1) \rVert_1 = 2, \\[1mm]
+\lVert x \rVert_1 &= \lVert y \rVert_1 = 1 .
+\end{aligned}
+$$
+
+Sol yan $2^2 + 2^2 = 8$, sağ yan $2(1^2 + 1^2) = 4$'tür. $8 \ne 4$ olduğundan özdeşlik bozulur ve $\lVert \cdot \rVert_1$ hiçbir iç çarpımdan gelmez.
+
+Aynı iki vektör maksimum normunu da eler: $\lVert x \pm y \rVert_\infty = 1$ olduğundan sol yan $1 + 1 = 2$, sağ yan yine $4$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+## İç, Kapanış, Sınır ve Yığılma Noktaları {#sec-ozt-kumeler}
+
+Küme sorularında önce kümeyi çizmek, sonra her noktayı kümenin "içinde mi, kenarında mı, dışında mı" diye sınıflandırmak gerekir. Tanımlar: iç nokta (@def-snr-ic), sınır noktası (@def-snr-sinir), kapanış (@def-snr-kapanis) ve yığılma noktası (@def-ack-yigilma-noktasi).
+
+::: {.callout-tip title="Dört adımda iç, kapanış, sınır ve yığılma noktaları"}
+1. **İç.** Kümeyi tanımlayan eşitsizlikleri kesin yap: $\le$ yerine $<$ yaz, eşitlik koşulu varsa iç boştur. Bulunan kümenin her noktası için kümenin içinde kalan bir yuvar göster.
+2. **Kapanış.** Eşitsizlikleri gevşet: $<$ yerine $\le$ yaz. Eklenen noktaların her birine kümeden bir dizi yakınsadığını göster.
+3. **Sınır.** $\partial S = \overline{S} \setminus S^\circ$ farkını al (@cor-snr-uc-parca).
+4. **Yığılma noktaları.** $S' = \overline{S} \setminus \{\text{izole noktalar}\}$; izole nokta, küçük bir yuvarında $S$'nin başka noktası bulunmayan noktadır. İzole noktası olmayan kümelerde $S' = \overline{S}$'dir.
+:::
+
+Son iki adımın dayanağı $\overline{S} = S \cup \partial S$ ve $S^\circ = S \setminus \partial S$ eşitlikleridir (@thm-snr-kapanis, @thm-snr-ic). Sık karşılaşılan kümelerin sonuçları kitapta bir tabloda toplanmıştır (@tbl-snr-ozet).
+
+::: {.callout-warning title="Gevşetme kuralı her kümede işlemez"}
+"Kesinleştir ve gevşet" kuralı, sınırı birkaç eğriden oluşan düzgün kümeler içindir. $\mathbb{Q}^2$ gibi yoğun kümelerde iç boş, kapanış bütün düzlemdir; sonlu bir kümenin içi boş, kapanışı kendisidir; tek bir noktası kopuk duran bir kümede o nokta kapanışa girer ama yığılma noktası değildir. Kural bir tahmin üretir; sonuç her zaman yuvarlarla doğrulanır.
+:::
+
+:::: {#exm-ozt-kume-ic name="Kesilmiş Bir Diskin İçi, Kapanışı ve Sınırı"}
+$$S = \{ (x, y) \in \mathbb{R}^2 : x^2 + y^2 < 9, \ y \ge 1 \}$$
+
+kümesinin içini, kapanışını, sınırını ve yığılma noktalarını bulunuz.
+
+::: {.cozum}
+**Çizim.** $S$, merkezi orijin ve yarıçapı $3$ olan açık diskin $y = 1$ doğrusunun üstünde kalan parçasıdır. Doğru çemberi $x^2 + 1 = 9$, yani $x = \pm 2\sqrt{2}$ noktalarında keser. Kümenin alt kenarı ($y = 1$ parçası) kümeye aittir, üst kenarı (çember yayı) ait değildir.
+
+**İç.** Eşitsizlikleri kesinleştirerek aday buluruz:
+
+$$S^\circ = \{ x^2 + y^2 < 9, \ y > 1 \}.$$
+
+Bu kümenin bir $p = (x_0, y_0)$ noktası için $\varepsilon = \min\{ 3 - \lVert p \rVert, \ y_0 - 1 \}$ alınırsa $B(p, \varepsilon)$ yuvarının her noktası çemberin içinde kalır (üçgen eşitsizliği) ve ikinci koordinatı $1$'den büyüktür. $y = 1$ üzerindeki noktalar iç nokta değildir: $(x_0, 1)$ merkezli her yuvar, $y < 1$ olan $\big( x_0, 1 - \tfrac{\varepsilon}{2} \big)$ noktasını içerir.
+
+**Kapanış.** Eşitsizlikleri gevşetiriz:
+
+$$\overline{S} = \{ x^2 + y^2 \le 9, \ y \ge 1 \}.$$
+
+Örneğin $(0, 3) \notin S$ noktasına $S$'deki $\big( 0, 3 - \tfrac{1}{k} \big)$ dizisi yakınsar; yay üzerindeki öbür noktalar ve iki köşe noktası da aynı biçimde kapanıştadır.
+
+**Sınır.** $\partial S = \overline{S} \setminus S^\circ$, kapalı bölgenin kenarıdır:
+
+$$
+\begin{aligned}
+\partial S = {} &\{ x^2 + y^2 = 9, \ y \ge 1 \} \\[1mm]
+&\cup \{ (x, 1) : \lvert x \rvert \le 2\sqrt{2} \}.
+\end{aligned}
+$$
+
+**Yığılma noktaları.** $S$'nin izole noktası yoktur; her noktasının her yuvarında $S$'nin başka noktaları vardır. Dolayısıyla $S' = \overline{S}$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Açık, Kapalı, Kompakt, Konveks, Bağlantılı {#sec-ozt-kompakt}
+
+Bir kümenin özelliklerini sormak, çoğu zaman tek tek tanıma gitmeden bilinen sonuçları birleştirmek demektir. En hızlı araç ters görüntüdür: sürekli fonksiyonlarla yazılan kesin eşitsizlikler açık, eşitlikler ve geniş eşitsizlikler kapalı kümeler verir.
+
+| Küme ya da durum | Sonuç | Dayanak |
+|:--|:--|:--|
+| $\{ x : g(x) < c \}$, $g$ bütün $\mathbb{R}^n$'de sürekli | açık | @cor-glo-acik-tanim-kumesi |
+| $\{ x : g(x) \le c \}$ ya da $\{ x : g(x) = c \}$ | kapalı | @cor-glo-kapali |
+| açıkların sonlu kesişimi, herhangi birleşimi | açık | @thm-ack-acik-ozellikler |
+| kapalıların sonlu birleşimi, herhangi kesişimi | kapalı | @thm-ack-kapali-ozellikler |
+| sonlu küme | kapalı | @cor-ack-sonlu-kume |
+| $<$ ile $\le$ birlikte kullanılmış | çoğunlukla ne açık ne kapalı; doğrudan denetlenir | @tbl-ack-dort-durum |
+| kapalı ve sınırlı | kompakt | @thm-kmp-heine-borel |
+| sınırsız ya da kapalı değil | kompakt değil | @cor-kmp-kompakt-olmama |
+| yuvar ya da konvekslerin kesişimi | konveks | @thm-kon-yuvar-konveks, @thm-kon-kesisim-konveks |
+| konveks küme | bağlantılı | @thm-kmp-konveks-baglantili |
+| sürekli $f$ altında kompakt ya da bağlantılı kümenin görüntüsü | kompakt ya da bağlantılı | @thm-glo-kompakt, @thm-glo-baglantili |
+
+: Küme özelliklerinin hızlı denetimi {#tbl-ozt-kume-ozellik}
+
+Olumsuz cevaplar için her özelliğin kendi karşı örnek biçimi vardır:
+
+- **Açık değil:** kümede olup kenarda duran bir $p$ seç; her $\varepsilon > 0$ için $B(p, \varepsilon)$ içinde kümenin dışında bir nokta göster (bir bileşeni $\tfrac{\varepsilon}{2}$ kaydırmak çoğu zaman yeter).
+- **Kapalı değil:** kümeden bir dizi seç, limiti kümenin dışında olsun (@thm-alt-kapali-dizisel); ya da kümeye ait olmayan bir yığılma noktası göster (@thm-ack-kapali-yigilma).
+- **Sınırlı değil:** normu istenildiği kadar büyük noktalar göster; örneğin $\{x > 0\}$ yarı düzleminde $(k, 0)$ noktaları.
+- **Konveks değil:** iki noktayı ve aralarındaki doğru parçasının kümenin dışına çıkan bir noktasını göster; çoğu zaman orta nokta yeter.
+- **Bağlantılı değil:** kümeyi iki ayrık parçaya ayıran iki açık küme göster (@def-kmp-baglantili). Örneğin $\{ xy > 0 \}$ kümesini $U = \{ x > 0 \}$ ve $V = \{ x < 0 \}$ ayırır.
+
+Bir fonksiyon altında görüntü ve ters görüntü sorulduğunda tanımdan hesaplanır; hangi özelliklerin korunduğu kitapta bir tabloda toplanmıştır (@tbl-glo-korunan). Özellikle açıklık ve kapalılık sürekli görüntü altında korunmaz, ters görüntü altında korunur.
+
+:::: {#exm-ozt-kume-ozellik name="Kesilmiş Diskin Özellikleri"}
+$$S = \{ (x, y) \in \mathbb{R}^2 : x^2 + y^2 < 9, \ y \ge 1 \}$$
+
+kümesinin açık, kapalı, sınırlı, kompakt, konveks ve bağlantılı olup olmadığını belirleyiniz.
+
+::: {.cozum}
+Kümenin içi, kapanışı ve sınırı @exm-ozt-kume-ic içinde bulundu.
+
+**Açık değil.** $p = (0, 1) \in S$'dir. Her $\varepsilon > 0$ için $\big( 0, 1 - \tfrac{\varepsilon}{2} \big)$ noktası $B(p, \varepsilon)$ içindedir ama $y < 1$ olduğundan $S$'de değildir. Eşdeğer olarak $S^\circ \ne S$'dir.
+
+**Kapalı değil.** $x_k = \big( 0, 3 - \tfrac{1}{k} \big)$ dizisinin terimleri $S$'dedir ($3 - \tfrac{1}{k} \ge 2 \ge 1$ ve $\big( 3 - \tfrac{1}{k} \big)^2 < 9$), limiti $(0, 3)$ ise $S$'de değildir (@thm-alt-kapali-dizisel).
+
+**Sınırlı.** Her noktası için $\lVert (x, y) \rVert < 3$'tür; $S \subseteq B(0, 3)$.
+
+**Kompakt değil.** Sınırlıdır ama kapalı değildir; Heine–Borel teoremi gereği kompakt olamaz (@cor-kmp-kompakt-olmama).
+
+**Konveks ve bağlantılı.** $S$, $B(0, 3)$ yuvarı ile $\{ y \ge 1 \}$ yarı düzleminin kesişimidir. Yuvar konvekstir (@thm-kon-yuvar-konveks). Yarı düzlem de konvekstir: $y_1, y_2 \ge 1$ ve $t \in [0, 1]$ ise $t y_1 + (1 - t) y_2 \ge t + (1 - t) = 1$ olur. Konvekslerin kesişimi konveks olduğundan (@thm-kon-kesisim-konveks) $S$ konvekstir ve dolayısıyla bağlantılıdır (@thm-kmp-konveks-baglantili). [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-kompakt name="Bir Elipsoit Parçasının Kompaktlığı"}
+$$
+\begin{aligned}
+K = \{ (x, y, z) \in \mathbb{R}^3 : {} &x^2 + 2y^2 + 3z^2 \le 6, \\[1mm]
+&x + y + z \ge 1 \}
+\end{aligned}
+$$
+
+kümesinin kompakt olduğunu gösteriniz.
+
+::: {.cozum}
+**Kapalılık.** $g(x, y, z) = x^2 + 2y^2 + 3z^2$ ve $\ell(x, y, z) = x + y + z$ polinomları $\mathbb{R}^3$'te süreklidir. $(-\infty, 6]$ ve $[1, +\infty)$ kapalı olduğundan ters görüntüleri
+
+$$g^{-1}\big( (-\infty, 6] \big), \qquad \ell^{-1}\big( [1, +\infty) \big)$$
+
+kapalıdır (@cor-glo-kapali). $K$ bu iki kapalı kümenin kesişimidir, dolayısıyla kapalıdır (@thm-ack-kapali-ozellikler).
+
+**Sınırlılık.** $K$'nin her noktasında $x^2 \le 6$, $2y^2 \le 6$ ve $3z^2 \le 6$'dır; buradan
+
+$$\lVert (x, y, z) \rVert^2 = x^2 + y^2 + z^2 \le 6 + 3 + 2 = 11$$
+
+bulunur. $K \subseteq B[0, \sqrt{11}]$'dir.
+
+**Sonuç.** $K$ kapalı ve sınırlı olduğundan Heine–Borel teoremi gereği kompakttır (@thm-kmp-heine-borel). $K$ boş da değildir: $(1, 0, 0)$ iki koşulu da sağlar. Bunun bir sonucu olarak $K$ üzerinde sürekli her fonksiyon en büyük ve en küçük değerini alır (@thm-glo-uc-deger). [$\blacksquare$]{.qed}
+:::
+::::
+
+## ℝⁿ'de Diziler {#sec-ozt-diziler}
+
+$\mathbb{R}^n$'de dizi sorularının neredeyse hepsi tek bir teoremle tek değişkenli dizilere indirgenir: bir dizi ancak ve ancak her bileşen dizisi yakınsaksa yakınsaktır ve limit, bileşenlerin limitlerinden oluşur (@thm-diz-koordinat).
+
+| Soru | Yöntem | Dayanak |
+|:--|:--|:--|
+| Limiti bul | Her bileşenin limitini ayrı ayrı bul | @thm-diz-koordinat |
+| Tanımla yakınsaklığı göster | $\lVert x_k - a \rVert \le \lVert x_k - a \rVert_1$ ile her bileşeni sınırla, $N$'yi seç | @def-diz-yakinsaklik |
+| Iraksak olduğunu göster | Bir bileşen ıraksak ya da iki alt dizi farklı limitli ya da dizi sınırsız | @cor-diz-bilesen-iraksak, @cor-alt-iraksaklik, @cor-diz-sinirsiz-iraksak |
+| Yakınsak bir alt dizi bul | Dizi sınırlıysa vardır; çift ve tek indisleri ayır | @thm-alt-bolzano-weierstrass |
+| Cauchy dizisi mi? | $\mathbb{R}^n$'de Cauchy olmak yakınsak olmakla aynıdır | @thm-alt-cauchy-olcutu |
+
+: Dizi sorularında yöntem {#tbl-ozt-diziler}
+
+Bileşenlerin limitlerinde Analiz 1'in bilinen limitleri kullanılır:
+
+| Bileşen | Limit |
+|:--|:--|
+| $\left( 1 + \frac{a}{k} \right)^k$ | $e^a$ |
+| $k \ln\left( 1 + \frac{a}{k} \right)$ | $a$ |
+| $\sqrt{k^2 + ak} - k$ | $\frac{a}{2}$ (eşlenikle çarp) |
+| $k \sin \frac{1}{k}$ | $1$ |
+| $\sqrt[k]{k}$, $\sqrt[k]{c}$ ($c > 0$) | $1$ |
+| $q^k$, $\lvert q \rvert < 1$ | $0$ |
+| $\frac{\sin k}{k}$, $\frac{(-1)^k}{k}$ | $0$ (sıkıştırma) |
+| $(-1)^k$, $\cos(k\pi)$, $\sin \frac{k\pi}{2}$ | yok (iki alt dizi) |
+
+: Bileşenlerde sık kullanılan limitler {#tbl-ozt-dizi-limitleri}
+
+:::: {#exm-ozt-dizi name="Üç Bileşenli Bir Dizinin Limiti"}
+$$x_k = \left( k \ln\frac{k + 2}{k}, \ \sqrt{k^2 + 5k} - k, \ k \sin\frac{1}{k} \right)$$
+
+dizisinin limitini bulunuz.
+
+::: {.cozum}
+Koordinat yakınsaklık teoremi (@thm-diz-koordinat) gereği her bileşenin limitini ayrı ayrı bulmak yeter.
+
+**Birinci bileşen.** Logaritmanın özelliğiyle
+
+$$k \ln\frac{k + 2}{k} = \ln\left( 1 + \frac{2}{k} \right)^{k} \longrightarrow \ln e^2 = 2$$
+
+olur; son adımda logaritmanın sürekliliği kullanıldı.
+
+**İkinci bileşen.** Eşlenikle çarpalım:
+
+$$
+\begin{aligned}
+\sqrt{k^2 + 5k} - k &= \frac{5k}{\sqrt{k^2 + 5k} + k} \\[1mm]
+&= \frac{5}{\sqrt{1 + \frac{5}{k}} + 1} \longrightarrow \frac{5}{2}.
+\end{aligned}
+$$
+
+**Üçüncü bileşen.** $t = \frac{1}{k} \to 0$ dersek $k \sin\frac{1}{k} = \dfrac{\sin t}{t} \to 1$'dir.
+
+**Sonuç.** Üç bileşen de yakınsak olduğundan dizi yakınsaktır ve
+
+$$\lim_{k \to \infty} x_k = \left( 2, \ \frac{5}{2}, \ 1 \right)$$
+
+olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Tanım Kümesi {#sec-ozt-tanim-kumesi}
+
+Soru bir fonksiyonun tanım kümesini istiyorsa, formüldeki her parçanın anlamlı olduğu noktalar aranır. Vektör değerli bir fonksiyonun tanım kümesi, bileşenlerin tanım kümelerinin kesişimidir (@def-lim-tanim-kumesi).
+
+| Formülde geçen | Koşul |
+|:--|:--|
+| $\sqrt{g}$ (çift dereceli kök) | $g \ge 0$ |
+| $\dfrac{1}{\sqrt{g}}$ | $g > 0$ |
+| $\ln g$ | $g > 0$ |
+| $\dfrac{p}{q}$ | $q \ne 0$ |
+| $\dfrac{1}{\ln g}$ | $g > 0$ ve $g \ne 1$ |
+| $\arcsin g$, $\arccos g$ | $-1 \le g \le 1$ |
+| $\tan g$ | $g \ne \frac{\pi}{2} + m\pi$, $m \in \mathbb{Z}$ |
+| $g^{h}$ (üs değişken) | $g > 0$ |
+
+: Tanım kümesi koşulları {#tbl-ozt-tanim}
+
+::: {.callout-tip title="Üç adımda tanım kümesi"}
+1. **Koşulları yaz.** Tablodan her parça için koşulu yaz; iç içe fonksiyonlarda içten dışa ilerle.
+2. **Sınır eğrilerini çiz.** Her koşulun eşitlik hâlini ($g = 0$, $g = 1$ gibi) çiz. Koşulu sağlamayan eğriler kesikli, sağlayanlar düz çizilir.
+3. **Bölgeyi seç.** Her eğrinin hangi yanının koşulu sağladığını bir deneme noktasıyla bul; bütün koşulların ortak bölgesini tara.
+:::
+
+:::: {#exm-ozt-tanim name="Kök ve Logaritma Birlikte"}
+$$f(x, y) = \frac{\sqrt{4 - x^2 - y^2}}{\ln(y - x)}$$
+
+fonksiyonunun tanım kümesini bulunuz ve düzlemde tarif ediniz.
+
+::: {.cozum}
+**Koşullar.** Pay için $4 - x^2 - y^2 \ge 0$, logaritma için $y - x > 0$, payda için $\ln(y - x) \ne 0$, yani $y - x \ne 1$ gerekir:
+
+$$D = \{ (x, y) : x^2 + y^2 \le 4, \ y > x, \ y \ne x + 1 \}.$$
+
+**Tarif.** Birinci koşul, yarıçapı $2$ olan kapalı diski verir; çember kümeye dahildir. İkinci koşul $y = x$ doğrusunun üst yanıdır; doğrunun kendisi dahil değildir. Üçüncü koşul $y = x + 1$ doğrusunu çıkarır. Bu doğrunun orijine uzaklığı $\frac{1}{\sqrt{2}} < 2$ olduğundan doğru diski keser; çıkarılan şey diskin içinden geçen bir kiriştir.
+
+Sonuç olarak $D$, kapalı diskin $y = x$ köşegeninin üstünde kalan yarısıdır; köşegen ve $y = x + 1$ kirişi çıkarılmıştır. Çemberin köşegen üstündeki yayı ise, uçları ve $y = x + 1$ doğrusuyla kesiştiği iki nokta dışında, kümededir. $D$ sınırlıdır; hem kümeye ait sınır noktaları (yay) hem de ait olmayanları (köşegen) olduğundan ne açık ne kapalıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Limitin Olmadığını Göstermek {#sec-ozt-limit-yok}
+
+Limitin yokluğunu göstermek için tek bir şey yeter: noktaya giden ve farklı limitler veren iki yol (@cor-yol-iki-yol) ya da iki dizi (@cor-lim-dizisel-yok). Bütün iş, doğru yolu hızlıca bulmaktır.
+
+::: {.callout-tip title="Dört adımda limitin olmadığını gösterme"}
+1. **Noktayı orijine taşı.** $(x_0, y_0) \ne (0, 0)$ ise $u = x - x_0$, $v = y - y_0$ yaz; ifadeyi $u$ ve $v$ cinsinden sadeleştir.
+2. **Eksenler ve doğrular.** $u = 0$, $v = 0$ ve $v = mu$ boyunca limiti hesapla. Sonuç $m$'ye bağlıysa bitti.
+3. **Eğriler.** Doğrular hep aynı değeri veriyorsa paydanın terimlerini aynı mertebeye getiren eğriyi dene: payda $u^a + v^b$ ise $v = m\, u^{a/b}$ (ya da $u = m\, v^{b/a}$).
+4. **Başka araçlar.** Diziler (@cor-lim-dizisel-yok) ya da var olan ama farklı ardışık limitler (@cor-yol-ardisik-limit-yok) de limitin yokluğunu gösterir.
+:::
+
+| Payda | Denenecek yol | Tipik pay |
+|:--|:--|:--|
+| $x^2 + y^2$ | $y = mx$ | $xy$, $x^2 - y^2$ |
+| $x^4 + y^2$ | $y = m x^2$ | $x^2 y$ |
+| $x^2 + y^4$ | $x = m y^2$ | $x y^2$ |
+| $x^6 + y^2$ | $y = m x^3$ | $x^3 y$ |
+| bir doğru boyunca sıfırlanan, örneğin $x + y$ | doğruya yaklaşan eğri: $y = -x + x^2$ | $xy$ |
+
+: Paydaya göre yol seçimi {#tbl-ozt-yollar}
+
+Tablonun son satırına bir örnek: $\dfrac{xy}{x + y}$ için $y = x$ boyunca değer $\dfrac{x}{2} \to 0$, $y = -x + x^2$ boyunca ise $\dfrac{x(x^2 - x)}{x^2} = x - 1 \to -1$'dir; limit yoktur.
+
+::: {.callout-warning title="Aynı değeri veren yollar limitin varlığını göstermez"}
+Üç, beş ya da sonsuz çoklukta doğru boyunca aynı değeri bulmak yalnızca bir **adaydır**; varlık ayrıca sıkıştırmayla ya da tanımla gösterilmelidir (@sec-ozt-limit-var). Ayrıca seçilen yol gerçekten noktaya gitmelidir: $(1, 0)$ noktasındaki limit için $y = 1$ doğrusu boyunca hesap yapmak anlamsızdır, çünkü bu doğru $(1, 0)$'dan geçmez.
+:::
+
+:::: {#exm-ozt-limit-yok-kaydirma name="Orijin Dışında Bir Noktada Limit"}
+$$\lim_{(x, y) \to (0, 2)} \frac{xy - 2x}{x^2 + y^2 - 4y + 4}$$
+
+limitinin var olup olmadığını araştırınız.
+
+::: {.cozum}
+**Kaydırma.** Pay $x(y - 2)$, payda $x^2 + (y - 2)^2$ biçiminde yazılır. $v = y - 2$ dersek $(x, y) \to (0, 2)$ olması $(x, v) \to (0, 0)$ olması demektir ve ifade
+
+$$f = \frac{xv}{x^2 + v^2}$$
+
+olur.
+
+**Eksenler.** $x = 0$ boyunca ($v \ne 0$) değer $0$'dır. $v = 0$, yani $y = 2$ doğrusu boyunca ($x \ne 0$) değer yine $0$'dır. İki eksen aynı sonucu verdi; bu bir şey kanıtlamaz.
+
+**Doğrular.** $v = mx$, yani $y = 2 + mx$ doğrusu $(0, 2)$'den geçer ve bu doğru boyunca
+
+$$f = \frac{m x^2}{(1 + m^2)\, x^2} = \frac{m}{1 + m^2}$$
+
+sabittir. $m = 0$ için limit $0$, $m = 1$ için $\frac{1}{2}$'dir.
+
+**Sonuç.** İki farklı yol farklı limit verdiğinden limit yoktur (@cor-yol-iki-yol). Yalnız eksenlere ve $y = 2$ doğrusuna bakıp "limit $0$" demek bu yüzden hatalı olurdu. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-limit-yok-parabol name="Doğruların Yetmediği Bir Limit"}
+$$\lim_{(x, y) \to (0, 0)} \frac{x y^2}{x^2 + y^4}$$
+
+limitinin olmadığını gösteriniz.
+
+::: {.cozum}
+**Doğrular.** $x = 0$ boyunca değer $0$'dır. $y = mx$ boyunca ($x \ne 0$)
+
+$$f(x, mx) = \frac{m^2 x^3}{x^2 + m^4 x^4} = \frac{m^2 x}{1 + m^4 x^2} \longrightarrow 0$$
+
+bulunur. Bütün doğrular $0$ veriyor; limit varsa $0$ olmak zorundadır.
+
+**Parabol.** Paydada $x^2$ ile $y^4$ terimleri $x = m y^2$ iken aynı mertebededir. Bu parabol boyunca ($y \ne 0$)
+
+$$f(m y^2, y) = \frac{m y^4}{m^2 y^4 + y^4} = \frac{m}{1 + m^2}$$
+
+olur; $m = 1$ için değer $\frac{1}{2}$'dir.
+
+**Sonuç.** $x$ ekseni (ya da herhangi bir doğru) boyunca limit $0$, $x = y^2$ parabolü boyunca $\frac{1}{2}$'dir. Limit yoktur (@cor-yol-iki-yol). [$\blacksquare$]{.qed}
+:::
+::::
+
+## Limitin Var Olduğunu Göstermek {#sec-ozt-limit-var}
+
+Limitin varlığını göstermek için, yollarla bulunan $L$ adayının $\lvert f - L \rvert$ farkını yalnız uzaklığa bağlı ve sıfıra giden bir ifadeyle sınırlamak gerekir (@thm-lim-sikistirma, @cor-lim-sifira-karsilastirma). Kitapta bu iş için üç adımlı bir reçete vardır ([Çok değişkenli fonksiyonlar ve limit](cok-degiskenli-fonksiyonlar-ve-limit.qmd)); burada en çok kullanılan eşitsizlikleri topluyoruz.
+
+| Eşitsizlik | Nerede işe yarar |
+|:--|:--|
+| $\lvert x \rvert \le \lVert (x, y) \rVert$, $\lvert y \rvert \le \lVert (x, y) \rVert$ | paydada $x^2 + y^2$ ya da norm varsa |
+| $2 \lvert xy \rvert \le x^2 + y^2$ | payda değil, payın içinde $xy$ gibi karışık terim varsa |
+| $\dfrac{x^2}{x^2 + y^2} \le 1$ | payı paydanın bir terimiyle ortaklaştırınca |
+| $\lvert \sin t \rvert \le \lvert t \rvert$, $\lvert \sin t \rvert \le 1$ | sinüslü paylarda |
+| $1 - \cos t \le \dfrac{t^2}{2}$ | kosinüslü paylarda |
+| $e^{t} \ge 1$ ($t \ge 0$) | paydada $e^{y^2}$ gibi bir çarpan varsa, atılır |
+| $x^4 + y^4 \ge \dfrac{(x^2 + y^2)^2}{2}$ | paydada dördüncü kuvvetler varsa |
+
+: Sıkıştırmada sık kullanılan eşitsizlikler {#tbl-ozt-esitsizlikler}
+
+İki değişkende kutupsal koordinatlar en düzenli yoldur: $x = x_0 + r\cos\theta$, $y = y_0 + r\sin\theta$ yazılır ve $\lvert f - L \rvert \le g(r)$ biçiminde, **$\theta$'ya bağlı olmayan** ve $r \to 0^+$ iken $0$'a giden bir $g$ aranır (@prp-yol-kutupsal). Pay ve payda $x, y$'nin homojen polinomları, payda yalnız orijinde sıfırsa pratik bir kural da vardır: payın derecesi paydanınkinden büyükse limit $0$'dır; küçük ya da eşitse limit çoğunlukla yoktur ve yollar denenir.
+
+Değişkenler yalnız $t = x^2 + y^2$ birleşiminde geçiyorsa limit tek değişkenli bir limite dönüşür (@prp-lim-bileske): örneğin $\dfrac{\sin(x^2 + y^2)}{x^2 + y^2} \to 1$'dir, çünkü $t \to 0^+$ iken $\dfrac{\sin t}{t} \to 1$'dir.
+
+:::: {#exm-ozt-limit-var name="Sıkıştırma ve Kutupsal Sınır"}
+$$\lim_{(x, y) \to (0, 0)} \frac{x^3 + 2y^4}{x^2 + y^2} = 0$$
+
+olduğunu gösteriniz.
+
+::: {.cozum}
+**Aday.** Payın derecesi ($3$ ve $4$) paydanınkinden ($2$) büyüktür; aday $L = 0$'dır.
+
+**Kutupsal sınır.** $x = r\cos\theta$, $y = r\sin\theta$ ($r > 0$) yazalım. $x^2 + y^2 = r^2$ olduğundan
+
+$$f = \frac{r^3\cos^3\theta + 2r^4\sin^4\theta}{r^2} = r\cos^3\theta + 2r^2\sin^4\theta$$
+
+olur. $\lvert \cos\theta \rvert \le 1$ ve $\lvert \sin\theta \rvert \le 1$ olduğundan
+
+$$\lvert f - 0 \rvert \le r + 2r^2 = g(r)$$
+
+bulunur. $g$, $\theta$'ya bağlı değildir ve $r \to 0^+$ iken $0$'a gider; @prp-yol-kutupsal gereği limit $0$'dır.
+
+**$\varepsilon$–$\delta$ diliyle.** $\varepsilon > 0$ verilsin ve $\delta = \min\left\{ 1, \dfrac{\varepsilon}{3} \right\}$ seçilsin. $0 < r < \delta$ ise $r < 1$ olduğundan $2r^2 < 2r$ ve
+
+$$\lvert f(x, y) \rvert \le r + 2r^2 < 3r < 3\delta \le \varepsilon$$
+
+olur. Burada $r = \lVert (x, y) \rVert$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Ardışık Limitler {#sec-ozt-ardisik}
+
+Ardışık limitler değişkenleri birer birer limite götürür (@def-yol-ardisik-limit): önce iç limit, sonra dış limit alınır ve her adım tek değişkenli bir limittir, L'Hôpital kuralı dahil bütün Analiz 1 araçları kullanılabilir. İki katlı limitle ilişkisi şöyledir:
+
+| Durum | Sonuç | Dayanak |
+|:--|:--|:--|
+| İç limitler var, iki ardışık limit var ve farklı | İki katlı limit yok | @cor-yol-ardisik-limit-yok |
+| İç limitler var, ardışık limitlerden biri yok | İki katlı limit yok | @cor-yol-ardisik-limit-yok |
+| Ardışık limitler var ve eşit | Hiçbir şey söylemez; yollar ve sıkıştırma denenir | @prp-yol-ardisik |
+| İki katlı limit $L$ ve iç limitler var | İki ardışık limit de $L$ | @prp-yol-ardisik |
+| İç limit yok | Ardışık limit tanımsız; iki katlı limit yine de olabilir | @exm-yol-ardisik-limit-var |
+
+: Ardışık limitler ve iki katlı limit {#tbl-ozt-ardisik}
+
+Örneğin $f(x, y) = \dfrac{x - y}{x + y}$ için $x \ne 0$ sabitken $y \to 0$ iç limiti $1$, $y \ne 0$ sabitken $x \to 0$ iç limiti $\dfrac{-y}{y} = -1$'dir. Ardışık limitler $1$ ve $-1$ çıkar, farklıdır. Bu fonksiyon $y = -x$ doğrusu üzerinde tanımsız olduğundan kararı eksenlere dayandırmak daha temizdir: $x$ ekseni boyunca ($y = 0$, $x \ne 0$) değer $1$, $y$ ekseni boyunca $-1$'dir; @cor-yol-iki-yol gereği $(0, 0)$'da limit yoktur.
+
+## Süreklilik ve Sürekli Genişleme {#sec-ozt-sureklilik}
+
+Süreklilik sorusu, limit sorusunun bir adım ötesidir: limit bulunur ve fonksiyonun o noktadaki değeriyle karşılaştırılır (@prp-srk-limit). Polinomlar, rasyonel fonksiyonlar ve bunların bileşkeleri tanımlı oldukları her noktada süreklidir (@thm-srk-polinom, @thm-srk-bileske); bu yüzden parçalı fonksiyonda yalnız özel nokta incelenir.
+
+| Özel noktada durum | Sonuç | Dayanak |
+|:--|:--|:--|
+| Limit var ve $f(x_0)$'a eşit | Sürekli | @prp-srk-limit |
+| Limit var, $f(x_0)$ farklı ya da tanımsız | Kaldırılabilir süreksizlik: $f(x_0) = L$ alınırsa sürekli | @def-srk-kaldirilabilir, @prp-srk-kaldirma |
+| Limit yok | Esas süreksizlik; hiçbir değer düzeltmez | @def-srk-esas-sureksizlik, @prp-srk-kaldirma |
+
+: Özel noktada süreklilik kararı {#tbl-ozt-sureklilik}
+
+"Hangi $a$ değeri için sürekli?" ya da "sürekli genişletilebilir mi?" diye soran sorularda cevap, varsa limitin kendisidir. Genişletme bir doğru boyunca da istenebilir: $\dfrac{x^2 - y^2}{x - y}$ fonksiyonu $x \ne y$ iken $x + y$'ye eşittir; $y = x$ doğrusu üzerinde $f(x, x) = 2x$ tanımlanırsa her yerde sürekli $x + y$ fonksiyonu elde edilir. Süreksizliği dizilerle göstermek için $f(x_k) \not\to f(x_0)$ olan bir $x_k \to x_0$ dizisi yeter (@cor-srk-sureksizlik-dizisel).
+
+:::: {#exm-ozt-surekli name="Tanımla Süreklilik"}
+$$
+f(x, y) = \begin{cases} \dfrac{x^3 y}{(1 + y^2)(x^2 + y^2)}, & (x, y) \ne (0, 0), \\[2mm] 0, & (x, y) = (0, 0) \end{cases}
+$$
+
+fonksiyonunun $(0, 0)$ noktasında sürekli olduğunu $\varepsilon$–$\delta$ tanımıyla gösteriniz.
+
+::: {.cozum}
+**Farkı sınırla.** $(x, y) \ne (0, 0)$ için $1 + y^2 \ge 1$ ve $\dfrac{x^2}{x^2 + y^2} \le 1$ olduğundan
+
+$$
+\begin{aligned}
+\lvert f(x, y) - f(0, 0) \rvert &\le \lvert x \rvert \lvert y \rvert \cdot \frac{x^2}{x^2 + y^2} \\[1mm]
+&\le \lvert x y \rvert \le \frac{x^2 + y^2}{2} = \frac{\lVert (x, y) \rVert^2}{2}
+\end{aligned}
+$$
+
+olur; son adımda $2 \lvert xy \rvert \le x^2 + y^2$ kullanıldı.
+
+**$\delta$'yı seç.** $\varepsilon > 0$ verilsin ve $\delta = \sqrt{2\varepsilon}$ olsun. $\lVert (x, y) \rVert < \delta$ ise
+
+$$\lvert f(x, y) - f(0, 0) \rvert \le \frac{\lVert (x, y) \rVert^2}{2} < \frac{\delta^2}{2} = \varepsilon$$
+
+bulunur; $(x, y) = (0, 0)$ için fark zaten $0$'dır. Tanım gereği (@def-srk-sureklilik) $f$, $(0, 0)$'da süreklidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-genisleme name="Sürekli Genişleme Değeri"}
+$$
+f(x, y) = \begin{cases} \dfrac{1 - \cos(x^2 + y^2)}{(x^2 + y^2)^2}, & (x, y) \ne (0, 0), \\[2mm] a, & (x, y) = (0, 0) \end{cases}
+$$
+
+fonksiyonunun $(0, 0)$'da sürekli olması için $a$ ne olmalıdır?
+
+::: {.cozum}
+Değişkenler yalnız $t = x^2 + y^2$ birleşiminde geçiyor. $(x, y) \to (0, 0)$ iken $t \to 0^+$'dır. Tek değişkenli limit iki kez L'Hôpital kuralıyla
+
+$$\lim_{t \to 0} \frac{1 - \cos t}{t^2} = \lim_{t \to 0} \frac{\sin t}{2t} = \lim_{t \to 0} \frac{\cos t}{2} = \frac{1}{2}$$
+
+bulunur. $\varphi(t) = \dfrac{1 - \cos t}{t^2}$ ($t \ne 0$), $\varphi(0) = \dfrac{1}{2}$ fonksiyonu $0$'da süreklidir ve $f = \varphi(x^2 + y^2)$'dir; @prp-lim-bileske gereği
+
+$$\lim_{(x, y) \to (0, 0)} f(x, y) = \frac{1}{2}$$
+
+olur. Limit var olduğundan $(0, 0)$ kaldırılabilir süreksizliktir ve $f$ ancak $a = \dfrac{1}{2}$ için süreklidir (@prp-srk-kaldirma). [$\blacksquare$]{.qed}
+:::
+::::
+
+## Kısmi Türev: Tanımdan {#sec-ozt-kismi}
+
+Bir noktadaki kısmi türev, tek değişkenli bir fark bölümünün limitidir (@def-kis-kismi-turev):
+
+$$
+\begin{aligned}
+f_x(a, b) &= \lim_{h \to 0} \frac{f(a + h, b) - f(a, b)}{h}, \\[1mm]
+f_y(a, b) &= \lim_{h \to 0} \frac{f(a, b + h) - f(a, b)}{h}.
+\end{aligned}
+$$
+
+Olağan noktalarda kurallarla türev alınır (@thm-kis-kurallar). Tanıma gitmek şu durumlarda zorunludur: parçalı fonksiyonun özel noktası, mutlak değer ya da kök içeren ifadenin sıfırlandığı nokta ve türev formülünün tanımsız kaldığı nokta.
+
+::: {.callout-tip title="Üç adımda tanımdan kısmi türev"}
+1. **Doğru dalı seç.** $f(a + h, b)$ yazılırken $(a + h, b)$ noktasının hangi parçaya düştüğüne bak; $h \ne 0$ küçükken çoğunlukla formülün geçerli olduğu parçadadır.
+2. **Fark bölümünü sadeleştir.** $\dfrac{f(a + h, b) - f(a, b)}{h}$ ifadesini $h$'nin tek değişkenli fonksiyonu olarak yaz.
+3. **Limit.** Limit sonluysa kısmi türev odur. Limit $\pm\infty$ ya da sağ ve sol limitler farklıysa kısmi türev yoktur; bu durumda $f$ o noktada türevlenemez (@thm-dif-kismi-turevler).
+:::
+
+| $f(x, y)$ (orijinde $0$) | $f_x(0, 0)$ | $f_y(0, 0)$ | Not |
+|:--|:-:|:-:|:--|
+| $\sqrt{\lvert xy \rvert}$ | $0$ | $0$ | eksenlerde $f = 0$ |
+| $\sqrt[3]{x^3 + y^3}$ | $1$ | $1$ | formül orijinde tanımsız, tanım çalışır |
+| $\lvert x \rvert + y$ | yok | $1$ | sağ ve sol limit $\pm 1$ |
+| $\dfrac{xy}{x^2 + y^2}$ | $0$ | $0$ | süreksiz olduğu hâlde kısmi türevler var |
+
+: Orijinde tanımdan kısmi türevler {#tbl-ozt-kismi}
+
+::: {.callout-warning title="Formülü türevleyip noktada yerine koymak"}
+Parçalı fonksiyonun özel noktasında formülü türevleyip noktayı yerine koymak yanlıştır: $\sqrt[3]{x^3 + y^3}$ için türev formülü $\dfrac{x^2}{(x^3 + y^3)^{2/3}}$ orijinde tanımsızdır, oysa tanımdan $f_x(0, 0) = \lim \dfrac{h}{h} = 1$ bulunur. Ters yönde de tehlike vardır: türevi alınan formül özel noktada hiç geçerli olmayabilir.
+:::
+
+:::: {#exm-ozt-kismi-egri name="Bir Doğru Boyunca Tanımlı Parçalı Fonksiyon"}
+$$
+f(x, y) = \begin{cases} \dfrac{x^2 + y^2}{x + y - 2}, & x + y \ne 2, \\[2mm] 1, & x + y = 2 \end{cases}
+$$
+
+fonksiyonu için $f_x(1, 1)$ ve $f_y(1, 1)$ kısmi türevlerinin var olup olmadığını araştırınız; $f$ bu noktada türevlenebilir midir?
+
+::: {.cozum}
+**Doğru dal.** $(1, 1)$ noktası $x + y = 2$ doğrusu üzerindedir, $f(1, 1) = 1$'dir. $h \ne 0$ için $(1 + h, 1)$ noktasında $x + y - 2 = h \ne 0$ olduğundan formül geçerlidir:
+
+$$f(1 + h, 1) = \frac{(1 + h)^2 + 1}{h} = \frac{2 + 2h + h^2}{h}.$$
+
+**Fark bölümü.**
+
+$$\frac{f(1 + h, 1) - f(1, 1)}{h} = \frac{\frac{2 + 2h + h^2}{h} - 1}{h} = \frac{h^2 + h + 2}{h^2}.$$
+
+**Limit.** $h \to 0$ iken pay $2$'ye, payda $0^+$'ya gider; fark bölümü $+\infty$'a ıraksar. Demek ki $f_x(1, 1)$ yoktur. $f$, $x$ ile $y$'ye göre simetrik olduğundan aynı hesap $f_y(1, 1)$'in de olmadığını gösterir.
+
+**Türevlenebilirlik.** Kısmi türevleri olmayan bir fonksiyon türevlenemez (@thm-dif-kismi-turevler); $f$, $(1, 1)$'de türevlenebilir değildir. Aslında sürekli bile değildir: $(1 + h, 1)$ boyunca $f \approx \frac{2}{h}$ sınırsız büyür (@cor-dif-sureksiz). [$\blacksquare$]{.qed}
+:::
+::::
+
+## Karışık Türevler ve Clairaut Teoremi {#sec-ozt-clairaut}
+
+Kitapta $f_{xy} = (f_x)_y$ yazılır: önce $x$'e, sonra $y$'ye göre türev alınır (@def-yuk-ikinci-mertebe). Orijinde karışık türevler tanımdan şöyle hesaplanır:
+
+$$
+\begin{aligned}
+f_{xy}(0, 0) &= \lim_{k \to 0} \frac{f_x(0, k) - f_x(0, 0)}{k}, \\[1mm]
+f_{yx}(0, 0) &= \lim_{h \to 0} \frac{f_y(h, 0) - f_y(0, 0)}{h}.
+\end{aligned}
+$$
+
+::: {.callout-tip title="Üç adımda tanımla karışık türev"}
+1. **Eksen üzerindeki birinci türev.** $y \ne 0$ için $f_x(0, y)$'yi bul. $(0, y)$ olağan bir noktaysa formül türevlenip $x = 0$ konabilir; ya da doğrudan $\lim_{h \to 0} \frac{f(h, y) - f(0, y)}{h}$ hesaplanır.
+2. **Orijindeki birinci türev.** $f_x(0, 0)$ tanımdan bulunur.
+3. **Fark bölümü.** $\dfrac{f_x(0, k) - f_x(0, 0)}{k}$ limiti $f_{xy}(0, 0)$'dır. $f_{yx}(0, 0)$ için rolleri değiştir: önce $f_y(x, 0)$.
+:::
+
+Clairaut teoremi (@thm-yuk-clairaut): $f_{xy}$ ile $f_{yx}$ noktanın bir komşuluğunda var ve noktada sürekliyse ikisi eşittir; özel olarak $f \in C^2$ ise her yerde eşittir. Karışık türevler farklı çıkıyorsa $f$ o noktada $C^2$ olamaz. $n$ değişkende ve yüksek mertebede de $C^k$ fonksiyonlarda türevlerin sırası önemsizdir (@cor-yuk-yuksek-mertebe). İkinci türevlerle ilgili bir başka kalıp Laplace denklemidir: $f_{xx} + f_{yy} = 0$ (üç değişkende $+ f_{zz}$) sağlanıyorsa $f$ harmoniktir (@def-yuk-laplace, @def-yuk-harmonik).
+
+:::: {#exm-ozt-clairaut name="Eşit Olmayan Karışık Türevler"}
+$$
+f(x, y) = \begin{cases} \dfrac{xy(x^2 - 2y^2)}{x^2 + y^2}, & (x, y) \ne (0, 0), \\[2mm] 0, & (x, y) = (0, 0) \end{cases}
+$$
+
+için $f_{xy}(0, 0)$ ve $f_{yx}(0, 0)$'ı bulunuz.
+
+::: {.cozum}
+**$f_x(0, y)$.** $f(0, y) = 0$ olduğundan $y \ne 0$ için
+
+$$f_x(0, y) = \lim_{h \to 0} \frac{f(h, y)}{h} = \lim_{h \to 0} \frac{y(h^2 - 2y^2)}{h^2 + y^2} = \frac{y \cdot (-2y^2)}{y^2} = -2y$$
+
+olur. Orijinde $f(h, 0) = 0$ olduğundan $f_x(0, 0) = 0$'dır; formül $y = 0$'da da geçerlidir.
+
+**$f_{xy}(0, 0)$.**
+
+$$f_{xy}(0, 0) = \lim_{k \to 0} \frac{f_x(0, k) - f_x(0, 0)}{k} = \lim_{k \to 0} \frac{-2k}{k} = -2.$$
+
+**$f_y(x, 0)$.** $f(x, 0) = 0$ olduğundan $x \ne 0$ için
+
+$$f_y(x, 0) = \lim_{k \to 0} \frac{f(x, k)}{k} = \lim_{k \to 0} \frac{x(x^2 - 2k^2)}{x^2 + k^2} = x$$
+
+ve $f_y(0, 0) = 0$'dır.
+
+**$f_{yx}(0, 0)$.**
+
+$$f_{yx}(0, 0) = \lim_{h \to 0} \frac{f_y(h, 0) - f_y(0, 0)}{h} = \lim_{h \to 0} \frac{h}{h} = 1.$$
+
+**Yorum.** $f_{xy}(0, 0) = -2 \ne 1 = f_{yx}(0, 0)$'dır. Orijin dışında $f$ rasyonel olduğundan karışık türevler orada eşittir; demek ki ikinci türevler orijinde sürekli olamaz ve Clairaut teoreminin (@thm-yuk-clairaut) varsayımı bozulur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Türevlenebilirlik İncelemesi {#sec-ozt-turevlenebilirlik}
+
+"Bir noktada türevlenebilir mi?" sorusu kitabın en çok tekrar eden sorusudur. Tanım (@def-dif-turevlenebilme) tek bir aday lineer dönüşüm bırakır: $h \mapsto \langle \nabla f(a), h \rangle$ (@cor-dif-gradyan-olcutu). Kitaptaki dört adımlı reçete ([Türevlenebilme ve toplam diferansiyel](turevlenebilme-ve-toplam-diferansiyel.qmd)) şöyle özetlenir.
+
+::: {.callout-tip title="Dört adımda türevlenebilirlik"}
+1. **Süreklilik.** $f$, $a$'da sürekli değilse türevlenemez (@cor-dif-sureksiz); dur.
+2. **Kısmi türevler.** Tanımdan hesapla (@sec-ozt-kismi). Biri yoksa türevlenemez. Kısmi türevler $a$'nın bir komşuluğunda var ve $a$'da sürekliyse türevlenebilir (@thm-dif-yeter-kosul); dur.
+3. **Kalan oranı.** İki değişkende, $a = (0, 0)$ için
+   $$R(h, k) = \frac{f(h, k) - f(0, 0) - f_x(0, 0)\, h - f_y(0, 0)\, k}{\sqrt{h^2 + k^2}}$$
+   yazılır.
+4. **Limit.** $R \to 0$ ise (sıkıştırma ya da kutupsal sınır) türevlenebilir. Aksi hâlde, yani bir yol boyunca $R \not\to 0$ ise (limit yoksa ya da sıfırdan farklıysa), türevlenemez.
+:::
+
+Türevin bir başka habercisi yönlü türevlerdir: $f$ türevlenebilirse her yönde $D_u f(a) = \langle \nabla f(a), u \rangle$'dir (@thm-yon-gradyan). Yönlü türevler $u$'nun lineer bir fonksiyonu değilse $f$ türevlenemez. Kavramlar arasındaki bütün oklar ve karşı örnekler kitapta tablolaştırılmıştır (@tbl-yon-iliskiler, @tbl-dif-iliskiler). En çok kullanılan zincir şudur:
+
+$$
+\begin{aligned}
+C^1 &\Longrightarrow \text{türevlenebilir} \\[1mm]
+&\Longrightarrow \text{sürekli ve her yönde } D_u f \text{ var}.
+\end{aligned}
+$$
+
+Okların hiçbiri ters çevrilemez. Orijinde $0$ değerini alan standart örnekler:
+
+| $f(x, y)$ | Sürekli mi? | $\nabla f(0, 0)$ | Türevlenebilir mi? |
+|:--|:-:|:-:|:-:|
+| $\dfrac{xy}{x^2 + y^2}$ | hayır | $(0, 0)$ | hayır |
+| $\dfrac{xy}{\sqrt{x^2 + y^2}}$ | evet | $(0, 0)$ | hayır |
+| $\sqrt{\lvert xy \rvert}$ | evet | $(0, 0)$ | hayır |
+| $\dfrac{x^2 y^2}{x^2 + y^2}$ | evet | $(0, 0)$ | evet |
+| $(x^2 + y^2) \sin\dfrac{1}{x^2 + y^2}$ | evet | $(0, 0)$ | evet, ama $C^1$ değil |
+
+: Orijinde türevlenebilirlik için standart örnekler {#tbl-ozt-turev-ornekleri}
+
+Vektör değerli bir fonksiyonun türevlenebilirliği (Jacobi matrisiyle "matris temsili") bileşen bileşen incelenir (@thm-zin-bilesen); bileşenleri polinom olan bir fonksiyonun kısmi türevleri sürekli olduğundan her yerde türevlenebilirdir (@thm-zin-yeter-kosul).
+
+:::: {#exm-ozt-turevlenebilirlik name="Sürekli, Kısmi Türevli, Türevlenemez"}
+$$
+f(x, y) = \begin{cases} \dfrac{x y^2}{x^2 + y^2}, & (x, y) \ne (0, 0), \\[2mm] 0, & (x, y) = (0, 0) \end{cases}
+$$
+
+fonksiyonunun $(0, 0)$ noktasında türevlenebilir olup olmadığını araştırınız.
+
+::: {.cozum}
+**Süreklilik.** $\dfrac{y^2}{x^2 + y^2} \le 1$ olduğundan $\lvert f(x, y) \rvert \le \lvert x \rvert \le \lVert (x, y) \rVert$'dir; $f$ orijinde süreklidir. Bu adım bir karar vermez.
+
+**Kısmi türevler.** Eksenler üzerinde $f = 0$'dır:
+
+$$f_x(0, 0) = \lim_{h \to 0} \frac{f(h, 0)}{h} = 0, \qquad f_y(0, 0) = \lim_{k \to 0} \frac{f(0, k)}{k} = 0.$$
+
+**Kalan oranı.** Tek aday sıfır dönüşümdür ve
+
+$$R(h, k) = \frac{f(h, k)}{\sqrt{h^2 + k^2}} = \frac{h k^2}{(h^2 + k^2)^{3/2}}$$
+
+olur.
+
+**Limit.** $k = 0$ boyunca $R = 0$'dır. $k = h$, $h > 0$ boyunca
+
+$$R(h, h) = \frac{h^3}{(2h^2)^{3/2}} = \frac{h^3}{2\sqrt{2}\, h^3} = \frac{\sqrt{2}}{4}$$
+
+olur. İki yol farklı değer verdiğinden $R$'nin limiti yoktur; $f$, $(0, 0)$'da türevlenemez.
+
+**Yönlü türevlerle sağlama.** $u = (u_1, u_2)$ birim vektörse $\dfrac{f(tu)}{t} = \dfrac{u_1 u_2^2}{u_1^2 + u_2^2} = u_1 u_2^2$ olduğundan her yönde $D_u f(0, 0) = u_1 u_2^2$ vardır. Bu değer $\langle \nabla f(0, 0), u \rangle = 0$'a eşit değildir (örneğin $u = \frac{1}{\sqrt{2}}(1, 1)$ için $\frac{1}{2\sqrt{2}}$); @thm-yon-gradyan gereği $f$ türevlenemez. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Toplam Diferansiyel ve Yaklaşık Hesap {#sec-ozt-diferansiyel}
+
+Türevlenebilir bir fonksiyonun artışının lineer kısmı toplam diferansiyeldir (@def-dif-toplam-diferansiyel):
+
+$$df = f_x\, dx + f_y\, dy \quad \big( \text{üç değişkende } {}+ f_z\, dz \big).$$
+
+Yaklaşık hesapta $dx = h_1$, $dy = h_2$ artımları alınır ve doğrusallaştırma (@def-dif-dogrusallastirma) kullanılır:
+
+$$f(a + h) \approx f(a) + \langle \nabla f(a), h \rangle .$$
+
+::: {.callout-tip title="Üç adımda yaklaşık hesap"}
+1. **Fonksiyonu ve noktayı seç.** Hesaplanacak sayıyı bir $f(a + h)$ değeri olarak yaz; $a$, $f$'nin ve türevlerinin kolay hesaplandığı yakın bir nokta olsun.
+2. **Gradyanı hesapla.** $\nabla f(a)$ bulunur.
+3. **Topla.** $f(a) + f_x(a)\, h_1 + f_y(a)\, h_2$ hesaplanır. Bağıl hata soruluyorsa $\dfrac{df}{f}$ oranı kullanılır.
+:::
+
+:::: {#exm-ozt-yaklasik name="Bir Kökün Yaklaşık Değeri"}
+$\sqrt{3{,}02^2 + 3{,}97^2}$ sayısının yaklaşık değerini toplam diferansiyelle bulunuz.
+
+::: {.cozum}
+**Seçim.** $f(x, y) = \sqrt{x^2 + y^2}$, $a = (3, 4)$ ve $h = (0{,}02, \ -0{,}03)$ alalım; $f(a) = 5$'tir.
+
+**Gradyan.** $f_x = \dfrac{x}{\sqrt{x^2 + y^2}}$, $f_y = \dfrac{y}{\sqrt{x^2 + y^2}}$ olduğundan $\nabla f(3, 4) = \left( \dfrac{3}{5}, \dfrac{4}{5} \right)$'tir.
+
+**Toplam.**
+
+$$
+\begin{aligned}
+f(a + h) &\approx 5 + \frac{3}{5} \cdot 0{,}02 + \frac{4}{5} \cdot (-0{,}03) \\[1mm]
+&= 5 + 0{,}012 - 0{,}024 = 4{,}988 .
+\end{aligned}
+$$
+
+Gerçek değer $4{,}98812\ldots$'dir; yaklaşımın hatası yaklaşık $0{,}0001$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Jacobi Matrisi, Hessian ve Zincir Kuralı {#sec-ozt-zincir}
+
+Türev matrislerinin hepsi aynı kurala uyar: satırlar fonksiyonun bileşenlerine, sütunlar değişkenlere karşılık gelir (@def-zin-jacobi-matrisi, @def-tay-hessian, @tbl-tay-turev-matrisleri).
+
+| Nesne | Boyut | Girdiler |
+|:--|:-:|:--|
+| $\nabla f$, $f : \mathbb{R}^n \to \mathbb{R}$ | $1 \times n$ | $f_{x_1}, \dots, f_{x_n}$ |
+| $J_F$, $F : \mathbb{R}^n \to \mathbb{R}^m$ | $m \times n$ | $i$. satır $\nabla F_i$ |
+| $H_f$, $f : \mathbb{R}^n \to \mathbb{R}$ | $n \times n$ | $(i, j)$ girdisi $\dfrac{\partial^2 f}{\partial x_i\, \partial x_j} = f_{x_j x_i}$; $f \in C^2$ ise simetrik ve $H_f = J_{\nabla f}$ |
+| $\det J_F$ ($m = n$) | sayı | $\dfrac{\partial(F_1, \dots, F_n)}{\partial(x_1, \dots, x_n)}$ |
+
+: Türev matrisleri {#tbl-ozt-matrisler}
+
+Zincir kuralı matris diliyle tek satırdır (@thm-zin-zincir-kurali):
+
+$$J_{f \circ g}(a) = J_f\big( g(a) \big)\, J_g(a).$$
+
+Elle hesapta ağaç diyagramı daha hızlıdır: tepeden bağımsız değişkene inen her yol boyunca kısmi türevler çarpılır, yollar toplanır (@cor-zin-iki-ara-degisken). Sık kullanılan özel hâller:
+
+$$
+\begin{aligned}
+\frac{dz}{dt} &= f_x\, x'(t) + f_y\, y'(t), \\[1mm]
+z_r &= f_x \cos\theta + f_y \sin\theta, \\[1mm]
+z_\theta &= -f_x\, r\sin\theta + f_y\, r\cos\theta .
+\end{aligned}
+$$
+
+Birinci satır $z = f\big( x(t), y(t) \big)$ için, son iki satır $x = r\cos\theta$, $y = r\sin\theta$ kutupsal dönüşümü için geçerlidir.
+
+::: {.callout-warning title="Dış fonksiyonun türevi ara noktada hesaplanır"}
+$J_f$ matrisi $a$'da değil $g(a)$'da hesaplanır. Ağaç diyagramında da önce ara değişkenlerin noktadaki değerleri bulunur, sonra dış fonksiyonun türevleri bu değerlerde yazılır.
+:::
+
+:::: {#exm-ozt-zincir name="Ağaç Diyagramıyla Zincir Kuralı"}
+$z = u^2 v$, $u = x e^{y}$ ve $v = x + y$ olsun. $\dfrac{\partial z}{\partial x}$ ve $\dfrac{\partial z}{\partial y}$ kısmi türevlerini $(x, y) = (1, 0)$ noktasında bulunuz.
+
+::: {.cozum}
+**Ara değerler.** $(1, 0)$'da $u = 1 \cdot e^0 = 1$ ve $v = 1 + 0 = 1$'dir.
+
+**Dallar.** $z_u = 2uv = 2$, $z_v = u^2 = 1$; ayrıca $u_x = e^{y} = 1$, $u_y = x e^{y} = 1$, $v_x = v_y = 1$'dir.
+
+**Yollar.** $z$'den $x$'e iki yol iner ($u$ ve $v$ üzerinden):
+
+$$
+\begin{aligned}
+z_x &= z_u\, u_x + z_v\, v_x = 2 \cdot 1 + 1 \cdot 1 = 3, \\[1mm]
+z_y &= z_u\, u_y + z_v\, v_y = 2 \cdot 1 + 1 \cdot 1 = 3 .
+\end{aligned}
+$$
+
+**Matris biçimiyle sağlama.**
+
+$$J_z\big( u, v \big)\, J_{(u, v)}(1, 0) = \begin{pmatrix} 2 & 1 \end{pmatrix} \begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix} = \begin{pmatrix} 3 & 3 \end{pmatrix}.$$
+
+Doğrudan yerine koyarak da $z = x^2 e^{2y}(x + y)$ ve $z_x(1, 0) = 2 + 1 = 3$ bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Yönlü Türev, Gradyan ve En Hızlı Artış {#sec-ozt-yonlu}
+
+Yönlü türev, $f$'nin bir birim vektör doğrultusundaki değişim hızıdır (@def-yon-yonlu-turev). $f$ türevlenebilirse gradyanla hesaplanır (@thm-yon-gradyan); en hızlı artış ve azalış yönleri de gradyandan okunur (@thm-yon-en-hizli-artis).
+
+| İstenen | Formül |
+|:--|:--|
+| $v$ yönünde yönlü türev | $D_u f(a) = \langle \nabla f(a), u \rangle$, $u = \dfrac{v}{\lVert v \rVert}$ |
+| $P$'den $Q$'ya doğru yönlü türev | $v = Q - P$ alınır |
+| En hızlı artış yönü ve hızı ($\nabla f(a) \ne 0$) | $\dfrac{\nabla f(a)}{\lVert \nabla f(a) \rVert}$, hız $\lVert \nabla f(a) \rVert$ |
+| En hızlı azalış yönü ve hızı ($\nabla f(a) \ne 0$) | $-\dfrac{\nabla f(a)}{\lVert \nabla f(a) \rVert}$, hız $-\lVert \nabla f(a) \rVert$ |
+| Değişimin sıfır olduğu yönler | $\langle \nabla f(a), u \rangle = 0$: seviye eğrisine teğet |
+| $f$ türevlenebilir değil | $D_u f(a) = \lim_{h \to 0} \frac{f(a + hu) - f(a)}{h}$ |
+
+: Yönlü türev formülleri {#tbl-ozt-yonlu}
+
+::: {.callout-warning title="Yön vektörünü birim yapmayı unutmak"}
+$\langle \nabla f(a), v \rangle$ sayısı ancak $\lVert v \rVert = 1$ ise yönlü türevdir. $v = (-2, 1, 2)$ gibi bir vektör verildiyse önce $\lVert v \rVert = 3$'e bölünür.
+:::
+
+:::: {#exm-ozt-yonlu name="Üç Değişkenli Fonksiyonda Yönlü Türev"}
+$f(x, y, z) = x^2 y + y z^3$ fonksiyonunun $P = (1, -1, 2)$ noktasında $v = (2, -1, 2)$ yönündeki yönlü türevini bulunuz. $f$ bu noktada hangi yönde en hızlı artar ve bu hız nedir?
+
+::: {.cozum}
+**Gradyan.** $f$ bir polinom olduğundan her yerde türevlenebilirdir.
+
+$$\nabla f = \big( 2xy, \ x^2 + z^3, \ 3yz^2 \big)$$
+
+ve $P$'de
+
+$$\nabla f(P) = \big( -2, \ 1 + 8, \ -12 \big) = (-2, \ 9, \ -12)$$
+
+olur.
+
+**Birim vektör.** $\lVert v \rVert = \sqrt{4 + 1 + 4} = 3$ olduğundan $u = \left( \dfrac{2}{3}, -\dfrac{1}{3}, \dfrac{2}{3} \right)$'tür.
+
+**Yönlü türev.**
+
+$$D_u f(P) = \frac{(-2) \cdot 2 + 9 \cdot (-1) + (-12) \cdot 2}{3} = \frac{-37}{3}.$$
+
+**En hızlı artış.** $f$ en hızlı $\nabla f(P)$ yönünde, yani $\dfrac{1}{\sqrt{229}}(-2, 9, -12)$ birim vektörü yönünde artar. Bu yöndeki hız
+
+$$\lVert \nabla f(P) \rVert = \sqrt{4 + 81 + 144} = \sqrt{229}$$
+
+olur (@thm-yon-en-hizli-artis). [$\blacksquare$]{.qed}
+:::
+::::
+
+## Teğet Düzlem ve Normal Doğru {#sec-ozt-teget}
+
+Teğet düzlem sorularında yüzeyin nasıl verildiği yöntemi belirler: bir grafik olarak $z = f(x, y)$ ya da bir seviye yüzeyi olarak $F(x, y, z) = 0$.
+
+| Yüzey | Normal vektör | Teğet düzlem |
+|:--|:--|:--|
+| $z = f(x, y)$, $P = \big( a, b, f(a, b) \big)$ | $\big( f_x, f_y, -1 \big)$ | $z = f(a, b) + f_x\,(x - a) + f_y\,(y - b)$ |
+| $F(x, y, z) = 0$, $P$ yüzeyde, $F \in C^1$, $\nabla F(P) \ne 0$ | $\nabla F(P)$ | $\langle \nabla F(P), X - P \rangle = 0$ |
+| Düzlemde $F(x, y) = 0$ eğrisi, $F \in C^1$, $\nabla F(P) \ne 0$ | $\nabla F(P)$ | teğet doğru: $F_x\,(x - x_0) + F_y\,(y - y_0) = 0$ |
+
+: Teğet düzlem ve normal {#tbl-ozt-teget}
+
+Tablodaki türevler $(a, b)$'de ya da $P$'de hesaplanır. Normal doğru, $P$'den geçen ve normal vektöre paralel doğrudur: $X = P + t\, n$, $t \in \mathbb{R}$ (@def-dif-teget-duzlem, @def-dif-normal-dogru, @cor-kap-uc-degisken). Grafik $z = f(x, y)$ aynı zamanda $F(x, y, z) = f(x, y) - z = 0$ seviye yüzeyidir; iki satır bu yüzden aynı düzlemi verir.
+
+:::: {#exm-ozt-teget name="Küre Kapağına Teğet Düzlem"}
+$f(x, y) = \sqrt{21 - x^2 - y^2}$ grafiğinin $P = \big( 2, -4, f(2, -4) \big)$ noktasındaki teğet düzlemini ve normal doğrusunu bulunuz.
+
+::: {.cozum}
+**Nokta.** $f(2, -4) = \sqrt{21 - 4 - 16} = 1$; $P = (2, -4, 1)$'dir.
+
+**Gradyan.** $f_x = -\dfrac{x}{\sqrt{21 - x^2 - y^2}}$, $f_y = -\dfrac{y}{\sqrt{21 - x^2 - y^2}}$ olduğundan $\nabla f(2, -4) = (-2, \ 4)$'tür.
+
+**Teğet düzlem.**
+
+$$z = 1 - 2(x - 2) + 4(y + 4), \quad \text{yani} \quad 2x - 4y + z = 21 .$$
+
+**Normal doğru.** Normal vektör $(f_x, f_y, -1) = (-2, 4, -1)$'dir:
+
+$$(x, y, z) = (2, -4, 1) + t\,(-2, \ 4, \ -1), \qquad t \in \mathbb{R}.$$
+
+**Sağlama.** Grafik, $F = x^2 + y^2 + z^2 - 21 = 0$ küresinin üst yarısıdır. $\nabla F(P) = (4, -8, 2)$ vektörü $(-2, 4, -1)$'in $-2$ katıdır, yani aynı doğrultudadır ve $\langle \nabla F(P), X - P \rangle = 0$ denklemi yine $2x - 4y + z = 21$ verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Taylor Formülü {#sec-ozt-taylor}
+
+Taylor formülü, $f$'yi $a$ civarında $x - a$'nın kuvvetleriyle yazar; son terim kalandır ve bir ara noktada hesaplanır (@thm-tay-taylor, @def-tay-taylor-polinomu). İki değişkende $h_1 = x - x_0$, $h_2 = y - y_0$ ile diferansiyeller binom katsayılarıyla açılır (@prp-tay-binom):
+
+$$
+\begin{aligned}
+df &= f_x\, h_1 + f_y\, h_2, \\[1mm]
+d^2 f &= f_{xx}\, h_1^2 + 2 f_{xy}\, h_1 h_2 + f_{yy}\, h_2^2, \\[1mm]
+d^3 f &= f_{xxx}\, h_1^3 + 3 f_{xxy}\, h_1^2 h_2 \\
+&\quad + 3 f_{xyy}\, h_1 h_2^2 + f_{yyy}\, h_2^3 .
+\end{aligned}
+$$
+
+Uygulamada en sık istenen biçim, ikinci mertebeye kadar terimler ve üçüncü mertebeden kalandır. $f \in C^3$ ve $(x, y)$, $(x_0, y_0)$ merkezli ve tanım kümesinde kalan bir yuvarın içindeyse, bu yuvarda bir $(c_1, c_2)$ noktası için (@cor-tay-iki-degisken):
+
+$$
+\begin{aligned}
+f(x, y) = {} &f(x_0, y_0) + df(x_0, y_0) + \tfrac{1}{2}\, d^2 f(x_0, y_0) \\[1mm]
+&+ \tfrac{1}{6}\, d^3 f(c_1, c_2).
+\end{aligned}
+$$
+
+İlk üç terim türevlerin $(x_0, y_0)$'daki değerleriyle, kalan ise iki noktayı birleştiren doğru parçası üzerindeki bir $(c_1, c_2)$ noktasında yazılır. Soru "üç terime kadar kalanlı" ya da "ikinci mertebeye kadar kalanlı" diyorsa istenen budur. Matris diliyle ilk üç terim
+
+$$T_2 = f(a) + \langle \nabla f(a), h \rangle + \tfrac{1}{2}\, h^{T} H_f(a)\, h$$
+
+olur (@cor-tay-ikinci-mertebe). Üç değişkende ikinci diferansiyel altı türev içerir:
+
+$$
+\begin{aligned}
+d^2 f = {} &f_{xx}\, h_1^2 + f_{yy}\, h_2^2 + f_{zz}\, h_3^2 \\[1mm]
+&+ 2\big( f_{xy}\, h_1 h_2 + f_{xz}\, h_1 h_3 + f_{yz}\, h_2 h_3 \big).
+\end{aligned}
+$$
+
+En kısa ezber kalıbı operatör yazımıdır (@prp-tay-operator-iki): $h \cdot \nabla = h_1 \partial_x + h_2 \partial_y$ (üç değişkende $+\, h_3 \partial_z$) operatörünün kuvvetleri binom ya da çok terimli açılımla açılır ve türevler noktada hesaplanır:
+
+$$T_k = \sum_{j=0}^{k} \frac{1}{j!}\, (h \cdot \nabla)^j f(a) = \sum_{|\alpha| \le k} \frac{\partial^\alpha f(a)}{\alpha!}\, h^\alpha .$$
+
+İkinci eşitlik (@prp-tay-coklu-indis) hesapta en pratik olanıdır: $x$'e göre $p$, $y$'ye göre $q$, $z$'ye göre $r$ kez türev alınan terim $\dfrac{1}{p!\, q!\, r!}$ ile çarpılır. Üçüncü mertebede üç değişkenli $f_{xyz}$ teriminin açılımdaki katsayısı $3! = 6$'dır ve $\dfrac{1}{3!}$ ile sadeleşip $1$ olur.
+
+::: {.callout-tip title="Dört adımda kalanlı Taylor formülü"}
+1. **Artımları yaz.** $h_1 = x - x_0$, $h_2 = y - y_0$.
+2. **Türevleri hesapla.** $k$. mertebeye kadar bütün kısmi türevler bulunur; $C^k$ fonksiyonda karışık türevlerden her gruptan yalnız biri yeter. $(k - 1)$. mertebeye kadar olanlar noktada, $k$. mertebedekiler genel noktada bırakılır.
+3. **Diferansiyelleri kur.** Binom katsayılarıyla $df$, $d^2 f$, … yazılır.
+4. **Birleştir.** $\frac{1}{j!}$ katsayılarıyla toplanır; kalan $c = a + \theta(x - a)$, $0 < \theta < 1$ noktasında yazılır.
+:::
+
+Polinomlarda formül kesindir: derecesi $m$ olan bir polinomun $m$. mertebeden sonraki türevleri sıfır olduğundan kalan sıfırdır ve Taylor açılımı, polinomu $(x - x_0)$ ile $(y - y_0)$'ın kuvvetlerine göre yeniden yazmaktan ibarettir.
+
+:::: {#exm-ozt-taylor name="İkinci Mertebeye Kadar Kalanlı Taylor Formülü"}
+$f(x, y) = e^{xy} + x^2 y$ fonksiyonunun $(0, 1)$ noktası civarında ikinci mertebeden terimlere kadar kalanlı Taylor formülünü yazınız.
+
+::: {.cozum}
+**Artımlar.** $h_1 = x - 0 = x$ ve $h_2 = y - 1$'dir. $f \in C^\infty(\mathbb{R}^2)$ olduğundan formül her $(x, y)$ için geçerlidir.
+
+**Noktadaki türevler.** $f(0, 1) = 1$'dir ve
+
+$$
+\begin{aligned}
+f_x &= y e^{xy} + 2xy, & f_x(0, 1) &= 1, \\[1mm]
+f_y &= x e^{xy} + x^2, & f_y(0, 1) &= 0, \\[1mm]
+f_{xx} &= y^2 e^{xy} + 2y, & f_{xx}(0, 1) &= 3, \\[1mm]
+f_{xy} &= (1 + xy)\, e^{xy} + 2x, & f_{xy}(0, 1) &= 1, \\[1mm]
+f_{yy} &= x^2 e^{xy}, & f_{yy}(0, 1) &= 0 .
+\end{aligned}
+$$
+
+**Üçüncü türevler (genel noktada).**
+
+$$
+\begin{aligned}
+f_{xxx} &= y^3 e^{xy}, \\[1mm]
+f_{xxy} &= (2y + x y^2)\, e^{xy} + 2, \\[1mm]
+f_{xyy} &= (2x + x^2 y)\, e^{xy}, \\[1mm]
+f_{yyy} &= x^3 e^{xy}.
+\end{aligned}
+$$
+
+**Birleştirme.** $df(0, 1) = x$ ve $d^2 f(0, 1) = 3x^2 + 2x(y - 1)$ olduğundan
+
+$$f(x, y) = 1 + x + \frac{3}{2}x^2 + x(y - 1) + R_2$$
+
+bulunur. Kalan terim, $(c_1, c_2)$ noktası $(0, 1)$ ile $(x, y)$'yi birleştiren doğru parçası üzerinde olmak üzere
+
+$$
+\begin{aligned}
+R_2 = \frac{1}{6} \Big[ &f_{xxx}\, x^3 + 3 f_{xxy}\, x^2 (y - 1) \\
+&+ 3 f_{xyy}\, x (y - 1)^2 + f_{yyy}\, (y - 1)^3 \Big]
+\end{aligned}
+$$
+
+olur; köşeli parantezdeki türevler $(c_1, c_2)$'de hesaplanır.
+
+**Sayısal sağlama.** $(0{,}1, \ 1{,}1)$ noktasında polinom $1 + 0{,}1 + 0{,}015 + 0{,}01 = 1{,}125$, gerçek değer ise $e^{0{,}11} + 0{,}011 \approx 1{,}1273$'tür; aradaki fark $R_2 \approx 0{,}0023$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Kritik Noktaları Sınıflandırmak {#sec-ozt-yerel}
+
+Yerel ekstremum sorusu iki aşamalıdır: önce aday noktalar ($\nabla f = 0$ olan durgun noktalar ve kısmi türevin olmadığı noktalar) bulunur (@thm-eks-gerek-kosul, @def-eks-kritik-nokta), sonra Hessian matrisiyle sınıflandırılır (@thm-eks-ikinci-turev-testi).
+
+::: {.callout-tip title="Dört adımda kritik noktaların sınıflandırılması"}
+1. **Kritik noktalar.** $\nabla f = 0$ sistemini çöz. Bir denklem çarpanlara ayrılıyorsa ($2x(1 - y) = 0$ gibi) her çarpanı ayrı bir durum olarak incele; bölme yapmadan önce bölenin sıfır olduğu durumu ayır. Kısmi türevin olmadığı noktaları da listeye ekle.
+2. **Hessian.** İkinci türevlerle $H_f$'yi genel noktada yaz.
+3. **Test.** Test yalnız $\nabla f(a) = 0$ olan durgun noktalarda ve $f$, $a$'nın bir komşuluğunda $C^2$ iken uygulanır. İki değişkende $D = f_{xx} f_{yy} - f_{xy}^2$ ve $f_{xx}$'in, üç değişkende $D_1, D_2, D_3$ asal alt determinantlarının işaretine bak. Kısmi türevin olmadığı kritik noktalarda $f(x) - f(a)$ farkının işaretine doğrudan bakılır.
+4. **Karar ve değer.** Tablolardan sonucu oku; ekstremum değerini $f$'de yerine koyarak bul. Test susarsa fonksiyonun kendisine dön.
+:::
+
+| Durgun noktada | Sonuç |
+|:--|:--|
+| $D > 0$ ve $f_{xx} > 0$ | kesin yerel minimum |
+| $D > 0$ ve $f_{xx} < 0$ | kesin yerel maksimum |
+| $D < 0$ | eyer noktası |
+| $D = 0$ | test sonuç vermez |
+
+: İki değişkende ikinci türev testi {#tbl-ozt-iki-degisken}
+
+Tablo, iki değişkenli testin (@cor-eks-iki-degisken) özetidir; $D$, Hessian matrisinin determinantıdır. $n$ değişkende Sylvester ölçütü kullanılır (@thm-eks-sylvester); $D_k$, $H_f$'nin sol üst köşesindeki $k \times k$ alt matrisin determinantıdır.
+
+| Asal alt determinantlar | Hessian | Sonuç |
+|:--|:--|:--|
+| $D_1 > 0$, $D_2 > 0$, $D_3 > 0$, … (hepsi pozitif) | pozitif tanımlı | kesin yerel minimum |
+| $D_1 < 0$, $D_2 > 0$, $D_3 < 0$, … (işaret değişir) | negatif tanımlı | kesin yerel maksimum |
+| $D_n \ne 0$ ve iki düzen de yok | belirsiz | eyer noktası |
+| $D_n = 0$ | ölçüt karar vermez | forma ya da fonksiyona dön |
+
+: Sylvester ölçütüyle sınıflandırma {#tbl-ozt-sylvester}
+
+::: {.callout-warning title="Test sustuğunda karar vermek"}
+$D = 0$ (ya da $D_n = 0$) iken "ekstremum yoktur" demek yanlıştır; nokta minimum, maksimum ya da eyer olabilir (@def-eks-eyer-noktasi). Bu durumda $f(x) - f(a)$ farkının işaretine doğrudan bakılır: kareler toplamına ya da çarpanlara ayrılır, noktadan geçen doğrular ve eğriler ($y = mx$, $y = kx^2$) boyunca incelenir. İki yol boyunca zıt işaret görülürse eyer noktasıdır; bir komşulukta $f \ge f(a)$ gösterilirse minimumdur.
+:::
+
+:::: {#exm-ozt-yerel-iki name="İki Değişkende Kritik Noktalar"}
+$f(x, y) = x^2 + 2y^2 - x^2 y$ fonksiyonunun kritik noktalarını bulup sınıflandırınız.
+
+::: {.cozum}
+**Kritik noktalar.** $f$ bir polinomdur; kısmi türevleri her yerde vardır.
+
+$$
+\begin{aligned}
+f_x &= 2x - 2xy = 2x(1 - y) = 0, \\[1mm]
+f_y &= 4y - x^2 = 0 .
+\end{aligned}
+$$
+
+Birinci denklemden $x = 0$ ya da $y = 1$'dir. $x = 0$ ise ikinciden $y = 0$ bulunur. $y = 1$ ise $x^2 = 4$, yani $x = \pm 2$'dir. Kritik noktalar $(0, 0)$, $(2, 1)$ ve $(-2, 1)$'dir.
+
+**Hessian.** $f_{xx} = 2 - 2y$, $f_{xy} = -2x$, $f_{yy} = 4$:
+
+$$H_f(x, y) = \begin{pmatrix} 2 - 2y & -2x \\ -2x & 4 \end{pmatrix}.$$
+
+**Test.**
+
+| Nokta | $f_{xx}$ | $D$ | Sonuç | $f$ |
+|:-:|:-:|:-:|:-:|:-:|
+| $(0, 0)$ | $2$ | $2 \cdot 4 - 0 = 8$ | kesin yerel minimum | $0$ |
+| $(2, 1)$ | $0$ | $0 \cdot 4 - 16 = -16$ | eyer noktası | $2$ |
+| $(-2, 1)$ | $0$ | $0 \cdot 4 - 16 = -16$ | eyer noktası | $2$ |
+
+: Kritik noktaların sınıflandırması {#tbl-ozt-yerel-iki}
+
+$(\pm 2, 1)$ noktalarında $f_{xx} = 0$ olması önemli değildir: $D < 0$ olduğu anda nokta eyerdir. Yerel minimum değeri $f(0, 0) = 0$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-yerel-uc name="Üç Değişkende Sylvester Ölçütü"}
+$f(x, y, z) = x^3 - 3x + y^2 + z^2 + yz$ fonksiyonunun kritik noktalarını bulup sınıflandırınız.
+
+::: {.cozum}
+**Kritik noktalar.**
+
+$$
+\begin{aligned}
+f_x &= 3x^2 - 3 = 0, \\[1mm]
+f_y &= 2y + z = 0, \\[1mm]
+f_z &= 2z + y = 0 .
+\end{aligned}
+$$
+
+Birinciden $x = \pm 1$'dir. Son iki denklemden $z = -2y$ ve $-4y + y = 0$, yani $y = z = 0$ bulunur. Kritik noktalar $(1, 0, 0)$ ve $(-1, 0, 0)$'dır.
+
+**Hessian.**
+
+$$H_f(x, y, z) = \begin{pmatrix} 6x & 0 & 0 \\ 0 & 2 & 1 \\ 0 & 1 & 2 \end{pmatrix}, \qquad D_1 = 6x, \quad D_2 = 12x, \quad D_3 = 18x .$$
+
+Burada $D_2 = 6x \cdot 2 - 0 = 12x$ ve $D_3 = 6x\,(2 \cdot 2 - 1 \cdot 1) = 18x$'tir.
+
+**$(1, 0, 0)$.** $D_1 = 6$, $D_2 = 12$, $D_3 = 18$; hepsi pozitiftir. Kesin yerel minimumdur ve $f(1, 0, 0) = 1 - 3 = -2$'dir.
+
+**$(-1, 0, 0)$.** $D_1 = -6$, $D_2 = -12$, $D_3 = -18$. $D_3 \ne 0$'dır ama $D_2 < 0$ olduğundan ne $(+, +, +)$ ne de $(-, +, -)$ düzeni vardır. Sylvester ölçütü gereği Hessian belirsizdir ve nokta bir eyer noktasıdır; $f(-1, 0, 0) = -1 + 3 = 2$'dir (@thm-eks-sylvester). [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-peano name="Her Doğru Boyunca Minimum, Yine de Eyer"}
+$f(x, y) = 3x^4 - 4x^2 y + y^2$ fonksiyonu için ikinci türev testinin $(0, 0)$'da sonuç vermediğini gösteriniz ve noktanın türünü belirleyiniz.
+
+::: {.cozum}
+**Test.** $\nabla f = (12x^3 - 8xy, \ -4x^2 + 2y)$ orijinde sıfırdır. $f_{xx} = 36x^2 - 8y$, $f_{xy} = -8x$, $f_{yy} = 2$ olduğundan
+
+$$H_f(0, 0) = \begin{pmatrix} 0 & 0 \\ 0 & 2 \end{pmatrix}, \qquad D = 0$$
+
+bulunur; test susar.
+
+**Doğrular boyunca.** $y = mx$ boyunca $f = m^2 x^2 - 4m x^3 + 3x^4$'tür; $m \ne 0$ ise küçük $x \ne 0$ için $m^2 x^2$ terimi baskındır ve $f > 0$ olur. $m = 0$ için $f = 3x^4 > 0$, $x = 0$ doğrusunda $f = y^2 > 0$'dır. Her doğru boyunca orijin bir minimumdur.
+
+**Parabol boyunca.** Fonksiyon çarpanlarına ayrılır: $f = (y - x^2)(y - 3x^2)$. İki parabolün arasında, örneğin $y = 2x^2$ üzerinde
+
+$$f(x, 2x^2) = (x^2)(-x^2) = -x^4 < 0 \quad (x \ne 0)$$
+
+olur. Orijinin her yuvarında $f < 0 = f(0, 0)$ olan noktalar ($y = 2x^2$ üzerinde) ve $f > 0$ olan noktalar ($y = 0$ üzerinde) vardır. $(0, 0)$ bir eyer noktasıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Kapalı ve Sınırlı Bölgede Mutlak Ekstremum {#sec-ozt-mutlak}
+
+Kompakt bir bölgede sürekli bir fonksiyon en büyük ve en küçük değerini mutlaka alır; bu değerler ya bir iç kritik noktada ya da sınırdadır (@prp-lag-mutlak-ekstremum-yeri). Bu yüzden aday listesi eksiksiz kurulup değerler karşılaştırılır.
+
+::: {.callout-tip title="Üç adımda mutlak ekstremum"}
+1. **İç kritik noktalar.** Bölgenin içinde $\nabla f = 0$ olan ve kısmi türevin olmadığı noktalar bulunur. Bölge dışına düşenler atılır.
+2. **Sınır.** Sınır parçalara ayrılır ve her parça tek değişkenle yazılır; $f$ o parçada tek değişkenli bir fonksiyona dönüşür. Onun kapalı aralıktaki kritik noktaları ve aralığın uçları (köşeler) listeye girer. Sınır bir $g = 0$ eğrisiyse Lagrange yöntemi de kullanılabilir (@sec-ozt-lagrange).
+3. **Karşılaştırma.** Listedeki değerlerin en büyüğü mutlak maksimum, en küçüğü mutlak minimumdur.
+:::
+
+| Sınır | Tek değişkenli yazım |
+|:--|:--|
+| $x^2 + y^2 = R^2$ | $x = R\cos t$, $y = R\sin t$; ya da $y^2 = R^2 - x^2$, $x \in [-R, R]$ |
+| $\frac{x^2}{a^2} + \frac{y^2}{b^2} = 1$ | $x = a\cos t$, $y = b\sin t$, $t \in [0, 2\pi]$ |
+| Doğru parçası | $y = mx + n$, $x \in [x_1, x_2]$; ya da bir değişken sabit |
+| Çokgen | her kenar ayrı doğru parçası; köşeler ayrıca listeye |
+
+: Sınır parçalarının tek değişkenle yazılışı {#tbl-ozt-sinir}
+
+::: {.callout-warning title="Yerine koyarken aralığı unutmak"}
+Çember üzerinde $y^2 = R^2 - x^2$ yazınca $x$ yalnız $[-R, R]$ aralığında değişir. Bu aralığın dışına düşen kritik noktalar atılır, aralığın uçları ise mutlaka listeye eklenir.
+:::
+
+:::: {#exm-ozt-mutlak name="Diskte En Büyük ve En Küçük Değer"}
+$f(x, y) = x^2 + 2y^2 - 2x$ fonksiyonunun $x^2 + y^2 \le 4$ kapalı diski üzerindeki mutlak maksimum ve minimum değerlerini bulunuz.
+
+::: {.cozum}
+Disk kapalı ve sınırlı, $f$ sürekli olduğundan iki değer de vardır.
+
+**İç kritik nokta.** $f_x = 2x - 2 = 0$ ve $f_y = 4y = 0$ sistemi $(1, 0)$ noktasını verir; $1^2 + 0^2 < 4$ olduğundan disktedir ve $f(1, 0) = -1$'dir.
+
+**Sınır.** Çember üzerinde $y^2 = 4 - x^2$, $x \in [-2, 2]$'dir:
+
+$$g(x) = x^2 + 2(4 - x^2) - 2x = -x^2 - 2x + 8 .$$
+
+$g'(x) = -2x - 2 = 0$ ise $x = -1$, $y = \pm\sqrt{3}$ ve $g(-1) = 9$'dur. Aralığın uçlarında $g(2) = 0$ (nokta $(2, 0)$) ve $g(-2) = 8$ (nokta $(-2, 0)$) bulunur.
+
+**Karşılaştırma.**
+
+| Aday | $(1, 0)$ | $(-1, \pm\sqrt{3})$ | $(2, 0)$ | $(-2, 0)$ |
+|:--|:-:|:-:|:-:|:-:|
+| $f$ | $-1$ | $9$ | $0$ | $8$ |
+
+: Mutlak ekstremum adayları {#tbl-ozt-mutlak}
+
+Mutlak maksimum $9$'dur ve $(-1, \pm\sqrt{3})$ noktalarında alınır; mutlak minimum $-1$'dir ve $(1, 0)$'da alınır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Lagrange Çarpanları {#sec-ozt-lagrange}
+
+Kısıt altında ekstremum sorusunda kısıtı çözmeye uğraşmak yerine Lagrange sistemi kurulur (@thm-lag-lagrange, @def-lag-lagrange-fonksiyonu). Bir ve iki kısıt için sistemler şöyledir (@thm-lag-cok-kisit):
+
+$$
+\begin{aligned}
+&\nabla f + \lambda \nabla g = 0, \quad g = 0; \\[1mm]
+&\nabla f + \lambda \nabla g_1 + \mu \nabla g_2 = 0, \quad g_1 = g_2 = 0 .
+\end{aligned}
+$$
+
+Bilinmeyen sayısı denklem sayısına eşittir: $n$ değişken ve $k$ kısıt için $n + k$ denklem.
+
+::: {.callout-tip title="Dört adımda Lagrange yöntemi"}
+1. **Kısıtı düzenle.** Kısıtı $g = 0$ biçiminde yaz. Kısıt üzerinde $\nabla g = 0$ (iki kısıtta $\nabla g_1$, $\nabla g_2$ doğrusal bağımlı) olan noktalar varsa aday listesine ayrıca ekle.
+2. **Sistemi çöz.** $\lambda$'yı yok etmek için denklemleri birbirine oranla ya da uygun değişkenlerle çarpıp çıkar. Bir ifadeye bölmeden önce o ifadenin sıfır olduğu durumu ayrı incele.
+3. **Değerleri hesapla.** $f$'yi bütün adaylarda hesapla.
+4. **Karar.** Kısıt kümesi kompaktsa (kapalı ve sınırlı) en büyük değer maksimum, en küçük değer minimumdur. Kompakt değilse karşılaştırma tek başına yetmez.
+:::
+
+Amaç fonksiyonunu sadeleştirmek işi kısaltır: uzaklık yerine uzaklığın karesi, $\sqrt{u}$ yerine $u$ en iyilenir; bu dönüşümler artan olduğundan ekstremum noktalarını değiştirmez.
+
+:::: {#exm-ozt-lagrange-bir name="Elips Üzerinde Bir Çarpımın Ekstremumları"}
+$f(x, y) = xy$ fonksiyonunun $x^2 + 4y^2 = 8$ elipsi üzerindeki en büyük ve en küçük değerlerini bulunuz.
+
+::: {.cozum}
+**Kısıt.** $g(x, y) = x^2 + 4y^2 - 8$ alalım. $\nabla g = (2x, 8y)$ yalnız orijinde sıfırdır, orijin de elips üzerinde değildir.
+
+**Sistem.**
+
+$$
+\begin{aligned}
+y + 2\lambda x &= 0, \\[1mm]
+x + 8\lambda y &= 0, \\[1mm]
+x^2 + 4y^2 &= 8 .
+\end{aligned}
+$$
+
+Birinciden $y = -2\lambda x$; ikinciye koyarsak $x(1 - 16\lambda^2) = 0$ bulunur. $x = 0$ ise $y = 0$ olur ve kısıt sağlanmaz. Demek ki $\lambda = \pm \frac{1}{4}$'tür.
+
+- $\lambda = -\frac{1}{4}$: $y = \frac{x}{2}$, kısıttan $2x^2 = 8$, $x = \pm 2$. Adaylar $(2, 1)$ ve $(-2, -1)$; $f = 2$.
+- $\lambda = \frac{1}{4}$: $y = -\frac{x}{2}$, yine $x = \pm 2$. Adaylar $(2, -1)$ ve $(-2, 1)$; $f = -2$.
+
+**Karar.** Elips kapalı ve sınırlıdır, dolayısıyla kompakttır; $f$ sürekli olduğundan iki değer de alınır. En büyük değer $2$ (noktalar $(2, 1)$ ve $(-2, -1)$), en küçük değer $-2$'dir (noktalar $(2, -1)$ ve $(-2, 1)$). [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-lagrange-iki name="İki Kısıtlı Lagrange Problemi"}
+$f(x, y, z) = x + y + z$ fonksiyonunun $x^2 + y^2 = 2$ ve $x + z = 1$ kısıtları altındaki en büyük ve en küçük değerlerini bulunuz.
+
+::: {.cozum}
+**Kısıtlar.** $g_1 = x^2 + y^2 - 2$, $g_2 = x + z - 1$. $\nabla g_1 = (2x, 2y, 0)$ ve $\nabla g_2 = (1, 0, 1)$ ancak $x = y = 0$ iken doğrusal bağımlıdır; bu nokta birinci kısıtı sağlamaz.
+
+**Sistem.** $\nabla f + \lambda \nabla g_1 + \mu \nabla g_2 = 0$ bileşen bileşen
+
+$$
+\begin{aligned}
+1 + 2\lambda x + \mu &= 0, \\[1mm]
+1 + 2\lambda y &= 0, \\[1mm]
+1 + \mu &= 0
+\end{aligned}
+$$
+
+verir. Üçüncüden $\mu = -1$, birinciden $2\lambda x = 0$ bulunur. İkinci denklem $\lambda \ne 0$ olmasını gerektirir; o hâlde $x = 0$'dır. Kısıtlardan $y^2 = 2$, yani $y = \pm\sqrt{2}$ ve $z = 1 - x = 1$'dir.
+
+**Değerler.** $f(0, \sqrt{2}, 1) = 1 + \sqrt{2}$ ve $f(0, -\sqrt{2}, 1) = 1 - \sqrt{2}$'dir.
+
+**Karar.** Kısıt kümesi, bir silindirle bir düzlemin kesişimi olan bir elipstir; kapalı ve sınırlıdır. En büyük değer $1 + \sqrt{2}$, en küçük değer $1 - \sqrt{2}$'dir. Sağlama: kısıt üzerinde $f = x + y + (1 - x) = 1 + y$ ve $\lvert y \rvert \le \sqrt{2}$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Kapalı Fonksiyonlar, Ters Fonksiyon ve Jacobi Determinantı {#sec-ozt-kapali}
+
+Kapalı fonksiyon sorularında denklem çözülmez; türevler, denklemin kısmi türevlerinin oranından okunur. Her satırda $F$ (ya da $F$ ve $G$) $C^1$ sınıfındadır ve denklem incelenen noktada sağlanır; her formülün paydası, teoremin "sıfırdan farklı" koşuludur.
+
+| Denklem | Bilinmeyen | Türev | Koşul |
+|:--|:--|:--|:--|
+| $F(x, y) = 0$ | $y = \varphi(x)$ | $y' = -\dfrac{F_x}{F_y}$ | $F_y \ne 0$ (@thm-kap-iki-degisken) |
+| $F(x, y, z) = 0$ | $z = \varphi(x, y)$ | $z_x = -\dfrac{F_x}{F_z}$, $z_y = -\dfrac{F_y}{F_z}$ | $F_z \ne 0$ (@cor-kap-uc-degisken) |
+| $F = G = 0$ | $u, v$ (değişkenler $x, y$) | Jacobi oranları (aşağıda) | $J = \dfrac{\partial(F, G)}{\partial(u, v)} \ne 0$ (@thm-kap-iki-denklem) |
+| $u = u(x, y)$, $v = v(x, y)$ | $x, y$ (ters fonksiyon) | $J_{F^{-1}}(F(a)) = (J_F(a))^{-1}$ | $\det J_F \ne 0$ (@thm-kap-ters-fonksiyon) |
+
+: Kapalı ve ters fonksiyonların türevleri {#tbl-ozt-kapali}
+
+İki denklemli sistemde payda hep $J$'dir; pay olan determinantta $J$'nin ilgili sütunu, türevi alınan değişkenin sütunuyla değiştirilir ve önüne eksi işareti konur:
+
+$$
+\begin{aligned}
+u_x &= -\frac{1}{J}\, \frac{\partial(F, G)}{\partial(x, v)}, & u_y &= -\frac{1}{J}\, \frac{\partial(F, G)}{\partial(y, v)}, \\[1mm]
+v_x &= -\frac{1}{J}\, \frac{\partial(F, G)}{\partial(u, x)}, & v_y &= -\frac{1}{J}\, \frac{\partial(F, G)}{\partial(u, y)} .
+\end{aligned}
+$$
+
+İki değişkenli ters fonksiyonda $J = \dfrac{\partial(u, v)}{\partial(x, y)} = u_x v_y - u_y v_x$ (@def-zin-jacobi-determinanti) ile
+
+$$x_u = \frac{v_y}{J}, \quad x_v = -\frac{u_y}{J}, \quad y_u = -\frac{v_x}{J}, \quad y_v = \frac{u_x}{J}$$
+
+ve $\dfrac{\partial(x, y)}{\partial(u, v)} = \dfrac{1}{J}$'dir. Örneğin kutupsal dönüşümde $\dfrac{\partial(x, y)}{\partial(r, \theta)} = r$'dir; dönüşüm $r > 0$ olan her noktada yerel olarak terslenebilir. Kapalı yüzeyin teğet düzlemi için @sec-ozt-teget, sistem çözümünün reçetesi için [Ters ve kapalı fonksiyon teoremleri](ters-ve-kapali-fonksiyon-teoremleri.qmd) bölümüne bakılabilir.
+
+:::: {#exm-ozt-kapali name="Kapalı Tanımlı Bir Yüzeyin Kısmi Türevleri"}
+$x^2 z + y z^3 + xy = 3$ denklemi $(1, 1, 1)$ noktası civarında $z$'yi $x$ ve $y$'nin türevlenebilir bir fonksiyonu olarak tanımlar mı? Tanımlıyorsa $z_x(1, 1)$ ve $z_y(1, 1)$'i bulunuz.
+
+::: {.cozum}
+**Denklem.** $F(x, y, z) = x^2 z + y z^3 + xy - 3$ bir polinomdur, dolayısıyla $C^1$'dir ve $F(1, 1, 1) = 1 + 1 + 1 - 3 = 0$'dır.
+
+**Kısmi türevler.**
+
+$$
+\begin{aligned}
+F_x &= 2xz + y, & F_x(1, 1, 1) &= 3, \\[1mm]
+F_y &= z^3 + x, & F_y(1, 1, 1) &= 2, \\[1mm]
+F_z &= x^2 + 3yz^2, & F_z(1, 1, 1) &= 4 .
+\end{aligned}
+$$
+
+**Koşul.** $F_z(1, 1, 1) = 4 \ne 0$ olduğundan üç değişkenli kapalı fonksiyon teoremi (@cor-kap-uc-degisken) gereği $(1, 1)$'in bir komşuluğunda $z(1, 1) = 1$ olan tek bir $C^1$ fonksiyon $z = \varphi(x, y)$ vardır.
+
+**Türevler.**
+
+$$z_x(1, 1) = -\frac{F_x}{F_z} = -\frac{3}{4}, \qquad z_y(1, 1) = -\frac{F_y}{F_z} = -\frac{2}{4} = -\frac{1}{2}.$$
+
+Aynı türevlerden yüzeyin $(1, 1, 1)$'deki teğet düzlemi de çıkar:
+
+$$3(x - 1) + 2(y - 1) + 4(z - 1) = 0 .$$
+
+Bu düzlemin normal vektörü $\nabla F(1, 1, 1) = (3, 2, 4)$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-ters name="Ters Fonksiyonun Kısmi Türevleri"}
+$u = x^2 - y^2$, $v = 2xy$ dönüşümünün $(x, y) = (1, 1)$ civarında yerel olarak terslenebilir olduğunu gösteriniz ve $x_u$, $x_v$, $y_u$, $y_v$ türevlerini bu noktada bulunuz.
+
+::: {.cozum}
+**Jacobi matrisi.**
+
+$$J_F(x, y) = \begin{pmatrix} 2x & -2y \\ 2y & 2x \end{pmatrix}, \qquad J_F(1, 1) = \begin{pmatrix} 2 & -2 \\ 2 & 2 \end{pmatrix}.$$
+
+**Determinant.** $J = 2 \cdot 2 - (-2) \cdot 2 = 8 \ne 0$'dır. Bileşenler polinom olduğundan $F \in C^1$'dir ve ters fonksiyon teoremi (@thm-kap-ters-fonksiyon) gereği $F$, $(1, 1)$ civarında yerel olarak terslenebilir; $F(1, 1) = (0, 2)$'dir.
+
+**Ters matris.** $J_{F^{-1}}(0, 2) = \big( J_F(1, 1) \big)^{-1}$ olduğundan
+
+$$\begin{pmatrix} x_u & x_v \\ y_u & y_v \end{pmatrix} = \frac{1}{8} \begin{pmatrix} 2 & 2 \\ -2 & 2 \end{pmatrix} = \begin{pmatrix} \frac{1}{4} & \frac{1}{4} \\[1mm] -\frac{1}{4} & \frac{1}{4} \end{pmatrix}$$
+
+bulunur. Yukarıdaki formüllerle sağlama: $x_u = \dfrac{v_y}{J} = \dfrac{2}{8}$ ve $y_u = -\dfrac{v_x}{J} = -\dfrac{2}{8}$'dir. Ayrıca $\dfrac{\partial(x, y)}{\partial(u, v)} = \dfrac{1}{8}$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Son Kontrol Listesi {#sec-ozt-kontrol}
+
+Bir çözümü bitirmeden önce şu soruları sor:
+
+1. Limit sorusunda nokta orijin değilse değişkenleri kaydırdın mı? Seçtiğin yollar gerçekten noktaya gidiyor mu?
+2. Birkaç yol aynı değeri verdiyse limitin varlığını ayrıca sıkıştırmayla ya da tanımla gösterdin mi? Kutupsal sınırın $\theta$'dan bağımsız olduğundan emin misin?
+3. Parçalı fonksiyonun özel noktasında kısmi türevi tanımdan mı hesapladın, yoksa formülü türevleyip yerine mi koydun?
+4. Türevlenebilirlik için önce süreklilik ve kısmi türevlere baktın mı? Kalan oranında paydaya $\sqrt{h^2 + k^2}$ yazdın mı?
+5. Yönlü türevde yön vektörünü birim yaptın mı?
+6. Zincir kuralında dış fonksiyonun türevlerini ara noktada hesapladın mı?
+7. Taylor formülünde kalan terimin türevlerini ara noktada bıraktın mı, katsayıları ($\frac{1}{2}$, $\frac{1}{6}$, binom katsayıları) doğru yazdın mı?
+8. Kritik noktaları ararken çarpanlara ayrılan denklemlerin her durumunu inceledin mi? Kısmi türevin olmadığı noktaları listeye ekledin mi?
+9. $D = 0$ ya da $D_n = 0$ olan noktalarda fonksiyonun kendisine döndün mü?
+10. Mutlak ekstremumda sınırın köşelerini ve aralık uçlarını listeye kattın mı?
+11. Lagrange sisteminde bölmeden önce sıfır durumunu ayırdın mı? Kısıt kümesinin kompakt olduğunu söyledin mi?
+12. Kapalı fonksiyon türevinde paydadaki $F_z$ ya da $J$'nin noktada sıfırdan farklı olduğunu gösterdin mi?
+
+Kuralları bir bütün hâlinde uygulamak için kitabın her bölümünün sonundaki Alıştırmalar kısmına dönebilir, konu sırasını [Müfredat ve Giriş](index.qmd) sayfasından izleyebilirsin.

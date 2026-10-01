@@ -18,8 +18,8 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Analitik Geometri](https://acik-matematik.com/dersler/analitik-geometri/) — 23 bölüm, 569 örnek ve alıştırma
 - [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
 - [Analiz 2: Türev ve İntegral](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
-- [Analiz 3: Fonksiyon Dizileri ve Seriler](https://acik-matematik.com/dersler/analiz-3/) — 20 bölüm, 268 örnek ve alıştırma
-- [Analiz 4: Çok Değişkenli Fonksiyonlar](https://acik-matematik.com/dersler/analiz-4/) — 20 bölüm, 466 örnek ve alıştırma
+- [Analiz 3: Fonksiyon Dizileri ve Seriler](https://acik-matematik.com/dersler/analiz-3/) — 21 bölüm, 291 örnek ve alıştırma
+- [Analiz 4: Çok Değişkenli Fonksiyonlar](https://acik-matematik.com/dersler/analiz-4/) — 21 bölüm, 497 örnek ve alıştırma
 - [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 8 bölüm, 116 örnek ve alıştırma
 - [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 17 bölüm, 611 örnek ve alıştırma
 - [Kompleks Analiz](https://acik-matematik.com/dersler/kompleks-analiz/) — 45 bölüm, 173 örnek ve alıştırma
@@ -60,17 +60,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **497** |
+| 📖 Konu/Bölüm | **499** |
 | 📐 Teorem | **1.184** |
 | 🔹 Lemma | **127** |
 | 📝 Tanım | **1.446** |
-| ✅ İspat | **2.086** |
-| 🧮 Örnek ve alıştırma | **4.517** |
-| 💡 Çözüm | **4.244** |
+| ✅ İspat | **2.088** |
+| 🧮 Örnek ve alıştırma | **4.571** |
+| 💡 Çözüm | **4.298** |
 | 📊 Şekil | **1.362** |
-| ✍️ Kelime | **2.036.547** |
-| 🔤 Karakter | **14.347.708** |
-| 💾 Kaynak metin | **31,6 MB** |
+| ✍️ Kelime | **2.059.051** |
+| 🔤 Karakter | **14.503.765** |
+| 💾 Kaynak metin | **31,7 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 
