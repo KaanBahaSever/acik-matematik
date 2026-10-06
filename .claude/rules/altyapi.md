@@ -27,7 +27,8 @@ paths:
 ## Derleme ve dışa aktarma
 
 - Bir Lua filtresi ya da `_kitap-ortak.yml` değişikliği bütün kitapları yeniden derletir; önce tek kitapla dene.
-- `build.py` her çalışmanın sonunda `scripts/seo.py`'yi çağırır. Betik `_site/sitemap.xml`'i bütün sayfalarla yeniden yazar ve her sayfaya `rel="canonical"` ekler. Adresler Cloudflare'in sunduğu biçimdedir: `.html` yok, `index.html` yerine `/`. Quarto'nun kendi site haritası yalnız portalı kapsadığı için bu adım kaldırılmaz.
+- `build.py` her çalışmanın sonunda `scripts/seo.py`'yi çağırır. Betik `_site/sitemap.xml`'i bütün sayfalarla yeniden yazar ve her sayfaya `rel="canonical"` ekler. Adresler Cloudflare'in sunduğu biçimdedir: `.html` yok, `index.html` yerine `/`. Quarto'nun kendi site haritası yalnız portalı kapsadığı için bu adım kaldırılmaz. Aynı betik her sayfanın başına "İçeriğe geç" bağlantısını koyar, Quarto'nun `href=""` araç çubuğu bağlantılarını `href="#" role="button"` yapar ve `_site/llms.txt`'yi ders listesinden üretir.
+- Kök `_headers` (HSTS) ve `_redirects` dosyalarını `build.py` `_site/` altına kopyalar; Cloudflare Pages ikisini de okur.
 - İndirilebilir dosyalar PDF (Typst) ve EPUB'dur; DOCX yoktur.
   - Her PDF sayfasının altında site adresi ve CC BY-NC-SA 4.0 lisansı bulunur (`scripts/export-assets/footer.typ`). EPUB'da `dc:rights` tanımlıdır. Export'u değiştirirken bunları koru.
   - Dosyalardaki "Bu sürüm" tarihi son commit'ten gelir.

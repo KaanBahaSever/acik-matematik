@@ -241,10 +241,12 @@ def sync_shared_assets() -> None:
     # Cloudflare Pages reads _site/_redirects, which keeps the addresses of
     # pages that have moved working. Quarto leaves files whose name starts with
     # "_" out of the build, so it is copied here.
-    redirects = ROOT / "_redirects"
-    if redirects.is_file():
-        SITE.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(redirects, SITE / "_redirects")
+    # _headers sets response headers (HSTS) the same way.
+    for name in ("_redirects", "_headers"):
+        source = ROOT / name
+        if source.is_file():
+            SITE.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, SITE / name)
 
 
 def prune_site(found: list[Path]) -> list[str]:
