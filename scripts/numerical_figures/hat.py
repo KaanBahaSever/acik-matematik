@@ -75,6 +75,52 @@ def brace(p, x1, x2, y, depth, color=TEXT, up=False, width=1.1, opacity=0.8):
 
 
 # ============================================================
+# mutlak-bagil: the same absolute error 0.5 at p = 2 and at p = 100
+# ============================================================
+p = pixel_plot(520, 260)
+BX0, BL, BHT = 60.0, 400.0, 22.0
+PSTAR = it("p") + sup("*")
+for pv, ps, top in ((2.0, 2.5, 58.0), (100.0, 100.5, 178.0)):
+    u = BL / ps                              # pixels per unit: p* lands at the right end of the bar
+    xe, xs = BX0 + pv * u, BX0 + ps * u
+    p.text_px(BX0, top - 14, it("p") + " = " + dec(pv) + ",   " + PSTAR + " = " + dec(ps), TEXT, 12.5,
+              "start", True)
+    p.add(f'<rect x="{BX0:.1f}" y="{top:.1f}" width="{xe - BX0:.1f}" height="{BHT:.1f}" fill="{THEORY}" '
+          f'fill-opacity="0.22" stroke="{THEORY}" stroke-width="1.1"/>')
+    p.add(f'<rect x="{xe:.1f}" y="{top:.1f}" width="{xs - xe:.1f}" height="{BHT:.1f}" fill="{PRACTICE}" '
+          f'fill-opacity="0.8" stroke="{PRACTICE}" stroke-width="1.1"/>')
+    for x in (BX0, xe, xs):
+        p.add(f'<line x1="{x:.1f}" y1="{top + BHT:.1f}" x2="{x:.1f}" y2="{top + BHT + 5:.1f}" stroke="{TEXT}" '
+              f'stroke-width="1" opacity="0.7"/>')
+    p.text_px(BX0, top + BHT + 18, "0", TEXT, 11.5, "middle")
+    gap_lbl = "mutlak hata |" + it("p") + " " + MINUS + " " + PSTAR + "| = " + dec(ps - pv)
+    if xs - xe > 40:
+        p.text_px(xe, top + BHT + 18, it("p"), THEORY, 12, "middle")
+        p.text_px(xs, top + BHT + 18, PSTAR, PRACTICE, 12, "middle")
+        brace(p, xe, xs, top - 4, 9, PRACTICE, up=True)
+        p.text_px(xs, top - 18, gap_lbl, PRACTICE, 12, "end")
+    else:
+        p.text_px(xe - 4, top + BHT + 18, it("p"), THEORY, 12, "end")
+        p.text_px(xs + 4, top + BHT + 18, PSTAR, PRACTICE, 12, "start")
+        p.add(f'<line x1="{xs - 1:.1f}" y1="{top - 22:.1f}" x2="{xs - 1:.1f}" y2="{top - 9:.1f}" '
+              f'stroke="{PRACTICE}" stroke-width="1.2"/>')
+        p.add(f'<polygon points="{xs - 1:.1f},{top - 2:.1f} {xs - 4.5:.1f},{top - 10:.1f} {xs + 2.5:.1f},'
+              f'{top - 10:.1f}" fill="{PRACTICE}"/>')
+        p.text_px(xs - 8, top - 18, gap_lbl, PRACTICE, 12, "end")
+    rel = (ps - pv) / pv
+    p.text_px(BX0 + BL, top + BHT + 40, "bağıl hata " + dec(ps - pv) + "/" + dec(pv) + " = " + dec(rel)
+              + " (yüzde " + dec(100 * rel) + ")", PRACTICE, 12.5, "end", True)
+save("mutlak-bagil", figure(
+    520, 260, [p],
+    "Aynı mutlak hata, iki farklı büyüklükte. Mavi çubuk <em>p</em>, turuncu parça |<em>p</em> &#8722; "
+    "<em>p</em>*| = 0,5 mutlak hatasıdır; her satır kendi ölçeğinde çizilmiştir. <em>p</em> = 2 iken hata "
+    "çubuğun dörtte biri kadardır (bağıl hata 0,25). <em>p</em> = 100 iken aynı hata ancak ince bir çizgidir "
+    "(bağıl hata 0,005).",
+    aria="Two bars drawn each to its own scale: p = 2 with p* = 2.5, where the absolute error 0.5 is a quarter "
+         "of the bar and the relative error is 0.25, and p = 100 with p* = 100.5, where the same absolute error "
+         "is a thin sliver and the relative error is 0.005"))
+
+# ============================================================
 # ieee-bitler: the 64 bits of the worked example, s | c | m
 # ============================================================
 BITS = "0" + "10000000011" + "1011100100010000000000000000000000000000000000000000"

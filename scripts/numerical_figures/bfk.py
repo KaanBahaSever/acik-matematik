@@ -339,3 +339,111 @@ save("p4-ileri-geri", figure(
     aria="The degree four interpolating polynomial through five equally spaced nodes from 1.0 to 2.2, "
          "with the start of the table marked for the forward difference value P_4(1.1) = 0.7196460 and "
          "the end of the table marked for the backward difference value P_4(2) = 0.2238754"))
+
+# ============================================================
+# ileri-geri-kosegen: one difference table, the forward diagonal at the top and the backward one at the bottom
+# ============================================================
+DELTA = "&#916;"
+W1, H1 = 660, 330
+dt = Plot(0, 0, W1, H1, (0, W1), (H1, 0))
+NN = 4                                   # five nodes x_0, ..., x_4
+ROW1, TOP1 = 32, 40
+CX = [50, 150, 270, 390, 510]            # left edges of the columns f, Delta, ..., Delta^4
+CW = [84, 100, 104, 104, 124]
+BH = 26
+FS1 = 13
+
+
+def ry(r):
+    return TOP1 + r * ROW1
+
+
+def fname(i):
+    return it("f") + "(" + xi(i) + ")"
+
+
+def dname(op, k, i):
+    return op + (sup(str(k)) if k > 1 else "") + it("f") + "(" + xi(i) + ")"
+
+
+def centre(c, i):
+    return CX[c] + CW[c] / 2, ry(2 * i + c)
+
+
+def nabla_text(cx, py, k, i, color, size, bold, prefix=""):
+    """Centred label prefix + nabla^k f(x_i); the nabla is a path (the SVG font has no U+2207)."""
+    rest = (sup(str(k)) if k > 1 else "") + it("f") + "(" + xi(i) + ")"
+    pw = 0.82 * text_w(prefix, size) + (0.45 * size if prefix else 0)
+    nw = 0.72 * size
+    total = pw + nw + 0.82 * text_w(rest, size)
+    px = cx - total / 2
+    if prefix:
+        dt.text_px(px, py, prefix, color, size, "start", bold)
+    px += pw
+    w, h = 0.62 * size, 0.66 * size
+    dt.add(f'<path d="M{px + 0.02 * size:.1f},{py - h:.1f} L{px + w:.1f},{py - h:.1f} '
+           f'L{px + w / 2 + 0.01 * size:.1f},{py:.1f} Z" fill="none" stroke="{color}" '
+           f'stroke-width="{(0.11 if bold else 0.085) * size:.2f}" stroke-linejoin="round"/>')
+    dt.text_px(px + nw, py, rest, color, size, "start", bold)
+
+
+# translucent bands along the two edges, painted first
+top_pts = [centre(c, 0) for c in range(NN + 1)]
+bot_pts = [centre(c, NN - c) for c in range(NN + 1)]
+for pts, col in ((top_pts, THEORY), (bot_pts, PRACTICE)):
+    d = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+    dt.add(f'<polyline points="{d}" fill="none" stroke="{col}" stroke-width="30" stroke-opacity="0.10" '
+           f'stroke-linejoin="round" stroke-linecap="round"/>')
+
+# x column
+for i in range(NN + 1):
+    dt.text_px(18, ry(2 * i) + 4.5, xi(i), TEXT, FS1, "middle")
+
+for c in range(NN + 1):
+    for i in range(NN + 1 - c):
+        cx, cy = centre(c, i)
+        top, bot = i == 0, i == NN - c
+        if top and bot:                      # the corner: both names, a two-tone box
+            h2 = 46
+            x0, y0 = CX[c], cy - h2 / 2
+            dt.add(f'<rect x="{x0}" y="{y0:.1f}" width="{CW[c]}" height="{h2}" rx="5" fill="{BG}"/>')
+            dt.add(f'<rect x="{x0}" y="{y0:.1f}" width="{CW[c]}" height="{h2 / 2:.1f}" fill="{THEORY}" '
+                   f'fill-opacity="0.16"/>')
+            dt.add(f'<rect x="{x0}" y="{cy:.1f}" width="{CW[c]}" height="{h2 / 2:.1f}" fill="{PRACTICE}" '
+                   f'fill-opacity="0.16"/>')
+            dt.add(f'<rect x="{x0}" y="{y0:.1f}" width="{CW[c]}" height="{h2}" rx="5" fill="none" '
+                   f'stroke="{TEXT}" stroke-width="1.3" stroke-opacity="0.7"/>')
+            dt.text_px(cx, cy - 6, dname(DELTA, c, 0), THEORY, FS1, "middle", True)
+            nabla_text(cx, cy + 16, c, NN, PRACTICE, FS1, True, "=")
+            continue
+        col = THEORY if top else PRACTICE if bot else TEXT
+        # an opaque page-coloured base, so the bands do not show through the tinted boxes
+        dt.add(f'<rect x="{CX[c]}" y="{cy - BH / 2:.1f}" width="{CW[c]}" height="{BH}" rx="5" fill="{BG}"/>')
+        dt.add(f'<rect x="{CX[c]}" y="{cy - BH / 2:.1f}" width="{CW[c]}" height="{BH}" rx="5" '
+               f'fill="{col if (top or bot) else BG}" fill-opacity="{0.16 if (top or bot) else 1}" '
+               f'stroke="{col}" stroke-width="{1.4 if (top or bot) else 1.0}" '
+               f'stroke-opacity="{1 if (top or bot) else 0.5}"/>')
+        if bot and c > 0:
+            nabla_text(cx, cy + 4.5, c, NN, col, FS1, True)
+            continue
+        s = fname(i) if c == 0 else dname(DELTA, c, i)
+        dt.text_px(cx, cy + 4.5, s, col, FS1, "middle", top or bot)
+
+# the two names, in the empty corners beside the edges
+dt.text_px(CX[3] + 56, ry(0) + 4.5, "ileri fark formülü", THEORY, 13, "middle", True)
+dt.text_px(CX[3] + 56, ry(0) + 21, "tablonun üst kenarı", THEORY, 12, "middle")
+dt.text_px(CX[3] + 56, ry(8) - 8, "geri fark formülü", PRACTICE, 13, "middle", True)
+dt.text_px(CX[3] + 56, ry(8) + 9, "tablonun alt kenarı", PRACTICE, 12, "middle")
+
+save("ileri-geri-kosegen", figure(
+    W1, H1, [dt],
+    "Beş eşit aralıklı nokta için tek bir fark tablosu. İleri fark formülü üst kenardaki "
+    "<em>f</em>(<em>x</em><sub>0</sub>), &#916;<em>f</em>(<em>x</em><sub>0</sub>), &#8230;, "
+    "&#916;<sup>4</sup><em>f</em>(<em>x</em><sub>0</sub>) sayılarını; geri fark formülü alt kenardaki "
+    "<em>f</em>(<em>x</em><sub>4</sub>), &#8711;<em>f</em>(<em>x</em><sub>4</sub>), &#8230;, "
+    "&#8711;<sup>4</sup><em>f</em>(<em>x</em><sub>4</sub>) sayılarını kullanır. Alt kenardaki her girdi bir "
+    "ileri farktır, örneğin &#8711;<sup>2</sup><em>f</em>(<em>x</em><sub>4</sub>) = "
+    "&#916;<sup>2</sup><em>f</em>(<em>x</em><sub>2</sub>); son sütundaki tek girdi iki kenarda ortaktır.",
+    aria="A forward difference table for five equally spaced nodes x_0 to x_4; the top edge f(x_0), Delta f(x_0) "
+         "up to Delta^4 f(x_0) is highlighted as the data of the forward formula and the bottom edge f(x_4), "
+         "nabla f(x_4) up to nabla^4 f(x_4) as the data of the backward formula; the corner entry is shared"))

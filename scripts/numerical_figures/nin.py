@@ -7,6 +7,12 @@ Figures go INSIDE the box they explain (theorem, proof, example, solution or
 exercise), never inside a definition box and never directly under a heading.
 The node diagram of the closed and open Newton-Cotes formulas sits directly
 below the definition box of the open formula.
+
+The concept figures (kavram-*) use a generic f without numbers and stay in the
+visible part of their box, before any proof: kavram-yamuk and kavram-simpson
+inside the statements of the two propositions, kavram-kapali and kavram-acik in
+the prose after the "Yani" paragraph that follows each definition, and
+kavram-orta-nokta inside the corollary on open formulas, after the list.
 The figures are NOT produced at build time. Run
 
     python scripts/numerical_figures/nin.py
@@ -21,7 +27,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from svg_plot import Plot, figure, TEXT, THEORY, PRACTICE, REMARK, BG  # noqa: E402
+from svg_plot import Plot, figure, TEXT, THEORY, PRACTICE, REMARK, BASE, BG  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -230,3 +236,235 @@ save("dugumler", figure(
     aria="Two segments from a to b: the closed formula with n = 3 uses the four equally spaced points a = x0, "
          "x1, x2, x3 = b; the open formula with n = 2 splits the interval into four parts and uses only the "
          "interior points x0, x1, x2, leaving the end points unused"))
+
+
+# ============================================================
+# Concept figures: shared helpers (generic f, no numbers)
+# ============================================================
+def lagrange(nodes, vals):
+    """The interpolating polynomial through (nodes[k], vals[k])."""
+    def poly(x):
+        s = 0.0
+        for k, (xk, yk) in enumerate(zip(nodes, vals)):
+            w = 1.0
+            for i, xi in enumerate(nodes):
+                if i != k:
+                    w *= (x - xi) / (xk - xi)
+            s += yk * w
+        return s
+    return poly
+
+
+CW, CH = 440, 250          # panel size of the concept figures
+
+
+def concept_frame(xr, yr):
+    p = Plot(40, 34, CW, CH, xr, yr)
+    p.origin_axes(it("x"), it("y"), (), (), opacity=0.5)
+    return p
+
+
+def approx_area(p, g, a, b):
+    """Shaded area under y = g(x) over [a, b] with its two vertical sides."""
+    p.polygon([(a, 0)] + samples(g, a, b) + [(b, 0)], THEORY, 0.18)
+    p.line([(a, 0), (a, g(a))], THEORY, 1.2, None, 0.7)
+    p.line([(b, 0), (b, g(b))], THEORY, 1.2, None, 0.7)
+
+
+def error_band(p, g1, g2, a, b, opacity=0.42):
+    """The region between y = g1(x) and y = g2(x) over [a, b]: the error."""
+    p.polygon(samples(g1, a, b) + samples(g2, a, b)[::-1], PRACTICE, opacity)
+
+
+def f_curve(p, g, a, b, lo, hi):
+    """y = f(x): solid over [a, b], faded on [lo, a] and [b, hi]."""
+    p.line(samples(g, lo, a, 40), BASE, 2.4, None, 0.35)
+    p.line(samples(g, b, hi, 40), BASE, 2.4, None, 0.35)
+    p.line(samples(g, a, b), BASE, 2.4)
+
+
+def drops(p, nodes, g):
+    """Dashed verticals from the x axis up to the nodes on the graph."""
+    for x in nodes:
+        p.vline(x, 0, g(x), TEXT, "3 3", 0.4)
+
+
+def legend(p, px, py, entries):
+    """Line-swatch legend at pixel (px, py); entries = [(label, color, dash), ...]."""
+    for k, (s, color, dash) in enumerate(entries):
+        y = py + 22 * k
+        da = f' stroke-dasharray="{dash}"' if dash else ""
+        p.add(f'<line x1="{px:.1f}" y1="{y:.1f}" x2="{px + 28:.1f}" y2="{y:.1f}" stroke="{color}" '
+              f'stroke-width="2.4"{da} stroke-linecap="round"/>')
+        p.text_px(px + 35, y + 4, s, color, 12.5)
+
+
+def h_braces(p, nodes, lift=5):
+    """Small upward braces labelled h between consecutive nodes, just above the x axis."""
+    y = p.Y(0) - lift
+    for x1, x2 in zip(nodes, nodes[1:]):
+        brace_up(p, p.X(x1) + 5, p.X(x2) - 5, y, 6, TEXT, 1.0, 0.6)
+        p.text_px((p.X(x1) + p.X(x2)) / 2, y - 11, it("h"), TEXT, 12, "middle")
+
+
+def fx(k):
+    """f(x_k)."""
+    return it("f") + "(" + xs(k) + ")"
+
+
+LEG_F = it("y") + " = " + it("f") + "(" + it("x") + ")"
+
+
+def leg_p(n):
+    return it("y") + " = " + it("P") + sub(n) + "(" + it("x") + ")"
+
+
+# one wavy f for the trapezoid, Simpson and midpoint pictures, so the three
+# approximations of the same area can be compared
+def g1(x):
+    return 1.05 + 0.62 * x - 0.075 * x * x + 0.28 * math.sin(2.0 * x - 0.6)
+
+
+XR1, YR1 = (-0.45, 6.5), (0.0, 3.4)
+A1, B1 = 1.0, 5.4
+
+# ============================================================
+# kavram-yamuk: the trapezoidal rule replaces f by the chord P1
+# ============================================================
+p = concept_frame(XR1, YR1)
+P1 = lagrange([A1, B1], [g1(A1), g1(B1)])
+approx_area(p, P1, A1, B1)
+error_band(p, g1, P1, A1, B1)
+f_curve(p, g1, A1, B1, 0.3, 6.15)
+p.line(samples(P1, 0.45, 5.95, 2), THEORY, 2.0)
+p.points([(A1, g1(A1)), (B1, g1(B1))], TEXT, 4.0)
+xaxis_marks(p, [(A1, it("a") + " = " + xs("0")), (B1, xs("1") + " = " + it("b"))])
+h_braces(p, [A1, B1])
+p.label((A1 + B1) / 2, 0.75, "(" + it("h") + "/2)[" + fx("0") + " + " + fx("1") + "]", 0, 4, THEORY, 12.5,
+        "middle", True)
+legend(p, p.X(4.3), p.Y(3.3), [(LEG_F, BASE, None), (leg_p("1"), THEORY, None)])
+save("kavram-yamuk", figure(
+    CW + 80, CH + 80, [p],
+    "Yamuk Kuralı <em>f</em>'yi uç noktalardan geçen <em>y</em> = <em>P</em><sub>1</sub>(<em>x</em>) "
+    "doğrusuyla değiştirir. Taralı yamuğun alanı formülün ana kısmıdır; eğri ile doğru arasında kalan "
+    "bölgeler hatayı gösterir.",
+    aria="A wavy curve y = f(x) on the interval from a = x0 to x1 = b, the line y = P1(x) through its two end "
+         "points, the shaded trapezoid under the line and the regions between curve and line, the error"))
+
+# ============================================================
+# kavram-simpson: Simpson's rule replaces f by the parabola P2
+# ============================================================
+p = concept_frame(XR1, YR1)
+M1 = (A1 + B1) / 2
+P2 = lagrange([A1, M1, B1], [g1(A1), g1(M1), g1(B1)])
+approx_area(p, P2, A1, B1)
+error_band(p, g1, P2, A1, B1)
+f_curve(p, g1, A1, B1, 0.3, 6.15)
+p.line(samples(P2, A1, B1), THEORY, 2.0)
+p.line(samples(P2, 0.6, A1, 20), THEORY, 2.0, None, 0.35)
+p.line(samples(P2, B1, 5.8, 20), THEORY, 2.0, None, 0.35)
+p.points([(x, g1(x)) for x in (A1, M1, B1)], TEXT, 4.0)
+xaxis_marks(p, [(A1, it("a") + " = " + xs("0")), (M1, xs("1")), (B1, xs("2") + " = " + it("b"))])
+h_braces(p, [A1, M1, B1])
+p.label(M1, 0.75, "(" + it("h") + "/3)[" + fx("0") + " + 4" + fx("1") + " + " + fx("2") + "]", 0, 4, THEORY,
+        12.5, "middle", True)
+legend(p, p.X(4.3), p.Y(3.3), [(LEG_F, BASE, None), (leg_p("2"), THEORY, None)])
+save("kavram-simpson", figure(
+    CW + 80, CH + 80, [p],
+    "Simpson Kuralı <em>f</em>'yi üç düğümden geçen <em>y</em> = <em>P</em><sub>2</sub>(<em>x</em>) parabolüyle "
+    "değiştirir. Taralı alan formülün ana kısmıdır; eğri ile parabol arasında kalan bölgeler hatayı gösterir.",
+    aria="The same wavy curve y = f(x) on the interval from a = x0 to x2 = b with midpoint x1, the parabola "
+         "y = P2(x) through the three points, the shaded area under the parabola and the regions between "
+         "curve and parabola, the error"))
+
+
+# one gently wavy f for the closed and open Newton-Cotes pictures, on the same
+# [a, b] and scale. Closed: n = 4 (five nodes). Open: n = 4 as well, so [a, b] is
+# cut into six parts and P_n is extrapolated from the five interior nodes to the
+# end points, which is where its visible error sits.
+def g2(x):
+    return 1.7 + 0.1 * x + 0.45 * math.sin(1.3 * x + 2.0)
+
+
+XR2, YR2 = (-0.45, 6.75), (0.0, 3.5)
+A2, B2 = 0.6, 6.0
+GRID = [A2 + (B2 - A2) * k / 6 for k in range(7)]      # open: x_-1, ..., x_n+1
+CLOSED = [A2 + (B2 - A2) * k / 4 for k in range(5)]   # closed: x_0, ..., x_n
+DOTS = "&#183;&#183;&#183;"
+
+
+def nc_figure(p, nodes, gap_x, marks, n_label):
+    poly = lagrange(nodes, [g2(x) for x in nodes])
+    approx_area(p, poly, A2, B2)
+    error_band(p, g2, poly, A2, B2)
+    f_curve(p, g2, A2, B2, 0.25, 6.45)
+    p.line(samples(poly, A2, B2), THEORY, 2.0)
+    drops(p, nodes, g2)
+    p.points([(x, g2(x)) for x in nodes], TEXT, 3.8)
+    xaxis_marks(p, marks)
+    p.label(gap_x, 0, DOTS, 0, 17, TEXT, 13, "middle")
+    legend(p, p.X(4.2), p.Y(3.42), [(LEG_F, BASE, None), (leg_p(n_label), THEORY, None)])
+    return poly
+
+
+N_ = it("n")
+
+# ============================================================
+# kavram-kapali: closed Newton-Cotes, P_n through all n + 1 points
+# ============================================================
+p = concept_frame(XR2, YR2)
+nc_figure(p, CLOSED, (CLOSED[2] + CLOSED[3]) / 2,
+          [(CLOSED[0], it("a") + " = " + xs("0")), (CLOSED[1], xs("1")), (CLOSED[2], xs("2")),
+           (CLOSED[3], xs(N_ + MINUS + "1")), (CLOSED[4], xs(N_) + " = " + it("b"))], N_)
+save("kavram-kapali", figure(
+    CW + 80, CH + 80, [p],
+    "Kapalı formülde [<em>a</em>, <em>b</em>] aralığını <em>n</em> eşit parçaya bölen <em>n</em> + 1 noktanın "
+    "hepsi, uç noktalar dahil, düğümdür. <em>f</em>'nin yerine bu noktalardan geçen "
+    "<em>y</em> = <em>P</em><sub><em>n</em></sub>(<em>x</em>) polinomunun integrali alınır; taralı alan "
+    "formülün değeridir.",
+    aria="A wavy curve y = f(x) on the interval from a = x0 to xn = b, with n + 1 equally spaced nodes including "
+         "both end points, the interpolating polynomial y = Pn(x) through all of them and the shaded area under "
+         "the polynomial"))
+
+# ============================================================
+# kavram-acik: open Newton-Cotes, P_n through the interior points only
+# ============================================================
+p = concept_frame(XR2, YR2)
+nc_figure(p, GRID[1:6], GRID[4],
+          [(GRID[0], it("a") + " = " + xs(MINUS + "1")), (GRID[1], xs("0")), (GRID[2], xs("1")),
+           (GRID[3], xs("2")), (GRID[4], ""),
+           (GRID[5], xs(N_)), (GRID[6], xs(N_ + "+1") + " = " + it("b"))], N_)
+p.hollow_points([(A2, g2(A2)), (B2, g2(B2))], TEXT, 3.8)
+save("kavram-acik", figure(
+    CW + 80, CH + 80, [p],
+    "Açık formülde [<em>a</em>, <em>b</em>] aralığı <em>n</em> + 2 eşit parçaya bölünür ve yalnız "
+    "<em>x</em><sub>0</sub>, …, <em>x</em><sub><em>n</em></sub> iç noktaları düğümdür; <em>f</em> uç noktalarda "
+    "hesaplanmaz (boş daireler). <em>P</em><sub><em>n</em></sub> yine de bütün [<em>a</em>, <em>b</em>] "
+    "üzerinden integrallenir.",
+    aria="The same wavy curve y = f(x) on the interval from a = x-1 to xn+1 = b, with nodes x0 to xn strictly "
+         "inside, the interpolating polynomial y = Pn(x) through the interior nodes only, extended to both end "
+         "points, and the shaded area under it from a to b"))
+
+# ============================================================
+# kavram-orta-nokta: the midpoint rule, a rectangle of height f(x0)
+# ============================================================
+p = concept_frame(XR1, YR1)
+P0 = lagrange([M1], [g1(M1)])
+approx_area(p, P0, A1, B1)
+error_band(p, g1, P0, A1, B1)
+f_curve(p, g1, A1, B1, 0.3, 6.15)
+p.line(samples(P0, A1, B1, 2), THEORY, 2.0)
+p.hollow_points([(A1, g1(A1)), (B1, g1(B1))], TEXT, 3.8)
+p.points([(M1, g1(M1))], TEXT, 4.0)
+xaxis_marks(p, [(A1, it("a") + " = " + xs(MINUS + "1")), (M1, xs("0")), (B1, xs("1") + " = " + it("b"))])
+h_braces(p, [A1, M1, B1])
+p.label(M1, 0.75, "2" + it("h") + " " + fx("0"), 0, 4, THEORY, 12.5, "middle", True)
+legend(p, p.X(4.3), p.Y(3.3), [(LEG_F, BASE, None), (it("y") + " = " + fx("0"), THEORY, None)])
+save("kavram-orta-nokta", figure(
+    CW + 80, CH + 80, [p],
+    "Orta Nokta Kuralı <em>f</em>'yi orta noktadaki değerine eşit sabitle değiştirir: taralı dikdörtgenin "
+    "tabanı 2<em>h</em>, yüksekliği <em>f</em>(<em>x</em><sub>0</sub>)'dır. Eğri ile dikdörtgenin üst kenarı "
+    "arasında kalan bölgeler hatayı gösterir.",
+    aria="The same wavy curve y = f(x) on the interval from a = x-1 to x1 = b with midpoint x0, the rectangle "
+         "of height f(x0) over the whole interval, shaded, and the regions between the curve and the top of the "
+         "rectangle, the error"))

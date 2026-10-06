@@ -343,3 +343,276 @@ save("cos-hata-yuzeyi", figure(
     aria="Staircase surface of log10 of the error of the Maclaurin polynomials of cos x, for x from 0.1 "
          "to 3 and n from 0 to 8; equal heights for each even n and the following odd n, steps down at "
          "every even n, lowest values for small x and large n"))
+
+
+# ============================================================
+# shared helpers of the concept figures (no numbers on the axes)
+# ============================================================
+PRIME = "&#8242;"
+
+
+def concept_plot(xr=(-0.35, 5.4), yr=(-0.4, 3.6), w=440, h=290):
+    """Panel with the origin near its lower left corner and arrowed axes."""
+    p = Plot(110, 30, w, h, xr, yr)
+    p.origin_axes(it("x"), it("y"), opacity=0.75)
+    return p
+
+
+def x_mark(p, x, y, s, color=TEXT, size=12.5):
+    """Dashed drop line from (x, y) to the x axis, a tick and the name of x below the axis."""
+    p.vline(x, 0, y, TEXT, "4 3", 0.45)
+    p.add(f'<line x1="{p.X(x):.1f}" y1="{p.Y(0) - 3:.1f}" x2="{p.X(x):.1f}" y2="{p.Y(0) + 3:.1f}" '
+          f'stroke="{TEXT}" stroke-width="1" opacity="0.75"/>')
+    p.label(x, 0, s, 0, 18, color, size, "middle")
+
+
+def y_mark(p, x, y, s, color=TEXT, size=12.5):
+    """Dashed guide from the y axis to (x, y), a tick and the name of y left of the axis."""
+    p.line([(0, y), (x, y)], TEXT, 1.0, "4 3", 0.45)
+    p.add(f'<line x1="{p.X(0) - 3:.1f}" y1="{p.Y(y):.1f}" x2="{p.X(0) + 3:.1f}" y2="{p.Y(y):.1f}" '
+          f'stroke="{TEXT}" stroke-width="1" opacity="0.75"/>')
+    p.label(0, y, s, -8, 4.5, color, size, "end")
+
+
+def bisect(g, lo, hi, n=80):
+    """Root of g on [lo, hi] (g(lo) and g(hi) of opposite signs)."""
+    glo = g(lo)
+    for _ in range(n):
+        mid = (lo + hi) / 2
+        if (g(mid) > 0) == (glo > 0):
+            lo, glo = mid, g(mid)
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def legend(p, items, y, x=None, gap=40):
+    """One-row legend: (label, color, width, dash) items, centred under the panel unless x is given."""
+    widths = [42 + text_w(s, 12) for s, *_ in items]
+    total = sum(widths) + gap * (len(items) - 1)
+    x = p.x0 + p.w / 2 - total / 2 if x is None else x
+    for (s, col, wd, da), wdt in zip(items, widths):
+        da_s = f' stroke-dasharray="{da}"' if da else ""
+        p.add(f'<line x1="{x:.1f}" y1="{y - 4:.1f}" x2="{x + 32:.1f}" y2="{y - 4:.1f}" stroke="{col}" '
+              f'stroke-width="{wd}"{da_s} stroke-linecap="round"/>')
+        p.text_px(x + 40, y, s, TEXT, 12)
+        x += wdt + gap
+
+
+FX = it("f")
+
+
+def fof(s):
+    """'f(s)' with an italic f."""
+    return FX + "(" + s + ")"
+
+
+# ============================================================
+# rolle: f(a) = f(b) and a horizontal tangent at c
+# ============================================================
+A_R, B_R = 0.8, 4.6
+
+
+def f_rolle(x):
+    return 1.0 + 0.32 * (x - A_R) * (B_R - x) * (1 + 0.25 * (x - A_R))
+
+
+C_R = bisect(lambda x: (f_rolle(x + 1e-6) - f_rolle(x - 1e-6)), A_R + 0.5, B_R - 0.5)
+FA_R, FC_R = f_rolle(A_R), f_rolle(C_R)
+p = concept_plot()
+p.line([(0, FA_R), (B_R, FA_R)], TEXT, 1.0, "4 3", 0.45)
+p.add(f'<line x1="{p.X(0) - 3:.1f}" y1="{p.Y(FA_R):.1f}" x2="{p.X(0) + 3:.1f}" y2="{p.Y(FA_R):.1f}" '
+      f'stroke="{TEXT}" stroke-width="1" opacity="0.75"/>')
+p.label(1.95, FA_R, fof(it("a")) + " = " + fof(it("b")), 0, -8, TEXT, 12.5, "middle")
+x_mark(p, A_R, FA_R, it("a"))
+x_mark(p, B_R, FA_R, it("b"))
+x_mark(p, C_R, FC_R, it("c"), PRACTICE)
+p.line(sample(f_rolle, A_R, B_R, 400), THEORY, 2.6)
+p.line([(C_R - 0.95, FC_R), (C_R + 0.95, FC_R)], PRACTICE, 2.2)
+dot(p, (A_R, FA_R), THEORY, 4.2)
+dot(p, (B_R, FA_R), THEORY, 4.2)
+dot(p, (C_R, FC_R), PRACTICE, 4.4)
+p.label(C_R, FC_R, FX + PRIME + "(" + it("c") + ") = 0", 0, -12, PRACTICE, 12.5, "middle", True)
+p.label(B_R, FA_R, it("y") + " = " + fof(it("x")), 10, -10, THEORY, 12.5, "start")
+save("rolle", figure(
+    int(p.x0 + p.w + 40), int(p.y0 + p.h + 40), [p],
+    "Rolle teoremi: <em>f</em>(<em>a</em>) = <em>f</em>(<em>b</em>) olduğundan grafik iki uçta aynı "
+    "yüksekliktedir. Arada bir <em>c</em> noktasında teğet yataydır, yani <em>f</em>&#8242;(<em>c</em>) = 0 olur.",
+    aria="Graph of a differentiable function with equal values at a and b and a horizontal tangent at an "
+         "interior point c where f'(c) = 0"))
+
+# ============================================================
+# ortalama-deger: the secant from (a, f(a)) to (b, f(b)) and the parallel tangent at c
+# ============================================================
+A_M, B_M = 0.7, 4.7
+
+
+def f_mvt(x):
+    t = x - A_M
+    return 0.8 + 1.15 * t - 0.2 * t * t + 0.012 * t ** 3
+
+
+def df_mvt(x):
+    t = x - A_M
+    return 1.15 - 0.4 * t + 0.036 * t * t
+
+
+FA_M, FB_M = f_mvt(A_M), f_mvt(B_M)
+SLOPE_M = (FB_M - FA_M) / (B_M - A_M)
+C_M = bisect(lambda x: df_mvt(x) - SLOPE_M, A_M, B_M)
+FC_M = f_mvt(C_M)
+p = concept_plot(h=245)
+y_mark(p, A_M, FA_M, fof(it("a")))
+y_mark(p, B_M, FB_M, fof(it("b")))
+x_mark(p, A_M, FA_M, it("a"))
+x_mark(p, B_M, FB_M, it("b"))
+x_mark(p, C_M, FC_M, it("c"), PRACTICE)
+p.line([(A_M, FA_M), (B_M, FB_M)], BASE, 2.2)
+p.line([(C_M - 1.45, FC_M - 1.45 * SLOPE_M), (C_M + 1.45, FC_M + 1.45 * SLOPE_M)], PRACTICE, 2.2)
+p.line(sample(f_mvt, A_M, B_M, 400), THEORY, 2.6)
+dot(p, (A_M, FA_M), THEORY, 4.2)
+dot(p, (B_M, FB_M), THEORY, 4.2)
+dot(p, (C_M, FC_M), PRACTICE, 4.4)
+p.label(B_M, FB_M, it("y") + " = " + fof(it("x")), 10, 16, THEORY, 12.5, "start")
+legend(p, (("kiriş", BASE, 2.2, None),
+           ("teğet, eğimi " + FX + PRIME + "(" + it("c") + ")", PRACTICE, 2.2, None)), p.y0 + p.h + 52)
+save("ortalama-deger", figure(
+    int(p.x0 + p.w + 40), int(p.y0 + p.h + 66), [p],
+    "Ortalama değer teoremi: (<em>a</em>, <em>f</em>(<em>a</em>)) ile (<em>b</em>, <em>f</em>(<em>b</em>)) "
+    "noktalarını birleştiren kirişin eğimi (<em>f</em>(<em>b</em>) &#8722; <em>f</em>(<em>a</em>))/(<em>b</em> "
+    "&#8722; <em>a</em>)'dır. Arada bir <em>c</em> noktasındaki teğet bu kirişe paraleldir.",
+    aria="Graph of a differentiable function on a to b with the secant joining (a, f(a)) and (b, f(b)) and "
+         "the parallel tangent line at an interior point c"))
+
+# ============================================================
+# ekstrem-deger: interior maximum f(c_2) with f'(c_2) = 0, minimum f(c_1) at the end point b
+# ============================================================
+A_E, B_E = 0.6, 4.8
+
+
+def f_evt(x):
+    t = (x - A_E) / (B_E - A_E)
+    return 1.7 + 1.7 * (4.8 * t - 7.8 * t * t + 2.4 * t ** 3)
+
+
+C2_E = bisect(lambda x: f_evt(x + 1e-6) - f_evt(x - 1e-6), A_E + 0.3, B_E - 0.5)
+MAX_E, MIN_E = f_evt(C2_E), f_evt(B_E)
+p = concept_plot()
+p.polygon([(A_E, MIN_E), (B_E, MIN_E), (B_E, MAX_E), (A_E, MAX_E)], PRACTICE, 0.07)
+y_mark(p, B_E, MAX_E, fof(it("c") + sub("2")), PRACTICE)
+y_mark(p, B_E, MIN_E, fof(it("c") + sub("1")), PRACTICE)
+x_mark(p, A_E, f_evt(A_E), it("a"))
+x_mark(p, C2_E, MAX_E, it("c") + sub("2"), PRACTICE)
+x_mark(p, B_E, MIN_E, it("b") + " = " + it("c") + sub("1"), PRACTICE)
+p.line([(C2_E - 0.7, MAX_E), (C2_E + 0.7, MAX_E)], PRACTICE, 2.2)
+p.line(sample(f_evt, A_E, B_E, 400), THEORY, 2.6)
+dot(p, (A_E, f_evt(A_E)), THEORY, 4.2)
+dot(p, (C2_E, MAX_E), PRACTICE, 4.6)
+dot(p, (B_E, MIN_E), PRACTICE, 4.6)
+p.label(C2_E, MAX_E, "maksimum", 0, -12, PRACTICE, 12.5, "middle", True)
+p.label(B_E, MIN_E, "minimum", 10, 4.5, PRACTICE, 12.5, "start", True)
+p.label(3.3, f_evt(3.3), it("y") + " = " + fof(it("x")), 8, -10, THEORY, 12.5, "start")
+save("ekstrem-deger", figure(
+    int(p.x0 + p.w + 40), int(p.y0 + p.h + 40), [p],
+    "Ekstrem değer teoremi: [<em>a</em>, <em>b</em>] üzerinde sürekli <em>f</em> bütün değerlerini "
+    "<em>f</em>(<em>c</em><sub>1</sub>) ile <em>f</em>(<em>c</em><sub>2</sub>) arasında (taralı bant) alır. "
+    "Maksimum bir iç noktada alınmıştır ve orada teğet yataydır (<em>f</em>&#8242;(<em>c</em><sub>2</sub>) = 0); "
+    "minimum ise <em>b</em> uç noktasında alınmıştır.",
+    aria="Graph of a continuous function on a to b whose maximum f(c2) is attained at an interior point with a "
+         "horizontal tangent and whose minimum f(c1) is attained at the end point b, the band between them shaded"))
+
+# ============================================================
+# ara-deger: the line y = K between f(a) and f(b) meets the graph
+# ============================================================
+A_I, B_I, K_I = 0.7, 4.7, 1.6
+
+
+def f_ivt(x):
+    t = (x - A_I) / (B_I - A_I)
+    return 0.6 + 2.4 * t + 1.0 * math.sin(3 * math.pi * t)
+
+
+FA_I, FB_I = f_ivt(A_I), f_ivt(B_I)
+grid_x = [A_I + (B_I - A_I) * k / 4000 for k in range(4001)]
+ROOTS_I = [bisect(lambda x: f_ivt(x) - K_I, u, v) for u, v in zip(grid_x, grid_x[1:])
+           if (f_ivt(u) - K_I) * (f_ivt(v) - K_I) < 0]
+assert len(ROOTS_I) == 3
+p = concept_plot(yr=(-0.4, 4.0), h=295)
+p.line([(0, FA_I), (0, FB_I)], PRACTICE, 7, None, 0.3)
+y_mark(p, A_I, FA_I, fof(it("a")))
+y_mark(p, B_I, FB_I, fof(it("b")))
+p.add(f'<line x1="{p.X(0) - 3:.1f}" y1="{p.Y(K_I):.1f}" x2="{p.X(0) + 3:.1f}" y2="{p.Y(K_I):.1f}" '
+      f'stroke="{TEXT}" stroke-width="1" opacity="0.75"/>')
+p.label(0, K_I, it("K"), -8, 4.5, PRACTICE, 12.5, "end", True)
+p.line([(0, K_I), (5.25, K_I)], PRACTICE, 1.8)
+x_mark(p, A_I, FA_I, it("a"))
+x_mark(p, B_I, FB_I, it("b"))
+for k, r in enumerate(ROOTS_I, 1):
+    x_mark(p, r, K_I, it("c") + sub(str(k)), PRACTICE)
+p.line(sample(f_ivt, A_I, B_I, 500), THEORY, 2.6)
+dot(p, (A_I, FA_I), THEORY, 4.2)
+dot(p, (B_I, FB_I), THEORY, 4.2)
+for r in ROOTS_I:
+    dot(p, (r, K_I), PRACTICE, 4.4)
+p.label(5.25, K_I, it("y") + " = " + it("K"), 0, -8, PRACTICE, 12.5, "end")
+p.label(B_I, FB_I, it("y") + " = " + fof(it("x")), 10, 16, THEORY, 12.5, "start")
+save("ara-deger", figure(
+    int(p.x0 + p.w + 40), int(p.y0 + p.h + 40), [p],
+    "Ara değer teoremi: <em>K</em>, <em>f</em>(<em>a</em>) ile <em>f</em>(<em>b</em>) arasında (eksendeki "
+    "kalın parça) olduğundan <em>y</em> = <em>K</em> doğrusu grafiği en az bir noktada keser. Bu grafikte üç kesim "
+    "noktası var; <em>c</em><sub>1</sub>, <em>c</em><sub>2</sub>, <em>c</em><sub>3</sub>'ün her biri için "
+    "<em>f</em>(<em>c</em>) = <em>K</em> olur.",
+    aria="Graph of a continuous function from (a, f(a)) up to (b, f(b)) crossed three times by the horizontal "
+         "line y = K, the crossing points c1, c2, c3 marked on the x axis"))
+
+# ============================================================
+# taylor: f, P_n and the remainder R_n(x) as the vertical gap at x
+# ============================================================
+X0_T, XT = 1.3, 3.9
+
+
+def f_tay(x):
+    return 0.45 + 0.32 * math.exp(0.6 * x)
+
+
+def p_tay(x):
+    """Second-order Taylor polynomial of f_tay at X0_T."""
+    e = 0.32 * math.exp(0.6 * X0_T)
+    h = x - X0_T
+    return 0.45 + e * (1 + 0.6 * h + 0.6 ** 2 * h * h / 2)
+
+
+p = concept_plot(xr=(-0.35, 4.55), yr=(-0.4, 4.6), w=480, h=265)
+FX0, FXT, PXT = f_tay(X0_T), f_tay(XT), p_tay(XT)
+x_mark(p, X0_T, FX0, it("x") + sub("0"))
+x_mark(p, XT, FXT, it("x"))
+# the interval between x_0 and x where xi(x) lies
+p.line([(X0_T, 0), (XT, 0)], PRACTICE, 7, None, 0.3)
+p.label((X0_T + XT) / 2, 0, "ξ(" + it("x") + ") bu aralıkta", 0, -9, PRACTICE, 11.5, "middle")
+p.line(sample(p_tay, -0.1, XT + 0.08, 300), PRACTICE, 2.2, "7 4")
+p.line(sample(f_tay, -0.1, XT + 0.08, 300), THEORY, 2.6)
+y_mark(p, XT, FXT, fof(it("x")), THEORY, 12)
+y_mark(p, XT, PXT, it("P") + sub(it("n")) + "(" + it("x") + ")", PRACTICE, 12)
+dot(p, (X0_T, FX0), TEXT, 4.2)
+p.label(X0_T, FX0, "(" + it("x") + sub("0") + ", " + fof(it("x") + sub("0")) + ")", -8, -10, TEXT, 12, "end")
+# the gap R_n(x)
+p.add(f'<line x1="{p.X(XT) + 9:.1f}" y1="{p.Y(FXT):.1f}" x2="{p.X(XT) + 9:.1f}" y2="{p.Y(PXT):.1f}" '
+      f'stroke="{TEXT}" stroke-width="1.4"/>')
+for yv in (FXT, PXT):
+    p.add(f'<line x1="{p.X(XT) + 5:.1f}" y1="{p.Y(yv):.1f}" x2="{p.X(XT) + 13:.1f}" y2="{p.Y(yv):.1f}" '
+          f'stroke="{TEXT}" stroke-width="1.4"/>')
+dot(p, (XT, FXT), THEORY, 4.2)
+dot(p, (XT, PXT), PRACTICE, 4.2)
+p.label(XT, (FXT + PXT) / 2, it("R") + sub(it("n")) + "(" + it("x") + ")", 18, 4.5, TEXT, 12.5, "start", True)
+legend(p, ((it("y") + " = " + fof(it("x")), THEORY, 2.6, None),
+           (it("y") + " = " + it("P") + sub(it("n")) + "(" + it("x") + ")", PRACTICE, 2.2, "7 4")), p.y0 + p.h + 52)
+save("taylor", figure(
+    int(p.x0 + p.w + 90), int(p.y0 + p.h + 66), [p],
+    "Taylor teoremi: <em>P<sub>n</sub></em>, <em>f</em>'nin grafiğine (<em>x</em><sub>0</sub>, "
+    "<em>f</em>(<em>x</em><sub>0</sub>)) noktasında yapışır. Bir <em>x</em> noktasında iki grafik arasındaki "
+    "düşey fark kesme hatası <em>R<sub>n</sub></em>(<em>x</em>) = <em>f</em>(<em>x</em>) &#8722; "
+    "<em>P<sub>n</sub></em>(<em>x</em>)'tir; formüldeki &#958;(<em>x</em>), <em>x</em><sub>0</sub> ile "
+    "<em>x</em> arasındaki (eksende kalın çizilen) aralıktadır.",
+    aria="Graph of a function f and its Taylor polynomial P_n about x0, touching at (x0, f(x0)); at a point x "
+         "the vertical gap between the two graphs is marked as the remainder R_n(x), and the interval between "
+         "x0 and x, where xi(x) lies, is highlighted on the x axis"))

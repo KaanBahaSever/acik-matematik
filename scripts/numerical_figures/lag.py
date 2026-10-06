@@ -390,3 +390,144 @@ save("carpim-yuzeyi", figure(
     aria="Ribbons over the interval from 0 to 1 for n = 1 to 10 showing the ratio of the node product to "
          "the bound h^(n+1) n!/4; every ribbon stays below the plane at height 1, the peaks near x = 0 and "
          "x = 1 stay high while the middle peaks shrink toward 0 as n grows"))
+
+EPS = "&#949;"
+
+
+def axis_tick(p, x, s):
+    """Tick mark on the bottom axis with a label below it."""
+    Y = p.y0 + p.h
+    p.add(f'<line x1="{p.X(x):.1f}" y1="{Y - 4:.1f}" x2="{p.X(x):.1f}" y2="{Y + 4:.1f}" '
+          f'stroke="{TEXT}" stroke-width="1.1" opacity="0.7"/>')
+    p.text_px(p.X(x), Y + 19, s, TEXT, 12.5, "middle")
+
+
+def poly_through(xs, ys):
+    """The interpolating polynomial through (xs, ys) in Lagrange form, as a callable."""
+    def f(x):
+        total = 0.0
+        for i, (xi_, yi) in enumerate(zip(xs, ys)):
+            term = yi
+            for j, xj in enumerate(xs):
+                if j != i:
+                    term *= (x - xj) / (xi_ - xj)
+            total += term
+        return total
+    return f
+
+
+# ============================================================
+# weierstrass-serit: a polynomial y = P(x) inside the band f(x) - eps < y < f(x) + eps on [a, b]
+# ============================================================
+WA, WB, WEPS = 0.7, 4.5, 0.62
+
+
+def wf(x):
+    return 1.9 + 0.55 * x + 0.9 * math.tanh(1.6 * (x - 1.6)) - 0.52 * math.tanh(1.3 * (x - 3.2))
+
+
+# P is a genuine polynomial: it interpolates f plus a gentle wave at 12 Chebyshev nodes of [a, b]
+CH = [(WA + WB) / 2 + (WB - WA) / 2 * math.cos((2 * k + 1) * math.pi / 24) for k in range(12)]
+WP = poly_through(CH, [wf(t) + 0.62 * WEPS * math.sin(2.6 * (t - WA) + 0.5) for t in CH])
+WGAP = max(abs(wf(WA + (WB - WA) * k / 2000) - WP(WA + (WB - WA) * k / 2000)) for k in range(2001))
+assert WGAP < 0.85 * WEPS, WGAP
+
+p = Plot(50, 30, 380, 240, (0, 5), (0.6, 5.2))
+p.axes((), (), it("x"), it("y"))
+band_lo = sample(lambda x: wf(x) - WEPS, WA, WB)
+band_hi = sample(lambda x: wf(x) + WEPS, WA, WB)
+p.polygon(band_lo + band_hi[::-1], PRACTICE, 0.10)
+for xv in (WA, WB):
+    p.vline(xv, 0.6, wf(xv) + WEPS, TEXT, "4 3", 0.4)
+    axis_tick(p, xv, it("a" if xv == WA else "b"))
+p.line(band_hi, PRACTICE, 1.6, "7 4")
+p.line(band_lo, PRACTICE, 1.6, "7 4")
+p.line(sample(wf, WA, WB), TEXT, 2.6)
+p.line(sample(WP, WA, WB), THEORY, 2.2)
+# the half width eps of the band, as a double arrow below the graph of f (P runs above f there)
+XE = 1.05
+p.arrow((XE, wf(XE) - WEPS / 2), (XE, wf(XE) - WEPS), TEXT, 1.1, 6.0, None, 0.85)
+p.arrow((XE, wf(XE) - WEPS / 2), (XE, wf(XE)), TEXT, 1.1, 6.0, None, 0.85)
+p.label(XE, wf(XE) - WEPS / 2, it(EPS), 6, 5, TEXT, 13, "start")
+# right-hand column of names
+ends = [(wf(WB) + WEPS, it("f") + "(" + it("x") + ") + " + it(EPS), PRACTICE, False),
+        (WP(WB), it("P") + "(" + it("x") + ")", THEORY, True),
+        (wf(WB), it("f") + "(" + it("x") + ")", TEXT, True),
+        (wf(WB) - WEPS, it("f") + "(" + it("x") + ") " + MINUS + " " + it(EPS), PRACTICE, False)]
+for yv, s, c, b in ends:
+    p.label(WB, yv, s, 8, 4, c, 12, "start", b)
+save("weierstrass-serit", figure(
+    560, 340, [p],
+    "<em>f</em> grafiğinin çevresinde, <em>y</em> = <em>f</em>(<em>x</em>) &#8722; &#949; ile "
+    "<em>y</em> = <em>f</em>(<em>x</em>) + &#949; kesikli eğrileri arasındaki şerit. Teorem, [<em>a</em>, <em>b</em>] "
+    "aralığının tamamında bu şeridin içinde kalan bir <em>P</em> polinomu bulunduğunu söyler.",
+    aria="A continuous function y = f(x) on the interval from a to b, the dashed curves f(x) + eps and "
+         "f(x) - eps bounding a shaded band, and a polynomial y = P(x) that wiggles but stays inside the band"))
+
+# ============================================================
+# lineer-interpolasyon: the line y = P(x) through (x_0, f(x_0)) and (x_1, f(x_1))
+# ============================================================
+LX0, LX1 = 1.2, 3.6
+
+
+def lf(x):
+    return 0.6 + 2.2 * math.log(x + 0.25) - 0.08 * (x - 2) ** 2
+
+
+LSLOPE = (lf(LX1) - lf(LX0)) / (LX1 - LX0)
+
+
+def lp(x):
+    return lf(LX0) + LSLOPE * (x - LX0)
+
+
+p = Plot(50, 30, 380, 260, (0, 5), (0, 4.6))
+p.axes((), (), it("x"), it("y"))
+for k, xv in enumerate((LX0, LX1)):
+    p.vline(xv, 0, lf(xv), TEXT, "4 3", 0.45)
+    axis_tick(p, xv, it("x") + sub(str(k)))
+p.line(sample(lf, 0.7, 4.75), TEXT, 2.6)
+p.line([(0.55, lp(0.55)), (4.55, lp(4.55))], THEORY, 2.2)
+for xv in (LX0, LX1):
+    dot(p, (xv, lf(xv)), TEXT, 4.4)
+plabel(p, LX0, lf(LX0), "(" + it("x") + sub("0") + ", " + it("f") + "(" + it("x") + sub("0") + "))", 8, 18, TEXT, 12)
+plabel(p, LX1, lf(LX1), "(" + it("x") + sub("1") + ", " + it("f") + "(" + it("x") + sub("1") + "))", -6, -12, TEXT, 12,
+       "end")
+p.label(4.75, lf(4.75), it("y") + " = " + it("f") + "(" + it("x") + ")", 8, 4, TEXT, 12.5, "start", True)
+p.label(4.55, lp(4.55), it("y") + " = " + it("P") + "(" + it("x") + ")", 8, 4, THEORY, 12.5, "start", True)
+save("lineer-interpolasyon", figure(
+    540, 330, [p],
+    "<em>y</em> = <em>f</em>(<em>x</em>) eğrisi ve (<em>x</em><sub>0</sub>, <em>f</em>(<em>x</em><sub>0</sub>)), "
+    "(<em>x</em><sub>1</sub>, <em>f</em>(<em>x</em><sub>1</sub>)) noktalarından geçen <em>y</em> = <em>P</em>(<em>x</em>) "
+    "doğrusu. <em>P</em>, iki düğümde <em>f</em> ile aynı değeri alır; düğümlerin arasında ve dışında "
+    "<em>f</em>'den ayrılır.",
+    aria="A curve y = f(x) and the straight line y = P(x) through the two points with abscissae x0 and x1; the "
+         "line meets the curve exactly at the two nodes and departs from it elsewhere"))
+
+# ============================================================
+# taylor-genis: e^x and P_0 ... P_5 about x_0 = 0 on [-1, 3]
+# ============================================================
+p = Plot(55, 30, 380, 300, (-1, 3), (-1, 21))
+p.grid([0, 1, 2, 3], [5, 10, 15, 20])
+p.axes((-1, 0, 1, 2, 3), (0, 5, 10, 15, 20), it("x"), it("y"), dec, dec)
+p.line([(-1, 0), (3, 0)], TEXT, 1.0, None, 0.4)
+p.line([(0, -1), (0, 21)], TEXT, 1.0, None, 0.4)
+TCOL = ((REMARK, None), (BASE, "6 4"), (PRACTICE, None), (THEORY, "6 4"), (REMARK, "2 3"), (BASE, None))
+for k in range(6):
+    p.line(sample(taylor(k), -1, 3), TCOL[k][0], 1.8, TCOL[k][1])
+p.line(sample(math.exp, -1, 3), TEXT, 3.0)
+E3 = math.exp(3)
+p.label(3, E3, it("y") + " = " + it("e") + sup(it("x")), 9, 5, TEXT, 12.5, bold=True)
+for k in range(6):
+    p.label(3, taylor(k)(3), it("y") + " = " + it("P") + sub(str(k)) + "(" + it("x") + ")", 9, 5,
+            TCOL[k][0], 12, bold=True)
+assert abs(taylor(5)(3) - 18.4) < 1e-12
+save("taylor-genis", figure(
+    560, 370, [p],
+    "<em>e</em><sup><em>x</em></sup> (kalın) ve <em>x</em><sub>0</sub> = 0 civarındaki <em>P</em><sub>0</sub>, "
+    "<em>P</em><sub>1</sub>, &#8230;, <em>P</em><sub>5</sub> Taylor polinomları, [&#8722;1, 3] aralığında. "
+    "0 civarında bütün eğriler <em>e</em><sup><em>x</em></sup> ile neredeyse çakışır; <em>x</em> = 3'te ise "
+    "<em>P</em><sub>5</sub>(3) = 18,4 bile <em>e</em><sup>3</sup> &#8776; 20,086 değerinden belirgin biçimde "
+    "uzaktır.",
+    aria="The exponential function on the interval from -1 to 3 together with its Taylor polynomials P0 to P5 "
+         "about x0 = 0; near 0 all curves agree, while at x = 3 even P5(3) = 18.4 stays well below e^3 = 20.086"))

@@ -456,3 +456,97 @@ save("adim-sayisi-yuzey", figure(
     aria="Staircase surface of the bisection step count n = floor(log2(L / eps)) + 1 over L = b - a from "
          "0.25 to 8 and eps from 1e-6 to 1e-1 on a logarithmic axis, with five marked points: "
          "(1, 1e-3) n = 10, (5, 0.005) n = 10, (0.25, 0.01) n = 5, (3, 1e-3) n = 12, (1, 1e-2) n = 7"))
+
+
+# ============================================================
+# yontem: the method picture, generic increasing f with f(a) < 0 < f(b)
+# ============================================================
+def sig(x):
+    """An increasing S-shaped stand-in for f on [a, b] = [0, 8]; only the shape matters."""
+    return 4.2 * math.tanh((x - 3.4) / 2.4) + 1.3
+
+
+A0, B0 = 0.0, 8.0
+lo, hi = A0, B0
+for _ in range(80):
+    m = (lo + hi) / 2
+    lo, hi = (m, hi) if sig(m) < 0 else (lo, m)
+ROOT_G = lo                                # about 2.632
+# the first three steps: [0, 8] -> [0, 4] -> [2, 4], midpoints 4, 2, 3
+STEPS = []
+a, b = A0, B0
+for _ in range(3):
+    m = (a + b) / 2
+    STEPS.append((a, b, m))
+    if sig(m) * sig(a) > 0:
+        a = m
+    else:
+        b = m
+assert [s[2] for s in STEPS] == [4.0, 2.0, 3.0]
+assert sig(4) > 0 > sig(2) and sig(3) > 0 and 2 < ROOT_G < 3
+
+XR = (-1.0, 8.9)
+YR = (-2.8, 6.4)
+p1 = Plot(70, 30, 54 * (XR[1] - XR[0]), 29 * (YR[1] - YR[0]), XR, YR)
+YAX = -0.7                                 # the y axis sits left of a
+p1.add(f'<g stroke="{TEXT}" stroke-width="1.1" opacity="0.6" fill="{TEXT}">'
+       f'<line x1="{p1.X(YAX) - 4:.1f}" y1="{p1.Y(0):.1f}" x2="{p1.X(XR[1]):.1f}" y2="{p1.Y(0):.1f}"/>'
+       f'<line x1="{p1.X(YAX):.1f}" y1="{p1.Y(YR[0]):.1f}" x2="{p1.X(YAX):.1f}" y2="{p1.Y(YR[1]):.1f}"/>'
+       f'<polygon points="{p1.X(XR[1]):.1f},{p1.Y(0):.1f} {p1.X(XR[1]) - 8:.1f},{p1.Y(0) - 3.5:.1f} '
+       f'{p1.X(XR[1]) - 8:.1f},{p1.Y(0) + 3.5:.1f}" stroke="none"/>'
+       f'<polygon points="{p1.X(YAX):.1f},{p1.Y(YR[1]):.1f} {p1.X(YAX) - 3.5:.1f},{p1.Y(YR[1]) + 8:.1f} '
+       f'{p1.X(YAX) + 3.5:.1f},{p1.Y(YR[1]) + 8:.1f}" stroke="none"/></g>')
+p1.label(XR[1], 0, it("x"), -2, 17, TEXT, 12.5, "end")
+p1.label(YAX, YR[1], it("y"), 9, 6, TEXT, 12.5, "start")
+# guides: vertical from the axis to the graph, horizontal from the graph to the y axis
+MARKS = [(A0, THEORY, True), (2.0, PRACTICE, True), (3.0, PRACTICE, False), (4.0, PRACTICE, True),
+         (B0, THEORY, True)]
+for xv, col, horiz in MARKS:
+    p1.line([(xv, 0), (xv, sig(xv))], TEXT, 1.0, "3 3", 0.6)
+    if horiz:
+        p1.line([(YAX, sig(xv)), (xv, sig(xv))], TEXT, 1.0, "3 3", 0.45)
+        p1.add(f'<line x1="{p1.X(YAX) - 3:.1f}" y1="{p1.Y(sig(xv)):.1f}" x2="{p1.X(YAX) + 3:.1f}" '
+               f'y2="{p1.Y(sig(xv)):.1f}" stroke="{TEXT}" stroke-width="1" opacity="0.7"/>')
+p1.line(sample(sig, A0, B0, 300), THEORY, 2.4)
+for xv, col, _ in MARKS:
+    dot(p1, (xv, sig(xv)), col, 4.0)
+hollow(p1, (ROOT_G, 0), TEXT, 3.8, 1.7)
+# y-axis labels
+for xv, s in ((B0, it("f") + "(" + it("b") + ")"), (4.0, it("f") + "(" + it("p") + sub("1") + ")"),
+              (2.0, it("f") + "(" + it("p") + sub("2") + ")"), (A0, it("f") + "(" + it("a") + ")")):
+    p1.label(YAX, sig(xv), s, -8, 4, TEXT, 12, "end")
+# x-axis labels: above the axis where the graph is below it, and the other way round
+p1.label(A0, 0, it("a") + " = " + it("a") + sub("1"), 0, -9, TEXT, 12, "middle")
+p1.label(2.0, 0, it("p") + sub("2"), 0, -9, PRACTICE, 12, "middle", True)
+p1.label(3.0, 0, it("p") + sub("3"), 0, 18, PRACTICE, 12, "middle", True)
+p1.label(4.0, 0, it("p") + sub("1"), 0, 18, PRACTICE, 12, "middle", True)
+p1.label(B0, 0, it("b") + " = " + it("b") + sub("1"), 0, 18, TEXT, 12, "middle")
+p1.label(ROOT_G, 0, it("p"), -5, -8, TEXT, 12.5, "end", True)
+p1.label(6.3, sig(6.3), it("y") + " = " + it("f") + "(" + it("x") + ")", 6, 20, THEORY, 12.5, "start", True)
+
+# nested intervals below the axis, on the same horizontal scale
+p2 = Plot(p1.x0, p1.y0 + p1.h + 16, p1.w, 102, XR, (0.5, 3.5))
+p2.add(f'<line x1="{p2.X(ROOT_G):.1f}" y1="{p1.Y(0) + 4:.1f}" x2="{p2.X(ROOT_G):.1f}" '
+       f'y2="{p2.y0 + p2.h:.1f}" stroke="{TEXT}" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>')
+for n, (a, b, m) in enumerate(STEPS, start=1):
+    y = 4 - n
+    Y = p2.Y(y)
+    p2.add(f'<rect x="{p2.X(a):.1f}" y="{Y - 3.5:.1f}" width="{p2.X(b) - p2.X(a):.1f}" height="7" '
+           f'fill="{BASE}" fill-opacity="0.4" stroke="{BASE}" stroke-width="1.1"/>')
+    for e in (a, b):
+        p2.add(f'<line x1="{p2.X(e):.1f}" y1="{Y - 7:.1f}" x2="{p2.X(e):.1f}" y2="{Y + 7:.1f}" '
+               f'stroke="{BASE}" stroke-width="1.6"/>')
+    hollow(p2, (m, y), PRACTICE, 3.4, 1.6)
+    k = sub(str(n))
+    p2.label(a, y, it("a") + k, 0, -12, TEXT, 12, "middle")
+    p2.label(m, y, it("p") + k, 0, -12, PRACTICE, 12, "middle", True)
+    p2.label(b, y, it("b") + k, 0, -12, TEXT, 12, "middle")
+save("yontem", figure(
+    int(p1.x0 + p1.w + 30), int(p2.y0 + p2.h + 20), [p1, p2],
+    "İkiye bölme metodunun ilk üç adımı. <em>f</em>(<em>p</em><sub>1</sub>) &gt; 0 olduğundan kök "
+    "[<em>a</em><sub>1</sub>, <em>p</em><sub>1</sub>] yarısında, <em>f</em>(<em>p</em><sub>2</sub>) &lt; 0 "
+    "olduğundan [<em>p</em><sub>2</sub>, <em>b</em><sub>2</sub>] yarısındadır. Alttaki iç içe aralıkların "
+    "her biri bir öncekinin yarısıdır ve <em>p</em> kökünü içerir.",
+    aria="An increasing curve y = f(x) on [a, b] with f(a) below 0 and f(b) above 0, the root p, the "
+         "midpoints p1, p2, p3 on the x axis and the values f(p1), f(p2) on the y axis; below the axis the "
+         "nested intervals [a1, b1], [a2, b2], [a3, b3] with their midpoints"))

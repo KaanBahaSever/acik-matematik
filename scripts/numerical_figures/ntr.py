@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from svg_plot import Plot, figure, dot, TEXT, THEORY, PRACTICE, BASE, BG, WIDE  # noqa: E402
+from svg_plot import Plot, figure, dot, TEXT, THEORY, PRACTICE, BASE, REMARK, BG, WIDE  # noqa: E402
 from svg_plot3 import Camera, Space  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -479,3 +479,64 @@ save("ileri-fark-hata-yuzeyi", figure(
     aria="Surface of the forward difference error for x e^x over x from 1 to 3 and h from 0.01 to 0.2, "
          "growing linearly in h and exponentially in x, with the cuts h = 0.1 and x = 2 highlighted, their "
          "crossing marked, and level curves 0.5, 1, 2, 4 on the floor"))
+
+# ============================================================
+# uc-kiris: tangent at x_0 and the forward, backward and centred chords of a convex curve
+# ============================================================
+def gf(x):
+    return 0.6 * math.exp(x)
+
+
+GX0, GH = 1.3, 0.65
+g_true = 0.6 * math.exp(GX0)
+g_fwd = (gf(GX0 + GH) - gf(GX0)) / GH
+g_bwd = (gf(GX0) - gf(GX0 - GH)) / GH
+g_mid = (gf(GX0 + GH) - gf(GX0 - GH)) / (2 * GH)
+# the centred slope is much closer to the true one than the one-sided slopes
+assert abs(g_mid - g_true) < 0.35 * min(abs(g_fwd - g_true), abs(g_bwd - g_true))
+
+p = Plot(50, 30, 400, 290, (0, 2.6), (0, 6.2))
+frame(p)
+axis_names(p, it("x"), it("y"))
+for v, s_ in ((GX0 - GH, X0 + " " + MINUS + " " + it("h")), (GX0, X0), (GX0 + GH, X0 + " + " + it("h"))):
+    p.vline(v, 0, gf(v), TEXT, "4 3", 0.4)
+    xtick(p, v, s_, 12)
+
+
+def through(x1, y1, m):
+    return lambda x: y1 + m * (x - x1)
+
+
+draw_fn(p, gf, 0.05, 2.5, TEXT, 2.6)
+draw_fn(p, through(GX0, gf(GX0), g_true), GX0 - GH - 0.35, GX0 + GH + 0.35, THEORY, 2.2)
+draw_fn(p, through(GX0, gf(GX0), g_fwd), GX0 - 0.25, GX0 + GH + 0.3, PRACTICE, 1.8, "8 4")
+draw_fn(p, through(GX0, gf(GX0), g_bwd), GX0 - GH - 0.3, GX0 + 0.35, REMARK, 1.8, "2 3")
+draw_fn(p, through(GX0 - GH, gf(GX0 - GH), g_mid), GX0 - GH - 0.2, GX0 + GH + 0.2, BASE, 2.2)
+for v in (GX0 - GH, GX0, GX0 + GH):
+    dot(p, (v, gf(v)), TEXT, 4.4)
+XTOP = math.log(6.2 / 0.6)
+p.label(XTOP, 6.2, it("y") + " = " + it("f") + "(" + it("x") + ")", 9, 12, TEXT, 12.5, "start", True)
+# key in the empty upper-left corner
+KEY = [(THEORY, None, 2.2, "teğet, eğim " + FP + "(" + X0 + ")"),
+       (PRACTICE, "8 4", 1.8, "ileri fark kirişi"),
+       (REMARK, "2 3", 1.8, "geri fark kirişi"),
+       (BASE, None, 2.2, "orta nokta kirişi")]
+kx, ky = p.x0 + 14, p.y0 + 6
+p.add(f'<rect x="{kx:.1f}" y="{ky:.1f}" width="178" height="{18 * len(KEY) + 10}" rx="4" fill="{BG}" '
+      f'stroke="{TEXT}" stroke-width="0.8" stroke-opacity="0.35"/>')
+for k, (c, dash, w, s_) in enumerate(KEY):
+    yy = ky + 16 + 18 * k
+    da = f' stroke-dasharray="{dash}"' if dash else ""
+    p.add(f'<line x1="{kx + 9:.1f}" y1="{yy - 4:.1f}" x2="{kx + 37:.1f}" y2="{yy - 4:.1f}" stroke="{c}" '
+          f'stroke-width="{w}"{da}/>')
+    p.text_px(kx + 44, yy, s_, c, 11.5, "start", c in (THEORY, BASE))
+save("uc-kiris", figure(
+    int(p.x0 + p.w + 110), int(p.y0 + p.h + 40), [p],
+    "<em>x</em><sub>0</sub> noktasındaki teğet ve üç kiriş. İleri fark kirişi <em>x</em><sub>0</sub> ile "
+    "<em>x</em><sub>0</sub> + <em>h</em>'yi, geri fark kirişi <em>x</em><sub>0</sub> &#8722; <em>h</em> ile "
+    "<em>x</em><sub>0</sub>'ı, orta nokta kirişi <em>x</em><sub>0</sub> &#8722; <em>h</em> ile "
+    "<em>x</em><sub>0</sub> + <em>h</em>'yi birleştirir. Tek yanlı kirişlerden biri teğetten dik, öteki yatık "
+    "kalır; orta nokta kirişi ise teğete neredeyse paraleldir.",
+    aria="A convex curve with the points at x0 - h, x0 and x0 + h, the tangent at x0, the steeper forward "
+         "difference chord, the flatter backward difference chord and the centred chord from x0 - h to x0 + h, "
+         "which is almost parallel to the tangent"))

@@ -391,3 +391,64 @@ save("not-tahmini", figure(
     "<em>y</em> &#8776; 68,81, yani yaklaşık 69.",
     aria="Scatter plot of ten math and physics grades with the regression line y = 0.6613x + 29.1290 and the "
          "predicted point at x = 60, y about 68.81, with dashed guides to both axes"))
+
+# ============================================================
+# genel-artiklar: generic picture of the method, points (x_i, y_i), the line y^ = ax + b, y^_i and q_i
+# ============================================================
+def sb(s_, size=9):
+    """Subscript inside an SVG <text>; the zero-width space resets the baseline."""
+    return f'<tspan font-size="{size}" dy="3.5">{s_}</tspan><tspan dy="-3.5">&#8203;</tspan>'
+
+
+GXS = [F(1), F(17, 10), F(29, 10), F(375, 100), F(46, 10)]
+GYS = [F(1), F(23, 10), F(2), F(37, 10), F(31, 10)]
+GA, GB = regression(GXS, GYS)
+GQ = [y - GA * x - GB for x, y in zip(GXS, GYS)]
+assert sum(GQ) == 0 and min(abs(float(q)) for q in GQ) > 0.3
+
+
+def gline(x):
+    return float(GA) * x + float(GB)
+
+
+IDX = ["1", "2", "3", None, it("n")]       # the fourth point stands for the ones between x_3 and x_n
+p = Plot(50, 30, 420, 280, (0, 5.4), (0, 4.6))
+p.axes((), (), it("x"), it("y"))
+p.line([(0.3, gline(0.3)), (5.1, gline(5.1))], THEORY, 2.2)
+p.label(5.1, gline(5.1), YHAT + " = " + it("a") + it("x") + " + " + it("b"), 6, -8, THEORY, 12.5, "end", True)
+for k, (x, y) in enumerate(zip(GXS, GYS)):
+    x, y = float(x), float(y)
+    yh = gline(x)
+    up = y > yh
+    Y = p.y0 + p.h
+    p.add(f'<line x1="{p.X(x):.1f}" y1="{Y - 4:.1f}" x2="{p.X(x):.1f}" y2="{Y + 4:.1f}" stroke="{TEXT}" '
+          f'stroke-width="1.1" opacity="0.7"/>')
+    p.line([(x, y), (x, yh)], PRACTICE, 2.0)
+    hollow(p, (x, yh), THEORY, 3.6, 1.6)
+    dot(p, (x, y), TEXT, 4.4)
+    i = IDX[k]
+    if i is None:
+        p.text_px(p.X(x), Y + 19, "&#8230;", TEXT, 12.5, "middle")
+        continue
+    p.text_px(p.X(x), Y + 19, it("x") + sb(i), TEXT, 12.5, "middle")
+    # the residual beside its segment on the side away from the rising line, the data point beyond its end
+    if up:
+        p.label(x, (y + yh) / 2, it("q") + sb(i), -7, 5, PRACTICE, 12.5, "end", True)
+    else:
+        p.label(x, (y + yh) / 2, it("q") + sb(i), 7, 5, PRACTICE, 12.5, "start", True)
+    p.label(x, y, "(" + it("x") + sb(i) + ", " + it("y") + sb(i) + ")", 0, -11 if up else 21, TEXT, 12, "middle")
+    # y^_i away from the rising line: below right if the point is above, above left otherwise
+    if up:
+        p.label(x, yh, YHAT + sb(i), 8, 17, THEORY, 12.5, "start")
+    else:
+        p.label(x, yh, YHAT + sb(i), -8, -9, THEORY, 12.5, "end")
+save("genel-artiklar", figure(
+    int(p.x0 + p.w + 40), int(p.y0 + p.h + 40), [p],
+    "Veri noktaları (<em>x</em><sub><em>i</em></sub>, <em>y</em><sub><em>i</em></sub>) (dolu daireler), "
+    "<em>ŷ</em> = <em>ax</em> + <em>b</em> doğrusu ve doğru üzerindeki <em>ŷ</em><sub><em>i</em></sub> = "
+    "<em>ax</em><sub><em>i</em></sub> + <em>b</em> tahmini değerleri (içi boş daireler). Dikey parçalar "
+    "<em>q</em><sub><em>i</em></sub> = <em>y</em><sub><em>i</em></sub> &#8722; <em>ŷ</em><sub><em>i</em></sub> "
+    "farklarıdır; en küçük kareler yöntemi bu parçaların uzunluklarının karelerinin toplamı <em>E</em>'yi "
+    "en küçük yapan doğruyu seçer.",
+    aria="Data points (x_i, y_i) scattered around the line y = ax + b, the fitted values on the line marked as "
+         "hollow circles and the vertical deviations q_1, q_2, q_3, ..., q_n between each point and the line"))

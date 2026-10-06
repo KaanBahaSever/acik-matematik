@@ -162,6 +162,42 @@ class GraphScene:
 
 
 # ============================================================
+# hata-buyumesi: E_n = C n E_0 (C = 1) against E_n = C^n E_0 (C = 1.5), n = 1..8, E_0 = 1
+# ============================================================
+C_LIN, C_EXP = 1.0, 1.5
+p = Plot(70, 40, 480, 300, (0, 8.7), (0, 27.5))
+p.axes(range(1, 9), [], "n", "", str, str)
+p.text_px(p.x0, p.y0 - 16, it("E") + sub(it("n")), TEXT, 12.5, "middle")
+for n in range(1, 9):
+    p.add(f'<line x1="{p.X(n):.1f}" y1="{p.Y(0):.1f}" x2="{p.X(n):.1f}" y2="{p.Y(0) - 4:.1f}" stroke="{TEXT}" '
+          f'stroke-width="1" opacity="0.6"/>')
+# E_0 on the vertical axis
+p.add(f'<line x1="{p.X(0) - 4:.1f}" y1="{p.Y(1):.1f}" x2="{p.X(0) + 4:.1f}" y2="{p.Y(1):.1f}" stroke="{TEXT}" '
+      f'stroke-width="1.1" opacity="0.8"/>')
+p.label(0, 1, it("E") + sub("0"), -8, 4.5, TEXT, 12.5, "end")
+lin = [(n, C_LIN * n) for n in range(1, 9)]
+exp_ = [(n, C_EXP ** n) for n in range(1, 9)]
+p.points(lin, THEORY, 4.4)
+p.points(exp_, PRACTICE, 4.4)
+p.points([(0, 1)], TEXT, 4.4)
+p.label(6.75, 23.0, "Kararsız üstel hata büyümesi", 0, 0, PRACTICE, 12.5, "end", True)
+p.label(6.75, 23.0, it("E") + sub(it("n")) + " = " + it("C") + sup(it("n")) + "&#8201;" + it("E") + sub("0"), 0, 19,
+        PRACTICE, 12.5, "end")
+p.label(8.45, 0, "Kararlı lineer hata büyümesi", 0, -31, THEORY, 12.5, "end", True)
+p.label(8.45, 0, it("E") + sub(it("n")) + " = " + it("C") + "&#8201;" + it("n") + "&#8201;" + it("E") + sub("0"), 0, -12,
+        THEORY, 12.5, "end")
+save("hata-buyumesi", figure(
+    int(p.x0 + p.w + 40), int(p.y0 + p.h + 30), [p],
+    "İlk hata <em>E</em><sub>0</sub> olmak üzere <em>n</em> = 1, 2, …, 8 adım sonraki hatalar. Mavi noktalar "
+    "lineer büyüme <em>E<sub>n</sub></em> = <em>C</em>&#8201;<em>n</em>&#8201;<em>E</em><sub>0</sub> "
+    "(<em>C</em> = 1), kırmızı noktalar üstel büyüme <em>E<sub>n</sub></em> = <em>C<sup>n</sup></em>&#8201;"
+    "<em>E</em><sub>0</sub> (<em>C</em> = 1,5) içindir. İlk adımlarda iki hata birbirine yakındır; "
+    "<em>n</em> = 8'de lineer hata 8&#8201;<em>E</em><sub>0</sub>, üstel hata yaklaşık 25,6&#8201;"
+    "<em>E</em><sub>0</sub> olur.",
+    aria="Errors E_n for n = 1 to 8 starting from E_0 = 1: blue dots for the stable linear growth E_n = C n E_0 "
+         "with C = 1, red dots for the unstable exponential growth E_n = C^n E_0 with C = 1.5"))
+
+# ============================================================
 # hata-yuzeyi: z = log10(E_n / E_0) = n log10(C), 0 <= n <= 10, 0.5 <= C <= 3
 # ============================================================
 # World coordinates: n runs along +y (to the right on the page), C grows along -x

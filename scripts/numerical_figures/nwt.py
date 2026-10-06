@@ -128,6 +128,81 @@ def newton(f, df, p0, n):
 
 
 # ============================================================
+# teget-fikri: the method picture on a generic increasing S-shaped curve
+# ============================================================
+# y = 3.5 / (1 + e^(-0.8 (x - 5))) - 0.6: convex left of x = 5, concave right
+# of it. From p0 = 1.1 the tangent overshoots to p1 = 5.09 right of the root
+# p = 3.03, and the tangent at p1 comes back to p2 = 3.36.
+def s_curve(x):
+    return 3.5 / (1 + math.exp(-0.8 * (x - 5))) - 0.6
+
+
+def ds_curve(x):
+    e = math.exp(-0.8 * (x - 5))
+    return 3.5 * 0.8 * e / (1 + e) ** 2
+
+
+def bisect_root(f, lo, hi):
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        if f(lo) * f(mid) <= 0:
+            hi = mid
+        else:
+            lo = mid
+    return (lo + hi) / 2
+
+
+FP = "<tspan font-style=\"italic\">f</tspan>&#8242;"
+S_ROOT = bisect_root(s_curve, 1.0, 5.0)
+sp = newton(s_curve, ds_curve, 1.1, 2)
+XS, YS = (-0.45, 7.0), (-0.95, 2.75)
+ps_ = Plot(30, 30, 450, 300, XS, YS)
+ps_.origin_axes(it("x"), it("y"))
+ps_.line([(x, s_curve(x)) for x in [XS[0] + 0.02 * k for k in range(int((6.9 - XS[0]) / 0.02) + 1)]],
+         TEXT, 2.0)
+ps_.label(6.9, s_curve(6.9), it("y") + " = " + it("f") + "(" + it("x") + ")", -4, -12, TEXT, 12.5, "end")
+# the two tangents, each from a little left of where it meets the axis to a little past its point
+T_END = ((0.35, sp[1] + 0.9), (sp[2] - 0.3, sp[1] + 1.15))
+for k in range(2):
+    x0, y0, m = sp[k], s_curve(sp[k]), ds_curve(sp[k])
+    lo, hi = T_END[k]
+    ps_.line([(lo, y0 + m * (lo - x0)), (hi, y0 + m * (hi - x0))], PRACTICE, 1.8)
+# guides from the axis to the curve
+for k in range(3):
+    ps_.line([(sp[k], 0), (sp[k], s_curve(sp[k]))], TEXT, 1.0, "4 3", 0.7)
+for k in range(3):
+    dot(ps_, (sp[k], s_curve(sp[k])), PRACTICE, 3.6 if k < 2 else 3.0)
+    axis_mark(ps_, sp[k])
+hollow(ps_, (S_ROOT, 0), TEXT, 3.6, 1.4)
+# points on the curve
+plabel(ps_, sp[0], s_curve(sp[0]), "(" + pn(0) + ", " + it("f") + "(" + pn(0) + "))", 4, 20, TEXT, 12)
+plabel(ps_, sp[1], s_curve(sp[1]), "(" + pn(1) + ", " + it("f") + "(" + pn(1) + "))", -10, -2, TEXT, 12, "end")
+# points on the axis
+ps_.label(sp[0], 0, pn(0), 0, -9, PRACTICE, 12.5, "middle", True)
+ps_.label(sp[1], 0, pn(1), 4, 17, PRACTICE, 12.5, "start", True)
+ps_.label(S_ROOT, 0, it("p"), -5, -8, TEXT, 12.5, "end", True)
+# p2 sits between the axis and the first tangent: guide it down below that tangent
+P2_DY = 40
+ps_.add(f'<line x1="{ps_.X(sp[2]):.1f}" y1="{ps_.Y(0) + 5:.1f}" x2="{ps_.X(sp[2]):.1f}" '
+        f'y2="{ps_.Y(0) + P2_DY - 12:.1f}" stroke="{TEXT}" stroke-width="1.0" stroke-dasharray="2 2" opacity="0.6"/>')
+ps_.label(sp[2], 0, pn(2), 0, P2_DY + 2, PRACTICE, 12.5, "middle", True)
+# the slope labels, in the empty bands next to the far ends of the tangents
+ps_.label(sp[1] + 0.1, 0, FP + "(" + pn(0) + ") eğimli teğet", 0, -24, PRACTICE, 11.5)
+t1_end = T_END[1][1]
+ps_.label(t1_end, s_curve(sp[1]) + ds_curve(sp[1]) * (t1_end - sp[1]),
+          FP + "(" + pn(1) + ") eğimli teğet", -12, -4, PRACTICE, 11.5, "end")
+
+save("teget-fikri", figure(
+    520, 370, [ps_],
+    "Newton-Raphson Metodunun geometrik anlamı. (<em>p</em><sub>0</sub>, <em>f</em>(<em>p</em><sub>0</sub>)) "
+    "noktasındaki teğet <em>x</em> eksenini <em>p</em><sub>1</sub>'de, (<em>p</em><sub>1</sub>, "
+    "<em>f</em>(<em>p</em><sub>1</sub>)) noktasındaki teğet <em>p</em><sub>2</sub>'de keser; "
+    "<em>p</em><sub>2</sub>, <em>p</em> köküne <em>p</em><sub>0</sub>'dan çok daha yakındır.",
+    aria="An increasing S shaped curve y = f(x) with root p. The tangent at (p0, f(p0)) with slope f'(p0) "
+         "meets the x axis at p1, right of the root; the tangent at (p1, f(p1)) with slope f'(p1) meets the "
+         "axis at p2, close to p"))
+
+# ============================================================
 # kotu-baslangic: f(x) = x^3 + 3x^2 - 1 from p0 = -2.5 and from p0 = -1.8
 # ============================================================
 def cubic(x):

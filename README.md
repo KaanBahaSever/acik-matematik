@@ -67,10 +67,10 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | ✅ İspat | **2.123** |
 | 🧮 Örnek ve alıştırma | **4.684** |
 | 💡 Çözüm | **4.411** |
-| 📊 Şekil | **1.399** |
-| ✍️ Kelime | **2.109.907** |
-| 🔤 Karakter | **14.857.448** |
-| 💾 Kaynak metin | **33,4 MB** |
+| 📊 Şekil | **1.423** |
+| ✍️ Kelime | **2.109.957** |
+| 🔤 Karakter | **14.857.918** |
+| 💾 Kaynak metin | **33,7 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 

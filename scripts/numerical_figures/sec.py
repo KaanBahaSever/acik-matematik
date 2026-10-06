@@ -80,6 +80,132 @@ def chord_root(a, fa, b, fb):
 
 
 # ============================================================
+# shared frame of the two method pictures (secant-yontem, regula-falsi-yontem)
+# ============================================================
+# A generic convex increasing curve y = e^(0.6 x) - 8 with p0 = 1 and p1 = 5.6.
+# Both methods start with the same two points, so the first two chords agree;
+# the third step shows the difference.
+def f_gen(x):
+    return math.exp(0.6 * x) - 8
+
+
+G0, G1 = 1.0, 5.6
+GEN_ROOT = math.log(8) / 0.6                  # 3.4657
+XG, YG = (-0.45, 6.35), (-8.6, 23.5)
+G_TOP = math.log(8 + 22.8) / 0.6              # the curve stops just under the top edge
+
+
+def secant_iterates(f, a, b, n):
+    ps = [a, b]
+    for _ in range(n):
+        ps.append(chord_root(ps[-2], f(ps[-2]), ps[-1], f(ps[-1])))
+    return ps
+
+
+def regula_falsi_iterates(f, a, b, n):
+    """Iterates and, for every new one, the index k of the other end of its chord."""
+    ps, ends, k = [a, b], [], 0
+    for _ in range(n):
+        last = len(ps) - 1
+        ends.append(k)
+        new = chord_root(ps[k], f(ps[k]), ps[last], f(ps[last]))
+        if f(new) * f(ps[last]) < 0:
+            k = last
+        ps.append(new)
+    return ps, ends
+
+
+def generic_frame():
+    g = Plot(30, 30, 452, 300, XG, YG)
+    g.origin_axes(it("x"), it("y"))
+    g.line(sample(f_gen, XG[0], G_TOP), THEORY, 2.0)
+    # curve name in the gap between the curve and the guide at p1
+    x_name = math.log(8 + 6) / 0.6
+    g.label(x_name, f_gen(x_name), it("y") + " = " + it("f") + "(" + it("x") + ")", 10, 4, THEORY, 12.5)
+    return g
+
+
+def point_label(k):
+    return "(" + pn(str(k)) + ", " + it("f") + "(" + pn(str(k)) + "))"
+
+
+def mark_iterates(g, ps):
+    """Dashed guides from the axis to the curve, the points on the curve and the axis ticks."""
+    for x in ps:
+        g.vline(x, 0, f_gen(x), TEXT, "3 3", 0.6)
+    for k, x in enumerate(ps):
+        dot(g, (x, f_gen(x)), PRACTICE, 4.2 if k < 2 else 3.2)
+    hollow(g, (GEN_ROOT, 0), TEXT, 3.6)
+    g.label(G0, f_gen(G0), point_label(0), 0, 20, TEXT, 12, "middle")
+    g.label(G1, f_gen(G1), point_label(1), -12, 0, TEXT, 12, "end")
+    g.label(G0, 0, pn("0"), 0, -8, TEXT, 12.5, "middle")
+    g.label(G1, 0, pn("1"), 0, 17, TEXT, 12.5, "middle")
+
+
+CHORD_SHADE = (0.45, 0.7, 1.0)
+
+# ============================================================
+# secant-yontem: the secant method on the generic curve
+# ============================================================
+gs = secant_iterates(f_gen, G0, G1, 3)        # 1, 5.6, 2.0538, 2.6930, 3.8766
+g = generic_frame()
+g.line([(gs[0], f_gen(gs[0])), (gs[1], f_gen(gs[1]))], PRACTICE, 1.8, None, CHORD_SHADE[0])
+g.line([(gs[2], f_gen(gs[2])), (gs[1], f_gen(gs[1]))], PRACTICE, 1.8, None, CHORD_SHADE[1])
+# the third secant runs from (p2, f(p2)) through (p3, f(p3)) on to the axis at p4
+m3 = (f_gen(gs[3]) - f_gen(gs[2])) / (gs[3] - gs[2])
+x_end = gs[4] + 0.25
+g.line([(gs[2], f_gen(gs[2])), (x_end, f_gen(gs[2]) + m3 * (x_end - gs[2]))], PRACTICE, 1.8, None,
+       CHORD_SHADE[2])
+mark_iterates(g, gs[:4])
+g.vline(gs[4], 0, f_gen(gs[4]), TEXT, "3 3", 0.6)
+dot(g, (gs[4], f_gen(gs[4])), PRACTICE, 3.2)
+g.label(gs[2], 0, pn("2"), -4, -8, TEXT, 12.5, "end")
+g.label(gs[3], 0, pn("3"), -4, -8, TEXT, 12.5, "end")
+g.label(GEN_ROOT, 0, it("p"), -5, -8, TEXT, 12.5, "end")
+g.label(gs[4], 0, pn("4"), 4, 17, TEXT, 12.5)
+save("secant-yontem", figure(
+    520, 370, [g],
+    "Secant metodu. (<em>p</em><sub>0</sub>, <em>f</em>(<em>p</em><sub>0</sub>)) ile (<em>p</em><sub>1</sub>, "
+    "<em>f</em>(<em>p</em><sub>1</sub>)) noktalarından geçen kiriş <em>x</em> eksenini <em>p</em><sub>2</sub>'de "
+    "keser. Sonraki her kiriş son iki noktadan geçer: (<em>p</em><sub>1</sub>, <em>f</em>(<em>p</em><sub>1</sub>)) "
+    "ile (<em>p</em><sub>2</sub>, <em>f</em>(<em>p</em><sub>2</sub>)) kirişi <em>p</em><sub>3</sub>'ü, "
+    "(<em>p</em><sub>2</sub>, <em>f</em>(<em>p</em><sub>2</sub>)) ile (<em>p</em><sub>3</sub>, "
+    "<em>f</em>(<em>p</em><sub>3</sub>)) kirişi <em>p</em><sub>4</sub>'ü verir. <em>p</em><sub>4</sub>, "
+    "<em>p</em> kökünün öbür yanına düşer.",
+    aria="Secant method on a convex increasing curve y = f(x): the line through (p0, f(p0)) and (p1, f(p1)) "
+         "meets the x axis at p2, the line through the points over p1 and p2 gives p3, and the line through "
+         "the points over p2 and p3 gives p4, which lies right of the root p"))
+
+# ============================================================
+# regula-falsi-yontem: regula falsi on the same curve and scale
+# ============================================================
+gr, gends = regula_falsi_iterates(f_gen, G0, G1, 3)   # 1, 5.6, 2.0538, 2.6930, 3.0562; ends 0, 1, 1
+g = generic_frame()
+for n in range(2, 5):
+    # the chord for p_n joins p_(n-1) with the kept end p_k of the other sign
+    a, b = gr[n - 1], gr[gends[n - 2]]
+    g.line([(a, f_gen(a)), (b, f_gen(b))], PRACTICE, 1.8, None, CHORD_SHADE[n - 2])
+mark_iterates(g, gr)
+dot(g, (G1, f_gen(G1)), PRACTICE, 5.2)
+g.label(gr[2], 0, pn("2"), -4, -8, TEXT, 12.5, "end")
+g.label(gr[3], 0, pn("3"), -4, -8, TEXT, 12.5, "end")
+# p4 is boxed in by the chords above the axis and the curve below it: carry its guide on under the curve
+P4_LOW = -4.6
+g.vline(gr[4], f_gen(gr[4]), P4_LOW, TEXT, "2 2", 0.6)
+g.label(gr[4], P4_LOW, pn("4"), 0, 15, TEXT, 12.5, "middle")
+g.label(GEN_ROOT, 0, it("p"), 5, 17, TEXT, 12.5)
+save("regula-falsi-yontem", figure(
+    520, 370, [g],
+    "Secant metodunun şeklindeki eğri ve başlangıç noktalarıyla Regula Falsi metodu. Yeni yaklaşımlarda "
+    "<em>f</em> hep negatif kaldığından her kiriş, <em>f</em>'nin pozitif olduğu (<em>p</em><sub>1</sub>, "
+    "<em>f</em>(<em>p</em><sub>1</sub>)) ucuna bağlı kalır ve <em>x</em> eksenini <em>p</em><sub>2</sub>, "
+    "<em>p</em><sub>3</sub>, <em>p</em><sub>4</sub>'te keser. İlk iki kiriş Secant metodundakilerle aynıdır; "
+    "ama <em>p</em><sub>4</sub> kökün öbür yanına geçmez. Yaklaşımlar <em>p</em>'ye hep soldan yaklaşır ve kök "
+    "her adımda kirişin iki ucu arasında kalır.",
+    aria="Regula falsi on the same convex curve: all chords pass through the fixed end (p1, f(p1)) and meet the "
+         "x axis at p2, p3 and p4, which approach the root p from the left"))
+
+# ============================================================
 # kiris: the first two secant steps for cos x - x
 # ============================================================
 def f_cos(x):

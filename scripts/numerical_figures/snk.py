@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from svg_plot import Plot, figure, dot, TEXT, THEORY, PRACTICE, BASE, BG, WIDE  # noqa: E402
+from svg_plot import Plot, figure, dot, hollow, TEXT, THEORY, PRACTICE, BASE, BG, WIDE  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -252,3 +252,137 @@ save("orumcek-agi", figure(
     aria="Two cobweb diagrams. Left: g(x) = 0.3 exp(-x) from p0 = 0.2, a square spiral closing in on the "
          "fixed point 0.23676. Right: g(x) = x^2 - 2 from p0 = 2.1, a staircase moving away from the fixed "
          "point 2 through 2.41 and 3.8081 and leaving the frame toward p3 = 12.5"))
+
+
+def axes_from_origin(p, xmax, ymax):
+    """Plain x and y axes through the data origin with arrowheads and italic names."""
+    ox, oy = p.X(0), p.Y(0)
+    xe, ye = p.X(xmax), p.Y(ymax)
+    p.add(f'<g stroke="{TEXT}" stroke-width="1.1" opacity="0.6" fill="{TEXT}">'
+          f'<line x1="{ox - 4:.1f}" y1="{oy:.1f}" x2="{xe:.1f}" y2="{oy:.1f}"/>'
+          f'<line x1="{ox:.1f}" y1="{oy + 4:.1f}" x2="{ox:.1f}" y2="{ye:.1f}"/>'
+          f'<polygon points="{xe:.1f},{oy:.1f} {xe - 8:.1f},{oy - 3.5:.1f} {xe - 8:.1f},{oy + 3.5:.1f}" stroke="none"/>'
+          f'<polygon points="{ox:.1f},{ye:.1f} {ox - 3.5:.1f},{ye + 8:.1f} {ox + 3.5:.1f},{ye + 8:.1f}" stroke="none"/>'
+          f'</g>')
+    p.text_px(xe - 2, oy + 17, it("x"), TEXT, 12.5, "end")
+    p.text_px(ox + 9, ye + 6, it("y"), TEXT, 12.5)
+
+
+def tick_x(p, v, s, color=TEXT, size=12, bold=False):
+    p.add(f'<line x1="{p.X(v):.1f}" y1="{p.Y(0) - 3:.1f}" x2="{p.X(v):.1f}" y2="{p.Y(0) + 3:.1f}" '
+          f'stroke="{TEXT}" opacity="0.7"/>')
+    p.label(v, 0, s, 0, 18, color, size, "middle", bold)
+
+
+def tick_y(p, v, s, color=TEXT, size=12, bold=False):
+    p.add(f'<line x1="{p.X(0) - 3:.1f}" y1="{p.Y(v):.1f}" x2="{p.X(0) + 3:.1f}" y2="{p.Y(v):.1f}" '
+          f'stroke="{TEXT}" opacity="0.7"/>')
+    p.label(0, v, s, -8, 4, color, size, "end", bold)
+
+
+# ============================================================
+# varlik: g maps [a, b] into itself, so its graph stays in the square and meets y = x
+# ============================================================
+def g_gen(x):
+    """A generic continuous g on [a, b] = [1, 4] with values in [1.72, 3.10] and |g'| < 1."""
+    t = (x - 1) / 3
+    return 1 + 3 * (0.52 + 0.2 * math.sin(4.2 * t + 0.4) - 0.08 * t)
+
+
+GA, GB = 1.0, 4.0
+lo, hi = GA, GB
+for _ in range(80):
+    m = (lo + hi) / 2
+    lo, hi = (m, hi) if g_gen(m) > m else (lo, m)
+PG = lo                                    # about 2.6657
+assert GA < g_gen(GA) and g_gen(GB) < GB
+assert all(GA <= g_gen(GA + 3 * k / 600) <= GB for k in range(601))
+W0 = (-0.25, 4.75)
+p = eq_plot(50, 30, 80, W0, W0)
+axes_from_origin(p, 4.75, 4.75)
+for v in (GA, GB):
+    p.line([(v, 0), (v, GA)], TEXT, 0.9, "3 3", 0.5)
+    p.line([(0, v), (GA, v)], TEXT, 0.9, "3 3", 0.5)
+p.polygon([(GA, GA), (GB, GA), (GB, GB), (GA, GB)], THEORY, 0.06, TEXT, 1.2, "6 4")
+p.line([(0, 0), (4.6, 4.6)], BASE, 1.9)
+p.line(sample(g_gen, GA, GB), THEORY, 2.6)
+for x in (GA, GB):
+    dot(p, (x, g_gen(x)), THEORY, 4.0)
+p.line([(PG, PG), (PG, 0)], TEXT, 1.0, "3 3", 0.7)
+dot(p, (PG, PG), PRACTICE, 4.8)
+for v, s in ((GA, it("a")), (GB, it("b"))):
+    tick_x(p, v, s)
+    tick_y(p, v, s)
+tick_x(p, PG, it("p"), PRACTICE, 12.5, True)
+p.label(4.6, 4.6, it("y") + " = " + it("x"), -4, -9, BASE, 12.5, "end", True)
+p.label(GB, g_gen(GB), it("y") + " = " + it("g") + "(" + it("x") + ")", -8, 22, THEORY, 12.5, "end", True)
+save("varlik", figure(
+    int(p.x0 + p.w + 30), int(p.y0 + p.h + 30), [p],
+    "<em>g</em>, [<em>a</em>, <em>b</em>] aralığını kendi içine gönderdiğinden grafiği kesikli karenin "
+    "içinde kalır. Grafik karenin sol kenarında <em>y</em> = <em>x</em> doğrusunun üstünde, sağ kenarında "
+    "altındadır; bu yüzden doğruyu bir (<em>p</em>, <em>p</em>) noktasında keser ve <em>p</em> bir sabit "
+    "noktadır.",
+    aria="The dashed square [a, b] x [a, b], the diagonal y = x and a continuous curve y = g(x) that stays "
+         "inside the square, starting above the diagonal at x = a and ending below it at x = b, so that it "
+         "meets the diagonal at the fixed point (p, p)"))
+
+
+# ============================================================
+# iterasyon: the cobweb p_{n+1} = g(p_n) for a decreasing g, generic labels
+# ============================================================
+def g_dec(x):
+    """A generic decreasing g; only the shape matters."""
+    return 3.2 * math.exp(-0.35 * x)
+
+
+IT = [3.4]
+for _ in range(4):
+    IT.append(g_dec(IT[-1]))
+PD = 1.0
+for _ in range(300):
+    PD = g_dec(PD)
+assert IT[1] < IT[3] < PD < IT[2] < IT[0]
+p = eq_plot(120, 30, 96, (-0.15, 4.25), (-0.15, 2.8))
+axes_from_origin(p, 4.25, 2.8)
+p.line([(0, 0), (2.7, 2.7)], BASE, 1.9)
+p.line(sample(g_dec, 0.72, 4.0), THEORY, 2.6)
+hollow(p, (PD, PD), TEXT, 4.2, 1.6)
+# guides: drops from the diagonal to the x axis, and from the y axis to where each horizontal step starts
+for v in IT[1:4]:
+    p.line([(v, v), (v, 0)], TEXT, 0.9, "3 3", 0.55)
+p.line([(0, IT[1]), (IT[1], IT[1])], TEXT, 0.9, "3 3", 0.55)
+p.line([(0, IT[2]), (IT[1], IT[2])], TEXT, 0.9, "3 3", 0.55)
+p.line([(0, IT[3]), (IT[3], IT[3])], TEXT, 0.9, "3 3", 0.55)
+# the staircase: up to the graph, across to the diagonal, ...
+path = [(IT[0], 0)]
+for a, b in zip(IT[:3], IT[1:4]):
+    path += [(a, b), (b, b)]
+for u, v in zip(path, path[1:]):
+    # stop short of the corner dot so the arrowhead stays visible
+    d = math.hypot(v[0] - u[0], v[1] - u[1])
+    cut = 5.5 / p.R(1)
+    p.arrow(u, (v[0] - (v[0] - u[0]) * cut / d, v[1] - (v[1] - u[1]) * cut / d), PRACTICE, 1.6, 7.5)
+for pt in path[1:]:
+    dot(p, pt, PRACTICE if abs(pt[0] - pt[1]) > 1e-9 else TEXT, 3.6)
+for k, v in enumerate(IT[:4]):
+    tick_x(p, v, it("p") + sub(str(k)), PRACTICE, 12.5, True)
+for k in (1, 2, 3):
+    tick_y(p, IT[k], it("p") + sub(str(k)) + " = " + it("g") + "(" + it("p") + sub(str(k - 1)) + ")", TEXT, 12)
+# point labels
+pair = lambda i, j: "(" + it("p") + sub(str(i)) + ", " + it("p") + sub(str(j)) + ")"
+p.label(IT[0], IT[1], pair(0, 1), 7, -9, TEXT, 11.5, "start")
+p.label(IT[1], IT[1], pair(1, 1), -7, -8, TEXT, 11.5, "end")
+p.label(IT[1], IT[2], pair(1, 2), 7, -9, TEXT, 11.5, "start")
+p.label(IT[2], IT[2], pair(2, 2), 9, 4, TEXT, 11.5, "start")
+p.label(2.7, 2.7, it("y") + " = " + it("x"), -4, -9, BASE, 12.5, "end", True)
+p.label(4.0, g_dec(4.0), it("y") + " = " + it("g") + "(" + it("x") + ")", 0, 20, THEORY, 12.5, "end", True)
+save("iterasyon", figure(
+    int(p.x0 + p.w + 30), int(p.y0 + p.h + 30), [p],
+    "Sabit nokta iterasyonunun geometrik yorumu. <em>p</em><sub>0</sub>'dan dikey olarak "
+    "<em>y</em> = <em>g</em>(<em>x</em>) grafiğine çıkılır ve <em>p</em><sub>1</sub> = "
+    "<em>g</em>(<em>p</em><sub>0</sub>) okunur. Yatay olarak <em>y</em> = <em>x</em> doğrusuna gidilince "
+    "<em>p</em><sub>1</sub> yatay eksene taşınır ve adım tekrarlanır. Azalan <em>g</em> için terimler "
+    "sabit noktanın (içi boş nokta) iki yanında dolanarak ona yaklaşır.",
+    aria="Cobweb diagram of p_(n+1) = g(p_n) for a decreasing g: from p0 up to the curve at (p0, p1), across "
+         "to the diagonal at (p1, p1), up to (p1, p2), across to (p2, p2), down to (p2, p3) and across to "
+         "(p3, p3); p0 to p3 on the x axis and p1 = g(p0), p2 = g(p1), p3 = g(p2) on the y axis"))
