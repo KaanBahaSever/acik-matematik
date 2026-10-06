@@ -1,0 +1,1111 @@
+---
+title: "Bölünmüş Farklar ve Newton Formülleri"
+pagetitle: "Bölünmüş Farklar ve Newton Formülleri"
+description: "Interpolasyon polinomunun Newton biçimi: bölünmüş farklar ve tablosu, Newton bölünmüş fark formülü, eşit aralıklı noktalarda ileri ve geri fark formülleri, Stirling merkezi fark formülü ve çözümlü örnekler."
+---
+
+Lagrange biçiminde yazılmış bir interpolasyon polinomuna yeni bir nokta eklemek istediğimizde bütün $L_k(x)$ katsayı polinomları değişir ve hesap baştan yapılır. Oysa interpolasyon polinomu tektir (@thm-lag-polinom); değişen yalnız onu yazma biçimimizdir. Bu bölümde aynı polinomu, yeni bir nokta eklendiğinde yalnız bir terim ekleyerek güncellenen bir biçimde yazacağız. Katsayılar, bölünmüş farklar denen ve basit bir tabloyla hesaplanan sayılardır.
+
+Newton bölünmüş farkları Principia'da (1687) ve Methodus Differentialis'te (1711) kullandı. James Stirling, bölümün sonunda göreceğimiz merkezi fark formülünü 1730 tarihli Methodus Differentialis'inde verdi.
+
+## Newton Biçimi ve Bölünmüş Farklar
+
+Önce polinomu yazacağımız biçimi seçiyor, sonra katsayılarını ilk birkaç adımda doğrudan hesaplayarak genel kuralı buluyoruz.
+
+$x_0, x_1, \dots, x_n$ farklı noktalarında $f$ ile aynı değerleri alan, derecesi en çok $n$ olan Lagrange interpolasyon polinomu $P_n(x)$ olsun. $a_0, a_1, \dots, a_n$ uygun sabitler olmak üzere bu polinomu
+
+$$
+\begin{aligned}
+P_n(x) &= a_0 + a_1(x - x_0) + a_2(x - x_0)(x - x_1) + \cdots \\[1mm]
+&\quad + a_n(x - x_0)(x - x_1)\cdots(x - x_{n-1})
+\end{aligned}
+\tag{1}
+$$
+
+biçiminde yazmak istiyoruz. Buna polinomun **Newton biçimi** denir. (1)'de $x = x_0$ yazılırsa $x_0$'ı içeren bütün çarpımlar sıfır olur ve $a_0 = P_n(x_0) = f(x_0)$ bulunur. $x = x_1$ yazılırsa yalnız ilk iki terim kalır:
+
+$$
+f(x_1) = P_n(x_1) = f(x_0) + a_1(x_1 - x_0)
+\quad\Longrightarrow\quad
+a_1 = \frac{f(x_1) - f(x_0)}{x_1 - x_0}.
+$$
+
+$x = x_2$ yazılırsa
+
+$$f(x_2) = a_0 + a_1(x_2 - x_0) + a_2(x_2 - x_0)(x_2 - x_1)$$
+
+olur. $a_0 = f(x_0)$ yazıp $f(x_1)$ ekleyip çıkararak düzenlersek
+
+$$
+\begin{aligned}
+f(x_2) - f(x_0) - a_1(x_2 - x_0)
+&= \big(f(x_2) - f(x_1)\big) + a_1(x_1 - x_0) - a_1(x_2 - x_0) \\[1mm]
+&= (x_2 - x_1)\left(\frac{f(x_2) - f(x_1)}{x_2 - x_1} - a_1\right)
+\end{aligned}
+$$
+
+elde edilir; buradan
+
+$$
+a_2 = \frac{1}{x_2 - x_0}\left(\frac{f(x_2) - f(x_1)}{x_2 - x_1} - \frac{f(x_1) - f(x_0)}{x_1 - x_0}\right)
+$$
+
+bulunur. $a_1$ bir fark bölümüdür; $a_2$ ise iki ardışık fark bölümünün farkının yine bir uzunluğa bölümüdür. Bu yapıya bir ad verelim.
+
+::: {#def-bfk-bolunmus-fark name="Bölünmüş Farklar"}
+$x_0, x_1, \dots, x_n$ farklı noktalar ve $f$ bu noktalarda tanımlı bir fonksiyon olsun.
+
+$f$'nin $x_i$ noktasına göre **sıfırıncı bölünmüş farkı** $f[x_i] = f(x_i)$'dir.
+
+$x_i$ ve $x_{i+1}$ noktalarına göre **birinci bölünmüş farkı**
+
+$$f[x_i, x_{i+1}] = \frac{f[x_{i+1}] - f[x_i]}{x_{i+1} - x_i},$$
+
+$x_i, x_{i+1}, x_{i+2}$ noktalarına göre **ikinci bölünmüş farkı**
+
+$$f[x_i, x_{i+1}, x_{i+2}] = \frac{f[x_{i+1}, x_{i+2}] - f[x_i, x_{i+1}]}{x_{i+2} - x_i}$$
+
+olarak tanımlanır. Bu biçimde devam edilir: $k - 1$. bölünmüş farklar bulunduktan sonra $x_i, x_{i+1}, \dots, x_{i+k}$ noktalarına göre **$k$. bölünmüş fark**
+
+$$f[x_i, x_{i+1}, \dots, x_{i+k}] = \frac{f[x_{i+1}, \dots, x_{i+k}] - f[x_i, \dots, x_{i+k-1}]}{x_{i+k} - x_i}$$
+
+olur. Özel olarak $f$'nin $n$. bölünmüş farkı
+
+$$f[x_0, x_1, \dots, x_n] = \frac{f[x_1, \dots, x_n] - f[x_0, \dots, x_{n-1}]}{x_n - x_0}$$
+
+sayısıdır.
+:::
+
+Yani $k$. bölünmüş fark, aynı uzunlukta iki komşu $(k-1)$. farkın (biri ilk noktayı, öbürü son noktayı içermez) farkının, uçtaki iki noktanın farkına bölümüdür. Kural yalnız noktaların listesine bakar, indislerin artan olmasını istemez: farklı noktaların herhangi bir $z_0, z_1, \dots, z_k$ listesi için $f[z_0, \dots, z_k]$ aynı formülle, payda $z_k - z_0$ alınarak hesaplanır. Örneğin $f[x_1, x_0] = \frac{f[x_0] - f[x_1]}{x_0 - x_1}$'dır. Yukarıdaki hesap $a_0 = f[x_0]$, $a_1 = f[x_0, x_1]$ ve $a_2 = f[x_0, x_1, x_2]$ olduğunu gösteriyor.
+
+Bu gözlemin her $k$ için doğru olduğunu göstermek için önce bölünmüş farkı interpolasyon polinomunun baş katsayısıyla ilişkilendirelim.
+
+:::: {#lem-bfk-bas-katsayi name="Bölünmüş Fark ve Baş Katsayı"}
+$x_0, x_1, \dots, x_k$ farklı noktalar ve $Q$, bu noktalarda $f$ ile aynı değerleri alan, derecesi en çok $k$ olan polinom olsun. $Q$'daki $x^k$'nin katsayısı $f[x_0, x_1, \dots, x_k]$'dır.
+
+::: {.ispat}
+$Q$ tek türlü belirlidir (@thm-lag-polinom). İddiayı $k$ üzerinden tümevarımla, her farklı nokta listesi için gösteriyoruz.
+
+$k = 0$ ise $Q(x) = f(x_0)$ sabit polinomdur ve $x^0$'ın katsayısı $f(x_0) = f[x_0]$'dır.
+
+İddia $k$ farklı noktadan oluşan her liste için doğru olsun. $Q_0$, $f$'yi $x_0, \dots, x_{k-1}$'de; $Q_1$ ise $x_1, \dots, x_k$'de interpole eden ve derecesi en çok $k - 1$ olan polinomlar olsun. Tümevarım hipotezine göre $Q_0$'daki $x^{k-1}$'in katsayısı $f[x_0, \dots, x_{k-1}]$, $Q_1$'deki $x^{k-1}$'in katsayısı $f[x_1, \dots, x_k]$'dır.
+
+$$R(x) = \frac{(x - x_0)\,Q_1(x) - (x - x_k)\,Q_0(x)}{x_k - x_0}$$
+
+polinomunun derecesi en çok $k$'dır. $R$'nin $f$'yi bütün $x_0, \dots, x_k$ noktalarında interpole ettiğini görelim:
+
+- $x = x_0$'da ilk terim sıfırdır ve $\frac{-(x_0 - x_k)}{x_k - x_0} = 1$ olduğundan $R(x_0) = Q_0(x_0) = f(x_0)$.
+- $x = x_k$'da ikinci terim sıfırdır: $R(x_k) = Q_1(x_k) = f(x_k)$.
+- $0 < i < k$ ise $Q_0(x_i) = Q_1(x_i) = f(x_i)$ olduğundan
+
+$$R(x_i) = f(x_i)\,\frac{(x_i - x_0) - (x_i - x_k)}{x_k - x_0} = f(x_i).$$
+
+Tekliğe göre $R = Q$'dur. $R$'deki $x^k$'nin katsayısı, $(x - x_0)Q_1(x)$ ve $(x - x_k)Q_0(x)$ çarpımlarındaki $x^k$ katsayılarından, yani $Q_1$ ile $Q_0$'ın $x^{k-1}$ katsayılarından gelir:
+
+$$\frac{f[x_1, \dots, x_k] - f[x_0, \dots, x_{k-1}]}{x_k - x_0} = f[x_0, \dots, x_k].$$
+
+Böylece iddia $k$ için de doğrudur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#thm-bfk-newton name="Newton Bölünmüş Fark Formülü"}
+$x_0, x_1, \dots, x_n$ farklı noktalarında $f$'yi interpole eden polinom
+
+$$
+\begin{aligned}
+P_n(x) &= f[x_0] + \sum_{k=1}^{n} f[x_0, \dots, x_k]\,(x - x_0)\cdots(x - x_{k-1}) \\[1mm]
+&= f[x_0] + f[x_0, x_1](x - x_0) + f[x_0, x_1, x_2](x - x_0)(x - x_1) \\[1mm]
+&\quad + f[x_0, x_1, x_2, x_3](x - x_0)(x - x_1)(x - x_2) + \cdots \\[1mm]
+&\quad + f[x_0, x_1, \dots, x_n](x - x_0)(x - x_1)\cdots(x - x_{n-1})
+\end{aligned}
+$$
+
+biçiminde yazılır. Yani (1)'deki katsayılar $k = 0, 1, \dots, n$ için $a_k = f[x_0, x_1, \dots, x_k]$'dır.
+
+::: {.ispat}
+$k = 0, 1, \dots, n$ için $P_k$, $f$'yi $x_0, \dots, x_k$'de interpole eden ve derecesi en çok $k$ olan polinom olsun. $P_0(x) = f(x_0) = f[x_0]$'dır.
+
+$k \geq 1$ için $P_k - P_{k-1}$ farkının derecesi en çok $k$'dır ve bu fark $x_0, \dots, x_{k-1}$ noktalarının her birinde sıfırdır, çünkü iki polinom da bu noktalarda $f$'ye eşittir. Derecesi en çok $k$ olan ve $k$ farklı kökü bulunan bir polinom, bu köklere ait çarpanların çarpımına bölünür ve bölüm sabittir. Dolayısıyla bir $c_k$ sabiti için
+
+$$P_k(x) - P_{k-1}(x) = c_k\,(x - x_0)(x - x_1)\cdots(x - x_{k-1})$$
+
+olur. Sağ tarafta $x^k$'nin katsayısı $c_k$'dır; solda ise $P_{k-1}$'de $x^k$ terimi olmadığından bu katsayı $P_k$'daki $x^k$'nin katsayısıdır. @lem-bfk-bas-katsayi gereği $c_k = f[x_0, \dots, x_k]$'dır. Bu eşitlikler $k = 1, \dots, n$ için taraf tarafa toplanırsa sol taraf $P_n(x) - P_0(x)$ olur ve formül elde edilir.
+
+(1)'deki katsayılar tek türlüdür: $x = x_0, x_1, \dots, x_n$ sırayla yazıldığında her adımda yalnız bir yeni katsayı ortaya çıkar ve o katsayı bir önceki adımlardakiler cinsinden tek türlü bulunur. Bu yüzden $a_k = f[x_0, \dots, x_k]$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani bir $x_{n+1}$ noktası eklendiğinde eski terimler aynen kalır, yalnız
+
+$$P_{n+1}(x) = P_n(x) + f[x_0, \dots, x_{n+1}](x - x_0)\cdots(x - x_n)$$
+
+terimi eklenir. Newton biçimi Lagrange polinomunun yalnız başka bir yazılışı olduğundan hata terimi de aynıdır (@thm-lag-hata).
+
+:::: {#cor-bfk-sira name="Bölünmüş Fark Noktaların Sırasına Bağlı Değildir"}
+$f[x_0, x_1, \dots, x_k]$ değeri $x_0, x_1, \dots, x_k$ noktalarının sırasına bağlı değildir. Örneğin $f[x_0, x_1, x_2] = f[x_2, x_0, x_1]$'dir.
+
+::: {.ispat}
+@lem-bfk-bas-katsayi her farklı nokta listesi için geçerlidir. Dolayısıyla $f[x_0, \dots, x_k]$, $f$'yi $\{x_0, \dots, x_k\}$ kümesinin noktalarında interpole eden ve derecesi en çok $k$ olan polinomdaki $x^k$'nin katsayısıdır. Bu polinom tektir (@thm-lag-polinom) ve yalnız noktaların kümesine bağlıdır; noktaları hangi sırayla yazdığımız onu değiştirmez. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani @thm-bfk-newton noktaların artan sırada dizilmesini istemez; noktalar hangi sırayla numaralanırsa numaralansın formül aynı polinomu verir. Bu serbestliği geri fark ve Stirling formüllerinde kullanacağız.
+
+## Bölünmüş Farklar Tablosu
+
+Newton formülünün katsayıları, her sütunun bir öncekinden hesaplandığı basamaklı bir tablodan okunur. Altı nokta ($n = 5$) için tablo aşağıdadır. Her fark, hesaplandığı iki girdinin arasındaki satırda durur; Newton formülünde kullanılan katsayılar tablonun üst kenarındaki $f[x_0]$, $f[x_0, x_1]$, $f[x_0, x_1, x_2]$, … girdileridir.
+
+::: {.difference-table}
+| $x$ | $f(x)$ | 1\. Böl. Fark | 2\. Böl. Fark | 3\. Böl. Fark | 4\. Böl. Fark | 5\. Böl. Fark |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_0$ | $f[x_0]$ | | | | | |
+| | | $f[x_0, x_1]$ | | | | |
+| $x_1$ | $f[x_1]$ | | $f[x_0, x_1, x_2]$ | | | |
+| | | $f[x_1, x_2]$ | | $f[x_0, x_1, x_2, x_3]$ | | |
+| $x_2$ | $f[x_2]$ | | $f[x_1, x_2, x_3]$ | | $f[x_0, \dots, x_4]$ | |
+| | | $f[x_2, x_3]$ | | $f[x_1, x_2, x_3, x_4]$ | | $f[x_0, \dots, x_5]$ |
+| $x_3$ | $f[x_3]$ | | $f[x_2, x_3, x_4]$ | | $f[x_1, \dots, x_5]$ | |
+| | | $f[x_3, x_4]$ | | $f[x_2, x_3, x_4, x_5]$ | | |
+| $x_4$ | $f[x_4]$ | | $f[x_3, x_4, x_5]$ | | | |
+| | | $f[x_4, x_5]$ | | | | |
+| $x_5$ | $f[x_5]$ | | | | | |
+:::
+
+Sütunların girdileri şu formüllerle hesaplanır:
+
+$$
+\begin{aligned}
+f[x_i] &= f(x_i), && i = 0, \dots, 5, \\[1mm]
+f[x_i, x_{i+1}] &= \frac{f[x_{i+1}] - f[x_i]}{x_{i+1} - x_i}, && i = 0, \dots, 4, \\[1mm]
+f[x_i, x_{i+1}, x_{i+2}] &= \frac{f[x_{i+1}, x_{i+2}] - f[x_i, x_{i+1}]}{x_{i+2} - x_i}, && i = 0, \dots, 3, \\[1mm]
+f[x_i, \dots, x_{i+3}] &= \frac{f[x_{i+1}, \dots, x_{i+3}] - f[x_i, \dots, x_{i+2}]}{x_{i+3} - x_i}, && i = 0, 1, 2, \\[1mm]
+f[x_i, \dots, x_{i+4}] &= \frac{f[x_{i+1}, \dots, x_{i+4}] - f[x_i, \dots, x_{i+3}]}{x_{i+4} - x_i}, && i = 0, 1, \\[1mm]
+f[x_0, \dots, x_5] &= \frac{f[x_1, \dots, x_5] - f[x_0, \dots, x_4]}{x_5 - x_0}.
+\end{aligned}
+$$
+
+Yani her girdi, sol tarafında hemen üstünde ve hemen altında duran iki girdiden hesaplanır: alttaki eksi üstteki, bölü bu girdinin kapsadığı ilk ve son noktanın farkı. Yeni bir $x_6$ noktası eklenirse tablonun altına bir satır ve her sütuna bir girdi eklenir; eski girdilerin hiçbiri değişmez.
+
+::: {.callout-tip title="Newton bölünmüş fark formülü dört adımda"}
+1. Noktaları $x_0, x_1, \dots, x_n$ diye numaralayın; $x_k$ ve $f[x_k]$ sütunlarını yazın.
+2. Her sütunu bir öncekinden hesaplayın: bir girdi, soldaki üst ve alt komşusunun farkının (alttaki eksi üstteki), kapsadığı uç noktaların farkına bölümüdür.
+3. Üst kenardaki $f[x_0], f[x_0, x_1], \dots, f[x_0, \dots, x_n]$ girdilerinin altını çizin; bunlar Newton katsayılarıdır.
+4. Newton biçimini, $P_n(x) = f[x_0] + \cdots$ polinomunu yazın; istenen noktada değerini hesaplayın ya da polinomu açın.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="5.0 23.0 602.0 262.0" role="img" aria-label="Triangular scheme of the divided difference table for four nodes: the values f[x_i] in the first column, each further box computed from its upper and lower left neighbours (twelve arrows), and the top edge f[x_0], f[x_0, x_1], f[x_0, x_1, x_2], f[x_0, x_1, x_2, x_3] highlighted as the Newton coefficients">
+  <line x1="93.0" y1="56.0" x2="113.0" y2="76.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="117.0,80.0 110.0,77.1 114.1,73.0" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="93.0" y1="116.0" x2="113.0" y2="96.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="117.0,92.0 114.1,99.0 110.0,94.9" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="93.0" y1="124.0" x2="113.0" y2="144.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="117.0,148.0 110.0,145.1 114.1,141.0" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="93.0" y1="184.0" x2="113.0" y2="164.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="117.0,160.0 114.1,167.0 110.0,162.9" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="93.0" y1="192.0" x2="113.0" y2="212.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="117.0,216.0 110.0,213.1 114.1,209.0" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="93.0" y1="252.0" x2="113.0" y2="232.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="117.0,228.0 114.1,235.0 110.0,230.9" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="223.0" y1="90.0" x2="243.0" y2="110.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="247.0,114.0 240.0,111.1 244.1,107.0" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="223.0" y1="150.0" x2="243.0" y2="130.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="247.0,126.0 244.1,133.0 240.0,128.9" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="223.0" y1="158.0" x2="243.0" y2="178.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="247.0,182.0 240.0,179.1 244.1,175.0" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="223.0" y1="218.0" x2="243.0" y2="198.0" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="247.0,194.0 244.1,201.0 240.0,196.9" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="389.0" y1="124.0" x2="412.7" y2="144.4" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="417.0,148.0 409.8,145.7 413.6,141.2" fill="var(--color-remark)" opacity="0.85"/>
+  <line x1="389.0" y1="184.0" x2="412.7" y2="163.6" stroke="var(--color-remark)" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="417.0,160.0 413.6,166.8 409.8,162.3" fill="var(--color-remark)" opacity="0.85"/>
+  <rect x="20" y="38.0" width="70" height="28" rx="5" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.5" stroke-opacity="1"/>
+  <text x="55.0" y="56.5" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <line x1="40.5" y1="64.0" x2="69.5" y2="64.0" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <rect x="20" y="106.0" width="70" height="28" rx="5" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="55.0" y="124.5" fill="var(--academic-text)" font-size="13.5" text-anchor="middle"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <rect x="20" y="174.0" width="70" height="28" rx="5" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="55.0" y="192.5" fill="var(--academic-text)" font-size="13.5" text-anchor="middle"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <rect x="20" y="242.0" width="70" height="28" rx="5" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="55.0" y="260.5" fill="var(--academic-text)" font-size="13.5" text-anchor="middle"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <rect x="120" y="72.0" width="100" height="28" rx="5" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.5" stroke-opacity="1"/>
+  <text x="170.0" y="90.5" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <line x1="144.2" y1="98.0" x2="195.8" y2="98.0" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <rect x="120" y="140.0" width="100" height="28" rx="5" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="170.0" y="158.5" fill="var(--academic-text)" font-size="13.5" text-anchor="middle"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <rect x="120" y="208.0" width="100" height="28" rx="5" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="170.0" y="226.5" fill="var(--academic-text)" font-size="13.5" text-anchor="middle"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <rect x="250" y="106.0" width="136" height="28" rx="5" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.5" stroke-opacity="1"/>
+  <text x="318.0" y="124.5" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <line x1="280.8" y1="132.0" x2="355.2" y2="132.0" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <rect x="250" y="174.0" width="136" height="28" rx="5" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-width="1.1" stroke-opacity="0.6"/>
+  <text x="318.0" y="192.5" fill="var(--academic-text)" font-size="13.5" text-anchor="middle"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <rect x="420" y="140.0" width="172" height="28" rx="5" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.5" stroke-opacity="1"/>
+  <text x="506.0" y="158.5" fill="var(--color-practice)" font-size="13.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan>]</text>
+  <line x1="457.4" y1="166.0" x2="554.6" y2="166.0" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="358.0" y="56.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">Newton katsayıları</text>
+  <line x1="318.0" y1="204.0" x2="318.0" y2="218.0" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="288.0" y="232.0" fill="var(--color-theory)" font-size="12" text-anchor="start">= (<tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan>] &#8722; <tspan font-style="italic">f</tspan>[<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>]) / (<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan> &#8722; <tspan font-style="italic">x</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+</svg>
+<figcaption>Dört noktalı bölünmüş fark tablosunun hesap şeması. Her kutu, solundaki üst ve alt komşusundan hesaplanır: alttaki eksi üstteki, bölü kapsanan ilk ve son noktanın farkı. Örneğin <em>f</em>[<em>x</em><sub>1</sub>, <em>x</em><sub>2</sub>, <em>x</em><sub>3</sub>] = (<em>f</em>[<em>x</em><sub>2</sub>, <em>x</em><sub>3</sub>] &#8722; <em>f</em>[<em>x</em><sub>1</sub>, <em>x</em><sub>2</sub>]) / (<em>x</em><sub>3</sub> &#8722; <em>x</em><sub>1</sub>). Üst kenardaki altı çizili kutular Newton katsayılarıdır.</figcaption>
+</figure>
+```
+:::
+
+:::: {#exm-bfk-newton-p3 name="Dört Noktadan Geçen Kübik Polinom"}
+Düzlemde $(0; 2)$, $(1; 3)$, $(2; 12)$ ve $(5; 147)$ noktaları verilsin. Newton bölünmüş fark formülünü kullanarak bu noktalardan geçen $P_3(x)$ interpolasyon polinomunu Newton biçiminde yazınız ve $P_3(3)$ değerini hesaplayınız.
+
+::: {.cozum}
+$x_0 = 0$, $x_1 = 1$, $x_2 = 2$, $x_3 = 5$ alalım. Birinci bölünmüş farklar
+
+$$
+f[x_0, x_1] = \frac{3 - 2}{1 - 0} = 1, \quad
+f[x_1, x_2] = \frac{12 - 3}{2 - 1} = 9, \quad
+f[x_2, x_3] = \frac{147 - 12}{5 - 2} = 45,
+$$
+
+ikinci bölünmüş farklar
+
+$$
+f[x_0, x_1, x_2] = \frac{9 - 1}{2 - 0} = 4, \qquad
+f[x_1, x_2, x_3] = \frac{45 - 9}{5 - 1} = 9,
+$$
+
+üçüncü bölünmüş fark
+
+$$f[x_0, x_1, x_2, x_3] = \frac{9 - 4}{5 - 0} = 1$$
+
+olur. Tablo:
+
+::: {.difference-table .with-k}
+| $k$ | $x_k$ | $f[x_k]$ | $f[x_{k-1}, x_k]$ | $f[x_{k-2}, x_{k-1}, x_k]$ | $f[x_{k-3}, \dots, x_k]$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $0$ | $0$ | $\underline{2}$ | | | |
+| | | | $\underline{1}$ | | |
+| $1$ | $1$ | $3$ | | $\underline{4}$ | |
+| | | | $9$ | | $\underline{1}$ |
+| $2$ | $2$ | $12$ | | $9$ | |
+| | | | $45$ | | |
+| $3$ | $5$ | $147$ | | | |
+:::
+
+Altı çizili katsayılarla Newton biçimi
+
+$$
+\begin{aligned}
+P_3(x) &= f[x_0] + f[x_0, x_1](x - x_0) + f[x_0, x_1, x_2](x - x_0)(x - x_1) \\[1mm]
+&\quad + f[x_0, x_1, x_2, x_3](x - x_0)(x - x_1)(x - x_2) \\[1mm]
+&= 2 + 1 \cdot x + 4x(x - 1) + 1 \cdot x(x - 1)(x - 2)
+\end{aligned}
+$$
+
+olur. Açarsak $4x(x - 1) = 4x^2 - 4x$ ve $x(x - 1)(x - 2) = x^3 - 3x^2 + 2x$ olduğundan
+
+$$P_3(x) = x^3 + x^2 - x + 2$$
+
+bulunur. Buradan $P_3(3) = 27 + 9 - 3 + 2 = 35$'tir.
+
+Newton biçiminin terim terim büyüdüğünü kısmi toplamlarda görürüz: $P_0(x) = 2$ yalnız ilk noktadan, $P_1(x) = x + 2$ ilk iki noktadan, $P_2(x) = 4x^2 - 3x + 2$ ilk üç noktadan geçer; $P_2(5) = 87$ olduğundan dördüncü nokta ancak son terimle yakalanır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="17.0 -3.5 537.0 355.5" role="img" aria-label="Partial sums of the Newton form through the points (0, 2), (1, 3), (2, 12), (5, 147): P_0 = 2, P_1 = x + 2, P_2 = 4x^2 - 3x + 2 and the thick cubic P_3 = x^3 + x^2 - x + 2, with P_3(3) = 35 and the dashed gap from P_2(5) = 87 to 147 filled by the last term">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="88.9" y1="30.0" x2="88.9" y2="320.0"/><line x1="156.7" y1="30.0" x2="156.7" y2="320.0"/><line x1="224.5" y1="30.0" x2="224.5" y2="320.0"/><line x1="292.3" y1="30.0" x2="292.3" y2="320.0"/><line x1="360.1" y1="30.0" x2="360.1" y2="320.0"/><line x1="427.9" y1="30.0" x2="427.9" y2="320.0"/><line x1="55.0" y1="302.9" x2="455.0" y2="302.9"/><line x1="55.0" y1="234.7" x2="455.0" y2="234.7"/><line x1="55.0" y1="166.5" x2="455.0" y2="166.5"/><line x1="55.0" y1="98.2" x2="455.0" y2="98.2"/><line x1="55.0" y1="30.0" x2="455.0" y2="30.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="55.0" y1="320.0" x2="463.0" y2="320.0"/>
+  <line x1="55.0" y1="22.0" x2="55.0" y2="320.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="88.9" y="336.0" text-anchor="middle">0</text>
+  <text x="156.7" y="336.0" text-anchor="middle">1</text>
+  <text x="224.5" y="336.0" text-anchor="middle">2</text>
+  <text x="292.3" y="336.0" text-anchor="middle">3</text>
+  <text x="360.1" y="336.0" text-anchor="middle">4</text>
+  <text x="427.9" y="336.0" text-anchor="middle">5</text>
+  <text x="48.0" y="306.9" text-anchor="end">0</text>
+  <text x="48.0" y="238.7" text-anchor="end">40</text>
+  <text x="48.0" y="170.5" text-anchor="end">80</text>
+  <text x="48.0" y="102.2" text-anchor="end">120</text>
+  <text x="48.0" y="34.0" text-anchor="end">160</text>
+  <text x="51.0" y="16.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <text x="457.0" y="336.0" fill="var(--academic-text)" font-size="11" text-anchor="start"><tspan font-style="italic">x</tspan></text>
+  <path d="M55.0,302.9 L455.0,302.9" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M55.0,299.5 L56.0,299.5 L57.0,299.5 L58.0,299.5 L59.0,299.5 L60.0,299.5 L61.0,299.5 L62.0,299.5 L63.0,299.5 L64.0,299.5 L65.0,299.5 L66.0,299.5 L67.0,299.5 L68.0,299.5 L69.0,299.5 L70.0,299.5 L71.0,299.5 L72.0,299.5 L73.0,299.5 L74.0,299.5 L75.0,299.5 L76.0,299.5 L77.0,299.5 L78.0,299.5 L79.0,299.5 L80.0,299.5 L81.0,299.5 L82.0,299.5 L83.0,299.5 L84.0,299.5 L85.0,299.5 L86.0,299.5 L87.0,299.5 L88.0,299.5 L89.0,299.5 L90.0,299.5 L91.0,299.5 L92.0,299.5 L93.0,299.5 L94.0,299.5 L95.0,299.5 L96.0,299.5 L97.0,299.5 L98.0,299.5 L99.0,299.5 L100.0,299.5 L101.0,299.5 L102.0,299.5 L103.0,299.5 L104.0,299.5 L105.0,299.5 L106.0,299.5 L107.0,299.5 L108.0,299.5 L109.0,299.5 L110.0,299.5 L111.0,299.5 L112.0,299.5 L113.0,299.5 L114.0,299.5 L115.0,299.5 L116.0,299.5 L117.0,299.5 L118.0,299.5 L119.0,299.5 L120.0,299.5 L121.0,299.5 L122.0,299.5 L123.0,299.5 L124.0,299.5 L125.0,299.5 L126.0,299.5 L127.0,299.5 L128.0,299.5 L129.0,299.5 L130.0,299.5 L131.0,299.5 L132.0,299.5 L133.0,299.5 L134.0,299.5 L135.0,299.5 L136.0,299.5 L137.0,299.5 L138.0,299.5 L139.0,299.5 L140.0,299.5 L141.0,299.5 L142.0,299.5 L143.0,299.5 L144.0,299.5 L145.0,299.5 L146.0,299.5 L147.0,299.5 L148.0,299.5 L149.0,299.5 L150.0,299.5 L151.0,299.5 L152.0,299.5 L153.0,299.5 L154.0,299.5 L155.0,299.5 L156.0,299.5 L157.0,299.5 L158.0,299.5 L159.0,299.5 L160.0,299.5 L161.0,299.5 L162.0,299.5 L163.0,299.5 L164.0,299.5 L165.0,299.5 L166.0,299.5 L167.0,299.5 L168.0,299.5 L169.0,299.5 L170.0,299.5 L171.0,299.5 L172.0,299.5 L173.0,299.5 L174.0,299.5 L175.0,299.5 L176.0,299.5 L177.0,299.5 L178.0,299.5 L179.0,299.5 L180.0,299.5 L181.0,299.5 L182.0,299.5 L183.0,299.5 L184.0,299.5 L185.0,299.5 L186.0,299.5 L187.0,299.5 L188.0,299.5 L189.0,299.5 L190.0,299.5 L191.0,299.5 L192.0,299.5 L193.0,299.5 L194.0,299.5 L195.0,299.5 L196.0,299.5 L197.0,299.5 L198.0,299.5 L199.0,299.5 L200.0,299.5 L201.0,299.5 L202.0,299.5 L203.0,299.5 L204.0,299.5 L205.0,299.5 L206.0,299.5 L207.0,299.5 L208.0,299.5 L209.0,299.5 L210.0,299.5 L211.0,299.5 L212.0,299.5 L213.0,299.5 L214.0,299.5 L215.0,299.5 L216.0,299.5 L217.0,299.5 L218.0,299.5 L219.0,299.5 L220.0,299.5 L221.0,299.5 L222.0,299.5 L223.0,299.5 L224.0,299.5 L225.0,299.5 L226.0,299.5 L227.0,299.5 L228.0,299.5 L229.0,299.5 L230.0,299.5 L231.0,299.5 L232.0,299.5 L233.0,299.5 L234.0,299.5 L235.0,299.5 L236.0,299.5 L237.0,299.5 L238.0,299.5 L239.0,299.5 L240.0,299.5 L241.0,299.5 L242.0,299.5 L243.0,299.5 L244.0,299.5 L245.0,299.5 L246.0,299.5 L247.0,299.5 L248.0,299.5 L249.0,299.5 L250.0,299.5 L251.0,299.5 L252.0,299.5 L253.0,299.5 L254.0,299.5 L255.0,299.5 L256.0,299.5 L257.0,299.5 L258.0,299.5 L259.0,299.5 L260.0,299.5 L261.0,299.5 L262.0,299.5 L263.0,299.5 L264.0,299.5 L265.0,299.5 L266.0,299.5 L267.0,299.5 L268.0,299.5 L269.0,299.5 L270.0,299.5 L271.0,299.5 L272.0,299.5 L273.0,299.5 L274.0,299.5 L275.0,299.5 L276.0,299.5 L277.0,299.5 L278.0,299.5 L279.0,299.5 L280.0,299.5 L281.0,299.5 L282.0,299.5 L283.0,299.5 L284.0,299.5 L285.0,299.5 L286.0,299.5 L287.0,299.5 L288.0,299.5 L289.0,299.5 L290.0,299.5 L291.0,299.5 L292.0,299.5 L293.0,299.5 L294.0,299.5 L295.0,299.5 L296.0,299.5 L297.0,299.5 L298.0,299.5 L299.0,299.5 L300.0,299.5 L301.0,299.5 L302.0,299.5 L303.0,299.5 L304.0,299.5 L305.0,299.5 L306.0,299.5 L307.0,299.5 L308.0,299.5 L309.0,299.5 L310.0,299.5 L311.0,299.5 L312.0,299.5 L313.0,299.5 L314.0,299.5 L315.0,299.5 L316.0,299.5 L317.0,299.5 L318.0,299.5 L319.0,299.5 L320.0,299.5 L321.0,299.5 L322.0,299.5 L323.0,299.5 L324.0,299.5 L325.0,299.5 L326.0,299.5 L327.0,299.5 L328.0,299.5 L329.0,299.5 L330.0,299.5 L331.0,299.5 L332.0,299.5 L333.0,299.5 L334.0,299.5 L335.0,299.5 L336.0,299.5 L337.0,299.5 L338.0,299.5 L339.0,299.5 L340.0,299.5 L341.0,299.5 L342.0,299.5 L343.0,299.5 L344.0,299.5 L345.0,299.5 L346.0,299.5 L347.0,299.5 L348.0,299.5 L349.0,299.5 L350.0,299.5 L351.0,299.5 L352.0,299.5 L353.0,299.5 L354.0,299.5 L355.0,299.5 L356.0,299.5 L357.0,299.5 L358.0,299.5 L359.0,299.5 L360.0,299.5 L361.0,299.5 L362.0,299.5 L363.0,299.5 L364.0,299.5 L365.0,299.5 L366.0,299.5 L367.0,299.5 L368.0,299.5 L369.0,299.5 L370.0,299.5 L371.0,299.5 L372.0,299.5 L373.0,299.5 L374.0,299.5 L375.0,299.5 L376.0,299.5 L377.0,299.5 L378.0,299.5 L379.0,299.5 L380.0,299.5 L381.0,299.5 L382.0,299.5 L383.0,299.5 L384.0,299.5 L385.0,299.5 L386.0,299.5 L387.0,299.5 L388.0,299.5 L389.0,299.5 L390.0,299.5 L391.0,299.5 L392.0,299.5 L393.0,299.5 L394.0,299.5 L395.0,299.5 L396.0,299.5 L397.0,299.5 L398.0,299.5 L399.0,299.5 L400.0,299.5 L401.0,299.5 L402.0,299.5 L403.0,299.5 L404.0,299.5 L405.0,299.5 L406.0,299.5 L407.0,299.5 L408.0,299.5 L409.0,299.5 L410.0,299.5 L411.0,299.5 L412.0,299.5 L413.0,299.5 L414.0,299.5 L415.0,299.5 L416.0,299.5 L417.0,299.5 L418.0,299.5 L419.0,299.5 L420.0,299.5 L421.0,299.5 L422.0,299.5 L423.0,299.5 L424.0,299.5 L425.0,299.5 L426.0,299.5 L427.0,299.5 L428.0,299.5 L429.0,299.5 L430.0,299.5 L431.0,299.5 L432.0,299.5 L433.0,299.5 L434.0,299.5 L435.0,299.5 L436.0,299.5 L437.0,299.5 L438.0,299.5 L439.0,299.5 L440.0,299.5 L441.0,299.5 L442.0,299.5 L443.0,299.5 L444.0,299.5 L445.0,299.5 L446.0,299.5 L447.0,299.5 L448.0,299.5 L449.0,299.5 L450.0,299.5 L451.0,299.5 L452.0,299.5 L453.0,299.5 L454.0,299.5 L455.0,299.5" fill="none" stroke="var(--color-remark)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M55.0,300.4 L56.0,300.4 L57.0,300.3 L58.0,300.3 L59.0,300.3 L60.0,300.3 L61.0,300.2 L62.0,300.2 L63.0,300.2 L64.0,300.2 L65.0,300.1 L66.0,300.1 L67.0,300.1 L68.0,300.1 L69.0,300.0 L70.0,300.0 L71.0,300.0 L72.0,300.0 L73.0,299.9 L74.0,299.9 L75.0,299.9 L76.0,299.9 L77.0,299.8 L78.0,299.8 L79.0,299.8 L80.0,299.8 L81.0,299.7 L82.0,299.7 L83.0,299.7 L84.0,299.7 L85.0,299.6 L86.0,299.6 L87.0,299.6 L88.0,299.6 L89.0,299.5 L90.0,299.5 L91.0,299.5 L92.0,299.5 L93.0,299.4 L94.0,299.4 L95.0,299.4 L96.0,299.4 L97.0,299.3 L98.0,299.3 L99.0,299.3 L100.0,299.3 L101.0,299.2 L102.0,299.2 L103.0,299.2 L104.0,299.1 L105.0,299.1 L106.0,299.1 L107.0,299.1 L108.0,299.0 L109.0,299.0 L110.0,299.0 L111.0,299.0 L112.0,298.9 L113.0,298.9 L114.0,298.9 L115.0,298.9 L116.0,298.8 L117.0,298.8 L118.0,298.8 L119.0,298.8 L120.0,298.7 L121.0,298.7 L122.0,298.7 L123.0,298.7 L124.0,298.6 L125.0,298.6 L126.0,298.6 L127.0,298.6 L128.0,298.5 L129.0,298.5 L130.0,298.5 L131.0,298.5 L132.0,298.4 L133.0,298.4 L134.0,298.4 L135.0,298.4 L136.0,298.3 L137.0,298.3 L138.0,298.3 L139.0,298.3 L140.0,298.2 L141.0,298.2 L142.0,298.2 L143.0,298.2 L144.0,298.1 L145.0,298.1 L146.0,298.1 L147.0,298.1 L148.0,298.0 L149.0,298.0 L150.0,298.0 L151.0,298.0 L152.0,297.9 L153.0,297.9 L154.0,297.9 L155.0,297.9 L156.0,297.8 L157.0,297.8 L158.0,297.8 L159.0,297.8 L160.0,297.7 L161.0,297.7 L162.0,297.7 L163.0,297.7 L164.0,297.6 L165.0,297.6 L166.0,297.6 L167.0,297.6 L168.0,297.5 L169.0,297.5 L170.0,297.5 L171.0,297.5 L172.0,297.4 L173.0,297.4 L174.0,297.4 L175.0,297.4 L176.0,297.3 L177.0,297.3 L178.0,297.3 L179.0,297.3 L180.0,297.2 L181.0,297.2 L182.0,297.2 L183.0,297.2 L184.0,297.1 L185.0,297.1 L186.0,297.1 L187.0,297.1 L188.0,297.0 L189.0,297.0 L190.0,297.0 L191.0,297.0 L192.0,296.9 L193.0,296.9 L194.0,296.9 L195.0,296.9 L196.0,296.8 L197.0,296.8 L198.0,296.8 L199.0,296.8 L200.0,296.7 L201.0,296.7 L202.0,296.7 L203.0,296.7 L204.0,296.6 L205.0,296.6 L206.0,296.6 L207.0,296.6 L208.0,296.5 L209.0,296.5 L210.0,296.5 L211.0,296.5 L212.0,296.4 L213.0,296.4 L214.0,296.4 L215.0,296.4 L216.0,296.3 L217.0,296.3 L218.0,296.3 L219.0,296.3 L220.0,296.2 L221.0,296.2 L222.0,296.2 L223.0,296.2 L224.0,296.1 L225.0,296.1 L226.0,296.1 L227.0,296.1 L228.0,296.0 L229.0,296.0 L230.0,296.0 L231.0,296.0 L232.0,295.9 L233.0,295.9 L234.0,295.9 L235.0,295.9 L236.0,295.8 L237.0,295.8 L238.0,295.8 L239.0,295.8 L240.0,295.7 L241.0,295.7 L242.0,295.7 L243.0,295.7 L244.0,295.6 L245.0,295.6 L246.0,295.6 L247.0,295.6 L248.0,295.5 L249.0,295.5 L250.0,295.5 L251.0,295.5 L252.0,295.4 L253.0,295.4 L254.0,295.4 L255.0,295.4 L256.0,295.3 L257.0,295.3 L258.0,295.3 L259.0,295.2 L260.0,295.2 L261.0,295.2 L262.0,295.2 L263.0,295.1 L264.0,295.1 L265.0,295.1 L266.0,295.1 L267.0,295.0 L268.0,295.0 L269.0,295.0 L270.0,295.0 L271.0,294.9 L272.0,294.9 L273.0,294.9 L274.0,294.9 L275.0,294.8 L276.0,294.8 L277.0,294.8 L278.0,294.8 L279.0,294.7 L280.0,294.7 L281.0,294.7 L282.0,294.7 L283.0,294.6 L284.0,294.6 L285.0,294.6 L286.0,294.6 L287.0,294.5 L288.0,294.5 L289.0,294.5 L290.0,294.5 L291.0,294.4 L292.0,294.4 L293.0,294.4 L294.0,294.4 L295.0,294.3 L296.0,294.3 L297.0,294.3 L298.0,294.3 L299.0,294.2 L300.0,294.2 L301.0,294.2 L302.0,294.2 L303.0,294.1 L304.0,294.1 L305.0,294.1 L306.0,294.1 L307.0,294.0 L308.0,294.0 L309.0,294.0 L310.0,294.0 L311.0,293.9 L312.0,293.9 L313.0,293.9 L314.0,293.9 L315.0,293.8 L316.0,293.8 L317.0,293.8 L318.0,293.8 L319.0,293.7 L320.0,293.7 L321.0,293.7 L322.0,293.7 L323.0,293.6 L324.0,293.6 L325.0,293.6 L326.0,293.6 L327.0,293.5 L328.0,293.5 L329.0,293.5 L330.0,293.5 L331.0,293.4 L332.0,293.4 L333.0,293.4 L334.0,293.4 L335.0,293.3 L336.0,293.3 L337.0,293.3 L338.0,293.3 L339.0,293.2 L340.0,293.2 L341.0,293.2 L342.0,293.2 L343.0,293.1 L344.0,293.1 L345.0,293.1 L346.0,293.1 L347.0,293.0 L348.0,293.0 L349.0,293.0 L350.0,293.0 L351.0,292.9 L352.0,292.9 L353.0,292.9 L354.0,292.9 L355.0,292.8 L356.0,292.8 L357.0,292.8 L358.0,292.8 L359.0,292.7 L360.0,292.7 L361.0,292.7 L362.0,292.7 L363.0,292.6 L364.0,292.6 L365.0,292.6 L366.0,292.6 L367.0,292.5 L368.0,292.5 L369.0,292.5 L370.0,292.5 L371.0,292.4 L372.0,292.4 L373.0,292.4 L374.0,292.4 L375.0,292.3 L376.0,292.3 L377.0,292.3 L378.0,292.3 L379.0,292.2 L380.0,292.2 L381.0,292.2 L382.0,292.2 L383.0,292.1 L384.0,292.1 L385.0,292.1 L386.0,292.1 L387.0,292.0 L388.0,292.0 L389.0,292.0 L390.0,292.0 L391.0,291.9 L392.0,291.9 L393.0,291.9 L394.0,291.9 L395.0,291.8 L396.0,291.8 L397.0,291.8 L398.0,291.8 L399.0,291.7 L400.0,291.7 L401.0,291.7 L402.0,291.7 L403.0,291.6 L404.0,291.6 L405.0,291.6 L406.0,291.6 L407.0,291.5 L408.0,291.5 L409.0,291.5 L410.0,291.4 L411.0,291.4 L412.0,291.4 L413.0,291.4 L414.0,291.3 L415.0,291.3 L416.0,291.3 L417.0,291.3 L418.0,291.2 L419.0,291.2 L420.0,291.2 L421.0,291.2 L422.0,291.1 L423.0,291.1 L424.0,291.1 L425.0,291.1 L426.0,291.0 L427.0,291.0 L428.0,291.0 L429.0,291.0 L430.0,290.9 L431.0,290.9 L432.0,290.9 L433.0,290.9 L434.0,290.8 L435.0,290.8 L436.0,290.8 L437.0,290.8 L438.0,290.7 L439.0,290.7 L440.0,290.7 L441.0,290.7 L442.0,290.6 L443.0,290.6 L444.0,290.6 L445.0,290.6 L446.0,290.5 L447.0,290.5 L448.0,290.5 L449.0,290.5 L450.0,290.4 L451.0,290.4 L452.0,290.4 L453.0,290.4 L454.0,290.3 L455.0,290.3" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M55.0,295.3 L56.0,295.4 L57.0,295.6 L58.0,295.8 L59.0,295.9 L60.0,296.1 L61.0,296.3 L62.0,296.4 L63.0,296.6 L64.0,296.7 L65.0,296.9 L66.0,297.0 L67.0,297.2 L68.0,297.3 L69.0,297.4 L70.0,297.6 L71.0,297.7 L72.0,297.8 L73.0,298.0 L74.0,298.1 L75.0,298.2 L76.0,298.3 L77.0,298.4 L78.0,298.5 L79.0,298.6 L80.0,298.7 L81.0,298.8 L82.0,298.9 L83.0,299.0 L84.0,299.1 L85.0,299.2 L86.0,299.3 L87.0,299.4 L88.0,299.5 L89.0,299.5 L90.0,299.6 L91.0,299.7 L92.0,299.7 L93.0,299.8 L94.0,299.9 L95.0,299.9 L96.0,300.0 L97.0,300.0 L98.0,300.1 L99.0,300.1 L100.0,300.2 L101.0,300.2 L102.0,300.3 L103.0,300.3 L104.0,300.3 L105.0,300.4 L106.0,300.4 L107.0,300.4 L108.0,300.4 L109.0,300.4 L110.0,300.5 L111.0,300.5 L112.0,300.5 L113.0,300.5 L114.0,300.5 L115.0,300.5 L116.0,300.5 L117.0,300.5 L118.0,300.5 L119.0,300.5 L120.0,300.4 L121.0,300.4 L122.0,300.4 L123.0,300.4 L124.0,300.3 L125.0,300.3 L126.0,300.3 L127.0,300.3 L128.0,300.2 L129.0,300.2 L130.0,300.1 L131.0,300.1 L132.0,300.0 L133.0,300.0 L134.0,299.9 L135.0,299.9 L136.0,299.8 L137.0,299.7 L138.0,299.7 L139.0,299.6 L140.0,299.5 L141.0,299.4 L142.0,299.4 L143.0,299.3 L144.0,299.2 L145.0,299.1 L146.0,299.0 L147.0,298.9 L148.0,298.8 L149.0,298.7 L150.0,298.6 L151.0,298.5 L152.0,298.4 L153.0,298.3 L154.0,298.2 L155.0,298.0 L156.0,297.9 L157.0,297.8 L158.0,297.7 L159.0,297.5 L160.0,297.4 L161.0,297.3 L162.0,297.1 L163.0,297.0 L164.0,296.8 L165.0,296.7 L166.0,296.5 L167.0,296.4 L168.0,296.2 L169.0,296.1 L170.0,295.9 L171.0,295.7 L172.0,295.6 L173.0,295.4 L174.0,295.2 L175.0,295.0 L176.0,294.8 L177.0,294.7 L178.0,294.5 L179.0,294.3 L180.0,294.1 L181.0,293.9 L182.0,293.7 L183.0,293.5 L184.0,293.3 L185.0,293.1 L186.0,292.9 L187.0,292.6 L188.0,292.4 L189.0,292.2 L190.0,292.0 L191.0,291.8 L192.0,291.5 L193.0,291.3 L194.0,291.1 L195.0,290.8 L196.0,290.6 L197.0,290.3 L198.0,290.1 L199.0,289.8 L200.0,289.6 L201.0,289.3 L202.0,289.1 L203.0,288.8 L204.0,288.6 L205.0,288.3 L206.0,288.0 L207.0,287.7 L208.0,287.5 L209.0,287.2 L210.0,286.9 L211.0,286.6 L212.0,286.3 L213.0,286.0 L214.0,285.7 L215.0,285.4 L216.0,285.1 L217.0,284.8 L218.0,284.5 L219.0,284.2 L220.0,283.9 L221.0,283.6 L222.0,283.3 L223.0,283.0 L224.0,282.6 L225.0,282.3 L226.0,282.0 L227.0,281.6 L228.0,281.3 L229.0,281.0 L230.0,280.6 L231.0,280.3 L232.0,279.9 L233.0,279.6 L234.0,279.2 L235.0,278.9 L236.0,278.5 L237.0,278.1 L238.0,277.8 L239.0,277.4 L240.0,277.0 L241.0,276.7 L242.0,276.3 L243.0,275.9 L244.0,275.5 L245.0,275.1 L246.0,274.7 L247.0,274.4 L248.0,274.0 L249.0,273.6 L250.0,273.2 L251.0,272.8 L252.0,272.3 L253.0,271.9 L254.0,271.5 L255.0,271.1 L256.0,270.7 L257.0,270.3 L258.0,269.8 L259.0,269.4 L260.0,269.0 L261.0,268.5 L262.0,268.1 L263.0,267.7 L264.0,267.2 L265.0,266.8 L266.0,266.3 L267.0,265.9 L268.0,265.4 L269.0,265.0 L270.0,264.5 L271.0,264.0 L272.0,263.6 L273.0,263.1 L274.0,262.6 L275.0,262.2 L276.0,261.7 L277.0,261.2 L278.0,260.7 L279.0,260.2 L280.0,259.7 L281.0,259.2 L282.0,258.7 L283.0,258.3 L284.0,257.7 L285.0,257.2 L286.0,256.7 L287.0,256.2 L288.0,255.7 L289.0,255.2 L290.0,254.7 L291.0,254.1 L292.0,253.6 L293.0,253.1 L294.0,252.6 L295.0,252.0 L296.0,251.5 L297.0,250.9 L298.0,250.4 L299.0,249.9 L300.0,249.3 L301.0,248.8 L302.0,248.2 L303.0,247.6 L304.0,247.1 L305.0,246.5 L306.0,245.9 L307.0,245.4 L308.0,244.8 L309.0,244.2 L310.0,243.6 L311.0,243.1 L312.0,242.5 L313.0,241.9 L314.0,241.3 L315.0,240.7 L316.0,240.1 L317.0,239.5 L318.0,238.9 L319.0,238.3 L320.0,237.7 L321.0,237.1 L322.0,236.5 L323.0,235.8 L324.0,235.2 L325.0,234.6 L326.0,234.0 L327.0,233.3 L328.0,232.7 L329.0,232.1 L330.0,231.4 L331.0,230.8 L332.0,230.1 L333.0,229.5 L334.0,228.8 L335.0,228.2 L336.0,227.5 L337.0,226.9 L338.0,226.2 L339.0,225.5 L340.0,224.9 L341.0,224.2 L342.0,223.5 L343.0,222.9 L344.0,222.2 L345.0,221.5 L346.0,220.8 L347.0,220.1 L348.0,219.4 L349.0,218.7 L350.0,218.0 L351.0,217.3 L352.0,216.6 L353.0,215.9 L354.0,215.2 L355.0,214.5 L356.0,213.8 L357.0,213.1 L358.0,212.3 L359.0,211.6 L360.0,210.9 L361.0,210.2 L362.0,209.4 L363.0,208.7 L364.0,207.9 L365.0,207.2 L366.0,206.5 L367.0,205.7 L368.0,205.0 L369.0,204.2 L370.0,203.4 L371.0,202.7 L372.0,201.9 L373.0,201.2 L374.0,200.4 L375.0,199.6 L376.0,198.8 L377.0,198.1 L378.0,197.3 L379.0,196.5 L380.0,195.7 L381.0,194.9 L382.0,194.1 L383.0,193.3 L384.0,192.5 L385.0,191.7 L386.0,190.9 L387.0,190.1 L388.0,189.3 L389.0,188.5 L390.0,187.7 L391.0,186.8 L392.0,186.0 L393.0,185.2 L394.0,184.4 L395.0,183.5 L396.0,182.7 L397.0,181.9 L398.0,181.0 L399.0,180.2 L400.0,179.3 L401.0,178.5 L402.0,177.6 L403.0,176.8 L404.0,175.9 L405.0,175.1 L406.0,174.2 L407.0,173.3 L408.0,172.5 L409.0,171.6 L410.0,170.7 L411.0,169.8 L412.0,168.9 L413.0,168.1 L414.0,167.2 L415.0,166.3 L416.0,165.4 L417.0,164.5 L418.0,163.6 L419.0,162.7 L420.0,161.8 L421.0,160.9 L422.0,160.0 L423.0,159.0 L424.0,158.1 L425.0,157.2 L426.0,156.3 L427.0,155.3 L428.0,154.4 L429.0,153.5 L430.0,152.6 L431.0,151.6 L432.0,150.7 L433.0,149.7 L434.0,148.8 L435.0,147.8 L436.0,146.9 L437.0,145.9 L438.0,145.0 L439.0,144.0 L440.0,143.0 L441.0,142.1 L442.0,141.1 L443.0,140.1 L444.0,139.1 L445.0,138.2 L446.0,137.2 L447.0,136.2 L448.0,135.2 L449.0,134.2 L450.0,133.2 L451.0,132.2 L452.0,131.2 L453.0,130.2 L454.0,129.2 L455.0,128.2" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M55.0,298.5 L56.0,298.5 L57.0,298.5 L58.0,298.6 L59.0,298.6 L60.0,298.6 L61.0,298.7 L62.0,298.7 L63.0,298.7 L64.0,298.8 L65.0,298.8 L66.0,298.8 L67.0,298.9 L68.0,298.9 L69.0,298.9 L70.0,299.0 L71.0,299.0 L72.0,299.0 L73.0,299.1 L74.0,299.1 L75.0,299.1 L76.0,299.2 L77.0,299.2 L78.0,299.2 L79.0,299.2 L80.0,299.3 L81.0,299.3 L82.0,299.3 L83.0,299.4 L84.0,299.4 L85.0,299.4 L86.0,299.5 L87.0,299.5 L88.0,299.5 L89.0,299.5 L90.0,299.6 L91.0,299.6 L92.0,299.6 L93.0,299.6 L94.0,299.6 L95.0,299.7 L96.0,299.7 L97.0,299.7 L98.0,299.7 L99.0,299.7 L100.0,299.8 L101.0,299.8 L102.0,299.8 L103.0,299.8 L104.0,299.8 L105.0,299.8 L106.0,299.8 L107.0,299.8 L108.0,299.8 L109.0,299.8 L110.0,299.8 L111.0,299.8 L112.0,299.8 L113.0,299.8 L114.0,299.8 L115.0,299.8 L116.0,299.8 L117.0,299.8 L118.0,299.8 L119.0,299.8 L120.0,299.8 L121.0,299.8 L122.0,299.8 L123.0,299.7 L124.0,299.7 L125.0,299.7 L126.0,299.7 L127.0,299.6 L128.0,299.6 L129.0,299.6 L130.0,299.6 L131.0,299.5 L132.0,299.5 L133.0,299.4 L134.0,299.4 L135.0,299.4 L136.0,299.3 L137.0,299.3 L138.0,299.2 L139.0,299.2 L140.0,299.1 L141.0,299.1 L142.0,299.0 L143.0,298.9 L144.0,298.9 L145.0,298.8 L146.0,298.7 L147.0,298.7 L148.0,298.6 L149.0,298.5 L150.0,298.4 L151.0,298.3 L152.0,298.3 L153.0,298.2 L154.0,298.1 L155.0,298.0 L156.0,297.9 L157.0,297.8 L158.0,297.7 L159.0,297.6 L160.0,297.5 L161.0,297.4 L162.0,297.2 L163.0,297.1 L164.0,297.0 L165.0,296.9 L166.0,296.8 L167.0,296.6 L168.0,296.5 L169.0,296.4 L170.0,296.2 L171.0,296.1 L172.0,295.9 L173.0,295.8 L174.0,295.6 L175.0,295.5 L176.0,295.3 L177.0,295.1 L178.0,295.0 L179.0,294.8 L180.0,294.6 L181.0,294.4 L182.0,294.2 L183.0,294.0 L184.0,293.9 L185.0,293.7 L186.0,293.5 L187.0,293.3 L188.0,293.0 L189.0,292.8 L190.0,292.6 L191.0,292.4 L192.0,292.2 L193.0,292.0 L194.0,291.7 L195.0,291.5 L196.0,291.2 L197.0,291.0 L198.0,290.7 L199.0,290.5 L200.0,290.2 L201.0,290.0 L202.0,289.7 L203.0,289.4 L204.0,289.2 L205.0,288.9 L206.0,288.6 L207.0,288.3 L208.0,288.0 L209.0,287.7 L210.0,287.4 L211.0,287.1 L212.0,286.8 L213.0,286.5 L214.0,286.2 L215.0,285.8 L216.0,285.5 L217.0,285.2 L218.0,284.8 L219.0,284.5 L220.0,284.1 L221.0,283.8 L222.0,283.4 L223.0,283.0 L224.0,282.7 L225.0,282.3 L226.0,281.9 L227.0,281.5 L228.0,281.1 L229.0,280.7 L230.0,280.3 L231.0,279.9 L232.0,279.5 L233.0,279.1 L234.0,278.6 L235.0,278.2 L236.0,277.8 L237.0,277.3 L238.0,276.9 L239.0,276.4 L240.0,276.0 L241.0,275.5 L242.0,275.0 L243.0,274.6 L244.0,274.1 L245.0,273.6 L246.0,273.1 L247.0,272.6 L248.0,272.1 L249.0,271.6 L250.0,271.1 L251.0,270.5 L252.0,270.0 L253.0,269.5 L254.0,268.9 L255.0,268.4 L256.0,267.8 L257.0,267.3 L258.0,266.7 L259.0,266.1 L260.0,265.5 L261.0,265.0 L262.0,264.4 L263.0,263.8 L264.0,263.2 L265.0,262.6 L266.0,261.9 L267.0,261.3 L268.0,260.7 L269.0,260.0 L270.0,259.4 L271.0,258.7 L272.0,258.1 L273.0,257.4 L274.0,256.8 L275.0,256.1 L276.0,255.4 L277.0,254.7 L278.0,254.0 L279.0,253.3 L280.0,252.6 L281.0,251.9 L282.0,251.1 L283.0,250.4 L284.0,249.7 L285.0,248.9 L286.0,248.2 L287.0,247.4 L288.0,246.6 L289.0,245.8 L290.0,245.1 L291.0,244.3 L292.0,243.5 L293.0,242.7 L294.0,241.8 L295.0,241.0 L296.0,240.2 L297.0,239.4 L298.0,238.5 L299.0,237.7 L300.0,236.8 L301.0,235.9 L302.0,235.1 L303.0,234.2 L304.0,233.3 L305.0,232.4 L306.0,231.5 L307.0,230.6 L308.0,229.6 L309.0,228.7 L310.0,227.8 L311.0,226.8 L312.0,225.9 L313.0,224.9 L314.0,223.9 L315.0,223.0 L316.0,222.0 L317.0,221.0 L318.0,220.0 L319.0,219.0 L320.0,218.0 L321.0,216.9 L322.0,215.9 L323.0,214.8 L324.0,213.8 L325.0,212.7 L326.0,211.7 L327.0,210.6 L328.0,209.5 L329.0,208.4 L330.0,207.3 L331.0,206.2 L332.0,205.1 L333.0,203.9 L334.0,202.8 L335.0,201.6 L336.0,200.5 L337.0,199.3 L338.0,198.2 L339.0,197.0 L340.0,195.8 L341.0,194.6 L342.0,193.4 L343.0,192.1 L344.0,190.9 L345.0,189.7 L346.0,188.4 L347.0,187.2 L348.0,185.9 L349.0,184.6 L350.0,183.4 L351.0,182.1 L352.0,180.8 L353.0,179.4 L354.0,178.1 L355.0,176.8 L356.0,175.5 L357.0,174.1 L358.0,172.7 L359.0,171.4 L360.0,170.0 L361.0,168.6 L362.0,167.2 L363.0,165.8 L364.0,164.4 L365.0,163.0 L366.0,161.5 L367.0,160.1 L368.0,158.6 L369.0,157.2 L370.0,155.7 L371.0,154.2 L372.0,152.7 L373.0,151.2 L374.0,149.7 L375.0,148.1 L376.0,146.6 L377.0,145.1 L378.0,143.5 L379.0,141.9 L380.0,140.4 L381.0,138.8 L382.0,137.2 L383.0,135.6 L384.0,134.0 L385.0,132.3 L386.0,130.7 L387.0,129.0 L388.0,127.4 L389.0,125.7 L390.0,124.0 L391.0,122.3 L392.0,120.6 L393.0,118.9 L394.0,117.2 L395.0,115.4 L396.0,113.7 L397.0,111.9 L398.0,110.2 L399.0,108.4 L400.0,106.6 L401.0,104.8 L402.0,103.0 L403.0,101.2 L404.0,99.3 L405.0,97.5 L406.0,95.6 L407.0,93.8 L408.0,91.9 L409.0,90.0 L410.0,88.1 L411.0,86.2 L412.0,84.3 L413.0,82.3 L414.0,80.4 L415.0,78.4 L416.0,76.5 L417.0,74.5 L418.0,72.5 L419.0,70.5 L420.0,68.5 L421.0,66.4 L422.0,64.4 L423.0,62.4 L424.0,60.3 L425.0,58.2 L426.0,56.1 L427.0,54.0 L428.0,51.9 L429.0,49.8 L430.0,47.7 L431.0,45.5 L432.0,43.4 L433.0,41.2 L434.0,39.0 L435.0,36.8 L436.0,34.6 L437.0,32.4 L438.0,30.2" fill="none" stroke="var(--color-practice)" stroke-width="3.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M427.9,154.5 L427.9,52.2" fill="none" stroke="var(--academic-text)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="427.9" cy="154.5" r="3.4" fill="var(--academic-bg)" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <rect x="436.9" y="72.4" width="102.6" height="38" rx="4" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="0.8" stroke-opacity="0.35"/>
+  <text x="488.2" y="87.4" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">son terim:</text>
+  <text x="488.2" y="103.4" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">x</tspan>(<tspan font-style="italic">x</tspan> &#8722; 1)(<tspan font-style="italic">x</tspan> &#8722; 2)</text>
+  <circle cx="88.9" cy="299.5" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="156.7" cy="297.8" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="224.5" cy="282.5" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="427.9" cy="52.2" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="292.3" cy="243.2" r="4.2" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <text x="284.3" y="235.2" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan>(3) = 35</text>
+  <text x="461.0" y="311.5" fill="var(--color-remark)" font-size="12" text-anchor="start"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="461.0" y="288.3" fill="var(--color-base)" font-size="12" text-anchor="start"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="461.0" y="132.2" fill="var(--color-theory)" font-size="12" text-anchor="start"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="445.1" y="36.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <rect x="60.6" y="34.1" width="190" height="98.1" rx="4" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="0.8" stroke-opacity="0.35"/>
+  <path d="M68.6,44.5 L92.3,44.5" fill="none" stroke="var(--color-practice)" stroke-width="3.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="99.1" y="51.1" fill="var(--color-practice)" font-size="11.5" text-anchor="start" font-weight="600"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan>(<tspan font-style="italic">x</tspan>) = <tspan font-style="italic">x</tspan><tspan font-size="9" dy="-5">3</tspan><tspan dy="5">&#8203;</tspan> + <tspan font-style="italic">x</tspan><tspan font-size="9" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan> &#8722; <tspan font-style="italic">x</tspan> + 2</text>
+  <path d="M68.6,67.5 L92.3,67.5" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="99.1" y="74.1" fill="var(--color-theory)" font-size="11.5" text-anchor="start"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan>(<tspan font-style="italic">x</tspan>) = 4<tspan font-style="italic">x</tspan><tspan font-size="9" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan> &#8722; 3<tspan font-style="italic">x</tspan> + 2</text>
+  <path d="M68.6,90.6 L92.3,90.6" fill="none" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="99.1" y="97.1" fill="var(--color-base)" font-size="11.5" text-anchor="start"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>(<tspan font-style="italic">x</tspan>) = <tspan font-style="italic">x</tspan> + 2</text>
+  <path d="M68.6,113.6 L92.3,113.6" fill="none" stroke="var(--color-remark)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="99.1" y="120.1" fill="var(--color-remark)" font-size="11.5" text-anchor="start"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>(<tspan font-style="italic">x</tspan>) = 2</text>
+</svg>
+<figcaption>Newton biçiminin kısmi toplamları. <em>P</em><sub>0</sub> yalnız (0; 2) noktasından, <em>P</em><sub>1</sub> ilk iki noktadan, <em>P</em><sub>2</sub> ilk üç noktadan geçer. <em>P</em><sub>2</sub>(5) = 87 olduğundan (5; 147) noktasına ancak son terim <em>x</em>(<em>x</em> &#8722; 1)(<em>x</em> &#8722; 2) eklenince ulaşılır. İçi boş daire <em>P</em><sub>3</sub>(3) = 35 değeridir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Eşit Aralıklı Noktalar: Newton İleri Fark Formülü
+
+Noktalar eşit aralıklı olduğunda Newton formülündeki çarpımlar tek bir değişkenle yazılır ve bölünmüş farklar sıradan farklara dönüşür.
+
+$i = 0, 1, \dots, n - 1$ için $h = x_{i+1} - x_i$ olsun. Bu durumda $x_1 = x_0 + h$, $x_2 = x_0 + 2h$, …, $x_i = x_0 + i \cdot h$'dir. $x = x_0 + s \cdot h$ yazarsak
+
+$$x - x_i = x_0 + s \cdot h - x_0 - i \cdot h = (s - i) \cdot h \tag{2}$$
+
+olur. Böylece Newton formülündeki çarpım
+
+$$(x - x_0)(x - x_1)\cdots(x - x_{k-1}) = s(s - 1)\cdots\big(s - (k - 1)\big) \cdot h^k$$
+
+biçimini alır. Bu çarpımı binom katsayısıyla kısaltacağız.
+
+::: {#def-bfk-binom name="Binom Katsayısı"}
+$s$ bir reel sayı ve $k \geq 1$ bir tam sayı olmak üzere
+
+$$\binom{s}{k} = \frac{s(s - 1)(s - 2)\cdots\big(s - (k - 1)\big)}{k!}$$
+
+sayısına **binom katsayısı** denir.
+:::
+
+Yani $s$ doğal sayıyken bilinen kombinasyon sayısı, aynı formülle her reel $s$ için tanımlanır. Örneğin $\binom{1/3}{2} = \frac{\frac{1}{3}\left(-\frac{2}{3}\right)}{2} = -\frac{1}{9}$'dur.
+
+:::: {#thm-bfk-ileri-bolunmus name="Newton İleri Bölünmüş Fark Formülü"}
+$x_0, x_1, \dots, x_n$ noktaları $h$ aralıklı ve $x = x_0 + s \cdot h$ ise
+
+$$P_n(x) = P_n(x_0 + s \cdot h) = f[x_0] + \sum_{k=1}^{n} \binom{s}{k} \cdot k! \cdot h^k \cdot f[x_0, x_1, \dots, x_k]$$
+
+olur.
+
+::: {.ispat}
+(2) gereği @thm-bfk-newton formülündeki terimler
+
+$$
+\begin{aligned}
+P_n(x_0 + s \cdot h) &= f[x_0] + f[x_0, x_1] \cdot s \cdot h + f[x_0, x_1, x_2] \cdot s(s - 1) \cdot h^2 \\[1mm]
+&\quad + f[x_0, x_1, x_2, x_3] \cdot s(s - 1)(s - 2) \cdot h^3 + \cdots \\[1mm]
+&\quad + f[x_0, x_1, \dots, x_n] \cdot s(s - 1)\cdots\big(s - (n - 1)\big) \cdot h^n
+\end{aligned}
+$$
+
+biçimini alır. @def-bfk-binom gereği $s(s - 1)\cdots\big(s - (k - 1)\big) = k! \binom{s}{k}$ olduğundan formül elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bölünmüş farklar eşit aralıklı noktalarda bölme yapmadan, ardışık farklarla da hesaplanabilir.
+
+::: {#def-bfk-ileri-fark name="İleri Fark"}
+$x_0, x_1, \dots, x_n$ noktaları $h$ aralıklı olsun. $f$'nin $x_i$'deki **ileri farkı**
+
+$$\Delta f(x_i) = f(x_{i+1}) - f(x_i)$$
+
+sayısıdır. Daha yüksek mertebeden ileri farklar indirgemeli olarak
+
+$$\Delta^k f(x_i) = \Delta\big(\Delta^{k-1} f(x_i)\big) = \Delta^{k-1} f(x_{i+1}) - \Delta^{k-1} f(x_i)$$
+
+ile tanımlanır. Örneğin $\Delta^2 f(x_0) = \Delta f(x_1) - \Delta f(x_0)$'dır.
+:::
+
+Yani ileri fark tablosu, bölünmüş fark tablosunun bölme yapılmadan kurulmuş hâlidir: her girdi, soldaki alt komşusundan üst komşusunun çıkarılmasıyla bulunur. $\Delta^k f(x_i)$, tabloda $x_i$'den başlayıp sağa aşağı inen köşegen üzerindeki $k$. girdidir.
+
+:::: {#prp-bfk-ileri-fark name="Bölünmüş Fark ve İleri Fark"}
+$x_0, x_1, \dots, x_n$ noktaları $h$ aralıklı ise $i + k \leq n$ olan her $i \geq 0$, $k \geq 1$ için
+
+$$f[x_i, x_{i+1}, \dots, x_{i+k}] = \frac{1}{k! \, h^k} \, \Delta^k f(x_i)$$
+
+olur. Özel olarak $f[x_0, x_1, \dots, x_k] = \frac{1}{k!\,h^k}\Delta^k f(x_0)$'dır.
+
+::: {.ispat}
+$k$ üzerinden tümevarım yapalım. $k = 1$ için
+
+$$f[x_i, x_{i+1}] = \frac{f(x_{i+1}) - f(x_i)}{x_{i+1} - x_i} = \frac{1}{h}\,\Delta f(x_i)$$
+
+olur. Eşitlik $k - 1$ için her başlangıç indisinde doğru olsun. $x_{i+k} - x_i = k h$ olduğundan
+
+$$
+\begin{aligned}
+f[x_i, \dots, x_{i+k}]
+&= \frac{f[x_{i+1}, \dots, x_{i+k}] - f[x_i, \dots, x_{i+k-1}]}{k h} \\[1mm]
+&= \frac{1}{k h}\left(\frac{\Delta^{k-1} f(x_{i+1})}{(k-1)!\,h^{k-1}} - \frac{\Delta^{k-1} f(x_i)}{(k-1)!\,h^{k-1}}\right) \\[1mm]
+&= \frac{\Delta^{k-1} f(x_{i+1}) - \Delta^{k-1} f(x_i)}{k!\,h^k}
+= \frac{1}{k!\,h^k}\,\Delta^k f(x_i)
+\end{aligned}
+$$
+
+bulunur. Örneğin $k = 2$, $i = 0$ için bu hesap
+
+$$f[x_0, x_1, x_2] = \frac{1}{2h}\left(\frac{1}{h}\Delta f(x_1) - \frac{1}{h}\Delta f(x_0)\right) = \frac{1}{2h^2}\Delta^2 f(x_0)$$
+
+biçimini alır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#cor-bfk-ileri-fark name="Newton İleri Fark Formülü"}
+$x_0, x_1, \dots, x_n$ noktaları $h$ aralıklı ve $x = x_0 + s \cdot h$ ise
+
+$$P_n(x) = P_n(x_0 + s \cdot h) = f(x_0) + \sum_{k=1}^{n} \binom{s}{k}\,\Delta^k f(x_0)$$
+
+olur.
+
+::: {.ispat}
+@thm-bfk-ileri-bolunmus formülünde @prp-bfk-ileri-fark gereği $k! \cdot h^k \cdot f[x_0, \dots, x_k] = \Delta^k f(x_0)$'dır; ayrıca $f[x_0] = f(x_0)$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani eşit aralıklı noktalarda katsayılar, ileri fark tablosunun üst kenarındaki $\Delta^k f(x_0)$ sayılarıdır ve $x$'in yeri yalnız $s = \frac{x - x_0}{h}$ sayısıyla girer. Tablonun başına yakın bir $x$ için $s$ küçüktür ve terimler hızla küçülür.
+
+## Newton Geri Fark Formülü
+
+Yaklaşım yapılacak nokta tablonun sonuna yakınsa, Newton formülünü noktaları sondan başa doğru dizerek yazmak daha uygundur.
+
+Noktaları $x_n, x_{n-1}, \dots, x_1, x_0$ sırasıyla alırsak @thm-bfk-newton ve @cor-bfk-sira gereği
+
+$$
+\begin{aligned}
+P_n(x) &= f[x_n] + f[x_n, x_{n-1}](x - x_n) + f[x_n, x_{n-1}, x_{n-2}](x - x_n)(x - x_{n-1}) \\[1mm]
+&\quad + \cdots + f[x_n, x_{n-1}, \dots, x_0](x - x_n)(x - x_{n-1})\cdots(x - x_1)
+\end{aligned}
+$$
+
+olur. Katsayılar bu kez tablonun alt kenarındaki girdilerdir.
+
+::: {#def-bfk-geri-fark name="Geri Fark"}
+$x_0, x_1, \dots, x_n$ noktaları $h$ aralıklı olsun. $f$'nin $x_i$'deki ($i \geq 1$) **geri farkı**
+
+$$\nabla f(x_i) = f(x_i) - f(x_{i-1})$$
+
+sayısıdır. Daha yüksek mertebeden geri farklar indirgemeli olarak ($i \geq k$)
+
+$$\nabla^k f(x_i) = \nabla\big(\nabla^{k-1} f(x_i)\big) = \nabla^{k-1} f(x_i) - \nabla^{k-1} f(x_{i-1})$$
+
+ile tanımlanır.
+:::
+
+Yani geri farklar ileri farklarla aynı sayılardır, yalnız başka bir uca göre adlandırılır: $\nabla f(x_{i+1}) = \Delta f(x_i)$ ve tümevarımla $\nabla^k f(x_{i+k}) = \Delta^k f(x_i)$'dır. $\nabla^k f(x_n)$, tabloda $x_n$'den başlayıp sağa yukarı çıkan köşegen üzerindeki $k$. girdidir. Bu yüzden ileri ve geri farklar tek bir tabloda gösterilir.
+
+:::: {#prp-bfk-geri-fark name="Bölünmüş Fark ve Geri Fark"}
+$x_0, x_1, \dots, x_n$ noktaları $h$ aralıklı ise $k \leq i \leq n$ olan her $i$ ve $k \geq 1$ için
+
+$$f[x_i, x_{i-1}, \dots, x_{i-k}] = \frac{1}{k!\,h^k}\,\nabla^k f(x_i)$$
+
+olur. Özel olarak $f[x_n, x_{n-1}] = \frac{1}{h}\nabla f(x_n)$, $f[x_n, x_{n-1}, x_{n-2}] = \frac{1}{2h^2}\nabla^2 f(x_n)$, …, $f[x_n, \dots, x_{n-k}] = \frac{1}{k!\,h^k}\nabla^k f(x_n)$'dır.
+
+::: {.ispat}
+@cor-bfk-sira gereği sol taraf $f[x_{i-k}, \dots, x_i]$'ye eşittir. $k$ üzerinden tümevarım yapalım. $k = 1$ için
+
+$$f[x_{i-1}, x_i] = \frac{f(x_i) - f(x_{i-1})}{h} = \frac{1}{h}\nabla f(x_i)$$
+
+dır. Eşitlik $k - 1$ için her uç indiste doğru olsun. $x_i - x_{i-k} = k h$ olduğundan
+
+$$
+\begin{aligned}
+f[x_{i-k}, \dots, x_i]
+&= \frac{f[x_{i-k+1}, \dots, x_i] - f[x_{i-k}, \dots, x_{i-1}]}{k h} \\[1mm]
+&= \frac{\nabla^{k-1} f(x_i) - \nabla^{k-1} f(x_{i-1})}{k h \cdot (k-1)!\,h^{k-1}}
+= \frac{1}{k!\,h^k}\,\nabla^k f(x_i)
+\end{aligned}
+$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#thm-bfk-geri-fark name="Newton Geri Fark Formülü"}
+$x_0, x_1, \dots, x_n$ noktaları $h$ aralıklı ve $x = x_n + s \cdot h$ ise
+
+$$P_n(x) = P_n(x_n + s \cdot h) = f(x_n) + \sum_{k=1}^{n} (-1)^k \binom{-s}{k}\,\nabla^k f(x_n)$$
+
+olur.
+
+::: {.ispat}
+$x_i = x_n - (n - i)h$ olduğundan
+
+$$x - x_i = x_n + s \cdot h - x_n + (n - i)h = (s + n - i) \cdot h$$
+
+olur. Buna göre geri sıralı Newton formülündeki çarpım
+
+$$(x - x_n)(x - x_{n-1})\cdots(x - x_{n-k+1}) = s(s + 1)\cdots\big(s + (k - 1)\big) \cdot h^k$$
+
+dır. @prp-bfk-geri-fark gereği katsayı $f[x_n, \dots, x_{n-k}] = \frac{1}{k!\,h^k}\nabla^k f(x_n)$ olduğundan $k$. terim
+
+$$\frac{s(s + 1)\cdots\big(s + (k - 1)\big)}{k!}\,\nabla^k f(x_n)$$
+
+olur. Öte yandan @def-bfk-binom ile her çarpanından $-1$ çıkarılırsa
+
+$$
+\begin{aligned}
+\binom{-s}{k} &= \frac{(-s)(-s - 1)(-s - 2)\cdots\big(-s - (k - 1)\big)}{k!} \\[1mm]
+&= \frac{(-1)^k\, s(s + 1)(s + 2)\cdots\big(s + (k - 1)\big)}{k!}
+\end{aligned}
+$$
+
+bulunur. $(-1)^k (-1)^k = 1$ olduğundan
+
+$$(-1)^k \binom{-s}{k} = \frac{s(s + 1)\cdots\big(s + (k - 1)\big)}{k!}$$
+
+dır ve $k$. terim $(-1)^k \binom{-s}{k}\nabla^k f(x_n)$ olarak yazılır. $f[x_n] = f(x_n)$ olduğundan formül elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani geri fark formülünde $x$ tablonun sonundaki $x_n$'den ölçülür; $x < x_n$ için $s$ negatiftir. Katsayılar açık yazıldığında
+
+$$
+\begin{aligned}
+P_n(x_n + s h) &= f(x_n) + s\,\nabla f(x_n) + \frac{s(s + 1)}{2!}\,\nabla^2 f(x_n) \\[1mm]
+&\quad + \frac{s(s + 1)(s + 2)}{3!}\,\nabla^3 f(x_n) + \cdots
+\end{aligned}
+$$
+
+olur.
+
+::: {.callout-tip title="Eşit aralıklı veride yaklaşım üç adımda"}
+1. İleri fark tablosunu kurun ($\Delta$ başlıkları üstte, aynı girdilerin $\nabla$ adları altta).
+2. $x$ tablonun başına yakınsa $x = x_0 + s \cdot h$ ile ileri fark formülünü, sonuna yakınsa $x = x_n + s \cdot h$ ile geri fark formülünü seçin; ileri formülün katsayıları üst kenarda, geri formülünkiler alt kenardadır.
+3. $\binom{s}{k}$ ya da $(-1)^k\binom{-s}{k}$ katsayılarını hesaplayın, terimleri bulun ve toplayın.
+:::
+
+:::: {#exm-bfk-fark-tablosu name="İleri ve Geri Fark Tablosu"}
+Bir $f$ fonksiyonunun eşit aralıklı noktalardaki değerleri aşağıdaki tabloda verilmiştir. $f$ için ileri-geri fark tablosunu oluşturunuz (virgülden sonra 7. basamak).
+
+::: {.iteration-table}
+| $k$ | $x_k$ | $f(x_k)$ |
+|:-:|--:|--:|
+| $0$ | $1{,}0$ | $0{,}7651977$ |
+| $1$ | $1{,}3$ | $0{,}6200860$ |
+| $2$ | $1{,}6$ | $0{,}4554022$ |
+| $3$ | $1{,}9$ | $0{,}2818186$ |
+| $4$ | $2{,}2$ | $0{,}1103623$ |
+:::
+
+::: {.cozum}
+Noktalar $h = 0{,}3$ aralıklıdır. Her sütunda alttaki komşudan üstteki çıkarılır. Birinci farklar
+
+$$
+\begin{aligned}
+\Delta f(x_0) &= 0{,}6200860 - 0{,}7651977 = -0{,}1451117, \\[1mm]
+\Delta f(x_1) &= 0{,}4554022 - 0{,}6200860 = -0{,}1646838, \\[1mm]
+\Delta f(x_2) &= 0{,}2818186 - 0{,}4554022 = -0{,}1735836, \\[1mm]
+\Delta f(x_3) &= 0{,}1103623 - 0{,}2818186 = -0{,}1714563,
+\end{aligned}
+$$
+
+ikinci farklar
+
+$$
+\begin{aligned}
+\Delta^2 f(x_0) &= -0{,}1646838 - (-0{,}1451117) = -0{,}0195721, \\[1mm]
+\Delta^2 f(x_1) &= -0{,}1735836 - (-0{,}1646838) = -0{,}0088998, \\[1mm]
+\Delta^2 f(x_2) &= -0{,}1714563 - (-0{,}1735836) = 0{,}0021273,
+\end{aligned}
+$$
+
+üçüncü ve dördüncü farklar
+
+$$
+\begin{aligned}
+\Delta^3 f(x_0) &= -0{,}0088998 - (-0{,}0195721) = 0{,}0106723, \\[1mm]
+\Delta^3 f(x_1) &= 0{,}0021273 - (-0{,}0088998) = 0{,}0110271, \\[1mm]
+\Delta^4 f(x_0) &= 0{,}0110271 - 0{,}0106723 = 0{,}0003548
+\end{aligned}
+$$
+
+olur. İleri farkların başlığı üstte, aynı girdilerin geri fark adları en alt satırdadır. İleri fark formülünde kullanılan girdiler üst kenarda, geri fark formülünde kullanılanlar alt kenarda altı çizilidir; $\Delta^4 f(x_0) = \nabla^4 f(x_4)$ ikisinde de kullanılır.
+
+::: {.difference-table .with-k .backward}
+| $k$ | $x_k$ | $f(x_k)$ | $\Delta f(x_k)$ | $\Delta^2 f(x_k)$ | $\Delta^3 f(x_k)$ | $\Delta^4 f(x_k)$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $0$ | $1{,}0$ | $\underline{0{,}7651977}$ | | | | |
+| | | | $\underline{-0{,}1451117}$ | | | |
+| $1$ | $1{,}3$ | $0{,}6200860$ | | $\underline{-0{,}0195721}$ | | |
+| | | | $-0{,}1646838$ | | $\underline{0{,}0106723}$ | |
+| $2$ | $1{,}6$ | $0{,}4554022$ | | $-0{,}0088998$ | | $\underline{0{,}0003548}$ |
+| | | | $-0{,}1735836$ | | $\underline{0{,}0110271}$ | |
+| $3$ | $1{,}9$ | $0{,}2818186$ | | $\underline{0{,}0021273}$ | | |
+| | | | $\underline{-0{,}1714563}$ | | | |
+| $4$ | $2{,}2$ | $\underline{0{,}1103623}$ | | | | |
+| $k$ | $x_k$ | $f(x_k)$ | $\nabla f(x_k)$ | $\nabla^2 f(x_k)$ | $\nabla^3 f(x_k)$ | $\nabla^4 f(x_k)$ |
+:::
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-bfk-ileri-f11 name="İleri Fark Formülüyle f(1,1)"}
+@exm-bfk-fark-tablosu verileriyle ($x_0 = 1{,}0$, $h = 0{,}3$, $n = 4$) Newton ileri fark formülünü kullanarak $f(1{,}1)$ için dördüncü dereceden bir polinom yardımıyla yaklaşımda bulununuz (virgülden sonra 7. basamak).
+
+::: {.cozum}
+$x = 1{,}1$ tablonun başında olduğundan ileri fark formülü kullanılır. $1{,}1 = 1{,}0 + s \cdot 0{,}3$ eşitliğinden $s = \frac{1}{3}$ bulunur. @cor-bfk-ileri-fark ile
+
+$$
+\begin{aligned}
+P_4(1{,}1) &= f(x_0) + s\,\Delta f(x_0) + \frac{s(s - 1)}{2!}\,\Delta^2 f(x_0) \\[1mm]
+&\quad + \frac{s(s - 1)(s - 2)}{3!}\,\Delta^3 f(x_0) \\[1mm]
+&\quad + \frac{s(s - 1)(s - 2)(s - 3)}{4!}\,\Delta^4 f(x_0)
+\end{aligned}
+$$
+
+dır. $s = \frac{1}{3}$ için katsayılar
+
+$$
+\begin{aligned}
+\frac{s(s - 1)}{2!} &= \frac{1}{2} \cdot \frac{1}{3} \cdot \left(-\frac{2}{3}\right) = -\frac{1}{9}, \\[1mm]
+\frac{s(s - 1)(s - 2)}{3!} &= -\frac{1}{9} \cdot \frac{1}{3}\left(-\frac{5}{3}\right) = \frac{5}{81}, \\[1mm]
+\frac{s(s - 1)(s - 2)(s - 3)}{4!} &= \frac{5}{81} \cdot \frac{1}{4}\left(-\frac{8}{3}\right) = -\frac{10}{243}
+\end{aligned}
+$$
+
+olur. Tablonun üst kenarındaki farklarla terimler
+
+$$
+\begin{aligned}
+P_4(1{,}1) &= 0{,}7651977 + \tfrac{1}{3}(-0{,}1451117) - \tfrac{1}{9}(-0{,}0195721) \\[1mm]
+&\quad + \tfrac{5}{81}(0{,}0106723) - \tfrac{10}{243}(0{,}0003548) \\[1mm]
+&= 0{,}7651977 - 0{,}0483706 + 0{,}0021747 \\[1mm]
+&\quad + 0{,}0006588 - 0{,}0000146 \\[1mm]
+&= 0{,}7196460
+\end{aligned}
+$$
+
+bulunur. Yani $f(1{,}1) \approx 0{,}7196460$'tır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-bfk-geri-f2 name="Geri Fark Formülüyle f(2)"}
+@exm-bfk-fark-tablosu verileriyle ($x_4 = 2{,}2$, $h = 0{,}3$, $n = 4$) Newton geri fark formülünü kullanarak $f(2)$ için dördüncü dereceden bir polinom yardımıyla yaklaşımda bulununuz (virgülden sonra 7. basamak).
+
+::: {.cozum}
+$x = 2$ tablonun sonunda olduğundan geri fark formülü kullanılır. $2 = 2{,}2 + s \cdot 0{,}3$ eşitliğinden $s = -\frac{2}{3}$ bulunur. @thm-bfk-geri-fark ile
+
+$$
+\begin{aligned}
+P_4(2) &= f(x_4) + (-1)\binom{-s}{1}\nabla f(x_4) + \binom{-s}{2}\nabla^2 f(x_4) \\[1mm]
+&\quad + (-1)\binom{-s}{3}\nabla^3 f(x_4) + \binom{-s}{4}\nabla^4 f(x_4) \\[1mm]
+&= f(x_4) + s\,\nabla f(x_4) + \frac{s(s + 1)}{2!}\,\nabla^2 f(x_4) \\[1mm]
+&\quad + \frac{s(s + 1)(s + 2)}{3!}\,\nabla^3 f(x_4) \\[1mm]
+&\quad + \frac{s(s + 1)(s + 2)(s + 3)}{4!}\,\nabla^4 f(x_4)
+\end{aligned}
+$$
+
+dır. $s = -\frac{2}{3}$ için katsayılar
+
+$$
+\begin{aligned}
+\frac{s(s + 1)}{2!} &= \frac{1}{2}\left(-\frac{2}{3}\right)\cdot\frac{1}{3} = -\frac{1}{9}, \\[1mm]
+\frac{s(s + 1)(s + 2)}{3!} &= -\frac{1}{9}\cdot\frac{1}{3}\cdot\frac{4}{3} = -\frac{4}{81}, \\[1mm]
+\frac{s(s + 1)(s + 2)(s + 3)}{4!} &= -\frac{4}{81}\cdot\frac{1}{4}\cdot\frac{7}{3} = -\frac{7}{243}
+\end{aligned}
+$$
+
+olur. Tablonun alt kenarındaki farklarla ($\nabla f(x_4) = -0{,}1714563$, $\nabla^2 f(x_4) = 0{,}0021273$, $\nabla^3 f(x_4) = 0{,}0110271$, $\nabla^4 f(x_4) = 0{,}0003548$) terimler
+
+$$
+\begin{aligned}
+P_4(2) &= 0{,}1103623 - \tfrac{2}{3}(-0{,}1714563) - \tfrac{1}{9}(0{,}0021273) \\[1mm]
+&\quad - \tfrac{4}{81}(0{,}0110271) - \tfrac{7}{243}(0{,}0003548) \\[1mm]
+&= 0{,}1103623 + 0{,}1143042 - 0{,}0002364 \\[1mm]
+&\quad - 0{,}0005445 - 0{,}0000102 \\[1mm]
+&= 0{,}2238754
+\end{aligned}
+$$
+
+bulunur. Yani $f(2) \approx 0{,}2238754$'tür.
+
+İki yaklaşım da beş noktadan geçen aynı $P_4$ polinomunun değerleridir; ileri ve geri formüller yalnız katsayıları tablonun farklı kenarından okur.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="23.0 -8.5 501.5 374.0" role="img" aria-label="The degree four interpolating polynomial through five equally spaced nodes from 1.0 to 2.2, with the start of the table marked for the forward difference value P_4(1.1) = 0.7196460 and the end of the table marked for the backward difference value P_4(2) = 0.2238754">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="90.0" y1="25.0" x2="90.0" y2="315.0"/><line x1="180.0" y1="25.0" x2="180.0" y2="315.0"/><line x1="270.0" y1="25.0" x2="270.0" y2="315.0"/><line x1="360.0" y1="25.0" x2="360.0" y2="315.0"/><line x1="450.0" y1="25.0" x2="450.0" y2="315.0"/><line x1="60.0" y1="315.0" x2="480.0" y2="315.0"/><line x1="60.0" y1="246.8" x2="480.0" y2="246.8"/><line x1="60.0" y1="178.5" x2="480.0" y2="178.5"/><line x1="60.0" y1="110.3" x2="480.0" y2="110.3"/><line x1="60.0" y1="42.1" x2="480.0" y2="42.1"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="60.0" y1="315.0" x2="488.0" y2="315.0"/>
+  <line x1="60.0" y1="17.0" x2="60.0" y2="315.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="90.0" y="331.0" text-anchor="middle">1,0</text>
+  <text x="180.0" y="331.0" text-anchor="middle">1,3</text>
+  <text x="270.0" y="331.0" text-anchor="middle">1,6</text>
+  <text x="360.0" y="331.0" text-anchor="middle">1,9</text>
+  <text x="450.0" y="331.0" text-anchor="middle">2,2</text>
+  <text x="53.0" y="319.0" text-anchor="end">0</text>
+  <text x="53.0" y="250.8" text-anchor="end">0,2</text>
+  <text x="53.0" y="182.5" text-anchor="end">0,4</text>
+  <text x="53.0" y="114.3" text-anchor="end">0,6</text>
+  <text x="53.0" y="46.1" text-anchor="end">0,8</text>
+  <text x="494.0" y="319.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  <text x="56.0" y="11.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="90.0,315.0 180.0,315.0 180.0,308.0 90.0,308.0" fill="var(--color-theory)" fill-opacity="0.35" stroke="var(--color-theory)" stroke-width="1.0"/>
+  <polygon points="360.0,315.0 450.0,315.0 450.0,308.0 360.0,308.0" fill="var(--color-practice)" fill-opacity="0.35" stroke="var(--color-practice)" stroke-width="1.0"/>
+  <text x="135.0" y="349.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">tablonun başı: ileri fark</text>
+  <text x="405.0" y="349.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">tablonun sonu: geri fark</text>
+  <path d="M75.0,46.6 L76.3,47.2 L77.6,47.8 L78.9,48.5 L80.2,49.1 L81.5,49.7 L82.8,50.4 L84.1,51.0 L85.4,51.6 L86.7,52.3 L88.0,52.9 L89.3,53.6 L90.6,54.2 L91.9,54.9 L93.2,55.5 L94.5,56.2 L95.8,56.9 L97.1,57.5 L98.4,58.2 L99.7,58.8 L101.0,59.5 L102.3,60.2 L103.6,60.8 L104.9,61.5 L106.2,62.2 L107.5,62.9 L108.8,63.5 L110.1,64.2 L111.4,64.9 L112.7,65.6 L114.0,66.3 L115.3,67.0 L116.6,67.7 L117.9,68.4 L119.2,69.0 L120.5,69.7 L121.8,70.4 L123.1,71.1 L124.4,71.8 L125.7,72.5 L127.0,73.2 L128.3,74.0 L129.6,74.7 L130.9,75.4 L132.2,76.1 L133.5,76.8 L134.8,77.5 L136.1,78.2 L137.4,79.0 L138.7,79.7 L140.0,80.4 L141.3,81.1 L142.6,81.9 L143.9,82.6 L145.2,83.3 L146.5,84.0 L147.8,84.8 L149.1,85.5 L150.4,86.2 L151.7,87.0 L153.0,87.7 L154.3,88.5 L155.6,89.2 L156.9,90.0 L158.2,90.7 L159.5,91.4 L160.8,92.2 L162.1,92.9 L163.4,93.7 L164.7,94.5 L166.0,95.2 L167.3,96.0 L168.6,96.7 L169.9,97.5 L171.2,98.2 L172.5,99.0 L173.8,99.8 L175.1,100.5 L176.4,101.3 L177.7,102.1 L179.0,102.8 L180.3,103.6 L181.6,104.4 L182.9,105.2 L184.2,105.9 L185.5,106.7 L186.8,107.5 L188.1,108.3 L189.4,109.1 L190.7,109.8 L192.0,110.6 L193.3,111.4 L194.6,112.2 L195.9,113.0 L197.2,113.8 L198.5,114.6 L199.8,115.4 L201.1,116.1 L202.4,116.9 L203.7,117.7 L205.0,118.5 L206.3,119.3 L207.6,120.1 L208.9,120.9 L210.2,121.7 L211.5,122.5 L212.8,123.3 L214.1,124.1 L215.4,124.9 L216.7,125.8 L218.0,126.6 L219.3,127.4 L220.6,128.2 L221.9,129.0 L223.2,129.8 L224.5,130.6 L225.8,131.4 L227.1,132.2 L228.4,133.1 L229.7,133.9 L231.0,134.7 L232.3,135.5 L233.6,136.3 L234.9,137.2 L236.2,138.0 L237.5,138.8 L238.8,139.6 L240.1,140.4 L241.4,141.3 L242.7,142.1 L244.0,142.9 L245.3,143.7 L246.6,144.6 L247.9,145.4 L249.2,146.2 L250.5,147.1 L251.8,147.9 L253.1,148.7 L254.4,149.6 L255.7,150.4 L257.0,151.2 L258.3,152.1 L259.6,152.9 L260.9,153.7 L262.2,154.6 L263.5,155.4 L264.8,156.3 L266.1,157.1 L267.4,157.9 L268.7,158.8 L270.0,159.6 L271.3,160.5 L272.6,161.3 L273.9,162.2 L275.2,163.0 L276.5,163.8 L277.8,164.7 L279.1,165.5 L280.4,166.4 L281.7,167.2 L283.0,168.1 L284.3,168.9 L285.6,169.8 L286.9,170.6 L288.2,171.5 L289.5,172.3 L290.8,173.2 L292.1,174.0 L293.4,174.9 L294.7,175.7 L296.0,176.6 L297.3,177.4 L298.6,178.3 L299.9,179.1 L301.2,180.0 L302.5,180.9 L303.8,181.7 L305.1,182.6 L306.4,183.4 L307.7,184.3 L309.0,185.1 L310.3,186.0 L311.6,186.8 L312.9,187.7 L314.2,188.6 L315.5,189.4 L316.8,190.3 L318.1,191.1 L319.4,192.0 L320.7,192.9 L322.0,193.7 L323.3,194.6 L324.6,195.4 L325.9,196.3 L327.2,197.2 L328.5,198.0 L329.8,198.9 L331.1,199.7 L332.4,200.6 L333.7,201.4 L335.0,202.3 L336.3,203.2 L337.6,204.0 L338.9,204.9 L340.2,205.8 L341.5,206.6 L342.8,207.5 L344.1,208.3 L345.4,209.2 L346.7,210.1 L348.0,210.9 L349.3,211.8 L350.6,212.6 L351.9,213.5 L353.2,214.4 L354.5,215.2 L355.8,216.1 L357.1,216.9 L358.4,217.8 L359.7,218.7 L361.0,219.5 L362.3,220.4 L363.6,221.2 L364.9,222.1 L366.2,222.9 L367.5,223.8 L368.8,224.7 L370.1,225.5 L371.4,226.4 L372.7,227.2 L374.0,228.1 L375.3,229.0 L376.6,229.8 L377.9,230.7 L379.2,231.5 L380.5,232.4 L381.8,233.2 L383.1,234.1 L384.4,234.9 L385.7,235.8 L387.0,236.6 L388.3,237.5 L389.6,238.4 L390.9,239.2 L392.2,240.1 L393.5,240.9 L394.8,241.8 L396.1,242.6 L397.4,243.5 L398.7,244.3 L400.0,245.2 L401.3,246.0 L402.6,246.9 L403.9,247.7 L405.2,248.6 L406.5,249.4 L407.8,250.3 L409.1,251.1 L410.4,251.9 L411.7,252.8 L413.0,253.6 L414.3,254.5 L415.6,255.3 L416.9,256.2 L418.2,257.0 L419.5,257.8 L420.8,258.7 L422.1,259.5 L423.4,260.4 L424.7,261.2 L426.0,262.0 L427.3,262.9 L428.6,263.7 L429.9,264.5 L431.2,265.4 L432.5,266.2 L433.8,267.0 L435.1,267.9 L436.4,268.7 L437.7,269.5 L439.0,270.4 L440.3,271.2 L441.6,272.0 L442.9,272.8 L444.2,273.7 L445.5,274.5 L446.8,275.3 L448.1,276.1 L449.4,277.0 L450.7,277.8 L452.0,278.6 L453.3,279.4 L454.6,280.2 L455.9,281.1 L457.2,281.9 L458.5,282.7 L459.8,283.5 L461.1,284.3 L462.4,285.1 L463.7,285.9 L465.0,286.8" fill="none" stroke="var(--academic-text)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="248.0" y="132.4" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">4</tspan><tspan dy="-3.5">&#8203;</tspan>(<tspan font-style="italic">x</tspan>)</text>
+  <line x1="120.0" y1="315.0" x2="120.0" y2="69.5" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/>
+  <line x1="390.0" y1="315.0" x2="390.0" y2="238.6" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/>
+  <circle cx="90.0" cy="53.9" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="180.0" cy="103.4" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="270.0" cy="159.6" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="360.0" cy="218.9" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="450.0" cy="277.3" r="4.0" fill="var(--academic-text)"/>
+  <circle cx="120.0" cy="69.5" r="4.6" fill="var(--academic-bg)" stroke="var(--color-theory)" stroke-width="1.9"/>
+  <circle cx="390.0" cy="238.6" r="4.6" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.9"/>
+  <rect x="126.5" y="48.9" width="131.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.9"/>
+  <text x="129.0" y="59.5" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">4</tspan><tspan dy="-3.5">&#8203;</tspan>(1,1) &#8776; 0,7196460</text>
+  <rect x="396.5" y="217.0" width="117.6" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.9"/>
+  <text x="399.0" y="227.6" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">P</tspan><tspan font-size="9" dy="3.5">4</tspan><tspan dy="-3.5">&#8203;</tspan>(2) &#8776; 0,2238754</text>
+</svg>
+<figcaption>(1,0; 0,7651977), …, (2,2; 0,1103623) beş noktasından geçen tek bir <em>P</em><sub>4</sub> polinomu. <em>x</em> = 1,1 tablonun başında olduğundan ileri fark formülüyle, <em>x</em> = 2 tablonun sonunda olduğundan geri fark formülüyle hesaplanır; iki değer de aynı eğrinin üzerindedir.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Stirling Merkezi Fark Formülü
+
+İleri ve geri fark formülleri, yaklaşım yapılacak nokta tablonun ortalarında olduğunda kullanışlı değildir: $s$ büyür ve katsayılar tablonun bir kenarından, $x$'ten uzak noktalardan gelir. Bu durumda kullanılabilecek bölünmüş fark formüllerinden biri Stirling formülü olarak bilinen merkezi fark formülüdür.
+
+Önce yaklaşım yapılacak noktaya yakın bir tablo noktasını $x_0$ olarak seçeriz. Tabloda $x_0$'ın altındaki noktaları $x_1, x_2, \dots$, üstündekileri $x_{-1}, x_{-2}, \dots$ diye yeniden indisleriz. Noktalar $h$ aralıklıdır: $x_i = x_0 + i \cdot h$. Beş nokta için bölünmüş fark tablosu şöyledir:
+
+::: {.difference-table}
+| $x_k$ | $f[x_k]$ | 1\. Böl. Fark | 2\. Böl. Fark | 3\. Böl. Fark | 4\. Böl. Fark |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $x_{-2}$ | $f[x_{-2}]$ | | | | |
+| | | $f[x_{-2}, x_{-1}]$ | | | |
+| $x_{-1}$ | $f[x_{-1}]$ | | $f[x_{-2}, x_{-1}, x_0]$ | | |
+| | | $\underline{f[x_{-1}, x_0]}$ | | $\underline{f[x_{-2}, x_{-1}, x_0, x_1]}$ | |
+| $x_0$ | $\underline{f[x_0]}$ | | $\underline{f[x_{-1}, x_0, x_1]}$ | | $\underline{f[x_{-2}, \dots, x_2]}$ |
+| | | $\underline{f[x_0, x_1]}$ | | $\underline{f[x_{-1}, x_0, x_1, x_2]}$ | |
+| $x_1$ | $f[x_1]$ | | $f[x_0, x_1, x_2]$ | | |
+| | | $f[x_1, x_2]$ | | | |
+| $x_2$ | $f[x_2]$ | | | | |
+:::
+
+Stirling formülü, altı çizili girdileri, yani $x_0$ satırının üzerinde ve hemen çevresinde duran farkları kullanır.
+
+:::: {#thm-bfk-stirling name="Stirling Merkezi Fark Formülü"}
+Noktalar $h$ aralıklı, $x_i = x_0 + i \cdot h$ ve $x = x_0 + s \cdot h$ olsun. $n = 2m + 1$ tek sayı ise Stirling formülü
+
+$$
+\begin{aligned}
+P_n(x) &= P_{2m+1}(x) = f(x_0) + \frac{s \cdot h}{2}\big(f[x_{-1}, x_0] + f[x_0, x_1]\big) \\[1mm]
+&\quad + s^2 h^2 f[x_{-1}, x_0, x_1] \\[1mm]
+&\quad + \frac{s(s^2 - 1)h^3}{2}\big(f[x_{-2}, x_{-1}, x_0, x_1] + f[x_{-1}, x_0, x_1, x_2]\big) \\[1mm]
+&\quad + s^2(s^2 - 1)h^4 f[x_{-2}, \dots, x_2] \\[1mm]
+&\quad + \frac{s(s^2 - 1)(s^2 - 4)h^5}{2}\big(f[x_{-3}, \dots, x_2] + f[x_{-2}, \dots, x_3]\big) + \cdots \\[1mm]
+&\quad + s^2(s^2 - 1)(s^2 - 4)\cdots\big(s^2 - (m - 1)^2\big)h^{2m} f[x_{-m}, \dots, x_m] \\[1mm]
+&\quad + \frac{s(s^2 - 1)(s^2 - 4)\cdots(s^2 - m^2)h^{2m+1}}{2} \\[1mm]
+&\qquad \cdot \big(f[x_{-m-1}, \dots, x_m] + f[x_{-m}, \dots, x_{m+1}]\big)
+\end{aligned}
+$$
+
+ile verilir. Bu durumda $P_{2m+1}$, $f$'yi $x_{-m}, \dots, x_{m+1}$ ve $x_{-m-1}, \dots, x_m$ noktalarında interpole eden iki polinomun ortalamasıdır; $f$ ile çakışması yalnız $x_{-m}, \dots, x_m$ düğümlerinde garantidir. $n = 2m$ çift sayı ise bu formülün son satırı (son iki satıra yayılan son terim) silinir ve elde edilen $P_{2m}$, $f$'yi $x_{-m}, \dots, x_m$ noktalarında interpole eden polinomdur.
+
+::: {.ispat}
+(2)'deki gibi $x - x_i = (s - i) \cdot h$'dir. @thm-bfk-newton formülünü düğümlerin iki farklı sıralamasıyla yazalım (@cor-bfk-sira):
+
+$$\text{(I)}\ \ x_0, x_1, x_{-1}, x_2, x_{-2}, \dots \qquad \text{(II)}\ \ x_0, x_{-1}, x_1, x_{-2}, x_2, \dots$$
+
+Newton formülünde $r$. terimin katsayısı ilk $r + 1$ düğümün bölünmüş farkı, çarpımı ise ilk $r$ düğüm üzerindendir. İki sıralamada da ilk $2j + 1$ düğüm $x_{-j}, \dots, x_j$'dir. İlk $2j$ düğüm (I)'de $x_{-j+1}, \dots, x_j$, (II)'de $x_{-j}, \dots, x_{j-1}$'dir.
+
+Çift indisli ($r = 2j$, $j \geq 1$) terimin katsayısı iki sıralamada da $f[x_{-j}, \dots, x_j]$'dir. $(s - i)(s + i) = s^2 - i^2$ olduğundan çarpımlar
+
+$$
+\begin{aligned}
+\text{(I)}:&\ \ s(s^2 - 1)\cdots\big(s^2 - (j-1)^2\big)(s - j)\,h^{2j}, \\[1mm]
+\text{(II)}:&\ \ s(s^2 - 1)\cdots\big(s^2 - (j-1)^2\big)(s + j)\,h^{2j}
+\end{aligned}
+$$
+
+olur; $\frac{(s - j) + (s + j)}{2} = s$ olduğundan ortalamaları $s^2(s^2 - 1)\cdots\big(s^2 - (j-1)^2\big)h^{2j}$'dir.
+
+Tek indisli ($r = 2j + 1$, $j \geq 0$) terimde çarpım iki sıralamada da ilk $2j + 1$ düğüm üzerindendir:
+
+$$\prod_{i=-j}^{j}(s - i)\,h = s(s^2 - 1)\cdots(s^2 - j^2)\,h^{2j+1}.$$
+
+Katsayı ise (I)'de $f[x_{-j}, \dots, x_{j+1}]$, (II)'de $f[x_{-j-1}, \dots, x_j]$'dir; ortalamaları bu iki farkın yarı toplamıdır.
+
+$n = 2m$ olsun. İki sıralamayı $x_{-m}, \dots, x_m$ düğümlerinde durdurursak iki ifade de bu $2m + 1$ noktada $f$'yi interpole eden, derecesi en çok $2m$ olan polinomdur; bu polinom tek olduğundan (@thm-lag-polinom) ikisi de $P_{2m}$'ye eşittir. O hâlde $P_{2m}$ iki ifadenin ortalamasıdır; ortalamayı terim terim alırsak, yukarıdaki hesaplarla formülün son terim hariç hâli çıkar.
+
+$n = 2m + 1$ ise (I)'e $x_{m+1}$, (II)'ye $x_{-m-1}$ düğümü eklenir. İki ifade, $P_{2m}$'ye $r = 2m + 1$ indisli terimlerini ekler; ortalamaları $P_{2m}$'ye formülün son terimini ekler. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $n = 2m$ iken Stirling formülü $x_{-m}, \dots, x_m$ noktalarındaki interpolasyon polinomunun, katsayıları $x_0$ çevresindeki farklardan okunan bir yazılışıdır. $n = 2m + 1$ iken son terim $x_{-m-1}$ ve $x_{m+1}$ noktalarını da kullanır; elde edilen polinom $x_{-m}, \dots, x_{m+1}$ ve $x_{-m-1}, \dots, x_m$ noktalarındaki iki interpolasyon polinomunun ortalamasıdır. $x$, $x_0$'a yakınken $s$ küçüktür ve $s^2$ çarpanları terimleri hızla küçültür.
+
+:::: {#exm-bfk-stirling name="Stirling Formülüyle f(1,5)"}
+Bazı değerleri aşağıda verilen $f$ fonksiyonu için $x_0 = 1{,}6$ olmak üzere $f(1{,}5)$ değerine Stirling formülünü kullanarak bir yaklaşımda bulununuz (virgülden sonra 7. basamak).
+
+::: {.iteration-table}
+| $x$ | $1{,}0$ | $1{,}3$ | $1{,}6$ | $1{,}9$ | $2{,}2$ |
+|:-:|--:|--:|--:|--:|--:|
+| $f(x)$ | $0{,}7651977$ | $0{,}6200860$ | $0{,}4554022$ | $0{,}2818186$ | $0{,}1103623$ |
+:::
+
+::: {.cozum}
+$x_0 = 1{,}6$ seçildiğinden $x_{-2} = 1{,}0$, $x_{-1} = 1{,}3$, $x_1 = 1{,}9$, $x_2 = 2{,}2$ ve $h = 0{,}3$'tür. Birinci bölünmüş farklar
+
+$$
+\begin{aligned}
+f[x_{-2}, x_{-1}] &= \frac{0{,}6200860 - 0{,}7651977}{0{,}3} = -0{,}4837057, \\[1mm]
+f[x_{-1}, x_0] &= \frac{0{,}4554022 - 0{,}6200860}{0{,}3} = -0{,}5489460, \\[1mm]
+f[x_0, x_1] &= \frac{0{,}2818186 - 0{,}4554022}{0{,}3} = -0{,}5786120, \\[1mm]
+f[x_1, x_2] &= \frac{0{,}1103623 - 0{,}2818186}{0{,}3} = -0{,}5715210,
+\end{aligned}
+$$
+
+ikinci bölünmüş farklar (payda $0{,}6$)
+
+$$
+\begin{aligned}
+f[x_{-2}, x_{-1}, x_0] &= \frac{-0{,}5489460 + 0{,}4837057}{0{,}6} = -0{,}1087338, \\[1mm]
+f[x_{-1}, x_0, x_1] &= \frac{-0{,}5786120 + 0{,}5489460}{0{,}6} = -0{,}0494433, \\[1mm]
+f[x_0, x_1, x_2] &= \frac{-0{,}5715210 + 0{,}5786120}{0{,}6} = 0{,}0118183,
+\end{aligned}
+$$
+
+üçüncü (payda $0{,}9$) ve dördüncü (payda $1{,}2$) bölünmüş farklar
+
+$$
+\begin{aligned}
+f[x_{-2}, \dots, x_1] &= \frac{-0{,}0494433 + 0{,}1087338}{0{,}9} = 0{,}0658783, \\[1mm]
+f[x_{-1}, \dots, x_2] &= \frac{0{,}0118183 + 0{,}0494433}{0{,}9} = 0{,}0680684, \\[1mm]
+f[x_{-2}, \dots, x_2] &= \frac{0{,}0680684 - 0{,}0658783}{1{,}2} = 0{,}0018251
+\end{aligned}
+$$
+
+olur. Stirling formülünde kullanılan girdilerin altı çizilidir:
+
+::: {.difference-table .with-k}
+| $k$ | $x_k$ | $f[x_k]$ | 1\. Böl. Fark | 2\. Böl. Fark | 3\. Böl. Fark | 4\. Böl. Fark |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $-2$ | $1{,}0$ | $0{,}7651977$ | | | | |
+| | | | $-0{,}4837057$ | | | |
+| $-1$ | $1{,}3$ | $0{,}6200860$ | | $-0{,}1087338$ | | |
+| | | | $\underline{-0{,}5489460}$ | | $\underline{0{,}0658783}$ | |
+| $0$ | $1{,}6$ | $\underline{0{,}4554022}$ | | $\underline{-0{,}0494433}$ | | $\underline{0{,}0018251}$ |
+| | | | $\underline{-0{,}5786120}$ | | $\underline{0{,}0680684}$ | |
+| $1$ | $1{,}9$ | $0{,}2818186$ | | $0{,}0118183$ | | |
+| | | | $-0{,}5715210$ | | | |
+| $2$ | $2{,}2$ | $0{,}1103623$ | | | | |
+:::
+
+$1{,}5 = 1{,}6 + s \cdot 0{,}3$ eşitliğinden $s = -\frac{1}{3}$ bulunur. Beş nokta olduğundan $n = 2m = 4$, $m = 2$'dir ve son satırı silinmiş formül kullanılır:
+
+$$
+\begin{aligned}
+P_4(x) &= f(x_0) + \frac{s h}{2}\big(f[x_{-1}, x_0] + f[x_0, x_1]\big) + s^2 h^2 f[x_{-1}, x_0, x_1] \\[1mm]
+&\quad + \frac{s(s^2 - 1)h^3}{2}\big(f[x_{-2}, \dots, x_1] + f[x_{-1}, \dots, x_2]\big) \\[1mm]
+&\quad + s^2(s^2 - 1)h^4 f[x_{-2}, \dots, x_2].
+\end{aligned}
+$$
+
+$s = -\frac{1}{3}$, $h = 0{,}3$ için $s^2 - 1 = -\frac{8}{9}$ olduğundan katsayılar
+
+$$
+\begin{aligned}
+s h &= -0{,}1, & s^2 h^2 &= 0{,}01, \\[1mm]
+s(s^2 - 1)h^3 &= \tfrac{8}{27} \cdot 0{,}027 = 0{,}008, & s^2(s^2 - 1)h^4 &= -\tfrac{8}{81} \cdot 0{,}0081 = -0{,}0008
+\end{aligned}
+$$
+
+olur. Buna göre
+
+$$
+\begin{aligned}
+f(1{,}5) \approx P_4(1{,}5)
+&= 0{,}4554022 + \tfrac{-0{,}1}{2}(-0{,}5489460 - 0{,}5786120) \\[1mm]
+&\quad + 0{,}01 \cdot (-0{,}0494433) \\[1mm]
+&\quad + \tfrac{0{,}008}{2}(0{,}0658783 + 0{,}0680684) \\[1mm]
+&\quad - 0{,}0008 \cdot 0{,}0018251 \\[1mm]
+&= 0{,}4554022 + 0{,}0563779 - 0{,}0004944 \\[1mm]
+&\quad + 0{,}0005358 - 0{,}0000015 \\[1mm]
+&= 0{,}5118200
+\end{aligned}
+$$
+
+bulunur. Bu veriler @exm-bfk-fark-tablosu verileridir ve sonuç oradaki $P_4$ polinomunun $1{,}5$'teki değeridir. Tutarlılık kontrolü olarak @prp-bfk-ileri-fark ile
+
+$$4! \cdot h^4 \cdot f[x_{-2}, \dots, x_2] = 24 \cdot 0{,}0081 \cdot 0{,}0018251 \approx 0{,}0003548$$
+
+olur; bu, oradaki $\Delta^4 f(1{,}0)$ değeridir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Aşağıdaki sorularda bölünmüş fark tablosu ve Newton formülleri kullanılır.
+
+:::: {#exr-bfk-ln4 name="ln 4 İçin Bölünmüş Fark Polinomu"}
+$\ln 3 = 1{,}0986123$, $\ln 5 = 1{,}6094379$ ve $\ln 6 = 1{,}7917595$ değerlerini kullanarak $\ln 4$ değerini yaklaşık olarak bulmak için bölünmüş farklar tablosu yardımıyla Newton bölünmüş fark formülünden bir interpolasyon polinomu bulunuz (virgülden sonra 7. basamağa yuvarlayınız).
+
+::: {.cozum}
+$x_0 = 3$, $x_1 = 5$, $x_2 = 6$ ve $f(x) = \ln x$ alalım. Bölünmüş farklar
+
+$$
+\begin{aligned}
+f[x_0, x_1] &= \frac{1{,}6094379 - 1{,}0986123}{5 - 3} = 0{,}2554128, \\[1mm]
+f[x_1, x_2] &= \frac{1{,}7917595 - 1{,}6094379}{6 - 5} = 0{,}1823216, \\[1mm]
+f[x_0, x_1, x_2] &= \frac{0{,}1823216 - 0{,}2554128}{6 - 3} = -0{,}0243637
+\end{aligned}
+$$
+
+olur. Tablo:
+
+::: {.difference-table .with-k}
+| $k$ | $x_k$ | $f[x_k]$ | $f[x_{k-1}, x_k]$ | $f[x_{k-2}, x_{k-1}, x_k]$ |
+|:-:|:-:|:-:|:-:|:-:|
+| $0$ | $3$ | $\underline{1{,}0986123}$ | | |
+| | | | $\underline{0{,}2554128}$ | |
+| $1$ | $5$ | $1{,}6094379$ | | $\underline{-0{,}0243637}$ |
+| | | | $0{,}1823216$ | |
+| $2$ | $6$ | $1{,}7917595$ | | |
+:::
+
+Newton bölünmüş fark formülüyle
+
+$$
+\begin{aligned}
+P_2(x) &= f[x_0] + f[x_0, x_1](x - x_0) + f[x_0, x_1, x_2](x - x_0)(x - x_1) \\[1mm]
+&= 1{,}0986123 + 0{,}2554128(x - 3) - 0{,}0243637(x - 3)(x - 5)
+\end{aligned}
+$$
+
+bulunur. $(x - 3)(x - 5) = x^2 - 8x + 15$ olduğundan açılmış hâli
+
+$$
+\begin{aligned}
+P_2(x) &= -0{,}0243637x^2 + (0{,}2554128 + 0{,}1949096)x \\[1mm]
+&\quad + (1{,}0986123 - 0{,}7662384 - 0{,}3654555) \\[1mm]
+&= -0{,}0243637x^2 + 0{,}4503224x - 0{,}0330816
+\end{aligned}
+$$
+
+olur. $x = 4$ için Newton biçiminden $x - 3 = 1$, $x - 5 = -1$ olduğundan
+
+$$\ln 4 \approx P_2(4) = 1{,}0986123 + 0{,}2554128 + 0{,}0243637 = 1{,}3783888$$
+
+bulunur. Gerçek değer $\ln 4 = 1{,}3862944$ olduğundan hata yaklaşık $0{,}0079$'dur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-bfk-yeni-nokta name="Newton Biçimine Yeni Nokta Eklemek"}
+@exm-bfk-newton-p3 örneğindeki $(0; 2)$, $(1; 3)$, $(2; 12)$, $(5; 147)$ noktalarına $(4; 54)$ noktası ekleniyor. Bölünmüş fark tablosunu yalnız yeni girdileri hesaplayarak genişletiniz ve beş noktadan geçen $P_4(x)$ polinomunu bulunuz.
+
+::: {.cozum}
+Eski noktalar $x_0 = 0$, $x_1 = 1$, $x_2 = 2$, $x_3 = 5$ olarak kalır, yeni nokta $x_4 = 4$'tür. Noktaların artan sırada olması gerekmez (@cor-bfk-sira). Tablonun altına bir satır eklenir ve her sütuna bir yeni girdi gelir:
+
+$$
+\begin{aligned}
+f[x_3, x_4] &= \frac{54 - 147}{4 - 5} = 93, \\[1mm]
+f[x_2, x_3, x_4] &= \frac{93 - 45}{4 - 2} = 24, \\[1mm]
+f[x_1, x_2, x_3, x_4] &= \frac{24 - 9}{4 - 1} = 5, \\[1mm]
+f[x_0, x_1, x_2, x_3, x_4] &= \frac{5 - 1}{4 - 0} = 1.
+\end{aligned}
+$$
+
+::: {.difference-table .with-k}
+| $k$ | $x_k$ | $f[x_k]$ | 1\. Böl. Fark | 2\. Böl. Fark | 3\. Böl. Fark | 4\. Böl. Fark |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $0$ | $0$ | $\underline{2}$ | | | | |
+| | | | $\underline{1}$ | | | |
+| $1$ | $1$ | $3$ | | $\underline{4}$ | | |
+| | | | $9$ | | $\underline{1}$ | |
+| $2$ | $2$ | $12$ | | $9$ | | $\underline{1}$ |
+| | | | $45$ | | $5$ | |
+| $3$ | $5$ | $147$ | | $24$ | | |
+| | | | $93$ | | | |
+| $4$ | $4$ | $54$ | | | | |
+:::
+
+Üst kenardaki eski katsayılar değişmemiştir; yalnız $f[x_0, \dots, x_4] = 1$ eklenmiştir. @exm-bfk-newton-p3 örneğindeki $P_3(x) = x^3 + x^2 - x + 2$ ile
+
+$$P_4(x) = P_3(x) + 1 \cdot x(x - 1)(x - 2)(x - 5)$$
+
+olur.
+
+$$x(x - 1)(x - 2)(x - 5) = x^4 - 8x^3 + 17x^2 - 10x$$
+
+olduğundan
+
+$$P_4(x) = x^4 - 7x^3 + 18x^2 - 11x + 2$$
+
+bulunur. Kontrol olarak
+
+$$P_4(4) = 256 - 448 + 288 - 44 + 2 = 54$$
+
+olur; eski dört noktada eklenen terim sıfır olduğundan $P_4$ onlardan da geçer. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-bfk-kup name="Küp Fonksiyonunun İleri Farkları"}
+$f(x) = x^3$ fonksiyonu için $x_k = k$ ($k = 0, 1, 2, 3, 4$, $h = 1$) noktalarında ileri fark tablosunu kurunuz. Üçüncü farkların sabit, dördüncü farkın sıfır olduğunu gösteriniz ve Newton ileri fark formülünün $f(x) = x^3$'ü geri verdiğini doğrulayınız.
+
+::: {.cozum}
+Değerler $0, 1, 8, 27, 64$'tür. Ardışık farklar alınırsa
+
+$$
+\begin{aligned}
+\Delta f &: \ 1 - 0 = 1,\ \ 8 - 1 = 7,\ \ 27 - 8 = 19,\ \ 64 - 27 = 37, \\[1mm]
+\Delta^2 f &: \ 7 - 1 = 6,\ \ 19 - 7 = 12,\ \ 37 - 19 = 18, \\[1mm]
+\Delta^3 f &: \ 12 - 6 = 6,\ \ 18 - 12 = 6, \\[1mm]
+\Delta^4 f &: \ 6 - 6 = 0
+\end{aligned}
+$$
+
+olur:
+
+::: {.difference-table .with-k}
+| $k$ | $x_k$ | $f(x_k)$ | $\Delta f(x_k)$ | $\Delta^2 f(x_k)$ | $\Delta^3 f(x_k)$ | $\Delta^4 f(x_k)$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $0$ | $0$ | $\underline{0}$ | | | | |
+| | | | $\underline{1}$ | | | |
+| $1$ | $1$ | $1$ | | $\underline{6}$ | | |
+| | | | $7$ | | $\underline{6}$ | |
+| $2$ | $2$ | $8$ | | $12$ | | $\underline{0}$ |
+| | | | $19$ | | $6$ | |
+| $3$ | $3$ | $27$ | | $18$ | | |
+| | | | $37$ | | | |
+| $4$ | $4$ | $64$ | | | | |
+:::
+
+Üçüncü farkların sabit olması @prp-bfk-ileri-fark ile açıklanır: $\Delta^3 f(x_i) = 3! \cdot h^3 \cdot f[x_i, \dots, x_{i+3}]$'tür. @lem-bfk-bas-katsayi gereği $f[x_i, \dots, x_{i+3}]$, $f$'yi dört noktada interpole eden kübik polinomun baş katsayısıdır; bu polinom $x^3$'ün kendisidir ve baş katsayısı $1$'dir. Dolayısıyla $\Delta^3 f(x_i) = 6 \cdot 1 \cdot 1 = 6$'dır. Sabit bir sütunun farkı sıfır olduğundan $\Delta^4 f(x_0) = 0$'dır.
+
+$x_0 = 0$, $h = 1$ için $x = s$'dir. @cor-bfk-ileri-fark ile
+
+$$
+\begin{aligned}
+P_4(s) &= 0 + \binom{s}{1} \cdot 1 + \binom{s}{2} \cdot 6 + \binom{s}{3} \cdot 6 + \binom{s}{4} \cdot 0 \\[1mm]
+&= s + 3s(s - 1) + s(s - 1)(s - 2) \\[1mm]
+&= s + 3s^2 - 3s + s^3 - 3s^2 + 2s = s^3
+\end{aligned}
+$$
+
+bulunur. Yani formül $f(x) = x^3$'ü tam olarak geri verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde interpolasyon polinomunu, katsayıları bir fark tablosundan okunan ve yeni noktalarla kolayca genişleyen bir biçimde yazdık. Aynı polinomlar, bir fonksiyonun yalnız tablo değerleri bilindiğinde türevine yaklaşmak için de kullanılır; sonraki bölümün konusu budur: [Nümerik Türev](numerik-turev.qmd).

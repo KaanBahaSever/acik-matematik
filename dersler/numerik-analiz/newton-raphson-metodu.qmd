@@ -1,0 +1,436 @@
+---
+title: "Newton-Raphson Metodu"
+pagetitle: "Newton-Raphson Metodu"
+description: "Newton-Raphson Metodunun Taylor polinomundan türetilmesi, teğet doğrusuyla geometrik anlamı, sabit nokta teoremiyle yakınsama ispatı ve çözümlü iterasyon tabloları."
+---
+
+İkiye Bölme Metodu her durumda yakınsar ama yavaştır; Sabit Nokta İterasyonu ise iyi bir $g$ seçimine bağlıdır. Newton-Raphson Metodu (kısaca Newton metodu), fonksiyonun türevini de kullanarak kök bulma problemleri için bilinen en etkili yöntemlerden biri olur: köke yeterince yakın bir başlangıçtan sonra her adımda doğru basamak sayısı hızla artar.
+
+Newton yöntemini 1669'da yazdı, ama çalışma ancak 1711'de basıldı; Joseph Raphson 1690'da daha sade bir biçimini yayımladı. Bugün kullandığımız türevli yazım Thomas Simpson'a (1740) dayanır.
+
+## Taylor polinomundan türetme
+
+Yöntem, $f$ fonksiyonunu başlangıç yaklaşımı civarında birinci dereceden Taylor polinomuyla değiştirmekten doğar.
+
+$f \in C^2[a, b]$ olsun ve $p$ kökü için $p_0 \in [a, b]$ öyle bir başlangıç yaklaşımı olsun ki $f'(p_0) \neq 0$ ve $|p - p_0|$ yeterince küçük olsun. Taylor Teoremine (@thm-onb-taylor) göre her $x \in [a, b]$ için $x$ ile $p_0$ arasında bir $\xi(x)$ sayısı vardır ve
+
+$$
+f(x) = f(p_0) + (x - p_0) f'(p_0) + \frac{(x - p_0)^2}{2} f''(\xi(x))
+$$
+
+yazılabilir. Burada $x = p$ alalım. $f(p) = 0$ olduğundan, $p$ ile $p_0$ arasındaki $\xi(p)$ için
+
+$$
+0 = f(p_0) + (p - p_0) f'(p_0) + \frac{(p - p_0)^2}{2} f''(\xi(p))
+$$
+
+elde edilir. $|p - p_0|$ küçük olduğundan $(p - p_0)^2$ çok daha küçüktür; son terimi ihmal edersek
+
+$$
+0 \approx f(p_0) + (p - p_0) f'(p_0)
+\quad\Longrightarrow\quad
+p \approx p_0 - \frac{f(p_0)}{f'(p_0)}
+$$
+
+bulunur (son adımda $f'(p_0) \neq 0$ ile bölündü). Sağdaki sayıyı $p_1$ diye adlandırıp aynı işlemi $p_1$'den başlayarak tekrarlarsak $p_2$, sonra $p_3$, … elde edilir.
+
+::: {#def-nwt-metot name="Newton-Raphson Metodu"}
+$f \in C^2[a, b]$ ve $p_0 \in [a, b]$ verilsin.
+
+$$
+p_n = p_{n-1} - \frac{f(p_{n-1})}{f'(p_{n-1})}, \qquad n \geq 1 \tag{1}
+$$
+
+indirgeme bağıntısıyla $(p_n)_{n=0}^{\infty}$ dizisini üreten yönteme **Newton-Raphson Metodu**, $p_0$ sayısına da **başlangıç yaklaşımı** denir. Her adımda $f'(p_{n-1}) \neq 0$ olması gerekir.
+:::
+
+Yani her adımda $f$ yerine onun $p_{n-1}$'deki doğrusal yaklaşımı konur ve bu doğrunun kökü bir sonraki yaklaşım olarak alınır.
+
+Bu doğrusal yaklaşım, $f$'nin grafiğine $(p_{n-1}, f(p_{n-1}))$ noktasında çizilen teğettir:
+
+$$
+y = f(p_{n-1}) + f'(p_{n-1})\,(x - p_{n-1}).
+$$
+
+$y = 0$ konursa $x = p_n$ çıkar. Demek ki $p_n$, grafiğe $(p_{n-1}, f(p_{n-1}))$ noktasında çizilen teğetin $x$ eksenini kestiği noktadır (@exm-nwt-cos çözümündeki şekil). İterasyon, [İkiye Bölme Metodu](ikiye-bolme-metodu.qmd) bölümündeki durma kriterlerinden biriyle durdurulur; bu bölümde çoğunlukla verilen bir $\varepsilon > 0$ için
+
+$$
+|p_n - p_{n-1}| < \varepsilon \tag{2}
+$$
+
+kriteri kullanılır.
+
+## Yakınsama
+
+Newton-Raphson Metodu, $g(x) = x - f(x)/f'(x)$ fonksiyonuyla yapılan bir sabit nokta iterasyonudur. Bu gözlem, yakınsamayı Sabit Nokta Teoreminden elde etmemizi sağlar.
+
+:::: {#thm-nwt-yakinsama name="Newton-Raphson Metodunun yakınsaması"}
+$f \in C^2[a, b]$ olsun. Bir $p \in (a, b)$ için $f(p) = 0$ ve $f'(p) \neq 0$ ise öyle bir $\delta > 0$ vardır ki her $p_0 \in [p - \delta, p + \delta]$ başlangıç yaklaşımı için (1) ile üretilen $(p_n)_{n=0}^{\infty}$ dizisi $p$ köküne yakınsar.
+
+::: {.ispat}
+$g(x) = x - \dfrac{f(x)}{f'(x)}$ diyelim. O zaman (1) bağıntısı $p_n = g(p_{n-1})$, $n \geq 1$ fonksiyonel iterasyonudur ve $f(p) = 0$ olduğundan $g(p) = p$ sağlanır. $0 < k < 1$ sabitlensin. Amacımız
+
+- $g([p - \delta, p + \delta]) \subseteq [p - \delta, p + \delta]$ ve
+- her $x \in (p - \delta, p + \delta)$ için $|g'(x)| \leq k$
+
+olacak biçimde bir $\delta > 0$ bulmak; bu durumda Sabit Nokta Teoreminin (@thm-snk-sabit-nokta) koşulları $[p - \delta, p + \delta]$ aralığında sağlanmış olur.
+
+**$g$'nin tanımlı ve türevlenebilir olduğu bir aralık.** $f'$ sürekli ve $f'(p) \neq 0$ olduğundan, ayrıca $p$ iç nokta olduğundan, öyle bir $\delta_1 > 0$ vardır ki $[p - \delta_1, p + \delta_1] \subseteq [a, b]$ ve bu aralıktaki her $x$ için $f'(x) \neq 0$ olur. Böylece $g$, $[p - \delta_1, p + \delta_1]$ üzerinde tanımlı ve süreklidir. Bölüm kuralıyla bu aralıkta
+
+$$
+\begin{aligned}
+g'(x) &= 1 - \frac{f'(x)\,f'(x) - f(x)\,f''(x)}{[f'(x)]^2} \\[1mm]
+&= \frac{f(x)\,f''(x)}{[f'(x)]^2}
+\end{aligned}
+$$
+
+bulunur. $f$, $f'$, $f''$ sürekli ve payda sıfırdan farklı olduğundan $g \in C^1[p - \delta_1, p + \delta_1]$ olur.
+
+**$|g'| \leq k$ olan daha küçük bir aralık.** $f(p) = 0$ olduğundan
+
+$$
+g'(p) = \frac{f(p)\,f''(p)}{[f'(p)]^2} = 0
+$$
+
+dır. $g'$ fonksiyonu $p$ noktasında sürekli olduğundan öyle bir $0 < \delta < \delta_1$ vardır ki her $x \in [p - \delta, p + \delta]$ için $|g'(x)| \leq k$ olur.
+
+**$g$ aralığı kendi içine gönderir.** $x \in [p - \delta, p + \delta]$ alalım. $x = p$ ise $g(x) = p$ aralıktadır. $x \neq p$ ise Ortalama Değer Teoremine (@thm-onb-ortalama-deger) göre $x$ ile $p$ arasında bir $\xi$ vardır ve $|g(x) - g(p)| = |g'(\xi)|\,|x - p|$ olur. $\xi$ de $[p - \delta, p + \delta]$ içinde olduğundan $|g'(\xi)| \leq k$ dır; dolayısıyla
+
+$$
+|g(x) - p| = |g(x) - g(p)| = |g'(\xi)|\,|x - p| \leq k\,|x - p| \leq k\delta < \delta
+$$
+
+ve $g(x) \in [p - \delta, p + \delta]$ elde edilir.
+
+**Sonuç.** $g$, $[p - \delta, p + \delta]$ üzerinde Sabit Nokta Teoreminin bütün koşullarını sağlar. Bu aralıktaki tek sabit nokta $p$ olduğundan, her $p_0 \in [p - \delta, p + \delta]$ için
+
+$$
+p_n = g(p_{n-1}) = p_{n-1} - \frac{f(p_{n-1})}{f'(p_{n-1})}, \qquad n \geq 1
+$$
+
+dizisi $p$'ye yakınsar. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $f'(p) \neq 0$ olan basit bir kökte, $p_0$ köke yeterince yakın seçilirse Newton-Raphson Metodu yakınsar. Teorem yalnız böyle bir $\delta$'nın var olduğunu söyler, büyüklüğünü vermez; bu yüzden uygulamada önce kökü içeren dar bir aralık belirlenir ve $p_0$ bu aralıktan seçilir.
+
+::: {.callout-warning}
+## Türev sıfıra yakınsa teğet uzağa gider
+
+$f'(p_{n-1})$ küçükse teğet neredeyse yataydır ve $x$ eksenini çok uzakta keser. $f(x) = x^3 + 3x^2 - 1$ için $f'(x) = 3x(x + 2)$ türevi $x = -2$ ve $x = 0$'da sıfırdır. $[-3; -2]$ aralığındaki kökü ararken $p_0 = -1{,}8$ seçilirse $f(p_0) = 2{,}888$, $f'(p_0) = -1{,}08$ ve $p_1 = 0{,}87407$ olur; dizi bundan sonra aranan kök yerine $0{,}53209$ köküne yakınsar. $p_0 = -2{,}5$ seçilince de $p_1 = -3{,}06667$ aralığın dışına düşer, ama dizi geri dönüp aranan köke yakınsar (@exr-nwt-kubik).
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="21.5 4.5 652.5 337.5" role="img" aria-label="Two panels with the graph of x^3 + 3x^2 - 1. Left: from p0 = -2.5 the tangent hits the x axis at p1 = -3.06667, left of the bracket from -3 to -2, and the next tangent comes back to p2 = -2.90088. Right: from p0 = -1.8 near the local maximum the nearly flat tangent reaches p1 = 0.87407 and the sequence goes to the root 0.53209">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="55.0" y1="310.0" x2="313.0" y2="310.0"/>
+  <line x1="55.0" y1="42.0" x2="55.0" y2="310.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="55.0" y="326.0" text-anchor="middle">&#8722;3,5</text>
+  <text x="117.5" y="326.0" text-anchor="middle">&#8722;3</text>
+  <text x="180.0" y="326.0" text-anchor="middle">&#8722;2,5</text>
+  <text x="242.5" y="326.0" text-anchor="middle">&#8722;2</text>
+  <text x="305.0" y="326.0" text-anchor="middle">&#8722;1,5</text>
+  <text x="48.0" y="314.0" text-anchor="end">&#8722;4</text>
+  <text x="48.0" y="249.0" text-anchor="end">&#8722;2</text>
+  <text x="48.0" y="184.0" text-anchor="end">0</text>
+  <text x="48.0" y="119.0" text-anchor="end">2</text>
+  <text x="48.0" y="54.0" text-anchor="end">4</text>
+  <text x="319.0" y="314.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  <text x="51.0" y="36.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="55.0" y1="50.0" x2="55.0" y2="310.0"/><line x1="117.5" y1="50.0" x2="117.5" y2="310.0"/><line x1="180.0" y1="50.0" x2="180.0" y2="310.0"/><line x1="242.5" y1="50.0" x2="242.5" y2="310.0"/><line x1="305.0" y1="50.0" x2="305.0" y2="310.0"/><line x1="55.0" y1="310.0" x2="305.0" y2="310.0"/><line x1="55.0" y1="245.0" x2="305.0" y2="245.0"/><line x1="55.0" y1="180.0" x2="305.0" y2="180.0"/><line x1="55.0" y1="115.0" x2="305.0" y2="115.0"/><line x1="55.0" y1="50.0" x2="305.0" y2="50.0"/></g>
+  <path d="M55.0,180.0 L305.0,180.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="117.5,185.0 242.5,185.0 242.5,175.0 117.5,175.0" fill="var(--color-remark)" fill-opacity="0.35" stroke="none" stroke-width="1.2"/>
+  <path d="M83.1,308.4 L83.8,306.3 L84.4,304.3 L85.0,302.3 L85.6,300.3 L86.2,298.3 L86.9,296.3 L87.5,294.4 L88.1,292.4 L88.8,290.5 L89.4,288.6 L90.0,286.6 L90.6,284.7 L91.2,282.8 L91.9,280.9 L92.5,279.1 L93.1,277.2 L93.8,275.3 L94.4,273.5 L95.0,271.7 L95.6,269.8 L96.2,268.0 L96.9,266.2 L97.5,264.4 L98.1,262.6 L98.8,260.9 L99.4,259.1 L100.0,257.4 L100.6,255.6 L101.3,253.9 L101.9,252.2 L102.5,250.5 L103.1,248.8 L103.8,247.1 L104.4,245.4 L105.0,243.7 L105.6,242.1 L106.3,240.4 L106.9,238.8 L107.5,237.2 L108.1,235.5 L108.8,233.9 L109.4,232.3 L110.0,230.8 L110.6,229.2 L111.3,227.6 L111.9,226.1 L112.5,224.5 L113.1,223.0 L113.7,221.5 L114.4,219.9 L115.0,218.4 L115.6,216.9 L116.3,215.4 L116.9,214.0 L117.5,212.5 L118.1,211.0 L118.7,209.6 L119.4,208.2 L120.0,206.7 L120.6,205.3 L121.3,203.9 L121.9,202.5 L122.5,201.1 L123.1,199.7 L123.7,198.4 L124.4,197.0 L125.0,195.6 L125.6,194.3 L126.2,193.0 L126.9,191.6 L127.5,190.3 L128.1,189.0 L128.8,187.7 L129.4,186.4 L130.0,185.2 L130.6,183.9 L131.2,182.6 L131.9,181.4 L132.5,180.2 L133.1,178.9 L133.8,177.7 L134.4,176.5 L135.0,175.3 L135.6,174.1 L136.2,172.9 L136.9,171.7 L137.5,170.6 L138.1,169.4 L138.8,168.3 L139.4,167.1 L140.0,166.0 L140.6,164.9 L141.2,163.7 L141.9,162.6 L142.5,161.5 L143.1,160.5 L143.8,159.4 L144.4,158.3 L145.0,157.2 L145.6,156.2 L146.2,155.1 L146.9,154.1 L147.5,153.1 L148.1,152.1 L148.8,151.1 L149.4,150.1 L150.0,149.1 L150.6,148.1 L151.2,147.1 L151.9,146.1 L152.5,145.2 L153.1,144.2 L153.8,143.3 L154.4,142.3 L155.0,141.4 L155.6,140.5 L156.2,139.6 L156.9,138.7 L157.5,137.8 L158.1,136.9 L158.8,136.0 L159.4,135.2 L160.0,134.3 L160.6,133.5 L161.2,132.6 L161.9,131.8 L162.5,131.0 L163.1,130.1 L163.8,129.3 L164.4,128.5 L165.0,127.7 L165.6,126.9 L166.2,126.2 L166.9,125.4 L167.5,124.6 L168.1,123.9 L168.8,123.1 L169.4,122.4 L170.0,121.6 L170.6,120.9 L171.2,120.2 L171.9,119.5 L172.5,118.8 L173.1,118.1 L173.8,117.4 L174.4,116.7 L175.0,116.0 L175.6,115.4 L176.2,114.7 L176.9,114.1 L177.5,113.4 L178.1,112.8 L178.8,112.2 L179.4,111.6 L180.0,110.9 L180.6,110.3 L181.2,109.7 L181.9,109.1 L182.5,108.6 L183.1,108.0 L183.8,107.4 L184.4,106.8 L185.0,106.3 L185.6,105.7 L186.2,105.2 L186.9,104.7 L187.5,104.1 L188.1,103.6 L188.8,103.1 L189.4,102.6 L190.0,102.1 L190.6,101.6 L191.2,101.1 L191.9,100.7 L192.5,100.2 L193.1,99.7 L193.8,99.3 L194.4,98.8 L195.0,98.4 L195.6,97.9 L196.2,97.5 L196.9,97.1 L197.5,96.7 L198.1,96.2 L198.8,95.8 L199.4,95.4 L200.0,95.0 L200.6,94.7 L201.2,94.3 L201.9,93.9 L202.5,93.5 L203.1,93.2 L203.8,92.8 L204.4,92.5 L205.0,92.2 L205.6,91.8 L206.2,91.5 L206.9,91.2 L207.5,90.9 L208.1,90.5 L208.8,90.2 L209.4,90.0 L210.0,89.7 L210.6,89.4 L211.2,89.1 L211.9,88.8 L212.5,88.6 L213.1,88.3 L213.8,88.1 L214.4,87.8 L215.0,87.6 L215.6,87.3 L216.2,87.1 L216.9,86.9 L217.5,86.7 L218.1,86.4 L218.8,86.2 L219.4,86.0 L220.0,85.8 L220.6,85.7 L221.2,85.5 L221.9,85.3 L222.5,85.1 L223.1,85.0 L223.8,84.8 L224.4,84.6 L225.0,84.5 L225.6,84.4 L226.2,84.2 L226.9,84.1 L227.5,84.0 L228.1,83.8 L228.7,83.7 L229.4,83.6 L230.0,83.5 L230.6,83.4 L231.3,83.3 L231.9,83.2 L232.5,83.1 L233.1,83.1 L233.7,83.0 L234.4,82.9 L235.0,82.9 L235.6,82.8 L236.3,82.7 L236.9,82.7 L237.5,82.7 L238.1,82.6 L238.7,82.6 L239.4,82.6 L240.0,82.5 L240.6,82.5 L241.3,82.5 L241.9,82.5 L242.5,82.5 L243.1,82.5 L243.8,82.5 L244.4,82.5 L245.0,82.5 L245.6,82.6 L246.2,82.6 L246.9,82.6 L247.5,82.7 L248.1,82.7 L248.8,82.7 L249.4,82.8 L250.0,82.8 L250.6,82.9 L251.2,83.0 L251.9,83.0 L252.5,83.1 L253.1,83.2 L253.8,83.3 L254.4,83.4 L255.0,83.4 L255.6,83.5 L256.2,83.6 L256.9,83.7 L257.5,83.8 L258.1,84.0 L258.8,84.1 L259.4,84.2 L260.0,84.3 L260.6,84.5 L261.2,84.6 L261.9,84.7 L262.5,84.9 L263.1,85.0 L263.8,85.2 L264.4,85.3 L265.0,85.5 L265.6,85.6 L266.2,85.8 L266.9,86.0 L267.5,86.1 L268.1,86.3 L268.8,86.5 L269.4,86.7 L270.0,86.9 L270.6,87.1 L271.2,87.3 L271.9,87.5 L272.5,87.7 L273.1,87.9 L273.8,88.1 L274.4,88.3 L275.0,88.5 L275.6,88.7 L276.2,89.0 L276.9,89.2 L277.5,89.4 L278.1,89.7 L278.8,89.9 L279.4,90.2 L280.0,90.4 L280.6,90.6 L281.2,90.9 L281.9,91.2 L282.5,91.4 L283.1,91.7 L283.8,91.9 L284.4,92.2 L285.0,92.5 L285.6,92.8 L286.2,93.1 L286.9,93.3 L287.5,93.6 L288.1,93.9 L288.8,94.2 L289.4,94.5 L290.0,94.8 L290.6,95.1 L291.2,95.4 L291.9,95.7 L292.5,96.0 L293.1,96.3 L293.8,96.6 L294.4,97.0 L295.0,97.3 L295.6,97.6 L296.2,97.9 L296.9,98.3 L297.5,98.6 L298.1,98.9 L298.8,99.3 L299.4,99.6 L300.0,100.0 L300.6,100.3 L301.2,100.7 L301.9,101.0 L302.5,101.4 L303.1,101.7 L303.8,102.1 L304.4,102.4 L305.0,102.8" fill="none" stroke="var(--academic-text)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="132.6" cy="180.0" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.4"/>
+  <text x="180.0" y="28.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">p</tspan>&#8320; = &#8722;2,5</text>
+  <path d="M94.2,194.6 L195.0,96.3" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M180.0,180.0 L180.0,110.9" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="180.0" cy="110.9" r="3.6" fill="var(--color-practice)"/>
+  <path d="M94.2,271.1 L144.9,141.7" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M109.2,180.0 L109.2,232.9" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="109.2" cy="232.9" r="3.6" fill="var(--color-practice)"/>
+  <line x1="180.0" y1="175.5" x2="180.0" y2="184.5" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="109.2" y1="175.5" x2="109.2" y2="184.5" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="129.9" y1="175.5" x2="129.9" y2="184.5" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="242.5" cy="82.5" r="3.0" fill="var(--academic-text)"/>
+  <rect x="246.0" y="64.7" width="48.1" height="14.0" rx="3" fill="var(--academic-bg)" opacity="0.9"/>
+  <text x="248.5" y="74.5" fill="var(--academic-text)" font-size="11" text-anchor="start">(&#8722;2, 3)</text>
+  <text x="180.0" y="197.0" fill="var(--color-practice)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">p</tspan>&#8320;</text>
+  <text x="103.2" y="173.0" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">p</tspan>&#8321;</text>
+  <text x="135.9" y="197.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">p</tspan>&#8322;</text>
+  <text x="211.2" y="212.0" fill="var(--color-remark)" font-size="11.5" text-anchor="middle">[&#8722;3; &#8722;2]</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="390.0" y1="310.0" x2="648.0" y2="310.0"/>
+  <line x1="390.0" y1="42.0" x2="390.0" y2="310.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="415.0" y="326.0" text-anchor="middle">&#8722;3</text>
+  <text x="465.0" y="326.0" text-anchor="middle">&#8722;2</text>
+  <text x="515.0" y="326.0" text-anchor="middle">&#8722;1</text>
+  <text x="565.0" y="326.0" text-anchor="middle">0</text>
+  <text x="615.0" y="326.0" text-anchor="middle">1</text>
+  <text x="383.0" y="314.0" text-anchor="end">&#8722;8</text>
+  <text x="383.0" y="256.2" text-anchor="end">&#8722;4</text>
+  <text x="383.0" y="198.4" text-anchor="end">0</text>
+  <text x="383.0" y="140.7" text-anchor="end">4</text>
+  <text x="383.0" y="82.9" text-anchor="end">8</text>
+  <text x="654.0" y="314.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  <text x="386.0" y="36.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="415.0" y1="50.0" x2="415.0" y2="310.0"/><line x1="465.0" y1="50.0" x2="465.0" y2="310.0"/><line x1="515.0" y1="50.0" x2="515.0" y2="310.0"/><line x1="565.0" y1="50.0" x2="565.0" y2="310.0"/><line x1="615.0" y1="50.0" x2="615.0" y2="310.0"/><line x1="390.0" y1="310.0" x2="640.0" y2="310.0"/><line x1="390.0" y1="252.2" x2="640.0" y2="252.2"/><line x1="390.0" y1="194.4" x2="640.0" y2="194.4"/><line x1="390.0" y1="136.7" x2="640.0" y2="136.7"/><line x1="390.0" y1="78.9" x2="640.0" y2="78.9"/></g>
+  <path d="M390.0,194.4 L640.0,194.4" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="415.0,199.4 465.0,199.4 465.0,189.4 415.0,189.4" fill="var(--color-remark)" fill-opacity="0.35" stroke="none" stroke-width="1.2"/>
+  <path d="M390.0,297.4 L390.6,294.5 L391.2,291.7 L391.9,289.0 L392.5,286.3 L393.1,283.6 L393.8,280.9 L394.4,278.3 L395.0,275.7 L395.6,273.1 L396.2,270.6 L396.9,268.1 L397.5,265.6 L398.1,263.2 L398.8,260.8 L399.4,258.4 L400.0,256.1 L400.6,253.8 L401.2,251.5 L401.9,249.2 L402.5,247.0 L403.1,244.8 L403.8,242.7 L404.4,240.6 L405.0,238.5 L405.6,236.4 L406.2,234.4 L406.9,232.4 L407.5,230.4 L408.1,228.4 L408.8,226.5 L409.4,224.6 L410.0,222.8 L410.6,220.9 L411.2,219.1 L411.9,217.4 L412.5,215.6 L413.1,213.9 L413.8,212.2 L414.4,210.5 L415.0,208.9 L415.6,207.3 L416.2,205.7 L416.9,204.1 L417.5,202.6 L418.1,201.1 L418.8,199.6 L419.4,198.2 L420.0,196.7 L420.6,195.3 L421.2,194.0 L421.9,192.6 L422.5,191.3 L423.1,190.0 L423.8,188.7 L424.4,187.5 L425.0,186.2 L425.6,185.0 L426.2,183.9 L426.9,182.7 L427.5,181.6 L428.1,180.5 L428.8,179.4 L429.4,178.3 L430.0,177.3 L430.6,176.3 L431.2,175.3 L431.9,174.3 L432.5,173.4 L433.1,172.5 L433.8,171.6 L434.4,170.7 L435.0,169.8 L435.6,169.0 L436.2,168.2 L436.9,167.4 L437.5,166.6 L438.1,165.9 L438.8,165.1 L439.4,164.4 L440.0,163.8 L440.6,163.1 L441.2,162.4 L441.9,161.8 L442.5,161.2 L443.1,160.6 L443.8,160.0 L444.4,159.5 L445.0,159.0 L445.6,158.5 L446.2,158.0 L446.9,157.5 L447.5,157.0 L448.1,156.6 L448.8,156.2 L449.4,155.8 L450.0,155.4 L450.6,155.0 L451.2,154.7 L451.9,154.4 L452.5,154.0 L453.1,153.7 L453.8,153.5 L454.4,153.2 L455.0,153.0 L455.6,152.7 L456.2,152.5 L456.9,152.3 L457.5,152.1 L458.1,152.0 L458.8,151.8 L459.4,151.7 L460.0,151.6 L460.6,151.5 L461.2,151.4 L461.9,151.3 L462.5,151.2 L463.1,151.2 L463.8,151.1 L464.4,151.1 L465.0,151.1 L465.6,151.1 L466.2,151.1 L466.9,151.2 L467.5,151.2 L468.1,151.3 L468.8,151.3 L469.4,151.4 L470.0,151.5 L470.6,151.6 L471.2,151.8 L471.9,151.9 L472.5,152.0 L473.1,152.2 L473.8,152.4 L474.4,152.5 L475.0,152.7 L475.6,152.9 L476.2,153.1 L476.9,153.4 L477.5,153.6 L478.1,153.8 L478.8,154.1 L479.4,154.3 L480.0,154.6 L480.6,154.9 L481.2,155.2 L481.9,155.5 L482.5,155.8 L483.1,156.1 L483.8,156.4 L484.4,156.8 L485.0,157.1 L485.6,157.5 L486.2,157.8 L486.9,158.2 L487.5,158.6 L488.1,159.0 L488.8,159.3 L489.4,159.7 L490.0,160.1 L490.6,160.5 L491.2,161.0 L491.9,161.4 L492.5,161.8 L493.1,162.3 L493.8,162.7 L494.4,163.1 L495.0,163.6 L495.6,164.0 L496.2,164.5 L496.9,165.0 L497.5,165.5 L498.1,165.9 L498.8,166.4 L499.4,166.9 L500.0,167.4 L500.6,167.9 L501.2,168.4 L501.9,168.9 L502.5,169.4 L503.1,169.9 L503.8,170.4 L504.4,170.9 L505.0,171.4 L505.6,172.0 L506.2,172.5 L506.9,173.0 L507.5,173.5 L508.1,174.1 L508.8,174.6 L509.4,175.1 L510.0,175.7 L510.6,176.2 L511.2,176.8 L511.9,177.3 L512.5,177.8 L513.1,178.4 L513.8,178.9 L514.4,179.5 L515.0,180.0 L515.6,180.5 L516.2,181.1 L516.9,181.6 L517.5,182.2 L518.1,182.7 L518.8,183.2 L519.4,183.8 L520.0,184.3 L520.6,184.9 L521.2,185.4 L521.9,185.9 L522.5,186.5 L523.1,187.0 L523.8,187.5 L524.4,188.0 L525.0,188.6 L525.6,189.1 L526.2,189.6 L526.9,190.1 L527.5,190.6 L528.1,191.1 L528.8,191.6 L529.4,192.1 L530.0,192.6 L530.6,193.1 L531.2,193.6 L531.9,194.1 L532.5,194.5 L533.1,195.0 L533.8,195.5 L534.4,196.0 L535.0,196.4 L535.6,196.9 L536.2,197.3 L536.9,197.7 L537.5,198.2 L538.1,198.6 L538.8,199.0 L539.4,199.5 L540.0,199.9 L540.6,200.3 L541.2,200.7 L541.9,201.0 L542.5,201.4 L543.1,201.8 L543.8,202.2 L544.4,202.5 L545.0,202.9 L545.6,203.2 L546.2,203.6 L546.9,203.9 L547.5,204.2 L548.1,204.5 L548.8,204.8 L549.4,205.1 L550.0,205.4 L550.6,205.7 L551.2,205.9 L551.9,206.2 L552.5,206.4 L553.1,206.6 L553.8,206.9 L554.4,207.1 L555.0,207.3 L555.6,207.5 L556.2,207.6 L556.9,207.8 L557.5,208.0 L558.1,208.1 L558.8,208.2 L559.4,208.4 L560.0,208.5 L560.6,208.6 L561.2,208.7 L561.9,208.7 L562.5,208.8 L563.1,208.8 L563.8,208.9 L564.4,208.9 L565.0,208.9 L565.6,208.9 L566.2,208.9 L566.9,208.8 L567.5,208.8 L568.1,208.7 L568.8,208.6 L569.4,208.5 L570.0,208.4 L570.6,208.3 L571.2,208.2 L571.9,208.0 L572.5,207.9 L573.1,207.7 L573.8,207.5 L574.4,207.3 L575.0,207.0 L575.6,206.8 L576.2,206.5 L576.9,206.3 L577.5,206.0 L578.1,205.6 L578.8,205.3 L579.4,205.0 L580.0,204.6 L580.6,204.2 L581.2,203.8 L581.9,203.4 L582.5,203.0 L583.1,202.5 L583.8,202.0 L584.4,201.5 L585.0,201.0 L585.6,200.5 L586.2,200.0 L586.9,199.4 L587.5,198.8 L588.1,198.2 L588.8,197.6 L589.4,196.9 L590.0,196.2 L590.6,195.6 L591.2,194.9 L591.9,194.1 L592.5,193.4 L593.1,192.6 L593.8,191.8 L594.4,191.0 L595.0,190.2 L595.6,189.3 L596.2,188.4 L596.9,187.5 L597.5,186.6 L598.1,185.7 L598.8,184.7 L599.4,183.7 L600.0,182.7 L600.6,181.7 L601.2,180.6 L601.9,179.5 L602.5,178.4 L603.1,177.3 L603.8,176.1 L604.4,175.0 L605.0,173.8 L605.6,172.5 L606.2,171.3 L606.9,170.0 L607.5,168.7 L608.1,167.4 L608.8,166.0 L609.4,164.7 L610.0,163.3 L610.6,161.8 L611.2,160.4 L611.9,158.9 L612.5,157.4 L613.1,155.9 L613.8,154.3 L614.4,152.7 L615.0,151.1 L615.6,149.5 L616.2,147.8 L616.9,146.1 L617.5,144.4 L618.1,142.6 L618.8,140.9 L619.4,139.1 L620.0,137.2 L620.6,135.4 L621.2,133.5 L621.9,131.6 L622.5,129.6 L623.1,127.6 L623.8,125.6 L624.4,123.6 L625.0,121.5 L625.6,119.4 L626.2,117.3 L626.9,115.2 L627.5,113.0 L628.1,110.8 L628.8,108.5 L629.4,106.2 L630.0,103.9 L630.6,101.6 L631.2,99.2 L631.9,96.8 L632.5,94.4 L633.1,91.9 L633.8,89.4 L634.4,86.9 L635.0,84.3 L635.6,81.7 L636.2,79.1 L636.9,76.4 L637.5,73.7 L638.1,71.0 L638.8,68.3 L639.4,65.5 L640.0,62.6" fill="none" stroke="var(--academic-text)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="421.0" cy="194.4" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.4"/>
+  <circle cx="532.4" cy="194.4" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.4"/>
+  <circle cx="591.6" cy="194.4" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.4"/>
+  <text x="515.0" y="28.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">p</tspan>&#8320; = &#8722;1,8</text>
+  <path d="M452.5,145.7 L621.2,198.3" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M475.0,194.4 L475.0,152.7" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M608.7,194.4 L608.7,166.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="475.0" cy="152.7" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="608.7" cy="166.1" r="3.0" fill="var(--color-practice)"/>
+  <line x1="475.0" y1="189.9" x2="475.0" y2="198.9" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="608.7" y1="189.9" x2="608.7" y2="198.9" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="595.7" y1="190.9" x2="595.7" y2="197.9" stroke="var(--color-practice)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="591.9" y1="190.9" x2="591.9" y2="197.9" stroke="var(--color-practice)" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="465.0" cy="151.1" r="3.0" fill="var(--academic-text)"/>
+  <rect x="440.9" y="131.3" width="48.1" height="14.0" rx="3" fill="var(--academic-bg)" opacity="0.9"/>
+  <text x="465.0" y="141.1" fill="var(--academic-text)" font-size="11" text-anchor="middle">(&#8722;2, 3)</text>
+  <circle cx="565.0" cy="208.9" r="3.0" fill="var(--academic-text)"/>
+  <rect x="540.9" y="218.1" width="48.1" height="14.0" rx="3" fill="var(--academic-bg)" opacity="0.9"/>
+  <text x="565.0" y="227.9" fill="var(--academic-text)" font-size="11" text-anchor="middle">(0, &#8722;1)</text>
+  <text x="475.0" y="211.4" fill="var(--color-practice)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">p</tspan>&#8320;</text>
+  <text x="614.7" y="211.4" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">p</tspan>&#8321;</text>
+  <line x1="602.5" y1="256.6" x2="593.9" y2="207.5" stroke="var(--color-practice)" stroke-width="1.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="593.0,202.4 596.8,208.3 591.4,209.3" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="612.5" y="275.3" fill="var(--color-practice)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">p</tspan>&#8322;, <tspan font-style="italic">p</tspan>&#8323;, ...</text>
+  <text x="612.5" y="290.3" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">0,53209 köküne</text>
+  <text x="612.5" y="305.3" fill="var(--color-practice)" font-size="11.5" text-anchor="middle">gider</text>
+</svg>
+<figcaption><em>f</em>(<em>x</em>) = <em>x</em>³ + 3<em>x</em>² &#8722; 1 için iki başlangıç. Solda (yakınlaştırılmış pencere) <em>p</em><sub>0</sub> = &#8722;2,5'teki teğet <em>x</em> eksenini [&#8722;3; &#8722;2] bandının solunda, <em>p</em><sub>1</sub> = &#8722;3,06667'de keser; <em>p</em><sub>1</sub>'deki teğet <em>p</em><sub>2</sub> = &#8722;2,90088'i verir ve dizi banttaki köke döner. Sağda <em>p</em><sub>0</sub> = &#8722;1,8 yerel maksimuma yakındır, <em>f</em>&#8242;(<em>p</em><sub>0</sub>) = &#8722;1,08 küçüktür; neredeyse yatay teğet <em>p</em><sub>1</sub> = 0,87407'ye uzanır ve <em>p</em><sub>2</sub> = 0,61403, <em>p</em><sub>3</sub> = 0,53873 ile dizi 0,53209 köküne gider. İçi boş daireler köklerdir.</figcaption>
+</figure>
+```
+:::
+
+## Yöntemin uygulanması
+
+Yöntemi bir tabloyla yürütmek, hem hesabı düzenli tutar hem de durma kriterini her satırda okumayı sağlar.
+
+::: {.callout-tip}
+## Newton-Raphson metodu dört adımda
+
+1. $f$ ve $f'$ fonksiyonlarını yaz; kökü içeren bir $[a, b]$ aralığı belirle (uç noktalarda işaret değişimi) ve $f \in C^2[a, b]$ olduğunu gör.
+2. Bu aralıktan bir $p_0$ seç; $f'(p_0) \neq 0$ olduğunu, mümkünse aralık boyunca $f' \neq 0$ olduğunu kontrol et.
+3. (1) bağıntısını uygula; her satıra $n$, $p_n$, $f(p_n)$, $f'(p_n)$, $f(p_n)/f'(p_n)$ ve $|p_n - p_{n-1}|$ değerlerini yaz. Bir sonraki yaklaşım $p_{n+1} = p_n - f(p_n)/f'(p_n)$ dir.
+4. (2) numaralı durma kriteri sağlanınca (ya da istenen $p_n$'ye ulaşınca) dur ve $p \approx p_n$ al.
+:::
+
+:::: {#exm-nwt-cos name="cos x − x = 0 denkleminin kökü"}
+$\cos x - x = 0$ denkleminin $p$ köküne, $p_0 = \pi/4$ başlangıç yaklaşımı ve $|p_n - p_{n-1}| < 10^{-8}$ durma kriteriyle Newton-Raphson Metodu kullanarak bir yaklaşımda bulunun. İşlemleri yuvarlama yapmadan bir tabloda gösterin.
+
+::: {.cozum}
+**Aralık ve koşullar.** $f(x) = \cos x - x$ olsun. $f(0) = 1 > 0$ ve $f(\pi/2) = -\pi/2 < 0$ olduğundan Ara Değer Teoremine (@thm-onb-ara-deger) göre $p \in [0, \pi/2]$ dir. Türev
+
+$$
+f'(x) = -\sin x - 1
+$$
+
+$[0, \pi/2]$ üzerinde $-1$ ile $-2$ arasındadır, yani sıfırdan farklıdır; özellikle $f'(p) \neq 0$. $f \in C^2[0, \pi/2]$ olduğundan @thm-nwt-yakinsama koşulları sağlanır; dolayısıyla köke yeterince yakın başlangıçlar için yöntem yakınsar. $p_0 = \pi/4$'ün bu komşulukta olduğunu tablo gösterir.
+
+**İterasyon.** $p_0 = \pi/4 \approx 0{,}785398163$ ve $n \geq 1$ için
+
+$$
+p_n = p_{n-1} - \frac{\cos(p_{n-1}) - p_{n-1}}{-\sin(p_{n-1}) - 1}
+$$
+
+dir. İlk adımda $f(p_0) = -0{,}078291382$, $f'(p_0) = -1{,}707106781$ ve
+
+$$
+p_1 = 0{,}785398163 - 0{,}045862030 = 0{,}739536134
+$$
+
+bulunur (gösterilen değerler 9 basamağa yuvarlanmıştır). Hesap tam duyarlıkla sürdürülür; tabloda yalnız gösterim 9 ondalık basamağa yuvarlandığı için son basamakta $1$ birimlik farklar görünebilir. $10^{-9}$'dan küçük değerler bilimsel yazımla verilmiştir.
+
+::: {.iteration-table}
+| $n$ | $p_n$ | $f(p_n)$ | $f'(p_n)$ | $f(p_n)/f'(p_n)$ | $\lvert p_n - p_{n-1}\rvert$ |
+|:-:|--:|--:|--:|--:|--:|
+| $0$ | $0{,}785398163$ | $-0{,}078291382$ | $-1{,}707106781$ | $0{,}045862030$ | |
+| $1$ | $0{,}739536134$ | $-0{,}000754875$ | $-1{,}673945288$ | $0{,}000450955$ | $0{,}045862030$ |
+| $2$ | $0{,}739085178$ | $-0{,}000000075$ | $-1{,}673612062$ | $0{,}000000045$ | $0{,}000450955$ |
+| $3$ | $0{,}739085133$ | $-0{,}745 \cdot 10^{-15}$ | $-1{,}673612029$ | $0{,}445 \cdot 10^{-15}$ | $0{,}000000045$ |
+| $4$ | $0{,}739085133$ | | | | $0{,}445 \cdot 10^{-15}$ |
+:::
+
+$n = 3$ satırında $|p_3 - p_2| = 0{,}000000045 > 10^{-8}$ olduğundan bir adım daha atılır; $n = 4$ satırında $|p_4 - p_3| < 10^{-8}$ olur ve iterasyon durur:
+
+$$
+p \approx p_4 = 0{,}739085133.
+$$
+
+Teğetlerin yaklaşımları nasıl ürettiği aşağıda görülüyor. $p_0$'daki teğet $x$ eksenini $p_1$'de keser; $p_1$'deki teğet ise $p_2$'de keser ve $p_2$ kökten ancak $4{,}5 \cdot 10^{-8}$ kadar uzaktadır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="16.5 4.5 682.5 317.5" role="img" aria-label="Two panels. Left: graph of cos x - x on 0.4 to 1.0 with the tangent at p0 = pi/4 meeting the x axis at p1 = 0.739536 and a small frame around p1. Right: zoom on 0.7385 to 0.7400 where graph and the tangent at p1 coincide and the tangent meets the axis at p2 = 0.739085178, on top of the root">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="60.0" y1="290.0" x2="318.0" y2="290.0"/>
+  <line x1="60.0" y1="32.0" x2="60.0" y2="290.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="60.0" y="306.0" text-anchor="middle">0,4</text>
+  <text x="101.7" y="306.0" text-anchor="middle">0,5</text>
+  <text x="143.3" y="306.0" text-anchor="middle">0,6</text>
+  <text x="185.0" y="306.0" text-anchor="middle">0,7</text>
+  <text x="226.7" y="306.0" text-anchor="middle">0,8</text>
+  <text x="268.3" y="306.0" text-anchor="middle">0,9</text>
+  <text x="310.0" y="306.0" text-anchor="middle">1</text>
+  <text x="53.0" y="270.2" text-anchor="end">&#8722;0,4</text>
+  <text x="53.0" y="222.6" text-anchor="end">&#8722;0,2</text>
+  <text x="53.0" y="175.0" text-anchor="end">0</text>
+  <text x="53.0" y="127.3" text-anchor="end">0,2</text>
+  <text x="53.0" y="79.7" text-anchor="end">0,4</text>
+  <text x="324.0" y="294.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  <text x="56.0" y="26.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="60.0" y1="40.0" x2="60.0" y2="290.0"/><line x1="101.7" y1="40.0" x2="101.7" y2="290.0"/><line x1="143.3" y1="40.0" x2="143.3" y2="290.0"/><line x1="185.0" y1="40.0" x2="185.0" y2="290.0"/><line x1="226.7" y1="40.0" x2="226.7" y2="290.0"/><line x1="268.3" y1="40.0" x2="268.3" y2="290.0"/><line x1="310.0" y1="40.0" x2="310.0" y2="290.0"/><line x1="60.0" y1="266.2" x2="310.0" y2="266.2"/><line x1="60.0" y1="218.6" x2="310.0" y2="218.6"/><line x1="60.0" y1="171.0" x2="310.0" y2="171.0"/><line x1="60.0" y1="123.3" x2="310.0" y2="123.3"/><line x1="60.0" y1="75.7" x2="310.0" y2="75.7"/></g>
+  <path d="M60.0,171.0 L310.0,171.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M60.0,46.9 L60.6,47.4 L61.2,47.9 L61.9,48.4 L62.5,48.9 L63.1,49.4 L63.8,49.9 L64.4,50.4 L65.0,50.9 L65.6,51.4 L66.2,51.9 L66.9,52.4 L67.5,52.9 L68.1,53.4 L68.8,53.9 L69.4,54.4 L70.0,54.9 L70.6,55.4 L71.3,55.9 L71.9,56.4 L72.5,56.9 L73.1,57.4 L73.8,57.9 L74.4,58.4 L75.0,58.9 L75.6,59.4 L76.2,60.0 L76.9,60.5 L77.5,61.0 L78.1,61.5 L78.8,62.0 L79.4,62.5 L80.0,63.0 L80.6,63.5 L81.2,64.0 L81.9,64.6 L82.5,65.1 L83.1,65.6 L83.8,66.1 L84.4,66.6 L85.0,67.1 L85.6,67.6 L86.2,68.2 L86.9,68.7 L87.5,69.2 L88.1,69.7 L88.8,70.2 L89.4,70.8 L90.0,71.3 L90.6,71.8 L91.2,72.3 L91.9,72.8 L92.5,73.4 L93.1,73.9 L93.8,74.4 L94.4,74.9 L95.0,75.4 L95.6,76.0 L96.2,76.5 L96.9,77.0 L97.5,77.5 L98.1,78.1 L98.8,78.6 L99.4,79.1 L100.0,79.6 L100.6,80.2 L101.2,80.7 L101.9,81.2 L102.5,81.8 L103.1,82.3 L103.8,82.8 L104.4,83.3 L105.0,83.9 L105.6,84.4 L106.2,84.9 L106.9,85.5 L107.5,86.0 L108.1,86.5 L108.8,87.1 L109.4,87.6 L110.0,88.1 L110.6,88.7 L111.2,89.2 L111.9,89.7 L112.5,90.3 L113.1,90.8 L113.8,91.4 L114.4,91.9 L115.0,92.4 L115.6,93.0 L116.2,93.5 L116.9,94.0 L117.5,94.6 L118.1,95.1 L118.8,95.7 L119.4,96.2 L120.0,96.8 L120.6,97.3 L121.3,97.8 L121.9,98.4 L122.5,98.9 L123.1,99.5 L123.8,100.0 L124.4,100.6 L125.0,101.1 L125.6,101.6 L126.2,102.2 L126.9,102.7 L127.5,103.3 L128.1,103.8 L128.8,104.4 L129.4,104.9 L130.0,105.5 L130.6,106.0 L131.2,106.6 L131.9,107.1 L132.5,107.7 L133.1,108.2 L133.8,108.8 L134.4,109.3 L135.0,109.9 L135.6,110.4 L136.2,111.0 L136.9,111.6 L137.5,112.1 L138.1,112.7 L138.8,113.2 L139.4,113.8 L140.0,114.3 L140.6,114.9 L141.2,115.4 L141.9,116.0 L142.5,116.6 L143.1,117.1 L143.8,117.7 L144.4,118.2 L145.0,118.8 L145.6,119.4 L146.2,119.9 L146.9,120.5 L147.5,121.0 L148.1,121.6 L148.8,122.2 L149.4,122.7 L150.0,123.3 L150.6,123.9 L151.2,124.4 L151.9,125.0 L152.5,125.5 L153.1,126.1 L153.8,126.7 L154.4,127.2 L155.0,127.8 L155.6,128.4 L156.2,128.9 L156.9,129.5 L157.5,130.1 L158.1,130.6 L158.8,131.2 L159.4,131.8 L160.0,132.4 L160.6,132.9 L161.2,133.5 L161.9,134.1 L162.5,134.6 L163.1,135.2 L163.8,135.8 L164.4,136.4 L165.0,136.9 L165.6,137.5 L166.2,138.1 L166.9,138.7 L167.5,139.2 L168.1,139.8 L168.8,140.4 L169.4,141.0 L170.0,141.5 L170.6,142.1 L171.2,142.7 L171.9,143.3 L172.5,143.9 L173.1,144.4 L173.8,145.0 L174.4,145.6 L175.0,146.2 L175.6,146.8 L176.2,147.3 L176.9,147.9 L177.5,148.5 L178.1,149.1 L178.8,149.7 L179.4,150.2 L180.0,150.8 L180.6,151.4 L181.3,152.0 L181.9,152.6 L182.5,153.2 L183.1,153.8 L183.8,154.3 L184.4,154.9 L185.0,155.5 L185.6,156.1 L186.3,156.7 L186.9,157.3 L187.5,157.9 L188.1,158.5 L188.8,159.0 L189.4,159.6 L190.0,160.2 L190.6,160.8 L191.3,161.4 L191.9,162.0 L192.5,162.6 L193.1,163.2 L193.8,163.8 L194.4,164.4 L195.0,165.0 L195.6,165.6 L196.2,166.1 L196.9,166.7 L197.5,167.3 L198.1,167.9 L198.7,168.5 L199.4,169.1 L200.0,169.7 L200.6,170.3 L201.2,170.9 L201.9,171.5 L202.5,172.1 L203.1,172.7 L203.8,173.3 L204.4,173.9 L205.0,174.5 L205.6,175.1 L206.3,175.7 L206.9,176.3 L207.5,176.9 L208.1,177.5 L208.8,178.1 L209.4,178.7 L210.0,179.3 L210.6,179.9 L211.2,180.5 L211.9,181.1 L212.5,181.7 L213.1,182.3 L213.8,183.0 L214.4,183.6 L215.0,184.2 L215.6,184.8 L216.2,185.4 L216.9,186.0 L217.5,186.6 L218.1,187.2 L218.8,187.8 L219.4,188.4 L220.0,189.0 L220.6,189.6 L221.2,190.2 L221.9,190.9 L222.5,191.5 L223.1,192.1 L223.7,192.7 L224.4,193.3 L225.0,193.9 L225.6,194.5 L226.2,195.1 L226.9,195.8 L227.5,196.4 L228.1,197.0 L228.8,197.6 L229.4,198.2 L230.0,198.8 L230.6,199.4 L231.2,200.1 L231.9,200.7 L232.5,201.3 L233.1,201.9 L233.8,202.5 L234.4,203.1 L235.0,203.8 L235.6,204.4 L236.2,205.0 L236.9,205.6 L237.5,206.2 L238.1,206.9 L238.8,207.5 L239.4,208.1 L240.0,208.7 L240.6,209.3 L241.2,210.0 L241.9,210.6 L242.5,211.2 L243.1,211.8 L243.8,212.4 L244.4,213.1 L245.0,213.7 L245.6,214.3 L246.2,214.9 L246.9,215.6 L247.5,216.2 L248.1,216.8 L248.8,217.4 L249.4,218.1 L250.0,218.7 L250.6,219.3 L251.2,220.0 L251.9,220.6 L252.5,221.2 L253.1,221.8 L253.8,222.5 L254.4,223.1 L255.0,223.7 L255.6,224.4 L256.2,225.0 L256.9,225.6 L257.5,226.2 L258.1,226.9 L258.8,227.5 L259.4,228.1 L260.0,228.8 L260.6,229.4 L261.2,230.0 L261.9,230.7 L262.5,231.3 L263.1,231.9 L263.8,232.6 L264.4,233.2 L265.0,233.8 L265.6,234.5 L266.2,235.1 L266.9,235.8 L267.5,236.4 L268.1,237.0 L268.8,237.7 L269.4,238.3 L270.0,238.9 L270.6,239.6 L271.2,240.2 L271.9,240.9 L272.5,241.5 L273.1,242.1 L273.8,242.8 L274.4,243.4 L275.0,244.0 L275.6,244.7 L276.2,245.3 L276.9,246.0 L277.5,246.6 L278.1,247.3 L278.8,247.9 L279.4,248.5 L280.0,249.2 L280.6,249.8 L281.2,250.5 L281.9,251.1 L282.5,251.8 L283.1,252.4 L283.8,253.0 L284.4,253.7 L285.0,254.3 L285.6,255.0 L286.2,255.6 L286.9,256.3 L287.5,256.9 L288.1,257.6 L288.8,258.2 L289.4,258.9 L290.0,259.5 L290.6,260.2 L291.2,260.8 L291.9,261.5 L292.5,262.1 L293.1,262.8 L293.8,263.4 L294.4,264.1 L295.0,264.7 L295.6,265.4 L296.2,266.0 L296.9,266.7 L297.5,267.3 L298.1,268.0 L298.8,268.6 L299.4,269.3 L300.0,269.9 L300.6,270.6 L301.2,271.2 L301.9,271.9 L302.5,272.5 L303.1,273.2 L303.8,273.8 L304.4,274.5 L305.0,275.2 L305.6,275.8 L306.2,276.5 L306.9,277.1 L307.5,277.8 L308.1,278.4 L308.8,279.1 L309.4,279.7 L310.0,280.4" fill="none" stroke="var(--academic-text)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M67.2,40.0 L310.0,276.8" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M220.6,171.0 L220.6,189.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="220.6" cy="189.6" r="3.6" fill="var(--color-practice)"/>
+  <line x1="220.6" y1="166.5" x2="220.6" y2="175.5" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="201.5" y1="166.5" x2="201.5" y2="175.5" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <text x="212.6" y="207.6" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">p</tspan>&#8320; = π/4</text>
+  <text x="210.5" y="160.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">p</tspan>&#8321;</text>
+  <text x="101.3" y="65.5" fill="var(--color-practice)" font-size="12" text-anchor="start">teğet</text>
+  <text x="137.3" y="137.3" fill="var(--academic-text)" font-size="12.5" text-anchor="end"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>)</text>
+  <rect x="194.5" y="164.0" width="14" height="14" fill="none" stroke="var(--color-base)" stroke-width="1.3"/>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="415.0" y1="290.0" x2="673.0" y2="290.0"/>
+  <line x1="415.0" y1="32.0" x2="415.0" y2="290.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="415.0" y="306.0" text-anchor="middle">0,7385</text>
+  <text x="498.3" y="306.0" text-anchor="middle">0,739</text>
+  <text x="581.7" y="306.0" text-anchor="middle">0,7395</text>
+  <text x="665.0" y="306.0" text-anchor="middle">0,74</text>
+  <text x="408.0" y="269.0" text-anchor="end">&#8722;0,001</text>
+  <text x="408.0" y="206.5" text-anchor="end">&#8722;0,0005</text>
+  <text x="408.0" y="144.0" text-anchor="end">0</text>
+  <text x="408.0" y="81.5" text-anchor="end">0,0005</text>
+  <text x="679.0" y="294.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  <text x="411.0" y="26.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="415.0" y1="40.0" x2="415.0" y2="290.0"/><line x1="498.3" y1="40.0" x2="498.3" y2="290.0"/><line x1="581.7" y1="40.0" x2="581.7" y2="290.0"/><line x1="665.0" y1="40.0" x2="665.0" y2="290.0"/><line x1="415.0" y1="265.0" x2="665.0" y2="265.0"/><line x1="415.0" y1="202.5" x2="665.0" y2="202.5"/><line x1="415.0" y1="140.0" x2="665.0" y2="140.0"/><line x1="415.0" y1="77.5" x2="665.0" y2="77.5"/></g>
+  <rect x="415.0" y="40.0" width="250.0" height="250.0" fill="none" stroke="var(--color-base)" stroke-width="1.3"/>
+  <path d="M415.0,140.0 L665.0,140.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M433.1,40.4 L433.7,41.1 L434.4,41.9 L435.0,42.7 L435.6,43.5 L436.2,44.3 L436.9,45.1 L437.5,45.8 L438.1,46.6 L438.8,47.4 L439.4,48.2 L440.0,49.0 L440.6,49.8 L441.3,50.5 L441.9,51.3 L442.5,52.1 L443.1,52.9 L443.8,53.7 L444.4,54.5 L445.0,55.3 L445.6,56.0 L446.3,56.8 L446.9,57.6 L447.5,58.4 L448.1,59.2 L448.8,60.0 L449.4,60.7 L450.0,61.5 L450.6,62.3 L451.2,63.1 L451.9,63.9 L452.5,64.7 L453.1,65.4 L453.7,66.2 L454.4,67.0 L455.0,67.8 L455.6,68.6 L456.2,69.4 L456.9,70.2 L457.5,70.9 L458.1,71.7 L458.7,72.5 L459.4,73.3 L460.0,74.1 L460.6,74.9 L461.3,75.6 L461.9,76.4 L462.5,77.2 L463.1,78.0 L463.8,78.8 L464.4,79.6 L465.0,80.4 L465.6,81.1 L466.3,81.9 L466.9,82.7 L467.5,83.5 L468.1,84.3 L468.8,85.1 L469.4,85.8 L470.0,86.6 L470.6,87.4 L471.3,88.2 L471.9,89.0 L472.5,89.8 L473.1,90.6 L473.7,91.3 L474.4,92.1 L475.0,92.9 L475.6,93.7 L476.2,94.5 L476.9,95.3 L477.5,96.0 L478.1,96.8 L478.7,97.6 L479.4,98.4 L480.0,99.2 L480.6,100.0 L481.2,100.7 L481.9,101.5 L482.5,102.3 L483.1,103.1 L483.8,103.9 L484.4,104.7 L485.0,105.5 L485.6,106.2 L486.3,107.0 L486.9,107.8 L487.5,108.6 L488.1,109.4 L488.8,110.2 L489.4,110.9 L490.0,111.7 L490.6,112.5 L491.3,113.3 L491.9,114.1 L492.5,114.9 L493.1,115.7 L493.8,116.4 L494.4,117.2 L495.0,118.0 L495.6,118.8 L496.2,119.6 L496.9,120.4 L497.5,121.1 L498.1,121.9 L498.7,122.7 L499.4,123.5 L500.0,124.3 L500.6,125.1 L501.2,125.9 L501.9,126.6 L502.5,127.4 L503.1,128.2 L503.7,129.0 L504.4,129.8 L505.0,130.6 L505.6,131.3 L506.3,132.1 L506.9,132.9 L507.5,133.7 L508.1,134.5 L508.8,135.3 L509.4,136.0 L510.0,136.8 L510.6,137.6 L511.3,138.4 L511.9,139.2 L512.5,140.0 L513.1,140.8 L513.8,141.5 L514.4,142.3 L515.0,143.1 L515.6,143.9 L516.3,144.7 L516.9,145.5 L517.5,146.2 L518.1,147.0 L518.7,147.8 L519.4,148.6 L520.0,149.4 L520.6,150.2 L521.2,151.0 L521.9,151.7 L522.5,152.5 L523.1,153.3 L523.7,154.1 L524.4,154.9 L525.0,155.7 L525.6,156.4 L526.2,157.2 L526.9,158.0 L527.5,158.8 L528.1,159.6 L528.8,160.4 L529.4,161.2 L530.0,161.9 L530.6,162.7 L531.3,163.5 L531.9,164.3 L532.5,165.1 L533.1,165.9 L533.8,166.6 L534.4,167.4 L535.0,168.2 L535.6,169.0 L536.3,169.8 L536.9,170.6 L537.5,171.4 L538.1,172.1 L538.8,172.9 L539.4,173.7 L540.0,174.5 L540.6,175.3 L541.2,176.1 L541.9,176.8 L542.5,177.6 L543.1,178.4 L543.7,179.2 L544.4,180.0 L545.0,180.8 L545.6,181.6 L546.2,182.3 L546.9,183.1 L547.5,183.9 L548.1,184.7 L548.7,185.5 L549.4,186.3 L550.0,187.0 L550.6,187.8 L551.2,188.6 L551.9,189.4 L552.5,190.2 L553.1,191.0 L553.8,191.8 L554.4,192.5 L555.0,193.3 L555.6,194.1 L556.3,194.9 L556.9,195.7 L557.5,196.5 L558.1,197.2 L558.8,198.0 L559.4,198.8 L560.0,199.6 L560.6,200.4 L561.3,201.2 L561.9,202.0 L562.5,202.7 L563.1,203.5 L563.7,204.3 L564.4,205.1 L565.0,205.9 L565.6,206.7 L566.2,207.4 L566.9,208.2 L567.5,209.0 L568.1,209.8 L568.7,210.6 L569.4,211.4 L570.0,212.2 L570.6,212.9 L571.2,213.7 L571.9,214.5 L572.5,215.3 L573.1,216.1 L573.7,216.9 L574.4,217.6 L575.0,218.4 L575.6,219.2 L576.3,220.0 L576.9,220.8 L577.5,221.6 L578.1,222.4 L578.8,223.1 L579.4,223.9 L580.0,224.7 L580.6,225.5 L581.3,226.3 L581.9,227.1 L582.5,227.8 L583.1,228.6 L583.8,229.4 L584.4,230.2 L585.0,231.0 L585.6,231.8 L586.2,232.6 L586.9,233.3 L587.5,234.1 L588.1,234.9 L588.7,235.7 L589.4,236.5 L590.0,237.3 L590.6,238.0 L591.2,238.8 L591.9,239.6 L592.5,240.4 L593.1,241.2 L593.7,242.0 L594.4,242.8 L595.0,243.5 L595.6,244.3 L596.2,245.1 L596.9,245.9 L597.5,246.7 L598.1,247.5 L598.8,248.2 L599.4,249.0 L600.0,249.8 L600.6,250.6 L601.3,251.4 L601.9,252.2 L602.5,253.0 L603.1,253.7 L603.8,254.5 L604.4,255.3 L605.0,256.1 L605.6,256.9 L606.3,257.7 L606.9,258.4 L607.5,259.2 L608.1,260.0 L608.7,260.8 L609.4,261.6 L610.0,262.4 L610.6,263.2 L611.2,263.9 L611.9,264.7 L612.5,265.5 L613.1,266.3 L613.7,267.1 L614.4,267.9 L615.0,268.6 L615.6,269.4 L616.2,270.2 L616.9,271.0 L617.5,271.8 L618.1,272.6 L618.7,273.4 L619.4,274.1 L620.0,274.9 L620.6,275.7 L621.3,276.5 L621.9,277.3 L622.5,278.1 L623.1,278.8 L623.8,279.6 L624.4,280.4 L625.0,281.2 L625.6,282.0 L626.3,282.8 L626.9,283.6 L627.5,284.3 L628.1,285.1 L628.8,285.9 L629.4,286.7 L630.0,287.5 L630.6,288.3 L631.2,289.1 L631.9,289.8" fill="none" stroke="var(--academic-text)" stroke-width="5.0" opacity="0.3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M432.9,40.0 L632.0,290.0" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M587.7,140.0 L587.7,234.4" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="587.7" cy="234.4" r="3.6" fill="var(--color-practice)"/>
+  <line x1="587.7" y1="135.5" x2="587.7" y2="144.5" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="512.5" cy="140.0" r="5.0" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.4"/>
+  <circle cx="512.5" cy="140.0" r="2.4" fill="var(--color-practice)"/>
+  <text x="593.7" y="132.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">p</tspan>&#8321;</text>
+  <text x="502.5" y="160.0" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">p</tspan>&#8322; ≈ <tspan font-style="italic">p</tspan></text>
+  <text x="595.7" y="248.4" fill="var(--academic-text)" font-size="11" text-anchor="start">(<tspan font-style="italic">p</tspan>&#8321;, <tspan font-style="italic">f</tspan>(<tspan font-style="italic">p</tspan>&#8321;))</text>
+  <text x="540.0" y="28.0" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">yakınlaştırma</text>
+</svg>
+<figcaption><em>f</em>(<em>x</em>) = cos <em>x</em> &#8722; <em>x</em> için Newton-Raphson adımları. Solda <em>p</em><sub>0</sub> = π/4 noktasındaki teğet <em>x</em> eksenini <em>p</em><sub>1</sub> = 0,739536'da keser; teğet grafiğe o kadar yakındır ki ancak uçlarda ayrılır. Küçük kare, sağda büyütülen [0,7385; 0,7400] × [&#8722;0,0012; 0,0008] penceresinin yerini gösterir (gerçek boyutu bu ölçekte bir pikselden küçüktür). Sağda grafik ile <em>p</em><sub>1</sub>'deki teğet ayırt edilemez; teğet <em>x</em> eksenini <em>p</em><sub>2</sub> = 0,739085178'de keser ve içi boş daireyle gösterilen <em>p</em> = 0,739085133 kökü bu ölçekte <em>p</em><sub>2</sub> ile üst üstedir.</figcaption>
+</figure>
+```
+
+$|p_n - p_{n-1}|$ sütunu $10^{-2}$, $10^{-4}$, $10^{-8}$, $10^{-16}$ mertebelerinden geçer: her adımda doğru basamak sayısı kabaca iki katına çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalarda her adımda virgülden sonra 5. basamağa yuvarlanır ve hesaba yuvarlanmış değerle devam edilir.
+
+:::: {#exr-nwt-kok-alti name="x² − 6 = 0 denkleminin pozitif kökü"}
+$x^2 - 6 = 0$ denkleminin pozitif köküne, Newton-Raphson Metodu ile $p_0 = 2$ alarak $p_3$ yaklaşımında bulunun. İşlemlerde virgülden sonra 5. basamağa yuvarlama yaparak bir tablo oluşturun.
+
+::: {.cozum}
+**Aralık ve koşullar.** $f(x) = x^2 - 6$ olsun. Pozitif kök $\sqrt{6}$ dır ve $2 = \sqrt{4} < \sqrt{6} < \sqrt{9} = 3$ olduğundan $[2, 3]$ aralığında çalışırız. $f \in C^2[2, 3]$ ve $f'(x) = 2x \geq 4$ olduğundan türev bu aralıkta sıfırdan farklıdır.
+
+**İterasyon.** $p_0 = 2{,}00000$ ve $n \geq 1$ için
+
+$$
+p_n = p_{n-1} - \frac{p_{n-1}^2 - 6}{2 p_{n-1}}
+$$
+
+dir. İlk satırda $f(2) = -2$, $f'(2) = 4$, $f(p_0)/f'(p_0) = -0{,}5$ ve $p_1 = 2 - (-0{,}5) = 2{,}5$ olur. İkinci satırda $f(2{,}5) = 0{,}25$, $f'(2{,}5) = 5$, oran $0{,}05$ ve $p_2 = 2{,}45$ bulunur. Üçüncü satırda $0{,}0025/4{,}9 = 0{,}000510\ldots$ değeri $0{,}00051$'e yuvarlanır ve $p_3 = 2{,}45 - 0{,}00051 = 2{,}44949$ elde edilir.
+
+::: {.iteration-table}
+| $n$ | $p_n$ | $f(p_n)$ | $f'(p_n)$ | $f(p_n)/f'(p_n)$ |
+|:-:|--:|--:|--:|--:|
+| $0$ | $2{,}00000$ | $-2{,}00000$ | $4{,}00000$ | $-0{,}50000$ |
+| $1$ | $2{,}50000$ | $0{,}25000$ | $5{,}00000$ | $0{,}05000$ |
+| $2$ | $2{,}45000$ | $0{,}00250$ | $4{,}90000$ | $0{,}00051$ |
+| $3$ | $2{,}44949$ | | | |
+:::
+
+Sonuç $p_3 = 2{,}44949$ dur. $\sqrt{6} = 2{,}4494897\ldots$ olduğundan $p_3$ beş basamağa kadar doğrudur.
+
+Bağıntı sadeleştirilirse $p_n = \frac{1}{2}\left(p_{n-1} + \frac{6}{p_{n-1}}\right)$ olur: [Sabit Nokta İterasyonu](sabit-nokta-iterasyonu.qmd) bölümünde $\sqrt{3}$ için kullanılan $g(x) = 0{,}5\left(x + \frac{3}{x}\right)$ fonksiyonu, $f(x) = x^2 - 3$'e uygulanan Newton-Raphson Metodundan başka bir şey değildir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-nwt-kubik name="Kübik denklemin −3 ile −2 arasındaki kökü"}
+$x^3 + 3x^2 - 1 = 0$ denkleminin $[-3; -2]$ aralığındaki köküne Newton-Raphson Metodu ile $p_0 = -2{,}5$ alarak $|p_n - p_{n-1}| < 10^{-4}$ durma kriteriyle bir $p_n$ yaklaşımında bulunun. Hesapları her adımda virgülden sonra 5. basamağa yuvarlayarak bir tabloda gösterin.
+
+::: {.cozum}
+**Aralık ve koşullar.** $f(x) = x^3 + 3x^2 - 1$ olsun. $f(-3) = -1 < 0$ ve $f(-2) = 3 > 0$ olduğundan Ara Değer Teoremine göre $(-3, -2)$ aralığında bir kök vardır. $f \in C^2[-3; -2]$ ve
+
+$$
+f'(x) = 3x^2 + 6x = 3x(x + 2)
+$$
+
+türevi $[-3; -2)$ üzerinde sıfırdan farklıdır (yalnız uç nokta $x = -2$'de sıfırdır). Kök $-2$'den uzakta olduğundan $f'(p) \neq 0$ dır.
+
+**İterasyon.** $p_0 = -2{,}5$ ve $n \geq 1$ için
+
+$$
+p_n = p_{n-1} - \frac{p_{n-1}^3 + 3p_{n-1}^2 - 1}{3p_{n-1}^2 + 6p_{n-1}}
+$$
+
+dir. İlk satırın hesabı şöyledir:
+
+$$
+\begin{aligned}
+f(-2{,}5) &= -15{,}625 + 18{,}75 - 1 = 2{,}125, \\[1mm]
+f'(-2{,}5) &= 18{,}75 - 15 = 3{,}75, \\[1mm]
+\frac{f(p_0)}{f'(p_0)} &= \frac{2{,}125}{3{,}75} = 0{,}566666\ldots \approx 0{,}56667, \\[1mm]
+p_1 &= -2{,}5 - 0{,}56667 = -3{,}06667.
+\end{aligned}
+$$
+
+$p_1$ aralığın biraz dışına düşer, ama sonraki adımlar köke geri döner.
+
+::: {.iteration-table}
+| $n$ | $p_n$ | $f(p_n)$ | $f'(p_n)$ | $f(p_n)/f'(p_n)$ | $\lvert p_n - p_{n-1}\rvert$ |
+|:-:|--:|--:|--:|--:|--:|
+| $0$ | $-2{,}50000$ | $2{,}12500$ | $3{,}75000$ | $0{,}56667$ | |
+| $1$ | $-3{,}06667$ | $-1{,}62700$ | $9{,}81337$ | $-0{,}16579$ | $0{,}56667$ |
+| $2$ | $-2{,}90088$ | $-0{,}16589$ | $7{,}84003$ | $-0{,}02116$ | $0{,}16579$ |
+| $3$ | $-2{,}87972$ | $-0{,}00254$ | $7{,}60004$ | $-0{,}00033$ | $0{,}02116$ |
+| $4$ | $-2{,}87939$ | $-0{,}00004$ | $7{,}59632$ | $-0{,}00001$ | $0{,}00033$ |
+| $5$ | $-2{,}87938$ | | | | $0{,}00001$ |
+:::
+
+$|p_4 - p_3| = 0{,}00033$ henüz $10^{-4}$'ten büyüktür; $|p_5 - p_4| = 0{,}00001 < 10^{-4}$ olduğundan iterasyon durur:
+
+$$
+p \approx p_5 = -2{,}87938.
+$$
+
+Gerçek kök $p = -2{,}8793852\ldots$ olduğundan $|p_5 - p| \approx 0{,}52 \cdot 10^{-5}$ tir. Beş basamaklı yuvarlamayla yaklaşımlar artık $-2{,}87939$ ile $-2{,}87938$ arasında gidip gelir; bu duyarlıkla daha iyisi elde edilemez. [$\blacksquare$]{.qed}
+:::
+::::
+
+Newton-Raphson Metodu her adımda $f'$ türevini hesaplamayı gerektirir. Türev yerine iki yaklaşımdan geçen kesenin eğimini kullanan yöntemler bir sonraki bölümün konusu: [Secant ve Regula Falsi Metodları](secant-ve-regula-falsi.qmd).

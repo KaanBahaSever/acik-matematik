@@ -1,0 +1,610 @@
+---
+title: "Secant ve Regula Falsi Metodları"
+pagetitle: "Secant ve Regula Falsi Metodları"
+description: "Newton-Raphson metodundaki türevi fark bölümüyle değiştiren Secant metodu, kökü içeren aralığı her adımda koruyan Regula Falsi metodu ve cos x − x = 0 denklemi üzerinde dört kök bulma yönteminin karşılaştırılması."
+---
+
+Newton-Raphson metodu hızlıdır ama her adımda $f'(p_{n-1})$ değerini ister. Türevin fonksiyonun kendisinden daha karmaşık olduğu ya da hiç kapalı biçimde yazılamadığı durumlarda bu, yöntemin zayıf yanıdır. Bu bölümde türevi, son iki yaklaşımdan hesaplanan bir fark bölümüyle değiştiriyoruz. Ortaya çıkan Secant metodu iki başlangıç değeriyle çalışır, her adımda yalnız bir fonksiyon değeri hesaplar ve Newton-Raphson'dan biraz yavaş yakınsar.
+
+Secant metodu da Newton-Raphson gibi kökün bulunduğu aralığı korumaz. Kirişlerle ilerlerken her adımda kökü içeren aralığı ikiye bölme metodundaki gibi denetlersek Regula Falsi metodunu elde ederiz. "Yanlış konum" anlamına gelen bu adın arkasındaki fikir, Antik Mısır'daki Rhind papirüsüne (MÖ yaklaşık 1650) kadar uzanır.
+
+## Secant Metodu
+
+Newton-Raphson metodunun $p_n = p_{n-1} - \dfrac{f(p_{n-1})}{f'(p_{n-1})}$ bağıntısından yola çıkalım. $p_{n-1}$ noktasındaki türev bir limittir:
+
+$$f'(p_{n-1}) = \lim_{x \to p_{n-1}} \frac{f(x) - f(p_{n-1})}{x - p_{n-1}}.$$
+
+$p_{n-2}$ değeri $p_{n-1}$'e yakınsa limitin yerine $x = p_{n-2}$ için fark bölümünü yazabiliriz:
+
+$$f'(p_{n-1}) \approx \frac{f(p_{n-2}) - f(p_{n-1})}{p_{n-2} - p_{n-1}} = \frac{f(p_{n-1}) - f(p_{n-2})}{p_{n-1} - p_{n-2}}.$$
+
+Bu yaklaşımı Newton-Raphson bağıntısında türevin yerine koyarsak
+
+$$
+\begin{aligned}
+p_n &= p_{n-1} - \frac{f(p_{n-1})}{\dfrac{f(p_{n-1}) - f(p_{n-2})}{p_{n-1} - p_{n-2}}} \\[1mm]
+&= p_{n-1} - \frac{f(p_{n-1}) \cdot (p_{n-1} - p_{n-2})}{f(p_{n-1}) - f(p_{n-2})}
+\end{aligned}
+$$
+
+bulunur.
+
+::: {#def-sec-secant name="Secant Metodu"}
+$p_0$ ve $p_1$ başlangıç değerleri olmak üzere
+
+$$p_n = p_{n-1} - \frac{f(p_{n-1}) \cdot (p_{n-1} - p_{n-2})}{f(p_{n-1}) - f(p_{n-2})}, \qquad n \ge 2 \tag{1}$$
+
+bağıntısıyla köke yaklaşma işlemine **Secant metodu** denir.
+:::
+
+Yani Secant metodu, Newton-Raphson metodunda $f'(p_{n-1})$ yerine son iki yaklaşımdan geçen doğrunun eğimini kullanır. $f(p_{n-2})$ bir önceki adımda hesaplandığı için her adımda yeni olarak yalnız $f(p_{n-1})$ hesaplanır; türev hiç gerekmez.
+
+(1) bağıntısının geometrik anlamı açıktır. $(p_{n-2}, f(p_{n-2}))$ ve $(p_{n-1}, f(p_{n-1}))$ noktalarından geçen doğru
+
+$$y = f(p_{n-1}) + \frac{f(p_{n-1}) - f(p_{n-2})}{p_{n-1} - p_{n-2}}\,(x - p_{n-1})$$
+
+doğrusudur. $y = 0$ koyup $x$'i çözersek tam olarak (1) bağıntısındaki $p_n$ çıkar. Böylece $(p_0, f(p_0))$ ve $(p_1, f(p_1))$ noktalarını birleştiren doğrunun $x$ eksenini kestiği nokta $p_2$ olur. Ardından $(p_1, f(p_1))$ ve $(p_2, f(p_2))$ noktalarını birleştiren doğrunun $x$ eksenini kestiği nokta $p_3$ olur. Süreç böyle sürdürülerek $p_4, p_5, \dots$ yaklaşımları bulunur. Yöntemin adı da eğriyi iki noktada kesen bu doğrudan (kesen, sekant) gelir.
+
+::: {.callout-tip title="Secant metodu dört adımda"}
+1. $p_0$, $p_1$ başlangıç değerlerini seç; $f(p_0)$ ve $f(p_1)$'i hesapla.
+2. $\text{Pay} = f(p_{n-1}) \cdot (p_{n-1} - p_{n-2})$ ve $\text{Payda} = f(p_{n-1}) - f(p_{n-2})$ değerlerini bul; $p_n = p_{n-1} - \text{Pay}/\text{Payda}$ olur.
+3. Durma kriterini (örneğin $|p_n - p_{n-1}| < \varepsilon$) dene; sağlanıyorsa $p \approx p_n$ al.
+4. Sağlanmıyorsa $f(p_n)$'yi hesapla, en eski noktayı bırak, $n$'yi bir artırıp 2. adıma dön.
+:::
+
+:::: {#exm-sec-cos name="cos x − x = 0 Denklemine Secant Metodu ile Yaklaşım"}
+$\cos x - x = 0$ denkleminin çözümüne Secant metodu ile yaklaşımda bulununuz. $p_0 = 0{,}5$ ve $p_1 = \dfrac{\pi}{4}$ alıp işlemlerinizi yuvarlama yapmadan bir tabloda gösteriniz.
+
+::: {.cozum}
+$f(x) = \cos x - x$, $p_0 = 0{,}5$, $p_1 = \dfrac{\pi}{4}$ olsun. (1) bağıntısı $n \ge 2$ için
+
+$$
+\begin{aligned}
+p_n &= p_{n-1} - \frac{\text{Pay}}{\text{Payda}}, \\[1mm]
+\text{Pay} &= (\cos p_{n-1} - p_{n-1})(p_{n-1} - p_{n-2}), \\[1mm]
+\text{Payda} &= \cos p_{n-1} - p_{n-1} - \cos p_{n-2} + p_{n-2}
+\end{aligned}
+$$
+
+biçimini alır. Başlangıç değerlerinde
+
+$$f(p_0) = \cos 0{,}5 - 0{,}5 = 0{,}377582562, \qquad f(p_1) = \cos\frac{\pi}{4} - \frac{\pi}{4} = -0{,}078291382$$
+
+olur. Hesaplar yuvarlanmamış değerlerle sürdürülür; sayılar dokuz ondalık basamağa yuvarlanarak gösterilir, bu yüzden elle yapılan çıkarmalarda son basamakta bir birimlik fark görülebilir. İlk adımda
+
+$$
+\begin{aligned}
+\text{Pay} &= (-0{,}078291382)(0{,}285398163) = -0{,}022344217, \\[1mm]
+\text{Payda} &= -0{,}078291382 - 0{,}377582562 = -0{,}455873944, \\[1mm]
+p_2 &= 0{,}785398163 - 0{,}049014025 = 0{,}736384139
+\end{aligned}
+$$
+
+bulunur. $p_2$, $(p_0, f(p_0))$ ve $(p_1, f(p_1))$ noktalarından geçen kirişin $x$ eksenini kestiği noktadır ve köke $p_1$'den çok daha yakındır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="18.0 -3.5 476.5 365.0" role="img" aria-label="Graph of y = cos x - x with the secant through (p0, f(p0)) and (p1, f(p1)) crossing the x axis at p2 = 0.7364; a zoom window shows p2, the dashed second secant and the root p = 0.7391">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="110.0" y1="30.0" x2="110.0" y2="310.0"/><line x1="210.0" y1="30.0" x2="210.0" y2="310.0"/><line x1="310.0" y1="30.0" x2="310.0" y2="310.0"/><line x1="410.0" y1="30.0" x2="410.0" y2="310.0"/><line x1="60.0" y1="299.6" x2="460.0" y2="299.6"/><line x1="60.0" y1="195.9" x2="460.0" y2="195.9"/><line x1="60.0" y1="144.1" x2="460.0" y2="144.1"/><line x1="60.0" y1="92.2" x2="460.0" y2="92.2"/><line x1="60.0" y1="40.4" x2="460.0" y2="40.4"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="60.0" y1="310.0" x2="468.0" y2="310.0"/>
+  <line x1="60.0" y1="22.0" x2="60.0" y2="310.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="110.0" y="326.0" text-anchor="middle">0,5</text>
+  <text x="210.0" y="326.0" text-anchor="middle">0,6</text>
+  <text x="310.0" y="326.0" text-anchor="middle">0,7</text>
+  <text x="410.0" y="326.0" text-anchor="middle">0,8</text>
+  <text x="53.0" y="303.6" text-anchor="end">&#8722;0,1</text>
+  <text x="53.0" y="251.8" text-anchor="end">0</text>
+  <text x="53.0" y="199.9" text-anchor="end">0,1</text>
+  <text x="53.0" y="148.1" text-anchor="end">0,2</text>
+  <text x="53.0" y="96.2" text-anchor="end">0,3</text>
+  <text x="53.0" y="44.4" text-anchor="end">0,4</text>
+  <text x="56.0" y="16.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <line x1="60.0" y1="247.8" x2="464.4" y2="247.8" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>
+  <polygon points="470.0,247.8 463.0,250.7 463.0,244.8" fill="var(--academic-text)" opacity="0.6"/>
+  <text x="474.0" y="251.8" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">x</tspan></text>
+  <path d="M81.5,30.3 L83.1,31.5 L84.7,32.7 L86.2,33.9 L87.8,35.1 L89.4,36.3 L91.0,37.5 L92.5,38.7 L94.1,39.9 L95.7,41.1 L97.3,42.3 L98.8,43.5 L100.4,44.7 L102.0,45.9 L103.6,47.1 L105.2,48.3 L106.7,49.5 L108.3,50.7 L109.9,51.9 L111.5,53.1 L113.0,54.3 L114.6,55.5 L116.2,56.8 L117.8,58.0 L119.4,59.2 L120.9,60.4 L122.5,61.6 L124.1,62.8 L125.7,64.1 L127.2,65.3 L128.8,66.5 L130.4,67.7 L132.0,69.0 L133.5,70.2 L135.1,71.4 L136.7,72.6 L138.3,73.9 L139.9,75.1 L141.4,76.3 L143.0,77.6 L144.6,78.8 L146.2,80.0 L147.7,81.3 L149.3,82.5 L150.9,83.7 L152.5,85.0 L154.0,86.2 L155.6,87.5 L157.2,88.7 L158.8,89.9 L160.4,91.2 L161.9,92.4 L163.5,93.7 L165.1,94.9 L166.7,96.2 L168.2,97.4 L169.8,98.7 L171.4,99.9 L173.0,101.2 L174.5,102.4 L176.1,103.7 L177.7,105.0 L179.3,106.2 L180.9,107.5 L182.4,108.7 L184.0,110.0 L185.6,111.3 L187.2,112.5 L188.7,113.8 L190.3,115.1 L191.9,116.3 L193.5,117.6 L195.1,118.9 L196.6,120.1 L198.2,121.4 L199.8,122.7 L201.4,123.9 L202.9,125.2 L204.5,126.5 L206.1,127.8 L207.7,129.0 L209.2,130.3 L210.8,131.6 L212.4,132.9 L214.0,134.2 L215.6,135.4 L217.1,136.7 L218.7,138.0 L220.3,139.3 L221.9,140.6 L223.4,141.9 L225.0,143.2 L226.6,144.5 L228.2,145.7 L229.7,147.0 L231.3,148.3 L232.9,149.6 L234.5,150.9 L236.1,152.2 L237.6,153.5 L239.2,154.8 L240.8,156.1 L242.4,157.4 L243.9,158.7 L245.5,160.0 L247.1,161.3 L248.7,162.6 L250.2,163.9 L251.8,165.2 L253.4,166.5 L255.0,167.9 L256.6,169.2 L258.1,170.5 L259.7,171.8 L261.3,173.1 L262.9,174.4 L264.4,175.7 L266.0,177.0 L267.6,178.4 L269.2,179.7 L270.7,181.0 L272.3,182.3 L273.9,183.6 L275.5,185.0 L277.1,186.3 L278.6,187.6 L280.2,188.9 L281.8,190.3 L283.4,191.6 L284.9,192.9 L286.5,194.2 L288.1,195.6 L289.7,196.9 L291.3,198.2 L292.8,199.6 L294.4,200.9 L296.0,202.2 L297.6,203.6 L299.1,204.9 L300.7,206.3 L302.3,207.6 L303.9,208.9 L305.4,210.3 L307.0,211.6 L308.6,213.0 L310.2,214.3 L311.8,215.7 L313.3,217.0 L314.9,218.3 L316.5,219.7 L318.1,221.0 L319.6,222.4 L321.2,223.7 L322.8,225.1 L324.4,226.4 L325.9,227.8 L327.5,229.2 L329.1,230.5 L330.7,231.9 L332.3,233.2 L333.8,234.6 L335.4,235.9 L337.0,237.3 L338.6,238.7 L340.1,240.0 L341.7,241.4 L343.3,242.8 L344.9,244.1 L346.5,245.5 L348.0,246.9 L349.6,248.2 L351.2,249.6 L352.8,251.0 L354.3,252.3 L355.9,253.7 L357.5,255.1 L359.1,256.5 L360.6,257.8 L362.2,259.2 L363.8,260.6 L365.4,262.0 L367.0,263.3 L368.5,264.7 L370.1,266.1 L371.7,267.5 L373.3,268.9 L374.8,270.3 L376.4,271.6 L378.0,273.0 L379.6,274.4 L381.1,275.8 L382.7,277.2 L384.3,278.6 L385.9,280.0 L387.5,281.4 L389.0,282.7 L390.6,284.1 L392.2,285.5 L393.8,286.9 L395.3,288.3 L396.9,289.7 L398.5,291.1 L400.1,292.5 L401.6,293.9 L403.2,295.3 L404.8,296.7 L406.4,298.1 L408.0,299.5 L409.5,300.9 L411.1,302.3 L412.7,303.7 L414.3,305.1 L415.8,306.5 L417.4,308.0 L419.0,309.4 L420.6,310.8 L422.1,312.2 L423.7,313.6 L425.3,315.0 L426.9,316.4 L428.5,317.8 L430.0,319.3 L431.6,320.7 L433.2,322.1 L434.8,323.5 L436.3,324.9 L437.9,326.3 L439.5,327.8 L441.1,329.2 L442.7,330.6 L444.2,332.0 L445.8,333.5 L447.4,334.9 L449.0,336.3 L450.5,337.7 L452.1,339.2 L453.7,340.6 L455.3,342.0 L456.8,343.4 L458.4,344.9 L460.0,346.3" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="80.0" y="216.7" fill="var(--color-theory)" font-size="12.5" text-anchor="start"><tspan font-style="italic">y</tspan> = cos <tspan font-style="italic">x</tspan> &#8722; <tspan font-style="italic">x</tspan></text>
+  <line x1="110.0" y1="52.0" x2="110.0" y2="247.8" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <line x1="395.4" y1="288.4" x2="395.4" y2="247.8" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <path d="M395.4,288.4 L346.4,245.4" fill="none" stroke="var(--color-practice)" stroke-width="1.6" stroke-dasharray="5 3" opacity="0.85" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M110.0,52.0 L395.4,288.4" fill="none" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="110.0" cy="52.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="395.4" cy="288.4" r="4.2" fill="var(--color-practice)"/>
+  <text x="110.0" y="264.8" fill="var(--academic-text)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">0</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="395.4" y="239.8" fill="var(--academic-text)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">1</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <polygon points="344.5,250.4 351.5,250.4 351.5,244.1 344.5,244.1" fill="none" fill-opacity="0" stroke="var(--academic-text)" stroke-width="0.9"/>
+  <line x1="348.0" y1="244.1" x2="285.0" y2="147.0" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.35"/>
+  <line x1="348.0" y1="244.1" x2="455.0" y2="147.0" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.35"/>
+  <rect x="285.0" y="37.0" width="170.0" height="110.0" rx="3" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="0.9" stroke-opacity="0.5"/>
+  <path d="M290.0,100.3 L450.0,100.3" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M290.0,36.5 L294.0,38.9 L298.0,41.3 L302.0,43.8 L306.0,46.2 L310.0,48.6 L314.0,51.1 L318.0,53.5 L322.0,55.9 L326.0,58.4 L330.0,60.8 L334.0,63.3 L338.0,65.7 L342.0,68.1 L346.0,70.6 L350.0,73.0 L354.0,75.4 L358.0,77.9 L362.0,80.3 L366.0,82.8 L370.0,85.2 L374.0,87.6 L378.0,90.1 L382.0,92.5 L386.0,95.0 L390.0,97.4 L394.0,99.8 L398.0,102.3 L402.0,104.7 L406.0,107.2 L410.0,109.6 L414.0,112.0 L418.0,114.5 L422.0,116.9 L426.0,119.4 L430.0,121.8 L434.0,124.3 L438.0,126.7 L442.0,129.1 L446.0,131.6 L450.0,134.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M290.0,75.3 L450.0,168.4" fill="none" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M333.1,62.7 L450.0,134.7" fill="none" stroke="var(--color-practice)" stroke-width="1.6" stroke-dasharray="5 3" opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="333.1" cy="62.7" r="3.2" fill="var(--color-practice)"/>
+  <circle cx="333.1" cy="100.3" r="3.0" fill="var(--color-practice)"/>
+  <circle cx="394.8" cy="100.3" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.6"/>
+  <text x="328.1" y="115.3" fill="var(--academic-text)" font-size="12" text-anchor="end"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">2</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="400.8" y="94.3" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">p</tspan></text>
+</svg>
+<figcaption><em>y</em> = cos <em>x</em> &#8722; <em>x</em> eğrisi ve Secant metodunun ilk iki kirişi. (<em>p</em><sub>0</sub>, <em>f</em>(<em>p</em><sub>0</sub>)) ile (<em>p</em><sub>1</sub>, <em>f</em>(<em>p</em><sub>1</sub>)) noktalarından geçen kiriş <em>x</em> eksenini <em>p</em><sub>2</sub> = 0,736384139'da keser. Büyütülmüş pencerede kesikli çizilen ikinci kiriş eğriyle neredeyse çakışır ve ekseni <em>p</em><sub>3</sub> = 0,739058139'da, <em>p</em> = 0,739085133 kökünün hemen yanında keser.</figcaption>
+</figure>
+```
+
+Örnekte durma kriteri verilmediğinden yaklaşımları, ardışık iki yaklaşım dokuz ondalık basamakta çakışana, yani $|p_n - p_{n-1}| < 10^{-9}$ olana kadar sürdürelim:
+
+::: {.iteration-table}
+| $n$ | $p_n$ | Pay | Payda | Pay/Payda | $\lvert p_n - p_{n-1}\rvert$ |
+|:-:|--:|--:|--:|--:|--:|
+| $0$ | $0{,}500000000$ | | | | |
+| $1$ | $0{,}785398163$ | | | | $0{,}285398163$ |
+| $2$ | $0{,}736384139$ | $-0{,}022344217$ | $-0{,}455873944$ | $0{,}049014025$ | $0{,}049014025$ |
+| $3$ | $0{,}739058139$ | $-0{,}000221432$ | $0{,}082809101$ | $-0{,}002674000$ | $0{,}002674000$ |
+| $4$ | $0{,}739085149$ | $0{,}000000121$ | $-0{,}004472541$ | $-0{,}000027010$ | $0{,}000027010$ |
+| $5$ | $0{,}739085133$ | $-0{,}72879 \cdot 10^{-12}$ | $-0{,}000045204$ | $0{,}000000016$ | $0{,}000000016$ |
+| $6$ | $0{,}739085133$ | $-0{,}25929 \cdot 10^{-20}$ | $0{,}000000027$ | $-0{,}96096 \cdot 10^{-13}$ | $0{,}96096 \cdot 10^{-13}$ |
+:::
+
+Son iki satırda Pay dokuz basamakta sıfır göründüğü için bilimsel gösterimle yazıldı. $|p_6 - p_5| < 10^{-9}$ olduğundan
+
+$$p \approx p_6 = 0{,}739085133$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Aynı denklemi Newton-Raphson metodu $p_0 = \dfrac{\pi}{4}$'ten başlayarak $p_3$'te dokuz basamak doğrulukla çözmüştü (@exm-nwt-cos). Secant metodu buna $p_5$'te ulaştı. Buna karşılık Secant metodunun her adımı tek bir fonksiyon değeri ister, Newton-Raphson'ınki ise hem $f$'yi hem $f'$'yi. Newton-Raphson'ın yakınsama garantisi (@thm-nwt-yakinsama) türevin varlığına ve $f'(p) \neq 0$ koşuluna dayanır. İki yöntem de kökü bir aralıkta tutmaz; yaklaşımlar kökün iki yanına gelişigüzel düşebilir.
+
+## Regula Falsi Metodu
+
+İkiye bölme metodunda kök her adımda bir aralığın içinde kalır ve aralık her adımda yarıya iner (@thm-ikb-yakinsama). Newton-Raphson ve Secant metodlarında ise kökün bulunduğu aralık garanti edilmez. Secant metodunun kirişleriyle ilerleyip her adımda kökü içeren aralığı ikiye bölme metodundaki gibi denetlersek bu iki iyi özelliği birleştiririz.
+
+Önce $f(p_0) \cdot f(p_1) < 0$ koşulunu sağlayan $p_0$ ve $p_1$ seçilir; ara değer teoremi (@thm-onb-ara-deger) gereği bu iki nokta arasında bir kök vardır. $(p_0, f(p_0))$ ve $(p_1, f(p_1))$ noktalarını birleştiren kirişin $x$ eksenini kestiği nokta $p_2$ olur. Eğer $f(p_1) \cdot f(p_2) < 0$ ise kök $p_1$ ile $p_2$ arasındadır ve $p_3$, $(p_1, f(p_1))$ ile $(p_2, f(p_2))$ noktalarından geçen kirişle bulunur. Değilse kök $p_0$ ile $p_2$ arasındadır ve $p_3$ için $(p_0, f(p_0))$ ile $(p_2, f(p_2))$ noktaları kullanılır. Süreç böyle sürdürülür.
+
+::: {#def-sec-regula-falsi name="Regula Falsi Metodu"}
+$f(p_0) \cdot f(p_1) < 0$ olsun. $n \ge 2$ için $p_k$, $k < n - 1$ ve $f(p_k) \cdot f(p_{n-1}) < 0$ koşullarını sağlayan en büyük $k$ indisli yaklaşım olmak üzere
+
+$$p_n = p_{n-1} - \frac{f(p_{n-1}) \cdot (p_{n-1} - p_k)}{f(p_{n-1}) - f(p_k)} \tag{2}$$
+
+bağıntısıyla köke yaklaşma işlemine **Regula Falsi metodu** denir.
+:::
+
+Yani formül Secant metodunun formülüdür; değişen yalnız kirişin ikinci ucudur. Secant metodunda bu uç her zaman $p_{n-2}$'dir. Regula Falsi metodunda ise $f$'nin işaretinin $f(p_{n-1})$'inkine zıt olduğu en son yaklaşımdır. $f(p_{n-1}) \cdot f(p_{n-2}) < 0$ ise $p_k = p_{n-2}$ olur ve adım bir Secant adımıyla aynıdır.
+
+:::: {#prp-sec-aralik name="Regula Falsi Metodunda Kök Aralıkta Kalır"}
+$f$, $p_0$ ile $p_1$ uçlu kapalı aralıkta sürekli ve $f(p_0) \cdot f(p_1) < 0$ olsun. Regula Falsi metodunun her adımında $p_{n-1}$ ile $p_k$ uçlu aralık $f$'nin bir kökünü içerir ve $p_n$ bu aralığın içinde kalır.
+
+::: {.ispat}
+$p_k$'nin seçimi gereği $f(p_{n-1})$ ile $f(p_k)$ zıt işaretlidir. Ara değer teoremi (@thm-onb-ara-deger) gereği $p_{n-1}$ ile $p_k$ arasında $f$'nin bir kökü vardır.
+
+$p_n$'nin bu iki noktanın arasında olduğunu görmek için
+
+$$t = \frac{f(p_{n-1})}{f(p_{n-1}) - f(p_k)}$$
+
+diyelim. $f(p_{n-1})$ ile $-f(p_k)$ aynı işaretli olduğundan
+
+$$|f(p_{n-1}) - f(p_k)| = |f(p_{n-1})| + |f(p_k)|$$
+
+olur. Bu toplam $|f(p_{n-1})|$'den büyüktür ve paydanın işareti payınkiyle aynıdır; dolayısıyla $0 < t < 1$ bulunur. (2) bağıntısı
+
+$$p_n = p_{n-1} - t\,(p_{n-1} - p_k) = (1 - t)\,p_{n-1} + t\,p_k$$
+
+biçiminde yazılabilir. Bu, $p_{n-1}$ ile $p_k$'nin $0 < t < 1$ ağırlıklı bir ortalamasıdır; yani $p_n$ iki noktanın arasındadır.
+
+Tümevarımla bütün yaklaşımlar $p_0$ ile $p_1$ uçlu aralıkta kalır, böylece $f$'nin sürekliliği her adımda kullanılabilir. $f(p_n) = 0$ ise kök bulunmuştur. Değilse $f(p_n)$, $f(p_{n-1})$ ile $f(p_k)$'den birine zıt işaretlidir; bir sonraki adımın ikinci ucu bu noktadır. Gerçekten, $f(p_n)f(p_{n-1}) < 0$ ise $n - 1$, $f(p_j)f(p_n) < 0$ koşulunu sağlayan en büyük $j < n$'dir. Aksi hâlde $k$'nin seçimi gereği $k < j \le n - 1$ olan her $p_j$ için $f(p_j)$, $f(p_{n-1})$ ile, dolayısıyla $f(p_n)$ ile aynı işaretlidir; bu yüzden en büyük uygun indis yine $k$'dir. Böylece iddia bir sonraki adım için de geçerlidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Kök hep kirişin iki ucu arasında kalır, ama ikiye bölmeden farklı olarak bu aralığın uzunluğu sıfıra gitmek zorunda değildir: aşağıdaki örneklerde uçlardan biri hiç değişmez. Bu yüzden durma kriteri olarak aralık uzunluğu değil, $|f(p_n)|$ ya da $|p_n - p_{n-1}|$ kullanılır.
+
+::: {.callout-tip title="Regula Falsi metodu dört adımda"}
+1. $f(p_0) \cdot f(p_1) < 0$ olacak biçimde $p_0$, $p_1$ seç; ilk adımda $p_k = p_0$ olur.
+2. $\text{Pay} = f(p_{n-1}) \cdot (p_{n-1} - p_k)$ ve $\text{Payda} = f(p_{n-1}) - f(p_k)$ ile $p_n = p_{n-1} - \text{Pay}/\text{Payda}$ bul.
+3. $f(p_n)$'yi hesapla ve durma kriterini dene; sağlanıyorsa $p \approx p_n$ al.
+4. $f(p_n) \cdot f(p_{n-1}) < 0$ ise yeni ikinci uç $p_{n-1}$ olur; değilse $p_k$ korunur. $n$'yi bir artırıp 2. adıma dön.
+:::
+
+:::: {#exm-sec-regula-falsi-cos name="cos x − x = 0 Denklemine Regula Falsi Metodu ile Yaklaşım"}
+$\cos x - x = 0$ denkleminin çözümüne Regula Falsi metodunu kullanarak yaklaşımda bulununuz. $p_0 = 0{,}5$, $p_1 = \dfrac{\pi}{4}$ alıp $|f(p_n)| < 10^{-8}$ durma kriteri ile işlemlerinizi yuvarlama yapmadan bir tabloda gösteriniz.
+
+::: {.cozum}
+$f(x) = \cos x - x$ için
+
+$$f(p_0) = 0{,}377582562 > 0, \qquad f(p_1) = -0{,}078291382 < 0$$
+
+olduğundan $f(p_0) \cdot f(p_1) < 0$ olur ve kök $[0{,}5;\ \pi/4]$ aralığındadır. $n \ge 2$ için (2) bağıntısı
+
+$$
+\begin{aligned}
+p_n &= p_{n-1} - \frac{\text{Pay}}{\text{Payda}}, \\[1mm]
+\text{Pay} &= (\cos p_{n-1} - p_{n-1})(p_{n-1} - p_k), \\[1mm]
+\text{Payda} &= \cos p_{n-1} - p_{n-1} - \cos p_k + p_k
+\end{aligned}
+$$
+
+biçimini alır. Adımları izleyelim:
+
+- $n = 2$: kiriş $p_1$ ile $p_0$ arasındadır; bu adım Secant adımıyla aynıdır ve $p_2 = 0{,}736384139$, $f(p_2) = 0{,}004517719 > 0$ bulunur. $f(p_2) \cdot f(p_1) < 0$ olduğundan yeni ikinci uç $p_1$'dir.
+- $n = 3$: kiriş $p_2$ ile $p_1$ arasındadır; yine Secant adımıyla aynıdır. $p_3 = 0{,}739058139$, $f(p_3) = 0{,}000045177 > 0$ olur. $f(p_3) \cdot f(p_2) > 0$ olduğundan ikinci uç $p_1$ olarak kalır.
+- $n = 4$: kiriş $p_3$ ile $p_1$ arasındadır. $p_4 = 0{,}739084864$, $f(p_4) = 0{,}000000451 > 0$ olur; ikinci uç yine $p_1$'dir.
+- $n = 5$: kiriş $p_4$ ile $p_1$ arasındadır. $p_5 = 0{,}739085131$ ve $|f(p_5)| \approx 0{,}45 \cdot 10^{-8} < 10^{-8}$ olur.
+
+Tabloda her satırda kirişin iki ucu ($p_{n-1}$ ve $p_k$), yeni yaklaşım $p_n$ ve hesabın ara değerleri yer alır:
+
+::: {.iteration-table}
+| $n$ | $p_{n-1}$ | $p_k$ | $p_n$ | $f(p_n)$ | Pay | Payda | Pay/Payda |
+|:-:|--:|--:|--:|--:|--:|--:|--:|
+| $0$ | | | $0{,}500000000$ | $0{,}377582562$ | | | |
+| $1$ | | | $0{,}785398163$ | $-0{,}078291382$ | | | |
+| $2$ | $0{,}785398163$ | $0{,}500000000$ | $0{,}736384139$ | $0{,}004517719$ | $-0{,}022344217$ | $-0{,}455873944$ | $0{,}049014025$ |
+| $3$ | $0{,}736384139$ | $0{,}785398163$ | $0{,}739058139$ | $0{,}000045177$ | $-0{,}000221432$ | $0{,}082809101$ | $-0{,}002674000$ |
+| $4$ | $0{,}739058139$ | $0{,}785398163$ | $0{,}739084864$ | $0{,}000000451$ | $-0{,}000002094$ | $0{,}078336559$ | $-0{,}000026725$ |
+| $5$ | $0{,}739084864$ | $0{,}785398163$ | $0{,}739085131$ | $0{,}000000004$ | $-0{,}000000021$ | $0{,}078291833$ | $-0{,}000000267$ |
+:::
+
+$|f(p_5)| < 10^{-8}$ olduğundan
+
+$$p \approx p_5 = 0{,}739085131$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+İlk iki adım Secant metoduyla aynıdır. $p_2$'den itibaren yaklaşımların hepsi kökün sol yanına düşer ($f(p_n) > 0$), bu yüzden $p_k = \dfrac{\pi}{4}$ ucu hiç değişmez. Uzak bir uca bağlı kalan kiriş köke daha yavaş yaklaşır: $p_4$'te Secant metodunun hatası yaklaşık $1{,}6 \cdot 10^{-8}$ iken Regula Falsi'ninki yaklaşık $2{,}7 \cdot 10^{-7}$'dir. Aynı durum aşağıdaki örnekte daha belirgindir.
+
+:::: {#exm-sec-kup-kok name="Üçün Küp Köküne Regula Falsi ile Yaklaşım"}
+$x^3 - 3 = 0$ denkleminin köküne Regula Falsi metodu ile $[1, 2]$ aralığında yaklaşımda bulununuz. İşlemlerinizde yuvarlama yapmadan $|f(p_n)| < 0{,}001$ durma kriterini kullanınız.
+
+::: {.cozum}
+$f(x) = x^3 - 3$, $p_0 = 1$, $p_1 = 2$ alalım. $f(p_0) = -2 < 0$ ve $f(p_1) = 5 > 0$ olduğundan kök $[1, 2]$ aralığındadır.
+
+Küp farkı çarpanlarına ayrılırsa
+
+$$f(p_{n-1}) - f(p_k) = p_{n-1}^3 - p_k^3 = (p_{n-1} - p_k)(p_{n-1}^2 + p_{n-1} p_k + p_k^2)$$
+
+olur ve (2) bağıntısında $p_{n-1} - p_k$ çarpanı sadeleşir:
+
+$$p_n = p_{n-1} - \frac{p_{n-1}^3 - 3}{p_{n-1}^2 + p_{n-1} p_k + p_k^2}, \qquad n \ge 2.$$
+
+Burada $\text{Pay} = p_{n-1}^3 - 3$ ve $\text{Payda} = p_{n-1}^2 + p_{n-1} p_k + p_k^2$ olur. İlk adımda $\text{Pay} = 5$, $\text{Payda} = 4 + 2 + 1 = 7$ ve
+
+$$p_2 = 2 - \frac{5}{7} = 1{,}285714286, \qquad f(p_2) = -0{,}874635569 < 0$$
+
+bulunur. $f(p_2) \cdot f(p_1) < 0$ olduğundan yeni ikinci uç $p_1 = 2$'dir. Sonraki her adımda da $f(p_n) < 0$ çıkar; yani $f(p_n) \cdot f(p_{n-1}) > 0$ olur ve ikinci uç hep $2$ olarak kalır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="26.5 -3.5 488.0 435.0" role="img" aria-label="Graph of y = x^3 - 3 with three regula falsi chords from the fixed point (2, 5) crossing the x axis at p2 = 1.2857, p3 = 1.3921 and p4 = 1.4267 near the root 1.4422, and bars for the intervals [1, 2], [p2, 2], [p3, 2], [p4, 2] whose right end stays at 2">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="95.0" y1="30.0" x2="95.0" y2="330.0"/><line x1="165.0" y1="30.0" x2="165.0" y2="330.0"/><line x1="235.0" y1="30.0" x2="235.0" y2="330.0"/><line x1="305.0" y1="30.0" x2="305.0" y2="330.0"/><line x1="375.0" y1="30.0" x2="375.0" y2="330.0"/><line x1="445.0" y1="30.0" x2="445.0" y2="330.0"/><line x1="60.0" y1="311.2" x2="480.0" y2="311.2"/><line x1="60.0" y1="161.2" x2="480.0" y2="161.2"/><line x1="60.0" y1="86.2" x2="480.0" y2="86.2"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="60.0" y1="330.0" x2="488.0" y2="330.0"/>
+  <line x1="60.0" y1="22.0" x2="60.0" y2="330.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="95.0" y="346.0" text-anchor="middle">1</text>
+  <text x="165.0" y="346.0" text-anchor="middle">1,2</text>
+  <text x="235.0" y="346.0" text-anchor="middle">1,4</text>
+  <text x="305.0" y="346.0" text-anchor="middle">1,6</text>
+  <text x="375.0" y="346.0" text-anchor="middle">1,8</text>
+  <text x="445.0" y="346.0" text-anchor="middle">2</text>
+  <text x="53.0" y="315.2" text-anchor="end">&#8722;2</text>
+  <text x="53.0" y="240.2" text-anchor="end">0</text>
+  <text x="53.0" y="165.2" text-anchor="end">2</text>
+  <text x="53.0" y="90.2" text-anchor="end">4</text>
+  <text x="56.0" y="16.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <line x1="60.0" y1="236.2" x2="484.4" y2="236.2" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>
+  <polygon points="490.0,236.2 483.0,239.2 483.0,233.3" fill="var(--academic-text)" opacity="0.6"/>
+  <text x="494.0" y="240.2" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">x</tspan></text>
+  <path d="M60.0,321.4 L61.7,321.0 L63.3,320.5 L65.0,320.1 L66.7,319.6 L68.3,319.2 L70.0,318.7 L71.6,318.3 L73.3,317.8 L75.0,317.3 L76.6,316.8 L78.3,316.4 L80.0,315.9 L81.6,315.4 L83.3,314.9 L85.0,314.4 L86.6,313.9 L88.3,313.4 L89.9,312.9 L91.6,312.3 L93.3,311.8 L94.9,311.3 L96.6,310.7 L98.3,310.2 L99.9,309.6 L101.6,309.1 L103.3,308.5 L104.9,308.0 L106.6,307.4 L108.2,306.8 L109.9,306.3 L111.6,305.7 L113.2,305.1 L114.9,304.5 L116.6,303.9 L118.2,303.3 L119.9,302.7 L121.6,302.0 L123.2,301.4 L124.9,300.8 L126.5,300.2 L128.2,299.5 L129.9,298.9 L131.5,298.2 L133.2,297.6 L134.9,296.9 L136.5,296.3 L138.2,295.6 L139.9,294.9 L141.5,294.2 L143.2,293.5 L144.8,292.8 L146.5,292.1 L148.2,291.4 L149.8,290.7 L151.5,290.0 L153.2,289.3 L154.8,288.5 L156.5,287.8 L158.2,287.1 L159.8,286.3 L161.5,285.6 L163.1,284.8 L164.8,284.0 L166.5,283.3 L168.1,282.5 L169.8,281.7 L171.5,280.9 L173.1,280.1 L174.8,279.3 L176.5,278.5 L178.1,277.7 L179.8,276.9 L181.5,276.0 L183.1,275.2 L184.8,274.4 L186.4,273.5 L188.1,272.7 L189.8,271.8 L191.4,270.9 L193.1,270.1 L194.8,269.2 L196.4,268.3 L198.1,267.4 L199.8,266.5 L201.4,265.6 L203.1,264.7 L204.7,263.8 L206.4,262.8 L208.1,261.9 L209.7,261.0 L211.4,260.0 L213.1,259.1 L214.7,258.1 L216.4,257.1 L218.1,256.2 L219.7,255.2 L221.4,254.2 L223.0,253.2 L224.7,252.2 L226.4,251.2 L228.0,250.2 L229.7,249.2 L231.4,248.1 L233.0,247.1 L234.7,246.0 L236.4,245.0 L238.0,243.9 L239.7,242.9 L241.3,241.8 L243.0,240.7 L244.7,239.6 L246.3,238.5 L248.0,237.4 L249.7,236.3 L251.3,235.2 L253.0,234.1 L254.7,233.0 L256.3,231.8 L258.0,230.7 L259.6,229.5 L261.3,228.4 L263.0,227.2 L264.6,226.0 L266.3,224.8 L268.0,223.7 L269.6,222.5 L271.3,221.3 L273.0,220.0 L274.6,218.8 L276.3,217.6 L277.9,216.4 L279.6,215.1 L281.3,213.9 L282.9,212.6 L284.6,211.3 L286.3,210.1 L287.9,208.8 L289.6,207.5 L291.3,206.2 L292.9,204.9 L294.6,203.6 L296.2,202.2 L297.9,200.9 L299.6,199.6 L301.2,198.2 L302.9,196.9 L304.6,195.5 L306.2,194.1 L307.9,192.8 L309.6,191.4 L311.2,190.0 L312.9,188.6 L314.5,187.2 L316.2,185.7 L317.9,184.3 L319.5,182.9 L321.2,181.4 L322.9,180.0 L324.5,178.5 L326.2,177.0 L327.9,175.6 L329.5,174.1 L331.2,172.6 L332.8,171.1 L334.5,169.6 L336.2,168.0 L337.8,166.5 L339.5,165.0 L341.2,163.4 L342.8,161.9 L344.5,160.3 L346.2,158.7 L347.8,157.2 L349.5,155.6 L351.1,154.0 L352.8,152.4 L354.5,150.7 L356.1,149.1 L357.8,147.5 L359.5,145.8 L361.1,144.2 L362.8,142.5 L364.5,140.8 L366.1,139.2 L367.8,137.5 L369.4,135.8 L371.1,134.1 L372.8,132.4 L374.4,130.6 L376.1,128.9 L377.8,127.2 L379.4,125.4 L381.1,123.6 L382.8,121.9 L384.4,120.1 L386.1,118.3 L387.8,116.5 L389.4,114.7 L391.1,112.9 L392.7,111.0 L394.4,109.2 L396.1,107.4 L397.7,105.5 L399.4,103.6 L401.1,101.8 L402.7,99.9 L404.4,98.0 L406.1,96.1 L407.7,94.2 L409.4,92.3 L411.0,90.3 L412.7,88.4 L414.4,86.4 L416.0,84.5 L417.7,82.5 L419.4,80.5 L421.0,78.5 L422.7,76.5 L424.4,74.5 L426.0,72.5 L427.7,70.5 L429.3,68.4 L431.0,66.4 L432.7,64.3 L434.3,62.3 L436.0,60.2 L437.7,58.1 L439.3,56.0 L441.0,53.9 L442.7,51.8 L444.3,49.6 L446.0,47.5 L447.6,45.3 L449.3,43.2 L451.0,41.0 L452.6,38.8 L454.3,36.6 L456.0,34.4 L457.6,32.2 L459.3,30.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="347.0" y="206.2" fill="var(--color-theory)" font-size="12.5" text-anchor="start"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">x</tspan>³ &#8722; 3</text>
+  <line x1="445.0" y1="48.8" x2="445.0" y2="330.0" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+  <line x1="445.0" y1="352.0" x2="445.0" y2="413.0" stroke="var(--color-practice)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+  <path d="M95.0,311.2 L445.0,48.8" fill="none" stroke="var(--color-practice)" stroke-width="1.7" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M195.0,269.0 L445.0,48.8" fill="none" stroke="var(--color-practice)" stroke-width="1.7" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M232.2,247.6 L445.0,48.8" fill="none" stroke="var(--color-practice)" stroke-width="1.7" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="95.0" cy="311.2" r="3.0" fill="var(--color-practice)"/>
+  <circle cx="195.0" cy="269.0" r="3.0" fill="var(--color-practice)"/>
+  <circle cx="232.2" cy="247.6" r="3.0" fill="var(--color-practice)"/>
+  <circle cx="445.0" cy="48.8" r="5.0" fill="var(--color-practice)"/>
+  <text x="436.0" y="42.8" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">1</tspan><tspan dy="-3">&#8203;</tspan> = 2</text>
+  <text x="101.0" y="327.2" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">0</tspan><tspan dy="-3">&#8203;</tspan> = 1</text>
+  <circle cx="195.0" cy="236.2" r="2.6" fill="var(--color-practice)"/>
+  <circle cx="232.2" cy="236.2" r="2.6" fill="var(--color-practice)"/>
+  <circle cx="244.4" cy="236.2" r="2.6" fill="var(--color-practice)"/>
+  <circle cx="249.8" cy="236.2" r="3.6" fill="var(--academic-bg)" stroke="var(--academic-text)" stroke-width="1.6"/>
+  <text x="190.0" y="229.2" fill="var(--academic-text)" font-size="12.5" text-anchor="end"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">2</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <path d="M233.6,238.5 L282.2,300.0" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="285.2" y="309.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">3</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <path d="M245.8,238.5 L296.2,277.5" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="299.2" y="286.5" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">4</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <path d="M251.2,238.5 L310.2,255.0" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="313.2" y="264.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">p</tspan></text>
+  <rect x="95.0" y="361.5" width="350.0" height="5" rx="2.5" fill="var(--color-base)" opacity="0.45"/>
+  <text x="88.0" y="368.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">[1, 2]</text>
+  <rect x="195.0" y="376.5" width="250.0" height="5" rx="2.5" fill="var(--color-base)" opacity="0.63"/>
+  <text x="188.0" y="383.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">[<tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">2</tspan><tspan dy="-3">&#8203;</tspan>, 2]</text>
+  <rect x="232.2" y="391.5" width="212.8" height="5" rx="2.5" fill="var(--color-base)" opacity="0.81"/>
+  <text x="225.2" y="398.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">[<tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">3</tspan><tspan dy="-3">&#8203;</tspan>, 2]</text>
+  <rect x="244.4" y="406.5" width="200.6" height="5" rx="2.5" fill="var(--color-base)" opacity="0.99"/>
+  <text x="237.4" y="413.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">[<tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3">4</tspan><tspan dy="-3">&#8203;</tspan>, 2]</text>
+</svg>
+<figcaption><em>y</em> = <em>x</em>³ &#8722; 3 için Regula Falsi metodunun ilk üç kirişi. Bütün kirişler sağ uçtaki (2, 5) noktasından çıkar ve <em>x</em> eksenini sırasıyla <em>p</em><sub>2</sub> = 1,285714286, <em>p</em><sub>3</sub> = 1,392059553, <em>p</em><sub>4</sub> = 1,426733629'da keser; kök <em>p</em> = 1,442249570'tir. Alttaki çubuklar kökü içeren aralıklardır: sol uç köke yaklaşırken sağ uç hep 2'de kalır.</figcaption>
+</figure>
+```
+
+Hesapların tamamı tabloda:
+
+::: {.iteration-table}
+| $n$ | $p_{n-1}$ | $p_k$ | $p_n$ | $f(p_n)$ | Pay | Payda | Pay/Payda |
+|:-:|--:|--:|--:|--:|--:|--:|--:|
+| $0$ | | | $1$ | $-2$ | | | |
+| $1$ | | | $2$ | $5$ | | | |
+| $2$ | $2$ | $1$ | $1{,}285714286$ | $-0{,}874635569$ | $5$ | $7$ | $0{,}714285714$ |
+| $3$ | $1{,}285714286$ | $2$ | $1{,}392059553$ | $-0{,}302425514$ | $-0{,}874635569$ | $8{,}224489796$ | $-0{,}106345268$ |
+| $4$ | $1{,}392059553$ | $2$ | $1{,}426733629$ | $-0{,}095785472$ | $-0{,}302425514$ | $8{,}721948907$ | $-0{,}034674075$ |
+| $5$ | $1{,}426733629$ | $2$ | $1{,}437509316$ | $-0{,}029483264$ | $-0{,}095785472$ | $8{,}889036105$ | $-0{,}010775687$ |
+| $6$ | $1{,}437509316$ | $2$ | $1{,}440806685$ | $-0{,}008994964$ | $-0{,}029483264$ | $8{,}941451665$ | $-0{,}003297369$ |
+| $7$ | $1{,}440806685$ | $2$ | $1{,}441810863$ | $-0{,}002736812$ | $-0{,}008994964$ | $8{,}957537272$ | $-0{,}001004178$ |
+| $8$ | $1{,}441810863$ | $2$ | $1{,}442116228$ | $-0{,}000832016$ | $-0{,}002736812$ | $8{,}962440290$ | $-0{,}000305365$ |
+:::
+
+$|f(p_7)| = 0{,}002736812 > 0{,}001$ iken $|f(p_8)| = 0{,}000832016 < 0{,}001$ olduğundan
+
+$$p \approx p_8 = 1{,}442116228$$
+
+bulunur. Gerçek kök $\sqrt[3]{3} = 1{,}442249570$'tir. Sağ uç $2$'de takılı kaldığı için hata her adımda yalnız yaklaşık $0{,}3$ katına iner. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Dört Yöntemin Karşılaştırılması
+
+$\cos x - x = 0$ denklemini şimdiye kadar dört yöntemle çözdük; sonuçları yan yana koyalım.
+
+:::: {#exm-sec-karsilastirma name="cos x − x = 0 İçin Yöntemlerin Karşılaştırılması"}
+$\cos x - x = 0$ denkleminin çözümüne Sabit Nokta İterasyonu ($g(x) = \cos x$, $p_0 = \dfrac{\pi}{4}$), Newton-Raphson, Secant ve Regula Falsi metodlarıyla yapılan yaklaşımları bir tabloda karşılaştırınız.
+
+::: {.cozum}
+Sabit Nokta İterasyonu için $g(x) = \cos x$ alalım; $\cos x = x$ olması $f(x) = \cos x - x = 0$ olmasıyla aynıdır. $g$, $[0, 1]$ üzerinde azalandır ve değerleri $[\cos 1, 1] = [0{,}540302306;\ 1]$ aralığındadır; yani $g$, $[0, 1]$'i kendi içine götürür. Ayrıca her $x \in [0, 1]$ için
+
+$$|g'(x)| = |\sin x| \le \sin 1 = 0{,}841470985 < 1$$
+
+olur. Sabit Nokta Teoremi (@thm-snk-sabit-nokta) gereği $p_0 = \dfrac{\pi}{4} \in [0, 1]$'den başlayan $p_n = \cos p_{n-1}$ dizisi köke yakınsar. İlk terimler $p_1 = \cos\dfrac{\pi}{4} = 0{,}707106781$, $p_2 = \cos p_1 = 0{,}760244597$, … biçiminde hesaplanır.
+
+Newton-Raphson sütunu @exm-nwt-cos, Secant sütunu @exm-sec-cos ve Regula Falsi sütunu @exm-sec-regula-falsi-cos örneklerinden alınmıştır. Her sütun o yöntemin $p_n$ yaklaşımlarıdır. Her yöntemin son satırında $p = 0{,}739085133\ldots$ kökünün basamaklarıyla çakışan basamaklar kalın yazılmıştır:
+
+::: {.iteration-table}
+| $n$ | Sabit Nokta | Newton-Raphson | Secant | Regula Falsi |
+|:-:|--:|--:|--:|--:|
+| $0$ | $0{,}785398163$ | $0{,}785398163$ | $0{,}500000000$ | $0{,}500000000$ |
+| $1$ | $0{,}707106781$ | $0{,}739536134$ | $0{,}785398163$ | $0{,}785398163$ |
+| $2$ | $0{,}760244597$ | $0{,}739085178$ | $0{,}736384139$ | $0{,}736384139$ |
+| $3$ | $0{,}724667481$ | $0{,}739085133$ | $0{,}739058139$ | $0{,}739058139$ |
+| $4$ | $0{,}748719886$ | $\mathbf{0{,}739085133}$ | $0{,}739085149$ | $0{,}739084864$ |
+| $5$ | $0{,}732560845$ | | $0{,}739085133$ | $\mathbf{0{,}73908513}1$ |
+| $6$ | $0{,}743464211$ | | $\mathbf{0{,}739085133}$ | |
+| $7$ | $\mathbf{0{,}73}6128257$ | | | |
+:::
+
+Hataların $n$'ye göre düşüşü yöntemler arasındaki farkı açıkça gösterir. Sabit Nokta İterasyonunda hata her adımda yaklaşık $0{,}67$ katına iner; yedi adım sonra bile yalnız iki basamak doğrudur. Newton-Raphson'da doğru basamak sayısı her adımda kabaca ikiye katlanır. Secant'ta da hızla artar ama Newton-Raphson'daki kadar hızlı değil. Regula Falsi ilk adımlarda Secant ile aynı gider, sonra sabit kalan uç yüzünden yavaşlar.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="33.5 -6.5 503.5 457.0" role="img" aria-label="Log scale plot of the errors |p_n - p| against n for fixed point iteration, Newton-Raphson, secant and regula falsi on cos x - x = 0; Newton and secant drop fastest, secant and regula falsi coincide up to n = 3">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="101.5" y1="30.0" x2="101.5" y2="370.0"/><line x1="155.4" y1="30.0" x2="155.4" y2="370.0"/><line x1="209.2" y1="30.0" x2="209.2" y2="370.0"/><line x1="263.1" y1="30.0" x2="263.1" y2="370.0"/><line x1="316.9" y1="30.0" x2="316.9" y2="370.0"/><line x1="370.8" y1="30.0" x2="370.8" y2="370.0"/><line x1="424.6" y1="30.0" x2="424.6" y2="370.0"/><line x1="478.5" y1="30.0" x2="478.5" y2="370.0"/><line x1="80.0" y1="350.5" x2="500.0" y2="350.5"/><line x1="80.0" y1="330.9" x2="500.0" y2="330.9"/><line x1="80.0" y1="311.4" x2="500.0" y2="311.4"/><line x1="80.0" y1="291.8" x2="500.0" y2="291.8"/><line x1="80.0" y1="272.3" x2="500.0" y2="272.3"/><line x1="80.0" y1="252.8" x2="500.0" y2="252.8"/><line x1="80.0" y1="233.2" x2="500.0" y2="233.2"/><line x1="80.0" y1="213.7" x2="500.0" y2="213.7"/><line x1="80.0" y1="194.1" x2="500.0" y2="194.1"/><line x1="80.0" y1="174.6" x2="500.0" y2="174.6"/><line x1="80.0" y1="155.1" x2="500.0" y2="155.1"/><line x1="80.0" y1="135.5" x2="500.0" y2="135.5"/><line x1="80.0" y1="116.0" x2="500.0" y2="116.0"/><line x1="80.0" y1="96.4" x2="500.0" y2="96.4"/><line x1="80.0" y1="76.9" x2="500.0" y2="76.9"/><line x1="80.0" y1="57.4" x2="500.0" y2="57.4"/><line x1="80.0" y1="37.8" x2="500.0" y2="37.8"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="80.0" y1="370.0" x2="508.0" y2="370.0"/>
+  <line x1="80.0" y1="22.0" x2="80.0" y2="370.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="101.5" y="386.0" text-anchor="middle">0</text>
+  <text x="155.4" y="386.0" text-anchor="middle">1</text>
+  <text x="209.2" y="386.0" text-anchor="middle">2</text>
+  <text x="263.1" y="386.0" text-anchor="middle">3</text>
+  <text x="316.9" y="386.0" text-anchor="middle">4</text>
+  <text x="370.8" y="386.0" text-anchor="middle">5</text>
+  <text x="424.6" y="386.0" text-anchor="middle">6</text>
+  <text x="478.5" y="386.0" text-anchor="middle">7</text>
+  <text x="73.0" y="354.5" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;16</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="315.4" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;14</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="276.3" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;12</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="237.2" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;10</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="198.1" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="159.1" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="120.0" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="80.9" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="41.8" text-anchor="end">1</text>
+  <text x="76.0" y="16.0" text-anchor="middle" font-style="italic">|<tspan font-style="italic">p</tspan><tspan font-size="8.5" dy="3"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3">&#8203;</tspan> &#8722; <tspan font-style="italic">p</tspan>|</text>
+  </g>
+  <text x="516.0" y="374.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">n</tspan></text>
+  <path d="M101.5,63.9 L155.4,67.0 L209.2,70.5 L263.1,73.8 L316.9,77.2 L370.8,80.5 L424.6,83.9 L478.5,87.2" fill="none" stroke="var(--color-remark)" stroke-width="1.8" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="101.5" cy="63.9" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <circle cx="155.4" cy="67.0" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <circle cx="209.2" cy="70.5" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <circle cx="263.1" cy="73.8" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <circle cx="316.9" cy="77.2" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <circle cx="370.8" cy="80.5" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <circle cx="424.6" cy="83.9" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <circle cx="478.5" cy="87.2" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <path d="M101.5,63.9 L155.4,103.2 L209.2,181.4 L263.1,337.8" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="263.1" y1="337.8" x2="266.5" y2="357.6" stroke="var(--color-theory)" stroke-width="1.4" stroke-dasharray="3 2" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="267.4,363.2 263.4,356.8 269.2,355.8" fill="var(--color-theory)" opacity="0.9"/>
+  <rect x="98.1" y="60.5" width="6.8" height="6.8" fill="var(--color-theory)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <rect x="152.0" y="99.8" width="6.8" height="6.8" fill="var(--color-theory)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <rect x="205.8" y="178.0" width="6.8" height="6.8" fill="var(--color-theory)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <rect x="259.7" y="334.4" width="6.8" height="6.8" fill="var(--color-theory)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <path d="M101.5,50.0 L155.4,63.9 L209.2,88.0 L263.1,127.1 L316.9,190.1 L370.8,292.2" fill="none" stroke="var(--color-practice)" stroke-width="1.8" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="370.8" y1="292.2" x2="392.2" y2="357.8" stroke="var(--color-practice)" stroke-width="1.4" stroke-dasharray="3 2" opacity="0.9" stroke-linecap="round"/>
+  <polygon points="393.9,363.2 389.0,357.4 394.5,355.6" fill="var(--color-practice)" opacity="0.9"/>
+  <polygon points="101.5,45.4 105.9,52.8 97.2,52.8" fill="var(--color-practice)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <polygon points="155.4,59.3 159.8,66.7 151.0,66.7" fill="var(--color-practice)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <polygon points="209.2,83.4 213.6,90.9 204.9,90.9" fill="var(--color-practice)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <polygon points="263.1,122.5 267.4,129.9 258.7,129.9" fill="var(--color-practice)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <polygon points="316.9,185.5 321.3,192.9 312.6,192.9" fill="var(--color-practice)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <polygon points="370.8,287.6 375.1,295.0 366.4,295.0" fill="var(--color-practice)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <path d="M101.5,50.0 L155.4,63.9 L209.2,88.0 L263.1,127.1 L316.9,166.2 L370.8,205.3" fill="none" stroke="var(--color-base)" stroke-width="1.8" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="101.5,42.7 108.8,50.0 101.5,57.3 94.2,50.0" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <polygon points="155.4,56.6 162.7,63.9 155.4,71.2 148.1,63.9" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <polygon points="209.2,80.7 216.5,88.0 209.2,95.3 201.9,88.0" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <polygon points="263.1,119.8 270.4,127.1 263.1,134.4 255.8,127.1" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <polygon points="316.9,158.9 324.2,166.2 316.9,173.5 309.6,166.2" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <polygon points="370.8,198.0 378.1,205.3 370.8,212.6 363.5,205.3" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="255.1" y="361.2" fill="var(--color-theory)" font-size="11" text-anchor="end">4,4 &#183; 10<tspan font-size="8.5" dy="-5">&#8722;32</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="401.9" y="361.2" fill="var(--color-practice)" font-size="11" text-anchor="start">3,4 &#183; 10<tspan font-size="8.5" dy="-5">&#8722;22</tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="100.0" y1="410.0" x2="130.0" y2="410.0" stroke="var(--color-remark)" stroke-width="1.8" opacity="0.9"/>
+  <circle cx="115.0" cy="410.0" r="4.0" fill="var(--color-remark)" stroke="var(--color-remark)" stroke-width="1.6"/>
+  <text x="140.0" y="414.0" fill="var(--academic-text)" font-size="12" text-anchor="start">Sabit Nokta</text>
+  <line x1="300.0" y1="410.0" x2="330.0" y2="410.0" stroke="var(--color-theory)" stroke-width="1.8" opacity="0.9"/>
+  <rect x="311.6" y="406.6" width="6.8" height="6.8" fill="var(--color-theory)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <text x="340.0" y="414.0" fill="var(--academic-text)" font-size="12" text-anchor="start">Newton-Raphson</text>
+  <line x1="100.0" y1="428.0" x2="130.0" y2="428.0" stroke="var(--color-practice)" stroke-width="1.8" opacity="0.9"/>
+  <polygon points="115.0,423.4 119.4,430.9 110.6,430.9" fill="var(--color-practice)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <text x="140.0" y="432.0" fill="var(--academic-text)" font-size="12" text-anchor="start">Secant</text>
+  <line x1="300.0" y1="428.0" x2="330.0" y2="428.0" stroke="var(--color-base)" stroke-width="1.8" stroke-dasharray="6 4" opacity="0.9"/>
+  <polygon points="315.0,420.7 322.3,428.0 315.0,435.3 307.7,428.0" fill="var(--academic-bg)" stroke="var(--color-base)" stroke-width="1.6"/>
+  <text x="340.0" y="432.0" fill="var(--academic-text)" font-size="12" text-anchor="start">Regula Falsi</text>
+</svg>
+<figcaption>cos <em>x</em> &#8722; <em>x</em> = 0 denkleminde dört yöntemin |<em>p</em><sub><em>n</em></sub> &#8722; <em>p</em>| hataları, logaritmik dikey eksende (<em>p</em> = 0,7390851332). Sabit Nokta İterasyonunun hatası her adımda aynı oranda azalır ve noktalar bir doğru boyunca iner. Newton-Raphson ve Secant'ın eğrileri giderek dikleşir; aşağı oklar, eksenin altında kalan sonraki hataları gösterir. Secant ile Regula Falsi <em>n</em> = 3'e kadar çakışır, sonra Regula Falsi yavaşlar.</figcaption>
+</figure>
+```
+
+Kök bulma yöntemlerini seçerken iki şey tartılır: hız ve güvence. İkiye bölme ve Regula Falsi kökü bir aralıkta tutar, Newton-Raphson ve Secant tutmaz. Newton-Raphson en hızlısıdır ama türev ister. Secant türevsiz olarak ona yakın bir hız sağlar. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Aşağıdaki sorularda bölümdeki iki yöntemi, paydadaki fonksiyon değerleri farkını çarpanlarına ayırarak sadeleştirilmiş bağıntılarla uyguluyoruz.
+
+:::: {#exr-sec-kok-iki name="İkinin Kareköküne Secant ile Yaklaşım"}
+$x^2 - 2 = 0$ denkleminin çözümüne Secant metodu ile yaklaşımda bulununuz. $p_0 = 1$ ve $p_1 = 1{,}5$ alınız. İşlemlerinizde yuvarlama yapmadan $|p_n - p_{n-1}| < 10^{-5}$ durma kriterini kullanınız.
+
+::: {.cozum}
+$f(x) = x^2 - 2$, $p_0 = 1$, $p_1 = 1{,}5$ olsun. İki kare farkından
+
+$$f(p_{n-1}) - f(p_{n-2}) = (p_{n-1} - p_{n-2})(p_{n-1} + p_{n-2})$$
+
+olduğundan (1) bağıntısında $p_{n-1} - p_{n-2}$ sadeleşir:
+
+$$p_n = p_{n-1} - \frac{p_{n-1}^2 - 2}{p_{n-1} + p_{n-2}}, \qquad n \ge 2.$$
+
+$\text{Pay} = p_{n-1}^2 - 2$ ve $\text{Payda} = p_{n-1} + p_{n-2}$ alalım. İlk adımda $\text{Pay} = 2{,}25 - 2 = 0{,}25$, $\text{Payda} = 2{,}5$ ve $p_2 = 1{,}5 - 0{,}1 = 1{,}4$ olur. İkinci adımda $\text{Pay} = 1{,}96 - 2 = -0{,}04$, $\text{Payda} = 2{,}9$ ve
+
+$$p_3 = 1{,}4 + \frac{0{,}04}{2{,}9} = 1{,}413793103$$
+
+bulunur. Sonraki adımlar tabloda:
+
+::: {.iteration-table}
+| $n$ | $p_n$ | Pay | Payda | Pay/Payda | $\lvert p_n - p_{n-1}\rvert$ |
+|:-:|--:|--:|--:|--:|--:|
+| $0$ | $1$ | | | | |
+| $1$ | $1{,}5$ | | | | $0{,}5$ |
+| $2$ | $1{,}4$ | $0{,}25$ | $2{,}5$ | $0{,}1$ | $0{,}1$ |
+| $3$ | $1{,}413793103$ | $-0{,}04$ | $2{,}9$ | $-0{,}013793103$ | $0{,}013793103$ |
+| $4$ | $1{,}414215686$ | $-0{,}001189061$ | $2{,}813793103$ | $-0{,}000422583$ | $0{,}000422583$ |
+| $5$ | $1{,}414213562$ | $0{,}000006007$ | $2{,}828008790$ | $0{,}000002124$ | $0{,}000002124$ |
+:::
+
+$|p_4 - p_3| = 0{,}000422583 > 10^{-5}$ iken $|p_5 - p_4| = 0{,}000002124 < 10^{-5}$ olduğundan
+
+$$p \approx p_5 = 1{,}414213562$$
+
+bulunur; bu, $\sqrt{2}$'nin dokuz ondalık basamağıyla aynıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sec-dorduncu-kok name="Beşin Dördüncü Dereceden Köküne Secant ile Yaklaşım"}
+$x^4 - 5 = 0$ denkleminin çözümüne Secant metodu ile yaklaşımda bulununuz. $p_0 = 1$ ve $p_1 = 2$ başlangıç değerlerini alınız. İşlemlerinizde yuvarlama yapmadan $|p_n - p_{n-1}| < 10^{-4}$ durma kriterini kullanınız.
+
+::: {.cozum}
+$f(x) = x^4 - 5$, $p_0 = 1$, $p_1 = 2$ olsun. İki kare farkını iki kez kullanırsak
+
+$$p_{n-1}^4 - p_{n-2}^4 = (p_{n-1} - p_{n-2})(p_{n-1} + p_{n-2})(p_{n-1}^2 + p_{n-2}^2)$$
+
+olur ve (1) bağıntısı sadeleşir:
+
+$$p_n = p_{n-1} - \frac{p_{n-1}^4 - 5}{(p_{n-1} + p_{n-2})(p_{n-1}^2 + p_{n-2}^2)}, \qquad n \ge 2.$$
+
+Pay kesrin payı, Payda kesrin paydasıdır. İlk adımda $\text{Pay} = 16 - 5 = 11$, $\text{Payda} = 3 \cdot 5 = 15$ ve
+
+$$p_2 = 2 - \frac{11}{15} = 1{,}266666667$$
+
+olur. İkinci adımda
+
+$$
+\begin{aligned}
+\text{Pay} &= p_2^4 - 5 = -2{,}425758025, \\[1mm]
+\text{Payda} &= (p_2 + p_1)(p_2^2 + p_1^2) = 18{,}307851852
+\end{aligned}
+$$
+
+bulunur. Bütün adımlar:
+
+::: {.iteration-table}
+| $n$ | $p_n$ | Pay | Payda | Pay/Payda | $\lvert p_n - p_{n-1}\rvert$ |
+|:-:|--:|--:|--:|--:|--:|
+| $0$ | $1$ | | | | |
+| $1$ | $2$ | | | | $1$ |
+| $2$ | $1{,}266666667$ | $11$ | $15$ | $0{,}733333333$ | $0{,}733333333$ |
+| $3$ | $1{,}399164900$ | $-2{,}425758025$ | $18{,}307851852$ | $-0{,}132498233$ | $0{,}132498233$ |
+| $4$ | $1{,}522117796$ | $-1{,}167557861$ | $9{,}495976915$ | $-0{,}122952896$ | $0{,}122952896$ |
+| $5$ | $1{,}492666490$ | $0{,}367759560$ | $12{,}487037493$ | $0{,}029451306$ | $0{,}029451306$ |
+| $6$ | $1{,}495277716$ | $-0{,}035778714$ | $13{,}701880542$ | $-0{,}002611227$ | $0{,}002611227$ |
+| $7$ | $1{,}495348973$ | $-0{,}000950409$ | $13{,}337910137$ | $-0{,}000071256$ | $0{,}000071256$ |
+:::
+
+$p_2$ ve $p_3$ kökün solunda kalırken $p_4$ kökün sağına, $[p_2, p_3]$ aralığının dışına düşer; Secant metodu kökü bir aralıkta tutmaz. $|p_6 - p_5| = 0{,}002611227 > 10^{-4}$ iken $|p_7 - p_6| = 0{,}000071256 < 10^{-4}$ olduğundan
+
+$$p \approx p_7 = 1{,}495348973$$
+
+bulunur. Gerçek değer $\sqrt[4]{5} = 1{,}495348781$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sec-kok-on name="Onun Kareköküne Regula Falsi ile Yaklaşım"}
+$x^2 - 10 = 0$ denkleminin çözümüne Regula Falsi metodu ile $[3, 4]$ aralığında yaklaşımda bulununuz. İşlemlerinizde yuvarlama yapmadan $|p_n - p_{n-1}| < 10^{-3}$ durma kriterini kullanınız.
+
+::: {.cozum}
+$f(x) = x^2 - 10$, $p_0 = 3$, $p_1 = 4$ alalım. $f(3) = -1 < 0$ ve $f(4) = 6 > 0$ olduğundan kök $[3, 4]$ aralığındadır. İki kare farkından
+
+$$f(p_{n-1}) - f(p_k) = (p_{n-1} - p_k)(p_{n-1} + p_k)$$
+
+olduğundan (2) bağıntısı
+
+$$p_n = p_{n-1} - \frac{p_{n-1}^2 - 10}{p_{n-1} + p_k}, \qquad n \ge 2$$
+
+biçimine sadeleşir; $\text{Pay} = p_{n-1}^2 - 10$, $\text{Payda} = p_{n-1} + p_k$ olur.
+
+İlk adımda $p_{n-1} = 4$, $p_k = 3$ ve
+
+$$p_2 = 4 - \frac{6}{7} = \frac{22}{7} = 3{,}142857143, \qquad f(p_2) = -0{,}122448980 < 0$$
+
+bulunur. $f(p_2) \cdot f(p_1) < 0$ olduğundan yeni ikinci uç $p_1 = 4$'tür. İkinci adımda
+
+$$p_3 = \frac{22}{7} - \frac{-6/49}{50/7} = \frac{22}{7} + \frac{3}{175} = \frac{553}{175} = 3{,}16$$
+
+olur ve $f(p_3) = -0{,}0144 < 0$ çıkar; ikinci uç yine $4$'tür. Sonraki adımlarda da $f(p_n) < 0$ kalır:
+
+::: {.iteration-table}
+| $n$ | $p_{n-1}$ | $p_k$ | $p_n$ | $f(p_n)$ | Pay | Payda | Pay/Payda | $\lvert p_n - p_{n-1}\rvert$ |
+|:-:|--:|--:|--:|--:|--:|--:|--:|--:|
+| $0$ | | | $3$ | $-1$ | | | | |
+| $1$ | | | $4$ | $6$ | | | | $1$ |
+| $2$ | $4$ | $3$ | $3{,}142857143$ | $-0{,}122448980$ | $6$ | $7$ | $0{,}857142857$ | $0{,}857142857$ |
+| $3$ | $3{,}142857143$ | $4$ | $3{,}16$ | $-0{,}0144$ | $-0{,}122448980$ | $7{,}142857143$ | $-0{,}017142857$ | $0{,}017142857$ |
+| $4$ | $3{,}16$ | $4$ | $3{,}162011173$ | $-0{,}001685341$ | $-0{,}0144$ | $7{,}16$ | $-0{,}002011173$ | $0{,}002011173$ |
+| $5$ | $3{,}162011173$ | $4$ | $3{,}162246490$ | $-0{,}000197137$ | $-0{,}001685341$ | $7{,}162011173$ | $-0{,}000235317$ | $0{,}000235317$ |
+:::
+
+$|p_4 - p_3| = 0{,}002011173 > 10^{-3}$ iken $|p_5 - p_4| = 0{,}000235317 < 10^{-3}$ olduğundan
+
+$$p \approx p_5 = 3{,}162246490$$
+
+bulunur. Gerçek değer $\sqrt{10} = 3{,}162277660$'tır; $|p_n - p_{n-1}|$ küçük olsa da sağ uç $4$'te sabit kaldığı için hata hâlâ yaklaşık $3 \cdot 10^{-5}$'tir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Kök bulma yöntemlerini burada tamamlıyoruz. Sıradaki kısımda bir fonksiyonu, verilen noktalardan geçen bir polinomla temsil etmeyi öğreneceğiz: [Lagrange İnterpolasyonu](lagrange-interpolasyonu.qmd).

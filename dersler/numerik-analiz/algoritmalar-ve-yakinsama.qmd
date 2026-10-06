@@ -1,0 +1,1175 @@
+---
+title: "Algoritmalar ve Yakınsama Hızı"
+pagetitle: "Algoritmalar ve Yakınsama Hızı"
+description: "Algoritma ve kararlılık kavramları, lineer ve üstel hata büyümesi, diziler ve fonksiyonlar için O gösterimiyle yakınsama hızı; çözümlü örnekler ve alıştırmalar."
+---
+
+Nümerik bir yöntem, bir problemin çözümüne adım adım yaklaşan bir algoritmadır. Her adımda yapılan işlemler makinede yuvarlanır; bu yüzden iki soru öne çıkar. Birincisi, küçük bir yuvarlama hatası sonraki adımlarda büyüyüp sonucu bozuyor mu? İkincisi, algoritmanın ürettiği yaklaşımlar gerçek değere ne kadar hızlı yaklaşıyor?
+
+Bu bölümde ilk soru için hata büyümesini lineer ve üstel diye ikiye ayırıyoruz. İkinci soru için de $O$ gösterimini kuruyoruz: $y_n = y_0 + O\left(\frac{1}{n^p}\right)$ ve $f(h) = L + O(h^p)$. Sonraki bölümlerdeki her yöntemi bu dille karşılaştıracağız.
+
+## Algoritmalar ve Kararlılık
+
+Önce algoritmanın ne olduğunu ve iyi bir algoritmadan ne beklediğimizi belirleyelim.
+
+::: {#def-yak-algoritma name="Algoritma"}
+Belirli bir sırayla uygulanacak adımların sonlu bir dizisini kesin biçimde tarif eden yönteme **algoritma** denir.
+:::
+
+Yani algoritma, ne yapılacağı her adımda açıkça belli olan ve sonlu sayıda adımda biten bir tariftir. Bu kitaptaki algoritmaların amacı bir problemin çözümüne (bir köke, bir integralin değerine, bir fonksiyonun değerine) yaklaşımda bulunmaktır.
+
+::: {#def-yak-kararli name="Kararlı Algoritma"}
+Girdideki küçük değişiklikler çıktıda da yalnız küçük değişikliklere yol açıyorsa algoritmaya **kararlı algoritma** denir.
+:::
+
+Yani kararlı bir algoritmada girdilerin makinede yuvarlanmasından doğan küçük hatalar (@def-hat-kn) sonucu bozmaz. Bir algoritmanın kararlı olup olmadığını, hatanın adım sayısıyla nasıl büyüdüğüne bakarak anlarız.
+
+::: {#def-yak-hata-buyumesi name="Lineer ve Üstel Hata Büyümesi"}
+Bir hesabın herhangi bir adımında ilk ortaya çıkan hata $E_0 > 0$, bu adımı izleyen $n$ adımdan sonraki hatanın büyüklüğü $E_n$ olsun. $C$, $n$'den bağımsız bir sabit olmak üzere
+
+1. $E_n \approx C \cdot n \cdot E_0$ ise hatanın büyümesi **lineerdir**,
+2. $C > 1$ ve $E_n \approx C^n E_0$ ise hatanın büyümesi **üsteldir**
+
+denir. Hata büyümesi lineer olan yaklaşıma **kararlı hata büyümesine sahip**, üstel olan yaklaşıma **kararsız hata büyümesine sahip** yaklaşım denir.
+:::
+
+Yani lineer büyümede $100$ adım sonra hata ilk hatanın yaklaşık $100\,C$ katıdır; üstel büyümede ise $C^{100}$ katıdır. $C = 3$ için bu $3^{100} \approx 5 \cdot 10^{47}$ eder. Bu yüzden hata büyümesi lineer olan bir algoritmayla yaklaşımda bulunmak genellikle kabul edilebilirdir; hata büyümesi üstel olan algoritmalardan kaçınılır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="102.0 34.5 530.0 408.0" role="img" aria-label="Surface z = n log10(C) for n from 0 to 10 and C from 0.5 to 3: below zero for C under 1, flat along C = 1, rising for C over 1, with the section C = 3 in red and the linear growth curve log10(n) dashed">
+  <polygon points="415.3,72.7 429.1,63.0 423.7,53.8 409.9,63.7" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="401.5,82.3 415.3,72.7 409.9,63.7 396.1,73.7" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="420.7,81.9 434.5,72.5 429.1,63.0 415.3,72.7" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="387.7,92.0 401.5,82.3 396.1,73.7 382.3,83.6" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="406.9,91.2 420.7,81.9 415.3,72.7 401.5,82.3" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="373.9,101.6 387.7,92.0 382.3,83.6 368.5,93.5" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="426.1,91.3 439.9,82.3 434.5,72.5 420.7,81.9" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="393.1,100.6 406.9,91.2 401.5,82.3 387.7,92.0" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="360.1,111.3 373.9,101.6 368.5,93.5 354.7,103.5" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="412.3,100.3 426.1,91.3 420.7,81.9 406.9,91.2" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="379.3,109.9 393.1,100.6 387.7,92.0 373.9,101.6" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="346.3,120.9 360.1,111.3 354.7,103.5 340.9,113.4" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="431.5,101.0 445.3,92.3 439.9,82.3 426.1,91.3" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="398.5,109.4 412.3,100.3 406.9,91.2 393.1,100.6" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="365.5,119.2 379.3,109.9 373.9,101.6 360.1,111.3" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="332.5,130.6 346.3,120.9 340.9,113.4 327.1,123.4" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="417.7,109.7 431.5,101.0 426.1,91.3 412.3,100.3" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="384.7,118.4 398.5,109.4 393.1,100.6 379.3,109.9" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="436.9,111.1 450.7,102.7 445.3,92.3 431.5,101.0" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="351.7,128.6 365.5,119.2 360.1,111.3 346.3,120.9" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="318.7,140.2 332.5,130.6 327.1,123.4 313.3,133.3" fill="var(--color-practice)" fill-opacity="0.372" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="403.9,118.4 417.7,109.7 412.3,100.3 398.5,109.4" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="370.9,127.4 384.7,118.4 379.3,109.9 365.5,119.2" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="337.9,137.9 351.7,128.6 346.3,120.9 332.5,130.6" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="423.1,119.5 436.9,111.1 431.5,101.0 417.7,109.7" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="304.9,149.9 318.7,140.2 313.3,133.3 299.5,143.2" fill="var(--color-practice)" fill-opacity="0.348" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="390.1,127.1 403.9,118.4 398.5,109.4 384.7,118.4" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="442.3,121.5 456.1,113.5 450.7,102.7 436.9,111.1" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="357.1,136.5 370.9,127.4 365.5,119.2 351.7,128.6" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="324.1,147.3 337.9,137.9 332.5,130.6 318.7,140.2" fill="var(--color-practice)" fill-opacity="0.360" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="291.0,159.5 304.9,149.9 299.5,143.2 285.6,153.2" fill="var(--color-practice)" fill-opacity="0.324" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="409.3,127.8 423.1,119.5 417.7,109.7 403.9,118.4" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="376.3,135.9 390.1,127.1 384.7,118.4 370.9,127.4" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="428.5,129.5 442.3,121.5 436.9,111.1 423.1,119.5" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="343.3,145.5 357.1,136.5 351.7,128.6 337.9,137.9" fill="var(--color-practice)" fill-opacity="0.369" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="310.3,156.6 324.1,147.3 318.7,140.2 304.9,149.9" fill="var(--color-practice)" fill-opacity="0.337" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="277.2,169.2 291.0,159.5 285.6,153.2 271.8,163.1" fill="var(--color-practice)" fill-opacity="0.300" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="447.7,132.3 461.5,124.7 456.1,113.5 442.3,121.5" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="395.5,136.2 409.3,127.8 403.9,118.4 390.1,127.1" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="362.5,144.6 376.3,135.9 370.9,127.4 357.1,136.5" fill="var(--color-practice)" fill-opacity="0.376" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="414.7,137.5 428.5,129.5 423.1,119.5 409.3,127.8" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="329.5,154.5 343.3,145.5 337.9,137.9 324.1,147.3" fill="var(--color-practice)" fill-opacity="0.347" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="296.4,166.0 310.3,156.6 304.9,149.9 291.0,159.5" fill="var(--color-practice)" fill-opacity="0.314" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="263.4,178.8 277.2,169.2 271.8,163.1 258.0,173.0" fill="var(--color-practice)" fill-opacity="0.276" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="381.7,144.5 395.5,136.2 390.1,127.1 376.3,135.9" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="433.9,139.9 447.7,132.3 442.3,121.5 428.5,129.5" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="348.7,153.3 362.5,144.6 357.1,136.5 343.3,145.5" fill="var(--color-practice)" fill-opacity="0.355" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="453.1,143.6 466.9,136.4 461.5,124.7 447.7,132.3" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="315.7,163.6 329.5,154.5 324.1,147.3 310.3,156.6" fill="var(--color-practice)" fill-opacity="0.325" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="400.9,145.5 414.7,137.5 409.3,127.8 395.5,136.2" fill="var(--color-practice)" fill-opacity="0.380" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="249.6,188.5 263.4,178.8 258.0,173.0 244.2,183.0" fill="var(--color-practice)" fill-opacity="0.251" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="282.6,175.3 296.4,166.0 291.0,159.5 277.2,169.2" fill="var(--color-practice)" fill-opacity="0.290" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="367.9,152.9 381.7,144.5 376.3,135.9 362.5,144.6" fill="var(--color-practice)" fill-opacity="0.360" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="420.1,147.5 433.9,139.9 428.5,129.5 414.7,137.5" fill="var(--color-practice)" fill-opacity="0.377" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="334.9,162.0 348.7,153.3 343.3,145.5 329.5,154.5" fill="var(--color-practice)" fill-opacity="0.334" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="439.3,150.8 453.1,143.6 447.7,132.3 433.9,139.9" fill="var(--color-practice)" fill-opacity="0.371" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="301.8,172.6 315.7,163.6 310.3,156.6 296.4,166.0" fill="var(--color-practice)" fill-opacity="0.303" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="235.8,198.1 249.6,188.5 244.2,183.0 230.4,192.9" fill="var(--color-practice)" fill-opacity="0.227" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="268.8,184.7 282.6,175.3 277.2,169.2 263.4,178.8" fill="var(--color-practice)" fill-opacity="0.267" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="387.1,153.5 400.9,145.5 395.5,136.2 381.7,144.5" fill="var(--color-practice)" fill-opacity="0.362" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="458.5,155.3 472.3,148.6 466.9,136.4 453.1,143.6" fill="var(--color-practice)" fill-opacity="0.359" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="354.1,161.2 367.9,152.9 362.5,144.6 348.7,153.3" fill="var(--color-practice)" fill-opacity="0.340" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="406.3,155.1 420.1,147.5 414.7,137.5 400.9,145.5" fill="var(--color-practice)" fill-opacity="0.360" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="321.1,170.7 334.9,162.0 329.5,154.5 315.7,163.6" fill="var(--color-practice)" fill-opacity="0.313" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="222.0,207.7 235.8,198.1 230.4,192.9 216.6,202.8" fill="var(--color-practice)" fill-opacity="0.203" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="288.0,181.6 301.8,172.6 296.4,166.0 282.6,175.3" fill="var(--color-practice)" fill-opacity="0.281" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="255.0,194.0 268.8,184.7 263.4,178.8 249.6,188.5" fill="var(--color-practice)" fill-opacity="0.244" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="425.5,158.0 439.3,150.8 433.9,139.9 420.1,147.5" fill="var(--color-practice)" fill-opacity="0.354" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="373.3,161.5 387.1,153.5 381.7,144.5 367.9,152.9" fill="var(--color-practice)" fill-opacity="0.343" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="444.7,162.1 458.5,155.3 453.1,143.6 439.3,150.8" fill="var(--color-practice)" fill-opacity="0.345" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="340.3,169.6 354.1,161.2 348.7,153.3 334.9,162.0" fill="var(--color-practice)" fill-opacity="0.320" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="463.9,167.7 477.7,161.4 472.3,148.6 458.5,155.3" fill="var(--color-practice)" fill-opacity="0.330" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="392.5,162.7 406.3,155.1 400.9,145.5 387.1,153.5" fill="var(--color-practice)" fill-opacity="0.342" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="307.2,179.4 321.1,170.7 315.7,163.6 301.8,172.6" fill="var(--color-practice)" fill-opacity="0.292" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="208.2,217.4 222.0,207.7 216.6,202.8 202.8,212.8" fill="var(--color-practice)" fill-opacity="0.179" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="274.2,190.7 288.0,181.6 282.6,175.3 268.8,184.7" fill="var(--color-practice)" fill-opacity="0.259" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="241.2,203.4 255.0,194.0 249.6,188.5 235.8,198.1" fill="var(--color-practice)" fill-opacity="0.221" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="411.7,165.2 425.5,158.0 420.1,147.5 406.3,155.1" fill="var(--color-practice)" fill-opacity="0.338" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="359.5,169.5 373.3,161.5 367.9,152.9 354.1,161.2" fill="var(--color-practice)" fill-opacity="0.324" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="326.5,178.0 340.3,169.6 334.9,162.0 321.1,170.7" fill="var(--color-practice)" fill-opacity="0.300" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="430.9,168.9 444.7,162.1 439.3,150.8 425.5,158.0" fill="var(--color-practice)" fill-opacity="0.330" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="293.4,188.1 307.2,179.4 301.8,172.6 288.0,181.6" fill="var(--color-practice)" fill-opacity="0.271" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="378.7,170.4 392.5,162.7 387.1,153.5 373.3,161.5" fill="var(--color-practice)" fill-opacity="0.325" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="194.4,227.0 208.2,217.4 202.8,212.8 189.0,222.7" fill="var(--color-practice)" fill-opacity="0.155" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="450.1,174.0 463.9,167.7 458.5,155.3 444.7,162.1" fill="var(--color-practice)" fill-opacity="0.317" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="260.4,199.7 274.2,190.7 268.8,184.7 255.0,194.0" fill="var(--color-practice)" fill-opacity="0.236" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="227.4,212.7 241.2,203.4 235.8,198.1 222.0,207.7" fill="var(--color-practice)" fill-opacity="0.198" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="469.3,180.7 483.1,174.9 477.7,161.4 463.9,167.7" fill="var(--color-practice)" fill-opacity="0.299" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="345.7,177.5 359.5,169.5 354.1,161.2 340.3,169.6" fill="var(--color-practice)" fill-opacity="0.305" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="397.9,172.4 411.7,165.2 406.3,155.1 392.5,162.7" fill="var(--color-practice)" fill-opacity="0.322" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="312.6,186.3 326.5,178.0 321.1,170.7 307.2,179.4" fill="var(--color-practice)" fill-opacity="0.280" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="417.1,175.6 430.9,168.9 425.5,158.0 411.7,165.2" fill="var(--color-practice)" fill-opacity="0.315" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="180.6,236.7 194.4,227.0 189.0,222.7 175.2,232.6" fill="var(--color-practice)" fill-opacity="0.130" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="279.6,196.8 293.4,188.1 288.0,181.6 274.2,190.7" fill="var(--color-practice)" fill-opacity="0.249" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="213.6,222.1 227.4,212.7 222.0,207.7 208.2,217.4" fill="var(--color-practice)" fill-opacity="0.174" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="246.6,208.7 260.4,199.7 255.0,194.0 241.2,203.4" fill="var(--color-practice)" fill-opacity="0.214" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="364.9,178.0 378.7,170.4 373.3,161.5 359.5,169.5" fill="var(--color-practice)" fill-opacity="0.307" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="436.3,180.3 450.1,174.0 444.7,162.1 430.9,168.9" fill="var(--color-practice)" fill-opacity="0.304" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="455.5,186.5 469.3,180.7 463.9,167.7 450.1,174.0" fill="var(--color-practice)" fill-opacity="0.287" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="474.7,194.4 488.5,189.2 483.1,174.9 469.3,180.7" fill="var(--color-practice)" fill-opacity="0.265" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="331.9,185.4 345.7,177.5 340.3,169.6 326.5,178.0" fill="var(--color-practice)" fill-opacity="0.286" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="384.1,179.6 397.9,172.4 392.5,162.7 378.7,170.4" fill="var(--color-practice)" fill-opacity="0.306" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="298.8,194.7 312.6,186.3 307.2,179.4 293.4,188.1" fill="var(--color-practice)" fill-opacity="0.260" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="166.8,246.3 180.6,236.7 175.2,232.6 161.4,242.6" fill="var(--color-practice)" fill-opacity="0.106" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="265.8,205.5 279.6,196.8 274.2,190.7 260.4,199.7" fill="var(--color-practice)" fill-opacity="0.228" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="199.8,231.4 213.6,222.1 208.2,217.4 194.4,227.0" fill="var(--color-practice)" fill-opacity="0.151" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="232.8,217.8 246.6,208.7 241.2,203.4 227.4,212.7" fill="var(--color-practice)" fill-opacity="0.192" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="403.3,182.4 417.1,175.6 411.7,165.2 397.9,172.4" fill="var(--color-practice)" fill-opacity="0.300" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="351.1,185.6 364.9,178.0 359.5,169.5 345.7,177.5" fill="var(--color-practice)" fill-opacity="0.290" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="422.5,186.6 436.3,180.3 430.9,168.9 417.1,175.6" fill="var(--color-practice)" fill-opacity="0.290" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="318.0,193.4 331.9,185.4 326.5,178.0 312.6,186.3" fill="var(--color-practice)" fill-opacity="0.268" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="441.7,192.2 455.5,186.5 450.1,174.0 436.3,180.3" fill="var(--color-practice)" fill-opacity="0.275" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="480.1,209.1 493.9,204.4 488.5,189.2 474.7,194.4" fill="var(--color-practice)" fill-opacity="0.229" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="460.9,199.7 474.7,194.4 469.3,180.7 455.5,186.5" fill="var(--color-practice)" fill-opacity="0.255" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="370.3,186.8 384.1,179.6 378.7,170.4 364.9,178.0" fill="var(--color-practice)" fill-opacity="0.289" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="153.0,256.0 166.8,246.3 161.4,242.6 147.6,252.5" fill="var(--color-practice)" fill-opacity="0.082" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="285.0,203.0 298.8,194.7 293.4,188.1 279.6,196.8" fill="var(--color-practice)" fill-opacity="0.240" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="186.0,240.8 199.8,231.4 194.4,227.0 180.6,236.7" fill="var(--color-practice)" fill-opacity="0.128" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="252.0,214.2 265.8,205.5 260.4,199.7 246.6,208.7" fill="var(--color-practice)" fill-opacity="0.207" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="219.0,226.8 232.8,217.8 227.4,212.7 213.6,222.1" fill="var(--color-practice)" fill-opacity="0.170" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="389.5,189.1 403.3,182.4 397.9,172.4 384.1,179.6" fill="var(--color-practice)" fill-opacity="0.285" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="337.3,193.2 351.1,185.6 345.7,177.5 331.9,185.4" fill="var(--color-practice)" fill-opacity="0.272" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="408.7,192.8 422.5,186.6 417.1,175.6 403.3,182.4" fill="var(--color-practice)" fill-opacity="0.277" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="304.2,201.4 318.0,193.4 312.6,186.3 298.8,194.7" fill="var(--color-practice)" fill-opacity="0.249" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="485.5,224.8 499.3,220.8 493.9,204.4 480.1,209.1" fill="var(--color-practice)" fill-opacity="0.189" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="427.9,198.0 441.7,192.2 436.3,180.3 422.5,186.6" fill="var(--color-practice)" fill-opacity="0.264" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="356.5,194.0 370.3,186.8 364.9,178.0 351.1,185.6" fill="var(--color-practice)" fill-opacity="0.273" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="271.2,211.4 285.0,203.0 279.6,196.8 265.8,205.5" fill="var(--color-practice)" fill-opacity="0.220" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="172.2,250.1 186.0,240.8 180.6,236.7 166.8,246.3" fill="var(--color-practice)" fill-opacity="0.105" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="466.3,213.7 480.1,209.1 474.7,194.4 460.9,199.7" fill="var(--color-practice)" fill-opacity="0.221" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="447.1,204.9 460.9,199.7 455.5,186.5 441.7,192.2" fill="var(--color-practice)" fill-opacity="0.245" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="238.2,222.9 252.0,214.2 246.6,208.7 232.8,217.8" fill="var(--color-practice)" fill-opacity="0.186" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="205.2,235.8 219.0,226.8 213.6,222.1 199.8,231.4" fill="var(--color-practice)" fill-opacity="0.148" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="323.4,200.8 337.3,193.2 331.9,185.4 318.0,193.4" fill="var(--color-practice)" fill-opacity="0.254" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="375.7,195.9 389.5,189.1 384.1,179.6 370.3,186.8" fill="var(--color-practice)" fill-opacity="0.270" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="290.4,209.4 304.2,201.4 298.8,194.7 285.0,203.0" fill="var(--color-practice)" fill-opacity="0.230" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="394.9,199.1 408.7,192.8 403.3,182.4 389.5,189.1" fill="var(--color-practice)" fill-opacity="0.263" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="490.9,241.8 504.7,238.5 499.3,220.8 485.5,224.8" fill="var(--color-practice)" fill-opacity="0.145" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="158.4,259.5 172.2,250.1 166.8,246.3 153.0,256.0" fill="var(--color-practice)" fill-opacity="0.082" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="257.4,219.7 271.2,211.4 265.8,205.5 252.0,214.2" fill="var(--color-practice)" fill-opacity="0.200" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="342.6,201.1 356.5,194.0 351.1,185.6 337.3,193.2" fill="var(--color-practice)" fill-opacity="0.257" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="191.4,244.9 205.2,235.8 199.8,231.4 186.0,240.8" fill="var(--color-practice)" fill-opacity="0.125" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="224.4,231.6 238.2,222.9 232.8,217.8 219.0,226.8" fill="var(--color-practice)" fill-opacity="0.165" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="414.1,203.8 427.9,198.0 422.5,186.6 408.7,192.8" fill="var(--color-practice)" fill-opacity="0.252" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="471.7,228.8 485.5,224.8 480.1,209.1 466.3,213.7" fill="var(--color-practice)" fill-opacity="0.183" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="433.3,210.2 447.1,204.9 441.7,192.2 427.9,198.0" fill="var(--color-practice)" fill-opacity="0.235" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="452.5,218.4 466.3,213.7 460.9,199.7 447.1,204.9" fill="var(--color-practice)" fill-opacity="0.213" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="309.6,208.4 323.4,200.8 318.0,193.4 304.2,201.4" fill="var(--color-practice)" fill-opacity="0.237" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="361.9,202.7 375.7,195.9 370.3,186.8 356.5,194.0" fill="var(--color-practice)" fill-opacity="0.256" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="496.3,260.4 510.1,257.9 504.7,238.5 490.9,241.8" fill="var(--color-practice)" fill-opacity="0.097" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="276.6,217.4 290.4,209.4 285.0,203.0 271.2,211.4" fill="var(--color-practice)" fill-opacity="0.211" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="243.6,228.1 257.4,219.7 252.0,214.2 238.2,222.9" fill="var(--color-practice)" fill-opacity="0.180" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="177.6,253.9 191.4,244.9 186.0,240.8 172.2,250.1" fill="var(--color-practice)" fill-opacity="0.103" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="381.1,205.4 394.9,199.1 389.5,189.1 375.7,195.9" fill="var(--color-practice)" fill-opacity="0.250" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="210.6,240.3 224.4,231.6 219.0,226.8 205.2,235.8" fill="var(--color-practice)" fill-opacity="0.144" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="328.8,208.3 342.6,201.1 337.3,193.2 323.4,200.8" fill="var(--color-practice)" fill-opacity="0.241" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="477.1,245.1 490.9,241.8 485.5,224.8 471.7,228.8" fill="var(--color-practice)" fill-opacity="0.141" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="400.3,209.6 414.1,203.8 408.7,192.8 394.9,199.1" fill="var(--color-practice)" fill-opacity="0.240" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="500.6,276.7 514.4,274.9 510.1,257.9 496.3,260.4" fill="var(--color-theory)" fill-opacity="0.092" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="457.9,232.8 471.7,228.8 466.3,213.7 452.5,218.4" fill="var(--color-practice)" fill-opacity="0.177" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="295.8,216.0 309.6,208.4 304.2,201.4 290.4,209.4" fill="var(--color-practice)" fill-opacity="0.219" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="419.5,215.4 433.3,210.2 427.9,198.0 414.1,203.8" fill="var(--color-practice)" fill-opacity="0.225" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="438.7,223.0 452.5,218.4 447.1,204.9 433.3,210.2" fill="var(--color-practice)" fill-opacity="0.204" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="348.0,209.4 361.9,202.7 356.5,194.0 342.6,201.1" fill="var(--color-practice)" fill-opacity="0.241" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="262.8,225.4 276.6,217.4 271.2,211.4 257.4,219.7" fill="var(--color-practice)" fill-opacity="0.192" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="163.8,262.9 177.6,253.9 172.2,250.1 158.4,259.5" fill="var(--color-practice)" fill-opacity="0.081" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="505.0,294.6 518.8,293.6 514.4,274.9 500.6,276.7" fill="var(--color-theory)" fill-opacity="0.141" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="229.8,236.5 243.6,228.1 238.2,222.9 224.4,231.6" fill="var(--color-practice)" fill-opacity="0.160" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="196.8,249.0 210.6,240.3 205.2,235.8 191.4,244.9" fill="var(--color-practice)" fill-opacity="0.123" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="367.3,211.7 381.1,205.4 375.7,195.9 361.9,202.7" fill="var(--color-practice)" fill-opacity="0.237" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="315.0,215.5 328.8,208.3 323.4,200.8 309.6,208.4" fill="var(--color-practice)" fill-opacity="0.224" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="482.5,262.9 496.3,260.4 490.9,241.8 477.1,245.1" fill="var(--color-practice)" fill-opacity="0.095" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="509.3,314.5 523.1,314.4 518.8,293.6 505.0,294.6" fill="var(--color-theory)" fill-opacity="0.196" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="517.9,363.3 531.7,365.4 527.4,338.0 513.6,337.1" fill="var(--color-theory)" fill-opacity="0.332" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="513.6,337.1 527.4,338.0 523.1,314.4 509.3,314.5" fill="var(--color-theory)" fill-opacity="0.258" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="386.5,215.4 400.3,209.6 394.9,199.1 381.1,205.4" fill="var(--color-practice)" fill-opacity="0.229" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="282.0,223.6 295.8,216.0 290.4,209.4 276.6,217.4" fill="var(--color-practice)" fill-opacity="0.202" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="463.3,248.4 477.1,245.1 471.7,228.8 457.9,232.8" fill="var(--color-practice)" fill-opacity="0.137" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="405.7,220.7 419.5,215.4 414.1,203.8 400.3,209.6" fill="var(--color-practice)" fill-opacity="0.215" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="334.2,216.2 348.0,209.4 342.6,201.1 328.8,208.3" fill="var(--color-practice)" fill-opacity="0.226" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="249.0,233.4 262.8,225.4 257.4,219.7 243.6,228.1" fill="var(--color-practice)" fill-opacity="0.173" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="444.1,236.8 457.9,232.8 452.5,218.4 438.7,223.0" fill="var(--color-practice)" fill-opacity="0.171" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="424.9,227.7 438.7,223.0 433.3,210.2 419.5,215.4" fill="var(--color-practice)" fill-opacity="0.196" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="486.8,278.5 500.6,276.7 496.3,260.4 482.5,262.9" fill="var(--color-theory)" fill-opacity="0.091" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="216.0,244.8 229.8,236.5 224.4,231.6 210.6,240.3" fill="var(--color-practice)" fill-opacity="0.140" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="183.0,257.7 196.8,249.0 191.4,244.9 177.6,253.9" fill="var(--color-practice)" fill-opacity="0.102" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="301.2,222.7 315.0,215.5 309.6,208.4 295.8,216.0" fill="var(--color-practice)" fill-opacity="0.208" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="353.4,218.0 367.3,211.7 361.9,202.7 348.0,209.4" fill="var(--color-practice)" fill-opacity="0.223" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="491.1,295.6 505.0,294.6 500.6,276.7 486.8,278.5" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="268.2,231.2 282.0,223.6 276.6,217.4 262.8,225.4" fill="var(--color-practice)" fill-opacity="0.184" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="468.7,265.4 482.5,262.9 477.1,245.1 463.3,248.4" fill="var(--color-practice)" fill-opacity="0.094" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="372.7,221.2 386.5,215.4 381.1,205.4 367.3,211.7" fill="var(--color-practice)" fill-opacity="0.217" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="235.2,241.4 249.0,233.4 243.6,228.1 229.8,236.5" fill="var(--color-practice)" fill-opacity="0.155" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="495.5,314.6 509.3,314.5 505.0,294.6 491.1,295.6" fill="var(--color-theory)" fill-opacity="0.189" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="320.4,222.9 334.2,216.2 328.8,208.3 315.0,215.5" fill="var(--color-practice)" fill-opacity="0.211" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="169.2,266.4 183.0,257.7 177.6,253.9 163.8,262.9" fill="var(--color-practice)" fill-opacity="0.081" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="202.2,253.2 216.0,244.8 210.6,240.3 196.8,249.0" fill="var(--color-practice)" fill-opacity="0.120" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="391.9,225.9 405.7,220.7 400.3,209.6 386.5,215.4" fill="var(--color-practice)" fill-opacity="0.205" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="449.5,251.7 463.3,248.4 457.9,232.8 444.1,236.8" fill="var(--color-practice)" fill-opacity="0.134" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="504.1,361.1 517.9,363.3 513.6,337.1 499.8,336.1" fill="var(--color-theory)" fill-opacity="0.318" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="499.8,336.1 513.6,337.1 509.3,314.5 495.5,314.6" fill="var(--color-theory)" fill-opacity="0.249" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="411.1,232.4 424.9,227.7 419.5,215.4 405.7,220.7" fill="var(--color-practice)" fill-opacity="0.188" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="430.3,240.8 444.1,236.8 438.7,223.0 424.9,227.7" fill="var(--color-practice)" fill-opacity="0.165" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="287.4,229.9 301.2,222.7 295.8,216.0 282.0,223.6" fill="var(--color-practice)" fill-opacity="0.192" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="473.0,280.3 486.8,278.5 482.5,262.9 468.7,265.4" fill="var(--color-theory)" fill-opacity="0.090" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="339.6,224.3 353.4,218.0 348.0,209.4 334.2,216.2" fill="var(--color-practice)" fill-opacity="0.210" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="254.4,238.8 268.2,231.2 262.8,225.4 249.0,233.4" fill="var(--color-practice)" fill-opacity="0.167" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="221.4,249.4 235.2,241.4 229.8,236.5 216.0,244.8" fill="var(--color-practice)" fill-opacity="0.136" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="358.8,227.0 372.7,221.2 367.3,211.7 353.4,218.0" fill="var(--color-practice)" fill-opacity="0.205" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="188.4,261.5 202.2,253.2 196.8,249.0 183.0,257.7" fill="var(--color-practice)" fill-opacity="0.100" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="306.6,229.7 320.4,222.9 315.0,215.5 301.2,222.7" fill="var(--color-practice)" fill-opacity="0.196" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="477.3,296.6 491.1,295.6 486.8,278.5 473.0,280.3" fill="var(--color-theory)" fill-opacity="0.134" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="454.9,267.9 468.7,265.4 463.3,248.4 449.5,251.7" fill="var(--color-practice)" fill-opacity="0.092" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="378.1,231.2 391.9,225.9 386.5,215.4 372.7,221.2" fill="var(--color-practice)" fill-opacity="0.195" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="435.7,255.0 449.5,251.7 444.1,236.8 430.3,240.8" fill="var(--color-practice)" fill-opacity="0.130" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="397.3,237.0 411.1,232.4 405.7,220.7 391.9,225.9" fill="var(--color-practice)" fill-opacity="0.180" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="273.6,237.1 287.4,229.9 282.0,223.6 268.2,231.2" fill="var(--color-practice)" fill-opacity="0.176" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="416.5,244.9 430.3,240.8 424.9,227.7 411.1,232.4" fill="var(--color-practice)" fill-opacity="0.158" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="481.7,314.7 495.5,314.6 491.1,295.6 477.3,296.6" fill="var(--color-theory)" fill-opacity="0.183" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="325.8,230.6 339.6,224.3 334.2,216.2 320.4,222.9" fill="var(--color-practice)" fill-opacity="0.197" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="240.6,246.4 254.4,238.8 249.0,233.4 235.2,241.4" fill="var(--color-practice)" fill-opacity="0.149" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="486.0,335.2 499.8,336.1 495.5,314.6 481.7,314.7" fill="var(--color-theory)" fill-opacity="0.239" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="490.3,358.9 504.1,361.1 499.8,336.1 486.0,335.2" fill="var(--color-theory)" fill-opacity="0.305" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="207.6,257.4 221.4,249.4 216.0,244.8 202.2,253.2" fill="var(--color-practice)" fill-opacity="0.117" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="459.2,282.1 473.0,280.3 468.7,265.4 454.9,267.9" fill="var(--color-theory)" fill-opacity="0.089" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="174.5,269.9 188.4,261.5 183.0,257.7 169.2,266.4" fill="var(--color-practice)" fill-opacity="0.080" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="345.0,232.8 358.8,227.0 353.4,218.0 339.6,224.3" fill="var(--color-practice)" fill-opacity="0.193" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="292.8,236.5 306.6,229.7 301.2,222.7 287.4,229.9" fill="var(--color-practice)" fill-opacity="0.181" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="364.2,236.4 378.1,231.2 372.7,221.2 358.8,227.0" fill="var(--color-practice)" fill-opacity="0.185" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="441.1,270.4 454.9,267.9 449.5,251.7 435.7,255.0" fill="var(--color-practice)" fill-opacity="0.091" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="259.8,244.3 273.6,237.1 268.2,231.2 254.4,238.8" fill="var(--color-practice)" fill-opacity="0.159" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="463.5,297.6 477.3,296.6 473.0,280.3 459.2,282.1" fill="var(--color-theory)" fill-opacity="0.130" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="383.5,241.7 397.3,237.0 391.9,225.9 378.1,231.2" fill="var(--color-practice)" fill-opacity="0.172" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="421.9,258.3 435.7,255.0 430.3,240.8 416.5,244.9" fill="var(--color-practice)" fill-opacity="0.126" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="312.0,236.9 325.8,230.6 320.4,222.9 306.6,229.7" fill="var(--color-practice)" fill-opacity="0.183" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="226.8,254.0 240.6,246.4 235.2,241.4 221.4,249.4" fill="var(--color-practice)" fill-opacity="0.131" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="402.7,248.9 416.5,244.9 411.1,232.4 397.3,237.0" fill="var(--color-practice)" fill-opacity="0.152" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="193.8,265.4 207.6,257.4 202.2,253.2 188.4,261.5" fill="var(--color-practice)" fill-opacity="0.098" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="467.8,314.8 481.7,314.7 477.3,296.6 463.5,297.6" fill="var(--color-theory)" fill-opacity="0.177" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="279.0,243.2 292.8,236.5 287.4,229.9 273.6,237.1" fill="var(--color-practice)" fill-opacity="0.166" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="331.2,238.6 345.0,232.8 339.6,224.3 325.8,230.6" fill="var(--color-practice)" fill-opacity="0.182" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="445.4,283.9 459.2,282.1 454.9,267.9 441.1,270.4" fill="var(--color-theory)" fill-opacity="0.088" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="472.2,334.3 486.0,335.2 481.7,314.7 467.8,314.8" fill="var(--color-theory)" fill-opacity="0.229" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="246.0,251.5 259.8,244.3 254.4,238.8 240.6,246.4" fill="var(--color-practice)" fill-opacity="0.143" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="476.5,356.7 490.3,358.9 486.0,335.2 472.2,334.3" fill="var(--color-theory)" fill-opacity="0.291" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="350.4,241.7 364.2,236.4 358.8,227.0 345.0,232.8" fill="var(--color-practice)" fill-opacity="0.175" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="213.0,261.6 226.8,254.0 221.4,249.4 207.6,257.4" fill="var(--color-practice)" fill-opacity="0.114" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="298.2,243.2 312.0,236.9 306.6,229.7 292.8,236.5" fill="var(--color-practice)" fill-opacity="0.170" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="427.3,272.9 441.1,270.4 435.7,255.0 421.9,258.3" fill="var(--color-practice)" fill-opacity="0.090" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="179.9,273.4 193.8,265.4 188.4,261.5 174.5,269.9" fill="var(--color-practice)" fill-opacity="0.079" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="369.6,246.4 383.5,241.7 378.1,231.2 364.2,236.4" fill="var(--color-practice)" fill-opacity="0.164" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="408.1,261.6 421.9,258.3 416.5,244.9 402.7,248.9" fill="var(--color-practice)" fill-opacity="0.122" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="388.9,252.9 402.7,248.9 397.3,237.0 383.5,241.7" fill="var(--color-practice)" fill-opacity="0.146" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="449.7,298.6 463.5,297.6 459.2,282.1 445.4,283.9" fill="var(--color-theory)" fill-opacity="0.127" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="265.2,250.0 279.0,243.2 273.6,237.1 259.8,244.3" fill="var(--color-practice)" fill-opacity="0.152" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="317.4,244.4 331.2,238.6 325.8,230.6 312.0,236.9" fill="var(--color-practice)" fill-opacity="0.170" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="232.2,258.7 246.0,251.5 240.6,246.4 226.8,254.0" fill="var(--color-practice)" fill-opacity="0.127" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="454.0,314.9 467.8,314.8 463.5,297.6 449.7,298.6" fill="var(--color-theory)" fill-opacity="0.170" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="431.6,285.7 445.4,283.9 441.1,270.4 427.3,272.9" fill="var(--color-theory)" fill-opacity="0.087" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="199.2,269.2 213.0,261.6 207.6,257.4 193.8,265.4" fill="var(--color-practice)" fill-opacity="0.096" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="336.6,246.9 350.4,241.7 345.0,232.8 331.2,238.6" fill="var(--color-practice)" fill-opacity="0.165" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="284.4,249.5 298.2,243.2 292.8,236.5 279.0,243.2" fill="var(--color-practice)" fill-opacity="0.157" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="458.4,333.3 472.2,334.3 467.8,314.8 454.0,314.9" fill="var(--color-theory)" fill-opacity="0.220" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="355.8,251.0 369.6,246.4 364.2,236.4 350.4,241.7" fill="var(--color-practice)" fill-opacity="0.156" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="413.5,275.4 427.3,272.9 421.9,258.3 408.1,261.6" fill="var(--color-practice)" fill-opacity="0.088" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="462.7,354.6 476.5,356.7 472.2,334.3 458.4,333.3" fill="var(--color-theory)" fill-opacity="0.278" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="375.0,256.9 388.9,252.9 383.5,241.7 369.6,246.4" fill="var(--color-practice)" fill-opacity="0.140" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="394.3,264.9 408.1,261.6 402.7,248.9 388.9,252.9" fill="var(--color-practice)" fill-opacity="0.118" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="251.4,256.7 265.2,250.0 259.8,244.3 246.0,251.5" fill="var(--color-practice)" fill-opacity="0.137" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="303.6,250.2 317.4,244.4 312.0,236.9 298.2,243.2" fill="var(--color-practice)" fill-opacity="0.158" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="435.9,299.6 449.7,298.6 445.4,283.9 431.6,285.7" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="218.4,265.9 232.2,258.7 226.8,254.0 213.0,261.6" fill="var(--color-practice)" fill-opacity="0.111" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="185.3,276.8 199.2,269.2 193.8,265.4 179.9,273.4" fill="var(--color-practice)" fill-opacity="0.079" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="322.8,252.2 336.6,246.9 331.2,238.6 317.4,244.4" fill="var(--color-practice)" fill-opacity="0.155" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="270.6,255.8 284.4,249.5 279.0,243.2 265.2,250.0" fill="var(--color-practice)" fill-opacity="0.143" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="440.2,315.0 454.0,314.9 449.7,298.6 435.9,299.6" fill="var(--color-theory)" fill-opacity="0.164" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="417.8,287.5 431.6,285.7 427.3,272.9 413.5,275.4" fill="var(--color-theory)" fill-opacity="0.086" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="342.0,255.7 355.8,251.0 350.4,241.7 336.6,246.9" fill="var(--color-practice)" fill-opacity="0.147" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="237.6,263.5 251.4,256.7 246.0,251.5 232.2,258.7" fill="var(--color-practice)" fill-opacity="0.122" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="361.2,260.9 375.0,256.9 369.6,246.4 355.8,251.0" fill="var(--color-practice)" fill-opacity="0.134" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="399.6,277.9 413.5,275.4 408.1,261.6 394.3,264.9" fill="var(--color-practice)" fill-opacity="0.087" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="289.8,256.0 303.6,250.2 298.2,243.2 284.4,249.5" fill="var(--color-practice)" fill-opacity="0.146" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="380.4,268.2 394.3,264.9 388.9,252.9 375.0,256.9" fill="var(--color-practice)" fill-opacity="0.114" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="444.5,332.4 458.4,333.3 454.0,314.9 440.2,315.0" fill="var(--color-theory)" fill-opacity="0.210" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="204.6,273.1 218.4,265.9 213.0,261.6 199.2,269.2" fill="var(--color-practice)" fill-opacity="0.094" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="448.9,352.4 462.7,354.6 458.4,333.3 444.5,332.4" fill="var(--color-theory)" fill-opacity="0.265" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="422.1,300.6 435.9,299.6 431.6,285.7 417.8,287.5" fill="var(--color-theory)" fill-opacity="0.119" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="256.8,262.1 270.6,255.8 265.2,250.0 251.4,256.7" fill="var(--color-practice)" fill-opacity="0.130" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="309.0,257.4 322.8,252.2 317.4,244.4 303.6,250.2" fill="var(--color-practice)" fill-opacity="0.145" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="223.8,270.3 237.6,263.5 232.2,258.7 218.4,265.9" fill="var(--color-practice)" fill-opacity="0.107" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="328.2,260.4 342.0,255.7 336.6,246.9 322.8,252.2" fill="var(--color-practice)" fill-opacity="0.139" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="404.0,289.3 417.8,287.5 413.5,275.4 399.6,277.9" fill="var(--color-theory)" fill-opacity="0.084" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="426.4,315.1 440.2,315.0 435.9,299.6 422.1,300.6" fill="var(--color-theory)" fill-opacity="0.157" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="190.7,280.3 204.6,273.1 199.2,269.2 185.3,276.8" fill="var(--color-practice)" fill-opacity="0.078" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="276.0,261.8 289.8,256.0 284.4,249.5 270.6,255.8" fill="var(--color-practice)" fill-opacity="0.135" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="347.4,265.0 361.2,260.9 355.8,251.0 342.0,255.7" fill="var(--color-practice)" fill-opacity="0.128" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="385.8,280.5 399.6,277.9 394.3,264.9 380.4,268.2" fill="var(--color-practice)" fill-opacity="0.086" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="366.6,271.5 380.4,268.2 375.0,256.9 361.2,260.9" fill="var(--color-practice)" fill-opacity="0.110" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="243.0,268.4 256.8,262.1 251.4,256.7 237.6,263.5" fill="var(--color-practice)" fill-opacity="0.117" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="430.7,331.4 444.5,332.4 440.2,315.0 426.4,315.1" fill="var(--color-theory)" fill-opacity="0.200" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="295.2,262.7 309.0,257.4 303.6,250.2 289.8,256.0" fill="var(--color-practice)" fill-opacity="0.135" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="408.3,301.6 422.1,300.6 417.8,287.5 404.0,289.3" fill="var(--color-theory)" fill-opacity="0.116" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="210.0,277.0 223.8,270.3 218.4,265.9 204.6,273.1" fill="var(--color-practice)" fill-opacity="0.092" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="435.1,350.2 448.9,352.4 444.5,332.4 430.7,331.4" fill="var(--color-theory)" fill-opacity="0.251" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="314.4,265.0 328.2,260.4 322.8,252.2 309.0,257.4" fill="var(--color-practice)" fill-opacity="0.131" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="262.2,267.5 276.0,261.8 270.6,255.8 256.8,262.1" fill="var(--color-practice)" fill-opacity="0.123" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="390.2,291.1 404.0,289.3 399.6,277.9 385.8,280.5" fill="var(--color-theory)" fill-opacity="0.083" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="333.6,269.0 347.4,265.0 342.0,255.7 328.2,260.4" fill="var(--color-practice)" fill-opacity="0.122" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="412.6,315.2 426.4,315.1 422.1,300.6 408.3,301.6" fill="var(--color-theory)" fill-opacity="0.151" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="352.8,274.8 366.6,271.5 361.2,260.9 347.4,265.0" fill="var(--color-practice)" fill-opacity="0.107" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="372.0,283.0 385.8,280.5 380.4,268.2 366.6,271.5" fill="var(--color-practice)" fill-opacity="0.084" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="229.2,274.7 243.0,268.4 237.6,263.5 223.8,270.3" fill="var(--color-practice)" fill-opacity="0.103" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="281.4,267.9 295.2,262.7 289.8,256.0 276.0,261.8" fill="var(--color-practice)" fill-opacity="0.125" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="196.1,283.8 210.0,277.0 204.6,273.1 190.7,280.3" fill="var(--color-practice)" fill-opacity="0.077" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="416.9,330.5 430.7,331.4 426.4,315.1 412.6,315.2" fill="var(--color-theory)" fill-opacity="0.191" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="394.5,302.6 408.3,301.6 404.0,289.3 390.2,291.1" fill="var(--color-theory)" fill-opacity="0.112" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="300.6,269.7 314.4,265.0 309.0,257.4 295.2,262.7" fill="var(--color-practice)" fill-opacity="0.123" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="248.4,273.3 262.2,267.5 256.8,262.1 243.0,268.4" fill="var(--color-practice)" fill-opacity="0.111" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="319.8,273.0 333.6,269.0 328.2,260.4 314.4,265.0" fill="var(--color-practice)" fill-opacity="0.116" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="421.2,348.1 435.1,350.2 430.7,331.4 416.9,330.5" fill="var(--color-theory)" fill-opacity="0.238" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="215.4,281.0 229.2,274.7 223.8,270.3 210.0,277.0" fill="var(--color-practice)" fill-opacity="0.090" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="376.4,292.9 390.2,291.1 385.8,280.5 372.0,283.0" fill="var(--color-theory)" fill-opacity="0.082" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="339.0,278.2 352.8,274.8 347.4,265.0 333.6,269.0" fill="var(--color-practice)" fill-opacity="0.103" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="267.6,273.2 281.4,267.9 276.0,261.8 262.2,267.5" fill="var(--color-practice)" fill-opacity="0.115" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="358.2,285.5 372.0,283.0 366.6,271.5 352.8,274.8" fill="var(--color-practice)" fill-opacity="0.083" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="398.8,315.3 412.6,315.2 408.3,301.6 394.5,302.6" fill="var(--color-theory)" fill-opacity="0.144" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="234.6,279.1 248.4,273.3 243.0,268.4 229.2,274.7" fill="var(--color-practice)" fill-opacity="0.099" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="286.8,274.3 300.6,269.7 295.2,262.7 281.4,267.9" fill="var(--color-practice)" fill-opacity="0.115" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="380.7,303.6 394.5,302.6 390.2,291.1 376.4,292.9" fill="var(--color-theory)" fill-opacity="0.108" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="403.1,329.5 416.9,330.5 412.6,315.2 398.8,315.3" fill="var(--color-theory)" fill-opacity="0.181" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="201.5,287.2 215.4,281.0 210.0,277.0 196.1,283.8" fill="var(--color-practice)" fill-opacity="0.077" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="306.0,277.0 319.8,273.0 314.4,265.0 300.6,269.7" fill="var(--color-practice)" fill-opacity="0.110" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="253.8,278.4 267.6,273.2 262.2,267.5 248.4,273.3" fill="var(--color-practice)" fill-opacity="0.105" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="362.5,294.7 376.4,292.9 372.0,283.0 358.2,285.5" fill="var(--color-theory)" fill-opacity="0.081" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="325.2,281.5 339.0,278.2 333.6,269.0 319.8,273.0" fill="var(--color-practice)" fill-opacity="0.099" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="344.4,288.0 358.2,285.5 352.8,274.8 339.0,278.2" fill="var(--color-practice)" fill-opacity="0.082" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="407.4,345.9 421.2,348.1 416.9,330.5 403.1,329.5" fill="var(--color-theory)" fill-opacity="0.224" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="220.8,284.9 234.6,279.1 229.2,274.7 215.4,281.0" fill="var(--color-practice)" fill-opacity="0.088" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="385.0,315.4 398.8,315.3 394.5,302.6 380.7,303.6" fill="var(--color-theory)" fill-opacity="0.138" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="273.0,279.0 286.8,274.3 281.4,267.9 267.6,273.2" fill="var(--color-practice)" fill-opacity="0.107" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="292.2,281.0 306.0,277.0 300.6,269.7 286.8,274.3" fill="var(--color-practice)" fill-opacity="0.104" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="366.9,304.6 380.7,303.6 376.4,292.9 362.5,294.7" fill="var(--color-theory)" fill-opacity="0.105" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="240.0,283.7 253.8,278.4 248.4,273.3 234.6,279.1" fill="var(--color-practice)" fill-opacity="0.095" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="389.3,328.6 403.1,329.5 398.8,315.3 385.0,315.4" fill="var(--color-theory)" fill-opacity="0.171" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="311.4,284.8 325.2,281.5 319.8,273.0 306.0,277.0" fill="var(--color-practice)" fill-opacity="0.095" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="348.7,296.5 362.5,294.7 358.2,285.5 344.4,288.0" fill="var(--color-theory)" fill-opacity="0.080" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="330.6,290.5 344.4,288.0 339.0,278.2 325.2,281.5" fill="var(--color-practice)" fill-opacity="0.080" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="206.9,290.7 220.8,284.9 215.4,281.0 201.5,287.2" fill="var(--color-practice)" fill-opacity="0.076" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="259.2,283.7 273.0,279.0 267.6,273.2 253.8,278.4" fill="var(--color-practice)" fill-opacity="0.099" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="393.6,343.7 407.4,345.9 403.1,329.5 389.3,328.6" fill="var(--color-theory)" fill-opacity="0.211" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="371.2,315.5 385.0,315.4 380.7,303.6 366.9,304.6" fill="var(--color-theory)" fill-opacity="0.131" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="278.4,285.1 292.2,281.0 286.8,274.3 273.0,279.0" fill="var(--color-practice)" fill-opacity="0.097" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="226.2,288.9 240.0,283.7 234.6,279.1 220.8,284.9" fill="var(--color-practice)" fill-opacity="0.085" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="353.1,305.6 366.9,304.6 362.5,294.7 348.7,296.5" fill="var(--color-theory)" fill-opacity="0.101" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="297.6,288.1 311.4,284.8 306.0,277.0 292.2,281.0" fill="var(--color-practice)" fill-opacity="0.091" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="375.5,327.7 389.3,328.6 385.0,315.4 371.2,315.5" fill="var(--color-theory)" fill-opacity="0.162" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="334.9,298.3 348.7,296.5 344.4,288.0 330.6,290.5" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="316.8,293.0 330.6,290.5 325.2,281.5 311.4,284.8" fill="var(--color-practice)" fill-opacity="0.079" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="245.4,288.3 259.2,283.7 253.8,278.4 240.0,283.7" fill="var(--color-practice)" fill-opacity="0.090" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="212.3,294.2 226.2,288.9 220.8,284.9 206.9,290.7" fill="var(--color-practice)" fill-opacity="0.075" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="264.6,289.1 278.4,285.1 273.0,279.0 259.2,283.7" fill="var(--color-practice)" fill-opacity="0.091" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="357.4,315.6 371.2,315.5 366.9,304.6 353.1,305.6" fill="var(--color-theory)" fill-opacity="0.125" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="379.8,341.5 393.6,343.7 389.3,328.6 375.5,327.7" fill="var(--color-theory)" fill-opacity="0.197" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="283.8,291.4 297.6,288.1 292.2,281.0 278.4,285.1" fill="var(--color-practice)" fill-opacity="0.087" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="339.2,306.6 353.1,305.6 348.7,296.5 334.9,298.3" fill="var(--color-theory)" fill-opacity="0.097" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="231.6,293.0 245.4,288.3 240.0,283.7 226.2,288.9" fill="var(--color-practice)" fill-opacity="0.082" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="303.0,295.5 316.8,293.0 311.4,284.8 297.6,288.1" fill="var(--color-practice)" fill-opacity="0.077" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="321.1,300.1 334.9,298.3 330.6,290.5 316.8,293.0" fill="var(--color-theory)" fill-opacity="0.077" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="361.7,326.7 375.5,327.7 371.2,315.5 357.4,315.6" fill="var(--color-theory)" fill-opacity="0.152" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="250.8,293.1 264.6,289.1 259.2,283.7 245.4,288.3" fill="var(--color-practice)" fill-opacity="0.085" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="343.6,315.7 357.4,315.6 353.1,305.6 339.2,306.6" fill="var(--color-theory)" fill-opacity="0.118" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="270.0,294.7 283.8,291.4 278.4,285.1 264.6,289.1" fill="var(--color-practice)" fill-opacity="0.083" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="366.0,339.4 379.8,341.5 375.5,327.7 361.7,326.7" fill="var(--color-theory)" fill-opacity="0.184" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="217.7,297.7 231.6,293.0 226.2,288.9 212.3,294.2" fill="var(--color-practice)" fill-opacity="0.074" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="325.4,307.6 339.2,306.6 334.9,298.3 321.1,300.1" fill="var(--color-theory)" fill-opacity="0.094" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="289.2,298.0 303.0,295.5 297.6,288.1 283.8,291.4" fill="var(--color-practice)" fill-opacity="0.076" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="307.3,301.9 321.1,300.1 316.8,293.0 303.0,295.5" fill="var(--color-theory)" fill-opacity="0.076" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="236.9,297.1 250.8,293.1 245.4,288.3 231.6,293.0" fill="var(--color-practice)" fill-opacity="0.079" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="347.9,325.8 361.7,326.7 357.4,315.6 343.6,315.7" fill="var(--color-theory)" fill-opacity="0.142" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="256.2,298.0 270.0,294.7 264.6,289.1 250.8,293.1" fill="var(--color-practice)" fill-opacity="0.080" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="329.8,315.8 343.6,315.7 339.2,306.6 325.4,307.6" fill="var(--color-theory)" fill-opacity="0.112" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="311.6,308.6 325.4,307.6 321.1,300.1 307.3,301.9" fill="var(--color-theory)" fill-opacity="0.090" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="352.2,337.2 366.0,339.4 361.7,326.7 347.9,325.8" fill="var(--color-theory)" fill-opacity="0.171" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="275.4,300.6 289.2,298.0 283.8,291.4 270.0,294.7" fill="var(--color-practice)" fill-opacity="0.075" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="293.5,303.7 307.3,301.9 303.0,295.5 289.2,298.0" fill="var(--color-theory)" fill-opacity="0.075" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="223.1,301.1 236.9,297.1 231.6,293.0 217.7,297.7" fill="var(--color-practice)" fill-opacity="0.073" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="334.1,324.8 347.9,325.8 343.6,315.7 329.8,315.8" fill="var(--color-theory)" fill-opacity="0.133" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="242.3,301.3 256.2,298.0 250.8,293.1 236.9,297.1" fill="var(--color-practice)" fill-opacity="0.076" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="315.9,315.9 329.8,315.8 325.4,307.6 311.6,308.6" fill="var(--color-theory)" fill-opacity="0.106" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="261.6,303.1 275.4,300.6 270.0,294.7 256.2,298.0" fill="var(--color-practice)" fill-opacity="0.073" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="297.8,309.6 311.6,308.6 307.3,301.9 293.5,303.7" fill="var(--color-theory)" fill-opacity="0.086" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="279.7,305.5 293.5,303.7 289.2,298.0 275.4,300.6" fill="var(--color-theory)" fill-opacity="0.074" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="338.4,335.0 352.2,337.2 347.9,325.8 334.1,324.8" fill="var(--color-theory)" fill-opacity="0.157" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="228.5,304.6 242.3,301.3 236.9,297.1 223.1,301.1" fill="var(--color-practice)" fill-opacity="0.072" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="320.3,323.9 334.1,324.8 329.8,315.8 315.9,315.9" fill="var(--color-theory)" fill-opacity="0.123" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="302.1,316.0 315.9,315.9 311.6,308.6 297.8,309.6" fill="var(--color-theory)" fill-opacity="0.099" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="247.7,305.6 261.6,303.1 256.2,298.0 242.3,301.3" fill="var(--color-practice)" fill-opacity="0.072" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="284.0,310.6 297.8,309.6 293.5,303.7 279.7,305.5" fill="var(--color-theory)" fill-opacity="0.083" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="265.9,307.3 279.7,305.5 275.4,300.6 261.6,303.1" fill="var(--color-theory)" fill-opacity="0.073" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="324.6,332.8 338.4,335.0 334.1,324.8 320.3,323.9" fill="var(--color-theory)" fill-opacity="0.144" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="306.5,323.0 320.3,323.9 315.9,315.9 302.1,316.0" fill="var(--color-theory)" fill-opacity="0.113" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="233.9,308.1 247.7,305.6 242.3,301.3 228.5,304.6" fill="var(--color-practice)" fill-opacity="0.071" stroke="var(--color-practice)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="288.3,316.1 302.1,316.0 297.8,309.6 284.0,310.6" fill="var(--color-theory)" fill-opacity="0.093" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="270.2,311.6 284.0,310.6 279.7,305.5 265.9,307.3" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="252.1,309.1 265.9,307.3 261.6,303.1 247.7,305.6" fill="var(--color-theory)" fill-opacity="0.072" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="310.8,330.7 324.6,332.8 320.3,323.9 306.5,323.0" fill="var(--color-theory)" fill-opacity="0.130" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="292.6,322.0 306.5,323.0 302.1,316.0 288.3,316.1" fill="var(--color-theory)" fill-opacity="0.104" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="274.5,316.2 288.3,316.1 284.0,310.6 270.2,311.6" fill="var(--color-theory)" fill-opacity="0.086" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="238.3,310.9 252.1,309.1 247.7,305.6 233.9,308.1" fill="var(--color-theory)" fill-opacity="0.071" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="256.4,312.6 270.2,311.6 265.9,307.3 252.1,309.1" fill="var(--color-theory)" fill-opacity="0.075" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="297.0,328.5 310.8,330.7 306.5,323.0 292.6,322.0" fill="var(--color-theory)" fill-opacity="0.117" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="278.8,321.1 292.6,322.0 288.3,316.1 274.5,316.2" fill="var(--color-theory)" fill-opacity="0.094" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="260.7,316.3 274.5,316.2 270.2,311.6 256.4,312.6" fill="var(--color-theory)" fill-opacity="0.080" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="242.6,313.6 256.4,312.6 252.1,309.1 238.3,310.9" fill="var(--color-theory)" fill-opacity="0.072" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="283.2,326.3 297.0,328.5 292.6,322.0 278.8,321.1" fill="var(--color-theory)" fill-opacity="0.104" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="265.0,320.1 278.8,321.1 274.5,316.2 260.7,316.3" fill="var(--color-theory)" fill-opacity="0.084" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="246.9,316.4 260.7,316.3 256.4,312.6 242.6,313.6" fill="var(--color-theory)" fill-opacity="0.073" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="269.3,324.1 283.2,326.3 278.8,321.1 265.0,320.1" fill="var(--color-theory)" fill-opacity="0.090" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="251.2,319.2 265.0,320.1 260.7,316.3 246.9,316.4" fill="var(--color-theory)" fill-opacity="0.075" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <polygon points="255.5,322.0 269.3,324.1 265.0,320.1 251.2,319.2" fill="var(--color-theory)" fill-opacity="0.077" stroke="var(--color-theory)" stroke-width="0.3" stroke-opacity="0.06" stroke-linejoin="round"/>
+  <path d="M310.8,330.7 L309.4,328.2 L308.1,325.7 L306.7,323.4 L305.4,321.2 L304.0,319.0 L302.7,316.8 L301.3,314.8 L300.0,312.8 L298.6,310.8 L297.3,308.9 L295.9,307.0 L294.6,305.1 L293.2,303.3 L291.9,301.5 L290.5,299.8 L289.2,298.0 L287.8,296.3 L286.5,294.7 L285.1,293.0 L283.8,291.4 L282.4,289.8 L281.1,288.2 L279.7,286.6 L278.4,285.1 L277.0,283.5 L275.7,282.0 L274.3,280.5 L273.0,279.0 L271.6,277.5 L270.3,276.1 L268.9,274.6 L267.6,273.2 L266.2,271.8 L264.9,270.3 L263.5,268.9 L262.2,267.5 L260.8,266.2 L259.5,264.8 L258.1,263.4 L256.8,262.1 L255.4,260.7 L254.1,259.4 L252.7,258.1 L251.4,256.7 L250.0,255.4 L248.7,254.1 L247.3,252.8 L246.0,251.5 L244.6,250.2 L243.3,249.0 L241.9,247.7 L240.6,246.4 L239.2,245.1 L237.9,243.9 L236.5,242.6 L235.2,241.4 L233.8,240.1 L232.5,238.9 L231.1,237.7 L229.8,236.5 L228.4,235.2 L227.1,234.0 L225.7,232.8 L224.4,231.6 L223.0,230.4 L221.7,229.2 L220.3,228.0 L219.0,226.8 L217.6,225.6 L216.3,224.4 L214.9,223.2 L213.6,222.1 L212.2,220.9 L210.9,219.7 L209.5,218.6 L208.2,217.4 L206.8,216.2 L205.5,215.1 L204.1,213.9 L202.8,212.8" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M366.0,339.4 L364.7,335.2 L363.3,331.3 L362.0,327.5 L360.6,323.8 L359.3,320.3 L357.9,316.9 L356.6,313.7 L355.2,310.5 L353.9,307.4 L352.5,304.4 L351.2,301.5 L349.8,298.7 L348.5,295.9 L347.1,293.2 L345.8,290.6 L344.4,288.0 L343.1,285.5 L341.7,283.0 L340.4,280.5 L339.0,278.2 L337.7,275.8 L336.3,273.5 L335.0,271.2 L333.6,269.0 L332.3,266.8 L330.9,264.6 L329.6,262.5 L328.2,260.4 L326.9,258.3 L325.5,256.2 L324.2,254.2 L322.8,252.2 L321.5,250.2 L320.1,248.2 L318.8,246.3 L317.4,244.4 L316.1,242.5 L314.7,240.6 L313.4,238.7 L312.0,236.9 L310.7,235.1 L309.3,233.3 L308.0,231.5 L306.6,229.7 L305.3,227.9 L303.9,226.2 L302.6,224.5 L301.2,222.7 L299.9,221.0 L298.5,219.3 L297.2,217.7 L295.8,216.0 L294.5,214.3 L293.1,212.7 L291.8,211.0 L290.4,209.4 L289.1,207.8 L287.7,206.2 L286.4,204.6 L285.0,203.0 L283.7,201.5 L282.3,199.9 L281.0,198.3 L279.6,196.8 L278.3,195.2 L276.9,193.7 L275.6,192.2 L274.2,190.7 L272.9,189.2 L271.5,187.7 L270.2,186.2 L268.8,184.7 L267.5,183.2 L266.1,181.7 L264.8,180.3 L263.4,178.8 L262.1,177.4 L260.7,175.9 L259.4,174.5 L258.0,173.0" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M421.2,348.1 L419.9,342.3 L418.5,336.8 L417.2,331.5 L415.8,326.5 L414.5,321.7 L413.1,317.0 L411.8,312.5 L410.4,308.2 L409.1,304.0 L407.7,300.0 L406.4,296.1 L405.0,292.3 L403.7,288.5 L402.3,284.9 L401.0,281.4 L399.6,277.9 L398.3,274.6 L397.0,271.3 L395.6,268.1 L394.3,264.9 L392.9,261.8 L391.6,258.8 L390.2,255.8 L388.9,252.9 L387.5,250.0 L386.2,247.2 L384.8,244.4 L383.5,241.7 L382.1,239.0 L380.8,236.4 L379.4,233.8 L378.1,231.2 L376.7,228.6 L375.4,226.1 L374.0,223.7 L372.7,221.2 L371.3,218.8 L370.0,216.4 L368.6,214.1 L367.3,211.7 L365.9,209.4 L364.6,207.1 L363.2,204.9 L361.9,202.7 L360.5,200.5 L359.2,198.3 L357.8,196.1 L356.5,194.0 L355.1,191.8 L353.8,189.7 L352.4,187.6 L351.1,185.6 L349.7,183.5 L348.4,181.5 L347.0,179.5 L345.7,177.5 L344.3,175.5 L343.0,173.5 L341.6,171.5 L340.3,169.6 L338.9,167.7 L337.6,165.8 L336.2,163.9 L334.9,162.0 L333.5,160.1 L332.2,158.2 L330.8,156.4 L329.5,154.5 L328.1,152.7 L326.8,150.9 L325.4,149.1 L324.1,147.3 L322.7,145.5 L321.4,143.7 L320.0,142.0 L318.7,140.2 L317.3,138.5 L316.0,136.7 L314.6,135.0 L313.3,133.3" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M476.5,356.7 L475.1,349.3 L473.8,342.3 L472.4,335.6 L471.1,329.1 L469.7,323.0 L468.4,317.1 L467.0,311.4 L465.7,306.0 L464.3,300.7 L463.0,295.6 L461.6,290.6 L460.3,285.8 L458.9,281.2 L457.6,276.6 L456.2,272.2 L454.9,267.9 L453.5,263.7 L452.2,259.6 L450.8,255.6 L449.5,251.7 L448.1,247.9 L446.8,244.1 L445.4,240.4 L444.1,236.8 L442.7,233.3 L441.4,229.8 L440.0,226.4 L438.7,223.0 L437.3,219.8 L436.0,216.5 L434.6,213.3 L433.3,210.2 L431.9,207.1 L430.6,204.0 L429.2,201.0 L427.9,198.0 L426.5,195.1 L425.2,192.2 L423.8,189.4 L422.5,186.6 L421.1,183.8 L419.8,181.0 L418.4,178.3 L417.1,175.6 L415.7,173.0 L414.4,170.3 L413.0,167.7 L411.7,165.2 L410.3,162.6 L409.0,160.1 L407.6,157.6 L406.3,155.1 L404.9,152.7 L403.6,150.3 L402.2,147.9 L400.9,145.5 L399.5,143.1 L398.2,140.8 L396.8,138.5 L395.5,136.2 L394.1,133.9 L392.8,131.6 L391.4,129.4 L390.1,127.1 L388.8,124.9 L387.4,122.7 L386.1,120.6 L384.7,118.4 L383.4,116.3 L382.0,114.1 L380.7,112.0 L379.3,109.9 L378.0,107.8 L376.6,105.7 L375.3,103.7 L373.9,101.6 L372.6,99.6 L371.2,97.6 L369.9,95.5 L368.5,93.5" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M531.7,365.4 L530.4,356.4 L529.0,347.8 L527.7,339.6 L526.3,331.8 L525.0,324.3 L523.6,317.2 L522.3,310.3 L520.9,303.7 L519.6,297.3 L518.2,291.1 L516.9,285.2 L515.5,279.4 L514.2,273.8 L512.8,268.3 L511.5,263.0 L510.1,257.9 L508.8,252.8 L507.4,247.9 L506.1,243.1 L504.7,238.5 L503.4,233.9 L502.0,229.4 L500.7,225.0 L499.3,220.8 L498.0,216.5 L496.6,212.4 L495.3,208.4 L493.9,204.4 L492.6,200.5 L491.2,196.7 L489.9,192.9 L488.5,189.2 L487.2,185.5 L485.8,181.9 L484.5,178.4 L483.1,174.9 L481.8,171.4 L480.4,168.0 L479.1,164.7 L477.7,161.4 L476.4,158.1 L475.0,154.9 L473.7,151.7 L472.3,148.6 L471.0,145.5 L469.6,142.4 L468.3,139.4 L466.9,136.4 L465.6,133.4 L464.2,130.5 L462.9,127.6 L461.5,124.7 L460.2,121.9 L458.8,119.1 L457.5,116.3 L456.1,113.5 L454.8,110.8 L453.4,108.1 L452.1,105.4 L450.7,102.7 L449.4,100.1 L448.0,97.5 L446.7,94.9 L445.3,92.3 L444.0,89.8 L442.6,87.3 L441.3,84.8 L439.9,82.3 L438.6,79.8 L437.2,77.4 L435.9,74.9 L434.5,72.5 L433.2,70.1 L431.8,67.7 L430.5,65.4 L429.1,63.0 L427.8,60.7 L426.4,58.4 L425.1,56.1 L423.7,53.8" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M255.5,322.0 L262.4,323.1 L269.3,324.1 L276.2,325.2 L283.2,326.3 L290.1,327.4 L297.0,328.5 L303.9,329.6 L310.8,330.7 L317.7,331.8 L324.6,332.8 L331.5,333.9 L338.4,335.0 L345.3,336.1 L352.2,337.2 L359.1,338.3 L366.0,339.4 L372.9,340.4 L379.8,341.5 L386.7,342.6 L393.6,343.7 L400.5,344.8 L407.4,345.9 L414.3,347.0 L421.2,348.1 L428.1,349.1 L435.1,350.2 L442.0,351.3 L448.9,352.4 L455.8,353.5 L462.7,354.6 L469.6,355.7 L476.5,356.7 L483.4,357.8 L490.3,358.9 L497.2,360.0 L504.1,361.1 L511.0,362.2 L517.9,363.3 L524.8,364.4 L531.7,365.4" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.3,294.2 L219.2,291.6 L226.2,288.9 L233.1,286.3 L240.0,283.7 L246.9,281.1 L253.8,278.4 L260.7,275.8 L267.6,273.2 L274.5,270.6 L281.4,267.9 L288.3,265.3 L295.2,262.7 L302.1,260.1 L309.0,257.4 L315.9,254.8 L322.8,252.2 L329.7,249.6 L336.6,246.9 L343.5,244.3 L350.4,241.7 L357.3,239.1 L364.2,236.4 L371.1,233.8 L378.1,231.2 L385.0,228.5 L391.9,225.9 L398.8,223.3 L405.7,220.7 L412.6,218.0 L419.5,215.4 L426.4,212.8 L433.3,210.2 L440.2,207.5 L447.1,204.9 L454.0,202.3 L460.9,199.7 L467.8,197.0 L474.7,194.4 L481.6,191.8 L488.5,189.2" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M190.7,280.3 L197.7,276.7 L204.6,273.1 L211.5,269.5 L218.4,265.9 L225.3,262.3 L232.2,258.7 L239.1,255.1 L246.0,251.5 L252.9,247.9 L259.8,244.3 L266.7,240.7 L273.6,237.1 L280.5,233.5 L287.4,229.9 L294.3,226.3 L301.2,222.7 L308.1,219.1 L315.0,215.5 L321.9,211.9 L328.8,208.3 L335.7,204.7 L342.6,201.1 L349.6,197.6 L356.5,194.0 L363.4,190.4 L370.3,186.8 L377.2,183.2 L384.1,179.6 L391.0,176.0 L397.9,172.4 L404.8,168.8 L411.7,165.2 L418.6,161.6 L425.5,158.0 L432.4,154.4 L439.3,150.8 L446.2,147.2 L453.1,143.6 L460.0,140.0 L466.9,136.4" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M169.2,266.4 L176.1,262.1 L183.0,257.7 L189.9,253.4 L196.8,249.0 L203.7,244.7 L210.6,240.3 L217.5,235.9 L224.4,231.6 L231.3,227.2 L238.2,222.9 L245.1,218.5 L252.0,214.2 L258.9,209.8 L265.8,205.5 L272.7,201.1 L279.6,196.8 L286.5,192.4 L293.4,188.1 L300.3,183.7 L307.2,179.4 L314.1,175.0 L321.1,170.7 L328.0,166.3 L334.9,162.0 L341.8,157.6 L348.7,153.3 L355.6,148.9 L362.5,144.6 L369.4,140.2 L376.3,135.9 L383.2,131.5 L390.1,127.1 L397.0,122.8 L403.9,118.4 L410.8,114.1 L417.7,109.7 L424.6,105.4 L431.5,101.0 L438.4,96.7 L445.3,92.3" fill="none" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M233.9,308.1 L238.5,307.2 L243.1,306.4 L247.7,305.6 L252.4,304.7 L257.0,303.9 L261.6,303.1 L266.2,302.2 L270.8,301.4 L275.4,300.6 L280.0,299.7 L284.6,298.9 L289.2,298.0 L293.8,297.2 L298.4,296.4 L303.0,295.5 L307.6,294.7 L312.2,293.9 L316.8,293.0 L321.4,292.2 L326.0,291.3 L330.6,290.5 L335.2,289.7 L339.8,288.8 L344.4,288.0 L349.0,287.2 L353.6,286.3 L358.2,285.5 L362.8,284.6 L367.4,283.8 L372.0,283.0 L376.6,282.1 L381.2,281.3 L385.8,280.5 L390.4,279.6 L395.0,278.8 L399.6,277.9 L404.3,277.1 L408.9,276.3 L413.5,275.4 L418.1,274.6 L422.7,273.8 L427.3,272.9 L431.9,272.1 L436.5,271.3 L441.1,270.4 L445.7,269.6 L450.3,268.7 L454.9,267.9 L459.5,267.1 L464.1,266.2 L468.7,265.4 L473.3,264.6 L477.9,263.7 L482.5,262.9 L487.1,262.0 L491.7,261.2 L496.3,260.4 L500.9,259.5 L505.5,258.7 L510.1,257.9" fill="none" stroke="var(--academic-text)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M147.6,252.5 L149.9,250.9 L152.2,249.2 L154.5,247.6 L156.8,245.9 L159.1,244.2 L161.4,242.6 L163.7,240.9 L166.0,239.3 L168.3,237.6 L170.6,236.0 L172.9,234.3 L175.2,232.6 L177.5,231.0 L179.8,229.3 L182.1,227.7 L184.4,226.0 L186.7,224.4 L189.0,222.7 L191.3,221.1 L193.6,219.4 L195.9,217.7 L198.2,216.1 L200.5,214.4 L202.8,212.8 L205.1,211.1 L207.4,209.5 L209.7,207.8 L212.0,206.2 L214.3,204.5 L216.6,202.8 L218.9,201.2 L221.2,199.5 L223.5,197.9 L225.8,196.2 L228.1,194.6 L230.4,192.9 L232.7,191.2 L235.0,189.6 L237.3,187.9 L239.6,186.3 L241.9,184.6 L244.2,183.0 L246.5,181.3 L248.8,179.7 L251.1,178.0 L253.4,176.3 L255.7,174.7 L258.0,173.0 L260.3,171.4 L262.6,169.7 L264.9,168.1 L267.2,166.4 L269.5,164.8 L271.8,163.1 L274.1,161.4 L276.4,159.8 L278.7,158.1 L281.0,156.5 L283.3,154.8 L285.6,153.2 L287.9,151.5 L290.3,149.8 L292.6,148.2 L294.9,146.5 L297.2,144.9 L299.5,143.2 L301.8,141.6 L304.1,139.9 L306.4,138.3 L308.7,136.6 L311.0,134.9 L313.3,133.3 L315.6,131.6 L317.9,130.0 L320.2,128.3 L322.5,126.7 L324.8,125.0 L327.1,123.4 L329.4,121.7 L331.7,120.0 L334.0,118.4 L336.3,116.7 L338.6,115.1 L340.9,113.4 L343.2,111.8 L345.5,110.1 L347.8,108.4 L350.1,106.8 L352.4,105.1 L354.7,103.5 L357.0,101.8 L359.3,100.2 L361.6,98.5 L363.9,96.9 L366.2,95.2 L368.5,93.5 L370.8,91.9 L373.1,90.2 L375.4,88.6 L377.7,86.9 L380.0,85.3 L382.3,83.6 L384.6,82.0 L386.9,80.3 L389.2,78.6 L391.5,77.0 L393.8,75.3 L396.1,73.7 L398.4,72.0 L400.7,70.4 L403.0,68.7 L405.3,67.0 L407.6,65.4 L409.9,63.7 L412.2,62.1 L414.5,60.4 L416.8,58.8 L419.1,57.1 L421.4,55.5 L423.7,53.8" fill="none" stroke="var(--color-practice)" stroke-width="2.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M261.6,303.1 L263.6,301.7 L265.7,300.4 L267.8,299.2 L269.8,298.0 L271.9,296.9 L274.0,295.8 L276.1,294.7 L278.1,293.7 L280.2,292.7 L282.3,291.7 L284.3,290.8 L286.4,289.9 L288.5,289.0 L290.6,288.1 L292.6,287.2 L294.7,286.4 L296.8,285.5 L298.8,284.7 L300.9,283.9 L303.0,283.1 L305.1,282.4 L307.1,281.6 L309.2,280.8 L311.3,280.1 L313.3,279.4 L315.4,278.6 L317.5,277.9 L319.6,277.2 L321.6,276.5 L323.7,275.8 L325.8,275.1 L327.8,274.5 L329.9,273.8 L332.0,273.1 L334.1,272.5 L336.1,271.8 L338.2,271.2 L340.3,270.5 L342.3,269.9 L344.4,269.3 L346.5,268.6 L348.6,268.0 L350.6,267.4 L352.7,266.8 L354.8,266.2 L356.8,265.6 L358.9,265.0 L361.0,264.4 L363.1,263.8 L365.1,263.2 L367.2,262.6 L369.3,262.0 L371.3,261.4 L373.4,260.8 L375.5,260.3 L377.6,259.7 L379.6,259.1 L381.7,258.5 L383.8,258.0 L385.8,257.4 L387.9,256.9 L390.0,256.3 L392.1,255.7 L394.1,255.2 L396.2,254.6 L398.3,254.1 L400.3,253.5 L402.4,253.0 L404.5,252.5 L406.6,251.9 L408.6,251.4 L410.7,250.8 L412.8,250.3 L414.8,249.8 L416.9,249.3 L419.0,248.7 L421.1,248.2 L423.1,247.7 L425.2,247.1 L427.3,246.6 L429.3,246.1 L431.4,245.6 L433.5,245.1 L435.6,244.6 L437.6,244.0 L439.7,243.5 L441.8,243.0 L443.8,242.5 L445.9,242.0 L448.0,241.5 L450.1,241.0 L452.1,240.5 L454.2,240.0 L456.3,239.5 L458.3,239.0 L460.4,238.5 L462.5,238.0 L464.6,237.5 L466.6,237.0 L468.7,236.5 L470.8,236.0 L472.8,235.5 L474.9,235.0 L477.0,234.5 L479.1,234.0 L481.1,233.5 L483.2,233.0 L485.3,232.5 L487.3,232.0 L489.4,231.6 L491.5,231.1 L493.6,230.6 L495.6,230.1 L497.7,229.6 L499.8,229.1 L501.8,228.7 L503.9,228.2 L506.0,227.7 L508.1,227.2 L510.1,226.7" fill="none" stroke="var(--color-theory)" stroke-width="2.4" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M255.5,322.0 L562.1,266.2" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="559.3" y1="266.7" x2="570.4" y2="264.7" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>
+  <polygon points="575.9,263.7 569.5,267.9 568.5,262.1" fill="var(--academic-text)" opacity="0.6"/>
+  <path d="M255.5,322.0 L128.1,240.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="130.3" y1="241.4" x2="128.5" y2="240.3" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>
+  <polygon points="123.8,237.2 131.3,238.6 128.1,243.5" fill="var(--academic-text)" opacity="0.6"/>
+  <path d="M255.5,427.8 L255.5,157.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="255.5" y1="160.1" x2="255.5" y2="153.3" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>
+  <polygon points="255.5,147.7 258.5,154.7 252.6,154.7" fill="var(--academic-text)" opacity="0.6"/>
+  <text x="581.9" y="275.7" fill="var(--academic-text)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">n</tspan></text>
+  <text x="119.8" y="230.2" fill="var(--academic-text)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">C</tspan></text>
+  <text x="255.5" y="138.7" fill="var(--academic-text)" font-size="12" text-anchor="middle">log<tspan font-size="8.5" dy="3.5">10</tspan><tspan dy="-3.5">&#8203;</tspan>(<tspan font-style="italic">E</tspan><tspan font-size="8.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan>/<tspan font-style="italic">E</tspan><tspan font-size="8.5" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <path d="M389.7,294.4 L397.5,299.4" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="391.6" y="311.9" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">5</text>
+  <path d="M527.8,269.2 L535.6,274.2" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="529.7" y="286.7" fill="var(--academic-text)" font-size="10.5" text-anchor="middle">10</text>
+  <path d="M233.9,308.1 L224.3,309.8" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="220.3" y="312.8" fill="var(--academic-text)" font-size="10.5" text-anchor="end">1</text>
+  <path d="M190.7,280.3 L181.1,282.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="177.1" y="285.1" fill="var(--academic-text)" font-size="10.5" text-anchor="end">2</text>
+  <path d="M147.6,252.5 L137.9,254.3" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="133.9" y="257.3" fill="var(--academic-text)" font-size="10.5" text-anchor="end">3</text>
+  <text x="241.9" y="329.7" fill="var(--academic-text)" font-size="10.5" text-anchor="end">0,5</text>
+  <path d="M247.2,416.8 L255.5,415.3" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="243.2" y="420.8" fill="var(--academic-text)" font-size="10.5" text-anchor="end">&#8722;3</text>
+  <path d="M247.2,230.1 L255.5,228.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="243.2" y="234.1" fill="var(--academic-text)" font-size="10.5" text-anchor="end">3</text>
+  <text x="431.7" y="57.8" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">C</tspan> = 3 (üstel)</text>
+  <text x="518.1" y="252.9" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">C</tspan> = 1</text>
+  <text x="518.1" y="226.7" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">lineer: <tspan font-style="italic">E</tspan><tspan font-size="8.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan> = <tspan font-style="italic">n</tspan>·<tspan font-style="italic">E</tspan><tspan font-size="8.5" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+</svg>
+<figcaption><em>z</em> = log<sub>10</sub>(<em>E<sub>n</sub></em>/<em>E</em><sub>0</sub>) = <em>n</em>&#8201;log<sub>10</sub> <em>C</em> yüzeyi (0 &#8804; <em>n</em> &#8804; 10, 0,5 &#8804; <em>C</em> &#8804; 3). Mavi bölgede (<em>C</em> &lt; 1) hata söner, kırmızı bölgede (<em>C</em> &gt; 1) üstel olarak büyür; <em>C</em> = 1 kesitinde yüzey düzdür. Kırmızı kalın eğri <em>C</em> = 3 kesitidir, kesikli mavi eğri ise lineer büyüme <em>E<sub>n</sub></em> = <em>n</em>&#8201;<em>E</em><sub>0</sub> için log<sub>10</sub> <em>n</em> değeridir. Yüzeyin arkasında kalan çizgiler soluk çizilmiştir.</figcaption>
+</figure>
+```
+
+## Üstel ve Lineer Hata Büyümesine Örnekler
+
+Aşağıdaki iki örnekte başlangıç değerindeki $10^{-5}$ mertebesinde tek bir yuvarlama hatasının izini sürüyoruz. Birinci örnekte hata her adımda üç katına çıkar, ikincisinde ise yalnız adım sayısıyla orantılı büyür.
+
+:::: {#exm-yak-indirgeme-a name="İndirgeme bağıntısının çözümü"}
+$c_1$ ve $c_2$ reel sabitler olmak üzere $(p_n)_{n=0}^{\infty}$ dizisi $n = 0, 1, 2, \dots$ için
+
+$$p_n = c_1 \left(\frac{1}{3}\right)^n + c_2\, 3^n$$
+
+ile tanımlansın. Bu dizinin $n = 2, 3, \dots$ için
+
+$$p_n = \frac{10}{3}\, p_{n-1} - p_{n-2} \tag{1}$$
+
+indirgeme bağıntısının bir çözümü olduğunu gösteriniz.
+
+::: {.cozum}
+$p_{n-1}$ ve $p_{n-2}$'yi (1)'in sağ tarafında yerine yazıp ortak çarpanları ayıralım:
+
+$$\begin{aligned}
+\frac{10}{3}\, p_{n-1} - p_{n-2} &= \frac{10}{3}\left[c_1 \left(\frac{1}{3}\right)^{n-1} + c_2\, 3^{n-1}\right]\\[1mm]
+&\quad - \left[c_1 \left(\frac{1}{3}\right)^{n-2} + c_2\, 3^{n-2}\right]\\[1mm]
+&= c_1 \left(\frac{1}{3}\right)^{n-2}\left(\frac{10}{3} \cdot \frac{1}{3} - 1\right)\\[1mm]
+&\quad + c_2\, 3^{n-2}\left(\frac{10}{3} \cdot 3 - 1\right)\\[1mm]
+&= c_1 \left(\frac{1}{3}\right)^{n-2} \cdot \frac{1}{9} + c_2\, 3^{n-2} \cdot 9\\[1mm]
+&= c_1 \left(\frac{1}{3}\right)^{n} + c_2\, 3^{n} = p_n.
+\end{aligned}$$
+
+Demek ki $c_1$ ve $c_2$ ne olursa olsun $(p_n)$ dizisi (1) bağıntısını sağlar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-yak-indirgeme-b name="Başlangıç değerlerinden sabitler"}
+$p_n = c_1 \left(\frac{1}{3}\right)^n + c_2\, 3^n$ dizisinde $p_0 = 1$ ve $p_1 = \frac{1}{3}$ verilirse $c_1$ ve $c_2$ sabitleri ne olur?
+
+::: {.cozum}
+$n = 0$ ve $n = 1$ yazalım:
+
+$$\begin{aligned}
+p_0 = 1 &\implies c_1 + c_2 = 1,\\[1mm]
+p_1 = \frac{1}{3} &\implies \frac{1}{3}\, c_1 + 3 c_2 = \frac{1}{3} \implies c_1 + 9 c_2 = 1.
+\end{aligned}$$
+
+İkinci denklemden birinciyi çıkarırsak $8 c_2 = 0$, yani $c_2 = 0$ ve $c_1 = 1$ bulunur. Bu sabitlerle dizi
+
+$$p_n = \left(\frac{1}{3}\right)^n$$
+
+olur ve $n \to \infty$ iken sıfıra yakınsar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-yak-indirgeme-c name="Beş-basamak yuvarlamada hatanın büyümesi"}
+$p_n = c_1 \left(\frac{1}{3}\right)^n + c_2\, 3^n$ dizisinde $p_0 = 1$ ve $p_1 = \frac{1}{3}$ başlangıç değerleri beş-basamak yuvarlama aritmetiğiyle (@def-hat-kn) gösterilsin ve $c_1$, $c_2$ sabitleri bu değerlerden bulunsun. Dizi (1) bağıntısıyla hesaplandığında oluşan hatanın karakteristiğini araştırınız.
+
+::: {.cozum}
+**Başlangıç değerleri.** Beş-basamak yuvarlamayla
+
+$$p_0^* = 0{,}10000 \cdot 10^{1}, \qquad p_1^* = 0{,}33333$$
+
+olur. Yalnız $p_1$ yuvarlanmıştır; $\left\lvert p_1 - p_1^* \right\rvert = \frac{1}{3} \cdot 10^{-5}$.
+
+**Sabitler.** $n = 0$ için $c_1^* + c_2^* = 0{,}10000 \cdot 10^{1}$, yani $c_1^* = 1 - c_2^*$. Bunu $n = 1$ denkleminde kullanalım:
+
+$$\begin{aligned}
+\frac{1}{3}\, c_1^* + 3 c_2^* = 0{,}33333 &\implies \frac{1}{3}\left(1 - c_2^*\right) + 3 c_2^* = 0{,}33333\\[1mm]
+&\implies \frac{8}{3}\, c_2^* = 0{,}33333 - \frac{1}{3} = -0{,}33333 \cdot 10^{-5}\\[1mm]
+&\implies c_2^* = -0{,}12500 \cdot 10^{-5}.
+\end{aligned}$$
+
+Buradan $c_1^* = 1 + 0{,}12500 \cdot 10^{-5}$, yani $c_1^* = 1{,}00000125$ bulunur; beş basamağa yuvarlanınca $c_1^* = 0{,}10000 \cdot 10^{1}$ olur. Böylece
+
+$$p_n^* = \left(\frac{1}{3}\right)^n - 0{,}12500 \cdot 10^{-5} \cdot 3^n.$$
+
+Bu biçimdeki her dizi (1)'i sağlar (bkz. @exm-yak-indirgeme-a). Bu dizi $n = 0$'da $1 - 0{,}125 \cdot 10^{-5}$ verir; beş basamakta bu yine $0{,}10000 \cdot 10^{1} = p_0^*$ demektir. Dolayısıyla (1) bağıntısını $p_0^*$ ve $p_1^*$'dan başlatırsak (ara işlemlerdeki yeni yuvarlamaları bir yana bırakırsak) beş basamak duyarlığında bu diziyi üretiriz. Gerçek çözümde sıfır olan $3^n$ katsayısı, yuvarlama yüzünden sıfır olmayan küçük bir $c_2^*$ değeri almıştır.
+
+**Hatanın büyümesi.** Mutlak hata
+
+$$\begin{aligned}
+E_n = \left\lvert p_n - p_n^* \right\rvert &= \left\lvert \left(\frac{1}{3}\right)^n - \left(\frac{1}{3}\right)^n + 0{,}12500 \cdot 10^{-5} \cdot 3^n \right\rvert\\[1mm]
+&= 0{,}12500 \cdot 10^{-5} \cdot 3^n
+\end{aligned}$$
+
+olur. Bu, $E_n \approx C^n E_0$ biçimidir (@def-yak-hata-buyumesi): $C = 3 > 1$ ve $E_0 = 0{,}12500 \cdot 10^{-5}$. Burada $E_0$, $3^n$ çarpanının önündeki sabittir; başlangıçtaki $\frac{1}{3} \cdot 10^{-5}$ yuvarlama hatasıyla aynı mertebededir. Demek ki $(p_n^*)$ dizisiyle $(p_n)$ dizisine yaklaşım **üstel hata büyümesine** sahiptir; bu yaklaşım kararsızdır.
+
+**Tablo.** Aşağıdaki tabloda $p_n^*$ değerleri (1) bağıntısından, $\frac{10}{3}$ yerine $0{,}33333 \cdot 10^{1}$ alınarak ve her çarpma ile her çıkarmanın sonucu beş basamağa yuvarlanarak hesaplanmıştır. Gerçek $p_n = \left(\frac{1}{3}\right)^n$ değerleri de beş basamakla verilmiş, mutlak ve bağıl hatalar (@def-hat-mutlak-bagil) bu beş basamaklı değerlerden hesaplanmıştır; bu yüzden $n = 0$ ve $n = 1$ satırlarında hata $0$ görünür.
+
+::: {.iteration-table}
+| $n$ | Hesaplanan $p_n^*$ | Gerçek $p_n$ | Bağıl Hata | Mutlak Hata |
+|:-:|--:|--:|--:|--:|
+| $0$ | $0{,}10000 \cdot 10^{1}$ | $0{,}10000 \cdot 10^{1}$ | $0$ | $0$ |
+| $1$ | $0{,}33333$ | $0{,}33333$ | $0$ | $0$ |
+| $2$ | $0{,}11110$ | $0{,}11111$ | $0{,}90001 \cdot 10^{-4}$ | $0{,}10000 \cdot 10^{-4}$ |
+| $3$ | $0{,}37000 \cdot 10^{-1}$ | $0{,}37037 \cdot 10^{-1}$ | $0{,}99900 \cdot 10^{-3}$ | $0{,}37000 \cdot 10^{-4}$ |
+| $4$ | $0{,}12230 \cdot 10^{-1}$ | $0{,}12346 \cdot 10^{-1}$ | $0{,}93958 \cdot 10^{-2}$ | $0{,}11600 \cdot 10^{-3}$ |
+| $5$ | $0{,}37660 \cdot 10^{-2}$ | $0{,}41152 \cdot 10^{-2}$ | $0{,}84856 \cdot 10^{-1}$ | $0{,}34920 \cdot 10^{-3}$ |
+| $6$ | $0{,}32300 \cdot 10^{-3}$ | $0{,}13717 \cdot 10^{-2}$ | $0{,}76453$ | $0{,}10487 \cdot 10^{-2}$ |
+| $7$ | $-0{,}26893 \cdot 10^{-2}$ | $0{,}45725 \cdot 10^{-3}$ | $0{,}68815 \cdot 10^{1}$ | $0{,}31466 \cdot 10^{-2}$ |
+| $8$ | $-0{,}92872 \cdot 10^{-2}$ | $0{,}15242 \cdot 10^{-3}$ | $0{,}61932 \cdot 10^{2}$ | $0{,}94396 \cdot 10^{-2}$ |
+:::
+
+Mutlak hata her adımda yaklaşık üç katına çıkıyor ($0{,}10487 \cdot 10^{-2}$, $0{,}31466 \cdot 10^{-2}$, $0{,}94396 \cdot 10^{-2}$); bu, $3^n$ çarpanının tahmin ettiği davranıştır. Gerçek değerler sıfıra giderken hesaplanan değerler $n = 7$'den itibaren negatife düşer ve $n = 8$'de bağıl hata $60$'ı aşar. [$\blacksquare$]{.qed}
+:::
+::::
+
+Aynı başlangıç değerleriyle bu kez çözümleri $n$'ye göre doğrusal olan bir bağıntıya bakalım.
+
+:::: {#exm-yak-lineer-buyume name="Lineer hata büyümesi"}
+$c_1 + c_2 n$ biçimindeki diziler $n \geq 2$ için
+
+$$p_n = 2\, p_{n-1} - p_{n-2} \tag{2}$$
+
+bağıntısını sağlar. $p_0 = 1$ ve $p_1 = \frac{1}{3}$ başlangıç değerleri beş-basamak yuvarlamayla gösterilip $c_1$, $c_2$ bu değerlerden bulunursa hata nasıl büyür?
+
+::: {.cozum}
+**Çözüm olduğu.** $p_n = c_1 + c_2 n$ için
+
+$$2\left[c_1 + c_2 (n-1)\right] - \left[c_1 + c_2 (n-2)\right] = c_1 + c_2 n = p_n.$$
+
+**Gerçek sabitler.** $p_0 = 1$ ile $c_1 = 1$, $p_1 = \frac{1}{3}$ ile $c_2 = \frac{1}{3} - 1 = -\frac{2}{3}$ bulunur; $p_n = 1 - \frac{2}{3} n$.
+
+**Beş-basamak sabitler.** $p_0^* = 0{,}10000 \cdot 10^{1}$ ve $p_1^* = 0{,}33333$ ile
+
+$$c_1^* = 0{,}10000 \cdot 10^{1}, \qquad c_2^* = 0{,}33333 - 1 = -0{,}66667$$
+
+olur; $p_n^* = 1 - 0{,}66667\, n$.
+
+**Hatanın büyümesi.**
+
+$$E_n = \left\lvert p_n - p_n^* \right\rvert = \left\lvert 0{,}66667 - \frac{2}{3} \right\rvert n \approx 0{,}33333 \cdot 10^{-5} \cdot n.$$
+
+Bu, $E_n \approx C \cdot n \cdot E_0$ biçimidir (@def-yak-hata-buyumesi; $C = 1$, $E_0 = 0{,}33333 \cdot 10^{-5}$). Hata büyümesi lineerdir, yaklaşım kararlıdır.
+
+Karşılaştıralım: $n = 8$'de buradaki hata yaklaşık $0{,}26667 \cdot 10^{-4}$'tür; üstel örnekteki (@exm-yak-indirgeme-c) mutlak hata ise $0{,}94396 \cdot 10^{-2}$, yani yaklaşık $350$ kat büyüktür. Başlangıçtaki yuvarlama hatası iki örnekte de aynı mertebededir; farkı yaratan, bağıntının hatayı nasıl taşıdığıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="24.0 -7.0 514.5 369.0" role="img" aria-label="Absolute error against n from 0 to 8 on a logarithmic axis from 10^-6 to 10^-1: the exponential growth 0.125e-5 times 3^n is a straight red line with the table errors as open circles, the linear growth 0.33333e-5 times n is a dashed blue curve, about 350 times smaller at n = 8">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="80.0" y1="30.0" x2="80.0" y2="330.0"/><line x1="126.5" y1="30.0" x2="126.5" y2="330.0"/><line x1="173.0" y1="30.0" x2="173.0" y2="330.0"/><line x1="219.5" y1="30.0" x2="219.5" y2="330.0"/><line x1="266.0" y1="30.0" x2="266.0" y2="330.0"/><line x1="312.6" y1="30.0" x2="312.6" y2="330.0"/><line x1="359.1" y1="30.0" x2="359.1" y2="330.0"/><line x1="405.6" y1="30.0" x2="405.6" y2="330.0"/><line x1="452.1" y1="30.0" x2="452.1" y2="330.0"/><line x1="80.0" y1="330.0" x2="480.0" y2="330.0"/><line x1="80.0" y1="270.0" x2="480.0" y2="270.0"/><line x1="80.0" y1="210.0" x2="480.0" y2="210.0"/><line x1="80.0" y1="150.0" x2="480.0" y2="150.0"/><line x1="80.0" y1="90.0" x2="480.0" y2="90.0"/><line x1="80.0" y1="30.0" x2="480.0" y2="30.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="80.0" y1="330.0" x2="488.0" y2="330.0"/>
+  <line x1="80.0" y1="22.0" x2="80.0" y2="330.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="80.0" y="346.0" text-anchor="middle">0</text>
+  <text x="126.5" y="346.0" text-anchor="middle">1</text>
+  <text x="173.0" y="346.0" text-anchor="middle">2</text>
+  <text x="219.5" y="346.0" text-anchor="middle">3</text>
+  <text x="266.0" y="346.0" text-anchor="middle">4</text>
+  <text x="312.6" y="346.0" text-anchor="middle">5</text>
+  <text x="359.1" y="346.0" text-anchor="middle">6</text>
+  <text x="405.6" y="346.0" text-anchor="middle">7</text>
+  <text x="452.1" y="346.0" text-anchor="middle">8</text>
+  <text x="494.0" y="334.0" font-style="italic">n</text>
+  </g>
+  <text x="72.0" y="334.0" fill="var(--academic-text)" font-size="11" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="72.0" y="274.0" fill="var(--academic-text)" font-size="11" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;5</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="72.0" y="214.0" fill="var(--academic-text)" font-size="11" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="72.0" y="154.0" fill="var(--academic-text)" font-size="11" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;3</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="72.0" y="94.0" fill="var(--academic-text)" font-size="11" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="72.0" y="34.0" fill="var(--academic-text)" font-size="11" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;1</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="76.0" y="16.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">mutlak hata <tspan font-style="italic">E</tspan><tspan font-size="8.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <path d="M80.0,324.2 L126.5,295.6 L173.0,266.9 L219.5,238.3 L266.0,209.7 L312.6,181.0 L359.1,152.4 L405.6,123.8 L452.1,95.2" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="80.0" cy="324.2" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="126.5" cy="295.6" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="173.0" cy="266.9" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="219.5" cy="238.3" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="266.0" cy="209.7" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="312.6" cy="181.0" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="359.1" cy="152.4" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="405.6" cy="123.8" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="452.1" cy="95.2" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="173.0" cy="270.0" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="219.5" cy="235.9" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="266.0" cy="206.1" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="312.6" cy="177.4" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="359.1" cy="148.8" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="405.6" cy="120.1" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="452.1" cy="91.5" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <path d="M126.5,298.6 L128.8,297.4 L131.2,296.1 L133.5,295.0 L135.8,293.9 L138.1,292.8 L140.5,291.8 L142.8,290.8 L145.1,289.9 L147.4,288.9 L149.8,288.1 L152.1,287.2 L154.4,286.4 L156.7,285.6 L159.1,284.8 L161.4,284.0 L163.7,283.3 L166.0,282.6 L168.4,281.9 L170.7,281.2 L173.0,280.6 L175.3,279.9 L177.7,279.3 L180.0,278.7 L182.3,278.1 L184.7,277.5 L187.0,276.9 L189.3,276.4 L191.6,275.8 L194.0,275.3 L196.3,274.8 L198.6,274.2 L200.9,273.7 L203.3,273.2 L205.6,272.7 L207.9,272.3 L210.2,271.8 L212.6,271.3 L214.9,270.9 L217.2,270.4 L219.5,270.0 L221.9,269.6 L224.2,269.1 L226.5,268.7 L228.8,268.3 L231.2,267.9 L233.5,267.5 L235.8,267.1 L238.1,266.7 L240.5,266.4 L242.8,266.0 L245.1,265.6 L247.4,265.2 L249.8,264.9 L252.1,264.5 L254.4,264.2 L256.7,263.8 L259.1,263.5 L261.4,263.2 L263.7,262.8 L266.0,262.5 L268.4,262.2 L270.7,261.9 L273.0,261.5 L275.3,261.2 L277.7,260.9 L280.0,260.6 L282.3,260.3 L284.7,260.0 L287.0,259.7 L289.3,259.4 L291.6,259.1 L294.0,258.9 L296.3,258.6 L298.6,258.3 L300.9,258.0 L303.3,257.8 L305.6,257.5 L307.9,257.2 L310.2,257.0 L312.6,256.7 L314.9,256.4 L317.2,256.2 L319.5,255.9 L321.9,255.7 L324.2,255.4 L326.5,255.2 L328.8,254.9 L331.2,254.7 L333.5,254.4 L335.8,254.2 L338.1,254.0 L340.5,253.7 L342.8,253.5 L345.1,253.3 L347.4,253.0 L349.8,252.8 L352.1,252.6 L354.4,252.4 L356.7,252.2 L359.1,251.9 L361.4,251.7 L363.7,251.5 L366.0,251.3 L368.4,251.1 L370.7,250.9 L373.0,250.7 L375.3,250.5 L377.7,250.3 L380.0,250.1 L382.3,249.9 L384.7,249.7 L387.0,249.5 L389.3,249.3 L391.6,249.1 L394.0,248.9 L396.3,248.7 L398.6,248.5 L400.9,248.3 L403.3,248.1 L405.6,247.9 L407.9,247.7 L410.2,247.6 L412.6,247.4 L414.9,247.2 L417.2,247.0 L419.5,246.8 L421.9,246.7 L424.2,246.5 L426.5,246.3 L428.8,246.1 L431.2,246.0 L433.5,245.8 L435.8,245.6 L438.1,245.4 L440.5,245.3 L442.8,245.1 L445.1,244.9 L447.4,244.8 L449.8,244.6 L452.1,244.4" fill="none" stroke="var(--color-theory)" stroke-width="2.0" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="126.5" cy="298.6" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="173.0" cy="280.6" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="219.5" cy="270.0" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="266.0" cy="262.5" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="312.6" cy="256.7" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="359.1" cy="251.9" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="405.6" cy="247.9" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="452.1" cy="244.4" r="3.4" fill="var(--color-theory)"/>
+  <line x1="463.7" y1="168.0" x2="463.7" y2="99.5" stroke="var(--academic-text)" stroke-width="1.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="463.7,93.9 466.7,100.9 460.8,100.9" fill="var(--academic-text)" opacity="1.0"/>
+  <line x1="463.7" y1="168.0" x2="463.7" y2="236.4" stroke="var(--academic-text)" stroke-width="1.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="463.7,242.0 460.8,235.0 466.7,235.0" fill="var(--academic-text)" opacity="1.0"/>
+  <path d="M455.8,91.5 L467.0,91.5" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M455.8,244.4 L467.0,244.4" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="467.2" y="161.8" width="63.0" height="14.5" rx="3" fill="var(--academic-bg)" opacity="0.9"/>
+  <text x="469.7" y="172.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-weight="600">&#8776; 350 kat</text>
+  <text x="288.0" y="184.5" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">üstel: 0,125·10<tspan font-size="8.5" dy="-5">&#8722;5</tspan><tspan dy="5">&#8203;</tspan>·3<tspan font-size="8.5" dy="-5"><tspan font-style="italic">n</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="316.6" y="278.7" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">lineer: 0,33333·10<tspan font-size="8.5" dy="-5">&#8722;5</tspan><tspan dy="5">&#8203;</tspan>·<tspan font-style="italic">n</tspan></text>
+  <text x="91.6" y="57.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-style="italic">log ölçekte üstel büyüme = doğru</text>
+  <circle cx="96.3" cy="81.0" r="6.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <text x="108.3" y="85.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start">tablodaki gerçek mutlak hata</text>
+</svg>
+<figcaption>Logaritmik eksende iki hata büyümesi. Kırmızı doğru üstel büyüme <em>E<sub>n</sub></em> = 0,125·10<sup>&#8722;5</sup>·3<sup><em>n</em></sup>, içi boş daireler tablodaki beş-basamak hesabın gerçek mutlak hatalarıdır; kesikli mavi eğri lineer büyüme <em>E<sub>n</sub></em> = 0,33333·10<sup>&#8722;5</sup>·<em>n</em>'dir. <em>n</em> = 8'de tablodaki hata lineer hatanın yaklaşık 350 katıdır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Dizilerde Yakınsama Hızı
+
+Bir algoritma çoğu zaman bir yaklaşımlar dizisi üretir. Dizinin yakınsaması yetmez; iki algoritmayı karşılaştırmak için dizinin limitine **ne kadar hızlı** yaklaştığını da ölçmek isteriz. Bunu, hızı bilinen bir sıfır dizisiyle karşılaştırarak yaparız.
+
+::: {#def-yak-dizi-hizi name="Dizilerde Yakınsama Hızı"}
+$(x_n)_{n=1}^{\infty}$ dizisi sıfıra ($x_n \to 0$), $(y_n)$ dizisi de bir $y_0$ sayısına ($y_n \to y_0$) yakınsasın. Yeterince büyük $n$ değerleri için
+
+$$\left| y_n - y_0 \right| \leq K \left| x_n \right|$$
+
+eşitsizliğini sağlayan bir $K > 0$ sayısı varsa $y_n \to y_0$ yakınsaması **$O(x_n)$ hızındadır** denir ve $y_n = y_0 + O(x_n)$ yazılır.
+:::
+
+Yani $y_n$ ile limiti arasındaki fark, sabit bir çarpan dışında, en az $x_n$ kadar hızlı küçülür. Bu kitapta karşılaştırma dizisi olarak $p > 0$ için $x_n = \frac{1}{n^p}$ biçimindeki dizileri alıyoruz ve eşitsizliğin sağlandığı **en büyük** $p$'yi arıyoruz:
+
+$$y_n = y_0 + O\left(\frac{1}{n^p}\right).$$
+
+$p$ ne kadar büyükse yakınsama o kadar hızlıdır.
+
+:::: {#exm-yak-dizi-hizlari name="İki dizinin hızını karşılaştırma"}
+$a_n = \dfrac{n+1}{n^2}$ ve $b_n = \dfrac{n+3}{n^3}$ dizilerinin yakınsama hızlarını karşılaştırınız.
+
+::: {.cozum}
+İki dizi de sıfıra yakınsar. Paydaki sabitleri $n$ ile üstten sınırlayalım. $n \geq 1$ için $1 \leq n$ olduğundan
+
+$$\left| a_n - 0 \right| = \frac{n+1}{n^2} \leq \frac{n+n}{n^2} = \frac{2n}{n^2} = 2 \cdot \frac{1}{n},$$
+
+yani $a_n = 0 + O\left(\frac{1}{n}\right)$. Benzer biçimde $3 \leq 3n$ olduğundan
+
+$$\left| b_n - 0 \right| = \frac{n+3}{n^3} \leq \frac{n+3n}{n^3} = \frac{4n}{n^3} = 4 \cdot \frac{1}{n^2},$$
+
+yani $b_n = 0 + O\left(\frac{1}{n^2}\right)$.
+
+Bu üsler en büyüktür: $a_n \geq \frac{1}{n}$ olduğundan $p > 1$ için $n^p a_n \geq n^{p-1} \to \infty$ ve hiçbir $K$ yetmez; aynı nedenle $b_n \geq \frac{1}{n^2}$ olduğundan $b_n$ için $p = 2$'den büyük üs alınamaz.
+
+Demek ki $(a_n)$ dizisi sıfıra $\frac{1}{n}$ hızında, $(b_n)$ dizisi ise $\frac{1}{n^2}$ hızında yakınsar; $(b_n)$ sıfıra $(a_n)$'den daha hızlı yakınsar. İlk değerler (beş anlamlı basamakla):
+
+::: {.iteration-table}
+| $n$ | $a_n$ | $b_n$ |
+|:-:|--:|--:|
+| $1$ | $2{,}0000$ | $4{,}0000$ |
+| $2$ | $0{,}75000$ | $0{,}62500$ |
+| $3$ | $0{,}44444$ | $0{,}22222$ |
+| $4$ | $0{,}31250$ | $0{,}10938$ |
+| $5$ | $0{,}24000$ | $0{,}064000$ |
+| $6$ | $0{,}19444$ | $0{,}041667$ |
+| $7$ | $0{,}16327$ | $0{,}029155$ |
+:::
+
+$n = 1$'de $b_n$ daha büyükken $n = 2$'den itibaren $a_n$'nin gerisinde kalır ve fark hızla açılır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="28.0 -6.5 486.5 368.5" role="img" aria-label="The sequences a_n = (n+1)/n^2 as blue dots and b_n = (n+3)/n^3 as red squares for n from 1 to 10, under their dashed bounds 2/n and 4/n^2">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="100.0" y1="30.0" x2="100.0" y2="330.0"/><line x1="140.0" y1="30.0" x2="140.0" y2="330.0"/><line x1="180.0" y1="30.0" x2="180.0" y2="330.0"/><line x1="220.0" y1="30.0" x2="220.0" y2="330.0"/><line x1="260.0" y1="30.0" x2="260.0" y2="330.0"/><line x1="300.0" y1="30.0" x2="300.0" y2="330.0"/><line x1="340.0" y1="30.0" x2="340.0" y2="330.0"/><line x1="380.0" y1="30.0" x2="380.0" y2="330.0"/><line x1="420.0" y1="30.0" x2="420.0" y2="330.0"/><line x1="460.0" y1="30.0" x2="460.0" y2="330.0"/><line x1="60.0" y1="294.3" x2="480.0" y2="294.3"/><line x1="60.0" y1="258.6" x2="480.0" y2="258.6"/><line x1="60.0" y1="222.9" x2="480.0" y2="222.9"/><line x1="60.0" y1="187.1" x2="480.0" y2="187.1"/><line x1="60.0" y1="151.4" x2="480.0" y2="151.4"/><line x1="60.0" y1="115.7" x2="480.0" y2="115.7"/><line x1="60.0" y1="80.0" x2="480.0" y2="80.0"/><line x1="60.0" y1="44.3" x2="480.0" y2="44.3"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="60.0" y1="330.0" x2="488.0" y2="330.0"/>
+  <line x1="60.0" y1="22.0" x2="60.0" y2="330.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="100.0" y="346.0" text-anchor="middle">1</text>
+  <text x="140.0" y="346.0" text-anchor="middle">2</text>
+  <text x="180.0" y="346.0" text-anchor="middle">3</text>
+  <text x="220.0" y="346.0" text-anchor="middle">4</text>
+  <text x="260.0" y="346.0" text-anchor="middle">5</text>
+  <text x="300.0" y="346.0" text-anchor="middle">6</text>
+  <text x="340.0" y="346.0" text-anchor="middle">7</text>
+  <text x="380.0" y="346.0" text-anchor="middle">8</text>
+  <text x="420.0" y="346.0" text-anchor="middle">9</text>
+  <text x="460.0" y="346.0" text-anchor="middle">10</text>
+  <text x="53.0" y="334.0" text-anchor="end">0</text>
+  <text x="53.0" y="262.6" text-anchor="end">1</text>
+  <text x="53.0" y="191.1" text-anchor="end">2</text>
+  <text x="53.0" y="119.7" text-anchor="end">3</text>
+  <text x="53.0" y="48.3" text-anchor="end">4</text>
+  <text x="494.0" y="334.0" font-style="italic">n</text>
+  <text x="56.0" y="16.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">a</tspan><tspan font-size="8.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">b</tspan><tspan font-size="8.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  </g>
+  <path d="M100.0,187.1 L101.0,190.6 L102.0,193.9 L103.0,197.1 L104.0,200.1 L105.0,203.0 L106.0,205.8 L107.0,208.4 L108.0,211.0 L109.0,213.4 L110.0,215.7 L111.0,218.0 L112.0,220.1 L113.0,222.2 L114.0,224.2 L115.0,226.1 L116.0,228.0 L117.0,229.7 L118.0,231.5 L119.0,233.1 L120.0,234.8 L121.0,236.3 L122.0,237.8 L123.0,239.3 L124.0,240.7 L125.0,242.1 L126.0,243.4 L127.0,244.7 L128.0,246.0 L129.0,247.2 L130.0,248.4 L131.0,249.5 L132.0,250.6 L133.0,251.7 L134.0,252.8 L135.0,253.8 L136.0,254.8 L137.0,255.8 L138.0,256.7 L139.0,257.7 L140.0,258.6 L141.0,259.5 L142.0,260.3 L143.0,261.2 L144.0,262.0 L145.0,262.8 L146.0,263.6 L147.0,264.3 L148.0,265.1 L149.0,265.8 L150.0,266.5 L151.0,267.2 L152.0,267.9 L153.0,268.6 L154.0,269.2 L155.0,269.8 L156.0,270.5 L157.0,271.1 L158.0,271.7 L159.0,272.3 L160.0,272.9 L161.0,273.4 L162.0,274.0 L163.0,274.5 L164.0,275.1 L165.0,275.6 L166.0,276.1 L167.0,276.6 L168.0,277.1 L169.0,277.6 L170.0,278.1 L171.0,278.5 L172.0,279.0 L173.0,279.4 L174.0,279.9 L175.0,280.3 L176.0,280.7 L177.0,281.2 L178.0,281.6 L179.0,282.0 L180.0,282.4 L181.0,282.8 L182.0,283.2 L183.0,283.5 L184.0,283.9 L185.0,284.3 L186.0,284.6 L187.0,285.0 L188.0,285.4 L189.0,285.7 L190.0,286.0 L191.0,286.4 L192.0,286.7 L193.0,287.0 L194.0,287.4 L195.0,287.7 L196.0,288.0 L197.0,288.3 L198.0,288.6 L199.0,288.9 L200.0,289.2 L201.0,289.5 L202.0,289.8 L203.0,290.0 L204.0,290.3 L205.0,290.6 L206.0,290.9 L207.0,291.1 L208.0,291.4 L209.0,291.6 L210.0,291.9 L211.0,292.2 L212.0,292.4 L213.0,292.7 L214.0,292.9 L215.0,293.1 L216.0,293.4 L217.0,293.6 L218.0,293.8 L219.0,294.1 L220.0,294.3 L221.0,294.5 L222.0,294.7 L223.0,294.9 L224.0,295.2 L225.0,295.4 L226.0,295.6 L227.0,295.8 L228.0,296.0 L229.0,296.2 L230.0,296.4 L231.0,296.6 L232.0,296.8 L233.0,297.0 L234.0,297.2 L235.0,297.3 L236.0,297.5 L237.0,297.7 L238.0,297.9 L239.0,298.1 L240.0,298.3 L241.0,298.4 L242.0,298.6 L243.0,298.8 L244.0,298.9 L245.0,299.1 L246.0,299.3 L247.0,299.4 L248.0,299.6 L249.0,299.8 L250.0,299.9 L251.0,300.1 L252.0,300.2 L253.0,300.4 L254.0,300.5 L255.0,300.7 L256.0,300.8 L257.0,301.0 L258.0,301.1 L259.0,301.3 L260.0,301.4 L261.0,301.6 L262.0,301.7 L263.0,301.9 L264.0,302.0 L265.0,302.1 L266.0,302.3 L267.0,302.4 L268.0,302.5 L269.0,302.7 L270.0,302.8 L271.0,302.9 L272.0,303.0 L273.0,303.2 L274.0,303.3 L275.0,303.4 L276.0,303.5 L277.0,303.7 L278.0,303.8 L279.0,303.9 L280.0,304.0 L281.0,304.1 L282.0,304.3 L283.0,304.4 L284.0,304.5 L285.0,304.6 L286.0,304.7 L287.0,304.8 L288.0,304.9 L289.0,305.0 L290.0,305.2 L291.0,305.3 L292.0,305.4 L293.0,305.5 L294.0,305.6 L295.0,305.7 L296.0,305.8 L297.0,305.9 L298.0,306.0 L299.0,306.1 L300.0,306.2 L301.0,306.3 L302.0,306.4 L303.0,306.5 L304.0,306.6 L305.0,306.7 L306.0,306.8 L307.0,306.9 L308.0,307.0 L309.0,307.1 L310.0,307.1 L311.0,307.2 L312.0,307.3 L313.0,307.4 L314.0,307.5 L315.0,307.6 L316.0,307.7 L317.0,307.8 L318.0,307.9 L319.0,307.9 L320.0,308.0 L321.0,308.1 L322.0,308.2 L323.0,308.3 L324.0,308.4 L325.0,308.4 L326.0,308.5 L327.0,308.6 L328.0,308.7 L329.0,308.8 L330.0,308.8 L331.0,308.9 L332.0,309.0 L333.0,309.1 L334.0,309.1 L335.0,309.2 L336.0,309.3 L337.0,309.4 L338.0,309.4 L339.0,309.5 L340.0,309.6 L341.0,309.7 L342.0,309.7 L343.0,309.8 L344.0,309.9 L345.0,309.9 L346.0,310.0 L347.0,310.1 L348.0,310.2 L349.0,310.2 L350.0,310.3 L351.0,310.4 L352.0,310.4 L353.0,310.5 L354.0,310.6 L355.0,310.6 L356.0,310.7 L357.0,310.8 L358.0,310.8 L359.0,310.9 L360.0,311.0 L361.0,311.0 L362.0,311.1 L363.0,311.1 L364.0,311.2 L365.0,311.3 L366.0,311.3 L367.0,311.4 L368.0,311.4 L369.0,311.5 L370.0,311.6 L371.0,311.6 L372.0,311.7 L373.0,311.7 L374.0,311.8 L375.0,311.9 L376.0,311.9 L377.0,312.0 L378.0,312.0 L379.0,312.1 L380.0,312.1 L381.0,312.2 L382.0,312.3 L383.0,312.3 L384.0,312.4 L385.0,312.4 L386.0,312.5 L387.0,312.5 L388.0,312.6 L389.0,312.6 L390.0,312.7 L391.0,312.7 L392.0,312.8 L393.0,312.8 L394.0,312.9 L395.0,312.9 L396.0,313.0 L397.0,313.0 L398.0,313.1 L399.0,313.1 L400.0,313.2 L401.0,313.2 L402.0,313.3 L403.0,313.3 L404.0,313.4 L405.0,313.4 L406.0,313.5 L407.0,313.5 L408.0,313.6 L409.0,313.6 L410.0,313.7 L411.0,313.7 L412.0,313.8 L413.0,313.8 L414.0,313.9 L415.0,313.9 L416.0,313.9 L417.0,314.0 L418.0,314.0 L419.0,314.1 L420.0,314.1 L421.0,314.2 L422.0,314.2 L423.0,314.3 L424.0,314.3 L425.0,314.3 L426.0,314.4 L427.0,314.4 L428.0,314.5 L429.0,314.5 L430.0,314.6 L431.0,314.6 L432.0,314.6 L433.0,314.7 L434.0,314.7 L435.0,314.8 L436.0,314.8 L437.0,314.8 L438.0,314.9 L439.0,314.9 L440.0,315.0 L441.0,315.0 L442.0,315.0 L443.0,315.1 L444.0,315.1 L445.0,315.2 L446.0,315.2 L447.0,315.2 L448.0,315.3 L449.0,315.3 L450.0,315.3 L451.0,315.4 L452.0,315.4 L453.0,315.5 L454.0,315.5 L455.0,315.5 L456.0,315.6 L457.0,315.6 L458.0,315.6 L459.0,315.7 L460.0,315.7" fill="none" stroke="var(--color-theory)" stroke-width="1.6" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M100.0,44.3 L101.0,58.1 L102.0,70.8 L103.0,82.8 L104.0,93.9 L105.0,104.3 L106.0,114.0 L107.0,123.1 L108.0,131.6 L109.0,139.6 L110.0,147.1 L111.0,154.2 L112.0,160.9 L113.0,167.3 L114.0,173.2 L115.0,178.9 L116.0,184.2 L117.0,189.3 L118.0,194.1 L119.0,198.7 L120.0,203.0 L121.0,207.1 L122.0,211.1 L123.0,214.8 L124.0,218.4 L125.0,221.8 L126.0,225.1 L127.0,228.2 L128.0,231.1 L129.0,234.0 L130.0,236.7 L131.0,239.3 L132.0,241.8 L133.0,244.2 L134.0,246.5 L135.0,248.7 L136.0,250.9 L137.0,252.9 L138.0,254.9 L139.0,256.8 L140.0,258.6 L141.0,260.3 L142.0,262.0 L143.0,263.6 L144.0,265.2 L145.0,266.7 L146.0,268.2 L147.0,269.6 L148.0,271.0 L149.0,272.3 L150.0,273.6 L151.0,274.8 L152.0,276.0 L153.0,277.1 L154.0,278.3 L155.0,279.3 L156.0,280.4 L157.0,281.4 L158.0,282.4 L159.0,283.4 L160.0,284.3 L161.0,285.2 L162.0,286.1 L163.0,286.9 L164.0,287.7 L165.0,288.5 L166.0,289.3 L167.0,290.1 L168.0,290.8 L169.0,291.5 L170.0,292.2 L171.0,292.9 L172.0,293.6 L173.0,294.2 L174.0,294.8 L175.0,295.4 L176.0,296.0 L177.0,296.6 L178.0,297.2 L179.0,297.7 L180.0,298.3 L181.0,298.8 L182.0,299.3 L183.0,299.8 L184.0,300.3 L185.0,300.7 L186.0,301.2 L187.0,301.7 L188.0,302.1 L189.0,302.5 L190.0,303.0 L191.0,303.4 L192.0,303.8 L193.0,304.2 L194.0,304.5 L195.0,304.9 L196.0,305.3 L197.0,305.6 L198.0,306.0 L199.0,306.3 L200.0,306.7 L201.0,307.0 L202.0,307.3 L203.0,307.6 L204.0,308.0 L205.0,308.3 L206.0,308.6 L207.0,308.8 L208.0,309.1 L209.0,309.4 L210.0,309.7 L211.0,310.0 L212.0,310.2 L213.0,310.5 L214.0,310.7 L215.0,311.0 L216.0,311.2 L217.0,311.5 L218.0,311.7 L219.0,311.9 L220.0,312.1 L221.0,312.4 L222.0,312.6 L223.0,312.8 L224.0,313.0 L225.0,313.2 L226.0,313.4 L227.0,313.6 L228.0,313.8 L229.0,314.0 L230.0,314.2 L231.0,314.4 L232.0,314.5 L233.0,314.7 L234.0,314.9 L235.0,315.1 L236.0,315.2 L237.0,315.4 L238.0,315.6 L239.0,315.7 L240.0,315.9 L241.0,316.0 L242.0,316.2 L243.0,316.3 L244.0,316.5 L245.0,316.6 L246.0,316.8 L247.0,316.9 L248.0,317.1 L249.0,317.2 L250.0,317.3 L251.0,317.5 L252.0,317.6 L253.0,317.7 L254.0,317.9 L255.0,318.0 L256.0,318.1 L257.0,318.2 L258.0,318.3 L259.0,318.5 L260.0,318.6 L261.0,318.7 L262.0,318.8 L263.0,318.9 L264.0,319.0 L265.0,319.1 L266.0,319.2 L267.0,319.3 L268.0,319.4 L269.0,319.5 L270.0,319.6 L271.0,319.7 L272.0,319.8 L273.0,319.9 L274.0,320.0 L275.0,320.1 L276.0,320.2 L277.0,320.3 L278.0,320.4 L279.0,320.5 L280.0,320.6 L281.0,320.6 L282.0,320.7 L283.0,320.8 L284.0,320.9 L285.0,321.0 L286.0,321.0 L287.0,321.1 L288.0,321.2 L289.0,321.3 L290.0,321.4 L291.0,321.4 L292.0,321.5 L293.0,321.6 L294.0,321.7 L295.0,321.7 L296.0,321.8 L297.0,321.9 L298.0,321.9 L299.0,322.0 L300.0,322.1 L301.0,322.1 L302.0,322.2 L303.0,322.3 L304.0,322.3 L305.0,322.4 L306.0,322.4 L307.0,322.5 L308.0,322.6 L309.0,322.6 L310.0,322.7 L311.0,322.7 L312.0,322.8 L313.0,322.9 L314.0,322.9 L315.0,323.0 L316.0,323.0 L317.0,323.1 L318.0,323.1 L319.0,323.2 L320.0,323.2 L321.0,323.3 L322.0,323.3 L323.0,323.4 L324.0,323.4 L325.0,323.5 L326.0,323.5 L327.0,323.6 L328.0,323.6 L329.0,323.7 L330.0,323.7 L331.0,323.8 L332.0,323.8 L333.0,323.9 L334.0,323.9 L335.0,324.0 L336.0,324.0 L337.0,324.0 L338.0,324.1 L339.0,324.1 L340.0,324.2 L341.0,324.2 L342.0,324.3 L343.0,324.3 L344.0,324.3 L345.0,324.4 L346.0,324.4 L347.0,324.5 L348.0,324.5 L349.0,324.5 L350.0,324.6 L351.0,324.6 L352.0,324.6 L353.0,324.7 L354.0,324.7 L355.0,324.7 L356.0,324.8 L357.0,324.8 L358.0,324.9 L359.0,324.9 L360.0,324.9 L361.0,325.0 L362.0,325.0 L363.0,325.0 L364.0,325.1 L365.0,325.1 L366.0,325.1 L367.0,325.1 L368.0,325.2 L369.0,325.2 L370.0,325.2 L371.0,325.3 L372.0,325.3 L373.0,325.3 L374.0,325.4 L375.0,325.4 L376.0,325.4 L377.0,325.5 L378.0,325.5 L379.0,325.5 L380.0,325.5 L381.0,325.6 L382.0,325.6 L383.0,325.6 L384.0,325.6 L385.0,325.7 L386.0,325.7 L387.0,325.7 L388.0,325.8 L389.0,325.8 L390.0,325.8 L391.0,325.8 L392.0,325.9 L393.0,325.9 L394.0,325.9 L395.0,325.9 L396.0,326.0 L397.0,326.0 L398.0,326.0 L399.0,326.0 L400.0,326.0 L401.0,326.1 L402.0,326.1 L403.0,326.1 L404.0,326.1 L405.0,326.2 L406.0,326.2 L407.0,326.2 L408.0,326.2 L409.0,326.2 L410.0,326.3 L411.0,326.3 L412.0,326.3 L413.0,326.3 L414.0,326.4 L415.0,326.4 L416.0,326.4 L417.0,326.4 L418.0,326.4 L419.0,326.5 L420.0,326.5 L421.0,326.5 L422.0,326.5 L423.0,326.5 L424.0,326.5 L425.0,326.6 L426.0,326.6 L427.0,326.6 L428.0,326.6 L429.0,326.6 L430.0,326.7 L431.0,326.7 L432.0,326.7 L433.0,326.7 L434.0,326.7 L435.0,326.7 L436.0,326.8 L437.0,326.8 L438.0,326.8 L439.0,326.8 L440.0,326.8 L441.0,326.9 L442.0,326.9 L443.0,326.9 L444.0,326.9 L445.0,326.9 L446.0,326.9 L447.0,326.9 L448.0,327.0 L449.0,327.0 L450.0,327.0 L451.0,327.0 L452.0,327.0 L453.0,327.0 L454.0,327.1 L455.0,327.1 L456.0,327.1 L457.0,327.1 L458.0,327.1 L459.0,327.1 L460.0,327.1" fill="none" stroke="var(--color-practice)" stroke-width="1.6" stroke-dasharray="6 4" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="100.0" cy="187.1" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="140.0" cy="276.4" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="180.0" cy="298.3" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="220.0" cy="307.7" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="312.9" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="300.0" cy="316.1" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="340.0" cy="318.3" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="380.0" cy="320.0" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="420.0" cy="321.2" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="460.0" cy="322.1" r="4.0" fill="var(--color-theory)"/>
+  <rect x="96.4" y="40.7" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="136.4" y="281.8" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="176.4" y="310.5" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="216.4" y="318.6" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="256.4" y="321.8" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="296.4" y="323.4" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="336.4" y="324.3" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="376.4" y="324.9" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="416.4" y="325.2" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <rect x="456.4" y="325.5" width="7.2" height="7.2" fill="var(--color-practice)"/>
+  <text x="110.0" y="48.3" fill="var(--color-practice)" font-size="13" text-anchor="start" font-weight="600"><tspan font-style="italic">b</tspan><tspan font-size="8.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="90.0" y="192.1" fill="var(--color-theory)" font-size="13" text-anchor="end" font-weight="600"><tspan font-style="italic">a</tspan><tspan font-size="8.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="232.0" y="286.0" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">2/<tspan font-style="italic">n</tspan></text>
+  <text x="137.0" y="233.7" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">4/<tspan font-style="italic">n</tspan><tspan font-size="8.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></text>
+</svg>
+<figcaption><em>a<sub>n</sub></em> = (<em>n</em> + 1)/<em>n</em>² (mavi daireler) ve <em>b<sub>n</sub></em> = (<em>n</em> + 3)/<em>n</em>³ (kırmızı kareler) dizilerinin ilk on terimi ile üst sınırları 2/<em>n</em> ve 4/<em>n</em>² (kesikli). <em>n</em> = 1'de iki dizi de sınırına eşittir; <em>n</em> &#8805; 3 için <em>b<sub>n</sub></em> sıfıra <em>a<sub>n</sub></em>'den çok daha hızlı iner.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Fonksiyonlarda Yakınsama Hızı
+
+Nümerik türev ve integral formüllerinde yaklaşım bir adım uzunluğu $h$'ye bağlıdır ve $h \to 0$ iken gerçek değere yaklaşır. Bu durumda hızı, $h$'nin bir kuvvetiyle ölçeriz.
+
+::: {#def-yak-fonksiyon-hizi name="Fonksiyonlarda Yakınsama Hızı"}
+$\lim\limits_{h \to 0} g(h) = 0$ ve $\lim\limits_{h \to 0} f(h) = L$ olsun. Yeterince küçük $h$ değerleri için
+
+$$\left| f(h) - L \right| \leq K \left| g(h) \right|$$
+
+eşitsizliğini sağlayan bir $K > 0$ sayısı varsa $f(h)$ fonksiyonu $L$ sayısına **$O(g(h))$ hızında yakınsar** denir ve $f(h) = L + O(g(h))$ yazılır.
+:::
+
+Yani $h$ küçüldükçe $f(h)$ ile $L$ arasındaki fark, sabit bir çarpan dışında, en az $g(h)$ kadar hızlı küçülür. Bu kitapta $p > 0$ için $g(h) = h^p$ biçimindeki fonksiyonları alıyor ve en büyük $p$'yi arıyoruz: $f(h) = L + O(h^p)$. Örneğin $p = 4$ ise $h$ yarıya indiğinde hata kabaca $16$'da birine düşer.
+
+:::: {#exm-yak-kosinus name="Kosinüsün Taylor polinomuyla hız"}
+Kosinüs fonksiyonunun $h = 0$ civarındaki 3. mertebeden Taylor polinomunu kullanarak
+
+$$\cos(h) + \frac{1}{2} h^2 = 1 + O(h^4)$$
+
+olduğunu, yani $h \to 0$ iken $\cos(h) + \frac{1}{2} h^2$ fonksiyonunun $1$ sayısına $h^4$ hızında yakınsadığını gösteriniz.
+
+::: {.cozum}
+$\cos$ fonksiyonunun $0$'daki türevleri sırasıyla $1, 0, -1, 0$ olduğundan 3. mertebeden Taylor polinomu $P_3(h) = 1 - \frac{1}{2} h^2$'dir. Dördüncü türev yine $\cos$ olduğundan Taylor teoremi (@thm-onb-taylor) gereği
+
+$$\cos(h) = 1 - \frac{1}{2} h^2 + \frac{\cos(\xi(h))}{24}\, h^4$$
+
+olur; burada $\xi(h)$, $0$ ile $h$ arasındadır. $\left|\cos(\xi(h))\right| \leq 1$ olduğundan
+
+$$0 \leq \left| \cos(h) + \frac{1}{2} h^2 - 1 \right| = \frac{h^4}{24} \left| \cos(\xi(h)) \right| \leq \frac{1}{24}\, h^4.$$
+
+$h \to 0$ iken sağ taraf sıfıra gittiğinden sıkıştırma teoremiyle $\cos(h) + \frac{1}{2} h^2 \to 1$ olur. Bu eşitsizlik, $K = \frac{1}{24}$ ve $g(h) = h^4$ ile @def-yak-fonksiyon-hizi koşuludur:
+
+$$\cos(h) + \frac{1}{2} h^2 = 1 + O(h^4).$$
+
+$4$ en büyük üstür: $\xi(h) \to 0$ olduğundan fark bölü $h^4$ oranı $\frac{\cos(\xi(h))}{24} \to \frac{1}{24} \neq 0$ olur; bu yüzden $p > 4$ için fark bölü $h^p$ sınırsız büyür. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalarda hata kestirimleri ve $O$ gösterimiyle yakınsama hızları üzerinde çalışıyoruz.
+
+$\frac{\pi}{4} = 1 - \frac{1}{3} + \frac{1}{5} - \cdots$ serisini Leibniz 1674'te buldu. İlk alıştırma bu serinin $\pi$'yi ne kadar yavaş verdiğini gösterir.
+
+:::: {#exr-yak-leibniz-pi name="Leibniz serisiyle π"}
+$-1 < x \leq 1$ için
+
+$$\arctan(x) = \lim_{n \to \infty} P_n(x), \qquad P_n(x) = \sum_{k=1}^{n} (-1)^{k+1} \frac{x^{2k-1}}{2k-1} \tag{3}$$
+
+olduğuna göre, $\tan\left(\frac{\pi}{4}\right) = 1$ eşitliğini kullanarak $\left| 4 \cdot P_n(1) - \pi \right| < 10^{-3}$ eşitsizliğinin sağlanması için $n$'nin en az kaç olması gerektiğini belirleyiniz.
+
+::: {.cozum}
+**Seriyi kuralım.** $\tan\left(\frac{\pi}{4}\right) = 1$ olduğundan $\frac{\pi}{4} = \arctan(1)$, yani
+
+$$\pi = 4 \arctan(1) = 4 \sum_{k=1}^{\infty} \frac{(-1)^{k+1}}{2k-1} = 4\left(1 - \frac{1}{3} + \frac{1}{5} - \cdots\right).$$
+
+**Hatayı sınırlayalım.** $a_k = \frac{1}{2k-1}$ terimleri pozitif, azalan ve sıfıra yakınsaktır. Alterne seriler için hata kestirimine göre kısmi toplamın hatası atılan ilk terimi aşmaz (bkz. [Analiz 2](../analiz-2/abel-dirichlet-ve-leibniz-testleri.html#thm-leibniz-hata-kestirimi)):
+
+$$\left| P_n(1) - \arctan(1) \right| \leq a_{n+1} = \frac{1}{2(n+1) - 1} = \frac{1}{2n+1}.$$
+
+Dolayısıyla
+
+$$\left| 4 \cdot P_n(1) - \pi \right| = 4 \left| P_n(1) - \arctan(1) \right| \leq \frac{4}{2n+1}.$$
+
+**$n$'yi bulalım.** Sağ tarafın $10^{-3}$'ten küçük olması yeterlidir:
+
+$$\frac{4}{2n+1} < 10^{-3} \iff 4000 < 2n+1 \iff \frac{3999}{2} < n \iff 1999{,}5 < n.$$
+
+Hata kestirimi $n \geq 2000$ terim alındığında istenen hassasiyeti garanti eder.
+
+Kestirim yalnız yeterli bir koşuldur. Doğrudan hesap, gerçek hatanın yaklaşık $\frac{1}{n}$ olduğunu gösterir: $n = 999$'da $1{,}0010 \cdot 10^{-3}$, $n = 1000$'de $0{,}99999975 \cdot 10^{-3}$. Yani hata $10^{-3}$'ün altına ilk kez $n = 1000$'de iner. İki durumda da sonuç aynıdır: üç basamak için bile binlerce terim gerekir, bu seri $\pi$'yi hesaplamak için çok yavaştır. [$\blacksquare$]{.qed}
+:::
+::::
+
+John Machin 1706'da $\frac{\pi}{4} = 4 \arctan\left(\frac{1}{5}\right) - \arctan\left(\frac{1}{239}\right)$ formülüyle $\pi$'nin 100 basamağını hesapladı. Küçük argümanlarda $\arctan$ serisi çok daha hızlı yakınsar.
+
+:::: {#exr-yak-machin-pi name="Machin formülüyle π"}
+$\frac{\pi}{4} = 4 \arctan\left(\frac{1}{5}\right) - \arctan\left(\frac{1}{239}\right)$ eşitliğini ve $\arctan(x)$'in (3)'teki Maclaurin serisi açılımını kullanarak $\pi$ sayısına $10^{-3}$ hassasiyetle yaklaşımda bulunmak için en az kaç terim kullanılmalıdır?
+
+::: {.cozum}
+**Seriyi kuralım.** Eşitliği $4$ ile çarpıp iki $\arctan$'ı da serisine açalım:
+
+$$\pi = 16 \sum_{k=1}^{\infty} \frac{(-1)^{k+1}}{5^{2k-1}(2k-1)} - 4 \sum_{k=1}^{\infty} \frac{(-1)^{k+1}}{239^{2k-1}(2k-1)}.$$
+
+İkinci serinin ilk terimi $\frac{4}{239} \approx 0{,}016736$'dır; $10^{-3}$'ten büyük olduğu için atılamaz. Bu terimden sonra kalan kısım ise hata kestirimi gereği
+
+$$4 \cdot \frac{1}{239^{3} \cdot 3} \approx 0{,}98 \cdot 10^{-7}$$
+
+ile sınırlıdır, yani ihmal edilebilir. Bu yüzden ikinci seriden yalnız ilk terimi alırız ve yaklaşımımız
+
+$$\pi \approx 16 \sum_{k=1}^{n} \frac{(-1)^{k+1}}{5^{2k-1}(2k-1)} - \frac{4}{239}$$
+
+olur. Belirleyici olan, birinci seriden kaç terim gerektiğidir.
+
+**Hatayı sınırlayalım.** Birinci serinin terimleri $\frac{1}{5^{2k-1}(2k-1)}$ pozitif, azalan ve sıfıra yakınsaktır. Önceki alıştırmadaki kestirimle (@exr-yak-leibniz-pi), $n$ terimden sonra kalan kısmın $16$ katı
+
+$$16 \cdot \frac{1}{5^{2n+1}(2n+1)}$$
+
+ile sınırlıdır. Bunun $10^{-3}$'ten küçük olması gerekir:
+
+$$\frac{16}{5^{2n+1}(2n+1)} < 10^{-3} \iff 16000 < (2n+1) \cdot 5^{2n+1}.$$
+
+**$n$'yi bulalım.**
+
+$$\begin{aligned}
+n = 1:&\quad 3 \cdot 5^{3} = 375 < 16000,\\[1mm]
+n = 2:&\quad 5 \cdot 5^{5} = 15625 < 16000,\\[1mm]
+n = 3:&\quad 7 \cdot 5^{7} = 546875 > 16000.
+\end{aligned}$$
+
+Eşitsizliğin sağlandığı ilk değer $n = 3$'tür. $n = 3$ için iki kalanın toplamı da $2{,}93 \cdot 10^{-5} + 0{,}98 \cdot 10^{-7} < 10^{-3}$ olur. Demek ki birinci seriden $3$ terim, ikinci seriden $1$ terim yeterlidir:
+
+$$\begin{aligned}
+\pi &\approx 16\left(\frac{1}{5} - \frac{1}{3 \cdot 5^{3}} + \frac{1}{5 \cdot 5^{5}}\right) - \frac{4}{239}\\[1mm]
+&= 3{,}1583573 - 0{,}0167364 = 3{,}1416209.
+\end{aligned}$$
+
+Gerçek hata $\left| \pi - 3{,}1416209 \right| \approx 2{,}8 \cdot 10^{-5}$'tir. $n = 2$'de kestirim $1{,}024 \cdot 10^{-3}$ verdiği için hassasiyeti garanti etmez (gerçek hata $0{,}996 \cdot 10^{-3}$ ile sınırın hemen altında kalır). Leibniz serisinin gerektirdiği binlerce terimle (@exr-yak-leibniz-pi) karşılaştırınca, küçük argümanın yakınsamayı ne kadar hızlandırdığı görülür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Sıradaki dört alıştırmada dizilerde yakınsama hızını (@def-yak-dizi-hizi) kullanıyoruz.
+
+:::: {#exr-yak-dizi-a name="sin(1/n) dizisinin hızı"}
+$a_n = \sin\left(\frac{1}{n}\right)$ dizisinin yakınsama hızını belirleyiniz.
+
+::: {.cozum}
+$\frac{1}{n} \to 0$ ve $\sin$ sürekli olduğundan $\lim\limits_{n \to \infty} \sin\left(\frac{1}{n}\right) = \sin 0 = 0$'dır.
+
+Her $x$ için $\left| \sin x \right| \leq \left| x \right|$'dir: ortalama değer teoremine (@thm-onb-ortalama-deger) göre $\sin x - \sin 0 = \cos(\xi)\, x$ ve $\left| \cos \xi \right| \leq 1$. Buna göre
+
+$$\left| a_n - 0 \right| = \left| \sin\left(\frac{1}{n}\right) \right| \leq \frac{1}{n} = 1 \cdot \frac{1}{n^1},$$
+
+yani
+
+$$\sin\left(\frac{1}{n}\right) = 0 + O\left(\frac{1}{n}\right).$$
+
+$p = 1$ en büyük üstür: $n \sin\left(\frac{1}{n}\right) \to 1$ olduğundan $p > 1$ için $n^p \sin\left(\frac{1}{n}\right) = n^{p-1} \cdot n \sin\left(\frac{1}{n}\right) \to \infty$. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-yak-dizi-b name="sin(1/n²) dizisinin hızı"}
+$b_n = \sin\left(\frac{1}{n^2}\right)$ dizisinin yakınsama hızını belirleyiniz.
+
+::: {.cozum}
+$\frac{1}{n^2} \to 0$ olduğundan $\lim\limits_{n \to \infty} \sin\left(\frac{1}{n^2}\right) = 0$'dır. $\left| \sin x \right| \leq \left| x \right|$ eşitsizliğini $x = \frac{1}{n^2}$ ile kullanırsak
+
+$$\left| b_n - 0 \right| = \left| \sin\left(\frac{1}{n^2}\right) \right| \leq 1 \cdot \frac{1}{n^2},$$
+
+yani
+
+$$\sin\left(\frac{1}{n^2}\right) = 0 + O\left(\frac{1}{n^2}\right).$$
+
+$n^2 \sin\left(\frac{1}{n^2}\right) \to 1$ olduğundan $p = 2$'den büyük üs alınamaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-yak-dizi-c name="sin²(1/n) dizisinin hızı"}
+$c_n = \left(\sin \frac{1}{n}\right)^2$ dizisinin yakınsama hızını belirleyiniz.
+
+::: {.cozum}
+$\sin\left(\frac{1}{n}\right) \to 0$ olduğundan karesi de sıfıra gider. $\left| \sin x \right| \leq \left| x \right|$ eşitsizliğinin iki tarafının karesini alırsak
+
+$$\left| c_n - 0 \right| = \left(\sin \frac{1}{n}\right)^2 \leq \left(\frac{1}{n}\right)^2 = \frac{1}{n^2},$$
+
+yani
+
+$$\left(\sin \frac{1}{n}\right)^2 = 0 + O\left(\frac{1}{n^2}\right).$$
+
+$n^2 c_n = \left(n \sin \frac{1}{n}\right)^2 \to 1$ olduğundan $p = 2$ en büyük üstür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-yak-dizi-d name="ln(n+1) − ln(n) dizisinin hızı"}
+$d_n = \ln(n+1) - \ln(n)$ dizisinin yakınsama hızını belirleyiniz.
+
+::: {.cozum}
+Logaritmanın özelliği ve sürekliliğiyle
+
+$$\lim_{n \to \infty} \left(\ln(n+1) - \ln(n)\right) = \lim_{n \to \infty} \ln\left(\frac{n+1}{n}\right) = \ln 1 = 0.$$
+
+$x > 0$ için $\ln(1 + x) \leq x$'tir: ortalama değer teoremiyle $\ln(1+x) - \ln 1 = \frac{x}{1 + \xi}$, $0 < \xi < x$, ve $\frac{1}{1+\xi} < 1$. Bunu $x = \frac{1}{n}$ ile kullanalım:
+
+$$\left| d_n - 0 \right| = \ln\left(\frac{n+1}{n}\right) = \ln\left(1 + \frac{1}{n}\right) \leq \frac{1}{n}.$$
+
+Buradan
+
+$$\ln(n+1) - \ln(n) = 0 + O\left(\frac{1}{n}\right)$$
+
+bulunur. $n \to \infty$ iken
+
+$$n \ln\left(1 + \frac{1}{n}\right) = \ln\left(1 + \frac{1}{n}\right)^n \to \ln e = 1$$
+
+olduğundan $p = 1$ en büyük üstür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Sonraki dört alıştırmada fonksiyonlarda yakınsama hızını (@def-yak-fonksiyon-hizi) Maclaurin açılımlarıyla belirliyoruz. Açılımda sıfıra en yavaş giden terim, yani $x$'in en küçük kuvvetli terimi, hızı belirler. $K$ sabitini ise kalan terimin Taylor teoremindeki (@thm-onb-taylor) biçiminden okuruz; $\xi$ her seferinde $0$ ile $x$ arasındadır.
+
+:::: {#exr-yak-fonksiyon-a name="sin x / x fonksiyonunun hızı"}
+$\lim\limits_{x \to 0} \dfrac{\sin x}{x} = 1$ yakınsamasının hızını belirleyiniz.
+
+::: {.cozum}
+**Açılım.** $\sin x = x - \frac{x^3}{3!} + \frac{x^5}{5!} - \cdots$ olduğundan
+
+$$\frac{\sin x}{x} = 1 - \frac{x^2}{6} + \frac{x^4}{120} - \cdots$$
+
+Sıfıra en yavaş giden terim $x^2$'li terimdir; hız $x^2$'dir.
+
+**Sabit.** Taylor teoremiyle $\sin x = x - \frac{x^3}{6} + \frac{\cos(\xi)}{120}\, x^5$. Buna göre $0 < \left| x \right| \leq 1$ için
+
+$$\left| \frac{\sin x}{x} - 1 \right| = \left| -\frac{x^2}{6} + \frac{\cos(\xi)}{120}\, x^4 \right| \leq \frac{x^2}{6} + \frac{x^2}{120} = \frac{7}{40}\, x^2;$$
+
+burada $\left| \cos \xi \right| \leq 1$ ve $x^4 \leq x^2$ kullanıldı.
+
+Demek ki $K = \frac{7}{40}$ ile
+
+$$\frac{\sin x}{x} = 1 + O(x^2).$$
+
+$\left(\frac{\sin x}{x} - 1\right) / x^2 \to -\frac{1}{6} \neq 0$ olduğundan $p = 2$ en büyük üstür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-yak-fonksiyon-b name="(1 − cos x) / x fonksiyonunun hızı"}
+$\lim\limits_{x \to 0} \dfrac{1 - \cos x}{x} = 0$ yakınsamasının hızını belirleyiniz.
+
+::: {.cozum}
+**Açılım.** $\cos x = 1 - \frac{x^2}{2!} + \frac{x^4}{4!} - \cdots$ olduğundan
+
+$$\frac{1 - \cos x}{x} = \frac{1 - \left(1 - \frac{x^2}{2} + \frac{x^4}{24} - \cdots\right)}{x} = \frac{x}{2} - \frac{x^3}{24} + \cdots$$
+
+En yavaş giden terim $x$'li terimdir.
+
+**Sabit.** Taylor teoremiyle $\cos x = 1 - \frac{x^2}{2} + \frac{\cos(\xi)}{24}\, x^4$. $0 < \left| x \right| \leq 1$ için
+
+$$\left| \frac{1 - \cos x}{x} - 0 \right| = \left| \frac{x}{2} - \frac{\cos(\xi)}{24}\, x^3 \right| \leq \frac{\left| x \right|}{2} + \frac{\left| x \right|}{24} = \frac{13}{24} \left| x \right|;$$
+
+burada $\left| x \right|^3 \leq \left| x \right|$ kullanıldı.
+
+Demek ki
+
+$$\frac{1 - \cos x}{x} = 0 + O(x).$$
+
+Oran $\frac{1 - \cos x}{x^2} \to \frac{1}{2} \neq 0$ olduğundan $p = 1$ en büyük üstür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-yak-fonksiyon-c name="(sin x − x cos x) / x fonksiyonunun hızı"}
+$\lim\limits_{x \to 0} \dfrac{\sin x - x \cos x}{x} = 0$ yakınsamasının hızını belirleyiniz.
+
+::: {.cozum}
+**Açılım.** İki açılımı yerine yazıp aynı kuvvetleri toplayalım:
+
+$$\begin{aligned}
+\frac{\sin x - x \cos x}{x} &= \frac{x - \frac{x^3}{6} + \frac{x^5}{120} - \cdots - x\left(1 - \frac{x^2}{2} + \frac{x^4}{24} - \cdots\right)}{x}\\[1mm]
+&= -\frac{x^2}{6} + \frac{x^2}{2} + \frac{x^4}{120} - \frac{x^4}{24} + \cdots\\[1mm]
+&= \frac{x^2}{3} - \frac{x^4}{30} + \cdots
+\end{aligned}$$
+
+En yavaş giden terim $x^2$'li terimdir.
+
+**Sabit.** Taylor teoremiyle
+
+$$\sin x = x - \frac{x^3}{6} + \frac{\cos(\xi_1)}{120}\, x^5, \qquad \cos x = 1 - \frac{x^2}{2} + \frac{\cos(\xi_2)}{24}\, x^4.$$
+
+Bunları yerine yazarsak
+
+$$\frac{\sin x - x \cos x}{x} = \frac{x^2}{3} + \left(\frac{\cos(\xi_1)}{120} - \frac{\cos(\xi_2)}{24}\right) x^4$$
+
+olur. $0 < \left| x \right| \leq 1$ için
+
+$$\left| \frac{\sin x - x \cos x}{x} \right| \leq \frac{x^2}{3} + \left(\frac{1}{120} + \frac{1}{24}\right) x^2 = \frac{23}{60}\, x^2;$$
+
+burada $x^4 \leq x^2$ kullanıldı.
+
+Demek ki
+
+$$\frac{\sin x - x \cos x}{x} = 0 + O(x^2).$$
+
+Fonksiyon bölü $x^2$ oranı $\frac{1}{3} \neq 0$'a gittiğinden $p = 2$ en büyük üstür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-yak-fonksiyon-d name="(1 − eˣ) / x fonksiyonunun hızı"}
+$\lim\limits_{x \to 0} \dfrac{1 - e^x}{x} = -1$ yakınsamasının hızını belirleyiniz.
+
+::: {.cozum}
+**Açılım.** $e^x = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \cdots$ olduğundan
+
+$$\frac{1 - e^x}{x} = \frac{1 - \left(1 + x + \frac{x^2}{2} + \frac{x^3}{6} + \cdots\right)}{x} = -1 - \frac{x}{2} - \frac{x^2}{6} - \cdots$$
+
+$-1$'den sonra en yavaş giden terim $x$'li terimdir.
+
+**Sabit.** Taylor teoremiyle $e^x = 1 + x + \frac{e^{\xi}}{2}\, x^2$. $0 < \left| x \right| \leq 1$ için $e^{\xi} \leq e$ olduğundan
+
+$$\left| \frac{1 - e^x}{x} - (-1) \right| = \frac{e^{\xi}}{2} \left| x \right| \leq \frac{e}{2} \left| x \right|.$$
+
+Demek ki
+
+$$\frac{1 - e^x}{x} = -1 + O(x).$$
+
+Fark bölü $x$ oranı $-\frac{1}{2} \neq 0$'a gittiğinden $p = 1$ en büyük üstür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Fibonacci dizisi Leonardo Fibonacci'nin 1202 tarihli Liber Abaci'sinde geçer. Son alıştırmada bu dizinin ardışık terimlerinin oranının limitini buluyoruz.
+
+:::: {#exr-yak-fibonacci name="Fibonacci oranları ve altın oran"}
+$F_0 = 1$, $F_1 = 1$ ve $n \geq 0$ için $F_{n+2} = F_{n+1} + F_n$ ile tanımlanan Fibonacci dizisini ele alalım ve $x_n = \frac{F_{n+1}}{F_n}$ olsun. $\lim\limits_{n \to \infty} x_n = x$ yakınsamasında limitin altın oran olarak bilinen $x = \frac{1 + \sqrt{5}}{2}$ sayısı olduğunu gösteriniz.
+
+::: {.cozum}
+**Oranın bağıntısı.** $x_{n+1}$'i $x_n$ cinsinden yazalım:
+
+$$x_{n+1} = \frac{F_{n+2}}{F_{n+1}} = \frac{F_{n+1} + F_n}{F_{n+1}} = 1 + \frac{F_n}{F_{n+1}} = 1 + \frac{1}{x_n}.$$
+
+**Limit denklemi.** $x_n \to x$ ise $x_{n+1} \to x$'tir. Bağıntıda limit alırsak ($x \neq 0$ olduğu aşağıda görülüyor)
+
+$$x = 1 + \frac{1}{x} \implies x^2 - x - 1 = 0.$$
+
+Diskriminant $\Delta = 1 + 4 = 5 > 0$ olduğundan iki kök vardır:
+
+$$x_1 = \frac{1 - \sqrt{5}}{2} < 0, \qquad x_2 = \frac{1 + \sqrt{5}}{2} > 0.$$
+
+**Doğru kökü seçelim.** Dizinin ilk terimleri
+
+$$(F_n) = (1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, \dots),$$
+
+$$(x_n) = \left(1, 2, \frac{3}{2}, \frac{5}{3}, \frac{8}{5}, \frac{13}{8}, \frac{21}{13}, \frac{34}{21}, \frac{55}{34}, \frac{89}{55}, \frac{144}{89}, \dots\right)$$
+
+olur. Fibonacci sayıları pozitif ve $n \geq 1$ için $F_{n+1} = F_n + F_{n-1} \geq F_n$ olduğundan her $n$ için $x_n \geq 1$'dir. Limit de $x \geq 1$ olmalıdır; negatif kök elenir ve
+
+$$x = x_2 = \frac{1 + \sqrt{5}}{2} \approx 1{,}618034$$
+
+bulunur.
+
+**Yakınsama hızı.** $\varphi = \frac{1 + \sqrt{5}}{2}$ diyelim; $\varphi = 1 + \frac{1}{\varphi}$'dir. Bağıntıdan
+
+$$x_{n+1} - \varphi = \left(1 + \frac{1}{x_n}\right) - \left(1 + \frac{1}{\varphi}\right) = \frac{\varphi - x_n}{x_n\, \varphi}$$
+
+ve $x_n \geq 1$ olduğundan $\left| x_{n+1} - \varphi \right| \leq \frac{1}{\varphi} \left| x_n - \varphi \right|$ elde edilir. Bunu tekrar tekrar uygularsak ($\left| x_0 - \varphi \right| = \varphi - 1 = \frac{1}{\varphi}$)
+
+$$\left| x_n - \varphi \right| \leq \frac{1}{\varphi^{n}} \left| x_0 - \varphi \right| = \frac{1}{\varphi^{n+1}}.$$
+
+$\frac{1}{\varphi} \approx 0{,}618 < 1$ olduğundan bu, limitin gerçekten var olduğunu da gösterir: hata her adımda en az $0{,}618$ çarpanıyla küçülür. Örneğin $x_{10} = \frac{144}{89} \approx 1{,}617978$ ve $\left| x_{10} - \varphi \right| \approx 0{,}56 \cdot 10^{-4}$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yakınsama hızını ölçecek dili kurduk. Bir sonraki bölümde ilk kök bulma algoritmasını ve hata sınırını bu dille inceliyoruz: [İkiye Bölme Metodu](ikiye-bolme-metodu.qmd).

@@ -1,0 +1,1168 @@
+---
+title: "Hatalar ve Makine Sayıları"
+pagetitle: "Hatalar ve Makine Sayıları"
+description: "Nümerik hesapta veri, kesme ve yuvarlama hataları, mutlak ve bağıl hata, tam sayı taşması, IEEE 754 standardının 64 bitlik makine sayıları, k-basamak normalize edilmiş ondalık kayan nokta sayıları ve k-basamak kesme ile yuvarlamanın bağıl hata sınırı."
+---
+
+Bilgisayar sonsuz basamaklı bir reel sayıyı saklayamaz, sonsuz bir seriyi sonuna kadar toplayamaz. Bu yüzden her nümerik sonuç bir yaklaşımdır ve yaklaşımın ne kadar iyi olduğunu bilmek için hatanın nereden geldiğini ve ne kadar büyüyebileceğini bilmek gerekir. Küçük görünen hatalar pahalıya patlayabilir: 25 Şubat 1991'de Dhahran'da bir Patriot füzesi, zamanın 0,1 saniyelik adımlarla 24 bitte kesilerek tutulmasından doğan birikmiş hata (yaklaşık 100 saatte 0,34 saniye) yüzünden bir Scud füzesini kaçırdı ve 28 asker öldü. 4 Haziran 1996'da ise Ariane 5 roketi, 64 bitlik bir kayan noktalı sayının 16 bitlik işaretli tam sayıya çevrilmesinde oluşan taşma yüzünden fırlatıştan yaklaşık 37 saniye sonra yok edildi.
+
+Bu bölümde önce hata türlerini ayırıp hatayı mutlak ve bağıl hata ile ölçeceğiz. Ardından bilgisayarın sayıları nasıl sakladığını, 64 bitlik makine sayılarını ve k-basamak kesme ile yuvarlamanın yaptığı hatanın sınırını göreceğiz.
+
+## Hata Türleri
+
+Nümerik bir yöntemle bulunan sonuç ile analitik çözüm arasındaki farka **hata** denir. Nümerik hatalar kaynaklarına göre üç türe ayrılır.
+
+::: {#def-hat-veri name="Veri Hatası"}
+Problemi kuran ya da çözen kişiden kaynaklanan hatalara **veri hatası** denir. Fiziksel ya da matematiksel modeli kurarken, işlem yaparken ya da program yazarken yapılan yanlışlar ve denklemlerin katsayılarını belirlemek için yapılan deneylerde ölçüm aletlerinin sınırlı hassaslığından doğan hatalar bu türdendir.
+:::
+
+Yani veri hatası, yöntem çalışmaya başlamadan önce girdiye karışmış hatadır. Yöntemin kendisiyle ilgisi olmadığından bu notlarda bu tür hatalarla ilgilenmeyeceğiz.
+
+::: {#def-hat-kesme name="Kesme Hatası"}
+Matematiksel bir işlemin gerçek sonucunu ifade etmek için onun yerine bir yaklaşım kullanılmasından doğan farka **kesme hatası** denir.
+:::
+
+Yani kesme hatası yöntemin kendisinden gelir: sonsuz bir süreç sonlu bir adımda kesilir. Örneğin bir fonksiyonun değerini Taylor polinomuyla hesapladığımızda serinin atılan terimleri kesme hatasını oluşturur; bu hata Taylor Teoremi'ndeki kalan terimle ölçülür (@thm-onb-taylor).
+
+::: {#def-hat-yuvarlama name="Yuvarlama Hatası"}
+Bilgisayarın sayıları yalnız belirli sayıda basamakla gösterebilmesinden doğan hataya **yuvarlama hatası** denir.
+:::
+
+Yani yöntem kusursuz olsa bile sayıların kendisi sonlu basamakla saklandığı için bir fark oluşur. Örneğin dört ondalık basamakla
+
+$$
+\begin{aligned}
+\pi &= 3{,}141592653\ldots \approx 3{,}1416, \\[1mm]
+e &= 2{,}71828182\ldots \approx 2{,}7183, \\[1mm]
+\frac{1}{3} &= 0{,}33333333\ldots \approx 0{,}3333
+\end{aligned}
+$$
+
+yazılır. Patriot füzesindeki hata da bu türdendir: $0{,}1$ sayısı ikili sistemde sonlu basamakla yazılamaz ($0{,}000110011001100\ldots_2$), 24 bitte kesilince her adımda küçük bir fark kalır ve bu fark adım adım birikir.
+
+## Mutlak ve Bağıl Hata
+
+Bir yaklaşımın ne kadar iyi olduğunu bir sayıyla ölçmek için iki nicelik kullanılır.
+
+::: {#def-hat-mutlak-bagil name="Mutlak ve Bağıl Hata"}
+Bir $p$ sayısına yapılan bir yaklaşım $p^*$ ile gösterilsin. $|p - p^*|$ değerine bu yaklaşımın **mutlak hatası** denir. $p \neq 0$ olmak üzere
+
+$$\left| \frac{p - p^*}{p} \right|$$
+
+değerine de bu yaklaşımın **bağıl hatası** denir.
+:::
+
+Yani mutlak hata yaklaşımın gerçek değerden ne kadar uzakta olduğunu, bağıl hata ise bu uzaklığın gerçek değerin büyüklüğüne oranını söyler. Bağıl hata birimsizdir; $0{,}01$ bağıl hata "yüzde 1 hata" demektir.
+
+:::: {#exm-hat-mutlak-bagil name="Mutlak ve Bağıl Hatanın Hesabı"}
+$p = 0{,}3$ sayısına $p^* = 0{,}31$ yaklaşımı yapılmıştır. Mutlak ve bağıl hatayı bulunuz.
+
+::: {.cozum}
+Mutlak hata
+
+$$|p - p^*| = |0{,}3 - 0{,}31| = 0{,}01$$
+
+ve bağıl hata
+
+$$\left| \frac{p - p^*}{p} \right| = \frac{0{,}01}{0{,}3} = \frac{1}{30} \approx 0{,}0333$$
+
+olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir yaklaşımın gerçek değere ne oranda yaklaştığını ölçmek için bağıl hata mutlak hatadan daha anlamlıdır. Aynı mutlak hata, küçük bir nicelikte büyük, büyük bir nicelikte küçük bir kusurdur.
+
+:::: {#exm-hat-yol-olcumu name="Aynı Mutlak Hata, Farklı Bağıl Hata"}
+$100$ km'lik bir yol $101$ km, $1$ km'lik bir yol $2$ km olarak ölçülmüştür. Hangi ölçme daha kabul edilebilirdir?
+
+::: {.cozum}
+**Mutlak hatalar.** İki ölçmede de mutlak hata aynıdır:
+
+$$|100 - 101| = 1 \text{ km}, \qquad |1 - 2| = 1 \text{ km}.$$
+
+Bu yüzden mutlak hata iki ölçmeyi ayırt etmez.
+
+**Bağıl hatalar.** Birinci ölçmenin bağıl hatası
+
+$$\left| \frac{100 - 101}{100} \right| = \frac{1}{100} = 0{,}01,$$
+
+ikinci ölçmeninki
+
+$$\left| \frac{1 - 2}{1} \right| = 1$$
+
+olur. $0{,}01 < 1$ olduğundan birinci ölçme daha kabul edilebilirdir: ilki yüzde 1, ikincisi yüzde 100 hatalıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Makine Sayıları
+
+Bilgisayarda sayılar iki biçimde saklanır: **tam sayı** değerleri ve **kayan noktalı sayı** değerleri. Yalnız tam sayılarla çalışılacaksa tam sayı değeri yeterlidir; herhangi bir reel sayıyla işlem yapılacaksa kayan noktalı sayı değerine ihtiyaç vardır.
+
+Tam sayılar ikili sayı sisteminde yazılır ve ayrılan bit sayısı gösterilebilecek en büyük tam sayıyı sınırlar. Örneğin $16$ bitle yazılabilecek en büyük tam sayı
+
+$$2^{16} - 1 = 65535$$
+
+olur. Bu $16$ bitin biri sayının işaretine ayrılırsa geriye $15$ bit kalır ve işaretli olarak yazılabilecek en büyük tam sayı
+
+$$2^{16-1} - 1 = 32767$$
+
+olur.
+
+::: {#def-hat-tasma name="Taşma"}
+Bir sayının, onu saklamak için ayrılan bitlerle gösterilebilecek en büyük (ya da en küçük) değeri aşmasına **taşma problemi** denir.
+:::
+
+Yani sonuç ayrılan yere sığmaz ve saklanan değer artık gerçek değerle ilgisizdir. Ariane 5'i yok eden hata buydu: $16$ bitlik işaretli bir tam sayıya $32767$'yi aşan bir değer yazılmak istendi.
+
+Kayan nokta gösterimi hem kesirleri hem de çok büyük reel sayıları saklamayı mümkün kılar. Bugün kullanılan biçim, IEEE'nin (The Institute of Electrical and Electronics Engineers) 1985'te yayımladığı ve 2008 ile 2019'da güncellediği IEEE 754 kayan nokta standardıdır. Bu standart $64$ bitlik bir reel sayıyı şöyle saklar:
+
+$$s\ c_{10} c_9 \ldots c_1 c_0\ m_{51} m_{50} \ldots m_1 m_0$$
+
+Bitlerin görevleri aşağıdaki tablodadır.
+
+::: {.iteration-table}
+| Sembol | Bit | Tanım |
+|:-:|:-:|:--|
+| $s$ | $1$ | İşaret Biti: $0$ = pozitif, $1$ = negatif |
+| $c$ | $11$ | Karakteristik |
+| $m$ | $52$ | Mantis |
+:::
+
+::: {#def-hat-ieee name="64 Bitlik Makine Sayısı"}
+$s$ işaret biti, $c_{10}, \ldots, c_0$ karakteristik bitleri ve $m_{51}, \ldots, m_0$ mantis bitleri olmak üzere
+
+$$c = \sum_{k=0}^{10} c_k\, 2^k, \qquad m = \sum_{k=0}^{51} m_k \left( \frac{1}{2} \right)^{52-k}$$
+
+denirse $64$ bitlik makine sayısının gösterdiği reel sayı
+
+$$r = (-1)^s\, 2^{c-1023}\, (1 + m)$$
+
+olur. Karakteristiğin $c = 0$ ($00000000000$) değeri $0$ sayısını, $c = 2047$ ($11111111111$) değeri sonsuzu göstermek için ayrılmıştır; bu formülle yazılan sayılarda $1 \le c \le 2046$'dır.
+:::
+
+Yani karakteristik sayının büyüklük mertebesini ($2$'nin kuvvetini), mantis ise anlamlı basamaklarını taşır. $c$'den $1023$ çıkarılması üssün negatif de olabilmesini sağlar. Mantisteki ilk bit $\frac{1}{2}$, ikincisi $\frac{1}{4}$ ağırlığındadır ve $0 \le m < 1$ olur. Mantis yalnız $52$ ikili basamak tutabildiğinden bu gösterimde bir yuvarlama hatası oluşur.
+
+:::: {#exm-hat-bit-dizisi name="Bir Bit Dizisinin Çözülmesi"}
+Aşağıdaki $64$ bitlik makine sayısının gösterdiği $r$ reel sayısını bulunuz.
+
+```
+0100000000111011100100010000000000000000000000000000000000000000
+```
+
+::: {.cozum}
+**Bitleri ayıralım.** İlk bit $s$, sonraki $11$ bit $c$, kalan $52$ bit $m$'dir:
+
+$$\underbrace{0}_{s}\ \underbrace{10000000011}_{c}$$
+
+$$\underbrace{1011100100010000000000000000000000000000000000000000}_{m}$$
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="8.0 17.5 606.5 160.0" role="img" aria-label="A strip of 64 bit boxes split into the sign bit s, the 11 bit characteristic c and the 52 bit mantissa m, with the place values of the one bits written below and the decoded value r = 2^4 (1 + m) = 27.56640625">
+  <rect x="40.0" y="44.0" width="8.4" height="18.0" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="0.7"/>
+  <text x="44.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="58.4" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.42" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="62.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="66.8" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="71.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="75.2" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="79.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="83.6" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="87.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="92.0" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="96.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="100.4" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="104.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="108.8" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="113.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="117.2" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="121.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="125.6" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="129.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="134.0" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.42" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="138.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="142.4" y="44.0" width="8.4" height="18.0" fill="var(--color-theory)" fill-opacity="0.42" stroke="var(--color-theory)" stroke-width="0.7"/>
+  <text x="146.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="160.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.42" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="165.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="169.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="173.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="177.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.42" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="181.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="186.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.42" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="190.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="194.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.42" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="198.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="202.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="207.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="211.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="215.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="219.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.42" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="223.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="228.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="232.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="236.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="240.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="244.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="249.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="253.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.42" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="257.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle" font-weight="600">1</text>
+  <rect x="261.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="265.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="270.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="274.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="278.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="282.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="286.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="291.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="295.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="299.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="303.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="307.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="312.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="316.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="320.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="324.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="328.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="333.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="337.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="341.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="345.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="349.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="354.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="358.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="362.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="366.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="370.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="375.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="379.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="383.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="387.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="391.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="396.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="400.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="404.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="408.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="412.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="417.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="421.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="425.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="429.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="433.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="438.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="442.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="446.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="450.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="454.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="459.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="463.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="467.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="471.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="475.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="480.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="484.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="488.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="492.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="496.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="501.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="505.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="509.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="513.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="517.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="522.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="526.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="530.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="534.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="538.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="543.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="547.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="551.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="555.6" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="559.8" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="564.0" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="568.2" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="572.4" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="576.6" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="580.8" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="585.0" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <rect x="589.2" y="44.0" width="8.4" height="18.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="0.7"/>
+  <text x="593.4" y="57.0" fill="var(--academic-text)" font-size="10" text-anchor="middle">0</text>
+  <text x="44.2" y="37.0" fill="var(--color-remark)" font-size="10.5" text-anchor="middle"><tspan font-style="italic">s</tspan></text>
+  <text x="62.6" y="37.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle"><tspan font-style="italic">c</tspan><tspan font-size="8" dy="3">10</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="146.6" y="37.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle"><tspan font-style="italic">c</tspan><tspan font-size="8" dy="3">0</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="165.0" y="37.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle"><tspan font-style="italic">m</tspan><tspan font-size="8" dy="3">51</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <text x="593.4" y="37.0" fill="var(--color-practice)" font-size="10.5" text-anchor="middle"><tspan font-style="italic">m</tspan><tspan font-size="8" dy="3">0</tspan><tspan dy="-3">&#8203;</tspan></text>
+  <line x1="62.6" y1="64.0" x2="62.6" y2="84.0" stroke="var(--color-theory)" stroke-width="0.8" opacity="0.7"/>
+  <text x="62.6" y="97.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">2<tspan font-size="8.5" dy="-5">10</tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="138.2" y1="64.0" x2="126.2" y2="84.0" stroke="var(--color-theory)" stroke-width="0.8" opacity="0.7"/>
+  <text x="126.2" y="97.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">2<tspan font-size="8.5" dy="-5">1</tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="146.6" y1="64.0" x2="146.6" y2="84.0" stroke="var(--color-theory)" stroke-width="0.8" opacity="0.7"/>
+  <text x="146.6" y="97.0" fill="var(--color-theory)" font-size="11" text-anchor="middle">2<tspan font-size="8.5" dy="-5">0</tspan><tspan dy="5">&#8203;</tspan></text>
+  <line x1="165.0" y1="64.0" x2="177.0" y2="84.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.7"/>
+  <text x="177.0" y="97.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">1/2</text>
+  <line x1="181.8" y1="64.0" x2="211.8" y2="84.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.7"/>
+  <text x="211.8" y="97.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">1/8</text>
+  <line x1="190.2" y1="64.0" x2="248.2" y2="84.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.7"/>
+  <text x="248.2" y="97.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">1/16</text>
+  <line x1="198.6" y1="64.0" x2="286.6" y2="84.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.7"/>
+  <text x="286.6" y="97.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">1/32</text>
+  <line x1="223.8" y1="64.0" x2="325.8" y2="84.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.7"/>
+  <text x="325.8" y="97.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">1/256</text>
+  <line x1="257.4" y1="64.0" x2="371.4" y2="84.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.7"/>
+  <text x="371.4" y="97.0" fill="var(--color-practice)" font-size="11" text-anchor="middle">1/4096</text>
+  <path d="M40.0,109.0 Q40.0,114.0 42.1,114.0 L42.1,114.0 Q44.2,114.0 44.2,119.0 Q44.2,114.0 46.3,114.0 L46.3,114.0 Q48.4,114.0 48.4,109.0" fill="none" stroke="var(--color-remark)" stroke-width="1.1" opacity="0.8"/>
+  <text x="44.2" y="134.0" fill="var(--color-remark)" font-size="11.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">s</tspan> (1 bit)</text>
+  <path d="M58.4,109.0 Q58.4,114.0 64.4,114.0 L98.6,114.0 Q104.6,114.0 104.6,119.0 Q104.6,114.0 110.6,114.0 L144.8,114.0 Q150.8,114.0 150.8,109.0" fill="none" stroke="var(--color-theory)" stroke-width="1.1" opacity="0.8"/>
+  <text x="104.6" y="134.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">c</tspan> (11 bit)</text>
+  <path d="M160.8,109.0 Q160.8,114.0 166.8,114.0 L373.2,114.0 Q379.2,114.0 379.2,119.0 Q379.2,114.0 385.2,114.0 L591.6,114.0 Q597.6,114.0 597.6,109.0" fill="none" stroke="var(--color-practice)" stroke-width="1.1" opacity="0.8"/>
+  <text x="379.2" y="134.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">m</tspan> (52 bit)</text>
+  <text x="318.8" y="161.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle"><tspan font-style="italic">s</tspan> = 0,   <tspan font-style="italic">c</tspan> = 1027,   <tspan font-style="italic">r</tspan> = 2<tspan font-size="8.5" dy="-5">4</tspan><tspan dy="5">&#8203;</tspan> (1 + <tspan font-style="italic">m</tspan>) = 27,56640625</text>
+</svg>
+<figcaption>Örnekteki 64 bitlik makine sayısı. İlk bit işaret biti <em>s</em>, sonraki 11 bit karakteristik <em>c</em>, kalan 52 bit mantis <em>m</em>'dir. 1 olan bitlerin altında basamak ağırlıkları yazılıdır: <em>c</em> = 2<sup>10</sup> + 2 + 1 = 1027 ve <em>m</em> = 1/2 + 1/8 + 1/16 + 1/32 + 1/256 + 1/4096.</figcaption>
+</figure>
+```
+
+**İşaret.** $s = 0$ olduğundan sayı pozitiftir.
+
+**Karakteristik.** $c$'nin yalnız $c_{10}$, $c_1$ ve $c_0$ bitleri $1$'dir:
+
+$$c = 1 \cdot 2^0 + 1 \cdot 2^1 + 0 \cdot 2^2 + \dots + 0 \cdot 2^9 + 1 \cdot 2^{10} = 1 + 2 + 1024 = 1027.$$
+
+**Mantis.** Soldan $1$., $3$., $4$., $5$., $8$. ve $12$. bitler $1$, geri kalanlar $0$'dır:
+
+$$
+\begin{aligned}
+m &= 1 \cdot \left(\tfrac{1}{2}\right)^1 + 0 \cdot \left(\tfrac{1}{2}\right)^2 + 1 \cdot \left(\tfrac{1}{2}\right)^3 + 1 \cdot \left(\tfrac{1}{2}\right)^4 + 1 \cdot \left(\tfrac{1}{2}\right)^5 \\[1mm]
+&\quad + 1 \cdot \left(\tfrac{1}{2}\right)^8 + 1 \cdot \left(\tfrac{1}{2}\right)^{12} \\[1mm]
+&= \frac{1}{2} + \frac{1}{8} + \frac{1}{16} + \frac{1}{32} + \frac{1}{256} + \frac{1}{4096}.
+\end{aligned}
+$$
+
+**Sayı.** Formülde yerine yazarsak
+
+$$
+\begin{aligned}
+r &= (-1)^0 \cdot 2^{1027-1023} \left( 1 + \frac{1}{2} + \frac{1}{8} + \frac{1}{16} + \frac{1}{32} + \frac{1}{256} + \frac{1}{4096} \right) \\[1mm]
+&= 16 + 8 + 2 + 1 + 0{,}5 + 0{,}0625 + 0{,}00390625 \\[1mm]
+&= 27{,}56640625 = 0{,}2756640625 \cdot 10^{2}
+\end{aligned}
+$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+$c$'nin aldığı değerler sınırlı olduğundan $64$ bitlik gösterimin yazabildiği pozitif sayılar da iki yandan sınırlıdır.
+
+:::: {#prp-hat-ieee-sinirlar name="64 Bitlik Gösterimde En Küçük ve En Büyük Pozitif Sayı"}
+$64$ bitlik makine sayısı gösteriminde yazılabilecek en küçük pozitif reel sayı
+
+$$2^{-1022} \approx 0{,}22251 \cdot 10^{-307},$$
+
+en büyük reel sayı ise
+
+$$2^{1023}\left(2 - 2^{-52}\right) \approx 0{,}17977 \cdot 10^{309}$$
+
+olur.
+
+::: {.ispat}
+$r = (-1)^s\, 2^{c-1023} (1 + m)$ sayısının pozitif olması için $s = 0$ olmalıdır. $r$ hem $c$'ye hem $m$'ye göre artandır.
+
+**En küçük sayı.** $c = 0$ değeri $0$ sayısına ayrıldığından $c$'nin alabileceği en küçük değer $00000000001$, yani $c = 1$'dir. Mantisin en küçük değeri bütün bitleri $0$ olan $m = 0$'dır. Buradan
+
+$$r = (-1)^0 \cdot 2^{1-1023} (1 + 0) = 2^{-1022}$$
+
+olur. Ondalığa çevirirsek
+
+$$2^{-1022} = 10^{-1022 \log_{10} 2} \approx 10^{-307{,}65266} \approx 0{,}22251 \cdot 10^{-307}$$
+
+bulunur.
+
+**En büyük sayı.** $c = 2047$ değeri sonsuza ayrıldığından $c$'nin en büyük değeri $11111111110$, yani $c = 2046$'dır. Mantisin en büyük değeri bütün bitleri $1$ olan değerdir:
+
+$$m = \sum_{k=0}^{51} \left( \frac{1}{2} \right)^{52-k} = \frac{1}{2} + \frac{1}{4} + \dots + \frac{1}{2^{52}} = 1 - 2^{-52}.$$
+
+Buradan
+
+$$
+\begin{aligned}
+r &= (-1)^0 \cdot 2^{2046-1023} \left( 1 + 1 - 2^{-52} \right) \\[1mm]
+&= 2^{1023} \left( 2 - 2^{-52} \right) \approx 2^{1024} \approx 0{,}17977 \cdot 10^{309}
+\end{aligned}
+$$
+
+olur; son adımda $2^{1024} = 10^{1024 \log_{10} 2} \approx 10^{308{,}25472}$ kullanıldı. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $64$ bitlik gösterim yaklaşık $10^{-308}$ ile $10^{308}$ arasındaki büyüklükleri kapsar. İşlemler belirli bir hassasiyetle yapılmazsa bu sınırlar aşılabilir ve taşma problemleri ortaya çıkar.
+
+## Ondalık Kayan Nokta Sayıları
+
+Makinenin ikili gösteriminde olanları elle izleyebilmek için aynı fikri $10$ tabanında, az sayıda basamakla inceleyeceğiz.
+
+::: {#def-hat-normalize name="k-Basamak Normalize Edilmiş Ondalık Kayan Nokta Sayısı"}
+$1 \le d_1 \le 9$ ve $i = 2, 3, \ldots, k$ için $0 \le d_i \le 9$ olmak üzere
+
+$$\pm\, 0{,}d_1 d_2 \ldots d_k \cdot 10^n$$
+
+biçiminde yazılabilen sayılara **k-basamak normalize edilmiş ondalık kayan nokta sayıları** denir.
+:::
+
+Yani virgülden hemen sonra sıfır olmayan bir basamak gelir ve yalnız $k$ basamak tutulur; sayının büyüklüğü $10^n$ çarpanına aktarılır. $d_1 \neq 0$ koşulu gösterimi tek kılar: $0{,}27 \cdot 10^{-5}$ yazılır, $0{,}027 \cdot 10^{-4}$ yazılmaz. Birkaç sayının normalize edilmiş ondalık formu şöyledir:
+
+::: {.iteration-table}
+| Sayı | Normalize edilmiş ondalık form |
+|--:|--:|
+| $1222000$ | $0{,}1222 \cdot 10^{7}$ |
+| $-0{,}0000345$ | $-0{,}345 \cdot 10^{-4}$ |
+| $0{,}0027 \cdot 10^{-3}$ | $0{,}27 \cdot 10^{-5}$ |
+| $0{,}1001 \cdot 10^{-5}$ | $0{,}1001 \cdot 10^{-5}$ |
+:::
+
+:::: {#exm-hat-iki-basamak name="İki Basamaklı Normalize Sayıların Dağılımı"}
+$k = 2$ için üssü $n = 0$ ve $n = 1$ olan pozitif normalize edilmiş ondalık kayan nokta sayılarını sayınız ve ardışık iki sayı arasındaki uzaklığı bulunuz.
+
+::: {.cozum}
+**$n = 0$.** Sayılar $0{,}d_1 d_2$ biçimindedir: $0{,}10;\ 0{,}11;\ \ldots;\ 0{,}99$. $d_1$ için $9$, $d_2$ için $10$ seçenek olduğundan $9 \cdot 10 = 90$ sayı vardır ve ardışık ikisi arasındaki uzaklık $0{,}01 = 10^{0-2}$'dir.
+
+**$n = 1$.** Sayılar $0{,}d_1 d_2 \cdot 10 = d_1{,}d_2$ biçimindedir: $1{,}0;\ 1{,}1;\ \ldots;\ 9{,}9$. Yine $90$ sayı vardır, ama ardışık ikisi arasındaki uzaklık $0{,}1 = 10^{1-2}$'dir.
+
+**Sonuç.** Her üs için sayı adedi aynıdır, aralık ise üs bir arttıkça $10$ katına çıkar. Bu yüzden normalize sayılar $0$'a yakın yerde sık, büyük sayılar arasında seyrektir. Aralığın sayının kendisine oranı ise yaklaşık sabit kalır: $n = 0$'da $\frac{0{,}01}{0{,}10} = 0{,}1$ ile $\frac{0{,}01}{0{,}99} \approx 0{,}0101$ arasındadır, $n = 1$'de de aynı aralıktadır. Genel olarak $k$ basamakta her üs için $9 \cdot 10^{k-1}$ sayı vardır ve aralık $10^{n-k}$'dir. [$\blacksquare$]{.qed}
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="34.0 30.0 586.0 217.0" role="img" aria-label="Two number lines. Top: 0 to 10 with the 90 numbers 0.10 to 0.99 packed in blue ticks and the 90 numbers 1.0 to 9.9 spaced 0.1 apart in orange ticks. Bottom: a zoom of 0 to 1.2 showing the blue ticks 0.01 apart, orange ticks at 1.0 and 1.1 and an empty hatched gap between 0 and 0.10">
+  <line x1="64.0" y1="84.0" x2="600.0" y2="84.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <polygon points="606.0,84.0 598.0,80.5 598.0,87.5" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="75.20" y1="72.0" x2="75.20" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="75.72" y1="72.0" x2="75.72" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="76.24" y1="72.0" x2="76.24" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="76.76" y1="72.0" x2="76.76" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="77.28" y1="72.0" x2="77.28" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="77.80" y1="72.0" x2="77.80" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="78.32" y1="72.0" x2="78.32" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="78.84" y1="72.0" x2="78.84" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="79.36" y1="72.0" x2="79.36" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="79.88" y1="72.0" x2="79.88" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="80.40" y1="72.0" x2="80.40" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="80.92" y1="72.0" x2="80.92" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="81.44" y1="72.0" x2="81.44" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="81.96" y1="72.0" x2="81.96" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="82.48" y1="72.0" x2="82.48" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="83.00" y1="72.0" x2="83.00" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="83.52" y1="72.0" x2="83.52" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="84.04" y1="72.0" x2="84.04" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="84.56" y1="72.0" x2="84.56" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="85.08" y1="72.0" x2="85.08" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="85.60" y1="72.0" x2="85.60" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="86.12" y1="72.0" x2="86.12" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="86.64" y1="72.0" x2="86.64" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="87.16" y1="72.0" x2="87.16" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="87.68" y1="72.0" x2="87.68" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="88.20" y1="72.0" x2="88.20" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="88.72" y1="72.0" x2="88.72" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="89.24" y1="72.0" x2="89.24" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="89.76" y1="72.0" x2="89.76" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="90.28" y1="72.0" x2="90.28" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="90.80" y1="72.0" x2="90.80" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="91.32" y1="72.0" x2="91.32" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="91.84" y1="72.0" x2="91.84" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="92.36" y1="72.0" x2="92.36" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="92.88" y1="72.0" x2="92.88" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="93.40" y1="72.0" x2="93.40" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="93.92" y1="72.0" x2="93.92" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="94.44" y1="72.0" x2="94.44" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="94.96" y1="72.0" x2="94.96" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="95.48" y1="72.0" x2="95.48" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="96.00" y1="72.0" x2="96.00" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="96.52" y1="72.0" x2="96.52" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="97.04" y1="72.0" x2="97.04" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="97.56" y1="72.0" x2="97.56" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="98.08" y1="72.0" x2="98.08" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="98.60" y1="72.0" x2="98.60" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="99.12" y1="72.0" x2="99.12" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="99.64" y1="72.0" x2="99.64" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="100.16" y1="72.0" x2="100.16" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="100.68" y1="72.0" x2="100.68" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="101.20" y1="72.0" x2="101.20" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="101.72" y1="72.0" x2="101.72" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="102.24" y1="72.0" x2="102.24" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="102.76" y1="72.0" x2="102.76" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="103.28" y1="72.0" x2="103.28" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="103.80" y1="72.0" x2="103.80" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="104.32" y1="72.0" x2="104.32" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="104.84" y1="72.0" x2="104.84" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="105.36" y1="72.0" x2="105.36" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="105.88" y1="72.0" x2="105.88" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="106.40" y1="72.0" x2="106.40" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="106.92" y1="72.0" x2="106.92" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="107.44" y1="72.0" x2="107.44" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="107.96" y1="72.0" x2="107.96" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="108.48" y1="72.0" x2="108.48" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="109.00" y1="72.0" x2="109.00" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="109.52" y1="72.0" x2="109.52" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="110.04" y1="72.0" x2="110.04" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="110.56" y1="72.0" x2="110.56" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="111.08" y1="72.0" x2="111.08" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="111.60" y1="72.0" x2="111.60" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="112.12" y1="72.0" x2="112.12" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="112.64" y1="72.0" x2="112.64" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="113.16" y1="72.0" x2="113.16" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="113.68" y1="72.0" x2="113.68" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="114.20" y1="72.0" x2="114.20" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="114.72" y1="72.0" x2="114.72" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="115.24" y1="72.0" x2="115.24" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="115.76" y1="72.0" x2="115.76" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="116.28" y1="72.0" x2="116.28" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="116.80" y1="72.0" x2="116.80" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="117.32" y1="72.0" x2="117.32" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="117.84" y1="72.0" x2="117.84" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="118.36" y1="72.0" x2="118.36" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="118.88" y1="72.0" x2="118.88" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="119.40" y1="72.0" x2="119.40" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="119.92" y1="72.0" x2="119.92" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="120.44" y1="72.0" x2="120.44" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="120.96" y1="72.0" x2="120.96" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="121.48" y1="72.0" x2="121.48" y2="84.0" stroke="var(--color-theory)" stroke-width="0.6" opacity="0.9"/>
+  <line x1="122.00" y1="72.0" x2="122.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="127.20" y1="72.0" x2="127.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="132.40" y1="72.0" x2="132.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="137.60" y1="72.0" x2="137.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="142.80" y1="72.0" x2="142.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="148.00" y1="72.0" x2="148.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="153.20" y1="72.0" x2="153.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="158.40" y1="72.0" x2="158.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="163.60" y1="72.0" x2="163.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="168.80" y1="72.0" x2="168.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="174.00" y1="72.0" x2="174.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="179.20" y1="72.0" x2="179.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="184.40" y1="72.0" x2="184.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="189.60" y1="72.0" x2="189.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="194.80" y1="72.0" x2="194.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="200.00" y1="72.0" x2="200.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="205.20" y1="72.0" x2="205.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="210.40" y1="72.0" x2="210.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="215.60" y1="72.0" x2="215.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="220.80" y1="72.0" x2="220.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="226.00" y1="72.0" x2="226.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="231.20" y1="72.0" x2="231.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="236.40" y1="72.0" x2="236.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="241.60" y1="72.0" x2="241.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="246.80" y1="72.0" x2="246.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="252.00" y1="72.0" x2="252.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="257.20" y1="72.0" x2="257.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="262.40" y1="72.0" x2="262.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="267.60" y1="72.0" x2="267.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="272.80" y1="72.0" x2="272.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="278.00" y1="72.0" x2="278.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="283.20" y1="72.0" x2="283.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="288.40" y1="72.0" x2="288.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="293.60" y1="72.0" x2="293.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="298.80" y1="72.0" x2="298.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="304.00" y1="72.0" x2="304.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="309.20" y1="72.0" x2="309.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="314.40" y1="72.0" x2="314.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="319.60" y1="72.0" x2="319.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="324.80" y1="72.0" x2="324.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="330.00" y1="72.0" x2="330.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="335.20" y1="72.0" x2="335.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="340.40" y1="72.0" x2="340.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="345.60" y1="72.0" x2="345.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="350.80" y1="72.0" x2="350.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="356.00" y1="72.0" x2="356.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="361.20" y1="72.0" x2="361.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="366.40" y1="72.0" x2="366.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="371.60" y1="72.0" x2="371.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="376.80" y1="72.0" x2="376.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="382.00" y1="72.0" x2="382.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="387.20" y1="72.0" x2="387.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="392.40" y1="72.0" x2="392.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="397.60" y1="72.0" x2="397.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="402.80" y1="72.0" x2="402.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="408.00" y1="72.0" x2="408.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="413.20" y1="72.0" x2="413.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="418.40" y1="72.0" x2="418.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="423.60" y1="72.0" x2="423.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="428.80" y1="72.0" x2="428.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="434.00" y1="72.0" x2="434.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="439.20" y1="72.0" x2="439.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="444.40" y1="72.0" x2="444.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="449.60" y1="72.0" x2="449.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="454.80" y1="72.0" x2="454.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="460.00" y1="72.0" x2="460.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="465.20" y1="72.0" x2="465.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="470.40" y1="72.0" x2="470.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="475.60" y1="72.0" x2="475.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="480.80" y1="72.0" x2="480.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="486.00" y1="72.0" x2="486.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="491.20" y1="72.0" x2="491.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="496.40" y1="72.0" x2="496.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="501.60" y1="72.0" x2="501.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="506.80" y1="72.0" x2="506.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="512.00" y1="72.0" x2="512.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="517.20" y1="72.0" x2="517.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="522.40" y1="72.0" x2="522.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="527.60" y1="72.0" x2="527.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="532.80" y1="72.0" x2="532.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="538.00" y1="72.0" x2="538.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="543.20" y1="72.0" x2="543.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="548.40" y1="72.0" x2="548.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="553.60" y1="72.0" x2="553.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="558.80" y1="72.0" x2="558.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="564.00" y1="72.0" x2="564.00" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="569.20" y1="72.0" x2="569.20" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="574.40" y1="72.0" x2="574.40" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="579.60" y1="72.0" x2="579.60" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="584.80" y1="72.0" x2="584.80" y2="84.0" stroke="var(--color-practice)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="70.0" y1="84.0" x2="70.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="70.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <line x1="122.0" y1="84.0" x2="122.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="122.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">1</text>
+  <line x1="174.0" y1="84.0" x2="174.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="174.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">2</text>
+  <line x1="226.0" y1="84.0" x2="226.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="226.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3</text>
+  <line x1="278.0" y1="84.0" x2="278.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="278.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">4</text>
+  <line x1="330.0" y1="84.0" x2="330.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="330.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">5</text>
+  <line x1="382.0" y1="84.0" x2="382.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="382.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">6</text>
+  <line x1="434.0" y1="84.0" x2="434.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="434.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">7</text>
+  <line x1="486.0" y1="84.0" x2="486.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="486.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">8</text>
+  <line x1="538.0" y1="84.0" x2="538.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="538.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">9</text>
+  <line x1="590.0" y1="84.0" x2="590.0" y2="88.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="590.0" y="101.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">10</text>
+  <path d="M75.2,68.0 Q75.2,63.5 81.2,63.5 L92.3,63.5 Q98.3,63.5 98.3,59.0 Q98.3,63.5 104.3,63.5 L115.5,63.5 Q121.5,63.5 121.5,68.0" fill="none" stroke="var(--color-theory)" stroke-width="1.1" opacity="0.8"/>
+  <text x="98.3" y="53.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">n</tspan> = 0: aralık 0,01</text>
+  <path d="M122.0,68.0 Q122.0,63.5 128.0,63.5 L347.4,63.5 Q353.4,63.5 353.4,59.0 Q353.4,63.5 359.4,63.5 L578.8,63.5 Q584.8,63.5 584.8,68.0" fill="none" stroke="var(--color-practice)" stroke-width="1.1" opacity="0.8"/>
+  <text x="353.4" y="53.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">n</tspan> = 1: aralık 0,1</text>
+  <polygon points="70.0,108.0 132.4,108.0 590.0,166.0 70.0,166.0" fill="var(--academic-text)" fill-opacity="0.035" stroke="var(--academic-text)" stroke-opacity="0.3" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="70.0" y1="83.0" x2="132.4" y2="83.0" stroke="var(--academic-text)" stroke-width="2.4" opacity="0.35"/>
+  <rect x="70.0" y="192.0" width="43.3" height="22" fill="var(--academic-text)" fill-opacity="0.07" stroke="none"/>
+  <line x1="70.0" y1="196.0" x2="74.0" y2="192.0" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="70.0" y1="202.0" x2="80.0" y2="192.0" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="70.0" y1="208.0" x2="86.0" y2="192.0" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="70.0" y1="214.0" x2="92.0" y2="192.0" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="76.0" y1="214.0" x2="98.0" y2="192.0" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="82.0" y1="214.0" x2="104.0" y2="192.0" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="88.0" y1="214.0" x2="110.0" y2="192.0" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="94.0" y1="214.0" x2="113.3" y2="194.7" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="100.0" y1="214.0" x2="113.3" y2="200.7" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="106.0" y1="214.0" x2="113.3" y2="206.7" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="112.0" y1="214.0" x2="113.3" y2="212.7" stroke="var(--academic-text)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="64.0" y1="214.0" x2="600.0" y2="214.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <polygon points="606.0,214.0 598.0,210.5 598.0,217.5" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="113.33" y1="202.0" x2="113.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="117.67" y1="202.0" x2="117.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="122.00" y1="202.0" x2="122.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="126.33" y1="202.0" x2="126.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="130.67" y1="202.0" x2="130.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="135.00" y1="202.0" x2="135.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="139.33" y1="202.0" x2="139.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="143.67" y1="202.0" x2="143.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="148.00" y1="202.0" x2="148.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="152.33" y1="202.0" x2="152.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="156.67" y1="202.0" x2="156.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="161.00" y1="202.0" x2="161.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="165.33" y1="202.0" x2="165.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="169.67" y1="202.0" x2="169.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="174.00" y1="202.0" x2="174.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="178.33" y1="202.0" x2="178.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="182.67" y1="202.0" x2="182.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="187.00" y1="202.0" x2="187.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="191.33" y1="202.0" x2="191.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="195.67" y1="202.0" x2="195.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="200.00" y1="202.0" x2="200.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="204.33" y1="202.0" x2="204.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="208.67" y1="202.0" x2="208.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="213.00" y1="202.0" x2="213.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="217.33" y1="202.0" x2="217.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="221.67" y1="202.0" x2="221.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="226.00" y1="202.0" x2="226.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="230.33" y1="202.0" x2="230.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="234.67" y1="202.0" x2="234.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="239.00" y1="202.0" x2="239.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="243.33" y1="202.0" x2="243.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="247.67" y1="202.0" x2="247.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="252.00" y1="202.0" x2="252.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="256.33" y1="202.0" x2="256.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="260.67" y1="202.0" x2="260.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="265.00" y1="202.0" x2="265.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="269.33" y1="202.0" x2="269.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="273.67" y1="202.0" x2="273.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="278.00" y1="202.0" x2="278.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="282.33" y1="202.0" x2="282.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="286.67" y1="202.0" x2="286.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="291.00" y1="202.0" x2="291.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="295.33" y1="202.0" x2="295.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="299.67" y1="202.0" x2="299.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="304.00" y1="202.0" x2="304.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="308.33" y1="202.0" x2="308.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="312.67" y1="202.0" x2="312.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="317.00" y1="202.0" x2="317.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="321.33" y1="202.0" x2="321.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="325.67" y1="202.0" x2="325.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="330.00" y1="202.0" x2="330.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="334.33" y1="202.0" x2="334.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="338.67" y1="202.0" x2="338.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="343.00" y1="202.0" x2="343.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="347.33" y1="202.0" x2="347.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="351.67" y1="202.0" x2="351.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="356.00" y1="202.0" x2="356.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="360.33" y1="202.0" x2="360.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="364.67" y1="202.0" x2="364.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="369.00" y1="202.0" x2="369.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="373.33" y1="202.0" x2="373.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="377.67" y1="202.0" x2="377.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="382.00" y1="202.0" x2="382.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="386.33" y1="202.0" x2="386.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="390.67" y1="202.0" x2="390.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="395.00" y1="202.0" x2="395.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="399.33" y1="202.0" x2="399.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="403.67" y1="202.0" x2="403.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="408.00" y1="202.0" x2="408.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="412.33" y1="202.0" x2="412.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="416.67" y1="202.0" x2="416.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="421.00" y1="202.0" x2="421.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="425.33" y1="202.0" x2="425.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="429.67" y1="202.0" x2="429.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="434.00" y1="202.0" x2="434.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="438.33" y1="202.0" x2="438.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="442.67" y1="202.0" x2="442.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="447.00" y1="202.0" x2="447.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="451.33" y1="202.0" x2="451.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="455.67" y1="202.0" x2="455.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="460.00" y1="202.0" x2="460.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="464.33" y1="202.0" x2="464.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="468.67" y1="202.0" x2="468.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="473.00" y1="202.0" x2="473.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="477.33" y1="202.0" x2="477.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="481.67" y1="202.0" x2="481.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="486.00" y1="202.0" x2="486.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="490.33" y1="202.0" x2="490.33" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="494.67" y1="202.0" x2="494.67" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="499.00" y1="202.0" x2="499.00" y2="214.0" stroke="var(--color-theory)" stroke-width="1.0" opacity="0.9"/>
+  <line x1="503.33" y1="202.0" x2="503.33" y2="214.0" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.9"/>
+  <line x1="546.67" y1="202.0" x2="546.67" y2="214.0" stroke="var(--color-practice)" stroke-width="1.6" opacity="0.9"/>
+  <line x1="70.0" y1="214.0" x2="70.0" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="70.0" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <line x1="113.3" y1="214.0" x2="113.3" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="113.3" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,1</text>
+  <line x1="156.7" y1="214.0" x2="156.7" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="156.7" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,2</text>
+  <line x1="200.0" y1="214.0" x2="200.0" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="200.0" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,3</text>
+  <line x1="243.3" y1="214.0" x2="243.3" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="243.3" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,4</text>
+  <line x1="286.7" y1="214.0" x2="286.7" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="286.7" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,5</text>
+  <line x1="330.0" y1="214.0" x2="330.0" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="330.0" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,6</text>
+  <line x1="373.3" y1="214.0" x2="373.3" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="373.3" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,7</text>
+  <line x1="416.7" y1="214.0" x2="416.7" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="416.7" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,8</text>
+  <line x1="460.0" y1="214.0" x2="460.0" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="460.0" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,9</text>
+  <line x1="503.3" y1="214.0" x2="503.3" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="503.3" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">1</text>
+  <line x1="546.7" y1="214.0" x2="546.7" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="546.7" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">1,1</text>
+  <line x1="590.0" y1="214.0" x2="590.0" y2="218.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="590.0" y="231.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">1,2</text>
+  <text x="72.0" y="184.0" fill="var(--academic-text)" font-size="11" text-anchor="start">normalize sayı yok</text>
+</svg>
+<figcaption>İki basamaklı (<em>k</em> = 2) pozitif normalize sayılar. Üstte [0, 10] aralığı: <em>n</em> = 0 için 0,10; 0,11; …; 0,99 sayıları [0,1; 1) içine sıkışır, <em>n</em> = 1 için 1,0; 1,1; …; 9,9 sayıları 0,1 aralıkla dizilir. Altta [0; 1,2] parçasının büyütmesi: 0 ile 0,10 arasında normalize sayı yoktur.</figcaption>
+</figure>
+```
+:::
+::::
+
+$y = 0{,}d_1 d_2 d_3 \ldots d_k d_{k+1} d_{k+2} \ldots \cdot 10^n$ taşmaya neden olmayan normalize edilmiş bir sayı olsun. Bu sayının basamakları genellikle $k$'dan çoktur, hatta sonsuzdur; makinede onun yerine $k$ basamaklı bir sayı saklanır.
+
+::: {#def-hat-kn name="Kayan Nokta Formu: k-Basamak Kesme ve Yuvarlama"}
+$y = 0{,}d_1 d_2 \ldots d_k d_{k+1} d_{k+2} \ldots \cdot 10^n$ sayısının ondalık kısmının yalnız $k$ basamağı alınarak elde edilen sayıya $y$'nin **kayan nokta formu** denir ve $KN(y)$ ile gösterilir. $k$ basamak iki yolla belirlenir:
+
+- **k-basamak kesme:** $d_{k+1} d_{k+2} \ldots$ basamakları atılır,
+$$KN(y) = 0{,}d_1 d_2 \ldots d_k \cdot 10^n.$$
+- **k-basamak yuvarlama:** $y$'ye $5 \cdot 10^{n-(k+1)}$ eklenir ve sonuca k-basamak kesme uygulanır,
+$$KN(y) = 0{,}\delta_1 \delta_2 \ldots \delta_k \cdot 10^n.$$
+
+Negatif sayılarda aynı işlem $|y|$'ye uygulanır ve işaret korunur.
+:::
+
+Yani kesmede fazla basamaklar düpedüz atılır. Yuvarlamada $d_{k+1} \ge 5$ ise $d_k$'ya $1$ eklenir (yukarı yuvarlama), $d_{k+1} < 5$ ise $k$ basamaktan sonra kesilir (aşağı yuvarlama). Aşağı yuvarlamada $i = 1, 2, \ldots, k$ için $\delta_i = d_i$ olur; yukarı yuvarlamada ise elde yüzünden önceki basamaklar, hatta üs de değişebilir; örneğin $0{,}99996 \cdot 10^{1}$ sayısı 4-basamak yuvarlamayla $0{,}1000 \cdot 10^{2}$ olur. Buradaki "kesme" sayının basamaklarını atmaktır; kesme hatası ise (@def-hat-kesme) bir sonsuz sürecin yarıda bırakılmasından doğar.
+
+:::: {#exm-hat-pi-kesme name="π Sayısının 5-Basamak Kesmesi"}
+$\pi$ sayısını 5-basamak kesme yaparak normalize edilmiş ondalık kayan nokta formunda yazınız.
+
+::: {.cozum}
+**Normalize form.** $\pi = 3{,}141592654\ldots$ olduğundan normalize edilmiş ondalık formu
+
+$$\pi = 0{,}3141592654\ldots \cdot 10^{1}$$
+
+olur; burada $n = 1$'dir.
+
+**Kesme.** İlk beş basamak $3, 1, 4, 1, 5$'tir; altıncı ve sonraki basamaklar atılır:
+
+$$KN(\pi) = 0{,}31415 \cdot 10^{1}.$$
+
+Mutlak hata $|\pi - 3{,}1415| \approx 0{,}0000927$, bağıl hata yaklaşık $0{,}29 \cdot 10^{-4}$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-hat-pi-yuvarlama name="π Sayısının 5-Basamak Yuvarlaması"}
+$\pi$ sayısını 5-basamak yuvarlama yaparak normalize edilmiş ondalık kayan nokta formunda yazınız.
+
+::: {.cozum}
+**Normalize form.** $\pi = 0{,}3141592654\ldots \cdot 10^{1}$, yani $n = 1$'dir.
+
+**Yuvarlama.** $k = 5$ ve $n = 1$ için eklenecek sayı $5 \cdot 10^{1-6} = 0{,}00005$'tir:
+
+$$\pi + 0{,}00005 = 3{,}14164265\ldots = 0{,}314164265\ldots \cdot 10^{1}.$$
+
+Bunu 5 basamaktan sonra kesersek
+
+$$KN(\pi) = 0{,}31416 \cdot 10^{1}$$
+
+bulunur. Kısa yoldan: altıncı basamak $d_6 = 9 \ge 5$ olduğundan beşinci basamak $5$'ten $6$'ya çıkar. Mutlak hata $|\pi - 3{,}1416| \approx 0{,}0000073$, bağıl hata yaklaşık $0{,}23 \cdot 10^{-5}$'tir; yuvarlama kesmeden yaklaşık on üç kat daha iyi sonuç verdi.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="27.0 2.5 468.0 450.5" role="img" aria-label="Two step functions near pi: 5 digit chopping, steps of width 0.0001 below the diagonal, and 5 digit rounding, steps centred on the diagonal; the vertical line y = pi meets them at 3.1415 and 3.1416">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5"><line x1="80.0" y1="420.0" x2="468.0" y2="420.0"/><line x1="80.0" y1="32.0" x2="80.0" y2="420.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="164.4" y1="40.0" x2="164.4" y2="420.0"/><line x1="234.8" y1="40.0" x2="234.8" y2="420.0"/><line x1="305.2" y1="40.0" x2="305.2" y2="420.0"/><line x1="375.6" y1="40.0" x2="375.6" y2="420.0"/><line x1="80.0" y1="335.6" x2="460.0" y2="335.6"/><line x1="80.0" y1="265.2" x2="460.0" y2="265.2"/><line x1="80.0" y1="194.8" x2="460.0" y2="194.8"/><line x1="80.0" y1="124.4" x2="460.0" y2="124.4"/></g>
+  <line x1="164.4" y1="420.0" x2="164.4" y2="424.0" stroke="var(--academic-text)" opacity="0.6"/>
+  <line x1="76.0" y1="335.6" x2="80.0" y2="335.6" stroke="var(--academic-text)" opacity="0.6"/>
+  <text x="164.4" y="437.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3,1414</text>
+  <text x="72.0" y="339.6" fill="var(--academic-text)" font-size="11" text-anchor="end">3,1414</text>
+  <line x1="234.8" y1="420.0" x2="234.8" y2="424.0" stroke="var(--academic-text)" opacity="0.6"/>
+  <line x1="76.0" y1="265.2" x2="80.0" y2="265.2" stroke="var(--academic-text)" opacity="0.6"/>
+  <text x="234.8" y="437.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3,1415</text>
+  <text x="72.0" y="269.2" fill="var(--academic-text)" font-size="11" text-anchor="end">3,1415</text>
+  <line x1="305.2" y1="420.0" x2="305.2" y2="424.0" stroke="var(--academic-text)" opacity="0.6"/>
+  <line x1="76.0" y1="194.8" x2="80.0" y2="194.8" stroke="var(--academic-text)" opacity="0.6"/>
+  <text x="305.2" y="437.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3,1416</text>
+  <text x="72.0" y="198.8" fill="var(--academic-text)" font-size="11" text-anchor="end">3,1416</text>
+  <line x1="375.6" y1="420.0" x2="375.6" y2="424.0" stroke="var(--academic-text)" opacity="0.6"/>
+  <line x1="76.0" y1="124.4" x2="80.0" y2="124.4" stroke="var(--academic-text)" opacity="0.6"/>
+  <text x="375.6" y="437.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3,1417</text>
+  <text x="72.0" y="128.4" fill="var(--academic-text)" font-size="11" text-anchor="end">3,1417</text>
+  <text x="474.0" y="424.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start"><tspan font-style="italic">y</tspan></text>
+  <text x="80.0" y="26.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">KN(<tspan font-style="italic">y</tspan>)</text>
+  <path d="M80.0,420.0 L460.0,40.0" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="300.0" cy="265.2" r="5.2" fill="var(--color-theory)" stroke="var(--academic-bg)" stroke-width="1.2"/>
+  <circle cx="300.0" cy="194.8" r="5.2" fill="var(--color-practice)" stroke="var(--academic-bg)" stroke-width="1.2"/>
+  <path d="M80.0,405.9 L129.3,405.9" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="129.3" cy="405.9" r="3.4" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <path d="M129.3,335.6 L199.6,335.6" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="129.3" cy="335.6" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="199.6" cy="335.6" r="3.4" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <path d="M199.6,265.2 L270.0,265.2" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="199.6" cy="265.2" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="270.0" cy="265.2" r="3.4" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <path d="M270.0,194.8 L340.4,194.8" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="270.0" cy="194.8" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="340.4" cy="194.8" r="3.4" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <path d="M340.4,124.4 L410.7,124.4" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="340.4" cy="124.4" r="3.4" fill="var(--color-practice)"/>
+  <circle cx="410.7" cy="124.4" r="3.4" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.6"/>
+  <path d="M410.7,54.1 L460.0,54.1" fill="none" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="410.7" cy="54.1" r="3.4" fill="var(--color-practice)"/>
+  <path d="M94.1,405.9 L164.4,405.9" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="94.1" cy="405.9" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="164.4" cy="405.9" r="3.4" fill="var(--academic-bg)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <path d="M164.4,335.6 L234.8,335.6" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="164.4" cy="335.6" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="234.8" cy="335.6" r="3.4" fill="var(--academic-bg)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <path d="M234.8,265.2 L305.2,265.2" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="234.8" cy="265.2" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="305.2" cy="265.2" r="3.4" fill="var(--academic-bg)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <path d="M305.2,194.8 L375.6,194.8" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="305.2" cy="194.8" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="375.6" cy="194.8" r="3.4" fill="var(--academic-bg)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <path d="M375.6,124.4 L445.9,124.4" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="375.6" cy="124.4" r="3.4" fill="var(--color-theory)"/>
+  <circle cx="445.9" cy="124.4" r="3.4" fill="var(--academic-bg)" stroke="var(--color-theory)" stroke-width="1.6"/>
+  <path d="M300.0,420.0 L300.0,40.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="300.0" y="34.0" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">y</tspan> = π</text>
+  <text x="309.0" y="283.2" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">kesme: 3,1415</text>
+  <text x="291.0" y="184.8" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">yuvarlama: 3,1416</text>
+  <line x1="94.0" y1="58.0" x2="120.0" y2="58.0" stroke="var(--color-theory)" stroke-width="2.4"/>
+  <text x="128.0" y="62.0" fill="var(--color-theory)" font-size="11.5" text-anchor="start">5-basamak kesme</text>
+  <line x1="94.0" y1="78.0" x2="120.0" y2="78.0" stroke="var(--color-practice)" stroke-width="2.4"/>
+  <text x="128.0" y="82.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start">5-basamak yuvarlama</text>
+</svg>
+<figcaption>π yakınındaki sayıların 5-basamak kesme (mavi) ve 5-basamak yuvarlama (turuncu) ile bulunan <em>KN</em>(<em>y</em>) değerleri. Basamakların sol ucu dahil, sağ ucu hariçtir; kesikli köşegen <em>KN</em>(<em>y</em>) = <em>y</em> doğrusudur. Kesme basamakları köşegenin hep altında kalır, yuvarlama basamakları köşegeni ortalar. <em>y</em> = π doğrusu kesmede 3,1415, yuvarlamada 3,1416 değerini verir.</figcaption>
+</figure>
+```
+:::
+::::
+
+Gerçek hesaplarda yalnız sayılar değil, her işlemin sonucu da $k$ basamağa indirilir.
+
+::: {#def-hat-aritmetik name="k-Basamak Kesme ve Yuvarlama Aritmetiği"}
+Bir ifadenin hesabında her sayının ve her ara işlem sonucunun yerine onun k-basamak kesmeyle bulunan $KN$ formu kullanılırsa hesap **k-basamak kesme aritmetiğiyle**, k-basamak yuvarlamayla bulunan $KN$ formu kullanılırsa **k-basamak yuvarlama aritmetiğiyle** yapılmış olur.
+:::
+
+Yani makine yalnız sonucu değil, yolda bulduğu her ara değeri de $k$ basamağa indirir; bu yüzden ara adımların hataları sonuca taşınır ve birikebilir.
+
+::: {.callout-tip title="Üç adımda k-basamak aritmetiğiyle hesap"}
+1. **Girdileri indir.** İfadedeki her sayıyı normalize forma getirip $KN$ formunu al ($\frac{1}{3} \to 0{,}333$ gibi).
+2. **İşlemleri sırayla yap.** İşlem önceliğine göre her işlemi yap ve sonucu hemen $KN$ formuna indir; bir sonraki işleme bu indirilmiş değerle geç.
+3. **Hatayı ölç.** Gerçek değer biliniyorsa son sonucun mutlak ve bağıl hatasını hesapla.
+:::
+
+:::: {#exm-hat-kesir-kesme name="Üç-Basamak Kesme Aritmetiğiyle Bir Kesir Hesabı"}
+$\left( \frac{1}{3} + \frac{3}{11} \right) - \frac{3}{20}$ işleminin gerçek değerini bulunuz. İşlemi 3-basamak kesme aritmetiğiyle yapıp yaklaşık değeri ve bu değerin bağıl hatasını hesaplayınız.
+
+::: {.cozum}
+**Gerçek değer.**
+
+$$\left( \frac{1}{3} + \frac{3}{11} \right) - \frac{3}{20} = \frac{11 + 9}{33} - \frac{3}{20} = \frac{400 - 99}{660} = \frac{301}{660} = 0{,}4560606\ldots$$
+
+**Girdiler.** $\frac{1}{3} = 0{,}3333\ldots \to 0{,}333$, $\frac{3}{11} = 0{,}2727\ldots \to 0{,}272$ ve $\frac{3}{20} = 0{,}15 \to 0{,}150$.
+
+**İşlemler.** $0{,}333 + 0{,}272 = 0{,}605$ ve $0{,}605 - 0{,}150 = 0{,}455$; ikisi de zaten üç basamaklıdır. Yaklaşık değer $0{,}455$'tir.
+
+**Bağıl hata.**
+
+$$\left| \frac{\frac{301}{660} - 0{,}455}{\frac{301}{660}} \right| = \frac{301 - 300{,}3}{301} = \frac{0{,}7}{301} = \frac{1}{430} \approx 0{,}002325581.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-hat-kesir-yuvarlama name="Üç-Basamak Yuvarlama Aritmetiğiyle Bir Kesir Hesabı"}
+$\left( \frac{1}{3} + \frac{3}{11} \right) - \frac{3}{20}$ işlemini 3-basamak yuvarlama aritmetiğiyle yapıp yaklaşık değeri ve bu değerin bağıl hatasını hesaplayınız. (Gerçek değer $\frac{301}{660}$'dır.)
+
+::: {.cozum}
+**Girdiler.** $\frac{1}{3} = 0{,}3333\ldots \to 0{,}333$; $\frac{3}{11} = 0{,}2727\ldots$ sayısının dördüncü basamağı $7 \ge 5$ olduğundan $\frac{3}{11} \to 0{,}273$; $\frac{3}{20} \to 0{,}150$.
+
+**İşlemler.** $0{,}333 + 0{,}273 = 0{,}606$ ve $0{,}606 - 0{,}150 = 0{,}456$. Yaklaşık değer $0{,}456$'dır.
+
+**Bağıl hata.**
+
+$$\left| \frac{\frac{301}{660} - 0{,}456}{\frac{301}{660}} \right| = \frac{301 - 300{,}96}{301} = \frac{0{,}04}{301} = \frac{1}{7525} \approx 0{,}00013289.$$
+
+Yuvarlama aritmetiğinin bağıl hatası kesmeninkinin yaklaşık on yedide biridir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir sayıyı saklarken yapılan bağıl hata yalnız $k$'ya bağlı bir sayıyla sınırlıdır; işlemler art arda yapıldığında ise bu hatalar birikebilir.
+
+:::: {#prp-hat-bagil-hata-siniri name="Kesme ve Yuvarlamada Bağıl Hata Sınırı"}
+$y \neq 0$ bir reel sayı ve $KN(y)$ onun $k$ basamaklı kayan nokta formu olsun.
+
+- $KN(y)$ k-basamak kesmeyle bulunmuşsa $\left| \dfrac{y - KN(y)}{y} \right| \le 10^{-k+1}$ olur.
+- $KN(y)$ k-basamak yuvarlamayla bulunmuşsa $\left| \dfrac{y - KN(y)}{y} \right| \le 0{,}5 \cdot 10^{-k+1}$ olur.
+
+::: {.ispat}
+İşaret iki yanda da aynı kaldığından $y > 0$ almak yeterlidir. $y = 0{,}d_1 d_2 \ldots d_k d_{k+1} \ldots \cdot 10^n$ olsun.
+
+**Payda.** $d_1 \ge 1$ olduğundan $y = 0{,}d_1 d_2 \ldots \cdot 10^n \ge 0{,}1 \cdot 10^n$ olur.
+
+**Atılan kısım.** $y$'yi ilk $k$ basamak ve geri kalan olarak ayıralım:
+
+$$y = \left( 0{,}d_1 d_2 \ldots d_k + 0{,}\underbrace{0 \ldots 0}_{k} d_{k+1} d_{k+2} \ldots \right) \cdot 10^n.$$
+
+İkinci terim $0{,}d_{k+1} d_{k+2} \ldots \cdot 10^{n-k}$'ya eşittir.
+
+**Kesme.** $KN(y) = 0{,}d_1 \ldots d_k \cdot 10^n$ olduğundan
+
+$$\left| \frac{y - KN(y)}{y} \right| = \frac{0{,}d_{k+1} d_{k+2} \ldots \cdot 10^{n-k}}{0{,}d_1 d_2 \ldots \cdot 10^n} \le \frac{1 \cdot 10^{n-k}}{0{,}1 \cdot 10^n} = 10^{-k+1}$$
+
+olur, çünkü $0{,}d_{k+1} d_{k+2} \ldots \le 1$'dir.
+
+**Yuvarlama, $d_{k+1} < 5$ durumu.** Aşağı yuvarlama yapılır ve $KN(y)$ kesmedeki ile aynıdır. Bu kez $d_{k+1} \le 4$ olduğundan $0{,}d_{k+1} d_{k+2} \ldots \le 0{,}5$'tir:
+
+$$\left| \frac{y - KN(y)}{y} \right| = \frac{0{,}d_{k+1} d_{k+2} \ldots \cdot 10^{n-k}}{0{,}d_1 d_2 \ldots \cdot 10^n} \le \frac{0{,}5 \cdot 10^{n-k}}{0{,}1 \cdot 10^n} = 0{,}5 \cdot 10^{-k+1}.$$
+
+**Yuvarlama, $d_{k+1} \ge 5$ durumu.** Yukarı yuvarlama yapılır: $k$-ıncı basamağa $1$ eklenir, yani
+
+$$KN(y) = \left( 0{,}d_1 d_2 \ldots d_k + 10^{-k} \right) \cdot 10^n$$
+
+olur (elde oluşsa da bu eşitlik sayı değeri olarak doğrudur). Bu durumda $KN(y) > y$ ve
+
+$$
+\begin{aligned}
+|KN(y) - y| &= \left( 1 \cdot 10^{-k} - 0{,}d_{k+1} d_{k+2} \ldots \cdot 10^{-k} \right) \cdot 10^n \\[1mm]
+&= \left( 1 - 0{,}d_{k+1} d_{k+2} \ldots \right) \cdot 10^{n-k}
+\end{aligned}
+$$
+
+olur. $d_{k+1} \ge 5$ olduğundan $0{,}d_{k+1} d_{k+2} \ldots \ge 0{,}5$, dolayısıyla $1 - 0{,}d_{k+1} d_{k+2} \ldots \le 0{,}5$'tir. Buradan
+
+$$\left| \frac{y - KN(y)}{y} \right| = \frac{(1 - 0{,}d_{k+1} d_{k+2} \ldots) \cdot 10^{n-k}}{0{,}d_1 d_2 \ldots \cdot 10^n} \le \frac{0{,}5 \cdot 10^{n-k}}{0{,}1 \cdot 10^n} = 0{,}5 \cdot 10^{-k+1}$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani $k$ basamakla çalışan bir makinede tek bir sayıyı saklamanın bağıl hatası, sayının büyüklüğünden bağımsız olarak, kesmede $10^{-k+1}$'i, yuvarlamada bunun yarısını aşmaz. Örneğin $\pi$'nin 5-basamak kesmesinde bağıl hata $0{,}29 \cdot 10^{-4} \le 10^{-4}$, 5-basamak yuvarlamasında $0{,}23 \cdot 10^{-5} \le 0{,}5 \cdot 10^{-4}$'tür. Sınır tek bir sayı içindir; art arda yapılan işlemlerde hatalar birikir ve bu sınır aşılabilir.
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalar mutlak ve bağıl hatayı, k-basamak aritmetiğini ve seri yaklaşımlarının hatasını birlikte kullanır.
+
+:::: {#exr-hat-karekok-iki name="Bağıl Hatası Sınırlı Yaklaşımlar"}
+$p^*$ sayısının $\sqrt{2}$'ye en fazla $10^{-4}$ bağıl hata ile yaklaştığı en geniş aralığı bulunuz.
+
+::: {.cozum}
+**Koşulu yazalım.** @def-hat-mutlak-bagil gereği istenen koşul
+
+$$\frac{|p^* - \sqrt{2}|}{|\sqrt{2}|} \le 10^{-4}$$
+
+eşitsizliğidir.
+
+**Mutlak değeri açalım.** $\sqrt{2} > 0$ olduğundan iki yanı $\sqrt{2}$ ile çarparız:
+
+$$
+\begin{aligned}
+|p^* - \sqrt{2}| \le \sqrt{2} \cdot 10^{-4}
+&\iff \sqrt{2} - \sqrt{2} \cdot 10^{-4} \le p^* \le \sqrt{2} + \sqrt{2} \cdot 10^{-4} \\[1mm]
+&\iff \sqrt{2}\,(1 - 0{,}0001) \le p^* \le \sqrt{2}\,(1 + 0{,}0001).
+\end{aligned}
+$$
+
+**Aralık.** Aranan en geniş aralık
+
+$$\left[ 0{,}9999\sqrt{2};\ 1{,}0001\sqrt{2} \right] \approx \left[ 1{,}4140721;\ 1{,}4143550 \right]$$
+
+olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-hat-kesir-orani name="Üç-Basamak Yuvarlama Aritmetiğiyle Bir Oran"}
+$$\frac{\frac{13}{14} - \frac{6}{7}}{2e - 5{,}4}$$
+
+kesrinin değerini üç-basamak yuvarlama aritmetiği kullanarak hesaplayınız. Kesrin gerçek değeri yaklaşık olarak $1{,}954$ olduğuna göre hesaptaki mutlak ve bağıl hataları bulunuz.
+
+::: {.cozum}
+**Pay.** $\frac{13}{14} = 0{,}92857\ldots \to 0{,}929$ ve $\frac{6}{7} = 0{,}85714\ldots \to 0{,}857$ olduğundan
+
+$$\frac{13}{14} - \frac{6}{7} \approx 0{,}929 - 0{,}857 = 0{,}072 = 0{,}720 \cdot 10^{-1}.$$
+
+**Payda.** $e = 2{,}71828\ldots$ sayısı $0{,}272 \cdot 10^{1} = 2{,}72$ olarak alınır ve
+
+$$2e - 5{,}4 \approx 2 \cdot 2{,}72 - 5{,}40 = 5{,}44 - 5{,}40 = 0{,}0400 = 0{,}400 \cdot 10^{-1}.$$
+
+**Kesir.**
+
+$$\frac{0{,}720 \cdot 10^{-1}}{0{,}400 \cdot 10^{-1}} = 1{,}80 = 0{,}180 \cdot 10^{1}.$$
+
+**Hatalar.** Mutlak hata
+
+$$|1{,}80 - 1{,}954| = 0{,}154,$$
+
+bağıl hata
+
+$$\frac{|1{,}80 - 1{,}954|}{|1{,}954|} = \frac{0{,}154}{1{,}954} \approx 0{,}0788 = 0{,}788 \cdot 10^{-1}$$
+
+bulunur. Bağıl hata yaklaşık yüzde 8'dir; paydada birbirine çok yakın $5{,}44$ ve $5{,}40$ sayılarının farkı alındığı için üç basamaklık hassasiyetin çoğu kaybolmuştur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-hat-pi-arctan name="Arktanjant Serisiyle π Yaklaşımı"}
+$\pi = 4\left( \arctan \frac{1}{2} + \arctan \frac{1}{3} \right)$ eşitliği ile verilen $\pi$ sayısına, $\arctan x$ fonksiyonunun Maclaurin serisinin ilk üç terimini kullanarak yaklaşımda bulununuz; oluşan mutlak ve bağıl hataları hesaplayınız. İşlemlerde virgülden sonra 7. basamağa yuvarlayınız.
+
+::: {.cozum}
+**Eşitlik.** $a = \arctan \frac{1}{2}$ ve $b = \arctan \frac{1}{3}$ olsun. Tanjantın toplam formülüyle
+
+$$\tan(a + b) = \frac{\frac{1}{2} + \frac{1}{3}}{1 - \frac{1}{2} \cdot \frac{1}{3}} = \frac{\frac{5}{6}}{\frac{5}{6}} = 1$$
+
+olur. $a, b \in \left(0, \frac{\pi}{4}\right)$ olduğundan $a + b \in \left(0, \frac{\pi}{2}\right)$'dir ve $a + b = \frac{\pi}{4}$ bulunur.
+
+**Yaklaşım polinomu.** $\arctan x = x - \frac{x^3}{3} + \frac{x^5}{5} - \cdots$ serisinin (bkz. [Analiz 2](../analiz-2/taylor-ve-maclaurin-serileri.html#exm-arctan-arcsin-serisi)) ilk üç terimi
+
+$$p(x) = x - \frac{x^3}{3} + \frac{x^5}{5}$$
+
+polinomudur ve $\pi \approx 4\left( p\left(\frac{1}{2}\right) + p\left(\frac{1}{3}\right) \right)$ alınır.
+
+**Polinom değerleri.**
+
+$$
+\begin{aligned}
+p\left(\tfrac{1}{2}\right) &= \frac{1}{2} - \frac{1}{24} + \frac{1}{160} = \frac{223}{480} \approx 0{,}4645833, \\[1mm]
+p\left(\tfrac{1}{3}\right) &= \frac{1}{3} - \frac{1}{81} + \frac{1}{1215} = \frac{391}{1215} \approx 0{,}3218107.
+\end{aligned}
+$$
+
+**Yaklaşık değer.**
+
+$$\pi \approx 4\,(0{,}4645833 + 0{,}3218107) = 4 \cdot 0{,}7863940 = 3{,}1455760.$$
+
+**Hatalar.** Mutlak hata
+
+$$|\pi - 3{,}1455760| \approx 0{,}0039833,$$
+
+bağıl hata
+
+$$\frac{|\pi - 3{,}1455760|}{|\pi|} \approx 0{,}0012679$$
+
+bulunur. Buradaki hatanın büyük kısmı kesme hatasıdır: serinin dördüncü ve sonraki terimleri atılmıştır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Sonraki üç alıştırma aynı fonksiyonu kullanır:
+
+$$f(x) = \frac{e^x - e^{-x}}{x}.$$
+
+:::: {#exr-hat-sinh-limit name="Bir Bölümün Sıfırdaki Limiti"}
+$f(x) = \dfrac{e^x - e^{-x}}{x}$ olsun. $\displaystyle\lim_{x \to 0} f(x)$ limitini bulunuz.
+
+::: {.cozum}
+**Belirsizlik.** $x \to 0$ iken pay $e^0 - e^0 = 0$'a, payda $0$'a gider; limit $\frac{0}{0}$ belirsizliğidir.
+
+**L'Hôpital Kuralı.** Pay ve paydanın türevlerini alırız (bkz. [Analiz 2](../analiz-2/lhospital-kurali.html#thm-lhospital-sifir-sifir)):
+
+$$\lim_{x \to 0} \frac{e^x - e^{-x}}{x} = \lim_{x \to 0} \frac{e^x + e^{-x}}{1} = 1 + 1 = 2.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-hat-sinh-dogrudan name="Doğrudan Hesapta Üç-Basamak Yuvarlama"}
+$f(x) = \dfrac{e^x - e^{-x}}{x}$ olsun. Üç-basamak yuvarlama aritmetiği kullanarak $f(0{,}1)$ değerini hesaplayınız.
+
+::: {.cozum}
+**Üsteller.** $e^{0{,}100} = 1{,}10517\ldots$ sayısının dördüncü basamağı $5$ olduğundan $e^{0{,}100} \to 0{,}111 \cdot 10^{1} = 1{,}11$; $e^{-0{,}100} = 0{,}904837\ldots \to 0{,}905$.
+
+**Fark ve bölüm.**
+
+$$f(0{,}1) \approx \frac{1{,}11 - 0{,}905}{0{,}100} = \frac{0{,}205}{0{,}100} = 2{,}05 = 0{,}205 \cdot 10^{1}.$$
+
+Yani $f(0{,}1) \approx 2{,}05$ bulunur. Gerçek değer $f(0{,}1) = 2{,}003335\ldots$ olduğundan bağıl hata yaklaşık $0{,}023$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-hat-sinh-maclaurin name="Maclaurin Polinomuyla Üç-Basamak Yuvarlama"}
+$f(x) = \dfrac{e^x - e^{-x}}{x}$ olsun. $e^x$ için 3. mertebeden Maclaurin polinomunu kullanarak üç-basamak yuvarlama aritmetiği yardımıyla $f(0{,}1)$ değerini hesaplayınız.
+
+::: {.cozum}
+**Polinomlar.** 3. mertebeden Maclaurin polinomuyla
+
+$$e^x \approx 1 + x + \frac{x^2}{2} + \frac{x^3}{6}, \qquad e^{-x} \approx 1 - x + \frac{x^2}{2} - \frac{x^3}{6}$$
+
+olur.
+
+**Sadeleştirme.** Farkta çift dereceli terimler birbirini götürür:
+
+$$f(x) \approx \frac{\left(1 + x + \frac{x^2}{2} + \frac{x^3}{6}\right) - \left(1 - x + \frac{x^2}{2} - \frac{x^3}{6}\right)}{x} = \frac{2x + \frac{x^3}{3}}{x} = 2 + \frac{x^2}{3}.$$
+
+**Hesap.** $(0{,}100)^2 = 0{,}0100$ ve $\frac{0{,}0100}{3} = 0{,}00333\ldots \to 0{,}00333$ olduğundan
+
+$$f(0{,}1) \approx 2 + 0{,}00333 = 2{,}00333 \to 0{,}200 \cdot 10^{1} = 2{,}00$$
+
+bulunur. Gerçek değer $2{,}003335\ldots$ olduğundan bağıl hata yaklaşık $0{,}0017$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani doğrudan hesaptaki (@exr-hat-sinh-dogrudan) büyük hata yöntemden değil, birbirine çok yakın $1{,}11$ ve $0{,}905$ sayılarının farkından gelir: baştaki basamaklar birbirini götürür ve geriye yuvarlama hatalarıyla dolu birkaç basamak kalır (**anlamlı basamak kaybı**). İfadeyi önce $2 + \frac{x^2}{3}$ biçimine getirmek bu çıkarmayı ortadan kaldırır ve üç basamakla bile on dört kat daha doğru sonuç verir.
+
+Hataların bir algoritma boyunca nasıl büyüdüğünü ve bir dizinin limitine ne hızla yaklaştığını ölçmek bir sonraki bölümün konusudur: [Algoritmalar ve Yakınsama Hızı](algoritmalar-ve-yakinsama.qmd).

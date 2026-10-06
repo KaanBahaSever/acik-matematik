@@ -13,7 +13,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 <!-- BOOKS-START -->
 
 <details>
-<summary><strong>Arşivdeki 33 ders</strong> — 22 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
+<summary><strong>Arşivdeki 33 ders</strong> — 23 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
 
 - [Analitik Geometri](https://acik-matematik.com/dersler/analitik-geometri/) — 23 bölüm, 569 örnek ve alıştırma
 - [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
@@ -30,6 +30,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Lineer Programlama](https://acik-matematik.com/dersler/lineer-programlama/) — 15 bölüm, 147 örnek ve alıştırma
 - [Matematiksel İstatistik](https://acik-matematik.com/dersler/matematiksel-istatistik/) — 18 bölüm, 263 örnek ve alıştırma
 - [Matematiğin Temelleri ve Mantık](https://acik-matematik.com/dersler/matematigin-temelleri/) — 19 bölüm, 106 örnek ve alıştırma
+- [Nümerik Analiz](https://acik-matematik.com/dersler/numerik-analiz/) — 12 bölüm, 113 örnek ve alıştırma
 - [Olasılık Teorisi](https://acik-matematik.com/dersler/olasilik-teorisi/) — 23 bölüm, 154 örnek ve alıştırma
 - [Raslantı Süreçleri](https://acik-matematik.com/dersler/raslanti-surecleri/) — 15 bölüm, 37 örnek ve alıştırma
 - [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 15 bölüm, 180 örnek ve alıştırma
@@ -43,7 +44,6 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - İleri Analiz — müfredatı hazır, bölümleri yazılıyor
 - İntegral Calculus — müfredatı hazır, bölümleri yazılıyor
 - Kodlama Teorisi — müfredatı hazır, bölümleri yazılıyor
-- Nümerik Analiz — müfredatı hazır, bölümleri yazılıyor
 - Python ile Bilimsel Hesaplama — müfredatı hazır, bölümleri yazılıyor
 - Soyut Cebir 2: Halkalar ve İdealler — müfredatı hazır, bölümleri yazılıyor
 - Soyut Cebir 3: Cisim Genişlemeleri — müfredatı hazır, bölümleri yazılıyor
@@ -60,17 +60,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **499** |
-| 📐 Teorem | **1.184** |
-| 🔹 Lemma | **127** |
-| 📝 Tanım | **1.446** |
-| ✅ İspat | **2.088** |
-| 🧮 Örnek ve alıştırma | **4.571** |
-| 💡 Çözüm | **4.298** |
-| 📊 Şekil | **1.362** |
-| ✍️ Kelime | **2.059.449** |
-| 🔤 Karakter | **14.506.424** |
-| 💾 Kaynak metin | **31,7 MB** |
+| 📖 Konu/Bölüm | **511** |
+| 📐 Teorem | **1.206** |
+| 🔹 Lemma | **129** |
+| 📝 Tanım | **1.485** |
+| ✅ İspat | **2.123** |
+| 🧮 Örnek ve alıştırma | **4.684** |
+| 💡 Çözüm | **4.411** |
+| 📊 Şekil | **1.399** |
+| ✍️ Kelime | **2.109.907** |
+| 🔤 Karakter | **14.857.448** |
+| 💾 Kaynak metin | **33,4 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 
