@@ -15,7 +15,15 @@
       grid, rules and alignment in Typst; every array is converted here into
       a Typst mat(...) whose augment lines reproduce the "|" column rules and
       the \hline row rules.
-    * a few amssymb macros pandoc does not know (\diagup, \diagdown).
+    * a few macros pandoc does not know (\diagup, \diagdown, \cfrac,
+      \hphantom).
+    * \dfrac, \dbinom and \displaystyle — pandoc's Typst writer drops the
+      math style, so in inline math (and in table cells) the fractions,
+      sums and integrals the notes deliberately set at display size came
+      out at Typst's small inline size. Each such piece is converted on its
+      own and wrapped in Typst's display(...). \dbinom and \tbinom are not
+      understood by pandoc at all and would be printed as raw TeX; for
+      EPUB/DOCX they become a plain \binom.
 
   The filter is a no-op for the website (HTML) build.
 ]]
@@ -37,6 +45,9 @@ end
 local MACROS = {
   ["\\diagup"] = "/",
   ["\\diagdown"] = "\\backslash",
+  -- not parsed by pandoc either; the nearest forms it knows
+  ["\\cfrac"] = "\\dfrac",
+  ["\\hphantom"] = "\\phantom",
 }
 
 local function fix_tex(tex)
@@ -158,6 +169,157 @@ local function convert_with_arrays(tex, display)
   return out
 end
 
+-- ------------------------------------------------- display-size pieces
+
+-- Macros whose math style pandoc's Typst writer loses, and what they become.
+local STYLE_KIND = {
+  dfrac = "frac",
+  dbinom = "binom",
+  tbinom = "binom",
+  displaystyle = "style",
+}
+
+-- The argument that starts at (or after whitespace from) index i: a {…}
+-- group, a control word or a single character. Returns its TeX and the
+-- index just after it, or nil when the braces do not balance.
+local function read_arg(tex, i)
+  while tex:sub(i, i):match("%s") do i = i + 1 end
+  local c = tex:sub(i, i)
+  if c == "{" then
+    local depth, j = 1, i + 1
+    while j <= #tex and depth > 0 do
+      local d = tex:sub(j, j)
+      if d == "\\" then
+        j = j + 1
+      elseif d == "{" then
+        depth = depth + 1
+      elseif d == "}" then
+        depth = depth - 1
+      end
+      j = j + 1
+    end
+    if depth ~= 0 then return nil end
+    return tex:sub(i + 1, j - 2), j
+  elseif c == "\\" then
+    local word = tex:match("^\\%a+", i) or tex:sub(i, i + 1)
+    return word, i + #word
+  elseif c ~= "" then
+    return c, i + 1
+  end
+  return nil
+end
+
+-- \displaystyle acts up to the end of its group: the closing brace of the
+-- enclosing {…}, a \right or \end that closes something opened before it,
+-- an alignment "&" or a "\\" row break. Returns the index where it stops.
+local function style_scope_end(tex, i)
+  local braces, pairs_open, envs = 0, 0, 0
+  while i <= #tex do
+    local c = tex:sub(i, i)
+    if c == "\\" then
+      local word = tex:match("^\\%a+", i)
+      if word == "\\left" then
+        pairs_open = pairs_open + 1
+      elseif word == "\\right" then
+        if braces == 0 and pairs_open == 0 then return i end
+        pairs_open = pairs_open - 1
+      elseif word == "\\begin" then
+        envs = envs + 1
+      elseif word == "\\end" then
+        if braces == 0 and envs == 0 then return i end
+        envs = envs - 1
+      elseif not word and tex:sub(i, i + 1) == "\\\\" and braces == 0 and envs == 0 then
+        return i
+      end
+      i = i + (word and #word or 2)
+    else
+      if c == "{" then
+        braces = braces + 1
+      elseif c == "}" then
+        if braces == 0 then return i end
+        braces = braces - 1
+      elseif c == "&" and braces == 0 and envs == 0 then
+        return i
+      end
+      i = i + 1
+    end
+  end
+  return i
+end
+
+local styled_to_typst
+
+-- Cut every styled piece out of the TeX, leaving a \text{…} placeholder.
+-- Returns the new TeX and a map placeholder -> Typst code, or nil when a
+-- piece cannot be parsed (the equation is then left to pandoc as before).
+local function cut_styled(tex)
+  local pieces, buf, i, count = {}, {}, 1, 0
+  while i <= #tex do
+    local s, e, name = tex:find("\\(%a+)", i)
+    if not s then break end
+    local kind = STYLE_KIND[name]
+    if not kind then
+      buf[#buf + 1] = tex:sub(i, e)
+      i = e + 1
+    else
+      buf[#buf + 1] = tex:sub(i, s - 1)
+      local code, after
+      if kind == "style" then
+        after = style_scope_end(tex, e + 1)
+        local body = tex:sub(e + 1, after - 1)
+        if trim(body) ~= "" then
+          code = "display(" .. styled_to_typst(body, false) .. ")"
+        end
+      else
+        local a, j = read_arg(tex, e + 1)
+        if not a then return nil end
+        local b, k = read_arg(tex, j)
+        if not b then return nil end
+        code = kind .. "(" .. styled_to_typst(a, false) .. ", " .. styled_to_typst(b, false) .. ")"
+        if name ~= "tbinom" then code = "display(" .. code .. ")" end
+        after = k
+      end
+      if code then
+        count = count + 1
+        local key = "QSTYLE" .. count .. "Q"
+        pieces[key] = code
+        buf[#buf + 1] = "\\text{" .. key .. "}"
+      end
+      i = after
+    end
+  end
+  buf[#buf + 1] = tex:sub(i)
+  return table.concat(buf), pieces
+end
+
+-- LaTeX -> Typst math source like typst_math_source, but keeping the
+-- display size of \dfrac, \dbinom and \displaystyle pieces and converting
+-- arrays to mat(...).
+styled_to_typst = function(tex, display)
+  local replaced, pieces = cut_styled(tex)
+  if not replaced then
+    replaced, pieces = tex, {}
+  end
+  local out
+  if replaced:find("\\begin{array}") then
+    out = convert_with_arrays(replaced, display)
+  else
+    out = typst_math_source(replaced, display)
+  end
+  for key, code in pairs(pieces) do
+    out = out:gsub('upright%("' .. key .. '"%)', function() return code end)
+    out = out:gsub('"' .. key .. '"', function() return code end)
+  end
+  return out
+end
+
+local function has_styled(tex)
+  for name in pairs(STYLE_KIND) do
+    if tex:find("\\" .. name, 1, true) then return true end
+  end
+  return false
+end
+
 -- ------------------------------------------------------------- filter
 
 function Math(el)
@@ -172,6 +334,8 @@ function Math(el)
   end
 
   if not TYPST then
+    -- MathML / OMML have no \dbinom or \tbinom; a plain \binom is close enough
+    tex = tex:gsub("\\[dt]binom(%A)", "\\binom%1")
     -- EPUB / DOCX: keep the tag visible as ordinary math at the right
     if tag then
       tex = trim(tex) .. " \\qquad (" .. tag .. ")"
@@ -184,7 +348,10 @@ function Math(el)
   end
 
   local has_array = tex:find("\\begin{array}") ~= nil
-  if not tag and not has_array then
+  -- In display math pandoc already sets fractions at display size, so only
+  -- the binomials it cannot parse have to be rewritten there.
+  local styled = has_styled(tex) and (not display or tex:find("\\[dt]binom") ~= nil)
+  if not tag and not has_array and not styled then
     if tex ~= el.text then
       el.text = tex
       return el
@@ -192,7 +359,7 @@ function Math(el)
     return nil
   end
 
-  local source = has_array and convert_with_arrays(tex, display) or typst_math_source(tex, display)
+  local source = styled_to_typst(tex, display)
   local typst
   if display then
     typst = "$ " .. source .. " $"
