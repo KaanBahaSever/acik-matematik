@@ -1,0 +1,535 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Nümerik analiz sorularını çözmek için pratik algoritmalar ve kopya kâğıdı: Taylor polinomu ve hata sınırı, mutlak ve bağıl hata, k-basamak kesme ve yuvarlama, yakınsama hızı, ikiye bölme, sabit nokta iterasyonu, Newton-Raphson, Secant ve Regula Falsi, Lagrange interpolasyonu ve hata sınırı, bölünmüş fark tabloları, nümerik türev formülleri, yamuk, Simpson ve Newton-Cotes kuralları, en küçük kareler doğrusu."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık karşılaşılan sorular şunlardır: bir denklemin köküne ikiye bölme, sabit nokta, Newton-Raphson, Secant ya da Regula Falsi ile yaklaşmak ve gereken adım sayısını bulmak; verilen noktalardan Lagrange ya da Newton biçiminde interpolasyon polinomu kurup hata sınırı vermek; bir türevi ya da integrali bir tablodan yaklaşık hesaplamak; verilere en küçük kareler doğrusu uydurmak. Bunların yanında Taylor polinomuyla yaklaşık değer ve hata sınırı, k-basamak aritmetikle hesap ve yakınsama hızı soran kısa sorular da sık gelir. Sayfa her soru tipi için adım adım bir algoritma, gerekli formül tablolarını, sık yapılan hataları ve kısa ama tam çözümlü örnekleri verir. Her kural, ayrıntısının ve gerekçesinin bulunduğu tanıma ya da teoreme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, sorunun hangi kalıba girdiğini ve hangi aracın en kısa yol olduğunu belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Kullanılacak araç | Bu sayfada |
+|:--|:--|:--|
+| Taylor polinomuyla yaklaşık değer, hata sınırı, kaç terim gerektiği | $R_n(x)$ kalan terimini en büyük türevle sınırla | @sec-ozt-taylor |
+| Mutlak ya da bağıl hata, $p^*$'ın bulunabileceği aralık | Tanımdan eşitsizlik | @sec-ozt-hatalar |
+| k-basamak kesme ya da yuvarlama aritmetiğiyle hesap | Her ara sonucu $KN$ formuna çevir | @sec-ozt-hatalar |
+| Bir dizinin ya da fonksiyonun yakınsama hızı | $\lvert y_n - y_0 \rvert \le K \lvert x_n \rvert$ sınırını bul | @sec-ozt-hiz |
+| Kökü içeren bir aralık bul | Ara değer teoremi: işaret değişimi | @sec-ozt-kok-araligi |
+| İkiye bölmeyle yaklaşım, gereken adım sayısı | $\frac{b - a}{2^n} < \varepsilon$ | @sec-ozt-ikiye-bolme |
+| Uygun $g$ seçip sabit nokta iterasyonu, adım sayısı | $g([a, b]) \subseteq [a, b]$, $\lvert g' \rvert \le k < 1$ | @sec-ozt-sabit-nokta |
+| Newton-Raphson ile köke yaklaşım | $p_n = p_{n-1} - f(p_{n-1})/f'(p_{n-1})$ | @sec-ozt-newton |
+| Secant ya da Regula Falsi ile köke yaklaşım | Kirişin $x$ eksenini kestiği nokta | @sec-ozt-secant |
+| Verilen noktalardan interpolasyon polinomu, yaklaşık değer | Lagrange katsayı polinomları | @sec-ozt-lagrange |
+| İnterpolasyonun hata sınırı | $\frac{M}{(n+1)!} \lvert (x - x_0) \cdots (x - x_n) \rvert$ | @sec-ozt-lagrange |
+| Bölünmüş fark tablosu, Newton biçimi, ileri ya da geri fark formülü | Basamaklı fark tablosu | @sec-ozt-bolunmus |
+| Tablodan birinci ya da ikinci türev | İki, üç-nokta ve ikinci türev formülleri | @sec-ozt-turev |
+| Yamuk, Simpson, Newton-Cotes ile integral ve hata sınırı | Formül tablosu ve hata terimleri | @sec-ozt-integral |
+| Verilere doğru uydurma | Normal denklemler ya da matris biçimi | @sec-ozt-ekk |
+
+## Taylor Polinomu ve Hata Sınırı {#sec-ozt-taylor}
+
+Taylor Teoremine (@thm-onb-taylor) göre $f(x) = P_n(x) + R_n(x)$ ve
+$$R_n(x) = \frac{f^{(n+1)}(\xi(x))}{(n+1)!}\,(x - x_0)^{n+1}$$
+dir; $\xi(x)$, $x_0$ ile $x$ arasında bilinmeyen bir sayıdır. Hata sınırı sorularının hepsi bu bilinmeyen $\xi$'yi en kötü değeriyle değiştirmekten ibarettir.
+
+::: {.callout-tip title="Dört adımda Taylor ile yaklaşık değer ve hata sınırı"}
+1. **Türevleri çıkar.** $f, f', \dots, f^{(n+1)}$'i yaz ve $x_0$'daki değerleri hesapla.
+2. **Polinomu kur.** $P_n(x) = \sum_{k=0}^{n} \frac{f^{(k)}(x_0)}{k!}(x - x_0)^k$ ve istenen noktada $P_n(x)$'i bul.
+3. **Türevi sınırla.** $x_0$ ile $x$ arasındaki her $t$ için $|f^{(n+1)}(t)| \le M$ olacak en küçük kolay $M$'yi bul.
+4. **Sınırı yaz.**
+   $$|f(x) - P_n(x)| \le \frac{M}{(n+1)!}\,|x - x_0|^{n+1}.$$
+:::
+
+"Kaç terim gerekir?" sorusunda 4. adımdaki sınır $n$'ye bağlı yazılır ve sınır istenen hassaslıktan küçük olana kadar $n = 1, 2, \dots$ denenir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $M$, $\xi$'nin bulunabileceği aralığın tamamı üzerinde alınır; yalnız $x_0$'da ya da yalnız $x$'te alınmaz.
+- $n$. mertebeden polinomun hatası $(n+1)$. türevle yazılır.
+- Trigonometrik fonksiyonlarda açılar radyandır.
+:::
+
+:::: {#exm-ozt-taylor name="Üstel Fonksiyon İçin Yaklaşık Değer ve Hata Sınırı"}
+$f(x) = e^{-x}$ fonksiyonunun $x_0 = 0$ civarındaki ikinci mertebeden Taylor polinomuyla $e^{-0{,}1}$ için bir yaklaşım bulunuz ve bir hata sınırı veriniz.
+
+::: {.cozum}
+$f(x) = e^{-x}$, $f'(x) = -e^{-x}$, $f''(x) = e^{-x}$, $f'''(x) = -e^{-x}$ olduğundan $f(0) = 1$, $f'(0) = -1$, $f''(0) = 1$ ve
+$$P_2(x) = 1 - x + \frac{x^2}{2}, \qquad P_2(0{,}1) = 1 - 0{,}1 + 0{,}005 = 0{,}905.$$
+
+$\xi$, $0$ ile $0{,}1$ arasındadır ve bu aralıkta $|f'''(t)| = e^{-t} \le e^0 = 1$ olduğundan $M = 1$ alınır:
+$$|e^{-0{,}1} - P_2(0{,}1)| \le \frac{1}{3!}\,(0{,}1)^3 = \frac{0{,}001}{6} \approx 0{,}000167.$$
+
+Gerçek değer $e^{-0{,}1} = 0{,}9048374\ldots$ olduğundan gerçek hata $0{,}0001626$'dır; sınırın altında kalır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Hatalar ve k-Basamak Aritmetik {#sec-ozt-hatalar}
+
+Mutlak hata $|p - p^*|$, bağıl hata $\left|\frac{p - p^*}{p}\right|$'dir (@def-hat-mutlak-bagil). Bağıl hata, hatayı sayının büyüklüğüne göre ölçer; bu yüzden büyük sayılarda daha anlamlıdır.
+
+**$p^*$ aralığı.** "Bağıl hatası en çok $\varepsilon$ olan $p^*$'lar hangi aralıktadır?" sorusunda $p > 0$ için
+$$|p - p^*| \le \varepsilon\, p \iff p(1 - \varepsilon) \le p^* \le p(1 + \varepsilon)$$
+yazılır. Örneğin $p = 150$ ve $\varepsilon = 10^{-3}$ için $149{,}85 \le p^* \le 150{,}15$ olur. Mutlak hata için aralık $p - \varepsilon \le p^* \le p + \varepsilon$'dur.
+
+**Kesme ve yuvarlama.** $y = 0{,}d_1 d_2 \ldots d_k d_{k+1} \ldots \cdot 10^n$ için (@def-hat-kn):
+
+| İşlem | Kural | Bağıl hata sınırı |
+|:-:|:-:|:-:|
+| k-basamak kesme | $d_{k+1}$ ve sonrasını at | $10^{-k+1}$ |
+| k-basamak yuvarlama | $5 \cdot 10^{n-(k+1)}$ ekle, sonra kes | $0{,}5 \cdot 10^{-k+1}$ |
+
+::: {.callout-tip title="Üç adımda k-basamak aritmetiğiyle hesap"}
+1. Her sayıyı önce $KN$ formuna çevir: $0{,}d_1 \ldots d_k \cdot 10^n$, $d_1 \ne 0$.
+2. Her işlemin sonucunu hemen yeniden $KN$ formuna çevir; sonucu sona saklama.
+3. Mutlak ve bağıl hatayı gerçek değerle hesapla.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Normalize biçimde ilk basamak sıfır olamaz: $0{,}0314 \cdot 10^2$ değil, $0{,}314 \cdot 10^1$.
+- Yakın iki sayının farkında anlamlı basamak kaybolur; mümkünse ifade yeniden düzenlenir (örneğin eşleniğiyle çarpılır).
+:::
+
+:::: {#exm-ozt-kesme-yuvarlama name="Bir Kesrin Dört Basamaklı Formları"}
+$y = \frac{22}{7}$ sayısının dört basamak kesme ve dört basamak yuvarlama ile kayan nokta formlarını bulunuz ve bağıl hatalarını hesaplayınız.
+
+::: {.cozum}
+$y = 0{,}3142857\ldots \cdot 10^1$ olduğundan $n = 1$, $k = 4$'tür.
+
+- **Kesme:** $KN(y) = 0{,}3142 \cdot 10^1$. Bağıl hata $\dfrac{0{,}000857\ldots}{3{,}142857\ldots} \approx 2{,}73 \cdot 10^{-4}$.
+- **Yuvarlama:** $y + 5 \cdot 10^{1-5} = 3{,}143357\ldots$ kesilirse $KN(y) = 0{,}3143 \cdot 10^1$. Bağıl hata $\dfrac{0{,}000143\ldots}{3{,}142857\ldots} \approx 4{,}55 \cdot 10^{-5}$.
+
+İki sonuç da tablodaki sınırların ($10^{-3}$ ve $0{,}5 \cdot 10^{-3}$) altındadır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Yakınsama Hızı {#sec-ozt-hiz}
+
+$y_n \to y_0$ yakınsaması, yeterince büyük $n$ için $|y_n - y_0| \le K|x_n|$ ise $O(x_n)$ hızındadır (@def-yak-dizi-hizi). Fonksiyonlarda da $h \to 0$ iken $|f(h) - L| \le K|g(h)|$ ise $f(h) = L + O(g(h))$ yazılır (@def-yak-fonksiyon-hizi). Pratikte $x_n = \frac{1}{n^p}$ ve $g(h) = h^p$ biçiminde, sınırı sağlayan en büyük $p$ aranır.
+
+::: {.callout-tip title="Üç adımda yakınsama hızı"}
+1. Limiti bul: $y_0$ ya da $L$.
+2. Farkı sadeleştir: $|y_n - y_0|$ için pay ve paydanın baş terimlerine bak; fonksiyonlarda Taylor açılımını kullan.
+3. Sınırı yaz: farkı $K \cdot \frac{1}{n^p}$ ya da $K \cdot |h|^p$ ile sınırla ve $p$'yi olabildiğince büyük seç.
+:::
+
+:::: {#exm-ozt-hiz-dizi name="Bir Dizinin Yakınsama Hızı"}
+$y_n = n \sin\frac{1}{n}$ dizisinin yakınsama hızını belirleyiniz.
+
+::: {.cozum}
+$0 < t \le 1$ için Taylor Teoreminden $t - \frac{t^3}{6} \le \sin t \le t$ olur. $t = \frac{1}{n}$ alıp $t$'ye bölersek
+$$1 - \frac{1}{6n^2} \le n \sin\frac{1}{n} \le 1, \qquad \text{yani} \qquad \left| n\sin\frac{1}{n} - 1 \right| \le \frac{1}{6n^2}.$$
+Dolayısıyla $y_n \to 1$ ve $n \sin\frac{1}{n} = 1 + O\!\left(\frac{1}{n^2}\right)$'dir. Örneğin $n = 10$ için fark $0{,}0016658$, sınır $0{,}0016667$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-hiz-fonksiyon name="Bir Fonksiyonun Yakınsama Hızı"}
+$f(h) = \dfrac{1 - \cos h}{h}$ fonksiyonunun $h \to 0$ iken yakınsama hızını belirleyiniz.
+
+::: {.cozum}
+Taylor Teoreminden $0 \le 1 - \cos h \le \frac{h^2}{2}$ olduğundan $h \ne 0$ için
+$$|f(h) - 0| = \frac{1 - \cos h}{|h|} \le \frac{|h|}{2}$$
+olur. O hâlde $f(h) \to 0$ ve $f(h) = 0 + O(h)$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kök Bulma: Aralık ve Yöntem Seçimi {#sec-ozt-kok-araligi}
+
+Her kök sorusu, kökü içeren bir aralıkla başlar. $f \in C[a, b]$ ve $f(a) \cdot f(b) < 0$ ise Ara Değer Teoremi (@thm-onb-ara-deger) gereği $(a, b)$'de bir kök vardır. Kök aralığı aranırken $f$ birkaç tam sayıda hesaplanır ve işaret değiştirdiği ardışık noktalar alınır; $f'$ aralıkta işaret değiştirmiyorsa kök tektir.
+
+Aşağıdaki tablo dört yöntemi yan yana koyar. Bu sayfada dördü de aynı denklemle, $f(x) = x^3 - 2x - 5 = 0$ ile gösterilir. $f(2) = -1 < 0$ ve $f(3) = 16 > 0$ olduğundan $[2, 3]$'te bir kök vardır; kök $p = 2{,}0945514815\ldots$'tir.
+
+::: {.formula-table}
+| Yöntem | Gerekenler | Adım | Yakınsama |
+|:----:|:-----:|:-------:|:-----:|
+| İkiye bölme | $f(a) \cdot f(b) < 0$ | $p_n = \dfrac{a_n + b_n}{2}$ | Her zaman, yavaş |
+| Sabit nokta | $x = g(x)$, $\lvert g' \rvert \le k < 1$ | $p_n = g(p_{n-1})$ | $k$ küçükse hızlı |
+| Newton-Raphson | $f'$, iyi bir $p_0$ | $p_n = p_{n-1} - \dfrac{f(p_{n-1})}{f'(p_{n-1})}$ | $p_0$ yakınsa çok hızlı |
+| Secant | $p_0$, $p_1$ | Son iki noktadan kiriş | Hızlı, garanti yok |
+| Regula Falsi | $f(p_0) \cdot f(p_1) < 0$ | İşaret değiştiren uçtan kiriş | Her zaman, Secant'tan yavaş |
+:::
+
+**Durma kriterleri** (@def-ikb-durma-kriteri): $|p_N - p_{N-1}| < \varepsilon$, $\frac{|p_N - p_{N-1}|}{|p_N|} < \varepsilon$ ya da $|f(p_N)| < \varepsilon$. Soruda hangisi istenmişse o kullanılır; belirtilmemişse ilki.
+
+## İkiye Bölme Metodu {#sec-ozt-ikiye-bolme}
+
+Her adımda aralık yarıya iner ve kök hep işaret değiştiren yarıdadır (@def-ikb-ikiye-bolme). Hata sınırı (@thm-ikb-yakinsama)
+$$|p_n - p| \le \frac{b - a}{2^n}$$
+dir. **Adım sayısı:** $10^{-m}$ hassaslık için $\frac{b - a}{2^n} < 10^{-m}$, yani $2^n > (b - a) \cdot 10^m$ sağlayan en küçük $n$ alınır.
+
+::: {.callout-tip title="İkiye bölme dört adımda"}
+1. $f(a) \cdot f(b) < 0$ olduğunu göster; $a_1 = a$, $b_1 = b$ al.
+2. $p_n = \frac{a_n + b_n}{2}$ ve $f(p_n)$'yi hesapla.
+3. $f(p_n)$, $f(a_n)$ ile aynı işaretliyse $a_{n+1} = p_n$; değilse $b_{n+1} = p_n$ al.
+4. Durma kriterini sına; sağlanmıyorsa 2. adıma dön. Değerleri tabloda topla.
+:::
+
+:::: {#exm-ozt-ikiye-bolme name="İkiye Bölme ile Bir Kübiğin Kökü"}
+$x^3 - 2x - 5 = 0$ denkleminin $[2, 3]$ aralığındaki köküne ikiye bölme metoduyla dört adım yaklaşınız. $10^{-4}$ hassaslık için en az kaç adım gerekir?
+
+::: {.cozum}
+$f(2) = -1 < 0$, $f(3) = 16 > 0$ olduğundan kök $(2, 3)$'tedir.
+
+::: {.iteration-table}
+| $n$ | $a_n$ | $b_n$ | $p_n$ | $f(p_n)$ |
+|:-:|:-:|:-:|:-:|:-:|
+| $1$ | $2$ | $3$ | $2{,}5$ | $5{,}625 > 0$ |
+| $2$ | $2$ | $2{,}5$ | $2{,}25$ | $1{,}890625 > 0$ |
+| $3$ | $2$ | $2{,}25$ | $2{,}125$ | $0{,}345703 > 0$ |
+| $4$ | $2$ | $2{,}125$ | $2{,}0625$ | $-0{,}351318 < 0$ |
+:::
+
+Dört adımdan sonra kök $(2{,}0625;\ 2{,}125)$ aralığındadır ve $p_4 = 2{,}0625$'in hatası en çok $\frac{1}{2^4} = 0{,}0625$'tir.
+
+Adım sayısı için $\frac{3 - 2}{2^n} < 10^{-4}$, yani $2^n > 10\,000$ gerekir. $2^{13} = 8192$, $2^{14} = 16\,384$ olduğundan en az $n = 14$ adım gerekir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Sabit Nokta İterasyonu {#sec-ozt-sabit-nokta}
+
+$f(x) = 0$ denklemi $x = g(x)$ biçimine getirilir ve $p_n = g(p_{n-1})$ ile iterasyon yapılır (@def-snk-iterasyon). Aynı denklem için birçok $g$ yazılabilir; işe yarayanı Sabit Nokta Teoreminin (@thm-snk-sabit-nokta) koşullarını sağlayandır:
+
+1. $g \in C[a, b]$ ve her $x \in [a, b]$ için $g(x) \in [a, b]$,
+2. her $x \in (a, b)$ için $|g'(x)| \le k < 1$.
+
+Bu durumda her $p_0 \in [a, b]$ için iterasyon tek sabit noktaya yakınsar ve (@cor-snk-hata-siniri)
+$$|p_n - p| \le k^n \max\{p_0 - a,\ b - p_0\}, \qquad |p_n - p| \le \frac{k^n}{1 - k}\,|p_1 - p_0|.$$
+
+::: {.callout-tip title="Dört adımda sabit nokta iterasyonu"}
+1. **$g$'yi seç.** Denklemi $x = g(x)$ biçiminde yaz; birkaç aday varsa $|g'|$'si küçük olanı al.
+2. **Koşulları denetle.** $g$ monotonsa $g([a, b])$ uç değerlerinden bulunur; $\max |g'|$'yi hesapla, bu $k$'dır.
+3. **Adım sayısını bul.** Hata sınırını $\varepsilon$'dan küçük yapan en küçük $n$'yi seç.
+4. **İterasyonu yap.** $p_n = g(p_{n-1})$ değerlerini tabloda topla.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Yalnız $|g'| < 1$'i denetlemek yetmez; $g$'nin aralığı kendi içine götürdüğü de gösterilmelidir.
+- $|g'(p)| > 1$ olan bir $g$ ile iterasyon, $p_0$ köke çok yakın olsa bile uzaklaşır.
+:::
+
+:::: {#exm-ozt-sabit-nokta name="Sabit Nokta İterasyonu ile Bir Kübiğin Kökü"}
+$x^3 + x - 1 = 0$ denklemini $x = g(x) = \dfrac{1}{1 + x^2}$ biçiminde yazınız. $g$'nin $[0{,}5;\ 1]$ aralığında Sabit Nokta Teoreminin koşullarını sağladığını gösteriniz ve $p_0 = 0{,}5$ ile $10^{-3}$ hassaslık için yeterli adım sayısını bulunuz.
+
+::: {.cozum}
+Denklem
+$$x^3 + x - 1 = 0 \iff x(1 + x^2) = 1 \iff x = \frac{1}{1 + x^2}$$
+biçiminde yazılabilir.
+
+**Aralık koşulu.** $g$, $[0{,}5;\ 1]$ üzerinde azalandır; $g(0{,}5) = 0{,}8$ ve $g(1) = 0{,}5$ olduğundan $g([0{,}5;\ 1]) = [0{,}5;\ 0{,}8] \subseteq [0{,}5;\ 1]$.
+
+**Türev koşulu.** $g'(x) = -\dfrac{2x}{(1 + x^2)^2}$'dir. $|g'|$ en büyük değerini $x = \frac{1}{\sqrt{3}}$'te alır:
+$$|g'(x)| \le \frac{2/\sqrt{3}}{(4/3)^2} = \frac{3\sqrt{3}}{8} \approx 0{,}6495 < 0{,}65 = k.$$
+
+**Adım sayısı.** $p_1 = g(0{,}5) = 0{,}8$ olduğundan
+$$\frac{k^n}{1 - k}\,|p_1 - p_0| = \frac{0{,}65^n}{0{,}35} \cdot 0{,}3 < 10^{-3} \iff 0{,}65^n < 0{,}0011\overline{6}.$$
+Logaritma alınırsa $n > \frac{\ln 0{,}0011\overline{6}}{\ln 0{,}65} \approx 15{,}68$, yani $n = 16$ adım yeterlidir.
+
+İlk iterasyonlar $p_1 = 0{,}8$, $p_2 = 0{,}609756$, $p_3 = 0{,}728968$, $p_4 = 0{,}653000$ olup köke ($p = 0{,}6823278\ldots$) iki yandan salınarak yaklaşır; bunun nedeni $g' < 0$ olmasıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Newton-Raphson Metodu {#sec-ozt-newton}
+
+Eğrinin $(p_{n-1}, f(p_{n-1}))$ noktasındaki teğeti $x$ eksenini $p_n$'de keser (@def-nwt-metot):
+$$p_n = p_{n-1} - \frac{f(p_{n-1})}{f'(p_{n-1})}, \qquad n \ge 1.$$
+$f(p) = 0$, $f'(p) \ne 0$ ve $p_0$ köke yeterince yakınsa yakınsama garantidir (@thm-nwt-yakinsama) ve doğru basamak sayısı her adımda kabaca ikiye katlanır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $f'(p_{n-1}) = 0$ ya da çok küçükse adım tanımsızdır ya da çok uzağa sıçrar; başka bir $p_0$ seçilir.
+- Kökten uzak bir $p_0$ ile dizi başka bir köke gidebilir ya da salınabilir; önce bir kök aralığı bulmak iyi bir alışkanlıktır.
+:::
+
+:::: {#exm-ozt-newton name="Newton-Raphson ile Bir Kübiğin Kökü"}
+$x^3 - 2x - 5 = 0$ denkleminin köküne $p_0 = 2$ alarak Newton-Raphson metoduyla üç adım yaklaşınız.
+
+::: {.cozum}
+$f(x) = x^3 - 2x - 5$, $f'(x) = 3x^2 - 2$ olduğundan $p_n = p_{n-1} - \dfrac{p_{n-1}^3 - 2p_{n-1} - 5}{3p_{n-1}^2 - 2}$'dir.
+
+::: {.iteration-table}
+| $n$ | $p_{n-1}$ | $f(p_{n-1})$ | $f'(p_{n-1})$ | $p_n$ |
+|:-:|:-:|:-:|:-:|:-:|
+| $1$ | $2$ | $-1$ | $10$ | $2{,}1$ |
+| $2$ | $2{,}1$ | $0{,}061$ | $11{,}23$ | $2{,}0945681$ |
+| $3$ | $2{,}0945681$ | $0{,}0001857$ | $11{,}1616$ | $2{,}0945515$ |
+:::
+
+Üç adımda yedi basamak doğrudur: $p_3 = 2{,}0945515$ ve $|f(p_3)| \approx 1{,}7 \cdot 10^{-9}$. Aynı hassaslık için ikiye bölmeyle yirmiden fazla adım gerekirdi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Secant ve Regula Falsi {#sec-ozt-secant}
+
+İki yöntem de türev yerine kirişin eğimini kullanır. Secant metodunda kiriş son iki noktadan geçer (@def-sec-secant):
+$$p_n = p_{n-1} - \frac{f(p_{n-1})\,(p_{n-1} - p_{n-2})}{f(p_{n-1}) - f(p_{n-2})}.$$
+Regula Falsi'de aynı formülde $p_{n-2}$ yerine, $f$ değeri $f(p_{n-1})$ ile ters işaretli olan en son nokta $p_k$ yazılır (@def-sec-regula-falsi). Böylece kök hep son iki uç arasında kalır (@prp-sec-aralik), ama bir uç takılı kaldığı için yakınsama Secant'tan yavaştır.
+
+::: {.callout-tip title="Regula Falsi dört adımda"}
+1. $f(p_0) \cdot f(p_1) < 0$ olduğunu göster.
+2. Son nokta $p_{n-1}$ ile, $f$ değeri ona ters işaretli en son nokta $p_k$ arasındaki kirişten $p_n$'yi hesapla.
+3. $f(p_n)$'yi hesapla ve işaretini not et; bir sonraki adımın karşı ucu buna göre seçilir.
+4. Durma kriterini sına; sağlanmıyorsa 2. adıma dön.
+:::
+
+:::: {#exm-ozt-secant-rf name="Secant ve Regula Falsi ile Bir Kübiğin Kökü"}
+$x^3 - 2x - 5 = 0$ denkleminin köküne $p_0 = 2$ ve $p_1 = 3$ ile Secant ve Regula Falsi metotlarıyla $p_4$'e kadar yaklaşınız.
+
+::: {.cozum}
+$f(2) = -1$, $f(3) = 16$'dır. İki yöntem de $p_2$'yi aynı kirişten bulur:
+$$p_2 = 3 - \frac{16 \cdot (3 - 2)}{16 - (-1)} = 3 - \frac{16}{17} = 2{,}0588235, \qquad f(p_2) = -0{,}390800.$$
+$f(p_2) < 0$ olduğundan $p_2$ ile ters işaretli son nokta $p_1 = 3$'tür; bu yüzden $p_3$ de iki yöntemde aynıdır: $p_3 = 2{,}0812637$, $f(p_3) = -0{,}147204$. Ayrım bundan sonra başlar.
+
+- **Secant** son iki noktayı ($p_2$, $p_3$) kullanır: $p_4 = 2{,}0948241$, $|p_4 - p| \approx 2{,}7 \cdot 10^{-4}$.
+- **Regula Falsi** $f(p_3) < 0$ olduğundan yine $p_1 = 3$'ü kullanır: $p_4 = 2{,}0896392$, $|p_4 - p| \approx 4{,}9 \cdot 10^{-3}$.
+
+Secant bir sonraki adımda $p_5 = 2{,}0945494$ ile beş basamağa ulaşırken Regula Falsi soldan, tek taraflı ve yavaş ilerler ($p_5 = 2{,}0927396$).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lagrange İnterpolasyonu ve Hata Sınırı {#sec-ozt-lagrange}
+
+$n + 1$ farklı noktadan geçen, derecesi en çok $n$ olan tek polinom (@thm-lag-polinom)
+$$P(x) = \sum_{k=0}^{n} f(x_k)\,L_k(x), \qquad L_k(x) = \prod_{\substack{i=0 \\ i \ne k}}^{n} \frac{x - x_i}{x_k - x_i}$$
+dir. Her $L_k$ kendi düğümünde $1$, ötekilerde $0$'dır. Hata sınırı (@cor-lag-hata-siniri):
+$$|f(x) - P(x)| \le \frac{M}{(n+1)!}\,\big|(x - x_0)(x - x_1)\cdots(x - x_n)\big|, \qquad |f^{(n+1)}| \le M.$$
+
+::: {.callout-tip title="Dört adımda interpolasyon ve hata sınırı"}
+1. $L_k(x)$'leri istenen noktada sayı olarak hesapla; kontrol için $\sum_k L_k(x) = 1$ olmalı.
+2. $P(x) = \sum_k f(x_k) L_k(x)$'i bul.
+3. $f^{(n+1)}$'i çıkar ve düğümlerle $x$'i içeren aralıkta $M$ ile sınırla.
+4. Hata sınırını yaz.
+:::
+
+:::: {#exm-ozt-lagrange name="Karekök İçin İkinci Dereceden İnterpolasyon"}
+$f(x) = \sqrt{x}$ fonksiyonunun $x_0 = 4$, $x_1 = 9$, $x_2 = 16$ düğümlerindeki ikinci dereceden Lagrange polinomuyla $\sqrt{10}$ için bir yaklaşım bulunuz ve bir hata sınırı veriniz.
+
+::: {.cozum}
+$x = 10$ için katsayı polinomları
+$$
+\begin{aligned}
+L_0(10) &= \frac{(10 - 9)(10 - 16)}{(4 - 9)(4 - 16)} = -\frac{1}{10}, \\[1mm]
+L_1(10) &= \frac{(10 - 4)(10 - 16)}{(9 - 4)(9 - 16)} = \frac{36}{35}, \\[1mm]
+L_2(10) &= \frac{(10 - 4)(10 - 9)}{(16 - 4)(16 - 9)} = \frac{1}{14}
+\end{aligned}
+$$
+olur; toplamları $1$'dir. Buradan
+$$P(10) = 2 \cdot \left(-\frac{1}{10}\right) + 3 \cdot \frac{36}{35} + 4 \cdot \frac{1}{14} = \frac{111}{35} \approx 3{,}171429.$$
+
+$f'''(x) = \frac{3}{8}\,x^{-5/2}$ azalan olduğundan $[4, 16]$'da $M = f'''(4) = \frac{3}{8} \cdot \frac{1}{32} = \frac{3}{256}$'dır:
+$$|\sqrt{10} - P(10)| \le \frac{3/256}{3!}\,|(10 - 4)(10 - 9)(10 - 16)| = \frac{3}{256} \cdot \frac{36}{6} \approx 0{,}0703.$$
+Gerçek değer $\sqrt{10} = 3{,}162278$ olduğundan gerçek hata $0{,}00915$'tir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bölünmüş Farklar ve Newton Formülleri {#sec-ozt-bolunmus}
+
+Bölünmüş farklar (@def-bfk-bolunmus-fark) basamaklı bir tabloda hesaplanır: her sütundaki sayı, solundaki iki komşunun farkının, köşegenin uçlarındaki düğümlerin farkına bölümüdür. Newton biçimi (@thm-bfk-newton) tablonun **üst kenarındaki** sayıları kullanır:
+$$P_n(x) = f[x_0] + f[x_0, x_1](x - x_0) + f[x_0, x_1, x_2](x - x_0)(x - x_1) + \cdots$$
+
+Düğümler $h$ aralıklıysa $f[x_0, \dots, x_k] = \frac{\Delta^k f(x_0)}{k!\,h^k}$ olur (@prp-bfk-ileri-fark) ve $x = x_0 + s h$ ile
+
+| Formül | Kullanılan farklar | Ne zaman |
+|:-:|:-:|:-:|
+| İleri fark (@cor-bfk-ileri-fark): $f(x_0) + \sum_{k} \binom{s}{k} \Delta^k f(x_0)$ | Tablonun üst kenarı | $x$ tablonun başına yakın |
+| Geri fark (@thm-bfk-geri-fark): $f(x_n) + \sum_{k} (-1)^k \binom{-s}{k} \nabla^k f(x_n)$, $x = x_n + sh$ | Tablonun alt kenarı | $x$ tablonun sonuna yakın |
+
+::: {.callout-tip title="Newton biçimi dört adımda"}
+1. Düğümleri ve değerleri ilk iki sütuna, aralarına birer boş satır bırakarak yaz.
+2. Her sütunu bir öncekinden hesapla: $k$. fark için payda $x_{i+k} - x_i$'dir.
+3. Üst kenardaki katsayıların altını çiz.
+4. $P_n(x)$'i yaz; yeni bir nokta eklenirse tabloya bir satır eklemek yeterlidir.
+:::
+
+:::: {#exm-ozt-bolunmus name="Bölünmüş Fark Tablosundan Kübik Polinom"}
+$(-1, 0)$, $(0, 1)$, $(1, 2)$, $(2, 9)$ noktalarından geçen polinomu Newton bölünmüş fark formülüyle bulunuz ve ileri fark formülüyle $P(0{,}5)$'i hesaplayınız.
+
+::: {.cozum}
+::: {.difference-table .with-k}
+| $k$ | $x_k$ | $f[x_k]$ | $f[x_{k-1}, x_k]$ | $f[x_{k-2}, x_{k-1}, x_k]$ | $f[x_{k-3}, \dots, x_k]$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $0$ | $-1$ | $\underline{0}$ | | | |
+| | | | $\underline{1}$ | | |
+| $1$ | $0$ | $1$ | | $\underline{0}$ | |
+| | | | $1$ | | $\underline{1}$ |
+| $2$ | $1$ | $2$ | | $3$ | |
+| | | | $7$ | | |
+| $3$ | $2$ | $9$ | | | |
+:::
+
+Altı çizili katsayılarla
+$$P_3(x) = 0 + 1 \cdot (x + 1) + 0 \cdot (x + 1)x + 1 \cdot (x + 1)x(x - 1) = x^3 + 1.$$
+
+Düğümler $h = 1$ aralıklıdır; ileri farklar $\Delta f(x_0) = 1$, $\Delta^2 f(x_0) = 0$, $\Delta^3 f(x_0) = 6$'dır ($= 3! \cdot 1^3 \cdot 1$). $x = 0{,}5 = -1 + s \cdot 1$ için $s = 1{,}5$ ve
+$$P(0{,}5) = 0 + 1{,}5 \cdot 1 + \binom{1{,}5}{2} \cdot 0 + \binom{1{,}5}{3} \cdot 6 = 1{,}5 + \frac{1{,}5 \cdot 0{,}5 \cdot (-0{,}5)}{6} \cdot 6 = 1{,}125$$
+olur; gerçekten $0{,}5^3 + 1 = 1{,}125$'tir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Nümerik Türev {#sec-ozt-turev}
+
+Türev formülleri, $f$'nin birkaç noktadaki değerlerinden türevi yaklaşık verir. Hata terimindeki türev, kullanılan noktaları içeren aralıkta $M$ ile sınırlanır.
+
+::: {.formula-table}
+| Formül | Yaklaşım | Hata terimi |
+|:------:|:--------:|:----:|
+| $f'(x_0)$: ileri ($h > 0$), geri ($h < 0$) fark | $\dfrac{f(x_0 + h) - f(x_0)}{h}$ | $-\dfrac{h}{2} f''(\xi)$ |
+| $f'(x_0)$: üç-nokta orta nokta | $\dfrac{f(x_0 + h) - f(x_0 - h)}{2h}$ | $-\dfrac{h^2}{6} f'''(\xi)$ |
+| $f'(x_0)$: üç-nokta uç nokta, $x_k = x_0 + kh$ | $\dfrac{-3f(x_0) + 4f(x_1) - f(x_2)}{2h}$ | $\dfrac{h^2}{3} f'''(\xi)$ |
+| $f''(x_0)$: orta nokta | $\dfrac{f(x_0 - h) - 2f(x_0) + f(x_0 + h)}{h^2}$ | $-\dfrac{h^2}{12} f^{(4)}(\xi)$ |
+:::
+
+Ayrıntılar: @prp-ntr-iki-nokta, @cor-ntr-x0-merkezli, @prp-ntr-uc-nokta ve @prp-ntr-ikinci-turev. Tablonun sonundaki türev için uç nokta formülü $h < 0$ ile, yani soldaki değerlerle kullanılır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Orta nokta formülünde payda $2h$'dir, $h$ değil.
+- $h$'yi çok küçültmek hesapta yuvarlama hatasını büyütür; hata terimi yalnız kesme hatasını ölçer.
+:::
+
+:::: {#exm-ozt-turev name="Kosinüsün Türevi İçin Üç Formül"}
+$f(x) = \cos x$ ve $h = 0{,}1$ için ileri fark ve üç-nokta orta nokta formülleriyle $f'(1)$'e, ikinci türev formülüyle $f''(1)$'e yaklaşınız ve hata sınırlarını veriniz.
+
+::: {.cozum}
+$\cos 0{,}9 = 0{,}6216100$, $\cos 1 = 0{,}5403023$, $\cos 1{,}1 = 0{,}4535961$'dir.
+
+- **İleri fark:**
+  $$f'(1) \approx \frac{0{,}4535961 - 0{,}5403023}{0{,}1} = -0{,}867062.$$
+  $[1;\ 1{,}1]$'de $|f''| = |\cos| \le \cos 1$ olduğundan hata en çok $\frac{0{,}1}{2} \cdot 0{,}5403 = 0{,}0270$'tir.
+- **Orta nokta:**
+  $$f'(1) \approx \frac{0{,}4535961 - 0{,}6216100}{0{,}2} = -0{,}840069.$$
+  $[0{,}9;\ 1{,}1]$'de $|f'''| = |\sin| \le \sin 1{,}1 = 0{,}8912$ olduğundan hata en çok $\frac{0{,}01}{6} \cdot 0{,}8912 = 0{,}00149$'dur.
+- **İkinci türev:**
+  $$f''(1) \approx \frac{0{,}6216100 - 2 \cdot 0{,}5403023 + 0{,}4535961}{0{,}01} = -0{,}539852.$$
+  $|f^{(4)}| = |\cos| \le \cos 0{,}9$ olduğundan hata en çok $\frac{0{,}01}{12} \cdot 0{,}6216 = 0{,}00052$'dir.
+
+Gerçek değerler $f'(1) = -\sin 1 = -0{,}841471$ ve $f''(1) = -\cos 1 = -0{,}540302$'dir; gerçek hatalar sırasıyla $0{,}0256$, $0{,}0014$ ve $0{,}00045$ olup sınırların altındadır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Nümerik İntegral {#sec-ozt-integral}
+
+Kapalı Newton-Cotes formülleri aralığın uçlarını kullanır, açık formüller kullanmaz (@cor-nin-kapali-formuller, @cor-nin-acik-formuller). Kapalı formüllerde $h = \frac{b - a}{n}$, açık formüllerde $h = \frac{b - a}{n + 2}$'dir.
+
+::: {.formula-table}
+| Kural | Formül | Hata terimi | Tam olduğu derece |
+|:-----:|:----------:|:----:|:---:|
+| Yamuk ($n = 1$) | $\dfrac{h}{2}\big[f(x_0) + f(x_1)\big]$ | $-\dfrac{h^3}{12} f''(\xi)$ | $1$ |
+| Simpson ($n = 2$) | $\dfrac{h}{3}\big[f(x_0) + 4f(x_1) + f(x_2)\big]$ | $-\dfrac{h^5}{90} f^{(4)}(\xi)$ | $3$ |
+| Simpson 3/8 ($n = 3$) | $\dfrac{3h}{8}\big[f(x_0) + 3f(x_1) + 3f(x_2) + f(x_3)\big]$ | $-\dfrac{3h^5}{80} f^{(4)}(\xi)$ | $3$ |
+| Orta nokta (açık, $n = 0$) | $2h\, f(x_0)$ | $\dfrac{h^3}{3} f''(\xi)$ | $1$ |
+| Açık, $n = 1$ | $\dfrac{3h}{2}\big[f(x_0) + f(x_1)\big]$ | $\dfrac{3h^3}{4} f''(\xi)$ | $1$ |
+| Açık, $n = 2$ | $\dfrac{4h}{3}\big[2f(x_0) - f(x_1) + 2f(x_2)\big]$ | $\dfrac{14h^5}{45} f^{(4)}(\xi)$ | $3$ |
+:::
+
+**Tam olduğu derece:** hata terimindeki türev bu dereceye kadar olan polinomlarda sıfırdır, yani formül onlarda gerçek değeri verir.
+
+::: {.callout-tip title="Dört adımda integral ve hata sınırı"}
+1. Kuralı seç ve $h$'yi bul: kapalıda $\frac{b - a}{n}$, açıkta $\frac{b - a}{n + 2}$.
+2. Düğümleri yaz: kapalıda $x_0 = a, \dots, x_n = b$; açıkta $x_0 = a + h, \dots, x_n = b - h$.
+3. Formülü uygula.
+4. Hata terimindeki türevi $[a, b]$ üzerinde $M$ ile sınırla ve $|E| \le (\text{katsayı}) \cdot M$ yaz.
+:::
+
+:::: {#exm-ozt-integral name="Bir Kök Fonksiyonunun İntegraline Dört Kuralla Yaklaşım"}
+$\displaystyle\int_0^1 \sqrt{1 + x}\,dx$ integraline Yamuk, Simpson, Simpson 3/8 ve Orta Nokta kurallarıyla yaklaşınız. Yamuk ve Simpson kuralları için hata sınırı veriniz.
+
+::: {.cozum}
+Gerçek değer $\frac{2}{3}\big(2\sqrt{2} - 1\big) = 1{,}2189514$'tür.
+
+Gereken değerler $f(0) = 1$, $f(\tfrac{1}{3}) = 1{,}1547005$, $f(\tfrac{1}{2}) = 1{,}2247449$, $f(\tfrac{2}{3}) = 1{,}2909944$ ve $f(1) = 1{,}4142136$'dır. Yamukta $h = 1$, Simpson'da ve orta noktada $h = \frac{1}{2}$, Simpson 3/8'de $h = \frac{1}{3}$'tür:
+$$
+\begin{aligned}
+\text{Yamuk:}\quad & \tfrac{1}{2}\big[1 + 1{,}4142136\big] = 1{,}2071068, \\[1mm]
+\text{Simpson:}\quad & \tfrac{1}{6}\big[1 + 4 \cdot 1{,}2247449 + 1{,}4142136\big] = 1{,}2188655, \\[1mm]
+\text{Simpson 3/8:}\quad & \tfrac{1}{8}\big[1 + 3 \cdot 1{,}1547005 + 3 \cdot 1{,}2909944 \\[1mm]
+& \quad + 1{,}4142136\big] = 1{,}2189123, \\[1mm]
+\text{Orta nokta:}\quad & 1 \cdot f(\tfrac{1}{2}) = 1{,}2247449.
+\end{aligned}
+$$
+
+::: {.iteration-table}
+| Kural | Yaklaşım | Gerçek hata |
+|:-:|:-:|:-:|
+| Yamuk | $1{,}2071068$ | $0{,}0118446$ |
+| Simpson | $1{,}2188655$ | $0{,}0000859$ |
+| Simpson 3/8 | $1{,}2189123$ | $0{,}0000391$ |
+| Orta nokta | $1{,}2247449$ | $0{,}0057935$ |
+:::
+
+**Hata sınırları.** $f''(x) = -\frac{1}{4}(1 + x)^{-3/2}$ ve $f^{(4)}(x) = -\frac{15}{16}(1 + x)^{-7/2}$'dir; mutlak değerleri $[0, 1]$'de $x = 0$'da en büyüktür:
+$$|E_{\text{Yamuk}}| \le \frac{1^3}{12} \cdot \frac{1}{4} = 0{,}0208, \qquad |E_{\text{Simpson}}| \le \frac{(1/2)^5}{90} \cdot \frac{15}{16} \approx 0{,}000326.$$
+Gerçek hatalar bu sınırların altındadır. Orta nokta kuralı tek bir fonksiyon değeriyle yamuk kuralından daha iyi sonuç verir; Simpson kuralı ise yalnız üç değerle hatayı $10^{-4}$'ün altına indirir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## En Küçük Kareler Doğrusu {#sec-ozt-ekk}
+
+$(x_1, y_1), \dots, (x_n, y_n)$ verisine uydurulan $\hat{y} = ax + b$ doğrusu, $E = \sum_{i=1}^{n} (y_i - ax_i - b)^2$ toplamını minimum yapar (@def-ekk-en-kucuk-kareler). $a$ ve $b$ normal denklemlerden (@def-ekk-normal-denklemler) bulunur; matris biçimi
+$$
+\begin{bmatrix}
+\sum x_i^2 & \sum x_i \\[1mm]
+\sum x_i & n
+\end{bmatrix}
+\begin{bmatrix} a \\ b \end{bmatrix}
+=
+\begin{bmatrix}
+\sum x_i y_i \\[1mm]
+\sum y_i
+\end{bmatrix}
+$$
+ve çözümü
+$$a = \frac{n\sum x_i y_i - \sum x_i \sum y_i}{n\sum x_i^2 - \left(\sum x_i\right)^2}, \qquad b = \frac{\sum y_i - a\sum x_i}{n}$$
+dir.
+
+::: {.callout-tip title="Regresyon doğrusu dört adımda"}
+1. $x_i$, $y_i$, $x_i^2$, $x_i y_i$ sütunlu bir tablo kur ve sütun toplamlarını al.
+2. Normal denklemleri ya da matris biçimini yaz.
+3. $a$ ve $b$'yi çöz.
+4. İstenirse $\hat{y}_i$'leri, artıkları $q_i = y_i - \hat{y}_i$ ve $E = \sum q_i^2$'yi hesapla; kontrol için $\sum q_i = 0$ olmalıdır.
+:::
+
+:::: {#exm-ozt-ekk name="Beş Noktaya Doğru Uydurma"}
+$(1, 2)$, $(2, 3)$, $(3, 5)$, $(4, 4)$, $(5, 6)$ noktalarına en küçük kareler yöntemiyle bir doğru uydurunuz ve $E$'yi hesaplayınız.
+
+::: {.cozum}
+::: {.iteration-table}
+| $x_i$ | $y_i$ | $x_i^2$ | $x_i y_i$ |
+|:-:|:-:|:-:|:-:|
+| $1$ | $2$ | $1$ | $2$ |
+| $2$ | $3$ | $4$ | $6$ |
+| $3$ | $5$ | $9$ | $15$ |
+| $4$ | $4$ | $16$ | $16$ |
+| $5$ | $6$ | $25$ | $30$ |
+| $\Sigma = 15$ | $\Sigma = 20$ | $\Sigma = 55$ | $\Sigma = 69$ |
+:::
+
+Normal denklemler $55a + 15b = 69$ ve $15a + 5b = 20$'dir. Buradan
+$$a = \frac{5 \cdot 69 - 15 \cdot 20}{5 \cdot 55 - 15^2} = \frac{45}{50} = 0{,}9, \qquad b = \frac{20 - 0{,}9 \cdot 15}{5} = 1{,}3$$
+ve regresyon doğrusu $\hat{y} = 0{,}9x + 1{,}3$'tür. Tahmini değerler $2{,}2;\ 3{,}1;\ 4;\ 4{,}9;\ 5{,}8$, artıklar $-0{,}2;\ -0{,}1;\ 1;\ -0{,}9;\ 0{,}2$ olup toplamları $0$'dır ve
+$$E = 0{,}04 + 0{,}01 + 1 + 0{,}81 + 0{,}04 = 1{,}9.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::

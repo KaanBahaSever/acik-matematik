@@ -30,7 +30,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Lineer Programlama](https://acik-matematik.com/dersler/lineer-programlama/) — 15 bölüm, 147 örnek ve alıştırma
 - [Matematiksel İstatistik](https://acik-matematik.com/dersler/matematiksel-istatistik/) — 18 bölüm, 263 örnek ve alıştırma
 - [Matematiğin Temelleri ve Mantık](https://acik-matematik.com/dersler/matematigin-temelleri/) — 19 bölüm, 106 örnek ve alıştırma
-- [Nümerik Analiz](https://acik-matematik.com/dersler/numerik-analiz/) — 12 bölüm, 113 örnek ve alıştırma
+- [Nümerik Analiz](https://acik-matematik.com/dersler/numerik-analiz/) — 13 bölüm, 126 örnek ve alıştırma
 - [Olasılık Teorisi](https://acik-matematik.com/dersler/olasilik-teorisi/) — 23 bölüm, 154 örnek ve alıştırma
 - [Raslantı Süreçleri](https://acik-matematik.com/dersler/raslanti-surecleri/) — 15 bölüm, 37 örnek ve alıştırma
 - [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 15 bölüm, 180 örnek ve alıştırma
@@ -60,16 +60,16 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **511** |
+| 📖 Konu/Bölüm | **512** |
 | 📐 Teorem | **1.206** |
 | 🔹 Lemma | **129** |
 | 📝 Tanım | **1.485** |
 | ✅ İspat | **2.123** |
-| 🧮 Örnek ve alıştırma | **4.684** |
-| 💡 Çözüm | **4.411** |
+| 🧮 Örnek ve alıştırma | **4.697** |
+| 💡 Çözüm | **4.424** |
 | 📊 Şekil | **1.423** |
-| ✍️ Kelime | **2.109.957** |
-| 🔤 Karakter | **14.857.918** |
+| ✍️ Kelime | **2.114.439** |
+| 🔤 Karakter | **14.887.855** |
 | 💾 Kaynak metin | **33,7 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
