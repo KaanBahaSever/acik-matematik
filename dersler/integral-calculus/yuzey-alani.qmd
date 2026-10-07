@@ -8,6 +8,26 @@ Bir eğrinin uzunluğunu bulmak için eğriyi küçük parçalara bölmüş, her
 
 Eğrideki fikir yüzeye olduğu gibi taşınamaz. Bir yüzeye içten çizilen üçgenlerden oluşan çokyüzlülerin alanları, üçgenler küçülse bile yüzeyin alanına yaklaşmak zorunda değildir: ince ve yüzeye neredeyse dik duran üçgenlerle alan istenildiği kadar büyütülebilir (Schwarz feneri). Bu yüzden yüzeyi küçük parçalarda kirişlerle değil, **teğet düzlemlerle** değiştireceğiz. Teğet düzlem yüzeyin o noktadaki eğimini tam olarak taşır; sonuçta yay uzunluğu formülünün iki boyutlu kardeşi olan bir iki katlı integral elde edeceğiz.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, norm, cross, sceneLayout, graph, graphPolar, path, point, points, quad, arrow, legendItem, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Yüzey Alanının Tanımı
 
 Önce yüzeyi küçük parçalara bölüp her parçayı bir teğet düzlem parçasıyla değiştirelim; yüzey alanını bu yaklaşımların limiti olarak tanımlayacağız.
@@ -246,6 +266,115 @@ Yani yüzeyi, her biri yüzeye tek bir noktada teğet olan küçük ve düz "pul
 </figure>
 ```
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: teğet parçalar yüzeyi kaplar.** Sahneyi sürükleyerek döndürebilirsiniz. Yarı saydam mavi yüzey $z = x^2 + y^2$ paraboloidinin $D = [0, 1] \times [0, 1]$ karesinin üstündeki parçasıdır. Turuncu parçalar tanımdaki $\Delta T_{ij}$ teğet paralelkenarlarıdır ve her biri yüzeye tek bir noktada değer. $m$ ve $n$ kaydırıcılarıyla ızgarayı sıklaştırın; değer satırı parçaların alanları toplamını yüzeyin alanıyla karşılaştırır. Değme noktası tanımdaki gibi sol alt köşe $(x_i, y_j)$ iken $m = n = 1$ için tek parça yataydır ve alanı gölgeninki kadar, yani $1$'dir. $m = n = 2$, $4$, $8$ ve $16$ için toplam $1{,}3901$, $1{,}6148$, $1{,}7356$ ve $1{,}7980$ olur ve alttan $1{,}8616$'ya yaklaşır. Değme noktasını karelerin merkezine taşıyınca $m = n = 2$ için @exr-yal-orta-nokta içindeki orta nokta tahmini $1{,}8279$ çıkar, $m = n = 8$ için toplam $1{,}8595$ olur. Parçalar birbirine eklenmez: aralarında basamaklar kalır. Tanım parçaları birleştirmeye çalışmaz, yalnız alanlarını toplar.
+
+```{ojs}
+//| echo: false
+viewof yalPatchControls = Inputs.form({
+  m: Inputs.range([1, 20], { value: 2, step: 1, label: "m" }),
+  n: Inputs.range([1, 20], { value: 2, step: 1, label: "n" }),
+  rule: Inputs.radio(["lower-left", "midpoint"], { value: "lower-left", label: "değme noktası", format: (key) => (key === "lower-left" ? "sol alt köşe" : "merkez") })
+})
+```
+
+```{ojs}
+//| echo: false
+yalPatchPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: z = x^2 + y^2 yuzeyinin [0, 1] x [0, 1] karesi ustundeki parcasi ve m x n izgaranin her hucresi ustunde yuzeye tek noktada teget olan paralelkenar parcalar; parcalarin alanlari toplami izgara siklastikca yuzeyin alanina, yaklasik 1,8616 degerine yaklasir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { m, n, rule } = yalPatchControls;
+  const f = (x, y) => x * x + y * y;
+  // Area of the piece over [0, 1] x [0, 1], computed numerically; the chapter quotes 1,8616.
+  const exact = 1.8615641807530909;
+  const [s, t] = rule === "lower-left" ? [0, 0] : [0.5, 0.5];
+  const dx = 1 / m;
+  const dy = 1 / n;
+  // The faces are shrunk a little toward their centres so the outlines drawn on top stay visible.
+  const inset = 0.01;
+  const mx = [];
+  const my = [];
+  const mz = [];
+  const I = [];
+  const J = [];
+  const K = [];
+  const ex = [];
+  const ey = [];
+  const ez = [];
+  const touch = [];
+  let total = 0;
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      const x0 = i * dx;
+      const y0 = j * dy;
+      // P_ij lies above the chosen point of R_ij; the patch is its tangent plane, cut above R_ij.
+      const xs = x0 + s * dx;
+      const ys = y0 + t * dy;
+      const p = 2 * xs;
+      const q = 2 * ys;
+      const plane = (x, y) => f(xs, ys) + p * (x - xs) + q * (y - ys);
+      const corners = [[x0, y0], [x0 + dx, y0], [x0 + dx, y0 + dy], [x0, y0 + dy]];
+      const cx = x0 + dx / 2;
+      const cy = y0 + dy / 2;
+      const start = mx.length;
+      for (const [x, y] of corners) {
+        const u = cx + (x - cx) * (1 - inset);
+        const v = cy + (y - cy) * (1 - inset);
+        mx.push(u);
+        my.push(v);
+        mz.push(plane(u, v));
+      }
+      I.push(start, start);
+      J.push(start + 1, start + 2);
+      K.push(start + 2, start + 3);
+      for (const [x, y] of [...corners, corners[0]]) {
+        ex.push(x);
+        ey.push(y);
+        ez.push(plane(x, y));
+      }
+      ex.push(null);
+      ey.push(null);
+      ez.push(null);
+      touch.push([xs, ys, f(xs, ys)]);
+      // Delta T_ij: the area of the parallelogram spanned by a = (dx, 0, p dx) and b = (0, dy, q dy).
+      total += norm(cross([dx, 0, p * dx], [0, dy, q * dy]));
+    }
+  }
+  // The grid on D.
+  const gx = [];
+  const gy = [];
+  const gz = [];
+  for (let i = 0; i <= m; i++) {
+    gx.push(i * dx, i * dx, null);
+    gy.push(0, 1, null);
+    gz.push(0, 0, null);
+  }
+  for (let j = 0; j <= n; j++) {
+    gx.push(0, 1, null);
+    gy.push(j * dy, j * dy, null);
+    gz.push(0, 0, null);
+  }
+  const traces = [
+    { type: "scatter3d", mode: "lines", x: gx, y: gy, z: gz, line: { color: theme.base, width: 2 }, showlegend: false, hoverinfo: "skip" },
+    { type: "mesh3d", x: mx, y: my, z: mz, i: I, j: J, k: K, color: theme.practice, opacity: 1, flatshading: true, lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05 }, hoverinfo: "skip", showlegend: false },
+    { type: "scatter3d", mode: "lines", x: ex, y: ey, z: ez, line: { color: withAlpha(theme.text, 0.6), width: 2 }, showlegend: false, hoverinfo: "skip" },
+    graph(f, 0, 1, 0, 1, theme.theory, { opacity: 0.3 }),
+    legendItem("z = x² + y²", theme.theory),
+    legendItem("teğet parçalar", theme.practice),
+    points(touch, theme.text, "değme noktaları", { size: m * n > 100 ? 2 : 3 })
+  ];
+  render(Plotly, yalPatchPlot, traces, sceneLayout(theme, { x: [0, 1], y: [0, 1], z: [-0.5, 2], eye: { x: -1.5, y: -1.65, z: 1.2 } }));
+  const where = rule === "lower-left" ? "sol alt köşe" : "merkez";
+  return html`<div class="scene3d-readout">m = ${m}, n = ${n} &nbsp;·&nbsp; ${m * n} parça &nbsp;·&nbsp; ΔA = ${fmtTrim(dx * dy)} &nbsp;·&nbsp; değme noktası: ${where}<br>parçaların alanları toplamı = ${fmt(total, 4)} &nbsp;·&nbsp; yüzeyin alanı ≈ ${fmt(exact, 4)} &nbsp;·&nbsp; fark = ${fmt(total - exact, 4)}</div>`;
+}
+```
+:::
+::::
+
 ## Yüzey Alanı Formülü
 
 Tanımdaki her $\Delta T_{ij}$ bir paralelkenarın alanıdır ve vektörel çarpımla hesaplanır. Bu hesap, toplamı bir Riemann toplamına, limiti de bir iki katlı integrale dönüştürür.
@@ -413,6 +542,79 @@ biçiminde de yazılabilir. Yani her $\Delta A$ alan parçası, teğet düzleme 
 <figcaption>Teğet düzlemi en dik doğrultusu boyunca kesen düşey düzlem. Düzlem <em>xy</em>-düzlemiyle <em>&#947;</em> açısı yapar; bu, <b>n</b> normali ile <b>k</b> arasındaki açıdır. Bu doğrultudaki <em>&#8467;</em> uzunluğundaki bir gölge düzlemde <em>&#8467;</em>/cos <em>&#947;</em> uzunluğuna karşılık gelir; buna dik (yatay) doğrultudaki uzunluklar değişmez.</figcaption>
 </figure>
 ```
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: eğim çarpanı.** Sahneyi sürükleyerek döndürebilirsiniz. Yarı saydam mavi yüzey @exm-yal-paraboloit içindeki $z = x^2 + y^2$ paraboloidi, tabandaki kare de kenarı $0{,}6$ ve alanı $\Delta A = 0{,}36$ olan, iki kenarı orijinden dışarı doğru uzanan bir karedir. Turuncu parça, teğet düzlemin bu karenin tam üstünde kalan parçasıdır; $\mathbf{n}$ birim normal, $\mathbf{k}$ düşey birim vektördür. $r$ ve $\theta$ kaydırıcıları karenin merkezini kutupsal koordinatlarla taşır. Burada $f_x = 2x$ ve $f_y = 2y$ olduğundan $f_x^2 + f_y^2 = 4r^2$'dir; değer satırı $\sec\gamma = \sqrt{1 + 4r^2}$ çarpanını ve teğet parçanın alanı $\sec\gamma \cdot \Delta A$'yı gösterir. Teğet düzlem yalnız orijinden dışarı doğru eğiktir: karenin bu doğrultudaki kenarı $\sec\gamma$ katına uzar, ona dik olan yatay kenarı değişmez. Tepede ($r = 0$) çarpan $1$'dir. $r = 0{,}5$ için $\gamma = 45^\circ$ ve çarpan $\sqrt{2} \approx 1{,}41$ olur; örnekteki parçanın kenarı olan $r = 3$ çemberinde çarpan $\sqrt{37} \approx 6{,}08$'e çıkar. Çarpanın $D$ dairesi üzerindeki ortalaması $117{,}32 / 28{,}27 \approx 4{,}15$'tir: paraboloit parçası, gölgesinin dört katından biraz büyüktür.
+
+```{ojs}
+//| echo: false
+viewof yalSlopeControls = Inputs.form({
+  r: Inputs.range([0, 3], { value: 1, step: 0.1, label: "r" }),
+  theta: Inputs.range([0, 345], { value: 225, step: 15, label: "θ (°)" })
+})
+```
+
+```{ojs}
+//| echo: false
+yalSlopePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: z = x^2 + y^2 paraboloidi, xy-duzleminde kenari 0,6 olan bir kare ve teget duzlemin bu karenin ustundeki parcasi; parcanin alani karenin sec(gamma) = sqrt(1 + 4r^2) katidir ve gamma, birim normal n ile k arasindaki acidir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const r = Math.round(yalSlopeControls.r * 10) / 10;
+  const theta = yalSlopeControls.theta;
+  const f = (x, y) => x * x + y * y;
+  const angle = (theta * Math.PI) / 180;
+  const radial = [Math.cos(angle), Math.sin(angle)];
+  const across = [-Math.sin(angle), Math.cos(angle)];
+  const x0 = r * radial[0];
+  const y0 = r * radial[1];
+  const z0 = f(x0, y0);
+  const p = 2 * x0;
+  const q = 2 * y0;
+  const plane = (x, y) => z0 + p * (x - x0) + q * (y - y0);
+  // A square of side 0.6 centred below P, one pair of sides along the radial (steepest) direction.
+  const side = 0.6;
+  const half = side / 2;
+  const square = [[-half, -half], [half, -half], [half, half], [-half, half]].map(([a, b]) => [x0 + a * radial[0] + b * across[0], y0 + a * radial[1] + b * across[1]]);
+  const floor = square.map(([x, y]) => [x, y, 0]);
+  const lifted = square.map(([x, y]) => [x, y, plane(x, y)]);
+  const sec = Math.sqrt(1 + p * p + q * q);
+  const gamma = (Math.acos(1 / sec) * 180) / Math.PI;
+  const unitNormal = [-p / sec, -q / sec, 1 / sec];
+  // A polyline through the given points; null breaks the line.
+  const lines = (list, color, width, name, dash = "solid") => ({
+    type: "scatter3d",
+    mode: "lines",
+    x: list.map((P) => (P ? P[0] : null)),
+    y: list.map((P) => (P ? P[1] : null)),
+    z: list.map((P) => (P ? P[2] : null)),
+    line: { color, width, dash },
+    name,
+    showlegend: Boolean(name),
+    hoverinfo: "skip"
+  });
+  const traces = [
+    graphPolar(f, 0, 2 * Math.PI, 0, 3, theme.theory, { opacity: 0.2 }),
+    path((u) => [3 * Math.cos(u), 3 * Math.sin(u), 0], 0, 2 * Math.PI, theme.base, undefined, { width: 3, samples: 96 }),
+    quad(...floor, theme.base, { opacity: 0.5 }),
+    lines([...floor, floor[0]], theme.base, 4, "ΔA: tabandaki kare"),
+    quad(...lifted, theme.practice, { opacity: 0.75 }),
+    lines([...lifted, lifted[0]], theme.practice, 5, "teğet parça"),
+    lines(floor.flatMap((P, k) => [P, lifted[k], null]), withAlpha(theme.text, 0.5), 2, undefined, "dash"),
+    ...arrow([x0, y0, z0], [0, 0, 1], theme.remark, "k"),
+    ...arrow([x0, y0, z0], unitNormal, theme.theory, "n"),
+    point([x0, y0, z0], theme.practice, undefined, { size: 5 }),
+    legendItem("z = x² + y²", theme.theory)
+  ];
+  render(Plotly, yalSlopePlot, traces, sceneLayout(theme, { x: [-3.6, 3.6], y: [-3.6, 3.6], z: [-0.2, 11], eye: { x: 1.45, y: 1.25, z: 1.25 } }));
+  return html`<div class="scene3d-readout">r = ${fmtTrim(r)} &nbsp;·&nbsp; θ = ${theta}° &nbsp;·&nbsp; x = ${fmt(x0, 2)} &nbsp;·&nbsp; y = ${fmt(y0, 2)} &nbsp;·&nbsp; z = ${fmt(z0, 2)}<br>f<sub>x</sub> = 2x = ${fmt(p, 2)} &nbsp;·&nbsp; f<sub>y</sub> = 2y = ${fmt(q, 2)} &nbsp;·&nbsp; sec γ = √(1 + 4r²) = ${fmt(sec, 4)} &nbsp;·&nbsp; γ = ${fmt(gamma, 2)}°<br>ΔA = 0,36 &nbsp;·&nbsp; teğet parçanın alanı = sec γ · ΔA = ${fmt(sec * side * side, 4)} &nbsp;·&nbsp; eğik kenar 0,6 → ${fmt(side * sec, 4)} &nbsp;·&nbsp; yatay kenar 0,6 → 0,6</div>`;
+}
+```
+:::
+::::
 
 Bu yorumdan üç sonuç çıkar:
 

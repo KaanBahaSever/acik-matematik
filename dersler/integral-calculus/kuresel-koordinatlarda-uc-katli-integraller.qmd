@@ -14,6 +14,26 @@ biçimini alır ve hesaplaması çoğu zaman çok zahmetlidir.
 
 Ortak merkezi orijine koyalım ve bir noktayı orijine uzaklığı ile iki açıyla belirtelim. Bu durumda birim top, "uzaklığı 0 ile 1 arasında olan, açıları serbest" noktaların kümesi olur ve integralin bütün sınırları sabitlere iner. Bu fikir **küresel koordinatlara** götürür. Önce koordinat sistemini ve dik koordinatlarla bağlantısını kuracağız. Sonra küçük bir küresel parçanın hacmini tam olarak hesaplayıp üç katlı integralin küresel koordinatlardaki biçimini ispatlayacağız.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, sceneLayout, surface, path, point, label, segment, legendItem, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Küresel Koordinatlar
 
 Uzaydaki bir noktanın yerini, orijine uzaklığı ile iki açı tek başına belirler.
@@ -587,6 +607,92 @@ olur ve kosinüs $[0, \pi]$ aralığında birebir olduğundan $\phi = c$'dir. Or
 ::::
 
 Yani küreler, $z$ ekseninden geçen yarı düzlemler ve ekseni $z$ ekseni olan koniler küresel koordinatlarda tek bir koordinatın sabit olmasıyla yazılır. Sınırları bunlardan oluşan cisimlerin tarifi bu yüzden çok kısalır. Örneğin $z = \sqrt{x^2 + y^2}$ konisi $\cot c = 1$, yani $\phi = \pi/4$ yüzeyidir.
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: bir noktanın küresel koordinatları ve sabit koordinat yüzeyleri.** Sahneyi sürükleyerek döndürebilirsiniz. $\rho$, $\theta$ ve $\phi$ kaydırıcıları $P$ noktasını taşır; açılar $15^\circ$ adımlarla derece cinsinden seçilir, değer satırı radyan karşılıklarını da yazar. Turuncu $OP$ doğru parçasının uzunluğu $\rho$'dur. $\phi$ açısı pozitif $z$ ekseninden $OP$'ye, $\theta$ açısı pozitif $x$ ekseninden $OP'$ izdüşümüne doğru ölçülür. Değer satırı, (1) formüllerinin verdiği dik koordinatları gösterir. Başlangıçtaki $\rho = 2$, $\theta = 45^\circ$, $\phi = 60^\circ$ seçimi, küresel koordinatlardan dik koordinatlara geçtiğimiz örneğin noktasıdır (@exm-kur-kuresten-dike): $x = y = \sqrt{3/2} \approx 1{,}2247$ ve $z = 1$ çıkar. $\rho = 4$, $\theta = 90^\circ$, $\phi = 120^\circ$ seçilirse ters yöndeki örneğin $(0, 2\sqrt{3}, -2)$ noktası, yani $x = 0$, $y \approx 3{,}4641$, $z = -2$ gelir (@exm-kur-dikten-kurese). Yüzey kutucukları $P$'den geçen üç sabit koordinat yüzeyini açıp kapatır: küre ($\rho$ sabit), yarı düzlem ($\theta$ sabit) ve yarı koni ($\phi$ sabit). $P$, bu üç yüzeyin ortak noktasıdır. $\phi = 90^\circ$ iken koni $xy$-düzlemine açılır, $90^\circ$'yi geçince aşağı döner.
+
+```{ojs}
+//| echo: false
+viewof kurCoordControls = Inputs.form({
+  rho: Inputs.range([0.5, 4], { value: 2, step: 0.25, label: "ρ" }),
+  theta: Inputs.range([0, 360], { value: 45, step: 15, label: "θ (°)" }),
+  phi: Inputs.range([0, 180], { value: 60, step: 15, label: "φ (°)" }),
+  shown: Inputs.checkbox(["sphere", "plane", "cone"], { value: ["sphere", "plane", "cone"], label: "yüzeyler", format: (key) => ({ sphere: "küre", plane: "yarı düzlem", cone: "yarı koni" })[key] })
+})
+```
+
+```{ojs}
+//| echo: false
+kurCoordPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: kuresel koordinatlari (rho, theta, phi) olan P noktasi, uzunlugu rho olan OP dogru parcasi, z ekseninden olculen phi acisi, x ekseninden olculen theta acisi, xy-duzlemindeki P' izdusumu ve P noktasindan gecen kure, yari duzlem ve yari koni"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { rho, theta, phi, shown } = kurCoordControls;
+  const t = (theta * Math.PI) / 180;
+  const p = (phi * Math.PI) / 180;
+  // spherical -> Cartesian, formula (1) of the chapter
+  const at = (r, th, ph) => [r * Math.sin(ph) * Math.cos(th), r * Math.sin(ph) * Math.sin(th), r * Math.cos(ph)];
+  const L = 4; // half-width of the box and the largest rho
+  const O = [0, 0, 0];
+  const P = at(rho, t, p);
+  const foot = [P[0], P[1], 0];
+  const guide = withAlpha(theme.text, 0.6);
+  const axis = withAlpha(theme.text, 0.35);
+  const traces = [
+    segment([-L, 0, 0], [L, 0, 0], axis, { dash: "solid", width: 2 }),
+    segment([0, -L, 0], [0, L, 0], axis, { dash: "solid", width: 2 }),
+    segment([0, 0, -L], [0, 0, L], axis, { dash: "solid", width: 2 })
+  ];
+  if (shown.includes("sphere")) {
+    traces.push(surface((th, ph) => at(rho, th, ph), 0, 2 * Math.PI, 0, Math.PI, theme.theory, { opacity: 0.16, nu: 40, nv: 24 }));
+    traces.push(legendItem("küre: ρ sabit", theme.theory));
+  }
+  if (shown.includes("plane")) {
+    traces.push(surface((s, h) => [s * Math.cos(t), s * Math.sin(t), h], 0, L, -L, L, theme.remark, { opacity: 0.2, nu: 2, nv: 2 }));
+    traces.push(legendItem("yarı düzlem: θ sabit", theme.remark));
+  }
+  if (shown.includes("cone")) {
+    if (phi > 0 && phi < 180) {
+      traces.push(surface((th, s) => at(s, th, p), 0, 2 * Math.PI, 0, L, theme.base, { opacity: 0.2, nu: 48, nv: 2 }));
+    } else {
+      // phi = 0 or 180: the cone shrinks to the positive or the negative z axis
+      traces.push(segment(O, [0, 0, phi === 0 ? L : -L], theme.base, { dash: "solid", width: 6 }));
+    }
+    traces.push(legendItem("yarı koni: φ sabit", theme.base));
+  }
+  const a = Math.min(1.2, 0.45 * rho); // radius of the phi arc
+  const b = 1.2; // radius of the theta arc
+  traces.push(
+    segment(O, foot, guide, { width: 3 }),
+    segment(foot, P, guide, { width: 3 }),
+    segment(O, P, theme.practice, { dash: "solid", width: 7, name: "OP, uzunluğu ρ" }),
+    path((s) => at(a, t, s), 0, p, theme.base, undefined, { width: 5, samples: 40 }),
+    path((s) => [b * Math.cos(s), b * Math.sin(s), 0], 0, t, theme.remark, undefined, { width: 5, samples: 60 }),
+    label(at(a + 0.4, t, p / 2), "φ", theme.base),
+    label([(b + 0.4) * Math.cos(t / 2), (b + 0.4) * Math.sin(t / 2), 0], "θ", theme.remark),
+    label(O, "O", theme.text, { position: "bottom left" }),
+    point(foot, theme.text, undefined, { size: 4, text: "P′" }),
+    point(P, theme.practice, undefined, { size: 6, text: "P" })
+  );
+  render(Plotly, kurCoordPlot, traces, sceneLayout(theme, { x: [-L, L], y: [-L, L], z: [-L, L] }));
+  const gcd = (m, n) => (n ? gcd(n, m % n) : m);
+  // an angle in degrees as a multiple of pi: 45 -> "π/4", 120 -> "2π/3"
+  const radians = (degrees) => {
+    const deg = Math.round(degrees);
+    if (deg === 0) return "0";
+    const g = gcd(deg, 180);
+    const top = deg / g === 1 ? "π" : `${deg / g}π`;
+    return 180 / g === 1 ? top : `${top}/${180 / g}`;
+  };
+  const [x, y, z] = P;
+  return html`<div class="scene3d-readout">ρ = ${fmtTrim(rho, 2)} &nbsp;·&nbsp; θ = ${theta}° = ${radians(theta)} &nbsp;·&nbsp; φ = ${phi}° = ${radians(phi)}<br>x = ρ sin φ cos θ = ${fmtTrim(x, 4)} &nbsp;·&nbsp; y = ρ sin φ sin θ = ${fmtTrim(y, 4)} &nbsp;·&nbsp; z = ρ cos φ = ${fmtTrim(z, 4)}<br>r = ρ sin φ = ${fmtTrim(rho * Math.sin(p), 4)} &nbsp;·&nbsp; x² + y² + z² = ${fmtTrim(x * x + y * y + z * z, 4)} = ρ²</div>`;
+}
+```
+:::
+::::
 
 Başka yüzeylerin küresel denklemini bulmak için (1)'i yerine yazmak ve sadeleştirmek yeterlidir. Sık kullanılan iki kısaltma
 
@@ -1446,6 +1552,97 @@ bulunur. Aşağıdaki şekil, bu ardışık integralin cismi nasıl taradığın
 ```
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: koni açılırken cisim ve hacmi.** Sahneyi sürükleyerek döndürebilirsiniz. Sahnedeki cisim $0 \le \phi \le \phi_0$, $0 \le \rho \le \cos\phi$ bölgesidir: $\phi = \phi_0$ yarı konisinin üstünde ve $\rho = \cos\phi$ küresinin içinde kalan kısım. Başlangıçtaki $\phi_0 = 45^\circ$ seçimi bu örneğin cismidir. Hesapta $\pi/4$ yerine $\phi_0$ yazılınca hacim $\pi(1 - \cos^4\phi_0)/6$ olur; $\phi_0 = 45^\circ$ için bu $\pi/8 \approx 0{,}3927$'dir. $\phi_0 = 90^\circ$ iken koni $xy$-düzlemine açılır ve cisim bütün topu doldurur; hacim $\pi/6$, yani yarıçapı $1/2$ olan topun hacmi olur. $\theta$ kaydırıcısı dış integrali canlandırır: cismin yalnız $0$ ile seçilen açı arasındaki kısmı çizilir. Turuncu yüzler, sabit bir $\theta$ için $\rho$ ve $\phi$'nin taradığı düzlemsel dilimdir. Dilim $z$ ekseni çevresinde döndükçe hacim açıyla orantılı büyür ve tam turda bütün cismi verir. $z$ ekseni üzerindeki nokta bütün cismin ağırlık merkezidir: $\phi_0 = 45^\circ$ için $\bar z = 7/12$ olur (bkz. @exr-kur-dondurma-agirlik-merkezi). Koni daraldıkça nokta yüksekliğin dörtte üçüne yaklaşır, $\phi_0 = 90^\circ$ iken topun merkezine ($\bar z = 1/2$) iner.
+
+```{ojs}
+//| echo: false
+viewof kurConeControls = Inputs.form({
+  phi0: Inputs.range([5, 90], { value: 45, step: 5, label: "φ₀ (°)" }),
+  turn: Inputs.range([15, 360], { value: 360, step: 15, label: "θ (°)" })
+})
+```
+
+```{ojs}
+//| echo: false
+kurConePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: phi = phi0 yari konisinin ustunde ve rho = cos phi kuresinin icinde kalan cisim; cisim theta sifirdan secilen aciya kadar taranir, sabit theta icin duzlemsel dilim ve cismin agirlik merkezi gosterilir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { phi0, turn } = kurConeControls;
+  const p0 = (phi0 * Math.PI) / 180;
+  const t1 = (turn * Math.PI) / 180;
+  // The point at distance s cos(phi) from the origin in the direction (theta, phi);
+  // s = 1 lies on the sphere rho = cos(phi), that is x^2 + y^2 + z^2 = z.
+  const at = (s, th, ph) => {
+    const r = s * Math.cos(ph);
+    return [r * Math.sin(ph) * Math.cos(th), r * Math.sin(ph) * Math.sin(th), r * Math.cos(ph)];
+  };
+  const traces = [
+    surface((th, ph) => at(1, th, ph), 0, 2 * Math.PI, 0, Math.PI / 2, theme.theory, { opacity: 0.07, nu: 40, nv: 24 }),
+    surface((th, ph) => at(1, th, ph), 0, t1, 0, p0, theme.theory, { opacity: 0.45, nu: 40, nv: 20 }),
+    legendItem("küre ρ = cos φ", theme.theory)
+  ];
+  // at phi0 = 90 degrees the cone has opened into the xy-plane and touches the solid only at the origin
+  if (phi0 < 90) {
+    traces.push(
+      surface((th, s) => at(s, th, p0), 0, t1, 0, 1, theme.base, { opacity: 0.45, nu: 40, nv: 2 }),
+      legendItem("yarı koni φ = φ₀", theme.base)
+    );
+  }
+  if (turn < 360) {
+    // The planar slices at theta = 0 and at the slider angle: fans from the origin to the arc rho = cos(phi).
+    const samples = 40;
+    const vertices = [];
+    const I = [];
+    const J = [];
+    const K = [];
+    const rim = { x: [], y: [], z: [] };
+    for (const th of [0, t1]) {
+      const start = vertices.length;
+      vertices.push([0, 0, 0]);
+      for (let k = 0; k <= samples; k++) vertices.push(at(1, th, (p0 * k) / samples));
+      for (let k = 1; k <= samples; k++) {
+        I.push(start);
+        J.push(start + k);
+        K.push(start + k + 1);
+      }
+      for (const q of [...vertices.slice(start), [0, 0, 0]]) {
+        rim.x.push(q[0]);
+        rim.y.push(q[1]);
+        rim.z.push(q[2]);
+      }
+      rim.x.push(null);
+      rim.y.push(null);
+      rim.z.push(null);
+    }
+    traces.push(
+      { type: "mesh3d", x: vertices.map((q) => q[0]), y: vertices.map((q) => q[1]), z: vertices.map((q) => q[2]), i: I, j: J, k: K, color: theme.practice, opacity: 0.6, flatshading: true, lighting: { ambient: 1, diffuse: 0, specular: 0 }, hoverinfo: "skip", showlegend: false },
+      { type: "scatter3d", mode: "lines", ...rim, line: { color: theme.practice, width: 4 }, name: "sabit θ için dilim", showlegend: true, hoverinfo: "skip" }
+    );
+  }
+  const c4 = Math.cos(p0) ** 4;
+  const c6 = Math.cos(p0) ** 6;
+  // centroid height of the whole solid: (pi (1 - cos^6) / 12) / (pi (1 - cos^4) / 6)
+  const zbar = (1 - c6) / (2 * (1 - c4));
+  traces.push(
+    segment([0, 0, 0], [0, 0, 1.05], withAlpha(theme.text, 0.4), { dash: "solid", width: 2 }),
+    point([0, 0, zbar], theme.text, "ağırlık merkezi", { size: 5 })
+  );
+  render(Plotly, kurConePlot, traces, sceneLayout(theme, { x: [-0.55, 0.55], y: [-0.55, 0.55], z: [-0.05, 1.05] }));
+  const full = (Math.PI * (1 - c4)) / 6;
+  const swept = (t1 * (1 - c4)) / 12;
+  // exact values where cos^4 is rational
+  const exact = { 30: ["7π/96", "37/56"], 45: ["π/8", "7/12"], 60: ["5π/32", "21/40"], 90: ["π/6", "1/2"] }[phi0];
+  return html`<div class="scene3d-readout">φ₀ = ${phi0}° &nbsp;·&nbsp; 0 ≤ θ ≤ ${turn}° &nbsp;·&nbsp; çizilen kısmın hacmi = θ(1 − cos⁴φ₀)/12 = ${fmt(swept, 4)}<br>bütün cisim: hacim = π(1 − cos⁴φ₀)/6 = ${fmt(full, 4)}${exact ? ` = ${exact[0]}` : ""} &nbsp;·&nbsp; ağırlık merkezi z̄ = ${fmt(zbar, 4)}${exact ? ` = ${exact[1]}` : ""}</div>`;
+}
+```
 :::
 ::::
 

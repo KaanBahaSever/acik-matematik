@@ -16,6 +16,26 @@ $$\iint_R f(x, y)\,dA = \iint_S f(r\cos\theta, r\sin\theta)\,r\,dr\,d\theta$$
 
 olur; burada $S$, $r\theta$-düzleminde $R$'ye karşılık gelen bölgedir. Bu bölümde aynı fikri genel dönüşümlere taşıyacağız. Asıl soru şudur: kutupsal formüldeki fazladan $r$ çarpanı nereden gelir ve başka bir dönüşümde onun yerini ne alır? Cevap, $dx/du$ türevinin iki ve üç boyuttaki karşılığı olan Jacobi determinantıdır.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, planeLayout, sceneLayout, fill2d, arrow2d, point2d, point, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Düzlemde Dönüşümler
 
 Değişken değiştirmenin dili dönüşümlerdir; önce bir dönüşümün noktaları ve bölgeleri nasıl taşıdığını görelim.
@@ -378,6 +398,164 @@ $$\Delta A \approx \left| \frac{\partial(x, y)}{\partial(u, v)} \right| \Delta u
 biçimini alır; Jacobi determinantı $(u_0, v_0)$ noktasında hesaplanır.
 
 Yani Jacobi determinantının mutlak değeri, $T$'nin $(u_0, v_0)$ çevresinde alanları kaç katına çıkardığını söyler. Bu, (1)'deki $dx/du$ çarpanının iki boyutlu karşılığıdır. Doğrusal bir dönüşümde $\partial(x, y)/\partial(u, v) = ad - bc$ sabittir ve (4) yaklaşımı tam eşitliğe dönüşür (@prp-ddg-dogrusal-alan).
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: bir dönüşüm alanları nasıl değiştirir?** Listeden bölümdeki dönüşümlerden birini seçin. $t$ kaydırıcısı birim dönüşümden ($t = 0$; resim $S$'nin kendisidir) seçilen $T$ dönüşümüne ($t = 1$) geçer: aradaki adımlarda her nokta $(u, v)$'den $T(u, v)$'ye giden doğru parçası üzerinde ilerler. İnce çizgiler $u = \text{sabit}$ ve $v = \text{sabit}$ doğrularının görüntüleridir. Turuncu bölge, sol alt köşesi kaydırıcılarla seçilen ve kenarları $\Delta u = \Delta v = \Delta$ olan küçük karenin görüntüsüdür. Kesikli çizgilerle çizilen paralelkenarı ise köşeden çıkan $\Delta u\,\mathbf{r}_u$ ve $\Delta v\,\mathbf{r}_v$ teğet vektörleri gerer. Değer satırı köşedeki Jacobi determinantını ve görüntünün alanının $\Delta u\,\Delta v$'ye oranını yazar; $\Delta$ küçüldükçe oran, (4)'te olduğu gibi $|J|$'ye yaklaşır. Örneğin $x = u^2 - v^2$, $y = 2uv$ dönüşümünde $(0{,}5;\ 0{,}5)$ köşesinde $J = 4(u^2 + v^2) = 2$'dir; oran $\Delta = 0{,}1$ için $2{,}427$, $\Delta = 0{,}01$ için $2{,}040$ çıkar. Bütün karenin görüntüsünün alanı ise $8/3$'tür. Kaymada $J = 1$ olduğundan alan değişmez (@exm-ddg-kayma); kutupsal dönüşümde $J = r$'dir (@exm-ddg-kutupsal). $x = u - v$, $y = u + v^2$ için $J = 2v + 1$ ve görüntünün alanı $2$'dir (@exr-ddg-egri-kenarli-goruntu). $x = 2u + 3v$, $y = u - v$ doğrusal dönüşümünde $J = -5$ her noktada aynıdır ve alanı $6$ olan dikdörtgenin görüntüsünün alanı $30$ olur (@exr-ddg-paralelkenar-goruntu). Bu dönüşümde $t$ artarken determinant bir an sıfırdan geçer: bölge bir doğru parçasına basılır, sonra ters yönde açılır. Alanı veren, determinantın işareti değil mutlak değeridir.
+
+```{ojs}
+//| echo: false
+//| output: false
+ddgMorphMaps = {
+  // T, its partial derivatives [x_u, x_v, y_u, y_v] and the rectangle S = [u0, u1] x [v0, v1];
+  // `jacobian` and `area` are the chapter's values for the full map (t = 1).
+  const maps = {
+    square: { title: "x = u² − v², y = 2uv", names: ["u", "v"], u: [0, 1], v: [0, 1], step: 0.05, start: [0.5, 0.5], T: (u, v) => [u * u - v * v, 2 * u * v], D: (u, v) => [2 * u, -2 * v, 2 * v, 2 * u], jacobian: "4(u² + v²)", area: "8/3" },
+    shear: { title: "x = u + v, y = v (kayma)", names: ["u", "v"], u: [0, 1], v: [0, 1], step: 0.05, start: [0.5, 0.5], T: (u, v) => [u + v, v], D: () => [1, 1, 0, 1], jacobian: "1", area: "1" },
+    polar: { title: "x = r cos θ, y = r sin θ (kutupsal)", names: ["r", "θ"], u: [1, 2], v: [0, Math.PI / 2], step: 0.05, start: [1.5, 0.75], T: (r, th) => [r * Math.cos(th), r * Math.sin(th)], D: (r, th) => [Math.cos(th), -r * Math.sin(th), Math.sin(th), r * Math.cos(th)], jacobian: "r", area: "3π/4" },
+    curved: { title: "x = u − v, y = u + v²", names: ["u", "v"], u: [0, 1], v: [0, 1], step: 0.05, start: [0.5, 0.5], T: (u, v) => [u - v, u + v * v], D: (u, v) => [1, -1, 1, 2 * v], jacobian: "2v + 1", area: "2" },
+    linear: { title: "x = 2u + 3v, y = u − v (doğrusal)", names: ["u", "v"], u: [0, 3], v: [0, 2], step: 0.1, start: [1.5, 1], T: (u, v) => [2 * u + 3 * v, u - v], D: () => [2, 3, 1, -1], jacobian: "−5", area: "30" }
+  };
+  // One fixed window per map: during the morph every point moves on the segment from (u, v) to T(u, v),
+  // so a box around S and T(S) holds every stage.
+  for (const map of Object.values(maps)) {
+    const xs = [];
+    const ys = [];
+    for (let i = 0; i <= 40; i++) {
+      for (let j = 0; j <= 40; j++) {
+        const u = map.u[0] + ((map.u[1] - map.u[0]) * i) / 40;
+        const v = map.v[0] + ((map.v[1] - map.v[0]) * j) / 40;
+        const [x, y] = map.T(u, v);
+        xs.push(u, x);
+        ys.push(v, y);
+      }
+    }
+    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    const pad = 0.06 * Math.max(x1 - x0, y1 - y0);
+    map.x = [x0 - pad, x1 + pad];
+    map.y = [y0 - pad, y1 + pad];
+  }
+  return maps;
+}
+```
+
+```{ojs}
+//| echo: false
+viewof ddgMorphChoice = Inputs.select(Object.keys(ddgMorphMaps), { value: "square", label: "dönüşüm", format: (key) => ddgMorphMaps[key].title })
+```
+
+```{ojs}
+//| echo: false
+viewof ddgMorphControls = {
+  const map = ddgMorphMaps[ddgMorphChoice];
+  const [n1, n2] = map.names;
+  // the largest corner on the step grid that keeps a cell of side 0.3 inside S
+  // (rounded, so the slider's max is 0.7 and not 0.7000000000000001)
+  const top = (range) => +(range[0] + Math.floor((range[1] - 0.3 - range[0]) / map.step + 1e-9) * map.step).toFixed(6);
+  return Inputs.form({
+    t: Inputs.range([0, 1], { value: 1, step: 0.05, label: "t" }),
+    a: Inputs.range([map.u[0], top(map.u)], { value: map.start[0], step: map.step, label: `${n1}₀` }),
+    b: Inputs.range([map.v[0], top(map.v)], { value: map.start[1], step: map.step, label: `${n2}₀` }),
+    d: Inputs.range([0.01, 0.3], { value: 0.1, step: 0.01, label: "Δ" })
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+ddgMorphPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: S dikdortgeni ve uzerindeki u = sabit, v = sabit izgarasi birim donusumden secilen T donusumune dogru bicim degistirir; kucuk bir karenin goruntusu, r_u ve r_v teget vektorlerinin gerdigi paralelkenarla karsilastirilir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const map = ddgMorphMaps[ddgMorphChoice];
+  const { t, a, b, d } = ddgMorphControls;
+  const [n1, n2] = map.names;
+  const [U0, U1] = map.u;
+  const [V0, V1] = map.v;
+  // the stage t of the morph from the identity (t = 0) to T (t = 1)
+  const T = (u, v) => {
+    const [x, y] = map.T(u, v);
+    return [(1 - t) * u + t * x, (1 - t) * v + t * y];
+  };
+  // tangent vectors r_u, r_v of that stage and its Jacobian determinant
+  const tangents = (u, v) => {
+    const [xu, xv, yu, yv] = map.D(u, v);
+    return [[1 - t + t * xu, t * yu], [t * xv, 1 - t + t * yv]];
+  };
+  const jacobian = (u, v) => {
+    const [ru, rv] = tangents(u, v);
+    return ru[0] * rv[1] - rv[0] * ru[1];
+  };
+  // image of the boundary of [u0, u1] x [v0, v1], traced counterclockwise in the uv-plane
+  const ring = (u0, u1, v0, v1, n) => {
+    const list = [];
+    for (let k = 0; k < n; k++) list.push(T(u0 + ((u1 - u0) * k) / n, v0));
+    for (let k = 0; k < n; k++) list.push(T(u1, v0 + ((v1 - v0) * k) / n));
+    for (let k = 0; k < n; k++) list.push(T(u1 - ((u1 - u0) * k) / n, v1));
+    for (let k = 0; k < n; k++) list.push(T(u0, v1 - ((v1 - v0) * k) / n));
+    return list;
+  };
+  const shoelace = (list) => Math.abs(list.reduce((sum, p, k) => {
+    const q = list[(k + 1) % list.length];
+    return sum + p[0] * q[1] - q[0] * p[1];
+  }, 0)) / 2;
+  // images of the grid lines u = const and v = const, as one trace
+  const gx = [];
+  const gy = [];
+  const addLine = (f) => {
+    for (let k = 0; k <= 40; k++) {
+      const [x, y] = f(k / 40);
+      gx.push(x);
+      gy.push(y);
+    }
+    gx.push(null);
+    gy.push(null);
+  };
+  for (let i = 0; i <= 8; i++) {
+    const u = U0 + ((U1 - U0) * i) / 8;
+    const v = V0 + ((V1 - V0) * i) / 8;
+    addLine((s) => T(u, V0 + (V1 - V0) * s));
+    addLine((s) => T(U0 + (U1 - U0) * s, v));
+  }
+  const cell = ring(a, a + d, b, b + d, 24);
+  const P = T(a, b);
+  const [ru, rv] = tangents(a, b);
+  const A = [P[0] + d * ru[0], P[1] + d * ru[1]];
+  const B = [P[0] + d * rv[0], P[1] + d * rv[1]];
+  const C = [A[0] + d * rv[0], A[1] + d * rv[1]];
+  const span = Math.max(map.x[1] - map.x[0], map.y[1] - map.y[0]);
+  const traces = [
+    { type: "scatter", mode: "lines", x: [U0, U1, U1, U0, U0], y: [V0, V0, V1, V1, V0], line: { color: withAlpha(theme.text, 0.55), width: 1.5, dash: "dot" }, name: "S (t = 0)", hoverinfo: "skip" },
+    fill2d(ring(U0, U1, V0, V1, 80), theme.base, { opacity: 0.12, width: 2.5, name: "S'nin görüntüsü" }),
+    { type: "scatter", mode: "lines", x: gx, y: gy, line: { color: withAlpha(theme.base, 0.6), width: 1 }, showlegend: false, hoverinfo: "skip" },
+    fill2d(cell, theme.practice, { opacity: 0.45, width: 1.5, name: "küçük karenin görüntüsü" }),
+    { type: "scatter", mode: "lines", x: [P[0], A[0], C[0], B[0], P[0]], y: [P[1], A[1], C[1], B[1], P[1]], line: { color: theme.theory, width: 1.5, dash: "dash" }, name: `Δ${n1} r<sub>${n1}</sub>, Δ${n2} r<sub>${n2}</sub> paralelkenarı`, hoverinfo: "skip" },
+    arrow2d(P, [d * ru[0], d * ru[1]], theme.theory, undefined, { width: 2, head: 0.025 * span }),
+    arrow2d(P, [d * rv[0], d * rv[1]], theme.theory, undefined, { width: 2, head: 0.025 * span }),
+    point2d(P, theme.practice, undefined, { size: 7 })
+  ];
+  render(Plotly, ddgMorphPlot, traces, planeLayout(theme, { x: map.x, y: map.y, revision: ddgMorphChoice }));
+  // area of the image of S: midpoint rule for the integral of |J| over S
+  const N = 100;
+  let area = 0;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) area += Math.abs(jacobian(U0 + ((i + 0.5) * (U1 - U0)) / N, V0 + ((j + 0.5) * (V1 - V0)) / N));
+  }
+  area *= ((U1 - U0) * (V1 - V0)) / (N * N);
+  const pair = (p) => `(${fmtTrim(p[0], 4)}; ${fmtTrim(p[1], 4)})`;
+  const end = Math.abs(t - 1) < 1e-9;
+  const J = fmtTrim(jacobian(a, b), 4);
+  const imageArea = fmtTrim(area, 3);
+  // at t = 1 also show the chapter's formula and exact area, unless they read the same as the number
+  const formula = end && map.jacobian !== J ? `${map.jacobian} = ` : "";
+  const exactArea = end && map.area !== imageArea ? ` = ${map.area}` : "";
+  return html`<div class="scene3d-readout">t = ${fmtTrim(t, 2)} &nbsp;·&nbsp; (${n1}₀, ${n2}₀) = ${pair([a, b])} ↦ (x₀, y₀) = ${pair(P)}<br>J = ∂(x, y)/∂(${n1}, ${n2}) = ${formula}${J} &nbsp;·&nbsp; görüntünün alanı / (Δ${n1} Δ${n2}) = ${fmt(shoelace(cell) / (d * d), 3)}<br>S'nin alanı = ${fmtTrim((U1 - U0) * (V1 - V0), 4)} &nbsp;·&nbsp; S'nin görüntüsünün alanı = ∬ |J| d${n1} d${n2} = ${imageArea}${exactArea}</div>`;
+}
+```
+:::
+::::
 
 ## İki Katlı İntegralde Değişken Değiştirme
 
@@ -1144,6 +1322,122 @@ $$\begin{aligned}
 \end{aligned}$$
 
 verir. Bu, küresel koordinatlardaki integral formülüdür (@thm-kur-kuresel). Determinantın işareti negatif çıksa da integrale mutlak değeri girer. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: küresel kama ve Jacobi determinantı.** Sahneyi sürükleyerek döndürebilirsiniz. Kaydırıcılar $\rho\theta\phi$-uzayında köşesi $(\rho_0, \theta_0, \phi_0)$, kenarları $\Delta\rho = \Delta\theta = \Delta\phi = \Delta$ olan kutuyu seçer. Turuncu cisim, bu kutunun küresel koordinat dönüşümü altındaki görüntüsü olan küresel kamadır. Kesikli mavi çizgiler ise köşeden çıkan $\Delta\rho\,\mathbf{r}_\rho$, $\Delta\theta\,\mathbf{r}_\theta$ ve $\Delta\phi\,\mathbf{r}_\phi$ vektörlerinin gerdiği paralelyüzlüdür; bu paralelyüzlünün hacmi $|J|\,\Delta\rho\,\Delta\theta\,\Delta\phi$'dir. Sahne her an kamaya yakınlaşır: $\Delta$ küçüldükçe kamanın kenarları düzleşir ve iki cisim birbirine benzer. Değer satırı kamanın tam hacmini küresel kamanın hacim formülüyle (@lem-kur-kama-hacmi) hesaplar ve $\Delta\rho\,\Delta\theta\,\Delta\phi$'ye böler. Başlangıçtaki $\rho_0 = 1{,}5$, $\phi_0 = 60^\circ$, $\Delta = 0{,}3$ seçiminde bu oran $2{,}5322$'dir; $\Delta = 0{,}05$ için $2{,}0425$'e iner ve $\Delta$ küçüldükçe $|J| = \rho_0^2 \sin\phi_0 \approx 1{,}9486$ değerine yaklaşır.
+
+```{ojs}
+//| echo: false
+viewof ddgWedgeControls = Inputs.form({
+  rho: Inputs.range([0.5, 2], { value: 1.5, step: 0.1, label: "ρ₀" }),
+  theta: Inputs.range([0, 330], { value: 30, step: 15, label: "θ₀ (°)" }),
+  phi: Inputs.range([15, 135], { value: 60, step: 15, label: "φ₀ (°)" }),
+  d: Inputs.range([0.05, 0.6], { value: 0.3, step: 0.05, label: "Δ" })
+})
+```
+
+```{ojs}
+//| echo: false
+ddgWedgePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: rho theta phi uzayindaki kucuk bir kutunun goruntusu olan kuresel kama ve koseden cikan d rho r_rho, d theta r_theta, d phi r_phi vektorlerinin gerdigi paralelyuzlu; Delta kuculdukce iki cisim birbirine benzer"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { rho, theta, phi, d } = ddgWedgeControls;
+  const t0 = (theta * Math.PI) / 180;
+  const p0 = (phi * Math.PI) / 180;
+  const [r1, t1, p1] = [rho + d, t0 + d, p0 + d];
+  const at = (r, th, ph) => [r * Math.sin(ph) * Math.cos(th), r * Math.sin(ph) * Math.sin(th), r * Math.cos(ph)];
+  const lerp = (a, b, s) => a + (b - a) * s;
+  // the six faces of the wedge as one mesh: rho = const (spheres), theta = const (half-planes), phi = const (cones)
+  const n = 10;
+  const mesh = { x: [], y: [], z: [], i: [], j: [], k: [] };
+  const face = (f) => {
+    const start = mesh.x.length;
+    for (let a = 0; a <= n; a++) {
+      for (let b = 0; b <= n; b++) {
+        const q = f(a / n, b / n);
+        mesh.x.push(q[0]);
+        mesh.y.push(q[1]);
+        mesh.z.push(q[2]);
+      }
+    }
+    for (let a = 0; a < n; a++) {
+      for (let b = 0; b < n; b++) {
+        const v = start + a * (n + 1) + b;
+        mesh.i.push(v, v);
+        mesh.j.push(v + n + 1, v + n + 2);
+        mesh.k.push(v + n + 2, v + 1);
+      }
+    }
+  };
+  for (const r of [rho, r1]) face((s, w) => at(r, lerp(t0, t1, s), lerp(p0, p1, w)));
+  for (const th of [t0, t1]) face((s, w) => at(lerp(rho, r1, s), th, lerp(p0, p1, w)));
+  for (const ph of [p0, p1]) face((s, w) => at(lerp(rho, r1, s), lerp(t0, t1, w), ph));
+  // the twelve edges of the wedge: arcs of circles and radial segments
+  const edges = { x: [], y: [], z: [] };
+  const edge = (f) => {
+    for (let k = 0; k <= 24; k++) {
+      const q = f(k / 24);
+      edges.x.push(q[0]);
+      edges.y.push(q[1]);
+      edges.z.push(q[2]);
+    }
+    edges.x.push(null);
+    edges.y.push(null);
+    edges.z.push(null);
+  };
+  for (const r of [rho, r1]) {
+    for (const ph of [p0, p1]) edge((s) => at(r, lerp(t0, t1, s), ph));
+    for (const th of [t0, t1]) edge((s) => at(r, th, lerp(p0, p1, s)));
+  }
+  for (const th of [t0, t1]) {
+    for (const ph of [p0, p1]) edge((s) => at(lerp(rho, r1, s), th, ph));
+  }
+  // the parallelepiped spanned by d r_rho, d r_theta, d r_phi at the corner (rho0, theta0, phi0)
+  const corner = at(rho, t0, p0);
+  const sides = [
+    [Math.sin(p0) * Math.cos(t0), Math.sin(p0) * Math.sin(t0), Math.cos(p0)],
+    [-rho * Math.sin(p0) * Math.sin(t0), rho * Math.sin(p0) * Math.cos(t0), 0],
+    [rho * Math.cos(p0) * Math.cos(t0), rho * Math.cos(p0) * Math.sin(t0), -rho * Math.sin(p0)]
+  ].map((v) => v.map((c) => c * d));
+  const vertex = (a, b, c) => corner.map((q, i) => q + a * sides[0][i] + b * sides[1][i] + c * sides[2][i]);
+  const box = { x: [], y: [], z: [] };
+  const join = (p, q) => {
+    box.x.push(p[0], q[0], null);
+    box.y.push(p[1], q[1], null);
+    box.z.push(p[2], q[2], null);
+  };
+  for (const a of [0, 1]) {
+    for (const b of [0, 1]) {
+      join(vertex(0, a, b), vertex(1, a, b));
+      join(vertex(a, 0, b), vertex(a, 1, b));
+      join(vertex(a, b, 0), vertex(a, b, 1));
+    }
+  }
+  // zoom on the wedge: a cube around everything drawn, so the scene stays true to scale
+  const all = ["x", "y", "z"].map((key) => [...mesh[key], ...box[key].filter((c) => c !== null)]);
+  const center = all.map((list) => (Math.min(...list) + Math.max(...list)) / 2);
+  const half = 0.6 * Math.max(...all.map((list) => Math.max(...list) - Math.min(...list)));
+  const range = (axis) => [center[axis] - half, center[axis] + half];
+  const traces = [
+    { type: "mesh3d", ...mesh, color: theme.practice, opacity: 0.45, flatshading: true, lighting: { ambient: 0.8, diffuse: 0.4, specular: 0.05 }, hoverinfo: "skip", showlegend: false },
+    { type: "scatter3d", mode: "lines", ...edges, line: { color: theme.practice, width: 4 }, name: "küresel kama", hoverinfo: "skip" },
+    { type: "scatter3d", mode: "lines", ...box, line: { color: theme.theory, width: 4, dash: "dash" }, name: "Δρ r<sub>ρ</sub>, Δθ r<sub>θ</sub>, Δφ r<sub>φ</sub> paralelyüzlüsü", hoverinfo: "skip" },
+    point(corner, theme.text, "köşe", { size: 4 })
+  ];
+  render(Plotly, ddgWedgePlot, traces, sceneLayout(theme, { x: range(0), y: range(1), z: range(2) }));
+  // exact volume of the wedge (formula of the lemma on spherical wedges) and the Jacobian at the corner
+  const volume = ((r1 ** 3 - rho ** 3) / 3) * (Math.cos(p0) - Math.cos(p1)) * d;
+  const jacobian = rho * rho * Math.sin(p0);
+  const sig = (x) => x.toLocaleString("tr-TR", { maximumSignificantDigits: 4, useGrouping: false });
+  return html`<div class="scene3d-readout">ρ₀ = ${fmtTrim(rho, 2)} &nbsp;·&nbsp; θ₀ = ${theta}° &nbsp;·&nbsp; φ₀ = ${phi}° &nbsp;·&nbsp; Δρ = Δθ = Δφ = ${fmtTrim(d, 2)}<br>kamanın hacmi = ${sig(volume)} &nbsp;·&nbsp; hacim / (Δρ Δθ Δφ) = ${fmt(volume / d ** 3, 4)}<br>|J| = ρ₀² sin φ₀ = ${fmt(jacobian, 4)} &nbsp;·&nbsp; paralelyüzlünün hacmi = |J| Δρ Δθ Δφ = ${sig(jacobian * d ** 3)}</div>`;
+}
+```
 :::
 ::::
 

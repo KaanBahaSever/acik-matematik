@@ -8,6 +8,26 @@ Eğrisel integralde bir fonksiyonu bir eğri boyunca, küçük yayların uzunluk
 
 Yüzey integralinin iki türü vardır. Birincisi skaler bir fonksiyonun integralidir; ince, eğri bir levhanın kütlesi ya da kütle merkezi bu türdendir. İkincisi bir vektör alanının yüzeyden geçen **akısıdır**: bir akışkanın bir zardan birim zamanda ne kadarının geçtiğini ya da bir elektrik alanının kapalı bir yüzeyden net olarak ne kadar "çıktığını" ölçer. Akıdan söz edebilmek için önce yüzeyin iki yüzünden hangisinin "pozitif" olduğunu, yani bir yönlendirme seçmemiz gerekecek. Son iki bölümün konusu olan Stokes ve diverjans teoremleri bu kavramların üzerine kurulur.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, dot, sceneLayout, surface, gridCurves, path, point, points, legendItem, arrow, arrowsAt, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Parametrik Yüzeyler Üzerinde Yüzey İntegrali
 
 Önce yüzeyi parametrik olarak verelim ve integrali bir Riemann toplamının limiti olarak tanımlayalım.
@@ -1808,6 +1828,72 @@ olur. Bu çelişki, Möbius şeridinde sürekli bir birim normal seçilemeyeceğ
 </figure>
 ```
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: normali Möbius şeridinde dolaştırmak.** Sahneyi sürükleyerek döndürebilirsiniz. Kaydırıcı $u$'yu $\pi$ biriminde verir. $u$ arttıkça $\mathbf{N}(u)$ birim normali orta çember boyunca ilerler ve geride bıraktığı normaller soluk olarak kalır. $u = 0$ iken $P = (1, 0, 0)$ noktasında $\mathbf{N}(0) = -\mathbf{k}$'dir. $u = \pi$ iken normal $\mathbf{N}(\pi) = -\mathbf{i}$ olur ve yatay durur. $u = 2\pi$ iken aynı $P$ noktasına $\mathbf{N}(2\pi) = \mathbf{k}$ olarak, yani ters dönmüş olarak varılır. Değer satırındaki $\mathbf{N}(u) \cdot \mathbf{N}(0) = \cos(u/2)$ çarpımı bu sırada $1$'den $-1$'e iner. Möbius şeridi yerine $\mathbf{r}(u, w) = \cos u\,\mathbf{i} + \sin u\,\mathbf{j} + \frac{w}{2}\,\mathbf{k}$ ile verilen iki yüzlü şeridi seçerseniz $2(\mathbf{r}_u \times \mathbf{r}_w) = \cos u\,\mathbf{i} + \sin u\,\mathbf{j}$ normali hep dışa bakar ve bir tur sonra kendisine döner.
+
+```{ojs}
+//| echo: false
+viewof yziMobiusControls = Inputs.form({
+  strip: Inputs.radio(["mobius", "band"], { value: "mobius", label: "şerit", format: (key) => (key === "mobius" ? "Möbius" : "iki yüzlü") }),
+  t: Inputs.range([0, 2], { value: 1, step: 0.02, label: "u / π" })
+})
+```
+
+```{ojs}
+//| echo: false
+yziMobiusPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: Mobius seridi ve orta cemberi; P = (1, 0, 0) noktasindan baslayip orta cember boyunca tasinan birim normal N(u) ve geride kalan normaller; bir tur sonra P noktasina ters yonde donen normal"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { strip, t } = yziMobiusControls;
+  const mobius = strip === "mobius";
+  const r = mobius
+    ? (u, w) => [(1 + (w / 2) * Math.cos(u / 2)) * Math.cos(u), (1 + (w / 2) * Math.cos(u / 2)) * Math.sin(u), (w / 2) * Math.sin(u / 2)]
+    : (u, w) => [Math.cos(u), Math.sin(u), w / 2];
+  // The unit normal N(u) = 2 (r_u x r_w) on the centre circle w = 0.
+  const N = mobius
+    ? (u) => [Math.sin(u / 2) * Math.cos(u), Math.sin(u / 2) * Math.sin(u), -Math.cos(u / 2)]
+    : (u) => [Math.cos(u), Math.sin(u), 0];
+  const u = t * Math.PI;
+  const shown = 0.7; // drawn length of the unit normals
+  const trail = [];
+  for (let k = 0; k < 24; k++) {
+    const s = (k * Math.PI) / 12;
+    if (s < u - 1e-9) trail.push(s);
+  }
+  const traces = [
+    surface(r, 0, 2 * Math.PI, -1, 1, theme.theory, { opacity: 0.3, nu: 40, nv: 8 }),
+    gridCurves(r, 0, 2 * Math.PI, -1, 1, 24, 0, withAlpha(theme.theory, 0.4), { width: 1.5 }),
+    path((s) => r(s, 1), 0, 2 * Math.PI, theme.theory, undefined, { width: 3, samples: 160 }),
+    path((s) => r(s, -1), 0, 2 * Math.PI, theme.theory, undefined, { width: 3, samples: 160 }),
+    legendItem(mobius ? "Möbius şeridi" : "iki yüzlü şerit", theme.theory),
+    path((s) => [Math.cos(s), Math.sin(s), 0], 0, 2 * Math.PI, withAlpha(theme.text, 0.6), "orta çember", { width: 3, dash: "dash", samples: 120 }),
+    point(r(0, 0), theme.text, undefined, { size: 5, text: "P", position: "bottom center" })
+  ];
+  if (trail.length) {
+    traces.push(...arrowsAt(trail.map((s) => r(s, 0)), trail.map((s) => N(s)), withAlpha(theme.base, 0.7), { scale: shown, head: 0.12, name: "geride kalan normaller" }));
+  }
+  traces.push(...arrow(r(u, 0), N(u).map((c) => c * shown), theme.practice, "N(u)", { head: 0.16 }));
+  render(Plotly, yziMobiusPlot, traces, sceneLayout(theme, { x: [-1.8, 1.8], y: [-1.8, 1.8], z: [-1.2, 1.2] }));
+  const piText = (k) => {
+    if (Math.abs(k) < 1e-9) return "0";
+    for (const d of [1, 2, 4]) {
+      const n = Math.round(k * d);
+      if (Math.abs(k * d - n) < 1e-6) return `${n < 0 ? "−" : ""}${Math.abs(n) === 1 ? "" : Math.abs(n)}π${d === 1 ? "" : "/" + d}`;
+    }
+    return `${fmtTrim(k, 2)}π`;
+  };
+  const n = N(u);
+  const back = Math.abs(t - 2) < 1e-9 ? html`<span> &nbsp;·&nbsp; P noktasına ${mobius ? "ters" : "aynı"} normalle dönüldü</span>` : "";
+  return html`<div class="scene3d-readout">u = ${piText(t)} &nbsp;·&nbsp; N(u) = (${fmt(n[0], 2)}; ${fmt(n[1], 2)}; ${fmt(n[2], 2)}) &nbsp;·&nbsp; N(u) · N(0) = ${fmt(dot(n, N(0)), 2)}${back}</div>`;
+}
+```
+:::
+::::
+
 Bundan sonra yalnız iki yüzlü yüzeylerle çalışacağız. $S$'nin (sınır noktaları dışında) her $(x, y, z)$ noktasında bir teğet düzlemi olsun. Bu noktada iki birim normal vektör vardır: $\mathbf{n}_1$ ve $\mathbf{n}_2 = -\mathbf{n}_1$.
 
 ::: {#def-yzi-yonlendirme name="Yönlendirilmiş Yüzey"}
@@ -2627,6 +2713,140 @@ bulunur.
 **Yorum.** $\mathbf{F}$, yoğunluğu $1$ olan bir akışkanın hız alanıysa, birim zamanda kürenin içinden dışına net olarak $\frac{4\pi}{3}$ birim kütle akar.
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: küreden geçen akının işareti.** Sahneyi sürükleyerek döndürebilirsiniz. Birim küre $\phi$ yönünde $m$, $\theta$ yönünde $n$ parçaya bölünmüştür. Her yama, orta noktasındaki $\mathbf{F} \cdot \mathbf{n}$ değerine göre boyanır: turuncu yamalarda $\mathbf{F} = z\,\mathbf{i} + y\,\mathbf{j} + x\,\mathbf{k}$ yüzeyi seçilen $\mathbf{n}$ yönünde geçer, mavi yamalarda ters yönde geçer; renk belirginleştikçe $|\mathbf{F} \cdot \mathbf{n}|$ büyür. Oklar seçilen birim normalleri ve $\mathbf{F}$'nin değerlerini gösterir. Küre üzerinde $|\mathbf{F}| = 1$ olduğundan bütün $\mathbf{F}$ okları aynı uzunluktadır; akıya yalnız normal bileşenleri katkı verir. Değer satırı (6) formülünün orta noktalarla kurulan Riemann toplamını, yani her yamada $\mathbf{F} \cdot (\mathbf{r}_\phi \times \mathbf{r}_\theta)\,\Delta\phi\,\Delta\theta$ çarpımlarının toplamını verir. Dışa yönlendirmede bu toplam $m = 4$, $n = 8$ için $4{,}168048$, $m = 12$, $n = 24$ için $4{,}188571$ olur ve $4\pi/3 \approx 4{,}188790$'a yaklaşır. Normali içe çevirince renkler yer değiştirir ve toplam aynı sayının ters işaretlisi olur.
+
+```{ojs}
+//| echo: false
+viewof yziFluxControls = Inputs.form({
+  side: Inputs.radio(["out", "in"], { value: "out", label: "normal", format: (key) => (key === "out" ? "dışa" : "içe") }),
+  m: Inputs.range([2, 24], { value: 4, step: 1, label: "m" }),
+  n: Inputs.range([3, 36], { value: 8, step: 1, label: "n" }),
+  arrows: Inputs.toggle({ value: true, label: "oklar" })
+})
+```
+
+```{ojs}
+//| echo: false
+yziFluxPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: m x n yamaya bolunmus birim kure; her yama F = z i + y j + x k alaninin secilen birim normal yonundeki bileseninin isaretine gore boyanir; birim normaller ve alan oklari gosterilir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { side, m, n, arrows } = yziFluxControls;
+  const sign = side === "out" ? 1 : -1;
+  const sphere = (p, t) => [Math.sin(p) * Math.cos(t), Math.sin(p) * Math.sin(t), Math.cos(p)];
+  const F = (q) => [q[2], q[1], q[0]];
+  // F(r(phi, theta)) . (r_phi x r_theta), worked out in the example.
+  const h = (p, t) => 2 * Math.sin(p) ** 2 * Math.cos(p) * Math.cos(t) + Math.sin(p) ** 3 * Math.sin(t) ** 2;
+  const dp = Math.PI / m;
+  const dt = (2 * Math.PI) / n;
+  let sum = 0;
+  const value = [];
+  const mids = [];
+  for (let i = 0; i < m; i++) {
+    value.push([]);
+    for (let j = 0; j < n; j++) {
+      const p = (i + 0.5) * dp;
+      const t = (j + 0.5) * dt;
+      sum += sign * h(p, t) * dp * dt;
+      // On the unit sphere the outward unit normal at q is q itself.
+      const q = sphere(p, t);
+      value[i].push(sign * dot(F(q), q));
+      mids.push(q.map((c) => 1.01 * c));
+    }
+  }
+  // A fine mesh: every patch is split into sp x st cells that carry the patch's value of F . n.
+  const sp = Math.max(1, Math.round(24 / m));
+  const st = Math.max(1, Math.round(48 / n));
+  const rows = m * sp;
+  const cols = n * st;
+  const X = [];
+  const Y = [];
+  const Z = [];
+  const I = [];
+  const J = [];
+  const K = [];
+  const C = [];
+  for (let a = 0; a <= rows; a++) {
+    for (let b = 0; b <= cols; b++) {
+      const q = sphere((a * Math.PI) / rows, (2 * Math.PI * b) / cols);
+      X.push(q[0]);
+      Y.push(q[1]);
+      Z.push(q[2]);
+    }
+  }
+  const at = (a, b) => a * (cols + 1) + b;
+  for (let a = 0; a < rows; a++) {
+    for (let b = 0; b < cols; b++) {
+      const c = value[Math.floor(a / sp)][Math.floor(b / st)];
+      I.push(at(a, b), at(a, b));
+      J.push(at(a + 1, b), at(a + 1, b + 1));
+      K.push(at(a + 1, b + 1), at(a, b + 1));
+      C.push(c, c);
+    }
+  }
+  // A neutral middle color for F . n = 0, mixed from the page's text and background colors.
+  const rgb = (color) => {
+    const match = /^#?([0-9a-f]{6})$/i.exec((color || "").trim());
+    const k = match ? parseInt(match[1], 16) : 0x808080;
+    return [(k >> 16) & 255, (k >> 8) & 255, k & 255];
+  };
+  const mix = (from, to, s) => {
+    const A = rgb(from);
+    const B = rgb(to);
+    return `rgb(${A.map((c, i) => Math.round(c + (B[i] - c) * s)).join(", ")})`;
+  };
+  const traces = [
+    {
+      type: "mesh3d",
+      x: X,
+      y: Y,
+      z: Z,
+      i: I,
+      j: J,
+      k: K,
+      intensity: C,
+      intensitymode: "cell",
+      colorscale: [
+        [0, theme.theory],
+        [0.5, mix(theme.background, theme.text, 0.15)],
+        [1, theme.practice]
+      ],
+      cmin: -1,
+      cmax: 1,
+      showscale: false,
+      opacity: 0.85,
+      flatshading: true,
+      lighting: { ambient: 0.85, diffuse: 0.3, specular: 0.05 },
+      hoverinfo: "skip",
+      showlegend: false
+    },
+    gridCurves((p, t) => sphere(p, t).map((c) => 1.004 * c), 0, Math.PI, 0, 2 * Math.PI, m, n, withAlpha(theme.text, 0.5), { width: 1.5 }),
+    legendItem("F · n > 0", theme.practice),
+    legendItem("F · n < 0", theme.theory),
+    points(mids, theme.text, "orta noktalar", { size: m * n > 200 ? 1.5 : 2.5 })
+  ];
+  if (arrows) {
+    const starts = [[0, 0, 1], [0, 0, -1]];
+    for (const p of [Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4]) {
+      for (let j = 0; j < 8; j++) starts.push(sphere(p, (j * Math.PI) / 4));
+    }
+    traces.push(
+      ...arrowsAt(starts, starts.map((q) => q.map((c) => sign * c)), theme.base, { scale: 0.4, head: 0.1, name: "n" }),
+      ...arrowsAt(starts, starts.map(F), withAlpha(theme.text, 0.85), { scale: 0.4, head: 0.1, name: "F" })
+    );
+  }
+  render(Plotly, yziFluxPlot, traces, sceneLayout(theme, { x: [-1.45, 1.45], y: [-1.45, 1.45], z: [-1.45, 1.45] }));
+  const exact = (sign * 4 * Math.PI) / 3;
+  return html`<div class="scene3d-readout">${m} × ${n} = ${m * n} yama &nbsp;·&nbsp; normal: ${side === "out" ? "dışa (pozitif yönlendirme)" : "içe (negatif yönlendirme)"}<br>Riemann toplamı = ${fmt(sum, 6)} &nbsp;·&nbsp; akı = ${sign > 0 ? "" : "−"}4π/3 ≈ ${fmt(exact, 6)} &nbsp;·&nbsp; fark = ${fmt(sum - exact, 6)}</div>`;
+}
+```
 :::
 ::::
 

@@ -8,6 +8,26 @@ Tek değişkenli integralde bir fonksiyonu bir $[a, b]$ aralığı boyunca toplu
 
 İki tür eğrisel integral göreceğiz. Birincisi bir skaler fonksiyonu eğri boyunca yay uzunluğuna göre toplar; ince bir telin kütlesi ya da bir eğrinin üzerine dikilmiş bir perdenin alanı bu türdendir. İkincisi bir vektör alanının eğriye teğet bileşenini toplar; bir kuvvet alanının bir parçacığı eğri boyunca hareket ettirirken yaptığı iş bu türdendir. [Vektör Alanları](vektor-alanlari.qmd) bölümünde tanıdığımız vektör alanları (bkz. @def-val-vektor-alani) böylece ilk kez bir integralin içine girecek.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, sceneLayout, planeLayout, render, path, points, legendItem, curtain, path2d, arrowHeads2d, arrow2d, field2d, point2d, segment2d, fill2d } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Yay Uzunluğuna Göre Eğrisel İntegral
 
 Önce eğriyi küçük yaylara bölelim ve tek değişkenli integraldeki Riemann toplamının eğri üzerindeki karşılığını kuralım.
@@ -398,6 +418,97 @@ $$\left(2\pi + \frac{1}{3}\right) - \left(0 - \frac{1}{3}\right) = 2\pi + \frac{
 bulunur.
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: perdenin alanı ve şeritler.** Sahneyi sürükleyerek döndürebilirsiniz. Zemindeki yay, @exm-egi-yarim-cember içindeki $C$ yarım çemberidir; mavi eğri, $C$'nin üzerine $f(x, y) = 2 + x^2 y$ yüksekliğinde dikilen perdenin üst kenarıdır. $n$ kaydırıcısı $C$'yi uzunlukları $\Delta s_i = \pi/n$ olan $n$ eşit alt yaya böler. Her turuncu şeridin tabanı bir alt yay, yüksekliği de $f$'nin o yayın orta noktasındaki değeridir; bu yüzden şeritlerin toplam alanı, @def-egi-yay-uzunlugu içindeki $\sum f(P_i^*)\,\Delta s_i$ Riemann toplamıdır. Kaydırıcının altındaki seçenekle şeritler yerine perdenin kendisine bakabilirsiniz. $n = 4$, $8$ ve $16$ için toplam $7{,}0088$, $6{,}9631$ ve $6{,}9531$ olur ve perdenin alanına, yani örnekte bulduğumuz $2\pi + \frac{2}{3} \approx 6{,}9499$ sayısına yaklaşır. Bu değerlerde $n$ ikiye katlandıkça fark yaklaşık dörtte birine iner.
+
+```{ojs}
+//| echo: false
+viewof egiCurtainControls = Inputs.form({
+  n: Inputs.range([1, 40], { value: 4, step: 1, label: "n" }),
+  show: Inputs.radio(["strips", "curtain"], { value: "strips", label: "göster", format: (key) => (key === "strips" ? "şeritler" : "perde") })
+})
+```
+
+```{ojs}
+//| echo: false
+egiCurtainPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: ust yarim birim cember C ve onun uzerinde f(x, y) = 2 + x^2 y yuksekliginde duran perde; C'nin n esit alt yayi uzerindeki seritlerin toplam alani Riemann toplamidir ve n buyudukce perdenin alani olan 2 pi + 2/3 sayisina yaklasir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { n, show } = egiCurtainControls;
+  const f = (x, y) => 2 + x * x * y;
+  // Area of the curtain, found in the example: 2 pi + 2/3.
+  const exact = 2 * Math.PI + 2 / 3;
+  const onC = (t) => [Math.cos(t), Math.sin(t)];
+  // On the unit circle the parameter is arc length, so every subarc has length pi / n.
+  const ds = Math.PI / n;
+  // Strip i stands on the subarc [i ds, (i + 1) ds]; its height is f at the midpoint of the subarc.
+  const strips = Array.from({ length: n }, (_, i) => {
+    const [x, y] = onC((i + 0.5) * ds);
+    return { t0: i * ds, t1: (i + 1) * ds, h: f(x, y), sample: [x, y, f(x, y)] };
+  });
+  const sum = strips.reduce((total, strip) => total + strip.h * ds, 0);
+  // All strips as one flat mesh standing on C, and their outlines as one line trace.
+  const stripTraces = () => {
+    const x = [];
+    const y = [];
+    const z = [];
+    const I = [];
+    const J = [];
+    const K = [];
+    const ex = [];
+    const ey = [];
+    const ez = [];
+    const steps = Math.max(2, Math.ceil(48 / n));
+    for (const { t0, t1, h } of strips) {
+      const start = x.length;
+      const arc = Array.from({ length: steps + 1 }, (_, j) => onC(t0 + ((t1 - t0) * j) / steps));
+      for (const [px, py] of arc) {
+        x.push(px, px);
+        y.push(py, py);
+        z.push(0, h);
+      }
+      for (let j = 0; j < steps; j++) {
+        const a = start + 2 * j;
+        I.push(a, a + 1);
+        J.push(a + 2, a + 3);
+        K.push(a + 1, a + 2);
+      }
+      const ring = [...arc.map(([px, py]) => [px, py, 0]), ...[...arc].reverse().map(([px, py]) => [px, py, h])];
+      ring.push(ring[0]);
+      for (const [px, py, pz] of ring) {
+        ex.push(px);
+        ey.push(py);
+        ez.push(pz);
+      }
+      ex.push(null);
+      ey.push(null);
+      ez.push(null);
+    }
+    return [
+      { type: "mesh3d", x, y, z, i: I, j: J, k: K, color: theme.practice, opacity: 0.85, flatshading: true, lighting: { ambient: 0.8, diffuse: 0.4, specular: 0.05 }, hoverinfo: "skip", showlegend: false, showscale: false },
+      { type: "scatter3d", mode: "lines", x: ex, y: ey, z: ez, line: { color: withAlpha(theme.text, 0.55), width: 2 }, showlegend: false, hoverinfo: "skip" }
+    ];
+  };
+  const traces = [
+    path((t) => [...onC(t), 0], 0, Math.PI, theme.base, "C", { width: 5 }),
+    ...(show === "strips"
+      ? [...stripTraces(), legendItem("şeritler", theme.practice), points(strips.map((strip) => strip.sample), theme.text, "örnek noktalar", { size: 3 })]
+      : [curtain(onC, 0, Math.PI, 0, f, theme.theory, { opacity: 0.45, samples: 120 }), legendItem("perde", theme.theory)]),
+    path((t) => { const [x, y] = onC(t); return [x, y, f(x, y)]; }, 0, Math.PI, theme.theory, "z = 2 + x²y", { width: 5 })
+  ];
+  render(Plotly, egiCurtainPlot, traces, sceneLayout(theme, { x: [-1.2, 1.2], y: [-0.3, 1.2], z: [0, 2.6], eye: { x: 0.75, y: -1.75, z: 0.75 } }));
+  const gap = sum - exact;
+  const dsText = n === 1 ? "π" : `π/${n}`;
+  return html`<div class="scene3d-readout">n = ${n} &nbsp;·&nbsp; Δs<sub>i</sub> = ${dsText} ≈ ${fmt(ds, 4)} &nbsp;·&nbsp; P<sub>i</sub>*: alt yayların orta noktaları<br>şeritlerin toplam alanı Σ f(P<sub>i</sub>*) Δs<sub>i</sub> = ${fmt(sum, 4)} &nbsp;·&nbsp; perdenin alanı 2π + 2/3 ≈ ${fmt(exact, 4)} &nbsp;·&nbsp; fark = ${gap > 5e-5 ? "+" : ""}${fmt(gap, 4)}</div>`;
+}
+```
 :::
 ::::
 
@@ -1024,6 +1135,84 @@ $$
 bulunur. İşin negatif çıkması şekille uyumludur: alanın okları eğri boyunca hareket yönüyle geniş açı yapar, yani kuvvet hareketi engeller.
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: iş, teğet bileşenin toplamıdır.** Soldaki (dar ekranda üstteki) panelde @exm-egi-ceyrek-cember içindeki $\mathbf{F} = x^2\,\mathbf{i} - xy\,\mathbf{j}$ alanı ve $C$ çeyrek çemberi, sağdaki (alttaki) panelde $\mathbf{F} \cdot \mathbf{T}$'nin $t$'ye göre grafiği vardır. $t/\pi$ kaydırıcısı $P = \mathbf{r}(t)$ noktasını $(1, 0)$'dan $(0, 1)$'e götürür. $P$'deki mavi ok $\mathbf{F}$'yi, ince ok $\mathbf{T}$ birim teğet vektörünü, turuncu ok da $\mathbf{F}$'nin teğet bileşeni $(\mathbf{F} \cdot \mathbf{T})\,\mathbf{T}$'yi gösterir; üç ok da yarı boyda çizilmiştir. Bu çemberde $|\mathbf{r}'(t)| = 1$ olduğundan $\mathbf{F} \cdot \mathbf{T} = -2\cos^2 t \sin t$'dir. Bu sayı hiç pozitif olmadığından turuncu ok hareketin tersine bakar ya da sıfırdır. Yine $ds = dt$ olduğundan grafikteki taralı bölgenin işaretli alanı, $P$'ye kadar yapılan iştir. $t = \pi/4$'te $\mathbf{F} \cdot \mathbf{T} = -\frac{\sqrt{2}}{2} \approx -0{,}7071$ ve o ana kadar yapılan iş yaklaşık $-0{,}4310$'dur; $t = \pi/2$'de iş, örnekte bulduğumuz $-\frac{2}{3} \approx -0{,}6667$ değerine ulaşır.
+
+```{ojs}
+//| echo: false
+viewof egiWorkControls = Inputs.form({
+  turn: Inputs.range([0, 0.5], { value: 0.25, step: 0.01, label: "t / π" })
+})
+```
+
+```{ojs}
+//| echo: false
+egiWorkPanels = html`<div style="display: flex; flex-wrap: wrap; gap: 0.75em">
+  <div class="scene3d" style="flex: 1 1 18em; min-width: 0" role="img" aria-label="Sahne, xy duzlemi: F = x^2 i - x y j alaninin oklari, (1, 0) noktasindan (0, 1) noktasina giden ceyrek cember C, uzerindeki P noktasi ve P'de yari boyda cizilmis F, birim teget T ve F'nin teget bileseni (F . T) T"></div>
+  <div class="scene3d" style="flex: 1 1 18em; min-width: 0" role="img" aria-label="Sahne, grafik: F . T = -2 cos^2 t sin t fonksiyonunun 0 ile pi/2 arasindaki grafigi ve 0 ile t arasindaki isaretli alan; bu alan P noktasina kadar yapilan istir"></div>
+</div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { turn } = egiWorkControls;
+  const fieldPanel = egiWorkPanels.children[0];
+  const graphPanel = egiWorkPanels.children[1];
+  const t = turn * Math.PI;
+  const F = (x, y) => [x * x, -x * y];
+  const r = (s) => [Math.cos(s), Math.sin(s)];
+  const dr = (s) => [-Math.sin(s), Math.cos(s)];
+  // On the unit circle |r'| = 1, so T = r' and F . T = F(r(s)) . r'(s).
+  const tangential = (s) => {
+    const [u, v] = F(...r(s));
+    const [a, b] = dr(s);
+    return u * a + v * b;
+  };
+  // Work done from s = 0 to s = end, by Simpson's rule (independent of the closed form in the example).
+  const work = (end) => {
+    const N = 200;
+    const h = end / N;
+    let total = tangential(0) + tangential(end);
+    for (let k = 1; k < N; k++) total += (k % 2 ? 4 : 2) * tangential(k * h);
+    return (total * h) / 3;
+  };
+  const P = r(t);
+  const FP = F(...P);
+  const T = dr(t);
+  const FT = tangential(t);
+  const W = work(t);
+  const half = (v) => [v[0] / 2, v[1] / 2];
+  const tip = (p, v) => [p[0] + v[0], p[1] + v[1]];
+  const component = [FT * T[0], FT * T[1]];
+  render(Plotly, fieldPanel, [
+    field2d(F, [0.1, 1.5], [0.1, 1.5], 8, withAlpha(theme.text, 0.4)),
+    path2d(r, 0, Math.PI / 2, withAlpha(theme.practice, 0.5), "C", { width: 3 }),
+    arrowHeads2d(r, 0, Math.PI / 2, 3, withAlpha(theme.practice, 0.5)),
+    path2d(r, 0, t, theme.practice, undefined, { width: 6 }),
+    segment2d(tip(P, half(FP)), tip(P, half(component)), withAlpha(theme.text, 0.6)),
+    arrow2d(P, half(FP), theme.theory, "F", { head: 0.08 }),
+    arrow2d(P, half(T), theme.text, "T", { head: 0.08, width: 1.8 }),
+    arrow2d(P, half(component), theme.practice, "(F · T) T", { head: 0.08 }),
+    point2d(P, theme.text, undefined, { size: 9 })
+  ], planeLayout(theme, { x: [-0.6, 1.7], y: [-0.25, 1.55] }));
+  // The shaded region between the graph of F . T and the t-axis, from 0 to t.
+  const steps = Math.max(2, Math.round(turn * 240));
+  const shaded = [[0, 0], ...Array.from({ length: steps + 1 }, (_, k) => [(t * k) / steps, tangential((t * k) / steps)]), [t, 0]];
+  render(Plotly, graphPanel, [
+    ...(t > 0 ? [fill2d(shaded, theme.practice, { opacity: 0.3, width: 0 })] : []),
+    path2d((s) => [s, tangential(s)], 0, Math.PI / 2, theme.theory, "F · T", { width: 3 }),
+    segment2d([t, 0], [t, FT], withAlpha(theme.text, 0.6)),
+    point2d([t, FT], theme.text, undefined, { size: 8 })
+  ], planeLayout(theme, { x: [0, 1.65], y: [-0.85, 0.12], equal: false, legend: false, titles: { x: "t", y: "F · T" } }));
+  const pair = (v) => `${fmt(v[0], 4)}; ${fmt(v[1], 4)}`;
+  return html`<div class="scene3d-readout">t = ${fmt(turn)}π &nbsp;·&nbsp; P = (${pair(P)}) &nbsp;·&nbsp; F(P) = ⟨${pair(FP)}⟩ &nbsp;·&nbsp; T = ⟨${pair(T)}⟩<br>F · T = ${fmt(FT, 4)} &nbsp;·&nbsp; P'ye kadar yapılan iş ∫ F · T ds = ${fmt(W, 4)} &nbsp;·&nbsp; bütün yol boyunca W = −2/3 ≈ ${fmt(-2 / 3, 4)}</div>`;
+}
+```
 :::
 ::::
 

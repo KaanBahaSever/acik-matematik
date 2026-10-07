@@ -8,6 +8,26 @@ Tek değişkenli analizde bir eğrinin altındaki alanı bulma problemi bizi bel
 
 Tanımdan integral hesaplamak çoğu zaman çok zahmetlidir. Tek değişkende bu yükü Analizin Temel Teoremi kaldırmıştı. İki değişkende aynı rolü Fubini Teoremi oynar: iki katlı integral, art arda alınan iki tek katlı integrale eşittir. Bölümü, bir fonksiyonun bir dikdörtgen üzerindeki ortalama değerini tanımlayarak bitireceğiz.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmtTrim, sceneLayout, graph, path, points, legendItem, columns, riemannRect, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Belirli İntegrali Hatırlayalım
 
 İki katlı integrali kurarken izleyeceğimiz yol, tek değişkenli belirli integralin kuruluşunun aynısıdır; bu yüzden o kuruluşu kısaca hatırlayalım.
@@ -634,6 +654,51 @@ Kare sayısını artırdıkça tahminler iyileşir. Aynı yöntemle (sağ üst k
 | Tahmin | $34$ | $41{,}5$ | $44{,}875$ | $46{,}46875$ |
 
 Cismin gerçek hacmi $48$'dir; bunu @exm-dkt-paraboloit-hacim içinde Fubini Teoremi'yle hesaplayacağız. $x, y \ge 0$ iken $f$ hem $x$ hem $y$ arttıkça azaldığından, her karenin sağ üst köşesi $f$'nin o karedeki en küçük değerini verir. Bu yüzden bütün kutular cismin içinde kalır ve tahminler gerçek değere alttan yaklaşır.
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: kutular inceldikçe hacme yaklaşır.** Sahneyi sürükleyerek döndürebilirsiniz; düşey eksen küçültülmüş ölçektedir. Yarı saydam mavi yüzey $z = 16 - x^2 - 2y^2$ paraboloidi, turuncu kutular da $R = [0, 2] \times [0, 2]$ karesinin $m \times n$ bölünüşüne karşılık gelen Riemann toplamının kutularıdır. $m$ ve $n$ kaydırıcılarıyla bölünüşü inceltin; değer satırı kutuların toplam hacmini, yani Riemann toplamını, cismin gerçek hacmi olan $48$ ile karşılaştırır. Örnek nokta sağ üst köşeyken $m = n = 2$ için örnekteki $34$ çıkar; $m = n = 4$, $8$ ve $16$ için tablodaki $41{,}5$, $44{,}875$ ve $46{,}46875$ gelir ve kutular hep yüzeyin altında kalır. Örnek noktayı karelerin merkezine taşıyınca kutuların tepeleri yüzeyi keser ve toplam $48$'in biraz üstüne çıkar: $m = n = 2$ için $49$, $m = n = 4$ için $48{,}25$, $m = n = 8$ için $48{,}0625$. $m = n$ ikiye katlandıkça fark dörtte birine iner; merkezler aynı kutu sayısıyla çok daha iyi bir tahmin verir. Bu seçim, birazdan göreceğimiz orta nokta kuralıdır (@def-dkt-orta-nokta).
+
+```{ojs}
+//| echo: false
+viewof dktRiemannControls = Inputs.form({
+  m: Inputs.range([1, 20], { value: 2, step: 1, label: "m" }),
+  n: Inputs.range([1, 20], { value: 2, step: 1, label: "n" }),
+  rule: Inputs.radio(["upper-right", "midpoint"], { value: "upper-right", label: "örnek nokta", format: (key) => (key === "upper-right" ? "sağ üst köşe" : "merkez") })
+})
+```
+
+```{ojs}
+//| echo: false
+dktRiemannPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: z = 16 - x^2 - 2y^2 paraboloidinin altinda, [0, 2] x [0, 2] karesinin m x n bolunusune karsilik gelen Riemann kutulari; kutularin toplam hacmi Riemann toplamidir ve bolunus inceldikce cismin gercek hacmi olan 48'e yaklasir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { m, n, rule } = dktRiemannControls;
+  const f = (x, y) => 16 - x * x - 2 * y * y;
+  // Volume of the solid, found with Fubini's theorem later in the chapter.
+  const exact = 48;
+  const riemann = riemannRect(f, 0, 2, 0, 2, m, n, rule);
+  // Walk once around the boundary of R = [0, 2] x [0, 2]; t = 0, 2, 4, 6 are the corners.
+  const rim = (t) => (t <= 2 ? [t, 0] : t <= 4 ? [2, t - 2] : t <= 6 ? [6 - t, 2] : [0, 8 - t]);
+  const traces = [
+    ...columns(riemann.cells, theme.practice, { edgeColor: withAlpha(theme.text, 0.6), edgeWidth: 2, name: "kutular" }),
+    graph(f, 0, 2, 0, 2, theme.theory, { opacity: 0.35 }),
+    path((t) => { const [x, y] = rim(t); return [x, y, f(x, y)]; }, 0, 8, theme.theory, undefined, { width: 4, samples: 320 }),
+    path((t) => [...rim(t), 0], 0, 8, theme.base, undefined, { width: 4, samples: 8 }),
+    legendItem("z = 16 − x² − 2y²", theme.theory),
+    points(riemann.samples, theme.text, "örnek noktalar", { size: m * n > 100 ? 2 : 3 })
+  ];
+  render(Plotly, dktRiemannPlot, traces, sceneLayout(theme, { x: [0, 2], y: [0, 2], z: [0, 16], aspectratio: { x: 1, y: 1, z: 0.9 }, eye: { x: 1.85, y: 1.45, z: 1.0 } }));
+  const gap = riemann.sum - exact;
+  const where = rule === "upper-right" ? "sağ üst köşe" : "merkez";
+  return html`<div class="scene3d-readout">m = ${m}, n = ${n} &nbsp;·&nbsp; ${m * n} kutu &nbsp;·&nbsp; ΔA = ${fmtTrim(riemann.dA)} &nbsp;·&nbsp; örnek nokta: ${where}<br>Riemann toplamı = ${fmtTrim(riemann.sum)} &nbsp;·&nbsp; gerçek hacim = ${exact} &nbsp;·&nbsp; fark = ${gap > 5e-6 ? "+" : ""}${fmtTrim(gap)}</div>`;
+}
+```
+:::
+::::
 
 :::: {#exm-dkt-yarim-silindir name="Hacim Olarak Yorumlanan Bir İntegral"}
 $R = [-1, 1] \times [-2, 2]$ olmak üzere

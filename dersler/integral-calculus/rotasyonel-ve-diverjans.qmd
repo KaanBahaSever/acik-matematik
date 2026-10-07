@@ -8,6 +8,26 @@ Tek değişkenli bir fonksiyonun türevi, fonksiyonun nasıl değiştiğini öl�
 
 Bir akışkanın hız alanı düşünüldüğünde rotasyonel, bir noktanın çevresindeki akışkanın hangi eksen etrafında ve ne hızla döndüğünü ölçer. Diverjans ise o noktadan dışarı ne kadar akışkan aktığını ölçer. Bu bölümde iki işlemi tanımlayacak, aralarındaki iki temel özdeşliği ispatlayacak ve rotasyonelin bir alanın konservatif olup olmadığına nasıl karar verdiğini göreceğiz. Son olarak Green Teoremi'ni bu işlemlerle iki vektör biçiminde yazacağız; bu biçimler Stokes ve diverjans teoremlerinin düzlemdeki karşılıklarıdır. Rotasyonel için kullanılan İngilizce *curl* adını 1871'de James Clerk Maxwell önermiştir. Aynı işlem Türkçede ve birçok Avrupa dilinde $\operatorname{rot} \mathbf{F}$ diye de yazılır.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, planeLayout, field2d, path2d, arrowHeads2d, point2d, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Rotasyonel
 
 Önce rotasyoneli bileşenlerle tanımlayalım, sonra onu akılda tutmanın kolay bir yolunu görelim.
@@ -656,6 +676,186 @@ Aşağıdaki şeklin (a) panelinde $\mathbf{F} = \sin y\,\mathbf{i} + \cos x\,\m
 </figure>
 ```
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: çark, rotasyonelin işaretine göre döner.** Açılır listeden şekildeki iki alandan birini ya da birazdan göreceğimiz kayma akışını (@exm-rot-kayma) seçin. $x_0$ ve $y_0$ kaydırıcıları çarkı taşır, $\varepsilon$ de çarkın yarıçapıdır. (a) alanında konum kaydırıcıları koordinatı $\pi$ biriminde verir; başlangıçtaki $-0{,}5$ ve $0{,}5$ değerleri $A_1 = (-\pi/2, \pi/2)$ noktasıdır. Çarkın çemberi üzerindeki kısa oklar, $\mathbf{F}$'nin çembere teğet bileşenleridir; çark, bu bileşenlerin ağır bastığı yöne döner. Değer satırı $\operatorname{curl} \mathbf{F} \cdot \mathbf{k}$ değerini ve dönme yönünü verir: $A_1$'de $1$, $A_2 = (\pi/2, \pi/2)$ noktasında $-1$, (b) alanında her yerde $0$, kayma akışında her yerde $-1$. İkinci satırdaki dolanım, $\mathbf{F}$'nin teğet bileşeninin çember boyunca integralidir; satır bunun dairenin alanına oranını verir. $A_1$'de bu oran $\varepsilon = 0{,}4$ için $0{,}980$, $\varepsilon = 0{,}05$ için $1{,}000$ olur, yani $\varepsilon$ küçüldükçe $\operatorname{curl} \mathbf{F} \cdot \mathbf{k}$ değerine yaklaşır. Bunun nedenini bölümün sonunda göreceğiz (@cor-rot-yogunluk).
+
+```{ojs}
+//| echo: false
+//| output: false
+rotWheelFields = ({
+  wave: {
+    label: "(a) sin y i + cos x j",
+    F: (x, y) => [Math.sin(y), Math.cos(x)],
+    curl: (x, y) => -(Math.sin(x) + Math.cos(y)),
+    box: [-3.3, 3.3, -3.3, 3.3],
+    grid: [[(-7 * Math.PI) / 8, (7 * Math.PI) / 8], [(-7 * Math.PI) / 8, (7 * Math.PI) / 8], 8, 8],
+    piUnits: true,
+    xr: [-1, 1],
+    yr: [-1, 1],
+    start: [-0.5, 0.5],
+    eps: [0.05, 1],
+    eps0: 0.4
+  },
+  gradient: {
+    label: "(b) 2xy i + (x² + y) j",
+    F: (x, y) => [2 * x * y, x * x + y],
+    // dQ/dx - dP/dy = 2x - 2x
+    curl: () => 0,
+    box: [-1.6, 1.6, -1.6, 1.6],
+    grid: [[-1.4, 1.4], [-1.4, 1.4], 8, 8],
+    piUnits: false,
+    xr: [-1.5, 1.5],
+    yr: [-1.5, 1.5],
+    start: [-0.8, 1.2],
+    eps: [0.05, 0.5],
+    eps0: 0.2
+  },
+  shear: {
+    label: "kayma akışı: y i",
+    F: (x, y) => [y, 0],
+    curl: () => -1,
+    box: [-2, 2, 0, 3],
+    grid: [[-1.75, 1.75], [0.25, 2.75], 8, 6],
+    piUnits: false,
+    xr: [-1.5, 1.5],
+    yr: [0.5, 2.5],
+    start: [0, 1.5],
+    eps: [0.05, 0.5],
+    eps0: 0.3
+  }
+})
+```
+
+```{ojs}
+//| echo: false
+viewof rotWheelField = Inputs.select(Object.keys(rotWheelFields), { value: "wave", label: "alan", format: (key) => rotWheelFields[key].label })
+```
+
+```{ojs}
+//| echo: false
+viewof rotWheelPoint = {
+  const field = rotWheelFields[rotWheelField];
+  const unit = field.piUnits ? " / π" : "";
+  return Inputs.form({
+    x: Inputs.range(field.xr, { value: field.start[0], step: 0.05, label: `x₀${unit}` }),
+    y: Inputs.range(field.yr, { value: field.start[1], step: 0.05, label: `y₀${unit}` }),
+    eps: Inputs.range(field.eps, { value: field.eps0, step: 0.05, label: "ε" }),
+    tangent: Inputs.toggle({ value: true, label: "teğetler" })
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+rotWheelPlot = html`<div class="scene3d" role="img" aria-label="Duzlem akisi ve kucuk bir cark: secilen alanin oklari, (x0, y0) noktasinda yaricapi epsilon olan cark, alanin cark cemberine teget bilesenleri ve curl F . k isaretine gore carkin donme yonu"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const field = rotWheelFields[rotWheelField];
+  const { x, y, eps, tangent } = rotWheelPoint;
+  const unit = field.piUnits ? Math.PI : 1;
+  const x0 = x * unit;
+  const y0 = y * unit;
+  const [xa, xb, ya, yb] = field.box;
+  const [gx, gy, nx, ny] = field.grid;
+  // One length scale for the field arrows and the tangential components, so the two compare.
+  const spread = (a, b, k) => Array.from({ length: k }, (_, i) => a + ((b - a) * i) / (k - 1));
+  const spacing = Math.min((gx[1] - gx[0]) / (nx - 1), (gy[1] - gy[0]) / (ny - 1));
+  let longest = 1e-12;
+  for (const px of spread(gx[0], gx[1], nx)) {
+    for (const py of spread(gy[0], gy[1], ny)) longest = Math.max(longest, Math.hypot(...field.F(px, py)));
+  }
+  const scale = (0.8 * spacing) / longest;
+  const head = 0.03 * (xb - xa);
+  // Several plane arrows in one line trace: a shaft and a two-stroke head each.
+  const arrowTrace = (starts, vectors, color, name) => {
+    const X = [];
+    const Y = [];
+    const c = Math.cos(0.45);
+    const s = Math.sin(0.45);
+    starts.forEach((p, k) => {
+      const v = vectors[k];
+      const length = Math.hypot(v[0], v[1]);
+      if (length < 1e-9) return;
+      const ux = v[0] / length;
+      const uy = v[1] / length;
+      const tip = [p[0] + v[0], p[1] + v[1]];
+      const h = Math.min(head, 0.45 * length);
+      X.push(p[0], tip[0], null, tip[0] + h * (-ux * c + uy * s), tip[0], tip[0] + h * (-ux * c - uy * s), null);
+      Y.push(p[1], tip[1], null, tip[1] + h * (-ux * s - uy * c), tip[1], tip[1] + h * (ux * s - uy * c), null);
+    });
+    return { type: "scatter", mode: "lines", x: X, y: Y, line: { color, width: 2.5 }, name, showlegend: Boolean(name), hoverinfo: "skip" };
+  };
+  const rim = (t) => [x0 + eps * Math.cos(t), y0 + eps * Math.sin(t)];
+  // Tangential components (F . T) T at twelve points of the wheel's rim.
+  const starts = [];
+  const parts = [];
+  for (let k = 0; k < 12; k++) {
+    const a = (2 * Math.PI * k) / 12;
+    const p = rim(a);
+    const T = [-Math.sin(a), Math.cos(a)];
+    const [P, Q] = field.F(p[0], p[1]);
+    const along = P * T[0] + Q * T[1];
+    starts.push(p);
+    parts.push([along * T[0] * scale, along * T[1] * scale]);
+  }
+  // Circulation around the rim (periodic trapezoid rule, exact to rounding for these fields).
+  const samples = 720;
+  let circulation = 0;
+  for (let k = 0; k < samples; k++) {
+    const a = (2 * Math.PI * k) / samples;
+    const [P, Q] = field.F(...rim(a));
+    circulation += (-P * Math.sin(a) + Q * Math.cos(a)) * eps;
+  }
+  circulation *= (2 * Math.PI) / samples;
+  const density = circulation / (Math.PI * eps * eps);
+  const g = field.curl(x0, y0);
+  const turning = Math.abs(g) > 1e-9;
+  const sense = g > 0 ? 1 : -1;
+  const radius = 1.4 * eps;
+  const arc = (t) => [x0 + radius * Math.cos(0.3 + sense * t), y0 + radius * Math.sin(0.3 + sense * t)];
+  const spokes = { type: "scatter", mode: "lines", x: [], y: [], line: { color: theme.practice, width: 2.5 }, showlegend: false, hoverinfo: "skip" };
+  for (let k = 0; k < 4; k++) {
+    const a = Math.PI / 4 + (k * Math.PI) / 2;
+    spokes.x.push(x0, x0 + eps * Math.cos(a), null);
+    spokes.y.push(y0, y0 + eps * Math.sin(a), null);
+  }
+  const traces = [
+    field2d(field.F, gx, gy, [nx, ny], withAlpha(theme.theory, 0.8), { scale, head, name: "F" }),
+    path2d(rim, 0, 2 * Math.PI, theme.practice, "çark", { width: 2.5 }),
+    spokes,
+    point2d([x0, y0], theme.practice, undefined, { size: 6 })
+  ];
+  if (turning) {
+    traces.push(
+      path2d(arc, 0, 4.4, theme.practice, undefined, { width: 2, dash: "dot" }),
+      arrowHeads2d(arc, 0, 4.4, 2, theme.practice, { size: Math.min(0.6 * radius, 0.05 * (xb - xa)) })
+    );
+  }
+  if (tangent) traces.push(arrowTrace(starts, parts, theme.base, "teğet bileşen"));
+  render(Plotly, rotWheelPlot, traces, planeLayout(theme, { x: [xa, xb], y: [ya, yb], revision: rotWheelField }));
+  // Coordinates: multiples of pi for field (a), plain numbers otherwise.
+  const piText = (k) => {
+    if (Math.abs(k) < 1e-9) return "0";
+    for (const d of [1, 2, 4]) {
+      const n = Math.round(k * d);
+      if (Math.abs(k * d - n) < 1e-6) return `${n < 0 ? "−" : ""}${Math.abs(n) === 1 ? "" : Math.abs(n)}π${d === 1 ? "" : "/" + d}`;
+    }
+    return `${fmtTrim(k, 2)}π`;
+  };
+  const coords = field.piUnits ? [piText(x), piText(y)] : [fmtTrim(x0, 2), fmtTrim(y0, 2)];
+  const where = coords.some((text) => text.includes(",")) ? `(${coords[0]}; ${coords[1]})` : `(${coords[0]}, ${coords[1]})`;
+  const [P0, Q0] = field.F(x0, y0);
+  const turn = !turning ? "dönmez" : g > 0 ? "saatin tersi yönünde döner" : "saat yönünde döner";
+  return html`<div class="scene3d-readout">(x₀, y₀) = ${where} &nbsp;·&nbsp; F(x₀, y₀) = (${fmt(P0, 2)}; ${fmt(Q0, 2)}) &nbsp;·&nbsp; curl F · k = ${fmt(g, 3)}: çark ${turn}<br>ε = ${fmtTrim(eps, 2)} &nbsp;·&nbsp; dolanım / (πε²) = ${fmt(density, 3)}</div>`;
+}
+```
+:::
+::::
+
 Akış çizgileri düz olsa bile alan dönmesiz olmayabilir. Aşağıdaki ısınma örneği bunu gösteriyor.
 
 :::: {#exm-rot-kayma name="Kayma Akışı"}
@@ -1059,6 +1259,142 @@ Aşağıdaki şeklin (a) panelinde $\mathbf{F} = (1 + x^2)\,\mathbf{i} + y\,\mat
 <figcaption>(a) <em>A</em><sub>1</sub> = (&#8722;1,5; 1) noktasında div <b>F</b> = &#8722;2 &lt; 0: kesikli çemberin içine giren oklar çıkanlardan uzundur, net akış içeri doğrudur. <em>A</em><sub>2</sub> = (1, 1) noktasında div <b>F</b> = 3 &gt; 0: çıkan oklar daha uzundur, net akış dışarı doğrudur. (b) div <b>F</b> = 0 her yerde; <em>A</em> = (1, 1) çevresine giren ve çıkan akış dengededir.</figcaption>
 </figure>
 ```
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: küçük bir çemberden geçen net akış.** Açılır listeden şekildeki iki alandan birini ya da $x^3\,\mathbf{i} + y^3\,\mathbf{j}$ alanını (@exm-rot-normal-bicim) seçin. $x_0$ ve $y_0$ kaydırıcıları kesikli çemberin merkezini, $\varepsilon$ de yarıçapını değiştirir. Çember üzerindeki kısa oklar, $\mathbf{F}$'nin çemberden dışarı bakan birim normal doğrultusundaki bileşenleridir: dışarı bakan ok çıkan, içeri bakan ok giren akışı gösterir. Değer satırı merkezdeki diverjansı, çemberden birim zamanda dışarı çıkan net akışı ($\oint_C \mathbf{F} \cdot \mathbf{n}\,ds$; $\mathbf{n}$ için bkz. @def-rot-dis-normal) ve bu akının dairenin alanına oranını verir. (a) alanında bu oran her $\varepsilon$ için merkezdeki diverjansa eşittir: $A_1$'de $-2$, $A_2$'de $3$; $x_0 = -0{,}5$ doğrusu üzerinde ise giren ve çıkan akış dengededir. (b) alanında akı her çember için $0$'dır. $x^3\,\mathbf{i} + y^3\,\mathbf{j}$ alanında merkez orijinde ve $\varepsilon = 1$ iken çember birim çemberdir ve akı $3\pi/2 \approx 4{,}7124$ çıkar. $\varepsilon$ küçüldükçe oran $3\varepsilon^2/2$ olur ve orijindeki diverjans olan $0$'a iner (@cor-rot-yogunluk).
+
+```{ojs}
+//| echo: false
+//| output: false
+rotFluxFields = ({
+  stretch: {
+    label: "(a) (1 + x²) i + y j",
+    F: (x, y) => [1 + x * x, y],
+    div: (x) => 2 * x + 1,
+    box: [-2.2, 2.2, -2.2, 2.2],
+    grid: [[-1.75, 1.75], [-1.75, 1.75], 8, 8],
+    xr: [-2, 2],
+    yr: [-2, 2],
+    start: [-1.5, 1],
+    eps0: 0.3
+  },
+  saddle: {
+    label: "(b) −x i + y j",
+    F: (x, y) => [-x, y],
+    div: () => -1 + 1,
+    box: [-2.2, 2.2, -2.2, 2.2],
+    grid: [[-1.75, 1.75], [-1.75, 1.75], 8, 8],
+    xr: [-2, 2],
+    yr: [-2, 2],
+    start: [1, 1],
+    eps0: 0.3
+  },
+  cubic: {
+    label: "x³ i + y³ j",
+    F: (x, y) => [x ** 3, y ** 3],
+    div: (x, y) => 3 * x * x + 3 * y * y,
+    box: [-1.6, 1.6, -1.6, 1.6],
+    grid: [[-1.4, 1.4], [-1.4, 1.4], 8, 8],
+    xr: [-1, 1],
+    yr: [-1, 1],
+    start: [0, 0],
+    eps0: 1
+  }
+})
+```
+
+```{ojs}
+//| echo: false
+viewof rotFluxField = Inputs.select(Object.keys(rotFluxFields), { value: "stretch", label: "alan", format: (key) => rotFluxFields[key].label })
+```
+
+```{ojs}
+//| echo: false
+viewof rotFluxPoint = {
+  const field = rotFluxFields[rotFluxField];
+  return Inputs.form({
+    x: Inputs.range(field.xr, { value: field.start[0], step: 0.05, label: "x₀" }),
+    y: Inputs.range(field.yr, { value: field.start[1], step: 0.05, label: "y₀" }),
+    eps: Inputs.range([0.05, 1], { value: field.eps0, step: 0.05, label: "ε" })
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+rotFluxPlot = html`<div class="scene3d" role="img" aria-label="Duzlem akisi ve kesikli bir cember: secilen alanin oklari, merkezi (x0, y0) ve yaricapi epsilon olan cember ve alanin cemberin dis normali dogrultusundaki bilesenleri; disari bakan oklar cikan, iceri bakan oklar giren akisi gosterir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const field = rotFluxFields[rotFluxField];
+  const { x: x0, y: y0, eps } = rotFluxPoint;
+  const [xa, xb, ya, yb] = field.box;
+  const [gx, gy, nx, ny] = field.grid;
+  const head = 0.03 * (xb - xa);
+  // Several plane arrows in one line trace: a shaft and a two-stroke head each.
+  const arrowTrace = (starts, vectors, color, name) => {
+    const X = [];
+    const Y = [];
+    const c = Math.cos(0.45);
+    const s = Math.sin(0.45);
+    starts.forEach((p, k) => {
+      const v = vectors[k];
+      const length = Math.hypot(v[0], v[1]);
+      if (length < 1e-9) return;
+      const ux = v[0] / length;
+      const uy = v[1] / length;
+      const tip = [p[0] + v[0], p[1] + v[1]];
+      const h = Math.min(head, 0.45 * length);
+      X.push(p[0], tip[0], null, tip[0] + h * (-ux * c + uy * s), tip[0], tip[0] + h * (-ux * c - uy * s), null);
+      Y.push(p[1], tip[1], null, tip[1] + h * (-ux * s - uy * c), tip[1], tip[1] + h * (ux * s - uy * c), null);
+    });
+    return { type: "scatter", mode: "lines", x: X, y: Y, line: { color, width: 2.5 }, name, showlegend: Boolean(name), hoverinfo: "skip" };
+  };
+  const rim = (t) => [x0 + eps * Math.cos(t), y0 + eps * Math.sin(t)];
+  // Normal components (F . n) n at sixteen points of the circle; the longest is drawn 0.6 eps long.
+  const starts = [];
+  const normals = [];
+  const values = [];
+  for (let k = 0; k < 16; k++) {
+    const a = (2 * Math.PI * k) / 16;
+    const p = rim(a);
+    const [P, Q] = field.F(p[0], p[1]);
+    starts.push(p);
+    normals.push([Math.cos(a), Math.sin(a)]);
+    values.push(P * Math.cos(a) + Q * Math.sin(a));
+  }
+  const largest = Math.max(...values.map(Math.abs));
+  const scale = largest > 1e-12 ? (0.6 * eps) / largest : 0;
+  const parts = normals.map((n, k) => [n[0] * values[k] * scale, n[1] * values[k] * scale]);
+  // Flux through the circle (periodic trapezoid rule, exact to rounding for these fields).
+  const samples = 720;
+  let flux = 0;
+  for (let k = 0; k < samples; k++) {
+    const a = (2 * Math.PI * k) / samples;
+    const [P, Q] = field.F(...rim(a));
+    flux += (P * Math.cos(a) + Q * Math.sin(a)) * eps;
+  }
+  flux *= (2 * Math.PI) / samples;
+  const density = flux / (Math.PI * eps * eps);
+  const traces = [
+    field2d(field.F, gx, gy, [nx, ny], withAlpha(theme.theory, 0.8), { head, name: "F" }),
+    path2d(rim, 0, 2 * Math.PI, theme.practice, "C", { width: 2, dash: "dash" }),
+    point2d([x0, y0], theme.practice, undefined, { size: 6 }),
+    arrowTrace(starts, parts, theme.base, "normal bileşen")
+  ];
+  render(Plotly, rotFluxPlot, traces, planeLayout(theme, { x: [xa, xb], y: [ya, yb], revision: rotFluxField }));
+  const coords = [fmtTrim(x0, 2), fmtTrim(y0, 2)];
+  const where = coords.some((text) => text.includes(",")) ? `(${coords[0]}; ${coords[1]})` : `(${coords[0]}, ${coords[1]})`;
+  const net = Math.abs(flux) < 1e-9 ? "giren ve çıkan dengede" : flux > 0 ? "net akış dışarı" : "net akış içeri";
+  const digits = Math.abs(flux) < 0.01 ? 6 : 4;
+  return html`<div class="scene3d-readout">(x₀, y₀) = ${where} &nbsp;·&nbsp; ε = ${fmtTrim(eps, 2)} &nbsp;·&nbsp; div F(x₀, y₀) = ${fmtTrim(field.div(x0, y0), 4)}<br>∮ F · n ds = ${fmtTrim(flux, digits)} (${net}) &nbsp;·&nbsp; akı / (πε²) = ${fmtTrim(density, 4)}</div>`;
+}
+```
+:::
+::::
 
 ## Laplace Operatörü
 

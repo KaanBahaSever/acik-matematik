@@ -10,6 +10,26 @@ Vektör alanlarının bir başka önemli türü **kuvvet alanlarıdır**: her no
 
 Bu bölümle kitabın ikinci kısmına, vektör analizine geçiyoruz. Vektör alanlarını tanımlayıp çizmeyi öğrenecek, hız ve kuvvet alanlarını tanıyacak, son olarak bir fonksiyonun gradyanı olan alanlara, yani konservatif alanlara bakacağız. Sonraki bölümlerde vektör alanlarını eğriler ve yüzeyler boyunca integralleyecek (iş ve akı), bu integralleri Green, Stokes ve diverjans teoremleriyle birbirine bağlayacağız.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmtTrim, planeLayout, sceneLayout, field2d, field3d, arrow2d, point2d, arrowHeads2d, point, arrowHeads3d, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Düzlemde ve Uzayda Vektör Alanları
 
 Vektör alanı, tanım kümesindeki her noktaya bir vektör atayan bir fonksiyondur. Önce bu fikri kesin biçimde yazalım.
@@ -298,6 +318,195 @@ Elle ancak birkaç ok çizebiliriz. Bilgisayar programları çok sayıda noktada
 ```
 
 İkinci alanda $\mathbf{i}$ bileşeni $y$ olduğundan oklar $x$ ekseninin üstünde sağa, altında sola doğrudur; $x$ ekseninin üzerinde ise $\mathbf{F}(x, 0) = \sin x\,\mathbf{j}$ düşeydir ve yönü $\sin x$'in işaretiyle değişir. Üçüncü alanda iki bileşen de hiçbir yerde negatif olmadığından oklar hep sağa ve yukarı doğrudur. $x$ ekseni üzerinde $\mathbf{F}(x, 0) = \ln(1 + x^2)\,\mathbf{j}$ düşey, $y$ ekseni üzerinde $\mathbf{F}(0, y) = \ln(1 + y^2)\,\mathbf{i}$ yataydır; alan yalnız orijinde sıfırdır.
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: bölümün düzlem alanları ve akış çizgileri.** Listeden bir alan seçin: ilk üçü yukarıdaki şekildeki alanlardır, ötekiler bölümün örnek ve alıştırmalarından gelir. "Orantılı" seçeneğinde oklar şekildeki gibi aynı oranda kısaltılır; "eşit" seçeneğinde hepsi aynı uzunlukta çizilir ve yalnız yönü gösterir. Sıklık kaydırıcısı ızgaradaki ok sayısını değiştirir. $x_0$ ve $y_0$ kaydırıcıları turuncu noktayı taşır; değer satırı oradaki $\mathbf{F}(x_0, y_0)$ vektörünü verir. Örneğin dönme alanında $(2, 2)$ noktasında tablodaki $\langle -2, 2 \rangle$ vektörü çıkar (bkz. @exm-val-donme). Turuncu eğri, noktadan geçen akış çizgisidir (@def-val-akis-cizgisi): alanı bir hız alanı sayarsak oradan bırakılan parçacığın yolu. Dönme alanında bu yol bir çemberdir. $y\,\mathbf{i} + \sin x\,\mathbf{j}$ alanında $y^2 + 2\cos x$ ifadesi akış boyunca sabittir (@exm-val-sarkac); bu sabit $2$'den küçükse eğri $(\pi, 0)$ ya da $(-\pi, 0)$ çevresinde kapanır, büyükse dalgalanarak pencereden çıkar. Gradyan alanlarında ince çizgiler $f$'nin seviye eğrileridir ve oklar onlara diktir (@exm-val-gradyan).
+
+```{ojs}
+//| echo: false
+//| output: false
+// Flow line of F through `start` (a point in the plane or in space), traced in both directions by RK4
+// on the unit field F/|F|: the same curve, parametrized by arc length. The trace stops near a zero of F
+// (the direction turns back or the steps stall), where keep(p) fails (outside the window or the domain)
+// or when the curve closes. `along(s)` is the point at arc length s from the first point, for direction marks.
+valFlowLine = (F, start, keep, ds, steps = 3000) => {
+  const unit = (p) => {
+    const v = F(...p);
+    const length = Math.hypot(...v);
+    return Number.isFinite(length) && length > 1e-9 ? v.map((c) => c / length) : null;
+  };
+  const shift = (p, v, h) => p.map((c, i) => c + h * v[i]);
+  const distance = (p, q) => Math.hypot(...p.map((c, i) => c - q[i]));
+  let closed = false;
+  const trace = (sign) => {
+    const list = [start];
+    let p = start;
+    let previous = unit(p);
+    if (!previous) return list;
+    for (let k = 0; k < steps; k++) {
+      const h = sign * ds;
+      const k1 = unit(p);
+      if (!k1 || k1.reduce((sum, c, i) => sum + c * previous[i], 0) < 0) break;
+      const k2 = unit(shift(p, k1, h / 2));
+      const k3 = k2 && unit(shift(p, k2, h / 2));
+      const k4 = k3 && unit(shift(p, k3, h));
+      if (!k4) break;
+      const next = p.map((c, i) => c + (h / 6) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+      if (distance(next, p) < 0.5 * ds) break;
+      previous = k1;
+      p = next;
+      list.push(p);
+      if (!keep(p)) break;
+      if (k > 40 && distance(p, start) < 1.5 * ds) {
+        closed = true;
+        list.push(start);
+        break;
+      }
+    }
+    return list;
+  };
+  const forward = trace(1);
+  const backward = closed ? [start] : trace(-1);
+  const points = [...backward.reverse(), ...forward.slice(1)];
+  const lengths = [0];
+  for (let k = 1; k < points.length; k++) lengths.push(lengths[k - 1] + distance(points[k], points[k - 1]));
+  const along = (s) => {
+    let lo = 0;
+    let hi = points.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (lengths[mid] <= s) lo = mid;
+      else hi = mid;
+    }
+    const w = (s - lengths[lo]) / (lengths[hi] - lengths[lo] || 1);
+    return points[lo].map((c, i) => c + w * (points[hi][i] - c));
+  };
+  return { points, closed, length: lengths[lengths.length - 1], along };
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+valPlaneFields = {
+  // the fields of the figure above (first three) and of the examples and exercises; f is a potential
+  return {
+    rotation: { title: "−y i + x j (dönme alanı)", F: (x, y) => [-y, x], x: [-5, 5], y: [-5, 5], start: [2, 2], note: (x, y) => `Akış çizgisi orijin merkezli bir çemberdir: x² + y² = ${fmtTrim(x * x + y * y, 4)} sabit kalır.` },
+    pendulum: {
+      title: "y i + sin x j", F: (x, y) => [y, Math.sin(x)], x: [-6.4, 6.4], y: [-3.2, 3.2], start: [2, 1],
+      note: (x, y) => {
+        const c = y * y + 2 * Math.cos(x);
+        const shape = c > 2 + 1e-9 ? "c, 2'den büyük olduğundan eğri dalgalıdır" : c < 2 - 1e-9 ? "c, 2'den küçük olduğundan eğri kapalıdır" : "c = 2 olduğundan eğri, alanın sıfır olduğu noktalara uzanır";
+        return `Akış çizgisi boyunca y² + 2 cos x = c = ${fmtTrim(c, 4)} sabit kalır; ${shape}.`;
+      }
+    },
+    log: { title: "ln(1 + y²) i + ln(1 + x²) j", F: (x, y) => [Math.log(1 + y * y), Math.log(1 + x * x)], x: [-5, 5], y: [-5, 5], start: [-2, 0], note: () => "İki bileşen de negatif olmadığından oklar hep sağa ve yukarı doğrudur; alan yalnız orijinde sıfırdır." },
+    tilt: { title: "−½ i + (y − x) j", F: (x, y) => [-0.5, y - x], x: [-2.5, 2.5], y: [-2.5, 2.5], start: [0, 0], note: () => "y = x doğrusu üzerinde oklar yatay ve sola doğrudur; doğrudan uzaklaştıkça dikleşir ve uzar." },
+    level: { title: "y i + (y + 2) j", F: (x, y) => [y, y + 2], x: [-4, 4], y: [-4, 4], start: [0, 0], note: () => "Oklar x ekseni üzerinde düşey, y = −2 doğrusu üzerinde yataydır." },
+    ring: {
+      title: "(r² − 2r)⟨x, y⟩, r = √(x² + y²)", F: (x, y) => { const r = Math.hypot(x, y); return [(r * r - 2 * r) * x, (r * r - 2 * r) * y]; }, x: [-3, 3], y: [-3, 3], start: [1, 1],
+      note: (x, y) => { const r = Math.hypot(x, y); return r < 2 ? `Noktanın orijine uzaklığı r = ${fmtTrim(r, 4)}, yani 2'den küçük: parçacık orijine doğru sürüklenir.` : `Noktanın orijine uzaklığı r = ${fmtTrim(r, 4)}, yani 2'den büyük: parçacık orijinden uzaklaşır.`; }
+    },
+    saddle: { title: "x i − y j", F: (x, y) => [x, -y], x: [-3, 3], y: [-3, 3], start: [1, 1], note: (x, y) => `Akış çizgisi boyunca xy = ${fmtTrim(x * y, 4)} sabit kalır.` },
+    shift: { title: "i + x j", F: (x, y) => [1, x], x: [-3, 3], y: [-3, 3], start: [0, 0], note: (x, y) => `Akış çizgisi y = x²/2 + C parabolüdür; burada C = y − x²/2 = ${fmtTrim(y - (x * x) / 2, 4)}.` },
+    gradient: { title: "∇f, f = x²y − y³", F: (x, y) => [2 * x * y, x * x - 3 * y * y], f: (x, y) => x * x * y - y ** 3, levels: [-90, 90, 10], x: [-4.5, 4.5], y: [-4.5, 4.5], start: [2, 1], note: () => "Oklar seviye eğrilerine diktir; akış çizgisi f'nin en hızlı arttığı yönde ilerler." },
+    ellipse: { title: "∇f, f = ln(1 + x² + 2y²)", F: (x, y) => { const q = 1 + x * x + 2 * y * y; return [(2 * x) / q, (4 * y) / q]; }, f: (x, y) => Math.log(1 + x * x + 2 * y * y), levels: [0.3, 3.3, 0.3], x: [-3, 3], y: [-3, 3], start: [1, 1], note: () => "Seviye eğrileri elipslerdir; oklar onlara dik ve dışarı doğrudur." }
+  };
+}
+```
+
+```{ojs}
+//| echo: false
+viewof valPlaneChoice = Inputs.select(Object.keys(valPlaneFields), { value: "rotation", label: "alan", format: (key) => valPlaneFields[key].title })
+```
+
+```{ojs}
+//| echo: false
+viewof valPlaneControls = {
+  const field = valPlaneFields[valPlaneChoice];
+  return Inputs.form({
+    x0: Inputs.range(field.x, { value: field.start[0], step: 0.1, label: "x₀" }),
+    y0: Inputs.range(field.y, { value: field.start[1], step: 0.1, label: "y₀" }),
+    n: Inputs.range([5, 19], { value: 11, step: 2, label: "sıklık" }),
+    mode: Inputs.radio(["scaled", "unit"], { value: "scaled", label: "uzunluk", format: (key) => (key === "scaled" ? "orantılı" : "eşit") }),
+    flow: Inputs.toggle({ label: "akış çizgisi", value: true })
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+valPlanePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: secilen duzlem vektor alaninin bir izgaradaki oklari, secilen noktadaki F vektoru ve o noktadan gecen akis cizgisi; gradyan alanlarinda f fonksiyonunun seviye egrileri"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const field = valPlaneFields[valPlaneChoice];
+  const { x0, y0, n, mode, flow } = valPlaneControls;
+  const F = field.F;
+  const [xa, xb] = field.x;
+  const [ya, yb] = field.y;
+  const width = xb - xa;
+  const height = yb - ya;
+  const span = Math.max(width, height);
+  // arrow grid, inset so that the arrows along the edges stay inside the window
+  const nx = n;
+  const ny = Math.max(3, Math.round(((n - 1) * height) / width) + 1);
+  const gx = [xa + 0.05 * width, xb - 0.05 * width];
+  const gy = [ya + 0.05 * height, yb - 0.05 * height];
+  const spacing = Math.min((gx[1] - gx[0]) / (nx - 1), (gy[1] - gy[0]) / (ny - 1));
+  // one common scale for every arrow: the longest grid arrow fills 80% of the spacing
+  let longest = 1e-12;
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) {
+      const v = F(gx[0] + ((gx[1] - gx[0]) * i) / (nx - 1), gy[0] + ((gy[1] - gy[0]) * j) / (ny - 1));
+      longest = Math.max(longest, Math.hypot(v[0], v[1]));
+    }
+  }
+  const scale = (0.8 * spacing) / longest;
+  const equal = mode === "unit";
+  const traces = [];
+  if (field.f) {
+    const xs = Array.from({ length: 81 }, (_, i) => xa + (width * i) / 80);
+    const ys = Array.from({ length: 81 }, (_, j) => ya + (height * j) / 80);
+    const line = withAlpha(theme.remark, 0.75);
+    traces.push(
+      { type: "contour", x: xs, y: ys, z: ys.map((y) => xs.map((x) => field.f(x, y))), autocontour: false, contours: { coloring: "lines", start: field.levels[0], end: field.levels[1], size: field.levels[2] }, colorscale: [[0, line], [1, line]], line: { width: 1.1, smoothing: 0.6 }, showscale: false, showlegend: false, hoverinfo: "skip" },
+      { type: "scatter", mode: "lines", x: [null], y: [null], line: { color: line, width: 1.5 }, name: "seviye eğrileri", hoverinfo: "skip" }
+    );
+  }
+  traces.push(field2d(F, gx, gy, [nx, ny], theme.theory, { scale, normalize: equal, fill: 0.8, name: "alanın okları" }));
+  if (flow) {
+    const keep = (p) => p[0] >= xa && p[0] <= xb && p[1] >= ya && p[1] <= yb;
+    const line = valFlowLine(F, [x0, y0], keep, span / 400);
+    const curve = line.points;
+    if (curve.length > 2) {
+      traces.push(
+        { type: "scatter", mode: "lines", x: curve.map((p) => p[0]), y: curve.map((p) => p[1]), line: { color: theme.practice, width: 3 }, name: "akış çizgisi", hoverinfo: "skip" },
+        arrowHeads2d(line.along, 0, line.length, 6, theme.practice, { size: 0.03 * span })
+      );
+    }
+  }
+  const v0 = F(x0, y0);
+  const size0 = Math.hypot(v0[0], v0[1]);
+  if (size0 > 1e-9) {
+    // drawn with the same scale as the grid arrows
+    const factor = equal ? (0.8 * spacing) / size0 : scale;
+    traces.push(arrow2d([x0, y0], [v0[0] * factor, v0[1] * factor], theme.practice, "F(x₀, y₀)", { width: 3.5, head: 0.24 * spacing }));
+  }
+  traces.push(point2d([x0, y0], theme.practice, undefined, { size: 8 }));
+  render(Plotly, valPlanePlot, traces, planeLayout(theme, { x: field.x, y: field.y, revision: valPlaneChoice }));
+  const where = `(${fmtTrim(x0, 4)}; ${fmtTrim(y0, 4)})`;
+  const first = [`F${where} = ⟨${fmtTrim(v0[0], 4)}; ${fmtTrim(v0[1], 4)}⟩`, `|F| = ${fmtTrim(size0, 4)}`];
+  if (field.f) first.push(`f${where} = ${fmtTrim(field.f(x0, y0), 4)}`);
+  const second = size0 < 1e-9 ? "Bu noktada F = 0: buradan bırakılan parçacık yerinde kalır." : field.note(x0, y0);
+  return html`<div class="scene3d-readout">${first.join(" · ")}<br>${second}</div>`;
+}
+```
+:::
+::::
 
 Uzaydaki bir alanı da aynı yolla, noktalardan başlayan oklarla çizeriz.
 
@@ -591,6 +800,111 @@ $$\left\langle \frac{y}{z},\ -\frac{x}{z} \right\rangle = -\frac{1}{z}\,\langle 
 olur; bu, dönme alanının (bkz. @exm-val-donme) $-1/z$ katıdır. Dönme alanı yukarıdan bakıldığında saat yönünün tersine döndüğünden parçacık yukarıdan bakıldığında $z$ ekseni çevresinde **saat yönünde** döner.
 
 Sonuç olarak parçacık bir silindirin üzerinde, saat yönünde dönerek yükselir. Yatay sürati $\sqrt{x^2 + y^2}\,/\,z$ yükseldikçe azalır, düşey sürati $z/4$ ise artar; bu yüzden sarmalın kıvrımları yukarı doğru gittikçe açılır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: uzayda vektör alanları ve akış çizgileri.** Sahneyi sürükleyerek döndürebilirsiniz. Listede bu bölümün uzay alanları var: yukarıdaki sarmal akış, düşey alan $z\,\mathbf{k}$ (@exm-val-zk), kütle çekim alanı ($mMG = 1$ alınarak; @exm-val-cekim), fıskiyeye benzeyen $x\,\mathbf{i} + y\,\mathbf{j} + 3\,\mathbf{k}$ alanı (@exr-val-uzay-tarif) ve formülleri birbirine benzeyen $\mathbf{F}_1$ ile $\mathbf{F}_2$. Oklar seyrek bir ızgarada, aynı oranda kısaltılarak çizilir; "eşit" seçeneği yalnız yönü gösterir. Kaydırıcılar turuncu başlangıç noktasını taşır, turuncu eğri de o noktadan geçen akış çizgisidir. Sarmal akışta değer satırı $x^2 + y^2$ ifadesinin akış boyunca sabit kaldığını yazar: parçacık bir silindirin üzerinde, yukarıdan bakınca saat yönünde dönerek yükselir. Yükseldikçe yatay sürati azalıp düşey sürati arttığından kıvrımlar yukarı doğru açılır, aşağıda ise $z$ küçüldükçe sıklaşır.
+
+```{ojs}
+//| echo: false
+//| output: false
+valSpaceFields = {
+  // box: the axis ranges of the scene; counts: arrows per axis; keep: the part of the box where the field is used
+  return {
+    helix: {
+      title: "(y/z) i − (x/z) j + (z/4) k (sarmal akış)", F: (x, y, z) => [y / z, -x / z, z / 4],
+      box: [[-2, 2], [-2, 2], [0, 4]], zRange: [0.3, 4], counts: [5, 5, 4], start: [1, 0, 1], keep: (p) => p[2] > 0.25,
+      note: (x, y) => (Math.hypot(x, y) < 1e-9 ? "Parçacık z ekseni üzerinde dümdüz yükselir." : `x² + y² = ${fmtTrim(x * x + y * y, 4)} sabit kalır: parçacık bu silindirin üzerinde, yukarıdan bakınca saat yönünde dönerek yükselir.`)
+    },
+    vertical: {
+      title: "z k", F: (x, y, z) => [0, 0, z], box: [[-2, 2], [-2, 2], [-2, 2]], counts: [4, 4, 5], start: [1, 1, 0.5],
+      note: (x, y, z) => `Akış çizgisi düşeydir: x ile y sabit kalır, parçacık ${z > 0 ? "yukarı" : "aşağı"} doğru giderek hızlanır.`
+    },
+    gravity: {
+      title: "−x/|x|³ (kütle çekimi, mMG = 1)", F: (x, y, z) => { const r3 = Math.hypot(x, y, z) ** 3; return [-x / r3, -y / r3, -z / r3]; },
+      box: [[-2, 2], [-2, 2], [-2, 2]], counts: [4, 4, 4], start: [1.5, 1, 1], keep: (p) => Math.hypot(...p) > 0.1,
+      note: (x, y, z) => `Oklar orijine yönelir; |F| = 1/(x² + y² + z²) = ${fmtTrim(1 / (x * x + y * y + z * z), 4)}. Akış çizgisi orijine giden ışındır.`
+    },
+    fountain: { title: "x i + y j + 3 k", F: (x, y) => [x, y, 3], box: [[-2, 2], [-2, 2], [0, 4]], counts: [5, 5, 3], start: [1, 0, 0.5], note: () => "Düşey bileşen her yerde 3'tür; z ekseninden uzaklaştıkça oklar uzar ve yataylaşır." },
+    first: { title: "F₁ = y i + z j + x k", F: (x, y, z) => [y, z, x], box: [[-2, 2], [-2, 2], [-2, 2]], counts: [5, 5, 5], start: [1, 0, 0], note: () => "j bileşeni z'dir ve xy-düzleminin iki yanında işaret değiştirir." },
+    second: { title: "F₂ = y i − 2 j + x k", F: (x, y, z) => [y, -2, x], box: [[-2, 2], [-2, 2], [-2, 2]], counts: [5, 5, 5], start: [1, 1, 0], note: () => "j bileşeni her yerde −2'dir: bütün oklar y ekseninin negatif yönüne eğilir." }
+  };
+}
+```
+
+```{ojs}
+//| echo: false
+viewof valSpaceChoice = Inputs.select(Object.keys(valSpaceFields), { value: "helix", label: "alan", format: (key) => valSpaceFields[key].title })
+```
+
+```{ojs}
+//| echo: false
+viewof valSpaceControls = {
+  const field = valSpaceFields[valSpaceChoice];
+  const [bx, by, bz] = field.box;
+  return Inputs.form({
+    x0: Inputs.range(bx, { value: field.start[0], step: 0.1, label: "x₀" }),
+    y0: Inputs.range(by, { value: field.start[1], step: 0.1, label: "y₀" }),
+    z0: Inputs.range(field.zRange ? field.zRange : bz, { value: field.start[2], step: 0.1, label: "z₀" }),
+    mode: Inputs.radio(["scaled", "unit"], { value: "scaled", label: "uzunluk", format: (key) => (key === "scaled" ? "orantılı" : "eşit") })
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+valSpacePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: secilen uzay vektor alaninin seyrek bir izgaradaki oklari ve secilen baslangic noktasindan gecen akis cizgisi; sarmal alanda akis cizgisi bir silindirin uzerinde donerek yukselir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const field = valSpaceFields[valSpaceChoice];
+  const { x0, y0, z0, mode } = valSpaceControls;
+  const F = field.F;
+  const box = field.box;
+  // arrow grid, inset from the faces of the box
+  const grid = box.map(([a, b]) => [a + 0.1 * (b - a), b - 0.1 * (b - a)]);
+  const counts = field.counts;
+  const spacing = Math.min(...grid.map(([a, b], axis) => (b - a) / (counts[axis] - 1)));
+  // one common scale for every arrow: the longest grid arrow fills 80% of the spacing
+  let longest = 1e-12;
+  for (let i = 0; i < counts[0]; i++) {
+    for (let j = 0; j < counts[1]; j++) {
+      for (let k = 0; k < counts[2]; k++) {
+        const p = [i, j, k].map((m, axis) => grid[axis][0] + ((grid[axis][1] - grid[axis][0]) * m) / (counts[axis] - 1));
+        const length = Math.hypot(...F(...p));
+        if (Number.isFinite(length)) longest = Math.max(longest, length);
+      }
+    }
+  }
+  const scale = (0.8 * spacing) / longest;
+  const traces = [...field3d(F, grid[0], grid[1], grid[2], counts, theme.theory, { scale, normalize: mode === "unit", fill: 0.8, name: "alanın okları" })];
+  const start = [x0, y0, z0];
+  const keep = (p) => p.every((c, axis) => c >= box[axis][0] && c <= box[axis][1]) && (field.keep ? field.keep(p) : true);
+  const line = valFlowLine(F, start, keep, (box[0][1] - box[0][0]) / 300);
+  const curve = line.points;
+  if (curve.length > 2) {
+    traces.push(
+      { type: "scatter3d", mode: "lines", x: curve.map((p) => p[0]), y: curve.map((p) => p[1]), z: curve.map((p) => p[2]), line: { color: theme.practice, width: 5 }, name: "akış çizgisi", hoverinfo: "skip" },
+      arrowHeads3d(line.along, 0, line.length, 6, theme.practice, { size: 0.2 })
+    );
+  }
+  traces.push(point(start, theme.practice, "başlangıç noktası", { size: 5 }));
+  render(Plotly, valSpacePlot, traces, sceneLayout(theme, { x: box[0], y: box[1], z: box[2], revision: valSpaceChoice }));
+  const v = F(x0, y0, z0);
+  const size = Math.hypot(...v);
+  const where = `(${fmtTrim(x0, 4)}; ${fmtTrim(y0, 4)}; ${fmtTrim(z0, 4)})`;
+  if (!Number.isFinite(size)) {
+    return html`<div class="scene3d-readout">F${where} tanımlı değildir.<br>Kütle çekim alanı orijinde tanımlı değildir; akış çizgisi orijinde biter.</div>`;
+  }
+  const first = `F${where} = ⟨${v.map((c) => fmtTrim(c, 4)).join("; ")}⟩ · |F| = ${fmtTrim(size, 4)}`;
+  const second = size < 1e-9 ? "Bu noktada F = 0: buradan bırakılan parçacık yerinde kalır." : field.note(x0, y0, z0);
+  return html`<div class="scene3d-readout">${first}<br>${second}</div>`;
+}
+```
 :::
 ::::
 

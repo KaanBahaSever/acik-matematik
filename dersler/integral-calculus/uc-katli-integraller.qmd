@@ -8,6 +8,26 @@ Tek değişkenli bir fonksiyonu bir aralık üzerinde, iki değişkenli bir fonk
 
 Yol haritamız iki katlı integraldekiyle aynıdır. Önce en basit bölge olan dikdörtgen kutuda integrali Riemann toplamlarının limiti olarak tanımlayacak ve Fubini Teoremi ile onu art arda alınan üç tek katlı integrale indireceğiz. Sonra integrali genel cisimlere taşıyıp cismi iki yüzey arasına sıkıştırarak hesaplamayı öğreneceğiz. Bölümü hacim, kütle, kütle merkezi, eylemsizlik momenti, olasılık ve ortalama değer uygulamalarıyla bitireceğiz.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, sceneLayout, surface, graphTypeI, curtain, slicePlane, path, point, segment, legendItem, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Kutularda Üç Katlı İntegral
 
 İşe, kenarları koordinat eksenlerine paralel olan bir kutuda tanımlı fonksiyonlarla başlayalım:
@@ -960,6 +980,77 @@ Bu ardışık integralin cismi nasıl taradığını adım adım izleyelim. En i
 </figure>
 ```
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: ardışık integral cismi tarar.** Sahneyi sürükleyerek döndürebilirsiniz; düşey eksen küçültülmüş ölçektedir. Yarı saydam mavi yüzeyler @exm-uki-z-12xy içindeki $E$ cismini sınırlar. $x$ kaydırıcısı turuncu üçgen dilimi, $y$ kaydırıcısı da dilimin içindeki dikey çubuğu taşır; tabanda $D$ üçgeninin $0$'dan $x$'e kadar taranmış kısmı boyalıdır. Değer satırı üç integrali ayrı ayrı gösterir: çubuk boyunca iç integral $72x^2y^2$, dilim boyunca ortadaki integral $24x^5$ ve $0$'dan $x$'e kadar bütün dilimlerin toplamı $\int_0^x 24t^5\,dt = 4x^6$. Örneğin $x = 0{,}5$ için dilimin integrali $0{,}75$, taranan kısmınki $0{,}0625$'tir. $x = 1$ olunca dilimler bütün cismi doldurur ve toplam, örnekteki $4$ değerine ulaşır. $y$ değeri $x$'i aşarsa $(x, y)$ noktası $D$'nin dışına çıkar ve çubuk kaybolur.
+
+```{ojs}
+//| echo: false
+viewof ukiSweepControls = Inputs.form({
+  x: Inputs.range([0, 1], { value: 0.8, step: 0.05, label: "x" }),
+  y: Inputs.range([0, 1], { value: 0.4, step: 0.05, label: "y" })
+})
+```
+
+```{ojs}
+//| echo: false
+ukiSweepPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: birinci oktantta z = 12xy yuzeyi ile y = x, x = 1 ve z = 0 duzlemleri arasindaki cisim; sabit x icin ucgen dilim, sabit x ve y icin z yonunde dikey cubuk ve tabandaki D ucgeninin x'e kadar taranan kismi"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const x = Math.round(ukiSweepControls.x * 100) / 100;
+  const y = Math.round(ukiSweepControls.y * 100) / 100;
+  const roof = (u, v) => 12 * u * v;
+  const inside = y <= x + 1e-9;
+  // A polyline through the given points; null breaks the line.
+  const lines = (list, color, width, name, dash = "solid") => ({
+    type: "scatter3d",
+    mode: "lines",
+    x: list.map((P) => (P ? P[0] : null)),
+    y: list.map((P) => (P ? P[1] : null)),
+    z: list.map((P) => (P ? P[2] : null)),
+    line: { color, width, dash },
+    name,
+    showlegend: Boolean(name),
+    hoverinfo: "skip"
+  });
+  const traces = [];
+  // The part of D already swept by the outer integral, 0 <= x' <= x.
+  if (x > 0) traces.push(graphTypeI(() => 0, 0, x, 0, (u) => u, theme.base, { opacity: 0.45, nx: 24, ny: 6 }));
+  traces.push(
+    lines([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 0, 0]], theme.base, 3),
+    graphTypeI(roof, 0, 1, 0, (u) => u, theme.theory, { opacity: 0.25, nx: 32, ny: 16 }),
+    curtain((u) => [1, u], 0, 1, 0, roof, theme.theory, { opacity: 0.12, samples: 24 }),
+    curtain((u) => [u, u], 0, 1, 0, roof, theme.theory, { opacity: 0.12, samples: 24 }),
+    lines([[1, 0, 0], [1, 1, 12], [1, 1, 0]], theme.theory, 3),
+    path((u) => [u, u, 12 * u * u], 0, 1, theme.theory, undefined, { width: 3, samples: 48 })
+  );
+  // The slice at fixed x: 0 <= y <= x, 0 <= z <= 12xy, a triangle in the plane of constant x.
+  if (x > 0) {
+    traces.push(
+      surface((u, w) => [x, u * x, w * roof(x, u * x)], 0, 1, 0, 1, theme.practice, { opacity: 0.45, nu: 12, nv: 1 }),
+      lines([[x, 0, 0], [x, x, 0], [x, x, roof(x, x)], [x, 0, 0]], theme.practice, 4, "dilim: x sabit")
+    );
+  }
+  // The rod at fixed (x, y): 0 <= z <= 12xy.
+  if (inside) traces.push(segment([x, y, 0], [x, y, roof(x, y)], theme.text, { width: 9, dash: "solid", name: "çubuk: x, y sabit" }));
+  traces.push(
+    point([x, y, 0], theme.text, undefined, { size: 4 }),
+    legendItem("z = 12xy", theme.theory),
+    legendItem("taranan kısım", theme.base)
+  );
+  render(Plotly, ukiSweepPlot, traces, sceneLayout(theme, { x: [0, 1], y: [0, 1], z: [0, 12], aspectratio: { x: 1, y: 1, z: 0.9 }, eye: { x: 1.5, y: -0.95, z: 1.0 } }));
+  const rodText = inside
+    ? `çubuk: 0 ≤ z ≤ 12xy = ${fmtTrim(roof(x, y), 4)}; iç integral 72x²y² = ${fmtTrim(72 * x * x * y * y, 4)}`
+    : "y > x: (x, y) noktası D'nin dışında, çubuk yok";
+  return html`<div class="scene3d-readout">x = ${fmtTrim(x)} &nbsp;·&nbsp; y = ${fmtTrim(y)} &nbsp;·&nbsp; ${rodText}<br>dilim (x sabit, 0 ≤ y ≤ x): ortadaki integral 24x⁵ = ${fmtTrim(24 * x ** 5, 4)}<br>taranan kısım (0 ≤ x′ ≤ x): 4x⁶ = ${fmtTrim(4 * x ** 6, 4)} &nbsp;·&nbsp; bütün cisim: 4</div>`;
+}
+```
+:::
+::::
+
 Bazen aynı cisim birden çok tipte yazılabilir ve tiplerden biri hesabı çok daha kolay kılar. Bir sonraki örnek bunu gösteriyor.
 
 :::: {#exm-uki-paraboloit name="Bir Paraboloitle Sınırlı Cisim"}
@@ -1454,6 +1545,114 @@ $$
 olur.
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: aynı cisim, üç sıra.** Sahneyi sürükleyerek döndürebilirsiniz. Yarı saydam mavi yüzeyler yukarıdaki iki örneğin $E$ cismini sınırlar. Sıra seçeneği ardışık integralin sırasını belirler: verilen $dz\,dy\,dx$ sırası, @exm-uki-sira-a içindeki $dx\,dz\,dy$ sırası ya da @exm-uki-sira-b içindeki $dy\,dx\,dz$ sırası. Dış değişken sabitlenince cisimden turuncu bir dilim kesilir; dilim kaydırıcısı bu sabit değeri taşır. Dilim dış değişkenin eksenine dik bir düzlemdedir. İçindeki çubuklar en içteki değişkenin yönündedir ve uçları iç integralin sınırlarıdır. $dz\,dy\,dx$ sırasında dilimler $x$ sabitken üçgenler, $dx\,dz\,dy$ sırasında $y$ sabitken dikdörtgenler, $dy\,dx\,dz$ sırasında ise $z$ sabitken eğri kenarlı bölgelerdir. İntegrand $1$ alınırsa ardışık integral $E$'nin hacmini verir (@prp-uki-hacim); değer satırı dilimin alanını ve o ana kadar taranan hacmi gösterir. Dilim değeri $0{,}5$ iken taranan hacimler üç sırada $0{,}0031$, $0{,}0543$ ve $0{,}0888$ gibi birbirinden çok farklı sayılardır. Dilim $1$'e ulaşınca üç sıra da aynı $1/10$ değerini verir.
+
+```{ojs}
+//| echo: false
+viewof ukiOrderControls = Inputs.form({
+  order: Inputs.radio(["zyx", "xzy", "yxz"], { value: "zyx", label: "sıra", format: (key) => ({ zyx: "dz dy dx", xzy: "dx dz dy", yxz: "dy dx dz" })[key] }),
+  t: Inputs.range([0, 1], { value: 0.6, step: 0.05, label: "dilim" })
+})
+```
+
+```{ojs}
+//| echo: false
+ukiOrderPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: z = 0, z = y ve x = 1 duzlemleri ile y = x^2 silindiri arasindaki cisim; secilen integrasyon sirasinin dis degiskenine dik bir dilim ve dilimin icinde en icteki degiskenin yonundeki cubuklar; her sirada cismin hacmi 1/10 cikar"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { order } = ukiOrderControls;
+  const t = Math.round(ukiOrderControls.t * 100) / 100;
+  const rt = Math.sqrt(t);
+  // A polyline through the given points; null breaks the line.
+  const lines = (list, color, width, name, dash = "solid") => ({
+    type: "scatter3d",
+    mode: "lines",
+    x: list.map((P) => (P ? P[0] : null)),
+    y: list.map((P) => (P ? P[1] : null)),
+    z: list.map((P) => (P ? P[2] : null)),
+    line: { color, width, dash },
+    name,
+    showlegend: Boolean(name),
+    hoverinfo: "skip"
+  });
+  // E = {0 <= x <= 1, 0 <= y <= x^2, 0 <= z <= y} sliced three ways. slice(u, s) maps the unit
+  // square onto the slice at outer value t; rod(w) is the segment of the innermost variable at
+  // middle position w; area and swept are the slice area and the volume swept up to t.
+  const plans = {
+    zyx: {
+      outer: "x",
+      bounds: "dış x: 0 → 1 · orta y: 0 → x² · iç z: 0 → y",
+      axis: "x",
+      slice: (u, s) => [t, u * t * t, s * u * t * t],
+      rod: (w) => [[t, w * t * t, 0], [t, w * t * t, w * t * t]],
+      area: t ** 4 / 2,
+      swept: t ** 5 / 10
+    },
+    xzy: {
+      outer: "y",
+      bounds: "dış y: 0 → 1 · orta z: 0 → y · iç x: √y → 1",
+      axis: "y",
+      slice: (u, s) => [rt + u * (1 - rt), t, s * t],
+      rod: (w) => [[rt, t, w * t], [1, t, w * t]],
+      area: t - t ** 1.5,
+      swept: t ** 2 / 2 - (2 / 5) * t ** 2.5
+    },
+    yxz: {
+      outer: "z",
+      bounds: "dış z: 0 → 1 · orta x: √z → 1 · iç y: z → x²",
+      axis: "z",
+      slice: (u, s) => {
+        const x = rt + u * (1 - rt);
+        return [x, t + s * (x * x - t), t];
+      },
+      rod: (w) => {
+        const x = rt + w * (1 - rt);
+        return [[x, t, t], [x, x * x, t]];
+      },
+      area: 1 / 3 - t + (2 / 3) * t ** 1.5,
+      swept: t / 3 - t ** 2 / 2 + (4 / 15) * t ** 2.5
+    }
+  };
+  const plan = plans[order];
+  // The outline of the slice: the image of the boundary of the unit square.
+  const rim = [];
+  for (let k = 0; k <= 24; k++) rim.push(plan.slice(k / 24, 0));
+  for (let k = 0; k <= 24; k++) rim.push(plan.slice(1, k / 24));
+  for (let k = 24; k >= 0; k--) rim.push(plan.slice(k / 24, 1));
+  for (let k = 24; k >= 0; k--) rim.push(plan.slice(0, k / 24));
+  const rods = [];
+  const count = 6;
+  for (let k = 0; k < count; k++) {
+    const [a, b] = plan.rod((k + 0.5) / count);
+    rods.push(a, b, null);
+  }
+  const traces = [
+    ...slicePlane(plan.axis, t, [0, 1], [0, 1], theme.remark, { opacity: 0.08, width: 1.5 }),
+    graphTypeI(() => 0, 0, 1, 0, (x) => x * x, theme.base, { opacity: 0.2, nx: 32, ny: 4 }),
+    graphTypeI((x, y) => y, 0, 1, 0, (x) => x * x, theme.theory, { opacity: 0.2, nx: 32, ny: 12 }),
+    curtain((u) => [u, u * u], 0, 1, 0, (x, y) => y, theme.theory, { opacity: 0.12, samples: 40 }),
+    curtain((u) => [1, u], 0, 1, 0, (x, y) => y, theme.theory, { opacity: 0.12, samples: 8 }),
+    // Edges of E: the parabola on the floor and on the top, the x axis and the triangle on x = 1.
+    path((u) => [u, u * u, 0], 0, 1, theme.theory, undefined, { width: 3, samples: 48 }),
+    path((u) => [u, u * u, u * u], 0, 1, theme.theory, undefined, { width: 3, samples: 48 }),
+    lines([[0, 0, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 0]], theme.theory, 3),
+    surface(plan.slice, 0, 1, 0, 1, theme.practice, { opacity: 0.5, nu: 24, nv: 1 }),
+    lines(rim, theme.practice, 4, "dilim"),
+    lines(rods, theme.text, 5, "iç integralin çubukları"),
+    legendItem("E cismi", theme.theory)
+  ];
+  render(Plotly, ukiOrderPlot, traces, sceneLayout(theme, { x: [0, 1], y: [0, 1], z: [0, 1], eye: { x: 1.45, y: -1.2, z: 1.0 } }));
+  return html`<div class="scene3d-readout">${plan.bounds}<br>dilim ${plan.outer} = ${fmtTrim(t)} &nbsp;·&nbsp; dilimin alanı = ${fmt(plan.area, 4)} &nbsp;·&nbsp; ${plan.outer} ≤ ${fmtTrim(t)} için taranan hacim = ${fmt(plan.swept, 4)}<br>E'nin hacmi = 1/10 = 0,1</div>`;
+}
+```
 :::
 ::::
 

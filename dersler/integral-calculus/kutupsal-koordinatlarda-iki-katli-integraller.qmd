@@ -14,6 +14,26 @@ diye yazılır. Sınırlarda karekökler belirir ve iç integral çoğu zaman za
 
 Bu bölümde iki katlı integrali kutupsal koordinatlara taşımayı öğreneceğiz. Kural kısadır: $x = r\cos\theta$, $y = r\sin\theta$ yazılır ve $dA$ yerine $r\,dr\,d\theta$ konur. Asıl iş, bu fazladan $r$ çarpanının nereden geldiğini anlamaktır; cevap küçük kutupsal dikdörtgenlerin alanındadır. Daireler, halkalar, gül eğrileri ya da orijinden geçen çemberlerle sınırlı bölgelerde integral bu sayede birkaç satırda hesaplanır.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, sceneLayout, graphPolar, curtain, path, points, legendItem, columns, riemannPolar, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Kutupsal Koordinatlar ve Bölgeler
 
 Önce kutupsal koordinatları kısaca hatırlayıp hangi bölgelerin bu koordinatlarla kolay yazıldığını görelim.
@@ -746,6 +766,70 @@ olarak yazılırdı. İç integral $\frac{4}{3}(1 - x^2)^{3/2}$ verir ve $\int (
 :::
 ::::
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: kutupsal kutularla hacim.** Sahneyi sürükleyerek döndürebilirsiniz. Mavi yüzey $z = 1 - x^2 - y^2$ paraboloidinin $R$ kutupsal dikdörtgeni ($a \le r \le b$, $0 \le \theta \le \beta$) üzerindeki parçasıdır. Turuncu kutular $R$'nin $m \times n$ hücresine dikilmiştir: her kutunun tabanı bir kutupsal hücre, yüksekliği paraboloidin hücre merkezindeki yüksekliğidir. Kutuların toplam hacmi, (1) ile verilen $S_{mn}$ toplamıdır. Hücreler orijinden uzaklaştıkça genişler, çünkü alanları $r_i^*\,\Delta r\,\Delta\theta$'dır. $a$, $b$ ve $\beta$ ile bölgeyi, $m$ ve $n$ ile bölünüşü değiştirebilirsiniz. Değer satırı $R$'nin alanını (@prp-kki-dikdortgen-alani), $S_{mn}$ toplamını ve gerçek hacmi, yani $\int_0^\beta\int_a^b (1 - r^2)\,r\,dr\,d\theta$ integralini gösterir. Başlangıçtaki $a = 0$, $b = 1$, $\beta = 2\pi$ seçimi birim disktir ve gerçek hacim, örnekte bulduğumuz $\frac{\pi}{2} \approx 1{,}5708$ olur. Yükseklik yalnız $r$'ye bağlı olduğundan $n$'yi değiştirmek toplamı değiştirmez. Birim diskte $m = 1$, $2$ ve $4$ için toplam sırasıyla $\frac{3\pi}{4} \approx 2{,}3562$, $\frac{9\pi}{16} \approx 1{,}7671$ ve $\frac{33\pi}{64} \approx 1{,}6199$ olur: toplam gerçek hacme üstten yaklaşır ve $m$ ikiye katlandıkça fark dörtte birine iner.
+
+```{ojs}
+//| echo: false
+viewof kkiPolarControls = Inputs.form({
+  a: Inputs.range([0, 0.9], { value: 0, step: 0.05, label: "a" }),
+  b: Inputs.range([0.1, 1], { value: 1, step: 0.05, label: "b" }),
+  beta: Inputs.radio([0.25, 0.5, 1, 1.5, 2], { value: 2, label: "β", format: (k) => (k === 2 ? "2π" : k === 1.5 ? "3π/2" : k === 1 ? "π" : k === 0.5 ? "π/2" : "π/4") }),
+  m: Inputs.range([1, 10], { value: 2, step: 1, label: "m (r)" }),
+  n: Inputs.range([1, 24], { value: 8, step: 1, label: "n (θ)" })
+})
+```
+
+```{ojs}
+//| echo: false
+kkiPolarPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: z = 1 - x^2 - y^2 paraboloidinin altinda, a ile b yaricaplari ve 0 ile beta acilari arasindaki kutupsal dikdortgenin m x n hucresine dikilen kutupsal kutular; kutularin toplam hacmi kutupsal Riemann toplamidir ve birim diskte gercek hacim pi/2 degerine yaklasir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { a, b, beta, m, n } = kkiPolarControls;
+  const r0 = Math.min(a, b);
+  const r1 = Math.max(a, b);
+  const t1 = beta * Math.PI;
+  const f = (x, y) => 1 - x * x - y * y;
+  // Midpoint polar Riemann sum, the sum (1) of the text.
+  const riemann = riemannPolar(f, r0, r1, 0, t1, m, n, "midpoint");
+  // Area of R and the exact volume: the integral of (1 - r^2) r over R.
+  const area = ((r1 * r1 - r0 * r0) * t1) / 2;
+  const exact = t1 * ((r1 ** 2 - r0 ** 2) / 2 - (r1 ** 4 - r0 ** 4) / 4);
+  // Walk once around the boundary of R: outer arc, ray theta = beta, inner arc back, ray theta = 0.
+  const rim = (s) => {
+    if (s <= 1) return [r1 * Math.cos(s * t1), r1 * Math.sin(s * t1)];
+    if (s <= 2) {
+      const r = r1 + (r0 - r1) * (s - 1);
+      return [r * Math.cos(t1), r * Math.sin(t1)];
+    }
+    if (s <= 3) {
+      const t = t1 * (3 - s);
+      return [r0 * Math.cos(t), r0 * Math.sin(t)];
+    }
+    return [r0 + (r1 - r0) * (s - 3), 0];
+  };
+  const traces = [
+    ...columns(riemann.cells, theme.practice, { edgeColor: withAlpha(theme.text, 0.6), edgeWidth: 2, name: "kutular" }),
+    graphPolar(f, 0, t1, r0, r1, theme.theory, { opacity: 0.35 }),
+    path((s) => { const [x, y] = rim(s); return [x, y, f(x, y)]; }, 0, 4, theme.theory, undefined, { width: 4, samples: 400 }),
+    path((s) => [...rim(s), 0], 0, 4, theme.base, undefined, { width: 4, samples: 400 }),
+    path((t) => [Math.cos(t), Math.sin(t), 0], 0, 2 * Math.PI, withAlpha(theme.text, 0.35), undefined, { width: 2, samples: 96 }),
+    legendItem("z = 1 − x² − y²", theme.theory),
+    points(riemann.samples, theme.text, "örnek noktalar", { size: m * n > 100 ? 2 : 3 })
+  ];
+  render(Plotly, kkiPolarPlot, traces, sceneLayout(theme, { x: [-1, 1], y: [-1, 1], z: [0, 1], eye: { x: 1.5, y: 1.3, z: 1.0 } }));
+  const betaText = beta === 2 ? "2π" : beta === 1.5 ? "3π/2" : beta === 1 ? "π" : beta === 0.5 ? "π/2" : "π/4";
+  const gap = riemann.sum - exact;
+  return html`<div class="scene3d-readout">${fmtTrim(r0, 2)} ≤ r ≤ ${fmtTrim(r1, 2)}, 0 ≤ θ ≤ ${betaText} &nbsp;·&nbsp; A(R) = ${fmt(area, 4)} &nbsp;·&nbsp; m = ${m}, n = ${n}: ${m * n} hücre<br>S<sub>mn</sub> = ${fmt(riemann.sum, 4)} &nbsp;·&nbsp; gerçek hacim = ${fmt(exact, 4)} &nbsp;·&nbsp; fark = ${gap > 5e-5 ? "+" : ""}${fmt(gap, 4)}</div>`;
+}
+```
+:::
+::::
+
 ## Genel Kutupsal Bölgeler
 
 Teoremin (ii) şıkkı (@thm-kki-kutupsal), sınırları sabit olmayan bölgeleri de kapsar. Bu bölgeler II. tip bölgelerin (@def-gbi-tip-2) kutupsal karşılığıdır. Orada $x$, $y$'ye bağlı iki eğri arasında, $y$ ise sabit sınırlar arasında değişiyordu. Burada $r$, $\theta$'ya bağlı iki eğri arasında, $\theta$ ise sabit sınırlar arasında değişir.
@@ -1116,6 +1200,59 @@ V = 2\left[\frac{3\theta}{2} + \sin 2\theta + \frac{1}{8}\sin 4\theta\right]_0^{
 $$
 
 elde edilir; sinüs terimleri $0$ ve $\frac{\pi}{2}$'de sıfırdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: ışını döndürerek hacmi biriktirmek.** Sahneyi sürükleyerek döndürebilirsiniz; düşey eksen küçültülmüş ölçektedir. Mavi yüzey, örnekteki cismin tavanı olan $z = x^2 + y^2$ paraboloidinin $D$ diski üzerindeki parçası, tabandaki çember de $x^2 + y^2 = 2x$ silindirinin izidir. $\theta$ kaydırıcısı (derece cinsinden) orijinden çıkan ışını $-\frac{\pi}{2}$'den $\frac{\pi}{2}$'ye döndürür. Her açıda ışın orijinden çıkar ve çembere $r = 2\cos\theta$'da ulaşır; iç integralin sınırları bunlardır ve iç integral $\int_0^{2\cos\theta} r^3\,dr = 4\cos^4\theta$ olur. Işının geride bıraktığı kısmın tavanı turuncuya boyanır; turuncu duvar da cismin ışın boyunca kesitidir. Değer satırı geride kalan kısmın hacmini, yani $4\cos^4 t$'nin $-\frac{\pi}{2}$'den $\theta$'ya integralini verir. $\theta = 0$'da bu hacim cismin tam yarısıdır: $\frac{3\pi}{4} \approx 2{,}3562$. $\theta = 45°$'de hacim $\frac{9\pi}{8} + 1 \approx 4{,}5343$ olur, $\theta = 90°$'de ise cismin hacmi olan $\frac{3\pi}{2} \approx 4{,}7124$ değerine ulaşır. Hacmin büyük kısmı $\theta = 0$ çevresinde birikir, çünkü orada hem ışın en uzun hem cisim en yüksektir.
+
+```{ojs}
+//| echo: false
+viewof kkiSweepAngle = Inputs.range([-90, 90], { value: 0, step: 1, label: "θ (°)" })
+```
+
+```{ojs}
+//| echo: false
+kkiSweepPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: x^2 + y^2 = 2x silindirinin icinde ve z = x^2 + y^2 paraboloidinin altindaki cisim; orijinden cikan isin -90 dereceden 90 dereceye doner, her acida r 0 ile 2 cos(theta) arasinda degisir ve taranan hacim 3 pi / 2 degerine birikir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const theta = (kkiSweepAngle * Math.PI) / 180;
+  const start = -Math.PI / 2;
+  const end = Math.PI / 2;
+  const f = (x, y) => x * x + y * y;
+  const h = (t) => Math.max(0, 2 * Math.cos(t)); // the circle x^2 + y^2 = 2x is r = 2 cos(theta)
+  const reach = h(theta);
+  const inner = 4 * Math.cos(theta) ** 4;
+  // Integral of 4 cos^4 t = 3/2 + 2 cos 2t + (cos 4t)/2 from -pi/2 to theta.
+  const swept = 1.5 * (theta - start) + Math.sin(2 * theta) + Math.sin(4 * theta) / 8;
+  const exact = 1.5 * Math.PI;
+  const ray = (s) => [s * Math.cos(theta), s * Math.sin(theta)];
+  const circle = (t) => [h(t) * Math.cos(t), h(t) * Math.sin(t)];
+  const traces = [];
+  if (theta > start + 1e-9) traces.push(graphPolar(f, start, theta, 0, h, theme.practice, { opacity: 0.6, nt: 36, nr: 14 }));
+  if (theta < end - 1e-9) traces.push(graphPolar(f, theta, end, 0, h, theme.theory, { opacity: 0.3, nt: 36, nr: 14 }));
+  if (reach > 1e-9) {
+    traces.push(
+      curtain(ray, 0, reach, 0, f, theme.practice, { opacity: 0.9, samples: 40 }),
+      path((s) => [...ray(s), 0], 0, reach, theme.practice, undefined, { width: 6, samples: 2 }),
+      path((s) => [...ray(s), f(...ray(s))], 0, reach, theme.practice, undefined, { width: 5, samples: 40 })
+    );
+  }
+  traces.push(
+    path((t) => [...circle(t), 0], start, end, theme.base, undefined, { width: 4, samples: 120 }),
+    path((t) => [...circle(t), f(...circle(t))], start, end, theme.theory, undefined, { width: 3, samples: 120 }),
+    legendItem("z = x² + y²", theme.theory),
+    legendItem("taranan kısım", theme.practice),
+    legendItem("x² + y² = 2x", theme.base)
+  );
+  render(Plotly, kkiSweepPlot, traces, sceneLayout(theme, { x: [0, 2], y: [-1, 1], z: [0, 4], aspectratio: { x: 1, y: 1, z: 1 }, eye: { x: 1.1, y: 1.9, z: 1.0 } }));
+  return html`<div class="scene3d-readout">θ = ${fmtTrim(kkiSweepAngle)}° ≈ ${fmt(theta, 4)} rad &nbsp;·&nbsp; ışın: 0 ≤ r ≤ 2 cos θ = ${fmt(reach, 4)} &nbsp;·&nbsp; iç integral 4 cos⁴θ = ${fmt(inner, 4)}<br>taranan hacim = ${fmt(swept, 4)} &nbsp;·&nbsp; cismin hacmi 3π/2 ≈ ${fmt(exact, 4)}</div>`;
+}
+```
 :::
 ::::
 

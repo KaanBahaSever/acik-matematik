@@ -14,6 +14,26 @@ $$x = r\cos\theta, \qquad y = r\sin\theta, \qquad r^2 = x^2 + y^2$$
 
 olduğunu ve $x \ne 0$ iken $\tan\theta = y/x$ eşitliğinin sağlandığını hatırlayalım.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, sceneLayout, cylinder, quad, slicePlane, path, point, label, legendItem, columns, polarCell, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Silindirik Koordinatlar
 
 Önce uzaydaki bir noktayı kutupsal koordinatlar ve yükseklik yardımıyla nasıl adlandıracağımızı görelim.
@@ -58,6 +78,88 @@ Yani $r$, $P$'nin $z$ eksenine uzaklığıdır; $\theta$, $P$'nin $z$ ekseni etr
 <figcaption><em>P</em> noktasının silindirik koordinatları: (<em>r</em>, <em>&#952;</em>), <em>P</em>'nin <em>xy</em>-düzlemindeki izdüşümünün kutupsal koordinatları, <em>z</em> ise <em>P</em>'nin yüksekliğidir. <em>r</em> aynı zamanda <em>P</em>'nin <em>z</em> eksenine uzaklığıdır; kesikli yaylar <em>P</em>'den geçen <em>r</em> = sabit silindirinin izleridir.</figcaption>
 </figure>
 ```
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: bir noktanın silindirik koordinatları.** Sahneyi sürükleyerek döndürebilirsiniz. $r$, $\theta$ ve $z$ kaydırıcıları $P$ noktasını taşır: $r$, $P$'nin $z$ eksenine uzaklığını; $\theta$, izdüşüm $P'$'nin pozitif $x$ ekseninden ölçülen açısını; $z$ de $P$'nin yüksekliğini değiştirir. Kesikli çemberler, $P$'den geçen $r = c$ silindirinin izleridir. Yüzeyler kutusu işaretlenince $P$'den geçen üç koordinat yüzeyi (@prp-sil-koordinat-yuzeyleri) görünür: silindir, düşey yarım düzlem ve yatay düzlem. $r > 0$ iken $P$ bu üç yüzeyin tek ortak noktasıdır. Değer satırı, birazdan göreceğimiz (1) formülleriyle (@prp-sil-gecis) hesaplanan dik koordinatları gösterir. Başlangıçtaki $(2, 2\pi/3, 1)$ noktası @exm-sil-silindirikten-dike içindeki noktadır ve $x = -1$, $y = \sqrt{3} \approx 1{,}73$ verir. $\theta$ açısını $150^\circ$, yani $5\pi/6$ yapınca @exr-sil-noktadan-dike içindeki $(-\sqrt{3}, 1, 1)$ noktası çıkar.
+
+```{ojs}
+//| echo: false
+viewof silPointControls = Inputs.form({
+  r: Inputs.range([0, 3], { value: 2, step: 0.1, label: "r" }),
+  theta: Inputs.range([0, 345], { value: 120, step: 15, label: "θ (°)" }),
+  z: Inputs.range([-2, 2], { value: 1, step: 0.1, label: "z" }),
+  surfaces: Inputs.toggle({ label: "yüzeyler", value: false })
+})
+```
+
+```{ojs}
+//| echo: false
+silPointPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: silindirik koordinatlari (r, theta, z) olan P noktasi, xy-duzlemindeki izdusumu, orijinden izdusume uzunlugu r olan dogru parcasi, pozitif x ekseninden olculen theta acisi ve P'nin yuksekligi z; istenirse P'den gecen r = sabit silindiri, theta = sabit yarim duzlemi ve z = sabit duzlemi"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const r = Math.round(silPointControls.r * 10) / 10;
+  const z = Math.round(silPointControls.z * 10) / 10;
+  const { theta, surfaces } = silPointControls;
+  const angle = (theta * Math.PI) / 180;
+  const x = r * Math.cos(angle);
+  const y = r * Math.sin(angle);
+  // theta as a multiple of pi: 120 -> "2π/3"
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  const piText = (degrees) => {
+    if (degrees === 0) return "0";
+    const g = gcd(degrees, 180);
+    const num = degrees / g;
+    const den = 180 / g;
+    return `${num === 1 ? "" : num}π${den === 1 ? "" : "/" + den}`;
+  };
+  // A polyline through the given points; null breaks the line.
+  const lines = (list, color, width, name, dash = "solid") => ({
+    type: "scatter3d",
+    mode: "lines",
+    x: list.map((P) => (P ? P[0] : null)),
+    y: list.map((P) => (P ? P[1] : null)),
+    z: list.map((P) => (P ? P[2] : null)),
+    line: { color, width, dash },
+    name,
+    showlegend: Boolean(name),
+    hoverinfo: "skip"
+  });
+  const traces = [];
+  if (surfaces) {
+    const edge = [3 * Math.cos(angle), 3 * Math.sin(angle)];
+    if (r > 0) traces.push(cylinder(r, -2, 2, theme.theory, { opacity: 0.15 }));
+    traces.push(
+      quad([0, 0, -2], [edge[0], edge[1], -2], [edge[0], edge[1], 2], [0, 0, 2], theme.remark, { opacity: 0.22 }),
+      ...slicePlane("z", z, [-3, 3], [-3, 3], theme.base, { opacity: 0.12, width: 1.5 }),
+      legendItem("r = sabit", theme.theory),
+      legendItem("θ = sabit", theme.remark),
+      legendItem("z = sabit", theme.base)
+    );
+  }
+  traces.push(
+    // the coordinate axes through the origin
+    lines([[-3, 0, 0], [3, 0, 0], null, [0, -3, 0], [0, 3, 0], null, [0, 0, -2], [0, 0, 2]], withAlpha(theme.text, 0.45), 2),
+    // traces of the cylinder r = const through P, on the floor and at the height of P
+    path((u) => [r * Math.cos(u), r * Math.sin(u), 0], 0, 2 * Math.PI, withAlpha(theme.text, 0.5), undefined, { width: 2, dash: "dash", samples: 96 }),
+    path((u) => [r * Math.cos(u), r * Math.sin(u), z], 0, 2 * Math.PI, withAlpha(theme.text, 0.5), undefined, { width: 2, dash: "dash", samples: 96 }),
+    lines([[0, 0, 0], [x, y, 0]], theme.practice, 6, "r"),
+    path((u) => [0.7 * Math.cos(u), 0.7 * Math.sin(u), 0], 0, angle, theme.base, "θ", { width: 6, samples: 48 }),
+    lines([[x, y, 0], [x, y, z]], theme.theory, 6, "z"),
+    // the distance from P to the z axis is r as well
+    lines([[0, 0, z], [x, y, z]], withAlpha(theme.text, 0.55), 2, undefined, "dash"),
+    point([x, y, 0], theme.text, undefined, { size: 4, text: "P′" }),
+    point([x, y, z], theme.practice, undefined, { size: 7, text: "P" })
+  );
+  render(Plotly, silPointPlot, traces, sceneLayout(theme, { x: [-3, 3], y: [-3, 3], z: [-2, 2], eye: { x: 1.6, y: 1.35, z: 0.9 } }));
+  return html`<div class="scene3d-readout">r = ${fmtTrim(r)} &nbsp;·&nbsp; θ = ${piText(theta)} = ${theta}° &nbsp;·&nbsp; z = ${fmtTrim(z)}<br>x = r cos θ = ${fmt(x, 2)} &nbsp;·&nbsp; y = r sin θ = ${fmt(y, 2)} &nbsp;·&nbsp; z = ${fmt(z, 2)} &nbsp;·&nbsp; x² + y² = r² = ${fmt(x * x + y * y, 2)}</div>`;
+}
+```
+:::
+::::
 
 İki sistem arasındaki geçiş, kutupsal koordinatlardaki geçişin üstüne $z = z$ eşitliğini eklemekten ibarettir.
 
@@ -614,6 +716,77 @@ olur. Kenarlara bakarak da aynı sonuca varırız: kutu, kenarları yaklaşık $
 <figcaption>Silindirik bir kutu: tabanı alanı &#916;<em>A</em> olan bir kutupsal dikdörtgen, yüksekliği &#916;<em>z</em>'dir. Kenarları yaklaşık &#916;<em>r</em>, <em>r</em>&#8201;&#916;<em>&#952;</em> ve &#916;<em>z</em> olduğundan hacmi yaklaşık <em>r</em>&#8201;&#916;<em>r</em>&#8201;&#916;<em>&#952;</em>&#8201;&#916;<em>z</em>'dir.</figcaption>
 </figure>
 ```
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: silindirik kutunun hacmi.** Sahneyi sürükleyerek döndürebilirsiniz. Turuncu cisim, $r$ ile $r + \Delta r$, $\theta$ ile $\theta + \Delta\theta$ ve $z = 0$ ile $z = 1$ arasında kalan silindirik kutudur. Mavi çizgiler kutunun bir köşesinde buluşan $\Delta r$, $r\,\Delta\theta$ ve $\Delta z$ kenarlarıdır. $r$ kaydırıcısı kutuyu $z$ ekseninden uzaklaştırır, $\Delta r$ ve $\Delta\theta$ kaydırıcıları kutunun boyutlarını değiştirir. Gri kutu, aynı $\Delta r$, $\Delta\theta$ ve $\Delta z$ ile eksene dayanan en içteki kutudur; turuncu kutuyla üst üste bindiğinde gizlenir. Değer satırı tam hacim $\Delta V = \bar{r}\,\Delta r\,\Delta\theta\,\Delta z$'yi, kenarlardan gelen $\Delta r \cdot r\,\Delta\theta \cdot \Delta z$ yaklaşımını ve $r$ çarpanı unutulunca çıkan $\Delta r\,\Delta\theta\,\Delta z$ çarpımını yan yana gösterir. Başlangıçtaki $\Delta r = 0{,}5$, $\Delta\theta = 30^\circ = \pi/6$ ve $\Delta z = 1$ değerleriyle en içteki kutunun hacmi $\pi/48 \approx 0{,}065$, $r = 2$'deki kutununki ise $3\pi/16 \approx 0{,}589$'dur; yani dokuz katıdır. $r$ çarpanı unutulsaydı ikisinin hacmi de aynı $\pi/12 \approx 0{,}262$ çıkardı.
+
+```{ojs}
+//| echo: false
+viewof silBoxControls = Inputs.form({
+  r: Inputs.range([0, 2.5], { value: 2, step: 0.1, label: "r" }),
+  dr: Inputs.range([0.1, 1], { value: 0.5, step: 0.1, label: "Δr" }),
+  dt: Inputs.range([10, 90], { value: 30, step: 5, label: "Δθ (°)" })
+})
+```
+
+```{ojs}
+//| echo: false
+silBoxPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: r ile r + dr, theta ile theta + dtheta ve z = 0 ile z = 1 arasindaki silindirik kutu, kenarlari dr, r dtheta ve dz; karsilastirma icin ayni dr, dtheta ve dz ile eksene dayanan en icteki kutu; kutunun hacmi ortalama yaricap carpi dr dtheta dz olur"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const r = Math.round(silBoxControls.r * 10) / 10;
+  const dr = Math.round(silBoxControls.dr * 10) / 10;
+  const degrees = silBoxControls.dt;
+  const dt = (degrees * Math.PI) / 180;
+  const dz = 1;
+  // The box starts at theta = 15 degrees.
+  const t0 = Math.PI / 12;
+  const t1 = t0 + dt;
+  const R = r + dr;
+  const rbar = r + dr / 2;
+  const at = (rho, angle, height) => [rho * Math.cos(angle), rho * Math.sin(angle), height];
+  // A polyline through the given points; null breaks the line.
+  const lines = (list, color, width, name, dash = "solid") => ({
+    type: "scatter3d",
+    mode: "lines",
+    x: list.map((P) => (P ? P[0] : null)),
+    y: list.map((P) => (P ? P[1] : null)),
+    z: list.map((P) => (P ? P[2] : null)),
+    line: { color, width, dash },
+    name,
+    showlegend: Boolean(name),
+    hoverinfo: "skip"
+  });
+  const traces = [
+    ...columns([polarCell(r, R, t0, t1, 0, dz, 24)], theme.practice, { opacity: 0.55, edgeColor: withAlpha(theme.text, 0.6), edgeWidth: 2 })
+  ];
+  // The innermost box with the same increments, for comparison (hidden while the two overlap).
+  if (r >= dr - 1e-9) {
+    traces.push(...columns([polarCell(0, dr, t0, t1, 0, dz, 12)], theme.remark, { opacity: 0.35, edgeColor: withAlpha(theme.text, 0.4), edgeWidth: 1.5 }));
+  }
+  traces.push(
+    // radii from the z axis to the outer arc along both sides of the box
+    lines([[0, 0, 0], at(R, t0, 0), null, [0, 0, 0], at(R, t1, 0)], withAlpha(theme.text, 0.5), 2, undefined, "dash"),
+    // the three edges that meet at the corner (r, theta, 0)
+    lines([at(r, t0, 0), at(R, t0, 0)], theme.theory, 8, "kenarlar"),
+    path((u) => at(r, u, 0), t0, t1, theme.theory, undefined, { width: 8, samples: 48 }),
+    lines([at(r, t0, 0), at(r, t0, dz)], theme.theory, 8),
+    label(at(r + dr / 2, t0, 0), "Δr", theme.theory, { position: "bottom center" }),
+    label(at(r, t0 + dt / 2, 0), "rΔθ", theme.theory, { position: "bottom center" }),
+    label(at(r, t0, dz / 2), "Δz", theme.theory, { position: "middle left" }),
+    legendItem("silindirik kutu", theme.practice),
+    legendItem("en içteki kutu", theme.remark)
+  );
+  render(Plotly, silBoxPlot, traces, sceneLayout(theme, { x: [-1, 3.5], y: [-0.5, 3.5], z: [0, 1.5], eye: { x: 1.3, y: 1.1, z: 1.3 } }));
+  return html`<div class="scene3d-readout">r = ${fmtTrim(r)} &nbsp;·&nbsp; Δr = ${fmtTrim(dr)} &nbsp;·&nbsp; Δθ = ${degrees}° = ${fmt(dt, 4)} rad &nbsp;·&nbsp; Δz = 1<br>iç yay rΔθ = ${fmt(r * dt, 4)} &nbsp;·&nbsp; dış yay (r + Δr)Δθ = ${fmt(R * dt, 4)} &nbsp;·&nbsp; r̄ = r + Δr/2 = ${fmtTrim(rbar)}<br>ΔV = r̄ Δr Δθ Δz = ${fmt(rbar * dr * dt * dz, 4)} &nbsp;·&nbsp; Δr · rΔθ · Δz = ${fmt(r * dt * dr * dz, 4)} &nbsp;·&nbsp; r çarpanı olmadan Δr Δθ Δz = ${fmt(dr * dt * dz, 4)}<br>en içteki kutu: ΔV = ${fmt((dr / 2) * dr * dt * dz, 4)}</div>`;
+}
+```
+:::
+::::
 
 ::: {.callout-warning title="r çarpanını unutmayın"}
 $dV$ yerine $dz\,dr\,d\theta$ yazmak en sık yapılan hatadır. Örneğin yarıçapı $a$, yüksekliği $h$ olan silindirin hacmi $r$ çarpanı unutulursa $\int_0^{2\pi}\int_0^a\int_0^h dz\,dr\,d\theta = 2\pi a h$ çıkar; bu, doğru değer olan $\pi a^2 h$ değildir.

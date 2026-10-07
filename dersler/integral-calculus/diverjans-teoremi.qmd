@@ -22,6 +22,83 @@ biçimini alacağını tahmin edebiliriz. Uygun koşullar altında bu tahmin do�
 
 Teorem, onu elektrostatik üzerine çalışırken bulan Carl Friedrich Gauss'un (1777–1855) adıyla **Gauss Teoremi** diye de anılır. Doğu Avrupa'da ise sonucu 1826'da ortaya koyan Mihail Ostrogradski'nin (1801–1862) adıyla bilinir. Bu bölümde teoremi ispatlayacak, akı hesaplarını nasıl kısalttığını görecek ve diverjansın fiziksel anlamını teoremden çıkaracağız.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, fmt, sceneLayout, surface, point, legendItem, arrowsAt, partials, cross, dot, norm, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+// Nodes and weights of the n-point Gauss-Legendre rule on [-1, 1] (Newton's method on P_n).
+function divGaussLegendre(n) {
+  const nodes = [];
+  const weights = [];
+  for (let i = 0; i < n; i++) {
+    let z = Math.cos((Math.PI * (i + 0.75)) / (n + 0.5));
+    let slope = 1;
+    for (let step = 0; step < 100; step++) {
+      let p0 = 1;
+      let p1 = z;
+      for (let k = 2; k <= n; k++) {
+        const p2 = ((2 * k - 1) * z * p1 - (k - 1) * p0) / k;
+        p0 = p1;
+        p1 = p2;
+      }
+      slope = (n * (z * p1 - p0)) / (z * z - 1);
+      const shift = p1 / slope;
+      z -= shift;
+      if (Math.abs(shift) < 1e-15) break;
+    }
+    nodes.push(z);
+    weights.push(2 / ((1 - z * z) * slope * slope));
+  }
+  return { nodes, weights };
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+// Flux of F through the closed surface surf(u, v), 0 <= u <= pi, 0 <= v <= 2 pi, whose r_u x r_v points
+// outward: Gauss-Legendre in u, midpoints in v. Returns the net flux and its outflow and inflow parts.
+function divFlux(F, surf, nu, nv) {
+  const rule = divGaussLegendre(nu);
+  const dv = (2 * Math.PI) / nv;
+  let net = 0;
+  let outflow = 0;
+  let inflow = 0;
+  for (let k = 0; k < nu; k++) {
+    const u = ((rule.nodes[k] + 1) * Math.PI) / 2;
+    const weight = ((rule.weights[k] * Math.PI) / 2) * dv;
+    for (let j = 0; j < nv; j++) {
+      const v = (j + 0.5) * dv;
+      const [ru, rv] = partials(surf, u, v);
+      const value = dot(F(surf(u, v)), cross(ru, rv)) * weight;
+      net += value;
+      if (value > 0) outflow += value;
+      else inflow += value;
+    }
+  }
+  return { net, outflow, inflow };
+}
+```
+::::
+
 ## Basit Katı Bölgeler
 
 Teoremi ispatlayacağımız cisimler, üç katlı integralleri hesaplarken kullandığımız tip 1, tip 2 ve tip 3 bölgelerin ([Üç Katlı İntegraller](uc-katli-integraller.qmd)) üçü birden olan cisimlerdir.
@@ -1206,6 +1283,81 @@ olur. Aynı akıyı küreyi parametrize ederek doğrudan da hesaplayabiliriz ([Y
 :::
 ::::
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: genişleyen küre.** Sahneyi sürükleyerek döndürebilirsiniz. $a$ kaydırıcısı orijin merkezli kürenin yarıçapını değiştirir; üstteki seçenekle bu bölümün üç vektör alanından birini seçersiniz: @exm-div-top-dogrulama içindeki $x\,\mathbf{i} + y\,\mathbf{j} + z\,\mathbf{k}$, @exm-div-birim-kure içindeki $z\,\mathbf{i} + y\,\mathbf{j} + x\,\mathbf{k}$ ve @exr-div-kure-kupler içindeki $(x^3 + y^3)\,\mathbf{i} + \dots$ alanı. Küre $\mathbf{F} \cdot \mathbf{n}$'nin işaretine göre boyanır: akışın dışarı çıktığı ve içeri girdiği bölgeler ayrı renklerdedir. Değer satırı akıyı yüzey integralinden sayısal olarak hesaplar, dışarı ve içeri akan kısımları ayrı ayrı verir ve sonucu $\iiint_B \operatorname{div}\mathbf{F}\,dV$ ile karşılaştırır. $z\,\mathbf{i} + y\,\mathbf{j} + x\,\mathbf{k}$ alanı kürenin bir bölümünden içeri girer: $a = 1$ iken dışarı akış yaklaşık $5{,}92$, içeri akış $-1{,}74$, net akı ise örnekteki $4\pi/3 \approx 4{,}1888$'dir. İlk alanda $a = 1$ için $4\pi \approx 12{,}5664$, üçüncü alanda $a = 2$ için $384\pi/5 \approx 241{,}2743$ çıkar. Akının topun hacmine oranı ilk iki alanda $a$'dan bağımsızdır ve $\operatorname{div}\mathbf{F}$'ye, yani $3$'e ve $1$'e eşittir. Üçüncü alanda bu oran $9a^2/5$'tir ve $a \to 0$ iken orijindeki diverjans olan $0$'a gider (@prp-div-aki-yorumu).
+
+```{ojs}
+//| echo: false
+viewof divBallControls = Inputs.form({
+  field: Inputs.radio(["r", "zyx", "cubes"], { value: "zyx", label: "alan", format: (key) => ({ r: "x i + y j + z k", zyx: "z i + y j + x k", cubes: "(x³ + y³) i + …" })[key] }),
+  a: Inputs.range([0.2, 2], { value: 1, step: 0.05, label: "a" })
+})
+```
+
+```{ojs}
+//| echo: false
+divBallPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: orijin merkezli a yaricapli kure, F . n nin isaretine gore disari ve iceri akis bolgelerine boyanmis; kure uzerinde F oklari; yuzeyden disari net aki, div F nin top uzerindeki uc katli integraline esittir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { field, a } = divBallControls;
+  // The three fields of the chapter, their divergence and the exact integral of div F over the ball of radius a.
+  const fields = {
+    r: { F: ([x, y, z]) => [x, y, z], div: "3", exactText: "4πa³", exact: 4 * Math.PI * a ** 3 },
+    zyx: { F: ([x, y, z]) => [z, y, x], div: "1", exactText: "4πa³/3", exact: (4 / 3) * Math.PI * a ** 3 },
+    cubes: {
+      F: ([x, y, z]) => [x ** 3 + y ** 3, y ** 3 + z ** 3, z ** 3 + x ** 3],
+      div: "3(x² + y² + z²)",
+      exactText: "12πa⁵/5",
+      exact: (12 / 5) * Math.PI * a ** 5
+    }
+  };
+  const { F, div, exactText, exact } = fields[field];
+  const sphere = (u, v) => [a * Math.sin(u) * Math.cos(v), a * Math.sin(u) * Math.sin(v), a * Math.cos(u)];
+  const flux = divFlux(F, sphere, 48, 96);
+  const volume = (4 / 3) * Math.PI * a ** 3;
+  // Shade the sphere by F . n, with n = position / a: outflow and inflow in two colors.
+  const nu = 36;
+  const nv = 72;
+  const normalPart = [];
+  for (let i = 0; i <= nu; i++) {
+    const row = [];
+    for (let j = 0; j <= nv; j++) {
+      const p = sphere((Math.PI * i) / nu, (2 * Math.PI * j) / nv);
+      row.push(dot(F(p), p) / a);
+    }
+    normalPart.push(row);
+  }
+  const largest = Math.max(1e-12, ...normalPart.flat().map((value) => Math.abs(value)));
+  const shading = {
+    surfacecolor: normalPart,
+    colorscale: [[0, theme.theory], [0.5, theme.surface], [1, theme.practice]],
+    cmin: -largest,
+    cmax: largest
+  };
+  // Arrows of F at 32 points of the sphere; the longest one is drawn 0.15 + 0.35 a long.
+  const feet = [sphere(0, 0), sphere(Math.PI, 0)];
+  for (let i = 1; i <= 5; i++) {
+    for (let j = 0; j < 6; j++) feet.push(sphere((i * Math.PI) / 6, ((2 * j + (i % 2)) * Math.PI) / 6));
+  }
+  const values = feet.map(F);
+  const longest = Math.max(1e-12, ...values.map(norm));
+  const traces = [
+    surface(sphere, 0, Math.PI, 0, 2 * Math.PI, theme.theory, { nu, nv, opacity: 0.6, trace: shading }),
+    legendItem("F · n > 0 (dışarı)", theme.practice),
+    legendItem("F · n < 0 (içeri)", theme.theory),
+    ...arrowsAt(feet, values, theme.text, { scale: (0.15 + 0.35 * a) / longest, head: 0.05 + 0.08 * a, name: "F" })
+  ];
+  render(Plotly, divBallPlot, traces, sceneLayout(theme, { x: [-3, 3], y: [-3, 3], z: [-3, 3], eye: { x: 1.55, y: 1.35, z: 0.85 } }));
+  return html`<div class="scene3d-readout">a = ${fmt(a)} &nbsp;·&nbsp; div <b>F</b> = ${div} &nbsp;·&nbsp; V(B) = 4πa³/3 = ${fmt(volume, 4)}<br>yüzeyden: dışarı akış = ${fmt(flux.outflow)} &nbsp;·&nbsp; içeri akış = ${fmt(flux.inflow)} &nbsp;·&nbsp; net akı = ${fmt(flux.net, 4)}<br>∭<sub>B</sub> div <b>F</b> dV = ${exactText} = ${fmt(exact, 4)} &nbsp;·&nbsp; akı / V(B) = ${fmt(flux.net / volume, 4)}</div>`;
+}
+```
+:::
+::::
+
 Sıradaki örnekte yüzey dört parçadan oluşuyor ve alanın kendisi karmaşık; diverjans ise basit.
 
 :::: {#exm-div-parabolik-silindir name="Parabolik Silindirle Sınırlı Cisim"}
@@ -1609,6 +1761,97 @@ bulunur. Demek ki orijini içine alan her kapalı $S$ yüzeyinden akı $4\pi\var
 Bu, tek bir nokta yük için Gauss yasasıdır. $\varepsilon$ ile boşluğun elektriksel geçirgenliği $\varepsilon_0$ arasında $\varepsilon = 1/(4\pi\varepsilon_0)$ bağıntısı olduğundan akı $Q/\varepsilon_0$'a eşittir.
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: Gauss yasası.** Sahneyi sürükleyerek döndürebilirsiniz. $Q$ yükü orijindedir ve $\varepsilon Q = 1$ alınmıştır, yani $\mathbf{E}(\mathbf{x}) = \mathbf{x}/|\mathbf{x}|^3$. Kapalı yüzeyin merkezi $(c, 0, 0)$ noktasıdır: $c$ kaydırıcısı yüzeyi $x$ ekseni boyunca kaydırır, $a$ büyüklüğünü değiştirir, dalga kaydırıcısı da küreyi girintili çıkıntılı bir kapalı yüzeye çevirir. Yüzey $\mathbf{E} \cdot \mathbf{n}$'nin işaretine göre boyanır; oklar yalnız $\mathbf{E}$'nin yönünü gösterir. Değer satırı akıyı yüzey integralinden sayısal olarak hesaplar. Yük yüzeyin içindeyken yüzey nasıl biçimlenirse biçimlensin net akı $4\pi \approx 12{,}5664$'tür. Yük dışarıda kalınca $\mathbf{E}$ yüzeyin bir yanından girip öbür yanından çıkar, iki kısım birbirini götürür ve net akı $0$ olur: yüzeyin çevrelediği cisimde $\mathbf{E}$ her yerde tanımlıdır ve $\operatorname{div}\mathbf{E} = 0$'dır, bu yüzden Diverjans Teoremi akıyı sıfır verir. Yüzey yükün çok yakınından geçtiğinde akı hesaplanmaz.
+
+```{ojs}
+//| echo: false
+viewof divGaussControls = Inputs.form({
+  c: Inputs.range([-2, 2], { value: 0, step: 0.1, label: "c" }),
+  a: Inputs.range([0.5, 1.25], { value: 1, step: 0.05, label: "a" }),
+  w: Inputs.range([0, 0.25], { value: 0, step: 0.05, label: "dalga" })
+})
+```
+
+```{ojs}
+//| echo: false
+divGaussPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: orijindeki Q yukunun E = x / |x|^3 alani ve merkezi (c, 0, 0) olan, dalgali olabilen kapali bir yuzey; yuzey E . n nin isaretine gore boyanmis, uzerinde E nin yonunu gosteren oklar; yuk icerideyken net aki 4 pi, disaridayken 0 dir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { c, a, w } = divGaussControls;
+  // The field of exm-div-gauss-yasasi with eps Q = 1: E = x / |x|^3, undefined only at the origin.
+  const E = (p) => {
+    const r = norm(p);
+    return p.map((t) => t / (r * r * r));
+  };
+  // A closed surface about the center (c, 0, 0): the sphere of radius a pushed in and out by a smooth wave of size w.
+  const wave = ([sx, sy, sz]) => sx ** 3 - 3 * sx * sy * sy + 0.8 * sx * sz + 0.5 * sy * sz;
+  const radius = (s) => a * (1 + w * wave(s));
+  const S = (u, v) => {
+    const s = [Math.sin(u) * Math.cos(v), Math.sin(u) * Math.sin(v), Math.cos(u)];
+    const R = radius(s);
+    return [c + R * s[0], R * s[1], R * s[2]];
+  };
+  // The surface is star-shaped about its center: the charge is inside when it is nearer than the surface on that ray.
+  const inside = Math.abs(c) < 1e-9 || Math.abs(c) < radius([-Math.sign(c), 0, 0]);
+  // Shade by the normal component of E (squeezed by tanh, since E blows up near the charge) and find the
+  // shortest distance from the charge to the surface.
+  const nu = 36;
+  const nv = 72;
+  let gap = Infinity;
+  const normalPart = [];
+  for (let i = 0; i <= nu; i++) {
+    const u = Math.min(Math.PI - 1e-3, Math.max(1e-3, (Math.PI * i) / nu));
+    const row = [];
+    for (let j = 0; j <= nv; j++) {
+      const v = (2 * Math.PI * j) / nv;
+      const p = S(u, v);
+      const [ru, rv] = partials(S, u, v);
+      const N = cross(ru, rv);
+      const value = dot(E(p), N) / norm(N);
+      row.push(Number.isFinite(value) ? value : 0);
+      gap = Math.min(gap, norm(p));
+    }
+    normalPart.push(row);
+  }
+  const sizes = normalPart.flat().map((value) => Math.abs(value)).sort((p, q) => p - q);
+  const typical = Math.max(1e-9, sizes[Math.floor(sizes.length / 2)]);
+  const shading = {
+    surfacecolor: normalPart.map((row) => row.map((value) => Math.tanh(value / typical))),
+    colorscale: [[0, theme.theory], [0.5, theme.surface], [1, theme.practice]],
+    cmin: -1,
+    cmax: 1
+  };
+  const flux = gap < 0.15 ? null : divFlux(E, S, 96, 192);
+  // Unit arrows of E at 32 points of the surface.
+  const feet = [S(0, 0), S(Math.PI, 0)];
+  for (let i = 1; i <= 5; i++) {
+    for (let j = 0; j < 6; j++) feet.push(S((i * Math.PI) / 6, ((2 * j + (i % 2)) * Math.PI) / 6));
+  }
+  const marked = feet.filter((p) => norm(p) > 1e-6);
+  const traces = [
+    surface(S, 0, Math.PI, 0, 2 * Math.PI, theme.theory, { nu, nv, opacity: 0.55, trace: shading }),
+    legendItem("E · n > 0 (dışarı)", theme.practice),
+    legendItem("E · n < 0 (içeri)", theme.theory),
+    ...arrowsAt(marked, marked.map(E), theme.text, { normalize: true, fill: 0.3, head: 0.1, name: "E (yalnız yön)" }),
+    point([0, 0, 0], theme.practice, "Q", { size: 6 })
+  ];
+  render(Plotly, divGaussPlot, traces, sceneLayout(theme, { x: [-3.9, 3.9], y: [-1.9, 1.9], z: [-1.9, 1.9], eye: { x: 0.6, y: -2.0, z: 0.8 } }));
+  const head = `c = ${fmt(c, 1)}, a = ${fmt(a)}, dalga = ${fmt(w)}`;
+  if (!flux) {
+    return html`<div class="scene3d-readout">${head} &nbsp;·&nbsp; yüzey Q yüküne çok yakın (en kısa uzaklık ≈ ${fmt(gap)}); <b>E</b> orada çok büyüdüğünden akı hesaplanmıyor, yüzeyi yükten uzaklaştırın</div>`;
+  }
+  const expected = inside ? `Gauss yasası: 4πεQ = 4π = ${fmt(4 * Math.PI, 4)}` : "Q dışarıda: div E = 0, akı 0";
+  return html`<div class="scene3d-readout">${head} &nbsp;·&nbsp; Q yüzeyin ${inside ? "içinde" : "dışında"}<br>dışarı akış = ${fmt(flux.outflow)} &nbsp;·&nbsp; içeri akış = ${fmt(flux.inflow)} &nbsp;·&nbsp; net akı = ${fmt(flux.net, 4)}<br>${expected}</div>`;
+}
+```
 :::
 ::::
 

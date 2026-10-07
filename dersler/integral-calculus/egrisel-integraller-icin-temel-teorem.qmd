@@ -12,6 +12,26 @@ olduğunu söyler (bkz. [Analiz 2](../analiz-2/analizin-temel-teoremleri.html#th
 
 İki ya da üç değişkenli bir $f$ fonksiyonunun gradyanı $\nabla f$, $f$'nin bir tür türevidir (bkz. [Analiz 4](../analiz-4/kismi-turevler.html#def-kis-gradyan)). Bu bölümde (1) eşitliğinin eğrisel integrallerdeki karşılığını kuracağız: bir gradyan alanının bir eğri boyunca integrali, $f$'nin eğrinin iki ucundaki değerlerinin farkıdır. Bu basit sonuçtan birkaç önemli soru doğar: Hangi alanların eğrisel integrali izlenen yola bağlı değildir? Bir alanın konservatif olup olmadığını nasıl anlarız ve potansiyel fonksiyonunu nasıl buluruz? "Konservatif" adı nereden gelir?
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, planeLayout, render, path2d, arrowHeads2d, field2d, point2d, segment2d } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Gradyan Alanlarının Eğrisel İntegrali
 
 Önce teoremi ifade edip ispatlayalım, ardından onu iki örnekte kullanalım.
@@ -267,6 +287,100 @@ $C_1$ ve $C_2$, $D$ içinde aynı $A$ noktasından aynı $B$ noktasına giden ik
 $$\int_{C_1} \nabla f \cdot d\mathbf{r} = f(B) - f(A) = \int_{C_2} \nabla f \cdot d\mathbf{r}$$
 
 bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: üç yol, iki alan.** Soldaki (dar ekranda üstteki) panelde $A(1, 0)$ noktasından $B(-1, 0)$ noktasına giden üç yol vardır: üst yarım çember $C_1$, alt yarım çember $C_2$ ve $x$ ekseni üzerindeki $C_3$ doğru parçası. $s$ kaydırıcısı her yolda bir noktayı yolun başından ($s = 0$) sonuna ($s = 1$) götürür. Sağdaki (alttaki) panel ve değer satırı, $\mathbf{F}$'nin her yolun şimdiye kadar geçilen kısmı boyunca integralini verir. İlk alan, yukarıda üç yolda $\pi$, $-\pi$ ve $0$ bulduğumuz $-y\,\mathbf{i} + x\,\mathbf{j}$ alanıdır; $s = 1$'de bu üç değer çıkar. İkinci alan $f(x, y) = 3x + x^2 y - y^3$ fonksiyonunun gradyanı, yani $(3 + 2xy)\,\mathbf{i} + (x^2 - 3y^2)\,\mathbf{j}$ alanıdır. Onda yolların ortasında ($s = 0{,}5$) değerler $-4$, $-2$ ve $-3$'tür, çünkü noktalar farklıdır: @thm-tte-temel-teorem gereği her değer, o yoldaki $P$ noktası için $f(P) - f(A)$ farkıdır. Yolların sonunda üç değer de $f(B) - f(A) = -3 - 3 = -6$ olur. Bu alanla @exm-tte-konservatif ve @exm-tte-potansiyel içinde yeniden karşılaşacağız.
+
+```{ojs}
+//| echo: false
+viewof ttePathsControls = Inputs.form({
+  field: Inputs.radio(["rotation", "gradient"], { value: "rotation", label: "alan", format: (key) => (key === "rotation" ? "−y i + x j" : "∇f") }),
+  s: Inputs.range([0, 1], { value: 0.5, step: 0.01, label: "s" })
+})
+```
+
+```{ojs}
+//| echo: false
+ttePathsPanels = html`<div style="display: flex; flex-wrap: wrap; gap: 0.75em">
+  <div class="scene3d" style="flex: 1 1 18em; min-width: 0" role="img" aria-label="Sahne, xy duzlemi: secilen vektor alaninin oklari ve A(1, 0) noktasindan B(-1, 0) noktasina giden uc yol, ust yarim cember C1, alt yarim cember C2 ve x ekseni uzerindeki dogru parcasi C3; her yolda s kadar ilerlemis birer nokta"></div>
+  <div class="scene3d" style="flex: 1 1 18em; min-width: 0" role="img" aria-label="Sahne, grafik: uc yol boyunca o ana kadar alinan egrisel integralin s ile degisimi; gradyan alaninda uc egri s = 1 noktasinda ayni -6 degerinde bulusur, -y i + x j alaninda pi, -pi ve 0 degerlerinde biter"></div>
+</div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { field, s } = ttePathsControls;
+  const fieldPanel = ttePathsPanels.children[0];
+  const graphPanel = ttePathsPanels.children[1];
+  const f = (x, y) => 3 * x + x * x * y - y * y * y;
+  const F = field === "rotation" ? (x, y) => [-y, x] : (x, y) => [3 + 2 * x * y, x * x - 3 * y * y];
+  // The three paths from A(1, 0) to B(-1, 0) and their derivatives, for 0 <= u <= 1.
+  const routes = [
+    { name: "C₁", color: theme.practice, r: (u) => [Math.cos(Math.PI * u), Math.sin(Math.PI * u)], dr: (u) => [-Math.PI * Math.sin(Math.PI * u), Math.PI * Math.cos(Math.PI * u)] },
+    { name: "C₂", color: theme.theory, r: (u) => [Math.cos(Math.PI * u), -Math.sin(Math.PI * u)], dr: (u) => [-Math.PI * Math.sin(Math.PI * u), -Math.PI * Math.cos(Math.PI * u)] },
+    { name: "C₃", color: theme.base, r: (u) => [1 - 2 * u, 0], dr: () => [-2, 0] }
+  ];
+  const integrand = (route, u) => {
+    const [P, Q] = F(...route.r(u));
+    const [dx, dy] = route.dr(u);
+    return P * dx + Q * dy;
+  };
+  // Line integral over the part 0 <= u <= end of a path, by Simpson's rule.
+  const lineIntegral = (route, end) => {
+    const N = 200;
+    const h = end / N;
+    let total = integrand(route, 0) + integrand(route, end);
+    for (let k = 1; k < N; k++) total += (k % 2 ? 4 : 2) * integrand(route, k * h);
+    return (total * h) / 3;
+  };
+  // Running values for the graph: Simpson's rule on each of 100 small pieces, added up.
+  const pieces = 100;
+  const running = routes.map((route) => {
+    const list = [[0, 0]];
+    let total = 0;
+    for (let k = 1; k <= pieces; k++) {
+      const a = (k - 1) / pieces;
+      const b = k / pieces;
+      total += ((b - a) / 6) * (integrand(route, a) + 4 * integrand(route, (a + b) / 2) + integrand(route, b));
+      list.push([b, total]);
+    }
+    return list;
+  });
+  const soFar = routes.map((route) => lineIntegral(route, s));
+  const A = [1, 0];
+  const B = [-1, 0];
+  render(Plotly, fieldPanel, [
+    field2d(F, [-1.4, 1.4], [-1.2, 1.2], [9, 7], withAlpha(theme.text, 0.35)),
+    ...routes.flatMap((route) => [
+      path2d(route.r, 0, 1, withAlpha(route.color, 0.5), route.name, { width: 3 }),
+      arrowHeads2d(route.r, 0, 1, 2, withAlpha(route.color, 0.5)),
+      path2d(route.r, 0, s, route.color, undefined, { width: 6 }),
+      point2d(route.r(s), route.color, undefined, { size: 9 })
+    ]),
+    point2d(A, theme.text, undefined, { size: 7, text: "A", position: "middle right" }),
+    point2d(B, theme.text, undefined, { size: 7, text: "B", position: "middle left" })
+  ], planeLayout(theme, { x: [-1.75, 1.75], y: [-1.5, 1.5] }));
+  const line = (list, color, width) => ({ type: "scatter", mode: "lines", x: list.map((p) => p[0]), y: list.map((p) => p[1]), line: { color, width }, showlegend: false, hoverinfo: "skip" });
+  render(Plotly, graphPanel, [
+    segment2d([s, -6.6], [s, 3.6], withAlpha(theme.text, 0.45)),
+    ...routes.flatMap((route, index) => [
+      line(running[index], withAlpha(route.color, 0.45), 2),
+      line([...running[index].filter(([u]) => u < s), [s, soFar[index]]], route.color, 4),
+      point2d([s, soFar[index]], route.color, undefined, { size: 9 })
+    ])
+  ], planeLayout(theme, { x: [0, 1], y: [-6.6, 3.6], equal: false, legend: false, titles: { x: "s", y: "∫ F · dr" } }));
+  const [v1, v2, v3] = soFar.map((value) => fmt(value, 4));
+  const fieldName = field === "rotation" ? "F = −y i + x j" : "F = ∇f, f = 3x + x²y − y³";
+  const note = field === "rotation"
+    ? "s = 1 iken π ≈ 3,1416, −π ≈ −3,1416 ve 0: uç noktalar aynı olduğu hâlde değerler farklı"
+    : `noktalardaki f(P) − f(A) farkları: ${routes.map((route) => fmt(f(...route.r(s)) - f(...A), 4)).join(" · ")}; s = 1 iken üçü de f(B) − f(A) = −6`;
+  return html`<div class="scene3d-readout">${fieldName} &nbsp;·&nbsp; s = ${fmt(s)}<br>C₁ (üst yarım çember): ${v1} &nbsp;·&nbsp; C₂ (alt yarım çember): ${v2} &nbsp;·&nbsp; C₃ (doğru parçası): ${v3}<br>${note}</div>`;
+}
+```
 :::
 ::::
 

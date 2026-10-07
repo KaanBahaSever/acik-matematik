@@ -80,7 +80,7 @@ paths:
 
 - A figure sits INSIDE the theorem, proof, example, solution or callout box it explains: right below the relevant paragraph, centered. It is never placed inside a definition box, but right below it. Different steps of a solution get separate figures.
   - In lineer-programlama, the figure of a single-figure solution sits at the very start of the solution (the reader sees the picture first). Figures that follow subproblems or iterations step by step stay next to the relevant step.
-- There are no code cells executed at build time (python, r, Jupyter). Figures are produced by `scripts/*_figures.py` and embedded in the `.qmd`; the details are in the `make-figures` skill. The only exception is the browser-run OJS 3D scenes in diferansiyel-geometri.
+- There are no code cells executed at build time (python, r, Jupyter). Figures are produced by `scripts/*_figures.py` and embedded in the `.qmd`; the details are in the `make-figures` skill. The only exception is the browser-run OJS scenes in diferansiyel-geometri and integral-calculus.
 - An embedded SVG is never fixed by hand: fix the generator script and regenerate the figure.
 
 ## Curriculum page (`index.qmd`)

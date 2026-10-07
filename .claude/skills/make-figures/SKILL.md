@@ -87,12 +87,14 @@ center_figures crops the viewBox to the content with a 14-unit margin. It adds `
   - `.ders-grafik-dar`: 24rem
 - These CSS values affect every course; tell the user if you change them.
 
-## 9. Interactive 3D (diferansiyel-geometri only)
+## 9. Interactive scenes (diferansiyel-geometri, integral-calculus)
 
-- A ```` ```{ojs} ```` cell uses `//| echo: false` and `import {…} from "../ojs/scene3d.js"`. Plotly is loaded as `plotly.js-dist-min@2.35.2`.
-- The scene sits inside `:::: {.content-visible when-format="html:js"}`, not inside `.cozum`.
-- OJS variables are page-global; each scene uses its own prefix.
+- Each of these books has its own helper module: `dersler/diferansiyel-geometri/ojs/scene3d.js` and `dersler/integral-calculus/ojs/scene3d.js` (the latter adds graphs over regions, Riemann columns, slicing planes, 3D and 2D vector fields, curtains and grid curves; its header documents the API).
+- A ```` ```{ojs} ```` cell uses `//| echo: false` and imports from the book's module (`../ojs/scene3d.js` from a chapter in a subfolder, `./ojs/scene3d.js` from the book root). Plotly is loaded as `plotly.js-dist-min@2.35.2`.
+- The scene sits inside `:::: {.content-visible when-format="html:js"}`, not inside `.cozum`/`.ispat`; a short paragraph starting "**Etkileşimli sahne: …**" says what to drag or slide.
+- OJS variables are page-global; each scene uses its own prefix (the chapter key in integral-calculus).
 - For PDF and EPUB a static SVG is also placed at the same spot.
+- The hidden browser pane does not run OJS cells; test scenes on a visible pane or a test copy of the page.
 
 ## 10. Verify
 

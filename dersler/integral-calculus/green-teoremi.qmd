@@ -16,6 +16,26 @@ Green Teoremi bu fikri düzleme taşır. Düzlemde kapalı bir eğriyle sınırl
 
 Teorem adını, kendi kendini yetiştirmiş İngiliz matematikçi George Green'den (1793–1841) alır. Green teoremin bir biçimini 1828'de kendi imkânlarıyla bastırdığı, elektrik ve manyetizma kuramına matematiksel analizi uygulayan bir denemede verdi; çalışma ancak 1846'da William Thomson (Lord Kelvin) onu yeniden bastırınca tanındı.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, planeLayout, render, path2d, arrowHeads2d, field2d, point2d, fill2d } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Pozitif Yönlü Sınır Eğrisi
 
 Green Teoremi bir bölgeyi sınır eğrisine bağladığı için önce sınırın hangi yönde dolaşılacağını belirlememiz gerekir.
@@ -628,6 +648,92 @@ bulunur. [$\blacksquare$]{.qed}
 :::
 ::::
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: Green Teoremi küçük bir diskte.** $a$ ve $b$ kaydırıcıları pozitif yönlü $C$ çemberinin merkezini, $\rho$ kaydırıcısı yarıçapını değiştirir; $D$, $C$'nin sınırladığı disktir. Zemindeki renk $\partial Q/\partial x - \partial P/\partial y$ farkını gösterir: turuncu tonlar pozitif, mavi tonlar negatif değerlerdir. Oklar yalnız $\mathbf{F}$'nin yönünü gösterir. Değer satırı $\oint_C \mathbf{F} \cdot d\mathbf{r}$ eğrisel integralini ve $D$ üzerindeki iki katlı integrali birbirinden bağımsız olarak, sayısal yöntemle hesaplar; Green Teoremi gereği ikisi hep eşit çıkar. İlk alan @exm-grn-yarim-halka içindeki $y^2\,\mathbf{i} + 3xy\,\mathbf{j}$ alanıdır. Onda fark $y$, iki katlı integral de $b\,\pi\rho^2$'dir: merkez $x$ ekseninin üstündeyse integral pozitif, altındaysa negatiftir; integralin disk alanına oranı ise yarıçap ne olursa olsun merkezdeki $b$ değerine eşittir. İkinci alan @exr-grn-is içindeki kuvvet alanıdır; onda fark $x^2 + y^2$, oran da $a^2 + b^2 + \frac{1}{2}\rho^2$'dir. Merkez $(1, 1)$ iken $\rho = 1$, $0{,}5$ ve $0{,}1$ için oran $2{,}5$, $2{,}125$ ve $2{,}005$ olur: disk küçüldükçe oran, farkın merkezdeki değeri olan $2$'ye yaklaşır.
+
+```{ojs}
+//| echo: false
+viewof grnDiskControls = Inputs.form({
+  field: Inputs.radio(["ring", "work"], { value: "ring", label: "alan", format: (key) => (key === "ring" ? "⟨y², 3xy⟩" : "⟨sin x, sin y + xy² + x³/3⟩") }),
+  a: Inputs.range([-1.5, 1.5], { value: 0, step: 0.1, label: "a" }),
+  b: Inputs.range([-1.5, 1.5], { value: 1, step: 0.1, label: "b" }),
+  rho: Inputs.range([0.1, 1], { value: 0.5, step: 0.05, label: "ρ" })
+})
+```
+
+```{ojs}
+//| echo: false
+grnDiskPlot = html`<div class="scene3d" role="img" aria-label="Sahne, xy duzlemi: dQ/dx - dP/dy farkini gosteren renkli zemin, secilen alanin yon oklari ve merkezi (a, b), yaricapi rho olan, saat yonunun tersine dolasilan C cemberi ile sinirladigi D diski; cember boyunca egrisel integral disk uzerindeki iki katli integrale esittir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { field, a, b, rho } = grnDiskControls;
+  // The field of the half-ring example and the force field of the work exercise, with Q_x - P_y.
+  const fields = {
+    ring: { F: (x, y) => [y * y, 3 * x * y], curl: (x, y) => y, top: 2.5 },
+    work: { F: (x, y) => [Math.sin(x), Math.sin(y) + x * y * y + (x * x * x) / 3], curl: (x, y) => x * x + y * y, top: 8 }
+  };
+  const { F, curl, top } = fields[field];
+  const circle = (t) => [a + rho * Math.cos(t), b + rho * Math.sin(t)];
+  // Line integral around the positively oriented circle: the trapezoid rule, very accurate for periodic integrands.
+  const N = 720;
+  let lineValue = 0;
+  for (let k = 0; k < N; k++) {
+    const t = (2 * Math.PI * k) / N;
+    const [P, Q] = F(...circle(t));
+    lineValue += P * (-rho * Math.sin(t)) + Q * (rho * Math.cos(t));
+  }
+  lineValue *= (2 * Math.PI) / N;
+  // Double integral of Q_x - P_y over the disk, in polar coordinates about the centre:
+  // Simpson's rule in r (exact for the polynomials here) and the trapezoid rule in theta.
+  const nr = 40;
+  const nt = 96;
+  let diskValue = 0;
+  for (let i = 0; i <= nr; i++) {
+    const r = (rho * i) / nr;
+    const weight = i === 0 || i === nr ? 1 : i % 2 ? 4 : 2;
+    let around = 0;
+    for (let j = 0; j < nt; j++) {
+      const t = (2 * Math.PI * j) / nt;
+      around += curl(a + r * Math.cos(t), b + r * Math.sin(t));
+    }
+    diskValue += weight * r * around * ((2 * Math.PI) / nt);
+  }
+  diskValue *= rho / nr / 3;
+  const area = Math.PI * rho * rho;
+  // Background: Q_x - P_y, blue where negative, orange where positive, transparent at 0.
+  const cells = 61;
+  const grid = Array.from({ length: cells }, (_, i) => -2.6 + (5.2 * i) / (cells - 1));
+  const heat = {
+    type: "heatmap",
+    x: grid,
+    y: grid,
+    z: grid.map((y) => grid.map((x) => curl(x, y))),
+    zmin: -top,
+    zmax: top,
+    zsmooth: "best",
+    colorscale: [[0, withAlpha(theme.theory, 0.4)], [0.5, withAlpha(theme.theory, 0)], [0.5001, withAlpha(theme.practice, 0)], [1, withAlpha(theme.practice, 0.4)]],
+    showscale: false,
+    hoverinfo: "skip"
+  };
+  const rim = Array.from({ length: 120 }, (_, k) => circle((2 * Math.PI * k) / 120));
+  render(Plotly, grnDiskPlot, [
+    heat,
+    field2d(F, [-2.25, 2.25], [-2.25, 2.25], 10, withAlpha(theme.text, 0.45), { normalize: true, fill: 0.6, name: "F (yalnız yön)" }),
+    fill2d(rim, theme.base, { opacity: 0.15, width: 0 }),
+    path2d(circle, 0, 2 * Math.PI, theme.practice, "C", { width: 3 }),
+    arrowHeads2d(circle, 0, 2 * Math.PI, 4, theme.practice, { size: Math.max(0.06, Math.min(0.18, 0.6 * rho)) }),
+    point2d([a, b], theme.text, undefined, { size: 7 })
+  ], planeLayout(theme, { x: [-2.6, 2.6], y: [-2.6, 2.6] }));
+  return html`<div class="scene3d-readout">merkez (${fmt(a, 1)}; ${fmt(b, 1)}), ρ = ${fmt(rho)} &nbsp;·&nbsp; ∮<sub>C</sub> F · dr = ${fmt(lineValue, 4)} &nbsp;·&nbsp; ∬<sub>D</sub> (∂Q/∂x − ∂P/∂y) dA = ${fmt(diskValue, 4)}<br>alan πρ² = ${fmt(area, 4)} &nbsp;·&nbsp; ∮ / alan = ${fmt(lineValue / area, 4)} &nbsp;·&nbsp; merkezde ∂Q/∂x − ∂P/∂y = ${fmt(curl(a, b), 4)}</div>`;
+}
+```
+:::
+::::
+
 Green Teoremi delikli bölgelere, yani basit bağlantılı olmayan (@def-tte-basit-baglantili) bölgelere de uygulanır. Böyle bir bölgenin sınırı birden çok kapalı eğriden oluşur ve sınırın pozitif yönü yine "bölge hep solda kalır" kuralıyla belirlenir: dış eğri saat yönünün tersine, iç eğriler saat yönünde dolaşılır.
 
 :::: {#cor-grn-delikli name="Delikli Bölgeler için Green Teoremi"}
@@ -794,6 +900,96 @@ bulunur. [$\blacksquare$]{.qed}
 ::::
 
 Bu örnekteki alan için $\partial Q/\partial x = \partial P/\partial y$ eşitliği orijin dışındaki her noktada sağlanır; buna rağmen orijini çevreleyen eğriler boyunca integral $2\pi \ne 0$'dır. Bu bir çelişki değildir: orijin çıkarılmış düzlem basit bağlantılı olmadığından konservatiflik ölçütü (@thm-tte-konservatif-test) bu alana uygulanamaz. Orijinden geçmeyen ve orijini çevrelemeyen bir basit kapalı eğri için ise eğrinin sınırladığı bölge orijini içermez ve Green Teoremi integralin $0$ olduğunu doğrudan verir.
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: orijini çevreleyen eğriler.** $a$ ve $b$ kaydırıcıları pozitif yönlü kapalı $C$ eğrisinin merkezini, $\rho$ kaydırıcısı büyüklüğünü, "dalga" kaydırıcısı da biçimini değiştirir; oklar yalnız $\mathbf{F}$'nin yönünü gösterir ve seçeneklerde $r^2 = x^2 + y^2$ kısaltması kullanılmıştır. İlk alan @exm-grn-orijin içindeki $(-y\,\mathbf{i} + x\,\mathbf{j})/(x^2 + y^2)$ alanıdır: $C$ orijini çevrelediği sürece, biçimi ve büyüklüğü ne olursa olsun, değer satırındaki integral $2\pi \approx 6{,}2832$'dir; $C$ orijini dışarıda bıraktığında $0$ olur. İkinci alan @exr-grn-tekil içindeki alandır. O, orijin dışında bir gradyan alanı olduğundan $C$ orijini çevrelese de integrali $0$'dır. İki alanda da orijin dışında $\partial Q/\partial x - \partial P/\partial y = 0$ olduğundan @cor-grn-delikli gereği eğriyi orijinin üzerinden geçirmeden biçimlendirmek integrali değiştirmez. İlk alanın integrali, $C$ orijinin üzerinden geçip onu dışarıda bıraktığı anda $2\pi$'den $0$'a atlar.
+
+```{ojs}
+//| echo: false
+viewof grnOriginControls = Inputs.form({
+  field: Inputs.radio(["vortex", "gradient"], { value: "vortex", label: "alan", format: (key) => (key === "vortex" ? "(−y, x) / r²" : "(2xy, y² − x²) / r⁴") }),
+  a: Inputs.range([-1.5, 1.5], { value: 0.5, step: 0.1, label: "a" }),
+  b: Inputs.range([-1.5, 1.5], { value: 0.3, step: 0.1, label: "b" }),
+  rho: Inputs.range([0.3, 1.2], { value: 1, step: 0.05, label: "ρ" }),
+  wave: Inputs.range([0, 0.4], { value: 0.3, step: 0.05, label: "dalga" })
+})
+```
+
+```{ojs}
+//| echo: false
+grnOriginPlot = html`<div class="scene3d" role="img" aria-label="Sahne, xy duzlemi: secilen alanin yon oklari, orijin O ve merkezi (a, b) olan, saat yonunun tersine dolasilan kapali C egrisi; C orijini cevreledikce birinci alanin integrali 2 pi, cevrelemedikce 0 olur, ikinci alanin integrali her zaman 0'dir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { field, a, b, rho, wave } = grnOriginControls;
+  // The field of the example and the gradient field of the exercise; both are undefined at the origin.
+  const F = field === "vortex"
+    ? (x, y) => {
+        const q = x * x + y * y;
+        return [-y / q, x / q];
+      }
+    : (x, y) => {
+        const q = x * x + y * y;
+        return [(2 * x * y) / (q * q), (y * y - x * x) / (q * q)];
+      };
+  // For the arrows only: no arrow at the origin itself.
+  const drawn = (x, y) => (x * x + y * y < 1e-9 ? [0, 0] : F(x, y));
+  // The closed curve at distance rho (1 + wave cos 3t) from the centre (a, b), traversed counterclockwise.
+  const radius = (t) => rho * (1 + wave * Math.cos(3 * t));
+  const C = (t) => [a + radius(t) * Math.cos(t), b + radius(t) * Math.sin(t)];
+  const dC = (t) => {
+    const R = radius(t);
+    const dR = -3 * rho * wave * Math.sin(3 * t);
+    return [dR * Math.cos(t) - R * Math.sin(t), dR * Math.sin(t) + R * Math.cos(t)];
+  };
+  const N = 3000;
+  const nodes = Array.from({ length: N + 1 }, (_, k) => (2 * Math.PI * k) / N);
+  const nearest = Math.min(...nodes.map((t) => Math.hypot(...C(t))));
+  const tooClose = nearest < 0.04;
+  // Whether C winds around the origin, from the total change of the polar angle along C.
+  let turning = 0;
+  for (let k = 1; k <= N; k++) {
+    const [x0, y0] = C(nodes[k - 1]);
+    const [x1, y1] = C(nodes[k]);
+    let step = Math.atan2(y1, x1) - Math.atan2(y0, x0);
+    if (step > Math.PI) step -= 2 * Math.PI;
+    if (step < -Math.PI) step += 2 * Math.PI;
+    turning += step;
+  }
+  const encloses = Math.round(turning / (2 * Math.PI)) !== 0;
+  // The line integral by Simpson's rule (only when C stays away from the origin).
+  let integral = 0;
+  if (!tooClose) {
+    for (let k = 0; k <= N; k++) {
+      const [P, Q] = F(...C(nodes[k]));
+      const [dx, dy] = dC(nodes[k]);
+      const weight = k === 0 || k === N ? 1 : k % 2 ? 4 : 2;
+      integral += weight * (P * dx + Q * dy);
+    }
+    integral *= (2 * Math.PI) / N / 3;
+  }
+  const outline = nodes.filter((_, k) => k % 10 === 0).map(C);
+  render(Plotly, grnOriginPlot, [
+    field2d(drawn, [-2.75, 2.75], [-2.75, 2.75], 12, withAlpha(theme.text, 0.45), { normalize: true, fill: 0.7, name: "F (yalnız yön)" }),
+    fill2d(outline, theme.base, { opacity: 0.15, width: 0 }),
+    path2d(C, 0, 2 * Math.PI, theme.practice, "C", { width: 3, samples: 300 }),
+    arrowHeads2d(C, 0, 2 * Math.PI, 5, theme.practice, { size: 0.16 }),
+    point2d([0, 0], theme.text, undefined, { size: 8, text: "O", position: "bottom right" })
+  ], planeLayout(theme, { x: [-3.2, 3.2], y: [-3.2, 3.2] }));
+  const where = `merkez (${fmt(a, 1)}; ${fmt(b, 1)}), ρ = ${fmt(rho)}, dalga = ${fmt(wave)}`;
+  if (tooClose) {
+    return html`<div class="scene3d-readout">${where} &nbsp;·&nbsp; C orijine çok yakın<br>F orijinde tanımsız olduğundan ∮<sub>C</sub> F · dr bu konumda hesaplanmıyor</div>`;
+  }
+  const status = encloses ? "C orijini çevreliyor" : "C orijini çevrelemiyor";
+  const hint = Math.abs(integral - 2 * Math.PI) < 1e-6 ? " ≈ 2π" : "";
+  return html`<div class="scene3d-readout">${where} &nbsp;·&nbsp; ${status}<br>∮<sub>C</sub> F · dr = ${fmt(integral, 4)}${hint} &nbsp;·&nbsp; orijin dışında ∂Q/∂x − ∂P/∂y = 0</div>`;
+}
+```
+:::
+::::
 
 ## Konservatiflik Ölçütüne Dönüş
 

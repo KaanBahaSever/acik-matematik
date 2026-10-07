@@ -8,6 +8,26 @@ description: "Değişken yoğunluklu bir levhanın kütlesi, elektrik yükü, mo
 
 Önce yoğunluğu noktadan noktaya değişen ince bir levhanın kütlesini ve üzerindeki elektrik yükünü bulacağız. Sonra levhanın dengede durduğu noktayı, yani kütle merkezini, ve levhayı bir eksen etrafında döndürmenin ne kadar zor olduğunu ölçen eylemsizlik momentini hesaplayacağız. Son kısımda iki rastgele değişkenin birlikte davranışını betimleyen ortak olasılık yoğunluk fonksiyonlarına geçeceğiz. Orada olasılık düzleme yayılmış bir kütle gibi davranacak, kütle merkezinin karşılığı da beklenen değer olacak.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, fmtTrim, sceneLayout, graphTypeI, graphPolar, path, point, segment, legendItem, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Yoğunluk ve Kütle
 
 Önce yoğunluk kavramını kuralım ve toplam kütlenin neden bir iki katlı integral olduğunu görelim.
@@ -333,6 +353,58 @@ Kütle $\frac{8}{3}$, kütle merkezi $\left( \frac{3}{8}, \frac{11}{16} \right)$
 :::
 ::::
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: yoğunluk değişince kütle merkezi kayar.** Sahneyi sürükleyerek döndürebilirsiniz; düşey eksen küçültülmüş ölçektedir. Tabandaki üçgen örnekteki levhadır. Üstündeki mavi yüzeyin her noktadaki yüksekliği, levhanın o noktadaki yoğunluğudur: $z = \rho(x, y) = 1 + px + qy$. $p$ ve $q$ kaydırıcıları yoğunluğun $x$ ve $y$ yönünde ne kadar hızlı arttığını belirler. Turuncu nokta kütle merkezini, küçük nokta ise yoğunluk sabitken bulunan ağırlık merkezi $\left(\frac{1}{3}, \frac{2}{3}\right)$ noktasını gösterir. Başlangıçtaki $p = 3$, $q = 1$ seçimi örnekteki yoğunluktur; değer satırı $m = \frac{8}{3}$, $M_y = 1$, $M_x = \frac{11}{6}$ ve kütle merkezi olarak $\left(\frac{3}{8}, \frac{11}{16}\right) = (0{,}375;\ 0{,}6875)$ noktasını verir. $p = q = 0$ iken yoğunluk sabittir ve kütle merkezi ağırlık merkezine oturur. $p = 6$, $q = 0$ iken levha $(1, 0)$ köşesine doğru ağırlaşır ve kütle merkezi $\left(\frac{4}{9}, \frac{5}{9}\right) \approx (0{,}4444;\ 0{,}5556)$ noktasına kayar. $p = 0$, $q = 3$ iken levha $(0, 2)$ köşesine doğru ağırlaşır ve kütle merkezi $\left(\frac{5}{18}, \frac{8}{9}\right) \approx (0{,}2778;\ 0{,}8889)$ noktasına kayar. Kütle merkezi her seferinde ağır tarafa kayar, ama üçgenin içinde kalır.
+
+```{ojs}
+//| echo: false
+viewof ikuTriangleControls = Inputs.form({
+  p: Inputs.range([0, 6], { value: 3, step: 0.5, label: "p" }),
+  q: Inputs.range([0, 3], { value: 1, step: 0.5, label: "q" })
+})
+```
+
+```{ojs}
+//| echo: false
+ikuTrianglePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: koseleri (0, 0), (1, 0) ve (0, 2) olan ucgen levha ve ustunde yuksekligi 1 + p x + q y yogunlugu olan yuzey; kaydiricilar yogunlugu degistirdikce kutle merkezi agir tarafa kayar, p = 3 ve q = 1 icin kutle merkezi (3/8, 11/16) noktasidir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { p, q } = ikuTriangleControls;
+  const rho = (x, y) => 1 + p * x + q * y;
+  const upper = (x) => 2 - 2 * x; // the hypotenuse y = 2 - 2x
+  // Over the triangle the integrals of 1, x, y, x^2, xy, y^2 are 1, 1/3, 2/3, 1/6, 1/6, 2/3.
+  const mass = 1 + p / 3 + (2 * q) / 3;
+  const My = 1 / 3 + p / 6 + q / 6;
+  const Mx = 2 / 3 + p / 6 + (2 * q) / 3;
+  const xbar = My / mass;
+  const ybar = Mx / mass;
+  // Walk once around the triangle: (0, 0) -> (1, 0) -> (0, 2) -> (0, 0).
+  const rim = (s) => (s <= 1 ? [s, 0] : s <= 2 ? [2 - s, 2 * (s - 1)] : [0, 2 * (3 - s)]);
+  const lift = 0.03; // keeps the points on the floor visible above the lamina
+  const traces = [
+    graphTypeI(() => 0, 0, 1, 0, upper, theme.base, { opacity: 0.3, nx: 12, ny: 8 }),
+    graphTypeI(rho, 0, 1, 0, upper, theme.theory, { opacity: 0.4, nx: 24, ny: 16 }),
+    path((s) => [...rim(s), 0], 0, 3, theme.base, undefined, { width: 4, samples: 3 }),
+    path((s) => [...rim(s), rho(...rim(s))], 0, 3, theme.theory, undefined, { width: 3, samples: 3 }),
+    ...[[0, 0], [1, 0], [0, 2]].map(([x, y]) => segment([x, y, 0], [x, y, rho(x, y)], withAlpha(theme.theory, 0.6), { dash: "solid", width: 2 })),
+    segment([xbar, ybar, 0], [xbar, ybar, rho(xbar, ybar)], theme.practice, { dash: "dot", width: 4 }),
+    point([xbar, ybar, lift], theme.practice, "kütle merkezi", { size: 7 }),
+    point([1 / 3, 2 / 3, lift], withAlpha(theme.text, 0.75), "ağırlık merkezi", { size: 4 }),
+    legendItem("z = ρ(x, y)", theme.theory)
+  ];
+  render(Plotly, ikuTrianglePlot, traces, sceneLayout(theme, { x: [0, 1], y: [0, 2], z: [0, 7], aspectratio: { x: 0.6, y: 1.2, z: 0.8 }, eye: { x: 1.6, y: 1.3, z: 1.1 } }));
+  // 1 + 3x + y, dropping zero terms and unit coefficients
+  const term = (k, v) => (k === 0 ? "" : ` + ${k === 1 ? "" : fmtTrim(k)}${v}`);
+  return html`<div class="scene3d-readout">ρ(x, y) = 1${term(p, "x")}${term(q, "y")} &nbsp;·&nbsp; m = ${fmt(mass, 4)} &nbsp;·&nbsp; M<sub>y</sub> = ${fmt(My, 4)} &nbsp;·&nbsp; M<sub>x</sub> = ${fmt(Mx, 4)}<br>kütle merkezi (${fmt(xbar, 4)}; ${fmt(ybar, 4)}) &nbsp;·&nbsp; ağırlık merkezi (${fmt(1 / 3, 4)}; ${fmt(2 / 3, 4)})</div>`;
+}
+```
+:::
+::::
+
 :::: {#exm-iku-yarim-disk name="Yoğunluğu Merkeze Uzaklıkla Orantılı Yarım Daire"}
 Yarım daire biçimindeki bir levhanın her noktasındaki yoğunluk, o noktanın dairenin merkezine uzaklığıyla orantılıdır. Levhanın kütle merkezini bulunuz.
 
@@ -420,6 +492,50 @@ olurdu; bu da $\bar{y} = \frac{4a}{3\pi} \approx 0{,}424a$ verir. Burada yoğunl
 ```
 
 [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: ağırlık kenara toplandıkça kütle merkezi yükselir.** Sahneyi sürükleyerek döndürebilirsiniz. Levha örnekteki yarım dairedir; $a = 1$ ve $K = 1$ alınmıştır. Mavi yüzeyin yüksekliği yoğunluktur: $\rho = r^k$. $k$ kaydırıcısı yoğunluğun merkezden kenara doğru ne kadar hızlı arttığını belirler. $k = 1$ örnekteki yoğunluktur; değer satırı $m = \frac{\pi}{3}$, $M_x = \frac{1}{2}$ ve $\bar{y} = \frac{3}{2\pi} \approx 0{,}4775$ verir. $k = 0$ sabit yoğunluktur ve $\bar{y} = \frac{4}{3\pi} \approx 0{,}4244$ olur. Aynı hesap her $k \ge 0$ için $m = \frac{\pi}{k + 2}$ ve $M_x = \frac{2}{k + 3}$ verir. $k$ büyüdükçe kütle kenara toplanır ve turuncu kütle merkezi yukarı tırmanır: örneğin $k = 4$ için $\bar{y} = \frac{12}{7\pi} \approx 0{,}5457$ olur. Simetri nedeniyle $\bar{x}$ her zaman $0$'dır.
+
+```{ojs}
+//| echo: false
+viewof ikuHalfDiskPower = Inputs.range([0, 4], { value: 1, step: 0.5, label: "k" })
+```
+
+```{ojs}
+//| echo: false
+ikuHalfDiskPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: birim yarim disk levha ve ustunde yuksekligi r^k yogunlugu olan yuzey; k buyudukce kutle kenara toplanir ve y ekseni uzerindeki kutle merkezi yukari cikar, k = 1 icin 3/(2 pi), sabit yogunlukta 4/(3 pi) yuksekligindedir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const k = ikuHalfDiskPower;
+  const rho = (x, y) => Math.hypot(x, y) ** k;
+  // Upper half of the unit disk with density r^k: m = pi/(k + 2), M_x = 2/(k + 3).
+  const mass = Math.PI / (k + 2);
+  const Mx = 2 / (k + 3);
+  const ybar = Mx / mass;
+  const uniform = 4 / (3 * Math.PI);
+  const lift = 0.01; // keeps the points on the floor visible above the lamina
+  const traces = [
+    graphPolar(() => 0, 0, Math.PI, 0, 1, theme.base, { opacity: 0.3, nt: 24, nr: 6 }),
+    graphPolar(rho, 0, Math.PI, 0, 1, theme.theory, { opacity: 0.4, nt: 36, nr: 18 }),
+    path((t) => [Math.cos(t), Math.sin(t), 0], 0, Math.PI, theme.base, undefined, { width: 4, samples: 60 }),
+    segment([-1, 0, 0], [1, 0, 0], theme.base, { dash: "solid", width: 4 }),
+    path((t) => [Math.cos(t), Math.sin(t), 1], 0, Math.PI, theme.theory, undefined, { width: 3, samples: 60 }),
+    path((s) => [s, 0, Math.abs(s) ** k], -1, 1, theme.theory, undefined, { width: 3, samples: 80 }),
+    segment([0, ybar, 0], [0, ybar, rho(0, ybar)], theme.practice, { dash: "dot", width: 4 }),
+    point([0, ybar, lift], theme.practice, "kütle merkezi", { size: 7 }),
+    point([0, uniform, lift], withAlpha(theme.text, 0.75), "sabit yoğunlukta", { size: 4 }),
+    legendItem("z = ρ = r<sup>k</sup>", theme.theory)
+  ];
+  render(Plotly, ikuHalfDiskPlot, traces, sceneLayout(theme, { x: [-1, 1], y: [0, 1], z: [0, 1], eye: { x: 0.9, y: -1.7, z: 1.0 } }));
+  return html`<div class="scene3d-readout">ρ = r<sup>k</sup>, k = ${fmtTrim(k)} &nbsp;·&nbsp; m = π/(k + 2) = ${fmt(mass, 4)} &nbsp;·&nbsp; M<sub>x</sub> = 2/(k + 3) = ${fmt(Mx, 4)}<br>kütle merkezi (0; ${fmt(ybar, 4)}) &nbsp;·&nbsp; sabit yoğunlukta (0; ${fmt(uniform, 4)})</div>`;
+}
+```
 :::
 ::::
 

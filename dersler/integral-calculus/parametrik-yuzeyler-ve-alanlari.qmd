@@ -10,6 +10,26 @@ Uzaydaki bir eğriyi tek parametreli bir $\mathbf{r}(t)$ vektör fonksiyonuyla a
 
 Önce yüzeyleri bu yolla tanımayı ve parametrelemeyi öğreneceğiz. Sonra parametrik bir yüzeyin teğet düzlemini ve alanını bulacağız. Alan formülünün, grafiklerin ve dönel yüzeylerin alanı için bildiğimiz formülleri özel hâl olarak içerdiğini de göreceğiz.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, partials, sceneLayout, planeLayout, surface, gridCurves, path, point, points, legendItem, fill2d, point2d, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+::::
+
 ## Parametrik Yüzeyler
 
 Parametrik bir yüzeyi, düzlemdeki bir bölgenin bir vektör fonksiyonuyla uzaya taşınması olarak tanımlıyoruz.
@@ -4684,6 +4704,188 @@ olur. $\theta$ tam bir tur attığında $\theta + \pi$ de tam bir tur atar. Bu y
 - **$z$ ekseni çevresinde simetrik yüzeyler** (koni, paraboloit gibi): parametreler kutupsal koordinatlar $r$ ve $\theta$.
 - **Dönel yüzeyler:** parametreler eğrinin parametresi ve dönme açısı.
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: haritadaki doğrular yüzeydeki koordinat eğrilerine gider.** Sahneyi sürükleyerek döndürebilirsiniz. Açılır listeden bir yüzey seçin: silindir (@exm-pyz-silindir), spiral tüp (@exm-pyz-spiral-tup), $a = 1$ yarıçaplı küre (@exm-pyz-kure), koni parçası (@exm-pyz-koni), sinüs eğrisinden elde edilen dönel yüzey (@exm-pyz-sinus-donel), helikoit (@exr-pyz-helikoit) ya da $a = 1$, $b = 2$ için torus (@exr-pyz-torus-param). Üstteki düz panel $D$ parametre bölgesidir; iki kaydırıcı $D$'deki düşey $u = u_0$ ve yatay $v = v_0$ doğrularını kaydırır. Alttaki sahnede bu doğruların görüntüleri olan $C_1$ ve $C_2$ koordinat eğrileri kalın çizilir; ikisi $\mathbf{r}(u_0, v_0)$ noktasında kesişir. Yüzeyin üzerindeki ince ağ da $D$'deki ince ağın görüntüsüdür. Değer satırı noktanın koordinatlarını ve iki eğrinin ne olduğunu yazar. Örneğin tüpte $C_1$, merkezi $(2\cos u_0,\ 2\sin u_0,\ u_0)$ olan $1$ yarıçaplı çemberdir; $v_0$ değişince $C_2$ sarmalının yarıçapı $2 + \sin v_0$ olarak $1$ ile $3$ arasında değişir. Kürede ise $C_1$ bir enlem çemberi, $C_2$ bir meridyendir.
+
+```{ojs}
+//| echo: false
+//| output: false
+pyzGridSurfaces = {
+  const TAU = 2 * Math.PI;
+  const triple = (p) => `(${fmt(p[0], 2)}; ${fmt(p[1], 2)}; ${fmt(p[2], 2)})`;
+  return {
+    tube: {
+      label: "spiral tüp",
+      formula: "r(u, v) = ⟨(2 + sin v) cos u, (2 + sin v) sin u, u + cos v⟩, D = [0, 2π] × [0, 2π]",
+      names: ["u", "v"],
+      u: [0, TAU],
+      v: [0, TAU],
+      slider: [[0, 6.28, 3.14], [0, 6.28, 1.57]],
+      r: (u, v) => [(2 + Math.sin(v)) * Math.cos(u), (2 + Math.sin(v)) * Math.sin(u), u + Math.cos(v)],
+      box: { x: [-3.2, 3.2], y: [-3.2, 3.2], z: [-1.2, 7.5] },
+      c1: (u) => `merkezi ${triple([2 * Math.cos(u), 2 * Math.sin(u), u])} olan 1 yarıçaplı çember`,
+      c2: (u, v) => `yarıçapı 2 + sin v₀ = ${fmt(2 + Math.sin(v), 2)} olan sarmal`
+    },
+    cylinder: {
+      label: "silindir",
+      formula: "r(u, v) = ⟨2 cos u, v, 2 sin u⟩, D = [0, 2π] × [0, 3]",
+      names: ["u", "v"],
+      u: [0, TAU],
+      v: [0, 3],
+      slider: [[0, 6.28, 1.57], [0, 3, 1.5]],
+      r: (u, v) => [2 * Math.cos(u), v, 2 * Math.sin(u)],
+      box: { x: [-2.2, 2.2], y: [-0.2, 3.2], z: [-2.2, 2.2] },
+      c1: (u) => `y eksenine paralel doğru (x = ${fmt(2 * Math.cos(u), 2)}, z = ${fmt(2 * Math.sin(u), 2)})`,
+      c2: (u, v) => `y = ${fmt(v, 2)} düzleminde, merkezi (0; ${fmt(v, 2)}; 0) olan 2 yarıçaplı çember`
+    },
+    sphere: {
+      label: "küre (a = 1)",
+      formula: "r(φ, θ) = ⟨sin φ cos θ, sin φ sin θ, cos φ⟩, D = [0, π] × [0, 2π]",
+      names: ["φ", "θ"],
+      u: [0, Math.PI],
+      v: [0, TAU],
+      slider: [[0, 3.14, 1], [0, 6.28, 0.8]],
+      r: (u, v) => [Math.sin(u) * Math.cos(v), Math.sin(u) * Math.sin(v), Math.cos(u)],
+      box: { x: [-1.15, 1.15], y: [-1.15, 1.15], z: [-1.15, 1.15] },
+      c1: (u) => (Math.sin(u) < 0.005 ? "kutup noktası (enlem çemberi tek noktaya iner)" : `z = cos φ₀ = ${fmt(Math.cos(u), 2)} yüksekliğinde, yarıçapı sin φ₀ = ${fmt(Math.sin(u), 2)} olan enlem çemberi`),
+      c2: () => "kuzey kutbunu güney kutbuna bağlayan meridyen (yarım çember)"
+    },
+    cone: {
+      label: "koni (z = 2r, r ≤ 1/2)",
+      formula: "r(r, θ) = ⟨r cos θ, r sin θ, 2r⟩, D = [0, 1/2] × [0, 2π]",
+      names: ["r", "θ"],
+      u: [0, 0.5],
+      v: [0, TAU],
+      slider: [[0, 0.5, 0.3], [0, 6.28, 0.8]],
+      r: (u, v) => [u * Math.cos(v), u * Math.sin(v), 2 * u],
+      box: { x: [-0.55, 0.55], y: [-0.55, 0.55], z: [-0.05, 1.05] },
+      c1: (u) => (u < 0.005 ? "koninin tepesi (tek nokta)" : `z = 2r₀ = ${fmt(2 * u, 2)} yüksekliğinde, yarıçapı ${fmt(u, 2)} olan yatay çember`),
+      c2: () => "koninin tepesinden çıkan doğru parçası"
+    },
+    sine: {
+      label: "dönel yüzey (y = sin x)",
+      formula: "r(x, θ) = ⟨x, sin x cos θ, sin x sin θ⟩, D = [0, 2π] × [0, 2π]",
+      names: ["x", "θ"],
+      u: [0, TAU],
+      v: [0, TAU],
+      slider: [[0, 6.28, 1.57], [0, 6.28, 0.8]],
+      r: (u, v) => [u, Math.sin(u) * Math.cos(v), Math.sin(u) * Math.sin(v)],
+      box: { x: [-0.1, 6.4], y: [-1.1, 1.1], z: [-1.1, 1.1] },
+      c1: (u) => (Math.abs(Math.sin(u)) < 0.005 ? "x ekseni üzerinde tek bir nokta" : `x = ${fmt(u, 2)} düzleminde, yarıçapı |sin x₀| = ${fmt(Math.abs(Math.sin(u)), 2)} olan çember`),
+      c2: () => "y = sin x eğrisinin x ekseni çevresinde θ₀ kadar döndürülmüşü"
+    },
+    helicoid: {
+      label: "helikoit",
+      formula: "r(u, v) = ⟨u cos v, u sin v, v⟩, D = [0, 1] × [0, π]",
+      names: ["u", "v"],
+      u: [0, 1],
+      v: [0, Math.PI],
+      slider: [[0, 1, 0.6], [0, 3.14, 1.2]],
+      r: (u, v) => [u * Math.cos(v), u * Math.sin(v), v],
+      box: { x: [-1.1, 1.1], y: [-1.1, 1.1], z: [-0.1, 3.25] },
+      c1: (u) => (u < 0.005 ? "z ekseni üzerinde bir doğru parçası" : `yarıçapı ${fmt(u, 2)} olan sarmal (helis)`),
+      c2: (u, v) => `z = ${fmt(v, 2)} yüksekliğinde, z ekseninden çıkan 1 uzunluğunda yatay doğru parçası`
+    },
+    torus: {
+      label: "torus (a = 1, b = 2)",
+      formula: "r(θ, α) = ⟨(2 + cos α) cos θ, (2 + cos α) sin θ, sin α⟩, D = [0, 2π] × [0, 2π]",
+      names: ["θ", "α"],
+      u: [0, TAU],
+      v: [0, TAU],
+      slider: [[0, 6.28, 0.8], [0, 6.28, 1]],
+      r: (u, v) => [(2 + Math.cos(v)) * Math.cos(u), (2 + Math.cos(v)) * Math.sin(u), Math.sin(v)],
+      box: { x: [-3.15, 3.15], y: [-3.15, 3.15], z: [-1.1, 1.1] },
+      c1: (u) => `döndürülen çemberin bir kopyası: merkezi ${triple([2 * Math.cos(u), 2 * Math.sin(u), 0])}, yarıçapı 1`,
+      c2: (u, v) => `z = sin α₀ = ${fmt(Math.sin(v), 2)} yüksekliğinde, yarıçapı 2 + cos α₀ = ${fmt(2 + Math.cos(v), 2)} olan yatay çember`
+    }
+  };
+}
+```
+
+```{ojs}
+//| echo: false
+viewof pyzGridSurface = Inputs.select(Object.keys(pyzGridSurfaces), { value: "tube", label: "yüzey", format: (key) => pyzGridSurfaces[key].label })
+```
+
+```{ojs}
+//| echo: false
+viewof pyzGridPoint = {
+  const s = pyzGridSurfaces[pyzGridSurface];
+  const [a, b] = s.names;
+  const [su, sv] = s.slider;
+  return Inputs.form({
+    u: Inputs.range([su[0], su[1]], { value: su[2], step: 0.01, label: `${a}₀` }),
+    v: Inputs.range([sv[0], sv[1]], { value: sv[2], step: 0.01, label: `${b}₀` })
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+pyzGridMap = html`<div class="scene3d" style="height: 220px" role="img" aria-label="Parametre bolgesi D: ince bir ag, dusey u = u0 dogrusu, yatay v = v0 dogrusu ve kesistikleri (u0, v0) noktasi"></div>`
+```
+
+```{ojs}
+//| echo: false
+pyzGridPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: secilen parametrik yuzey, uzerindeki koordinat egrisi agi ve kalin cizilen iki koordinat egrisi C1 (u = u0) ile C2 (v = v0); egriler r(u0, v0) noktasinda kesisir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const s = pyzGridSurfaces[pyzGridSurface];
+  const { u, v } = pyzGridPoint;
+  const [a, b] = s.names;
+  const [u0, u1] = s.u;
+  const [v0, v1] = s.v;
+  const steps = 12;
+  // The parameter region D with the grid that the surface's thin mesh comes from.
+  const lines = (segments, color, width) => ({
+    type: "scatter",
+    mode: "lines",
+    x: segments.flatMap((segment) => [...segment.map((q) => q[0]), null]),
+    y: segments.flatMap((segment) => [...segment.map((q) => q[1]), null]),
+    line: { color, width },
+    showlegend: false,
+    hoverinfo: "skip"
+  });
+  const mesh = [];
+  for (let i = 0; i <= steps; i++) {
+    const c = u0 + ((u1 - u0) * i) / steps;
+    mesh.push([[c, v0], [c, v1]]);
+  }
+  for (let j = 0; j <= steps; j++) {
+    const c = v0 + ((v1 - v0) * j) / steps;
+    mesh.push([[u0, c], [u1, c]]);
+  }
+  const mapTraces = [
+    fill2d([[u0, v0], [u1, v0], [u1, v1], [u0, v1]], theme.theory, { opacity: 0.1, width: 1.5 }),
+    lines(mesh, withAlpha(theme.theory, 0.35), 1),
+    lines([[[u, v0], [u, v1]]], theme.practice, 3.5),
+    lines([[[u0, v], [u1, v]]], theme.base, 3.5),
+    point2d([u, v], theme.text, undefined, { size: 8 })
+  ];
+  const padU = 0.04 * (u1 - u0);
+  const padV = 0.06 * (v1 - v0);
+  render(Plotly, pyzGridMap, mapTraces, planeLayout(theme, { x: [u0 - padU, u1 + padU], y: [v0 - padV, v1 + padV], equal: false, legend: false, titles: { x: a, y: b } }));
+  const p = s.r(u, v);
+  const traces = [
+    surface(s.r, u0, u1, v0, v1, theme.theory, { opacity: 0.28 }),
+    gridCurves(s.r, u0, u1, v0, v1, steps, steps, withAlpha(theme.theory, 0.45), { width: 1.5 }),
+    legendItem("S", theme.theory),
+    path((t) => s.r(u, t), v0, v1, theme.practice, `C₁ (${a} = ${a}₀)`, { width: 7, samples: 160 }),
+    path((t) => s.r(t, v), u0, u1, theme.base, `C₂ (${b} = ${b}₀)`, { width: 7, samples: 160 }),
+    point(p, theme.text, `r(${a}₀, ${b}₀)`, { size: 5 })
+  ];
+  render(Plotly, pyzGridPlot, traces, sceneLayout(theme, { ...s.box, revision: pyzGridSurface }));
+  const pair = [fmt(u, 2), fmt(v, 2)];
+  return html`<div class="scene3d-readout">${s.formula}<br>(${a}₀, ${b}₀) = (${pair[0]}; ${pair[1]}) &nbsp;·&nbsp; r(${a}₀, ${b}₀) = (${fmt(p[0], 2)}; ${fmt(p[1], 2)}; ${fmt(p[2], 2)})<br>C₁ (${a} = ${a}₀): ${s.c1(u, v)}<br>C₂ (${b} = ${b}₀): ${s.c2(u, v)}</div>`;
+}
+```
+:::
+::::
+
 ## Teğet Düzlemler
 
 Parametrik bir yüzeyin bir noktadaki teğet düzlemini, o noktadan geçen iki koordinat eğrisinin teğet vektörleriyle kuracağız.
@@ -5091,6 +5293,181 @@ olur.
 <figcaption><em>D</em> dikdörtgeni <em>&#916;u</em> &#215; <em>&#916;v</em> boyutlu alt dikdörtgenlere bölünür. <em>R<sub>ij</sub></em>'nin görüntüsü <em>S<sub>ij</sub></em> yamasıdır (koyu). Yama, <em>P<sub>ij</sub></em> köşesinden çıkan <em>&#916;u</em> <b>r</b><sub><em>u</em></sub><sup>*</sup> ve <em>&#916;v</em> <b>r</b><sub><em>v</em></sub><sup>*</sup> vektörlerinin gerdiği paralelkenarla (turuncu) yaklaşık olarak aynı alana sahiptir.</figcaption>
 </figure>
 ```
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: yüzeyi paralelkenarlarla kaplamak.** Sahneyi sürükleyerek döndürebilirsiniz. Açılır listeden birim küreyi (@exm-pyz-kure-alani), $z = x^2 + y^2$ paraboloidinin $z \le 9$ parçasını (@exm-pyz-paraboloit-alani), helikoidi (@exr-pyz-helikoit) ya da $a = 1$, $b = 2$ için torusu (@exr-pyz-torus-alan) seçin. $m$ ve $n$ kaydırıcıları $D$'yi birinci parametre yönünde $m$, ikinci parametre yönünde $n$ parçaya böler. Her $R_{ij}$'nin sol alt köşesine karşılık gelen $P_{ij}$ noktasında $\Delta u\,\mathbf{r}_u^*$ ve $\Delta v\,\mathbf{r}_v^*$ vektörlerinin gerdiği paralelkenar çizilir. Paralelkenarlar teğet düzlemlerde yatar ve yüzeyi pullar gibi örter. Değer satırı paralelkenarların alanlarının toplamını, birazdan tanımlayacağımız yüzey alanıyla (@def-pyz-yuzey-alani) karşılaştırır. Kürede $m = 4$ için toplam $11{,}9137$, $m = 30$ için $12{,}5549$ olur ve $4\pi \approx 12{,}5664$'e yaklaşır. Bu dört yüzeyde $|\mathbf{r}_u \times \mathbf{r}_v|$ yalnız bir parametreye bağlı olduğundan toplam öbür yöndeki bölüntüden etkilenmez. Torusta ise $\cos\alpha$'nın eşit aralıklı noktalardaki değerlerinin toplamı $0$ olduğundan toplam her bölüntüde tam $8\pi^2 \approx 78{,}9568$'dir.
+
+```{ojs}
+//| echo: false
+//| output: false
+pyzAreaSurfaces = {
+  const TAU = 2 * Math.PI;
+  return {
+    sphere: {
+      label: "küre (a = 1)",
+      names: ["φ", "θ"],
+      r: (u, v) => [Math.sin(u) * Math.cos(v), Math.sin(u) * Math.sin(v), Math.cos(u)],
+      u: [0, Math.PI],
+      v: [0, TAU],
+      // |r_phi x r_theta| = sin(phi)
+      mag: (u) => Math.sin(u),
+      exact: 4 * Math.PI,
+      exactText: "4π",
+      m: [3, 30, 4],
+      n: [6, 30, 8],
+      box: { x: [-1.7, 1.7], y: [-1.7, 1.7], z: [-1.7, 1.7] }
+    },
+    paraboloid: {
+      label: "paraboloit (z ≤ 9)",
+      names: ["r", "θ"],
+      r: (u, v) => [u * Math.cos(v), u * Math.sin(v), u * u],
+      u: [0, 3],
+      v: [0, TAU],
+      // |r_r x r_theta| = r sqrt(4 r^2 + 1)
+      mag: (u) => u * Math.sqrt(4 * u * u + 1),
+      exact: (Math.PI / 6) * (37 * Math.sqrt(37) - 1),
+      exactText: "π(37√37 − 1)/6",
+      m: [2, 30, 4],
+      n: [8, 30, 12],
+      box: { x: [-3.8, 3.8], y: [-3.8, 3.8], z: [0, 9.2] }
+    },
+    helicoid: {
+      label: "helikoit",
+      names: ["u", "v"],
+      r: (u, v) => [u * Math.cos(v), u * Math.sin(v), v],
+      u: [0, 1],
+      v: [0, Math.PI],
+      // |r_u x r_v| = sqrt(1 + u^2)
+      mag: (u) => Math.sqrt(1 + u * u),
+      exact: (Math.PI / 2) * (Math.SQRT2 + Math.log(1 + Math.SQRT2)),
+      exactText: "(π/2)[√2 + ln(1 + √2)]",
+      m: [2, 30, 4],
+      n: [3, 30, 6],
+      box: { x: [-1.4, 1.4], y: [-0.1, 1.4], z: [0, 3.2] }
+    },
+    torus: {
+      label: "torus (a = 1, b = 2)",
+      names: ["θ", "α"],
+      r: (u, v) => [(2 + Math.cos(v)) * Math.cos(u), (2 + Math.cos(v)) * Math.sin(u), Math.sin(v)],
+      u: [0, TAU],
+      v: [0, TAU],
+      // |r_theta x r_alpha| = a (b + a cos(alpha)) with a = 1, b = 2
+      mag: (u, v) => 2 + Math.cos(v),
+      exact: 8 * Math.PI * Math.PI,
+      exactText: "8π²",
+      m: [8, 30, 12],
+      n: [6, 30, 8],
+      box: { x: [-3.9, 3.9], y: [-3.9, 3.9], z: [-1.45, 1.45] }
+    }
+  };
+}
+```
+
+```{ojs}
+//| echo: false
+viewof pyzAreaSurface = Inputs.select(Object.keys(pyzAreaSurfaces), { value: "sphere", label: "yüzey", format: (key) => pyzAreaSurfaces[key].label })
+```
+
+```{ojs}
+//| echo: false
+viewof pyzAreaGrid = {
+  const s = pyzAreaSurfaces[pyzAreaSurface];
+  return Inputs.form({
+    m: Inputs.range([s.m[0], s.m[1]], { value: s.m[2], step: 1, label: "m" }),
+    n: Inputs.range([s.n[0], s.n[1]], { value: s.n[2], step: 1, label: "n" })
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+pyzAreaPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: secilen yuzey ve onu ortuyen paralelkenarlar; her paralelkenar bir yamanin sol alt kosesindeki teget duzlemde, delta u r_u ve delta v r_v vektorlerinin gerdigi paralelkenardir ve alanlarinin toplami yuzey alanina yaklasir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const s = pyzAreaSurfaces[pyzAreaSurface];
+  const { m, n } = pyzAreaGrid;
+  const [u0, u1] = s.u;
+  const [v0, v1] = s.v;
+  const du = (u1 - u0) / m;
+  const dv = (v1 - v0) / n;
+  const inset = 0.01;
+  const X = [];
+  const Y = [];
+  const Z = [];
+  const I = [];
+  const J = [];
+  const K = [];
+  const EX = [];
+  const EY = [];
+  const EZ = [];
+  const corners = [];
+  let total = 0;
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      const u = u0 + i * du;
+      const v = v0 + j * dv;
+      total += s.mag(u, v) * du * dv;
+      const p = s.r(u, v);
+      const [ru, rv] = partials(s.r, u, v);
+      const a = ru.map((c) => c * du);
+      const b = rv.map((c) => c * dv);
+      const quad = [p, p.map((c, k) => c + a[k]), p.map((c, k) => c + a[k] + b[k]), p.map((c, k) => c + b[k])];
+      // The filled face is shrunk a little toward its centre so that the edge lines are not hidden in it.
+      const centre = p.map((c, k) => c + (a[k] + b[k]) / 2);
+      const start = X.length;
+      for (const q of quad) {
+        X.push(centre[0] + (q[0] - centre[0]) * (1 - inset));
+        Y.push(centre[1] + (q[1] - centre[1]) * (1 - inset));
+        Z.push(centre[2] + (q[2] - centre[2]) * (1 - inset));
+      }
+      I.push(start, start);
+      J.push(start + 1, start + 2);
+      K.push(start + 2, start + 3);
+      for (const q of [...quad, quad[0]]) {
+        EX.push(q[0]);
+        EY.push(q[1]);
+        EZ.push(q[2]);
+      }
+      EX.push(null);
+      EY.push(null);
+      EZ.push(null);
+      corners.push(p);
+    }
+  }
+  const traces = [
+    surface(s.r, u0, u1, v0, v1, theme.theory, { opacity: 0.25, nu: 32, nv: 32 }),
+    legendItem("yüzey", theme.theory),
+    {
+      type: "mesh3d",
+      x: X,
+      y: Y,
+      z: Z,
+      i: I,
+      j: J,
+      k: K,
+      color: theme.practice,
+      opacity: 0.9,
+      flatshading: true,
+      lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9, fresnel: 0.1 },
+      hoverinfo: "skip",
+      showlegend: false,
+      showscale: false
+    },
+    { type: "scatter3d", mode: "lines", x: EX, y: EY, z: EZ, line: { color: withAlpha(theme.text, 0.6), width: 2 }, name: "paralelkenarlar", showlegend: true, hoverinfo: "skip" },
+    points(corners, theme.text, "P<sub>ij</sub> köşeleri", { size: m * n > 300 ? 1.5 : 2.5 })
+  ];
+  render(Plotly, pyzAreaPlot, traces, sceneLayout(theme, { ...s.box, revision: pyzAreaSurface }));
+  const [a, b] = s.names;
+  const gap = total - s.exact;
+  return html`<div class="scene3d-readout">${m} × ${n} = ${m * n} paralelkenar &nbsp;·&nbsp; Δ${a} = ${fmt(du, 4)}, Δ${b} = ${fmt(dv, 4)}<br>paralelkenarların toplam alanı = ${fmt(total, 4)} &nbsp;·&nbsp; yüzey alanı = ${s.exactText} ≈ ${fmt(s.exact, 4)} &nbsp;·&nbsp; fark = ${fmt(gap, 4)}</div>`;
+}
+```
+:::
+::::
 
 Bütün yamalardaki paralelkenarların alanlarını toplayınca $S$'nin alanı için
 

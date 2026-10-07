@@ -10,6 +10,56 @@ Teoremin iki tarafında da tanıdık nesneler durur. Bir tarafta bir $\mathbf{F}
 
 Bölümün sonunda teoremin rotasyonele fiziksel bir anlam kazandırdığını da göreceğiz: bir akışkanın hız alanının rotasyoneli, akışkanın bir nokta çevresinde hangi eksen etrafında ve ne kadar döndüğünü ölçer.
 
+:::: {.content-visible when-format="html:js"}
+```{ojs}
+//| echo: false
+//| output: false
+import { PLOTLY, watchTheme, withAlpha, fmt, sceneLayout, surface, gridCurves, path, point, label, segment, legendItem, quad, arrow, arrowHeads3d, arrowsAt, dot, norm, render } from "./ojs/scene3d.js"
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+Plotly = require(PLOTLY)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+theme = Generators.observe(watchTheme)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+// Nodes and weights of the n-point Gauss-Legendre rule on [-1, 1] (Newton's method on P_n).
+function stoGaussLegendre(n) {
+  const nodes = [];
+  const weights = [];
+  for (let i = 0; i < n; i++) {
+    let z = Math.cos((Math.PI * (i + 0.75)) / (n + 0.5));
+    let slope = 1;
+    for (let step = 0; step < 100; step++) {
+      let p0 = 1;
+      let p1 = z;
+      for (let k = 2; k <= n; k++) {
+        const p2 = ((2 * k - 1) * z * p1 - (k - 1) * p0) / k;
+        p0 = p1;
+        p1 = p2;
+      }
+      slope = (n * (z * p1 - p0)) / (z * z - 1);
+      const shift = p1 / slope;
+      z -= shift;
+      if (Math.abs(shift) < 1e-15) break;
+    }
+    nodes.push(z);
+    weights.push(2 / ((1 - z * z) * slope * slope));
+  }
+  return { nodes, weights };
+}
+```
+::::
+
 ## Sınır Eğrisinin Pozitif Yönü
 
 Teoremi yazabilmek için önce bir yüzeyin yönlendirmesinin, sınır eğrisine nasıl bir yön verdiğini belirlememiz gerekiyor.
@@ -1792,6 +1842,102 @@ buluruz. [$\blacksquare$]{.qed}
 
 Yani bir rotasyonelin akısı, yüzeyin kendisine değil, yalnız sınırına ve sınırın yönüne bağlıdır. Bu, bir yüzey üzerinde integral almak zor, aynı sınırlı başka bir yüzey üzerinde kolay olduğunda çok işe yarar. Yön uyumunu kontrol etmenin kolay bir yolu var: yüzeylerden biri öbürünün üstünde bir kubbe gibi duruyorsa, ikisi de yukarı yönlendirildiğinde sınıra aynı yönü verir (yukarıdaki şekilde disk, yarım küre ve paraboloit gibi).
 
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: sınırı aynı kalan yüzeyler.** Sahneyi sürükleyerek döndürebilirsiniz. Yarı saydam mavi yüzey $S$, $z = (h + by)(1 - x^2 - y^2)$ grafiğidir; $h$ ve $b$ kaydırıcıları nasıl ayarlanırsa ayarlansın sınırı $xy$-düzlemindeki birim çember $C$'dir. $h = b = 0$ iken $S$ birim disk, $h = 1$, $b = 0$ iken @exm-sto-dogrulama içindeki paraboloittir; $b$ yüzeyi $y$ yönünde eğer. Vektör alanı yine o örnekteki $\mathbf{F} = -y\,\mathbf{i} + x\,\mathbf{j} + xz\,\mathbf{k}$'dir: yüzeydeki oklar birim normal $\mathbf{n}$'yi ve $\operatorname{curl}\mathbf{F} = -z\,\mathbf{j} + 2\,\mathbf{k}$'yi, $C$ üzerindeki oklar $\mathbf{F}$'yi gösterir. Değer satırı iki tarafı da sayısal olarak hesaplar. Yüzey değiştikçe yüzey alanı da değişir (disk için $\pi \approx 3{,}14$, paraboloit için $5{,}33$), ama $\operatorname{curl}\mathbf{F}$'nin akısı hep $2\pi \approx 6{,}2832$'de kalır (@cor-sto-ayni-sinir) ve $C$ boyunca alınan eğrisel integrale eşittir. $\mathbf{n}$'yi aşağı çevirince $C$'nin pozitif yönü de döner (@def-sto-pozitif-yon) ve iki taraf birlikte $-2\pi$ olur.
+
+```{ojs}
+//| echo: false
+viewof stoSurfaceControls = Inputs.form({
+  h: Inputs.range([-1, 1.5], { value: 1, step: 0.05, label: "h" }),
+  b: Inputs.range([-0.5, 0.5], { value: 0, step: 0.05, label: "b" }),
+  side: Inputs.radio(["up", "down"], { value: "up", label: "n", format: (key) => (key === "up" ? "yukarı" : "aşağı") }),
+  showCurl: Inputs.toggle({ label: "curl F", value: true })
+})
+```
+
+```{ojs}
+//| echo: false
+stoSurfacePlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: z = (h + b y)(1 - x^2 - y^2) yuzeyi S ve siniri olan xy-duzlemindeki birim cember C; yuzeyde birim normal n ve curl F oklari, C uzerinde F = -y i + x j + xz k oklari; curl F nin S den akisi her h ve b icin 2 pi dir ve C boyunca egrisel integrale esittir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { h, b, side, showCurl } = stoSurfaceControls;
+  const sign = side === "up" ? 1 : -1;
+  // The field of exm-sto-dogrulama and its curl.
+  const F = ([x, y, z]) => [-y, x, x * z];
+  const curlF = ([x, y, z]) => [0, -z, 2];
+  // The surface z = g(x, y) over the unit disk; its boundary is always the unit circle in the xy-plane.
+  const g = (x, y) => (h + b * y) * (1 - x * x - y * y);
+  const gx = (x, y) => -2 * x * (h + b * y);
+  const gy = (x, y) => b * (1 - x * x - y * y) - 2 * y * (h + b * y);
+  const S = (r, t) => {
+    const x = r * Math.cos(t);
+    const y = r * Math.sin(t);
+    return [x, y, g(x, y)];
+  };
+  // Flux of curl F with the upward normal: the integral over the unit disk of -G1 g_x - G2 g_y + G3,
+  // in polar coordinates (Gauss-Legendre in r, midpoints in theta). The same grids give the area.
+  const coarse = stoGaussLegendre(8);
+  const fine = stoGaussLegendre(24);
+  const nt = 96;
+  const dt = (2 * Math.PI) / nt;
+  let flux = 0;
+  let area = 0;
+  for (let j = 0; j < nt; j++) {
+    const t = (j + 0.5) * dt;
+    coarse.nodes.forEach((node, k) => {
+      const r = (node + 1) / 2;
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const G = curlF([x, y, g(x, y)]);
+      flux += (-G[0] * gx(x, y) - G[1] * gy(x, y) + G[2]) * r * (coarse.weights[k] / 2) * dt;
+    });
+    fine.nodes.forEach((node, k) => {
+      const r = (node + 1) / 2;
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      area += Math.sqrt(1 + gx(x, y) ** 2 + gy(x, y) ** 2) * r * (fine.weights[k] / 2) * dt;
+    });
+  }
+  flux *= sign;
+  // The positive direction of C: counterclockwise seen from above when n points up, clockwise otherwise.
+  const C = (t) => [Math.cos(sign * t), Math.sin(sign * t), 0];
+  const nc = 256;
+  let circulation = 0;
+  for (let k = 0; k < nc; k++) {
+    const t = (2 * Math.PI * k) / nc;
+    const velocity = [-sign * Math.sin(sign * t), sign * Math.cos(sign * t), 0];
+    circulation += dot(F(C(t)), velocity) * ((2 * Math.PI) / nc);
+  }
+  // Arrows at the center and at six points of the circle r = 0.6.
+  const feet = [S(0, 0), ...Array.from({ length: 6 }, (_, k) => S(0.6, (k * Math.PI) / 3))];
+  const normals = feet.map(([x, y]) => {
+    const N = [-gx(x, y), -gy(x, y), 1];
+    const length = norm(N);
+    return N.map((c) => (0.4 * sign * c) / length);
+  });
+  const rim = Array.from({ length: 8 }, (_, k) => [Math.cos((k * Math.PI) / 4), Math.sin((k * Math.PI) / 4), 0]);
+  const traces = [
+    surface(S, 0, 1, 0, 2 * Math.PI, theme.theory, { nu: 16, nv: 48, opacity: 0.35 }),
+    gridCurves(S, 0, 1, 0, 2 * Math.PI, 4, 12, withAlpha(theme.theory, 0.45), { width: 1.5 }),
+    legendItem("S", theme.theory),
+    path(C, 0, 2 * Math.PI, theme.practice, "C = ∂S", { width: 6, samples: 160 }),
+    arrowHeads3d(C, 0, 2 * Math.PI, 4, theme.practice, { size: 0.18 }),
+    ...arrowsAt(feet, normals, theme.base, { scale: 1, head: 0.12, name: "n" }),
+    ...(showCurl ? arrowsAt(feet, feet.map(curlF), theme.remark, { scale: 0.2, head: 0.1, name: "curl F" }) : []),
+    ...arrowsAt(rim, rim.map(F), theme.text, { scale: 0.35, head: 0.1, name: "F (C üzerinde)" })
+  ];
+  render(Plotly, stoSurfacePlot, traces, sceneLayout(theme, { x: [-1.4, 1.4], y: [-1.4, 1.4], z: [-1.6, 2.2], eye: { x: 1.6, y: 1.4, z: 0.75 } }));
+  const turn = sign > 0 ? "yukarıdan bakınca saat yönünün tersi" : "yukarıdan bakınca saat yönü";
+  return html`<div class="scene3d-readout">h = ${fmt(h)}, b = ${fmt(b)} &nbsp;·&nbsp; <b>n</b> ${sign > 0 ? "yukarı" : "aşağı"} bakıyor; C'nin pozitif yönü: ${turn}<br>S'nin yüzey alanı = ${fmt(area)} &nbsp;·&nbsp; ∬<sub>S</sub> curl <b>F</b> · d<b>S</b> = ${fmt(flux, 4)} &nbsp;·&nbsp; ∫<sub>C</sub> <b>F</b> · d<b>r</b> = ${fmt(circulation, 4)}</div>`;
+}
+```
+:::
+::::
+
 ::: {.callout-tip title="Bir rotasyonelin akısı iki yoldan"}
 $\iint_S \operatorname{curl}\mathbf{F} \cdot d\mathbf{S}$ integralini Stokes Teoremi'yle iki yoldan hesaplayabiliriz:
 
@@ -2517,6 +2663,87 @@ yaklaşımı geçerlidir. Bu sayı, akışkanın $P_0$ çevresinde $\mathbf{n}$ 
 $$\operatorname{curl}\mathbf{v}(P_0) \cdot \mathbf{n} = |\operatorname{curl}\mathbf{v}(P_0)| \cos\alpha$$
 
 olur. Bu değer en büyük, $\mathbf{n}$ tam $\operatorname{curl}\mathbf{v}(P_0)$ yönündeyken olur. Akışkanın içine, ekseni $\mathbf{n}$ olan küçük bir kürekli çark koyduğumuzu düşünelim. Çark en hızlı, ekseni $\operatorname{curl}\mathbf{v}$'ye paralelken döner ve dönme yönü sağ el kuralıyla $\operatorname{curl}\mathbf{v}$'nin yönünden okunur. $\operatorname{curl}\mathbf{v} = \mathbf{0}$ olan bir noktada ise çark hangi eksenle konursa konsun dönme eğilimi göstermez.
+
+:::: {.content-visible when-format="html:js"}
+::: {.interactive-scene}
+**Etkileşimli sahne: kürekli çark.** Sahneyi sürükleyerek döndürebilirsiniz. @exm-sto-dogrulama içindeki alanı bir akışkanın hız alanı olarak alalım: $\mathbf{v} = -y\,\mathbf{i} + x\,\mathbf{j} + xz\,\mathbf{k}$ ve $\operatorname{curl}\mathbf{v} = -z\,\mathbf{j} + 2\,\mathbf{k}$. Çarkın merkezi $P_0(0, 0, 1)$ noktasıdır; orada $\operatorname{curl}\mathbf{v}(P_0) = -\mathbf{j} + 2\,\mathbf{k}$ ve $|\operatorname{curl}\mathbf{v}(P_0)| = \sqrt{5}$, yani yaklaşık $2{,}2361$ olur (bu ok yarı boyda çizilmiştir). $\phi$ ve $\theta$ kaydırıcıları çarkın ekseni $\mathbf{n}$'yi küresel koordinatlardaki açılarla döndürür, $a$ ise $S_a$ diskinin yarıçapıdır. Değer satırı $C_a$ etrafındaki dolanımı sayısal olarak hesaplar ve $\pi a^2$'ye böler. $a$ küçüldükçe dolanım sıfıra gider ama oran değişmez ve $\operatorname{curl}\mathbf{v}(P_0) \cdot \mathbf{n} = \sqrt{5}\cos\alpha$'ya eşit kalır. Bunun nedeni, $\operatorname{curl}\mathbf{v}$'nin bileşenlerinin $x, y, z$'nin en çok birinci dereceden polinomları olmasıdır: böyle bir fonksiyonun disk üzerindeki ortalaması merkezdeki değeridir. Genel bir vektör alanında (2) eşitliği yalnız limitte geçerlidir. $\mathbf{n} = \mathbf{k}$ iken oran $2$, $\mathbf{n} = \mathbf{i}$ iken $0$, $\mathbf{n} = \mathbf{j}$ iken $-1$'dir. Kutucuk işaretlenince $\mathbf{n}$, $\operatorname{curl}\mathbf{v}(P_0)$ yönüne çevrilir ($\alpha = 0$) ve oran en büyük değeri $\sqrt{5}$'e ulaşır: çark en hızlı bu eksenle döner.
+
+```{ojs}
+//| echo: false
+viewof stoWheelControls = Inputs.form({
+  a: Inputs.range([0.1, 1], { value: 0.5, step: 0.05, label: "a" }),
+  phi: Inputs.range([0, 180], { value: 0, step: 5, label: "ϕ (°)" }),
+  theta: Inputs.range([0, 355], { value: 0, step: 5, label: "θ (°)" }),
+  align: Inputs.toggle({ label: "n ∥ curl v", value: false })
+})
+```
+
+```{ojs}
+//| echo: false
+stoWheelPlot = html`<div class="scene3d" role="img" aria-label="Dondurulebilir sahne: P0 = (0, 0, 1) merkezli, a yaricapli ve ekseni n olan kurekli cark; diskin siniri C_a uzerinde v = -y i + x j + xz k hiz alaninin oklari, n ve yari boyda curl v(P0) vektoru; C_a etrafindaki dolanimin pi a^2 ye orani curl v(P0) . n dir"></div>`
+```
+
+```{ojs}
+//| echo: false
+{
+  const { a, phi, theta, align } = stoWheelControls;
+  // The velocity field of exm-sto-dogrulama and its curl at P0.
+  const v = ([x, y, z]) => [-y, x, x * z];
+  const P0 = [0, 0, 1];
+  const curl0 = [0, -1, 2];
+  const curlLength = norm(curl0);
+  // Spherical angles of the axis n; the toggle turns n along curl v(P0) = (0, -1, 2).
+  const degree = Math.PI / 180;
+  const ph = align ? Math.acos(curl0[2] / curlLength) : phi * degree;
+  const th = align ? 1.5 * Math.PI : theta * degree;
+  const n = [Math.sin(ph) * Math.cos(th), Math.sin(ph) * Math.sin(th), Math.cos(ph)];
+  // e1, e2 span the disk and e1 x e2 = n, so t -> P0 + a(cos t e1 + sin t e2) is the positive direction of C_a.
+  const e1 = [Math.cos(ph) * Math.cos(th), Math.cos(ph) * Math.sin(th), -Math.sin(ph)];
+  const e2 = [-Math.sin(th), Math.cos(th), 0];
+  const at = (s, t) => [0, 1, 2].map((i) => P0[i] + s * a * (Math.cos(t) * e1[i] + Math.sin(t) * e2[i]));
+  const rim = (t) => at(1, t);
+  // Circulation around C_a (periodic trapezoid rule) and the ratio of (2).
+  const nc = 256;
+  let circulation = 0;
+  for (let k = 0; k < nc; k++) {
+    const t = (2 * Math.PI * k) / nc;
+    const speed = [0, 1, 2].map((i) => a * (-Math.sin(t) * e1[i] + Math.cos(t) * e2[i]));
+    circulation += dot(v(rim(t)), speed) * ((2 * Math.PI) / nc);
+  }
+  const area = Math.PI * a * a;
+  const curlNormal = dot(curl0, n);
+  const alpha = Math.acos(Math.max(-1, Math.min(1, curlNormal / curlLength))) / degree;
+  // Four paddles of the wheel, in planes through the axis n.
+  const paddles = [0, 1, 2, 3].map((k) => {
+    const c = Math.cos((k * Math.PI) / 2);
+    const s = Math.sin((k * Math.PI) / 2);
+    const corner = (out, up) => [0, 1, 2].map((i) => P0[i] + a * (out * (c * e1[i] + s * e2[i]) + up * n[i]));
+    return quad(corner(0.15, -0.3), corner(0.9, -0.3), corner(0.9, 0.3), corner(0.15, 0.3), theme.practice, { opacity: 0.3 });
+  });
+  const halfCurl = curl0.map((c) => c / 2);
+  const foot = n.map((c, i) => dot(halfCurl, n) * c + P0[i]);
+  const tip = halfCurl.map((c, i) => c + P0[i]);
+  const marks = Array.from({ length: 12 }, (_, k) => rim((k * Math.PI) / 6));
+  const traces = [
+    surface(at, 0, 1, 0, 2 * Math.PI, theme.theory, { nu: 2, nv: 48, opacity: 0.22 }),
+    legendItem("S<sub>a</sub>", theme.theory),
+    ...paddles,
+    path(rim, 0, 2 * Math.PI, theme.practice, "C<sub>a</sub>", { width: 5, samples: 160 }),
+    arrowHeads3d(rim, 0, 2 * Math.PI, 4, theme.practice, { size: Math.max(0.05, 0.22 * a) }),
+    ...arrowsAt(marks, marks.map(v), theme.text, { scale: 0.45, head: Math.max(0.03, 0.1 * a), name: "v (C<sub>a</sub> üzerinde)" }),
+    ...arrow(P0, n, theme.practice, "n", { head: 0.15 }),
+    ...arrow(P0, halfCurl, theme.base, "curl v(P₀) (yarı boy)", { head: 0.15 }),
+    segment(P0, foot, withAlpha(theme.practice, 0.7), { dash: "dot" }),
+    segment(tip, foot, withAlpha(theme.text, 0.6)),
+    point(P0, theme.text, undefined, { size: 4 }),
+    label(P0, "P₀", theme.text, { position: "bottom center" })
+  ];
+  render(Plotly, stoWheelPlot, traces, sceneLayout(theme, { x: [-1.5, 1.5], y: [-1.5, 1.5], z: [-0.5, 2.5], eye: { x: 1.6, y: 1.4, z: 0.75 } }));
+  return html`<div class="scene3d-readout">a = ${fmt(a)} &nbsp;·&nbsp; ϕ = ${fmt(ph / degree, 1)}°, θ = ${fmt(th / degree, 1)}° &nbsp;·&nbsp; <b>n</b> ile curl <b>v</b>(P₀) arasındaki açı α = ${fmt(alpha, 1)}°<br>C<sub>a</sub> etrafında dolanım = ${fmt(circulation, 4)} &nbsp;·&nbsp; πa² = ${fmt(area, 4)} &nbsp;·&nbsp; oran = ${fmt(circulation / area, 4)} &nbsp;·&nbsp; curl <b>v</b>(P₀) · <b>n</b> = √5 cos α = ${fmt(curlNormal, 4)}</div>`;
+}
+```
+:::
+::::
 
 ## Rotasyoneli Sıfır Olan Alanlar
 
