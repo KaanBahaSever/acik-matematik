@@ -1,4 +1,4 @@
-# 🌿 Açık Matematik
+# <picture><source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg"><img src="assets/logo.svg" alt="" width="40" height="40" align="top"></picture> Açık Matematik
 
 **Açık Matematik**, lisans düzeyindeki matematik derslerini tek bir yerde toplayan, açık kaynaklı ve reklamsız bir Türkçe not arşividir. Amaç sade: bir öğrencinin aradığı tanımı, teoremi ya da çözülmüş soruyu; dağınık fotokopilerde, okunaksız el yazılarında ve birbirini tutmayan gösterimlerde aramak zorunda kalmaması.
 
@@ -68,9 +68,9 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | 🧮 Örnek ve alıştırma | **5.045** |
 | 💡 Çözüm | **4.772** |
 | 📊 Şekil | **1.563** |
-| ✍️ Kelime | **2.235.241** |
-| 🔤 Karakter | **15.774.071** |
-| 💾 Kaynak metin | **39,5 MB** |
+| ✍️ Kelime | **2.240.514** |
+| 🔤 Karakter | **15.815.719** |
+| 💾 Kaynak metin | **39,7 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 
