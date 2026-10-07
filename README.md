@@ -13,7 +13,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 <!-- BOOKS-START -->
 
 <details>
-<summary><strong>Arşivdeki 33 ders</strong> — 23 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
+<summary><strong>Arşivdeki 33 ders</strong> — 24 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
 
 - [Analitik Geometri](https://acik-matematik.com/dersler/analitik-geometri/) — 23 bölüm, 569 örnek ve alıştırma
 - [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 38 bölüm, 274 örnek ve alıştırma
@@ -22,6 +22,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Analiz 4: Çok Değişkenli Fonksiyonlar](https://acik-matematik.com/dersler/analiz-4/) — 21 bölüm, 497 örnek ve alıştırma
 - [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 8 bölüm, 116 örnek ve alıştırma
 - [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 17 bölüm, 611 örnek ve alıştırma
+- [İntegral Calculus](https://acik-matematik.com/dersler/integral-calculus/) — 18 bölüm, 348 örnek ve alıştırma
 - [Kompleks Analiz](https://acik-matematik.com/dersler/kompleks-analiz/) — 45 bölüm, 173 örnek ve alıştırma
 - [Konveks Analiz](https://acik-matematik.com/dersler/konveks-analiz/) — 13 bölüm, 70 örnek ve alıştırma
 - [Kriptografi](https://acik-matematik.com/dersler/kriptografi/) — 25 bölüm, 34 örnek ve alıştırma
@@ -42,7 +43,6 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - Eliptik Eğriler — müfredatı hazır, bölümleri yazılıyor
 - Fonksiyonel Analiz — müfredatı hazır, bölümleri yazılıyor
 - İleri Analiz — müfredatı hazır, bölümleri yazılıyor
-- İntegral Calculus — müfredatı hazır, bölümleri yazılıyor
 - Kodlama Teorisi — müfredatı hazır, bölümleri yazılıyor
 - Python ile Bilimsel Hesaplama — müfredatı hazır, bölümleri yazılıyor
 - Soyut Cebir 2: Halkalar ve İdealler — müfredatı hazır, bölümleri yazılıyor
@@ -60,17 +60,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **512** |
-| 📐 Teorem | **1.206** |
-| 🔹 Lemma | **129** |
-| 📝 Tanım | **1.485** |
-| ✅ İspat | **2.123** |
-| 🧮 Örnek ve alıştırma | **4.697** |
-| 💡 Çözüm | **4.424** |
-| 📊 Şekil | **1.423** |
-| ✍️ Kelime | **2.114.439** |
-| 🔤 Karakter | **14.887.855** |
-| 💾 Kaynak metin | **33,7 MB** |
+| 📖 Konu/Bölüm | **530** |
+| 📐 Teorem | **1.238** |
+| 🔹 Lemma | **130** |
+| 📝 Tanım | **1.562** |
+| ✅ İspat | **2.199** |
+| 🧮 Örnek ve alıştırma | **5.045** |
+| 💡 Çözüm | **4.772** |
+| 📊 Şekil | **1.563** |
+| ✍️ Kelime | **2.235.241** |
+| 🔤 Karakter | **15.774.071** |
+| 💾 Kaynak metin | **39,5 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 

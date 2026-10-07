@@ -1,0 +1,1438 @@
+---
+title: "Çok Katlı İntegrallerde Değişken Değiştirme"
+pagetitle: "Çok Katlı İntegrallerde Değişken Değiştirme"
+description: "Düzlemde dönüşümler ve bir bölgenin görüntüsü, küçük bir dikdörtgenin alanının Jacobi determinantıyla nasıl değiştiği, iki ve üç katlı integrallerde değişken değiştirme formülü, uygun dönüşümün seçimi ve kutupsal, silindirik ve küresel koordinat formüllerinin bu genel formülden çıkışı."
+---
+
+Tek değişkenli integralde değişken değiştirme, karmaşık görünen bir integrali daha kolay bir integrale çevirmenin en güçlü aracıdır. $x = g(u)$ yazıp $a = g(c)$, $b = g(d)$ alırsak (bkz. [Analiz 2](../analiz-2/belirli-integralde-yontemler.html#thm-belirli-degisken-degistirme))
+
+$$\int_a^b f(x)\,dx = \int_c^d f\big(g(u)\big)\,g'(u)\,du = \int_c^d f\big(x(u)\big)\,\frac{dx}{du}\,du \tag{1}$$
+
+olur. Buradaki $dx/du$ çarpanı, $u$ ekseninde kısa bir aralığın $x$ ekseninde kaç katına çıktığını ölçer.
+
+İki katlı integrallerde bir değişken değiştirmeyi aslında kullandık: kutupsal koordinatlar. $x = r\cos\theta$, $y = r\sin\theta$ yazınca (@thm-kki-kutupsal)
+
+$$\iint_R f(x, y)\,dA = \iint_S f(r\cos\theta, r\sin\theta)\,r\,dr\,d\theta$$
+
+olur; burada $S$, $r\theta$-düzleminde $R$'ye karşılık gelen bölgedir. Bu bölümde aynı fikri genel dönüşümlere taşıyacağız. Asıl soru şudur: kutupsal formüldeki fazladan $r$ çarpanı nereden gelir ve başka bir dönüşümde onun yerini ne alır? Cevap, $dx/du$ türevinin iki ve üç boyuttaki karşılığı olan Jacobi determinantıdır.
+
+## Düzlemde Dönüşümler
+
+Değişken değiştirmenin dili dönüşümlerdir; önce bir dönüşümün noktaları ve bölgeleri nasıl taşıdığını görelim.
+
+::: {#def-ddg-donusum name="Dönüşüm ve Görüntü"}
+$uv$-düzleminin bir bölgesinden $xy$-düzlemine giden ve
+
+$$x = g(u, v), \qquad y = h(u, v)$$
+
+denklemleriyle verilen $T(u, v) = (x, y)$ fonksiyonuna bir **dönüşüm** (transformation) denir. Bu denklemleri kısaca $x = x(u, v)$, $y = y(u, v)$ diye de yazarız. $g$ ile $h$'nin birinci mertebeden kısmi türevleri sürekliyse $T$'ye bir **$C^1$ dönüşüm** denir.
+
+$T(u_1, v_1) = (x_1, y_1)$ ise $(x_1, y_1)$ noktasına $(u_1, v_1)$ noktasının **görüntüsü** (image) denir. $uv$-düzlemindeki bir $S$ kümesinin bütün noktalarının görüntülerinden oluşan
+
+$$T(S) = \{\, T(u, v) \mid (u, v) \in S \,\}$$
+
+kümesine $S$'nin **görüntüsü** denir.
+:::
+
+Yani bir dönüşüm, $uv$-düzlemindeki her noktayı $xy$-düzleminde bir noktaya, bir bölgeyi de bütün olarak başka bir bölgeye taşır. Analiz 4'te incelediğimiz $\mathbb{R}^2 \to \mathbb{R}^2$ fonksiyonlarından bir farkı yoktur; burada onlara bölgeleri taşıyan haritalar gözüyle bakıyoruz.
+
+::: {#def-ddg-bire-bir name="Bire Bir Dönüşüm ve Ters Dönüşüm"}
+Farklı iki noktayı aynı noktaya götürmeyen bir $T$ dönüşümüne **bire bir** (one-to-one) dönüşüm denir. $T$ bire birse, her $(x, y) = T(u, v)$ noktasını yeniden $(u, v)$ noktasına götüren bir **ters dönüşümü** (inverse transformation) vardır ve bu dönüşüm $T^{-1}$ ile gösterilir. $x = g(u, v)$, $y = h(u, v)$ denklemleri $u$ ve $v$ için çözülebiliyorsa ters dönüşüm
+
+$$u = G(x, y), \qquad v = H(x, y)$$
+
+biçiminde yazılır.
+:::
+
+Yani $T$ bire birse hiçbir bilgi kaybolmaz: $R = T(S)$ bölgesinin her noktası $S$'nin tek bir noktasından gelir ve $T^{-1}$ bizi o noktaya geri götürür. Değişken değiştirmede iki yönü birlikte kullanacağız: bölgeyi $T^{-1}$ ile $uv$-düzlemine taşıyacak, integrandı ise $T$ ile $u$ ve $v$ cinsinden yazacağız.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 12.0 591.5 248.0" role="img" aria-label="Left: a rounded region S in the uv-plane with a marked point (u1, v1). Right: its image R = T(S) in the xy-plane with the image point (x1, y1). Arrows T and T inverse between the panels">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="198.0" x2="284.0" y2="198.0"/>
+  <line x1="70.0" y1="232.0" x2="70.0" y2="56.0"/>
+  <polygon points="284.0,198.0 276.0,194.5 276.0,201.5" stroke="none"/>
+  <polygon points="70.0,56.0 66.5,64.0 73.5,64.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="282.0" y="213.0" text-anchor="end"><tspan font-style="italic">u</tspan></text>
+  <text x="77.0" y="65.0"><tspan font-style="italic">v</tspan></text>
+  </g>
+  <polygon points="242.5,132.0 241.8,130.4 241.1,128.9 240.3,127.5 239.4,126.1 238.6,124.7 237.7,123.4 236.8,122.2 235.8,121.0 234.9,119.9 234.0,118.8 233.0,117.7 232.1,116.7 231.2,115.6 230.3,114.7 229.4,113.7 228.5,112.7 227.7,111.8 226.8,110.8 225.9,109.9 225.0,109.0 224.1,108.0 223.2,107.1 222.3,106.2 221.4,105.3 220.4,104.4 219.4,103.6 218.4,102.7 217.3,101.9 216.2,101.1 215.1,100.3 213.9,99.6 212.7,99.0 211.5,98.3 210.2,97.8 208.9,97.3 207.6,96.9 206.2,96.5 204.8,96.2 203.4,96.0 202.0,95.9 200.6,95.8 199.2,95.8 197.7,95.9 196.3,96.0 194.9,96.3 193.5,96.6 192.1,96.9 190.7,97.3 189.4,97.8 188.1,98.3 186.7,98.9 185.5,99.5 184.2,100.2 182.9,100.9 181.7,101.6 180.5,102.4 179.3,103.2 178.1,104.1 177.0,104.9 175.8,105.8 174.7,106.8 173.6,107.7 172.5,108.7 171.4,109.7 170.3,110.8 169.2,111.9 168.2,113.1 167.2,114.2 166.2,115.5 165.2,116.8 164.3,118.1 163.5,119.5 162.7,120.9 161.9,122.4 161.2,123.9 160.6,125.4 160.1,127.0 159.7,128.7 159.4,130.3 159.2,132.0 159.1,133.7 159.1,135.4 159.2,137.1 159.5,138.7 159.8,140.4 160.3,142.0 160.9,143.6 161.6,145.1 162.5,146.6 163.4,148.0 164.4,149.3 165.6,150.6 166.8,151.7 168.1,152.8 169.4,153.8 170.8,154.7 172.3,155.5 173.7,156.1 175.2,156.8 176.7,157.3 178.2,157.7 179.7,158.1 181.2,158.4 182.7,158.6 184.1,158.8 185.5,158.9 186.9,159.0 188.2,159.1 189.5,159.2 190.7,159.3 191.9,159.3 193.1,159.4 194.2,159.6 195.3,159.7 196.5,159.9 197.5,160.1 198.6,160.4 199.7,160.6 200.9,161.0 202.0,161.3 203.2,161.7 204.4,162.1 205.6,162.6 206.9,163.0 208.3,163.4 209.7,163.9 211.1,164.3 212.6,164.6 214.2,165.0 215.8,165.2 217.4,165.4 219.1,165.6 220.8,165.6 222.5,165.5 224.3,165.4 226.0,165.1 227.8,164.7 229.5,164.2 231.1,163.5 232.7,162.7 234.3,161.9 235.8,160.8 237.2,159.7 238.5,158.5 239.7,157.2 240.7,155.7 241.7,154.2 242.5,152.6 243.2,151.0 243.8,149.3 244.2,147.6 244.5,145.8 244.6,144.0 244.7,142.2 244.6,140.5 244.4,138.7 244.0,137.0 243.6,135.3 243.1,133.6" fill="var(--color-base)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M242.5,132.0 L241.8,130.4 L241.1,128.9 L240.3,127.5 L239.4,126.1 L238.6,124.7 L237.7,123.4 L236.8,122.2 L235.8,121.0 L234.9,119.9 L234.0,118.8 L233.0,117.7 L232.1,116.7 L231.2,115.6 L230.3,114.7 L229.4,113.7 L228.5,112.7 L227.7,111.8 L226.8,110.8 L225.9,109.9 L225.0,109.0 L224.1,108.0 L223.2,107.1 L222.3,106.2 L221.4,105.3 L220.4,104.4 L219.4,103.6 L218.4,102.7 L217.3,101.9 L216.2,101.1 L215.1,100.3 L213.9,99.6 L212.7,99.0 L211.5,98.3 L210.2,97.8 L208.9,97.3 L207.6,96.9 L206.2,96.5 L204.8,96.2 L203.4,96.0 L202.0,95.9 L200.6,95.8 L199.2,95.8 L197.7,95.9 L196.3,96.0 L194.9,96.3 L193.5,96.6 L192.1,96.9 L190.7,97.3 L189.4,97.8 L188.1,98.3 L186.7,98.9 L185.5,99.5 L184.2,100.2 L182.9,100.9 L181.7,101.6 L180.5,102.4 L179.3,103.2 L178.1,104.1 L177.0,104.9 L175.8,105.8 L174.7,106.8 L173.6,107.7 L172.5,108.7 L171.4,109.7 L170.3,110.8 L169.2,111.9 L168.2,113.1 L167.2,114.2 L166.2,115.5 L165.2,116.8 L164.3,118.1 L163.5,119.5 L162.7,120.9 L161.9,122.4 L161.2,123.9 L160.6,125.4 L160.1,127.0 L159.7,128.7 L159.4,130.3 L159.2,132.0 L159.1,133.7 L159.1,135.4 L159.2,137.1 L159.5,138.7 L159.8,140.4 L160.3,142.0 L160.9,143.6 L161.6,145.1 L162.5,146.6 L163.4,148.0 L164.4,149.3 L165.6,150.6 L166.8,151.7 L168.1,152.8 L169.4,153.8 L170.8,154.7 L172.3,155.5 L173.7,156.1 L175.2,156.8 L176.7,157.3 L178.2,157.7 L179.7,158.1 L181.2,158.4 L182.7,158.6 L184.1,158.8 L185.5,158.9 L186.9,159.0 L188.2,159.1 L189.5,159.2 L190.7,159.3 L191.9,159.3 L193.1,159.4 L194.2,159.6 L195.3,159.7 L196.5,159.9 L197.5,160.1 L198.6,160.4 L199.7,160.6 L200.9,161.0 L202.0,161.3 L203.2,161.7 L204.4,162.1 L205.6,162.6 L206.9,163.0 L208.3,163.4 L209.7,163.9 L211.1,164.3 L212.6,164.6 L214.2,165.0 L215.8,165.2 L217.4,165.4 L219.1,165.6 L220.8,165.6 L222.5,165.5 L224.3,165.4 L226.0,165.1 L227.8,164.7 L229.5,164.2 L231.1,163.5 L232.7,162.7 L234.3,161.9 L235.8,160.8 L237.2,159.7 L238.5,158.5 L239.7,157.2 L240.7,155.7 L241.7,154.2 L242.5,152.6 L243.2,151.0 L243.8,149.3 L244.2,147.6 L244.5,145.8 L244.6,144.0 L244.7,142.2 L244.6,140.5 L244.4,138.7 L244.0,137.0 L243.6,135.3 L243.1,133.6 L242.5,132.0" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="214.0" cy="142.8" r="3.8" fill="var(--academic-text)"/>
+  <path d="M214.0,142.8 L250.0,171.6" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="253.0" y="183.6" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(<tspan font-style="italic">u</tspan><tspan font-size="10" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">v</tspan><tspan font-size="10" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="187.6" y="120.0" fill="var(--color-base)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="366.0" y1="218.6" x2="599.4" y2="218.6"/>
+  <line x1="397.6" y1="245.6" x2="397.6" y2="26.0"/>
+  <polygon points="599.4,218.6 591.4,215.1 591.4,222.1" stroke="none"/>
+  <polygon points="397.6,26.0 394.1,34.0 401.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="597.4" y="233.6" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="404.6" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="559.9,73.1 557.0,70.3 554.1,67.6 551.1,65.1 548.0,62.9 544.9,60.8 541.7,58.8 538.6,57.1 535.4,55.5 532.3,54.0 529.3,52.6 526.2,51.3 523.2,50.1 520.3,48.9 517.4,47.9 514.5,46.8 511.7,45.9 508.9,44.9 506.1,44.0 503.3,43.1 500.5,42.2 497.7,41.4 494.9,40.7 492.0,40.0 489.1,39.3 486.2,38.8 483.3,38.3 480.3,37.9 477.3,37.6 474.3,37.5 471.2,37.5 468.1,37.7 465.1,38.0 462.1,38.4 459.0,39.0 456.1,39.8 453.1,40.8 450.3,41.9 447.5,43.2 444.8,44.7 442.3,46.3 439.8,48.1 437.4,49.9 435.2,51.9 433.1,54.0 431.1,56.2 429.3,58.5 427.6,60.9 426.0,63.3 424.5,65.8 423.2,68.3 422.0,70.8 420.8,73.3 419.8,75.9 418.9,78.5 418.0,81.1 417.3,83.6 416.6,86.2 415.9,88.8 415.4,91.4 414.9,94.0 414.4,96.5 414.0,99.1 413.7,101.7 413.5,104.3 413.3,106.9 413.1,109.5 413.1,112.0 413.1,114.6 413.2,117.2 413.4,119.8 413.6,122.3 414.0,124.8 414.5,127.3 415.0,129.8 415.7,132.2 416.5,134.6 417.3,136.9 418.3,139.1 419.4,141.3 420.6,143.4 421.9,145.4 423.2,147.3 424.7,149.1 426.3,150.9 427.9,152.5 429.7,154.0 431.5,155.4 433.4,156.7 435.3,157.9 437.3,158.9 439.4,159.9 441.6,160.7 443.7,161.4 446.0,162.0 448.2,162.4 450.5,162.8 452.8,163.0 455.1,163.1 457.5,163.1 459.8,163.1 462.1,162.9 464.3,162.6 466.6,162.3 468.8,161.9 471.0,161.4 473.1,160.9 475.2,160.4 477.2,159.9 479.2,159.4 481.1,158.9 483.0,158.4 484.9,158.0 486.8,157.6 488.6,157.3 490.5,157.0 492.4,156.8 494.3,156.7 496.2,156.7 498.3,156.7 500.3,156.8 502.5,156.9 504.7,157.0 507.1,157.2 509.5,157.4 512.1,157.6 514.8,157.7 517.5,157.8 520.4,157.8 523.4,157.8 526.5,157.6 529.7,157.3 532.9,156.8 536.2,156.1 539.5,155.3 542.9,154.2 546.2,153.0 549.5,151.4 552.7,149.6 555.9,147.6 558.9,145.3 561.7,142.7 564.4,139.9 566.8,136.8 569.0,133.6 570.8,130.1 572.4,126.4 573.7,122.6 574.6,118.6 575.2,114.6 575.4,110.5 575.2,106.3 574.7,102.2 573.8,98.2 572.7,94.2 571.2,90.3 569.4,86.5 567.3,82.9 565.0,79.5 562.5,76.2" fill="var(--color-theory)" fill-opacity="0.14" stroke="none" stroke-width="1.2"/>
+  <path d="M559.9,73.1 L557.0,70.3 L554.1,67.6 L551.1,65.1 L548.0,62.9 L544.9,60.8 L541.7,58.8 L538.6,57.1 L535.4,55.5 L532.3,54.0 L529.3,52.6 L526.2,51.3 L523.2,50.1 L520.3,48.9 L517.4,47.9 L514.5,46.8 L511.7,45.9 L508.9,44.9 L506.1,44.0 L503.3,43.1 L500.5,42.2 L497.7,41.4 L494.9,40.7 L492.0,40.0 L489.1,39.3 L486.2,38.8 L483.3,38.3 L480.3,37.9 L477.3,37.6 L474.3,37.5 L471.2,37.5 L468.1,37.7 L465.1,38.0 L462.1,38.4 L459.0,39.0 L456.1,39.8 L453.1,40.8 L450.3,41.9 L447.5,43.2 L444.8,44.7 L442.3,46.3 L439.8,48.1 L437.4,49.9 L435.2,51.9 L433.1,54.0 L431.1,56.2 L429.3,58.5 L427.6,60.9 L426.0,63.3 L424.5,65.8 L423.2,68.3 L422.0,70.8 L420.8,73.3 L419.8,75.9 L418.9,78.5 L418.0,81.1 L417.3,83.6 L416.6,86.2 L415.9,88.8 L415.4,91.4 L414.9,94.0 L414.4,96.5 L414.0,99.1 L413.7,101.7 L413.5,104.3 L413.3,106.9 L413.1,109.5 L413.1,112.0 L413.1,114.6 L413.2,117.2 L413.4,119.8 L413.6,122.3 L414.0,124.8 L414.5,127.3 L415.0,129.8 L415.7,132.2 L416.5,134.6 L417.3,136.9 L418.3,139.1 L419.4,141.3 L420.6,143.4 L421.9,145.4 L423.2,147.3 L424.7,149.1 L426.3,150.9 L427.9,152.5 L429.7,154.0 L431.5,155.4 L433.4,156.7 L435.3,157.9 L437.3,158.9 L439.4,159.9 L441.6,160.7 L443.7,161.4 L446.0,162.0 L448.2,162.4 L450.5,162.8 L452.8,163.0 L455.1,163.1 L457.5,163.1 L459.8,163.1 L462.1,162.9 L464.3,162.6 L466.6,162.3 L468.8,161.9 L471.0,161.4 L473.1,160.9 L475.2,160.4 L477.2,159.9 L479.2,159.4 L481.1,158.9 L483.0,158.4 L484.9,158.0 L486.8,157.6 L488.6,157.3 L490.5,157.0 L492.4,156.8 L494.3,156.7 L496.2,156.7 L498.3,156.7 L500.3,156.8 L502.5,156.9 L504.7,157.0 L507.1,157.2 L509.5,157.4 L512.1,157.6 L514.8,157.7 L517.5,157.8 L520.4,157.8 L523.4,157.8 L526.5,157.6 L529.7,157.3 L532.9,156.8 L536.2,156.1 L539.5,155.3 L542.9,154.2 L546.2,153.0 L549.5,151.4 L552.7,149.6 L555.9,147.6 L558.9,145.3 L561.7,142.7 L564.4,139.9 L566.8,136.8 L569.0,133.6 L570.8,130.1 L572.4,126.4 L573.7,122.6 L574.6,118.6 L575.2,114.6 L575.4,110.5 L575.2,106.3 L574.7,102.2 L573.8,98.2 L572.7,94.2 L571.2,90.3 L569.4,86.5 L567.3,82.9 L565.0,79.5 L562.5,76.2 L559.9,73.1" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="510.6" cy="117.0" r="3.8" fill="var(--academic-text)"/>
+  <text x="510.6" y="135.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">(<tspan font-style="italic">x</tspan><tspan font-size="10" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">y</tspan><tspan font-size="10" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="466.6" y="80.6" fill="var(--color-theory)" font-size="13.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">R</tspan> = <tspan font-style="italic">T</tspan>(<tspan font-style="italic">S</tspan>)</text>
+  <line x1="298.0" y1="115.0" x2="357.6" y2="115.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="364.0,115.0 356.0,118.4 356.0,111.6" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="331.0" y="108.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+  <line x1="364.0" y1="149.0" x2="304.4" y2="149.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="298.0,149.0 306.0,145.6 306.0,152.4" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="331.0" y="142.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan><tspan font-size="10" dy="-5">&#8722;1</tspan><tspan dy="5">&#8203;</tspan></text>
+</svg>
+<figcaption><em>T</em> dönüşümü <em>uv</em>-düzlemindeki <em>S</em> bölgesini <em>xy</em>-düzlemindeki <em>R</em> = <em>T</em>(<em>S</em>) bölgesine, her (<em>u</em><sub>1</sub>, <em>v</em><sub>1</sub>) noktasını da görüntüsü (<em>x</em><sub>1</sub>, <em>y</em><sub>1</sub>) noktasına götürür. <em>T</em> bire bir ise <em>T</em><sup>&#8722;1</sup> geri dönüşü sağlar. Burada <em>T</em>(<em>u</em>, <em>v</em>) = (<em>u</em>² &#8722; <em>v</em>², 2<em>uv</em>) alınmıştır.</figcaption>
+</figure>
+```
+
+Bir bölgenin görüntüsünü bulmak için bütün noktalarını tek tek taşımamız gerekmez. Bu bölümde kullanacağımız sürekli ve bire bir dönüşümler bölgenin sınırını görüntünün sınırına götürür; bu yüzden sınırı taşımak yeterlidir.
+
+::: {.callout-tip title="Bir bölgenin görüntüsü üç adımda"}
+1. $S$'nin sınırını parçalara ayır. Kenarları eksenlere paralel bir dikdörtgende her kenar bir $u = \text{sabit}$ ya da $v = \text{sabit}$ doğru parçasıdır.
+2. Her parçayı $x = g(u, v)$, $y = h(u, v)$ denklemlerine koy. Kalan parametreyi yok ederek görüntü eğrisinin $xy$-denklemini ve aralığını bul.
+3. Görüntü eğrilerinin sınırladığı bölge $R = T(S)$'dir. Eğrilerin hangi tarafının $R$ olduğunu $S$'nin içinden bir noktanın görüntüsüyle kontrol et.
+:::
+
+:::: {#exm-ddg-kayma name="Birim Karenin Bir Kayma Altındaki Görüntüsü"}
+$S = [0, 1] \times [0, 1]$ birim karesinin $x = u + v$, $y = v$ dönüşümü altındaki görüntüsünü bulunuz.
+
+::: {.cozum}
+**Kenarlar.** Karenin dört kenarını sırayla taşıyalım.
+
+- $v = 0$, $0 \le u \le 1$ alt kenarı için $x = u$, $y = 0$ olur: görüntü, $x$ ekseni üzerinde $(0, 0)$ ile $(1, 0)$ arasındaki doğru parçasıdır.
+- $u = 1$, $0 \le v \le 1$ sağ kenarı için $x = 1 + v$, $y = v$, yani $x = 1 + y$ olur: görüntü $(1, 0)$ ile $(2, 1)$ arasındaki doğru parçasıdır.
+- $v = 1$ üst kenarı için $x = u + 1$, $y = 1$ olur: görüntü $(1, 1)$ ile $(2, 1)$ arasındaki yatay doğru parçasıdır.
+- $u = 0$ sol kenarı için $x = v$, $y = v$, yani $y = x$ olur: görüntü $(0, 0)$ ile $(1, 1)$ arasındaki doğru parçasıdır.
+
+**Bölge.** Bu dört doğru parçası, köşeleri $(0, 0)$, $(1, 0)$, $(2, 1)$ ve $(1, 1)$ olan paralelkenarı sınırlar:
+
+$$R = \{(x, y) \mid 0 \le y \le 1,\ y \le x \le y + 1\}.$$
+
+Karenin merkezi $(1/2, 1/2)$'nin görüntüsü $(1, 1/2)$'dir ve $1/2 \le 1 \le 3/2$ olduğundan gerçekten $R$'nin içindedir. Paralelkenarın tabanı $1$, yüksekliği $1$ olduğundan alanı $1$'dir; dönüşüm karenin alanını değiştirmemiştir. Bunun nedenini bir sonraki başlıkta göreceğiz. [$\blacksquare$]{.qed}
+:::
+::::
+
+Kenarlar doğru parçası olarak kalmak zorunda değildir; doğrusal olmayan bir dönüşüm onları eğriltir.
+
+:::: {#exm-ddg-kare-parabol name="Birim Karenin Parabollerle Sınırlı Görüntüsü"}
+$x = u^2 - v^2$, $y = 2uv$ dönüşümü altında $S = [0, 1] \times [0, 1]$ birim karesinin görüntüsünü bulunuz.
+
+::: {.cozum}
+Karenin kenarlarına $S_1$ (alt), $S_2$ (sağ), $S_3$ (üst) ve $S_4$ (sol) diyelim ve kareyi saat yönünün tersine dolaşalım.
+
+**$S_1$ kenarı.** $v = 0$, $0 \le u \le 1$ için $x = u^2$, $y = 0$ olur. $u$, $0$'dan $1$'e giderken $x$ de $0$'dan $1$'e gider: $S_1$'in görüntüsü $x$ ekseni üzerinde $(0, 0)$ ile $(1, 0)$ arasındaki doğru parçasıdır.
+
+**$S_2$ kenarı.** $u = 1$, $0 \le v \le 1$ için
+
+$$x = 1 - v^2, \qquad y = 2v$$
+
+olur. İkinci denklemden $v = y/2$ yazıp birincide yerine koyarak $v$'yi yok edelim:
+
+$$x = 1 - \frac{y^2}{4}, \qquad 0 \le x \le 1.$$
+
+Bu, $(1, 0)$'dan $(0, 2)$'ye giden bir parabol yayıdır.
+
+**$S_3$ kenarı.** $v = 1$ için $x = u^2 - 1$, $y = 2u$ olur; $u = y/2$ yazınca
+
+$$x = \frac{y^2}{4} - 1, \qquad -1 \le x \le 0$$
+
+parabol yayı bulunur. $u$, $1$'den $0$'a inerken bu yay $(0, 2)$'den $(-1, 0)$'a iner.
+
+**$S_4$ kenarı.** $u = 0$ için $x = -v^2$, $y = 0$ olur: görüntü $x$ ekseni üzerinde $(-1, 0)$ ile $(0, 0)$ arasındaki doğru parçasıdır.
+
+**Bölge.** $S$'nin görüntüsü, $x$ ekseni ile $x = 1 - y^2/4$ ve $x = y^2/4 - 1$ parabollerinin sınırladığı bölgedir:
+
+$$R = \Big\{(x, y) \mid 0 \le y \le 2,\ \frac{y^2}{4} - 1 \le x \le 1 - \frac{y^2}{4}\Big\}.$$
+
+Kontrol için karenin merkezini alalım: $T(1/2, 1/2) = (0, 1/2)$ ve $y = 1/2$ için $-15/16 \le 0 \le 15/16$ olduğundan bu nokta $R$'nin içindedir. Kareyi saat yönünün tersine dolaşınca $R$'nin sınırı da saat yönünün tersine dolaşılır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 12.0 669.0 300.0" role="img" aria-label="Left: the unit square in the uv-plane with sides S1 to S4 drawn counterclockwise in four colors. Right: the region R bounded by the x axis and the parabolas x = 1 - y^2/4 and x = y^2/4 - 1, with vertices (-1, 0), (1, 0) and (0, 2) and the image sides in matching colors">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="235.0" x2="262.8" y2="235.0"/>
+  <line x1="77.5" y1="276.5" x2="77.5" y2="56.0"/>
+  <polygon points="262.8,235.0 254.8,231.5 254.8,238.5" stroke="none"/>
+  <polygon points="77.5,56.0 74.0,64.0 81.0,64.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="260.8" y="250.0" text-anchor="end"><tspan font-style="italic">u</tspan></text>
+  <text x="84.5" y="65.0"><tspan font-style="italic">v</tspan></text>
+  </g>
+  <polygon points="77.5,235.0 202.5,235.0 202.5,110.0 77.5,110.0" fill="var(--color-base)" fill-opacity="0.13" stroke="none" stroke-width="1.2"/>
+  <path d="M77.5,235.0 L79.6,235.0 L81.7,235.0 L83.8,235.0 L85.8,235.0 L87.9,235.0 L90.0,235.0 L92.1,235.0 L94.2,235.0 L96.2,235.0 L98.3,235.0 L100.4,235.0 L102.5,235.0 L104.6,235.0 L106.7,235.0 L108.8,235.0 L110.8,235.0 L112.9,235.0 L115.0,235.0 L117.1,235.0 L119.2,235.0 L121.2,235.0 L123.3,235.0 L125.4,235.0 L127.5,235.0 L129.6,235.0 L131.7,235.0 L133.8,235.0 L135.8,235.0 L137.9,235.0 L140.0,235.0 L142.1,235.0 L144.2,235.0 L146.2,235.0 L148.3,235.0 L150.4,235.0 L152.5,235.0 L154.6,235.0 L156.7,235.0 L158.8,235.0 L160.8,235.0 L162.9,235.0 L165.0,235.0 L167.1,235.0 L169.2,235.0 L171.2,235.0 L173.3,235.0 L175.4,235.0 L177.5,235.0 L179.6,235.0 L181.7,235.0 L183.8,235.0 L185.8,235.0 L187.9,235.0 L190.0,235.0 L192.1,235.0 L194.2,235.0 L196.2,235.0 L198.3,235.0 L200.4,235.0 L202.5,235.0" fill="none" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="137.9" y1="235.0" x2="134.9" y2="235.0" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="142.1,235.0 133.1,238.8 133.1,231.2" fill="var(--color-base)" opacity="1.0"/>
+  <path d="M202.5,235.0 L202.5,232.9 L202.5,230.8 L202.5,228.8 L202.5,226.7 L202.5,224.6 L202.5,222.5 L202.5,220.4 L202.5,218.3 L202.5,216.2 L202.5,214.2 L202.5,212.1 L202.5,210.0 L202.5,207.9 L202.5,205.8 L202.5,203.8 L202.5,201.7 L202.5,199.6 L202.5,197.5 L202.5,195.4 L202.5,193.3 L202.5,191.2 L202.5,189.2 L202.5,187.1 L202.5,185.0 L202.5,182.9 L202.5,180.8 L202.5,178.8 L202.5,176.7 L202.5,174.6 L202.5,172.5 L202.5,170.4 L202.5,168.3 L202.5,166.2 L202.5,164.2 L202.5,162.1 L202.5,160.0 L202.5,157.9 L202.5,155.8 L202.5,153.8 L202.5,151.7 L202.5,149.6 L202.5,147.5 L202.5,145.4 L202.5,143.3 L202.5,141.2 L202.5,139.2 L202.5,137.1 L202.5,135.0 L202.5,132.9 L202.5,130.8 L202.5,128.8 L202.5,126.7 L202.5,124.6 L202.5,122.5 L202.5,120.4 L202.5,118.3 L202.5,116.2 L202.5,114.2 L202.5,112.1 L202.5,110.0" fill="none" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="202.5" y1="174.6" x2="202.5" y2="177.6" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="202.5,170.4 206.3,179.4 198.7,179.4" fill="var(--color-theory)" opacity="1.0"/>
+  <path d="M202.5,110.0 L200.4,110.0 L198.3,110.0 L196.2,110.0 L194.2,110.0 L192.1,110.0 L190.0,110.0 L187.9,110.0 L185.8,110.0 L183.8,110.0 L181.7,110.0 L179.6,110.0 L177.5,110.0 L175.4,110.0 L173.3,110.0 L171.2,110.0 L169.2,110.0 L167.1,110.0 L165.0,110.0 L162.9,110.0 L160.8,110.0 L158.8,110.0 L156.7,110.0 L154.6,110.0 L152.5,110.0 L150.4,110.0 L148.3,110.0 L146.2,110.0 L144.2,110.0 L142.1,110.0 L140.0,110.0 L137.9,110.0 L135.8,110.0 L133.8,110.0 L131.7,110.0 L129.6,110.0 L127.5,110.0 L125.4,110.0 L123.3,110.0 L121.2,110.0 L119.2,110.0 L117.1,110.0 L115.0,110.0 L112.9,110.0 L110.8,110.0 L108.8,110.0 L106.7,110.0 L104.6,110.0 L102.5,110.0 L100.4,110.0 L98.3,110.0 L96.2,110.0 L94.2,110.0 L92.1,110.0 L90.0,110.0 L87.9,110.0 L85.8,110.0 L83.8,110.0 L81.7,110.0 L79.6,110.0 L77.5,110.0" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="142.1" y1="110.0" x2="145.1" y2="110.0" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="137.9,110.0 146.9,106.2 146.9,113.8" fill="var(--color-practice)" opacity="1.0"/>
+  <path d="M77.5,110.0 L77.5,112.1 L77.5,114.2 L77.5,116.2 L77.5,118.3 L77.5,120.4 L77.5,122.5 L77.5,124.6 L77.5,126.7 L77.5,128.8 L77.5,130.8 L77.5,132.9 L77.5,135.0 L77.5,137.1 L77.5,139.2 L77.5,141.2 L77.5,143.3 L77.5,145.4 L77.5,147.5 L77.5,149.6 L77.5,151.7 L77.5,153.8 L77.5,155.8 L77.5,157.9 L77.5,160.0 L77.5,162.1 L77.5,164.2 L77.5,166.2 L77.5,168.3 L77.5,170.4 L77.5,172.5 L77.5,174.6 L77.5,176.7 L77.5,178.8 L77.5,180.8 L77.5,182.9 L77.5,185.0 L77.5,187.1 L77.5,189.2 L77.5,191.2 L77.5,193.3 L77.5,195.4 L77.5,197.5 L77.5,199.6 L77.5,201.7 L77.5,203.8 L77.5,205.8 L77.5,207.9 L77.5,210.0 L77.5,212.1 L77.5,214.2 L77.5,216.2 L77.5,218.3 L77.5,220.4 L77.5,222.5 L77.5,224.6 L77.5,226.7 L77.5,228.8 L77.5,230.8 L77.5,232.9 L77.5,235.0" fill="none" stroke="var(--color-remark)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="77.5" y1="170.4" x2="77.5" y2="167.4" stroke="var(--color-remark)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="77.5,174.6 73.7,165.6 81.3,165.6" fill="var(--color-remark)" opacity="1.0"/>
+  <circle cx="202.5" cy="235.0" r="3.2" fill="var(--academic-text)"/>
+  <text x="208.5" y="251.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(1, 0)</text>
+  <circle cx="202.5" cy="110.0" r="3.2" fill="var(--academic-text)"/>
+  <text x="208.5" y="103.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(1, 1)</text>
+  <circle cx="77.5" cy="110.0" r="3.2" fill="var(--academic-text)"/>
+  <text x="70.5" y="103.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(0, 1)</text>
+  <text x="140.0" y="253.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan><tspan font-size="10" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="211.5" y="177.5" fill="var(--color-theory)" font-size="13" text-anchor="start" font-weight="600"><tspan font-style="italic">S</tspan><tspan font-size="10" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="140.0" y="101.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan><tspan font-size="10" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="68.5" y="177.5" fill="var(--color-remark)" font-size="13" text-anchor="end" font-weight="600"><tspan font-style="italic">S</tspan><tspan font-size="10" dy="3.5">4</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="140.0" y="177.5" fill="var(--color-base)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="376.0" y1="260.4" x2="676.8" y2="260.4"/>
+  <line x1="524.0" y1="298.0" x2="524.0" y2="26.0"/>
+  <polygon points="676.8,260.4 668.8,256.9 668.8,263.9" stroke="none"/>
+  <polygon points="524.0,26.0 520.5,34.0 527.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="674.8" y="275.4" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="531.0" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="524.0,260.4 524.0,260.4 524.1,260.4 524.2,260.4 524.4,260.4 524.7,260.4 525.0,260.4 525.3,260.4 525.7,260.4 526.2,260.4 526.7,260.4 527.2,260.4 527.8,260.4 528.5,260.4 529.2,260.4 530.0,260.4 530.8,260.4 531.7,260.4 532.6,260.4 533.6,260.4 534.7,260.4 535.8,260.4 536.9,260.4 538.1,260.4 539.4,260.4 540.7,260.4 542.0,260.4 543.4,260.4 544.9,260.4 546.4,260.4 548.0,260.4 549.6,260.4 551.3,260.4 553.0,260.4 554.8,260.4 556.7,260.4 558.6,260.4 560.5,260.4 562.5,260.4 564.6,260.4 566.7,260.4 568.8,260.4 571.0,260.4 573.3,260.4 575.6,260.4 578.0,260.4 580.4,260.4 582.9,260.4 585.4,260.4 588.0,260.4 590.7,260.4 593.4,260.4 596.1,260.4 598.9,260.4 601.8,260.4 604.7,260.4 607.6,260.4 610.6,260.4 613.7,260.4 616.8,260.4 620.0,260.4 620.0,260.4 620.0,257.2 619.9,254.0 619.8,250.8 619.6,247.6 619.3,244.4 619.0,241.2 618.7,238.0 618.3,234.8 617.8,231.6 617.3,228.4 616.8,225.2 616.2,222.0 615.5,218.8 614.8,215.6 614.0,212.4 613.2,209.2 612.3,206.0 611.4,202.8 610.4,199.6 609.3,196.4 608.2,193.2 607.1,190.0 605.9,186.8 604.6,183.6 603.3,180.4 602.0,177.2 600.6,174.0 599.1,170.8 597.6,167.6 596.0,164.4 594.4,161.2 592.7,158.0 591.0,154.8 589.2,151.6 587.3,148.4 585.4,145.2 583.5,142.0 581.5,138.8 579.4,135.6 577.3,132.4 575.2,129.2 573.0,126.0 570.7,122.8 568.4,119.6 566.0,116.4 563.6,113.2 561.1,110.0 558.6,106.8 556.0,103.6 553.3,100.4 550.6,97.2 547.9,94.0 545.1,90.8 542.2,87.6 539.3,84.4 536.4,81.2 533.4,78.0 530.3,74.8 527.2,71.6 524.0,68.4 524.0,68.4 520.8,71.6 517.7,74.8 514.6,78.0 511.6,81.2 508.7,84.4 505.8,87.6 502.9,90.8 500.1,94.0 497.4,97.2 494.7,100.4 492.0,103.6 489.4,106.8 486.9,110.0 484.4,113.2 482.0,116.4 479.6,119.6 477.3,122.8 475.0,126.0 472.8,129.2 470.7,132.4 468.6,135.6 466.5,138.8 464.5,142.0 462.6,145.2 460.7,148.4 458.8,151.6 457.0,154.8 455.3,158.0 453.6,161.2 452.0,164.4 450.4,167.6 448.9,170.8 447.4,174.0 446.0,177.2 444.7,180.4 443.4,183.6 442.1,186.8 440.9,190.0 439.8,193.2 438.7,196.4 437.6,199.6 436.6,202.8 435.7,206.0 434.8,209.2 434.0,212.4 433.2,215.6 432.5,218.8 431.8,222.0 431.2,225.2 430.7,228.4 430.2,231.6 429.7,234.8 429.3,238.0 429.0,241.2 428.7,244.4 428.4,247.6 428.2,250.8 428.1,254.0 428.0,257.2 428.0,260.4 428.0,260.4 431.2,260.4 434.3,260.4 437.4,260.4 440.4,260.4 443.3,260.4 446.2,260.4 449.1,260.4 451.9,260.4 454.6,260.4 457.3,260.4 460.0,260.4 462.6,260.4 465.1,260.4 467.6,260.4 470.0,260.4 472.4,260.4 474.7,260.4 477.0,260.4 479.2,260.4 481.3,260.4 483.4,260.4 485.5,260.4 487.5,260.4 489.4,260.4 491.3,260.4 493.2,260.4 495.0,260.4 496.7,260.4 498.4,260.4 500.0,260.4 501.6,260.4 503.1,260.4 504.6,260.4 506.0,260.4 507.3,260.4 508.6,260.4 509.9,260.4 511.1,260.4 512.2,260.4 513.3,260.4 514.4,260.4 515.4,260.4 516.3,260.4 517.2,260.4 518.0,260.4 518.8,260.4 519.5,260.4 520.2,260.4 520.8,260.4 521.3,260.4 521.8,260.4 522.3,260.4 522.7,260.4 523.0,260.4 523.3,260.4 523.6,260.4 523.8,260.4 523.9,260.4 524.0,260.4 524.0,260.4" fill="var(--color-theory)" fill-opacity="0.13" stroke="none" stroke-width="1.2"/>
+  <path d="M524.0,260.4 L524.0,260.4 L524.1,260.4 L524.2,260.4 L524.4,260.4 L524.7,260.4 L525.0,260.4 L525.3,260.4 L525.7,260.4 L526.2,260.4 L526.7,260.4 L527.2,260.4 L527.8,260.4 L528.5,260.4 L529.2,260.4 L530.0,260.4 L530.8,260.4 L531.7,260.4 L532.6,260.4 L533.6,260.4 L534.7,260.4 L535.8,260.4 L536.9,260.4 L538.1,260.4 L539.4,260.4 L540.7,260.4 L542.0,260.4 L543.4,260.4 L544.9,260.4 L546.4,260.4 L548.0,260.4 L549.6,260.4 L551.3,260.4 L553.0,260.4 L554.8,260.4 L556.7,260.4 L558.6,260.4 L560.5,260.4 L562.5,260.4 L564.6,260.4 L566.7,260.4 L568.8,260.4 L571.0,260.4 L573.3,260.4 L575.6,260.4 L578.0,260.4 L580.4,260.4 L582.9,260.4 L585.4,260.4 L588.0,260.4 L590.7,260.4 L593.4,260.4 L596.1,260.4 L598.9,260.4 L601.8,260.4 L604.7,260.4 L607.6,260.4 L610.6,260.4 L613.7,260.4 L616.8,260.4 L620.0,260.4" fill="none" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="546.4" y1="260.4" x2="542.4" y2="260.4" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="549.6,260.4 540.6,264.2 540.6,256.6" fill="var(--color-base)" opacity="1.0"/>
+  <path d="M620.0,260.4 L620.0,257.2 L619.9,254.0 L619.8,250.8 L619.6,247.6 L619.3,244.4 L619.0,241.2 L618.7,238.0 L618.3,234.8 L617.8,231.6 L617.3,228.4 L616.8,225.2 L616.2,222.0 L615.5,218.8 L614.8,215.6 L614.0,212.4 L613.2,209.2 L612.3,206.0 L611.4,202.8 L610.4,199.6 L609.3,196.4 L608.2,193.2 L607.1,190.0 L605.9,186.8 L604.6,183.6 L603.3,180.4 L602.0,177.2 L600.6,174.0 L599.1,170.8 L597.6,167.6 L596.0,164.4 L594.4,161.2 L592.7,158.0 L591.0,154.8 L589.2,151.6 L587.3,148.4 L585.4,145.2 L583.5,142.0 L581.5,138.8 L579.4,135.6 L577.3,132.4 L575.2,129.2 L573.0,126.0 L570.7,122.8 L568.4,119.6 L566.0,116.4 L563.6,113.2 L561.1,110.0 L558.6,106.8 L556.0,103.6 L553.3,100.4 L550.6,97.2 L547.9,94.0 L545.1,90.8 L542.2,87.6 L539.3,84.4 L536.4,81.2 L533.4,78.0 L530.3,74.8 L527.2,71.6 L524.0,68.4" fill="none" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="597.6" y1="167.6" x2="597.6" y2="167.6" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="594.4,161.2 601.8,167.6 595.0,170.9" fill="var(--color-theory)" opacity="1.0"/>
+  <path d="M524.0,68.4 L520.8,71.6 L517.7,74.8 L514.6,78.0 L511.6,81.2 L508.7,84.4 L505.8,87.6 L502.9,90.8 L500.1,94.0 L497.4,97.2 L494.7,100.4 L492.0,103.6 L489.4,106.8 L486.9,110.0 L484.4,113.2 L482.0,116.4 L479.6,119.6 L477.3,122.8 L475.0,126.0 L472.8,129.2 L470.7,132.4 L468.6,135.6 L466.5,138.8 L464.5,142.0 L462.6,145.2 L460.7,148.4 L458.8,151.6 L457.0,154.8 L455.3,158.0 L453.6,161.2 L452.0,164.4 L450.4,167.6 L448.9,170.8 L447.4,174.0 L446.0,177.2 L444.7,180.4 L443.4,183.6 L442.1,186.8 L440.9,190.0 L439.8,193.2 L438.7,196.4 L437.6,199.6 L436.6,202.8 L435.7,206.0 L434.8,209.2 L434.0,212.4 L433.2,215.6 L432.5,218.8 L431.8,222.0 L431.2,225.2 L430.7,228.4 L430.2,231.6 L429.7,234.8 L429.3,238.0 L429.0,241.2 L428.7,244.4 L428.4,247.6 L428.2,250.8 L428.1,254.0 L428.0,257.2 L428.0,260.4" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="453.6" y1="161.2" x2="453.6" y2="161.2" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="450.4,167.6 451.1,157.9 457.8,161.2" fill="var(--color-practice)" opacity="1.0"/>
+  <path d="M428.0,260.4 L431.2,260.4 L434.3,260.4 L437.4,260.4 L440.4,260.4 L443.3,260.4 L446.2,260.4 L449.1,260.4 L451.9,260.4 L454.6,260.4 L457.3,260.4 L460.0,260.4 L462.6,260.4 L465.1,260.4 L467.6,260.4 L470.0,260.4 L472.4,260.4 L474.7,260.4 L477.0,260.4 L479.2,260.4 L481.3,260.4 L483.4,260.4 L485.5,260.4 L487.5,260.4 L489.4,260.4 L491.3,260.4 L493.2,260.4 L495.0,260.4 L496.7,260.4 L498.4,260.4 L500.0,260.4 L501.6,260.4 L503.1,260.4 L504.6,260.4 L506.0,260.4 L507.3,260.4 L508.6,260.4 L509.9,260.4 L511.1,260.4 L512.2,260.4 L513.3,260.4 L514.4,260.4 L515.4,260.4 L516.3,260.4 L517.2,260.4 L518.0,260.4 L518.8,260.4 L519.5,260.4 L520.2,260.4 L520.8,260.4 L521.3,260.4 L521.8,260.4 L522.3,260.4 L522.7,260.4 L523.0,260.4 L523.3,260.4 L523.6,260.4 L523.8,260.4 L523.9,260.4 L524.0,260.4 L524.0,260.4" fill="none" stroke="var(--color-remark)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="498.4" y1="260.4" x2="494.4" y2="260.4" stroke="var(--color-remark)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="501.6,260.4 492.6,264.2 492.6,256.6" fill="var(--color-remark)" opacity="1.0"/>
+  <circle cx="620.0" cy="260.4" r="3.2" fill="var(--academic-text)"/>
+  <text x="626.0" y="276.4" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(1, 0)</text>
+  <circle cx="428.0" cy="260.4" r="3.2" fill="var(--academic-text)"/>
+  <text x="422.0" y="276.4" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(&#8722;1, 0)</text>
+  <circle cx="524.0" cy="68.4" r="3.2" fill="var(--academic-text)"/>
+  <text x="532.0" y="62.4" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(0, 2)</text>
+  <text x="572.0" y="278.4" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">T</tspan>(<tspan font-style="italic">S</tspan><tspan font-size="10" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="476.0" y="278.4" fill="var(--color-remark)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">T</tspan>(<tspan font-style="italic">S</tspan><tspan font-size="10" dy="3.5">4</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="572.0" y="95.3" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">x</tspan> = 1 &#8722; <tspan font-style="italic">y</tspan>²/4</text>
+  <text x="476.0" y="95.3" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan> = <tspan font-style="italic">y</tspan>²/4 &#8722; 1</text>
+  <text x="524.0" y="198.2" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">R</tspan></text>
+  <line x1="270.8" y1="172.5" x2="369.6" y2="172.5" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="376.0,172.5 368.0,175.9 368.0,169.1" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="323.4" y="165.5" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+</svg>
+<figcaption><em>x</em> = <em>u</em>² &#8722; <em>v</em>², <em>y</em> = 2<em>uv</em> dönüşümü birim karenin <em>S</em><sub>1</sub>, <em>S</em><sub>2</sub>, <em>S</em><sub>3</sub>, <em>S</em><sub>4</sub> kenarlarını aynı renkteki sınır parçalarına götürür. Kare saat yönünün tersine dolaşılınca <em>R</em>'nin sınırı da saat yönünün tersine dolaşılır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Küçük Bir Dikdörtgenin Görüntüsü
+
+Bir dönüşümün integrali nasıl etkilediğini anlamak için önce alanları nasıl değiştirdiğine bakalım. En basit durum, doğrusal dönüşümlerdir.
+
+:::: {#prp-ddg-dogrusal-alan name="Doğrusal Dönüşümde Alanın Değişimi"}
+$a$, $b$, $c$, $d$, $p$, $q$ sabitler olmak üzere
+
+$$T(u, v) = (au + bv + p,\ cu + dv + q)$$
+
+olsun. $T$, kenarları $\Delta u$ ve $\Delta v$ olan $S = [u_0, u_0 + \Delta u] \times [v_0, v_0 + \Delta v]$ dikdörtgenini bir paralelkenara götürür ve bu paralelkenarın alanı
+
+$$|ad - bc|\,\Delta u\,\Delta v$$
+
+olur.
+
+::: {.ispat}
+**Görüntü bir paralelkenardır.** $S$'nin her noktası, $0 \le s \le 1$ ve $0 \le t \le 1$ olmak üzere $(u_0 + s\,\Delta u,\ v_0 + t\,\Delta v)$ biçimindedir. $P = T(u_0, v_0)$ köşesini ve $\mathbf{a} = \langle a, c \rangle$, $\mathbf{b} = \langle b, d \rangle$ vektörlerini alalım. $T$'nin bileşenleri doğrusal olduğundan
+
+$$\begin{aligned}
+x &= (au_0 + bv_0 + p) + s\,\Delta u\, a + t\,\Delta v\, b, \\[1mm]
+y &= (cu_0 + dv_0 + q) + s\,\Delta u\, c + t\,\Delta v\, d
+\end{aligned}$$
+
+olur; vektör diliyle görüntü noktası $P + s\,\Delta u\,\mathbf{a} + t\,\Delta v\,\mathbf{b}$'dir. $s$ ve $t$, $[0, 1]$ aralığını taradıkça bu noktalar tam olarak $P$ köşesinden çıkan $\Delta u\,\mathbf{a}$ ve $\Delta v\,\mathbf{b}$ vektörlerinin gerdiği paralelkenarı tarar.
+
+**Alan.** Düzlemdeki iki vektörü üçüncü bileşeni $0$ olan uzay vektörleri sayarsak, gerdikleri paralelkenarın alanı vektörel çarpımlarının uzunluğudur:
+
+$$\big(\Delta u\,\langle a, c, 0 \rangle\big) \times \big(\Delta v\,\langle b, d, 0 \rangle\big) = (ad - bc)\,\Delta u\,\Delta v\;\mathbf{k}.$$
+
+Bu vektörün uzunluğu $|ad - bc|\,\Delta u\,\Delta v$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani doğrusal bir dönüşüm bütün dikdörtgenlerin alanını aynı $|ad - bc|$ oranında büyütür ya da küçültür. Kayma örneğindeki (@exm-ddg-kayma) $x = u + v$, $y = v$ dönüşümünde $a = b = d = 1$, $c = 0$ olduğundan $ad - bc = 1$'dir; alanın korunmasının nedeni budur.
+
+Doğrusal olmayan bir dönüşüm dikdörtgeni eğri kenarlı bir bölgeye götürür. Yine de küçük bir dikdörtgende dönüşüm doğrusala çok yakındır. Sol alt köşesi $(u_0, v_0)$, kenarları $\Delta u$ ve $\Delta v$ olan küçük bir $S$ dikdörtgeni alalım ve görüntüsüne $R$ diyelim. $T$'yi
+
+$$\mathbf{r}(u, v) = g(u, v)\,\mathbf{i} + h(u, v)\,\mathbf{j}$$
+
+konum vektörüyle yazalım. $S$'nin alt kenarı $v = v_0$ doğrusu üzerindedir; görüntüsü $\mathbf{r}(u, v_0)$ eğrisidir ve bu eğrinin $(x_0, y_0) = T(u_0, v_0)$ noktasındaki teğet vektörü
+
+$$\mathbf{r}_u = g_u(u_0, v_0)\,\mathbf{i} + h_u(u_0, v_0)\,\mathbf{j} = \frac{\partial x}{\partial u}\,\mathbf{i} + \frac{\partial y}{\partial u}\,\mathbf{j}$$
+
+olur. Aynı biçimde sol kenarın ($u = u_0$) görüntüsü olan $\mathbf{r}(u_0, v)$ eğrisinin teğet vektörü
+
+$$\mathbf{r}_v = g_v(u_0, v_0)\,\mathbf{i} + h_v(u_0, v_0)\,\mathbf{j} = \frac{\partial x}{\partial v}\,\mathbf{i} + \frac{\partial y}{\partial v}\,\mathbf{j}$$
+
+olur. $R$'yi, $(x_0, y_0)$ köşesinden çıkan
+
+$$\mathbf{a} = \mathbf{r}(u_0 + \Delta u, v_0) - \mathbf{r}(u_0, v_0), \qquad \mathbf{b} = \mathbf{r}(u_0, v_0 + \Delta v) - \mathbf{r}(u_0, v_0)$$
+
+kiriş vektörlerinin gerdiği paralelkenarla yaklaşık olarak değiştirebiliriz. Kısmi türevin tanımına göre
+
+$$\mathbf{r}_u = \lim_{\Delta u \to 0} \frac{\mathbf{r}(u_0 + \Delta u, v_0) - \mathbf{r}(u_0, v_0)}{\Delta u}$$
+
+olduğundan $\mathbf{a} \approx \Delta u\,\mathbf{r}_u$ ve aynı nedenle $\mathbf{b} \approx \Delta v\,\mathbf{r}_v$'dir. Demek ki $R$, $\Delta u\,\mathbf{r}_u$ ve $\Delta v\,\mathbf{r}_v$ teğet vektörlerinin gerdiği paralelkenara yakındır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 12.0 662.5 316.0" role="img" aria-label="Left: a small rectangle S with lower left corner (u0, v0) and sides du, dv. Right: its curved image R with corner (x0, y0), the image curves r(u, v0) and r(u0, v), and the dashed parallelogram spanned by the tangent vectors du r_u and dv r_v">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="245.0" x2="314.0" y2="245.0"/>
+  <line x1="67.0" y1="276.0" x2="67.0" y2="106.0"/>
+  <polygon points="314.0,245.0 306.0,241.5 306.0,248.5" stroke="none"/>
+  <polygon points="67.0,106.0 63.5,114.0 70.5,114.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="312.0" y="260.0" text-anchor="end"><tspan font-style="italic">u</tspan></text>
+  <text x="74.0" y="115.0"><tspan font-style="italic">v</tspan></text>
+  </g>
+  <polygon points="202.0,191.0 269.5,191.0 269.5,137.0 202.0,137.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="2.0"/>
+  <circle cx="202.0" cy="191.0" r="3.6" fill="var(--academic-text)"/>
+  <text x="196.0" y="208.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(<tspan font-style="italic">u</tspan><tspan font-size="10" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">v</tspan><tspan font-size="10" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="235.8" y="208.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">&#916;<tspan font-style="italic">u</tspan></text>
+  <text x="195.0" y="169.0" fill="var(--academic-text)" font-size="12" text-anchor="end">&#916;<tspan font-style="italic">v</tspan></text>
+  <text x="235.8" y="169.0" fill="var(--color-base)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="396.0" y1="295.0" x2="664.0" y2="295.0"/>
+  <line x1="415.0" y1="314.0" x2="415.0" y2="26.0"/>
+  <polygon points="664.0,295.0 656.0,291.5 656.0,298.5" stroke="none"/>
+  <polygon points="415.0,26.0 411.5,34.0 418.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="662.0" y="310.0" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="422.0" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="499.0,215.0 500.7,214.3 502.4,213.7 504.1,213.0 505.8,212.3 507.5,211.7 509.2,211.0 511.0,210.3 512.8,209.7 514.6,209.0 516.4,208.3 518.2,207.7 520.0,207.0 521.8,206.3 523.7,205.7 525.6,205.0 527.4,204.3 529.3,203.7 531.2,203.0 533.2,202.3 535.1,201.7 537.1,201.0 539.0,200.3 541.0,199.7 543.0,199.0 545.0,198.3 547.0,197.7 549.1,197.0 551.1,196.3 553.2,195.7 555.2,195.0 557.3,194.3 559.4,193.7 561.6,193.0 563.7,192.3 565.8,191.7 568.0,191.0 570.2,190.3 572.4,189.7 574.6,189.0 576.8,188.3 579.0,187.7 581.2,187.0 583.5,186.3 585.8,185.7 588.1,185.0 590.4,184.3 592.7,183.7 595.0,183.0 597.3,182.3 599.7,181.7 602.1,181.0 604.4,180.3 606.8,179.7 609.2,179.0 611.7,178.3 614.1,177.7 616.6,177.0 619.0,176.3 621.5,175.7 624.0,175.0 624.0,175.0 623.5,173.0 622.9,171.0 622.4,169.0 621.8,167.0 621.2,165.0 620.6,163.0 620.0,161.0 619.4,159.0 618.8,157.0 618.2,155.0 617.6,153.0 617.0,151.0 616.3,149.0 615.7,147.0 615.0,145.0 614.3,143.0 613.6,141.0 613.0,139.0 612.3,137.0 611.6,135.0 610.8,133.0 610.1,131.0 609.4,129.0 608.6,127.0 607.9,125.0 607.1,123.0 606.4,121.0 605.6,119.0 604.8,117.0 604.0,115.0 603.2,113.0 602.4,111.0 601.6,109.0 600.7,107.0 599.9,105.0 599.0,103.0 598.2,101.0 597.3,99.0 596.4,97.0 595.6,95.0 594.7,93.0 593.8,91.0 592.8,89.0 591.9,87.0 591.0,85.0 590.1,83.0 589.1,81.0 588.2,79.0 587.2,77.0 586.2,75.0 585.2,73.0 584.2,71.0 583.2,69.0 582.2,67.0 581.2,65.0 580.2,63.0 579.2,61.0 578.1,59.0 577.1,57.0 576.0,55.0 576.0,55.0 573.5,56.3 571.0,57.7 568.6,59.0 566.1,60.3 563.7,61.7 561.2,63.0 558.8,64.3 556.4,65.7 554.1,67.0 551.7,68.3 549.3,69.7 547.0,71.0 544.7,72.3 542.4,73.7 540.1,75.0 537.8,76.3 535.5,77.7 533.2,79.0 531.0,80.3 528.8,81.7 526.6,83.0 524.4,84.3 522.2,85.7 520.0,87.0 517.8,88.3 515.7,89.7 513.6,91.0 511.4,92.3 509.3,93.7 507.2,95.0 505.2,96.3 503.1,97.7 501.1,99.0 499.0,100.3 497.0,101.7 495.0,103.0 493.0,104.3 491.0,105.7 489.1,107.0 487.1,108.3 485.2,109.7 483.2,111.0 481.3,112.3 479.4,113.7 477.6,115.0 475.7,116.3 473.8,117.7 472.0,119.0 470.2,120.3 468.4,121.7 466.6,123.0 464.8,124.3 463.0,125.7 461.2,127.0 459.5,128.3 457.8,129.7 456.1,131.0 454.4,132.3 452.7,133.7 451.0,135.0 451.0,135.0 452.1,136.3 453.1,137.7 454.2,139.0 455.2,140.3 456.2,141.7 457.2,143.0 458.2,144.3 459.2,145.7 460.2,147.0 461.2,148.3 462.2,149.7 463.2,151.0 464.1,152.3 465.1,153.7 466.0,155.0 466.9,156.3 467.8,157.7 468.8,159.0 469.7,160.3 470.6,161.7 471.4,163.0 472.3,164.3 473.2,165.7 474.0,167.0 474.9,168.3 475.7,169.7 476.6,171.0 477.4,172.3 478.2,173.7 479.0,175.0 479.8,176.3 480.6,177.7 481.4,179.0 482.1,180.3 482.9,181.7 483.6,183.0 484.4,184.3 485.1,185.7 485.8,187.0 486.6,188.3 487.3,189.7 488.0,191.0 488.6,192.3 489.3,193.7 490.0,195.0 490.7,196.3 491.3,197.7 492.0,199.0 492.6,200.3 493.2,201.7 493.8,203.0 494.4,204.3 495.0,205.7 495.6,207.0 496.2,208.3 496.8,209.7 497.4,211.0 497.9,212.3 498.5,213.7 499.0,215.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="none" stroke-width="1.2"/>
+  <path d="M624.0,175.0 L623.5,173.0 L622.9,171.0 L622.4,169.0 L621.8,167.0 L621.2,165.0 L620.6,163.0 L620.0,161.0 L619.4,159.0 L618.8,157.0 L618.2,155.0 L617.6,153.0 L617.0,151.0 L616.3,149.0 L615.7,147.0 L615.0,145.0 L614.3,143.0 L613.6,141.0 L613.0,139.0 L612.3,137.0 L611.6,135.0 L610.8,133.0 L610.1,131.0 L609.4,129.0 L608.6,127.0 L607.9,125.0 L607.1,123.0 L606.4,121.0 L605.6,119.0 L604.8,117.0 L604.0,115.0 L603.2,113.0 L602.4,111.0 L601.6,109.0 L600.7,107.0 L599.9,105.0 L599.0,103.0 L598.2,101.0 L597.3,99.0 L596.4,97.0 L595.6,95.0 L594.7,93.0 L593.8,91.0 L592.8,89.0 L591.9,87.0 L591.0,85.0 L590.1,83.0 L589.1,81.0 L588.2,79.0 L587.2,77.0 L586.2,75.0 L585.2,73.0 L584.2,71.0 L583.2,69.0 L582.2,67.0 L581.2,65.0 L580.2,63.0 L579.2,61.0 L578.1,59.0 L577.1,57.0 L576.0,55.0" fill="none" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M576.0,55.0 L573.5,56.3 L571.0,57.7 L568.6,59.0 L566.1,60.3 L563.7,61.7 L561.2,63.0 L558.8,64.3 L556.4,65.7 L554.1,67.0 L551.7,68.3 L549.3,69.7 L547.0,71.0 L544.7,72.3 L542.4,73.7 L540.1,75.0 L537.8,76.3 L535.5,77.7 L533.2,79.0 L531.0,80.3 L528.8,81.7 L526.6,83.0 L524.4,84.3 L522.2,85.7 L520.0,87.0 L517.8,88.3 L515.7,89.7 L513.6,91.0 L511.4,92.3 L509.3,93.7 L507.2,95.0 L505.2,96.3 L503.1,97.7 L501.1,99.0 L499.0,100.3 L497.0,101.7 L495.0,103.0 L493.0,104.3 L491.0,105.7 L489.1,107.0 L487.1,108.3 L485.2,109.7 L483.2,111.0 L481.3,112.3 L479.4,113.7 L477.6,115.0 L475.7,116.3 L473.8,117.7 L472.0,119.0 L470.2,120.3 L468.4,121.7 L466.6,123.0 L464.8,124.3 L463.0,125.7 L461.2,127.0 L459.5,128.3 L457.8,129.7 L456.1,131.0 L454.4,132.3 L452.7,133.7 L451.0,135.0" fill="none" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M499.0,215.0 L500.7,214.3 L502.4,213.7 L504.1,213.0 L505.8,212.3 L507.5,211.7 L509.2,211.0 L511.0,210.3 L512.8,209.7 L514.6,209.0 L516.4,208.3 L518.2,207.7 L520.0,207.0 L521.8,206.3 L523.7,205.7 L525.6,205.0 L527.4,204.3 L529.3,203.7 L531.2,203.0 L533.2,202.3 L535.1,201.7 L537.1,201.0 L539.0,200.3 L541.0,199.7 L543.0,199.0 L545.0,198.3 L547.0,197.7 L549.1,197.0 L551.1,196.3 L553.2,195.7 L555.2,195.0 L557.3,194.3 L559.4,193.7 L561.6,193.0 L563.7,192.3 L565.8,191.7 L568.0,191.0 L570.2,190.3 L572.4,189.7 L574.6,189.0 L576.8,188.3 L579.0,187.7 L581.2,187.0 L583.5,186.3 L585.8,185.7 L588.1,185.0 L590.4,184.3 L592.7,183.7 L595.0,183.0 L597.3,182.3 L599.7,181.7 L602.1,181.0 L604.4,180.3 L606.8,179.7 L609.2,179.0 L611.7,178.3 L614.1,177.7 L616.6,177.0 L619.0,176.3 L621.5,175.7 L624.0,175.0" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M451.0,135.0 L452.1,136.3 L453.1,137.7 L454.2,139.0 L455.2,140.3 L456.2,141.7 L457.2,143.0 L458.2,144.3 L459.2,145.7 L460.2,147.0 L461.2,148.3 L462.2,149.7 L463.2,151.0 L464.1,152.3 L465.1,153.7 L466.0,155.0 L466.9,156.3 L467.8,157.7 L468.8,159.0 L469.7,160.3 L470.6,161.7 L471.4,163.0 L472.3,164.3 L473.2,165.7 L474.0,167.0 L474.9,168.3 L475.7,169.7 L476.6,171.0 L477.4,172.3 L478.2,173.7 L479.0,175.0 L479.8,176.3 L480.6,177.7 L481.4,179.0 L482.1,180.3 L482.9,181.7 L483.6,183.0 L484.4,184.3 L485.1,185.7 L485.8,187.0 L486.6,188.3 L487.3,189.7 L488.0,191.0 L488.6,192.3 L489.3,193.7 L490.0,195.0 L490.7,196.3 L491.3,197.7 L492.0,199.0 L492.6,200.3 L493.2,201.7 L493.8,203.0 L494.4,204.3 L495.0,205.7 L495.6,207.0 L496.2,208.3 L496.8,209.7 L497.4,211.0 L497.9,212.3 L498.5,213.7 L499.0,215.0" fill="none" stroke="var(--color-theory)" stroke-width="2.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="499.0,215.0 599.0,175.0 567.0,95.0 467.0,135.0" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <line x1="499.0" y1="215.0" x2="592.3" y2="177.7" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="599.0,175.0 592.0,181.9 589.2,174.8" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="499.0" y1="215.0" x2="469.7" y2="141.7" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="467.0,135.0 473.9,142.0 466.8,144.8" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="499.0" cy="215.0" r="3.6" fill="var(--academic-text)"/>
+  <text x="491.0" y="221.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(<tspan font-style="italic">x</tspan><tspan font-size="10" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">y</tspan><tspan font-size="10" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="555.0" y="225.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600">&#916;<tspan font-style="italic">u</tspan> <tspan font-weight="700">r</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">u</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <rect x="489.5" y="168.0" width="35.0" height="16.5" rx="3" fill="var(--academic-bg)" opacity="0.85"/>
+  <text x="492.0" y="179.0" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600">&#916;<tspan font-style="italic">v</tspan> <tspan font-weight="700">r</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">v</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="630.0" y="193.0" fill="var(--color-theory)" font-size="12" text-anchor="start"><tspan font-weight="700">r</tspan>(<tspan font-style="italic">u</tspan>, <tspan font-style="italic">v</tspan><tspan font-size="10" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="445.0" y="131.0" fill="var(--color-theory)" font-size="12" text-anchor="end"><tspan font-weight="700">r</tspan>(<tspan font-style="italic">u</tspan><tspan font-size="10" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">v</tspan>)</text>
+  <text x="599.0" y="140.0" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">R</tspan></text>
+  <line x1="322.0" y1="164.0" x2="389.6" y2="164.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="396.0,164.0 388.0,167.4 388.0,160.6" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="359.0" y="157.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+</svg>
+<figcaption>Kenarları &#916;<em>u</em> ve &#916;<em>v</em> olan küçük <em>S</em> dikdörtgeninin görüntüsü eğri kenarlı bir <em>R</em> bölgesidir. <em>R</em>, (<em>x</em><sub>0</sub>, <em>y</em><sub>0</sub>) köşesindeki &#916;<em>u</em> <b>r</b><sub><em>u</em></sub> ve &#916;<em>v</em> <b>r</b><sub><em>v</em></sub> teğet vektörlerinin gerdiği paralelkenara (kesikli) yakındır. Burada <em>T</em>(<em>u</em>, <em>v</em>) = (<em>u</em>² &#8722; <em>v</em>², 2<em>uv</em>), <em>S</em> = [1; 1,5] &#215; [0,4; 0,8] alınmıştır.</figcaption>
+</figure>
+```
+
+Bu paralelkenarın alanını vektörel çarpımla bulalım. $R$'nin alanına $\Delta A$ dersek
+
+$$\Delta A \approx \big| (\Delta u\,\mathbf{r}_u) \times (\Delta v\,\mathbf{r}_v) \big| = |\mathbf{r}_u \times \mathbf{r}_v|\,\Delta u\,\Delta v \tag{2}$$
+
+olur. Vektörel çarpımı determinantla hesaplarsak
+
+$$\mathbf{r}_u \times \mathbf{r}_v = \begin{vmatrix} \mathbf{i} & \mathbf{j} & \mathbf{k} \\[1mm] \dfrac{\partial x}{\partial u} & \dfrac{\partial y}{\partial u} & 0 \\[3mm] \dfrac{\partial x}{\partial v} & \dfrac{\partial y}{\partial v} & 0 \end{vmatrix} = \left( \frac{\partial x}{\partial u}\,\frac{\partial y}{\partial v} - \frac{\partial x}{\partial v}\,\frac{\partial y}{\partial u} \right) \mathbf{k}$$
+
+bulunur. Parantez içindeki ifade, $T$ dönüşümünün **Jacobi determinantıdır** (Jacobian; bkz. [Analiz 4](../analiz-4/jacobi-matrisi-ve-zincir-kurali.html#def-zin-jacobi-determinanti)):
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} \dfrac{\partial x}{\partial u} & \dfrac{\partial x}{\partial v} \\[3mm] \dfrac{\partial y}{\partial u} & \dfrac{\partial y}{\partial v} \end{vmatrix} = \frac{\partial x}{\partial u}\,\frac{\partial y}{\partial v} - \frac{\partial x}{\partial v}\,\frac{\partial y}{\partial u}. \tag{3}$$
+
+Bu determinant adını Carl Gustav Jacob Jacobi'den (1804–1851) alır. Kısmi türevlerden kurulan bu determinantları ilk kullanan Cauchy olmuştu; onları çok katlı integralleri hesaplamak için bir yönteme dönüştüren ise Jacobi'dir. Bu gösterimle (2) yaklaşımı
+
+$$\Delta A \approx \left| \frac{\partial(x, y)}{\partial(u, v)} \right| \Delta u\,\Delta v \tag{4}$$
+
+biçimini alır; Jacobi determinantı $(u_0, v_0)$ noktasında hesaplanır.
+
+Yani Jacobi determinantının mutlak değeri, $T$'nin $(u_0, v_0)$ çevresinde alanları kaç katına çıkardığını söyler. Bu, (1)'deki $dx/du$ çarpanının iki boyutlu karşılığıdır. Doğrusal bir dönüşümde $\partial(x, y)/\partial(u, v) = ad - bc$ sabittir ve (4) yaklaşımı tam eşitliğe dönüşür (@prp-ddg-dogrusal-alan).
+
+## İki Katlı İntegralde Değişken Değiştirme
+
+Şimdi (4) yaklaşımını bir Riemann toplamının her terimine uygulayarak değişken değiştirme formülüne ulaşıyoruz.
+
+:::: {#thm-ddg-degisken-degistirme name="İki Katlı İntegralde Değişken Değiştirme"}
+$T$, $uv$-düzlemindeki bir $S$ bölgesini $xy$-düzlemindeki bir $R$ bölgesine götüren bir $C^1$ dönüşüm olsun: $T(S) = R$. $R$ ile $S$ I. ya da II. tip bölgeler (@def-gbi-tip-1, @def-gbi-tip-2) ya da ortak noktaları yalnız sınırlarında olan sonlu sayıda böyle bölgenin birleşimi, $f$ de $R$ üzerinde sürekli olsun. $S$'nin sınırı dışındaki noktalarda $T$ bire bir ve Jacobi determinantı sıfırdan farklıysa
+
+$$\iint_R f(x, y)\,dA = \iint_S f\big(x(u, v),\, y(u, v)\big) \left| \frac{\partial(x, y)}{\partial(u, v)} \right| du\,dv$$
+
+olur.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 12.0 742.0 345.5" role="img" aria-label="Left: an elliptical region S in the uv-plane covered by a rectangular grid, one cell S_ij highlighted with corner (u_i, v_j). Right: the image region R with the curved image grid and the highlighted image cell R_ij with corner (x_i, y_j)">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="314.2" x2="415.7" y2="314.2"/>
+  <line x1="65.2" y1="343.4" x2="65.2" y2="96.0"/>
+  <polygon points="415.7,314.2 407.7,310.7 407.7,317.7" stroke="none"/>
+  <polygon points="65.2,96.0 61.7,104.0 68.7,104.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="413.7" y="329.2" text-anchor="end"><tspan font-style="italic">u</tspan></text>
+  <text x="72.2" y="105.0"><tspan font-style="italic">v</tspan></text>
+  </g>
+  <polygon points="373.9,198.7 373.8,196.1 373.7,193.6 373.4,191.0 372.9,188.5 372.4,186.0 371.8,183.5 371.0,181.0 370.1,178.6 369.1,176.2 368.0,173.8 366.8,171.4 365.4,169.1 364.0,166.9 362.5,164.7 360.8,162.5 359.1,160.4 357.2,158.4 355.3,156.4 353.3,154.5 351.1,152.7 348.9,150.9 346.7,149.2 344.3,147.6 341.9,146.0 339.4,144.6 336.8,143.2 334.2,141.9 331.5,140.7 328.7,139.6 325.9,138.6 323.1,137.6 320.2,136.8 317.3,136.0 314.3,135.4 311.4,134.9 308.4,134.4 305.3,134.1 302.3,133.8 299.3,133.7 296.2,133.6 293.1,133.7 290.1,133.8 287.1,134.1 284.0,134.4 281.0,134.9 278.1,135.4 275.1,136.0 272.2,136.8 269.3,137.6 266.5,138.6 263.7,139.6 260.9,140.7 258.2,141.9 255.6,143.2 253.0,144.6 250.5,146.0 248.1,147.6 245.7,149.2 243.5,150.9 241.3,152.7 239.1,154.5 237.1,156.4 235.2,158.4 233.3,160.4 231.6,162.5 229.9,164.7 228.4,166.9 227.0,169.1 225.6,171.4 224.4,173.8 223.3,176.2 222.3,178.6 221.4,181.0 220.6,183.5 220.0,186.0 219.5,188.5 219.0,191.0 218.7,193.6 218.6,196.1 218.5,198.7 218.6,201.3 218.7,203.8 219.0,206.4 219.5,208.9 220.0,211.4 220.6,213.9 221.4,216.4 222.3,218.8 223.3,221.2 224.4,223.6 225.6,226.0 227.0,228.3 228.4,230.5 229.9,232.7 231.6,234.9 233.3,237.0 235.2,239.0 237.1,241.0 239.1,242.9 241.3,244.7 243.5,246.5 245.7,248.2 248.1,249.8 250.5,251.4 253.0,252.8 255.6,254.2 258.2,255.5 260.9,256.7 263.7,257.8 266.5,258.8 269.3,259.8 272.2,260.6 275.1,261.4 278.1,262.0 281.0,262.5 284.0,263.0 287.1,263.3 290.1,263.6 293.1,263.7 296.2,263.8 299.3,263.7 302.3,263.6 305.3,263.3 308.4,263.0 311.4,262.5 314.3,262.0 317.3,261.4 320.2,260.6 323.1,259.8 325.9,258.8 328.7,257.8 331.5,256.7 334.2,255.5 336.8,254.2 339.4,252.8 341.9,251.4 344.3,249.8 346.7,248.2 348.9,246.5 351.1,244.7 353.3,242.9 355.3,241.0 357.2,239.0 359.1,237.0 360.8,234.9 362.5,232.7 364.0,230.5 365.4,228.3 366.8,226.0 368.0,223.6 369.1,221.2 370.1,218.8 371.0,216.4 371.8,213.9 372.4,211.4 372.9,208.9 373.4,206.4 373.7,203.8 373.8,201.3 373.9,198.7" fill="var(--color-base)" fill-opacity="0.12" stroke="none" stroke-width="1.2"/>
+  <path d="M212.2,272.2 L212.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M240.2,272.2 L240.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M268.2,272.2 L268.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M296.2,272.2 L296.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M324.2,272.2 L324.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M352.2,272.2 L352.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M380.2,272.2 L380.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.2,272.2 L380.2,272.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.2,242.8 L380.2,242.8" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.2,213.4 L380.2,213.4" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.2,184.0 L380.2,184.0" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.2,154.6 L380.2,154.6" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.2,125.2 L380.2,125.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M373.9,198.7 L373.8,196.1 L373.7,193.6 L373.4,191.0 L372.9,188.5 L372.4,186.0 L371.8,183.5 L371.0,181.0 L370.1,178.6 L369.1,176.2 L368.0,173.8 L366.8,171.4 L365.4,169.1 L364.0,166.9 L362.5,164.7 L360.8,162.5 L359.1,160.4 L357.2,158.4 L355.3,156.4 L353.3,154.5 L351.1,152.7 L348.9,150.9 L346.7,149.2 L344.3,147.6 L341.9,146.0 L339.4,144.6 L336.8,143.2 L334.2,141.9 L331.5,140.7 L328.7,139.6 L325.9,138.6 L323.1,137.6 L320.2,136.8 L317.3,136.0 L314.3,135.4 L311.4,134.9 L308.4,134.4 L305.3,134.1 L302.3,133.8 L299.3,133.7 L296.2,133.6 L293.1,133.7 L290.1,133.8 L287.1,134.1 L284.0,134.4 L281.0,134.9 L278.1,135.4 L275.1,136.0 L272.2,136.8 L269.3,137.6 L266.5,138.6 L263.7,139.6 L260.9,140.7 L258.2,141.9 L255.6,143.2 L253.0,144.6 L250.5,146.0 L248.1,147.6 L245.7,149.2 L243.5,150.9 L241.3,152.7 L239.1,154.5 L237.1,156.4 L235.2,158.4 L233.3,160.4 L231.6,162.5 L229.9,164.7 L228.4,166.9 L227.0,169.1 L225.6,171.4 L224.4,173.8 L223.3,176.2 L222.3,178.6 L221.4,181.0 L220.6,183.5 L220.0,186.0 L219.5,188.5 L219.0,191.0 L218.7,193.6 L218.6,196.1 L218.5,198.7 L218.6,201.3 L218.7,203.8 L219.0,206.4 L219.5,208.9 L220.0,211.4 L220.6,213.9 L221.4,216.4 L222.3,218.8 L223.3,221.2 L224.4,223.6 L225.6,226.0 L227.0,228.3 L228.4,230.5 L229.9,232.7 L231.6,234.9 L233.3,237.0 L235.2,239.0 L237.1,241.0 L239.1,242.9 L241.3,244.7 L243.5,246.5 L245.7,248.2 L248.1,249.8 L250.5,251.4 L253.0,252.8 L255.6,254.2 L258.2,255.5 L260.9,256.7 L263.7,257.8 L266.5,258.8 L269.3,259.8 L272.2,260.6 L275.1,261.4 L278.1,262.0 L281.0,262.5 L284.0,263.0 L287.1,263.3 L290.1,263.6 L293.1,263.7 L296.2,263.8 L299.3,263.7 L302.3,263.6 L305.3,263.3 L308.4,263.0 L311.4,262.5 L314.3,262.0 L317.3,261.4 L320.2,260.6 L323.1,259.8 L325.9,258.8 L328.7,257.8 L331.5,256.7 L334.2,255.5 L336.8,254.2 L339.4,252.8 L341.9,251.4 L344.3,249.8 L346.7,248.2 L348.9,246.5 L351.1,244.7 L353.3,242.9 L355.3,241.0 L357.2,239.0 L359.1,237.0 L360.8,234.9 L362.5,232.7 L364.0,230.5 L365.4,228.3 L366.8,226.0 L368.0,223.6 L369.1,221.2 L370.1,218.8 L371.0,216.4 L371.8,213.9 L372.4,211.4 L372.9,208.9 L373.4,206.4 L373.7,203.8 L373.8,201.3 L373.9,198.7" fill="none" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="296.2,184.0 324.2,184.0 324.2,154.6 296.2,154.6" fill="var(--color-base)" fill-opacity="0.45" stroke="var(--color-base)" stroke-width="1.4"/>
+  <circle cx="296.2" cy="184.0" r="3.4" fill="var(--academic-text)"/>
+  <path d="M315.8,163.4 L382.3,110.5" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="390.7" y="104.2" fill="var(--color-base)" font-size="13" text-anchor="start" font-weight="600"><tspan font-style="italic">S</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">ij</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <rect x="244.7" y="191.2" width="48.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.85"/>
+  <text x="290.2" y="201.0" fill="var(--academic-text)" font-size="11" text-anchor="end">(<tspan font-style="italic">u</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">i</tspan></tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">v</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="202.2" y="203.7" fill="var(--color-base)" font-size="15" text-anchor="end" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <text x="310.2" y="287.2" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#916;<tspan font-style="italic">u</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="466.0" y1="292.2" x2="750.0" y2="292.2"/>
+  <line x1="525.2" y1="310.0" x2="525.2" y2="26.0"/>
+  <polygon points="750.0,292.2 742.0,288.7 742.0,295.7" stroke="none"/>
+  <polygon points="525.2,26.0 521.7,34.0 528.7,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="748.0" y="307.2" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="532.2" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="696.2,143.4 694.9,140.2 693.3,137.0 691.7,133.9 689.8,130.8 687.8,127.9 685.6,125.0 683.3,122.3 680.8,119.7 678.1,117.2 675.3,114.8 672.4,112.6 669.3,110.5 666.2,108.6 662.9,106.8 659.5,105.1 656.0,103.7 652.5,102.4 648.8,101.2 645.1,100.3 641.3,99.5 637.5,98.9 633.7,98.4 629.8,98.2 625.9,98.1 622.0,98.2 618.1,98.4 614.2,98.8 610.3,99.4 606.5,100.2 602.7,101.1 598.9,102.2 595.2,103.4 591.6,104.8 588.0,106.3 584.5,108.0 581.1,109.8 577.8,111.7 574.6,113.7 571.5,115.9 568.5,118.1 565.6,120.5 562.8,122.9 560.2,125.4 557.7,128.0 555.3,130.7 553.0,133.4 550.9,136.2 548.9,139.0 547.1,141.8 545.3,144.7 543.8,147.6 542.3,150.5 541.0,153.4 539.8,156.3 538.8,159.3 537.9,162.2 537.1,165.0 536.4,167.9 535.9,170.7 535.4,173.5 535.1,176.3 534.9,179.0 534.8,181.7 534.9,184.3 535.0,186.9 535.2,189.4 535.5,191.9 535.9,194.3 536.4,196.6 537.0,198.9 537.6,201.1 538.3,203.3 539.1,205.4 540.0,207.4 540.9,209.4 541.9,211.3 542.9,213.2 544.0,214.9 545.2,216.7 546.4,218.3 547.7,219.9 549.0,221.5 550.3,223.0 551.7,224.4 553.1,225.8 554.6,227.1 556.1,228.4 557.7,229.7 559.3,230.9 561.0,232.0 562.7,233.1 564.4,234.2 566.2,235.2 568.0,236.2 569.8,237.1 571.7,238.0 573.7,238.9 575.7,239.7 577.7,240.4 579.8,241.2 581.9,241.9 584.1,242.5 586.3,243.1 588.6,243.6 590.9,244.1 593.3,244.5 595.7,244.9 598.2,245.2 600.7,245.5 603.3,245.7 605.9,245.9 608.6,245.9 611.3,245.9 614.0,245.8 616.8,245.7 619.6,245.4 622.5,245.1 625.4,244.7 628.3,244.2 631.2,243.6 634.2,242.9 637.1,242.1 640.1,241.3 643.1,240.3 646.0,239.2 649.0,237.9 651.9,236.6 654.9,235.2 657.8,233.6 660.6,232.0 663.4,230.2 666.2,228.3 668.9,226.3 671.6,224.2 674.2,222.0 676.7,219.7 679.1,217.2 681.4,214.7 683.6,212.1 685.7,209.3 687.7,206.5 689.6,203.6 691.3,200.6 692.9,197.5 694.4,194.4 695.7,191.1 696.8,187.9 697.8,184.5 698.7,181.2 699.3,177.8 699.8,174.3 700.2,170.9 700.3,167.4 700.3,163.9 700.0,160.4 699.6,157.0 699.0,153.5 698.3,150.1 697.3,146.8 696.2,143.4" fill="var(--color-theory)" fill-opacity="0.12" stroke="none" stroke-width="1.2"/>
+  <path d="M566.6,266.4 L566.2,264.9 L565.7,263.4 L565.2,261.9 L564.7,260.4 L564.1,258.9 L563.6,257.4 L563.0,255.9 L562.4,254.4 L561.7,252.9 L561.1,251.4 L560.4,249.9 L559.6,248.4 L558.9,246.9 L558.1,245.4 L557.3,243.9 L556.5,242.4 L555.7,240.9 L554.8,239.4 L553.9,237.9 L553.0,236.4 L552.1,234.9 L551.1,233.4 L550.1,231.9 L549.1,230.4 L548.0,228.9 L547.0,227.4 L545.9,225.9 L544.8,224.4 L543.6,222.9 L542.5,221.4 L541.3,219.9 L540.0,218.4 L538.8,216.9 L537.5,215.3 L536.2,213.8 L534.9,212.3 L533.6,210.8 L532.2,209.3 L530.8,207.8 L529.4,206.3 L527.9,204.8 L526.5,203.3 L525.0,201.8 L523.5,200.3 L521.9,198.8 L520.4,197.3 L518.8,195.8 L517.1,194.3 L515.5,192.8 L513.8,191.3 L512.1,189.8 L510.4,188.3 L508.7,186.8 L506.9,185.3 L505.1,183.8 L503.3,182.3 L501.4,180.8 L499.6,179.3 L497.7,177.8 L495.8,176.3" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M585.4,261.5 L585.0,259.7 L584.5,258.0 L584.0,256.2 L583.5,254.4 L582.9,252.6 L582.4,250.8 L581.8,249.0 L581.2,247.2 L580.5,245.4 L579.9,243.6 L579.2,241.9 L578.5,240.1 L577.7,238.3 L576.9,236.5 L576.2,234.7 L575.3,232.9 L574.5,231.1 L573.6,229.3 L572.7,227.5 L571.8,225.8 L570.9,224.0 L569.9,222.2 L568.9,220.4 L567.9,218.6 L566.8,216.8 L565.8,215.0 L564.7,213.2 L563.6,211.4 L562.4,209.7 L561.3,207.9 L560.1,206.1 L558.8,204.3 L557.6,202.5 L556.3,200.7 L555.0,198.9 L553.7,197.1 L552.4,195.3 L551.0,193.6 L549.6,191.8 L548.2,190.0 L546.8,188.2 L545.3,186.4 L543.8,184.6 L542.3,182.8 L540.7,181.0 L539.2,179.2 L537.6,177.5 L535.9,175.7 L534.3,173.9 L532.6,172.1 L530.9,170.3 L529.2,168.5 L527.5,166.7 L525.7,164.9 L523.9,163.1 L522.1,161.4 L520.3,159.6 L518.4,157.8 L516.5,156.0 L514.6,154.2" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M607.5,256.6 L607.0,254.6 L606.6,252.5 L606.1,250.4 L605.6,248.3 L605.0,246.3 L604.5,244.2 L603.9,242.1 L603.3,240.0 L602.6,238.0 L601.9,235.9 L601.3,233.8 L600.5,231.7 L599.8,229.7 L599.0,227.6 L598.2,225.5 L597.4,223.4 L596.6,221.3 L595.7,219.3 L594.8,217.2 L593.9,215.1 L593.0,213.0 L592.0,211.0 L591.0,208.9 L590.0,206.8 L588.9,204.7 L587.9,202.7 L586.8,200.6 L585.7,198.5 L584.5,196.4 L583.3,194.4 L582.1,192.3 L580.9,190.2 L579.7,188.1 L578.4,186.1 L577.1,184.0 L575.8,181.9 L574.5,179.8 L573.1,177.8 L571.7,175.7 L570.3,173.6 L568.8,171.5 L567.4,169.5 L565.9,167.4 L564.4,165.3 L562.8,163.2 L561.2,161.2 L559.6,159.1 L558.0,157.0 L556.4,154.9 L554.7,152.9 L553.0,150.8 L551.3,148.7 L549.6,146.6 L547.8,144.6 L546.0,142.5 L544.2,140.4 L542.3,138.3 L540.5,136.3 L538.6,134.2 L536.6,132.1" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M632.8,251.7 L632.4,249.4 L631.9,247.0 L631.4,244.6 L630.9,242.3 L630.4,239.9 L629.8,237.6 L629.2,235.2 L628.6,232.8 L628.0,230.5 L627.3,228.1 L626.6,225.7 L625.9,223.4 L625.1,221.0 L624.4,218.7 L623.6,216.3 L622.8,213.9 L621.9,211.6 L621.1,209.2 L620.2,206.9 L619.2,204.5 L618.3,202.1 L617.3,199.8 L616.3,197.4 L615.3,195.0 L614.3,192.7 L613.2,190.3 L612.1,188.0 L611.0,185.6 L609.9,183.2 L608.7,180.9 L607.5,178.5 L606.3,176.2 L605.0,173.8 L603.8,171.4 L602.5,169.1 L601.2,166.7 L599.8,164.4 L598.4,162.0 L597.0,159.6 L595.6,157.3 L594.2,154.9 L592.7,152.5 L591.2,150.2 L589.7,147.8 L588.2,145.5 L586.6,143.1 L585.0,140.7 L583.4,138.4 L581.7,136.0 L580.1,133.7 L578.4,131.3 L576.7,128.9 L574.9,126.6 L573.1,124.2 L571.3,121.8 L569.5,119.5 L567.7,117.1 L565.8,114.8 L563.9,112.4 L562.0,110.0" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M661.5,246.8 L661.0,244.2 L660.6,241.5 L660.1,238.9 L659.5,236.2 L659.0,233.6 L658.4,230.9 L657.8,228.3 L657.2,225.6 L656.6,223.0 L655.9,220.3 L655.2,217.7 L654.5,215.0 L653.8,212.4 L653.0,209.7 L652.2,207.1 L651.4,204.5 L650.5,201.8 L649.7,199.2 L648.8,196.5 L647.9,193.9 L646.9,191.2 L646.0,188.6 L645.0,185.9 L643.9,183.3 L642.9,180.6 L641.8,178.0 L640.7,175.3 L639.6,172.7 L638.5,170.0 L637.3,167.4 L636.1,164.7 L634.9,162.1 L633.7,159.4 L632.4,156.8 L631.1,154.1 L629.8,151.5 L628.4,148.9 L627.1,146.2 L625.7,143.6 L624.3,140.9 L622.8,138.3 L621.3,135.6 L619.8,133.0 L618.3,130.3 L616.8,127.7 L615.2,125.0 L613.6,122.4 L612.0,119.7 L610.4,117.1 L608.7,114.4 L607.0,111.8 L605.3,109.1 L603.5,106.5 L601.8,103.8 L600.0,101.2 L598.1,98.6 L596.3,95.9 L594.4,93.3 L592.5,90.6 L590.6,88.0" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M693.4,241.9 L692.9,239.0 L692.4,236.0 L692.0,233.1 L691.4,230.2 L690.9,227.2 L690.3,224.3 L689.7,221.4 L689.1,218.4 L688.5,215.5 L687.8,212.6 L687.1,209.6 L686.4,206.7 L685.7,203.8 L684.9,200.8 L684.1,197.9 L683.3,195.0 L682.4,192.0 L681.6,189.1 L680.7,186.2 L679.8,183.2 L678.8,180.3 L677.8,177.4 L676.9,174.4 L675.8,171.5 L674.8,168.6 L673.7,165.6 L672.6,162.7 L671.5,159.8 L670.4,156.8 L669.2,153.9 L668.0,151.0 L666.8,148.0 L665.6,145.1 L664.3,142.2 L663.0,139.2 L661.7,136.3 L660.3,133.4 L659.0,130.4 L657.6,127.5 L656.1,124.6 L654.7,121.6 L653.2,118.7 L651.7,115.8 L650.2,112.8 L648.7,109.9 L647.1,107.0 L645.5,104.0 L643.9,101.1 L642.3,98.2 L640.6,95.2 L638.9,92.3 L637.2,89.4 L635.4,86.4 L633.7,83.5 L631.9,80.5 L630.0,77.6 L628.2,74.7 L626.3,71.7 L624.4,68.8 L622.5,65.9" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M728.5,237.0 L728.1,233.8 L727.6,230.6 L727.1,227.3 L726.6,224.1 L726.1,220.9 L725.5,217.7 L724.9,214.5 L724.3,211.2 L723.6,208.0 L723.0,204.8 L722.3,201.6 L721.6,198.4 L720.8,195.1 L720.1,191.9 L719.3,188.7 L718.4,185.5 L717.6,182.3 L716.7,179.0 L715.8,175.8 L714.9,172.6 L714.0,169.4 L713.0,166.2 L712.0,162.9 L711.0,159.7 L710.0,156.5 L708.9,153.3 L707.8,150.1 L706.7,146.8 L705.5,143.6 L704.4,140.4 L703.2,137.2 L702.0,134.0 L700.7,130.7 L699.4,127.5 L698.2,124.3 L696.8,121.1 L695.5,117.9 L694.1,114.6 L692.7,111.4 L691.3,108.2 L689.9,105.0 L688.4,101.8 L686.9,98.5 L685.4,95.3 L683.8,92.1 L682.3,88.9 L680.7,85.7 L679.1,82.4 L677.4,79.2 L675.7,76.0 L674.1,72.8 L672.3,69.6 L670.6,66.3 L668.8,63.1 L667.0,59.9 L665.2,56.7 L663.4,53.5 L661.5,50.2 L659.6,47.0 L657.7,43.8" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M566.6,266.4 L568.3,265.9 L570.1,265.5 L571.9,265.0 L573.7,264.5 L575.6,264.0 L577.5,263.5 L579.4,263.0 L581.4,262.5 L583.4,262.0 L585.4,261.5 L587.5,261.0 L589.6,260.6 L591.7,260.1 L593.8,259.6 L596.0,259.1 L598.3,258.6 L600.5,258.1 L602.8,257.6 L605.1,257.1 L607.5,256.6 L609.9,256.1 L612.3,255.6 L614.8,255.2 L617.2,254.7 L619.8,254.2 L622.3,253.7 L624.9,253.2 L627.5,252.7 L630.2,252.2 L632.8,251.7 L635.6,251.2 L638.3,250.7 L641.1,250.2 L643.9,249.8 L646.7,249.3 L649.6,248.8 L652.5,248.3 L655.5,247.8 L658.5,247.3 L661.5,246.8 L664.5,246.3 L667.6,245.8 L670.7,245.3 L673.8,244.9 L677.0,244.4 L680.2,243.9 L683.4,243.4 L686.7,242.9 L690.0,242.4 L693.4,241.9 L696.7,241.4 L700.1,240.9 L703.6,240.4 L707.0,239.9 L710.5,239.5 L714.1,239.0 L717.6,238.5 L721.2,238.0 L724.9,237.5 L728.5,237.0" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M559.6,248.4 L561.4,247.6 L563.1,246.7 L564.9,245.9 L566.8,245.1 L568.6,244.2 L570.5,243.4 L572.5,242.6 L574.4,241.7 L576.4,240.9 L578.5,240.1 L580.5,239.2 L582.6,238.4 L584.7,237.6 L586.9,236.7 L589.1,235.9 L591.3,235.1 L593.6,234.2 L595.9,233.4 L598.2,232.6 L600.5,231.7 L602.9,230.9 L605.3,230.1 L607.8,229.2 L610.3,228.4 L612.8,227.6 L615.4,226.7 L617.9,225.9 L620.6,225.1 L623.2,224.2 L625.9,223.4 L628.6,222.5 L631.3,221.7 L634.1,220.9 L636.9,220.0 L639.8,219.2 L642.7,218.4 L645.6,217.5 L648.5,216.7 L651.5,215.9 L654.5,215.0 L657.5,214.2 L660.6,213.4 L663.7,212.5 L666.9,211.7 L670.0,210.9 L673.3,210.0 L676.5,209.2 L679.8,208.4 L683.1,207.5 L686.4,206.7 L689.8,205.9 L693.2,205.0 L696.6,204.2 L700.1,203.4 L703.6,202.5 L707.1,201.7 L710.7,200.9 L714.3,200.0 L717.9,199.2 L721.6,198.4" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M549.1,230.4 L550.8,229.2 L552.6,228.0 L554.4,226.8 L556.2,225.7 L558.1,224.5 L560.0,223.3 L561.9,222.1 L563.9,221.0 L565.9,219.8 L567.9,218.6 L570.0,217.4 L572.0,216.2 L574.2,215.1 L576.3,213.9 L578.5,212.7 L580.7,211.5 L583.0,210.4 L585.3,209.2 L587.6,208.0 L590.0,206.8 L592.4,205.6 L594.8,204.5 L597.2,203.3 L599.7,202.1 L602.2,200.9 L604.8,199.8 L607.4,198.6 L610.0,197.4 L612.6,196.2 L615.3,195.0 L618.0,193.9 L620.8,192.7 L623.6,191.5 L626.4,190.3 L629.2,189.2 L632.1,188.0 L635.0,186.8 L638.0,185.6 L640.9,184.4 L643.9,183.3 L647.0,182.1 L650.1,180.9 L653.2,179.7 L656.3,178.6 L659.5,177.4 L662.7,176.2 L665.9,175.0 L669.2,173.9 L672.5,172.7 L675.8,171.5 L679.2,170.3 L682.6,169.1 L686.0,168.0 L689.5,166.8 L693.0,165.6 L696.5,164.4 L700.1,163.3 L703.7,162.1 L707.3,160.9 L711.0,159.7" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M534.9,212.3 L536.6,210.8 L538.4,209.3 L540.2,207.8 L542.0,206.3 L543.9,204.7 L545.8,203.2 L547.7,201.7 L549.7,200.2 L551.7,198.7 L553.7,197.1 L555.8,195.6 L557.9,194.1 L560.0,192.6 L562.2,191.0 L564.4,189.5 L566.6,188.0 L568.8,186.5 L571.1,185.0 L573.4,183.4 L575.8,181.9 L578.2,180.4 L580.6,178.9 L583.1,177.4 L585.6,175.8 L588.1,174.3 L590.6,172.8 L593.2,171.3 L595.8,169.8 L598.5,168.2 L601.2,166.7 L603.9,165.2 L606.6,163.7 L609.4,162.1 L612.2,160.6 L615.1,159.1 L617.9,157.6 L620.8,156.1 L623.8,154.5 L626.8,153.0 L629.8,151.5 L632.8,150.0 L635.9,148.5 L639.0,146.9 L642.1,145.4 L645.3,143.9 L648.5,142.4 L651.8,140.9 L655.0,139.3 L658.3,137.8 L661.7,136.3 L665.0,134.8 L668.4,133.2 L671.9,131.7 L675.3,130.2 L678.8,128.7 L682.4,127.2 L685.9,125.6 L689.5,124.1 L693.2,122.6 L696.8,121.1" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M517.1,194.3 L518.9,192.4 L520.6,190.6 L522.4,188.7 L524.3,186.9 L526.1,185.0 L528.0,183.1 L530.0,181.3 L531.9,179.4 L533.9,177.5 L535.9,175.7 L538.0,173.8 L540.1,171.9 L542.2,170.1 L544.4,168.2 L546.6,166.3 L548.8,164.5 L551.1,162.6 L553.4,160.8 L555.7,158.9 L558.0,157.0 L560.4,155.2 L562.8,153.3 L565.3,151.4 L567.8,149.6 L570.3,147.7 L572.8,145.8 L575.4,144.0 L578.0,142.1 L580.7,140.2 L583.4,138.4 L586.1,136.5 L588.8,134.6 L591.6,132.8 L594.4,130.9 L597.3,129.1 L600.2,127.2 L603.1,125.3 L606.0,123.5 L609.0,121.6 L612.0,119.7 L615.0,117.9 L618.1,116.0 L621.2,114.1 L624.4,112.3 L627.5,110.4 L630.7,108.5 L634.0,106.7 L637.3,104.8 L640.6,102.9 L643.9,101.1 L647.3,99.2 L650.7,97.4 L654.1,95.5 L657.6,93.6 L661.1,91.8 L664.6,89.9 L668.2,88.0 L671.8,86.2 L675.4,84.3 L679.1,82.4" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M495.8,176.3 L497.5,174.1 L499.3,171.9 L501.1,169.7 L502.9,167.4 L504.8,165.2 L506.7,163.0 L508.6,160.8 L510.5,158.6 L512.5,156.4 L514.6,154.2 L516.6,152.0 L518.7,149.8 L520.8,147.6 L523.0,145.4 L525.2,143.2 L527.4,141.0 L529.7,138.7 L532.0,136.5 L534.3,134.3 L536.6,132.1 L539.0,129.9 L541.5,127.7 L543.9,125.5 L546.4,123.3 L548.9,121.1 L551.5,118.9 L554.1,116.7 L556.7,114.5 L559.3,112.2 L562.0,110.0 L564.7,107.8 L567.5,105.6 L570.2,103.4 L573.1,101.2 L575.9,99.0 L578.8,96.8 L581.7,94.6 L584.6,92.4 L587.6,90.2 L590.6,88.0 L593.7,85.8 L596.7,83.5 L599.8,81.3 L603.0,79.1 L606.2,76.9 L609.4,74.7 L612.6,72.5 L615.9,70.3 L619.2,68.1 L622.5,65.9 L625.9,63.7 L629.3,61.5 L632.7,59.3 L636.2,57.0 L639.7,54.8 L643.2,52.6 L646.8,50.4 L650.4,48.2 L654.0,46.0 L657.7,43.8" fill="none" stroke="var(--academic-text)" stroke-width="0.8" opacity="0.45" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M696.2,143.4 L694.9,140.2 L693.3,137.0 L691.7,133.9 L689.8,130.8 L687.8,127.9 L685.6,125.0 L683.3,122.3 L680.8,119.7 L678.1,117.2 L675.3,114.8 L672.4,112.6 L669.3,110.5 L666.2,108.6 L662.9,106.8 L659.5,105.1 L656.0,103.7 L652.5,102.4 L648.8,101.2 L645.1,100.3 L641.3,99.5 L637.5,98.9 L633.7,98.4 L629.8,98.2 L625.9,98.1 L622.0,98.2 L618.1,98.4 L614.2,98.8 L610.3,99.4 L606.5,100.2 L602.7,101.1 L598.9,102.2 L595.2,103.4 L591.6,104.8 L588.0,106.3 L584.5,108.0 L581.1,109.8 L577.8,111.7 L574.6,113.7 L571.5,115.9 L568.5,118.1 L565.6,120.5 L562.8,122.9 L560.2,125.4 L557.7,128.0 L555.3,130.7 L553.0,133.4 L550.9,136.2 L548.9,139.0 L547.1,141.8 L545.3,144.7 L543.8,147.6 L542.3,150.5 L541.0,153.4 L539.8,156.3 L538.8,159.3 L537.9,162.2 L537.1,165.0 L536.4,167.9 L535.9,170.7 L535.4,173.5 L535.1,176.3 L534.9,179.0 L534.8,181.7 L534.9,184.3 L535.0,186.9 L535.2,189.4 L535.5,191.9 L535.9,194.3 L536.4,196.6 L537.0,198.9 L537.6,201.1 L538.3,203.3 L539.1,205.4 L540.0,207.4 L540.9,209.4 L541.9,211.3 L542.9,213.2 L544.0,214.9 L545.2,216.7 L546.4,218.3 L547.7,219.9 L549.0,221.5 L550.3,223.0 L551.7,224.4 L553.1,225.8 L554.6,227.1 L556.1,228.4 L557.7,229.7 L559.3,230.9 L561.0,232.0 L562.7,233.1 L564.4,234.2 L566.2,235.2 L568.0,236.2 L569.8,237.1 L571.7,238.0 L573.7,238.9 L575.7,239.7 L577.7,240.4 L579.8,241.2 L581.9,241.9 L584.1,242.5 L586.3,243.1 L588.6,243.6 L590.9,244.1 L593.3,244.5 L595.7,244.9 L598.2,245.2 L600.7,245.5 L603.3,245.7 L605.9,245.9 L608.6,245.9 L611.3,245.9 L614.0,245.8 L616.8,245.7 L619.6,245.4 L622.5,245.1 L625.4,244.7 L628.3,244.2 L631.2,243.6 L634.2,242.9 L637.1,242.1 L640.1,241.3 L643.1,240.3 L646.0,239.2 L649.0,237.9 L651.9,236.6 L654.9,235.2 L657.8,233.6 L660.6,232.0 L663.4,230.2 L666.2,228.3 L668.9,226.3 L671.6,224.2 L674.2,222.0 L676.7,219.7 L679.1,217.2 L681.4,214.7 L683.6,212.1 L685.7,209.3 L687.7,206.5 L689.6,203.6 L691.3,200.6 L692.9,197.5 L694.4,194.4 L695.7,191.1 L696.8,187.9 L697.8,184.5 L698.7,181.2 L699.3,177.8 L699.8,174.3 L700.2,170.9 L700.3,167.4 L700.3,163.9 L700.0,160.4 L699.6,157.0 L699.0,153.5 L698.3,150.1 L697.3,146.8 L696.2,143.4" fill="none" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="601.2,166.7 603.4,165.4 605.7,164.2 608.0,162.9 610.3,161.6 612.7,160.4 615.1,159.1 617.5,157.8 619.9,156.6 622.3,155.3 624.8,154.0 627.3,152.8 629.8,151.5 629.8,151.5 628.4,148.9 627.1,146.2 625.7,143.6 624.3,140.9 622.8,138.3 621.3,135.6 619.8,133.0 618.3,130.3 616.8,127.7 615.2,125.0 613.6,122.4 612.0,119.7 612.0,119.7 609.5,121.3 607.0,122.8 604.5,124.4 602.1,125.9 599.7,127.5 597.3,129.1 594.9,130.6 592.6,132.2 590.2,133.7 587.9,135.3 585.6,136.8 583.4,138.4 583.4,138.4 585.0,140.7 586.6,143.1 588.2,145.5 589.7,147.8 591.2,150.2 592.7,152.5 594.2,154.9 595.6,157.3 597.0,159.6 598.4,162.0 599.8,164.4 601.2,166.7" fill="var(--color-theory)" fill-opacity="0.45" stroke="var(--color-theory)" stroke-width="1.4"/>
+  <circle cx="601.2" cy="166.7" r="3.4" fill="var(--academic-text)"/>
+  <path d="M607.7,139.3 L700.0,72.3" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="704.6" y="66.8" fill="var(--color-theory)" font-size="13" text-anchor="start" font-weight="600"><tspan font-style="italic">R</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">ij</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <rect x="606.7" y="171.9" width="48.0" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.85"/>
+  <text x="609.2" y="181.7" fill="var(--academic-text)" font-size="11" text-anchor="start">(<tspan font-style="italic">x</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">i</tspan></tspan><tspan dy="-3.5">&#8203;</tspan>, <tspan font-style="italic">y</tspan><tspan font-size="10" dy="3.5"><tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan>)</text>
+  <text x="487.8" y="176.3" fill="var(--color-theory)" font-size="15" text-anchor="end" font-weight="600"><tspan font-style="italic">R</tspan></text>
+  <line x1="425.7" y1="198.7" x2="453.6" y2="198.7" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="460.0,198.7 452.0,202.1 452.0,195.3" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="442.9" y="191.7" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+</svg>
+<figcaption><em>S</em> bölgesi &#916;<em>u</em> &#215; &#916;<em>v</em> boyutlu <em>S<sub>ij</sub></em> dikdörtgenlerine bölünür; <em>T</em> bu ızgarayı <em>R</em> üzerinde eğri bir ızgaraya götürür. Her <em>R<sub>ij</sub></em> parçasının alanı yaklaşık |&#8706;(<em>x</em>, <em>y</em>)/&#8706;(<em>u</em>, <em>v</em>)| &#916;<em>u</em> &#916;<em>v</em> olur (burada <em>T</em>(<em>u</em>, <em>v</em>) = (<em>u</em>² &#8722; <em>v</em>², 2<em>uv</em>)).</figcaption>
+</figure>
+```
+
+::: {.ispat baslik="İspatın fikri"}
+**Bölme.** $S$'yi, kenarları $\Delta u$ ve $\Delta v$ olan küçük $S_{ij}$ dikdörtgenlerine bölelim ve yalnız tamamen $S$'nin içinde kalanları alalım. $S_{ij}$'nin sol alt köşesi $(u_i, v_j)$, görüntüsü $R_{ij} = T(S_{ij})$ ve $(x_i, y_j) = T(u_i, v_j)$ olsun. $T$, $S$'nin iç noktalarında bire bir olduğundan $R_{ij}$ parçalarının iç kısımları örtüşmez. Bu parçalar, sınıra yakın ince bir şerit dışında $R$'yi doldurur; hücreler küçüldükçe bu şeridin alanı sıfıra gider.
+
+**Her parçanın alanı.** (4)'e göre $R_{ij}$'nin alanı
+
+$$\Delta A_{ij} \approx \left| \frac{\partial(x, y)}{\partial(u, v)}(u_i, v_j) \right| \Delta u\,\Delta v$$
+
+olur.
+
+**Toplam.** İki katlı integrali Riemann toplamıyla yaklaşık yazarsak (@def-dkt-iki-katli-integral)
+
+$$\begin{aligned}
+\iint_R f(x, y)\,dA &\approx \sum_{i} \sum_{j} f(x_i, y_j)\,\Delta A_{ij} \\[1mm]
+&\approx \sum_{i} \sum_{j} f\big(x(u_i, v_j), y(u_i, v_j)\big) \left| \frac{\partial(x, y)}{\partial(u, v)}(u_i, v_j) \right| \Delta u\,\Delta v
+\end{aligned}$$
+
+bulunur. Son toplam, $f\big(x(u, v), y(u, v)\big)\,|\partial(x, y)/\partial(u, v)|$ sürekli fonksiyonunun $S$ üzerindeki bir Riemann toplamıdır. $\Delta u, \Delta v \to 0$ iken bu toplam teoremin sağ tarafındaki integrale, ilk toplam ise sol taraftaki integrale yaklaşır.
+
+**Eksik kalan adım.** Bütün $R_{ij}$ parçalarında yapılan "eğri kenarlı bölge yerine paralelkenar" hatalarının toplamının da sıfıra gittiğini göstermek gerekir. Bunun için $T$'nin kısmi türevlerinin $S$ üzerinde düzgün sürekli olduğu kullanılarak her parçadaki hatanın $\Delta u\,\Delta v$'ye göre küçük olduğu, aynı anda bütün parçalar için kanıtlanır; bu tam ispat ileri analizin konusudur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani integrali $x, y$ değişkenlerinden $u, v$ değişkenlerine taşırken üç şey değişir: integrand $f\big(x(u, v), y(u, v)\big)$ olur, bölge $R$'den $S$'ye geçer ve alan elemanı
+
+$$dA = \left| \frac{\partial(x, y)}{\partial(u, v)} \right| du\,dv$$
+
+olur. Bu, (1)'deki tek boyutlu formülün tam karşılığıdır: $dx/du$ türevinin yerini Jacobi determinantının mutlak değeri alır. Tek boyutta mutlak değere gerek yoktu, çünkü $g$ azalansa integralin sınırları da yer değiştirir ve işaret kendiliğinden düzelir. Çok katlı integralde bölgelerin böyle bir yönü yoktur ve alan her zaman pozitiftir.
+
+İlk uygulama olarak kutupsal koordinat formülünün bu teoremin bir özel hâli olduğunu görelim.
+
+:::: {#exm-ddg-kutupsal name="Kutupsal Koordinatlar Bir Özel Hâldir"}
+$0 \le a < b$ ve $0 < \beta - \alpha \le 2\pi$ olsun. $R$, $xy$-düzleminde $a \le r \le b$ ve $\alpha \le \theta \le \beta$ ile verilen kutupsal dikdörtgen, $f$ de $R$ üzerinde sürekli olsun. Değişken değiştirme teoremini (@thm-ddg-degisken-degistirme) kullanarak
+
+$$\iint_R f(x, y)\,dA = \int_\alpha^\beta \int_a^b f(r\cos\theta, r\sin\theta)\,r\,dr\,d\theta$$
+
+olduğunu gösteriniz.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 12.0 636.5 271.5" role="img" aria-label="Left: the rectangle a to b in r times alpha to beta in theta in the r theta plane. Right: the polar rectangle between the arcs r = a and r = b and the rays theta = alpha and theta = beta">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="232.2" x2="332.8" y2="232.2"/>
+  <line x1="61.0" y1="252.0" x2="61.0" y2="76.0"/>
+  <polygon points="332.8,232.2 324.8,228.8 324.8,235.8" stroke="none"/>
+  <polygon points="61.0,76.0 57.5,84.0 64.5,84.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="330.8" y="247.2" text-anchor="end"><tspan font-style="italic">r</tspan></text>
+  <text x="68.0" y="85.0"><tspan font-style="italic">&#952;</tspan></text>
+  </g>
+  <polygon points="166.0,190.2 271.0,190.2 271.0,116.7 166.0,116.7" fill="var(--color-base)" fill-opacity="0.15" stroke="var(--color-base)" stroke-width="2.0"/>
+  <path d="M166.0,232.2 L166.0,190.2" fill="none" stroke="var(--academic-text)" stroke-width="0.9" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M271.0,232.2 L271.0,190.2" fill="none" stroke="var(--academic-text)" stroke-width="0.9" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M61.0,190.2 L166.0,190.2" fill="none" stroke="var(--academic-text)" stroke-width="0.9" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M61.0,116.7 L166.0,116.7" fill="none" stroke="var(--academic-text)" stroke-width="0.9" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="166.0" y="248.2" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">a</tspan></text>
+  <text x="271.0" y="248.2" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">b</tspan></text>
+  <text x="54.0" y="195.2" fill="var(--academic-text)" font-size="12.5" text-anchor="end">&#945;</text>
+  <text x="54.0" y="121.7" fill="var(--academic-text)" font-size="12.5" text-anchor="end">&#946;</text>
+  <text x="173.0" y="158.5" fill="var(--color-base)" font-size="12" text-anchor="start"><tspan font-style="italic">r</tspan> = <tspan font-style="italic">a</tspan></text>
+  <text x="278.0" y="158.5" fill="var(--color-base)" font-size="12" text-anchor="start"><tspan font-style="italic">r</tspan> = <tspan font-style="italic">b</tspan></text>
+  <text x="218.5" y="206.2" fill="var(--color-base)" font-size="12" text-anchor="middle">&#952; = &#945;</text>
+  <text x="218.5" y="108.7" fill="var(--color-base)" font-size="12" text-anchor="middle">&#952; = &#946;</text>
+  <text x="218.5" y="158.5" fill="var(--color-base)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="396.0" y1="245.6" x2="644.1" y2="245.6"/>
+  <line x1="419.6" y1="269.2" x2="419.6" y2="26.0"/>
+  <polygon points="644.1,245.6 636.1,242.1 636.1,249.1" stroke="none"/>
+  <polygon points="419.6,26.0 416.1,34.0 423.1,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="642.1" y="260.6" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="426.6" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="600.1,169.3 599.2,167.2 598.3,165.1 597.3,163.0 596.4,160.9 595.4,158.9 594.3,156.8 593.3,154.8 592.2,152.8 591.1,150.8 590.0,148.8 588.9,146.8 587.7,144.8 586.5,142.9 585.3,140.9 584.1,139.0 582.8,137.1 581.6,135.2 580.3,133.3 578.9,131.5 577.6,129.6 576.2,127.8 574.8,125.9 573.4,124.1 572.0,122.4 570.6,120.6 569.1,118.8 567.6,117.1 566.1,115.4 564.6,113.7 563.0,112.0 561.4,110.3 559.9,108.7 558.2,107.1 556.6,105.5 555.0,103.9 553.3,102.3 551.6,100.7 549.9,99.2 548.2,97.7 546.5,96.2 544.7,94.7 543.0,93.3 541.2,91.9 539.4,90.5 537.6,89.1 535.7,87.7 533.9,86.4 532.0,85.0 530.1,83.7 528.2,82.5 526.3,81.2 524.4,80.0 522.5,78.8 520.5,77.6 518.5,76.4 516.6,75.3 514.6,74.1 512.6,73.0 510.5,72.0 508.5,70.9 464.1,158.3 465.1,158.8 466.1,159.3 467.1,159.9 468.1,160.4 469.1,161.0 470.1,161.6 471.0,162.2 472.0,162.8 473.0,163.4 473.9,164.0 474.9,164.7 475.8,165.3 476.7,166.0 477.7,166.7 478.6,167.3 479.5,168.0 480.4,168.7 481.3,169.4 482.2,170.2 483.0,170.9 483.9,171.7 484.8,172.4 485.6,173.2 486.5,173.9 487.3,174.7 488.1,175.5 488.9,176.3 489.7,177.1 490.5,178.0 491.3,178.8 492.1,179.6 492.8,180.5 493.6,181.3 494.3,182.2 495.1,183.1 495.8,184.0 496.5,184.9 497.2,185.8 497.9,186.7 498.6,187.6 499.3,188.5 499.9,189.5 500.6,190.4 501.2,191.3 501.8,192.3 502.5,193.3 503.1,194.2 503.7,195.2 504.2,196.2 504.8,197.2 505.4,198.2 505.9,199.2 506.4,200.2 507.0,201.2 507.5,202.2 508.0,203.3 508.5,204.3 508.9,205.3 509.4,206.4 509.9,207.4" fill="var(--color-theory)" fill-opacity="0.15" stroke="none" stroke-width="1.2"/>
+  <path d="M509.9,207.4 L509.4,206.4 L508.9,205.3 L508.5,204.3 L508.0,203.3 L507.5,202.2 L507.0,201.2 L506.4,200.2 L505.9,199.2 L505.4,198.2 L504.8,197.2 L504.2,196.2 L503.7,195.2 L503.1,194.2 L502.5,193.3 L501.8,192.3 L501.2,191.3 L500.6,190.4 L499.9,189.5 L499.3,188.5 L498.6,187.6 L497.9,186.7 L497.2,185.8 L496.5,184.9 L495.8,184.0 L495.1,183.1 L494.3,182.2 L493.6,181.3 L492.8,180.5 L492.1,179.6 L491.3,178.8 L490.5,178.0 L489.7,177.1 L488.9,176.3 L488.1,175.5 L487.3,174.7 L486.5,173.9 L485.6,173.2 L484.8,172.4 L483.9,171.7 L483.0,170.9 L482.2,170.2 L481.3,169.4 L480.4,168.7 L479.5,168.0 L478.6,167.3 L477.7,166.7 L476.7,166.0 L475.8,165.3 L474.9,164.7 L473.9,164.0 L473.0,163.4 L472.0,162.8 L471.0,162.2 L470.1,161.6 L469.1,161.0 L468.1,160.4 L467.1,159.9 L466.1,159.3 L465.1,158.8 L464.1,158.3" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M600.1,169.3 L599.2,167.2 L598.3,165.1 L597.3,163.0 L596.4,160.9 L595.4,158.9 L594.3,156.8 L593.3,154.8 L592.2,152.8 L591.1,150.8 L590.0,148.8 L588.9,146.8 L587.7,144.8 L586.5,142.9 L585.3,140.9 L584.1,139.0 L582.8,137.1 L581.6,135.2 L580.3,133.3 L578.9,131.5 L577.6,129.6 L576.2,127.8 L574.8,125.9 L573.4,124.1 L572.0,122.4 L570.6,120.6 L569.1,118.8 L567.6,117.1 L566.1,115.4 L564.6,113.7 L563.0,112.0 L561.4,110.3 L559.9,108.7 L558.2,107.1 L556.6,105.5 L555.0,103.9 L553.3,102.3 L551.6,100.7 L549.9,99.2 L548.2,97.7 L546.5,96.2 L544.7,94.7 L543.0,93.3 L541.2,91.9 L539.4,90.5 L537.6,89.1 L535.7,87.7 L533.9,86.4 L532.0,85.0 L530.1,83.7 L528.2,82.5 L526.3,81.2 L524.4,80.0 L522.5,78.8 L520.5,77.6 L518.5,76.4 L516.6,75.3 L514.6,74.1 L512.6,73.0 L510.5,72.0 L508.5,70.9" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M419.6,245.6 L509.9,207.4" fill="none" stroke="var(--academic-text)" stroke-width="0.9" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M509.9,207.4 L600.1,169.3" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M419.6,245.6 L464.1,158.3" fill="none" stroke="var(--academic-text)" stroke-width="0.9" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M464.1,158.3 L508.5,70.9" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M460.8,245.6 L460.8,244.8 L460.7,244.0 L460.7,243.1 L460.6,242.3 L460.6,241.5 L460.5,240.7 L460.4,239.9 L460.2,239.0 L460.1,238.2 L459.9,237.4 L459.8,236.6 L459.6,235.8 L459.4,235.0 L459.2,234.2 L458.9,233.4 L458.7,232.7 L458.4,231.9 L458.1,231.1 L457.8,230.3 L457.5,229.6" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M480.4,245.6 L480.3,243.4 L480.2,241.1 L480.0,238.9 L479.7,236.7 L479.3,234.5 L478.9,232.3 L478.4,230.2 L477.8,228.0 L477.1,225.9 L476.3,223.8 L475.5,221.8 L474.6,219.7 L473.6,217.7 L472.5,215.8 L471.4,213.8 L470.2,212.0 L468.9,210.1 L467.6,208.3 L466.2,206.6 L464.7,204.9 L463.2,203.3 L461.6,201.7 L460.0,200.2 L458.3,198.8 L456.6,197.4 L454.8,196.1 L452.9,194.8 L451.1,193.6 L449.1,192.5 L447.2,191.5" fill="none" stroke="var(--academic-text)" stroke-width="1.0" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="465.9" y="242.4" fill="var(--academic-text)" font-size="12" text-anchor="start">&#945;</text>
+  <text x="463.7" y="198.0" fill="var(--academic-text)" font-size="12" text-anchor="start">&#946;</text>
+  <text x="485.4" y="166.7" fill="var(--color-theory)" font-size="12" text-anchor="start"><tspan font-style="italic">r</tspan> = <tspan font-style="italic">a</tspan></text>
+  <text x="571.0" y="112.0" fill="var(--color-theory)" font-size="12" text-anchor="start"><tspan font-style="italic">r</tspan> = <tspan font-style="italic">b</tspan></text>
+  <text x="563.0" y="202.4" fill="var(--color-theory)" font-size="12" text-anchor="start">&#952; = &#945;</text>
+  <text x="476.3" y="112.6" fill="var(--color-theory)" font-size="12" text-anchor="end">&#952; = &#946;</text>
+  <text x="550.6" y="161.0" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">R</tspan></text>
+  <line x1="342.7" y1="153.5" x2="387.6" y2="153.5" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="394.0,153.5 386.0,156.9 386.0,150.1" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="368.4" y="146.5" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+</svg>
+<figcaption><em>x</em> = <em>r</em> cos &#952;, <em>y</em> = <em>r</em> sin &#952; dönüşümü <em>r</em>&#952;-düzlemindeki [<em>a</em>, <em>b</em>] &#215; [&#945;, &#946;] dikdörtgenini <em>xy</em>-düzlemindeki kutupsal dikdörtgene götürür: <em>r</em> = sabit doğruları çember yaylarına, &#952; = sabit doğruları orijinden çıkan ışınlara gider.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+**Dönüşüm.** $r\theta$-düzleminden $xy$-düzlemine giden
+
+$$x = g(r, \theta) = r\cos\theta, \qquad y = h(r, \theta) = r\sin\theta$$
+
+dönüşümü $S = [a, b] \times [\alpha, \beta]$ dikdörtgenini $R$ kutupsal dikdörtgenine götürür: $r = \text{sabit}$ doğruları çember yaylarına, $\theta = \text{sabit}$ doğruları orijinden çıkan ışınlara gider.
+
+**Jacobi determinantı.**
+
+$$\frac{\partial(x, y)}{\partial(r, \theta)} = \begin{vmatrix} \cos\theta & -r\sin\theta \\ \sin\theta & r\cos\theta \end{vmatrix} = r\cos^2\theta + r\sin^2\theta = r.$$
+
+**Koşullar.** $S$ bir dikdörtgendir. $R$'yi koordinat eksenleri boyunca keserek, her biri eksenlerin ayırdığı dört bölgeden yalnız birinde kalan en çok beş kutupsal dikdörtgene ayırabiliriz; parçaların ortak noktaları yalnız sınırlarındadır. Her parça I. tip bölgedir. Örneğin birinci bölgedeki bir parçada, $x = c$ düşey doğrusu üzerinde $a \le r \le b$ koşulu da $\theta$'ya konan koşul da $y$ için birer aralık verir ve iki aralığın kesişimi yine bir aralıktır; yani her düşey doğru parçayı tek bir doğru parçası boyunca keser. Öteki bölgelerdeki parçalar bunların eksenlere göre yansımalarıdır.
+
+$S$'nin iç noktalarında $r > a \ge 0$ olduğundan Jacobi determinantı sıfırdan farklıdır. Aynı noktalarda $r$, noktanın orijine uzaklığı, $\theta$ ise uzunluğu en çok $2\pi$ olan açık bir aralıktaki açısı olduğundan $(r, \theta)$ çifti $(x, y)$ noktasından tek türlü bulunur; yani $T$ bire birdir. Sınırda bu koşullar bozulabilir ($a = 0$ ise $r = 0$ kenarının tamamı orijine gider), teorem buna izin verir.
+
+**Sonuç.** $r \ge 0$ olduğundan $|\partial(x, y)/\partial(r, \theta)| = r$'dir. @thm-ddg-degisken-degistirme ve $S$ dikdörtgeni üzerinde Fubini Teoremi (@thm-dkt-fubini)
+
+$$\iint_R f(x, y)\,dA = \iint_S f(r\cos\theta, r\sin\theta)\,r\,dr\,d\theta = \int_\alpha^\beta \int_a^b f(r\cos\theta, r\sin\theta)\,r\,dr\,d\theta$$
+
+verir. Bu, kutupsal koordinatlara geçiş formülüdür (@thm-kki-kutupsal); kutupsal formüldeki fazladan $r$ çarpanı, kutupsal dönüşümün Jacobi determinantıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Şimdi verilen bir dönüşümle, zor bir bölgeyi basit bir bölgeye çevirelim.
+
+:::: {#exm-ddg-parabol-integral name="Parabollerle Sınırlı Bölgede Bir İntegral"}
+$x = u^2 - v^2$, $y = 2uv$ değişken değiştirmesini kullanarak
+
+$$\iint_R y\,dA$$
+
+integralini hesaplayınız. Burada $R$, $x$ ekseni ile $y^2 = 4 - 4x$ ve $y^2 = 4 + 4x$ parabollerinin sınırladığı, $y \ge 0$ olan bölgedir.
+
+::: {.cozum}
+**Bölge.** $y^2 = 4 - 4x$ denklemi $x = 1 - y^2/4$, $y^2 = 4 + 4x$ denklemi ise $x = y^2/4 - 1$ demektir. Demek ki $R$, birim karenin görüntüsü olarak bulduğumuz bölgedir (@exm-ddg-kare-parabol) ve $T(S) = R$, $S = [0, 1] \times [0, 1]$'dir. Değişken değiştirmenin amacı da budur: $S$, $R$'den çok daha basit bir bölgedir.
+
+**Bire birlik.** $T(u, v) = (x, y)$ ise
+
+$$(u^2 + v^2)^2 = (u^2 - v^2)^2 + (2uv)^2 = x^2 + y^2$$
+
+olur, yani $u^2 + v^2 = \sqrt{x^2 + y^2}$'dir. Buna $u^2 - v^2 = x$ eşitliğini ekleyip çıkarırsak
+
+$$u^2 = \frac{\sqrt{x^2 + y^2} + x}{2}, \qquad v^2 = \frac{\sqrt{x^2 + y^2} - x}{2}$$
+
+bulunur. $u, v \ge 0$ olduğundan $u$ ile $v$, $(x, y)$ noktasından tek türlü belirlenir; $T$, $S$ üzerinde bire birdir.
+
+**Jacobi determinantı.**
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} 2u & -2v \\ 2v & 2u \end{vmatrix} = 4u^2 + 4v^2.$$
+
+Bu sayı yalnız $S$'nin köşesi olan $(0, 0)$'da sıfırdır, başka her yerde pozitiftir.
+
+**İntegral.** $y = 2uv$ ve $|\partial(x, y)/\partial(u, v)| = 4(u^2 + v^2)$ olduğundan @thm-ddg-degisken-degistirme
+
+$$\begin{aligned}
+\iint_R y\,dA &= \int_0^1 \int_0^1 (2uv) \cdot 4(u^2 + v^2)\,du\,dv = 8 \int_0^1 \int_0^1 (u^3 v + u v^3)\,du\,dv \\[1mm]
+&= 8 \int_0^1 \left[ \frac{u^4 v}{4} + \frac{u^2 v^3}{2} \right]_{u=0}^{u=1} dv = \int_0^1 (2v + 4v^3)\,dv \\[1mm]
+&= \Big[ v^2 + v^4 \Big]_0^1 = 2
+\end{aligned}$$
+
+verir.
+
+**Kontrol.** Aynı integrali doğrudan da hesaplayabiliriz. $0 \le y \le 2$ için $x$, $y^2/4 - 1$ ile $1 - y^2/4$ arasında değiştiğinden
+
+$$\iint_R y\,dA = \int_0^2 y \left( 2 - \frac{y^2}{2} \right) dy = \left[ y^2 - \frac{y^4}{8} \right]_0^2 = 4 - 2 = 2.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Uygun Dönüşümü Seçmek
+
+Önceki örnekte dönüşüm bize verilmişti. Verilmediğinde ilk iş uygun bir dönüşüm bulmaktır ve ipucu ya integrandda ya da bölgededir.
+
+İntegrali zorlaştıran şey integrandsa, onun içinde tekrar eden ifadeler ($x + y$, $x - y$, $xy$ gibi) yeni değişken olmaya adaydır. Zorluk bölgedeyse, sınır eğrilerinin denklemleri $u = \text{sabit}$ ve $v = \text{sabit}$ biçimine girecek şekilde yeni değişkenler seçilir; böylece $S$ basit bir dikdörtgen ya da yamuk olur.
+
+::: {.callout-tip title="Değişken değiştirme beş adımda"}
+1. **Dönüşümü seç:** integrandın ya da sınır eğrilerinin biçimine bakarak $u = u(x, y)$, $v = v(x, y)$ yeni değişkenlerini belirle.
+2. **$T$'yi bul:** bu denklemleri $x$ ve $y$ için çöz.
+3. **Jacobi determinantını hesapla:** $\partial(x, y)/\partial(u, v)$'yi bul ve mutlak değerini al.
+4. **$S$'yi bul:** $R$'nin sınır eğrilerini $u$ ve $v$ cinsinden yaz.
+5. **İntegrali hesapla:** integrandı $u$, $v$ cinsinden yaz, Jacobi çarpanıyla çarp ve $S$ üzerinde ardışık integral olarak hesapla.
+:::
+
+:::: {#exm-ddg-yamuk-ustel name="Bir Yamukta Üstel İntegral"}
+$R$, köşeleri $(1, 0)$, $(2, 0)$, $(0, -2)$ ve $(0, -1)$ olan yamuk olmak üzere
+
+$$\iint_R e^{(x + y)/(x - y)}\,dA$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+**1. Dönüşümü seç.** $e^{(x + y)/(x - y)}$ fonksiyonunun $x$'e ya da $y$'ye göre ilkelini bulmak kolay değildir. Üsteki $x + y$ ve $x - y$ ifadeleri yeni değişkenleri önerir:
+
+$$u = x + y, \qquad v = x - y.$$
+
+Bu denklemler $xy$-düzleminden $uv$-düzlemine giden $T^{-1}$ dönüşümünü tanımlar.
+
+**2. $T$'yi bul.** Denklemleri toplayıp çıkarırsak
+
+$$x = \frac{u + v}{2}, \qquad y = \frac{u - v}{2}$$
+
+bulunur.
+
+**3. Jacobi determinantı.**
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} \tfrac{1}{2} & \tfrac{1}{2} \\[1mm] \tfrac{1}{2} & -\tfrac{1}{2} \end{vmatrix} = -\frac{1}{4} - \frac{1}{4} = -\frac{1}{2}, \qquad \left| \frac{\partial(x, y)}{\partial(u, v)} \right| = \frac{1}{2}.$$
+
+**4. $S$'yi bul.** $R$'nin kenarları $y = 0$, $x - y = 2$, $x = 0$ ve $x - y = 1$ doğruları üzerindedir. Bunları sırayla $u$, $v$ cinsinden yazalım:
+
+- $y = 0$ ise $u = x$ ve $v = x$'tir, yani $u = v$;
+- $x - y = 2$ ise $v = 2$;
+- $x = 0$ ise $u = y$ ve $v = -y$'dir, yani $u = -v$;
+- $x - y = 1$ ise $v = 1$.
+
+Böylece $S$, köşeleri $(1, 1)$, $(2, 2)$, $(-2, 2)$ ve $(-1, 1)$ olan yamuktur:
+
+$$S = \{(u, v) \mid 1 \le v \le 2,\ -v \le u \le v\}.$$
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 12.0 712.0 274.0" role="img" aria-label="Left: the trapezoid S in the uv-plane with vertices (1, 1), (2, 2), (-2, 2), (-1, 1) and sides u = v, v = 2, u = -v, v = 1. Right: the trapezoid R in the xy-plane with vertices (1, 0), (2, 0), (0, -2), (0, -1) and sides y = 0, x - y = 2, x = 0, x - y = 1 in matching colors">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="203.2" x2="386.4" y2="203.2"/>
+  <line x1="206.4" y1="229.6" x2="206.4" y2="36.0"/>
+  <polygon points="386.4,203.2 378.4,199.7 378.4,206.7" stroke="none"/>
+  <polygon points="206.4,36.0 202.9,44.0 209.9,44.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="384.4" y="218.2" text-anchor="end"><tspan font-style="italic">u</tspan></text>
+  <text x="213.4" y="45.0"><tspan font-style="italic">v</tspan></text>
+  </g>
+  <polygon points="270.4,139.2 334.4,75.2 78.4,75.2 142.4,139.2" fill="var(--color-base)" fill-opacity="0.13" stroke="none" stroke-width="1.2"/>
+  <path d="M270.4,139.2 L334.4,75.2" fill="none" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M334.4,75.2 L78.4,75.2" fill="none" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M78.4,75.2 L142.4,139.2" fill="none" stroke="var(--color-remark)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M142.4,139.2 L270.4,139.2" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="270.4" cy="139.2" r="3.2" fill="var(--academic-text)"/>
+  <text x="277.4" y="154.2" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(1, 1)</text>
+  <circle cx="334.4" cy="75.2" r="3.2" fill="var(--academic-text)"/>
+  <text x="338.4" y="67.2" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(2, 2)</text>
+  <circle cx="78.4" cy="75.2" r="3.2" fill="var(--academic-text)"/>
+  <text x="74.4" y="67.2" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(&#8722;2, 2)</text>
+  <circle cx="142.4" cy="139.2" r="3.2" fill="var(--academic-text)"/>
+  <text x="135.4" y="154.2" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(&#8722;1, 1)</text>
+  <text x="311.4" y="112.2" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">u</tspan> = <tspan font-style="italic">v</tspan></text>
+  <text x="206.4" y="67.2" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">v</tspan> = 2</text>
+  <text x="101.4" y="112.2" fill="var(--color-remark)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">u</tspan> = &#8722;<tspan font-style="italic">v</tspan></text>
+  <text x="206.4" y="156.2" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">v</tspan> = 1</text>
+  <text x="206.4" y="112.2" fill="var(--color-base)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="466.0" y1="72.9" x2="719.7" y2="72.9"/>
+  <line x1="512.9" y1="271.9" x2="512.9" y2="26.0"/>
+  <polygon points="719.7,72.9 711.7,69.4 711.7,76.4" stroke="none"/>
+  <polygon points="512.9,26.0 509.4,34.0 516.4,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="717.7" y="87.9" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="519.9" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="590.9,72.9 668.9,72.9 512.9,228.9 512.9,150.9" fill="var(--color-theory)" fill-opacity="0.13" stroke="none" stroke-width="1.2"/>
+  <path d="M590.9,72.9 L668.9,72.9" fill="none" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M668.9,72.9 L512.9,228.9" fill="none" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M512.9,228.9 L512.9,150.9" fill="none" stroke="var(--color-remark)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M512.9,150.9 L590.9,72.9" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="590.9" cy="72.9" r="3.2" fill="var(--academic-text)"/>
+  <text x="586.9" y="64.9" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(1, 0)</text>
+  <circle cx="668.9" cy="72.9" r="3.2" fill="var(--academic-text)"/>
+  <text x="672.9" y="64.9" fill="var(--academic-text)" font-size="11.5" text-anchor="start">(2, 0)</text>
+  <circle cx="512.9" cy="228.9" r="3.2" fill="var(--academic-text)"/>
+  <text x="505.9" y="233.9" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(0, &#8722;2)</text>
+  <circle cx="512.9" cy="150.9" r="3.2" fill="var(--academic-text)"/>
+  <text x="505.9" y="155.9" fill="var(--academic-text)" font-size="11.5" text-anchor="end">(0, &#8722;1)</text>
+  <text x="629.9" y="89.9" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">y</tspan> = 0</text>
+  <text x="599.9" y="158.9" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">x</tspan> &#8722; <tspan font-style="italic">y</tspan> = 2</text>
+  <text x="505.9" y="194.9" fill="var(--color-remark)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan> = 0</text>
+  <text x="544.9" y="105.9" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan> &#8722; <tspan font-style="italic">y</tspan> = 1</text>
+  <text x="571.4" y="136.4" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">R</tspan></text>
+  <line x1="394.4" y1="103.0" x2="455.6" y2="103.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="462.0,103.0 454.0,106.4 454.0,99.6" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="428.2" y="96.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+  <line x1="462.0" y1="137.0" x2="400.8" y2="137.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="394.4,137.0 402.4,133.6 402.4,140.4" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="428.2" y="130.0" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan><tspan font-size="10" dy="-5">&#8722;1</tspan><tspan dy="5">&#8203;</tspan></text>
+</svg>
+<figcaption><em>u</em> = <em>x</em> + <em>y</em>, <em>v</em> = <em>x</em> &#8722; <em>y</em> ile <em>R</em> yamuğunun her kenarı <em>S</em> yamuğunun aynı renkteki kenarına gider. <em>T</em> ise <em>x</em> = (<em>u</em> + <em>v</em>)/2, <em>y</em> = (<em>u</em> &#8722; <em>v</em>)/2 ile <em>S</em>'yi <em>R</em>'ye geri götürür.</figcaption>
+</figure>
+```
+
+**5. İntegrali hesapla.** $(x + y)/(x - y) = u/v$ olduğundan @thm-ddg-degisken-degistirme
+
+$$\begin{aligned}
+\iint_R e^{(x + y)/(x - y)}\,dA &= \int_1^2 \int_{-v}^{v} e^{u/v} \cdot \frac{1}{2}\,du\,dv = \frac{1}{2} \int_1^2 \Big[ v\,e^{u/v} \Big]_{u=-v}^{u=v} dv \\[1mm]
+&= \frac{1}{2} \int_1^2 \big( e - e^{-1} \big)\,v\,dv = \frac{1}{2} \big( e - e^{-1} \big) \cdot \frac{3}{2} = \frac{3}{4} \big( e - e^{-1} \big)
+\end{aligned}$$
+
+verir. Sayısal olarak bu değer yaklaşık $1{,}763$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan üç hata"}
+- **Mutlak değeri unutmak.** Yamuk örneğinde (@exm-ddg-yamuk-ustel) Jacobi determinantı $-1/2$'dir ama integrale $1/2$ girer; alan elemanı negatif olamaz.
+- **Sınırları dönüştürmemek.** Yeni integralin sınırları $R$'yi değil $S$'yi betimlemelidir.
+- **Determinantı ters yönde kullanmak.** Formüle $\partial(x, y)/\partial(u, v)$ girer. Elimizde $\partial(u, v)/\partial(x, y)$ varsa formüle onun çarpmaya göre tersi girer (@prp-ddg-ters-jacobi).
+:::
+
+Reçetenin ikinci adımı her zaman kolay değildir: $u$ ve $v$'yi $x$, $y$ cinsinden yazmak kolay olduğu hâlde tersini çözmek zahmetli olabilir. Neyse ki Jacobi determinantını ters dönüşümden de hesaplayabiliriz.
+
+:::: {#prp-ddg-ters-jacobi name="Ters Dönüşümün Jacobi Determinantı"}
+$U$ ile $V$ düzlemde açık kümeler, $T : U \to V$ bire bir ve örten bir $C^1$ dönüşüm, $T^{-1} : V \to U$ de $C^1$ olsun. $(u, v) \in U$ ve $(x, y) = T(u, v)$ olan her noktada
+
+$$\frac{\partial(x, y)}{\partial(u, v)} \cdot \frac{\partial(u, v)}{\partial(x, y)} = 1$$
+
+olur. Özel olarak iki determinant da sıfırdan farklıdır ve
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \frac{1}{\partial(u, v)/\partial(x, y)}$$
+
+dir.
+
+::: {.ispat}
+Her $(u, v) \in U$ için $T^{-1}\big(T(u, v)\big) = (u, v)$ eşitliği vardır. Sağ taraf birim dönüşümdür ve Jacobi matrisi $2 \times 2$ birim matris $I$'dır. Zincir kuralına göre (bkz. [Analiz 4](../analiz-4/jacobi-matrisi-ve-zincir-kurali.html#thm-zin-zincir-kurali)) bileşkenin Jacobi matrisi, Jacobi matrislerinin çarpımıdır:
+
+$$J_{T^{-1}}(x, y)\, J_T(u, v) = I, \qquad (x, y) = T(u, v).$$
+
+İki matrisin çarpımının determinantı determinantların çarpımına eşit olduğundan
+
+$$\det J_{T^{-1}}(x, y) \cdot \det J_T(u, v) = \det I = 1$$
+
+olur. $\det J_T(u, v) = \partial(x, y)/\partial(u, v)$ ve $\det J_{T^{-1}}(x, y) = \partial(u, v)/\partial(x, y)$ olduğundan istenen eşitlik çıkar. Çarpımları $1$ olduğundan ikisi de sıfır olamaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani ters dönüşümün Jacobi determinantı, dönüşümün Jacobi determinantının çarpmaya göre tersidir; tek değişkendeki $dx/du = 1/(du/dx)$ kuralının karşılığıdır. Örneğin yamuk örneğinde (@exm-ddg-yamuk-ustel) $x$ ve $y$'yi çözmeye gerek yoktu:
+
+$$\frac{\partial(u, v)}{\partial(x, y)} = \begin{vmatrix} 1 & 1 \\ 1 & -1 \end{vmatrix} = -2 \quad \Longrightarrow \quad \frac{\partial(x, y)}{\partial(u, v)} = -\frac{1}{2}.$$
+
+Bu kural, ters dönüşümü açıkça yazmanın zor olduğu yerde işi büyük ölçüde kolaylaştırır.
+
+:::: {#exm-ddg-hiperbol name="Hiperbollerle Sınırlı Bir Bölge"}
+$R$, birinci bölgede $x^2 - y^2 = 1$, $x^2 - y^2 = 9$, $xy = 2$ ve $xy = 4$ hiperbollerinin sınırladığı bölge olmak üzere
+
+$$\iint_R (x^2 + y^2)\,dA$$
+
+integralini hesaplayınız.
+
+::: {.cozum}
+**Dönüşüm.** Sınır eğrileri $x^2 - y^2 = \text{sabit}$ ve $xy = \text{sabit}$ biçiminde olduğundan
+
+$$u = x^2 - y^2, \qquad v = xy$$
+
+alalım. Bu değişkenlerle $R$, $1 \le u \le 9$ ve $2 \le v \le 4$ eşitsizlikleriyle betimlenir; yani $S = [1, 9] \times [2, 4]$ dikdörtgenidir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="52.0 12.0 770.5 280.0" role="img" aria-label="Left: the rectangle S = [1, 9] x [2, 4] in the uv-plane. Right: the curved region R in the first quadrant between the hyperbolas x^2 - y^2 = 1, x^2 - y^2 = 9, xy = 2 and xy = 4">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="66.0" y1="198.5" x2="334.0" y2="198.5"/>
+  <line x1="84.7" y1="214.0" x2="84.7" y2="56.0"/>
+  <polygon points="334.0,198.5 326.0,195.0 326.0,202.0" stroke="none"/>
+  <polygon points="84.7,56.0 81.2,64.0 88.2,64.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="109.2" y1="195.5" x2="109.2" y2="201.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="109.2" y="213.5" text-anchor="middle">1</text>
+  <line x1="305.5" y1="195.5" x2="305.5" y2="201.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="305.5" y="213.5" text-anchor="middle">9</text>
+  <line x1="81.7" y1="140.8" x2="87.7" y2="140.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="77.7" y="144.8" text-anchor="end">2</text>
+  <line x1="81.7" y1="83.1" x2="87.7" y2="83.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="77.7" y="87.1" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="332.0" y="213.5" text-anchor="end"><tspan font-style="italic">u</tspan></text>
+  <text x="91.7" y="65.0"><tspan font-style="italic">v</tspan></text>
+  </g>
+  <polygon points="109.2,140.8 305.5,140.8 305.5,83.1 109.2,83.1" fill="var(--color-base)" fill-opacity="0.15" stroke="var(--color-base)" stroke-width="2.0"/>
+  <text x="207.4" y="116.9" fill="var(--color-base)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="436.0" y1="255.4" x2="798.2" y2="255.4"/>
+  <line x1="458.4" y1="277.8" x2="458.4" y2="26.0"/>
+  <polygon points="798.2,255.4 790.2,251.9 790.2,258.9" stroke="none"/>
+  <polygon points="458.4,26.0 454.9,34.0 461.9,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="796.2" y="270.4" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="465.4" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M550.4,255.4 L550.5,251.7 L550.7,248.0 L551.1,244.4 L551.6,240.7 L552.2,237.0 L553.0,233.3 L553.9,229.6 L555.0,226.0 L556.2,222.3 L557.5,218.6 L558.9,214.9 L560.4,211.2 L562.1,207.6 L563.8,203.9 L565.7,200.2 L567.6,196.5 L569.7,192.8 L571.8,189.2 L574.0,185.5 L576.2,181.8 L578.6,178.1 L581.0,174.4 L583.4,170.8 L585.9,167.1 L588.5,163.4 L591.1,159.7 L593.8,156.0 L596.5,152.4 L599.3,148.7 L602.1,145.0 L605.0,141.3 L607.8,137.6 L610.8,134.0 L613.7,130.3 L616.7,126.6 L619.7,122.9 L622.7,119.2 L625.8,115.6 L628.9,111.9 L632.0,108.2 L635.1,104.5 L638.3,100.8 L641.4,97.2 L644.6,93.5 L647.8,89.8 L651.1,86.1 L654.3,82.4 L657.6,78.8 L660.8,75.1 L664.1,71.4 L667.4,67.7 L670.7,64.0 L674.0,60.4 L677.4,56.7 L680.7,53.0 L684.1,49.3 L687.4,45.6 L690.8,42.0 L694.2,38.3 L697.6,34.6" fill="none" stroke="var(--color-practice)" stroke-width="1.2" stroke-dasharray="5 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M734.4,255.4 L734.4,252.2 L734.5,249.0 L734.6,245.8 L734.7,242.6 L734.9,239.5 L735.1,236.3 L735.3,233.1 L735.6,229.9 L735.9,226.7 L736.2,223.5 L736.6,220.3 L737.0,217.1 L737.5,214.0 L738.0,210.8 L738.5,207.6 L739.1,204.4 L739.7,201.2 L740.3,198.0 L741.0,194.8 L741.7,191.6 L742.4,188.5 L743.2,185.3 L744.0,182.1 L744.8,178.9 L745.7,175.7 L746.6,172.5 L747.5,169.3 L748.5,166.1 L749.5,163.0 L750.5,159.8 L751.6,156.6 L752.6,153.4 L753.8,150.2 L754.9,147.0 L756.1,143.8 L757.3,140.6 L758.5,137.4 L759.8,134.3 L761.1,131.1 L762.4,127.9 L763.8,124.7 L765.2,121.5 L766.6,118.3 L768.0,115.1 L769.5,111.9 L770.9,108.8 L772.4,105.6 L774.0,102.4 L775.5,99.2 L777.1,96.0 L778.7,92.8 L780.4,89.6 L782.0,86.4 L783.7,83.3 L785.4,80.1 L787.1,76.9 L788.8,73.7 L790.6,70.5 L792.4,67.3 L794.2,64.1" fill="none" stroke="var(--color-practice)" stroke-width="1.2" stroke-dasharray="5 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M533.5,30.0 L537.5,41.3 L541.4,51.5 L545.4,60.8 L549.3,69.3 L553.3,77.0 L557.3,84.2 L561.2,90.8 L565.2,96.9 L569.2,102.6 L573.1,107.8 L577.1,112.8 L581.0,117.4 L585.0,121.7 L589.0,125.7 L592.9,129.6 L596.9,133.2 L600.8,136.6 L604.8,139.8 L608.8,142.8 L612.7,145.7 L616.7,148.5 L620.7,151.1 L624.6,153.6 L628.6,155.9 L632.5,158.2 L636.5,160.4 L640.5,162.4 L644.4,164.4 L648.4,166.3 L652.4,168.1 L656.3,169.9 L660.3,171.5 L664.2,173.2 L668.2,174.7 L672.2,176.2 L676.1,177.6 L680.1,179.0 L684.0,180.4 L688.0,181.7 L692.0,182.9 L695.9,184.1 L699.9,185.3 L703.9,186.4 L707.8,187.5 L711.8,188.6 L715.7,189.6 L719.7,190.6 L723.7,191.6 L727.6,192.5 L731.6,193.4 L735.5,194.3 L739.5,195.2 L743.5,196.0 L747.4,196.8 L751.4,197.6 L755.4,198.4 L759.3,199.1 L763.3,199.9 L767.2,200.6 L771.2,201.3" fill="none" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 3" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M608.6,30.0 L611.3,34.0 L614.0,37.8 L616.7,41.6 L619.4,45.2 L622.2,48.7 L624.9,52.0 L627.6,55.3 L630.3,58.4 L633.0,61.5 L635.7,64.5 L638.4,67.3 L641.1,70.1 L643.8,72.8 L646.5,75.5 L649.3,78.0 L652.0,80.5 L654.7,82.9 L657.4,85.3 L660.1,87.5 L662.8,89.8 L665.5,91.9 L668.2,94.0 L670.9,96.1 L673.6,98.1 L676.4,100.1 L679.1,102.0 L681.8,103.8 L684.5,105.6 L687.2,107.4 L689.9,109.2 L692.6,110.8 L695.3,112.5 L698.0,114.1 L700.7,115.7 L703.5,117.2 L706.2,118.8 L708.9,120.2 L711.6,121.7 L714.3,123.1 L717.0,124.5 L719.7,125.8 L722.4,127.2 L725.1,128.5 L727.8,129.7 L730.6,131.0 L733.3,132.2 L736.0,133.4 L738.7,134.6 L741.4,135.8 L744.1,136.9 L746.8,138.0 L749.5,139.1 L752.2,140.2 L754.9,141.2 L757.7,142.3 L760.4,143.3 L763.1,144.3 L765.8,145.3 L768.5,146.2 L771.2,147.2" fill="none" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="5 3" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="605.6,140.4 608.0,142.3 610.4,144.1 612.9,145.8 615.3,147.5 617.7,149.2 620.2,150.8 622.7,152.3 625.1,153.9 627.6,155.4 630.1,156.8 632.5,158.2 635.0,159.6 637.5,160.9 639.9,162.2 642.4,163.4 644.8,164.6 647.3,165.8 649.7,166.9 652.2,168.0 654.6,169.1 657.0,170.2 659.4,171.2 661.7,172.2 664.1,173.1 666.5,174.0 668.8,175.0 671.2,175.8 673.5,176.7 675.8,177.5 678.1,178.3 680.4,179.1 682.6,179.9 684.9,180.7 687.1,181.4 689.3,182.1 691.6,182.8 693.8,183.5 695.9,184.1 698.1,184.8 700.3,185.4 702.4,186.0 704.6,186.6 706.7,187.2 708.8,187.8 710.9,188.4 713.0,188.9 715.0,189.4 717.1,190.0 719.1,190.5 721.2,191.0 723.2,191.5 725.2,191.9 727.2,192.4 729.2,192.9 731.1,193.3 733.1,193.8 735.0,194.2 737.0,194.6 738.9,195.1 740.8,195.5 740.8,195.5 741.0,194.5 741.2,193.6 741.5,192.6 741.7,191.7 741.9,190.7 742.1,189.8 742.3,188.8 742.5,187.9 742.8,186.9 743.0,186.0 743.2,185.1 743.5,184.1 743.7,183.2 743.9,182.3 744.2,181.4 744.4,180.4 744.6,179.5 744.9,178.6 745.1,177.7 745.4,176.8 745.6,175.8 745.9,174.9 746.1,174.0 746.4,173.1 746.7,172.2 746.9,171.3 747.2,170.4 747.5,169.5 747.7,168.6 748.0,167.7 748.3,166.8 748.5,165.9 748.8,165.1 749.1,164.2 749.4,163.3 749.6,162.4 749.9,161.5 750.2,160.7 750.5,159.8 750.8,158.9 751.1,158.0 751.4,157.2 751.7,156.3 751.9,155.4 752.2,154.6 752.5,153.7 752.8,152.9 753.1,152.0 753.4,151.2 753.7,150.3 754.0,149.5 754.3,148.6 754.6,147.8 754.9,146.9 755.3,146.1 755.6,145.3 755.9,144.4 756.2,143.6 756.5,142.8 756.8,141.9 756.8,141.9 755.2,141.3 753.5,140.7 751.8,140.0 750.2,139.4 748.5,138.7 746.8,138.0 745.1,137.3 743.5,136.6 741.8,135.9 740.1,135.2 738.4,134.5 736.7,133.7 735.0,133.0 733.3,132.2 731.5,131.5 729.8,130.7 728.1,129.9 726.4,129.1 724.7,128.3 722.9,127.4 721.2,126.6 719.5,125.7 717.7,124.9 716.0,124.0 714.3,123.1 712.5,122.2 710.8,121.3 709.0,120.3 707.3,119.4 705.6,118.4 703.8,117.4 702.1,116.5 700.3,115.4 698.6,114.4 696.8,113.4 695.1,112.3 693.3,111.3 691.6,110.2 689.8,109.1 688.1,108.0 686.4,106.9 684.6,105.7 682.9,104.6 681.2,103.4 679.4,102.2 677.7,101.0 676.0,99.8 674.3,98.6 672.6,97.3 670.9,96.1 669.2,94.8 667.5,93.5 665.8,92.2 664.1,90.8 662.4,89.5 660.8,88.1 659.1,86.7 657.5,85.3 655.9,83.9 654.2,82.5 654.2,82.5 653.5,83.3 652.8,84.1 652.1,85.0 651.4,85.8 650.6,86.6 649.9,87.4 649.2,88.3 648.4,89.1 647.7,90.0 647.0,90.8 646.2,91.7 645.5,92.5 644.7,93.4 644.0,94.2 643.2,95.1 642.5,96.0 641.7,96.9 640.9,97.7 640.2,98.6 639.4,99.5 638.6,100.4 637.9,101.3 637.1,102.2 636.3,103.1 635.5,104.1 634.7,105.0 633.9,105.9 633.1,106.9 632.3,107.8 631.5,108.7 630.7,109.7 629.9,110.6 629.1,111.6 628.3,112.6 627.5,113.6 626.6,114.5 625.8,115.5 625.0,116.5 624.2,117.5 623.3,118.5 622.5,119.6 621.6,120.6 620.8,121.6 619.9,122.6 619.1,123.7 618.2,124.7 617.3,125.8 616.5,126.9 615.6,128.0 614.7,129.0 613.8,130.1 612.9,131.2 612.0,132.4 611.1,133.5 610.2,134.6 609.3,135.8 608.4,136.9 607.5,138.1 606.6,139.2 605.6,140.4" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="2.0"/>
+  <text x="683.1" y="47.8" fill="var(--color-practice)" font-size="11.5" text-anchor="end"><tspan font-style="italic">x</tspan>² &#8722; <tspan font-style="italic">y</tspan>² = 1</text>
+  <text x="785.6" y="63.3" fill="var(--color-practice)" font-size="11.5" text-anchor="end"><tspan font-style="italic">x</tspan>² &#8722; <tspan font-style="italic">y</tspan>² = 9</text>
+  <text x="777.2" y="205.3" fill="var(--color-remark)" font-size="11.5" text-anchor="start"><tspan font-style="italic">xy</tspan> = 2</text>
+  <text x="777.2" y="151.2" fill="var(--color-remark)" font-size="11.5" text-anchor="start"><tspan font-style="italic">xy</tspan> = 4</text>
+  <text x="683.8" y="145.4" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">R</tspan></text>
+  <line x1="352.0" y1="94.9" x2="423.6" y2="94.9" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="430.0,94.9 422.0,98.3 422.0,91.6" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="391.0" y="87.9" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+  <line x1="430.0" y1="128.9" x2="358.4" y2="128.9" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="352.0,128.9 360.0,125.6 360.0,132.3" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="391.0" y="121.9" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan><tspan font-size="10" dy="-5">&#8722;1</tspan><tspan dy="5">&#8203;</tspan></text>
+</svg>
+<figcaption><em>u</em> = <em>x</em>² &#8722; <em>y</em>², <em>v</em> = <em>xy</em> değişkenleri birinci bölgedeki dört hiperbolün sınırladığı <em>R</em> bölgesini [1, 9] &#215; [2, 4] dikdörtgenine çevirir.</figcaption>
+</figure>
+```
+
+**Bire birlik.** $x, y > 0$ olsun.
+
+$$(x^2 + y^2)^2 = (x^2 - y^2)^2 + 4x^2 y^2 = u^2 + 4v^2$$
+
+olduğundan $x^2 + y^2 = \sqrt{u^2 + 4v^2}$'dir ve
+
+$$x^2 = \frac{\sqrt{u^2 + 4v^2} + u}{2}, \qquad y^2 = \frac{\sqrt{u^2 + 4v^2} - u}{2}$$
+
+bulunur. $x$ ve $y$ pozitif olduğundan $(u, v)$'den tek türlü belirlenir. Bu formüller $v > 0$ iken $C^1$ olan bir $T$ dönüşümü verir; ama onu açıkça kullanmamıza gerek kalmayacak.
+
+**Jacobi determinantı.** Ters yöndeki determinant kolayca bulunur:
+
+$$\frac{\partial(u, v)}{\partial(x, y)} = \begin{vmatrix} 2x & -2y \\ y & x \end{vmatrix} = 2x^2 + 2y^2.$$
+
+Ters dönüşüm kuralına (@prp-ddg-ters-jacobi) göre
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \frac{1}{2(x^2 + y^2)}$$
+
+olur. Burada $x^2 + y^2$, $(u, v)$'nin bir fonksiyonu olarak düşünülür; integranddaki $x^2 + y^2$ ile aynı noktada hesaplandığından birazdan sadeleşecek.
+
+**İntegral.** @thm-ddg-degisken-degistirme
+
+$$\begin{aligned}
+\iint_R (x^2 + y^2)\,dA &= \int_2^4 \int_1^9 (x^2 + y^2) \cdot \frac{1}{2(x^2 + y^2)}\,du\,dv \\[1mm]
+&= \int_2^4 \int_1^9 \frac{1}{2}\,du\,dv = \frac{1}{2} \cdot 8 \cdot 2 = 8
+\end{aligned}$$
+
+verir. İntegrand, Jacobi çarpanıyla tam olarak sadeleşti; uygun seçilen bir dönüşümün gücü budur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Üç Katlı İntegralde Değişken Değiştirme
+
+Aynı fikir uzayda da işler. Tek fark, küçük dikdörtgenlerin yerini küçük kutuların, paralelkenarların yerini de paralelyüzlülerin almasıdır.
+
+$T$, $uvw$-uzayındaki bir $S$ bölgesini $xyz$-uzayındaki bir $R$ bölgesine
+
+$$x = g(u, v, w), \qquad y = h(u, v, w), \qquad z = k(u, v, w)$$
+
+denklemleriyle götüren bir dönüşüm olsun. $T$'nin Jacobi determinantı bu kez $3 \times 3$ bir determinanttır:
+
+$$\frac{\partial(x, y, z)}{\partial(u, v, w)} = \begin{vmatrix} \dfrac{\partial x}{\partial u} & \dfrac{\partial x}{\partial v} & \dfrac{\partial x}{\partial w} \\[3mm] \dfrac{\partial y}{\partial u} & \dfrac{\partial y}{\partial v} & \dfrac{\partial y}{\partial w} \\[3mm] \dfrac{\partial z}{\partial u} & \dfrac{\partial z}{\partial v} & \dfrac{\partial z}{\partial w} \end{vmatrix}. \tag{5}$$
+
+:::: {#thm-ddg-uc-boyut name="Üç Katlı İntegralde Değişken Değiştirme"}
+$T$, $uvw$-uzayındaki bir $S$ bölgesini $xyz$-uzayındaki bir $R$ bölgesine götüren bir $C^1$ dönüşüm olsun: $T(S) = R$. $R$ ile $S$ kapalı, sınırlı ve sınırları sonlu sayıda düzgün yüzey parçasından oluşan bölgeler, $f$ de $R$ üzerinde sürekli olsun. $S$'nin sınırı dışındaki noktalarda $T$ bire bir ve Jacobi determinantı sıfırdan farklıysa
+
+$$\iiint_R f(x, y, z)\,dV = \iiint_S f\big(T(u, v, w)\big) \left| \frac{\partial(x, y, z)}{\partial(u, v, w)} \right| du\,dv\,dw$$
+
+olur. Burada $f\big(T(u, v, w)\big)$, $f$'de $x$, $y$, $z$ yerine $x(u, v, w)$, $y(u, v, w)$, $z(u, v, w)$ yazılarak elde edilen fonksiyondur.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="33.5 32.5 776.0 349.0" role="img" aria-label="Left: a box in rho theta phi space with edges d rho, d theta, d phi. Right: the spherical wedge it maps to in xyz-space, bounded by two spheres, two half planes and two cones, with edge lengths d rho, rho sin phi d theta and rho d phi">
+  <line x1="198.4" y1="199.4" x2="59.9" y2="273.5" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="55.0,276.2 59.8,270.3 62.6,275.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="51.0" y="289.2" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">&#961;</text>
+  <line x1="198.4" y1="199.4" x2="348.6" y2="238.8" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="354.0,240.3 346.5,241.3 348.0,235.6" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="364.0" y="244.3" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">&#952;</text>
+  <line x1="198.4" y1="199.4" x2="198.4" y2="70.6" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="198.4,65.0 201.3,72.0 195.5,72.0" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="188.4" y="61.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">&#966;</text>
+  <polygon points="193.5,206.6 193.5,160.2 242.6,173.1 242.6,219.5" fill="var(--color-base)" fill-opacity="0.05" stroke="none" stroke-width="1.2"/>
+  <polygon points="153.3,228.1 153.3,181.7 202.5,194.6 202.5,241.0" fill="var(--color-base)" fill-opacity="0.11" stroke="none" stroke-width="1.2"/>
+  <polygon points="193.5,206.6 193.5,160.2 153.3,181.7 153.3,228.1" fill="var(--color-base)" fill-opacity="0.05" stroke="none" stroke-width="1.2"/>
+  <polygon points="242.6,219.5 242.6,173.1 202.5,194.6 202.5,241.0" fill="var(--color-base)" fill-opacity="0.11" stroke="none" stroke-width="1.2"/>
+  <polygon points="193.5,206.6 242.6,219.5 202.5,241.0 153.3,228.1" fill="var(--color-base)" fill-opacity="0.05" stroke="none" stroke-width="1.2"/>
+  <polygon points="193.5,160.2 242.6,173.1 202.5,194.6 153.3,181.7" fill="var(--color-base)" fill-opacity="0.11" stroke="none" stroke-width="1.2"/>
+  <path d="M193.5,206.6 L193.5,160.2" fill="none" stroke="var(--color-base)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M193.5,206.6 L242.6,219.5" fill="none" stroke="var(--color-base)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M193.5,206.6 L153.3,228.1" fill="none" stroke="var(--color-base)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M193.5,160.2 L242.6,173.1" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M193.5,160.2 L153.3,181.7" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M242.6,219.5 L242.6,173.1" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M242.6,219.5 L202.5,241.0" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M242.6,173.1 L202.5,194.6" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M153.3,228.1 L153.3,181.7" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M153.3,228.1 L202.5,241.0" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M153.3,181.7 L202.5,194.6" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M202.5,241.0 L202.5,194.6" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="165.4" y="165.0" fill="var(--academic-text)" font-size="12" text-anchor="end">&#916;&#961;</text>
+  <text x="177.9" y="252.5" fill="var(--academic-text)" font-size="12" text-anchor="middle">&#916;&#952;</text>
+  <text x="251.6" y="200.3" fill="var(--academic-text)" font-size="12" text-anchor="start">&#916;&#966;</text>
+  <text x="143.3" y="209.9" fill="var(--color-base)" font-size="15" text-anchor="end" font-weight="600"><tspan font-style="italic">S</tspan></text>
+  <line x1="584.8" y1="280.2" x2="451.2" y2="351.6" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="446.2,354.3 451.0,348.4 453.8,353.6" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="442.2" y="367.3" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">x</text>
+  <line x1="584.8" y1="280.2" x2="777.2" y2="330.6" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="782.6,332.1 775.1,333.1 776.6,327.4" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="792.6" y="336.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">y</text>
+  <line x1="584.8" y1="280.2" x2="584.8" y2="61.9" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="584.8,56.2 587.7,63.2 581.8,63.2" fill="var(--academic-text)" opacity="0.55"/>
+  <text x="574.8" y="52.2" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">z</text>
+  <path d="M584.8,280.2 L601.7,198.2" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M584.8,280.2 L637.9,190.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M584.8,280.2 L612.8,260.3" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M584.8,280.2 L672.9,246.8" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.35" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="627.3,193.7 637.9,190.1 651.5,207.2 638.3,211.7" fill="var(--color-theory)" fill-opacity="0.061" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="638.3,211.7 651.5,207.2 663.3,226.3 647.7,231.6" fill="var(--color-theory)" fill-opacity="0.057" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="615.1,196.5 627.3,193.7 638.3,211.7 622.9,215.1" fill="var(--color-theory)" fill-opacity="0.061" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="647.7,231.6 663.3,226.3 672.9,246.8 655.4,252.8" fill="var(--color-theory)" fill-opacity="0.057" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="601.7,198.2 615.1,196.5 622.9,215.1 606.0,217.4" fill="var(--color-theory)" fill-opacity="0.061" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="622.9,215.1 638.3,211.7 647.7,231.6 629.6,235.6" fill="var(--color-theory)" fill-opacity="0.057" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="629.6,235.6 647.7,231.6 655.4,252.8 635.1,257.3" fill="var(--color-theory)" fill-opacity="0.058" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="606.0,217.4 622.9,215.1 629.6,235.6 609.8,238.2" fill="var(--color-theory)" fill-opacity="0.056" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="609.8,238.2 629.6,235.6 635.1,257.3 612.8,260.3" fill="var(--color-theory)" fill-opacity="0.058" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="637.9,190.1 647.4,174.0 663.5,194.1 651.5,207.2" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="651.5,207.2 663.5,194.1 677.4,216.6 663.3,226.3" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="663.3,226.3 677.4,216.6 688.7,240.8 672.9,246.8" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="647.4,174.0 656.9,157.8 675.4,181.0 663.5,194.1" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="663.5,194.1 675.4,181.0 691.4,206.9 677.4,216.6" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="677.4,216.6 691.4,206.9 704.5,234.9 688.7,240.8" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="656.9,157.8 666.4,141.6 687.4,167.9 675.4,181.0" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="675.4,181.0 687.4,167.9 705.5,197.2 691.4,206.9" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="691.4,206.9 705.5,197.2 720.3,228.9 704.5,234.9" fill="var(--color-theory)" fill-opacity="0.062" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="627.3,193.7 635.0,178.2 647.4,174.0 637.9,190.1" fill="var(--color-theory)" fill-opacity="0.078" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="615.1,196.5 620.5,181.4 635.0,178.2 627.3,193.7" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="601.7,198.2 604.7,183.5 620.5,181.4 615.1,196.5" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="635.0,178.2 642.6,162.7 656.9,157.8 647.4,174.0" fill="var(--color-theory)" fill-opacity="0.078" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="620.5,181.4 626.0,166.4 642.6,162.7 635.0,178.2" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="642.6,162.7 650.2,147.2 666.4,141.6 656.9,157.8" fill="var(--color-theory)" fill-opacity="0.078" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="604.7,183.5 607.7,168.8 626.0,166.4 620.5,181.4" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="626.0,166.4 631.4,151.4 650.2,147.2 642.6,162.7" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="607.7,168.8 610.8,154.1 631.4,151.4 626.0,166.4" fill="var(--color-theory)" fill-opacity="0.079" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.08" stroke-linejoin="round"/>
+  <polygon points="650.2,147.2 666.4,141.6 687.4,167.9 667.1,174.8" fill="var(--color-theory)" fill-opacity="0.147" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="667.1,174.8 687.4,167.9 705.5,197.2 681.6,205.4" fill="var(--color-theory)" fill-opacity="0.136" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="631.4,151.4 650.2,147.2 667.1,174.8 643.4,180.1" fill="var(--color-theory)" fill-opacity="0.146" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="681.6,205.4 705.5,197.2 720.3,228.9 693.4,238.1" fill="var(--color-theory)" fill-opacity="0.135" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="610.8,154.1 631.4,151.4 643.4,180.1 617.4,183.6" fill="var(--color-theory)" fill-opacity="0.146" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="643.4,180.1 667.1,174.8 681.6,205.4 653.8,211.6" fill="var(--color-theory)" fill-opacity="0.134" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="653.8,211.6 681.6,205.4 693.4,238.1 662.2,245.0" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="617.4,183.6 643.4,180.1 653.8,211.6 623.2,215.7" fill="var(--color-theory)" fill-opacity="0.134" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="623.2,215.7 653.8,211.6 662.2,245.0 627.9,249.6" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="601.7,198.2 604.7,183.5 609.8,206.1 606.0,217.4" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="606.0,217.4 609.8,206.1 614.2,230.7 609.8,238.2" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="609.8,238.2 614.2,230.7 617.8,256.7 612.8,260.3" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="604.7,183.5 607.7,168.8 613.6,194.8 609.8,206.1" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="609.8,206.1 613.6,194.8 618.7,223.2 614.2,230.7" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="607.7,168.8 610.8,154.1 617.4,183.6 613.6,194.8" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="614.2,230.7 618.7,223.2 622.9,253.1 617.8,256.7" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="613.6,194.8 617.4,183.6 623.2,215.7 618.7,223.2" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="618.7,223.2 623.2,215.7 627.9,249.6 622.9,253.1" fill="var(--color-theory)" fill-opacity="0.137" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="655.4,252.8 668.1,247.9 688.7,240.8 672.9,246.8" fill="var(--color-theory)" fill-opacity="0.197" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="635.1,257.3 644.1,253.2 668.1,247.9 655.4,252.8" fill="var(--color-theory)" fill-opacity="0.199" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="668.1,247.9 680.7,243.0 704.5,234.9 688.7,240.8" fill="var(--color-theory)" fill-opacity="0.197" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="612.8,260.3 617.8,256.7 644.1,253.2 635.1,257.3" fill="var(--color-theory)" fill-opacity="0.199" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="644.1,253.2 653.2,249.1 680.7,243.0 668.1,247.9" fill="var(--color-theory)" fill-opacity="0.199" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="680.7,243.0 693.4,238.1 720.3,228.9 704.5,234.9" fill="var(--color-theory)" fill-opacity="0.197" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="617.8,256.7 622.9,253.1 653.2,249.1 644.1,253.2" fill="var(--color-theory)" fill-opacity="0.199" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="653.2,249.1 662.2,245.0 693.4,238.1 680.7,243.0" fill="var(--color-theory)" fill-opacity="0.199" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <polygon points="622.9,253.1 627.9,249.6 662.2,245.0 653.2,249.1" fill="var(--color-theory)" fill-opacity="0.199" stroke="var(--color-theory)" stroke-width="0.4" stroke-opacity="0.18" stroke-linejoin="round"/>
+  <path d="M601.7,198.2 L602.0,199.6 L602.4,201.0 L602.7,202.4 L603.0,203.8 L603.4,205.2 L603.7,206.6 L604.0,208.0 L604.3,209.5 L604.7,210.9 L605.0,212.4 L605.3,213.9 L605.6,215.4 L605.9,216.9 L606.2,218.4 L606.5,219.9 L606.8,221.4 L607.1,223.0 L607.4,224.5 L607.7,226.1 L608.0,227.6 L608.2,229.2 L608.5,230.8 L608.8,232.4 L609.1,234.0 L609.3,235.6 L609.6,237.2 L609.8,238.8 L610.1,240.4 L610.3,242.0 L610.6,243.7 L610.8,245.3 L611.1,247.0 L611.3,248.6 L611.5,250.3 L611.8,251.9 L612.0,253.6 L612.2,255.3 L612.4,256.9 L612.6,258.6 L612.8,260.3" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M601.7,198.2 L602.7,198.1 L603.7,198.0 L604.8,197.9 L605.8,197.8 L606.8,197.7 L607.8,197.6 L608.8,197.4 L609.8,197.3 L610.8,197.1 L611.8,197.0 L612.8,196.8 L613.8,196.7 L614.8,196.5 L615.7,196.3 L616.7,196.2 L617.7,196.0 L618.6,195.8 L619.5,195.6 L620.5,195.4 L621.4,195.2 L622.3,195.0 L623.2,194.8 L624.1,194.6 L625.0,194.3 L625.9,194.1 L626.8,193.9 L627.6,193.6 L628.5,193.4 L629.3,193.1 L630.1,192.9 L631.0,192.6 L631.8,192.4 L632.6,192.1 L633.4,191.8 L634.1,191.6 L634.9,191.3 L635.7,191.0 L636.4,190.7 L637.1,190.4 L637.9,190.1" fill="none" stroke="var(--color-theory)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M601.7,198.2 L601.9,197.1 L602.1,196.0 L602.4,194.9 L602.6,193.8 L602.8,192.7 L603.0,191.6 L603.3,190.5 L603.5,189.4 L603.7,188.3 L603.9,187.2 L604.2,186.1 L604.4,185.0 L604.6,183.9 L604.9,182.8 L605.1,181.7 L605.3,180.6 L605.5,179.5 L605.8,178.4 L606.0,177.3 L606.2,176.2 L606.4,175.1 L606.7,174.0 L606.9,172.9 L607.1,171.8 L607.4,170.7 L607.6,169.6 L607.8,168.5 L608.0,167.4 L608.3,166.3 L608.5,165.1 L608.7,164.0 L608.9,162.9 L609.2,161.8 L609.4,160.7 L609.6,159.6 L609.9,158.5 L610.1,157.4 L610.3,156.3 L610.5,155.2 L610.8,154.1" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M612.8,260.3 L614.5,260.1 L616.3,259.9 L618.0,259.8 L619.7,259.6 L621.4,259.4 L623.0,259.2 L624.7,258.9 L626.4,258.7 L628.0,258.5 L629.7,258.2 L631.3,258.0 L633.0,257.7 L634.6,257.4 L636.2,257.1 L637.8,256.9 L639.4,256.6 L640.9,256.2 L642.5,255.9 L644.0,255.6 L645.6,255.3 L647.1,254.9 L648.6,254.6 L650.1,254.2 L651.5,253.8 L653.0,253.4 L654.4,253.1 L655.9,252.7 L657.3,252.3 L658.7,251.8 L660.1,251.4 L661.4,251.0 L662.8,250.6 L664.1,250.1 L665.4,249.7 L666.7,249.2 L668.0,248.8 L669.2,248.3 L670.5,247.8 L671.7,247.3 L672.9,246.8" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M612.8,260.3 L613.2,260.0 L613.6,259.7 L613.9,259.5 L614.3,259.2 L614.7,258.9 L615.1,258.7 L615.5,258.4 L615.8,258.1 L616.2,257.9 L616.6,257.6 L617.0,257.3 L617.3,257.1 L617.7,256.8 L618.1,256.5 L618.5,256.3 L618.9,256.0 L619.2,255.7 L619.6,255.5 L620.0,255.2 L620.4,254.9 L620.7,254.7 L621.1,254.4 L621.5,254.1 L621.9,253.9 L622.3,253.6 L622.6,253.3 L623.0,253.1 L623.4,252.8 L623.8,252.5 L624.1,252.3 L624.5,252.0 L624.9,251.7 L625.3,251.5 L625.7,251.2 L626.0,250.9 L626.4,250.7 L626.8,250.4 L627.2,250.1 L627.5,249.8 L627.9,249.6" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M637.9,190.1 L638.9,191.3 L640.0,192.5 L641.1,193.8 L642.1,195.0 L643.2,196.3 L644.2,197.5 L645.2,198.8 L646.2,200.1 L647.2,201.4 L648.2,202.7 L649.2,204.0 L650.2,205.4 L651.2,206.7 L652.1,208.1 L653.1,209.5 L654.0,210.8 L654.9,212.2 L655.8,213.7 L656.7,215.1 L657.6,216.5 L658.5,217.9 L659.4,219.4 L660.2,220.8 L661.1,222.3 L661.9,223.8 L662.7,225.3 L663.5,226.8 L664.3,228.3 L665.1,229.8 L665.9,231.3 L666.6,232.8 L667.4,234.3 L668.1,235.9 L668.8,237.4 L669.5,239.0 L670.2,240.5 L670.9,242.1 L671.6,243.7 L672.2,245.2 L672.9,246.8" fill="none" stroke="var(--color-theory)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M637.9,190.1 L638.6,188.9 L639.3,187.7 L640.0,186.5 L640.7,185.3 L641.4,184.1 L642.1,182.9 L642.9,181.6 L643.6,180.4 L644.3,179.2 L645.0,178.0 L645.7,176.8 L646.4,175.6 L647.1,174.4 L647.9,173.2 L648.6,171.9 L649.3,170.7 L650.0,169.5 L650.7,168.3 L651.4,167.1 L652.1,165.9 L652.9,164.7 L653.6,163.5 L654.3,162.2 L655.0,161.0 L655.7,159.8 L656.4,158.6 L657.2,157.4 L657.9,156.2 L658.6,155.0 L659.3,153.8 L660.0,152.6 L660.7,151.3 L661.4,150.1 L662.2,148.9 L662.9,147.7 L663.6,146.5 L664.3,145.3 L665.0,144.1 L665.7,142.9 L666.4,141.6" fill="none" stroke="var(--color-theory)" stroke-width="1.1" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M672.9,246.8 L674.1,246.4 L675.2,245.9 L676.4,245.5 L677.6,245.0 L678.8,244.6 L680.0,244.1 L681.2,243.7 L682.4,243.2 L683.5,242.8 L684.7,242.3 L685.9,241.9 L687.1,241.4 L688.3,241.0 L689.5,240.5 L690.7,240.1 L691.8,239.6 L693.0,239.2 L694.2,238.7 L695.4,238.3 L696.6,237.8 L697.8,237.4 L699.0,237.0 L700.1,236.5 L701.3,236.1 L702.5,235.6 L703.7,235.2 L704.9,234.7 L706.1,234.3 L707.3,233.8 L708.4,233.4 L709.6,232.9 L710.8,232.5 L712.0,232.0 L713.2,231.6 L714.4,231.1 L715.6,230.7 L716.7,230.2 L717.9,229.8 L719.1,229.3 L720.3,228.9" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M610.8,154.1 L611.3,156.2 L611.8,158.3 L612.3,160.5 L612.9,162.6 L613.4,164.8 L613.9,167.0 L614.4,169.2 L614.9,171.4 L615.4,173.7 L615.9,175.9 L616.3,178.2 L616.8,180.5 L617.3,182.8 L617.8,185.1 L618.2,187.4 L618.7,189.8 L619.1,192.2 L619.6,194.5 L620.0,196.9 L620.5,199.3 L620.9,201.8 L621.3,204.2 L621.7,206.6 L622.1,209.1 L622.5,211.5 L622.9,214.0 L623.3,216.5 L623.7,219.0 L624.1,221.5 L624.5,224.0 L624.9,226.5 L625.2,229.1 L625.6,231.6 L625.9,234.2 L626.3,236.7 L626.6,239.3 L627.0,241.8 L627.3,244.4 L627.6,247.0 L627.9,249.6" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M610.8,154.1 L612.4,154.0 L614.0,153.8 L615.5,153.6 L617.1,153.5 L618.7,153.3 L620.2,153.1 L621.8,152.9 L623.3,152.7 L624.9,152.4 L626.4,152.2 L627.9,152.0 L629.4,151.7 L630.9,151.5 L632.4,151.2 L633.9,150.9 L635.4,150.7 L636.8,150.4 L638.3,150.1 L639.7,149.8 L641.1,149.5 L642.5,149.1 L643.9,148.8 L645.3,148.5 L646.7,148.1 L648.0,147.8 L649.4,147.4 L650.7,147.1 L652.0,146.7 L653.3,146.3 L654.6,145.9 L655.8,145.5 L657.1,145.1 L658.3,144.7 L659.5,144.3 L660.7,143.9 L661.9,143.4 L663.1,143.0 L664.2,142.5 L665.3,142.1 L666.4,141.6" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M627.9,249.6 L630.6,249.3 L633.2,249.1 L635.8,248.8 L638.4,248.5 L641.1,248.2 L643.6,247.9 L646.2,247.5 L648.8,247.2 L651.3,246.8 L653.9,246.4 L656.4,246.0 L658.9,245.6 L661.4,245.2 L663.9,244.8 L666.3,244.3 L668.7,243.8 L671.2,243.4 L673.6,242.9 L675.9,242.4 L678.3,241.8 L680.6,241.3 L682.9,240.8 L685.2,240.2 L687.5,239.6 L689.7,239.1 L692.0,238.5 L694.2,237.8 L696.3,237.2 L698.5,236.6 L700.6,235.9 L702.7,235.3 L704.8,234.6 L706.8,233.9 L708.8,233.3 L710.8,232.6 L712.8,231.8 L714.7,231.1 L716.6,230.4 L718.5,229.6 L720.3,228.9" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M666.4,141.6 L668.1,143.5 L669.7,145.3 L671.4,147.2 L673.0,149.1 L674.6,151.1 L676.2,153.0 L677.8,155.0 L679.3,157.0 L680.9,159.0 L682.4,161.0 L683.9,163.0 L685.4,165.1 L686.9,167.2 L688.4,169.3 L689.8,171.4 L691.3,173.5 L692.7,175.7 L694.1,177.8 L695.5,180.0 L696.9,182.2 L698.2,184.4 L699.5,186.7 L700.9,188.9 L702.2,191.1 L703.4,193.4 L704.7,195.7 L705.9,198.0 L707.2,200.3 L708.4,202.6 L709.6,205.0 L710.7,207.3 L711.9,209.7 L713.0,212.0 L714.1,214.4 L715.2,216.8 L716.3,219.2 L717.3,221.6 L718.3,224.0 L719.3,226.4 L720.3,228.9" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="612.4" y="268.9" fill="var(--academic-text)" font-size="12" text-anchor="end">&#916;&#961;</text>
+  <text x="684.3" y="261.8" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">&#961;</tspan> sin &#966; &#916;&#952;</text>
+  <text x="705.9" y="186.2" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">&#961;</tspan> &#916;&#966;</text>
+  <text x="662.1" y="197.9" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600"><tspan font-style="italic">R</tspan></text>
+  <line x1="387.0" y1="170.6" x2="423.6" y2="170.6" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="430.0,170.6 422.0,173.9 422.0,167.2" fill="var(--academic-text)" opacity="0.85"/>
+  <text x="408.5" y="163.6" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+</svg>
+<figcaption>Küresel koordinat dönüşümü (&#961;, &#952;, &#966;)-uzayındaki küçük <em>S</em> kutusunu bir küresel kama <em>R</em>'ye götürür. Kamanın kenarları yaklaşık &#916;&#961;, &#961; sin &#966; &#916;&#952; ve &#961; &#916;&#966; olduğundan hacmi yaklaşık &#961;² sin &#966; &#916;&#961; &#916;&#952; &#916;&#966;'dir; bu çarpan Jacobi determinantının mutlak değeridir.</figcaption>
+</figure>
+```
+
+::: {.ispat baslik="İspatın fikri"}
+**Küçük bir kutunun görüntüsü.** $T$'yi $\mathbf{r}(u, v, w) = x\,\mathbf{i} + y\,\mathbf{j} + z\,\mathbf{k}$ konum vektörüyle yazalım. Bir köşesi $(u_0, v_0, w_0)$, kenarları $\Delta u$, $\Delta v$, $\Delta w$ olan küçük bir kutunun görüntüsü, iki boyuttaki akıl yürütmeyle, $\Delta u\,\mathbf{r}_u$, $\Delta v\,\mathbf{r}_v$ ve $\Delta w\,\mathbf{r}_w$ vektörlerinin gerdiği paralelyüzlüye yakındır.
+
+**Hacim.** Bu paralelyüzlünün hacmi karma çarpımın mutlak değeridir:
+
+$$\Delta V \approx \big| \mathbf{r}_u \cdot (\mathbf{r}_v \times \mathbf{r}_w) \big|\,\Delta u\,\Delta v\,\Delta w.$$
+
+Karma çarpım, satırları $\mathbf{r}_u$, $\mathbf{r}_v$, $\mathbf{r}_w$'nin bileşenleri olan determinanttır. Bu determinant, (5)'teki determinantın satırlarıyla sütunlarının yer değiştirmiş hâlidir ve devrik almak determinantı değiştirmez. Demek ki
+
+$$\Delta V \approx \left| \frac{\partial(x, y, z)}{\partial(u, v, w)} \right| \Delta u\,\Delta v\,\Delta w$$
+
+olur.
+
+**Toplam.** $S$'yi küçük kutulara bölüp bu yaklaşımı her kutuya uygularsak, iki boyutta olduğu gibi, sağ taraftaki integralin bir Riemann toplamı soldaki integrale yaklaşır. Hataların toplamının sıfıra gittiğini göstermek iki boyuttaki gibi ileri analiz gerektirir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani üç boyutta hacim elemanı $dV = |\partial(x, y, z)/\partial(u, v, w)|\,du\,dv\,dw$ olur. Silindirik ve küresel koordinatlardaki formüller bu teoremin iki özel hâlidir.
+
+:::: {#exm-ddg-silindirik name="Silindirik Koordinatların Jacobi Determinantı"}
+$x = r\cos\theta$, $y = r\sin\theta$, $z = z$ silindirik koordinat dönüşümünün Jacobi determinantını hesaplayınız ve üç katlı integralde değişken değiştirme teoreminin (@thm-ddg-uc-boyut) silindirik koordinatlarda verdiği formülü yazınız.
+
+::: {.cozum}
+**Jacobi determinantı.** Kısmi türevleri (5)'e yerleştirip determinantı son satıra göre açalım:
+
+$$\frac{\partial(x, y, z)}{\partial(r, \theta, z)} = \begin{vmatrix} \cos\theta & -r\sin\theta & 0 \\ \sin\theta & r\cos\theta & 0 \\ 0 & 0 & 1 \end{vmatrix} = 1 \cdot \begin{vmatrix} \cos\theta & -r\sin\theta \\ \sin\theta & r\cos\theta \end{vmatrix} = r.$$
+
+**Koşullar.** $R$, $r\theta z$-uzayında teoremdeki koşulları sağlayan bir $S$ bölgesinin görüntüsü olsun; $S$'nin noktalarında $r \ge 0$ olsun ve $\theta$, uzunluğu en çok $2\pi$ olan bir $[\alpha, \beta]$ aralığında kalsın. $S$'nin iç noktalarında $r > 0$ olduğundan Jacobi determinantı sıfırdan farklıdır. Aynı noktalarda $\theta$ açık $(\alpha, \beta)$ aralığındadır. $r$ noktanın $z$ eksenine uzaklığı, $\theta$ da bu aralıkta noktanın kutupsal açısı olan tek sayı olduğundan $(r, \theta, z)$ üçlüsü $(x, y, z)$ noktasından tek türlü bulunur; yani $T$ bire birdir. Jacobi determinantı yalnız $r = 0$ olan sınır noktalarında sıfırdır ve teorem buna izin verir.
+
+**Formül.** $r \ge 0$ olduğundan Jacobi determinantının mutlak değeri $r$'dir ve @thm-ddg-uc-boyut
+
+$$\iiint_R f(x, y, z)\,dV = \iiint_S f(r\cos\theta, r\sin\theta, z)\,r\,dz\,dr\,d\theta$$
+
+verir. Bu, silindirik koordinatlardaki integral formülüdür (@thm-sil-silindirik); kutupsal koordinatlardaki $r$ çarpanı aynen korunur, çünkü $z$ değişkeni değişmeden kalır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ddg-kuresel name="Küresel Koordinatlarda İntegral Formülü"}
+$0 \le a < b$, $\alpha < \beta \le \alpha + 2\pi$ ve $0 \le c < d \le \pi$ olsun. $R$, $a \le \rho \le b$, $\alpha \le \theta \le \beta$, $c \le \phi \le d$ ile verilen küresel kama, $f$ de $R$ üzerinde sürekli olsun. Üç katlı integralde değişken değiştirme teoremini (@thm-ddg-uc-boyut) kullanarak küresel koordinatlarda üç katlı integral formülünü elde ediniz.
+
+::: {.cozum}
+**Dönüşüm.** Küresel koordinatlar (@def-kur-kuresel-koordinatlar)
+
+$$x = \rho\sin\phi\cos\theta, \qquad y = \rho\sin\phi\sin\theta, \qquad z = \rho\cos\phi$$
+
+denklemleriyle verilir; $\rho \ge 0$ ve $0 \le \phi \le \pi$'dir. Bu dönüşüm $S = [a, b] \times [\alpha, \beta] \times [c, d]$ kutusunu $R$ kamasına götürür.
+
+**Jacobi determinantı.** Değişkenleri $(\rho, \theta, \phi)$ sırasıyla alırsak
+
+$$\frac{\partial(x, y, z)}{\partial(\rho, \theta, \phi)} = \begin{vmatrix} \sin\phi\cos\theta & -\rho\sin\phi\sin\theta & \rho\cos\phi\cos\theta \\ \sin\phi\sin\theta & \rho\sin\phi\cos\theta & \rho\cos\phi\sin\theta \\ \cos\phi & 0 & -\rho\sin\phi \end{vmatrix}$$
+
+olur. Son satırın ortasında $0$ bulunduğundan determinantı son satıra göre açmak en kolayıdır:
+
+$$\frac{\partial(x, y, z)}{\partial(\rho, \theta, \phi)} = \cos\phi\, M_1 - \rho\sin\phi\, M_2.$$
+
+Buradaki iki minör şöyledir:
+
+$$\begin{aligned}
+M_1 &= \begin{vmatrix} -\rho\sin\phi\sin\theta & \rho\cos\phi\cos\theta \\ \rho\sin\phi\cos\theta & \rho\cos\phi\sin\theta \end{vmatrix} \\[1mm]
+&= -\rho^2\sin\phi\cos\phi\sin^2\theta - \rho^2\sin\phi\cos\phi\cos^2\theta = -\rho^2\sin\phi\cos\phi, \\[2mm]
+M_2 &= \begin{vmatrix} \sin\phi\cos\theta & -\rho\sin\phi\sin\theta \\ \sin\phi\sin\theta & \rho\sin\phi\cos\theta \end{vmatrix} \\[1mm]
+&= \rho\sin^2\phi\cos^2\theta + \rho\sin^2\phi\sin^2\theta = \rho\sin^2\phi.
+\end{aligned}$$
+
+Bunları yerine koyarsak
+
+$$\frac{\partial(x, y, z)}{\partial(\rho, \theta, \phi)} = -\rho^2\sin\phi\cos^2\phi - \rho^2\sin\phi\sin^2\phi = -\rho^2\sin\phi$$
+
+bulunur.
+
+**Koşullar.** $S$ bir kutu, $R$ de küreler, yarı düzlemler ve yarı konilerle sınırlanan bir kamadır. $S$'nin iç noktalarında $\rho > a \ge 0$ ve $0 \le c < \phi < d \le \pi$ olduğundan $\rho^2\sin\phi \ne 0$, yani Jacobi determinantı sıfırdan farklıdır. Aynı noktalarda $\rho$ noktanın orijine uzaklığı, $\phi$ da pozitif $z$ ekseniyle yaptığı açıdır. $0 < \phi < \pi$ olduğundan nokta $z$ ekseni üzerinde değildir ve $\theta$, uzunluğu en çok $2\pi$ olan açık $(\alpha, \beta)$ aralığında tek türlü bulunur. Böylece $(\rho, \theta, \phi)$ üçlüsü noktadan tek türlü belirlenir; yani $T$ bire birdir. Jacobi determinantı yalnız $\rho = 0$, $\phi = 0$ ve $\phi = \pi$ olan noktalarda sıfırdır ve bu noktalar $S$'nin içinde değildir. Örneğin $a = 0$ ise $\rho = 0$ yüzünün tamamı orijine gider; teorem sınırdaki bu bozulmaya izin verir.
+
+**Formül.** $0 \le \phi \le \pi$ olduğundan $\sin\phi \ge 0$'dır ve
+
+$$\left| \frac{\partial(x, y, z)}{\partial(\rho, \theta, \phi)} \right| = \big| -\rho^2\sin\phi \big| = \rho^2\sin\phi$$
+
+olur. @thm-ddg-uc-boyut ve $S$ kutusu üzerinde Fubini Teoremi (@thm-uki-fubini)
+
+$$\begin{aligned}
+\iiint_R f(x, y, z)\,dV = \int_c^d \int_\alpha^\beta \int_a^b\, & f(\rho\sin\phi\cos\theta,\ \rho\sin\phi\sin\theta,\ \rho\cos\phi) \\[1mm]
+&\cdot \rho^2\sin\phi\;d\rho\,d\theta\,d\phi
+\end{aligned}$$
+
+verir. Bu, küresel koordinatlardaki integral formülüdür (@thm-kur-kuresel). Determinantın işareti negatif çıksa da integrale mutlak değeri girer. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalar, bir bölgenin görüntüsünü bulmaktan uygun dönüşümü kendimiz seçmeye kadar bölümün bütün yöntemlerini kolaydan zora doğru tarar.
+
+:::: {#exr-ddg-paralelkenar-goruntu name="Bir Dikdörtgenin Doğrusal Görüntüsü"}
+$S = [0, 3] \times [0, 2]$ dikdörtgeninin $x = 2u + 3v$, $y = u - v$ dönüşümü altındaki görüntüsünü bulunuz.
+
+::: {.cozum}
+**Köşeler.** Dönüşüm doğrusal olduğundan doğru parçalarını doğru parçalarına götürür; bu yüzden köşeleri taşımak yeterlidir:
+
+$$(0, 0) \mapsto (0, 0), \quad (3, 0) \mapsto (6, 3), \quad (3, 2) \mapsto (12, 1), \quad (0, 2) \mapsto (6, -2).$$
+
+**Kenarlar.** $v = 0$ kenarında $x = 2u$, $y = u$, yani $y = x/2$ ($0 \le x \le 6$) olur. $u = 3$ kenarında $x = 6 + 3v$, $y = 3 - v$'dir; $v = 3 - y$ yazınca $y = 5 - x/3$ ($6 \le x \le 12$) bulunur. $v = 2$ kenarında $x = 2u + 6$, $y = u - 2$'dir; $u = y + 2$ yazınca $y = x/2 - 5$ ($6 \le x \le 12$) bulunur. $u = 0$ kenarında $x = 3v$, $y = -v$, yani $y = -x/3$ ($0 \le x \le 6$) olur.
+
+**Bölge.** Görüntü, köşeleri $(0, 0)$, $(6, 3)$, $(12, 1)$ ve $(6, -2)$ olan paralelkenardır. Ters dönüşümü yazarak da betimleyebiliriz: $x = 2u + 3v$, $y = u - v$ denklemlerinden $u = (x + 3y)/5$, $v = (x - 2y)/5$ çıkar, dolayısıyla
+
+$$R = \{(x, y) \mid 0 \le x + 3y \le 15,\ 0 \le x - 2y \le 10\}$$
+
+olur. Burada $|ad - bc| = |2 \cdot (-1) - 3 \cdot 1| = 5$ ve dikdörtgenin alanı $3 \cdot 2 = 6$ olduğundan, doğrusal dönüşümde alan kuralına (@prp-ddg-dogrusal-alan) göre paralelkenarın alanı $5 \cdot 6 = 30$'dur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-egri-kenarli-goruntu name="Kenarları Eğrilen Bir Kare"}
+$S = [0, 1] \times [0, 1]$ birim karesinin $x = u - v$, $y = u + v^2$ dönüşümü altındaki görüntüsü olan $R$ bölgesini bulunuz.
+
+::: {.cozum}
+**Kenarlar.** Kareyi saat yönünün tersine dolaşalım.
+
+- $v = 0$, $0 \le u \le 1$: $x = u$, $y = u$; görüntü $y = x$ doğrusunun $(0, 0)$ ile $(1, 1)$ arasındaki parçasıdır.
+- $u = 1$, $0 \le v \le 1$: $x = 1 - v$, $y = 1 + v^2$. $v = 1 - x$ yazınca $y = 1 + (1 - x)^2 = x^2 - 2x + 2$ ($0 \le x \le 1$) bulunur; bu yay $(1, 1)$'den $(0, 2)$'ye gider.
+- $v = 1$, $u$ $1$'den $0$'a: $x = u - 1$, $y = u + 1$, yani $y = x + 2$ ($-1 \le x \le 0$); $(0, 2)$'den $(-1, 1)$'e giden doğru parçası.
+- $u = 0$, $v$ $1$'den $0$'a: $x = -v$, $y = v^2$, yani $y = x^2$ ($-1 \le x \le 0$); $(-1, 1)$'den $(0, 0)$'a giden parabol yayı.
+
+**Bölge.** Bu dört eğri $R$'yi sınırlar:
+
+$$R = \{-1 \le x \le 0,\ x^2 \le y \le x + 2\} \cup \{0 \le x \le 1,\ x \le y \le x^2 - 2x + 2\}.$$
+
+Karenin merkezinin görüntüsü $T(1/2, 1/2) = (0, 3/4)$'tür ve $0 \le 3/4 \le 2$ olduğundan $R$'nin içindedir.
+
+**Kontrol.** $T$ bire birdir: $u - v = u' - v'$ ve $u + v^2 = u' + v'^2$ ise $u - u' = v - v'$ ve $u - u' = v'^2 - v^2$ olur; buradan $(v - v')(1 + v + v') = 0$ çıkar ve $v + v' \ge 0$ olduğundan $v = v'$, sonra $u = u'$ bulunur. Jacobi determinantı
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} 1 & -1 \\ 1 & 2v \end{vmatrix} = 2v + 1 > 0$$
+
+olduğundan $R$'nin alanı $\int_0^1 \int_0^1 (2v + 1)\,du\,dv = 2$'dir. Doğrudan hesap da aynı sonucu verir:
+
+$$\int_{-1}^{0} (x + 2 - x^2)\,dx + \int_0^1 (x^2 - 3x + 2)\,dx = \frac{7}{6} + \frac{5}{6} = 2.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-donusum-bul name="Bir Bölgeyi Kareye Açan Dönüşüm"}
+$R$, birinci bölgede $y = 1/x$ ve $y = 4/x$ hiperbolleri ile $y = x$ ve $y = 4x$ doğruları arasında kalan bölge olsun. $uv$-düzleminde kenarları eksenlere paralel bir $S$ dikdörtgenini $R$'ye götüren bir $T$ dönüşümü bulunuz.
+
+::: {.cozum}
+**Yeni değişkenler.** Sınır eğrileri $xy = 1$, $xy = 4$, $y/x = 1$ ve $y/x = 4$ biçiminde yazılabilir. Bu yüzden
+
+$$u = xy, \qquad v = \frac{y}{x}$$
+
+alalım. $R$'nin noktaları tam olarak $1 \le u \le 4$ ve $1 \le v \le 4$ eşitsizliklerini sağlar; yani $S = [1, 4] \times [1, 4]$ karesidir.
+
+**$T$'yi bul.** $uv = y^2$ ve $u/v = x^2$'dir. $x, y > 0$ olduğundan
+
+$$T(u, v) = \left( \sqrt{u/v},\ \sqrt{uv} \right)$$
+
+bulunur. Gerçekten $(u, v) \in S$ ise $x, y > 0$, $xy = u \in [1, 4]$ ve $y/x = v \in [1, 4]$'tür; köşeler $(1, 1) \mapsto (1, 1)$, $(4, 1) \mapsto (2, 2)$, $(4, 4) \mapsto (1, 4)$ ve $(1, 4) \mapsto (1/2, 2)$ olur.
+
+**Jacobi determinantı.** @prp-ddg-ters-jacobi ile
+
+$$\frac{\partial(u, v)}{\partial(x, y)} = \begin{vmatrix} y & x \\ -y/x^2 & 1/x \end{vmatrix} = \frac{2y}{x} = 2v, \qquad \frac{\partial(x, y)}{\partial(u, v)} = \frac{1}{2v} \ne 0$$
+
+bulunur. Bu dönüşümle örneğin $R$'nin alanı da kolayca hesaplanır:
+
+$$\iint_R dA = \int_1^4 \int_1^4 \frac{1}{2v}\,du\,dv = 3 \cdot \frac{\ln 4}{2} = 3\ln 2.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-jacobi-iki name="İki Değişkenli Bir Jacobi Determinantı"}
+$x = u^2 + uv$, $y = uv^2$ dönüşümünün Jacobi determinantını bulunuz.
+
+::: {.cozum}
+Kısmi türevler
+
+$$\frac{\partial x}{\partial u} = 2u + v, \quad \frac{\partial x}{\partial v} = u, \quad \frac{\partial y}{\partial u} = v^2, \quad \frac{\partial y}{\partial v} = 2uv$$
+
+olduğundan
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} 2u + v & u \\ v^2 & 2uv \end{vmatrix} = (2u + v)(2uv) - u v^2 = 4u^2 v + u v^2$$
+
+bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-jacobi-uc name="Üç Değişkenli Bir Jacobi Determinantı"}
+$x = u + vw$, $y = v + wu$, $z = w + uv$ dönüşümünün Jacobi determinantını bulunuz.
+
+::: {.cozum}
+Kısmi türevleri (5)'e yerleştirip determinantı ilk satıra göre açalım:
+
+$$\begin{aligned}
+\frac{\partial(x, y, z)}{\partial(u, v, w)} &= \begin{vmatrix} 1 & w & v \\ w & 1 & u \\ v & u & 1 \end{vmatrix} \\[1mm]
+&= 1 \cdot (1 - u^2) - w\,(w - uv) + v\,(wu - v) \\[1mm]
+&= 1 - u^2 - w^2 + uvw + uvw - v^2 \\[1mm]
+&= 1 + 2uvw - u^2 - v^2 - w^2.
+\end{aligned}$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-ucgen-integral name="Bir Üçgende Verilen Dönüşümle İntegral"}
+$R$, köşeleri $(0, 0)$, $(2, 1)$ ve $(1, 2)$ olan üçgen olmak üzere $\iint_R (x - 3y)\,dA$ integralini $x = 2u + v$, $y = u + 2v$ dönüşümüyle hesaplayınız.
+
+::: {.cozum}
+**$S$'yi bul.** Denklemleri $u$ ve $v$ için çözersek $u = (2x - y)/3$ ve $v = (2y - x)/3$ bulunur. Köşeler $(0, 0) \mapsto (0, 0)$, $(2, 1) \mapsto (1, 0)$ ve $(1, 2) \mapsto (0, 1)$ olur. Dönüşüm doğrusal olduğundan $S$, köşeleri bu üç nokta olan üçgendir:
+
+$$S = \{(u, v) \mid 0 \le u \le 1,\ 0 \le v \le 1 - u\}.$$
+
+**Jacobi determinantı ve integrand.**
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} 2 & 1 \\ 1 & 2 \end{vmatrix} = 3, \qquad x - 3y = (2u + v) - 3(u + 2v) = -u - 5v.$$
+
+**İntegral.**
+
+$$\begin{aligned}
+\iint_R (x - 3y)\,dA &= \int_0^1 \int_0^{1 - u} (-u - 5v) \cdot 3\,dv\,du \\[1mm]
+&= 3 \int_0^1 \left[ -uv - \frac{5v^2}{2} \right]_{v=0}^{v=1-u} du \\[1mm]
+&= 3 \int_0^1 \left( -\frac{3u^2}{2} + 4u - \frac{5}{2} \right) du \\[1mm]
+&= 3 \left( -\frac{1}{2} + 2 - \frac{5}{2} \right) = -3.
+\end{aligned}$$
+
+Burada iç integralin değerini
+
+$$-u(1 - u) - \frac{5}{2}(1 - u)^2 = -\frac{3}{2}u^2 + 4u - \frac{5}{2}$$
+
+diye açtık. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-hiperbol-integral name="Doğrular ve Hiperbollerle Sınırlı Bölgede İntegral"}
+$R$, birinci bölgede $y = x$ ve $y = 3x$ doğruları ile $xy = 1$ ve $xy = 3$ hiperbollerinin sınırladığı bölge olmak üzere $\iint_R xy\,dA$ integralini $x = u/v$, $y = v$ dönüşümüyle hesaplayınız.
+
+::: {.cozum}
+**$S$'yi bul.** $u = xy$ ve $v = y$'dir. Sınırları sırayla yazalım: $xy = 1$ ise $u = 1$; $xy = 3$ ise $u = 3$; $y = x$ ise $v = u/v$, yani $v = \sqrt{u}$; $y = 3x$ ise $v = 3u/v$, yani $v = \sqrt{3u}$. Böylece
+
+$$S = \{(u, v) \mid 1 \le u \le 3,\ \sqrt{u} \le v \le \sqrt{3u}\}$$
+
+olur.
+
+**Jacobi determinantı.**
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} 1/v & -u/v^2 \\ 0 & 1 \end{vmatrix} = \frac{1}{v} > 0.$$
+
+**İntegral.** $xy = u$ olduğundan
+
+$$\begin{aligned}
+\iint_R xy\,dA &= \int_1^3 \int_{\sqrt{u}}^{\sqrt{3u}} u \cdot \frac{1}{v}\,dv\,du = \int_1^3 u \Big[ \ln v \Big]_{\sqrt{u}}^{\sqrt{3u}} du \\[1mm]
+&= \int_1^3 u \ln\sqrt{3}\,du = \frac{\ln 3}{2} \left[ \frac{u^2}{2} \right]_1^3 = \frac{\ln 3}{2} \cdot 4 = 2\ln 3.
+\end{aligned}$$
+
+Burada $\ln\sqrt{3u} - \ln\sqrt{u} = \ln\sqrt{3} = \tfrac{1}{2}\ln 3$ eşitliğini kullandık. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-elipsoid name="Elipsoidin Hacmi"}
+$a, b, c > 0$ olmak üzere
+
+$$\frac{x^2}{a^2} + \frac{y^2}{b^2} + \frac{z^2}{c^2} \le 1$$
+
+elipsoidinin $E$ cisminin hacmini $x = au$, $y = bv$, $z = cw$ dönüşümüyle bulunuz.
+
+::: {.cozum}
+**$S$'yi bul.** $x = au$, $y = bv$, $z = cw$ yazınca elipsoidin eşitsizliği $u^2 + v^2 + w^2 \le 1$ olur. Demek ki $T$, $uvw$-uzayındaki birim yuvar $B$'yi $E$'ye götürür.
+
+**Jacobi determinantı.**
+
+$$\frac{\partial(x, y, z)}{\partial(u, v, w)} = \begin{vmatrix} a & 0 & 0 \\ 0 & b & 0 \\ 0 & 0 & c \end{vmatrix} = abc > 0.$$
+
+**Hacim.** @thm-ddg-uc-boyut ve birim yuvarın hacminin $\tfrac{4}{3}\pi$ olması kullanılırsa
+
+$$V(E) = \iiint_E dV = \iiint_B abc\,du\,dv\,dw = abc \cdot \frac{4}{3}\pi = \frac{4}{3}\pi abc$$
+
+bulunur. $a = b = c$ alınırsa yarıçapı $a$ olan kürenin hacmi $\tfrac{4}{3}\pi a^3$ elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-carnot name="Bir Carnot Çevriminin İşi"}
+Termodinamikte ideal bir Carnot makinesinin bir çevrimde yaptığı iş, birinci bölgede $xy = a$ ve $xy = b$ eğrileri (izotermler) ile $xy^{1{,}4} = c$ ve $xy^{1{,}4} = d$ eğrilerinin (adyabatikler) sınırladığı $R$ bölgesinin alanına eşittir; burada $0 < a < b$ ve $0 < c < d$'dir. Bu alanı hesaplayınız.
+
+::: {.cozum}
+**Yeni değişkenler.** $u = xy$ ve $v = xy^{1{,}4}$ alınca sınır eğrileri $u = a$, $u = b$, $v = c$ ve $v = d$ olur; yani $S = [a, b] \times [c, d]$ dikdörtgenidir.
+
+**Bire birlik.** $x, y > 0$ için $v/u = y^{0{,}4}$'tür; buradan $y = (v/u)^{5/2}$ ve $x = u/y$ tek türlü bulunur. Yani dönüşüm bire birdir ve tersi $u, v > 0$ iken $C^1$'dir.
+
+**Jacobi determinantı.** Ters yöndeki determinant
+
+$$\frac{\partial(u, v)}{\partial(x, y)} = \begin{vmatrix} y & x \\ y^{1{,}4} & 1{,}4\,x y^{0{,}4} \end{vmatrix} = 1{,}4\,x y^{1{,}4} - x y^{1{,}4} = 0{,}4\,x y^{1{,}4} = 0{,}4\,v$$
+
+olduğundan ters dönüşüm kuralına (@prp-ddg-ters-jacobi) göre
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \frac{1}{0{,}4\,v} = \frac{5}{2v}$$
+
+olur.
+
+**Alan.**
+
+$$\iint_R dA = \int_a^b \int_c^d \frac{5}{2v}\,dv\,du = \frac{5}{2}\,(b - a) \Big[ \ln v \Big]_c^d = \frac{5}{2}\,(b - a)\ln\frac{d}{c}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-paralelkenar-uygun name="Bir Paralelkenarda Uygun Değişken Değiştirme"}
+$R$, $x - 2y = 0$, $x - 2y = 4$, $3x - y = 1$ ve $3x - y = 8$ doğrularının sınırladığı paralelkenar olmak üzere
+
+$$\iint_R \frac{x - 2y}{3x - y}\,dA$$
+
+integralini uygun bir değişken değiştirmeyle hesaplayınız.
+
+::: {.cozum}
+**Dönüşüm.** Hem integrand hem sınırlar $u = x - 2y$ ve $v = 3x - y$ seçimini önerir. Bu değişkenlerle $R$, $S = [0, 4] \times [1, 8]$ dikdörtgenine dönüşür ve integrand $u/v$ olur. $R$ üzerinde $3x - y \ge 1 > 0$ olduğundan integrand süreklidir.
+
+**Jacobi determinantı.**
+
+$$\frac{\partial(u, v)}{\partial(x, y)} = \begin{vmatrix} 1 & -2 \\ 3 & -1 \end{vmatrix} = -1 + 6 = 5, \qquad \left| \frac{\partial(x, y)}{\partial(u, v)} \right| = \frac{1}{5}.$$
+
+**İntegral.**
+
+$$\iint_R \frac{x - 2y}{3x - y}\,dA = \int_1^8 \int_0^4 \frac{u}{v} \cdot \frac{1}{5}\,du\,dv = \frac{1}{5} \left[ \frac{u^2}{2} \right]_0^4 \Big[ \ln v \Big]_1^8 = \frac{1}{5} \cdot 8 \ln 8 = \frac{8}{5}\ln 8.$$
+
+$\ln 8 = 3\ln 2$ olduğundan sonuç $\tfrac{24}{5}\ln 2$ diye de yazılabilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-kare-ustel name="Döndürülmüş Bir Karede Üstel İntegral"}
+$R = \{(x, y) \mid |x| + |y| \le 1\}$ olmak üzere $\iint_R e^{x + y}\,dA$ integralini uygun bir değişken değiştirmeyle hesaplayınız.
+
+::: {.cozum}
+**Bölgeyi yeniden yazalım.** $R$, köşeleri $(\pm 1, 0)$ ve $(0, \pm 1)$ olan bir karedir. Her $x, y$ için
+
+$$\big( |x| + |y| \big)^2 = x^2 + y^2 + 2|xy| = \max\big\{ (x + y)^2,\ (x - y)^2 \big\}$$
+
+olduğundan $|x| + |y| = \max\{|x + y|, |x - y|\}$'dir. Demek ki
+
+$$R = \{(x, y) \mid -1 \le x + y \le 1,\ -1 \le x - y \le 1\}.$$
+
+**Dönüşüm.** $u = x + y$, $v = x - y$ alırsak $S = [-1, 1] \times [-1, 1]$ olur ve integrand $e^u$'dur.
+
+**Jacobi determinantı.**
+
+$$\frac{\partial(u, v)}{\partial(x, y)} = \begin{vmatrix} 1 & 1 \\ 1 & -1 \end{vmatrix} = -2, \qquad \left| \frac{\partial(x, y)}{\partial(u, v)} \right| = \frac{1}{2}.$$
+
+**İntegral.**
+
+$$\iint_R e^{x + y}\,dA = \int_{-1}^{1} \int_{-1}^{1} e^u \cdot \frac{1}{2}\,du\,dv = \frac{1}{2} \cdot 2 \cdot \big( e - e^{-1} \big) = e - e^{-1}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ddg-ucgen-ispat name="Toplamın Fonksiyonunu Tek Katlı İntegrale İndirmek"}
+$f$, $[0, 1]$ aralığında sürekli ve $R$, köşeleri $(0, 0)$, $(1, 0)$ ve $(0, 1)$ olan üçgen olsun.
+
+$$\iint_R f(x + y)\,dA = \int_0^1 u\,f(u)\,du$$
+
+olduğunu gösteriniz.
+
+::: {.cozum}
+**Dönüşüm.** İntegrand yalnız $x + y$ toplamına bağlı olduğundan $u = x + y$, $v = y$ alalım. Bu denklemlerden $x = u - v$, $y = v$ çıkar; dönüşüm doğrusal ve bire birdir.
+
+**Jacobi determinantı.**
+
+$$\frac{\partial(x, y)}{\partial(u, v)} = \begin{vmatrix} 1 & -1 \\ 0 & 1 \end{vmatrix} = 1.$$
+
+**$S$'yi bul.** $R = \{x \ge 0,\ y \ge 0,\ x + y \le 1\}$ koşulları $u - v \ge 0$, $v \ge 0$, $u \le 1$ olur:
+
+$$S = \{(u, v) \mid 0 \le u \le 1,\ 0 \le v \le u\}.$$
+
+**Sonuç.** $f(x + y)$, sürekli fonksiyonların bileşkesi olarak $R$ üzerinde süreklidir. @thm-ddg-degisken-degistirme
+
+$$\iint_R f(x + y)\,dA = \int_0^1 \int_0^u f(u) \cdot 1\,dv\,du = \int_0^1 f(u) \Big[ v \Big]_0^u du = \int_0^1 u\,f(u)\,du$$
+
+verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Böylece çok katlı integrallerin hesap araçlarını tamamladık: Fubini Teoremi integrali ardışık integrallere, değişken değiştirme ise zor bir bölgeyi ya da integrandı daha uygun bir biçime çevirir. Sonraki bölümde [Vektör Alanları](vektor-alanlari.qmd) ile vektör analizine geçiyor ve integrali eğriler ile yüzeyler boyunca almaya hazırlanıyoruz.
