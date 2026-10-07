@@ -103,9 +103,21 @@ jobs:
           }
           Write-Output "Both Cloudflare secrets are present."
 
+      # The runner is a desktop PC that may be busy with other work. A full
+      # rebuild renders 8 books at once, and when the machine runs out of
+      # memory some renders die ("paging file is too small", Typst/pandoc
+      # allocation failures) although the books themselves are fine. The
+      # build cache keeps every book that did render, so a second pass only
+      # repeats the failed ones, one at a time. Only a render failure (exit
+      # code 1) is retried: an export failure (exit code 2) has already been
+      # recorded in the cache and a second pass would hide it.
       - name: Build the whole site
         run: |
           python scripts/build.py
+          if ($LASTEXITCODE -eq 1) {
+            Write-Output "::warning::some books failed to render; retrying them one at a time"
+            python scripts/build.py --serial
+          }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify the build output
