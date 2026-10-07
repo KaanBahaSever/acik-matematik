@@ -10,7 +10,7 @@ heading. The figures are NOT produced at build time. Run (with the course
 venv, since the data is computed with NumPy exactly as in the chapter code)
 
     set OPENBLAS_NUM_THREADS=1
-    taslaklar/python-bilimsel/.venv/Scripts/python.exe scripts/python_figures/npd.py
+    python scripts/python_figures/npd.py
     python scripts/center_figures.py "python-npd-*.md"
     python scripts/check_figure_labels.py "scripts/_figures/python-npd-*.md"
 

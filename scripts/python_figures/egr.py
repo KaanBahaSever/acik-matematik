@@ -7,9 +7,10 @@ Figures go INSIDE the box they explain (theorem, proof, example, solution,
 exercise or callout), never inside a definition box and never directly under
 a heading; concept figures stay visible (not inside a collapsed .cozum
 block). The figures are NOT produced at build time. The data come from
-NumPy and SciPy, so run this script with the course environment:
+NumPy and SciPy, so run this script with a Python that has the course packages
+(Python 3.12 with NumPy 2.5, SciPy 1.18, SymPy 1.14):
 
-    taslaklar/python-bilimsel/.venv/Scripts/python.exe \
+    python \
         scripts/python_figures/egr.py
     python scripts/center_figures.py "python-egr-*.md"
     python scripts/check_figure_labels.py "scripts/_figures/python-egr-*.md"

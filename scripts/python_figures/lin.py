@@ -17,8 +17,9 @@ Captions are Turkish on purpose; aria labels are plain ASCII.
 
 Every plotted number is recomputed here with NumPy by the same code the
 chapter shows (Hilbert errors, least-squares fit, SVD, low-rank images). Run
-the script with the course environment (taslaklar/python-bilimsel/.venv,
-OPENBLAS_NUM_THREADS=1) so the floating-point data match the printed outputs.
+the script with the course packages (Python 3.12 with NumPy 2.5,
+SciPy 1.18, SymPy 1.14) (Python 3.12 with NumPy 2.5, SciPy 1.18,
+SymPy 1.14; OPENBLAS_NUM_THREADS=1) so the floating-point data match the printed outputs.
 """
 import math
 import sys
