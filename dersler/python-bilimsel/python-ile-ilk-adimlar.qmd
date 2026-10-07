@@ -1,0 +1,1851 @@
+---
+title: "Python ile İlk Adımlar: Sayılar, Değişkenler ve İfadeler"
+pagetitle: "Python ile İlk Adımlar: Sayılar, Değişkenler ve İfadeler"
+description: "Python'ı matematik için bir hesap aracı olarak kullanmaya başlamak: ifadeler ve değişkenler, sınırsız büyüklükte tam sayılar, IEEE 754 kayan noktalı sayılar ve makine epsilonu, karmaşık sayılar, Fraction ve Decimal ile tam hesap, math modülü ve f-string ile sayı biçimlendirme."
+---
+
+$2^{100}$ sayısının bütün basamaklarını yazmak, $100!$'in kaç basamaklı olduğunu bulmak, $\sqrt{2}$'nin elli basamağını hesaplamak ya da $\left(1 + \frac{1}{n}\right)^n$ dizisinin $e$'ye ne hızla yaklaştığını görmek elle uzun sürer; bilgisayarla ise birkaç satırlık iştir. Bu ders Python'ı tam olarak böyle bir araç olarak öğretir: her yeni yapıyı, zaten bildiğimiz bir matematik problemi üzerinde göreceğiz.
+
+İlk bölümde Python'ı gelişmiş bir hesap makinesi gibi kullanacağız. Ama bu hesap makinesi farklı sayı türleriyle çok farklı davranır. Tam sayılarla istediğimiz büyüklükte ve hiç hata yapmadan hesap yapar; ondalıklı sayılarla ise hemen her işlemde küçük bir yuvarlama hatası yapar. $0{,}1 + 0{,}2$ toplamının Python'da tam olarak $0{,}3$ çıkmamasının nedeni budur.
+
+Bölümün asıl amacı, hangi sayı türünün ne zaman kullanılacağını ve bir sonuca ne kadar güvenilebileceğini öğrenmektir. Bunun için tam sayıları, kayan noktalı sayıları, karmaşık sayıları, tam kesirleri ve ondalık sayıları sırayla ele alacağız.
+
+## Python'u Çalıştırmak
+
+Python kodu birkaç farklı ortamda çalıştırılabilir; hepsinde dil aynıdır, yalnız kodu yazıp sonucu görme biçimi değişir.
+
+**Python**, okunaklı söz dizimiyle bilinen genel amaçlı bir programlama dilidir. Python **yorumlanan** (interpreted) bir dildir: yazdığımız kodu **yorumlayıcı** (interpreter) adı verilen program doğrudan çalıştırır; kullanıcının ayrıca yürüttüğü bir derleme adımı yoktur. Bilimsel hesaptaki yaygınlığını büyük ölçüde NumPy, SciPy, SymPy, Matplotlib ve pandas kütüphanelerine borçludur; bu kütüphaneleri ilerleyen bölümlerde tek tek göreceğiz.
+
+Python kodunu çalıştırmanın üç yaygın yolu vardır:
+
+- **Etkileşimli yorumlayıcı.** Terminalde `python` yazıldığında `>>>` istemi belirir. Bu isteme yazılan her ifade hemen hesaplanır ve değeri bir alt satırda gösterilir. Kısa denemeler için en hızlı yoldur.
+- **Betik.** Kod `ilk.py` gibi `.py` uzantılı bir dosyaya yazılır ve terminalde `python ilk.py` komutuyla baştan sona çalıştırılır. Betikte ifadelerin değeri kendiliğinden gösterilmez; görmek istediğimizi `print` ile yazdırırız.
+- **Jupyter defteri.** Kodun, açıklamaların ve çıktıların hücreler hâlinde bir arada durduğu bir belgedir. Google Colab, Jupyter defterlerini hiçbir kurulum yapmadan tarayıcıda çalıştırır.
+
+Etkileşimli yorumlayıcıda kısa bir oturum şöyle görünür:
+
+```text
+>>> 2 + 3 * 4
+14
+>>> 7 / 2
+3.5
+>>> 2 ** 10
+1024
+```
+
+::: {.callout-note title="Kurulum hakkında kısa bir not"}
+Python, [python.org](https://www.python.org) adresinden ya da bilimsel kütüphanelerle birlikte gelen Anaconda dağıtımıyla kurulabilir. Kurulumla uğraşmadan başlamak için Google Colab yeterlidir. Bu notlardaki kodlar Python 3.12, NumPy 2.5, SciPy 1.18, SymPy 1.14, Matplotlib 3.11 ve pandas 3.0 ile çalıştırılmıştır.
+:::
+
+Bu notlarda kod betik olarak verilir; hemen altında, "Çıktı:" satırından sonra, kodun çalıştırıldığında ekrana yazdığı her şey aynen gösterilir. İlk programımız şudur:
+
+```python
+# İlk programımız: bir selam ve basit bir hesap
+print("Merhaba, matematik!")
+print(2 + 3 * 4)
+```
+
+Çıktı:
+
+```text
+Merhaba, matematik!
+14
+```
+
+`#` işaretinden satır sonuna kadar olan kısım bir **yorumdur** (comment); Python onu okumaz, yalnız okura açıklama yapar. `print` parantez içinde verilen değerleri ekrana yazar. Tırnak içindeki `"Merhaba, matematik!"` gibi metinlere **dize** (string) denir; dizeler Türkçe karakter de içerebilir.
+
+## İfadeler ve İşlem Önceliği
+
+Python'a verdiğimiz her hesap bir ifadedir; önce ifadenin ne olduğunu ve Python'un onu hangi sırayla hesapladığını görelim.
+
+::: {#def-gir-ifade name="İfade"}
+Sayılardan, değişken adlarından, işlem işaretlerinden ve fonksiyon çağrılarından oluşan ve bir değeri olan kod parçasına **ifade** (expression) denir. Python bir ifadeyi **değerlendirerek** (evaluate) onu tek bir değere indirger.
+:::
+
+Yani `2 + 3 * 4` bir ifadedir ve değeri `14`'tür; `print(2 + 3 * 4)` ise bu değeri ekrana yazan bir komuttur. Etkileşimli yorumlayıcı her ifadenin değerini kendiliğinden gösterir, betik göstermez.
+
+Python'un aritmetik işlemleri aşağıdaki tablodadır.
+
+| İşlem | Python | Örnek | Değer |
+|:--|:-:|:-:|:-:|
+| toplama | `+` | `7 + 2` | `9` |
+| çıkarma | `-` | `7 - 2` | `5` |
+| çarpma | `*` | `7 * 2` | `14` |
+| bölme | `/` | `7 / 2` | `3.5` |
+| tam bölme | `//` | `7 // 2` | `3` |
+| kalan | `%` | `7 % 2` | `1` |
+| üs alma | `**` | `7 ** 2` | `49` |
+
+İşlem önceliği matematikteki gibidir: önce üs alma, sonra çarpma ve bölmeler, en son toplama ve çıkarmalar yapılır; parantez içi her zaman önce hesaplanır. Aynı öncelikteki işlemler soldan sağa yapılır. Tek istisna üs almadır: `2 ** 3 ** 2` ifadesi $2^{3^2} = 2^9$ olarak, yani sağdan sola hesaplanır. Üs alma, önündeki eksi işaretinden de önce gelir; `-2 ** 2` ifadesi, matematikteki $-2^2$ gibi, $-(2^2) = -4$'tür.
+
+```python
+print(2 + 3 * 4)     # önce çarpma yapılır
+print((2 + 3) * 4)   # parantez önceliği değiştirir
+print(2 ** 3 ** 2)   # üs sağdan sola: 2 ** 9
+print(-2 ** 2)       # -(2 ** 2)
+print((-2) ** 2)
+print(10 - 4 - 3)    # soldan sağa: (10 - 4) - 3
+print(7 / 2, 6 / 3)  # / her zaman ondalıklı sonuç verir
+```
+
+Çıktı:
+
+```text
+14
+20
+512
+-4
+4
+3
+3.5 2.0
+```
+
+`print`'e virgülle ayrılmış birden çok değer verilirse onları aralarına birer boşluk koyarak aynı satıra yazar. Son satırda `6 / 3` işleminin `2` değil `2.0` verdiğine dikkat edin: `/` işlemi, bölüm tam sayı olsa bile ondalıklı bir sayı üretir. Tam sayı sonucu veren `//` işlemini @sec-gir-tam-bolme kısmında göreceğiz.
+
+::: {.callout-warning title="Şapka işareti üs alma değildir"}
+Birçok hesap makinesinde ve LaTeX'te $2^3$ için `2^3` yazılır, ama Python'da `^` bit düzeyinde "dışlayıcı ya da" (XOR) işlemidir ve hata vermeden bambaşka bir sayı üretir. Üs almak için daima `**` kullanılır.
+
+```python
+print(2 ^ 3)    # XOR: 10 ve 11 bit dizilerinden 01 çıkar
+print(2 ** 3)   # üs alma
+```
+
+Çıktı:
+
+```text
+1
+8
+```
+:::
+
+:::: {#exm-gir-parantez name="Kesirli Bir İfadeyi Python'a Çevirmek"}
+$\dfrac{2^{10} - 1}{3 \cdot 11}$ sayısını Python ile hesaplayınız.
+
+::: {.cozum}
+**Doğrudan yazım.** İfadeyi kâğıttaki sırayla `2 ** 10 - 1 / 3 * 11` diye yazarsak öncelik kuralları yüzünden Python önce $1/3$'ü hesaplar, sonucu $11$ ile çarpar ve bunu $2^{10}$'dan çıkarır:
+
+```python
+# Yanlış: yalnız 1 / 3 bölünür, sonra 11 ile çarpılır
+print(2 ** 10 - 1 / 3 * 11)
+```
+
+Çıktı:
+
+```text
+1020.3333333333334
+```
+
+**Parantezli yazım.** Kesir çizgisi payı ve paydayı birer bütün yapar; Python'da bunu parantezle söyleriz:
+
+```python
+# Doğru: pay ve payda ayrı ayrı parantez içinde
+print((2 ** 10 - 1) / (3 * 11))
+```
+
+Çıktı:
+
+```text
+31.0
+```
+
+**Sağlama.** $2^{10} - 1 = 1023 = 3 \cdot 11 \cdot 31$ olduğundan aranan değer gerçekten $31$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Değişkenler ve Atama
+
+Bir değeri tekrar tekrar kullanmak ya da adım adım güncellemek için ona bir ad veririz.
+
+::: {#def-gir-degisken name="Değişken ve Atama"}
+`ad = ifade` biçimindeki komuta **atama** (assignment) denir. Python sağdaki ifadeyi değerlendirir ve elde ettiği değeri soldaki ada bağlar. Bir değere bağlanmış ada **değişken** (variable) denir.
+:::
+
+Yani `=` işareti matematikteki eşitlik değil, bir emirdir: "sağdakini hesapla, sonucu bu adla sakla". Bu yüzden matematikte anlamsız olan `n = n + 1` Python'da anlamlıdır: `n`'nin şimdiki değerine $1$ ekler ve sonucu yine `n` adına bağlar. İki değerin eşit olup olmadığını sınamak için `==` kullanılır; sonuç `True` (doğru) ya da `False` (yanlış) olur.
+
+```python
+r = 2.5                   # yarıçap
+pi = 3.141592653589793
+area = pi * r ** 2        # dairenin alanı
+perimeter = 2 * pi * r    # dairenin çevresi
+print(area, perimeter)
+n = 10
+n = n + 1                 # n'nin eski değerine 1 ekle
+n += 1                    # aynı işin kısa yazılışı
+print(n, n == 12)
+```
+
+Çıktı:
+
+```text
+19.634954084936208 15.707963267948966
+12 True
+```
+
+`n += 1` yazımı `n = n + 1`'in kısaltmasıdır; aynı biçimde `-=`, `*=`, `/=`, `//=`, `%=` ve `**=` de vardır.
+
+Değişken adları harf, rakam ve alt çizgiden (`_`) oluşur ve rakamla başlayamaz. Büyük ve küçük harf ayrıdır: `x` ile `X` iki ayrı değişkendir. `for`, `if`, `def`, `lambda` gibi Python'un kendi **anahtar kelimeleri** ad olarak kullanılamaz. Türkçe harfler kurallara aykırı değildir, ama bu notlarda değişken adları İngilizce ya da matematikteki alışılmış adlardır (`x`, `n`, `f`, `A`, `tol`). `print`, `sum`, `max` gibi hazır fonksiyonların adlarını değişkenlere vermekten de kaçınmak gerekir; aksi hâlde o ad artık fonksiyonu değil, bizim değerimizi gösterir.
+
+Python'da bir değişkenin türü yoktur, değerin türü vardır: aynı ad önce bir tam sayıya, sonra bir ondalıklı sayıya bağlanabilir. Bir değerin türünü `type` fonksiyonu söyler.
+
+```python
+x = 7
+print(type(x))
+x = 7 / 2             # aynı ad şimdi başka türde bir değere bağlı
+print(type(x))
+print(type(3 + 4j), type("yedi"), type(7 > 2))
+```
+
+Çıktı:
+
+```text
+<class 'int'>
+<class 'float'>
+<class 'complex'> <class 'str'> <class 'bool'>
+```
+
+Bu bölümde `int` (tam sayı), `float` (kayan noktalı sayı) ve `complex` (karmaşık sayı) türlerini ayrıntılı göreceğiz. `str` dize türüdür; `bool` ise yalnız `True` ve `False` değerlerinden oluşan **mantıksal** türdür: `7 > 2` karşılaştırmasının değeri `True`'dur.
+
+Birden çok değişkene aynı satırda atama yapılabilir: `a, b = 1, 2` yazımı `a`'ya $1$'i, `b`'ye $2$'yi bağlar. Bu **eşzamanlı atamada** sağ taraftaki bütün ifadeler, hiçbir ad değişmeden önce hesaplanır. Bu yüzden `a, b = b, a` iki değişkenin değerlerini takas eder.
+
+::: {.callout-note title="Bir önizleme: for döngüsü"}
+Döngüleri [Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd) bölümünde ayrıntılı göreceğiz. Bu bölümdeki birkaç örnek için şu kadarı yeterli: `for k in range(a, b):` satırının altındaki girintili (dört boşlukla içeri yazılmış) satırlar, `k` sırasıyla $a, a + 1, \ldots, b - 1$ değerlerini alarak tekrar tekrar çalışır. `range(n)` ise $0, 1, \ldots, n - 1$ değerlerini verir.
+
+```python
+for k in range(1, 6):
+    print(k, k ** 2, k ** 3)
+```
+
+Çıktı:
+
+```text
+1 1 1
+2 4 8
+3 9 27
+4 16 64
+5 25 125
+```
+:::
+
+:::: {#exm-gir-fibonacci name="Fibonacci Sayıları ve Eşzamanlı Atama"}
+$F_0 = 0$, $F_1 = 1$ ve $n \ge 0$ için $F_{n+2} = F_{n+1} + F_n$ ile tanımlanan Fibonacci dizisinin $F_{10}$ terimini eşzamanlı atamayla hesaplayınız.
+
+::: {.cozum}
+**Fikir.** `a` ve `b` ardışık iki terimi, yani $(F_k, F_{k+1})$ çiftini tutsun. `a, b = b, a + b` ataması bu çifti $(F_{k+1}, F_k + F_{k+1}) = (F_{k+1}, F_{k+2})$ çiftine taşır. $(F_0, F_1)$'den başlayıp bu adımı $10$ kez uygularsak `a`'da $F_{10}$ kalır.
+
+```python
+a, b = 0, 1           # F0 ve F1
+for k in range(10):   # adımı 10 kez uygula
+    a, b = b, a + b   # (Fk, Fk+1) -> (Fk+1, Fk+2)
+print(a, b)           # F10 ve F11
+```
+
+Çıktı:
+
+```text
+55 89
+```
+
+**Neden eşzamanlı?** Atamayı iki ayrı satıra bölersek ikinci satır `a`'nın eski değerini değil, yeni değerini kullanır:
+
+```python
+a, b = 0, 1
+a = b          # a artık 1
+b = a + b      # yeni a kullanıldı: 1 + 1
+print(a, b)    # doğrusu 1 1 olmalıydı
+```
+
+Çıktı:
+
+```text
+1 2
+```
+
+Doğru bir adım $(F_0, F_1) = (0, 1)$ çiftini $(F_1, F_2) = (1, 1)$ çiftine götürmeliydi. Eşzamanlı atamayla $F_{10} = 55$ bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Çıktıyı Biçimlendirmek {#sec-gir-bicimlendirme}
+
+Hesap sonuçlarını okunaklı, hizalı ve istediğimiz basamak sayısıyla yazdırmak için `print`'i biçimlendirilmiş dizelerle birlikte kullanırız.
+
+`print` virgülle ayrılmış değerleri varsayılan olarak bir boşlukla ayırır ve sonunda satırı bitirir. Ayıracı `sep`, satır sonunu `end` ile değiştirebiliriz:
+
+```python
+print(1, 2, 3)
+print(1, 2, 3, sep=" < ")
+print("a", end="; ")   # satırı bitirme, sonuna "; " koy
+print("b")
+```
+
+Çıktı:
+
+```text
+1 2 3
+1 < 2 < 3
+a; b
+```
+
+::: {#def-gir-fstring name="f-string ve Biçim Belirteci"}
+Önüne `f` harfi konmuş bir dizeye **f-string** denir. Böyle bir dizede süslü parantez içine yazılan `{ifade}` değerlendirilir ve değeri dizeye yerleştirilir. `{ifade:biçim}` yazımında iki noktadan sonra gelen **biçim belirteci** (format specifier) değerin nasıl yazılacağını belirler.
+:::
+
+Yani f-string bir şablondur: sabit metin aynen kalır, süslü parantezlerin yerine ifadelerin değerleri istenen biçimde yazılır. Bilimsel hesapta en çok kullanılan biçim belirteçleri şunlardır:
+
+| Belirteç | Anlamı |
+|:-:|:--|
+| `.4f` | noktadan sonra $4$ basamak |
+| `.3e` | bilimsel gösterim, noktadan sonra $3$ basamak |
+| `.5g` | $5$ anlamlı basamak |
+| `.1%` | yüzde olarak, noktadan sonra $1$ basamak |
+| `,` | binlik ayırıcı |
+| `b`, `x` | ikili ve onaltılı taban |
+| `>8`, `<8`, `^8` | $8$ karakterlik alanda sağa, sola, ortaya yasla |
+| `10.4f` | $10$ karakterlik alanda, noktadan sonra $4$ basamak |
+
+```python
+x = 2 / 3
+n = 2 ** 32
+print(f"x = {x}")
+print(f"{x:.4f} | {x:.3e} | {x:.5g} | {x:.1%}")
+print(f"{n:,} | {n:.2e}")
+print(f"{10:b} | {255:x}")             # ikili ve onaltılı
+print(f"[{7:>6}] [{7:<6}] [{7:^6}]")   # sağa, sola, ortaya
+print(f"{x = :.3f}")                   # adı ve değeri birlikte
+```
+
+Çıktı:
+
+```text
+x = 0.6666666666666666
+0.6667 | 6.667e-01 | 0.66667 | 66.7%
+4,294,967,296 | 4.29e+09
+1010 | ff
+[     7] [7     ] [  7   ]
+x = 0.667
+```
+
+Son satırdaki `{x = :.3f}` yazımı, ifadenin kendisini ve değerini birlikte yazar; ara sonuçları kontrol ederken çok işe yarar.
+
+::: {.callout-note title="Ondalık nokta ve virgül"}
+Python sayıları her zaman ondalık noktayla yazar ve okur: `0.5` bir sayıdır, `0,5` ise virgülle ayrılmış iki ayrı sayıdır; `print(0,5)` komutu `0 5` yazar. Bu notlarda metin ve formüllerde Türkçedeki gibi ondalık virgül ($0{,}5$), kodda ve kod çıktısında ise Python'un yazdığı biçimde ondalık nokta kullanılır.
+:::
+
+:::: {#exm-gir-tablo name="Hizalı Bir Karekök Tablosu"}
+$n = 1, 2, \ldots, 6$ için $n$, $\sqrt{n}$ ve $1/n^{2}$ değerlerini sütunları hizalı bir tablo olarak yazdırınız; $\sqrt{n}$ noktadan sonra $6$ basamakla, $1/n^2$ ise bilimsel gösterimle yazılsın.
+
+::: {.cozum}
+**Biçimleri seçelim.** $n$ için $2$ karakterlik sağa yaslı alan (`>2`), $\sqrt{n} = n^{1/2}$ için $10$ karakterlik alanda $6$ ondalık basamak (`10.6f`), $1/n^2$ için $12$ karakterlik alanda $3$ basamaklı bilimsel gösterim (`12.3e`) kullanalım. Karekökü `n ** 0.5` ile alıyoruz.
+
+```python
+print(f"{'n':>2} {'kök n':>10} {'1/n^2':>12}")
+for n in range(1, 7):
+    print(f"{n:>2} {n ** 0.5:10.6f} {1 / n ** 2:12.3e}")
+```
+
+Çıktı:
+
+```text
+ n      kök n        1/n^2
+ 1   1.000000    1.000e+00
+ 2   1.414214    2.500e-01
+ 3   1.732051    1.111e-01
+ 4   2.000000    6.250e-02
+ 5   2.236068    4.000e-02
+ 6   2.449490    2.778e-02
+```
+
+**Hizalama.** Başlık satırındaki dizeler de aynı genişliklerle sağa yaslandığından başlıklar sütunların tam üstüne düştü. Sayılar ne kadar basamaklı olursa olsun her sütun aynı genişlikte kaldı. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Modüller ve math Modülü {#sec-gir-math}
+
+Karekök, logaritma ve trigonometrik fonksiyonlar dilin çekirdeğinde değil, Python'la birlikte gelen `math` modülündedir.
+
+::: {#def-gir-modul name="Modül ve İçe Aktarma"}
+Birbiriyle ilgili fonksiyon ve sabitleri bir arada tutan Python dosyasına **modül** denir. `import math` komutu `math` modülünü yükler; modüldeki bir ada `math.sqrt` gibi `modül.ad` yazımıyla ulaşılır. `from math import sqrt, pi` komutu ise yalnız `sqrt` ve `pi` adlarını, önlerine `math.` yazmadan kullanılabilir hâle getirir.
+:::
+
+Yani modül, hazır araçların durduğu bir kutudur; `import` bu kutuyu masaya koyar. Modül adını önde yazmak (`math.sqrt`) bir adın nereden geldiğini açıkça gösterdiği için genellikle tercih edilir.
+
+```python
+import math
+
+print(math.sqrt(2), math.pi, math.e)
+print(math.exp(1), math.log(math.e), math.log10(1000))
+print(math.log(8, 2), math.log2(8))     # 2 tabanında logaritma
+print(math.sin(math.pi / 6), math.cos(0))
+print(math.floor(-2.5), math.ceil(-2.5), math.trunc(-2.5))
+print(math.factorial(10), math.comb(5, 2), math.gcd(84, 36))
+```
+
+Çıktı:
+
+```text
+1.4142135623730951 3.141592653589793 2.718281828459045
+2.718281828459045 1.0 3.0
+3.0 3.0
+0.49999999999999994 1.0
+-3 -2 -2
+3628800 10 12
+```
+
+Bu çıktıda birkaç noktaya dikkat edelim:
+
+- `math.log(x)` doğal logaritmadır, yani $\ln x$'tir; başka bir taban ikinci argümanla verilir: `math.log(8, 2)`.
+- Trigonometrik fonksiyonlar açıyı **radyan** cinsinden alır. Dereceyi radyana `math.radians`, radyanı dereceye `math.degrees` çevirir.
+- $\sin(\pi/6) = 1/2$ olduğu hâlde Python `0.49999999999999994` yazdı. Nedeni, `math.pi`'nin $\pi$'nin kendisi değil, ona çok yakın bir ondalıklı sayı olmasıdır. Bu küçük farkları @sec-gir-float kısmında inceleyeceğiz.
+- `floor` aşağı, `ceil` yukarı yuvarlar; `trunc` ise ondalık kısmı atar, yani sıfıra doğru yuvarlar. Negatif sayılarda `floor` ile `trunc` farklı sonuç verir.
+- `factorial`, `comb(n, k)` $= \binom{n}{k}$, `perm(n, k)` $= \frac{n!}{(n-k)!}$, `gcd` ve `lcm` tam sayılarla çalışır ve sonucu tam verir.
+
+Sık kullanılan diğer adlar şunlardır: `tan`, `asin`, `acos`, `atan`, `atan2(y, x)`, `sinh`, `cosh`, `hypot(x, y)` $= \sqrt{x^2 + y^2}$, tam sayı karekökü `isqrt(n)` $= \lfloor \sqrt{n} \rfloor$, sonsuzu gösteren `inf` ve "sayı değil" anlamına gelen `nan`. Bir fonksiyonun ne yaptığını `help(math.comb)` komutu yazdırır. Mutlak değer için `math.fabs(x)` de vardır, ama sonucu her zaman `float`'tır; genellikle yerleşik `abs(x)` fonksiyonu kullanılır. `abs(x)` de $|x|$'i verir, tam sayıyı tam sayı olarak döndürür ve karmaşık sayılarla da çalışır.
+
+`from` yazımıyla adlar doğrudan kullanılır:
+
+```python
+from math import sqrt, pi
+
+print(sqrt(16), 2 * pi)
+```
+
+Çıktı:
+
+```text
+4.0 6.283185307179586
+```
+
+`from math import *` yazımı modüldeki bütün adları getirir; ama hangi adın nereden geldiğini gizlediği ve aynı adlı değişkenleri sessizce ezebildiği için önerilmez.
+
+`math` modülü gerçel sayılarla çalışır ve tanım kümesi dışındaki bir değer hata verir. Etkileşimli yorumlayıcıda bu şöyle görünür:
+
+```text
+>>> import math
+>>> math.sqrt(-1)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ValueError: math domain error
+```
+
+Negatif sayıların karekökü için karmaşık sayılarla çalışan `cmath` modülü vardır; onu @sec-gir-complex kısmında göreceğiz.
+
+:::: {#exm-gir-kosinus-teoremi name="Kosinüs Teoremiyle Üçüncü Kenar"}
+Bir üçgenin iki kenarı $a = 7$, $b = 8$ ve bu kenarlar arasındaki açı $\gamma = 60^\circ$'dir. Üçüncü kenarı $c^2 = a^2 + b^2 - 2ab\cos\gamma$ kosinüs teoremiyle Python'da hesaplayınız.
+
+::: {.cozum}
+**Açıyı radyana çevirelim.** `math.cos` açıyı radyan cinsinden beklediğinden `math.cos(60)` yazmak $60$ radyanın kosinüsünü hesaplar. Bu yüzden açıyı önce `math.radians` ile çeviriyoruz; karşılaştırma için yanlış yazımın sonucunu da yazdıralım:
+
+```python
+import math
+
+a, b = 7, 8
+gamma = math.radians(60)        # 60 derece = pi/3 radyan
+c = math.sqrt(a**2 + b**2 - 2 * a * b * math.cos(gamma))
+print(c)
+print(math.sqrt(57), math.cos(gamma))
+print(math.sqrt(a**2 + b**2 - 2 * a * b * math.cos(60)))  # yanlış
+```
+
+Çıktı:
+
+```text
+7.549834435270749
+7.54983443527075 0.5000000000000001
+14.82127706395429
+```
+
+**Elle sağlama.** $\cos 60^\circ = \frac{1}{2}$ olduğundan $c^2 = 49 + 64 - 56 = 57$ ve $c = \sqrt{57} \approx 7{,}5498$ olur. Python'un bulduğu `c` değeri `math.sqrt(57)` ile yalnız son basamakta farklıdır: `math.cos(gamma)` tam $0{,}5$ değil, `0.5000000000000001` çıktığı için küçük bir yuvarlama farkı oluştu.
+
+**Yanlış satır.** Son satırdaki $14{,}82$, kosinüsü yaklaşık $-0{,}95$ olan $60$ radyanlık açıyla hesaplanmıştır ve $c \approx 7{,}55$ ile hiç ilgisi yoktur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Tam Sayılar {#sec-gir-int}
+
+Python'un tam sayıları, matematikteki $\mathbb{Z}$'nin bilgisayardaki en sadık modelidir.
+
+::: {#def-gir-int name="Tam Sayı Türü"}
+Python'da tam sayılar `int` türündendir. Bir `int` değeri, büyüklüğüne üst sınır konmadan ve tam olarak saklanır. İki `int` arasında toplama, çıkarma, çarpma, tam bölme, kalan ve doğal sayı kuvvetine üs alma işlemlerinin sonucu yine tam olarak hesaplanmış bir `int`'tir.
+:::
+
+Yani `int` ile yapılan hesapta yuvarlama yoktur; sayının büyüklüğünü yalnız bilgisayarın belleği sınırlar. Birçok programlama dili tam sayıları $64$ bitle saklar ve $2^{63} - 1$'i aşan sonuçlarda taşma yaşar (bkz. [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-tasma)); Python'da böyle bir sınır yoktur.
+
+```python
+import math
+
+print(2 ** 63 - 1)              # 64 bitlik işaretli en büyük tam sayı
+print(2 ** 100)
+print(math.factorial(30))       # 30!
+print(2 ** 100 + 1 - 2 ** 100)  # tam hesap: 1 kaybolmaz
+print(2 ** -1)                  # negatif üs: sonuç artık int değil
+```
+
+Çıktı:
+
+```text
+9223372036854775807
+1267650600228229401496703205376
+265252859812191058636308480000000
+1
+0.5
+```
+
+Son satır, negatif kuvvetin sonucunun bir `float` olduğunu gösteriyor. Uzun sayıları okunaklı yazmak için rakamların arasına alt çizgi konabilir: `1_000_000` ile `1000000` aynı sayıdır.
+
+Bir tam sayının basamaklarını saymak için onu `str` ile dizeye çevirir, dizenin uzunluğunu `len` ile alırız: `len(str(2 ** 100))` değeri $31$'dir.
+
+:::: {#exm-gir-yuz-faktoriyel name="Yüz Faktöriyelin Basamak Sayısı"}
+$100!$ sayısının kaç basamaklı olduğunu bulunuz ve sonucu $\log_{10}$ ile sağlayınız.
+
+::: {.cozum}
+**Doğrudan sayım.** $100!$'i tam olarak hesaplayıp dizeye çevirelim ve uzunluğuna bakalım. `math.log10` çok büyük tam sayıları da kabul eder:
+
+```python
+import math
+
+N = math.factorial(100)
+print(len(str(N)))                     # basamak sayısı
+print(math.log10(N))
+print(math.floor(math.log10(N)) + 1)
+```
+
+Çıktı:
+
+```text
+158
+157.97000365471578
+158
+```
+
+**Logaritmayla sağlama.** Pozitif bir $N$ tam sayısı $d$ basamaklıysa $10^{d-1} \le N < 10^{d}$, yani $d - 1 \le \log_{10} N < d$ olur. Buradan $d = \lfloor \log_{10} N \rfloor + 1$ bulunur. $\log_{10}(100!) \approx 157{,}97$ olduğundan $d = 158$'dir; iki yol aynı sonucu verdi. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Tam Bölme ve Kalan {#sec-gir-tam-bolme}
+
+Sayılar teorisinin temel aracı olan bölme algoritması Python'da üç işlemle karşılanır: `//`, `%` ve `divmod`.
+
+::: {#def-gir-tam-bolme name="Tam Bölme ve Kalan"}
+$a$ ve $b \neq 0$ tam sayılar olsun. Python'da `a // b` **tam bölümü** $q = \lfloor a/b \rfloor$ sayısıdır, `a % b` **kalanı** ise $r = a - bq$ sayısıdır. `divmod(a, b)` bu ikisini `(q, r)` çifti olarak birlikte verir.
+:::
+
+Yani `//` bölümü daima aşağı, $-\infty$'a doğru yuvarlar ve $a = bq + r$ eşitliği her zaman sağlanır. $b > 0$ ise $0 \le r < b$ olur; bu, [Sayılar Teorisi](../sayilar-teorisi/1/bolme-algoritmasi.html#thm-bolme-algoritmasi) notlarındaki bölme algoritmasının verdiği bölüm ve kalanın ta kendisidir, $a$ negatif olsa bile. $b < 0$ ise $b < r \le 0$ olur, yani kalan bölenin işaretini alır.
+
+```python
+print(17 // 5, 17 % 5, divmod(17, 5))
+print(-17 // 5, -17 % 5, divmod(-17, 5))
+print(5 * (-4) + 3)          # a = bq + r sağlaması
+print(7.5 // 2, 7.5 % 2)     # ondalıklı sayılarda da tanımlı
+```
+
+Çıktı:
+
+```text
+3 2 (3, 2)
+-4 3 (-4, 3)
+-17
+3.0 1.5
+```
+
+Bölüm sıfıra doğru değil aşağı yuvarlandığından $-17/5 = -3{,}4$ için tam bölüm $-3$ değil $-4$ olur ve kalan negatif değil, $3$ çıkar. (Sayının önündeki eksi işareti `//`'den önce uygulanır, yani `-17 // 5` ifadesi `(-17) // 5` demektir.) Aşağıdaki şekil iki durumu sayı doğrusu üzerinde gösteriyor: $q$, $a$'yı aşmayan en büyük $5$ katının katsayısıdır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="11.5 8.5 620.5 225.0" role="img" aria-label="Two number lines. Top: three blocks of length 5 from 0 to 15 (q = 3) and a remainder block from 15 to 17 (r = 2). Bottom: four blocks of length 5 from 0 down to -20 (q = -4) and a remainder block from -20 to -17 (r = 3).">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" fill="var(--academic-text)"><line x1="25.9" y1="70.0" x2="610.2" y2="70.0"/><polygon points="618.2,70.0 610.2,66.5 610.2,73.5" stroke="none"/></g>
+  <line x1="35.0" y1="67.8" x2="35.0" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="47.9" y1="67.8" x2="47.9" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="60.9" y1="67.8" x2="60.9" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="73.8" y1="67.8" x2="73.8" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="86.8" y1="65.5" x2="86.8" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="99.7" y1="67.8" x2="99.7" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="112.7" y1="67.8" x2="112.7" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="125.7" y1="67.8" x2="125.7" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="138.6" y1="67.8" x2="138.6" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="151.6" y1="65.5" x2="151.6" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="164.5" y1="67.8" x2="164.5" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="177.5" y1="67.8" x2="177.5" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="190.4" y1="67.8" x2="190.4" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="203.4" y1="67.8" x2="203.4" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="216.3" y1="65.5" x2="216.3" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="229.3" y1="67.8" x2="229.3" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="242.3" y1="67.8" x2="242.3" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="255.2" y1="67.8" x2="255.2" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="268.2" y1="67.8" x2="268.2" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="281.1" y1="65.5" x2="281.1" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="294.1" y1="67.8" x2="294.1" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="307.0" y1="67.8" x2="307.0" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="320.0" y1="67.8" x2="320.0" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="333.0" y1="67.8" x2="333.0" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="345.9" y1="65.5" x2="345.9" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="358.9" y1="67.8" x2="358.9" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="371.8" y1="67.8" x2="371.8" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="384.8" y1="67.8" x2="384.8" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="397.7" y1="67.8" x2="397.7" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="410.7" y1="65.5" x2="410.7" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="423.7" y1="67.8" x2="423.7" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="436.6" y1="67.8" x2="436.6" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="449.6" y1="67.8" x2="449.6" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="462.5" y1="67.8" x2="462.5" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="475.5" y1="65.5" x2="475.5" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="488.4" y1="67.8" x2="488.4" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="501.4" y1="67.8" x2="501.4" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="514.3" y1="67.8" x2="514.3" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="527.3" y1="67.8" x2="527.3" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="540.3" y1="65.5" x2="540.3" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="553.2" y1="67.8" x2="553.2" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="566.2" y1="67.8" x2="566.2" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="579.1" y1="67.8" x2="579.1" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="592.1" y1="67.8" x2="592.1" y2="72.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="605.0" y1="65.5" x2="605.0" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="86.8" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#8722;20</text>
+  <text x="151.6" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#8722;15</text>
+  <text x="216.3" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#8722;10</text>
+  <text x="281.1" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#8722;5</text>
+  <text x="345.9" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <text x="410.7" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">5</text>
+  <text x="475.5" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">10</text>
+  <text x="540.3" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">15</text>
+  <text x="605.0" y="87.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">20</text>
+  <rect x="345.9" y="53.0" width="64.8" height="14.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="378.3" y="64.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" font-weight="600">5</text>
+  <rect x="410.7" y="53.0" width="64.8" height="14.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="443.1" y="64.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" font-weight="600">5</text>
+  <rect x="475.5" y="53.0" width="64.8" height="14.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="507.9" y="64.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" font-weight="600">5</text>
+  <rect x="540.3" y="35.0" width="25.9" height="14.0" fill="var(--color-practice)" fill-opacity="0.28" stroke="var(--color-practice)" stroke-width="1.4"/>
+  <circle cx="566.2" cy="70.0" r="4.4" fill="var(--color-practice)"/>
+  <text x="566.2" y="87.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">17</text>
+  <text x="572.2" y="46.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">r</tspan> = 2</text>
+  <text x="443.1" y="44.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">q</tspan> = 3</text>
+  <text x="29.8" y="32.0" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600">divmod(17, 5) = (3, 2)</text>
+  <text x="29.8" y="50.0" fill="var(--academic-text)" font-size="12" text-anchor="start">17 = 5 &#183; 3 + 2</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" fill="var(--academic-text)"><line x1="25.9" y1="200.0" x2="610.2" y2="200.0"/><polygon points="618.2,200.0 610.2,196.5 610.2,203.5" stroke="none"/></g>
+  <line x1="35.0" y1="197.8" x2="35.0" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="47.9" y1="197.8" x2="47.9" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="60.9" y1="197.8" x2="60.9" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="73.8" y1="197.8" x2="73.8" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="86.8" y1="195.5" x2="86.8" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="99.7" y1="197.8" x2="99.7" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="112.7" y1="197.8" x2="112.7" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="125.7" y1="197.8" x2="125.7" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="138.6" y1="197.8" x2="138.6" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="151.6" y1="195.5" x2="151.6" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="164.5" y1="197.8" x2="164.5" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="177.5" y1="197.8" x2="177.5" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="190.4" y1="197.8" x2="190.4" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="203.4" y1="197.8" x2="203.4" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="216.3" y1="195.5" x2="216.3" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="229.3" y1="197.8" x2="229.3" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="242.3" y1="197.8" x2="242.3" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="255.2" y1="197.8" x2="255.2" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="268.2" y1="197.8" x2="268.2" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="281.1" y1="195.5" x2="281.1" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="294.1" y1="197.8" x2="294.1" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="307.0" y1="197.8" x2="307.0" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="320.0" y1="197.8" x2="320.0" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="333.0" y1="197.8" x2="333.0" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="345.9" y1="195.5" x2="345.9" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="358.9" y1="197.8" x2="358.9" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="371.8" y1="197.8" x2="371.8" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="384.8" y1="197.8" x2="384.8" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="397.7" y1="197.8" x2="397.7" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="410.7" y1="195.5" x2="410.7" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="423.7" y1="197.8" x2="423.7" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="436.6" y1="197.8" x2="436.6" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="449.6" y1="197.8" x2="449.6" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="462.5" y1="197.8" x2="462.5" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="475.5" y1="195.5" x2="475.5" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="488.4" y1="197.8" x2="488.4" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="501.4" y1="197.8" x2="501.4" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="514.3" y1="197.8" x2="514.3" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="527.3" y1="197.8" x2="527.3" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="540.3" y1="195.5" x2="540.3" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <line x1="553.2" y1="197.8" x2="553.2" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="566.2" y1="197.8" x2="566.2" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="579.1" y1="197.8" x2="579.1" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="592.1" y1="197.8" x2="592.1" y2="202.2" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <line x1="605.0" y1="195.5" x2="605.0" y2="204.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="86.8" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#8722;20</text>
+  <text x="216.3" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#8722;10</text>
+  <text x="281.1" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#8722;5</text>
+  <text x="345.9" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <text x="410.7" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">5</text>
+  <text x="475.5" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">10</text>
+  <text x="540.3" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">15</text>
+  <text x="605.0" y="217.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">20</text>
+  <rect x="86.8" y="183.0" width="64.8" height="14.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="119.2" y="194.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" font-weight="600">5</text>
+  <rect x="151.6" y="183.0" width="64.8" height="14.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="184.0" y="194.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" font-weight="600">5</text>
+  <rect x="216.3" y="183.0" width="64.8" height="14.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="248.7" y="194.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" font-weight="600">5</text>
+  <rect x="281.1" y="183.0" width="64.8" height="14.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--color-theory)" stroke-width="1.2"/>
+  <text x="313.5" y="194.0" fill="var(--color-theory)" font-size="10.5" text-anchor="middle" font-weight="600">5</text>
+  <rect x="86.8" y="165.0" width="38.9" height="14.0" fill="var(--color-practice)" fill-opacity="0.28" stroke="var(--color-practice)" stroke-width="1.4"/>
+  <circle cx="125.7" cy="200.0" r="4.4" fill="var(--color-practice)"/>
+  <text x="125.7" y="217.0" fill="var(--color-practice)" font-size="11.5" text-anchor="middle" font-weight="600">&#8722;17</text>
+  <text x="131.7" y="176.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">r</tspan> = 3</text>
+  <text x="216.3" y="174.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">q</tspan> = &#8722;4</text>
+  <text x="610.2" y="162.0" fill="var(--academic-text)" font-size="12" text-anchor="end" font-weight="600">divmod(&#8722;17, 5) = (&#8722;4, 3)</text>
+  <text x="610.2" y="180.0" fill="var(--academic-text)" font-size="12" text-anchor="end">&#8722;17 = 5 &#183; (&#8722;4) + 3</text>
+</svg>
+<figcaption><code>divmod(17, 5)</code> ve <code>divmod(-17, 5)</code> sayı doğrusunda. Mavi bloklar |<em>q</em>| tane 5 uzunluğunda adımdır ve 0'dan, <em>a</em>'yı aşmayan en büyük 5 katı olan <em>q</em> &#183; 5'e ulaşır; turuncu blok <em>r</em> = <em>a</em> &#8722; 5<em>q</em> kalanıdır. İki durumda da 0 &#8804; <em>r</em> &lt; 5 olur; &#8722;17 için bölüm &#8722;3 değil &#8722;4'tür.</figcaption>
+</figure>
+```
+
+Kalan işlemi, büyük kuvvetlerin modüler hesabında da kullanılır. `pow(a, n, m)` çağrısı $a^n$'yi hiç hesaplamadan, her adımda $m$'ye göre kalan alarak $a^n \bmod m$ değerini bulur. Kuvvet ardışık kare almalarla oluşturulduğundan adım sayısı yaklaşık $\log_2 n$'dir; $n$ yüzlerce basamaklı olsa bile hesap anında biter.
+
+:::: {#exm-gir-fermat name="Fermat Testiyle Bileşiklik"}
+Fermat'nın küçük teoremini kullanarak $341$'in asal olmadığını gösteriniz.
+
+::: {.cozum}
+**Test.** [Fermat'nın küçük teoremine](../sayilar-teorisi/1/fermat-teoremi.html#thm-fermat) göre $p$ asal ve $p \nmid a$ ise $a^{p-1} \equiv 1 \pmod{p}$ olur. Bu yüzden $341 \nmid a$ olan bir $a$ için $a^{340} \not\equiv 1 \pmod{341}$ çıkarsa $341$ asal olamaz. $a = 2$ ve $a = 3$'ü deneyelim:
+
+```python
+print(pow(2, 340, 341))   # 2^340 mod 341
+print(pow(3, 340, 341))   # 3^340 mod 341
+print(2 ** 340 % 341)     # aynı sonuç, ama önce 2^340 hesaplanır
+print(11 * 31)
+```
+
+Çıktı:
+
+```text
+1
+56
+1
+341
+```
+
+**Yorum.** $2^{340} \equiv 1 \pmod{341}$ olduğundan $a = 2$ ile yapılan test karar veremez; $341$, $2$ tabanına göre bir **sahte asal**dır. Buna karşılık $3^{340} \equiv 56 \not\equiv 1 \pmod{341}$ olduğundan $341$ asal değildir. Gerçekten $341 = 11 \cdot 31$'dir. Üçüncü satırdaki doğrudan hesap da aynı kalanı verdi, ama önce $103$ basamaklı $2^{340}$ sayısını hesapladı. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Kayan Noktalı Sayılar {#sec-gir-float}
+
+Tam sayılardan sonra gerçel sayılara geçiyoruz: `2.5` gibi ondalık noktayla yazılan her sayı ve iki tam sayının `/` ile bölümü Python'da `float` türündendir; bu tür, gerçel sayıların sonlu bir alt kümesidir.
+
+::: {#def-gir-float name="Kayan Noktalı Sayı Türü"}
+Python'un `float` türü, IEEE 754 standardının $64$ bitlik (çift duyarlıklı) makine sayılarıdır. Sıfırdan farklı her normalize `float`
+
+$$x = \pm\,(1 + m)\, 2^{e}, \qquad -1022 \le e \le 1023$$
+
+biçimindedir; burada $m = (0{,}b_1 b_2 \ldots b_{52})_2$, yani $0 \le m < 1$ ve $2^{52} m$ bir tam sayıdır. Bir sayı yazıldığında ya da bir işlem yapıldığında sonuç, kendisine en yakın `float` değerine **yuvarlanır**.
+:::
+
+Yani `float`, gerçel sayıları $53$ anlamlı ikili basamakla, yaklaşık $16$ ondalık basamakla temsil eder. Bitlerin bellekte nasıl dizildiği [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-ieee) notlarında ayrıntılı anlatılmıştır. Ondalık tabanda sonlu olan $0{,}1$ sayısının ikili açılımı $0{,}000110011001100\ldots_2$ sonsuzdur; bu yüzden $0{,}1$ bir `float` olarak tam saklanamaz, ona en yakın makine sayısı saklanır.
+
+```python
+print(0.1 + 0.2)
+print(0.1 + 0.2 == 0.3)
+print(f"{0.1:.20f}")                 # 0.1'in saklanan değeri
+print(2.0 ** 100 + 1 - 2.0 ** 100)   # 1 kayboldu
+print(1e308 * 10, -1e308 * 10)       # taşma: sonsuz
+```
+
+Çıktı:
+
+```text
+0.30000000000000004
+False
+0.10000000000000000555
+0.0
+inf -inf
+```
+
+Satırları sırayla okuyalım:
+
+- Python bir `float`'ı yazarken, geri okunduğunda aynı `float`'ı veren en kısa ondalık diziyi yazar. `0.1` için bu dizi `0.1`'dir, ama saklanan değer, üçüncü satırın gösterdiği gibi, `0.1`'den biraz büyüktür. $0{,}1$ ile $0{,}2$'nin saklanan değerlerinin toplamı da $0{,}3$'e en yakın `float`'a değil, onun bir sonraki komşusuna yuvarlanır.
+- $2^{100}$ civarında ardışık iki `float` arasındaki uzaklık $2^{48}$'dir. $2^{100} + 1$ bu aralığa göre $2^{100}$'e o kadar yakındır ki toplam yine $2^{100}$'e yuvarlanır. Aynı hesap `int` ile tam olarak $1$ vermişti.
+- `1e308` yazımı $1 \cdot 10^{308}$ demektir. En büyük `float`'ı aşan sonuçlar `inf`, yani sonsuz olur.
+
+Bir `float`'ı tam sayıya `int(x)` çevirir (ondalık kısmı atarak), bir tam sayıyı `float`'a `float(n)` çevirir. `float` sisteminin sınırlarını `sys` modülündeki `sys.float_info` söyler:
+
+```python
+import sys
+
+print(sys.float_info.max)
+print(sys.float_info.min)
+print(sys.float_info.mant_dig, sys.float_info.dig)
+print(2.0 ** 1023 * (2 - 2.0 ** -52) == sys.float_info.max)
+print(2.0 ** -1022 == sys.float_info.min)
+```
+
+Çıktı:
+
+```text
+1.7976931348623157e+308
+2.2250738585072014e-308
+53 15
+True
+True
+```
+
+Yani en büyük `float` $2^{1023}(2 - 2^{-52}) \approx 1{,}798 \cdot 10^{308}$, en küçük pozitif normalize `float` ise $2^{-1022} \approx 2{,}225 \cdot 10^{-308}$'dir; bunlar [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#prp-hat-ieee-sinirlar) notlarında bulunan sınırlardır. `mant_dig` anlamlı ikili basamak sayısını ($52$ mantis biti ve gizli baştaki $1$ ile $53$) verir. `dig` ise $15$'tir: $15$ anlamlı basamaklı her ondalık sayı `float`'a çevrilip geri yazıldığında aynen elde edilir. Standart, $2^{-1022}$'nin altında daha az anlamlı basamaklı **alt normal** (subnormal) sayılara da izin verir; bunların en küçüğü $2^{-1074} \approx 4{,}9 \cdot 10^{-324}$'tür.
+
+Kayan noktalı sayılar sayı doğrusuna eşit aralıklarla dağılmaz. Bunu görmek için mantisi yalnız $2$ ikili basamaklı olan oyuncak bir sistem düşünelim: sayılar $(1 + m/4) \cdot 2^{e}$ biçiminde olsun, burada $m \in \{0, 1, 2, 3\}$ ve $-2 \le e \le 2$'dir.
+
+```python
+# 2 bitlik mantisli oyuncak sistem: (1 + m/4) * 2**e
+for e in range(-2, 3):
+    print(e, 2.0**e, 1.25 * 2.0**e, 1.5 * 2.0**e, 1.75 * 2.0**e)
+```
+
+Çıktı:
+
+```text
+-2 0.25 0.3125 0.375 0.4375
+-1 0.5 0.625 0.75 0.875
+0 1.0 1.25 1.5 1.75
+1 2.0 2.5 3.0 3.5
+2 4.0 5.0 6.0 7.0
+```
+
+Her $[2^e, 2^{e+1})$ aralığında dört sayı vardır ve bunlar eşit aralıklıdır; ama aralık $2^{e-2}$'dir ve bir sonraki ikilik aralıkta iki katına çıkar. Gerçek `float` sisteminde de her $[2^e, 2^{e+1})$ aralığında $2^{52}$ tane eşit aralıklı sayı vardır ve aralık $2^{e-52}$'dir. Mutlak aralık büyüdükçe artar, ama sayının büyüklüğüne oranı hep aynı mertebede kalır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="13.0 29.0 612.5 222.5" role="img" aria-label="Top: the number line from 0 to 8 with the 20 toy floating point numbers, spaced 1/4 on [1, 2), 1/2 on [2, 4) and 1 on [4, 8). Bottom: an 8 times zoom of [0, 1] with spacing 1/16 on [1/4, 1/2), 1/8 on [1/2, 1) and an empty gap between 0 and 1/4.">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" fill="var(--academic-text)"><line x1="30.0" y1="70.0" x2="603.6" y2="70.0"/><polygon points="611.6,70.0 603.6,66.5 603.6,73.5" stroke="none"/></g>
+  <rect x="27.0" y="59.0" width="77.2" height="22" rx="3" fill="var(--color-remark)" fill-opacity="0.12" stroke="none"/>
+  <line x1="30.0" y1="65.5" x2="30.0" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="30.0" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <line x1="101.2" y1="65.5" x2="101.2" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="101.2" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">1</text>
+  <line x1="172.5" y1="65.5" x2="172.5" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="172.5" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">2</text>
+  <line x1="243.8" y1="65.5" x2="243.8" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="243.8" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3</text>
+  <line x1="315.0" y1="65.5" x2="315.0" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="315.0" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">4</text>
+  <line x1="386.2" y1="65.5" x2="386.2" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="386.2" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">5</text>
+  <line x1="457.5" y1="65.5" x2="457.5" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="457.5" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">6</text>
+  <line x1="528.8" y1="65.5" x2="528.8" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="528.8" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">7</text>
+  <line x1="600.0" y1="65.5" x2="600.0" y2="74.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="600.0" y="88.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">8</text>
+  <circle cx="47.8" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="52.3" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="56.7" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="61.2" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="65.6" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="74.5" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="83.4" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="92.3" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="101.2" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="119.1" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="136.9" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="154.7" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="172.5" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="208.1" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="243.8" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="279.4" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="315.0" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="386.2" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="457.5" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <circle cx="528.8" cy="70.0" r="3.0" fill="var(--color-theory)"/>
+  <path d="M102.2,95.0 L102.2,100.0 L171.5,100.0 L171.5,95.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.65"/>
+  <text x="136.9" y="115.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">aralık 1/4</text>
+  <path d="M173.5,95.0 L173.5,100.0 L314.0,100.0 L314.0,95.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.65"/>
+  <text x="243.8" y="115.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">aralık 1/2</text>
+  <path d="M316.0,95.0 L316.0,100.0 L599.0,100.0 L599.0,95.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.65"/>
+  <text x="457.5" y="115.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">aralık 1</text>
+  <text x="28.0" y="52.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-weight="600">0 ile 8 arası</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" fill="var(--academic-text)"><line x1="30.0" y1="190.0" x2="603.4" y2="190.0"/><polygon points="611.4,190.0 603.4,186.5 603.4,193.5" stroke="none"/></g>
+  <line x1="30.0" y1="185.5" x2="30.0" y2="194.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="30.0" y="208.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <line x1="172.5" y1="185.5" x2="172.5" y2="194.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="172.5" y="208.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,25</text>
+  <line x1="315.0" y1="185.5" x2="315.0" y2="194.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="315.0" y="208.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,5</text>
+  <line x1="457.5" y1="185.5" x2="457.5" y2="194.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="457.5" y="208.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0,75</text>
+  <line x1="600.0" y1="185.5" x2="600.0" y2="194.5" stroke="var(--academic-text)" stroke-width="1" opacity="0.6"/>
+  <text x="600.0" y="208.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">1</text>
+  <circle cx="172.5" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="208.1" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="243.8" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="279.4" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="315.0" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="386.2" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="457.5" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="528.8" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="600.0" cy="190.0" r="3.6" fill="var(--color-theory)"/>
+  <path d="M173.5,215.0 L173.5,220.0 L314.0,220.0 L314.0,215.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.65"/>
+  <text x="243.8" y="235.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">aralık 1/16</text>
+  <path d="M316.0,215.0 L316.0,220.0 L599.0,220.0 L599.0,215.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.65"/>
+  <text x="457.5" y="235.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">aralık 1/8</text>
+  <rect x="31.0" y="181.0" width="136.5" height="18" rx="3" fill="var(--color-remark)" fill-opacity="0.12" stroke="none"/>
+  <text x="101.2" y="176.0" fill="var(--color-remark)" font-size="11" text-anchor="middle">sayı yok</text>
+  <text x="28.0" y="158.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start" font-weight="600">0 ile 1 arasının 8 kat büyütmesi</text>
+</svg>
+<figcaption>Mantisi 2 bitlik oyuncak sistemin 20 pozitif sayısı, (1 + <em>m</em>/4) &#183; 2<sup><em>e</em></sup>. Her [2<sup><em>e</em></sup>, 2<sup><em>e</em>+1</sup>) aralığında dört sayı eşit aralıklı durur; aralık bir sonraki ikilik aralıkta iki katına çıkar. Altta, üstteki gölgeli [0, 1] parçası 8 kat büyütülmüştür: 0 ile 0,25 arasında sistemin hiçbir sayısı yoktur.</figcaption>
+</figure>
+```
+
+::: {.callout-warning title="Büyük tam sayılar ve bölme"}
+`float` yalnız $53$ anlamlı ikili basamak tutar; bu yüzden $2^{53}$'ten büyük tam sayıların hepsi `float` olarak saklanamaz. `/` işleminin sonucu her zaman `float` olduğundan büyük tam sayılarla bölmede `/` yerine `//` kullanılmalıdır.
+
+```python
+n = 2 ** 53 + 1
+print(n, float(n), float(n) == n)
+print(10 ** 20 // 3)        # tam
+print(int(10 ** 20 / 3))    # float üzerinden: son basamaklar bozuk
+```
+
+Çıktı:
+
+```text
+9007199254740993 9007199254740992.0 False
+33333333333333333333
+33333333333333331968
+```
+:::
+
+## Makine Epsilonu ve Sayıları Karşılaştırmak {#sec-gir-epsilon}
+
+Yuvarlama hatasının büyüklüğünü tek bir sayı belirler: $1$ ile ondan büyük ilk `float` arasındaki uzaklık.
+
+::: {#def-gir-makine-epsilonu name="Makine Epsilonu"}
+$1$'den büyük en küçük `float` $1 + 2^{-52}$'dir. $\varepsilon = 2^{-52} \approx 2{,}22 \cdot 10^{-16}$ sayısına **makine epsilonu** (machine epsilon) denir.
+:::
+
+Yani $1$'in sağındaki ilk komşu $1 + \varepsilon$'dur ve $1$ ile $1 + \varepsilon$ arasındaki bir sayı bu ikisinden birine yuvarlanır. Daha genel olarak, bir `x` değeri ile büyüklükçe ondan sonra gelen ilk `float` arasındaki uzaklığa `x`'in **ulp**'u (unit in the last place) denir ve `math.ulp(x)` ile bulunur; $\varepsilon$, `math.ulp(1.0)` değeridir.
+
+```python
+import math
+import sys
+
+eps = sys.float_info.epsilon
+print(eps, eps == 2 ** -52)
+print(1 + eps > 1, 1 + eps / 2 == 1)
+print(math.nextafter(1, 2) - 1)        # 1'den sonraki float eksi 1
+print(math.ulp(1.0), math.ulp(1000.0), math.ulp(1e16))
+```
+
+Çıktı:
+
+```text
+2.220446049250313e-16 True
+True True
+2.220446049250313e-16
+2.220446049250313e-16 1.1368683772161603e-13 2.0
+```
+
+`math.nextafter(x, y)`, `x`'ten `y` yönünde ilerleyince karşılaşılan ilk `float`'tır. $1 + \varepsilon/2$ sayısı $1$ ile $1 + \varepsilon$'un tam ortasındadır; IEEE 754'ün "eşitlikte son biti çift olana yuvarla" kuralıyla $1$'e yuvarlanır. Son satır, aralığın sayıyla birlikte büyüdüğünü gösteriyor: $10^{16}$ civarında ardışık `float`'lar $2$ aralıklıdır, yani $10^{16} + 1$ tam olarak saklanamaz.
+
+::: {#prp-gir-bagil-yuvarlama name="Yuvarlamanın Bağıl Hatası"}
+$x$, $2^{-1022} \le |x| \le 2^{1023}(2 - 2^{-52})$ koşulunu sağlayan bir gerçel sayı ve $\mathrm{fl}(x)$, $x$'e en yakın `float` olsun. Bu durumda
+
+$$\mathrm{fl}(x) = x\,(1 + \delta), \qquad |\delta| \le \frac{\varepsilon}{2} = 2^{-53}$$
+
+olur. IEEE 754 standardı ayrıca dört işlemin ve karekökün sonucunun, tam sonucun yuvarlanmışı olmasını şart koşar: `float` sayılar $x, y$ ve $\circ \in \{+, -, \times, /\}$ için, tam sonuç $x \circ y$ yukarıdaki normal aralıkta kaldıkça (yani taşma ya da alttan taşma olmadıkça) $\mathrm{fl}(x \circ y) = (x \circ y)(1 + \delta)$, $|\delta| \le 2^{-53}$ olur.
+:::
+
+Yani tek bir işlemin bağıl hatası en fazla $2^{-53} \approx 1{,}1 \cdot 10^{-16}$'dır; tek bir işlemden sonra bir `float` sonucuna yaklaşık $16$ anlamlı basamakla güvenebiliriz. Hatalar ise art arda yapılan işlemler boyunca birikebilir. Sınırın ispatı, ondalık tabanda $k$ basamakla yuvarlamanın bağıl hata sınırının (bkz. [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#prp-hat-bagil-hata-siniri)) ikili tabanda $53$ basamakla aynen tekrarıdır.
+
+Aşağıdaki şekil `math.ulp(x)/x` bağıl aralığının $x$'e göre nasıl değiştiğini gösteriyor. Bağıl aralık her ikilik aralığın başında $\varepsilon$'dur, aralığın sonuna doğru $\varepsilon/2$'ye iner ve bir sonraki $2$ kuvvetinde yeniden $\varepsilon$'a sıçrar.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="38.0 3.0 486.0 269.5" role="img" aria-label="Sawtooth graph of ulp(x)/x for x from 1/8 to 16 on a logarithmic axis: on every interval between consecutive powers of two it falls from eps to eps/2 and jumps back to eps at the next power of two.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="80.0" y1="40.0" x2="80.0" y2="240.0"/><line x1="138.6" y1="40.0" x2="138.6" y2="240.0"/><line x1="197.1" y1="40.0" x2="197.1" y2="240.0"/><line x1="255.7" y1="40.0" x2="255.7" y2="240.0"/><line x1="314.3" y1="40.0" x2="314.3" y2="240.0"/><line x1="372.9" y1="40.0" x2="372.9" y2="240.0"/><line x1="431.4" y1="40.0" x2="431.4" y2="240.0"/><line x1="490.0" y1="40.0" x2="490.0" y2="240.0"/><line x1="80.0" y1="200.0" x2="490.0" y2="200.0"/><line x1="80.0" y1="66.7" x2="490.0" y2="66.7"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="80.0" y1="240.0" x2="498.0" y2="240.0"/>
+  <line x1="80.0" y1="32.0" x2="80.0" y2="240.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="80.0" y="256.0" text-anchor="middle">1/8</text>
+  <text x="138.6" y="256.0" text-anchor="middle">1/4</text>
+  <text x="197.1" y="256.0" text-anchor="middle">1/2</text>
+  <text x="255.7" y="256.0" text-anchor="middle">1</text>
+  <text x="314.3" y="256.0" text-anchor="middle">2</text>
+  <text x="372.9" y="256.0" text-anchor="middle">4</text>
+  <text x="431.4" y="256.0" text-anchor="middle">8</text>
+  <text x="490.0" y="256.0" text-anchor="middle">16</text>
+  <text x="73.0" y="204.0" text-anchor="end">&#949;/2</text>
+  <text x="73.0" y="70.7" text-anchor="end">&#949;</text>
+  <text x="504.0" y="244.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  </g>
+  <text x="76.0" y="26.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">ulp(<tspan font-style="italic">x</tspan>) / <tspan font-style="italic">x</tspan></text>
+  <path d="M80.0,66.7 L80.5,68.2 L81.0,69.7 L81.5,71.2 L82.0,72.8 L82.4,74.3 L82.9,75.8 L83.4,77.2 L83.9,78.7 L84.4,80.2 L84.9,81.6 L85.4,83.1 L85.9,84.5 L86.3,86.0 L86.8,87.4 L87.3,88.8 L87.8,90.2 L88.3,91.6 L88.8,93.0 L89.3,94.4 L89.8,95.8 L90.2,97.1 L90.7,98.5 L91.2,99.8 L91.7,101.2 L92.2,102.5 L92.7,103.9 L93.2,105.2 L93.7,106.5 L94.2,107.8 L94.6,109.1 L95.1,110.4 L95.6,111.7 L96.1,112.9 L96.6,114.2 L97.1,115.5 L97.6,116.7 L98.1,118.0 L98.5,119.2 L99.0,120.5 L99.5,121.7 L100.0,122.9 L100.5,124.1 L101.0,125.3 L101.5,126.5 L102.0,127.7 L102.5,128.9 L102.9,130.1 L103.4,131.2 L103.9,132.4 L104.4,133.6 L104.9,134.7 L105.4,135.9 L105.9,137.0 L106.4,138.1 L106.8,139.2 L107.3,140.4 L107.8,141.5 L108.3,142.6 L108.8,143.7 L109.3,144.8 L109.8,145.9 L110.3,146.9 L110.8,148.0 L111.2,149.1 L111.7,150.1 L112.2,151.2 L112.7,152.2 L113.2,153.3 L113.7,154.3 L114.2,155.4 L114.7,156.4 L115.1,157.4 L115.6,158.4 L116.1,159.4 L116.6,160.4 L117.1,161.4 L117.6,162.4 L118.1,163.4 L118.6,164.4 L119.0,165.3 L119.5,166.3 L120.0,167.3 L120.5,168.2 L121.0,169.2 L121.5,170.1 L122.0,171.1 L122.5,172.0 L123.0,172.9 L123.4,173.9 L123.9,174.8 L124.4,175.7 L124.9,176.6 L125.4,177.5 L125.9,178.4 L126.4,179.3 L126.9,180.2 L127.3,181.1 L127.8,181.9 L128.3,182.8 L128.8,183.7 L129.3,184.5 L129.8,185.4 L130.3,186.2 L130.8,187.1 L131.2,187.9 L131.7,188.8 L132.2,189.6 L132.7,190.4 L133.2,191.3 L133.7,192.1 L134.2,192.9 L134.7,193.7 L135.2,194.5 L135.6,195.3 L136.1,196.1 L136.6,196.9 L137.1,197.7 L137.6,198.5 L138.1,199.2 L138.6,200.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="138.6" y1="200.0" x2="138.6" y2="66.7" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <circle cx="80.0" cy="66.7" r="3.0" fill="var(--color-theory)"/>
+  <path d="M138.6,66.7 L139.1,68.2 L139.5,69.7 L140.0,71.2 L140.5,72.8 L141.0,74.3 L141.5,75.8 L142.0,77.2 L142.5,78.7 L143.0,80.2 L143.5,81.6 L143.9,83.1 L144.4,84.5 L144.9,86.0 L145.4,87.4 L145.9,88.8 L146.4,90.2 L146.9,91.6 L147.4,93.0 L147.8,94.4 L148.3,95.8 L148.8,97.1 L149.3,98.5 L149.8,99.8 L150.3,101.2 L150.8,102.5 L151.3,103.9 L151.8,105.2 L152.2,106.5 L152.7,107.8 L153.2,109.1 L153.7,110.4 L154.2,111.7 L154.7,112.9 L155.2,114.2 L155.7,115.5 L156.1,116.7 L156.6,118.0 L157.1,119.2 L157.6,120.5 L158.1,121.7 L158.6,122.9 L159.1,124.1 L159.6,125.3 L160.0,126.5 L160.5,127.7 L161.0,128.9 L161.5,130.1 L162.0,131.2 L162.5,132.4 L163.0,133.6 L163.5,134.7 L164.0,135.9 L164.4,137.0 L164.9,138.1 L165.4,139.2 L165.9,140.4 L166.4,141.5 L166.9,142.6 L167.4,143.7 L167.9,144.8 L168.3,145.9 L168.8,146.9 L169.3,148.0 L169.8,149.1 L170.3,150.1 L170.8,151.2 L171.3,152.2 L171.8,153.3 L172.2,154.3 L172.7,155.4 L173.2,156.4 L173.7,157.4 L174.2,158.4 L174.7,159.4 L175.2,160.4 L175.7,161.4 L176.2,162.4 L176.6,163.4 L177.1,164.4 L177.6,165.3 L178.1,166.3 L178.6,167.3 L179.1,168.2 L179.6,169.2 L180.1,170.1 L180.5,171.1 L181.0,172.0 L181.5,172.9 L182.0,173.9 L182.5,174.8 L183.0,175.7 L183.5,176.6 L184.0,177.5 L184.5,178.4 L184.9,179.3 L185.4,180.2 L185.9,181.1 L186.4,181.9 L186.9,182.8 L187.4,183.7 L187.9,184.5 L188.4,185.4 L188.8,186.2 L189.3,187.1 L189.8,187.9 L190.3,188.8 L190.8,189.6 L191.3,190.4 L191.8,191.3 L192.3,192.1 L192.8,192.9 L193.2,193.7 L193.7,194.5 L194.2,195.3 L194.7,196.1 L195.2,196.9 L195.7,197.7 L196.2,198.5 L196.7,199.2 L197.1,200.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="197.1" y1="200.0" x2="197.1" y2="66.7" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <circle cx="138.6" cy="66.7" r="3.0" fill="var(--color-theory)"/>
+  <path d="M197.1,66.7 L197.6,68.2 L198.1,69.7 L198.6,71.2 L199.1,72.8 L199.6,74.3 L200.1,75.8 L200.6,77.2 L201.0,78.7 L201.5,80.2 L202.0,81.6 L202.5,83.1 L203.0,84.5 L203.5,86.0 L204.0,87.4 L204.5,88.8 L205.0,90.2 L205.4,91.6 L205.9,93.0 L206.4,94.4 L206.9,95.8 L207.4,97.1 L207.9,98.5 L208.4,99.8 L208.9,101.2 L209.3,102.5 L209.8,103.9 L210.3,105.2 L210.8,106.5 L211.3,107.8 L211.8,109.1 L212.3,110.4 L212.8,111.7 L213.2,112.9 L213.7,114.2 L214.2,115.5 L214.7,116.7 L215.2,118.0 L215.7,119.2 L216.2,120.5 L216.7,121.7 L217.2,122.9 L217.6,124.1 L218.1,125.3 L218.6,126.5 L219.1,127.7 L219.6,128.9 L220.1,130.1 L220.6,131.2 L221.1,132.4 L221.5,133.6 L222.0,134.7 L222.5,135.9 L223.0,137.0 L223.5,138.1 L224.0,139.2 L224.5,140.4 L225.0,141.5 L225.5,142.6 L225.9,143.7 L226.4,144.8 L226.9,145.9 L227.4,146.9 L227.9,148.0 L228.4,149.1 L228.9,150.1 L229.4,151.2 L229.8,152.2 L230.3,153.3 L230.8,154.3 L231.3,155.4 L231.8,156.4 L232.3,157.4 L232.8,158.4 L233.3,159.4 L233.8,160.4 L234.2,161.4 L234.7,162.4 L235.2,163.4 L235.7,164.4 L236.2,165.3 L236.7,166.3 L237.2,167.3 L237.7,168.2 L238.1,169.2 L238.6,170.1 L239.1,171.1 L239.6,172.0 L240.1,172.9 L240.6,173.9 L241.1,174.8 L241.6,175.7 L242.0,176.6 L242.5,177.5 L243.0,178.4 L243.5,179.3 L244.0,180.2 L244.5,181.1 L245.0,181.9 L245.5,182.8 L246.0,183.7 L246.4,184.5 L246.9,185.4 L247.4,186.2 L247.9,187.1 L248.4,187.9 L248.9,188.8 L249.4,189.6 L249.9,190.4 L250.3,191.3 L250.8,192.1 L251.3,192.9 L251.8,193.7 L252.3,194.5 L252.8,195.3 L253.3,196.1 L253.8,196.9 L254.2,197.7 L254.7,198.5 L255.2,199.2 L255.7,200.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="255.7" y1="200.0" x2="255.7" y2="66.7" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <circle cx="197.1" cy="66.7" r="3.0" fill="var(--color-theory)"/>
+  <path d="M255.7,66.7 L256.2,68.2 L256.7,69.7 L257.2,71.2 L257.7,72.8 L258.2,74.3 L258.6,75.8 L259.1,77.2 L259.6,78.7 L260.1,80.2 L260.6,81.6 L261.1,83.1 L261.6,84.5 L262.1,86.0 L262.5,87.4 L263.0,88.8 L263.5,90.2 L264.0,91.6 L264.5,93.0 L265.0,94.4 L265.5,95.8 L266.0,97.1 L266.5,98.5 L266.9,99.8 L267.4,101.2 L267.9,102.5 L268.4,103.9 L268.9,105.2 L269.4,106.5 L269.9,107.8 L270.4,109.1 L270.8,110.4 L271.3,111.7 L271.8,112.9 L272.3,114.2 L272.8,115.5 L273.3,116.7 L273.8,118.0 L274.3,119.2 L274.8,120.5 L275.2,121.7 L275.7,122.9 L276.2,124.1 L276.7,125.3 L277.2,126.5 L277.7,127.7 L278.2,128.9 L278.7,130.1 L279.1,131.2 L279.6,132.4 L280.1,133.6 L280.6,134.7 L281.1,135.9 L281.6,137.0 L282.1,138.1 L282.6,139.2 L283.0,140.4 L283.5,141.5 L284.0,142.6 L284.5,143.7 L285.0,144.8 L285.5,145.9 L286.0,146.9 L286.5,148.0 L287.0,149.1 L287.4,150.1 L287.9,151.2 L288.4,152.2 L288.9,153.3 L289.4,154.3 L289.9,155.4 L290.4,156.4 L290.9,157.4 L291.3,158.4 L291.8,159.4 L292.3,160.4 L292.8,161.4 L293.3,162.4 L293.8,163.4 L294.3,164.4 L294.8,165.3 L295.2,166.3 L295.7,167.3 L296.2,168.2 L296.7,169.2 L297.2,170.1 L297.7,171.1 L298.2,172.0 L298.7,172.9 L299.2,173.9 L299.6,174.8 L300.1,175.7 L300.6,176.6 L301.1,177.5 L301.6,178.4 L302.1,179.3 L302.6,180.2 L303.1,181.1 L303.5,181.9 L304.0,182.8 L304.5,183.7 L305.0,184.5 L305.5,185.4 L306.0,186.2 L306.5,187.1 L307.0,187.9 L307.5,188.8 L307.9,189.6 L308.4,190.4 L308.9,191.3 L309.4,192.1 L309.9,192.9 L310.4,193.7 L310.9,194.5 L311.4,195.3 L311.8,196.1 L312.3,196.9 L312.8,197.7 L313.3,198.5 L313.8,199.2 L314.3,200.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="314.3" y1="200.0" x2="314.3" y2="66.7" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <circle cx="255.7" cy="66.7" r="3.0" fill="var(--color-theory)"/>
+  <path d="M314.3,66.7 L314.8,68.2 L315.3,69.7 L315.8,71.2 L316.2,72.8 L316.7,74.3 L317.2,75.8 L317.7,77.2 L318.2,78.7 L318.7,80.2 L319.2,81.6 L319.7,83.1 L320.1,84.5 L320.6,86.0 L321.1,87.4 L321.6,88.8 L322.1,90.2 L322.6,91.6 L323.1,93.0 L323.6,94.4 L324.0,95.8 L324.5,97.1 L325.0,98.5 L325.5,99.8 L326.0,101.2 L326.5,102.5 L327.0,103.9 L327.5,105.2 L328.0,106.5 L328.4,107.8 L328.9,109.1 L329.4,110.4 L329.9,111.7 L330.4,112.9 L330.9,114.2 L331.4,115.5 L331.9,116.7 L332.3,118.0 L332.8,119.2 L333.3,120.5 L333.8,121.7 L334.3,122.9 L334.8,124.1 L335.3,125.3 L335.8,126.5 L336.2,127.7 L336.7,128.9 L337.2,130.1 L337.7,131.2 L338.2,132.4 L338.7,133.6 L339.2,134.7 L339.7,135.9 L340.2,137.0 L340.6,138.1 L341.1,139.2 L341.6,140.4 L342.1,141.5 L342.6,142.6 L343.1,143.7 L343.6,144.8 L344.1,145.9 L344.5,146.9 L345.0,148.0 L345.5,149.1 L346.0,150.1 L346.5,151.2 L347.0,152.2 L347.5,153.3 L348.0,154.3 L348.5,155.4 L348.9,156.4 L349.4,157.4 L349.9,158.4 L350.4,159.4 L350.9,160.4 L351.4,161.4 L351.9,162.4 L352.4,163.4 L352.8,164.4 L353.3,165.3 L353.8,166.3 L354.3,167.3 L354.8,168.2 L355.3,169.2 L355.8,170.1 L356.3,171.1 L356.8,172.0 L357.2,172.9 L357.7,173.9 L358.2,174.8 L358.7,175.7 L359.2,176.6 L359.7,177.5 L360.2,178.4 L360.7,179.3 L361.1,180.2 L361.6,181.1 L362.1,181.9 L362.6,182.8 L363.1,183.7 L363.6,184.5 L364.1,185.4 L364.6,186.2 L365.0,187.1 L365.5,187.9 L366.0,188.8 L366.5,189.6 L367.0,190.4 L367.5,191.3 L368.0,192.1 L368.5,192.9 L369.0,193.7 L369.4,194.5 L369.9,195.3 L370.4,196.1 L370.9,196.9 L371.4,197.7 L371.9,198.5 L372.4,199.2 L372.9,200.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="372.9" y1="200.0" x2="372.9" y2="66.7" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <circle cx="314.3" cy="66.7" r="3.0" fill="var(--color-theory)"/>
+  <path d="M372.9,66.7 L373.3,68.2 L373.8,69.7 L374.3,71.2 L374.8,72.8 L375.3,74.3 L375.8,75.8 L376.3,77.2 L376.8,78.7 L377.2,80.2 L377.7,81.6 L378.2,83.1 L378.7,84.5 L379.2,86.0 L379.7,87.4 L380.2,88.8 L380.7,90.2 L381.2,91.6 L381.6,93.0 L382.1,94.4 L382.6,95.8 L383.1,97.1 L383.6,98.5 L384.1,99.8 L384.6,101.2 L385.1,102.5 L385.5,103.9 L386.0,105.2 L386.5,106.5 L387.0,107.8 L387.5,109.1 L388.0,110.4 L388.5,111.7 L389.0,112.9 L389.5,114.2 L389.9,115.5 L390.4,116.7 L390.9,118.0 L391.4,119.2 L391.9,120.5 L392.4,121.7 L392.9,122.9 L393.4,124.1 L393.8,125.3 L394.3,126.5 L394.8,127.7 L395.3,128.9 L395.8,130.1 L396.3,131.2 L396.8,132.4 L397.3,133.6 L397.8,134.7 L398.2,135.9 L398.7,137.0 L399.2,138.1 L399.7,139.2 L400.2,140.4 L400.7,141.5 L401.2,142.6 L401.7,143.7 L402.1,144.8 L402.6,145.9 L403.1,146.9 L403.6,148.0 L404.1,149.1 L404.6,150.1 L405.1,151.2 L405.6,152.2 L406.0,153.3 L406.5,154.3 L407.0,155.4 L407.5,156.4 L408.0,157.4 L408.5,158.4 L409.0,159.4 L409.5,160.4 L410.0,161.4 L410.4,162.4 L410.9,163.4 L411.4,164.4 L411.9,165.3 L412.4,166.3 L412.9,167.3 L413.4,168.2 L413.9,169.2 L414.3,170.1 L414.8,171.1 L415.3,172.0 L415.8,172.9 L416.3,173.9 L416.8,174.8 L417.3,175.7 L417.8,176.6 L418.2,177.5 L418.7,178.4 L419.2,179.3 L419.7,180.2 L420.2,181.1 L420.7,181.9 L421.2,182.8 L421.7,183.7 L422.2,184.5 L422.6,185.4 L423.1,186.2 L423.6,187.1 L424.1,187.9 L424.6,188.8 L425.1,189.6 L425.6,190.4 L426.1,191.3 L426.5,192.1 L427.0,192.9 L427.5,193.7 L428.0,194.5 L428.5,195.3 L429.0,196.1 L429.5,196.9 L430.0,197.7 L430.5,198.5 L430.9,199.2 L431.4,200.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="431.4" y1="200.0" x2="431.4" y2="66.7" stroke="var(--color-theory)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <circle cx="372.9" cy="66.7" r="3.0" fill="var(--color-theory)"/>
+  <path d="M431.4,66.7 L431.9,68.2 L432.4,69.7 L432.9,71.2 L433.4,72.8 L433.9,74.3 L434.4,75.8 L434.8,77.2 L435.3,78.7 L435.8,80.2 L436.3,81.6 L436.8,83.1 L437.3,84.5 L437.8,86.0 L438.3,87.4 L438.8,88.8 L439.2,90.2 L439.7,91.6 L440.2,93.0 L440.7,94.4 L441.2,95.8 L441.7,97.1 L442.2,98.5 L442.7,99.8 L443.1,101.2 L443.6,102.5 L444.1,103.9 L444.6,105.2 L445.1,106.5 L445.6,107.8 L446.1,109.1 L446.6,110.4 L447.0,111.7 L447.5,112.9 L448.0,114.2 L448.5,115.5 L449.0,116.7 L449.5,118.0 L450.0,119.2 L450.5,120.5 L451.0,121.7 L451.4,122.9 L451.9,124.1 L452.4,125.3 L452.9,126.5 L453.4,127.7 L453.9,128.9 L454.4,130.1 L454.9,131.2 L455.3,132.4 L455.8,133.6 L456.3,134.7 L456.8,135.9 L457.3,137.0 L457.8,138.1 L458.3,139.2 L458.8,140.4 L459.2,141.5 L459.7,142.6 L460.2,143.7 L460.7,144.8 L461.2,145.9 L461.7,146.9 L462.2,148.0 L462.7,149.1 L463.2,150.1 L463.6,151.2 L464.1,152.2 L464.6,153.3 L465.1,154.3 L465.6,155.4 L466.1,156.4 L466.6,157.4 L467.1,158.4 L467.5,159.4 L468.0,160.4 L468.5,161.4 L469.0,162.4 L469.5,163.4 L470.0,164.4 L470.5,165.3 L471.0,166.3 L471.5,167.3 L471.9,168.2 L472.4,169.2 L472.9,170.1 L473.4,171.1 L473.9,172.0 L474.4,172.9 L474.9,173.9 L475.4,174.8 L475.8,175.7 L476.3,176.6 L476.8,177.5 L477.3,178.4 L477.8,179.3 L478.3,180.2 L478.8,181.1 L479.3,181.9 L479.8,182.8 L480.2,183.7 L480.7,184.5 L481.2,185.4 L481.7,186.2 L482.2,187.1 L482.7,187.9 L483.2,188.8 L483.7,189.6 L484.1,190.4 L484.6,191.3 L485.1,192.1 L485.6,192.9 L486.1,193.7 L486.6,194.5 L487.1,195.3 L487.6,196.1 L488.0,196.9 L488.5,197.7 L489.0,198.5 L489.5,199.2 L490.0,200.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="431.4" cy="66.7" r="3.0" fill="var(--color-theory)"/>
+  <text x="285.0" y="224.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">bir ikilik aralıkta ulp(<tspan font-style="italic">x</tspan>) sabit, <tspan font-style="italic">x</tspan> büyüdükçe oran azalır</text>
+</svg>
+<figcaption>Bağıl aralık <code>math.ulp(x)/x</code>, logaritmik <em>x</em> ekseninde. Bir [2<sup><em>e</em></sup>, 2<sup><em>e</em>+1</sup>) aralığında ardışık <code>float</code>'lar arasındaki uzaklık sabit olduğundan bağıl aralık &#949;'dan &#949;/2'ye iner ve her 2 kuvvetinde yeniden &#949;'a sıçrar. Yuvarlamanın bağıl hatası bunun yarısıyla, en fazla &#949;/2 ile sınırlıdır.</figcaption>
+</figure>
+```
+
+Yuvarlama hatası ile yöntemin kendi hatasının birlikte nasıl davrandığını tanıdık bir limitte görelim.
+
+:::: {#exm-gir-e-yaklasimi name="e Sayısına Yaklaşan Dizi"}
+$e = \lim_{n\to\infty} \left(1 + \frac{1}{n}\right)^n$ olduğunu biliyoruz (bkz. [Analiz 1](../analiz-1/monoton-diziler-ve-e-sayisi.html#def-e-sayisi)). $n = 10^k$, $k = 1, 2, \ldots, 16$ için $\left(1 + \frac{1}{n}\right)^n$ değerini `float` ile hesaplayıp `math.e` ile arasındaki farkı inceleyiniz.
+
+::: {.cozum}
+**Hesap.**
+
+```python
+import math
+
+for k in range(1, 17):
+    n = 10 ** k
+    approx = (1 + 1 / n) ** n
+    print(k, approx, abs(approx - math.e))
+```
+
+Çıktı:
+
+```text
+1 2.5937424601000023 0.12453936835904278
+2 2.7048138294215285 0.01346799903751661
+3 2.7169239322355936 0.0013578962234515046
+4 2.7181459268249255 0.000135901634119584
+5 2.7182682371922975 1.359126674760347e-05
+6 2.7182804690957534 1.359363291708604e-06
+7 2.7182816941320818 1.3432696333026684e-07
+8 2.7182817983473577 3.011168736577474e-08
+9 2.7182820520115603 2.2355251516614771e-07
+10 2.7182820532347876 2.2477574246337895e-07
+11 2.71828205335711 2.248980650598753e-07
+12 2.7185234960372378 0.00024166757819266138
+13 2.716110034086901 0.002171794372144209
+14 2.716110034087023 0.0021717943720220845
+15 3.035035206549262 0.31675337809021675
+16 1.0 1.718281828459045
+```
+
+**İlk kısım: yöntemin hatası.** $k \le 7$ iken hata her adımda yaklaşık on kat azalır. Bu, dizinin kendi yakınsama hızıdır: Taylor açılımıyla $e - \left(1 + \frac{1}{n}\right)^n \approx \frac{e}{2n}$ olduğu gösterilebilir.
+
+**İkinci kısım: yuvarlama hatası.** $k = 9$'dan sonra hata yeniden büyür. $1 + \frac{1}{n}$ toplamı @prp-gir-bagil-yuvarlama gereği $2^{-53}$'e kadar bağıl hatayla saklanır; $n$'inci kuvvet alınırken bu bağıl hata yaklaşık $n$ ile çarpılır. $n = 10^9$ için $n \cdot 2^{-53} \approx 1{,}1 \cdot 10^{-7}$ olur ve bu, artık yöntemin $\frac{e}{2n} \approx 1{,}4 \cdot 10^{-9}$ hatasından çok büyüktür.
+
+**Son satır.** $n = 10^{16}$ için $10^{-16} < \frac{\varepsilon}{2}$ olduğundan $1 + 10^{-16}$ toplamı doğrudan $1$'e yuvarlanır ve $1^n = 1$ çıkar. En iyi sonuç, iki hatanın dengelendiği $k = 8$ civarında elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+İki hata kaynağı log-log ölçekte açıkça ayrılır: soldaki doğru parçası yöntemin $\frac{e}{2n}$ hatasıdır, sağdaki yükselen kısım ise yuvarlama hatasının $n$ ile büyümesidir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="35.5 3.0 489.0 297.5" role="img" aria-label="Log-log plot of the error of (1 + 1/n)^n against n = 10^1 ... 10^16: the points follow the dashed line e/(2n) down to about 3e-8 at n = 10^8 and then rise along the dotted line e n 2^-53 up to 1.7 at n = 10^16.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="118.4" y1="40.0" x2="118.4" y2="270.0"/><line x1="169.7" y1="40.0" x2="169.7" y2="270.0"/><line x1="220.9" y1="40.0" x2="220.9" y2="270.0"/><line x1="272.2" y1="40.0" x2="272.2" y2="270.0"/><line x1="323.4" y1="40.0" x2="323.4" y2="270.0"/><line x1="374.7" y1="40.0" x2="374.7" y2="270.0"/><line x1="425.9" y1="40.0" x2="425.9" y2="270.0"/><line x1="477.2" y1="40.0" x2="477.2" y2="270.0"/><line x1="80.0" y1="247.0" x2="490.0" y2="247.0"/><line x1="80.0" y1="201.0" x2="490.0" y2="201.0"/><line x1="80.0" y1="155.0" x2="490.0" y2="155.0"/><line x1="80.0" y1="109.0" x2="490.0" y2="109.0"/><line x1="80.0" y1="63.0" x2="490.0" y2="63.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="80.0" y1="270.0" x2="498.0" y2="270.0"/>
+  <line x1="80.0" y1="32.0" x2="80.0" y2="270.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="118.4" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="169.7" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="220.9" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="272.2" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="323.4" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">10</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="374.7" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">12</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="425.9" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">14</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="477.2" y="286.0" text-anchor="middle">10<tspan font-size="10" dy="-5">16</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="251.0" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="205.0" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="159.0" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="113.0" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="67.0" text-anchor="end">1</text>
+  <text x="504.0" y="274.0" font-style="italic"><tspan font-style="italic">n</tspan></text>
+  </g>
+  <text x="76.0" y="26.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">hata</text>
+  <path d="M92.8,82.9 L301.2,270.0" fill="none" stroke="var(--color-base)" stroke-width="1.6" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M234.3,270.0 L477.2,52.0" fill="none" stroke="var(--color-remark)" stroke-width="1.6" stroke-dasharray="2 3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M92.8,83.8 L118.4,106.0 L144.1,128.9 L169.7,151.9 L195.3,174.9 L220.9,197.9 L246.6,221.1 L272.2,236.0 L297.8,216.0 L323.4,215.9 L349.1,215.9 L374.7,146.2 L400.3,124.3 L425.9,124.3 L451.6,74.5 L477.2,57.6" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="92.8" cy="83.8" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="118.4" cy="106.0" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="144.1" cy="128.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="169.7" cy="151.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="195.3" cy="174.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="220.9" cy="197.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="246.6" cy="221.1" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="272.2" cy="236.0" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="297.8" cy="216.0" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="323.4" cy="215.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="349.1" cy="215.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="374.7" cy="146.2" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="400.3" cy="124.3" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="425.9" cy="124.3" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="451.6" cy="74.5" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="477.2" cy="57.6" r="3.6" fill="var(--color-practice)"/>
+  <text x="164.3" y="142.1" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">e</tspan>/(2<tspan font-style="italic">n</tspan>)</text>
+  <text x="428.5" y="86.0" fill="var(--color-remark)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">e</tspan> &#183; <tspan font-style="italic">n</tspan> &#183; 2<tspan font-size="10" dy="-5">&#8722;53</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="288.2" y="254.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start" font-weight="600">en iyi: <tspan font-style="italic">n</tspan> = 10<tspan font-size="10" dy="-5">8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="469.2" y="47.6" fill="var(--color-practice)" font-size="11.5" text-anchor="end"><tspan font-style="italic">n</tspan> = 10<tspan font-size="10" dy="-5">16</tspan><tspan dy="5">&#8203;</tspan>: sonuç 1</text>
+</svg>
+<figcaption>(1 + 1/<em>n</em>)<sup><em>n</em></sup> ile <em>e</em> arasındaki fark, <em>e</em> sayısına yaklaşan dizi örneğindeki kodun 16 değeri, log-log ölçekte. Kesikli çizgi yöntemin <em>e</em>/(2<em>n</em>) hatası, noktalı çizgi yuvarlama hatasının <em>e</em> &#183; <em>n</em> &#183; 2<sup>&#8722;53</sup> kaba tahminidir. Hata önce <em>n</em> ile azalır, <em>n</em> = 10<sup>8</sup> civarında en küçük değerini alır, sonra yuvarlama yüzünden büyür.</figcaption>
+</figure>
+```
+
+Yuvarlama hataları yüzünden matematikte eşit olan iki niceliğin `float` değerleri son basamaklarda farklı çıkabilir. Bu yüzden `float` sayılar `==` ile değil, bir toleransla karşılaştırılır.
+
+::: {#def-gir-isclose name="Toleransla Karşılaştırma"}
+`math.isclose(a, b, rel_tol=1e-09, abs_tol=0.0)` çağrısı, `rel_tol` değerine $\rho$ ve `abs_tol` değerine $\tau$ dersek,
+
+$$|a - b| \le \max\bigl(\rho \cdot \max(|a|, |b|),\ \tau\bigr)$$
+
+eşitsizliği sağlanıyorsa `True`, sağlanmıyorsa `False` verir. $\rho$'ya **bağıl tolerans**, $\tau$'ya **mutlak tolerans** denir; verilmeyen tolerans için varsayılan değer kullanılır.
+:::
+
+Yani bağıl tolerans farkı sayıların kendi büyüklüğüyle ölçer: varsayılan $\rho = 10^{-9}$, iki sayının yaklaşık dokuz anlamlı basamağının aynı olmasını ister. Mutlak tolerans ise büyüklükten bağımsız bir eşiktir. Sayılardan biri $0$ ise bağıl koşul $|a| \le \rho\,|a|$ biçimine iner ve yalnız $a = 0$ iken sağlanır; bu yüzden sıfırla karşılaştırırken mutlak tolerans şarttır. `abs_tol=1e-12` yazımında olduğu gibi, bir argümanı adıyla vermek mümkündür.
+
+::: {.callout-tip title="Üç adımda iki float'ı karşılaştırmak"}
+1. **`==` kullanma.** Matematikte eşit olan iki niceliğin `float` değerleri son basamaklarda farklı olabilir.
+2. **Bağıl tolerans seç.** Sayıların büyüklüğüne uygun bir `rel_tol` ile `math.isclose(a, b, rel_tol=...)` kullan; varsayılan $10^{-9}$ çoğu hesap için yeterlidir.
+3. **Sıfırın yakınında mutlak tolerans ekle.** Beklenen değer $0$ ise problemin ölçeğine uygun bir `abs_tol` ver.
+:::
+
+:::: {#exm-gir-sin-pi name="Sıfırla Karşılaştırma"}
+$\sin \pi = 0$ eşitliğini Python'da `math.sin` ve `math.pi` ile sınayınız.
+
+::: {.cozum}
+**Değeri ve üç karşılaştırmayı yazdıralım.**
+
+```python
+import math
+
+y = math.sin(math.pi)
+print(y)
+print(y == 0)
+print(math.isclose(y, 0))                  # yalnız bağıl tolerans
+print(math.isclose(y, 0, abs_tol=1e-12))   # mutlak tolerans eklendi
+```
+
+Çıktı:
+
+```text
+1.2246467991473532e-16
+False
+False
+True
+```
+
+**Neden sıfır değil?** `math.pi` $\pi$'nin kendisi değil, ona en yakın `float`'tır ve $\pi$ ile farkı yaklaşık $1{,}22 \cdot 10^{-16}$'dır. $\pi$ civarında $\sin(\pi - h) = \sin h \approx h$ olduğundan Python bu küçük farkı doğru olarak hesapladı; sonuç $0$ değil, bu yüzden `==` karşılaştırması `False` verdi.
+
+**Toleranslar.** Sayılardan biri $0$ olduğu için yalnız bağıl toleransla yapılan karşılaştırma da `False` verdi. Sinüs değerleri $1$ mertebesinde olduğundan $\tau = 10^{-12}$ mutlak toleransı makul bir eşiktir ve bununla karşılaştırma `True` verdi. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Karmaşık Sayılar {#sec-gir-complex}
+
+Python karmaşık sayıları da yerleşik bir tür olarak tanır; temel işlemler için bir modül yüklemek gerekmez.
+
+::: {#def-gir-complex name="Karmaşık Sayı Türü"}
+Python'da $a + bi$ karmaşık sayısı `a + bj` biçiminde yazılır ve `complex` türündendir; sanal birim `1j` ile gösterilir. Bir `z` karmaşık sayısının gerçel ve sanal kısımları `z.real` ve `z.imag`, eşleniği `z.conjugate()`, modülü `abs(z)` ile bulunur.
+:::
+
+Yani Python, mühendislikteki geleneği izleyerek $i$ yerine $j$ harfini kullanır. Tek başına `j` bir değişken adıdır; sanal birim daima önünde bir sayıyla, `1j` olarak yazılır. Gerçel ve sanal kısımlar `float` olarak saklanır, bu yüzden karmaşık hesap da `float` hesabının yuvarlama hatalarını taşır. `z.conjugate()` gibi bir değerin arkasına nokta konarak çağrılan fonksiyonlara **metot** denir.
+
+```python
+z = 3 + 4j
+w = 1 - 2j
+print(z + w, z * w, z / w)
+print(z.real, z.imag, z.conjugate(), abs(z))
+print(1j ** 2)
+```
+
+Çıktı:
+
+```text
+(4+2j) (11-2j) (-1+2j)
+3.0 4.0 (3-4j) 5.0
+(-1+0j)
+```
+
+Karekök, üstel fonksiyon ve logaritmanın karmaşık sürümleri `cmath` modülündedir:
+
+```python
+import cmath
+
+print(cmath.sqrt(-1), cmath.sqrt(-4))
+print(cmath.exp(1j * cmath.pi))      # Euler: e^(i pi) = -1
+print(cmath.polar(3 + 4j))           # (modül, argüman)
+print(cmath.rect(2, cmath.pi / 2))   # 2 e^(i pi/2) = 2i
+```
+
+Çıktı:
+
+```text
+1j 2j
+(-1+1.2246467991473532e-16j)
+(5.0, 0.9272952180016122)
+(1.2246467991473532e-16+2j)
+```
+
+`cmath.polar(z)`, $z = re^{i\theta}$ olacak biçimdeki $(r, \theta)$ çiftini $\theta \in [-\pi, \pi]$ olacak biçimde verir; `cmath.rect(r, theta)` bunun tersidir. [Euler formülüne](../kompleks-analiz/kompleks-sayilar/ustel-form.html#def-euler) göre $e^{i\pi} = -1$'dir. Python'un sonucundaki `1.2246467991473532e-16j` sanal kısmı yine `cmath.pi` ile $\pi$ arasındaki farktan gelir; aynı fark `cmath.rect` satırının gerçel kısmında da görünür.
+
+:::: {#exm-gir-ikinci-derece name="Karmaşık Kökleri Olan İkinci Derece Denklem"}
+$x^2 + 2x + 5 = 0$ denkleminin köklerini Python ile bulunuz ve sağlamasını yapınız.
+
+::: {.cozum}
+**Formül.** Kökler $x_{1,2} = \dfrac{-b \pm \sqrt{b^2 - 4ac}}{2a}$ ile verilir. Diskriminant $\Delta = 4 - 20 = -16 < 0$ olduğundan `math.sqrt` hata verir; `cmath.sqrt` ise $\sqrt{-16} = 4i$ sonucunu döndürür.
+
+```python
+import cmath
+
+a, b, c = 1, 2, 5
+d = cmath.sqrt(b**2 - 4 * a * c)   # diskriminantın karekökü
+x1 = (-b + d) / (2 * a)
+x2 = (-b - d) / (2 * a)
+print(x1, x2)
+print(x1**2 + 2 * x1 + 5, x2**2 + 2 * x2 + 5)   # sağlama
+```
+
+Çıktı:
+
+```text
+(-1+2j) (-1-2j)
+0j 0j
+```
+
+**Sonuç.** Kökler $-1 + 2i$ ve $-1 - 2i$'dir; katsayılar gerçel olduğundan birbirinin eşleniğidir. Her iki kökte de polinomun değeri tam olarak $0$ çıktı, çünkü bu hesaptaki bütün ara değerler `float` olarak tam saklanabilen küçük tam sayılardır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-gir-birim-kokleri name="Birimin Altıncı Kökleri"}
+$z^6 = 1$ denkleminin altı kökünü $\omega_k = e^{2\pi i k/6}$, $k = 0, 1, \ldots, 5$ formülüyle hesaplayınız ve her birinin denklemi ne kadar iyi sağladığını inceleyiniz.
+
+::: {.cozum}
+**Hesap.** Formül, [Kompleks Analiz](../kompleks-analiz/kompleks-sayilar/kokler.html#thm-kokler) notlarındaki $n$-inci kök formülünün $z_0 = 1$, $n = 6$ hâlidir.
+
+```python
+import cmath
+
+n = 6
+for k in range(n):
+    w = cmath.exp(2j * cmath.pi * k / n)
+    print(k, w, abs(w ** n - 1))
+```
+
+Çıktı:
+
+```text
+0 (1+0j) 0.0
+1 (0.5000000000000001+0.8660254037844386j) 8.617648093045562e-16
+2 (-0.4999999999999998+0.8660254037844387j) 1.2412670766236366e-15
+3 (-1+1.2246467991473532e-16j) 7.347880794884119e-16
+4 (-0.5000000000000004-0.8660254037844385j) 2.975418419039454e-15
+5 (0.5000000000000001-0.8660254037844386j) 8.617648093045562e-16
+```
+
+**Yorum.** Tam değerler $\pm 1$ ve $\pm\frac{1}{2} \pm \frac{\sqrt{3}}{2}\, i$'dir; $\frac{\sqrt{3}}{2} \approx 0{,}8660254$. Hesaplanan değerler son basamaklarda bunlardan biraz farklıdır ve $|\omega_k^6 - 1|$ farkları $0$ değil, $10^{-15}$ mertebesindedir: her kök $\varepsilon$ mertebesinde bir bağıl hatayla bulunmuştur ve altıncı kuvvet bu hatayı birkaç kat büyütür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Altı kök, birim çember üzerinde düzgün bir altıgenin köşelerine dizilir; ardışık iki kök arasındaki açı $\frac{2\pi}{6} = \frac{\pi}{3}$'tür.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="27.0 12.0 366.0 366.0" role="img" aria-label="The unit circle with the six sixth roots of unity omega_0 = 1, omega_1, omega_2, omega_3 = -1, omega_4, omega_5 forming a regular hexagon; the angle pi/3 between omega_0 and omega_1 is marked.">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="41.0" y1="195.0" x2="379.0" y2="195.0"/>
+  <line x1="210.0" y1="364.0" x2="210.0" y2="26.0"/>
+  <polygon points="379.0,195.0 371.0,191.5 371.0,198.5" stroke="none"/>
+  <polygon points="210.0,26.0 206.5,34.0 213.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="377.0" y="210.0" text-anchor="end">Re</text>
+  <text x="217.0" y="35.0">Im</text>
+  </g>
+  <circle cx="210.0" cy="195.0" r="110.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="5 4" opacity="1.0"/>
+  <polygon points="320.0,195.0 265.0,99.7 155.0,99.7 100.0,195.0 155.0,290.3 265.0,290.3" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <path d="M245.2,195.0 L245.2,194.2 L245.2,193.5 L245.1,192.7 L245.1,191.9 L245.0,191.2 L244.9,190.4 L244.8,189.6 L244.7,188.9 L244.5,188.1 L244.4,187.4 L244.2,186.6 L244.0,185.9 L243.8,185.2 L243.6,184.4 L243.3,183.7 L243.1,183.0 L242.8,182.2 L242.5,181.5 L242.2,180.8 L241.9,180.1 L241.6,179.4 L241.2,178.7 L240.9,178.1 L240.5,177.4 L240.1,176.7 L239.7,176.1 L239.3,175.4 L238.8,174.8 L238.4,174.2 L237.9,173.6 L237.5,173.0 L237.0,172.4 L236.5,171.8 L236.0,171.2 L235.4,170.7 L234.9,170.1 L234.3,169.6 L233.8,169.0 L233.2,168.5 L232.6,168.0 L232.0,167.5 L231.4,167.1 L230.8,166.6 L230.2,166.2 L229.6,165.7 L228.9,165.3 L228.3,164.9 L227.6,164.5" fill="none" stroke="var(--color-practice)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="246.5" y="179.4" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">&#960;/3</text>
+  <circle cx="320.0" cy="195.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="265.0" cy="99.7" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="155.0" cy="99.7" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="100.0" cy="195.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="155.0" cy="290.3" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="265.0" cy="290.3" r="4.6" fill="var(--color-practice)"/>
+  <text x="328.0" y="187.0" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">&#969;</tspan><tspan font-size="10" dy="3.5">0</tspan><tspan dy="-3.5">&#8203;</tspan> = 1</text>
+  <text x="271.0" y="89.7" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">&#969;</tspan><tspan font-size="10" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="149.0" y="89.7" fill="var(--academic-text)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">&#969;</tspan><tspan font-size="10" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="92.0" y="187.0" fill="var(--academic-text)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">&#969;</tspan><tspan font-size="10" dy="3.5">3</tspan><tspan dy="-3.5">&#8203;</tspan> = &#8722;1</text>
+  <text x="149.0" y="310.3" fill="var(--academic-text)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">&#969;</tspan><tspan font-size="10" dy="3.5">4</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="271.0" y="310.3" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">&#969;</tspan><tspan font-size="10" dy="3.5">5</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+</svg>
+<figcaption><em>z</em><sup>6</sup> = 1 denkleminin <code>cmath.exp(2j * cmath.pi * k / 6)</code> ile hesaplanan altı kökü. Kökler birim çember üzerinde düzgün bir altıgenin köşeleridir ve ardışık iki kök arasındaki açı &#960;/3'tür.</figcaption>
+</figure>
+```
+
+## Tam Kesirler {#sec-gir-fraction}
+
+Rasyonel sayılarla hiç yuvarlama yapmadan hesap yapmak için standart kütüphanedeki `fractions` modülü kullanılır.
+
+::: {#def-gir-fraction name="Kesir Türü"}
+`fractions` modülündeki `Fraction(p, q)`, $q \neq 0$ olmak üzere $p$ ve $q$ tam sayılarından $p/q$ rasyonel sayısını kurar ve onu paydası pozitif, en sade kesir olarak saklar. `Fraction` değerleri arasında dört işlem ve tam sayı kuvvetleri tam olarak yapılır; sonuç yine en sade hâle getirilir.
+:::
+
+Yani `Fraction`, $\mathbb{Q}$'nun bilgisayardaki tam modelidir ve `int`'in kesirlere genişlemesi gibi düşünülebilir. Bedeli hızdır: hesap ilerledikçe pay ve paydalar büyüyebilir ve işlemler `float`'a göre çok daha yavaştır.
+
+```python
+from fractions import Fraction
+
+x = Fraction(1, 3) + Fraction(1, 6)
+print(x, x.numerator, x.denominator)
+print(Fraction(6, 4), Fraction("0.75"), Fraction(3, 10) * 10)
+print(Fraction(1, 10) + Fraction(2, 10) == Fraction(3, 10))
+print(Fraction(0.1))          # float 0.1'in tam değeri
+print(float(Fraction(22, 7)))
+```
+
+Çıktı:
+
+```text
+1/2 1 2
+3/2 3/4 3
+True
+3602879701896397/36028797018963968
+3.142857142857143
+```
+
+`x.numerator` ve `x.denominator` kesrin payını ve paydasını verir. `Fraction(0.1)` satırı ise bir `float`'ın aslında hangi rasyonel sayı olduğunu tam olarak gösteriyor: paydası $36028797018963968 = 2^{55}$'tir. Bu, `0.1`'in $\frac{1}{10}$ değil, ona çok yakın bir ikili kesir olduğunun kesin kanıtıdır. Bir kesri iki tam sayıdan ya da `Fraction("0.75")` gibi bir dizeden kurmak tamdır; bir `float`'tan kurmak ise `float`'ın hatasını da beraberinde getirir.
+
+:::: {#exm-gir-harmonik name="Harmonik Sayının Tam Değeri"}
+$H_{10} = 1 + \frac{1}{2} + \frac{1}{3} + \cdots + \frac{1}{10}$ toplamını tam kesir olarak bulunuz ve `float` ile yapılan toplamla karşılaştırınız.
+
+::: {.cozum}
+**İki toplamı yan yana kuralım.** `H` tam toplamı, `h` ise `float` toplamı biriktirsin:
+
+```python
+from fractions import Fraction
+
+H = Fraction(0)
+h = 0.0
+for k in range(1, 11):
+    H += Fraction(1, k)    # tam toplam
+    h += 1 / k             # float toplam
+print(H)
+print(float(H), h)
+```
+
+Çıktı:
+
+```text
+7381/2520
+2.9289682539682538 2.9289682539682538
+```
+
+**Sonuç.** $H_{10} = \frac{7381}{2520}$'dir; payda $2520 = \operatorname{ekok}(1, 2, \ldots, 10)$ ve pay $7381 = 11^2 \cdot 61$ olduğundan kesir en sade hâldedir. Bu kısa toplamda `float` toplam, tam değere en yakın `float` ile aynı çıktı; ama tam değeri, yani pay ve paydayı, ancak `Fraction` verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-gir-pi-kesir name="Pi Sayısına En Yakın Kesir"}
+Paydası $1000$'i geçmeyen kesirler arasında $\pi$'ye en yakın olanı bulunuz.
+
+::: {.cozum}
+**Araç.** `Fraction` değerlerinin `limit_denominator(N)` metodu, paydası $N$'yi geçmeyen kesirler arasında kendisine en yakın olanı verir. `Fraction(math.pi)`, `math.pi` `float`'ının tam değeridir; $\pi$'den farkı $10^{-16}$ mertebesinde olduğundan bu soruda $\pi$ yerine kullanılabilir.
+
+```python
+import math
+from fractions import Fraction
+
+p = Fraction(math.pi)
+print(p.limit_denominator(10))
+print(p.limit_denominator(100))
+print(p.limit_denominator(1000))
+r = p.limit_denominator(1000)
+print(float(r) - math.pi)
+```
+
+Çıktı:
+
+```text
+22/7
+311/99
+355/113
+2.667641894049666e-07
+```
+
+**Sonuç.** Aranan kesir $\frac{355}{113}$'tür ve $\pi$'den farkı yaklaşık $2{,}7 \cdot 10^{-7}$'dir. Paydası $114$ ile $1000$ arasında olan hiçbir kesir bundan daha iyi değildir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Paydanın üst sınırı $N$ büyüdükçe en iyi yaklaşım ancak belirli $N$ değerlerinde değişir; aradaki $N$'lerde aynı kesir en iyi kalır. Aşağıdaki şekil `limit_denominator(N)` çağrısının $N = 1, 2, \ldots, 1000$ için verdiği kesirlerin $\pi$'ye uzaklığını gösteriyor.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="36.0 3.0 491.5 287.5" role="img" aria-label="Step graph on log-log axes of the distance to pi of the best fraction with denominator at most N, for N from 1 to 1000: 3 at N = 1, 22/7 at N = 10, 311/99 at N = 100 and 355/113 at N = 1000 with error about 2.7e-7.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="80.0" y1="40.0" x2="80.0" y2="260.0"/><line x1="216.7" y1="40.0" x2="216.7" y2="260.0"/><line x1="353.3" y1="40.0" x2="353.3" y2="260.0"/><line x1="490.0" y1="40.0" x2="490.0" y2="260.0"/><line x1="80.0" y1="223.3" x2="490.0" y2="223.3"/><line x1="80.0" y1="162.2" x2="490.0" y2="162.2"/><line x1="80.0" y1="101.1" x2="490.0" y2="101.1"/><line x1="80.0" y1="40.0" x2="490.0" y2="40.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="80.0" y1="260.0" x2="498.0" y2="260.0"/>
+  <line x1="80.0" y1="32.0" x2="80.0" y2="260.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="80.0" y="276.0" text-anchor="middle">1</text>
+  <text x="216.7" y="276.0" text-anchor="middle">10</text>
+  <text x="353.3" y="276.0" text-anchor="middle">100</text>
+  <text x="490.0" y="276.0" text-anchor="middle">1000</text>
+  <text x="73.0" y="227.3" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="166.2" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="105.1" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="73.0" y="44.0" text-anchor="end">1</text>
+  <text x="504.0" y="264.0" font-style="italic"><tspan font-style="italic">N</tspan></text>
+  </g>
+  <text x="76.0" y="26.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic">hata</text>
+  <path d="M80.0,65.9 L121.1,65.9 L145.2,65.9 L162.3,65.9 L162.3,69.5 L175.5,69.5 L175.5,77.7 L186.3,77.7 L186.3,88.9 L195.5,88.9 L195.5,128.6 L203.4,128.6 L210.4,128.6 L216.7,128.6 L222.3,128.6 L227.5,128.6 L232.2,128.6 L236.6,128.6 L240.7,128.6 L244.6,128.6 L248.2,128.6 L251.6,128.6 L254.8,128.6 L257.8,128.6 L260.7,128.6 L263.5,128.6 L266.1,128.6 L268.6,128.6 L271.1,128.6 L273.4,128.6 L275.6,128.6 L277.8,128.6 L279.9,128.6 L281.9,128.6 L283.8,128.6 L285.7,128.6 L287.5,128.6 L289.3,128.6 L291.0,128.6 L292.7,128.6 L294.3,128.6 L295.9,128.6 L297.4,128.6 L298.9,128.6 L300.4,128.6 L301.8,128.6 L303.2,128.6 L304.6,128.6 L305.9,128.6 L307.2,128.6 L308.5,128.6 L309.8,128.6 L311.0,128.6 L312.2,128.6 L313.4,128.6 L314.5,128.6 L315.7,128.6 L316.8,128.6 L317.8,128.6 L318.9,128.6 L320.0,128.6 L320.0,128.8 L321.0,128.8 L322.0,128.8 L323.0,128.8 L324.0,128.8 L325.0,128.8 L325.9,128.8 L326.8,128.8 L326.8,132.1 L327.8,132.1 L328.7,132.1 L329.6,132.1 L330.4,132.1 L331.3,132.1 L332.2,132.1 L333.0,132.1 L333.0,135.5 L333.8,135.5 L334.7,135.5 L335.5,135.5 L336.3,135.5 L337.0,135.5 L337.8,135.5 L338.6,135.5 L338.6,139.2 L339.3,139.2 L340.1,139.2 L340.8,139.2 L341.6,139.2 L342.3,139.2 L343.0,139.2 L343.7,139.2 L343.7,143.3 L344.4,143.3 L345.1,143.3 L345.7,143.3 L346.4,143.3 L347.1,143.3 L347.7,143.3 L348.4,143.3 L348.4,148.2 L349.0,148.2 L349.7,148.2 L350.3,148.2 L350.9,148.2 L351.5,148.2 L352.1,148.2 L352.7,148.2 L352.7,154.5 L353.3,154.5 L353.9,154.5 L354.5,154.5 L355.1,154.5 L355.7,154.5 L356.2,154.5 L356.8,154.5 L356.8,164.7 L357.3,164.7 L357.9,164.7 L358.4,164.7 L359.0,164.7 L359.5,164.7 L360.1,164.7 L360.6,164.7 L360.6,240.9 L361.1,240.9 L361.6,240.9 L362.1,240.9 L362.7,240.9 L363.2,240.9 L363.7,240.9 L364.2,240.9 L364.6,240.9 L365.1,240.9 L365.6,240.9 L366.1,240.9 L366.6,240.9 L367.1,240.9 L367.5,240.9 L368.0,240.9 L368.4,240.9 L368.9,240.9 L369.4,240.9 L369.8,240.9 L370.3,240.9 L370.7,240.9 L371.1,240.9 L371.6,240.9 L372.0,240.9 L372.5,240.9 L372.9,240.9 L373.3,240.9 L373.7,240.9 L374.1,240.9 L374.6,240.9 L375.0,240.9 L375.4,240.9 L375.8,240.9 L376.2,240.9 L376.6,240.9 L377.0,240.9 L377.4,240.9 L377.8,240.9 L378.2,240.9 L378.6,240.9 L379.0,240.9 L379.3,240.9 L379.7,240.9 L380.1,240.9 L380.5,240.9 L380.9,240.9 L381.2,240.9 L381.6,240.9 L382.0,240.9 L382.3,240.9 L382.7,240.9 L383.1,240.9 L383.4,240.9 L383.8,240.9 L384.1,240.9 L384.5,240.9 L384.8,240.9 L385.2,240.9 L385.5,240.9 L385.9,240.9 L386.2,240.9 L386.5,240.9 L386.9,240.9 L387.2,240.9 L387.6,240.9 L387.9,240.9 L388.2,240.9 L388.5,240.9 L388.9,240.9 L389.2,240.9 L389.5,240.9 L389.8,240.9 L390.2,240.9 L390.5,240.9 L390.8,240.9 L391.1,240.9 L391.4,240.9 L391.7,240.9 L392.1,240.9 L392.4,240.9 L392.7,240.9 L393.0,240.9 L393.3,240.9 L393.6,240.9 L393.9,240.9 L394.2,240.9 L394.5,240.9 L394.8,240.9 L395.1,240.9 L395.4,240.9 L395.6,240.9 L395.9,240.9 L396.2,240.9 L396.5,240.9 L396.8,240.9 L397.1,240.9 L397.4,240.9 L397.7,240.9 L397.9,240.9 L398.2,240.9 L398.5,240.9 L398.8,240.9 L399.0,240.9 L399.3,240.9 L399.6,240.9 L399.9,240.9 L400.1,240.9 L400.4,240.9 L400.7,240.9 L400.9,240.9 L401.2,240.9 L401.5,240.9 L401.7,240.9 L402.0,240.9 L402.3,240.9 L402.5,240.9 L402.8,240.9 L403.0,240.9 L403.3,240.9 L403.5,240.9 L403.8,240.9 L404.0,240.9 L404.3,240.9 L404.5,240.9 L404.8,240.9 L405.0,240.9 L405.3,240.9 L405.5,240.9 L405.8,240.9 L406.0,240.9 L406.3,240.9 L406.5,240.9 L406.8,240.9 L407.0,240.9 L407.2,240.9 L407.5,240.9 L407.7,240.9 L408.0,240.9 L408.2,240.9 L408.4,240.9 L408.7,240.9 L408.9,240.9 L409.1,240.9 L409.4,240.9 L409.6,240.9 L409.8,240.9 L410.0,240.9 L410.3,240.9 L410.5,240.9 L410.7,240.9 L411.0,240.9 L411.2,240.9 L411.4,240.9 L411.6,240.9 L411.8,240.9 L412.1,240.9 L412.3,240.9 L412.5,240.9 L412.7,240.9 L412.9,240.9 L413.2,240.9 L413.4,240.9 L413.6,240.9 L413.8,240.9 L414.0,240.9 L414.2,240.9 L414.4,240.9 L414.7,240.9 L414.9,240.9 L415.1,240.9 L415.3,240.9 L415.5,240.9 L415.7,240.9 L415.9,240.9 L416.1,240.9 L416.3,240.9 L416.5,240.9 L416.7,240.9 L416.9,240.9 L417.1,240.9 L417.3,240.9 L417.5,240.9 L417.7,240.9 L417.9,240.9 L418.1,240.9 L418.3,240.9 L418.5,240.9 L418.7,240.9 L418.9,240.9 L419.1,240.9 L419.3,240.9 L419.5,240.9 L419.7,240.9 L419.9,240.9 L420.1,240.9 L420.3,240.9 L420.5,240.9 L420.7,240.9 L420.9,240.9 L421.1,240.9 L421.2,240.9 L421.4,240.9 L421.6,240.9 L421.8,240.9 L422.0,240.9 L422.2,240.9 L422.4,240.9 L422.6,240.9 L422.7,240.9 L422.9,240.9 L423.1,240.9 L423.3,240.9 L423.5,240.9 L423.7,240.9 L423.8,240.9 L424.0,240.9 L424.2,240.9 L424.4,240.9 L424.6,240.9 L424.7,240.9 L424.9,240.9 L425.1,240.9 L425.3,240.9 L425.4,240.9 L425.6,240.9 L425.8,240.9 L426.0,240.9 L426.1,240.9 L426.3,240.9 L426.5,240.9 L426.7,240.9 L426.8,240.9 L427.0,240.9 L427.2,240.9 L427.3,240.9 L427.5,240.9 L427.7,240.9 L427.9,240.9 L428.0,240.9 L428.2,240.9 L428.4,240.9 L428.5,240.9 L428.7,240.9 L428.9,240.9 L429.0,240.9 L429.2,240.9 L429.4,240.9 L429.5,240.9 L429.7,240.9 L429.9,240.9 L430.0,240.9 L430.2,240.9 L430.3,240.9 L430.5,240.9 L430.7,240.9 L430.8,240.9 L431.0,240.9 L431.1,240.9 L431.3,240.9 L431.5,240.9 L431.6,240.9 L431.8,240.9 L431.9,240.9 L432.1,240.9 L432.3,240.9 L432.4,240.9 L432.6,240.9 L432.7,240.9 L432.9,240.9 L433.0,240.9 L433.2,240.9 L433.3,240.9 L433.5,240.9 L433.7,240.9 L433.8,240.9 L434.0,240.9 L434.1,240.9 L434.3,240.9 L434.4,240.9 L434.6,240.9 L434.7,240.9 L434.9,240.9 L435.0,240.9 L435.2,240.9 L435.3,240.9 L435.5,240.9 L435.6,240.9 L435.8,240.9 L435.9,240.9 L436.1,240.9 L436.2,240.9 L436.4,240.9 L436.5,240.9 L436.6,240.9 L436.8,240.9 L436.9,240.9 L437.1,240.9 L437.2,240.9 L437.4,240.9 L437.5,240.9 L437.7,240.9 L437.8,240.9 L437.9,240.9 L438.1,240.9 L438.2,240.9 L438.4,240.9 L438.5,240.9 L438.7,240.9 L438.8,240.9 L438.9,240.9 L439.1,240.9 L439.2,240.9 L439.4,240.9 L439.5,240.9 L439.6,240.9 L439.8,240.9 L439.9,240.9 L440.0,240.9 L440.2,240.9 L440.3,240.9 L440.5,240.9 L440.6,240.9 L440.7,240.9 L440.9,240.9 L441.0,240.9 L441.1,240.9 L441.3,240.9 L441.4,240.9 L441.5,240.9 L441.7,240.9 L441.8,240.9 L441.9,240.9 L442.1,240.9 L442.2,240.9 L442.3,240.9 L442.5,240.9 L442.6,240.9 L442.7,240.9 L442.9,240.9 L443.0,240.9 L443.1,240.9 L443.3,240.9 L443.4,240.9 L443.5,240.9 L443.7,240.9 L443.8,240.9 L443.9,240.9 L444.0,240.9 L444.2,240.9 L444.3,240.9 L444.4,240.9 L444.6,240.9 L444.7,240.9 L444.8,240.9 L444.9,240.9 L445.1,240.9 L445.2,240.9 L445.3,240.9 L445.4,240.9 L445.6,240.9 L445.7,240.9 L445.8,240.9 L445.9,240.9 L446.1,240.9 L446.2,240.9 L446.3,240.9 L446.4,240.9 L446.6,240.9 L446.7,240.9 L446.8,240.9 L446.9,240.9 L447.1,240.9 L447.2,240.9 L447.3,240.9 L447.4,240.9 L447.5,240.9 L447.7,240.9 L447.8,240.9 L447.9,240.9 L448.0,240.9 L448.1,240.9 L448.3,240.9 L448.4,240.9 L448.5,240.9 L448.6,240.9 L448.7,240.9 L448.9,240.9 L449.0,240.9 L449.1,240.9 L449.2,240.9 L449.3,240.9 L449.4,240.9 L449.6,240.9 L449.7,240.9 L449.8,240.9 L449.9,240.9 L450.0,240.9 L450.2,240.9 L450.3,240.9 L450.4,240.9 L450.5,240.9 L450.6,240.9 L450.7,240.9 L450.8,240.9 L451.0,240.9 L451.1,240.9 L451.2,240.9 L451.3,240.9 L451.4,240.9 L451.5,240.9 L451.6,240.9 L451.8,240.9 L451.9,240.9 L452.0,240.9 L452.1,240.9 L452.2,240.9 L452.3,240.9 L452.4,240.9 L452.5,240.9 L452.7,240.9 L452.8,240.9 L452.9,240.9 L453.0,240.9 L453.1,240.9 L453.2,240.9 L453.3,240.9 L453.4,240.9 L453.5,240.9 L453.6,240.9 L453.8,240.9 L453.9,240.9 L454.0,240.9 L454.1,240.9 L454.2,240.9 L454.3,240.9 L454.4,240.9 L454.5,240.9 L454.6,240.9 L454.7,240.9 L454.8,240.9 L454.9,240.9 L455.1,240.9 L455.2,240.9 L455.3,240.9 L455.4,240.9 L455.5,240.9 L455.6,240.9 L455.7,240.9 L455.8,240.9 L455.9,240.9 L456.0,240.9 L456.1,240.9 L456.2,240.9 L456.3,240.9 L456.4,240.9 L456.5,240.9 L456.6,240.9 L456.7,240.9 L456.8,240.9 L456.9,240.9 L457.1,240.9 L457.2,240.9 L457.3,240.9 L457.4,240.9 L457.5,240.9 L457.6,240.9 L457.7,240.9 L457.8,240.9 L457.9,240.9 L458.0,240.9 L458.1,240.9 L458.2,240.9 L458.3,240.9 L458.4,240.9 L458.5,240.9 L458.6,240.9 L458.7,240.9 L458.8,240.9 L458.9,240.9 L459.0,240.9 L459.1,240.9 L459.2,240.9 L459.3,240.9 L459.4,240.9 L459.5,240.9 L459.6,240.9 L459.7,240.9 L459.8,240.9 L459.9,240.9 L460.0,240.9 L460.1,240.9 L460.2,240.9 L460.3,240.9 L460.4,240.9 L460.5,240.9 L460.6,240.9 L460.7,240.9 L460.8,240.9 L460.9,240.9 L461.0,240.9 L461.0,240.9 L461.1,240.9 L461.2,240.9 L461.3,240.9 L461.4,240.9 L461.5,240.9 L461.6,240.9 L461.7,240.9 L461.8,240.9 L461.9,240.9 L462.0,240.9 L462.1,240.9 L462.2,240.9 L462.3,240.9 L462.4,240.9 L462.5,240.9 L462.6,240.9 L462.7,240.9 L462.8,240.9 L462.9,240.9 L463.0,240.9 L463.0,240.9 L463.1,240.9 L463.2,240.9 L463.3,240.9 L463.4,240.9 L463.5,240.9 L463.6,240.9 L463.7,240.9 L463.8,240.9 L463.9,240.9 L464.0,240.9 L464.1,240.9 L464.2,240.9 L464.2,240.9 L464.3,240.9 L464.4,240.9 L464.5,240.9 L464.6,240.9 L464.7,240.9 L464.8,240.9 L464.9,240.9 L465.0,240.9 L465.1,240.9 L465.2,240.9 L465.2,240.9 L465.3,240.9 L465.4,240.9 L465.5,240.9 L465.6,240.9 L465.7,240.9 L465.8,240.9 L465.9,240.9 L466.0,240.9 L466.1,240.9 L466.1,240.9 L466.2,240.9 L466.3,240.9 L466.4,240.9 L466.5,240.9 L466.6,240.9 L466.7,240.9 L466.8,240.9 L466.8,240.9 L466.9,240.9 L467.0,240.9 L467.1,240.9 L467.2,240.9 L467.3,240.9 L467.4,240.9 L467.5,240.9 L467.5,240.9 L467.6,240.9 L467.7,240.9 L467.8,240.9 L467.9,240.9 L468.0,240.9 L468.1,240.9 L468.1,240.9 L468.2,240.9 L468.3,240.9 L468.4,240.9 L468.5,240.9 L468.6,240.9 L468.7,240.9 L468.7,240.9 L468.8,240.9 L468.9,240.9 L469.0,240.9 L469.1,240.9 L469.2,240.9 L469.3,240.9 L469.3,240.9 L469.4,240.9 L469.5,240.9 L469.6,240.9 L469.7,240.9 L469.8,240.9 L469.8,240.9 L469.9,240.9 L470.0,240.9 L470.1,240.9 L470.2,240.9 L470.3,240.9 L470.3,240.9 L470.4,240.9 L470.5,240.9 L470.6,240.9 L470.7,240.9 L470.7,240.9 L470.8,240.9 L470.9,240.9 L471.0,240.9 L471.1,240.9 L471.2,240.9 L471.2,240.9 L471.3,240.9 L471.4,240.9 L471.5,240.9 L471.6,240.9 L471.6,240.9 L471.7,240.9 L471.8,240.9 L471.9,240.9 L472.0,240.9 L472.0,240.9 L472.1,240.9 L472.2,240.9 L472.3,240.9 L472.4,240.9 L472.4,240.9 L472.5,240.9 L472.6,240.9 L472.7,240.9 L472.8,240.9 L472.8,240.9 L472.9,240.9 L473.0,240.9 L473.1,240.9 L473.2,240.9 L473.2,240.9 L473.3,240.9 L473.4,240.9 L473.5,240.9 L473.6,240.9 L473.6,240.9 L473.7,240.9 L473.8,240.9 L473.9,240.9 L473.9,240.9 L474.0,240.9 L474.1,240.9 L474.2,240.9 L474.3,240.9 L474.3,240.9 L474.4,240.9 L474.5,240.9 L474.6,240.9 L474.6,240.9 L474.7,240.9 L474.8,240.9 L474.9,240.9 L474.9,240.9 L475.0,240.9 L475.1,240.9 L475.2,240.9 L475.3,240.9 L475.3,240.9 L475.4,240.9 L475.5,240.9 L475.6,240.9 L475.6,240.9 L475.7,240.9 L475.8,240.9 L475.9,240.9 L475.9,240.9 L476.0,240.9 L476.1,240.9 L476.2,240.9 L476.2,240.9 L476.3,240.9 L476.4,240.9 L476.5,240.9 L476.5,240.9 L476.6,240.9 L476.7,240.9 L476.8,240.9 L476.8,240.9 L476.9,240.9 L477.0,240.9 L477.1,240.9 L477.1,240.9 L477.2,240.9 L477.3,240.9 L477.3,240.9 L477.4,240.9 L477.5,240.9 L477.6,240.9 L477.6,240.9 L477.7,240.9 L477.8,240.9 L477.9,240.9 L477.9,240.9 L478.0,240.9 L478.1,240.9 L478.1,240.9 L478.2,240.9 L478.3,240.9 L478.4,240.9 L478.4,240.9 L478.5,240.9 L478.6,240.9 L478.7,240.9 L478.7,240.9 L478.8,240.9 L478.9,240.9 L478.9,240.9 L479.0,240.9 L479.1,240.9 L479.2,240.9 L479.2,240.9 L479.3,240.9 L479.4,240.9 L479.4,240.9 L479.5,240.9 L479.6,240.9 L479.7,240.9 L479.7,240.9 L479.8,240.9 L479.9,240.9 L479.9,240.9 L480.0,240.9 L480.1,240.9 L480.1,240.9 L480.2,240.9 L480.3,240.9 L480.4,240.9 L480.4,240.9 L480.5,240.9 L480.6,240.9 L480.6,240.9 L480.7,240.9 L480.8,240.9 L480.8,240.9 L480.9,240.9 L481.0,240.9 L481.0,240.9 L481.1,240.9 L481.2,240.9 L481.3,240.9 L481.3,240.9 L481.4,240.9 L481.5,240.9 L481.5,240.9 L481.6,240.9 L481.7,240.9 L481.7,240.9 L481.8,240.9 L481.9,240.9 L481.9,240.9 L482.0,240.9 L482.1,240.9 L482.1,240.9 L482.2,240.9 L482.3,240.9 L482.3,240.9 L482.4,240.9 L482.5,240.9 L482.5,240.9 L482.6,240.9 L482.7,240.9 L482.7,240.9 L482.8,240.9 L482.9,240.9 L482.9,240.9 L483.0,240.9 L483.1,240.9 L483.1,240.9 L483.2,240.9 L483.3,240.9 L483.3,240.9 L483.4,240.9 L483.5,240.9 L483.5,240.9 L483.6,240.9 L483.7,240.9 L483.7,240.9 L483.8,240.9 L483.9,240.9 L483.9,240.9 L484.0,240.9 L484.1,240.9 L484.1,240.9 L484.2,240.9 L484.3,240.9 L484.3,240.9 L484.4,240.9 L484.5,240.9 L484.5,240.9 L484.6,240.9 L484.7,240.9 L484.7,240.9 L484.8,240.9 L484.9,240.9 L484.9,240.9 L485.0,240.9 L485.1,240.9 L485.1,240.9 L485.2,240.9 L485.2,240.9 L485.3,240.9 L485.4,240.9 L485.4,240.9 L485.5,240.9 L485.6,240.9 L485.6,240.9 L485.7,240.9 L485.8,240.9 L485.8,240.9 L485.9,240.9 L485.9,240.9 L486.0,240.9 L486.1,240.9 L486.1,240.9 L486.2,240.9 L486.3,240.9 L486.3,240.9 L486.4,240.9 L486.5,240.9 L486.5,240.9 L486.6,240.9 L486.6,240.9 L486.7,240.9 L486.8,240.9 L486.8,240.9 L486.9,240.9 L487.0,240.9 L487.0,240.9 L487.1,240.9 L487.1,240.9 L487.2,240.9 L487.3,240.9 L487.3,240.9 L487.4,240.9 L487.5,240.9 L487.5,240.9 L487.6,240.9 L487.6,240.9 L487.7,240.9 L487.8,240.9 L487.8,240.9 L487.9,240.9 L487.9,240.9 L488.0,240.9 L488.1,240.9 L488.1,240.9 L488.2,240.9 L488.3,240.9 L488.3,240.9 L488.4,240.9 L488.4,240.9 L488.5,240.9 L488.6,240.9 L488.6,240.9 L488.7,240.9 L488.7,240.9 L488.8,240.9 L488.9,240.9 L488.9,240.9 L489.0,240.9 L489.0,240.9 L489.1,240.9 L489.2,240.9 L489.2,240.9 L489.3,240.9 L489.3,240.9 L489.4,240.9 L489.5,240.9 L489.5,240.9 L489.6,240.9 L489.6,240.9 L489.7,240.9 L489.8,240.9 L489.8,240.9 L489.9,240.9 L489.9,240.9 L490.0,240.9 L490.0,240.9" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="216.7" cy="128.6" r="4.4" fill="var(--color-practice)"/>
+  <text x="224.7" y="120.6" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">22/7</text>
+  <circle cx="353.3" cy="154.5" r="4.4" fill="var(--color-practice)"/>
+  <text x="361.3" y="146.5" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">311/99</text>
+  <circle cx="490.0" cy="240.9" r="4.4" fill="var(--color-practice)"/>
+  <text x="484.0" y="230.9" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">355/113</text>
+  <text x="86.0" y="57.9" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">3</text>
+</svg>
+<figcaption>Paydası en fazla <em>N</em> olan kesirler arasında &#960;'ye en yakın olanın hatası, <code>limit_denominator(N)</code> ile <em>N</em> = 1, 2, &#8230;, 1000 için. Hata basamak basamak azalır: 22/7, <em>N</em> = 7'den 56'ya kadar en iyi kesirdir ve <em>N</em> = 57'de yerini 179/57'ye bırakır; 355/113 ise <em>N</em> = 113'ten 1000'e kadar en iyi kesir kalır. Turuncu noktalar örnekteki kodun yazdırdığı <em>N</em> = 10, 100, 1000 değerleridir.</figcaption>
+</figure>
+```
+
+## Ondalık Hesap {#sec-gir-decimal}
+
+Bazı hesaplarda sayıların onluk tabanda tam saklanması ya da `float`'ın sunduğundan çok daha fazla basamak gerekir; bunun için `decimal` modülü vardır.
+
+::: {#def-gir-decimal name="Ondalık Sayı Türü"}
+`decimal` modülündeki `Decimal` türü sayıları onluk tabanda ve belirli sayıda anlamlı basamakla saklar. İşlemlerin kaç anlamlı basamakla yapılacağını `getcontext().prec` değeri belirler (varsayılan değeri $28$'dir); her işlemin sonucu bu sayıda anlamlı basamağa yuvarlanır.
+:::
+
+Yani `Decimal` da bir kayan noktalı sayı sistemidir, ama tabanı $10$'dur ve basamak sayısını biz seçeriz. `Decimal("0.1")` gibi bir dizeden kurulan ondalık sayılar tam saklanır; $\frac{1}{3}$ gibi onluk açılımı sonsuz olan sayılar ise yine yuvarlanır.
+
+```python
+from decimal import Decimal, getcontext
+
+print(Decimal("0.1") + Decimal("0.2"))
+print(Decimal(0.1))                # float'tan kurulunca hatası da gelir
+print(Decimal(1) / Decimal(3))     # varsayılan: 28 basamak
+getcontext().prec = 50
+print(Decimal(1) / Decimal(3))
+```
+
+Çıktı:
+
+```text
+0.3
+0.1000000000000000055511151231257827021181583404541015625
+0.3333333333333333333333333333
+0.33333333333333333333333333333333333333333333333333
+```
+
+::: {.callout-warning title="Decimal değerlerini dizeden kurun"}
+`Decimal(0.1)` yazıldığında önce `0.1` `float`'ı oluşur ve `Decimal` onun tam değerini, yani yukarıdaki uzun sayıyı saklar. Ondalık bir sayıyı tam saklamak için onu dize olarak verin: `Decimal("0.1")`.
+:::
+
+:::: {#exm-gir-karekok-iki name="Karekök İkinin Elli Basamağı"}
+$\sqrt{2}$'yi $50$ anlamlı basamakla hesaplayınız ve bulduğunuz sayının karesinin $2$'den ne kadar farklı olduğunu bulunuz.
+
+::: {.cozum}
+**Hassasiyeti ayarlayıp karekökü alalım.** `Decimal` değerlerinin `sqrt` metodu karekökü, o anki hassasiyetle hesaplar:
+
+```python
+from decimal import Decimal, getcontext
+
+getcontext().prec = 50
+r = Decimal(2).sqrt()
+print(r)
+print(r * r - 2)
+print(2 ** 0.5)          # float ile karşılaştırma
+```
+
+Çıktı:
+
+```text
+1.4142135623730950488016887242096980785696718753769
+-1E-49
+1.4142135623730951
+```
+
+**Karenin farkı.** `r`, $\sqrt{2}$'nin $50$ anlamlı basamağa yuvarlanmış hâlidir ve $\sqrt{2}$'den küçüktür; bu yüzden karesi $2$'den biraz küçük çıkar. Fark $10^{-49}$ mertebesindedir, yani ancak $50$. anlamlı basamakta ortaya çıkar. `float` ise yalnız $17$ anlamlı basamak yazdı ve sonuncusu bile $\sqrt{2}$'nin basamağı değildir: $\sqrt{2} = 1{,}41421356237309504\ldots$ olduğu hâlde `float` son basamağı $1$ olarak yazdı. [$\blacksquare$]{.qed}
+:::
+::::
+
+Python'un yerleşik `round(x, n)` fonksiyonu $x$'i noktadan sonra $n$ basamağa yuvarlar ($n$ verilmezse en yakın tam sayıya). Tam ortadaki değerlerde "en yakın çift sayıya yuvarla" kuralını uygular; bu kural, çok sayıda yuvarlamada hataların hep aynı yöne birikmesini önler. Okulda öğrenilen "yarımı yukarı yuvarla" kuralı için `Decimal`'in `quantize` metodu kullanılır:
+
+```python
+from decimal import Decimal, ROUND_HALF_UP
+
+print(round(0.5), round(1.5), round(2.5))   # yarımlar çifte gider
+x = Decimal("2.675")
+print(x.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+```
+
+Çıktı:
+
+```text
+0 2 2
+2.68
+```
+
+Bölümde gördüğümüz sayı türlerini şöyle özetleyebiliriz:
+
+| Tür | Değerler | Kesinlik | Ne zaman? |
+|:--|:--|:--|:--|
+| `int` | $\mathbb{Z}$ | tam | sayma, sayılar teorisi, kombinatorik |
+| `float` | $53$ ikili basamaklı sayılar | işlem başına bağıl hata $\le 2^{-53}$ | sayısal hesabın büyük çoğunluğu |
+| `complex` | iki `float` | `float` gibi | karmaşık sayılarla sayısal hesap |
+| `Fraction` | $\mathbb{Q}$ | tam | tam kesirli sonuçlar, küçük hesaplar |
+| `Decimal` | onluk kayan nokta | seçilen basamak sayısı | para hesabı, çok basamaklı hesap |
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalar bölümdeki sayı türlerini tanıdık matematik problemleri üzerinde kullanır; her çözüm çalıştırılmış kodu ve çıktısını içerir. Kodu önce kendiniz yazmayı deneyin, sonra çözümle karşılaştırın.
+
+:::: {#exr-gir-basamak-toplami name="İki Üzeri Binin Basamakları"}
+$2^{1000}$ sayısının kaç basamaklı olduğunu ve basamaklarının toplamını bulunuz.
+
+::: {.cozum}
+**Basamakları dolaşalım.** `for` döngüsü bir dizenin karakterlerini de tek tek dolaşabilir. `int("7")` gibi bir çağrı, tek rakamlı bir dizeyi tam sayıya çevirir.
+
+```python
+n = 2 ** 1000
+s = str(n)
+total = 0
+for c in s:           # dizenin karakterlerini tek tek dolaş
+    total += int(c)   # karakteri rakama çevirip ekle
+print(len(s), total)
+```
+
+Çıktı:
+
+```text
+302 1366
+```
+
+**Sağlama.** Basamak sayısı $\lfloor 1000 \log_{10} 2 \rfloor + 1$ formülüyle de bulunur: $1000 \log_{10} 2 \approx 301{,}03$ olduğundan sonuç $302$'dir. $2^{1000}$ sayısı $302$ basamaklıdır ve basamaklarının toplamı $1366$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-son-basamaklar name="Büyük Bir Kuvvetin Son Basamakları"}
+$3^{1000}$ sayısının son $10$ basamağını bulunuz.
+
+::: {.cozum}
+**Kalana çevirelim.** Bir sayının son $10$ basamağı, onun $10^{10}$ ile bölümünden kalandır. Bu kalanı `pow` ile, $3^{1000}$'i hesaplamadan bulabiliriz. Sağlama için doğrudan hesabı da yapalım; kalan $10$ basamaktan kısa çıkarsa baştaki sıfırları da göstermek için `010d` biçimini (soldan sıfırla doldurulmuş $10$ karakterlik tam sayı) kullanıyoruz:
+
+```python
+r = pow(3, 1000, 10 ** 10)
+print(f"{r:010d}")
+print(3 ** 1000 % 10 ** 10 == r)
+```
+
+Çıktı:
+
+```text
+2855220001
+True
+```
+
+**Sonuç.** $3^{1000}$ sayısının son on basamağı $2855220001$'dir; iki yol aynı kalanı verdi. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-sifir-sayisi name="Bin Faktöriyelin Sonundaki Sıfırlar"}
+$1000!$ sayısının sonunda kaç sıfır olduğunu bulunuz.
+
+::: {.cozum}
+**Sayarak düşünelim.** Sondaki her sıfır bir $10 = 2 \cdot 5$ çarpanıdır. $1000!$ içinde $2$ çarpanları $5$ çarpanlarından çok olduğundan sıfır sayısı $5$ çarpanlarının sayısına eşittir. $1$'den $1000$'e kadar $5$'in katları birer, $25$'in katları birer fazla, $125$'in katları bir fazla daha, $625$'in katları bir fazla daha $5$ çarpanı verir:
+
+$$\left\lfloor \frac{1000}{5} \right\rfloor + \left\lfloor \frac{1000}{25} \right\rfloor + \left\lfloor \frac{1000}{125} \right\rfloor + \left\lfloor \frac{1000}{625} \right\rfloor = 200 + 40 + 8 + 1 = 249.$$
+
+**Python ile.** Formülü `//` ile hesaplayalım; sağlama için $1000!$'i dizeye çevirip sağdaki sıfırları sayalım. Dizenin `rstrip("0")` metodu sağdaki `0` karakterlerini atar, uzunluklar arasındaki fark atılan sıfır sayısıdır:
+
+```python
+import math
+
+n = 1000
+print(n // 5 + n // 25 + n // 125 + n // 625)
+s = str(math.factorial(n))
+print(len(s) - len(s.rstrip("0")))   # sağdaki sıfırların sayısı
+```
+
+Çıktı:
+
+```text
+249
+249
+```
+
+**Sonuç.** $1000!$ sayısının sonunda $249$ sıfır vardır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-saniye name="Bir Milyon Saniye"}
+$10^{6}$ saniyenin kaç gün, saat, dakika ve saniye ettiğini `divmod` ile bulunuz.
+
+::: {.cozum}
+**Birimleri sırayla ayıralım.** Önce saniyeleri $60$'a bölüp dakika ve artan saniyeyi, sonra dakikaları $60$'a bölüp saat ve artan dakikayı, en son saatleri $24$'e bölüp gün ve artan saati buluruz. `divmod`'un verdiği çifti eşzamanlı atamayla iki değişkene ayırıyoruz:
+
+```python
+t = 10 ** 6
+m, s = divmod(t, 60)     # dakika ve artan saniye
+h, m = divmod(m, 60)     # saat ve artan dakika
+d, h = divmod(h, 24)     # gün ve artan saat
+print(d, h, m, s)
+print(((d * 24 + h) * 60 + m) * 60 + s)   # sağlama
+```
+
+Çıktı:
+
+```text
+11 13 46 40
+1000000
+```
+
+**Sonuç.** $10^6$ saniye $11$ gün $13$ saat $46$ dakika $40$ saniyedir; son satır bu parçalardan yeniden $10^6$'yı elde ediyor. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-negatif-bolen name="Negatif Bölenle Tam Bölme"}
+$17$'yi $-5$'e Python'un `//` ve `%` işlemleriyle bölünüz ve sonucu, kalanın $0 \le r < |b|$ koşulunu sağladığı sayılar teorisi bölmesiyle karşılaştırınız.
+
+::: {.cozum}
+**Python'un bölmesi.** @def-gir-tam-bolme gereği $q = \lfloor 17/(-5) \rfloor$, yani $q = \lfloor -3{,}4 \rfloor = -4$ ve $r = 17 - (-5)(-4) = -3$ olur; kalan bölen gibi negatiftir.
+
+**Sayılar teorisi bölmesi.** [Negatif bölenle bölmede](../sayilar-teorisi/1/bolme-algoritmasi.html#cor-bolme-negatif) kalan $0 \le r < |b| = 5$ aralığında seçilir: $17 = (-5)(-3) + 2$. Bu kalanı Python'da `a % abs(b)` verir, bölüm de $q = (a - r)/b$ eşitliğinden bulunur:
+
+```python
+a, b = 17, -5
+print(a // b, a % b, b * (a // b) + a % b)
+r = a % abs(b)            # 0 <= r < |b| olan kalan
+q = (a - r) // b
+print(q, r, b * q + r)
+```
+
+Çıktı:
+
+```text
+-4 -3 17
+-3 2 17
+```
+
+**Karşılaştırma.** İki bölme de $a = bq + r$ eşitliğini sağlar, ama kalanları farklı aralıkta seçer: Python $(q, r) = (-4, -3)$, sayılar teorisi $(q, r) = (-3, 2)$ verir. Bölen pozitifken bu fark ortaya çıkmaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-epsilon name="Makine Epsilonunu Deneyle Bulmak"}
+$k = 50, 51, \ldots, 55$ için `1 + 2 ** -k == 1` karşılaştırmasının değerini yazdırarak $1 + 2^{-k}$ toplamının $1$'e eşit çıktığı en küçük $k$'yi bulunuz ve sonucu makine epsilonuyla açıklayınız.
+
+::: {.cozum}
+**Deney.** Negatif kuvvet aldığımız için `2 ** -k` bir `float`'tır:
+
+```python
+import sys
+
+for k in range(50, 56):
+    print(k, 1 + 2 ** -k == 1)
+print(sys.float_info.epsilon == 2 ** -52)
+```
+
+Çıktı:
+
+```text
+50 False
+51 False
+52 False
+53 True
+54 True
+55 True
+True
+```
+
+**Açıklama.** $k \le 52$ iken $1 + 2^{-k}$ sayısı tam olarak bir `float`'tır: mantisin $k$'inci ikili basamağı $1$, diğerleri $0$'dır. Bu yüzden toplam $1$'den büyük kalır. $k = 53$ için $1 + 2^{-53} = 1 + \frac{\varepsilon}{2}$ sayısı $1$ ile $1 + \varepsilon$'un tam ortasındadır ve "eşitlikte çifte yuvarla" kuralıyla $1$'e yuvarlanır. Daha büyük $k$'lerde toplam $1$'e daha da yakındır. Aranan en küçük değer $k = 53$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-onda-bir name="Onda Birin On Katı"}
+`0.0`'dan başlayıp $0{,}1$'i döngüyle on kez ekleyiniz. Sonucu $1$ ile `==` ve `math.isclose` kullanarak karşılaştırınız; aynı toplamı `Fraction(1, 10)` ile de yapınız.
+
+::: {.cozum}
+**İki toplamı birlikte kuralım.**
+
+```python
+import math
+from fractions import Fraction
+
+total = 0.0
+exact = Fraction(0)
+for k in range(10):
+    total += 0.1
+    exact += Fraction(1, 10)
+print(total, total == 1, math.isclose(total, 1))
+print(exact, exact == 1)
+```
+
+Çıktı:
+
+```text
+0.9999999999999999 False True
+1 True
+```
+
+**Yorum.** `float` toplam her adımda küçük bir yuvarlama hatası yaptı ve sonuç $1$'in hemen altındaki `float` oldu; bu yüzden `==` `False` verdi. Fark $10^{-16}$ mertebesinde olduğundan `math.isclose` ile karşılaştırma `True` verdi. `Fraction` toplamı ise tam olarak $1$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-sadelesme name="Sadeleşme Hatası"}
+$f(x) = \dfrac{1 - \cos x}{x^2}$ fonksiyonunun $x \to 0$ iken limiti $\frac{1}{2}$'dir. $f(10^{-8})$'i Python ile doğrudan hesaplayınız ve sonucu, $1 - \cos x = 2\sin^2(x/2)$ özdeşliğiyle yeniden yazılmış formülün sonucuyla karşılaştırınız.
+
+::: {.cozum}
+**İki formül.**
+
+```python
+import math
+
+x = 1e-8
+print(math.cos(x))                          # 1'e yuvarlandı
+print((1 - math.cos(x)) / x ** 2)           # doğrudan formül
+print(2 * math.sin(x / 2) ** 2 / x ** 2)    # özdeşlikle
+```
+
+Çıktı:
+
+```text
+1.0
+0.0
+0.5
+```
+
+**Ne oldu?** $\cos x = 1 - \frac{x^2}{2} + \cdots$ olduğundan $x = 10^{-8}$ için $\cos x \approx 1 - 5 \cdot 10^{-17}$'dir. $1$'in hemen altındaki `float` $1 - \frac{\varepsilon}{2}$ olduğundan, $1$'e uzaklığı $\frac{\varepsilon}{4} \approx 5{,}55 \cdot 10^{-17}$'den küçük olan sayılar $1$'e yuvarlanır. $5 \cdot 10^{-17}$ bu eşiğin altında kaldığı için `math.cos(x)` tam olarak $1$ çıkar ve $1 - \cos x$ farkı $0$ olur: birbirine çok yakın iki sayının farkı alınırken bütün anlamlı basamaklar kaybolmuştur. Bu olaya **yıkıcı sadeleşme** (catastrophic cancellation) denir. Özdeşlikle yazılan formülde fark alınmaz; $\sin(x/2)$ tam bağıl hassasiyetle hesaplanır ve sonuç doğru olarak $0{,}5$ çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-karmasik-kuvvet name="Bir Karmaşık Sayının Onuncu Kuvveti"}
+$(1 + i)^{10}$ sayısını Python ile hesaplayınız ve sonucu kutupsal biçimle sağlayınız.
+
+::: {.cozum}
+**Doğrudan ve kutupsal yoldan hesap.**
+
+```python
+import cmath
+
+z = 1 + 1j
+print(z ** 10)
+r, theta = cmath.polar(z)
+print(r, theta)
+print(cmath.rect(r ** 10, 10 * theta))
+```
+
+Çıktı:
+
+```text
+32j
+1.4142135623730951 0.7853981633974483
+(9.797174393178832e-15+32.00000000000002j)
+```
+
+**Elle sağlama.** $|1 + i| = \sqrt{2}$ ve $\arg(1 + i) = \frac{\pi}{4}$ olduğundan
+
+$$(1 + i)^{10} = (\sqrt{2})^{10}\, e^{i\,10\pi/4} = 32\, e^{i\,5\pi/2} = 32\, e^{i\pi/2} = 32i$$
+
+olur. Tam sayı kuvveti `**` ile alındığında Python ardışık çarpmalar yapar ve bu çarpımlarda bütün ara değerler küçük tam sayılar olduğundan sonuç tam olarak `32j` çıkar. Kutupsal yol ise $\sqrt{2}$ ve $\frac{\pi}{4}$'ün yuvarlanmış değerlerinden geçtiği için son basamaklarda küçük hatalar taşır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-teleskopik name="Teleskopik Bir Toplam"}
+$\displaystyle\sum_{k=1}^{20} \frac{1}{k(k+1)}$ toplamını `Fraction` ile tam olarak hesaplayınız ve $\dfrac{n}{n+1}$ formülüyle karşılaştırınız.
+
+::: {.cozum}
+**Formül.** $\frac{1}{k(k+1)} = \frac{1}{k} - \frac{1}{k+1}$ olduğundan toplam teleskopiktir:
+
+$$\sum_{k=1}^{n} \frac{1}{k(k+1)} = 1 - \frac{1}{n+1} = \frac{n}{n+1}.$$
+
+**Python ile.**
+
+```python
+from fractions import Fraction
+
+n = 20
+S = Fraction(0)
+for k in range(1, n + 1):
+    S += Fraction(1, k * (k + 1))
+print(S, S == Fraction(n, n + 1))
+```
+
+Çıktı:
+
+```text
+20/21 True
+```
+
+**Sonuç.** Toplam tam olarak $\frac{20}{21}$'dir ve formülle uyuşur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-yuvarlama name="Beklenmedik Bir Yuvarlama"}
+`round(2.675, 2)` çağrısının neden `2.68` değil `2.67` verdiğini açıklayınız.
+
+::: {.cozum}
+**Saklanan değere bakalım.** `Decimal(2.675)` yazımı, `2.675` `float`'ının tam değerini gösterir:
+
+```python
+from decimal import Decimal
+
+print(round(2.675, 2))
+print(Decimal(2.675))     # float 2.675'in tam değeri
+```
+
+Çıktı:
+
+```text
+2.67
+2.67499999999999982236431605997495353221893310546875
+```
+
+**Açıklama.** $2{,}675$'in ikili açılımı sonsuzdur; ona en yakın `float` $2{,}675$'ten biraz küçüktür. `round` bu saklanan değeri yuvarlar. Değer $2{,}67$ ile $2{,}68$'in tam ortasında değil, ortanın biraz altında olduğundan doğru yuvarlama $2{,}67$'dir. Buradaki sorun bir yuvarlama kuralı değil, $2{,}675$'in `float` olarak tam saklanamamasıdır. Ondalık sayıları tam yuvarlamak gerekiyorsa `Decimal("2.675")` ve `quantize` kullanılır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gir-poker name="Aynı Türden Beş Kart"}
+$52$ kartlık bir desteden rastgele çekilen $5$ kartın hepsinin aynı türden (hepsi kupa, hepsi karo, hepsi maça ya da hepsi sinek) olma olasılığını tam kesir olarak ve yüzde olarak bulunuz.
+
+::: {.cozum}
+**Sayalım.** Bütün eşit olasılıklı eller $\binom{52}{5}$ tanedir. Aynı türden bir el için önce türü ($4$ yol), sonra o türün $13$ kartından $5$'ini ($\binom{13}{5}$ yol) seçeriz. Olasılık
+
+$$P = \frac{4\binom{13}{5}}{\binom{52}{5}}$$
+
+olur.
+
+**Python ile.** Binom katsayıları `math.comb` ile tam sayı olarak, oran da `Fraction` ile tam kesir olarak hesaplanır:
+
+```python
+import math
+from fractions import Fraction
+
+total = math.comb(52, 5)
+flush = 4 * math.comb(13, 5)
+P = Fraction(flush, total)
+print(total, flush)
+print(P, f"{float(P):.4%}")
+```
+
+Çıktı:
+
+```text
+2598960 5148
+33/16660 0.1981%
+```
+
+**Sonuç.** $P = \frac{5148}{2598960} = \frac{33}{16660} \approx 0{,}00198$, yani yaklaşık yüzde $0{,}198$'dir: bin elden yalnız ikisi aynı türdendir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde Python'ı bir hesap makinesi gibi kullandık: kod yukarıdan aşağıya bir kez çalıştı ve döngüyü yalnız bir önizleme olarak gördük. Gerçek programlar karar verir, bir koşul sağlanana kadar tekrar eder ve tekrar tekrar kullanılabilecek parçalar tanımlar. Bir sonraki bölüm [Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd), `if`, `for`, `while` yapılarını ve kendi fonksiyonlarımızı yazmayı Öklid algoritması, Collatz dizisi ve Newton yöntemiyle karekök gibi tanıdık problemler üzerinde öğretiyor.

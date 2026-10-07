@@ -1,0 +1,1934 @@
+---
+title: "NumPy ile Lineer Cebir"
+pagetitle: "NumPy ile Lineer Cebir"
+description: "NumPy ile matris çarpımı, lineer sistem çözümü, ters matris, determinant ve rank, vektör ve matris normları, koşul sayısı, özdeğerler, en küçük kareler ve tekil değer ayrışımı; her adım çalıştırılmış kod ve çıktısıyla."
+---
+
+Bilimsel hesaplamadaki problemlerin büyük çoğunluğu sonunda bir lineer cebir problemine dönüşür. Bir diferansiyel denklemi sayısal olarak çözmek, bir veri kümesine eğri uydurmak ya da bir optimizasyon problemini çözmek çoğu zaman bir $Ax = b$ sistemini çözmeye ya da bir matrisin özdeğerlerini bulmaya varır. Kâğıt üzerinde $3 \times 3$ bir sistemi Gauss yöntemiyle birkaç dakikada çözeriz; bilgisayar $2000 \times 2000$ bir sistemi, bu bölümde ölçeceğimiz gibi, saniyenin onda biri kadar bir sürede çözer.
+
+NumPy'ın `numpy.linalg` modülü bu hesapları onlarca yıldır geliştirilen ve sınanan LAPACK kütüphanesine devreder. Bu bölümde [Lineer Cebir](../lineer-cebir/) notlarından tanıdığımız işlemleri (matris çarpımı, ters matris, determinant, rank, özdeğerler) NumPy ile yapacağız. Tanımları ve ispatları yeniden anlatmayacağız; gerektiğinde Lineer Cebir notlarına bağlantı vereceğiz. Dizilerin nasıl kurulduğunu [NumPy Dizileri](numpy-dizileri.qmd), eleman eleman işlemleri ve broadcasting'i [Vektörizasyon ve Broadcasting](vektorizasyon-ve-broadcasting.qmd) bölümünde gördük.
+
+Asıl dikkatimiz, kayan noktalı sayılarla hesap yapmanın getirdiği farklarda olacak. Tekil bir matrisin determinantı $0$ yerine $6{,}7 \cdot 10^{-18}$ çıkabilir; `solve` hiçbir uyarı vermeden bileşenleri $10^{15}$ mertebesinde olan anlamsız bir çözüm döndürebilir; ters matrisle çözmek hem daha yavaş hem de daha az doğrudur. Bu olguları açıklayan kavram **koşul sayısıdır**. Bölümü en küçük kareler problemi ve tekil değer ayrışımıyla kapatacağız.
+
+## Matris Çarpımı ve Temel İşlemler
+
+NumPy'da bir matris, iki eksenli bir dizidir: birinci eksen satırları, ikinci eksen sütunları sayar. Matematikteki $AB$ çarpımının Python'daki karşılığı `@` işlecidir.
+
+```python
+import numpy as np
+
+A = np.array([[1, 2],
+              [3, 4]])
+B = np.array([[0, 1],
+              [1, 0]])
+
+print(A @ B)    # matris çarpımı
+print(B @ A)    # sıra değişince sonuç değişir
+print(A * B)    # eleman eleman çarpım: matris çarpımı DEĞİL
+```
+
+Çıktı:
+
+```text
+[[2 1]
+ [4 3]]
+[[3 4]
+ [1 2]]
+[[0 2]
+ [3 0]]
+```
+
+$B$ matrisi $A$'yı sağdan çarpınca $A$'nın sütunlarının, soldan çarpınca satırlarının yerini değiştirir; bu yüzden $AB \ne BA$'dır. Son satırdaki `A * B` ise matris çarpımı değildir: karşılıklı elemanları çarpar.
+
+::: {#def-lin-matmul name="Matris Çarpımı İşleci"}
+$A$ dizisinin şekli $(m, n)$, $B$ dizisinin şekli $(n, p)$ olsun. `A @ B` ifadesi, elemanları
+
+$$(AB)_{ij} = \sum_{k=1}^{n} a_{ik} b_{kj}$$
+
+olan $(m, p)$ şekilli diziyi verir. $A$'nın sütun sayısı $B$'nin satır sayısına eşit değilse işlem `ValueError` hatası verir. `np.matmul(A, B)` aynı işlemin fonksiyon biçimidir.
+:::
+
+Yani `@`, [Lineer Cebir](../lineer-cebir/matrisler/matrisler-ve-islemler.html#def-carpim) notlarındaki matris çarpımının ta kendisidir. Aşağıdaki şekil bu boyut kuralını gösteriyor: çarpımın her elemanı, $A$'nın bir satırı ile $B$'nin bir sütununun iç çarpımıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="3.5 18.5 461.5 286.0" role="img" aria-label="A 3 by 4 grid A with row i shaded, times a 4 by 2 grid B with column j shaded, equals a 3 by 2 grid C with the entry c_ij shaded; c_ij = a_i1 b_1j + ... + a_i4 b_4j">
+  <rect x="30.0" y="110.0" width="160.0" height="40.0" fill="var(--color-theory)" fill-opacity="0.22" stroke="none" stroke-width="1.0" stroke-opacity="0.55"/>
+  <rect x="240.0" y="50.0" width="40.0" height="160.0" fill="var(--color-base)" fill-opacity="0.22" stroke="none" stroke-width="1.0" stroke-opacity="0.55"/>
+  <rect x="370.0" y="110.0" width="40.0" height="40.0" fill="var(--color-practice)" fill-opacity="0.35" stroke="none" stroke-width="1.0" stroke-opacity="0.55"/>
+  <rect x="30.0" y="70.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="70.0" y="70.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="110.0" y="70.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="150.0" y="70.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="30.0" y="110.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="70.0" y="110.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="110.0" y="110.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="150.0" y="110.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="30.0" y="150.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="70.0" y="150.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="110.0" y="150.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="150.0" y="150.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="240.0" y="50.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="280.0" y="50.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="240.0" y="90.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="280.0" y="90.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="240.0" y="130.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="280.0" y="130.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="240.0" y="170.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="280.0" y="170.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="370.0" y="70.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="410.0" y="70.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="370.0" y="110.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="410.0" y="110.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="370.0" y="150.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="410.0" y="150.0" width="40.0" height="40.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <rect x="30.0" y="70.0" width="160.0" height="120.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.6" stroke-opacity="0.8"/>
+  <rect x="240.0" y="50.0" width="80.0" height="160.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.6" stroke-opacity="0.8"/>
+  <rect x="370.0" y="70.0" width="80.0" height="120.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.6" stroke-opacity="0.8"/>
+  <text x="215.0" y="136.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">@</text>
+  <text x="345.0" y="136.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">=</text>
+  <text x="50.0" y="134.0" fill="var(--color-theory)" font-size="12" text-anchor="middle"><tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="260.0" y="74.0" fill="var(--color-base)" font-size="12" text-anchor="middle"><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">1<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="90.0" y="134.0" fill="var(--color-theory)" font-size="12" text-anchor="middle"><tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>2</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="260.0" y="114.0" fill="var(--color-base)" font-size="12" text-anchor="middle"><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">2<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="130.0" y="134.0" fill="var(--color-theory)" font-size="12" text-anchor="middle"><tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>3</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="260.0" y="154.0" fill="var(--color-base)" font-size="12" text-anchor="middle"><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">3<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="170.0" y="134.0" fill="var(--color-theory)" font-size="12" text-anchor="middle"><tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>4</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="260.0" y="194.0" fill="var(--color-base)" font-size="12" text-anchor="middle"><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">4<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="390.0" y="134.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">c</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">ij</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="110.0" y="234.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">A</tspan>: (3, 4)</text>
+  <text x="280.0" y="234.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">B</tspan>: (4, 2)</text>
+  <text x="410.0" y="234.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">C</tspan>: (3, 2)</text>
+  <text x="22.0" y="134.0" fill="var(--color-theory)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">i</tspan></text>
+  <text x="260.0" y="42.0" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">j</tspan></text>
+  <text x="240.0" y="264.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">c</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">ij</tspan></tspan><tspan dy="-3.5">&#8203;</tspan> = <tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>1</tspan><tspan dy="-3.5">&#8203;</tspan><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">1<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan> + <tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>2</tspan><tspan dy="-3.5">&#8203;</tspan><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">2<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan> + <tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>3</tspan><tspan dy="-3.5">&#8203;</tspan><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">3<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan> + <tspan font-style="italic">a</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">i</tspan>4</tspan><tspan dy="-3.5">&#8203;</tspan><tspan font-style="italic">b</tspan><tspan font-size="9.5" dy="3.5">4<tspan font-style="italic">j</tspan></tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="240.0" y="288.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">iç boyutlar eşit olmalı: <tspan font-style="italic">A</tspan>'nın 4 sütunu, <tspan font-style="italic">B</tspan>'nin 4 satırı</text>
+</svg>
+<figcaption><code>A @ B</code> için boyut kuralı: (3, 4) şekilli <em>A</em> ile (4, 2) şekilli <em>B</em>'nin çarpımı (3, 2) şekillidir. <em>C</em>'nin <em>i</em>. satır, <em>j</em>. sütundaki elemanı, <em>A</em>'nın <em>i</em>. satırı ile <em>B</em>'nin <em>j</em>. sütununun iç çarpımıdır. Bu yüzden <em>A</em>'nın sütun sayısı <em>B</em>'nin satır sayısına eşit olmak zorundadır.</figcaption>
+</figure>
+```
+
+::: {.callout-warning title="Yıldız işareti matris çarpımı değildir"}
+`A * B`, aynı şekilli iki diziyi eleman eleman çarpar. Şekiller farklıysa broadcasting kuralları devreye girer ve hiçbir hata almadan beklenmedik bir sonuç elde edilebilir: örneğin $(3, 3)$ şekilli `A` ile uzunluğu $3$ olan `v` için `A * v` hata vermez ama $Av$ değildir. Matematikte $AB$ yazdığımız her yerde kodda `A @ B` yazılır. Eski kodlarda görülen `np.dot(A, B)` iki eksenli dizilerde aynı sonucu verir; `np.matrix` sınıfı ise artık önerilmez ve yeni kodda kullanılmaz.
+:::
+
+Tek eksenli bir dizi ne satır ne de sütun vektörüdür; yalnızca bir sayı listesidir. `@` işleci onu bağlama göre yorumlar: `A @ v` çarpımında `v` bir sütun vektörü, `w @ A` çarpımında `w` bir satır vektörü gibi davranır. Aynı uzunluktaki iki vektörün `u @ v` çarpımı ise [standart iç çarpımdır](../analiz-4/rn-uzayi-ic-carpim-ve-norm.html#def-nrm-standart-ic-carpim). Transpoz `A.T` ile alınır.
+
+```python
+import numpy as np
+
+A = np.array([[2, -1, 0],
+              [1, 3, 4]])      # 2 x 3 matris
+v = np.array([1, 0, -2])       # uzunluğu 3 olan vektör
+w = np.array([1, 1])           # uzunluğu 2 olan vektör
+
+print(A @ v)        # A v: v sütun gibi davranır
+print(w @ A)        # w^T A: w satır gibi davranır
+print(v @ v)        # iç çarpım: 1 + 0 + 4
+print(A.T.shape)    # transpoz
+print(A @ A.T)      # 2 x 2 ve simetrik
+print(np.trace(A @ A.T))    # köşegen toplamı (iz)
+```
+
+Çıktı:
+
+```text
+[ 2 -7]
+[3 2 4]
+5
+(3, 2)
+[[ 5 -1]
+ [-1 26]]
+31
+```
+
+$AA^T$ her zaman simetriktir, çünkü $(AA^T)^T = (A^T)^T A^T = AA^T$'dir. `np.trace` köşegen elemanların toplamını, yani izi verir. $n \times n$ birim matris `np.eye(n)` ile, bir kare matrisin $k$. kuvveti `np.linalg.matrix_power(A, k)` ile kurulur.
+
+:::: {#exm-lin-fibonacci name="Fibonacci Sayıları ve Matris Kuvveti"}
+Fibonacci sayıları $F_0 = 0$, $F_1 = 1$ ve $F_{n+1} = F_n + F_{n-1}$ ile tanımlanır. $Q = \begin{pmatrix} 1 & 1 \\ 1 & 0 \end{pmatrix}$ matrisinin kuvvetlerini kullanarak $F_{10}$ ve $F_{100}$ sayılarını hesaplayınız.
+
+::: {.cozum}
+Önce $n \ge 1$ için
+
+$$Q^n = \begin{pmatrix} F_{n+1} & F_n \\ F_n & F_{n-1} \end{pmatrix}$$
+
+olduğunu tümevarımla görelim. $n = 1$ için $F_2 = 1$, $F_1 = 1$, $F_0 = 0$ olduğundan eşitlik doğrudur. Eşitlik $n$ için doğruysa
+
+$$Q^{n+1} = Q^n Q = \begin{pmatrix} F_{n+1} + F_n & F_{n+1} \\ F_n + F_{n-1} & F_n \end{pmatrix} = \begin{pmatrix} F_{n+2} & F_{n+1} \\ F_{n+1} & F_n \end{pmatrix}$$
+
+olur. Demek ki $F_n$, $Q^n$'nin birinci satır, ikinci sütundaki elemanıdır; Python'da bu eleman `[0, 1]` indeksiyle okunur.
+
+```python
+import numpy as np
+
+Q = np.array([[1, 1],
+              [1, 0]])
+print(np.linalg.matrix_power(Q, 10))
+
+Q100 = np.linalg.matrix_power(Q, 100)
+print(Q100[0, 1])               # int64 taştı!
+
+Q_obj = Q.astype(object)        # elemanlar Python tamsayısı olur
+print(np.linalg.matrix_power(Q_obj, 100)[0, 1])
+```
+
+Çıktı:
+
+```text
+[[89 55]
+ [55 34]]
+3736710778780434371
+354224848179261915075
+```
+
+$Q^{10}$'un köşegen dışı elemanından $F_{10} = 55$ okunur. $F_{100}$ için ilk sonuç yanlıştır; doğru değer son satırdaki $354\,224\,848\,179\,261\,915\,075$ sayısıdır. NumPy tamsayı dizilerini varsayılan olarak 64 bitlik `int64` türünde tutar. Bu türün en büyük değeri $2^{63} - 1 \approx 9{,}22 \cdot 10^{18}$'dir ve $F_{93}$ bu sınırı aşar. Sınırı aşan bir tamsayı işlemi hata vermez: sonuç $2^{64}$'e göre kalanı alınarak sessizce "başa sarar". `astype(object)` ile elemanlar, büyüklüğü sınırsız olan Python tamsayılarına çevrilir; hesap yavaşlar ama tam doğru olur. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Tamsayı taşması sessizdir"}
+Python'ın kendi tamsayıları istediği kadar büyüyebilir ([Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd)), NumPy'ın `int64` dizileri büyüyemez. Ayrıca `solve`, `inv`, `det` ve `eig` gibi LAPACK'e dayanan fonksiyonlar hesabı her zaman kayan noktalı sayılarla yapar. Tamsayı dizileri önce `float64` türüne çevrilir ve sonuç yine yuvarlama hatası taşır: örneğin $\begin{pmatrix} 2 & 1 \\ 1 & 3 \end{pmatrix}$ tamsayı matrisinin determinantı `5.000000000000001` çıkar. `object` türündeki diziler ise bu fonksiyonlarda hata verir. Tam aritmetikle matris hesabı gerekiyorsa [SymPy ile Sembolik Hesap](sympy-ile-sembolik-hesap.qmd) bölümündeki matrisler kullanılır.
+:::
+
+## Lineer Sistemlerin Çözümü
+
+Lineer cebirin merkezindeki problem, $A$ bir $n \times n$ matris ve $b \in \mathbb{R}^n$ iken [lineer denklem sistemini](../lineer-cebir/denklem-sistemleri/lineer-denklemler.html#def-sistem) $Ax = b$ biçiminde çözmektir. $A$ regüler ise çözüm tektir ve NumPy'da tek satırla bulunur: `np.linalg.solve(A, b)`.
+
+`solve`, elle yaptığımız [Gauss yöntemini](../lineer-cebir/denklem-sistemleri/gauss-yontemi.html) bir matris ayrışımı olarak düzenler. Satır değişimleriyle birlikte $A$'yı bir alt üçgensel $L$ ve bir üst üçgensel $U$ matrisinin çarpımına ayırır, sonra iki üçgensel sistemi ileriye ve geriye doğru yerine koyarak çözer. Bu **LU ayrışımı** yaklaşık $\tfrac{2}{3}n^3$ aritmetik işlem gerektirir. Her adımda sütundaki mutlak değerce en büyük elemanı köşegene getirmek (kısmi pivotlama, partial pivoting) yuvarlama hatalarının büyümesini önler.
+
+::: {.callout-tip title="Bir lineer sistemi üç adımda çözmek"}
+1. Katsayılar matrisini `A`, sağ tarafı `b` olarak kayan noktalı diziler biçiminde kurun.
+2. `x = np.linalg.solve(A, b)` ile çözün.
+3. Sağlama yapın: `np.allclose(A @ x, b)` ifadesi `True` olmalı, $r = b - Ax$ **artık** (residual) vektörü sıfıra yakın olmalıdır.
+:::
+
+:::: {#exm-lin-uc-bilinmeyen name="Üç Bilinmeyenli Bir Sistem"}
+$$
+\begin{aligned}
+2x + y - 3z &= 5\\
+3x - 2y + 2z &= 5\\
+5x - 3y - z &= 16
+\end{aligned}
+$$
+
+sistemini `solve` ile çözünüz ve çözümü sağlayınız.
+
+::: {.cozum}
+Üç adımı sırayla uyguluyoruz: katsayıları ve sağ tarafı kuruyor, `solve` ile çözüyor, sonra sağlama yapıp artığı hesaplıyoruz.
+
+```python
+import numpy as np
+
+A = np.array([[2.0, 1.0, -3.0],
+              [3.0, -2.0, 2.0],
+              [5.0, -3.0, -1.0]])
+b = np.array([5.0, 5.0, 16.0])
+
+x = np.linalg.solve(A, b)
+print(x)
+print(np.allclose(A @ x, b))    # sağlama
+print(b - A @ x)                # artık vektörü
+```
+
+Çıktı:
+
+```text
+[ 1. -3. -2.]
+True
+[0. 0. 0.]
+```
+
+Çözüm $(x, y, z) = (1, -3, -2)$'dir. Gerçekten $2 - 3 + 6 = 5$, $3 + 6 - 4 = 5$ ve $5 + 9 + 2 = 16$'dır. Bu sistem [Lineer Cebir](../lineer-cebir/denklem-sistemleri/gauss-yontemi.html#exr-gauss) notlarında Gauss yöntemiyle elle çözülen sistemlerden biridir ve orada da aynı çözüm bulunur. Artığın tam sıfır çıkması bu küçük örneğe özgüdür; genelde $10^{-16}$ mertebesinde sayılar görürüz. [$\blacksquare$]{.qed}
+:::
+::::
+
+`solve`'un ikinci argümanı bir matris de olabilir. Bu durumda her sütun ayrı bir sağ taraf sayılır ve sonuç, sütunları karşılık gelen çözümler olan bir matristir. LU ayrışımı yalnızca bir kez yapıldığı için bu yol, sistemleri tek tek çözmekten ucuzdur.
+
+```python
+import numpy as np
+
+A = np.array([[4.0, 1.0],
+              [2.0, 3.0]])
+B = np.array([[1.0, 0.0, 9.0],
+              [0.0, 1.0, 7.0]])   # üç sağ taraf, sütun sütun
+
+X = np.linalg.solve(A, B)
+print(X)
+```
+
+Çıktı:
+
+```text
+[[ 0.3 -0.1  2. ]
+ [-0.2  0.4  1. ]]
+```
+
+İlk iki sağ taraf birim matrisin sütunları olduğundan çözümün ilk iki sütunu $A^{-1}$'in sütunlarıdır:
+
+$$A^{-1} = \frac{1}{10}\begin{pmatrix} 3 & -1 \\ -2 & 4 \end{pmatrix}.$$
+
+Üçüncü sütun, $(9, 7)$ sağ tarafının çözümü olan $(2, 1)$'dir.
+
+$A$ tekil olduğunda `solve` çoğu zaman `LinAlgError` hatası verir. Bu hatayı [Sınıflar, Hata Yakalama ve Dosyalar](siniflar-hatalar-ve-dosyalar.qmd) bölümündeki `try`/`except` yapısıyla yakalayıp sistemi rank ölçütüyle inceleyebiliriz.
+
+:::: {#exm-lin-sonsuz-cozum name="Sonsuz Çözümlü Bir Sistem"}
+$$
+\begin{aligned}
+x + 2y - 3z &= 6\\
+2x - y + 4z &= 2\\
+4x + 3y - 2z &= 14
+\end{aligned}
+$$
+
+sistemini `solve` ile çözmeyi deneyiniz; başarısız olursa sistemin çözülebilir olup olmadığına rank ölçütüyle karar veriniz.
+
+::: {.cozum}
+`np.column_stack` katsayılar matrisinin yanına $b$'yi bir sütun olarak ekler ve genişletilmiş matrisi kurar.
+
+```python
+import numpy as np
+
+A = np.array([[1.0, 2.0, -3.0],
+              [2.0, -1.0, 4.0],
+              [4.0, 3.0, -2.0]])
+b = np.array([6.0, 2.0, 14.0])
+
+try:
+    x = np.linalg.solve(A, b)
+except np.linalg.LinAlgError as err:
+    print("solve başarısız:", err)
+
+Ab = np.column_stack([A, b])    # genişletilmiş matris [A | b]
+print(np.linalg.matrix_rank(A), np.linalg.matrix_rank(Ab))
+```
+
+Çıktı:
+
+```text
+solve başarısız: Singular matrix
+2 2
+```
+
+`solve` hata verdi, çünkü katsayılar matrisi tekildir. `matrix_rank` hem $A$'nın hem de $[A \mid b]$ genişletilmiş matrisinin rankını $2$ buldu. [Çözülebilirliğin rank ölçütüne](../lineer-cebir/vektor-uzaylari/rank.html#thm-cozulebilirlik) göre iki rank eşit olduğundan sistem çözülebilirdir. Homojen sistemin [çözüm uzayı](../lineer-cebir/vektor-uzaylari/rank.html#thm-cozum-uzayi-boyutu) $3 - 2 = 1$ boyutludur, yani bir serbest değişken ve sonsuz çok çözüm vardır. Gauss yöntemiyle bulunan genel çözüm $a \in \mathbb{R}$ olmak üzere $(2 - a,\ 2 + 2a,\ a)$'dır; örneğin $a = 1$ için $(1, 4, 1)$ sistemi sağlar: $1 + 8 - 3 = 6$, $2 - 4 + 4 = 2$, $4 + 12 - 2 = 14$. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Ters Matris, Determinant ve Rank
+
+Lineer Cebir'de bir kare matrisin [tersini](../lineer-cebir/matrisler/kare-matrisler-ve-ters.html#def-ters-matris), [determinantını](../lineer-cebir/determinantlar/determinant.html#def-determinant) ve [rankını](../lineer-cebir/vektor-uzaylari/rank.html#def-satir-ranki) elle hesaplamayı öğrendik. NumPy'daki karşılıkları `np.linalg.inv`, `np.linalg.det` ve `np.linalg.matrix_rank` fonksiyonlarıdır.
+
+```python
+import numpy as np
+
+A = np.array([[2.0, 1.0, 1.0],
+              [1.0, 3.0, 2.0],
+              [1.0, 0.0, 0.0]])
+
+A_inv = np.linalg.inv(A)
+print(A_inv)
+print(np.linalg.det(A))
+print(np.linalg.matrix_rank(A))
+print(np.allclose(A @ A_inv, np.eye(3)))
+```
+
+Çıktı:
+
+```text
+[[ 0.  0.  1.]
+ [-2.  1.  3.]
+ [ 3. -1. -5.]]
+-1.0
+3
+True
+```
+
+`inv` ve `det` de LU ayrışımına dayanır: determinant, $U$'nun köşegen elemanlarının çarpımıdır ve satır değişimlerinin sayısı tekse işaret değiştirir. Bu matrisin determinantı $-1$ olduğu ve elemanları tamsayı olduğu için tersinin elemanları da tamsayıdır ([Lineer Cebir, tersin ek matrisle formülü](../lineer-cebir/determinantlar/kofaktor-ve-ters.html#cor-ek-ters)). Elle hesabın aksine bilgisayar her adımda yuvarlama yapar. Bu küçük örnekte görünür bir hata oluşmadı, ama genel durumda `A @ A_inv` birim matrise yalnızca yaklaşık olarak eşittir; karşılaştırmayı bu yüzden `==` ile değil `np.allclose` ile yapıyoruz.
+
+:::: {#exm-lin-sessiz-tekil name="Sessizce Yanlış Bir Çözüm"}
+$$A = \begin{pmatrix} 0{,}1 & 0{,}2 & 0{,}3 \\ 0{,}4 & 0{,}5 & 0{,}6 \\ 0{,}7 & 0{,}8 & 0{,}9 \end{pmatrix}, \qquad b = \begin{pmatrix} 1 \\ 0 \\ 0 \end{pmatrix}$$
+
+olsun. $Ax = b$ sisteminin çözümü olmadığını gösterip `solve`'un bu sisteme verdiği yanıtı inceleyiniz.
+
+::: {.cozum}
+$A$'nın satırları $R_1, R_2, R_3$ olsun. $R_1 - 2R_2 + R_3$ birleşiminin bileşenleri
+
+$$0{,}1 - 0{,}8 + 0{,}7 = 0, \qquad 0{,}2 - 1 + 0{,}8 = 0, \qquad 0{,}3 - 1{,}2 + 0{,}9 = 0$$
+
+olduğundan satırlar lineer bağımlıdır ve $A$ tekildir. Aynı birleşimi denklemlere uygularsak sol taraf $0$, sağ taraf $1 - 2 \cdot 0 + 0 = 1$ olur. $0 = 1$ çelişkisi sistemin çözümü olmadığını gösterir. Şimdi NumPy'a soralım:
+
+```python
+import numpy as np
+
+A = np.array([[0.1, 0.2, 0.3],
+              [0.4, 0.5, 0.6],
+              [0.7, 0.8, 0.9]])
+b = np.array([1.0, 0.0, 0.0])
+
+x = np.linalg.solve(A, b)       # hata vermiyor!
+print(x)
+print(A @ x)                    # b'ye hiç benzemiyor
+print(np.linalg.det(A))
+print(np.linalg.matrix_rank(A))
+```
+
+Çıktı:
+
+```text
+[-4.50359963e+15  9.00719925e+15 -4.50359963e+15]
+[ 0.85  0.2  -0.45]
+6.661338147750926e-18
+2
+```
+
+`solve` hata vermedi ve bileşenleri $10^{15}$ mertebesinde olan bir "çözüm" döndürdü. Sağlama yapınca $Ax$'in $b$'ye hiç benzemediği görülüyor. Determinant da $0$ değil, $6{,}7 \cdot 10^{-18}$ çıktı. Sebep, $0{,}1$, $0{,}2$, … sayılarının ikili sistemde tam olarak gösterilememesidir ([Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-ieee)). Bellekteki matris, tekil matrisin çok küçük bir bozulmasıdır ve tam olarak tekil değildir. LU ayrışımı $0$ olması gereken yerde $1{,}1 \cdot 10^{-16}$ büyüklüğünde bir pivot bulur ve ona böler. `matrix_rank` ise doğru yanıtı, $2$'yi verdi; bu kararı nasıl verdiğini tekil değer ayrışımı kısmında göreceğiz. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Tekilliği determinantla sınamayın"}
+`det(A) == 0` sınaması kayan noktalı sayılarla anlamsızdır. Yukarıdaki tekil matrisin determinantı $0$ çıkmadı. Tersine, $0{,}1\, I_{20}$ matrisinin determinantı $10^{-20}$'dir, ama bu matrisle sistem çözmek son derece kolaydır. Determinant matrisin ölçeğine bağlıdır ve matrisin tekilliğe ne kadar yakın olduğunu ölçmez. Doğru araçlar `matrix_rank` ve aşağıda tanımlayacağımız koşul sayısıdır.
+:::
+
+## Vektör ve Matris Normları
+
+Bir hesabın ne kadar doğru olduğunu söyleyebilmek için vektörlerin ve matrislerin büyüklüğünü tek bir sayıyla ölçmemiz gerekir. Vektör [normlarını](../analiz-4/rn-uzayi-ic-carpim-ve-norm.html#def-nrm-norm) Analiz 4 notlarında tanımladık: Öklid normu $\|x\|_2$, 1-normu $\|x\|_1 = \sum |x_i|$ ve maksimum normu $\|x\|_\infty = \max |x_i|$ ([$p$-normları](../analiz-4/rn-uzayi-ic-carpim-ve-norm.html#def-nrm-p-normu)). Hepsini `np.linalg.norm` hesaplar; ikinci argüman normun türünü seçer.
+
+```python
+import numpy as np
+
+x = np.array([3.0, -4.0, 12.0])
+print(np.linalg.norm(x))            # Öklid normu (2-normu)
+print(np.linalg.norm(x, 1))         # mutlak değerler toplamı
+print(np.linalg.norm(x, np.inf))    # en büyük mutlak değer
+```
+
+Çıktı:
+
+```text
+13.0
+19.0
+12.0
+```
+
+Gerçekten $\|x\|_2 = \sqrt{9 + 16 + 144} = 13$, $\|x\|_1 = 3 + 4 + 12 = 19$ ve $\|x\|_\infty = 12$'dir. Matrisler için en kullanışlı normlar, bir vektör normundan türetilenlerdir.
+
+::: {#def-lin-dogal-norm name="Doğal Matris Normu"}
+$\mathbb{R}^n$ ve $\mathbb{R}^m$ üzerinde aynı türden bir $\|\cdot\|$ vektör normu verilsin (örneğin ikisinde de Öklid normu). $m \times n$ bir $A$ matrisi için ($x \in \mathbb{R}^n$, $Ax \in \mathbb{R}^m$)
+
+$$\|A\| = \max_{x \ne 0} \frac{\|Ax\|}{\|x\|} = \max_{\|x\| = 1} \|Ax\|$$
+
+sayısına bu vektör normunun ürettiği **doğal matris normu** denir. $\|\cdot\|_1$, $\|\cdot\|_2$ ve $\|\cdot\|_\infty$ vektör normlarının ürettiği matris normları sırasıyla $\|A\|_1$, $\|A\|_2$ ve $\|A\|_\infty$ ile gösterilir.
+:::
+
+Yani $\|A\|$, $A$'nın bir vektörü en fazla kaç katına uzatabildiğidir. Tanımdan her $x$ için $\|Ax\| \le \|A\|\,\|x\|$ eşitsizliği, buradan da $\|AB\| \le \|A\|\,\|B\|$ eşitsizliği çıkar. Doğal normların yanında, elemanların kareleri toplamından gelen bir norm da sık kullanılır.
+
+::: {#def-lin-frobenius name="Frobenius Normu"}
+$m \times n$ bir $A$ matrisinin **Frobenius normu**
+
+$$\|A\|_F = \Big(\sum_{i=1}^{m} \sum_{j=1}^{n} a_{ij}^2\Big)^{1/2}$$
+
+sayısıdır.
+:::
+
+Yani Frobenius normu, matrisi $mn$ bileşenli uzun bir vektör gibi düşünüp aldığımız Öklid normudur. Bir vektör normundan türetilmez, ama her $x$ için $\|Ax\|_2 \le \|A\|_F\,\|x\|_2$ eşitsizliğini sağlar. 1- ve sonsuz normlarının ise basit formülleri vardır.
+
+:::: {#prp-lin-norm-formulleri name="Bir ve Sonsuz Normlarının Formülleri"}
+$n \times n$ bir $A$ matrisi için
+
+$$\|A\|_1 = \max_{1 \le j \le n} \sum_{i=1}^{n} |a_{ij}|, \qquad \|A\|_\infty = \max_{1 \le i \le n} \sum_{j=1}^{n} |a_{ij}|$$
+
+dir. Yani $\|A\|_1$ mutlak değerlerle en büyük sütun toplamı, $\|A\|_\infty$ en büyük satır toplamıdır.
+
+::: {.ispat}
+**Sonsuz normu.** $\|x\|_\infty = 1$ olsun. Her $j$ için $|x_j| \le 1$ olduğundan her $i$ için
+
+$$|(Ax)_i| = \Big|\sum_{j} a_{ij} x_j\Big| \le \sum_{j} |a_{ij}|\,|x_j| \le \sum_{j} |a_{ij}|$$
+
+olur; demek ki $\|Ax\|_\infty$ en büyük satır toplamını aşmaz. Eşitliği göstermek için en büyük toplamın bulunduğu satır $k$ olsun ve $a_{kj} \ge 0$ ise $x_j = 1$, değilse $x_j = -1$ seçelim. O zaman $\|x\|_\infty = 1$ ve $(Ax)_k = \sum_j |a_{kj}|$ olur.
+
+**1-normu.** Her $x$ için
+
+$$\|Ax\|_1 = \sum_{i} \Big|\sum_{j} a_{ij} x_j\Big| \le \sum_{j} |x_j| \sum_{i} |a_{ij}| \le \Big(\max_{j} \sum_{i} |a_{ij}|\Big)\, \|x\|_1$$
+
+dir. En büyük sütun toplamı $k$. sütundaysa $x = e_k$ için eşitlik sağlanır, çünkü $Ae_k$, $A$'nın $k$. sütunudur. [$\blacksquare$]{.qed}
+:::
+::::
+
+$\|A\|_2$ için bu kadar basit bir formül yoktur; onu tekil değer ayrışımı kısmında $A$'nın en büyük tekil değeri olarak tanıyacağız. `np.linalg.norm` matrislerde de ikinci argümanla çalışır. Dikkat: ikinci argüman verilmezse matrisin 2-normu değil Frobenius normu hesaplanır.
+
+```python
+import numpy as np
+
+A = np.array([[1.0, -2.0],
+              [3.0, 4.0]])
+print(np.linalg.norm(A, 1))         # en büyük sütun toplamı
+print(np.linalg.norm(A, np.inf))    # en büyük satır toplamı
+print(np.linalg.norm(A, 2))         # 2-normu
+print(np.linalg.norm(A))            # varsayılan: Frobenius normu
+```
+
+Çıktı:
+
+```text
+6.0
+7.0
+5.116672736016927
+5.477225575051661
+```
+
+$A$'nın mutlak değerlerle sütun toplamları $1 + 3 = 4$ ve $2 + 4 = 6$, satır toplamları $1 + 2 = 3$ ve $3 + 4 = 7$'dir. Bu yüzden $\|A\|_1 = 6$ ve $\|A\|_\infty = 7$'dir. Frobenius normu $\|A\|_F = \sqrt{1 + 4 + 9 + 16}$, yani $\sqrt{30} \approx 5{,}4772$'dir.
+
+## Koşul Sayısı
+
+Sessizce yanlış çözüm örneğinde (@exm-lin-sessiz-tekil) veride $10^{-17}$ mertebesindeki yuvarlama hataları, çözümü olmayan bir sistemden bileşenleri $10^{15}$ mertebesinde olan bir "çözüm" üretti. Bir sistemin verisindeki küçük değişikliklerin çözümü ne kadar değiştirebileceğini ölçen sayı koşul sayısıdır.
+
+::: {#def-lin-kosul-sayisi name="Koşul Sayısı"}
+Regüler bir $A$ kare matrisinin, bir doğal matris normuna göre **koşul sayısı** (condition number)
+
+$$\kappa(A) = \|A\|\,\|A^{-1}\|$$
+
+sayısıdır. $A$ tekil ise $\kappa(A) = \infty$ kabul edilir. NumPy'da `np.linalg.cond(A)` 2-normuna göre koşul sayısını, `np.linalg.cond(A, 1)` ve `np.linalg.cond(A, np.inf)` öteki iki normdakini verir.
+:::
+
+Yani koşul sayısı $A$ ile $A^{-1}$'in büyüklüklerinin çarpımıdır ve hiçbir zaman $1$'den küçük olmaz: $1 = \|I\| = \|AA^{-1}\| \le \|A\|\,\|A^{-1}\|$. Koşul sayısı $1$'e yakın matrislere **iyi koşullu**, çok büyük olanlara **kötü koşullu** denir. Koşul sayısının neyi ölçtüğünü şu önerme söyler.
+
+:::: {#prp-lin-kosul-hata name="Sağ Taraftaki Hatanın Büyümesi"}
+$A$ regüler, $b \ne 0$, $Ax = b$ ve $A(x + \delta x) = b + \delta b$ olsun. O zaman
+
+$$\frac{\|\delta x\|}{\|x\|} \le \kappa(A)\, \frac{\|\delta b\|}{\|b\|}$$
+
+dir.
+
+::: {.ispat}
+İki eşitliği taraf tarafa çıkarırsak $A\,\delta x = \delta b$, yani $\delta x = A^{-1}\delta b$ olur ve buradan $\|\delta x\| \le \|A^{-1}\|\,\|\delta b\|$ bulunur. Öte yandan $\|b\| = \|Ax\| \le \|A\|\,\|x\|$ olduğundan
+
+$$\frac{1}{\|x\|} \le \frac{\|A\|}{\|b\|}$$
+
+dir ($b \ne 0$ olduğundan $x \ne 0$'dır). Bu iki eşitsizliği taraf tarafa çarparsak
+
+$$\frac{\|\delta x\|}{\|x\|} \le \|A\|\,\|A^{-1}\|\,\frac{\|\delta b\|}{\|b\|} = \kappa(A)\,\frac{\|\delta b\|}{\|b\|}$$
+
+elde edilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yani sağ taraftaki göreli hata çözümde en fazla $\kappa(A)$ katına çıkabilir; $A$'nın kendisindeki küçük hatalar için de benzer bir sınır kanıtlanabilir. Kayan noktalı bir sayının göreli hassasiyeti $\varepsilon \approx 2{,}2 \cdot 10^{-16}$ olduğundan ([Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd)) veri zaten bu büyüklükte hatalarla saklanır. Bu yüzden pratik kural şudur: $\kappa(A) \approx 10^k$ ise çözümün yaklaşık $16$ anlamlı basamağından $k$ tanesi kaybedilir.
+
+:::: {#exm-lin-iki-dogru name="Neredeyse Paralel İki Doğru"}
+$x + y = 2$, $x - y = 0$ sisteminde ve $x + y = 2$, $x + 1{,}1\,y = 2{,}1$ sisteminde ikinci denklemin sağ tarafı $0{,}1$ artırıldığında çözümlerin ne kadar değiştiğini karşılaştırınız ve sonucu koşul sayısıyla açıklayınız.
+
+::: {.cozum}
+İki sistemi ve değiştirilmiş sağ tarafları aynı döngüde çözüyoruz. Her satırda önce özgün, sonra değişmiş sistemin çözümü yazılıyor.
+
+```python
+import numpy as np
+
+A_good = np.array([[1.0, 1.0],
+                   [1.0, -1.0]])    # x + y = 2,  x - y = 0
+A_bad = np.array([[1.0, 1.0],
+                  [1.0, 1.1]])      # x + y = 2,  x + 1.1y = 2.1
+b_good = np.array([2.0, 0.0])
+b_bad = np.array([2.0, 2.1])
+db = np.array([0.0, 0.1])           # ikinci bileşene 0.1 ekleniyor
+
+for A, b in [(A_good, b_good), (A_bad, b_bad)]:
+    x = np.linalg.solve(A, b)
+    x2 = np.linalg.solve(A, b + db)
+    print(x, x2)
+```
+
+Çıktı:
+
+```text
+[1. 1.] [1.05 0.95]
+[1. 1.] [0. 2.]
+```
+
+İlk sistemde çözüm $(1, 1)$'den $(1{,}05;\ 0{,}95)$'e, yani sağ taraftaki değişiklikle aynı mertebede kaydı. İkinci sistemde aynı değişiklik çözümü $(1, 1)$'den $(0, 2)$'ye taşıdı. İkinci sistemi koşul sayısıyla inceleyelim:
+
+```python
+import numpy as np
+
+A = np.array([[1.0, 1.0],
+              [1.0, 1.1]])
+b = np.array([2.0, 2.1])
+b2 = np.array([2.0, 2.2])
+
+x = np.linalg.solve(A, b)
+x2 = np.linalg.solve(A, b2)
+
+kappa = np.linalg.cond(A)
+rel_b = np.linalg.norm(b2 - b) / np.linalg.norm(b)
+rel_x = np.linalg.norm(x2 - x) / np.linalg.norm(x)
+print(f"koşul sayısı          : {kappa:.4f}")
+print(f"b'deki göreli değişim : {rel_b:.4f}")
+print(f"x'teki göreli değişim : {rel_x:.4f}")
+print(f"önermedeki üst sınır  : {kappa * rel_b:.4f}")
+```
+
+Çıktı:
+
+```text
+koşul sayısı          : 42.0762
+b'deki göreli değişim : 0.0345
+x'teki göreli değişim : 1.0000
+önermedeki üst sınır  : 1.4509
+```
+
+$b$'deki $\%3{,}4$'lük değişiklik $x$'te $\%100$'lük bir değişikliğe yol açtı. Büyüme katsayısı $1 / 0{,}0345 \approx 29$'dur ve önermedeki üst sınırı (@prp-lin-kosul-hata), yani $\kappa(A) \approx 42$ katını aşmaz. İlk sistemin katsayılar matrisinin sütunları dik ve aynı uzunlukta olduğundan koşul sayısı $1$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Aşağıdaki şekil iki durumu geometrik olarak gösteriyor. İki doğru dik açıyla kesiştiğinde birini biraz kaydırmak kesişim noktasını da biraz kaydırır. Doğrular neredeyse paralel olduğunda ise kesişim noktası çok hassastır: küçük bir kayma onu doğrular boyunca uzağa taşır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="18.5 6.5 603.5 300.0" role="img" aria-label="Two panels. Left: lines x + y = 2 and x - y = 0 meet at right angles at (1, 1); shifting the second line moves the solution to (1.05, 0.95). Right: lines x + y = 2 and x + 1.1y = 2.1 are nearly parallel; the same shift moves the solution from (1, 1) to (0, 2)">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="46.0" y1="276.0" x2="290.0" y2="276.0"/>
+  <line x1="46.0" y1="32.0" x2="46.0" y2="276.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="90.2" y="292.0" text-anchor="middle">0</text>
+  <text x="164.0" y="292.0" text-anchor="middle">1</text>
+  <text x="237.8" y="292.0" text-anchor="middle">2</text>
+  <text x="39.0" y="235.8" text-anchor="end">0</text>
+  <text x="39.0" y="162.0" text-anchor="end">1</text>
+  <text x="39.0" y="88.2" text-anchor="end">2</text>
+  <text x="296.0" y="280.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  <text x="42.0" y="26.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="90.2" y1="40.0" x2="90.2" y2="276.0"/><line x1="164.0" y1="40.0" x2="164.0" y2="276.0"/><line x1="237.8" y1="40.0" x2="237.8" y2="276.0"/><line x1="46.0" y1="231.8" x2="282.0" y2="231.8"/><line x1="46.0" y1="158.0" x2="282.0" y2="158.0"/><line x1="46.0" y1="84.2" x2="282.0" y2="84.2"/></g>
+  <path d="M46.0,40.0 L47.2,41.2 L48.4,42.4 L49.6,43.6 L50.7,44.7 L51.9,45.9 L53.1,47.1 L54.3,48.3 L55.5,49.5 L56.7,50.7 L57.9,51.9 L59.0,53.0 L60.2,54.2 L61.4,55.4 L62.6,56.6 L63.8,57.8 L65.0,59.0 L66.2,60.2 L67.3,61.3 L68.5,62.5 L69.7,63.7 L70.9,64.9 L72.1,66.1 L73.3,67.3 L74.5,68.5 L75.6,69.6 L76.8,70.8 L78.0,72.0 L79.2,73.2 L80.4,74.4 L81.6,75.6 L82.8,76.8 L83.9,77.9 L85.1,79.1 L86.3,80.3 L87.5,81.5 L88.7,82.7 L89.9,83.9 L91.1,85.1 L92.3,86.3 L93.4,87.4 L94.6,88.6 L95.8,89.8 L97.0,91.0 L98.2,92.2 L99.4,93.4 L100.6,94.6 L101.7,95.7 L102.9,96.9 L104.1,98.1 L105.3,99.3 L106.5,100.5 L107.7,101.7 L108.9,102.9 L110.0,104.0 L111.2,105.2 L112.4,106.4 L113.6,107.6 L114.8,108.8 L116.0,110.0 L117.2,111.2 L118.3,112.3 L119.5,113.5 L120.7,114.7 L121.9,115.9 L123.1,117.1 L124.3,118.3 L125.5,119.5 L126.6,120.6 L127.8,121.8 L129.0,123.0 L130.2,124.2 L131.4,125.4 L132.6,126.6 L133.8,127.8 L134.9,128.9 L136.1,130.1 L137.3,131.3 L138.5,132.5 L139.7,133.7 L140.9,134.9 L142.1,136.1 L143.2,137.2 L144.4,138.4 L145.6,139.6 L146.8,140.8 L148.0,142.0 L149.2,143.2 L150.4,144.4 L151.5,145.5 L152.7,146.7 L153.9,147.9 L155.1,149.1 L156.3,150.3 L157.5,151.5 L158.7,152.7 L159.8,153.8 L161.0,155.0 L162.2,156.2 L163.4,157.4 L164.6,158.6 L165.8,159.8 L167.0,161.0 L168.2,162.2 L169.3,163.3 L170.5,164.5 L171.7,165.7 L172.9,166.9 L174.1,168.1 L175.3,169.3 L176.5,170.5 L177.6,171.6 L178.8,172.8 L180.0,174.0 L181.2,175.2 L182.4,176.4 L183.6,177.6 L184.8,178.8 L185.9,179.9 L187.1,181.1 L188.3,182.3 L189.5,183.5 L190.7,184.7 L191.9,185.9 L193.1,187.1 L194.2,188.2 L195.4,189.4 L196.6,190.6 L197.8,191.8 L199.0,193.0 L200.2,194.2 L201.4,195.4 L202.5,196.5 L203.7,197.7 L204.9,198.9 L206.1,200.1 L207.3,201.3 L208.5,202.5 L209.7,203.7 L210.8,204.8 L212.0,206.0 L213.2,207.2 L214.4,208.4 L215.6,209.6 L216.8,210.8 L218.0,212.0 L219.1,213.1 L220.3,214.3 L221.5,215.5 L222.7,216.7 L223.9,217.9 L225.1,219.1 L226.3,220.3 L227.4,221.4 L228.6,222.6 L229.8,223.8 L231.0,225.0 L232.2,226.2 L233.4,227.4 L234.6,228.6 L235.7,229.7 L236.9,230.9 L238.1,232.1 L239.3,233.3 L240.5,234.5 L241.7,235.7 L242.9,236.9 L244.1,238.1 L245.2,239.2 L246.4,240.4 L247.6,241.6 L248.8,242.8 L250.0,244.0 L251.2,245.2 L252.4,246.4 L253.5,247.5 L254.7,248.7 L255.9,249.9 L257.1,251.1 L258.3,252.3 L259.5,253.5 L260.7,254.7 L261.8,255.8 L263.0,257.0 L264.2,258.2 L265.4,259.4 L266.6,260.6 L267.8,261.8 L269.0,263.0 L270.1,264.1 L271.3,265.3 L272.5,266.5 L273.7,267.7 L274.9,268.9 L276.1,270.1 L277.3,271.3 L278.4,272.4 L279.6,273.6 L280.8,274.8" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M46.0,276.0 L47.2,274.8 L48.4,273.6 L49.6,272.4 L50.7,271.3 L51.9,270.1 L53.1,268.9 L54.3,267.7 L55.5,266.5 L56.7,265.3 L57.9,264.1 L59.0,263.0 L60.2,261.8 L61.4,260.6 L62.6,259.4 L63.8,258.2 L65.0,257.0 L66.2,255.8 L67.3,254.7 L68.5,253.5 L69.7,252.3 L70.9,251.1 L72.1,249.9 L73.3,248.7 L74.5,247.5 L75.6,246.4 L76.8,245.2 L78.0,244.0 L79.2,242.8 L80.4,241.6 L81.6,240.4 L82.8,239.2 L83.9,238.1 L85.1,236.9 L86.3,235.7 L87.5,234.5 L88.7,233.3 L89.9,232.1 L91.1,230.9 L92.3,229.7 L93.4,228.6 L94.6,227.4 L95.8,226.2 L97.0,225.0 L98.2,223.8 L99.4,222.6 L100.6,221.4 L101.7,220.3 L102.9,219.1 L104.1,217.9 L105.3,216.7 L106.5,215.5 L107.7,214.3 L108.9,213.1 L110.0,212.0 L111.2,210.8 L112.4,209.6 L113.6,208.4 L114.8,207.2 L116.0,206.0 L117.2,204.8 L118.3,203.7 L119.5,202.5 L120.7,201.3 L121.9,200.1 L123.1,198.9 L124.3,197.7 L125.5,196.5 L126.6,195.4 L127.8,194.2 L129.0,193.0 L130.2,191.8 L131.4,190.6 L132.6,189.4 L133.8,188.2 L134.9,187.1 L136.1,185.9 L137.3,184.7 L138.5,183.5 L139.7,182.3 L140.9,181.1 L142.1,179.9 L143.2,178.8 L144.4,177.6 L145.6,176.4 L146.8,175.2 L148.0,174.0 L149.2,172.8 L150.4,171.6 L151.5,170.5 L152.7,169.3 L153.9,168.1 L155.1,166.9 L156.3,165.7 L157.5,164.5 L158.7,163.3 L159.8,162.2 L161.0,161.0 L162.2,159.8 L163.4,158.6 L164.6,157.4 L165.8,156.2 L167.0,155.0 L168.2,153.8 L169.3,152.7 L170.5,151.5 L171.7,150.3 L172.9,149.1 L174.1,147.9 L175.3,146.7 L176.5,145.5 L177.6,144.4 L178.8,143.2 L180.0,142.0 L181.2,140.8 L182.4,139.6 L183.6,138.4 L184.8,137.2 L185.9,136.1 L187.1,134.9 L188.3,133.7 L189.5,132.5 L190.7,131.3 L191.9,130.1 L193.1,128.9 L194.2,127.8 L195.4,126.6 L196.6,125.4 L197.8,124.2 L199.0,123.0 L200.2,121.8 L201.4,120.6 L202.5,119.5 L203.7,118.3 L204.9,117.1 L206.1,115.9 L207.3,114.7 L208.5,113.5 L209.7,112.3 L210.8,111.2 L212.0,110.0 L213.2,108.8 L214.4,107.6 L215.6,106.4 L216.8,105.2 L218.0,104.0 L219.1,102.9 L220.3,101.7 L221.5,100.5 L222.7,99.3 L223.9,98.1 L225.1,96.9 L226.3,95.7 L227.4,94.6 L228.6,93.4 L229.8,92.2 L231.0,91.0 L232.2,89.8 L233.4,88.6 L234.6,87.4 L235.7,86.3 L236.9,85.1 L238.1,83.9 L239.3,82.7 L240.5,81.5 L241.7,80.3 L242.9,79.1 L244.1,77.9 L245.2,76.8 L246.4,75.6 L247.6,74.4 L248.8,73.2 L250.0,72.0 L251.2,70.8 L252.4,69.6 L253.5,68.5 L254.7,67.3 L255.9,66.1 L257.1,64.9 L258.3,63.7 L259.5,62.5 L260.7,61.3 L261.8,60.2 L263.0,59.0 L264.2,57.8 L265.4,56.6 L266.6,55.4 L267.8,54.2 L269.0,53.0 L270.1,51.9 L271.3,50.7 L272.5,49.5 L273.7,48.3 L274.9,47.1 L276.1,45.9 L277.3,44.7 L278.4,43.6 L279.6,42.4 L280.8,41.2 L282.0,40.0" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M54.3,275.1 L55.5,273.9 L56.7,272.7 L57.9,271.5 L59.0,270.3 L60.2,269.1 L61.4,268.0 L62.6,266.8 L63.8,265.6 L65.0,264.4 L66.2,263.2 L67.3,262.0 L68.5,260.8 L69.7,259.7 L70.9,258.5 L72.1,257.3 L73.3,256.1 L74.5,254.9 L75.6,253.7 L76.8,252.5 L78.0,251.4 L79.2,250.2 L80.4,249.0 L81.6,247.8 L82.8,246.6 L83.9,245.4 L85.1,244.2 L86.3,243.1 L87.5,241.9 L88.7,240.7 L89.9,239.5 L91.1,238.3 L92.3,237.1 L93.4,235.9 L94.6,234.8 L95.8,233.6 L97.0,232.4 L98.2,231.2 L99.4,230.0 L100.6,228.8 L101.7,227.6 L102.9,226.5 L104.1,225.3 L105.3,224.1 L106.5,222.9 L107.7,221.7 L108.9,220.5 L110.0,219.3 L111.2,218.1 L112.4,217.0 L113.6,215.8 L114.8,214.6 L116.0,213.4 L117.2,212.2 L118.3,211.0 L119.5,209.8 L120.7,208.7 L121.9,207.5 L123.1,206.3 L124.3,205.1 L125.5,203.9 L126.6,202.7 L127.8,201.5 L129.0,200.4 L130.2,199.2 L131.4,198.0 L132.6,196.8 L133.8,195.6 L134.9,194.4 L136.1,193.2 L137.3,192.1 L138.5,190.9 L139.7,189.7 L140.9,188.5 L142.1,187.3 L143.2,186.1 L144.4,184.9 L145.6,183.8 L146.8,182.6 L148.0,181.4 L149.2,180.2 L150.4,179.0 L151.5,177.8 L152.7,176.6 L153.9,175.5 L155.1,174.3 L156.3,173.1 L157.5,171.9 L158.7,170.7 L159.8,169.5 L161.0,168.3 L162.2,167.2 L163.4,166.0 L164.6,164.8 L165.8,163.6 L167.0,162.4 L168.2,161.2 L169.3,160.0 L170.5,158.9 L171.7,157.7 L172.9,156.5 L174.1,155.3 L175.3,154.1 L176.5,152.9 L177.6,151.7 L178.8,150.6 L180.0,149.4 L181.2,148.2 L182.4,147.0 L183.6,145.8 L184.8,144.6 L185.9,143.4 L187.1,142.2 L188.3,141.1 L189.5,139.9 L190.7,138.7 L191.9,137.5 L193.1,136.3 L194.2,135.1 L195.4,133.9 L196.6,132.8 L197.8,131.6 L199.0,130.4 L200.2,129.2 L201.4,128.0 L202.5,126.8 L203.7,125.6 L204.9,124.5 L206.1,123.3 L207.3,122.1 L208.5,120.9 L209.7,119.7 L210.8,118.5 L212.0,117.3 L213.2,116.2 L214.4,115.0 L215.6,113.8 L216.8,112.6 L218.0,111.4 L219.1,110.2 L220.3,109.0 L221.5,107.9 L222.7,106.7 L223.9,105.5 L225.1,104.3 L226.3,103.1 L227.4,101.9 L228.6,100.7 L229.8,99.6 L231.0,98.4 L232.2,97.2 L233.4,96.0 L234.6,94.8 L235.7,93.6 L236.9,92.4 L238.1,91.3 L239.3,90.1 L240.5,88.9 L241.7,87.7 L242.9,86.5 L244.1,85.3 L245.2,84.1 L246.4,83.0 L247.6,81.8 L248.8,80.6 L250.0,79.4 L251.2,78.2 L252.4,77.0 L253.5,75.8 L254.7,74.7 L255.9,73.5 L257.1,72.3 L258.3,71.1 L259.5,69.9 L260.7,68.7 L261.8,67.5 L263.0,66.3 L264.2,65.2 L265.4,64.0 L266.6,62.8 L267.8,61.6 L269.0,60.4 L270.1,59.2 L271.3,58.0 L272.5,56.9 L273.7,55.7 L274.9,54.5 L276.1,53.3 L277.3,52.1 L278.4,50.9 L279.6,49.7 L280.8,48.6 L282.0,47.4" fill="none" stroke="var(--color-base)" stroke-width="2.0" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="164.0" cy="158.0" r="4.4" fill="var(--academic-text)"/>
+  <circle cx="167.7" cy="161.7" r="4.4" fill="var(--color-practice)"/>
+  <text x="164.0" y="32.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">İyi koşullu: &#954; = 1</text>
+  <text x="164.0" y="145.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">(1, 1)</text>
+  <text x="176.7" y="176.7" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">(1,05; 0,95)</text>
+  <text x="252.5" y="246.5" fill="var(--color-theory)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan> + <tspan font-style="italic">y</tspan> = 2</text>
+  <text x="200.9" y="62.1" fill="var(--color-base)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan> &#8722; <tspan font-style="italic">y</tspan> = 0</text>
+  <text x="278.3" y="143.3" fill="var(--color-base)" font-size="12" text-anchor="end"><tspan font-style="italic">x</tspan> &#8722; <tspan font-style="italic">y</tspan> = 0,1</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="352.0" y1="276.0" x2="596.0" y2="276.0"/>
+  <line x1="352.0" y1="32.0" x2="352.0" y2="276.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="396.2" y="292.0" text-anchor="middle">0</text>
+  <text x="470.0" y="292.0" text-anchor="middle">1</text>
+  <text x="543.8" y="292.0" text-anchor="middle">2</text>
+  <text x="345.0" y="235.8" text-anchor="end">0</text>
+  <text x="345.0" y="162.0" text-anchor="end">1</text>
+  <text x="345.0" y="88.2" text-anchor="end">2</text>
+  <text x="602.0" y="280.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  <text x="348.0" y="26.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="396.2" y1="40.0" x2="396.2" y2="276.0"/><line x1="470.0" y1="40.0" x2="470.0" y2="276.0"/><line x1="543.8" y1="40.0" x2="543.8" y2="276.0"/><line x1="352.0" y1="231.8" x2="588.0" y2="231.8"/><line x1="352.0" y1="158.0" x2="588.0" y2="158.0"/><line x1="352.0" y1="84.2" x2="588.0" y2="84.2"/></g>
+  <path d="M352.0,40.0 L353.2,41.2 L354.4,42.4 L355.6,43.6 L356.7,44.7 L357.9,45.9 L359.1,47.1 L360.3,48.3 L361.5,49.5 L362.7,50.7 L363.9,51.9 L365.0,53.0 L366.2,54.2 L367.4,55.4 L368.6,56.6 L369.8,57.8 L371.0,59.0 L372.2,60.2 L373.3,61.3 L374.5,62.5 L375.7,63.7 L376.9,64.9 L378.1,66.1 L379.3,67.3 L380.5,68.5 L381.6,69.6 L382.8,70.8 L384.0,72.0 L385.2,73.2 L386.4,74.4 L387.6,75.6 L388.8,76.8 L389.9,77.9 L391.1,79.1 L392.3,80.3 L393.5,81.5 L394.7,82.7 L395.9,83.9 L397.1,85.1 L398.3,86.3 L399.4,87.4 L400.6,88.6 L401.8,89.8 L403.0,91.0 L404.2,92.2 L405.4,93.4 L406.6,94.6 L407.7,95.7 L408.9,96.9 L410.1,98.1 L411.3,99.3 L412.5,100.5 L413.7,101.7 L414.9,102.9 L416.0,104.0 L417.2,105.2 L418.4,106.4 L419.6,107.6 L420.8,108.8 L422.0,110.0 L423.2,111.2 L424.3,112.3 L425.5,113.5 L426.7,114.7 L427.9,115.9 L429.1,117.1 L430.3,118.3 L431.5,119.5 L432.6,120.6 L433.8,121.8 L435.0,123.0 L436.2,124.2 L437.4,125.4 L438.6,126.6 L439.8,127.8 L440.9,128.9 L442.1,130.1 L443.3,131.3 L444.5,132.5 L445.7,133.7 L446.9,134.9 L448.1,136.1 L449.2,137.2 L450.4,138.4 L451.6,139.6 L452.8,140.8 L454.0,142.0 L455.2,143.2 L456.4,144.4 L457.5,145.5 L458.7,146.7 L459.9,147.9 L461.1,149.1 L462.3,150.3 L463.5,151.5 L464.7,152.7 L465.8,153.8 L467.0,155.0 L468.2,156.2 L469.4,157.4 L470.6,158.6 L471.8,159.8 L473.0,161.0 L474.2,162.2 L475.3,163.3 L476.5,164.5 L477.7,165.7 L478.9,166.9 L480.1,168.1 L481.3,169.3 L482.5,170.5 L483.6,171.6 L484.8,172.8 L486.0,174.0 L487.2,175.2 L488.4,176.4 L489.6,177.6 L490.8,178.8 L491.9,179.9 L493.1,181.1 L494.3,182.3 L495.5,183.5 L496.7,184.7 L497.9,185.9 L499.1,187.1 L500.2,188.2 L501.4,189.4 L502.6,190.6 L503.8,191.8 L505.0,193.0 L506.2,194.2 L507.4,195.4 L508.5,196.5 L509.7,197.7 L510.9,198.9 L512.1,200.1 L513.3,201.3 L514.5,202.5 L515.7,203.7 L516.8,204.8 L518.0,206.0 L519.2,207.2 L520.4,208.4 L521.6,209.6 L522.8,210.8 L524.0,212.0 L525.1,213.1 L526.3,214.3 L527.5,215.5 L528.7,216.7 L529.9,217.9 L531.1,219.1 L532.3,220.3 L533.4,221.4 L534.6,222.6 L535.8,223.8 L537.0,225.0 L538.2,226.2 L539.4,227.4 L540.6,228.6 L541.7,229.7 L542.9,230.9 L544.1,232.1 L545.3,233.3 L546.5,234.5 L547.7,235.7 L548.9,236.9 L550.1,238.1 L551.2,239.2 L552.4,240.4 L553.6,241.6 L554.8,242.8 L556.0,244.0 L557.2,245.2 L558.4,246.4 L559.5,247.5 L560.7,248.7 L561.9,249.9 L563.1,251.1 L564.3,252.3 L565.5,253.5 L566.7,254.7 L567.8,255.8 L569.0,257.0 L570.2,258.2 L571.4,259.4 L572.6,260.6 L573.8,261.8 L575.0,263.0 L576.1,264.1 L577.3,265.3 L578.5,266.5 L579.7,267.7 L580.9,268.9 L582.1,270.1 L583.3,271.3 L584.4,272.4 L585.6,273.6 L586.8,274.8" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M352.0,50.7 L353.2,51.8 L354.4,52.9 L355.6,54.0 L356.7,55.0 L357.9,56.1 L359.1,57.2 L360.3,58.3 L361.5,59.4 L362.7,60.4 L363.9,61.5 L365.0,62.6 L366.2,63.7 L367.4,64.7 L368.6,65.8 L369.8,66.9 L371.0,68.0 L372.2,69.1 L373.3,70.1 L374.5,71.2 L375.7,72.3 L376.9,73.4 L378.1,74.4 L379.3,75.5 L380.5,76.6 L381.6,77.7 L382.8,78.8 L384.0,79.8 L385.2,80.9 L386.4,82.0 L387.6,83.1 L388.8,84.1 L389.9,85.2 L391.1,86.3 L392.3,87.4 L393.5,88.5 L394.7,89.5 L395.9,90.6 L397.1,91.7 L398.3,92.8 L399.4,93.9 L400.6,94.9 L401.8,96.0 L403.0,97.1 L404.2,98.2 L405.4,99.2 L406.6,100.3 L407.7,101.4 L408.9,102.5 L410.1,103.6 L411.3,104.6 L412.5,105.7 L413.7,106.8 L414.9,107.9 L416.0,108.9 L417.2,110.0 L418.4,111.1 L419.6,112.2 L420.8,113.3 L422.0,114.3 L423.2,115.4 L424.3,116.5 L425.5,117.6 L426.7,118.6 L427.9,119.7 L429.1,120.8 L430.3,121.9 L431.5,123.0 L432.6,124.0 L433.8,125.1 L435.0,126.2 L436.2,127.3 L437.4,128.4 L438.6,129.4 L439.8,130.5 L440.9,131.6 L442.1,132.7 L443.3,133.7 L444.5,134.8 L445.7,135.9 L446.9,137.0 L448.1,138.1 L449.2,139.1 L450.4,140.2 L451.6,141.3 L452.8,142.4 L454.0,143.4 L455.2,144.5 L456.4,145.6 L457.5,146.7 L458.7,147.8 L459.9,148.8 L461.1,149.9 L462.3,151.0 L463.5,152.1 L464.7,153.1 L465.8,154.2 L467.0,155.3 L468.2,156.4 L469.4,157.5 L470.6,158.5 L471.8,159.6 L473.0,160.7 L474.2,161.8 L475.3,162.9 L476.5,163.9 L477.7,165.0 L478.9,166.1 L480.1,167.2 L481.3,168.2 L482.5,169.3 L483.6,170.4 L484.8,171.5 L486.0,172.6 L487.2,173.6 L488.4,174.7 L489.6,175.8 L490.8,176.9 L491.9,177.9 L493.1,179.0 L494.3,180.1 L495.5,181.2 L496.7,182.3 L497.9,183.3 L499.1,184.4 L500.2,185.5 L501.4,186.6 L502.6,187.6 L503.8,188.7 L505.0,189.8 L506.2,190.9 L507.4,192.0 L508.5,193.0 L509.7,194.1 L510.9,195.2 L512.1,196.3 L513.3,197.4 L514.5,198.4 L515.7,199.5 L516.8,200.6 L518.0,201.7 L519.2,202.7 L520.4,203.8 L521.6,204.9 L522.8,206.0 L524.0,207.1 L525.1,208.1 L526.3,209.2 L527.5,210.3 L528.7,211.4 L529.9,212.4 L531.1,213.5 L532.3,214.6 L533.4,215.7 L534.6,216.8 L535.8,217.8 L537.0,218.9 L538.2,220.0 L539.4,221.1 L540.6,222.1 L541.7,223.2 L542.9,224.3 L544.1,225.4 L545.3,226.5 L546.5,227.5 L547.7,228.6 L548.9,229.7 L550.1,230.8 L551.2,231.9 L552.4,232.9 L553.6,234.0 L554.8,235.1 L556.0,236.2 L557.2,237.2 L558.4,238.3 L559.5,239.4 L560.7,240.5 L561.9,241.6 L563.1,242.6 L564.3,243.7 L565.5,244.8 L566.7,245.9 L567.8,246.9 L569.0,248.0 L570.2,249.1 L571.4,250.2 L572.6,251.3 L573.8,252.3 L575.0,253.4 L576.1,254.5 L577.3,255.6 L578.5,256.6 L579.7,257.7 L580.9,258.8 L582.1,259.9 L583.3,261.0 L584.4,262.0 L585.6,263.1 L586.8,264.2 L588.0,265.3" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M352.0,44.0 L353.2,45.1 L354.4,46.2 L355.6,47.3 L356.7,48.3 L357.9,49.4 L359.1,50.5 L360.3,51.6 L361.5,52.6 L362.7,53.7 L363.9,54.8 L365.0,55.9 L366.2,57.0 L367.4,58.0 L368.6,59.1 L369.8,60.2 L371.0,61.3 L372.2,62.4 L373.3,63.4 L374.5,64.5 L375.7,65.6 L376.9,66.7 L378.1,67.7 L379.3,68.8 L380.5,69.9 L381.6,71.0 L382.8,72.1 L384.0,73.1 L385.2,74.2 L386.4,75.3 L387.6,76.4 L388.8,77.4 L389.9,78.5 L391.1,79.6 L392.3,80.7 L393.5,81.8 L394.7,82.8 L395.9,83.9 L397.1,85.0 L398.3,86.1 L399.4,87.1 L400.6,88.2 L401.8,89.3 L403.0,90.4 L404.2,91.5 L405.4,92.5 L406.6,93.6 L407.7,94.7 L408.9,95.8 L410.1,96.9 L411.3,97.9 L412.5,99.0 L413.7,100.1 L414.9,101.2 L416.0,102.2 L417.2,103.3 L418.4,104.4 L419.6,105.5 L420.8,106.6 L422.0,107.6 L423.2,108.7 L424.3,109.8 L425.5,110.9 L426.7,111.9 L427.9,113.0 L429.1,114.1 L430.3,115.2 L431.5,116.3 L432.6,117.3 L433.8,118.4 L435.0,119.5 L436.2,120.6 L437.4,121.6 L438.6,122.7 L439.8,123.8 L440.9,124.9 L442.1,126.0 L443.3,127.0 L444.5,128.1 L445.7,129.2 L446.9,130.3 L448.1,131.4 L449.2,132.4 L450.4,133.5 L451.6,134.6 L452.8,135.7 L454.0,136.7 L455.2,137.8 L456.4,138.9 L457.5,140.0 L458.7,141.1 L459.9,142.1 L461.1,143.2 L462.3,144.3 L463.5,145.4 L464.7,146.4 L465.8,147.5 L467.0,148.6 L468.2,149.7 L469.4,150.8 L470.6,151.8 L471.8,152.9 L473.0,154.0 L474.2,155.1 L475.3,156.1 L476.5,157.2 L477.7,158.3 L478.9,159.4 L480.1,160.5 L481.3,161.5 L482.5,162.6 L483.6,163.7 L484.8,164.8 L486.0,165.9 L487.2,166.9 L488.4,168.0 L489.6,169.1 L490.8,170.2 L491.9,171.2 L493.1,172.3 L494.3,173.4 L495.5,174.5 L496.7,175.6 L497.9,176.6 L499.1,177.7 L500.2,178.8 L501.4,179.9 L502.6,180.9 L503.8,182.0 L505.0,183.1 L506.2,184.2 L507.4,185.3 L508.5,186.3 L509.7,187.4 L510.9,188.5 L512.1,189.6 L513.3,190.6 L514.5,191.7 L515.7,192.8 L516.8,193.9 L518.0,195.0 L519.2,196.0 L520.4,197.1 L521.6,198.2 L522.8,199.3 L524.0,200.3 L525.1,201.4 L526.3,202.5 L527.5,203.6 L528.7,204.7 L529.9,205.7 L531.1,206.8 L532.3,207.9 L533.4,209.0 L534.6,210.1 L535.8,211.1 L537.0,212.2 L538.2,213.3 L539.4,214.4 L540.6,215.4 L541.7,216.5 L542.9,217.6 L544.1,218.7 L545.3,219.8 L546.5,220.8 L547.7,221.9 L548.9,223.0 L550.1,224.1 L551.2,225.1 L552.4,226.2 L553.6,227.3 L554.8,228.4 L556.0,229.5 L557.2,230.5 L558.4,231.6 L559.5,232.7 L560.7,233.8 L561.9,234.8 L563.1,235.9 L564.3,237.0 L565.5,238.1 L566.7,239.2 L567.8,240.2 L569.0,241.3 L570.2,242.4 L571.4,243.5 L572.6,244.6 L573.8,245.6 L575.0,246.7 L576.1,247.8 L577.3,248.9 L578.5,249.9 L579.7,251.0 L580.9,252.1 L582.1,253.2 L583.3,254.3 L584.4,255.3 L585.6,256.4 L586.8,257.5 L588.0,258.6" fill="none" stroke="var(--color-base)" stroke-width="2.0" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="470.0" cy="158.0" r="4.4" fill="var(--academic-text)"/>
+  <circle cx="396.2" cy="84.2" r="4.4" fill="var(--color-practice)"/>
+  <text x="470.0" y="32.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">Kötü koşullu: &#954; &#8776; 42</text>
+  <text x="479.0" y="150.0" fill="var(--academic-text)" font-size="12" text-anchor="start">(1, 1)</text>
+  <text x="405.2" y="78.2" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">(0, 2)</text>
+  <text x="536.4" y="264.9" fill="var(--color-theory)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan> + <tspan font-style="italic">y</tspan> = 2</text>
+  <text x="584.3" y="95.3" fill="var(--color-base)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan> + 1,1<tspan font-style="italic">y</tspan> = 2,1</text>
+  <text x="584.3" y="121.1" fill="var(--color-base)" font-size="12" text-anchor="end"><tspan font-style="italic">x</tspan> + 1,1<tspan font-style="italic">y</tspan> = 2,2</text>
+</svg>
+<figcaption>Her iki sistemde de ikinci denklemin sağ tarafı 0,1 artırıldı: ikinci doğru, kesikli konumuna kayar. Solda doğrular dik açıyla kesiştiği için çözüm (1, 1)'den yalnızca (1,05; 0,95)'e gider. Sağda doğrular neredeyse paraleldir; aynı küçük kayma kesişim noktasını (1, 1)'den (0, 2)'ye taşır.</figcaption>
+</figure>
+```
+
+Determinantın bu hassasiyeti ölçmediğini görmek için $0{,}1\, I_{20}$ matrisine bakalım.
+
+```python
+import numpy as np
+
+D = 0.1 * np.eye(20)
+print(np.linalg.det(D))          # neredeyse sıfır ...
+print(np.linalg.cond(D))         # ... ama koşul sayısı en iyi değerde
+print(np.linalg.solve(D, np.ones(20))[:4])
+```
+
+Çıktı:
+
+```text
+1.0000000000000135e-20
+1.0
+[10. 10. 10. 10.]
+```
+
+Determinant $10^{-20}$'dir, ama koşul sayısı mümkün olan en iyi değer olan $1$'dir ve sistem tam olarak çözülür. Şimdi koşul sayısı çok hızlı büyüyen ünlü bir matris ailesine bakalım.
+
+:::: {#exm-lin-hilbert name="Hilbert Matrisi"}
+Elemanları $h_{ij} = \dfrac{1}{i + j - 1}$ ($i, j = 1, \dots, n$) olan $n \times n$ matrise **Hilbert matrisi** denir ve $H_n$ ile gösterilir. $n = 5, 6, \dots, 12$ için gerçek çözümü $x = (1, 1, \dots, 1)$ olan $H_n x = b$ sistemini kurup `solve` ile ve `inv(H) @ b` ile çözünüz; iki yöntemin hatalarını ve artıklarını karşılaştırınız.
+
+::: {.cozum}
+Gerçek çözüm birlerden oluşsun diye $b = H_n \mathbf{1}$ alıyoruz. Matrisi broadcasting ile kuruyoruz ([Vektörizasyon ve Broadcasting](vektorizasyon-ve-broadcasting.qmd)): `i[:, None] + i[None, :]` ifadesi $i + j$ değerlerinden oluşan $n \times n$ diziyi verir. Hataları göreli olarak ölçüyoruz: hata $\|\hat x - x\|_2 / \|x\|_2$, artık $\|H_n \hat x - b\|_2 / \|b\|_2$'dir; burada $\hat x$ hesaplanan çözümdür.
+
+```python
+import numpy as np
+
+
+def rel_err(approx, exact):
+    """Göreli hata: ||approx - exact|| / ||exact||."""
+    return np.linalg.norm(approx - exact) / np.linalg.norm(exact)
+
+
+print(" n    koşul   hata:solve  hata:inv  artık:solve  artık:inv")
+for n in range(5, 13):
+    i = np.arange(1, n + 1)
+    H = 1.0 / (i[:, None] + i[None, :] - 1)    # Hilbert matrisi
+    x_true = np.ones(n)
+    b = H @ x_true
+    x1 = np.linalg.solve(H, b)
+    x2 = np.linalg.inv(H) @ b
+    print(f"{n:2d}  {np.linalg.cond(H):8.1e}"
+          f"  {rel_err(x1, x_true):9.1e}  {rel_err(x2, x_true):8.1e}"
+          f"  {rel_err(H @ x1, b):10.1e}  {rel_err(H @ x2, b):9.1e}")
+```
+
+Çıktı:
+
+```text
+ n    koşul   hata:solve  hata:inv  artık:solve  artık:inv
+ 5   4.8e+05    1.3e-12   2.7e-11     7.9e-17    2.3e-13
+ 6   1.5e+07    4.1e-11   9.7e-10     1.5e-16    8.1e-12
+ 7   4.8e+08    1.8e-09   1.0e-08     6.5e-17    9.2e-10
+ 8   1.5e+10    6.7e-08   4.8e-07     1.6e-16    2.7e-08
+ 9   4.9e+11    3.0e-06   8.4e-05     7.9e-17    1.9e-06
+10   1.6e+13    1.2e-05   2.4e-03     1.6e-16    3.4e-05
+11   5.2e+14    1.1e-03   1.0e-01     6.7e-17    4.6e-04
+12   1.6e+16    1.3e-01   2.7e+00     1.1e-16    4.6e-02
+```
+
+Tablodan üç sonuç okunuyor.
+
+- Koşul sayısı $n$ bir arttıkça yaklaşık $33$ katına çıkıyor ve $n = 12$'de $10^{16}$'ya, yani $1/\varepsilon$ düzeyine ulaşıyor. Bu noktada koşul sayısının kendisi bile ancak kabaca hesaplanabilir; yüksek duyarlıklı bir hesap gerçek değerin $1{,}7 \cdot 10^{16}$ olduğunu gösterir.
+- İki yöntemin de hatası koşul sayısıyla birlikte büyüyor ve kabaca $\kappa(H_n)\,\varepsilon$ düzeyinde kalıyor; önermenin (@prp-lin-kosul-hata) söylediği budur. `inv` ile bulunan çözümün hatası her satırda daha büyük.
+- Asıl fark artıkta. `solve`'un artığı her $n$ için $10^{-16}$ civarında kalırken `inv`'inki koşul sayısıyla büyüyor; $n = 12$'de `inv` ile bulunan çözüm denklemi ancak $\%5$ civarında bir hatayla sağlıyor. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Neden Ters Matrisle Çözmüyoruz?
+
+Matematikte $Ax = b$'nin çözümünü $x = A^{-1}b$ diye yazmak doğaldır ve doğrudur. Kodda bunu `np.linalg.inv(A) @ b` diye yazmak ise hem daha az doğru hem de daha yavaştır. Hilbert örneğinin (@exm-lin-hilbert) sonuçları aşağıdaki şekilde özetleniyor.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="21.5 8.5 619.0 313.5" role="img" aria-label="Two log-scale panels over n = 5 to 12. Left: relative error of solve and of inv, both growing with n, inv above solve, with the dashed estimate kappa times eps. Right: relative residual; solve stays near 1e-16 while inv grows to about 5e-2">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="290.0" x2="306.0" y2="290.0"/>
+  <line x1="70.0" y1="32.0" x2="70.0" y2="290.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="81.7" y="306.0" text-anchor="middle">5</text>
+  <text x="110.9" y="306.0" text-anchor="middle">6</text>
+  <text x="140.2" y="306.0" text-anchor="middle">7</text>
+  <text x="169.4" y="306.0" text-anchor="middle">8</text>
+  <text x="198.6" y="306.0" text-anchor="middle">9</text>
+  <text x="227.8" y="306.0" text-anchor="middle">10</text>
+  <text x="257.1" y="306.0" text-anchor="middle">11</text>
+  <text x="286.3" y="306.0" text-anchor="middle">12</text>
+  <text x="63.0" y="280.5" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;16</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="226.4" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;12</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="172.4" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="118.3" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="64.3" text-anchor="end">10<tspan font-size="10" dy="-5">0</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="312.0" y="294.0" font-style="italic"><tspan font-style="italic">n</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="70.0" y1="276.5" x2="298.0" y2="276.5"/><line x1="70.0" y1="222.4" x2="298.0" y2="222.4"/><line x1="70.0" y1="168.4" x2="298.0" y2="168.4"/><line x1="70.0" y1="114.3" x2="298.0" y2="114.3"/><line x1="70.0" y1="60.3" x2="298.0" y2="60.3"/></g>
+  <path d="M81.7,195.1 L110.9,174.8 L140.2,154.5 L169.4,134.2 L198.6,113.8 L227.8,93.4 L257.1,72.9 L286.3,52.8" fill="none" stroke="var(--academic-text)" stroke-width="1.4" stroke-dasharray="5 4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M81.7,221.1 L110.9,200.7 L140.2,178.5 L169.4,157.2 L198.6,134.9 L227.8,126.5 L257.1,100.1 L286.3,72.3" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="81.7" cy="221.1" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="110.9" cy="200.7" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="140.2" cy="178.5" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="169.4" cy="157.2" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="198.6" cy="134.9" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="227.8" cy="126.5" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="257.1" cy="100.1" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="286.3" cy="72.3" r="3.6" fill="var(--color-theory)"/>
+  <path d="M81.7,203.1 L110.9,182.1 L140.2,168.2 L169.4,145.6 L198.6,115.3 L227.8,95.6 L257.1,73.8 L286.3,54.4" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="81.7" cy="203.1" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="110.9" cy="182.1" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="140.2" cy="168.2" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="169.4" cy="145.6" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="198.6" cy="115.3" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="227.8" cy="95.6" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="257.1" cy="73.8" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="286.3" cy="54.4" r="3.6" fill="var(--color-practice)"/>
+  <text x="184.0" y="32.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">Göreli hata</text>
+  <path d="M81.7,57.6 L105.1,57.6" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="111.1" y="61.6" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">solve</text>
+  <path d="M81.7,83.2 L105.1,83.2" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="111.1" y="87.2" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">inv</text>
+  <path d="M81.7,108.9 L105.1,108.9" fill="none" stroke="var(--academic-text)" stroke-width="1.4" stroke-dasharray="5 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="111.1" y="112.9" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600">&#954;(<tspan font-style="italic">H</tspan><tspan font-size="9.5" dy="3.5"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3.5">&#8203;</tspan>)&#215;&#949;</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="378.0" y1="290.0" x2="614.0" y2="290.0"/>
+  <line x1="378.0" y1="32.0" x2="378.0" y2="290.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="389.7" y="306.0" text-anchor="middle">5</text>
+  <text x="418.9" y="306.0" text-anchor="middle">6</text>
+  <text x="448.2" y="306.0" text-anchor="middle">7</text>
+  <text x="477.4" y="306.0" text-anchor="middle">8</text>
+  <text x="506.6" y="306.0" text-anchor="middle">9</text>
+  <text x="535.8" y="306.0" text-anchor="middle">10</text>
+  <text x="565.1" y="306.0" text-anchor="middle">11</text>
+  <text x="594.3" y="306.0" text-anchor="middle">12</text>
+  <text x="371.0" y="280.5" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;16</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="371.0" y="226.4" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;12</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="371.0" y="172.4" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="371.0" y="118.3" text-anchor="end">10<tspan font-size="10" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="371.0" y="64.3" text-anchor="end">10<tspan font-size="10" dy="-5">0</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="620.0" y="294.0" font-style="italic"><tspan font-style="italic">n</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="378.0" y1="276.5" x2="606.0" y2="276.5"/><line x1="378.0" y1="222.4" x2="606.0" y2="222.4"/><line x1="378.0" y1="168.4" x2="606.0" y2="168.4"/><line x1="378.0" y1="114.3" x2="606.0" y2="114.3"/><line x1="378.0" y1="60.3" x2="606.0" y2="60.3"/></g>
+  <path d="M389.7,277.9 L418.9,274.2 L448.2,279.0 L477.4,273.8 L506.6,277.9 L535.8,273.9 L565.1,278.8 L594.3,275.7" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="389.7" cy="277.9" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="418.9" cy="274.2" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="448.2" cy="279.0" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="477.4" cy="273.8" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="506.6" cy="277.9" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="535.8" cy="273.9" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="565.1" cy="278.8" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="594.3" cy="275.7" r="3.6" fill="var(--color-theory)"/>
+  <path d="M389.7,231.0 L418.9,210.1 L448.2,182.4 L477.4,162.5 L506.6,137.7 L535.8,120.6 L565.1,105.4 L594.3,78.3" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="389.7" cy="231.0" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="418.9" cy="210.1" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="448.2" cy="182.4" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="477.4" cy="162.5" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="506.6" cy="137.7" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="535.8" cy="120.6" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="565.1" cy="105.4" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="594.3" cy="78.3" r="3.6" fill="var(--color-practice)"/>
+  <text x="492.0" y="32.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">Göreli artık</text>
+  <path d="M389.7,57.6 L413.1,57.6" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="419.1" y="61.6" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">solve</text>
+  <path d="M389.7,83.2 L413.1,83.2" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="419.1" y="87.2" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">inv</text>
+</svg>
+<figcaption>Hilbert sistemleri <em>H</em><sub><em>n</em></sub><em>x</em> = <em>b</em> için <code>solve</code> ve <code>inv</code> ile bulunan çözümler (dikey eksen logaritmik). Solda göreli hata: ikisi de koşul sayısıyla büyür; kesikli çizgi κ(<em>H</em><sub><em>n</em></sub>)·ε kaba tahminidir. Sağda göreli artık ‖<em>H</em><sub><em>n</em></sub><em>x</em> &#8722; <em>b</em>‖/‖<em>b</em>‖: <code>solve</code>'un artığı 10<sup>&#8722;16</sup> düzeyinde kalır, <code>inv</code>'inki koşul sayısıyla birlikte büyür.</figcaption>
+</figure>
+```
+
+Artıktaki farkın sebebi şudur. `solve`'un kullandığı kısmi pivotlamalı LU yöntemi pratikte **geriye doğru kararlıdır** (backward stable): bulduğu $\hat x$, $A$'ya çok yakın bir $A + \delta A$ matrisi için ($\|\delta A\| / \|A\|$ oranı $\varepsilon$ mertebesinde) sistemin tam çözümüdür. Bu yüzden $b - A\hat x = \delta A\,\hat x$ artığı her zaman $\varepsilon$ mertebesindedir. Hata ise bu küçük bozulmanın koşul sayısıyla büyümesinden gelir ve hiçbir yöntem onu ortadan kaldıramaz. `inv` ile hesaplanan ters matris de yaklaşık olarak doğrudur, ama $\hat x = \widehat{A^{-1}}\, b$ çarpımı bu güvenceyi taşımaz: artığı koşul sayısıyla büyür.
+
+Hız farkını görmek için rastgele bir $2000 \times 2000$ sistemi iki yolla çözelim. `rng.standard_normal((n, n))` elemanları standart normal dağılımdan, yani ortalaması $0$ ve standart sapması $1$ olan normal dağılımdan gelen $n \times n$ bir dizi üretir. `time.perf_counter()` saniye cinsinden bir saat değeri verir; her yöntemi beş kez çalıştırıp en kısa süreyi alıyoruz.
+
+```python
+import time
+
+import numpy as np
+
+rng = np.random.default_rng(1)
+n = 2000
+A = rng.standard_normal((n, n))
+b = rng.standard_normal(n)
+
+
+def best_time(f, repeat=5):
+    """f'yi birkaç kez çalıştırıp en kısa süreyi saniye cinsinden verir."""
+    times = []
+    for _ in range(repeat):
+        t0 = time.perf_counter()
+        f()
+        times.append(time.perf_counter() - t0)
+    return min(times)
+
+
+t_solve = best_time(lambda: np.linalg.solve(A, b))
+t_inv = best_time(lambda: np.linalg.inv(A) @ b)
+print(f"solve     : {t_solve:.1g} s")
+print(f"inv ve @  : {t_inv:.1g} s")
+print(f"oran      : yaklaşık {round(t_inv / t_solve)}")
+```
+
+Çıktı:
+
+```text
+solve     : 0.1 s
+inv ve @  : 0.4 s
+oran      : yaklaşık 4
+```
+
+Bu süreler bu bilgisayarda, tek iş parçacığıyla ölçüldü; başka bir makinede farklı sayılar çıkar. Oran ise kabaca sabittir: LU ayrışımı yaklaşık $\tfrac{2}{3}n^3$, tersi hesaplamak yaklaşık $2n^3$ işlem gerektirir; yani `inv` yaklaşık üç kat iş yapar. Ölçülen oranın bundan biraz büyük çıkması, süreyi yalnızca işlem sayısının değil, belleğe erişim gibi uygulama ayrıntılarının da belirlemesindendir.
+
+::: {.callout-warning title="Ters matris yerine solve"}
+Kodda $A^{-1}b$ görürseniz onu `np.linalg.solve(A, b)` olarak yazın. Ters matris yalnızca matrisin kendisi gerçekten gerektiğinde (örneğin elemanları yorumlanacaksa) hesaplanır. Aynı $A$ ile birçok sistem çözülecekse sağ tarafları bir matrisin sütunlarına koyup `solve(A, B)` çağırın ya da SciPy'daki `scipy.linalg.lu_factor` ile ayrışımı bir kez hesaplayıp `scipy.linalg.lu_solve` ile tekrar tekrar kullanın.
+:::
+
+## Özdeğerler ve Özvektörler
+
+[Özdeğer ve özvektör](../lineer-cebir/ozdegerler/ozdeger-ozvektor.html#def-ozdeger) kavramlarını Lineer Cebir'den biliyoruz: $v \ne 0$ ve $Av = \lambda v$. Elle hesapta önce [karakteristik polinomun](../lineer-cebir/ozdegerler/karakteristik-polinom.html#thm-ozdeger-kok) köklerini buluruz. Sayısal hesapta bu yol kullanılmaz, çünkü bir polinomun kökleri katsayılardaki küçük hatalara çok duyarlıdır. LAPACK bunun yerine, matrisi benzerlik dönüşümleriyle adım adım üçgensel biçime yaklaştıran **QR algoritmasını** kullanır. NumPy'daki karşılığı `np.linalg.eig`'dir.
+
+```python
+import numpy as np
+
+A = np.array([[2.0, 1.0],
+              [1.0, 2.0]])
+w, V = np.linalg.eig(A)
+print(w)                            # özdeğerler
+print(V)                            # sütunlar: birim özvektörler
+print(np.allclose(A @ V, V * w))    # her i için A v_i = w_i v_i
+print(np.real_if_close(w))          # sanal kısımlar sıfırsa at
+```
+
+Çıktı:
+
+```text
+[3.+0.j 1.+0.j]
+[[ 0.70710678+0.j -0.70710678+0.j]
+ [ 0.70710678+0.j  0.70710678+0.j]]
+True
+[3. 1.]
+```
+
+`eig` iki dizi döndürür: `w[i]` özdeğerine `V[:, i]` **sütunu** karşılık gelir, satırı değil. Özvektörler birim uzunluktadır, işaretleri keyfidir ve özdeğerler belli bir sıraya dizilmez. `V * w` çarpımı broadcasting ile $V$'nin $i$. sütununu `w[i]` ile çarpar; böylece bütün $Av_i = \lambda_i v_i$ eşitlikleri tek satırda sınanır.
+
+Çıktıdaki `+0.j` kısımları sonucun karmaşık türde (`complex128`) geldiğini gösteriyor. Eski NumPy sürümleri, sanal kısımların hepsi sıfır olduğunda gerçel türde bir dizi döndürürdü. Kullandığımız NumPy 2.5 sürümünde ise `eig` sonucu, özdeğerlerin hepsi gerçel olsa bile her zaman karmaşık türde verir; NumPy belgelerindeki `eig` örnekleri de bunu gösterir. Sanal kısımlar sıfırsa `np.real_if_close` diziyi gerçel türe çevirir; kodun her sürümde aynı sonucu vermesi için bundan sonra bu adımı ekleyeceğiz.
+
+::: {.callout-tip title="Özdeğer hesabını üç adımda doğrulamak"}
+1. Özdeğer `w[i]` ise ona ait özvektör `V[:, i]` sütunudur.
+2. `np.allclose(A @ V, V * w)` ile bütün $Av_i = \lambda_i v_i$ eşitliklerini sınayın.
+3. Köşegenleştirme için `np.linalg.cond(V)` değerine bakın: makul büyüklükteyse $V$ regülerdir ve $V^{-1}AV$ köşegendir.
+:::
+
+:::: {#exm-lin-kosegen name="Bir Matrisin Köşegenleştirilmesi"}
+$$A = \begin{pmatrix} 1 & -3 & 3 \\ 3 & -5 & 3 \\ 6 & -6 & 4 \end{pmatrix}$$
+
+matrisinin özdeğerlerini ve özvektörlerini `eig` ile bulup $V^{-1}AV$ matrisinin köşegen olduğunu doğrulayınız.
+
+::: {.cozum}
+Üç adımı uyguluyoruz. $D = V^{-1}AV$ matrisini ters almadan, $VD = AV$ sistemini `solve` ile çözerek hesaplıyoruz.
+
+```python
+import numpy as np
+
+A = np.array([[1.0, -3.0, 3.0],
+              [3.0, -5.0, 3.0],
+              [6.0, -6.0, 4.0]])
+w, V = np.linalg.eig(A)
+w, V = np.real_if_close(w), np.real_if_close(V)
+print(w)
+print(np.allclose(A @ V, V * w))     # 2. adım: A v_i = w_i v_i
+print(np.linalg.cond(V))             # 3. adım: V regüler mi?
+
+D = np.linalg.solve(V, A @ V)        # V^{-1} A V, ters almadan
+print(np.allclose(D, np.diag(w)))
+```
+
+Çıktı:
+
+```text
+[ 4. -2. -2.]
+True
+4.300625249463308
+True
+```
+
+Özdeğerler $4$, $-2$ ve $-2$'dir; $-2$ iki katlıdır. $V$'nin koşul sayısı yaklaşık $4{,}3$ olduğundan sütunları rahatça bağımsızdır ve $V^{-1}AV = \operatorname{diag}(4, -2, -2)$ eşitliği sağlanır. Bu matris [Lineer Cebir](../lineer-cebir/ozdegerler/kosegenlestirme.html#exm-kosegen-3x3) notlarında elle köşegenleştirilmişti. Oradaki $P$ matrisinin sütunları buradaki $V$'nin sütunlarından farklıdır, çünkü iki katlı özdeğerin öz uzayı iki boyutludur ve bu uzayda sonsuz çok taban seçilebilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lin-kosegenlestirilemez name="Köşegenleştirilemeyen Bir Matris"}
+$$B = \begin{pmatrix} -3 & 1 & -1 \\ -7 & 5 & -1 \\ -6 & 6 & -2 \end{pmatrix}$$
+
+matrisinin karakteristik polinomu bir önceki örnekteki $A$'nınkiyle aynıdır, ama $B$ köşegenleştirilemez. `eig`'in bu matrise verdiği yanıtı inceleyiniz.
+
+::: {.cozum}
+Özdeğerleri, özvektörleri ve $V$'nin koşul sayısını yazdıralım:
+
+```python
+import numpy as np
+
+B = np.array([[-3.0, 1.0, -1.0],
+              [-7.0, 5.0, -1.0],
+              [-6.0, 6.0, -2.0]])
+w, V = np.linalg.eig(B)
+w, V = np.real_if_close(w), np.real_if_close(V)
+print(w)
+print(V)
+print(np.linalg.cond(V))
+```
+
+Çıktı:
+
+```text
+[ 4.         -1.99999996 -2.00000004]
+[[ 8.80956881e-17 -7.07106781e-01  7.07106781e-01]
+ [-7.07106781e-01 -7.07106781e-01  7.07106781e-01]
+ [-7.07106781e-01  2.62505234e-08  2.62505208e-08]]
+71765775.70757502
+```
+
+Tam aritmetikte özdeğerler yine $4$, $-2$ ve $-2$'dir, ama $-2$'nin öz uzayı tek boyutludur ([Lineer Cebir](../lineer-cebir/ozdegerler/kosegenlestirme.html#exm-kosegenlestirilemez)). NumPy'ın sonucunda iki şey dikkat çekiyor.
+
+- İki katlı özdeğer $-1{,}99999996$ ve $-2{,}00000004$ olarak, yani yalnızca $8$ basamak doğrulukla bulundu. Köşegenleştirilemeyen bir matrisin katlı özdeğeri, verideki $\varepsilon$ büyüklüğündeki hataları $\sqrt{\varepsilon} \approx 10^{-8}$ büyüklüğüne çıkarır.
+- $V$'nin son iki sütunu neredeyse aynı doğrultudadır: ikisi de $(1, 1, 0)$ doğrultusuna çok yakındır ve biri ötekinin yaklaşık $-1$ katıdır. Bu yüzden $V$'nin koşul sayısı $7 \cdot 10^7$ civarındadır.
+
+Sayısal hesapta köşegenleştirilemezliği, $V$'nin tam olarak tekil çıkmasından değil, koşul sayısının çok büyük olmasından anlarız. [$\blacksquare$]{.qed}
+:::
+::::
+
+Gerçel bir matrisin özdeğerleri karmaşık da olabilir. [Lineer Cebir](../lineer-cebir/ozdegerler/kosegenlestirme.html#exm-reel-kok-yok) notlarındaki $\begin{pmatrix} 1 & -1 \\ 2 & -1 \end{pmatrix}$ matrisinin karakteristik polinomu $t^2 + 1$'dir ve özdeğerleri $\pm i$'dir. Python'da sanal birim `1j` ile yazılır.
+
+```python
+import numpy as np
+
+B = np.array([[1.0, -1.0],
+              [2.0, -1.0]])
+w, V = np.linalg.eig(B)
+print(w)
+print(V[:, 0])
+print(np.allclose(B @ V, V * w))
+```
+
+Çıktı:
+
+```text
+[-9.71445147e-17+1.j -9.71445147e-17-1.j]
+[0.40824829+0.40824829j 0.81649658+0.j        ]
+True
+```
+
+Gerçel kısımlardaki $-9{,}7 \cdot 10^{-17}$, tam olarak $0$ olması gereken bir sayının yuvarlama hatasıdır. $i$ özdeğerine ait özvektör $\big(\tfrac{1 + i}{2},\ 1\big)$ vektörünün birim uzunluğa ölçeklenmiş hâlidir: bu vektörün uzunluğunun karesi $\tfrac{1}{2} + 1 = \tfrac{3}{2}$ olduğundan ölçek çarpanı $\sqrt{2/3} \approx 0{,}8165$'tir.
+
+## Simetrik Matrisler
+
+Uygulamada en sık karşılaşılan matrisler simetriktir: kuadratik formların matrisleri, ikinci türev (Hesse) matrisleri, kovaryans matrisleri. Simetrik matrislerin özdeğer problemi çok daha iyi huyludur.
+
+::: {#thm-lin-spektral name="Simetrik Matrisler İçin Spektral Teorem"}
+$A$ gerçel ve simetrik ($A^T = A$) bir $n \times n$ matris olsun. O zaman $A$'nın bütün özdeğerleri gerçeldir ve sütunları $A$'nın özvektörlerinden oluşan, $Q^TQ = I$ eşitliğini sağlayan bir $Q$ matrisi vardır:
+
+$$A = Q \Lambda Q^T, \qquad \Lambda = \operatorname{diag}(\lambda_1, \dots, \lambda_n).$$
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="22.0 12.0 376.0 376.0" role="img" aria-label="Unit circle (dashed) and its image ellipse under A = [[2, 1], [1, 2]]; eigenvector q1 along (1, 1) is stretched to 3 q1, eigenvector q2 along (-1, 1) is unchanged, and x = (1, 0) is mapped to Ax = (2, 1), which points in a different direction">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="200.0" x2="384.0" y2="200.0"/>
+  <line x1="210.0" y1="374.0" x2="210.0" y2="26.0"/>
+  <polygon points="384.0,200.0 376.0,196.5 376.0,203.5" stroke="none"/>
+  <polygon points="210.0,26.0 206.5,34.0 213.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="64.3" y1="197.0" x2="64.3" y2="203.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="64.3" y="215.0" text-anchor="middle">&#8722;3</text>
+  <line x1="112.9" y1="197.0" x2="112.9" y2="203.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="112.9" y="215.0" text-anchor="middle">&#8722;2</text>
+  <line x1="307.1" y1="197.0" x2="307.1" y2="203.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="307.1" y="215.0" text-anchor="middle">2</text>
+  <line x1="355.7" y1="197.0" x2="355.7" y2="203.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="355.7" y="215.0" text-anchor="middle">3</text>
+  <line x1="207.0" y1="345.7" x2="213.0" y2="345.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="203.0" y="349.7" text-anchor="end">&#8722;3</text>
+  <line x1="207.0" y1="297.1" x2="213.0" y2="297.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="203.0" y="301.1" text-anchor="end">&#8722;2</text>
+  <line x1="207.0" y1="102.9" x2="213.0" y2="102.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="203.0" y="106.9" text-anchor="end">2</text>
+  <line x1="207.0" y1="54.3" x2="213.0" y2="54.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="203.0" y="58.3" text-anchor="end">3</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="382.0" y="215.0" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="217.0" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M258.6,200.0 L258.5,197.5 L258.3,194.9 L258.0,192.4 L257.5,189.9 L256.9,187.4 L256.2,185.0 L255.3,182.6 L254.4,180.2 L253.3,177.9 L252.1,175.7 L250.7,173.5 L249.3,171.5 L247.7,169.4 L246.1,167.5 L244.3,165.7 L242.5,163.9 L240.6,162.3 L238.5,160.7 L236.5,159.3 L234.3,157.9 L232.1,156.7 L229.8,155.6 L227.4,154.7 L225.0,153.8 L222.6,153.1 L220.1,152.5 L217.6,152.0 L215.1,151.7 L212.5,151.5 L210.0,151.4 L207.5,151.5 L204.9,151.7 L202.4,152.0 L199.9,152.5 L197.4,153.1 L195.0,153.8 L192.6,154.7 L190.2,155.6 L187.9,156.7 L185.7,157.9 L183.5,159.3 L181.5,160.7 L179.4,162.3 L177.5,163.9 L175.7,165.7 L173.9,167.5 L172.3,169.4 L170.7,171.5 L169.3,173.5 L167.9,175.7 L166.7,177.9 L165.6,180.2 L164.7,182.6 L163.8,185.0 L163.1,187.4 L162.5,189.9 L162.0,192.4 L161.7,194.9 L161.5,197.5 L161.4,200.0 L161.5,202.5 L161.7,205.1 L162.0,207.6 L162.5,210.1 L163.1,212.6 L163.8,215.0 L164.7,217.4 L165.6,219.8 L166.7,222.1 L167.9,224.3 L169.3,226.5 L170.7,228.5 L172.3,230.6 L173.9,232.5 L175.7,234.3 L177.5,236.1 L179.4,237.7 L181.5,239.3 L183.5,240.7 L185.7,242.1 L187.9,243.3 L190.2,244.4 L192.6,245.3 L195.0,246.2 L197.4,246.9 L199.9,247.5 L202.4,248.0 L204.9,248.3 L207.5,248.5 L210.0,248.6 L212.5,248.5 L215.1,248.3 L217.6,248.0 L220.1,247.5 L222.6,246.9 L225.0,246.2 L227.4,245.3 L229.8,244.4 L232.1,243.3 L234.3,242.1 L236.5,240.7 L238.5,239.3 L240.6,237.7 L242.5,236.1 L244.3,234.3 L246.1,232.5 L247.7,230.6 L249.3,228.5 L250.7,226.5 L252.1,224.3 L253.3,222.1 L254.4,219.8 L255.3,217.4 L256.2,215.0 L256.9,212.6 L257.5,210.1 L258.0,207.6 L258.3,205.1 L258.5,202.5 L258.6,200.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M307.1,151.4 L309.6,146.4 L311.7,141.5 L313.5,136.8 L315.1,132.3 L316.4,127.9 L317.4,123.8 L318.1,119.8 L318.5,116.1 L318.6,112.6 L318.4,109.4 L317.9,106.4 L317.1,103.6 L316.1,101.1 L314.7,98.9 L313.0,97.0 L311.1,95.3 L308.9,93.9 L306.4,92.9 L303.6,92.1 L300.6,91.6 L297.4,91.4 L293.9,91.5 L290.2,91.9 L286.2,92.6 L282.1,93.6 L277.7,94.9 L273.2,96.5 L268.5,98.3 L263.6,100.4 L258.6,102.9 L253.4,105.5 L248.2,108.5 L242.8,111.7 L237.3,115.1 L231.8,118.7 L226.2,122.6 L220.5,126.7 L214.9,131.0 L209.2,135.5 L203.5,140.2 L197.8,145.0 L192.2,150.0 L186.6,155.1 L181.1,160.3 L175.7,165.7 L170.3,171.1 L165.1,176.6 L160.0,182.2 L155.0,187.8 L150.2,193.5 L145.5,199.2 L141.0,204.9 L136.7,210.5 L132.6,216.2 L128.7,221.8 L125.1,227.3 L121.7,232.8 L118.5,238.2 L115.5,243.4 L112.9,248.6 L110.4,253.6 L108.3,258.5 L106.5,263.2 L104.9,267.7 L103.6,272.1 L102.6,276.2 L101.9,280.2 L101.5,283.9 L101.4,287.4 L101.6,290.6 L102.1,293.6 L102.9,296.4 L103.9,298.9 L105.3,301.1 L107.0,303.0 L108.9,304.7 L111.1,306.1 L113.6,307.1 L116.4,307.9 L119.4,308.4 L122.6,308.6 L126.1,308.5 L129.8,308.1 L133.8,307.4 L137.9,306.4 L142.3,305.1 L146.8,303.5 L151.5,301.7 L156.4,299.6 L161.4,297.1 L166.6,294.5 L171.8,291.5 L177.2,288.3 L182.7,284.9 L188.2,281.3 L193.8,277.4 L199.5,273.3 L205.1,269.0 L210.8,264.5 L216.5,259.8 L222.2,255.0 L227.8,250.0 L233.4,244.9 L238.9,239.7 L244.3,234.3 L249.7,228.9 L254.9,223.4 L260.0,217.8 L265.0,212.2 L269.8,206.5 L274.5,200.8 L279.0,195.1 L283.3,189.5 L287.4,183.8 L291.3,178.2 L294.9,172.7 L298.3,167.2 L301.5,161.8 L304.5,156.6 L307.1,151.4" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="210.0" y1="200.0" x2="308.5" y2="101.5" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="313.0,97.0 309.8,105.0 305.0,100.2" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="210.0" y1="200.0" x2="239.3" y2="170.7" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="244.3,165.7 240.7,174.7 235.3,169.3" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="210.0" y1="200.0" x2="180.7" y2="170.7" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="175.7,165.7 184.7,169.3 179.3,174.7" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="210.0" y1="200.0" x2="252.2" y2="200.0" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="258.6,200.0 250.6,203.4 250.6,196.6" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="210.0" y1="200.0" x2="301.4" y2="154.3" stroke="var(--color-base)" stroke-width="2.0" stroke-dasharray="5 3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="307.1,151.4 301.5,158.0 298.5,152.0" fill="var(--color-base)" opacity="1.0"/>
+  <text x="321.0" y="99.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">A</tspan><tspan font-style="italic">q</tspan><tspan font-size="9.5" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan> = 3<tspan font-style="italic">q</tspan><tspan font-size="9.5" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="220.5" y="179.5" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">q</tspan><tspan font-size="9.5" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="169.7" y="157.7" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">A</tspan><tspan font-style="italic">q</tspan><tspan font-size="9.5" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan> = <tspan font-style="italic">q</tspan><tspan font-size="9.5" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="244.0" y="217.0" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">x</tspan></text>
+  <text x="315.1" y="155.4" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">A</tspan><tspan font-style="italic">x</tspan></text>
+  <text x="112.9" y="333.6" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">A</tspan>'nın görüntüsü</text>
+</svg>
+<figcaption><em>A</em> = [[2, 1], [1, 2]] birim çemberi (kesikli) elipse götürür. Elipsin eksenleri <em>A</em>'nın dik özvektörleri boyuncadır: <em>q</em><sub>1</sub> = (1, 1)/√2 doğrultusu 3 kat uzar, <em>q</em><sub>2</sub> = (&#8722;1, 1)/√2 doğrultusu olduğu gibi kalır. Özvektör olmayan <em>x</em> = (1, 0) ise <em>Ax</em> = (2, 1)'e gider ve doğrultusu değişir.</figcaption>
+</figure>
+```
+:::
+
+Yani simetrik bir matris, birbirine dik $n$ doğrultunun her birini kendi özdeğeri kadar uzatır ya da kısaltır; şekil bunu $\begin{pmatrix} 2 & 1 \\ 1 & 2 \end{pmatrix}$ matrisi için gösteriyor. Teoremin ispatı iç çarpım uzaylarının konusudur; burada sonuçlarını kullanacağız.
+
+Simetrik matrisler için `np.linalg.eigh` kullanılır. `eigh` matrisin yalnızca alt üçgenini okur, `eig`'den daha hızlıdır, özdeğerleri gerçel türde ve küçükten büyüğe sıralı döndürür ve özvektörlerin dik olmasını garanti eder. Matris simetrik değilse `eigh` uyarı vermeden yanlış sonuç verir; bu yüzden yalnızca simetrik matrislerde kullanılmalıdır.
+
+Örnek olarak, ikinci türevin sonlu farklarla yaklaşımında ortaya çıkan matrisi alalım. $x_0 < x_1 < \dots < x_{n+1}$ eşit aralıklı noktalar ve $h = x_{i+1} - x_i$ ise iç noktalarda
+
+$$f''(x_i) \approx \frac{f(x_{i-1}) - 2f(x_i) + f(x_{i+1})}{h^2}$$
+
+yaklaşımı kullanılır (sonlu fark yaklaşımlarını [Sayısal Türev ve İntegral](sayisal-turev-ve-integral.qmd) bölümünde inceleyeceğiz). Uçlarda $f(x_0) = f(x_{n+1}) = 0$ ise bu yaklaşımları $i = 1, \dots, n$ için alt alta yazmak, iç noktalardaki değerlerin vektörünü $-L/h^2$ matrisiyle çarpmak demektir. $L$'nin köşegeninde $2$, köşegenin hemen üstünde ve altında $-1$, öteki yerlerinde $0$ bulunur. $n = 3$ için:
+
+```python
+import numpy as np
+
+L = np.array([[2.0, -1.0, 0.0],
+              [-1.0, 2.0, -1.0],
+              [0.0, -1.0, 2.0]])
+w, Q = np.linalg.eigh(L)
+print(w)                                      # küçükten büyüğe, gerçel
+print(2 - np.sqrt(2), 2 + np.sqrt(2))         # beklenen uç değerler
+print(np.allclose(Q.T @ Q, np.eye(3)))        # Q ortogonal
+print(np.allclose(Q @ np.diag(w) @ Q.T, L))   # L = Q Λ Q^T
+```
+
+Çıktı:
+
+```text
+[0.58578644 2.         3.41421356]
+0.5857864376269049 3.414213562373095
+True
+True
+```
+
+Bu matrisin özdeğerleri $2 - \sqrt{2}$, $2$ ve $2 + \sqrt{2}$'dir; `eigh` bunları sırayla verdi. $Q^TQ = I$ ve $L = Q\Lambda Q^T$ eşitlikleri de sağlanıyor.
+
+## En Küçük Kareler
+
+Denklem sayısı bilinmeyen sayısından fazla olan bir $Ax = b$ sisteminin ($A$ $m \times n$ ve $m > n$) genellikle çözümü yoktur. Ölçüm verisine bir doğru ya da eğri uydururken karşılaştığımız durum budur. [Nümerik Analiz](../numerik-analiz/en-kucuk-kareler-yontemi.html#def-ekk-en-kucuk-kareler) notlarındaki en küçük kareler yöntemi, denklemleri tam sağlamaya çalışmak yerine hataların kareleri toplamını en küçük yapar.
+
+::: {#def-lin-en-kucuk-kareler name="En Küçük Kareler Çözümü"}
+$A$ bir $m \times n$ matris ve $b \in \mathbb{R}^m$ olsun. $\|Ax - b\|_2$ değerini en küçük yapan bir $\hat x \in \mathbb{R}^n$ vektörüne $Ax = b$ sisteminin **en küçük kareler çözümü** (least squares solution) denir.
+:::
+
+Yani $\hat x$, $r = b - A\hat x$ artık vektörünün bileşenlerinin kareleri toplamını en küçük yapar. $A$'nın sütunları lineer bağımsızsa ($\operatorname{rank} A = n$) $\hat x$ tektir ve $A^TA\hat x = A^Tb$ **normal denklemlerinin** çözümüdür. Doğru uydururken kurulan [normal denklemler](../numerik-analiz/en-kucuk-kareler-yontemi.html#def-ekk-normal-denklemler) bunun $n = 2$ hâlidir. NumPy'da `np.linalg.lstsq(A, b)` dört şey döndürür: çözüm, artık kareleri toplamı, $A$'nın rankı ve $A$'nın tekil değerleri.
+
+:::: {#exm-lin-dort-nokta name="Dört Noktaya Doğru Uydurma"}
+$(-1;\ 1)$, $(-0{,}1;\ 1{,}099)$, $(0{,}2;\ 0{,}808)$ ve $(1;\ 1)$ noktalarına en küçük kareler anlamında en iyi uyan $y = ax + b$ doğrusunu `lstsq` ile bulunuz.
+
+::: {.cozum}
+Her nokta bir $a x_i + b = y_i$ denklemi verir. Bilinmeyenler $a$ ve $b$ olduğundan katsayılar matrisinin sütunları $x_i$ değerleri ve birlerdir:
+
+$$\begin{pmatrix} -1 & 1 \\ -0{,}1 & 1 \\ 0{,}2 & 1 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} \approx \begin{pmatrix} 1 \\ 1{,}099 \\ 0{,}808 \\ 1 \end{pmatrix}.$$
+
+```python
+import numpy as np
+
+x = np.array([-1.0, -0.1, 0.2, 1.0])
+y = np.array([1.0, 1.099, 0.808, 1.0])
+
+A = np.column_stack([x, np.ones_like(x)])   # sütunlar: x ve 1
+coef, rss, rank, sv = np.linalg.lstsq(A, y)
+a, b = coef
+print(f"a = {a:.9f}, b = {b:.9f}")
+print("hata kareleri toplamı:", rss)
+print("rank:", rank)
+print("tekil değerler:", sv)
+```
+
+Çıktı:
+
+```text
+a = -0.022454212, b = 0.977311355
+hata kareleri toplamı: [0.04347042]
+rank: 2
+tekil değerler: [2.00127829 1.42999483]
+```
+
+Doğru $y \approx -0{,}022454x + 0{,}977311$'dir. Bu veri [Nümerik Analiz](../numerik-analiz/en-kucuk-kareler-yontemi.html#exm-ekk-dort-nokta) notlarında normal denklemlerle elle çözülmüştü; orada bulunan $a = -0{,}022454212$ ve $b = 0{,}977311355$ değerleriyle dokuz basamak uyuşuyor. Hata kareleri toplamı da oradaki $E \approx 0{,}0435$ değeridir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-lin-parabol name="Gürültülü Veriye Parabol Uydurma"}
+$[0, 4]$ aralığında eşit aralıklı $15$ noktada $y = 1 + 2t - 0{,}5t^2$ değerlerine standart sapması $0{,}3$ olan normal dağılımlı gürültü eklenerek bir veri üretiliyor. Bu veriye $y = c_0 + c_1 t + c_2 t^2$ parabolünü en küçük kareler yöntemiyle uydurunuz.
+
+::: {.cozum}
+`rng.normal(0, 0.3, t.size)` ortalaması $0$, standart sapması $0{,}3$ olan normal dağılımdan `t.size` tane sayı üretir ([Rastgele Sayılar ve Monte Carlo Yöntemleri](rastgele-sayilar-ve-monte-carlo.qmd)); tohum sabit olduğu için her çalıştırmada aynı veri çıkar. Model katsayılara göre lineerdir, bu yüzden $1$, $t$, $t^2$ sütunlarından oluşan $15 \times 3$ bir $M$ matrisiyle $Mc \approx y$ sistemini kuruyoruz.
+
+```python
+import numpy as np
+
+rng = np.random.default_rng(7)
+t = np.linspace(0, 4, 15)
+y = 1 + 2 * t - 0.5 * t**2 + rng.normal(0, 0.3, t.size)
+
+M = np.column_stack([np.ones_like(t), t, t**2])   # sütunlar: 1, t, t^2
+c, rss, rank, sv = np.linalg.lstsq(M, y)
+print("katsayılar:", c)
+r = y - M @ c                                     # artıklar
+print("artık normu:", np.linalg.norm(r))
+print("koşul sayıları:", np.linalg.cond(M), np.linalg.cond(M.T @ M))
+```
+
+Çıktı:
+
+```text
+katsayılar: [ 0.92977395  2.02839706 -0.50492187]
+artık normu: 0.7047186321326601
+koşul sayıları: 31.06032228313357 964.7436203321174
+```
+
+Uydurulan parabol $y \approx 0{,}930 + 2{,}028t - 0{,}505t^2$'dir; gürültüye rağmen katsayılar verinin üretildiği $1$, $2$ ve $-0{,}5$ değerlerine yakın çıktı. Son satır önemli bir gözlem içeriyor: $M^TM$'nin koşul sayısı $M$'ninkinin karesidir, $31{,}06^2 \approx 964{,}7$. [$\blacksquare$]{.qed}
+:::
+::::
+
+Uydurulan parabol, verinin üretildiği eğri ve artıklar aşağıdaki şekilde görülüyor. Bu tür grafikleri bir sonraki bölümde Matplotlib ile çizeceğiz.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="28.5 -3.5 480.0 345.5" role="img" aria-label="Fifteen noisy data points, the least-squares parabola y = 0.930 + 2.028 t - 0.505 t^2, the dashed generating curve 1 + 2t - 0.5t^2 and vertical residual segments">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="56.0" y1="310.0" x2="484.0" y2="310.0"/>
+  <line x1="56.0" y1="22.0" x2="56.0" y2="310.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="79.1" y="326.0" text-anchor="middle">0</text>
+  <text x="171.4" y="326.0" text-anchor="middle">1</text>
+  <text x="263.7" y="326.0" text-anchor="middle">2</text>
+  <text x="356.0" y="326.0" text-anchor="middle">3</text>
+  <text x="448.3" y="326.0" text-anchor="middle">4</text>
+  <text x="49.0" y="314.0" text-anchor="end">0</text>
+  <text x="49.0" y="242.2" text-anchor="end">1</text>
+  <text x="49.0" y="170.4" text-anchor="end">2</text>
+  <text x="49.0" y="98.6" text-anchor="end">3</text>
+  <text x="490.0" y="314.0" font-style="italic"><tspan font-style="italic">t</tspan></text>
+  <text x="52.0" y="16.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="79.1" y1="30.0" x2="79.1" y2="310.0"/><line x1="171.4" y1="30.0" x2="171.4" y2="310.0"/><line x1="263.7" y1="30.0" x2="263.7" y2="310.0"/><line x1="356.0" y1="30.0" x2="356.0" y2="310.0"/><line x1="448.3" y1="30.0" x2="448.3" y2="310.0"/><line x1="56.0" y1="310.0" x2="476.0" y2="310.0"/><line x1="56.0" y1="238.2" x2="476.0" y2="238.2"/><line x1="56.0" y1="166.4" x2="476.0" y2="166.4"/><line x1="56.0" y1="94.6" x2="476.0" y2="94.6"/></g>
+  <path d="M69.8,252.9 L73.1,247.6 L76.4,242.3 L79.7,237.2 L83.0,232.1 L86.3,227.1 L89.6,222.3 L92.9,217.5 L96.2,212.8 L99.5,208.2 L102.8,203.7 L106.1,199.2 L109.4,194.9 L112.7,190.7 L116.0,186.5 L119.3,182.5 L122.6,178.5 L125.9,174.6 L129.2,170.8 L132.5,167.1 L135.8,163.5 L139.1,160.0 L142.4,156.6 L145.7,153.3 L149.0,150.1 L152.3,146.9 L155.6,143.9 L158.9,140.9 L162.2,138.1 L165.5,135.3 L168.7,132.6 L172.0,130.0 L175.3,127.5 L178.6,125.1 L181.9,122.8 L185.2,120.6 L188.5,118.4 L191.8,116.4 L195.1,114.4 L198.4,112.6 L201.7,110.8 L205.0,109.1 L208.3,107.5 L211.6,106.0 L214.9,104.6 L218.2,103.3 L221.5,102.1 L224.8,101.0 L228.1,100.0 L231.4,99.0 L234.7,98.2 L238.0,97.4 L241.3,96.7 L244.6,96.2 L247.9,95.7 L251.2,95.3 L254.5,95.0 L257.8,94.8 L261.1,94.6 L264.4,94.6 L267.6,94.7 L270.9,94.8 L274.2,95.1 L277.5,95.4 L280.8,95.9 L284.1,96.4 L287.4,97.0 L290.7,97.7 L294.0,98.5 L297.3,99.4 L300.6,100.4 L303.9,101.4 L307.2,102.6 L310.5,103.8 L313.8,105.2 L317.1,106.6 L320.4,108.2 L323.7,109.8 L327.0,111.5 L330.3,113.3 L333.6,115.2 L336.9,117.2 L340.2,119.3 L343.5,121.4 L346.8,123.7 L350.1,126.0 L353.4,128.5 L356.7,131.0 L360.0,133.7 L363.3,136.4 L366.5,139.2 L369.8,142.1 L373.1,145.1 L376.4,148.2 L379.7,151.3 L383.0,154.6 L386.3,158.0 L389.6,161.4 L392.9,165.0 L396.2,168.6 L399.5,172.3 L402.8,176.2 L406.1,180.1 L409.4,184.1 L412.7,188.2 L416.0,192.3 L419.3,196.6 L422.6,201.0 L425.9,205.5 L429.2,210.0 L432.5,214.6 L435.8,219.4 L439.1,224.2 L442.4,229.1 L445.7,234.1 L449.0,239.2 L452.3,244.4 L455.6,249.7 L458.9,255.1 L462.2,260.6" fill="none" stroke="var(--color-base)" stroke-width="1.6" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M69.8,258.2 L73.1,252.8 L76.4,247.4 L79.7,242.2 L83.0,237.1 L86.3,232.0 L89.6,227.1 L92.9,222.2 L96.2,217.5 L99.5,212.8 L102.8,208.2 L106.1,203.7 L109.4,199.3 L112.7,195.0 L116.0,190.8 L119.3,186.7 L122.6,182.7 L125.9,178.7 L129.2,174.9 L132.5,171.1 L135.8,167.5 L139.1,163.9 L142.4,160.4 L145.7,157.1 L149.0,153.8 L152.3,150.6 L155.6,147.5 L158.9,144.5 L162.2,141.5 L165.5,138.7 L168.7,136.0 L172.0,133.3 L175.3,130.8 L178.6,128.3 L181.9,126.0 L185.2,123.7 L188.5,121.5 L191.8,119.5 L195.1,117.5 L198.4,115.6 L201.7,113.8 L205.0,112.0 L208.3,110.4 L211.6,108.9 L214.9,107.5 L218.2,106.1 L221.5,104.9 L224.8,103.7 L228.1,102.6 L231.4,101.7 L234.7,100.8 L238.0,100.0 L241.3,99.3 L244.6,98.7 L247.9,98.2 L251.2,97.7 L254.5,97.4 L257.8,97.2 L261.1,97.0 L264.4,97.0 L267.6,97.0 L270.9,97.2 L274.2,97.4 L277.5,97.7 L280.8,98.1 L284.1,98.6 L287.4,99.2 L290.7,99.9 L294.0,100.7 L297.3,101.6 L300.6,102.5 L303.9,103.6 L307.2,104.8 L310.5,106.0 L313.8,107.3 L317.1,108.8 L320.4,110.3 L323.7,111.9 L327.0,113.6 L330.3,115.4 L333.6,117.3 L336.9,119.3 L340.2,121.4 L343.5,123.5 L346.8,125.8 L350.1,128.1 L353.4,130.6 L356.7,133.1 L360.0,135.8 L363.3,138.5 L366.5,141.3 L369.8,144.2 L373.1,147.2 L376.4,150.3 L379.7,153.5 L383.0,156.8 L386.3,160.1 L389.6,163.6 L392.9,167.2 L396.2,170.8 L399.5,174.6 L402.8,178.4 L406.1,182.3 L409.4,186.3 L412.7,190.5 L416.0,194.7 L419.3,199.0 L422.6,203.3 L425.9,207.8 L429.2,212.4 L432.5,217.1 L435.8,221.8 L439.1,226.7 L442.4,231.6 L445.7,236.7 L449.0,241.8 L452.3,247.0 L455.6,252.3 L458.9,257.7 L462.2,263.2" fill="none" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M79.1,238.2 L79.1,243.2" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M105.5,193.7 L105.5,204.6" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M131.8,173.8 L131.8,171.9" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M158.2,160.7 L158.2,145.1" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M184.6,130.8 L184.6,124.2" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M210.9,127.7 L210.9,109.2" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M237.3,96.3 L237.3,100.1" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M263.7,65.7 L263.7,97.0" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M290.1,108.1 L290.1,99.8" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M316.4,119.7 L316.4,108.5" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M342.8,110.4 L342.8,123.1" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M369.2,133.8 L369.2,143.6" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M395.6,165.6 L395.6,170.1" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M421.9,220.2 L421.9,202.5" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M448.3,238.8 L448.3,240.7" fill="none" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="79.1" cy="238.2" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="105.5" cy="193.7" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="131.8" cy="173.8" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="158.2" cy="160.7" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="184.6" cy="130.8" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="210.9" cy="127.7" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="237.3" cy="96.3" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="263.7" cy="65.7" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="290.1" cy="108.1" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="316.4" cy="119.7" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="342.8" cy="110.4" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="369.2" cy="133.8" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="395.6" cy="165.6" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="421.9" cy="220.2" r="3.8" fill="var(--academic-text)"/>
+  <circle cx="448.3" cy="238.8" r="3.8" fill="var(--academic-text)"/>
+  <path d="M185.2,241.8 L217.5,241.8" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="224.5" y="245.8" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">uydurulan parabol</text>
+  <path d="M185.2,263.3 L217.5,263.3" fill="none" stroke="var(--color-base)" stroke-width="2.0" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="224.5" y="267.3" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600">1 + 2<tspan font-style="italic">t</tspan> &#8722; 0,5<tspan font-style="italic">t</tspan><tspan font-size="9.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <path d="M185.2,284.9 L217.5,284.9" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="224.5" y="288.9" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">artıklar</text>
+</svg>
+<figcaption>On beş gürültülü veri noktası, <code>lstsq</code> ile uydurulan parabol <em>y</em> &#8776; 0,930 + 2,028<em>t</em> &#8722; 0,505<em>t</em><sup>2</sup> ve verinin üretildiği 1 + 2<em>t</em> &#8722; 0,5<em>t</em><sup>2</sup> eğrisi (kesikli). Dikey parçalar artıklardır; <code>lstsq</code> bunların kareleri toplamını en küçük yapar.</figcaption>
+</figure>
+```
+
+::: {.callout-warning title="Normal denklemleri doğrudan çözmeyin"}
+$A^TA\hat x = A^Tb$ sistemini `solve` ile çözmek kolay görünür, ama 2-normunda $\kappa(A^TA) = \kappa(A)^2$ olduğundan kaybedilen basamak sayısı iki katına çıkar (@exr-lin-normal-denklem). `lstsq` normal denklemleri kurmaz, $A$'nın tekil değer ayrışımını kullanır. Polinom uydurmanın hazır araçlarını [Polinomlar, İnterpolasyon ve Eğri Uydurma](interpolasyon-ve-egri-uydurma.qmd) bölümünde göreceğiz.
+:::
+
+## Tekil Değer Ayrışımı
+
+Bölüm boyunca birkaç kez tekil değerlere gönderme yaptık: `matrix_rank`, 2-normu, `cond` ve `lstsq` hep onlara dayanır. Şimdi bu ayrışımı tanıyalım.
+
+::: {#def-lin-svd name="Tekil Değer Ayrışımı"}
+$A$ bir $m \times n$ gerçel matris ve $p = \min(m, n)$ olsun. $U$ ($m \times m$) ve $V$ ($n \times n$) matrisleri $U^TU = I$ ve $V^TV = I$ eşitliklerini sağlasın; $\Sigma$ ise köşegeninde $\sigma_1 \ge \sigma_2 \ge \dots \ge \sigma_p \ge 0$ sayıları, öteki yerlerinde $0$ bulunan $m \times n$ bir matris olsun.
+
+$$A = U \Sigma V^T$$
+
+yazılışına $A$'nın **tekil değer ayrışımı** (singular value decomposition, SVD), $\sigma_i$ sayılarına $A$'nın **tekil değerleri**, $U$'nun ve $V$'nin $u_i$ ve $v_i$ sütunlarına **sol** ve **sağ tekil vektörler** denir.
+:::
+
+Yani her $i \le p$ için $Av_i = \sigma_i u_i$'dir: $A$, birbirine dik $v_i$ doğrultularını birbirine dik $u_i$ doğrultularına gönderir ve $i$. doğrultuyu $\sigma_i$ katına uzatır. Spektral teoremden farkı, giriş ve çıkış için iki ayrı dik taban kullanılmasıdır; bu sayede ayrışım her matris için, kare olmayanlar için bile vardır. NumPy'da `np.linalg.svd(A)` üç dizi döndürür: `U`, tekil değerleri büyükten küçüğe içeren tek eksenli `s` dizisi ve $V$'nin kendisi değil, transpozu olan `Vt`.
+
+```python
+import numpy as np
+
+A = np.array([[3.0, 0.0],
+              [4.0, 5.0]])
+U, s, Vt = np.linalg.svd(A)
+print(U)
+print(s)                     # tekil değerler, büyükten küçüğe
+print(Vt)                    # dikkat: V değil, V^T
+print(np.allclose(U @ np.diag(s) @ Vt, A))
+print(np.sqrt(45), np.sqrt(5))
+```
+
+Çıktı:
+
+```text
+[[-0.31622777 -0.9486833 ]
+ [-0.9486833   0.31622777]]
+[6.70820393 2.23606798]
+[[-0.70710678 -0.70710678]
+ [-0.70710678  0.70710678]]
+True
+6.708203932499369 2.23606797749979
+```
+
+$A^TA = \begin{pmatrix} 25 & 20 \\ 20 & 25 \end{pmatrix}$ matrisinin özdeğerleri $45$ ve $5$'tir ve tekil değerler bunların karekökleridir: $\sigma_1 = 3\sqrt5$, $\sigma_2 = \sqrt5$. Sağ tekil vektörler $v_1 = -(1, 1)/\sqrt2$ ve $v_2 = (-1, 1)/\sqrt2$, sol tekil vektörler $u_1 = -(1, 3)/\sqrt{10}$ ve $u_2 = (-3, 1)/\sqrt{10}$'dur. Örneğin $Av_1 = -(3, 9)/\sqrt2 = \sigma_1 u_1$'dir. Şekil ayrışımın geometrisini gösteriyor: $A$ birim çemberi bir elipse götürür ve elipsin yarı eksenleri $\sigma_1 u_1$ ile $\sigma_2 u_2$'dir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 -1.5 596.5 309.5" role="img" aria-label="Two panels. Left: unit circle with orthonormal vectors v1 and v2 pointing down-left and up-left. Right: the image ellipse under A = [[3, 0], [4, 5]] with semi-axes sigma1 u1 of length 3 sqrt 5 and sigma2 u2 of length sqrt 5">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="160.0" x2="244.0" y2="160.0"/>
+  <line x1="140.0" y1="264.0" x2="140.0" y2="56.0"/>
+  <polygon points="244.0,160.0 236.0,156.5 236.0,163.5" stroke="none"/>
+  <polygon points="140.0,56.0 136.5,64.0 143.5,64.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="242.0" y="175.0" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="147.0" y="65.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M206.7,160.0 L206.6,156.5 L206.3,153.0 L205.8,149.6 L205.2,146.1 L204.4,142.7 L203.4,139.4 L202.2,136.1 L200.9,132.9 L199.4,129.7 L197.7,126.7 L195.9,123.7 L193.9,120.8 L191.8,118.0 L189.5,115.4 L187.1,112.9 L184.6,110.5 L182.0,108.2 L179.2,106.1 L176.3,104.1 L173.3,102.3 L170.3,100.6 L167.1,99.1 L163.9,97.8 L160.6,96.6 L157.3,95.6 L153.9,94.8 L150.4,94.2 L147.0,93.7 L143.5,93.4 L140.0,93.3 L136.5,93.4 L133.0,93.7 L129.6,94.2 L126.1,94.8 L122.7,95.6 L119.4,96.6 L116.1,97.8 L112.9,99.1 L109.7,100.6 L106.7,102.3 L103.7,104.1 L100.8,106.1 L98.0,108.2 L95.4,110.5 L92.9,112.9 L90.5,115.4 L88.2,118.0 L86.1,120.8 L84.1,123.7 L82.3,126.7 L80.6,129.7 L79.1,132.9 L77.8,136.1 L76.6,139.4 L75.6,142.7 L74.8,146.1 L74.2,149.6 L73.7,153.0 L73.4,156.5 L73.3,160.0 L73.4,163.5 L73.7,167.0 L74.2,170.4 L74.8,173.9 L75.6,177.3 L76.6,180.6 L77.8,183.9 L79.1,187.1 L80.6,190.3 L82.3,193.3 L84.1,196.3 L86.1,199.2 L88.2,202.0 L90.5,204.6 L92.9,207.1 L95.4,209.5 L98.0,211.8 L100.8,213.9 L103.7,215.9 L106.7,217.7 L109.7,219.4 L112.9,220.9 L116.1,222.2 L119.4,223.4 L122.7,224.4 L126.1,225.2 L129.6,225.8 L133.0,226.3 L136.5,226.6 L140.0,226.7 L143.5,226.6 L147.0,226.3 L150.4,225.8 L153.9,225.2 L157.3,224.4 L160.6,223.4 L163.9,222.2 L167.1,220.9 L170.3,219.4 L173.3,217.7 L176.3,215.9 L179.2,213.9 L182.0,211.8 L184.6,209.5 L187.1,207.1 L189.5,204.6 L191.8,202.0 L193.9,199.2 L195.9,196.3 L197.7,193.3 L199.4,190.3 L200.9,187.1 L202.2,183.9 L203.4,180.6 L204.4,177.3 L205.2,173.9 L205.8,170.4 L206.3,167.0 L206.6,163.5 L206.7,160.0" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="140.0" y1="160.0" x2="98.0" y2="202.0" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="92.9,207.1 96.6,198.1 101.9,203.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="140.0" y1="160.0" x2="98.0" y2="118.0" stroke="var(--color-base)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="92.9,112.9 101.9,116.6 96.6,121.9" fill="var(--color-base)" opacity="1.0"/>
+  <text x="86.9" y="221.1" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">v</tspan><tspan font-size="9.5" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="86.9" y="106.9" fill="var(--color-base)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">v</tspan><tspan font-size="9.5" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="140.0" y="52.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">birim çember</text>
+  <line x1="258.0" y1="160.0" x2="304.0" y2="160.0" stroke="var(--academic-text)" stroke-width="1.6" opacity="0.8"/>
+  <polygon points="312.0,160.0 303.0,155.5 303.0,164.5" fill="var(--academic-text)" opacity="0.8"/>
+  <text x="281.0" y="151.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">A</tspan></text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="326.0" y1="160.0" x2="594.0" y2="160.0"/>
+  <line x1="460.0" y1="294.0" x2="460.0" y2="26.0"/>
+  <polygon points="594.0,160.0 586.0,156.5 586.0,163.5" stroke="none"/>
+  <polygon points="460.0,26.0 456.5,34.0 463.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="356.0" y1="157.0" x2="356.0" y2="163.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="356.0" y="175.0" text-anchor="middle">&#8722;6</text>
+  <line x1="408.0" y1="157.0" x2="408.0" y2="163.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="408.0" y="175.0" text-anchor="middle">&#8722;3</text>
+  <line x1="512.0" y1="157.0" x2="512.0" y2="163.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="512.0" y="175.0" text-anchor="middle">3</text>
+  <line x1="564.0" y1="157.0" x2="564.0" y2="163.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="564.0" y="175.0" text-anchor="middle">6</text>
+  <line x1="457.0" y1="212.0" x2="463.0" y2="212.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="453.0" y="216.0" text-anchor="end">&#8722;3</text>
+  <line x1="457.0" y1="108.0" x2="463.0" y2="108.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="453.0" y="112.0" text-anchor="end">3</text>
+  <line x1="457.0" y1="56.0" x2="463.0" y2="56.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="453.0" y="60.0" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="592.0" y="175.0" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="467.0" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M512.0,90.7 L511.9,86.2 L511.7,82.0 L511.4,78.0 L510.9,74.2 L510.2,70.6 L509.5,67.3 L508.5,64.2 L507.5,61.4 L506.3,58.9 L505.0,56.6 L503.6,54.7 L502.1,53.0 L500.4,51.6 L498.6,50.5 L496.8,49.7 L494.8,49.2 L492.7,49.0 L490.6,49.1 L488.3,49.6 L486.0,50.3 L483.6,51.3 L481.2,52.6 L478.6,54.2 L476.1,56.1 L473.5,58.3 L470.8,60.8 L468.1,63.6 L465.4,66.6 L462.7,69.8 L460.0,73.3 L457.3,77.1 L454.6,81.1 L451.9,85.2 L449.2,89.6 L446.5,94.2 L443.9,99.0 L441.4,103.9 L438.8,109.0 L436.4,114.3 L434.0,119.6 L431.7,125.1 L429.4,130.6 L427.3,136.3 L425.2,142.0 L423.2,147.7 L421.4,153.5 L419.6,159.3 L417.9,165.2 L416.4,170.9 L415.0,176.7 L413.7,182.4 L412.5,188.1 L411.5,193.7 L410.5,199.2 L409.8,204.5 L409.1,209.8 L408.6,214.9 L408.3,219.9 L408.1,224.7 L408.0,229.3 L408.1,233.8 L408.3,238.0 L408.6,242.0 L409.1,245.8 L409.8,249.4 L410.5,252.7 L411.5,255.8 L412.5,258.6 L413.7,261.1 L415.0,263.4 L416.4,265.3 L417.9,267.0 L419.6,268.4 L421.4,269.5 L423.2,270.3 L425.2,270.8 L427.3,271.0 L429.4,270.9 L431.7,270.4 L434.0,269.7 L436.4,268.7 L438.8,267.4 L441.4,265.8 L443.9,263.9 L446.5,261.7 L449.2,259.2 L451.9,256.4 L454.6,253.4 L457.3,250.2 L460.0,246.7 L462.7,242.9 L465.4,238.9 L468.1,234.8 L470.8,230.4 L473.5,225.8 L476.1,221.0 L478.6,216.1 L481.2,211.0 L483.6,205.7 L486.0,200.4 L488.3,194.9 L490.6,189.4 L492.7,183.7 L494.8,178.0 L496.8,172.3 L498.6,166.5 L500.4,160.7 L502.1,154.8 L503.6,149.1 L505.0,143.3 L506.3,137.6 L507.5,131.9 L508.5,126.3 L509.5,120.8 L510.2,115.5 L510.9,110.2 L511.4,105.1 L511.7,100.1 L511.9,95.3 L512.0,90.7" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="460.0" y1="160.0" x2="425.5" y2="263.5" stroke="var(--color-practice)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="423.2,270.3 422.5,260.6 429.7,263.0" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="460.0" y1="160.0" x2="430.1" y2="150.0" stroke="var(--color-base)" stroke-width="2.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="423.2,147.7 433.0,147.0 430.6,154.2" fill="var(--color-base)" opacity="1.0"/>
+  <text x="414.2" y="274.3" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600">&#963;<tspan font-size="9.5" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan><tspan font-style="italic">u</tspan><tspan font-size="9.5" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="419.2" y="137.7" fill="var(--color-base)" font-size="12.5" text-anchor="end" font-weight="600">&#963;<tspan font-size="9.5" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan><tspan font-style="italic">u</tspan><tspan font-size="9.5" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+  <text x="515.5" y="232.8" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">&#963;<tspan font-size="9.5" dy="3.5">1</tspan><tspan dy="-3.5">&#8203;</tspan> = 3√5 &#8776; 6,71</text>
+  <text x="515.5" y="257.1" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600">&#963;<tspan font-size="9.5" dy="3.5">2</tspan><tspan dy="-3.5">&#8203;</tspan> = √5 &#8776; 2,24</text>
+  <text x="460.0" y="22.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">A</tspan>'nın görüntüsü: elips</text>
+</svg>
+<figcaption><em>A</em> = [[3, 0], [4, 5]] matrisinin tekil değer ayrışımının geometrisi. Birim çemberdeki dik <em>v</em><sub>1</sub>, <em>v</em><sub>2</sub> vektörleri, elipsin yarı eksenleri olan σ<sub>1</sub><em>u</em><sub>1</sub> ve σ<sub>2</sub><em>u</em><sub>2</sub> vektörlerine gider. Vektörlerin işaretleri <code>svd</code>'nin döndürdüğü gibidir; işaret seçimi keyfidir.</figcaption>
+</figure>
+```
+
+::: {#prp-lin-tekil-deger name="Tekil Değerlerin Söyledikleri"}
+Her gerçel $A$ matrisinin bir tekil değer ayrışımı vardır ve tekil değerleri tek türlü belirlidir: $\sigma_1^2, \dots, \sigma_p^2$ sayıları $A^TA$'nın özdeğerleridir (varsa $A^TA$'nın öteki özdeğerleri $0$'dır). Ayrıca şunlar doğrudur.
+
+(i\) $A$'nın rankı, sıfırdan farklı tekil değerlerinin sayısıdır.
+
+(ii\) $\|A\|_2 = \sigma_1$'dir.
+
+(iii\) $A$ kare ve regüler ise $\kappa(A) = \sigma_1 / \sigma_n$'dir (2-normunda).
+:::
+
+Kare olmayan bir matrisin tersi yoktur, ama (iii)'teki oran onun için de anlamlıdır. Sütunları lineer bağımsız $m \times n$ bir $A$ matrisinin ($m > n$) 2-normundaki koşul sayısı $\kappa(A) = \sigma_1 / \sigma_n$ olarak tanımlanır ve `np.linalg.cond` kare olmayan matrislerde bu oranı hesaplar. En küçük kareler kısmında $M$ için yazdırdığımız koşul sayısı budur. $M^TM$'nin özdeğerleri $\sigma_i^2$ olduğundan $\kappa(M^TM) = \sigma_1^2 / \sigma_n^2 = \kappa(M)^2$ eşitliği de buradan çıkar.
+
+Sessizce yanlış çözüm örneğindeki (@exm-lin-sessiz-tekil) matrise tekil değerleriyle bakalım. `compute_uv=False` yalnızca tekil değerleri hesaplatır; `np.finfo(float).eps` makine epsilonunu verir.
+
+```python
+import numpy as np
+
+A = np.array([[0.1, 0.2, 0.3],
+              [0.4, 0.5, 0.6],
+              [0.7, 0.8, 0.9]])
+s = np.linalg.svd(A, compute_uv=False)     # yalnız tekil değerler
+print(s)
+
+tol = s.max() * max(A.shape) * np.finfo(float).eps
+print(tol, np.sum(s > tol), np.linalg.matrix_rank(A))
+print(np.isclose(np.linalg.norm(A, 2), s[0]))
+print(s[0] / s[-1], np.linalg.cond(A))
+```
+
+Çıktı:
+
+```text
+[1.68481034e+00 1.06836951e-01 3.65063904e-17]
+1.1223091358001955e-15 2 2
+True
+4.615110719530146e+16 4.615110719530146e+16
+```
+
+Üçüncü tekil değer $3{,}7 \cdot 10^{-17}$'dir: tam aritmetikte $0$ olması gereken bir sayının yuvarlama hatası. `matrix_rank`, $\sigma_1 \cdot \max(m, n) \cdot \varepsilon \approx 1{,}1 \cdot 10^{-15}$ eşiğinden büyük tekil değerleri sayar ve rankı $2$ bulur. 2-normu en büyük tekil değere, koşul sayısı $\sigma_1/\sigma_3 \approx 4{,}6 \cdot 10^{16}$ oranına eşittir. Bu koşul sayısı $1/\varepsilon$'dan büyük olduğundan matris sayısal olarak tekildir ve `solve`'un ürettiği sayılar anlamsızdır.
+
+Tekil değer ayrışımı $A$'yı rankı $1$ olan matrislerin toplamı olarak da yazar:
+
+$$A = \sigma_1 u_1 v_1^T + \sigma_2 u_2 v_2^T + \dots + \sigma_p u_p v_p^T.$$
+
+Tekil değerler büyükten küçüğe sıralı olduğundan bu toplamın ilk terimleri en önemli kısımdır.
+
+::: {#thm-lin-eckart-young name="En İyi Düşük Ranklı Yaklaşım"}
+$A = U\Sigma V^T$ ve $k < \operatorname{rank} A$ olsun.
+
+$$A_k = \sum_{i=1}^{k} \sigma_i u_i v_i^T$$
+
+matrisi, rankı en fazla $k$ olan bütün $B$ matrisleri arasında $\|A - B\|_2$ değerini en küçük yapar ve $\|A - A_k\|_2 = \sigma_{k+1}$'dir.
+:::
+
+Bu sonuç Eckart–Young teoremi olarak bilinir. Yani $A$'yı $k$ terimle yaklaşık yazmanın en iyi yolu ayrışımın ilk $k$ terimini almaktır ve yapılan hata, atılan ilk tekil değerdir. $m \times n$ bir matrisin $A_k$ yaklaşımını saklamak için $mn$ yerine $k(m + n + 1)$ sayı yeter.
+
+:::: {#exm-lin-dusuk-rank name="Bir Görüntünün Düşük Ranklı Yaklaşımı"}
+$32 \times 32$ bir matrisin elemanlarını $[0, 1]$ aralığındaki gri tonlar olarak düşünelim ($0$ zemin rengi, $1$ en yoğun ton). Bir halka ve onu kesen çapraz bir şeritten oluşan görüntünün rank $2$, $6$ ve $12$ yaklaşımlarını hesaplayıp hataları tekil değerlerle karşılaştırınız.
+
+::: {.cozum}
+Izgarayı broadcasting ile kuruyoruz: `X` sütunun, `Y` satırın konumunu tutar. Halka ile şeridin kesiştiği hücrelerde toplam $1$'i aşar; `np.clip(z, 0, 1)` bir `z` dizisinin $0$'dan küçük elemanlarını $0$'a, $1$'den büyük elemanlarını $1$'e eşitler. `U[:, :k] * s[:k]` çarpımı $U$'nun ilk $k$ sütununu karşılık gelen tekil değerlerle çarpar; bunu `Vt[:k]` ile çarpmak ayrışımın ilk $k$ teriminin toplamını verir.
+
+```python
+import numpy as np
+
+n = 32
+g = np.linspace(-1, 1, n)
+X, Y = g[None, :], g[:, None]                  # broadcasting ile ızgara
+R = np.sqrt(X**2 + Y**2)
+ring = np.exp(-((R - 0.6) / 0.12) ** 2)        # bir halka
+band = (np.abs(X - Y) < 0.15).astype(float)    # çapraz bir şerit
+img = np.clip(ring + band, 0, 1)               # [0, 1] aralığına kırp
+
+U, s, Vt = np.linalg.svd(img)
+print("rank:", np.linalg.matrix_rank(img))
+print(np.round(s[:6], 3))
+for k in (2, 6, 12):
+    img_k = (U[:, :k] * s[:k]) @ Vt[:k]        # ilk k terimin toplamı
+    err = np.linalg.norm(img - img_k, 2)
+    print(k, f"{err:.6f}", f"{s[k]:.6f}", k * (2 * n + 1))
+```
+
+Çıktı:
+
+```text
+rank: 32
+[12.502  5.364  4.514  3.85   3.834  3.251]
+2 4.514021 4.514021 130
+6 2.872318 2.872318 390
+12 1.077171 1.077171 780
+```
+
+Keskin kenarlı çapraz şerit tek başına neredeyse tam ranklıdır; bu yüzden görüntünün rankı da tamdır ($32$). Her satırda hata, Eckart–Young teoreminin (@thm-lin-eckart-young) söylediği gibi atılan ilk tekil değer olan $\sigma_{k+1}$'e eşit çıktı. Son sütun yaklaşımı saklamak için gereken sayı adedidir: $12$ terim için $780$ sayı, özgün görüntünün $1024$ sayısından azdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Yaklaşımları görüntü olarak çizdiğimizde rank $2$'nin yalnızca kaba bir desen verdiği, rank $12$'nin ise halkayı ve şeridi tanınır biçimde yakaladığı görülüyor. Çapraz şerit gibi satırlara ve sütunlara paralel olmayan ayrıntılar çok terim gerektirir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="5.0 6.5 620.0 198.0" role="img" aria-label="Four 32 by 32 grey-scale images: the original ring crossed by a diagonal band, and its rank 2, 6 and 12 approximations from the SVD with 2-norm errors 4.51, 2.87 and 1.08">
+  <path d="M80 52h8v4h-8zM64 56h8v4h-8zM96 56h8v4h-8zM56 60h4v4h-4zM108 60h4v4h-4zM112 64h4v4h-4zM116 68h4v4h-4zM120 72h4v4h-4zM40 76h4v4h-4zM76 76h16v4h-16zM124 76h4v4h-4zM96 80h4v4h-4zM36 84h4v4h-4zM100 84h4v4h-4zM128 84h4v4h-4zM36 88h4v4h-4zM104 88h4v4h-4zM128 88h4v4h-4zM56 96h4v4h-4zM108 96h4v4h-4zM32 100h4v4h-4zM56 100h4v4h-4zM108 100h4v4h-4zM132 100h4v4h-4zM32 104h4v4h-4zM56 104h4v4h-4zM108 104h4v4h-4zM132 104h4v4h-4zM56 108h4v4h-4zM108 108h4v4h-4zM36 116h4v4h-4zM60 116h4v4h-4zM128 116h4v4h-4zM36 120h4v4h-4zM64 120h4v4h-4zM128 120h4v4h-4zM68 124h4v4h-4zM40 128h4v4h-4zM76 128h16v4h-16zM124 128h4v4h-4zM44 132h4v4h-4zM48 136h4v4h-4zM52 140h4v4h-4zM56 144h4v4h-4zM108 144h4v4h-4zM64 148h8v4h-8zM96 148h8v4h-8zM80 152h8v4h-8z" fill="var(--academic-text)" fill-opacity="0.1"/>
+  <path d="M72 56h24v4h-24zM60 60h4v4h-4zM104 60h4v4h-4zM56 64h4v4h-4zM108 64h4v4h-4zM44 76h4v4h-4zM72 76h4v4h-4zM92 76h4v4h-4zM120 76h4v4h-4zM40 80h4v4h-4zM100 80h4v4h-4zM124 80h4v4h-4zM104 84h4v4h-4zM36 92h4v4h-4zM56 92h4v4h-4zM108 92h4v4h-4zM128 92h4v4h-4zM36 96h4v4h-4zM128 96h4v4h-4zM36 100h4v4h-4zM128 100h4v4h-4zM36 104h4v4h-4zM128 104h4v4h-4zM36 108h4v4h-4zM128 108h4v4h-4zM36 112h4v4h-4zM56 112h4v4h-4zM108 112h4v4h-4zM128 112h4v4h-4zM60 120h4v4h-4zM40 124h4v4h-4zM64 124h4v4h-4zM124 124h4v4h-4zM44 128h4v4h-4zM72 128h4v4h-4zM92 128h4v4h-4zM120 128h4v4h-4zM56 140h4v4h-4zM108 140h4v4h-4zM60 144h4v4h-4zM104 144h4v4h-4zM72 148h24v4h-24z" fill="var(--academic-text)" fill-opacity="0.2"/>
+  <path d="M64 60h4v4h-4zM100 60h4v4h-4zM112 68h4v4h-4zM116 72h4v4h-4zM68 76h4v4h-4zM96 76h4v4h-4zM40 84h4v4h-4zM124 84h4v4h-4zM56 88h4v4h-4zM108 88h4v4h-4zM56 116h4v4h-4zM108 116h4v4h-4zM40 120h4v4h-4zM124 120h4v4h-4zM68 128h4v4h-4zM96 128h4v4h-4zM48 132h4v4h-4zM52 136h4v4h-4zM64 144h4v4h-4zM100 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.3"/>
+  <path d="M68 60h4v4h-4zM96 60h4v4h-4zM60 64h4v4h-4zM104 64h4v4h-4zM80 72h8v4h-8zM44 80h4v4h-4zM120 80h4v4h-4zM40 88h4v4h-4zM124 88h4v4h-4zM52 100h4v4h-4zM112 100h4v4h-4zM52 104h4v4h-4zM112 104h4v4h-4zM40 116h4v4h-4zM124 116h4v4h-4zM44 124h4v4h-4zM120 124h4v4h-4zM80 132h8v4h-8zM60 140h4v4h-4zM104 140h4v4h-4zM68 144h4v4h-4zM96 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.4"/>
+  <path d="M72 60h4v4h-4zM92 60h4v4h-4zM76 72h4v4h-4zM88 72h4v4h-4zM104 80h4v4h-4zM40 92h4v4h-4zM124 92h4v4h-4zM52 96h4v4h-4zM112 96h4v4h-4zM52 108h4v4h-4zM112 108h4v4h-4zM40 112h4v4h-4zM124 112h4v4h-4zM60 124h4v4h-4zM76 132h4v4h-4zM88 132h4v4h-4zM72 144h4v4h-4zM92 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.5"/>
+  <path d="M76 60h4v4h-4zM88 60h4v4h-4zM108 68h4v4h-4zM72 72h4v4h-4zM92 72h4v4h-4zM112 72h4v4h-4zM100 76h4v4h-4zM116 76h4v4h-4zM108 84h4v4h-4zM52 92h4v4h-4zM112 92h4v4h-4zM40 96h4v4h-4zM124 96h4v4h-4zM40 108h4v4h-4zM124 108h4v4h-4zM52 112h4v4h-4zM112 112h4v4h-4zM56 120h4v4h-4zM48 128h4v4h-4zM64 128h4v4h-4zM52 132h4v4h-4zM72 132h4v4h-4zM92 132h4v4h-4zM56 136h4v4h-4zM76 144h4v4h-4zM88 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.6"/>
+  <path d="M80 60h8v4h-8zM64 64h4v4h-4zM100 64h4v4h-4zM68 72h4v4h-4zM96 72h4v4h-4zM44 84h4v4h-4zM120 84h4v4h-4zM52 88h4v4h-4zM112 88h4v4h-4zM40 100h4v4h-4zM124 100h4v4h-4zM40 104h4v4h-4zM124 104h4v4h-4zM52 116h4v4h-4zM112 116h4v4h-4zM44 120h4v4h-4zM120 120h4v4h-4zM68 132h4v4h-4zM96 132h4v4h-4zM64 140h4v4h-4zM100 140h4v4h-4zM80 144h8v4h-8z" fill="var(--academic-text)" fill-opacity="0.7"/>
+  <path d="M68 64h4v4h-4zM96 64h4v4h-4zM60 68h4v4h-4zM80 68h8v4h-8zM104 68h4v4h-4zM104 76h4v4h-4zM48 80h4v4h-4zM108 80h4v4h-4zM116 80h4v4h-4zM44 88h4v4h-4zM120 88h4v4h-4zM48 100h4v4h-4zM116 100h4v4h-4zM48 104h4v4h-4zM116 104h4v4h-4zM44 116h4v4h-4zM120 116h4v4h-4zM48 124h4v4h-4zM56 124h4v4h-4zM116 124h4v4h-4zM60 128h4v4h-4zM60 136h4v4h-4zM80 136h8v4h-8zM104 136h4v4h-4zM68 140h4v4h-4zM96 140h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.8"/>
+  <path d="M72 64h4v4h-4zM92 64h4v4h-4zM72 68h8v4h-8zM88 68h8v4h-8zM64 72h4v4h-4zM100 72h4v4h-4zM108 72h4v4h-4zM112 76h4v4h-4zM52 84h4v4h-4zM112 84h4v4h-4zM44 92h8v4h-8zM116 92h8v4h-8zM48 96h4v4h-4zM116 96h4v4h-4zM48 108h4v4h-4zM116 108h4v4h-4zM44 112h8v4h-8zM116 112h8v4h-8zM52 120h4v4h-4zM112 120h4v4h-4zM52 128h4v4h-4zM56 132h4v4h-4zM64 132h4v4h-4zM100 132h4v4h-4zM72 136h8v4h-8zM88 136h8v4h-8zM72 140h4v4h-4zM92 140h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.9"/>
+  <path d="M20 40h12v4h-12zM20 44h16v4h-16zM20 48h20v4h-20zM24 52h20v4h-20zM28 56h20v4h-20zM32 60h20v4h-20zM36 64h20v4h-20zM76 64h16v4h-16zM40 68h20v4h-20zM64 68h8v4h-8zM96 68h8v4h-8zM44 72h20v4h-20zM104 72h4v4h-4zM48 76h20v4h-20zM108 76h4v4h-4zM52 80h20v4h-20zM112 80h4v4h-4zM48 84h4v4h-4zM56 84h20v4h-20zM116 84h4v4h-4zM48 88h4v4h-4zM60 88h20v4h-20zM116 88h4v4h-4zM64 92h20v4h-20zM44 96h4v4h-4zM68 96h20v4h-20zM120 96h4v4h-4zM44 100h4v4h-4zM72 100h20v4h-20zM120 100h4v4h-4zM44 104h4v4h-4zM76 104h20v4h-20zM120 104h4v4h-4zM44 108h4v4h-4zM80 108h20v4h-20zM120 108h4v4h-4zM84 112h20v4h-20zM48 116h4v4h-4zM88 116h20v4h-20zM116 116h4v4h-4zM48 120h4v4h-4zM92 120h20v4h-20zM116 120h4v4h-4zM52 124h4v4h-4zM96 124h20v4h-20zM56 128h4v4h-4zM100 128h20v4h-20zM60 132h4v4h-4zM104 132h20v4h-20zM64 136h8v4h-8zM96 136h8v4h-8zM108 136h20v4h-20zM76 140h16v4h-16zM112 140h20v4h-20zM116 144h20v4h-20zM120 148h20v4h-20zM124 152h20v4h-20zM128 156h20v4h-20zM132 160h16v4h-16zM136 164h12v4h-12z" fill="var(--academic-text)" fill-opacity="1.0"/>
+  <rect x="20.0" y="40.0" width="128.0" height="128.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.2" stroke-opacity="0.6"/>
+  <text x="84.0" y="30.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">özgün (rank 32)</text>
+  <path d="M234 40h8v4h-8zM190 44h12v4h-12zM230 44h16v4h-16zM274 44h12v4h-12zM182 48h20v4h-20zM226 48h8v4h-8zM242 48h8v4h-8zM274 48h20v4h-20zM182 52h8v4h-8zM202 52h4v4h-4zM226 52h4v4h-4zM246 52h4v4h-4zM270 52h4v4h-4zM286 52h8v4h-8zM178 56h8v4h-8zM222 56h4v4h-4zM250 56h4v4h-4zM290 56h8v4h-8zM178 60h8v4h-8zM214 60h4v4h-4zM258 60h4v4h-4zM290 60h8v4h-8zM178 64h8v4h-8zM290 64h8v4h-8zM186 68h4v4h-4zM286 68h4v4h-4zM230 76h4v4h-4zM242 76h4v4h-4zM194 80h4v4h-4zM234 80h8v4h-8zM278 80h4v4h-4zM190 88h4v4h-4zM282 88h4v4h-4zM182 92h8v4h-8zM286 92h8v4h-8zM178 96h8v4h-8zM210 96h4v4h-4zM262 96h4v4h-4zM290 96h8v4h-8zM174 100h8v4h-8zM214 100h4v4h-4zM258 100h4v4h-4zM294 100h8v4h-8zM174 104h8v4h-8zM214 104h4v4h-4zM258 104h4v4h-4zM294 104h8v4h-8zM178 108h8v4h-8zM210 108h4v4h-4zM262 108h4v4h-4zM290 108h8v4h-8zM182 112h8v4h-8zM286 112h8v4h-8zM190 116h4v4h-4zM282 116h4v4h-4zM194 124h4v4h-4zM234 124h8v4h-8zM278 124h4v4h-4zM230 128h4v4h-4zM242 128h4v4h-4zM186 136h4v4h-4zM286 136h4v4h-4zM178 140h8v4h-8zM290 140h8v4h-8zM178 144h8v4h-8zM214 144h4v4h-4zM258 144h4v4h-4zM290 144h8v4h-8zM178 148h8v4h-8zM222 148h4v4h-4zM250 148h4v4h-4zM290 148h8v4h-8zM182 152h8v4h-8zM202 152h4v4h-4zM226 152h4v4h-4zM246 152h4v4h-4zM270 152h4v4h-4zM286 152h8v4h-8zM182 156h20v4h-20zM226 156h8v4h-8zM242 156h8v4h-8zM274 156h20v4h-20zM190 160h12v4h-12zM230 160h16v4h-16zM274 160h12v4h-12zM234 164h8v4h-8z" fill="var(--academic-text)" fill-opacity="0.1"/>
+  <path d="M234 48h8v4h-8zM190 52h12v4h-12zM230 52h4v4h-4zM242 52h4v4h-4zM274 52h12v4h-12zM186 56h8v4h-8zM202 56h4v4h-4zM270 56h4v4h-4zM282 56h8v4h-8zM186 60h4v4h-4zM206 60h4v4h-4zM218 60h4v4h-4zM254 60h4v4h-4zM266 60h4v4h-4zM286 60h4v4h-4zM186 64h4v4h-4zM286 64h4v4h-4zM190 68h4v4h-4zM282 68h4v4h-4zM194 72h4v4h-4zM278 72h4v4h-4zM230 80h4v4h-4zM242 80h4v4h-4zM194 84h4v4h-4zM234 84h8v4h-8zM278 84h4v4h-4zM186 96h4v4h-4zM214 96h4v4h-4zM258 96h4v4h-4zM286 96h4v4h-4zM182 100h4v4h-4zM218 100h4v4h-4zM254 100h4v4h-4zM290 100h4v4h-4zM182 104h4v4h-4zM218 104h4v4h-4zM254 104h4v4h-4zM290 104h4v4h-4zM186 108h4v4h-4zM214 108h4v4h-4zM258 108h4v4h-4zM286 108h4v4h-4zM194 120h4v4h-4zM234 120h8v4h-8zM278 120h4v4h-4zM230 124h4v4h-4zM242 124h4v4h-4zM194 132h4v4h-4zM278 132h4v4h-4zM190 136h4v4h-4zM282 136h4v4h-4zM186 140h4v4h-4zM286 140h4v4h-4zM186 144h4v4h-4zM206 144h4v4h-4zM218 144h4v4h-4zM254 144h4v4h-4zM266 144h4v4h-4zM286 144h4v4h-4zM186 148h8v4h-8zM202 148h4v4h-4zM270 148h4v4h-4zM282 148h8v4h-8zM190 152h12v4h-12zM230 152h4v4h-4zM242 152h4v4h-4zM274 152h12v4h-12zM234 156h8v4h-8z" fill="var(--academic-text)" fill-opacity="0.2"/>
+  <path d="M234 52h8v4h-8zM194 56h4v4h-4zM226 56h4v4h-4zM246 56h4v4h-4zM278 56h4v4h-4zM190 60h4v4h-4zM222 60h4v4h-4zM250 60h4v4h-4zM282 60h4v4h-4zM234 72h8v4h-8zM226 76h4v4h-4zM246 76h4v4h-4zM226 80h4v4h-4zM246 80h4v4h-4zM230 84h4v4h-4zM242 84h4v4h-4zM194 88h4v4h-4zM278 88h4v4h-4zM190 92h4v4h-4zM210 92h8v4h-8zM258 92h8v4h-8zM282 92h4v4h-4zM218 96h4v4h-4zM254 96h4v4h-4zM186 100h4v4h-4zM206 100h4v4h-4zM266 100h4v4h-4zM286 100h4v4h-4zM186 104h4v4h-4zM206 104h4v4h-4zM266 104h4v4h-4zM286 104h4v4h-4zM218 108h4v4h-4zM254 108h4v4h-4zM190 112h4v4h-4zM210 112h8v4h-8zM258 112h8v4h-8zM282 112h4v4h-4zM194 116h4v4h-4zM278 116h4v4h-4zM230 120h4v4h-4zM242 120h4v4h-4zM226 124h4v4h-4zM246 124h4v4h-4zM226 128h4v4h-4zM246 128h4v4h-4zM234 132h8v4h-8zM190 144h4v4h-4zM222 144h4v4h-4zM250 144h4v4h-4zM282 144h4v4h-4zM194 148h4v4h-4zM226 148h4v4h-4zM246 148h4v4h-4zM278 148h4v4h-4zM234 152h8v4h-8z" fill="var(--academic-text)" fill-opacity="0.3"/>
+  <path d="M198 56h4v4h-4zM230 56h16v4h-16zM274 56h4v4h-4zM190 64h4v4h-4zM210 64h8v4h-8zM258 64h8v4h-8zM282 64h4v4h-4zM230 72h4v4h-4zM242 72h4v4h-4zM198 76h4v4h-4zM274 76h4v4h-4zM198 80h4v4h-4zM274 80h4v4h-4zM226 84h4v4h-4zM246 84h4v4h-4zM234 88h8v4h-8zM218 92h4v4h-4zM254 92h4v4h-4zM190 96h4v4h-4zM206 96h4v4h-4zM266 96h4v4h-4zM282 96h4v4h-4zM190 100h4v4h-4zM222 100h4v4h-4zM250 100h4v4h-4zM282 100h4v4h-4zM190 104h4v4h-4zM222 104h4v4h-4zM250 104h4v4h-4zM282 104h4v4h-4zM190 108h4v4h-4zM206 108h4v4h-4zM266 108h4v4h-4zM282 108h4v4h-4zM218 112h4v4h-4zM254 112h4v4h-4zM234 116h8v4h-8zM226 120h4v4h-4zM246 120h4v4h-4zM198 124h4v4h-4zM274 124h4v4h-4zM198 128h4v4h-4zM274 128h4v4h-4zM230 132h4v4h-4zM242 132h4v4h-4zM190 140h4v4h-4zM210 140h8v4h-8zM258 140h8v4h-8zM282 140h4v4h-4zM198 148h4v4h-4zM230 148h16v4h-16zM274 148h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.4"/>
+  <path d="M194 60h4v4h-4zM202 60h4v4h-4zM226 60h4v4h-4zM246 60h4v4h-4zM270 60h4v4h-4zM278 60h4v4h-4zM218 64h4v4h-4zM254 64h4v4h-4zM194 68h4v4h-4zM278 68h4v4h-4zM226 72h4v4h-4zM246 72h4v4h-4zM198 84h4v4h-4zM274 84h4v4h-4zM226 88h8v4h-8zM242 88h8v4h-8zM194 92h4v4h-4zM206 92h4v4h-4zM222 92h4v4h-4zM250 92h4v4h-4zM266 92h4v4h-4zM278 92h4v4h-4zM222 96h4v4h-4zM250 96h4v4h-4zM222 108h4v4h-4zM250 108h4v4h-4zM194 112h4v4h-4zM206 112h4v4h-4zM222 112h4v4h-4zM250 112h4v4h-4zM266 112h4v4h-4zM278 112h4v4h-4zM226 116h8v4h-8zM242 116h8v4h-8zM198 120h4v4h-4zM274 120h4v4h-4zM226 132h4v4h-4zM246 132h4v4h-4zM194 136h4v4h-4zM278 136h4v4h-4zM218 140h4v4h-4zM254 140h4v4h-4zM194 144h4v4h-4zM202 144h4v4h-4zM226 144h4v4h-4zM246 144h4v4h-4zM270 144h4v4h-4zM278 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.5"/>
+  <path d="M198 60h4v4h-4zM230 60h4v4h-4zM242 60h4v4h-4zM274 60h4v4h-4zM194 64h4v4h-4zM206 64h4v4h-4zM222 64h4v4h-4zM250 64h4v4h-4zM266 64h4v4h-4zM278 64h4v4h-4zM234 68h8v4h-8zM198 72h4v4h-4zM274 72h4v4h-4zM222 76h4v4h-4zM250 76h4v4h-4zM222 80h4v4h-4zM250 80h4v4h-4zM222 84h4v4h-4zM250 84h4v4h-4zM198 88h4v4h-4zM210 88h16v4h-16zM250 88h16v4h-16zM274 88h4v4h-4zM226 92h24v4h-24zM194 96h4v4h-4zM226 96h4v4h-4zM246 96h4v4h-4zM278 96h4v4h-4zM202 100h4v4h-4zM226 100h4v4h-4zM246 100h4v4h-4zM270 100h4v4h-4zM202 104h4v4h-4zM226 104h4v4h-4zM246 104h4v4h-4zM270 104h4v4h-4zM194 108h4v4h-4zM226 108h4v4h-4zM246 108h4v4h-4zM278 108h4v4h-4zM226 112h24v4h-24zM198 116h4v4h-4zM210 116h16v4h-16zM250 116h16v4h-16zM274 116h4v4h-4zM222 120h4v4h-4zM250 120h4v4h-4zM222 124h4v4h-4zM250 124h4v4h-4zM222 128h4v4h-4zM250 128h4v4h-4zM198 132h4v4h-4zM274 132h4v4h-4zM234 136h8v4h-8zM194 140h4v4h-4zM206 140h4v4h-4zM222 140h4v4h-4zM250 140h4v4h-4zM266 140h4v4h-4zM278 140h4v4h-4zM198 144h4v4h-4zM230 144h4v4h-4zM242 144h4v4h-4zM274 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.6"/>
+  <path d="M234 60h8v4h-8zM226 64h4v4h-4zM246 64h4v4h-4zM210 68h8v4h-8zM222 68h12v4h-12zM242 68h12v4h-12zM258 68h8v4h-8zM222 72h4v4h-4zM250 72h4v4h-4zM202 76h4v4h-4zM270 76h4v4h-4zM202 80h4v4h-4zM218 80h4v4h-4zM254 80h4v4h-4zM270 80h4v4h-4zM214 84h8v4h-8zM254 84h8v4h-8zM202 88h8v4h-8zM266 88h8v4h-8zM198 92h8v4h-8zM270 92h8v4h-8zM202 96h4v4h-4zM230 96h4v4h-4zM242 96h4v4h-4zM270 96h4v4h-4zM194 100h4v4h-4zM278 100h4v4h-4zM194 104h4v4h-4zM278 104h4v4h-4zM202 108h4v4h-4zM230 108h4v4h-4zM242 108h4v4h-4zM270 108h4v4h-4zM198 112h8v4h-8zM270 112h8v4h-8zM202 116h8v4h-8zM266 116h8v4h-8zM214 120h8v4h-8zM254 120h8v4h-8zM202 124h4v4h-4zM218 124h4v4h-4zM254 124h4v4h-4zM270 124h4v4h-4zM202 128h4v4h-4zM270 128h4v4h-4zM222 132h4v4h-4zM250 132h4v4h-4zM210 136h8v4h-8zM222 136h12v4h-12zM242 136h12v4h-12zM258 136h8v4h-8zM226 140h4v4h-4zM246 140h4v4h-4zM234 144h8v4h-8z" fill="var(--academic-text)" fill-opacity="0.7"/>
+  <path d="M202 64h4v4h-4zM230 64h16v4h-16zM270 64h4v4h-4zM198 68h4v4h-4zM218 68h4v4h-4zM254 68h4v4h-4zM274 68h4v4h-4zM214 72h8v4h-8zM254 72h8v4h-8zM214 76h8v4h-8zM254 76h8v4h-8zM206 80h12v4h-12zM258 80h12v4h-12zM202 84h12v4h-12zM262 84h12v4h-12zM198 96h4v4h-4zM234 96h8v4h-8zM274 96h4v4h-4zM198 100h4v4h-4zM230 100h4v4h-4zM242 100h4v4h-4zM274 100h4v4h-4zM198 104h4v4h-4zM230 104h4v4h-4zM242 104h4v4h-4zM274 104h4v4h-4zM198 108h4v4h-4zM234 108h8v4h-8zM274 108h4v4h-4zM202 120h12v4h-12zM262 120h12v4h-12zM206 124h12v4h-12zM258 124h12v4h-12zM214 128h8v4h-8zM254 128h8v4h-8zM214 132h8v4h-8zM254 132h8v4h-8zM198 136h4v4h-4zM218 136h4v4h-4zM254 136h4v4h-4zM274 136h4v4h-4zM202 140h4v4h-4zM230 140h16v4h-16zM270 140h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.8"/>
+  <path d="M198 64h4v4h-4zM274 64h4v4h-4zM206 68h4v4h-4zM266 68h4v4h-4zM202 72h12v4h-12zM262 72h12v4h-12zM206 76h8v4h-8zM262 76h8v4h-8zM234 100h8v4h-8zM234 104h8v4h-8zM206 128h8v4h-8zM262 128h8v4h-8zM202 132h12v4h-12zM262 132h12v4h-12zM206 136h4v4h-4zM266 136h4v4h-4zM198 140h4v4h-4zM274 140h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.9"/>
+  <path d="M202 68h4v4h-4zM270 68h4v4h-4zM202 136h4v4h-4zM270 136h4v4h-4z" fill="var(--academic-text)" fill-opacity="1.0"/>
+  <rect x="174.0" y="40.0" width="128.0" height="128.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.2" stroke-opacity="0.6"/>
+  <text x="238.0" y="30.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">k</tspan> = 2</text>
+  <text x="238.0" y="188.0" fill="var(--color-practice)" font-size="12" text-anchor="middle">hata &#8776; 4,51</text>
+  <path d="M348 40h4v4h-4zM416 40h24v4h-24zM416 44h24v4h-24zM356 52h4v4h-4zM380 52h24v4h-24zM376 56h4v4h-4zM404 56h4v4h-4zM448 56h8v4h-8zM328 60h4v4h-4zM364 60h8v4h-8zM412 60h4v4h-4zM424 60h8v4h-8zM448 60h8v4h-8zM432 64h4v4h-4zM448 64h8v4h-8zM340 68h4v4h-4zM432 68h4v4h-4zM448 68h8v4h-8zM448 72h8v4h-8zM348 76h4v4h-4zM384 76h4v4h-4zM396 76h4v4h-4zM448 76h8v4h-8zM348 80h4v4h-4zM388 80h4v4h-4zM400 80h4v4h-4zM432 80h4v4h-4zM392 84h4v4h-4zM404 84h4v4h-4zM344 88h4v4h-4zM396 88h4v4h-4zM408 88h4v4h-4zM436 88h4v4h-4zM340 92h4v4h-4zM412 92h4v4h-4zM440 92h4v4h-4zM340 96h4v4h-4zM364 96h4v4h-4zM404 96h4v4h-4zM416 96h4v4h-4zM440 96h4v4h-4zM340 100h4v4h-4zM368 100h4v4h-4zM408 100h4v4h-4zM440 100h4v4h-4zM340 104h4v4h-4zM372 104h4v4h-4zM412 104h4v4h-4zM440 104h4v4h-4zM340 108h4v4h-4zM364 108h4v4h-4zM376 108h4v4h-4zM416 108h4v4h-4zM440 108h4v4h-4zM340 112h4v4h-4zM368 112h4v4h-4zM440 112h4v4h-4zM344 116h4v4h-4zM372 116h4v4h-4zM384 116h4v4h-4zM436 116h4v4h-4zM376 120h4v4h-4zM388 120h4v4h-4zM348 124h4v4h-4zM380 124h4v4h-4zM392 124h4v4h-4zM432 124h4v4h-4zM328 128h8v4h-8zM384 128h4v4h-4zM396 128h4v4h-4zM432 128h4v4h-4zM328 132h8v4h-8zM328 136h8v4h-8zM348 136h4v4h-4zM440 136h4v4h-4zM328 140h8v4h-8zM348 140h4v4h-4zM328 144h8v4h-8zM352 144h8v4h-8zM368 144h4v4h-4zM412 144h8v4h-8zM452 144h4v4h-4zM328 148h8v4h-8zM376 148h4v4h-4zM404 148h4v4h-4zM380 152h24v4h-24zM424 152h4v4h-4zM344 160h24v4h-24zM344 164h24v4h-24zM432 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.1"/>
+  <path d="M348 44h4v4h-4zM360 56h4v4h-4zM380 56h4v4h-4zM400 56h4v4h-4zM332 60h4v4h-4zM372 60h4v4h-4zM408 60h4v4h-4zM344 72h4v4h-4zM348 84h4v4h-4zM432 84h4v4h-4zM344 92h4v4h-4zM436 92h4v4h-4zM344 112h4v4h-4zM436 112h4v4h-4zM348 120h4v4h-4zM432 120h4v4h-4zM436 132h4v4h-4zM372 144h4v4h-4zM408 144h4v4h-4zM448 144h4v4h-4zM380 148h4v4h-4zM400 148h4v4h-4zM420 148h4v4h-4zM432 160h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.2"/>
+  <path d="M348 48h4v4h-4zM352 52h4v4h-4zM384 56h16v4h-16zM336 60h4v4h-4zM376 60h4v4h-4zM404 60h4v4h-4zM340 64h4v4h-4zM368 64h4v4h-4zM412 64h12v4h-12zM428 64h4v4h-4zM384 72h16v4h-16zM428 72h4v4h-4zM400 76h4v4h-4zM428 76h4v4h-4zM352 80h4v4h-4zM384 80h4v4h-4zM404 80h4v4h-4zM428 80h4v4h-4zM388 84h4v4h-4zM348 88h4v4h-4zM392 88h4v4h-4zM412 88h4v4h-4zM432 88h4v4h-4zM396 92h4v4h-4zM416 92h4v4h-4zM344 96h4v4h-4zM360 96h4v4h-4zM368 96h4v4h-4zM400 96h4v4h-4zM420 96h4v4h-4zM436 96h4v4h-4zM344 100h4v4h-4zM360 100h4v4h-4zM372 100h4v4h-4zM404 100h4v4h-4zM420 100h4v4h-4zM436 100h4v4h-4zM344 104h4v4h-4zM360 104h4v4h-4zM376 104h4v4h-4zM408 104h4v4h-4zM420 104h4v4h-4zM436 104h4v4h-4zM344 108h4v4h-4zM360 108h4v4h-4zM380 108h4v4h-4zM412 108h4v4h-4zM420 108h4v4h-4zM436 108h4v4h-4zM364 112h4v4h-4zM384 112h4v4h-4zM348 116h4v4h-4zM368 116h4v4h-4zM388 116h4v4h-4zM432 116h4v4h-4zM392 120h4v4h-4zM352 124h4v4h-4zM376 124h4v4h-4zM396 124h4v4h-4zM428 124h4v4h-4zM352 128h4v4h-4zM380 128h4v4h-4zM352 132h4v4h-4zM384 132h16v4h-16zM352 140h4v4h-4zM360 140h12v4h-12zM412 140h4v4h-4zM440 140h4v4h-4zM376 144h4v4h-4zM404 144h4v4h-4zM444 144h4v4h-4zM384 148h16v4h-16zM428 152h4v4h-4zM432 156h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.3"/>
+  <path d="M344 40h4v4h-4zM328 56h4v4h-4zM360 60h4v4h-4zM364 64h4v4h-4zM424 64h4v4h-4zM428 68h4v4h-4zM348 72h4v4h-4zM352 76h4v4h-4zM380 76h4v4h-4zM408 84h4v4h-4zM364 92h4v4h-4zM416 112h4v4h-4zM372 120h4v4h-4zM400 128h4v4h-4zM428 128h4v4h-4zM432 132h4v4h-4zM352 136h4v4h-4zM356 140h4v4h-4zM416 140h4v4h-4zM420 144h4v4h-4zM452 148h4v4h-4zM436 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.4"/>
+  <path d="M328 40h4v4h-4zM344 44h4v4h-4zM332 56h4v4h-4zM356 56h4v4h-4zM380 60h4v4h-4zM400 60h4v4h-4zM372 64h4v4h-4zM408 64h4v4h-4zM344 68h4v4h-4zM380 72h4v4h-4zM400 72h4v4h-4zM404 76h4v4h-4zM352 84h4v4h-4zM428 84h4v4h-4zM416 88h4v4h-4zM348 92h4v4h-4zM360 92h4v4h-4zM392 92h4v4h-4zM420 92h4v4h-4zM432 92h4v4h-4zM396 96h4v4h-4zM400 100h4v4h-4zM380 104h4v4h-4zM384 108h4v4h-4zM348 112h4v4h-4zM360 112h4v4h-4zM388 112h4v4h-4zM420 112h4v4h-4zM432 112h4v4h-4zM364 116h4v4h-4zM352 120h4v4h-4zM428 120h4v4h-4zM376 128h4v4h-4zM380 132h4v4h-4zM400 132h4v4h-4zM436 136h4v4h-4zM372 140h4v4h-4zM408 140h4v4h-4zM380 144h4v4h-4zM400 144h4v4h-4zM424 148h4v4h-4zM448 148h4v4h-4zM436 160h4v4h-4zM452 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.5"/>
+  <path d="M340 40h4v4h-4zM328 52h4v4h-4zM348 52h4v4h-4zM340 60h4v4h-4zM384 60h4v4h-4zM396 60h4v4h-4zM376 64h4v4h-4zM404 64h4v4h-4zM424 68h4v4h-4zM376 76h4v4h-4zM380 80h4v4h-4zM408 80h4v4h-4zM384 84h4v4h-4zM412 84h4v4h-4zM352 88h4v4h-4zM364 88h4v4h-4zM388 88h4v4h-4zM428 88h4v4h-4zM368 92h4v4h-4zM348 96h4v4h-4zM372 96h4v4h-4zM432 96h4v4h-4zM376 100h4v4h-4zM404 104h4v4h-4zM348 108h4v4h-4zM408 108h4v4h-4zM432 108h4v4h-4zM412 112h4v4h-4zM352 116h4v4h-4zM392 116h4v4h-4zM416 116h4v4h-4zM428 116h4v4h-4zM368 120h4v4h-4zM396 120h4v4h-4zM372 124h4v4h-4zM400 124h4v4h-4zM404 128h4v4h-4zM356 136h4v4h-4zM376 140h4v4h-4zM404 140h4v4h-4zM384 144h4v4h-4zM396 144h4v4h-4zM440 144h4v4h-4zM432 152h4v4h-4zM452 152h4v4h-4zM440 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.6"/>
+  <path d="M332 40h4v4h-4zM328 44h4v4h-4zM344 48h4v4h-4zM336 56h4v4h-4zM352 56h4v4h-4zM388 60h8v4h-8zM344 64h4v4h-4zM380 64h4v4h-4zM400 64h4v4h-4zM368 68h4v4h-4zM376 68h48v4h-48zM376 72h4v4h-4zM404 72h4v4h-4zM424 72h4v4h-4zM408 76h4v4h-4zM424 76h4v4h-4zM356 80h4v4h-4zM412 80h4v4h-4zM424 80h4v4h-4zM416 84h4v4h-4zM424 84h4v4h-4zM356 88h8v4h-8zM420 88h8v4h-8zM352 92h8v4h-8zM424 92h8v4h-8zM356 96h4v4h-4zM424 96h4v4h-4zM348 100h4v4h-4zM356 100h4v4h-4zM424 100h4v4h-4zM432 100h4v4h-4zM348 104h4v4h-4zM356 104h4v4h-4zM424 104h4v4h-4zM432 104h4v4h-4zM356 108h4v4h-4zM424 108h4v4h-4zM352 112h8v4h-8zM424 112h8v4h-8zM356 116h8v4h-8zM420 116h8v4h-8zM356 120h4v4h-4zM364 120h4v4h-4zM356 124h4v4h-4zM368 124h4v4h-4zM424 124h4v4h-4zM356 128h4v4h-4zM372 128h4v4h-4zM356 132h4v4h-4zM376 132h4v4h-4zM404 132h4v4h-4zM360 136h48v4h-48zM412 136h4v4h-4zM380 140h4v4h-4zM400 140h4v4h-4zM436 140h4v4h-4zM388 144h8v4h-8zM428 148h4v4h-4zM444 148h4v4h-4zM436 156h4v4h-4zM452 160h4v4h-4zM448 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.7"/>
+  <path d="M336 40h4v4h-4zM340 44h4v4h-4zM328 48h4v4h-4zM332 52h4v4h-4zM344 52h4v4h-4zM340 56h12v4h-12zM344 60h4v4h-4zM360 64h4v4h-4zM384 64h8v4h-8zM396 64h4v4h-4zM364 68h4v4h-4zM372 68h4v4h-4zM352 72h4v4h-4zM372 72h4v4h-4zM408 72h4v4h-4zM420 72h4v4h-4zM356 76h4v4h-4zM372 76h4v4h-4zM412 76h4v4h-4zM376 80h4v4h-4zM416 80h4v4h-4zM356 84h12v4h-12zM420 84h4v4h-4zM368 88h4v4h-4zM388 92h4v4h-4zM352 96h4v4h-4zM392 96h4v4h-4zM428 96h4v4h-4zM352 100h4v4h-4zM380 100h4v4h-4zM396 100h4v4h-4zM384 104h4v4h-4zM400 104h4v4h-4zM428 104h4v4h-4zM352 108h4v4h-4zM388 108h4v4h-4zM428 108h4v4h-4zM392 112h4v4h-4zM412 116h4v4h-4zM360 120h4v4h-4zM416 120h12v4h-12zM364 124h4v4h-4zM404 124h4v4h-4zM368 128h4v4h-4zM408 128h4v4h-4zM424 128h4v4h-4zM360 132h4v4h-4zM372 132h4v4h-4zM408 132h4v4h-4zM428 132h4v4h-4zM408 136h4v4h-4zM416 136h4v4h-4zM384 140h4v4h-4zM392 140h8v4h-8zM420 140h4v4h-4zM436 144h4v4h-4zM432 148h12v4h-12zM436 152h4v4h-4zM448 152h4v4h-4zM452 156h4v4h-4zM440 160h4v4h-4zM444 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.8"/>
+  <path d="M332 44h4v4h-4zM356 60h4v4h-4zM392 64h4v4h-4zM348 68h4v4h-4zM364 72h8v4h-8zM412 72h8v4h-8zM360 76h12v4h-12zM416 76h8v4h-8zM360 80h8v4h-8zM420 80h4v4h-4zM380 84h4v4h-4zM384 88h4v4h-4zM372 92h4v4h-4zM376 96h4v4h-4zM392 100h4v4h-4zM428 100h4v4h-4zM352 104h4v4h-4zM388 104h4v4h-4zM404 108h4v4h-4zM408 112h4v4h-4zM396 116h4v4h-4zM400 120h4v4h-4zM360 124h4v4h-4zM416 124h8v4h-8zM360 128h8v4h-8zM412 128h12v4h-12zM364 132h8v4h-8zM412 132h8v4h-8zM432 136h4v4h-4zM388 140h4v4h-4zM424 144h4v4h-4zM448 160h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.9"/>
+  <path d="M336 44h4v4h-4zM332 48h12v4h-12zM336 52h8v4h-8zM348 60h8v4h-8zM348 64h12v4h-12zM352 68h12v4h-12zM356 72h8v4h-8zM368 80h8v4h-8zM368 84h12v4h-12zM372 88h12v4h-12zM376 92h12v4h-12zM380 96h12v4h-12zM384 100h8v4h-8zM392 104h8v4h-8zM392 108h12v4h-12zM396 112h12v4h-12zM400 116h12v4h-12zM404 120h12v4h-12zM408 124h8v4h-8zM420 132h8v4h-8zM420 136h12v4h-12zM424 140h12v4h-12zM428 144h8v4h-8zM440 152h8v4h-8zM440 156h12v4h-12zM444 160h4v4h-4z" fill="var(--academic-text)" fill-opacity="1.0"/>
+  <rect x="328.0" y="40.0" width="128.0" height="128.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.2" stroke-opacity="0.6"/>
+  <text x="392.0" y="30.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">k</tspan> = 6</text>
+  <text x="392.0" y="188.0" fill="var(--color-practice)" font-size="12" text-anchor="middle">hata &#8776; 2,87</text>
+  <path d="M510 40h8v4h-8zM546 52h8v4h-8zM530 56h4v4h-4zM558 56h8v4h-8zM518 60h8v4h-8zM566 60h4v4h-4zM574 64h4v4h-4zM482 68h4v4h-4zM578 68h4v4h-4zM482 72h4v4h-4zM582 72h4v4h-4zM502 76h4v4h-4zM534 76h20v4h-20zM502 80h4v4h-4zM538 80h4v4h-4zM554 80h8v4h-8zM586 80h4v4h-4zM546 84h4v4h-4zM558 84h4v4h-4zM590 84h4v4h-4zM498 88h4v4h-4zM562 88h8v4h-8zM590 88h4v4h-4zM518 92h4v4h-4zM546 92h4v4h-4zM554 92h4v4h-4zM566 92h4v4h-4zM518 96h8v4h-8zM570 96h4v4h-4zM594 96h4v4h-4zM518 100h4v4h-4zM554 100h4v4h-4zM562 100h4v4h-4zM570 100h4v4h-4zM594 100h4v4h-4zM494 104h4v4h-4zM518 104h4v4h-4zM526 104h4v4h-4zM534 104h4v4h-4zM570 104h4v4h-4zM494 108h4v4h-4zM518 108h4v4h-4zM566 108h8v4h-8zM522 112h4v4h-4zM534 112h4v4h-4zM542 112h4v4h-4zM570 112h4v4h-4zM498 116h4v4h-4zM522 116h8v4h-8zM590 116h4v4h-4zM498 120h4v4h-4zM530 120h4v4h-4zM542 120h4v4h-4zM502 124h4v4h-4zM530 124h8v4h-8zM550 124h4v4h-4zM586 124h4v4h-4zM538 128h20v4h-20zM586 128h4v4h-4zM506 132h4v4h-4zM606 132h4v4h-4zM510 136h4v4h-4zM606 136h4v4h-4zM514 140h4v4h-4zM522 144h4v4h-4zM566 144h8v4h-8zM526 148h8v4h-8zM558 148h4v4h-4zM538 152h8v4h-8zM574 164h8v4h-8z" fill="var(--academic-text)" fill-opacity="0.1"/>
+  <path d="M506 52h4v4h-4zM534 56h12v4h-12zM550 56h8v4h-8zM562 60h4v4h-4zM494 64h4v4h-4zM570 64h4v4h-4zM554 76h4v4h-4zM582 76h4v4h-4zM534 80h4v4h-4zM562 80h4v4h-4zM538 84h4v4h-4zM562 84h8v4h-8zM586 84h4v4h-4zM542 88h4v4h-4zM498 92h4v4h-4zM522 92h4v4h-4zM570 92h4v4h-4zM590 92h4v4h-4zM498 96h4v4h-4zM526 96h4v4h-4zM590 96h4v4h-4zM498 100h4v4h-4zM530 100h4v4h-4zM558 104h4v4h-4zM590 104h4v4h-4zM498 108h4v4h-4zM562 108h4v4h-4zM590 108h4v4h-4zM498 112h4v4h-4zM518 112h4v4h-4zM566 112h4v4h-4zM590 112h4v4h-4zM546 116h4v4h-4zM502 120h4v4h-4zM522 120h8v4h-8zM550 120h4v4h-4zM526 124h4v4h-4zM554 124h4v4h-4zM506 128h4v4h-4zM534 128h4v4h-4zM518 140h4v4h-4zM594 140h4v4h-4zM526 144h4v4h-4zM534 148h8v4h-8zM546 148h12v4h-12zM582 152h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.2"/>
+  <path d="M494 40h4v4h-4zM498 44h4v4h-4zM502 48h4v4h-4zM482 52h4v4h-4zM486 56h4v4h-4zM510 56h4v4h-4zM546 56h4v4h-4zM490 60h4v4h-4zM514 60h4v4h-4zM526 60h4v4h-4zM498 68h4v4h-4zM502 72h4v4h-4zM558 76h4v4h-4zM502 84h4v4h-4zM570 88h4v4h-4zM550 96h4v4h-4zM590 100h4v4h-4zM498 104h4v4h-4zM538 108h4v4h-4zM518 116h4v4h-4zM586 120h4v4h-4zM530 128h4v4h-4zM586 132h4v4h-4zM590 136h4v4h-4zM562 144h4v4h-4zM574 144h4v4h-4zM598 144h4v4h-4zM542 148h4v4h-4zM578 148h4v4h-4zM602 148h4v4h-4zM606 152h4v4h-4zM586 156h4v4h-4zM590 160h4v4h-4zM594 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.3"/>
+  <path d="M530 60h4v4h-4zM558 60h4v4h-4zM518 64h8v4h-8zM574 68h4v4h-4zM542 72h12v4h-12zM578 72h4v4h-4zM506 76h4v4h-4zM506 80h4v4h-4zM502 88h4v4h-4zM586 88h4v4h-4zM574 96h4v4h-4zM514 100h4v4h-4zM574 100h4v4h-4zM514 104h4v4h-4zM574 104h4v4h-4zM514 108h4v4h-4zM502 116h4v4h-4zM586 116h4v4h-4zM582 124h4v4h-4zM582 128h4v4h-4zM510 132h4v4h-4zM538 132h12v4h-12zM514 136h4v4h-4zM566 140h8v4h-8zM530 144h4v4h-4zM558 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.4"/>
+  <path d="M534 60h4v4h-4zM566 64h4v4h-4zM538 72h4v4h-4zM530 76h4v4h-4zM566 80h4v4h-4zM582 80h4v4h-4zM518 88h4v4h-4zM502 92h4v4h-4zM514 96h4v4h-4zM574 108h4v4h-4zM586 112h4v4h-4zM570 116h4v4h-4zM506 124h4v4h-4zM522 124h4v4h-4zM558 128h4v4h-4zM550 132h4v4h-4zM522 140h4v4h-4zM554 144h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.5"/>
+  <path d="M494 44h4v4h-4zM486 52h4v4h-4zM506 56h4v4h-4zM538 60h4v4h-4zM546 60h12v4h-12zM498 64h4v4h-4zM570 68h4v4h-4zM534 72h4v4h-4zM554 72h4v4h-4zM574 72h4v4h-4zM562 76h4v4h-4zM578 76h4v4h-4zM570 84h4v4h-4zM538 88h4v4h-4zM514 92h4v4h-4zM574 92h4v4h-4zM586 92h4v4h-4zM502 96h4v4h-4zM530 96h4v4h-4zM586 96h4v4h-4zM586 100h4v4h-4zM502 104h4v4h-4zM502 108h4v4h-4zM558 108h4v4h-4zM586 108h4v4h-4zM502 112h4v4h-4zM514 112h4v4h-4zM574 112h4v4h-4zM550 116h4v4h-4zM518 120h4v4h-4zM510 128h4v4h-4zM526 128h4v4h-4zM514 132h4v4h-4zM534 132h4v4h-4zM554 132h4v4h-4zM518 136h4v4h-4zM590 140h4v4h-4zM534 144h12v4h-12zM550 144h4v4h-4zM582 148h4v4h-4zM602 152h4v4h-4zM594 160h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.6"/>
+  <path d="M498 48h4v4h-4zM502 52h4v4h-4zM490 56h4v4h-4zM494 60h4v4h-4zM510 60h4v4h-4zM542 60h4v4h-4zM514 64h4v4h-4zM526 64h4v4h-4zM562 64h4v4h-4zM502 68h4v4h-4zM506 72h4v4h-4zM530 72h4v4h-4zM530 80h4v4h-4zM506 84h4v4h-4zM582 84h4v4h-4zM514 88h4v4h-4zM522 88h4v4h-4zM546 96h4v4h-4zM502 100h4v4h-4zM550 100h4v4h-4zM538 104h4v4h-4zM586 104h4v4h-4zM542 108h4v4h-4zM566 116h4v4h-4zM574 116h4v4h-4zM506 120h4v4h-4zM582 120h4v4h-4zM558 124h4v4h-4zM558 132h4v4h-4zM582 132h4v4h-4zM586 136h4v4h-4zM526 140h4v4h-4zM562 140h4v4h-4zM574 140h4v4h-4zM546 144h4v4h-4zM578 144h4v4h-4zM594 144h4v4h-4zM598 148h4v4h-4zM586 152h4v4h-4zM590 156h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.7"/>
+  <path d="M490 40h4v4h-4zM482 48h4v4h-4zM530 64h4v4h-4zM558 64h4v4h-4zM518 68h4v4h-4zM542 68h4v4h-4zM566 68h4v4h-4zM558 72h4v4h-4zM510 76h4v4h-4zM566 76h4v4h-4zM570 80h4v4h-4zM578 80h4v4h-4zM534 84h4v4h-4zM506 88h4v4h-4zM574 88h4v4h-4zM582 88h4v4h-4zM526 92h4v4h-4zM542 92h4v4h-4zM510 100h4v4h-4zM534 100h4v4h-4zM554 104h4v4h-4zM578 104h4v4h-4zM546 112h4v4h-4zM562 112h4v4h-4zM506 116h4v4h-4zM514 116h4v4h-4zM582 116h4v4h-4zM554 120h4v4h-4zM510 124h4v4h-4zM518 124h4v4h-4zM522 128h4v4h-4zM578 128h4v4h-4zM530 132h4v4h-4zM522 136h4v4h-4zM546 136h4v4h-4zM570 136h4v4h-4zM530 140h4v4h-4zM558 140h4v4h-4zM606 156h4v4h-4zM598 164h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.8"/>
+  <path d="M534 64h4v4h-4zM554 64h4v4h-4zM522 68h4v4h-4zM538 68h4v4h-4zM546 68h12v4h-12zM522 72h8v4h-8zM562 72h4v4h-4zM570 72h4v4h-4zM526 76h4v4h-4zM574 76h4v4h-4zM510 80h8v4h-8zM514 84h8v4h-8zM574 84h4v4h-4zM506 92h4v4h-4zM578 92h8v4h-8zM510 96h4v4h-4zM578 96h4v4h-4zM578 100h4v4h-4zM510 104h4v4h-4zM510 108h4v4h-4zM578 108h4v4h-4zM506 112h8v4h-8zM582 112h4v4h-4zM514 120h4v4h-4zM570 120h8v4h-8zM574 124h8v4h-8zM514 128h4v4h-4zM562 128h4v4h-4zM518 132h4v4h-4zM526 132h4v4h-4zM562 132h8v4h-8zM534 136h12v4h-12zM550 136h4v4h-4zM566 136h4v4h-4zM534 140h4v4h-4zM554 140h4v4h-4z" fill="var(--academic-text)" fill-opacity="0.9"/>
+  <path d="M482 40h8v4h-8zM482 44h12v4h-12zM486 48h12v4h-12zM490 52h12v4h-12zM494 56h12v4h-12zM498 60h12v4h-12zM502 64h12v4h-12zM538 64h16v4h-16zM506 68h12v4h-12zM526 68h12v4h-12zM558 68h8v4h-8zM510 72h12v4h-12zM566 72h4v4h-4zM514 76h12v4h-12zM570 76h4v4h-4zM518 80h12v4h-12zM574 80h4v4h-4zM510 84h4v4h-4zM522 84h12v4h-12zM578 84h4v4h-4zM510 88h4v4h-4zM526 88h12v4h-12zM578 88h4v4h-4zM510 92h4v4h-4zM530 92h12v4h-12zM506 96h4v4h-4zM534 96h12v4h-12zM582 96h4v4h-4zM506 100h4v4h-4zM538 100h12v4h-12zM582 100h4v4h-4zM506 104h4v4h-4zM542 104h12v4h-12zM582 104h4v4h-4zM506 108h4v4h-4zM546 108h12v4h-12zM582 108h4v4h-4zM550 112h12v4h-12zM578 112h4v4h-4zM510 116h4v4h-4zM554 116h12v4h-12zM578 116h4v4h-4zM510 120h4v4h-4zM558 120h12v4h-12zM578 120h4v4h-4zM514 124h4v4h-4zM562 124h12v4h-12zM518 128h4v4h-4zM566 128h12v4h-12zM522 132h4v4h-4zM570 132h12v4h-12zM526 136h8v4h-8zM554 136h12v4h-12zM574 136h12v4h-12zM538 140h16v4h-16zM578 140h12v4h-12zM582 144h12v4h-12zM586 148h12v4h-12zM590 152h12v4h-12zM594 156h12v4h-12zM598 160h12v4h-12zM602 164h8v4h-8z" fill="var(--academic-text)" fill-opacity="1.0"/>
+  <rect x="482.0" y="40.0" width="128.0" height="128.0" fill="none" fill-opacity="1.0" stroke="var(--academic-text)" stroke-width="1.2" stroke-opacity="0.6"/>
+  <text x="546.0" y="30.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600"><tspan font-style="italic">k</tspan> = 12</text>
+  <text x="546.0" y="188.0" fill="var(--color-practice)" font-size="12" text-anchor="middle">hata &#8776; 1,08</text>
+</svg>
+<figcaption>32 × 32 boyutlu bir matris gri tonlu bir görüntü olarak (renk ne kadar yoğunsa değer o kadar büyük) ve onun <code>svd</code> ile bulunan rank 2, 6 ve 12 yaklaşımları. Alttaki sayılar 2-normundaki hatalardır ve sırasıyla σ<sub>3</sub>, σ<sub>7</sub>, σ<sub>13</sub> tekil değerlerine eşittir. Çizimde 0'ın altına ya da 1'in üstüne taşan değerler 0 ve 1'e kırpıldı.</figcaption>
+</figure>
+```
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmaları önce kendiniz çözmeyi deneyin; çözümlerdeki kodlar NumPy 2.5 ile çalıştırılmış ve çıktıları olduğu gibi verilmiştir.
+
+:::: {#exr-lin-cramer name="Cramer Kuralının Kodu"}
+[Cramer kuralını](../lineer-cebir/determinantlar/cramer-kurali.html#thm-cramer) uygulayan bir `cramer(A, b)` fonksiyonu yazınız ve Üç Bilinmeyenli Bir Sistem örneğindeki (@exm-lin-uc-bilinmeyen) sistemde sonucunu `solve` ile karşılaştırınız.
+
+::: {.cozum}
+Cramer kuralına göre $x_j = \det(A_j)/\det(A)$'dır; $A_j$, $A$'nın $j$. sütununun yerine $b$ konarak elde edilir. `A.copy()` ile kopya almak önemlidir; `Aj = A` yazsaydık `Aj` yeni bir dizi değil, aynı dizinin ikinci adı olurdu ve `A`'nın kendisi değişirdi ([NumPy Dizileri](numpy-dizileri.qmd)).
+
+```python
+import numpy as np
+
+
+def cramer(A, b):
+    """Ax = b sistemini Cramer kuralıyla çözer (A kare ve regüler)."""
+    d = np.linalg.det(A)
+    x = np.empty(len(b))
+    for j in range(len(b)):
+        Aj = A.copy()
+        Aj[:, j] = b                # j. sütunun yerine b konur
+        x[j] = np.linalg.det(Aj) / d
+    return x
+
+
+A = np.array([[2.0, 1.0, -3.0],
+              [3.0, -2.0, 2.0],
+              [5.0, -3.0, -1.0]])
+b = np.array([5.0, 5.0, 16.0])
+print(cramer(A, b))
+print(np.linalg.solve(A, b))
+print(np.allclose(cramer(A, b), np.linalg.solve(A, b)))
+```
+
+Çıktı:
+
+```text
+[ 1. -3. -2.]
+[ 1. -3. -2.]
+True
+```
+
+İki yöntem aynı sonucu veriyor. Ama Cramer kuralı $n + 1$ determinant hesaplar; her biri yaklaşık $\tfrac{2}{3}n^3$ işlem tuttuğundan toplam maliyet $n^4$ mertebesindedir. Bu yüzden yöntem kuramsal olarak değerlidir, ama büyük sistemlerin çözümünde kullanılmaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-dort-denklem name="Dört Denklemli Bir Sistem"}
+$$
+\begin{aligned}
+x + 2y + 2z &= 2\\
+3x - 2y - z &= 5\\
+2x - 5y + 3z &= -4\\
+x + 4y + 6z &= 0
+\end{aligned}
+$$
+
+sisteminin çözülebilir olduğunu rank ölçütüyle gösterip çözümünü `lstsq` ile bulunuz.
+
+::: {.cozum}
+Katsayılar matrisi $4 \times 3$ olduğundan `solve` kullanılamaz, çünkü `solve` kare matris ister. Önce rankları karşılaştırıp sonra `lstsq`'yu çalıştırıyoruz.
+
+```python
+import numpy as np
+
+A = np.array([[1.0, 2.0, 2.0],
+              [3.0, -2.0, -1.0],
+              [2.0, -5.0, 3.0],
+              [1.0, 4.0, 6.0]])
+b = np.array([2.0, 5.0, -4.0, 0.0])
+
+Ab = np.column_stack([A, b])
+print(np.linalg.matrix_rank(A), np.linalg.matrix_rank(Ab))
+
+x, rss, rank, sv = np.linalg.lstsq(A, b)
+print(x)
+print(np.linalg.norm(A @ x - b))
+```
+
+Çıktı:
+
+```text
+3 3
+[ 2.  1. -1.]
+6.556898606395034e-15
+```
+
+$\operatorname{rank} A = \operatorname{rank}\,[A \mid b] = 3$ olduğundan sistem [çözülebilirdir](../lineer-cebir/vektor-uzaylari/rank.html#thm-cozulebilirlik); rank bilinmeyen sayısına eşit olduğundan çözüm tektir. Çözülebilir bir sistemde en küçük kareler çözümü gerçek çözümdür: artık normu $10^{-15}$ mertebesindedir, yani denklemler yuvarlama hatası dışında tam sağlanır. Çözüm $(x, y, z) = (2, 1, -1)$'dir: $2 + 2 - 2 = 2$, $6 - 2 + 1 = 5$, $4 - 5 - 3 = -4$ ve $2 + 4 - 6 = 0$. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-norm-esitsizlik name="Normlar Arasındaki İki Eşitsizlik"}
+$$A = \begin{pmatrix} 1 & -2 & 3 \\ 0 & 4 & -1 \\ 2 & 1 & 5 \end{pmatrix}$$
+
+matrisinin $\|A\|_1$, $\|A\|_\infty$, $\|A\|_2$ ve $\|A\|_F$ normlarını hesaplayıp $\|A\|_2 \le \|A\|_F$ ve $\|A\|_2 \le \sqrt{\|A\|_1\,\|A\|_\infty}$ eşitsizliklerinin sağlandığını doğrulayınız.
+
+::: {.cozum}
+Dört normu hesaplayıp iki eşitsizliği sınıyoruz.
+
+```python
+import numpy as np
+
+A = np.array([[1.0, -2.0, 3.0],
+              [0.0, 4.0, -1.0],
+              [2.0, 1.0, 5.0]])
+n1 = np.linalg.norm(A, 1)
+n_inf = np.linalg.norm(A, np.inf)
+n2 = np.linalg.norm(A, 2)
+n_fro = np.linalg.norm(A, "fro")
+print(n1, n_inf, n2, n_fro)
+print(n2 <= n_fro, n2 <= np.sqrt(n1 * n_inf))
+```
+
+Çıktı:
+
+```text
+9.0 8.0 6.399487517369997 7.810249675906654
+True True
+```
+
+Mutlak değerlerle sütun toplamları $3$, $7$, $9$ ve satır toplamları $6$, $5$, $8$ olduğundan $\|A\|_1 = 9$ ve $\|A\|_\infty = 8$'dir. $\|A\|_F = \sqrt{61} \approx 7{,}81$ ve $\sqrt{9 \cdot 8} = \sqrt{72} \approx 8{,}49$ değerleri $\|A\|_2 \approx 6{,}40$'tan büyüktür.
+
+İki eşitsizlik her kare matris için doğrudur. Birincisi tekil değerlerden gelir: Frobenius normu dik matrislerle çarpınca değişmediğinden
+
+$$\|A\|_F^2 = \|\Sigma\|_F^2 = \sigma_1^2 + \dots + \sigma_n^2 \ge \sigma_1^2 = \|A\|_2^2$$
+
+dir. İkincisi için $\|A\|_2^2$'nin $A^TA$'nın en büyük özdeğeri olduğunu kullanalım. $Mv = \lambda v$ ve $v \ne 0$ ise $|\lambda|\,\|v\|_1 = \|Mv\|_1 \le \|M\|_1\,\|v\|_1$ olduğundan her özdeğerin mutlak değeri $\|M\|_1$'i aşmaz. $M = A^TA$ için bu
+
+$$\|A\|_2^2 \le \|A^TA\|_1 \le \|A^T\|_1\,\|A\|_1 = \|A\|_\infty\,\|A\|_1$$
+
+verir; son adımda $A^T$'nin sütunlarının $A$'nın satırları olduğunu kullandık. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-vandermonde name="Vandermonde Matrislerinin Koşul Sayısı"}
+$[0, 1]$ aralığında eşit aralıklı $n$ nokta $x_1, \dots, x_n$ için $(i, j)$ elemanı $x_i^{\,j-1}$ olan $n \times n$ Vandermonde matrisinin koşul sayısını $n = 4, 8, 12, 16, 20$ için hesaplayıp her durumda kaybedilmesi beklenen anlamlı basamak sayısını tahmin ediniz.
+
+::: {.cozum}
+`np.vander(x, increasing=True)` sütunları $1, x, x^2, \dots$ olan Vandermonde matrisini kurar ([NumPy Dizileri](numpy-dizileri.qmd)). Kaybedilen basamak sayısını $\log_{10}\kappa$ ile tahmin ediyoruz.
+
+```python
+import numpy as np
+
+for n in (4, 8, 12, 16, 20):
+    x = np.linspace(0, 1, n)
+    V = np.vander(x, increasing=True)    # sütunlar: 1, x, x^2, ...
+    kappa = np.linalg.cond(V)
+    print(f"n = {n:2d}   koşul = {kappa:8.2e}   "
+          f"kaybedilen basamak ≈ {np.log10(kappa):4.1f}")
+```
+
+Çıktı:
+
+```text
+n =  4   koşul = 9.89e+01   kaybedilen basamak ≈  2.0
+n =  8   koşul = 2.68e+05   kaybedilen basamak ≈  5.4
+n = 12   koşul = 8.83e+08   kaybedilen basamak ≈  8.9
+n = 16   koşul = 3.12e+12   kaybedilen basamak ≈ 12.5
+n = 20   koşul = 1.15e+16   kaybedilen basamak ≈ 16.1
+```
+
+Koşul sayısı $n$ ile üstel olarak büyüyor: $n = 8$'de yaklaşık $5$, $n = 12$'de yaklaşık $9$ basamak kaybedilir ve $n = 20$'de koşul sayısı $10^{16}$'yı geçer; bu matrisle kurulan bir sistemin çözümünde hiçbir basamağa güvenilemez. Bu matris, verilen noktalardan geçen polinomun katsayılarını bulmak için kurulan sistemin matrisidir. Bu yüzden interpolasyon polinomu pratikte bu sistem çözülerek değil, [Lagrange](../numerik-analiz/lagrange-interpolasyonu.html) ya da [Newton](../numerik-analiz/bolunmus-farklar.html) biçimiyle hesaplanır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-binet name="Özdeğerlerle Fibonacci Sayıları"}
+Fibonacci örneğindeki (@exm-lin-fibonacci) $Q$ matrisini $Q = V\Lambda V^{-1}$ biçiminde köşegenleştirip $F_n$'yi $Q^n = V\Lambda^nV^{-1}$ formülüyle hesaplayınız ve sonucu $n = 10, 40, 70, 80$ için tam değerle karşılaştırınız.
+
+::: {.cozum}
+$Q$'nun karakteristik polinomu $t^2 - t - 1$'dir; özdeğerleri $\varphi = \tfrac{1 + \sqrt5}{2}$ ve $-1/\varphi = \tfrac{1 - \sqrt5}{2}$'dir. $\Lambda$ köşegen olduğundan $\Lambda^n$'yi hesaplamak köşegen elemanların $n$. kuvvetini almaktır. $Q$ simetrik olduğundan `eigh` kullanıyoruz: döndürdüğü $V$ ortogonaldir, yani $V^{-1} = V^T$'dir ve ters matris hesaplamaya gerek kalmaz. `eigh` özdeğerleri küçükten büyüğe sıraladığı için önce $-1/\varphi$ gelir. Tam değerleri `dtype=object` ile tamsayı matris kuvvetinden alıyoruz.
+
+```python
+import numpy as np
+
+Q = np.array([[1.0, 1.0],
+              [1.0, 0.0]])
+w, V = np.linalg.eigh(Q)
+print(w)                                       # -1/φ ve φ
+
+Q_obj = np.array([[1, 1], [1, 0]], dtype=object)
+for n in (10, 40, 70, 80):
+    Qn = V @ np.diag(w**n) @ V.T               # Q^n = V Λ^n V^T
+    exact = np.linalg.matrix_power(Q_obj, n)[0, 1]
+    approx = round(Qn[0, 1])
+    print(n, approx, exact, approx - exact)
+```
+
+Çıktı:
+
+```text
+[-0.61803399  1.61803399]
+10 55 55 0
+40 102334155 102334155 0
+70 190392490709135 190392490709135 0
+80 23416728348467740 23416728348467685 55
+```
+
+$n = 70$'e kadar sonuç tam doğru. $F_{80} = 23\,416\,728\,348\,467\,685$ ise $17$ basamaklı bir sayıdır; `float64` yalnızca $15$ ile $16$ arası anlamlı basamak taşıyabildiğinden son basamaklar yanlış çıkar ve fark $55$ olur. Bu hesabın ifade ettiği formül $F_n = \big(\varphi^n - (-1/\varphi)^n\big)/\sqrt5$ Binet formülüdür. Matematikte tam olan bu formül, kayan noktalı sayılarla büyük $n$ için tam sonuç veremez. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-kuvvet name="Kuvvet Yöntemi"}
+$$A = \begin{pmatrix} 4 & 1 & 0 \\ 1 & 3 & 1 \\ 0 & 1 & 2 \end{pmatrix}$$
+
+matrisinin mutlak değerce en büyük özdeğerini **kuvvet yöntemiyle** yaklaşık olarak bulup `eigh` ile karşılaştırınız: $x_0 = (1, 1, 1)$ vektöründen başlayıp $x_{k+1} = Ax_k / \|Ax_k\|_2$ adımlarını tekrarlayınız ve özdeğer tahmini olarak $\lambda_k = x_k^T A x_k$ Rayleigh bölümünü alınız.
+
+::: {.cozum}
+$A$ simetrik olduğundan özvektörleri dik bir $q_1, q_2, q_3$ tabanı oluşturur. $x_0 = c_1q_1 + c_2q_2 + c_3q_3$ ise
+
+$$A^kx_0 = c_1\lambda_1^kq_1 + c_2\lambda_2^kq_2 + c_3\lambda_3^kq_3$$
+
+olur. $|\lambda_1|$ en büyükse ve $c_1 \ne 0$ ise ilk terim baskın çıkar, yani $x_k$ birim vektörü $\pm q_1$'e yaklaşır. Her adımda normalleştirmek sayıların taşmasını önler.
+
+```python
+import numpy as np
+
+A = np.array([[4.0, 1.0, 0.0],
+              [1.0, 3.0, 1.0],
+              [0.0, 1.0, 2.0]])
+x = np.array([1.0, 1.0, 1.0])
+for k in range(1, 31):
+    y = A @ x
+    x = y / np.linalg.norm(y)       # her adımda birim vektöre indir
+    lam = x @ A @ x                 # Rayleigh bölümü
+    if k % 5 == 0:
+        print(f"{k:2d}  {lam:.12f}")
+
+w, Q = np.linalg.eigh(A)
+print("eigh:", w)
+```
+
+Çıktı:
+
+```text
+ 5  4.729619855519
+10  4.732025279744
+15  4.732050539813
+20  4.732050804760
+25  4.732050807539
+30  4.732050807569
+eigh: [1.26794919 3.         4.73205081]
+```
+
+En büyük özdeğer $3 + \sqrt3 \approx 4{,}732050808$'dir ve $30$ adımda on iki basamak doğru bulundu. Yakınsama hızını $|\lambda_2 / \lambda_1| = 3 / 4{,}732 \approx 0{,}634$ oranı belirler: Rayleigh bölümünün hatası her adımda yaklaşık bu oranın karesiyle, $0{,}40$ ile çarpılır. Tabloda beş adımda hata yaklaşık $0{,}40^5 \approx 0{,}01$ katına iniyor. İki büyük özdeğer birbirine yakın olsaydı yöntem çok yavaşlardı. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-markov name="Bir Markov Zincirinin Daimi Durumu"}
+Geçiş matrisi
+
+$$P = \begin{pmatrix} 0{,}5 & 0{,}5 \\ 0{,}1 & 0{,}9 \end{pmatrix}$$
+
+olan Markov zincirinin [daimi durum olasılığını](../raslanti-surecleri/2-markov-zincirleri/reguler-matrisler-daimi-durum.html#def-daimi-durum), yani $\pi P = \pi$ ve $\pi_1 + \pi_2 = 1$ koşullarını sağlayan $\pi$ satır vektörünü `eig` ile bulunuz.
+
+::: {.cozum}
+$\pi P = \pi$ eşitliğinin transpozunu alırsak $P^T\pi^T = \pi^T$ olur: $\pi^T$, $P^T$'nin $1$ özdeğerine ait bir özvektörüdür. `eig` birim uzunlukta bir özvektör döndürür; onu bileşenleri toplamı $1$ olacak biçimde ölçekliyoruz. `np.argmin(np.abs(w - 1))`, $1$'e en yakın özdeğerin indeksini verir.
+
+```python
+import numpy as np
+
+P = np.array([[0.5, 0.5],
+              [0.1, 0.9]])
+w, V = np.linalg.eig(P.T)           # πP = π  ⟺  P^T π^T = π^T
+w, V = np.real_if_close(w), np.real_if_close(V)
+print(w)
+i = np.argmin(np.abs(w - 1))        # özdeğeri 1 olan sütun
+pi = V[:, i] / V[:, i].sum()        # bileşenler toplamı 1 olsun
+print(pi)
+print(np.allclose(pi @ P, pi))
+```
+
+Çıktı:
+
+```text
+[0.4 1. ]
+[0.16666667 0.83333333]
+True
+```
+
+$P^T$'nin özdeğerleri $0{,}4$ ve $1$'dir. Daimi durum $\pi = (1/6,\ 5/6)$, yani yaklaşık $(0{,}1667;\ 0{,}8333)$'tür; bu, [Raslantı Süreçleri](../raslanti-surecleri/2-markov-zincirleri/reguler-matrisler-daimi-durum.html#exm-hava-daimi) notlarında denklem sistemiyle bulunan sonuçla aynıdır. Zincir uzun vadede zamanın altıda birini birinci, altıda beşini ikinci durumda geçirir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-konik name="Bir Elipsin Asal Eksenleri"}
+$5x^2 + 4xy + 2y^2 = 1$ elipsinin asal eksen doğrultularını ve yarı eksen uzunluklarını, denklemi $\mathbf{u} = (x, y)^T$ olmak üzere $\mathbf{u}^T S\, \mathbf{u} = 1$ biçiminde yazıp $S$ simetrik matrisinin özdeğer ayrışımıyla bulunuz.
+
+::: {.cozum}
+$\mathbf{u}^TS\,\mathbf{u} = s_{11}x^2 + 2s_{12}xy + s_{22}y^2$ olduğundan karma terimin katsayısı $4$ köşegen dışına ikiye bölünerek yazılır:
+
+$$S = \begin{pmatrix} 5 & 2 \\ 2 & 2 \end{pmatrix}.$$
+
+Spektral teoremle (@thm-lin-spektral) $S = Q\Lambda Q^T$ yazıp $\mathbf{u}' = Q^T\mathbf{u}$ yeni koordinatlarına geçersek denklem $\lambda_1 x'^2 + \lambda_2 y'^2 = 1$ olur; yarı eksenler $1/\sqrt{\lambda_1}$ ve $1/\sqrt{\lambda_2}$'dir.
+
+```python
+import numpy as np
+
+S = np.array([[5.0, 2.0],
+              [2.0, 2.0]])     # 5x^2 + 4xy + 2y^2 = [x y] S [x y]^T
+w, Q = np.linalg.eigh(S)
+print(w)
+print(Q)
+print(1 / np.sqrt(w))          # yarı eksen uzunlukları
+theta = np.degrees(np.arctan(Q[1, 1] / Q[0, 1]))
+print(theta)                   # λ = 6 özvektörünün x ekseniyle açısı
+```
+
+Çıktı:
+
+```text
+[1. 6.]
+[[ 0.4472136  -0.89442719]
+ [-0.89442719 -0.4472136 ]]
+[1.         0.40824829]
+26.56505117707799
+```
+
+Özdeğerler $1$ ve $6$'dır, dolayısıyla yeni koordinatlarda denklem $x'^2 + 6y'^2 = 1$'dir. Büyük yarı eksen $1$ uzunluğundadır ve $\lambda = 1$'in özvektörü $(1, -2)/\sqrt5$ doğrultusundadır. Küçük yarı eksen $1/\sqrt6 \approx 0{,}408$ uzunluğundadır ve $\lambda = 6$'nın özvektörü $(2, 1)/\sqrt5$ doğrultusundadır (`eigh` işaretleri keyfi seçer). $(2, 1)$ doğrultusunun $x$ ekseniyle yaptığı açı $\arctan\tfrac12 \approx 26{,}57^\circ$'dir. Bu, [Analitik Geometri](../analitik-geometri/koniklerin-siniflandirilmasi.html#thm-kns-donme-acisi) notlarındaki $\tan 2\theta = 2a_{12}/(a_{11} - a_{22}) = 4/3$ formülünün verdiği dönme açısıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-normal-denklem name="Normal Denklemlerin Kaybettirdiği Basamaklar"}
+$[0, 1]$ aralığında eşit aralıklı $30$ noktada $p(t) = 1 + t + t^2 + \dots + t^9$ polinomunun değerleri veriliyor. Bu veriye dokuzuncu dereceden bir polinomu hem `lstsq` ile hem de normal denklemleri `solve` ile çözerek uydurunuz ve bulunan katsayıların en büyük hatalarını karşılaştırınız.
+
+::: {.cozum}
+Veri tam olarak bir polinomdan geldiği için doğru katsayıların hepsi $1$'dir; hatayı $\max_k |c_k - 1|$ ile ölçüyoruz. Katsayılar matrisi $M$, sütunları $1, t, \dots, t^9$ olan $30 \times 10$ bir Vandermonde matrisidir.
+
+```python
+import numpy as np
+
+t = np.linspace(0, 1, 30)
+M = np.vander(t, 10, increasing=True)   # sütunlar: 1, t, ..., t^9
+c_true = np.ones(10)
+y = M @ c_true                  # tam olarak bir polinomun değerleri
+
+c_lstsq = np.linalg.lstsq(M, y)[0]
+c_normal = np.linalg.solve(M.T @ M, M.T @ y)
+print(f"koşul(M)       = {np.linalg.cond(M):.1e}")
+print(f"koşul(M^T M)   = {np.linalg.cond(M.T @ M):.1e}")
+print(f"lstsq hatası        : {np.max(np.abs(c_lstsq - c_true)):.1e}")
+print(f"normal denk. hatası : {np.max(np.abs(c_normal - c_true)):.1e}")
+```
+
+Çıktı:
+
+```text
+koşul(M)       = 3.5e+06
+koşul(M^T M)   = 1.2e+13
+lstsq hatası        : 9.2e-11
+normal denk. hatası : 9.3e-04
+```
+
+$M$'nin koşul sayısı $3{,}5 \cdot 10^6$, $M^TM$'ninki onun karesi olan $1{,}2 \cdot 10^{13}$'tür. `lstsq` katsayıları $10^{-10}$ mertebesinde bir hatayla bulurken normal denklemlerin hatası $10^{-3}$ mertebesine çıktı: aşağı yukarı yedi basamak fazladan kaybedildi. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-sifir-uzayi name="Tekil Değer Ayrışımıyla Çekirdek"}
+$$M = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{pmatrix}$$
+
+matrisinin [çekirdeğini](../lineer-cebir/lineer-donusumler/cekirdek-ve-goruntu.html#def-cekirdek), yani $Mv = 0$ denkleminin çözüm uzayını tekil değer ayrışımı yardımıyla bulunuz.
+
+::: {.cozum}
+$M = U\Sigma V^T$ ise $Mv_i = \sigma_i u_i$'dir. Bu yüzden sıfır olan (ya da sayısal olarak sıfır sayılan) tekil değerlere ait sağ tekil vektörler çekirdeği gerer. Tekil değerler büyükten küçüğe sıralı olduğundan aranan vektör `Vt`'nin son satırıdır.
+
+```python
+import numpy as np
+
+M = np.array([[1.0, 2.0, 3.0],
+              [4.0, 5.0, 6.0],
+              [7.0, 8.0, 9.0]])
+U, s, Vt = np.linalg.svd(M)
+print(s)
+v = Vt[-1]                  # en küçük tekil değere ait sağ tekil vektör
+print(v / v[0])             # ilk bileşeni 1 olacak biçimde ölçekle
+print(np.linalg.norm(M @ v))
+```
+
+Çıktı:
+
+```text
+[1.68481034e+01 1.06836951e+00 3.33475287e-16]
+[ 1. -2.  1.]
+5.20740757162067e-16
+```
+
+Üçüncü tekil değer $3{,}3 \cdot 10^{-16}$, yani sayısal olarak sıfırdır; öteki ikisi açıkça sıfırdan farklı olduğundan $\operatorname{rank} M = 2$ ve çekirdek bir boyutludur. Son sağ tekil vektör, ilk bileşeni $1$ olacak biçimde ölçeklenince $(1, -2, 1)$ çıkıyor. Gerçekten $1 - 4 + 3 = 0$, $4 - 10 + 6 = 0$ ve $7 - 16 + 9 = 0$'dır; çekirdek $\{t\,(1, -2, 1) : t \in \mathbb{R}\}$ doğrusudur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-lin-rank-bir name="En İyi Rank Bir Yaklaşım"}
+$$A = \begin{pmatrix} 3 & 2 & 2 \\ 2 & 3 & -2 \end{pmatrix}$$
+
+matrisine 2-normunda en yakın olan, rankı $1$ olan $A_1$ matrisini bulup $\|A - A_1\|_2$ değerini hesaplayınız.
+
+::: {.cozum}
+Eckart–Young teoremine (@thm-lin-eckart-young) göre aranan matris $A_1 = \sigma_1 u_1 v_1^T$'dir ve hata $\sigma_2$'dir. `np.outer(u, v)` iki vektörün dış çarpımı olan $uv^T$ matrisini verir.
+
+```python
+import numpy as np
+
+A = np.array([[3.0, 2.0, 2.0],
+              [2.0, 3.0, -2.0]])
+U, s, Vt = np.linalg.svd(A)
+print(s)
+A1 = s[0] * np.outer(U[:, 0], Vt[0])    # σ1 u1 v1^T
+print(np.round(A1, 12))
+print(np.linalg.norm(A - A1, 2))
+```
+
+Çıktı:
+
+```text
+[5. 3.]
+[[ 2.5  2.5 -0. ]
+ [ 2.5  2.5 -0. ]]
+2.9999999999999996
+```
+
+Tekil değerler $5$ ve $3$'tür; gerçekten $AA^T = \begin{pmatrix} 17 & 8 \\ 8 & 17 \end{pmatrix}$ matrisinin özdeğerleri $25$ ve $9$'dur. $u_1 = (1, 1)/\sqrt2$ ve $v_1 = (1, 1, 0)/\sqrt2$ olduğundan (işaretler birlikte değişebilir)
+
+$$A_1 = 5 \cdot \frac{1}{2}\begin{pmatrix} 1 & 1 & 0 \\ 1 & 1 & 0 \end{pmatrix} = \begin{pmatrix} 2{,}5 & 2{,}5 & 0 \\ 2{,}5 & 2{,}5 & 0 \end{pmatrix}$$
+
+bulunur. Çıktıdaki `-0.`, $-10^{-16}$ gibi çok küçük negatif bir sayının yuvarlanmasından doğan işaretli sıfırdır; IEEE 754'te $-0$ ile $0$ eşittir. Hata $\|A - A_1\|_2 = 3 = \sigma_2$'dir; çıktıdaki $2{,}9999999999999996$ yine yuvarlama hatasıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde NumPy'ın lineer cebir araçlarını ve onları güvenle kullanmanın kurallarını gördük: sistemleri `inv` ile değil `solve` ile çözmek, tekilliği determinantla değil rank ve koşul sayısıyla sınamak, simetrik matrislerde `eigh`'i seçmek, aşırı belirli sistemlerde normal denklemler yerine `lstsq`'ya başvurmak. Sonuçları bu bölümde sık sık şekillerle gösterdik; bir sonraki bölümde, [Matplotlib ile Grafik Çizimi](matplotlib-ile-grafik-cizimi.qmd) bölümünde, bu tür grafikleri kendimiz çizmeyi öğreneceğiz.

@@ -1,0 +1,1924 @@
+---
+title: "Sayısal Türev ve İntegral"
+pagetitle: "Sayısal Türev ve İntegral"
+description: "Python ile sonlu farklarla türev ve adım boyunun seçimi, np.gradient ile ızgarada türev, yamuk ve Simpson kuralları, np.trapezoid ve simpson ile veri üzerinde integral, quad ile hata tahminli ve genelleştirilmiş integraller, dblquad ve tplquad ile katlı integraller."
+---
+
+Analiz derslerinde türev ve integral, kurallar ve formüllerle hesaplanır. Uygulamada ise fonksiyon çoğu zaman bir formül olarak değil, bir ölçüm tablosu ya da başka bir programın çıktısı olarak elimizdedir. Formül olsa bile ilkel her zaman bulunamaz: $e^{-x^2}$ ve $\sin x / x$ fonksiyonlarının ilkelleri elementer fonksiyonlarla yazılamaz. [SymPy ile Sembolik Hesap](sympy-ile-sembolik-hesap.qmd) bölümünde SymPy'nin bu integraller için `erf` ve `Si` adlı özel fonksiyonlara başvurduğunu görmüştük. Böyle durumlarda türev ve integral, fonksiyonun sonlu sayıda noktadaki değerlerinden **sayısal** olarak hesaplanır.
+
+Bu bölümde önce fark bölümleriyle türev alacağız ve hatanın adım boyuna bağlı davranışını inceleyeceğiz: adımı küçültmek bir noktaya kadar işe yarar, sonra sonucu bozar. Ardından ızgara verisinin türevini veren `np.gradient` fonksiyonunu, yamuk ve Simpson kurallarını (önce kendi kodumuzla, sonra `np.trapezoid` ve `scipy.integrate.simpson` ile), SciPy'nin hata tahmini de veren uyarlamalı `quad` fonksiyonunu ve katlı integraller için `dblquad` ile `tplquad` fonksiyonlarını kullanacağız. Formüllerin türetilmesi ve hata terimlerinin ispatı Nümerik Analiz notlarındadır (bkz. [Nümerik Analiz](../numerik-analiz/numerik-turev.html) ve [Nümerik Analiz](../numerik-analiz/numerik-integrasyon.html)). Burada onları Python'da uygulayıp sınıyoruz.
+
+[Vektörizasyon ve Broadcasting](vektorizasyon-ve-broadcasting.qmd) bölümünde fark bölümlerini dizilerle hesaplamış ve merkezi farkın hatasının $h^2$ ile küçüldüğünü görmüştük. Şimdi aynı formüllerin ne kadar doğru olabileceğini ve doğruluğu neyin sınırladığını soruyoruz.
+
+## Fark Bölümleriyle Türev
+
+Türevin tanımındaki limiti küçük ama sıfır olmayan bir adımda durdurmak, akla gelen ilk yaklaşımdır.
+
+::: {#def-int-ileri-geri-fark name="İleri ve Geri Fark Bölümü"}
+$f$, $x$'i içeren bir aralıkta tanımlı ve $h > 0$ olsun.
+
+$$D_h^{+} f(x) = \frac{f(x + h) - f(x)}{h}, \qquad D_h^{-} f(x) = \frac{f(x) - f(x - h)}{h}$$
+
+sayılarına $f$'nin $x$'teki **ileri fark bölümü** ve **geri fark bölümü** (forward and backward difference quotient), $h$ sayısına da **adım** (step size) denir.
+:::
+
+Yani ileri fark $x$'in sağındaki, geri fark ise solundaki bir noktayla kurulan kirişin eğimidir. $h \to 0$ iken ikisi de $f'(x)$'e yaklaşır; türevin tanımı tam olarak budur.
+
+::: {#def-int-merkezi-fark name="Merkezi Fark Bölümü"}
+$f$, $x$'i içeren bir aralıkta tanımlı ve $h > 0$ olsun.
+
+$$D_h f(x) = \frac{f(x + h) - f(x - h)}{2h}$$
+
+sayısına $f$'nin $x$'teki **merkezi fark bölümü** (central difference quotient) denir.
+:::
+
+Yani merkezi fark, $x$'in iki yanında eşit uzaklıktaki noktalardan geçen kirişin eğimidir. İleri ve geri fark bölümlerinin aritmetik ortalamasına eşittir:
+
+$$D_h f(x) = \frac{D_h^{+} f(x) + D_h^{-} f(x)}{2}.$$
+
+İki formülü Python fonksiyonu olarak yazıp $f(x) = e^x$ için $x = 1$'de deneyelim. Kesin türev $f'(1) = e$'dir.
+
+```python
+import math
+
+
+def forward_diff(f, x, h):
+    """İleri fark bölümü: (f(x + h) - f(x)) / h."""
+    return (f(x + h) - f(x)) / h
+
+
+def central_diff(f, x, h):
+    """Merkezi fark bölümü: (f(x + h) - f(x - h)) / (2h)."""
+    return (f(x + h) - f(x - h)) / (2 * h)
+
+
+x = 1.0
+exact = math.exp(x)                 # (e^x)' = e^x
+print("     h    ileri fark hatası   merkezi fark hatası")
+for h in [0.1, 0.01, 0.001]:
+    e_fwd = abs(forward_diff(math.exp, x, h) - exact)
+    e_cen = abs(central_diff(math.exp, x, h) - exact)
+    print(f"{h:6.0e}   {e_fwd:17.3e}   {e_cen:19.3e}")
+```
+
+Çıktı:
+
+```text
+     h    ileri fark hatası   merkezi fark hatası
+ 1e-01           1.406e-01             4.533e-03
+ 1e-02           1.364e-02             4.530e-05
+ 1e-03           1.360e-03             4.530e-07
+```
+
+Hata ileri farkta $h$ ile, merkezi farkta $h^2$ ile orantılı küçülüyor: $h$ on kat küçülünce birinci sütun on kat, ikinci sütun yüz kat küçülüyor. Bunun nedeni Taylor açılımıdır.
+
+::: {#prp-int-kesme-hatasi name="Fark Bölümlerinin Kesme Hatası"}
+$h > 0$ olsun.
+
+1. $f$, $[x, x + h]$ aralığında $C^2$ sınıfındaysa $x < \xi < x + h$ olan bir $\xi$ için
+$$D_h^{+} f(x) - f'(x) = \frac{h}{2}\, f''(\xi)$$
+olur.
+2. $f$, $[x - h, x + h]$ aralığında $C^3$ sınıfındaysa $x - h < \eta < x + h$ olan bir $\eta$ için
+$$D_h f(x) - f'(x) = \frac{h^2}{6}\, f'''(\eta)$$
+olur.
+
+Birinci eşitliğin ispatı için bkz. [Nümerik Analiz](../numerik-analiz/numerik-turev.html#prp-ntr-iki-nokta). İkinci eşitlik oradaki üç-nokta orta nokta formülüdür (bkz. [Nümerik Analiz](../numerik-analiz/numerik-turev.html#prp-ntr-uc-nokta)).
+:::
+
+Yani hata ifadesindeki $h$'nin kuvveti yaklaşımın **mertebesini** (order) verir: ileri fark bölümünün hatası $O(h)$, merkezi farkınki $O(h^2)$'dir (bkz. [Nümerik Analiz](../numerik-analiz/algoritmalar-ve-yakinsama.html#def-yak-fonksiyon-hizi)). İleri farka birinci mertebeden, merkezi farka ikinci mertebeden bir yaklaşım denir. $f(x) = e^x$ için $f'' = f''' = e^x$ olduğundan $x = 1$ civarında hatalar yaklaşık $\frac{e}{2}h$ ve $\frac{e}{6}h^2$'dir. $h = 0{,}001$ için bunlar yaklaşık $1{,}36 \cdot 10^{-3}$ ve $4{,}53 \cdot 10^{-7}$ eder; tablodaki sayılarla uyuşur.
+
+## Adımı Seçmek: Kesme ve Yuvarlama Hatası
+
+Hata formülleri, $h$'yi olabildiğince küçük seçmeyi önerir gibidir. Deneyelim: aynı türevi $h = 10^{-1}, 10^{-2}, \dots, 10^{-15}$ adımlarıyla hesaplayalım.
+
+```python
+import math
+
+x = 1.0
+exact = math.exp(x)
+print("     h    ileri fark hatası   merkezi fark hatası")
+for k in range(1, 16):
+    h = 10.0**-k
+    fwd = (math.exp(x + h) - math.exp(x)) / h
+    cen = (math.exp(x + h) - math.exp(x - h)) / (2 * h)
+    print(f"{h:6.0e}   {abs(fwd - exact):17.3e}"
+          f"   {abs(cen - exact):19.3e}")
+```
+
+Çıktı:
+
+```text
+     h    ileri fark hatası   merkezi fark hatası
+ 1e-01           1.406e-01             4.533e-03
+ 1e-02           1.364e-02             4.530e-05
+ 1e-03           1.360e-03             4.530e-07
+ 1e-04           1.359e-04             4.531e-09
+ 1e-05           1.359e-05             5.859e-11
+ 1e-06           1.359e-06             1.635e-10
+ 1e-07           1.399e-07             5.859e-11
+ 1e-08           6.603e-09             6.603e-09
+ 1e-09           2.154e-07             6.603e-09
+ 1e-10           1.548e-06             6.727e-07
+ 1e-11           3.263e-05             1.043e-05
+ 1e-12           4.323e-04             2.103e-04
+ 1e-13           4.559e-04             4.559e-04
+ 1e-14           9.338e-03             9.338e-03
+ 1e-15           3.903e-01             1.683e-01
+```
+
+Tablo beklenmedik bir şey söylüyor. İleri farkın hatası $h = 10^{-8}$'e kadar küçülüyor, sonra büyümeye başlıyor; $h = 10^{-15}$'te türevin ilk ondalık basamağı bile yanlış. Merkezi fark en iyi sonucunu $h = 10^{-5}$ civarında veriyor; $h = 10^{-7}$'de aynı küçüklükte bir hatanın çıkması ise bir rastlantıdır ve nedenini birazdan göreceğiz. Bozulmanın kaynağı paydaki çıkarmadır:
+
+```python
+import math
+
+h = 1e-12
+a = math.exp(1.0 + h)
+b = math.exp(1.0)
+print(f"e^(1 + h)   = {a:.17f}")
+print(f"e^1         = {b:.17f}")
+print(f"fark        = {a - b:.6e}")
+print(f"e * h       = {math.e * h:.6e}")
+print(f"(1 + h) - 1 = {(1.0 + h) - 1.0:.6e}")
+```
+
+Çıktı:
+
+```text
+e^(1 + h)   = 2.71828182846176380
+e^1         = 2.71828182845904509
+fark        = 2.718714e-12
+e * h       = 2.718282e-12
+(1 + h) - 1 = 1.000089e-12
+```
+
+$e^{1 + h}$ ile $e^1$'in ilk on ondalık basamağı aynıdır. İki sayı da makinede yaklaşık 16 anlamlı basamakla saklandığı için farklarının yalnız ilk dört basamağı doğru çıkar: $2{,}718282 \cdot 10^{-12}$ olması gereken fark $2{,}718714 \cdot 10^{-12}$ bulundu. Bu, [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd) bölümünde gördüğümüz sadeleşme hatasıdır: birbirine çok yakın iki sayının farkında anlamlı basamaklar kaybolur. Adımın kendisi bile tam değildir: $1 + h$ makinede tam gösterilemediği için $(1 + h) - 1$ farkı $10^{-12}$ yerine $1{,}000089 \cdot 10^{-12}$ çıkar. Bu hataların etkisi bölme sırasında $1/h$ ile büyür.
+
+:::: {#prp-int-toplam-hata name="Yuvarlama Hatasıyla Birlikte Toplam Hata"}
+$f$'nin değerleri makinede $\tilde f$ olarak hesaplansın ve $x$'in yakınındaki her $t$ için $|\tilde f(t) - f(t)| \le \delta$ olsun. Çıkarma ve bölmenin kendi yuvarlamasını ihmal edelim. $\tilde D_h^{+} f(x)$ ve $\tilde D_h f(x)$, fark bölümlerinin $\tilde f$ değerleriyle hesaplanan karşılıkları olsun.
+
+1. $x$'in yakınındaki her $t$ için $|f''(t)| \le M_2$ ise
+$$\big|\tilde D_h^{+} f(x) - f'(x)\big| \le \frac{M_2\, h}{2} + \frac{2\delta}{h}$$
+olur. Sağ taraf en küçük değerini $h_{+} = 2\sqrt{\delta / M_2}$ adımında alır.
+2. $x$'in yakınındaki her $t$ için $|f'''(t)| \le M_3$ ise
+$$\big|\tilde D_h f(x) - f'(x)\big| \le \frac{M_3\, h^2}{6} + \frac{\delta}{h}$$
+olur. Sağ taraf en küçük değerini $h_0 = \sqrt[3]{3\delta / M_3}$ adımında alır.
+
+::: {.ispat}
+**İleri fark.** $\tilde f(t) = f(t) + r(t)$ yazalım; $|r(t)| \le \delta$'dır. Bu durumda
+
+$$\tilde D_h^{+} f(x) = D_h^{+} f(x) + \frac{r(x + h) - r(x)}{h}$$
+
+olur. @prp-int-kesme-hatasi gereği birinci terimin $f'(x)$'ten farkı $\frac{h}{2}|f''(\xi)| \le \frac{M_2 h}{2}$'dir. İkinci terimin mutlak değeri en çok $\frac{|r(x + h)| + |r(x)|}{h} \le \frac{2\delta}{h}$'dir. Üçgen eşitsizliği birinci sınırı verir.
+
+**Merkezi fark.** Aynı ayrıştırmayla
+
+$$\tilde D_h f(x) - f'(x) = \big(D_h f(x) - f'(x)\big) + \frac{r(x + h) - r(x - h)}{2h}$$
+
+olur. Parantezin mutlak değeri en çok $\frac{M_3 h^2}{6}$, ikinci terimin mutlak değeri en çok $\frac{2\delta}{2h} = \frac{\delta}{h}$'dir.
+
+**En küçük değer.** $A, B > 0$ için $g(h) = Ah + B/h$ fonksiyonunun türevi $g'(h) = A - B/h^2$'dir. Bu türev yalnız $h = \sqrt{B/A}$'da sıfır olur ve $g''(h) = 2B/h^3 > 0$ olduğundan burası $(0, \infty)$'daki en küçük değerdir. $A = M_2/2$ ve $B = 2\delta$ için $h_{+} = \sqrt{4\delta/M_2} = 2\sqrt{\delta/M_2}$ bulunur. Benzer biçimde $g(h) = Ah^2 + B/h$ için $g'(h) = 2Ah - B/h^2 = 0$ denklemi $h^3 = B/(2A)$ verir ve $g''(h) = 2A + 2B/h^3 > 0$'dır. $A = M_3/6$ ve $B = \delta$ için $h_0^3 = 3\delta/M_3$ olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani toplam hata iki kaynaktan gelir: $h$ küçüldükçe azalan **kesme hatası** (truncation error) ve $h$ küçüldükçe büyüyen **yuvarlama hatası** (round-off error) (bkz. [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-kesme) ve [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-yuvarlama)). Makinede $\delta$ kabaca $\varepsilon\,|f(x)|$ kadardır; burada $\varepsilon = 2^{-52} \approx 2{,}2 \cdot 10^{-16}$ makine epsilonudur. $f$ ve türevleri $1$ mertebesindeyse en iyi adımlar ileri fark için $h_{+} \approx \sqrt{\varepsilon} \approx 10^{-8}$, merkezi fark için $h_0 \approx \sqrt[3]{\varepsilon} \approx 10^{-5}$ olur. Bu adımlarda hata sınırları da yaklaşık $\sqrt{\varepsilon} \approx 10^{-8}$ ve $\varepsilon^{2/3} \approx 10^{-11}$'dir. Demek ki merkezi fark yalnız daha hızlı yakınsamakla kalmaz, ulaşabildiği doğruluk da daha yüksektir.
+
+:::: {#exm-int-en-iyi-adim name="Üstel Fonksiyonda En İyi Adım"}
+$f(x) = e^x$ için $x = 1$'de $\delta = \varepsilon e$ ve $M_2 = M_3 = e$ alın. @prp-int-toplam-hata ile verilen en iyi adımları ve bu adımlardaki hata sınırlarını hesaplayıp adım taramasının tablosuyla karşılaştırın.
+
+::: {.cozum}
+**Formüller.** $h_{+} = 2\sqrt{\delta/M_2}$ ve $h_0 = \sqrt[3]{3\delta/M_3}$ adımlarını ve sınırların bu adımlardaki değerlerini doğrudan koda dökeriz:
+
+```python
+import math
+
+eps = 2.0**-52                  # makine epsilonu
+x = 1.0
+delta = eps * math.exp(x)       # bir f değerindeki yuvarlama hatası
+M = math.exp(x)                 # x yakınında |f''| ve |f'''| yaklaşık e
+
+h_fwd = 2 * math.sqrt(delta / M)
+bound_fwd = M * h_fwd / 2 + 2 * delta / h_fwd
+h_cen = (3 * delta / M) ** (1 / 3)
+bound_cen = M * h_cen**2 / 6 + delta / h_cen
+print(f"ileri fark  : h = {h_fwd:.2e}   sınır = {bound_fwd:.2e}")
+print(f"merkezi fark: h = {h_cen:.2e}   sınır = {bound_cen:.2e}")
+```
+
+Çıktı:
+
+```text
+ileri fark  : h = 2.98e-08   sınır = 8.10e-08
+merkezi fark: h = 8.73e-06   sınır = 1.04e-10
+```
+
+**Karşılaştırma.** İleri fark için önerilen adım $h_{+} \approx 3 \cdot 10^{-8}$'dir; tabloda en küçük hata ($6{,}6 \cdot 10^{-9}$) $h = 10^{-8}$'de çıkmıştı. Merkezi fark için önerilen adım $h_0 \approx 8{,}7 \cdot 10^{-6}$'dır; tabloda en küçük hata ($5{,}9 \cdot 10^{-11}$) $h = 10^{-5}$'te çıkmıştı. Aynı hata $h = 10^{-7}$'de de çıkmıştı, ama orada yuvarlama hataları tesadüfen birbirini büyük ölçüde götürmüştür. Sınır $h = 10^{-7}$'de $6 \cdot 10^{-9}$'dur, yani bu adımda hata yüz kat büyük de çıkabilirdi; nitekim aradaki $h = 10^{-6}$ adımında hata yeniden $1{,}6 \cdot 10^{-10}$'dur. Güvenilir olan yalnız $h = 10^{-5}$'teki sonuçtur. Gerçek hatalar sınırların altında kalır, çünkü sınır en kötü durumu varsayar: iki yuvarlama hatasının hem en büyük hem de ters işaretli olduğunu. Yine de sınırlar en iyi adımın büyüklüğünü doğru tahmin eder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Aşağıdaki şekil, tablonun iki sütununu ve teoremdeki iki sınırı aynı logaritmik eksenlerde gösteriyor. Hata eğrileri V biçimindedir: sağ kolda kesme hatası, sol kolda yuvarlama hatası baskındır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="23.5 -10.5 500.5 347.0" role="img" aria-label="Log-log plot of the error of the forward and central difference for the derivative of exp at x = 1 against h = 10^-1 ... 10^-15. Both curves are V shaped: the forward error is smallest near h = 1e-8, the central error near h = 1e-5; dashed theoretical bounds follow the same shape">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="86.6" y1="26.0" x2="86.6" y2="306.0"/><line x1="169.5" y1="26.0" x2="169.5" y2="306.0"/><line x1="252.4" y1="26.0" x2="252.4" y2="306.0"/><line x1="335.3" y1="26.0" x2="335.3" y2="306.0"/><line x1="418.2" y1="26.0" x2="418.2" y2="306.0"/><line x1="70.0" y1="281.4" x2="490.0" y2="281.4"/><line x1="70.0" y1="232.3" x2="490.0" y2="232.3"/><line x1="70.0" y1="183.2" x2="490.0" y2="183.2"/><line x1="70.0" y1="134.1" x2="490.0" y2="134.1"/><line x1="70.0" y1="84.9" x2="490.0" y2="84.9"/><line x1="70.0" y1="35.8" x2="490.0" y2="35.8"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="306.0" x2="498.0" y2="306.0"/>
+  <line x1="70.0" y1="18.0" x2="70.0" y2="306.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="86.6" y="322.0" text-anchor="middle">10<tspan font-size="8.5" dy="-5">&#8722;15</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="169.5" y="322.0" text-anchor="middle">10<tspan font-size="8.5" dy="-5">&#8722;12</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="252.4" y="322.0" text-anchor="middle">10<tspan font-size="8.5" dy="-5">&#8722;9</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="335.3" y="322.0" text-anchor="middle">10<tspan font-size="8.5" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="418.2" y="322.0" text-anchor="middle">10<tspan font-size="8.5" dy="-5">&#8722;3</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="39.8" text-anchor="end">1</text>
+  <text x="63.0" y="88.9" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="138.1" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="187.2" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="236.3" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="285.4" text-anchor="end">10<tspan font-size="8.5" dy="-5">&#8722;10</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="504.0" y="310.0" font-style="italic"><tspan font-style="italic">h</tspan></text>
+  <text x="66.0" y="12.0" text-anchor="middle" font-style="italic">hata</text>
+  </g>
+  <path d="M77.8,26.0 L78.4,26.6 L79.5,27.5 L80.5,28.4 L81.6,29.4 L82.6,30.3 L83.7,31.2 L84.7,32.2 L85.8,33.1 L86.8,34.1 L87.9,35.0 L88.9,35.9 L90.0,36.9 L91.1,37.8 L92.1,38.7 L93.2,39.7 L94.2,40.6 L95.3,41.5 L96.3,42.5 L97.4,43.4 L98.4,44.3 L99.5,45.3 L100.5,46.2 L101.6,47.1 L102.6,48.1 L103.7,49.0 L104.7,50.0 L105.8,50.9 L106.8,51.8 L107.9,52.8 L108.9,53.7 L110.0,54.6 L111.1,55.6 L112.1,56.5 L113.2,57.4 L114.2,58.4 L115.3,59.3 L116.3,60.2 L117.4,61.2 L118.4,62.1 L119.5,63.1 L120.5,64.0 L121.6,64.9 L122.6,65.9 L123.7,66.8 L124.7,67.7 L125.8,68.7 L126.8,69.6 L127.9,70.5 L128.9,71.5 L130.0,72.4 L131.1,73.3 L132.1,74.3 L133.2,75.2 L134.2,76.2 L135.3,77.1 L136.3,78.0 L137.4,79.0 L138.4,79.9 L139.5,80.8 L140.5,81.8 L141.6,82.7 L142.6,83.6 L143.7,84.6 L144.7,85.5 L145.8,86.4 L146.8,87.4 L147.9,88.3 L148.9,89.3 L150.0,90.2 L151.1,91.1 L152.1,92.1 L153.2,93.0 L154.2,93.9 L155.3,94.9 L156.3,95.8 L157.4,96.7 L158.4,97.7 L159.5,98.6 L160.5,99.5 L161.6,100.5 L162.6,101.4 L163.7,102.4 L164.7,103.3 L165.8,104.2 L166.8,105.2 L167.9,106.1 L168.9,107.0 L170.0,108.0 L171.1,108.9 L172.1,109.8 L173.2,110.8 L174.2,111.7 L175.3,112.6 L176.3,113.6 L177.4,114.5 L178.4,115.5 L179.5,116.4 L180.5,117.3 L181.6,118.3 L182.6,119.2 L183.7,120.1 L184.7,121.1 L185.8,122.0 L186.8,122.9 L187.9,123.9 L188.9,124.8 L190.0,125.7 L191.1,126.7 L192.1,127.6 L193.2,128.6 L194.2,129.5 L195.3,130.4 L196.3,131.4 L197.4,132.3 L198.4,133.2 L199.5,134.2 L200.5,135.1 L201.6,136.0 L202.6,137.0 L203.7,137.9 L204.7,138.8 L205.8,139.8 L206.8,140.7 L207.9,141.7 L208.9,142.6 L210.0,143.5 L211.1,144.5 L212.1,145.4 L213.2,146.3 L214.2,147.3 L215.3,148.2 L216.3,149.1 L217.4,150.1 L218.4,151.0 L219.5,151.9 L220.5,152.9 L221.6,153.8 L222.6,154.8 L223.7,155.7 L224.7,156.6 L225.8,157.6 L226.8,158.5 L227.9,159.4 L228.9,160.4 L230.0,161.3 L231.1,162.2 L232.1,163.2 L233.2,164.1 L234.2,165.0 L235.3,166.0 L236.3,166.9 L237.4,167.9 L238.4,168.8 L239.5,169.7 L240.5,170.7 L241.6,171.6 L242.6,172.5 L243.7,173.5 L244.7,174.4 L245.8,175.3 L246.8,176.3 L247.9,177.2 L248.9,178.1 L250.0,179.1 L251.1,180.0 L252.1,180.9 L253.2,181.9 L254.2,182.8 L255.3,183.7 L256.3,184.7 L257.4,185.6 L258.4,186.5 L259.5,187.5 L260.5,188.4 L261.6,189.3 L262.6,190.2 L263.7,191.2 L264.7,192.1 L265.8,193.0 L266.8,193.9 L267.9,194.8 L268.9,195.7 L270.0,196.6 L271.1,197.5 L272.1,198.4 L273.2,199.3 L274.2,200.2 L275.3,201.0 L276.3,201.8 L277.4,202.7 L278.4,203.5 L279.5,204.2 L280.5,205.0 L281.6,205.7 L282.6,206.4 L283.7,207.0 L284.7,207.6 L285.8,208.1 L286.8,208.6 L287.9,209.0 L288.9,209.4 L290.0,209.6 L291.1,209.8 L292.1,210.0 L293.2,210.0 L294.2,210.0 L295.3,209.8 L296.3,209.6 L297.4,209.3 L298.4,209.0 L299.5,208.6 L300.5,208.1 L301.6,207.5 L302.6,206.9 L303.7,206.3 L304.7,205.6 L305.8,204.9 L306.8,204.2 L307.9,203.4 L308.9,202.6 L310.0,201.8 L311.1,200.9 L312.1,200.1 L313.2,199.2 L314.2,198.3 L315.3,197.4 L316.3,196.5 L317.4,195.6 L318.4,194.7 L319.5,193.8 L320.5,192.9 L321.6,192.0 L322.6,191.1 L323.7,190.1 L324.7,189.2 L325.8,188.3 L326.8,187.4 L327.9,186.4 L328.9,185.5 L330.0,184.6 L331.1,183.6 L332.1,182.7 L333.2,181.8 L334.2,180.8 L335.3,179.9 L336.3,179.0 L337.4,178.0 L338.4,177.1 L339.5,176.2 L340.5,175.2 L341.6,174.3 L342.6,173.4 L343.7,172.4 L344.7,171.5 L345.8,170.6 L346.8,169.6 L347.9,168.7 L348.9,167.8 L350.0,166.8 L351.1,165.9 L352.1,164.9 L353.2,164.0 L354.2,163.1 L355.3,162.1 L356.3,161.2 L357.4,160.3 L358.4,159.3 L359.5,158.4 L360.5,157.5 L361.6,156.5 L362.6,155.6 L363.7,154.7 L364.7,153.7 L365.8,152.8 L366.8,151.8 L367.9,150.9 L368.9,150.0 L370.0,149.0 L371.1,148.1 L372.1,147.2 L373.2,146.2 L374.2,145.3 L375.3,144.4 L376.3,143.4 L377.4,142.5 L378.4,141.6 L379.5,140.6 L380.5,139.7 L381.6,138.8 L382.6,137.8 L383.7,136.9 L384.7,135.9 L385.8,135.0 L386.8,134.1 L387.9,133.1 L388.9,132.2 L390.0,131.3 L391.1,130.3 L392.1,129.4 L393.2,128.5 L394.2,127.5 L395.3,126.6 L396.3,125.7 L397.4,124.7 L398.4,123.8 L399.5,122.8 L400.5,121.9 L401.6,121.0 L402.6,120.0 L403.7,119.1 L404.7,118.2 L405.8,117.2 L406.8,116.3 L407.9,115.4 L408.9,114.4 L410.0,113.5 L411.1,112.6 L412.1,111.6 L413.2,110.7 L414.2,109.7 L415.3,108.8 L416.3,107.9 L417.4,106.9 L418.4,106.0 L419.5,105.1 L420.5,104.1 L421.6,103.2 L422.6,102.3 L423.7,101.3 L424.7,100.4 L425.8,99.5 L426.8,98.5 L427.9,97.6 L428.9,96.6 L430.0,95.7 L431.1,94.8 L432.1,93.8 L433.2,92.9 L434.2,92.0 L435.3,91.0 L436.3,90.1 L437.4,89.2 L438.4,88.2 L439.5,87.3 L440.5,86.4 L441.6,85.4 L442.6,84.5 L443.7,83.5 L444.7,82.6 L445.8,81.7 L446.8,80.7 L447.9,79.8 L448.9,78.9 L450.0,77.9 L451.1,77.0 L452.1,76.1 L453.2,75.1 L454.2,74.2 L455.3,73.3 L456.3,72.3 L457.4,71.4 L458.4,70.4 L459.5,69.5 L460.5,68.6 L461.6,67.6 L462.6,66.7 L463.7,65.8 L464.7,64.8 L465.8,63.9 L466.8,63.0 L467.9,62.0 L468.9,61.1 L470.0,60.2 L471.1,59.2 L472.1,58.3 L473.2,57.3 L474.2,56.4 L475.3,55.5 L476.3,54.5 L477.4,53.6 L478.4,52.7 L479.5,51.7 L480.5,50.8 L481.6,49.9 L482.6,48.9 L483.7,48.0 L484.7,47.1 L485.8,46.1 L486.8,45.2 L487.9,44.2 L488.9,43.3 L490.0,42.4" fill="none" stroke="var(--color-practice)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M70.0,26.5 L71.1,27.4 L72.1,28.3 L73.2,29.3 L74.2,30.2 L75.3,31.2 L76.3,32.1 L77.4,33.0 L78.4,34.0 L79.5,34.9 L80.5,35.8 L81.6,36.8 L82.6,37.7 L83.7,38.6 L84.7,39.6 L85.8,40.5 L86.8,41.4 L87.9,42.4 L88.9,43.3 L90.0,44.3 L91.1,45.2 L92.1,46.1 L93.2,47.1 L94.2,48.0 L95.3,48.9 L96.3,49.9 L97.4,50.8 L98.4,51.7 L99.5,52.7 L100.5,53.6 L101.6,54.5 L102.6,55.5 L103.7,56.4 L104.7,57.4 L105.8,58.3 L106.8,59.2 L107.9,60.2 L108.9,61.1 L110.0,62.0 L111.1,63.0 L112.1,63.9 L113.2,64.8 L114.2,65.8 L115.3,66.7 L116.3,67.6 L117.4,68.6 L118.4,69.5 L119.5,70.4 L120.5,71.4 L121.6,72.3 L122.6,73.3 L123.7,74.2 L124.7,75.1 L125.8,76.1 L126.8,77.0 L127.9,77.9 L128.9,78.9 L130.0,79.8 L131.1,80.7 L132.1,81.7 L133.2,82.6 L134.2,83.5 L135.3,84.5 L136.3,85.4 L137.4,86.4 L138.4,87.3 L139.5,88.2 L140.5,89.2 L141.6,90.1 L142.6,91.0 L143.7,92.0 L144.7,92.9 L145.8,93.8 L146.8,94.8 L147.9,95.7 L148.9,96.6 L150.0,97.6 L151.1,98.5 L152.1,99.5 L153.2,100.4 L154.2,101.3 L155.3,102.3 L156.3,103.2 L157.4,104.1 L158.4,105.1 L159.5,106.0 L160.5,106.9 L161.6,107.9 L162.6,108.8 L163.7,109.7 L164.7,110.7 L165.8,111.6 L166.8,112.6 L167.9,113.5 L168.9,114.4 L170.0,115.4 L171.1,116.3 L172.1,117.2 L173.2,118.2 L174.2,119.1 L175.3,120.0 L176.3,121.0 L177.4,121.9 L178.4,122.8 L179.5,123.8 L180.5,124.7 L181.6,125.7 L182.6,126.6 L183.7,127.5 L184.7,128.5 L185.8,129.4 L186.8,130.3 L187.9,131.3 L188.9,132.2 L190.0,133.1 L191.1,134.1 L192.1,135.0 L193.2,135.9 L194.2,136.9 L195.3,137.8 L196.3,138.8 L197.4,139.7 L198.4,140.6 L199.5,141.6 L200.5,142.5 L201.6,143.4 L202.6,144.4 L203.7,145.3 L204.7,146.2 L205.8,147.2 L206.8,148.1 L207.9,149.0 L208.9,150.0 L210.0,150.9 L211.1,151.9 L212.1,152.8 L213.2,153.7 L214.2,154.7 L215.3,155.6 L216.3,156.5 L217.4,157.5 L218.4,158.4 L219.5,159.3 L220.5,160.3 L221.6,161.2 L222.6,162.1 L223.7,163.1 L224.7,164.0 L225.8,165.0 L226.8,165.9 L227.9,166.8 L228.9,167.8 L230.0,168.7 L231.1,169.6 L232.1,170.6 L233.2,171.5 L234.2,172.4 L235.3,173.4 L236.3,174.3 L237.4,175.2 L238.4,176.2 L239.5,177.1 L240.5,178.1 L241.6,179.0 L242.6,179.9 L243.7,180.9 L244.7,181.8 L245.8,182.7 L246.8,183.7 L247.9,184.6 L248.9,185.5 L250.0,186.5 L251.1,187.4 L252.1,188.3 L253.2,189.3 L254.2,190.2 L255.3,191.2 L256.3,192.1 L257.4,193.0 L258.4,194.0 L259.5,194.9 L260.5,195.8 L261.6,196.8 L262.6,197.7 L263.7,198.6 L264.7,199.6 L265.8,200.5 L266.8,201.4 L267.9,202.4 L268.9,203.3 L270.0,204.3 L271.1,205.2 L272.1,206.1 L273.2,207.1 L274.2,208.0 L275.3,208.9 L276.3,209.9 L277.4,210.8 L278.4,211.7 L279.5,212.7 L280.5,213.6 L281.6,214.5 L282.6,215.5 L283.7,216.4 L284.7,217.4 L285.8,218.3 L286.8,219.2 L287.9,220.2 L288.9,221.1 L290.0,222.0 L291.1,223.0 L292.1,223.9 L293.2,224.8 L294.2,225.8 L295.3,226.7 L296.3,227.6 L297.4,228.6 L298.4,229.5 L299.5,230.4 L300.5,231.4 L301.6,232.3 L302.6,233.3 L303.7,234.2 L304.7,235.1 L305.8,236.1 L306.8,237.0 L307.9,237.9 L308.9,238.9 L310.0,239.8 L311.1,240.7 L312.1,241.7 L313.2,242.6 L314.2,243.5 L315.3,244.5 L316.3,245.4 L317.4,246.4 L318.4,247.3 L319.5,248.2 L320.5,249.2 L321.6,250.1 L322.6,251.0 L323.7,252.0 L324.7,252.9 L325.8,253.8 L326.8,254.8 L327.9,255.7 L328.9,256.6 L330.0,257.6 L331.1,258.5 L332.1,259.5 L333.2,260.4 L334.2,261.3 L335.3,262.3 L336.3,263.2 L337.4,264.1 L338.4,265.1 L339.5,266.0 L340.5,266.9 L341.6,267.8 L342.6,268.8 L343.7,269.7 L344.7,270.6 L345.8,271.5 L346.8,272.4 L347.9,273.3 L348.9,274.2 L350.0,275.0 L351.1,275.9 L352.1,276.7 L353.2,277.5 L354.2,278.2 L355.3,278.9 L356.3,279.5 L357.4,280.1 L358.4,280.5 L359.5,280.8 L360.5,281.0 L361.6,281.0 L362.6,280.9 L363.7,280.6 L364.7,280.1 L365.8,279.4 L366.8,278.6 L367.9,277.5 L368.9,276.4 L370.0,275.1 L371.1,273.7 L372.1,272.2 L373.2,270.6 L374.2,269.0 L375.3,267.3 L376.3,265.5 L377.4,263.8 L378.4,262.0 L379.5,260.2 L380.5,258.4 L381.6,256.5 L382.6,254.7 L383.7,252.8 L384.7,251.0 L385.8,249.1 L386.8,247.3 L387.9,245.4 L388.9,243.5 L390.0,241.7 L391.1,239.8 L392.1,237.9 L393.2,236.1 L394.2,234.2 L395.3,232.3 L396.3,230.5 L397.4,228.6 L398.4,226.7 L399.5,224.9 L400.5,223.0 L401.6,221.1 L402.6,219.2 L403.7,217.4 L404.7,215.5 L405.8,213.6 L406.8,211.8 L407.9,209.9 L408.9,208.0 L410.0,206.1 L411.1,204.3 L412.1,202.4 L413.2,200.5 L414.2,198.7 L415.3,196.8 L416.3,194.9 L417.4,193.0 L418.4,191.2 L419.5,189.3 L420.5,187.4 L421.6,185.6 L422.6,183.7 L423.7,181.8 L424.7,179.9 L425.8,178.1 L426.8,176.2 L427.9,174.3 L428.9,172.5 L430.0,170.6 L431.1,168.7 L432.1,166.8 L433.2,165.0 L434.2,163.1 L435.3,161.2 L436.3,159.4 L437.4,157.5 L438.4,155.6 L439.5,153.7 L440.5,151.9 L441.6,150.0 L442.6,148.1 L443.7,146.3 L444.7,144.4 L445.8,142.5 L446.8,140.6 L447.9,138.8 L448.9,136.9 L450.0,135.0 L451.1,133.2 L452.1,131.3 L453.2,129.4 L454.2,127.5 L455.3,125.7 L456.3,123.8 L457.4,121.9 L458.4,120.1 L459.5,118.2 L460.5,116.3 L461.6,114.4 L462.6,112.6 L463.7,110.7 L464.7,108.8 L465.8,107.0 L466.8,105.1 L467.9,103.2 L468.9,101.3 L470.0,99.5 L471.1,97.6 L472.1,95.7 L473.2,93.9 L474.2,92.0 L475.3,90.1 L476.3,88.2 L477.4,86.4 L478.4,84.5 L479.5,82.6 L480.5,80.8 L481.6,78.9 L482.6,77.0 L483.7,75.1 L484.7,73.3 L485.8,71.4 L486.8,69.5 L487.9,67.7 L488.9,65.8 L490.0,63.9" fill="none" stroke="var(--color-theory)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M473.4,56.8 L445.8,81.6 L418.2,106.2 L390.5,130.8 L362.9,155.4 L335.3,179.9 L307.6,204.2 L280.0,236.7 L252.4,199.6 L224.7,178.5 L197.1,146.0 L169.5,118.5 L141.8,117.9 L114.2,85.7 L86.6,45.9" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="473.4" cy="56.8" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="445.8" cy="81.6" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="418.2" cy="106.2" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="390.5" cy="130.8" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="362.9" cy="155.4" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="335.3" cy="179.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="307.6" cy="204.2" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="280.0" cy="236.7" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="252.4" cy="199.6" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="224.7" cy="178.5" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="197.1" cy="146.0" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="169.5" cy="118.5" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="141.8" cy="117.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="114.2" cy="85.7" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="86.6" cy="45.9" r="3.6" fill="var(--color-practice)"/>
+  <path d="M473.4,93.4 L445.8,142.5 L418.2,191.6 L390.5,240.8 L362.9,287.1 L335.3,276.2 L307.6,287.1 L280.0,236.7 L252.4,236.7 L224.7,187.4 L197.1,158.2 L169.5,126.1 L141.8,117.9 L114.2,85.7 L86.6,54.8" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="473.4" cy="93.4" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="445.8" cy="142.5" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="418.2" cy="191.6" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="390.5" cy="240.8" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="362.9" cy="287.1" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="335.3" cy="276.2" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="307.6" cy="287.1" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="280.0" cy="236.7" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="252.4" cy="236.7" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="224.7" cy="187.4" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="197.1" cy="158.2" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="169.5" cy="126.1" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="141.8" cy="117.9" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="114.2" cy="85.7" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="86.6" cy="54.8" r="3.6" fill="var(--color-theory)"/>
+  <circle cx="293.1" cy="210.0" r="5.0" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="361.3" cy="281.1" r="5.0" fill="none" stroke="var(--color-theory)" stroke-width="1.8"/>
+  <text x="390.5" y="99.7" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">eğim 1</text>
+  <text x="429.2" y="217.6" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">eğim 2</text>
+  <text x="81.1" y="148.8" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600">eğim &#8722;1</text>
+  <text x="81.1" y="180.7" fill="var(--academic-text)" font-size="11.5" text-anchor="start">yuvarlama</text>
+  <text x="81.1" y="195.7" fill="var(--academic-text)" font-size="11.5" text-anchor="start">hatası baskın</text>
+  <text x="373.9" y="57.9" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">kesme hatası baskın</text>
+  <line x1="78.3" y1="247.1" x2="104.3" y2="247.1" stroke="var(--color-practice)" stroke-width="1.9"/>
+  <circle cx="91.3" cy="247.1" r="3.4" fill="var(--color-practice)"/>
+  <text x="112.3" y="251.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">ileri fark</text>
+  <line x1="78.3" y1="268.1" x2="104.3" y2="268.1" stroke="var(--color-theory)" stroke-width="1.9"/>
+  <circle cx="91.3" cy="268.1" r="3.4" fill="var(--color-theory)"/>
+  <text x="112.3" y="272.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">merkezi fark</text>
+  <line x1="78.3" y1="289.1" x2="104.3" y2="289.1" stroke="var(--academic-text)" stroke-width="1.9" stroke-dasharray="5 4"/>
+  <text x="112.3" y="293.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">teoremdeki sınır</text>
+</svg>
+<figcaption><em>e</em><sup><em>x</em></sup> fonksiyonunun <em>x</em> = 1'deki türevi için ileri ve merkezi farkın hatası, iki eksen de logaritmik; adım taraması kodunun tablosundaki sayıların aynısı. Sağda kesme hatası baskındır ve doğrular 1 ile 2 eğimiyle iner. Solda yuvarlama hatası baskındır ve hata 1/<em>h</em> gibi büyür. Kesikli eğriler teoremdeki sınırlardır; içi boş halkalar sınırın en küçük olduğu adımları, yaklaşık 3&#183;10<sup>&#8722;8</sup> ve 9&#183;10<sup>&#8722;6</sup> değerlerini gösterir.</figcaption>
+</figure>
+```
+
+::: {.callout-warning title="Adımı küçültmek doğruluğu her zaman artırmaz"}
+Fark bölümlerinde $h$ küçüldükçe yuvarlama hatası $1/h$ gibi büyür. $10^{-12}$ gibi çok küçük bir adım, $10^{-5}$ gibi orta bir adımdan çok daha kötü sonuç verir. Ayrıca adım, $x$'in ve $f$'nin ölçeğine göre seçilmelidir: $x = 10^6$ civarında $10^{-5}$ gibi bir adım $x$'in son basamaklarına düşer; $x + h$ toplamında adımın yalnız birkaç anlamlı basamağı korunur.
+:::
+
+::: {.callout-tip title="Fark bölümüyle türev üç adımda"}
+1. Merkezi farkı seç. İleri ya da geri farkı yalnız fonksiyon $x$'in bir yanında tanımlı değilse kullan.
+2. Adımı ölçekle: $\delta \approx \varepsilon\,|f(x)|$ ve $M_3 \approx |f'''(x)|$ alarak $h = \sqrt[3]{3\delta/M_3}$ hesapla. Bu bilgiler yoksa $h = \sqrt[3]{\varepsilon}\,\max(1, |x|)$ kaba ama makul bir başlangıçtır.
+3. Türevi $h$ ve $2h$ adımlarıyla hesaplayıp karşılaştır. İki sonucun farkı hatanın büyüklüğü hakkında fikir verir; fark beklenenden büyükse adımı yeniden düşün.
+:::
+
+:::: {#exm-int-ln-milyon name="Büyük Bir Noktada Logaritmanın Türevi"}
+$f(x) = \ln x$ fonksiyonunun $x = 10^6$ noktasındaki türevini merkezi farkla, adımı yukarıdaki üç adıma göre seçerek hesaplayın. Sonucu ezbere seçilmiş $h = 10^{-5}$ adımının sonucuyla karşılaştırın. Kesin değer $f'(10^6) = 10^{-6}$'dır.
+
+::: {.cozum}
+**1. adım.** $\ln x$, $10^6$'nın iki yanında da tanımlıdır; merkezi farkı kullanırız.
+
+**2. adım.** $\delta = \varepsilon \ln(10^6) \approx 3{,}1 \cdot 10^{-15}$'tir. $f'''(x) = 2/x^3$ olduğundan $M_3 = 2 \cdot 10^{-18}$ alırız. Önerilen adım $h = \sqrt[3]{3\delta/M_3} \approx 16{,}6$ çıkar. Bu adım ilk bakışta büyük görünür, ama $10^6$'nın yanında küçüktür: $\ln x$ bu ölçekte çok yavaş değişir.
+
+**3. adım.** $h$ ile $2h$ adımlarının sonuçlarını karşılaştırırız. Kıyas için $h = 10^{-5}$ adımını da deneriz:
+
+```python
+import math
+
+
+def central_diff(f, x, h):
+    return (f(x + h) - f(x - h)) / (2 * h)
+
+
+eps = 2.0**-52
+x = 1.0e6
+exact = 1 / x                       # (ln x)' = 1/x
+
+# 2. adım: delta = eps |ln x| ve M3 = |f'''(x)| = 2 / x^3
+delta = eps * abs(math.log(x))
+M3 = 2 / x**3
+h = (3 * delta / M3) ** (1 / 3)
+print(f"önerilen h = {h:.2f}")
+
+# 3. adım: h ile 2h karşılaştırılır; kıyas için ezbere h = 1e-5
+d1 = central_diff(math.log, x, h)
+d2 = central_diff(math.log, x, 2 * h)
+print(f"D(h) ile D(2h) arasındaki bağıl fark: {abs(d1 - d2) / d1:.1e}")
+for step in [h, 2 * h, 1e-5]:
+    d = central_diff(math.log, x, step)
+    rel = abs(d - exact) / exact
+    print(f"h = {step:8.3g}   bağıl hata = {rel:.1e}")
+```
+
+Çıktı:
+
+```text
+önerilen h = 16.63
+D(h) ile D(2h) arasındaki bağıl fark: 2.7e-10
+h =     16.6   bağıl hata = 1.0e-10
+h =     33.3   bağıl hata = 3.7e-10
+h =    1e-05   bağıl hata = 8.3e-08
+```
+
+**Sonuç.** $D(h)$ ile $D(2h)$ arasındaki bağıl fark $2{,}7 \cdot 10^{-10}$'dur; gerçek bağıl hata da bu mertebededir ($1{,}0 \cdot 10^{-10}$). Teoremdeki sınır, $h = 10^{-5}$ adımında $\delta/h$ teriminden gelen $3 \cdot 10^{-4}$ kadar bir bağıl hataya izin verir. Bu çalıştırmada yuvarlama hataları kısmen birbirini götürdüğü için gerçek hata daha küçük çıktı, ama yine de önerilen adımdakinin yaklaşık 800 katıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Izgarada Türev: np.gradient
+
+Şimdiye kadar $f$'yi istediğimiz noktada hesaplayabiliyorduk. Fonksiyon bir tablo olarak verildiğinde ise adımı biz seçemeyiz; elimizdeki noktalarla yetinmek zorundayız.
+
+::: {#def-int-gradient name="np.gradient ile Izgarada Türev"}
+$x_0 < x_1 < \dots < x_n$ noktalarında $y_k = f(x_k)$ değerleri verilsin. `np.gradient(y, x)` çağrısı, $k$ indisli elemanı $f'(x_k)$'ye bir yaklaşım olan $n + 1$ elemanlı bir dizi döndürür.
+
+- İç noktalarda ($0 < k < n$) $x_{k-1}$, $x_k$, $x_{k+1}$ noktalarından geçen ikinci dereceden polinomun $x_k$'deki türevini alır. Aralıklar eşitse bu, merkezi fark bölümüdür: $(y_{k+1} - y_{k-1})/(2h)$.
+- Uç noktalarda varsayılan olarak tek yönlü fark bölümünü kullanır: $(y_1 - y_0)/(x_1 - x_0)$ ve $(y_n - y_{n-1})/(x_n - x_{n-1})$. `edge_order=2` verilirse ilk ya da son üç noktadan geçen ikinci dereceden polinomun uçtaki türevini alır.
+
+Noktalar eşit aralıklıysa `x` dizisi yerine adım da verilebilir: `np.gradient(y, h)`.
+:::
+
+Yani `np.gradient` iç noktalarda ikinci mertebeden, uçlarda ise varsayılan hâlde yalnız birinci mertebeden bir yaklaşım verir; `edge_order=2` uçları da ikinci mertebeye çıkarır. Eşit aralıkta bunlar Nümerik Analiz notlarındaki üç-nokta formülleridir (bkz. [Nümerik Analiz](../numerik-analiz/numerik-turev.html#prp-ntr-uc-nokta)). Dokuz noktalı bir ızgarada $\cos x$'in türevini hesaplayıp kesin türev $-\sin x$ ile karşılaştıralım:
+
+```python
+import numpy as np
+
+x = np.linspace(0, np.pi, 9)              # adım pi/8
+y = np.cos(x)
+exact = -np.sin(x)
+g1 = np.gradient(y, x)                    # uçlarda birinci mertebe
+g2 = np.gradient(y, x, edge_order=2)      # uçlarda ikinci mertebe
+print(np.round(g1, 4))
+print(np.round(g2, 4))
+print(np.round(exact, 4) + 0.0)           # + 0.0: -0. yerine 0. yazar
+err1 = np.abs(g1 - exact)
+err2 = np.abs(g2 - exact)
+print("iç noktalarda en büyük hata:", round(err1[1:-1].max(), 4))
+print("uçlarda hata, varsayılan   :", np.round(err1[[0, -1]], 4))
+print("uçlarda hata, edge_order=2 :", np.round(err2[[0, -1]], 4))
+```
+
+Çıktı:
+
+```text
+[-0.1938 -0.3729 -0.6891 -0.9003 -0.9745 -0.9003 -0.6891 -0.3729 -0.1938]
+[-0.0148 -0.3729 -0.6891 -0.9003 -0.9745 -0.9003 -0.6891 -0.3729 -0.0148]
+[ 0.     -0.3827 -0.7071 -0.9239 -1.     -0.9239 -0.7071 -0.3827  0.    ]
+iç noktalarda en büyük hata: 0.0255
+uçlarda hata, varsayılan   : [0.1938 0.1938]
+uçlarda hata, edge_order=2 : [0.0148 0.0148]
+```
+
+İç noktalardaki en büyük hata $0{,}0255$'tir. Bu, @prp-int-kesme-hatasi ile uyumludur: $h = \pi/8$ için $\frac{h^2}{6} \approx 0{,}0257$ eder. Uçlarda ise varsayılan tek yönlü fark $0{,}19$ kadar sapar; `edge_order=2` bu sapmayı $0{,}015$'e indirir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="21.0 2.0 487.0 304.5" role="img" aria-label="The curve -sin x on [0, pi] with the nine values of np.gradient of cos x: interior points lie on the curve, the default end values -0.19 lie well below 0, the edge_order=2 end values -0.015 lie close to 0">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="64.0" y1="252.8" x2="474.0" y2="252.8"/><line x1="64.0" y1="146.9" x2="474.0" y2="146.9"/><line x1="64.0" y1="40.9" x2="474.0" y2="40.9"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="64.0" y1="274.0" x2="482.0" y2="274.0"/>
+  <line x1="64.0" y1="16.0" x2="64.0" y2="274.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="57.0" y="256.8" text-anchor="end">&#8722;1</text>
+  <text x="57.0" y="150.9" text-anchor="end">&#8722;0,5</text>
+  <text x="57.0" y="44.9" text-anchor="end">0</text>
+  <text x="488.0" y="278.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  </g>
+  <text x="78.5" y="290.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <text x="173.8" y="290.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#960;/4</text>
+  <text x="269.0" y="290.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#960;/2</text>
+  <text x="364.2" y="290.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3&#960;/4</text>
+  <text x="459.5" y="290.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#960;</text>
+  <path d="M78.5,40.9 L79.8,43.2 L81.1,45.4 L82.4,47.6 L83.6,49.9 L84.9,52.1 L86.2,54.3 L87.5,56.5 L88.7,58.7 L90.0,61.0 L91.3,63.2 L92.6,65.4 L93.8,67.6 L95.1,69.8 L96.4,72.0 L97.7,74.2 L98.9,76.4 L100.2,78.6 L101.5,80.8 L102.8,83.0 L104.0,85.1 L105.3,87.3 L106.6,89.5 L107.8,91.7 L109.1,93.8 L110.4,96.0 L111.7,98.1 L112.9,100.2 L114.2,102.4 L115.5,104.5 L116.8,106.6 L118.0,108.7 L119.3,110.8 L120.6,112.9 L121.9,115.0 L123.1,117.1 L124.4,119.2 L125.7,121.3 L127.0,123.3 L128.2,125.4 L129.5,127.4 L130.8,129.4 L132.1,131.4 L133.3,133.4 L134.6,135.4 L135.9,137.4 L137.1,139.4 L138.4,141.4 L139.7,143.3 L141.0,145.3 L142.2,147.2 L143.5,149.1 L144.8,151.0 L146.1,152.9 L147.3,154.8 L148.6,156.7 L149.9,158.5 L151.2,160.4 L152.4,162.2 L153.7,164.0 L155.0,165.8 L156.3,167.6 L157.5,169.4 L158.8,171.2 L160.1,172.9 L161.4,174.7 L162.6,176.4 L163.9,178.1 L165.2,179.8 L166.4,181.4 L167.7,183.1 L169.0,184.7 L170.3,186.4 L171.5,188.0 L172.8,189.6 L174.1,191.2 L175.4,192.7 L176.6,194.3 L177.9,195.8 L179.2,197.3 L180.5,198.8 L181.7,200.3 L183.0,201.7 L184.3,203.2 L185.6,204.6 L186.8,206.0 L188.1,207.4 L189.4,208.7 L190.7,210.1 L191.9,211.4 L193.2,212.7 L194.5,214.0 L195.7,215.3 L197.0,216.6 L198.3,217.8 L199.6,219.0 L200.8,220.2 L202.1,221.4 L203.4,222.5 L204.7,223.7 L205.9,224.8 L207.2,225.9 L208.5,227.0 L209.8,228.0 L211.0,229.1 L212.3,230.1 L213.6,231.1 L214.9,232.0 L216.1,233.0 L217.4,233.9 L218.7,234.8 L220.0,235.7 L221.2,236.6 L222.5,237.4 L223.8,238.2 L225.0,239.0 L226.3,239.8 L227.6,240.6 L228.9,241.3 L230.1,242.0 L231.4,242.7 L232.7,243.4 L234.0,244.0 L235.2,244.7 L236.5,245.3 L237.8,245.8 L239.1,246.4 L240.3,246.9 L241.6,247.4 L242.9,247.9 L244.2,248.4 L245.4,248.8 L246.7,249.2 L248.0,249.6 L249.3,250.0 L250.5,250.4 L251.8,250.7 L253.1,251.0 L254.3,251.3 L255.6,251.5 L256.9,251.8 L258.2,252.0 L259.4,252.2 L260.7,252.3 L262.0,252.5 L263.3,252.6 L264.5,252.7 L265.8,252.7 L267.1,252.8 L268.4,252.8 L269.6,252.8 L270.9,252.8 L272.2,252.7 L273.5,252.7 L274.7,252.6 L276.0,252.5 L277.3,252.3 L278.6,252.2 L279.8,252.0 L281.1,251.8 L282.4,251.5 L283.7,251.3 L284.9,251.0 L286.2,250.7 L287.5,250.4 L288.7,250.0 L290.0,249.6 L291.3,249.2 L292.6,248.8 L293.8,248.4 L295.1,247.9 L296.4,247.4 L297.7,246.9 L298.9,246.4 L300.2,245.8 L301.5,245.3 L302.8,244.7 L304.0,244.0 L305.3,243.4 L306.6,242.7 L307.9,242.0 L309.1,241.3 L310.4,240.6 L311.7,239.8 L313.0,239.0 L314.2,238.2 L315.5,237.4 L316.8,236.6 L318.0,235.7 L319.3,234.8 L320.6,233.9 L321.9,233.0 L323.1,232.0 L324.4,231.1 L325.7,230.1 L327.0,229.1 L328.2,228.0 L329.5,227.0 L330.8,225.9 L332.1,224.8 L333.3,223.7 L334.6,222.5 L335.9,221.4 L337.2,220.2 L338.4,219.0 L339.7,217.8 L341.0,216.6 L342.3,215.3 L343.5,214.0 L344.8,212.7 L346.1,211.4 L347.3,210.1 L348.6,208.7 L349.9,207.4 L351.2,206.0 L352.4,204.6 L353.7,203.2 L355.0,201.7 L356.3,200.3 L357.5,198.8 L358.8,197.3 L360.1,195.8 L361.4,194.3 L362.6,192.7 L363.9,191.2 L365.2,189.6 L366.5,188.0 L367.7,186.4 L369.0,184.7 L370.3,183.1 L371.6,181.4 L372.8,179.8 L374.1,178.1 L375.4,176.4 L376.6,174.7 L377.9,172.9 L379.2,171.2 L380.5,169.4 L381.7,167.6 L383.0,165.8 L384.3,164.0 L385.6,162.2 L386.8,160.4 L388.1,158.5 L389.4,156.7 L390.7,154.8 L391.9,152.9 L393.2,151.0 L394.5,149.1 L395.8,147.2 L397.0,145.3 L398.3,143.3 L399.6,141.4 L400.9,139.4 L402.1,137.4 L403.4,135.4 L404.7,133.4 L405.9,131.4 L407.2,129.4 L408.5,127.4 L409.8,125.4 L411.0,123.3 L412.3,121.3 L413.6,119.2 L414.9,117.1 L416.1,115.0 L417.4,112.9 L418.7,110.8 L420.0,108.7 L421.2,106.6 L422.5,104.5 L423.8,102.4 L425.1,100.2 L426.3,98.1 L427.6,96.0 L428.9,93.8 L430.2,91.7 L431.4,89.5 L432.7,87.3 L434.0,85.1 L435.2,83.0 L436.5,80.8 L437.8,78.6 L439.1,76.4 L440.3,74.2 L441.6,72.0 L442.9,69.8 L444.2,67.6 L445.4,65.4 L446.7,63.2 L448.0,61.0 L449.3,58.7 L450.5,56.5 L451.8,54.3 L453.1,52.1 L454.4,49.9 L455.6,47.6 L456.9,45.4 L458.2,43.2 L459.5,40.9" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="126.2" cy="120.0" r="3.8" fill="var(--color-practice)"/>
+  <circle cx="173.8" cy="186.9" r="3.8" fill="var(--color-practice)"/>
+  <circle cx="221.4" cy="231.7" r="3.8" fill="var(--color-practice)"/>
+  <circle cx="269.0" cy="247.4" r="3.8" fill="var(--color-practice)"/>
+  <circle cx="316.6" cy="231.7" r="3.8" fill="var(--color-practice)"/>
+  <circle cx="364.2" cy="186.9" r="3.8" fill="var(--color-practice)"/>
+  <circle cx="411.8" cy="120.0" r="3.8" fill="var(--color-practice)"/>
+  <line x1="78.5" y1="82.0" x2="78.5" y2="40.9" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+  <circle cx="78.5" cy="82.0" r="4.2" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <rect x="74.9" y="40.5" width="7.2" height="7.2" fill="var(--color-base)" transform="rotate(45 78.5 44.1)"/>
+  <line x1="459.5" y1="82.0" x2="459.5" y2="40.9" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+  <circle cx="459.5" cy="82.0" r="4.2" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <rect x="455.9" y="40.5" width="7.2" height="7.2" fill="var(--color-base)" transform="rotate(45 459.5 44.1)"/>
+  <text x="145.2" y="199.8" fill="var(--color-theory)" font-size="12.5" text-anchor="end" font-weight="600">&#8722;sin <tspan font-style="italic">x</tspan></text>
+  <circle cx="200.7" cy="79.1" r="3.4" fill="var(--color-practice)"/>
+  <text x="221.7" y="83.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">iç noktalar</text>
+  <circle cx="200.7" cy="100.1" r="3.6" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <text x="221.7" y="104.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">uçlar, varsayılan</text>
+  <rect x="197.1" y="117.5" width="7.2" height="7.2" fill="var(--color-base)" transform="rotate(45 200.7 121.1)"/>
+  <text x="221.7" y="125.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">uçlar, edge_order=2</text>
+</svg>
+<figcaption><code>np.gradient</code> kodunun dokuz noktada bulduğu türevler ve kesin türev &#8722;sin <em>x</em>. İç noktalardaki merkezi farklar eğriye çok yakındır. Uçlardaki tek yönlü fark ise varsayılan hâlde 0,19 kadar sapar (içi boş halkalar); <code>edge_order=2</code> ile bu sapma 0,015'e iner (yeşil karolar).</figcaption>
+</figure>
+```
+
+:::: {#exm-int-duzensiz name="Düzensiz Aralıklı Ölçümlerden Hız"}
+Bir cismin konumu $t = 0;\ 0{,}5;\ 1{,}2;\ 2;\ 2{,}5;\ 3$ saniyelerinde ölçülmüş olsun ve konum $s(t) = 2t^2$ metre kuralına uysun. Bu altı ölçümden cismin hızını `np.gradient` ile hesaplayın ve kesin hız $v(t) = 4t$ ile karşılaştırın.
+
+::: {.cozum}
+**Çağrı.** Ölçüm anları eşit aralıklı olmadığı için zaman dizisini ikinci argüman olarak veririz. Karşılaştırma için son satırda `t` dizisini bilerek vermiyoruz:
+
+```python
+import numpy as np
+
+t = np.array([0.0, 0.5, 1.2, 2.0, 2.5, 3.0])      # saniye
+s = 2 * t**2                                      # metre
+print(np.gradient(s, t))
+print(np.round(np.gradient(s, t, edge_order=2), 6))
+print(4 * t)                                      # kesin hız
+print(np.gradient(s))                             # YANLIŞ: adım 1 sanılır
+```
+
+Çıktı:
+
+```text
+[ 1.   2.   4.8  8.  10.  11. ]
+[ 0.   2.   4.8  8.  10.  12. ]
+[ 0.   2.   4.8  8.  10.  12. ]
+[0.5  1.44 3.75 4.81 5.   5.5 ]
+```
+
+**Sonuç.** İç noktalarda sonuç tam olarak kesin hızdır, çünkü üç noktadan geçen ikinci dereceden polinom $s$'nin kendisidir. Uçlarda varsayılan tek yönlü fark $1$ ve $11$ verir (kesin değerler $0$ ve $12$); `edge_order=2` uçları da düzeltir. Son satır sık yapılan bir hatadır: `x` verilmezse `np.gradient` noktalar arasındaki uzaklığı $1$ sayar ve sonuç anlamsız olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+`np.gradient` çok boyutlu dizilerde her eksen boyunca ayrı ayrı çalışır ve kısmi türevleri bir demet olarak döndürür. $f(x, y) = \sin x \cos y$ fonksiyonunun kısmi türevlerini $[0, 2] \times [0, 1]$ üzerindeki bir ızgarada hesaplayalım:
+
+```python
+import numpy as np
+
+x = np.linspace(0, 2, 201)                    # adım 0.01
+y = np.linspace(0, 1, 101)                    # adım 0.01
+X, Y = np.meshgrid(x, y, indexing="ij")       # X[i, j] = x[i], Y[i, j] = y[j]
+F = np.sin(X) * np.cos(Y)
+Fx, Fy = np.gradient(F, x, y, edge_order=2)   # eksen 0 -> x, eksen 1 -> y
+i, j = 100, 50
+print(X[i, j], Y[i, j])
+print(Fx[i, j], np.cos(1) * np.cos(0.5))
+print(Fy[i, j], -np.sin(1) * np.sin(0.5))
+print(np.abs(Fx - np.cos(X) * np.cos(Y)).max())
+print(np.abs(Fy + np.sin(X) * np.sin(Y)).max())
+```
+
+Çıktı:
+
+```text
+1.0 0.5
+0.4741519791538522 0.4741598817790379
+-0.40341595643361927 -0.4034226801113349
+3.333216667877892e-05
+2.791296891380135e-05
+```
+
+`indexing="ij"` seçeneği, dizinin $0$ numaralı ekseninin $x$'e, $1$ numaralı ekseninin $y$'ye karşılık gelmesini sağlar; böylece `np.gradient(F, x, y)` önce $\partial f/\partial x$'i, sonra $\partial f/\partial y$'yi verir. $(1;\ 0{,}5)$ noktasında iki kısmi türevin de ilk dört ondalık basamağı doğrudur. Bütün ızgaradaki en büyük hata $3 \cdot 10^{-5}$ civarındadır; adım $0{,}01$ olduğundan bu, ikinci mertebeden bir yöntemden beklenen büyüklüktür.
+
+## Yamuk ve Simpson Kuralları
+
+İntegrale geçelim. Belirli integrali hesaplamak için $[a, b]$ aralığını $n$ eşit parçaya böler, her parçada $f$'yi integrali kolay alınan bir polinomla değiştiririz.
+
+::: {#def-int-bilesik-yamuk name="Bileşik Yamuk Kuralı"}
+$n \ge 1$, $h = (b - a)/n$ ve $k = 0, 1, \dots, n$ için $x_k = a + kh$ olsun.
+
+$$T_n = h\left[\frac{f(x_0)}{2} + f(x_1) + \dots + f(x_{n-1}) + \frac{f(x_n)}{2}\right]$$
+
+sayısına $\int_a^b f(x)\,dx$ için **bileşik yamuk kuralı** (composite trapezoidal rule) yaklaşımı denir.
+:::
+
+Yani her $[x_k, x_{k+1}]$ parçasında $f$'yi uçlardaki değerleri birleştiren doğruyla değiştirip $n$ yamuğun alanını toplarız (tek parça için bkz. [Nümerik Analiz](../numerik-analiz/numerik-integrasyon.html#prp-nin-yamuk)). İç noktalar iki yamuğa birden katıldığı için ağırlıkları $h$, uç noktaların ağırlığı $h/2$'dir.
+
+::: {#def-int-bilesik-simpson name="Bileşik Simpson Kuralı"}
+$n$ çift, $h = (b - a)/n$ ve $k = 0, 1, \dots, n$ için $x_k = a + kh$ olsun.
+
+$$
+\begin{aligned}
+S_n = \frac{h}{3}\Big[&f(x_0) + 4f(x_1) + 2f(x_2) + 4f(x_3) + \dots\\[1mm]
+&\quad + 2f(x_{n-2}) + 4f(x_{n-1}) + f(x_n)\Big]
+\end{aligned}
+$$
+
+sayısına $\int_a^b f(x)\,dx$ için **bileşik Simpson kuralı** (composite Simpson's rule) yaklaşımı denir.
+:::
+
+Yani $[x_0, x_2], [x_2, x_4], \dots$ ikili parçalarının her birinde $f$'yi üç noktadan geçen bir parabolle değiştirip parabollerin altındaki alanları toplarız (tek parça için bkz. [Nümerik Analiz](../numerik-analiz/numerik-integrasyon.html#prp-nin-simpson)). Ağırlıklar tek indisli noktalarda $4h/3$, iç çift indisli noktalarda $2h/3$, uçlarda $h/3$'tür.
+
+İki kuralı NumPy dilimleriyle birkaç satırda yazabiliriz: `y[1:-1]` iç noktaları, `y[1:-1:2]` tek indisli noktaları, `y[2:-1:2]` ise iç çift indisli noktaları seçer. Örnek olarak ilkeli elementer olmayan
+
+$$\int_0^2 e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}\,\mathrm{erf}(2)$$
+
+integralini alalım; kesin değeri `math.erf` ile hesaplarız.
+
+```python
+import math
+
+import numpy as np
+
+
+def trapezoid_rule(f, a, b, n):
+    """Bileşik yamuk kuralı, n eşit alt aralık."""
+    x = np.linspace(a, b, n + 1)
+    y = f(x)
+    h = (b - a) / n
+    return h * (y[0] / 2 + y[1:-1].sum() + y[-1] / 2)
+
+
+def simpson_rule(f, a, b, n):
+    """Bileşik Simpson kuralı; n çift olmalı."""
+    if n % 2:
+        raise ValueError("Simpson kuralı için n çift olmalı")
+    x = np.linspace(a, b, n + 1)
+    y = f(x)
+    h = (b - a) / n
+    return h / 3 * (y[0] + 4 * y[1:-1:2].sum()
+                    + 2 * y[2:-1:2].sum() + y[-1])
+
+
+def f(x):
+    return np.exp(-x**2)
+
+
+exact = math.sqrt(math.pi) / 2 * math.erf(2)
+print(f"kesin değer: {exact:.10f}")
+print(f"T_4 = {trapezoid_rule(f, 0, 2, 4):.10f}")
+print(f"S_4 = {simpson_rule(f, 0, 2, 4):.10f}")
+print("   n   yamuk hatası   oran   Simpson hatası   oran")
+old_t = old_s = None
+for n in [4, 8, 16, 32, 64, 128, 256]:
+    et = abs(trapezoid_rule(f, 0, 2, n) - exact)
+    es = abs(simpson_rule(f, 0, 2, n) - exact)
+    rt = f"{old_t / et:6.2f}" if old_t else "     -"
+    rs = f"{old_s / es:6.2f}" if old_s else "     -"
+    print(f"{n:4d}   {et:12.3e}  {rt}   {es:14.3e}  {rs}")
+    old_t, old_s = et, es
+```
+
+Çıktı:
+
+```text
+kesin değer: 0.8820813908
+T_4 = 0.8806186341
+S_4 = 0.8818124253
+   n   yamuk hatası   oran   Simpson hatası   oran
+   4      1.463e-03       -        2.690e-04       -
+   8      3.776e-04    3.87        1.588e-05   16.94
+  16      9.515e-05    3.97        9.942e-07   15.97
+  32      2.383e-05    3.99        6.212e-08   16.01
+  64      5.961e-06    4.00        3.882e-09   16.00
+ 128      1.490e-06    4.00        2.426e-10   16.00
+ 256      3.726e-07    4.00        1.516e-11   16.00
+```
+
+$n = 4$ için iki yaklaşımı aşağıdaki şekilde görüyoruz. Simpson kuralı aynı beş fonksiyon değeriyle yamuk kuralından beş kat daha küçük hata veriyor.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="14.0 2.5 670.0 263.5" role="img" aria-label="Two panels with the curve exp(-x^2) on [0, 2] and five nodes. Left: four shaded trapezoids, T4 = 0.8806. Right: two shaded parabolic strips through three nodes each, S4 = 0.8818">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="50.0" y1="234.0" x2="328.0" y2="234.0"/>
+  <line x1="50.0" y1="26.0" x2="50.0" y2="234.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="59.5" y="250.0" text-anchor="middle">0</text>
+  <text x="118.7" y="250.0" text-anchor="middle">0,5</text>
+  <text x="177.9" y="250.0" text-anchor="middle">1</text>
+  <text x="237.1" y="250.0" text-anchor="middle">1,5</text>
+  <text x="296.3" y="250.0" text-anchor="middle">2</text>
+  <text x="43.0" y="232.8" text-anchor="end">0</text>
+  <text x="43.0" y="145.8" text-anchor="end">0,5</text>
+  <text x="43.0" y="58.9" text-anchor="end">1</text>
+  <text x="334.0" y="238.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  </g>
+  <polygon points="59.5,228.8 59.5,54.9 118.7,93.3 118.7,228.8" fill="var(--color-base)" fill-opacity="0.18" stroke="var(--color-base)" stroke-width="1.3"/>
+  <polygon points="118.7,228.8 118.7,93.3 177.9,164.8 177.9,228.8" fill="var(--color-base)" fill-opacity="0.18" stroke="var(--color-base)" stroke-width="1.3"/>
+  <polygon points="177.9,228.8 177.9,164.8 237.1,210.5 237.1,228.8" fill="var(--color-base)" fill-opacity="0.18" stroke="var(--color-base)" stroke-width="1.3"/>
+  <polygon points="237.1,228.8 237.1,210.5 296.3,225.6 296.3,228.8" fill="var(--color-base)" fill-opacity="0.18" stroke="var(--color-base)" stroke-width="1.3"/>
+  <path d="M59.5,54.9 L60.3,54.9 L61.1,54.9 L62.0,54.9 L62.8,55.0 L63.6,55.1 L64.5,55.2 L65.3,55.3 L66.1,55.4 L67.0,55.6 L67.8,55.7 L68.6,55.9 L69.5,56.1 L70.3,56.3 L71.1,56.5 L71.9,56.8 L72.8,57.1 L73.6,57.3 L74.4,57.6 L75.3,57.9 L76.1,58.3 L76.9,58.6 L77.8,59.0 L78.6,59.3 L79.4,59.7 L80.3,60.1 L81.1,60.6 L81.9,61.0 L82.8,61.5 L83.6,61.9 L84.4,62.4 L85.3,62.9 L86.1,63.4 L86.9,64.0 L87.8,64.5 L88.6,65.1 L89.4,65.6 L90.2,66.2 L91.1,66.8 L91.9,67.4 L92.7,68.1 L93.6,68.7 L94.4,69.4 L95.2,70.0 L96.1,70.7 L96.9,71.4 L97.7,72.1 L98.6,72.8 L99.4,73.6 L100.2,74.3 L101.1,75.0 L101.9,75.8 L102.7,76.6 L103.6,77.4 L104.4,78.2 L105.2,79.0 L106.0,79.8 L106.9,80.6 L107.7,81.5 L108.5,82.3 L109.4,83.2 L110.2,84.0 L111.0,84.9 L111.9,85.8 L112.7,86.7 L113.5,87.6 L114.4,88.5 L115.2,89.4 L116.0,90.3 L116.9,91.3 L117.7,92.2 L118.5,93.2 L119.4,94.1 L120.2,95.1 L121.0,96.0 L121.9,97.0 L122.7,98.0 L123.5,99.0 L124.3,100.0 L125.2,101.0 L126.0,102.0 L126.8,103.0 L127.7,104.0 L128.5,105.0 L129.3,106.0 L130.2,107.0 L131.0,108.0 L131.8,109.1 L132.7,110.1 L133.5,111.1 L134.3,112.2 L135.2,113.2 L136.0,114.2 L136.8,115.3 L137.7,116.3 L138.5,117.4 L139.3,118.4 L140.2,119.4 L141.0,120.5 L141.8,121.5 L142.6,122.6 L143.5,123.6 L144.3,124.7 L145.1,125.7 L146.0,126.8 L146.8,127.8 L147.6,128.9 L148.5,129.9 L149.3,131.0 L150.1,132.0 L151.0,133.0 L151.8,134.1 L152.6,135.1 L153.5,136.1 L154.3,137.2 L155.1,138.2 L156.0,139.2 L156.8,140.3 L157.6,141.3 L158.4,142.3 L159.3,143.3 L160.1,144.3 L160.9,145.3 L161.8,146.3 L162.6,147.3 L163.4,148.3 L164.3,149.3 L165.1,150.3 L165.9,151.3 L166.8,152.3 L167.6,153.2 L168.4,154.2 L169.3,155.2 L170.1,156.1 L170.9,157.1 L171.8,158.0 L172.6,158.9 L173.4,159.9 L174.3,160.8 L175.1,161.7 L175.9,162.6 L176.7,163.6 L177.6,164.5 L178.4,165.4 L179.2,166.3 L180.1,167.1 L180.9,168.0 L181.7,168.9 L182.6,169.8 L183.4,170.6 L184.2,171.5 L185.1,172.3 L185.9,173.1 L186.7,174.0 L187.6,174.8 L188.4,175.6 L189.2,176.4 L190.1,177.2 L190.9,178.0 L191.7,178.8 L192.5,179.6 L193.4,180.4 L194.2,181.1 L195.0,181.9 L195.9,182.6 L196.7,183.4 L197.5,184.1 L198.4,184.8 L199.2,185.6 L200.0,186.3 L200.9,187.0 L201.7,187.7 L202.5,188.4 L203.4,189.0 L204.2,189.7 L205.0,190.4 L205.9,191.0 L206.7,191.7 L207.5,192.3 L208.4,193.0 L209.2,193.6 L210.0,194.2 L210.8,194.8 L211.7,195.4 L212.5,196.0 L213.3,196.6 L214.2,197.2 L215.0,197.8 L215.8,198.4 L216.7,198.9 L217.5,199.5 L218.3,200.0 L219.2,200.6 L220.0,201.1 L220.8,201.6 L221.7,202.1 L222.5,202.6 L223.3,203.1 L224.2,203.6 L225.0,204.1 L225.8,204.6 L226.6,205.1 L227.5,205.5 L228.3,206.0 L229.1,206.5 L230.0,206.9 L230.8,207.3 L231.6,207.8 L232.5,208.2 L233.3,208.6 L234.1,209.0 L235.0,209.4 L235.8,209.8 L236.6,210.2 L237.5,210.6 L238.3,211.0 L239.1,211.4 L240.0,211.7 L240.8,212.1 L241.6,212.5 L242.5,212.8 L243.3,213.2 L244.1,213.5 L244.9,213.8 L245.8,214.1 L246.6,214.5 L247.4,214.8 L248.3,215.1 L249.1,215.4 L249.9,215.7 L250.8,216.0 L251.6,216.3 L252.4,216.6 L253.3,216.8 L254.1,217.1 L254.9,217.4 L255.8,217.6 L256.6,217.9 L257.4,218.1 L258.3,218.4 L259.1,218.6 L259.9,218.9 L260.7,219.1 L261.6,219.3 L262.4,219.6 L263.2,219.8 L264.1,220.0 L264.9,220.2 L265.7,220.4 L266.6,220.6 L267.4,220.8 L268.2,221.0 L269.1,221.2 L269.9,221.4 L270.7,221.6 L271.6,221.7 L272.4,221.9 L273.2,222.1 L274.1,222.3 L274.9,222.4 L275.7,222.6 L276.6,222.7 L277.4,222.9 L278.2,223.0 L279.0,223.2 L279.9,223.3 L280.7,223.5 L281.5,223.6 L282.4,223.8 L283.2,223.9 L284.0,224.0 L284.9,224.1 L285.7,224.3 L286.5,224.4 L287.4,224.5 L288.2,224.6 L289.0,224.7 L289.9,224.8 L290.7,224.9 L291.5,225.0 L292.4,225.1 L293.2,225.2 L294.0,225.3 L294.9,225.4 L295.7,225.5 L296.5,225.6 L297.3,225.7 L298.2,225.8 L299.0,225.9 L299.8,226.0 L300.7,226.0 L301.5,226.1 L302.3,226.2 L303.2,226.3 L304.0,226.3 L304.8,226.4 L305.7,226.5 L306.5,226.5 L307.3,226.6 L308.2,226.7" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="59.5" cy="54.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="118.7" cy="93.3" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="177.9" cy="164.8" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="237.1" cy="210.5" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="296.3" cy="225.6" r="3.6" fill="var(--color-practice)"/>
+  <text x="140.9" y="104.4" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">e</tspan><tspan font-size="8.5" dy="-5">&#8722;<tspan font-style="italic">x</tspan>²</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="185.0" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">Yamuk kuralı: <tspan font-style="italic">T</tspan>₄ = 0,8806</text>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="380.0" y1="234.0" x2="658.0" y2="234.0"/>
+  <line x1="380.0" y1="26.0" x2="380.0" y2="234.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="389.5" y="250.0" text-anchor="middle">0</text>
+  <text x="448.7" y="250.0" text-anchor="middle">0,5</text>
+  <text x="507.9" y="250.0" text-anchor="middle">1</text>
+  <text x="567.1" y="250.0" text-anchor="middle">1,5</text>
+  <text x="626.3" y="250.0" text-anchor="middle">2</text>
+  <text x="373.0" y="232.8" text-anchor="end">0</text>
+  <text x="373.0" y="145.8" text-anchor="end">0,5</text>
+  <text x="373.0" y="58.9" text-anchor="end">1</text>
+  <text x="664.0" y="238.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  </g>
+  <polygon points="389.5,228.8 389.5,54.9 391.0,55.4 392.5,56.0 394.0,56.6 395.5,57.3 397.0,57.9 398.5,58.6 400.0,59.3 401.5,60.0 403.0,60.7 404.5,61.5 406.0,62.3 407.5,63.1 409.0,63.9 410.5,64.7 412.0,65.6 413.5,66.5 415.0,67.4 416.5,68.3 418.0,69.3 419.5,70.2 421.0,71.2 422.5,72.2 424.0,73.3 425.4,74.3 426.9,75.4 428.4,76.5 429.9,77.6 431.4,78.7 432.9,79.9 434.4,81.1 435.9,82.3 437.4,83.5 438.9,84.7 440.4,86.0 441.9,87.3 443.4,88.6 444.9,89.9 446.4,91.3 447.9,92.6 449.4,94.0 450.9,95.5 452.4,96.9 453.9,98.3 455.4,99.8 456.9,101.3 458.4,102.8 459.9,104.4 461.4,105.9 462.9,107.5 464.4,109.1 465.9,110.7 467.4,112.4 468.9,114.1 470.4,115.7 471.9,117.4 473.4,119.2 474.9,120.9 476.4,122.7 477.9,124.5 479.4,126.3 480.9,128.1 482.4,130.0 483.9,131.9 485.4,133.8 486.9,135.7 488.4,137.6 489.9,139.6 491.4,141.6 492.9,143.6 494.4,145.6 495.9,147.7 497.4,149.7 498.9,151.8 500.4,153.9 501.9,156.1 503.4,158.2 504.9,160.4 506.4,162.6 507.9,164.8 507.9,228.8" fill="var(--color-base)" fill-opacity="0.18" stroke="var(--color-base)" stroke-width="1.3"/>
+  <polygon points="507.9,228.8 507.9,164.8 509.4,166.3 510.9,167.8 512.4,169.3 513.9,170.8 515.4,172.3 516.9,173.7 518.4,175.1 519.9,176.5 521.4,177.9 522.9,179.2 524.4,180.6 525.9,181.9 527.4,183.2 528.9,184.5 530.4,185.7 531.9,187.0 533.4,188.2 534.9,189.4 536.4,190.6 537.9,191.7 539.4,192.9 540.9,194.0 542.4,195.1 543.9,196.2 545.4,197.2 546.9,198.3 548.4,199.3 549.9,200.3 551.4,201.3 552.9,202.3 554.4,203.2 555.9,204.1 557.4,205.0 558.9,205.9 560.4,206.8 561.9,207.6 563.4,208.5 564.9,209.3 566.4,210.1 567.9,210.8 569.4,211.6 570.9,212.3 572.4,213.0 573.9,213.7 575.3,214.4 576.8,215.0 578.3,215.7 579.8,216.3 581.3,216.9 582.8,217.5 584.3,218.0 585.8,218.5 587.3,219.1 588.8,219.6 590.3,220.0 591.8,220.5 593.3,220.9 594.8,221.3 596.3,221.7 597.8,222.1 599.3,222.5 600.8,222.8 602.3,223.1 603.8,223.4 605.3,223.7 606.8,224.0 608.3,224.2 609.8,224.4 611.3,224.6 612.8,224.8 614.3,225.0 615.8,225.1 617.3,225.3 618.8,225.4 620.3,225.5 621.8,225.5 623.3,225.6 624.8,225.6 626.3,225.6 626.3,228.8" fill="var(--color-base)" fill-opacity="0.18" stroke="var(--color-base)" stroke-width="1.3"/>
+  <line x1="448.7" y1="228.8" x2="448.7" y2="93.3" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+  <line x1="567.1" y1="228.8" x2="567.1" y2="210.5" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+  <path d="M389.5,54.9 L390.3,54.9 L391.1,54.9 L392.0,54.9 L392.8,55.0 L393.6,55.1 L394.5,55.2 L395.3,55.3 L396.1,55.4 L397.0,55.6 L397.8,55.7 L398.6,55.9 L399.5,56.1 L400.3,56.3 L401.1,56.5 L401.9,56.8 L402.8,57.1 L403.6,57.3 L404.4,57.6 L405.3,57.9 L406.1,58.3 L406.9,58.6 L407.8,59.0 L408.6,59.3 L409.4,59.7 L410.3,60.1 L411.1,60.6 L411.9,61.0 L412.8,61.5 L413.6,61.9 L414.4,62.4 L415.3,62.9 L416.1,63.4 L416.9,64.0 L417.8,64.5 L418.6,65.1 L419.4,65.6 L420.2,66.2 L421.1,66.8 L421.9,67.4 L422.7,68.1 L423.6,68.7 L424.4,69.4 L425.2,70.0 L426.1,70.7 L426.9,71.4 L427.7,72.1 L428.6,72.8 L429.4,73.6 L430.2,74.3 L431.1,75.0 L431.9,75.8 L432.7,76.6 L433.6,77.4 L434.4,78.2 L435.2,79.0 L436.0,79.8 L436.9,80.6 L437.7,81.5 L438.5,82.3 L439.4,83.2 L440.2,84.0 L441.0,84.9 L441.9,85.8 L442.7,86.7 L443.5,87.6 L444.4,88.5 L445.2,89.4 L446.0,90.3 L446.9,91.3 L447.7,92.2 L448.5,93.2 L449.4,94.1 L450.2,95.1 L451.0,96.0 L451.9,97.0 L452.7,98.0 L453.5,99.0 L454.3,100.0 L455.2,101.0 L456.0,102.0 L456.8,103.0 L457.7,104.0 L458.5,105.0 L459.3,106.0 L460.2,107.0 L461.0,108.0 L461.8,109.1 L462.7,110.1 L463.5,111.1 L464.3,112.2 L465.2,113.2 L466.0,114.2 L466.8,115.3 L467.7,116.3 L468.5,117.4 L469.3,118.4 L470.2,119.4 L471.0,120.5 L471.8,121.5 L472.6,122.6 L473.5,123.6 L474.3,124.7 L475.1,125.7 L476.0,126.8 L476.8,127.8 L477.6,128.9 L478.5,129.9 L479.3,131.0 L480.1,132.0 L481.0,133.0 L481.8,134.1 L482.6,135.1 L483.5,136.1 L484.3,137.2 L485.1,138.2 L486.0,139.2 L486.8,140.3 L487.6,141.3 L488.4,142.3 L489.3,143.3 L490.1,144.3 L490.9,145.3 L491.8,146.3 L492.6,147.3 L493.4,148.3 L494.3,149.3 L495.1,150.3 L495.9,151.3 L496.8,152.3 L497.6,153.2 L498.4,154.2 L499.3,155.2 L500.1,156.1 L500.9,157.1 L501.8,158.0 L502.6,158.9 L503.4,159.9 L504.3,160.8 L505.1,161.7 L505.9,162.6 L506.7,163.6 L507.6,164.5 L508.4,165.4 L509.2,166.3 L510.1,167.1 L510.9,168.0 L511.7,168.9 L512.6,169.8 L513.4,170.6 L514.2,171.5 L515.1,172.3 L515.9,173.1 L516.7,174.0 L517.6,174.8 L518.4,175.6 L519.2,176.4 L520.1,177.2 L520.9,178.0 L521.7,178.8 L522.5,179.6 L523.4,180.4 L524.2,181.1 L525.0,181.9 L525.9,182.6 L526.7,183.4 L527.5,184.1 L528.4,184.8 L529.2,185.6 L530.0,186.3 L530.9,187.0 L531.7,187.7 L532.5,188.4 L533.4,189.0 L534.2,189.7 L535.0,190.4 L535.9,191.0 L536.7,191.7 L537.5,192.3 L538.4,193.0 L539.2,193.6 L540.0,194.2 L540.8,194.8 L541.7,195.4 L542.5,196.0 L543.3,196.6 L544.2,197.2 L545.0,197.8 L545.8,198.4 L546.7,198.9 L547.5,199.5 L548.3,200.0 L549.2,200.6 L550.0,201.1 L550.8,201.6 L551.7,202.1 L552.5,202.6 L553.3,203.1 L554.2,203.6 L555.0,204.1 L555.8,204.6 L556.6,205.1 L557.5,205.5 L558.3,206.0 L559.1,206.5 L560.0,206.9 L560.8,207.3 L561.6,207.8 L562.5,208.2 L563.3,208.6 L564.1,209.0 L565.0,209.4 L565.8,209.8 L566.6,210.2 L567.5,210.6 L568.3,211.0 L569.1,211.4 L570.0,211.7 L570.8,212.1 L571.6,212.5 L572.5,212.8 L573.3,213.2 L574.1,213.5 L574.9,213.8 L575.8,214.1 L576.6,214.5 L577.4,214.8 L578.3,215.1 L579.1,215.4 L579.9,215.7 L580.8,216.0 L581.6,216.3 L582.4,216.6 L583.3,216.8 L584.1,217.1 L584.9,217.4 L585.8,217.6 L586.6,217.9 L587.4,218.1 L588.3,218.4 L589.1,218.6 L589.9,218.9 L590.7,219.1 L591.6,219.3 L592.4,219.6 L593.2,219.8 L594.1,220.0 L594.9,220.2 L595.7,220.4 L596.6,220.6 L597.4,220.8 L598.2,221.0 L599.1,221.2 L599.9,221.4 L600.7,221.6 L601.6,221.7 L602.4,221.9 L603.2,222.1 L604.1,222.3 L604.9,222.4 L605.7,222.6 L606.6,222.7 L607.4,222.9 L608.2,223.0 L609.0,223.2 L609.9,223.3 L610.7,223.5 L611.5,223.6 L612.4,223.8 L613.2,223.9 L614.0,224.0 L614.9,224.1 L615.7,224.3 L616.5,224.4 L617.4,224.5 L618.2,224.6 L619.0,224.7 L619.9,224.8 L620.7,224.9 L621.5,225.0 L622.4,225.1 L623.2,225.2 L624.0,225.3 L624.9,225.4 L625.7,225.5 L626.5,225.6 L627.3,225.7 L628.2,225.8 L629.0,225.9 L629.8,226.0 L630.7,226.0 L631.5,226.1 L632.3,226.2 L633.2,226.3 L634.0,226.3 L634.8,226.4 L635.7,226.5 L636.5,226.5 L637.3,226.6 L638.2,226.7" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="389.5" cy="54.9" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="448.7" cy="93.3" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="507.9" cy="164.8" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="567.1" cy="210.5" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="626.3" cy="225.6" r="3.6" fill="var(--color-practice)"/>
+  <text x="470.9" y="104.4" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">e</tspan><tspan font-size="8.5" dy="-5">&#8722;<tspan font-style="italic">x</tspan>²</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="515.0" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">Simpson kuralı: <tspan font-style="italic">S</tspan>₄ = 0,8818</text>
+</svg>
+<figcaption><em>e</em><sup>&#8722;<em>x</em>²</sup> fonksiyonunun [0, 2] aralığındaki integrali, <em>n</em> = 4 alt aralıkla; kuralları kendimiz yazdığımız kodun ilk iki sonucu. Solda her alt aralıktaki yamuk, sağda ikişer alt aralığı kaplayan iki parabol. Kesin değer 0,8821'dir: parabollerin altındaki alan yamukların alanından daha yakındır.</figcaption>
+</figure>
+```
+
+Tablonun "oran" sütunları, $n$ ikiye katlanınca hatanın yamuk kuralında $4$'e, Simpson kuralında $16$'ya bölündüğünü gösteriyor. Bunun nedeni hata terimleridir.
+
+:::: {#prp-int-bilesik-hata name="Bileşik Kuralların Hatası"}
+$h = (b - a)/n$ olsun.
+
+1. $f \in C^2[a, b]$ ise bir $\mu \in (a, b)$ için
+$$\int_a^b f(x)\,dx - T_n = -\frac{(b - a)\,h^2}{12}\, f''(\mu)$$
+olur.
+2. $n$ çift ve $f \in C^4[a, b]$ ise bir $\mu \in (a, b)$ için
+$$\int_a^b f(x)\,dx - S_n = -\frac{(b - a)\,h^4}{180}\, f^{(4)}(\mu)$$
+olur.
+
+::: {.ispat}
+**Yamuk.** Tek bir $[x_k, x_{k+1}]$ parçasında yamuk kuralının hatası, bir $\xi_k \in (x_k, x_{k+1})$ için $-\frac{h^3}{12} f''(\xi_k)$'dir (bkz. [Nümerik Analiz](../numerik-analiz/numerik-integrasyon.html#prp-nin-yamuk)). $n$ parçayı toplarız:
+
+$$\int_a^b f(x)\,dx - T_n = -\frac{h^3}{12}\sum_{k=0}^{n-1} f''(\xi_k).$$
+
+$\frac{1}{n}\sum_{k} f''(\xi_k)$ ortalaması, $f''(\xi_k)$ sayılarının en küçüğü ile en büyüğü arasındadır. $f''$ sürekli olduğundan, ara değer teoremini bu iki değerin alındığı noktalar arasında uygularsak ortalamaya eşit olan bir $f''(\mu)$ değeri buluruz; $\mu$ bu iki nokta arasında, dolayısıyla $(a, b)$ içindedir. Böylece toplam $n f''(\mu)$ olur ve $n h^3 = (b - a) h^2$ eşitliği birinci formülü verir.
+
+**Simpson.** Her $[x_{2j}, x_{2j+2}]$ parçasında Simpson kuralının hatası, bir $\xi_j$ için $-\frac{h^5}{90} f^{(4)}(\xi_j)$'dir (bkz. [Nümerik Analiz](../numerik-analiz/numerik-integrasyon.html#prp-nin-simpson)). $n/2$ parçayı toplayıp aynı ortalama argümanını kullanırız: toplam hata $-\frac{h^5}{90} \cdot \frac{n}{2}\, f^{(4)}(\mu)$ olur ve $\frac{n}{2} h^5 = \frac{(b - a) h^4}{2}$ eşitliği ikinci formülü verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Yani yamuk kuralı ikinci, Simpson kuralı dördüncü mertebedendir. $n$ ikiye katlanınca $h$ yarıya iner; yamuk kuralının hatası yaklaşık $2^2 = 4$'e, Simpson kuralınınki $2^4 = 16$'ya bölünür. Simpson kuralı derecesi en çok $3$ olan polinomları tam integre eder, çünkü onların dördüncü türevi sıfırdır. Aynı tablo logaritmik eksenlerde iki doğru verir ve doğruların eğimleri mertebeleri gösterir:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 -12.5 452.5 318.5" role="img" aria-label="Log-log plot of the error of the composite trapezoid and Simpson rules for the integral of exp(-x^2) on [0, 2] against n = 4 ... 256: two straight lines with slopes -2 and -4">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="83.4" y1="24.0" x2="83.4" y2="274.0"/><line x1="140.7" y1="24.0" x2="140.7" y2="274.0"/><line x1="197.9" y1="24.0" x2="197.9" y2="274.0"/><line x1="255.2" y1="24.0" x2="255.2" y2="274.0"/><line x1="312.4" y1="24.0" x2="312.4" y2="274.0"/><line x1="369.7" y1="24.0" x2="369.7" y2="274.0"/><line x1="426.9" y1="24.0" x2="426.9" y2="274.0"/><line x1="70.0" y1="240.1" x2="440.0" y2="240.1"/><line x1="70.0" y1="188.1" x2="440.0" y2="188.1"/><line x1="70.0" y1="136.0" x2="440.0" y2="136.0"/><line x1="70.0" y1="83.9" x2="440.0" y2="83.9"/><line x1="70.0" y1="31.8" x2="440.0" y2="31.8"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="274.0" x2="448.0" y2="274.0"/>
+  <line x1="70.0" y1="16.0" x2="70.0" y2="274.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="83.4" y="290.0" text-anchor="middle">4</text>
+  <text x="140.7" y="290.0" text-anchor="middle">8</text>
+  <text x="197.9" y="290.0" text-anchor="middle">16</text>
+  <text x="255.2" y="290.0" text-anchor="middle">32</text>
+  <text x="312.4" y="290.0" text-anchor="middle">64</text>
+  <text x="369.7" y="290.0" text-anchor="middle">128</text>
+  <text x="426.9" y="290.0" text-anchor="middle">256</text>
+  <text x="63.0" y="35.8" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="87.9" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="140.0" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="192.1" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="244.1" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;10</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="454.0" y="278.0" font-style="italic"><tspan font-style="italic">n</tspan></text>
+  <text x="66.0" y="10.0" text-anchor="middle" font-style="italic">hata</text>
+  </g>
+  <path d="M83.4,53.6 L140.7,68.9 L197.9,84.5 L255.2,100.1 L312.4,115.8 L369.7,131.5 L426.9,147.1" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="83.4" cy="53.6" r="3.6" fill="var(--color-base)"/>
+  <circle cx="140.7" cy="68.9" r="3.6" fill="var(--color-base)"/>
+  <circle cx="197.9" cy="84.5" r="3.6" fill="var(--color-base)"/>
+  <circle cx="255.2" cy="100.1" r="3.6" fill="var(--color-base)"/>
+  <circle cx="312.4" cy="115.8" r="3.6" fill="var(--color-base)"/>
+  <circle cx="369.7" cy="131.5" r="3.6" fill="var(--color-base)"/>
+  <circle cx="426.9" cy="147.1" r="3.6" fill="var(--color-base)"/>
+  <path d="M83.4,72.7 L140.7,104.7 L197.9,136.0 L255.2,167.4 L312.4,198.8 L369.7,230.1 L426.9,261.5" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="83.4" cy="72.7" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="140.7" cy="104.7" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="197.9" cy="136.0" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="255.2" cy="167.4" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="312.4" cy="198.8" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="369.7" cy="230.1" r="3.6" fill="var(--color-practice)"/>
+  <circle cx="426.9" cy="261.5" r="3.6" fill="var(--color-practice)"/>
+  <text x="289.3" y="99.9" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600">yamuk: eğim &#8722;2</text>
+  <text x="96.7" y="203.7" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">Simpson: eğim &#8722;4</text>
+</svg>
+<figcaption>Kuralları kendimiz yazdığımız kodun tablosu, iki eksen de logaritmik. <em>n</em> her ikiye katlandığında yamuk kuralının hatası 4'e, Simpson kuralınınki 16'ya bölünür: doğruların eğimleri &#8722;2 ve &#8722;4'tür, yani hatalar <em>h</em>² ve <em>h</em>⁴ ile orantılıdır.</figcaption>
+</figure>
+```
+
+## Örneklenmiş Veriyle İntegral
+
+Kendi yazdığımız fonksiyonlar $f$'yi bir Python fonksiyonu olarak alıyordu. Bir ölçüm tablosunda ise elimizde yalnız sayılar vardır; NumPy ve SciPy'nin hazır fonksiyonları doğrudan bu sayılarla çalışır.
+
+::: {#def-int-trapezoid-simpson name="np.trapezoid ve scipy.integrate.simpson"}
+`y` dizisi, `x` dizisindeki noktalarda fonksiyonun değerlerini tutsun.
+
+- `np.trapezoid(y, x)` her $[x_k, x_{k+1}]$ parçasında bir yamuğun alanını hesaplayıp toplar: $\sum_k (x_{k+1} - x_k)\,\frac{y_k + y_{k+1}}{2}$. Noktaların eşit aralıklı olması gerekmez. Eşit aralıkta `x` yerine `dx=h` de verilebilir.
+- `scipy.integrate.simpson(y, x=x)` bileşik Simpson kuralını uygular. Alt aralık sayısı tek olduğunda da çalışır; son aralığı ayrı bir formülle hesaba katar.
+:::
+
+Yani bu iki fonksiyon, yukarıda kendimiz yazdığımız kuralların veri dizisi alan sürümleridir. NumPy'nin eski sürümlerindeki `np.trapz` adı kaldırılmıştır; yeni kodda `np.trapezoid` kullanılır.
+
+```python
+import numpy as np
+from scipy.integrate import simpson
+
+x = np.linspace(0, 2, 5)                # n = 4 alt aralık, h = 0.5
+y = np.exp(-x**2)
+print(np.trapezoid(y, x))               # x noktaları verilerek
+print(np.trapezoid(y, dx=0.5))          # eşit aralıkta yalnız adım
+print(simpson(y, x=x))
+
+# Düzensiz aralıklar: yamuk kuralı her parçanın kendi genişliğini kullanır
+xu = np.array([0.0, 0.2, 0.5, 1.0, 1.4, 2.0])
+print(np.trapezoid(np.exp(-xu**2), xu))
+```
+
+Çıktı:
+
+```text
+0.8806186341245394
+0.8806186341245394
+0.8818124252941161
+0.8931873236709345
+```
+
+İlk üç sayı, kendi kodumuzun $n = 4$ için bulduğu $T_4$ ve $S_4$ değerleriyle aynıdır. Son satırda noktalar düzensiz aralıklıdır; `np.trapezoid` her parçanın kendi genişliğini kullanır.
+
+::: {.callout-tip title="Bileşik kuralla integral üç adımda"}
+1. Noktaları ve değerleri kur: `x = np.linspace(a, b, n + 1)` ve `y = f(x)`. Simpson kuralı için $n$'yi çift seç.
+2. `np.trapezoid(y, x)` ya da `simpson(y, x=x)` ile yaklaşımı hesapla.
+3. $n$'yi ikiye katlayıp yeniden hesapla. Yeni yaklaşımın hatası yamuk kuralında yaklaşık $(T_{2n} - T_n)/3$, Simpson kuralında yaklaşık $(S_{2n} - S_n)/15$'tir.
+:::
+
+:::: {#exm-int-ln2 name="İkiye Katlayarak Hata Tahmini"}
+$\int_1^2 \frac{dx}{x} = \ln 2$ integraline yamuk ve Simpson kurallarıyla $n = 8, 16, 32$ alt aralık için yaklaşın. Her ikiye katlamada yeni yaklaşımın hatasını tahmin edin ve tahmini gerçek hatayla karşılaştırın.
+
+::: {.cozum}
+**Tahminin gerekçesi.** $I$ kesin değer olsun. Yamuk kuralında $I - T_n \approx 4\,(I - T_{2n})$ olduğundan
+
+$$T_{2n} - T_n = (I - T_n) - (I - T_{2n}) \approx 3\,(I - T_{2n})$$
+
+olur, yani $I - T_{2n} \approx (T_{2n} - T_n)/3$'tür. Simpson kuralında aynı hesap $16$ çarpanıyla $I - S_{2n} \approx (S_{2n} - S_n)/15$ verir.
+
+**Kod.** Üç adımı bir döngüde uygularız:
+
+```python
+import math
+
+import numpy as np
+from scipy.integrate import simpson
+
+exact = math.log(2)
+old_t = old_s = None
+for n in [8, 16, 32]:
+    # 1. adım: noktalar ve değerler
+    x = np.linspace(1, 2, n + 1)
+    y = 1 / x
+    # 2. adım: kurallar
+    t = np.trapezoid(y, x)
+    s = simpson(y, x=x)
+    # 3. adım: n'yi ikiye katlayınca hata tahmini
+    if old_t is not None:
+        est_t = (t - old_t) / 3
+        est_s = (s - old_s) / 15
+        print(f"n = {n:2d}  yamuk: tahmin {est_t:.2e}"
+              f"  gerçek {exact - t:.2e}")
+        print(f"        Simpson: tahmin {est_s:.2e}"
+              f"  gerçek {exact - s:.2e}")
+    old_t, old_s = t, s
+```
+
+Çıktı:
+
+```text
+n = 16  yamuk: tahmin -2.44e-04  gerçek -2.44e-04
+        Simpson: tahmin -4.59e-07  gerçek -4.72e-07
+n = 32  yamuk: tahmin -6.10e-05  gerçek -6.10e-05
+        Simpson: tahmin -2.95e-08  gerçek -2.97e-08
+```
+
+**Sonuç.** Yamuk kuralı için tahmin ile gerçek hata, yazılan üç basamakta aynıdır. Simpson kuralında da tahmin gerçek hatanın yüzde üçü içindedir. Hatalar negatiftir, yani iki kural da integrali fazla tahmin eder. @prp-int-bilesik-hata bunu açıklar: $f(x) = 1/x$ için $f''(x) = 2/x^3$ ve $f^{(4)}(x) = 24/x^5$ pozitiftir. Yamuk kuralında bunun geometrik anlamı da vardır: $1/x$ dışbükey olduğu için kirişler eğrinin üstünde kalır. Kesin değeri bilmediğimiz durumlarda bu tahmin, kaç alt aralığın yeteceğine karar vermek için kullanılır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-int-hiz-tablosu name="Hız Tablosundan Yol"}
+Bir aracın hızı ilk bir dakika boyunca beş saniyede bir okunmuş ve sırasıyla 0; 8,5; 14,6; 19,0; 22,1; 24,3; 25,9; 27,1; 27,9; 28,5; 28,9; 29,2; 29,5 m/s bulunmuş olsun. Aracın bu sürede aldığı yolu yamuk ve Simpson kurallarıyla hesaplayın. Tablo $v(t) = 30\,(1 - e^{-t/15})$ modelinden üretilip bir ondalığa yuvarlanmıştır; sonuçları modelin verdiği $\int_0^{60} v(t)\,dt = 1350 + 450\,e^{-4}$ değeriyle karşılaştırın.
+
+::: {.cozum}
+**Veri.** 13 ölçüm 12 eşit alt aralık verir; $n$ çift olduğundan Simpson kuralı doğrudan uygulanır.
+
+```python
+import math
+
+import numpy as np
+from scipy.integrate import simpson
+
+t = np.arange(0, 61, 5.0)                            # 0, 5, ..., 60 saniye
+v = np.array([0.0, 8.5, 14.6, 19.0, 22.1, 24.3, 25.9,
+              27.1, 27.9, 28.5, 28.9, 29.2, 29.5])   # m/s
+print("yamuk  :", np.trapezoid(v, t))
+print("Simpson:", simpson(v, x=t))
+print("model  :", 1350 + 450 * math.exp(-4))
+```
+
+Çıktı:
+
+```text
+yamuk  : 1353.75
+Simpson: 1357.8333333333335
+model  : 1358.2420374999303
+```
+
+**Sonuç.** Simpson kuralı modelin değerinden $0{,}4$ metre, yamuk kuralı $4{,}5$ metre uzakta kaldı. Verideki yuvarlama tek başına sonucu $60 \cdot 0{,}05 = 3$ metreye kadar değiştirebileceğinden Simpson sonucu, verinin izin verdiği doğruluktadır. Yamuk kuralının hatası ise çoğunlukla kuralın kendisinden gelir: $v$ içbükeydir ve kirişler eğrinin altında kalır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bazen integralin yalnız son değeri değil, üst sınırın fonksiyonu olarak bütün gidişatı gerekir: $F(x) = \int_a^x f(t)\,dt$. `scipy.integrate.cumulative_trapezoid(y, x, initial=0)` her $x_k$ için $\int_{x_0}^{x_k} f(t)\,dt$ integralinin yamuk kuralıyla bulunan yaklaşımını verir; `initial=0` ilk elemanı $0$ yapar. Örnek olarak [SymPy ile Sembolik Hesap](sympy-ile-sembolik-hesap.qmd) bölümünde karşılaştığımız sinüs integrali fonksiyonunu,
+
+$$\mathrm{Si}(x) = \int_0^x \frac{\sin t}{t}\,dt,$$
+
+$[0, 20]$ aralığında hesaplayalım. $t = 0$'da $\sin t / t$ ifadesi $0/0$ olur. `np.sinc(u)` ise $\sin(\pi u)/(\pi u)$ değerini hesaplar ve $u = 0$'da $1$ verir; bu yüzden `np.sinc(t / np.pi)` sorunu ortadan kaldırır.
+
+```python
+import numpy as np
+from scipy.integrate import cumulative_trapezoid
+from scipy.special import sici
+
+t = np.linspace(0, 20, 401)                 # adım 0.05
+y = np.sinc(t / np.pi)                      # sin(t)/t; t = 0'da 1
+Si = cumulative_trapezoid(y, t, initial=0)  # Si[k] = t[0]..t[k] integrali
+exact = sici(t)[0]                          # sici, (Si, Ci) ikilisini verir
+print(len(Si), Si[-1])
+print("en büyük hata:", np.abs(Si - exact).max())
+k = Si.argmax()
+print("en büyük değer:", t[k], Si[k])
+```
+
+Çıktı:
+
+```text
+401 1.5482454765212605
+en büyük hata: 9.086494840016002e-05
+en büyük değer: 3.1500000000000004 1.8518598626730711
+```
+
+Sonuçlar, SciPy'nin özel fonksiyonu `scipy.special.sici` ile $10^{-4}$ duyarlıkla uyuşuyor. `sici(t)` iki dizi döndürür, sinüs integrali $\mathrm{Si}$ ve kosinüs integrali $\mathrm{Ci}$; ilkini `[0]` indisiyle aldık. En büyük değer $x = \pi$ civarındadır, çünkü $\mathrm{Si}$'nin türevi olan $\sin x / x$ ilk kez orada sıfır olur ve işaret değiştirir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 2.0 500.0 304.0" role="img" aria-label="The sine integral Si(x) on [0, 20] computed with cumulative_trapezoid, rising to its maximum 1.8519 at x = 3.15 and oscillating around the dashed line pi/2; the integrand sin(t)/t is drawn in grey">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="168.6" y1="24.0" x2="168.6" y2="274.0"/><line x1="271.0" y1="24.0" x2="271.0" y2="274.0"/><line x1="373.3" y1="24.0" x2="373.3" y2="274.0"/><line x1="475.7" y1="24.0" x2="475.7" y2="274.0"/><line x1="58.0" y1="185.5" x2="488.0" y2="185.5"/><line x1="58.0" y1="133.4" x2="488.0" y2="133.4"/><line x1="58.0" y1="81.3" x2="488.0" y2="81.3"/><line x1="58.0" y1="29.2" x2="488.0" y2="29.2"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="58.0" y1="274.0" x2="496.0" y2="274.0"/>
+  <line x1="58.0" y1="16.0" x2="58.0" y2="274.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="66.2" y="290.0" text-anchor="middle">0</text>
+  <text x="168.6" y="290.0" text-anchor="middle">5</text>
+  <text x="271.0" y="290.0" text-anchor="middle">10</text>
+  <text x="373.3" y="290.0" text-anchor="middle">15</text>
+  <text x="475.7" y="290.0" text-anchor="middle">20</text>
+  <text x="51.0" y="241.5" text-anchor="end">0</text>
+  <text x="51.0" y="189.5" text-anchor="end">0,5</text>
+  <text x="51.0" y="137.4" text-anchor="end">1</text>
+  <text x="51.0" y="85.3" text-anchor="end">1,5</text>
+  <text x="51.0" y="33.2" text-anchor="end">2</text>
+  <text x="502.0" y="278.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  </g>
+  <path d="M66.2,237.5 L483.9,237.5" fill="none" stroke="var(--academic-text)" stroke-width="0.9" opacity="0.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M66.2,73.9 L483.9,73.9" fill="none" stroke="var(--academic-text)" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="483.9" y="66.9" fill="var(--academic-text)" font-size="12" text-anchor="end">&#960;/2</text>
+  <path d="M66.2,133.4 L67.2,133.4 L68.2,133.5 L69.3,133.8 L70.3,134.1 L71.3,134.5 L72.3,134.9 L73.4,135.5 L74.4,136.1 L75.4,136.9 L76.4,137.7 L77.5,138.5 L78.5,139.5 L79.5,140.6 L80.5,141.7 L81.5,142.9 L82.6,144.1 L83.6,145.5 L84.6,146.9 L85.6,148.4 L86.7,149.9 L87.7,151.5 L88.7,153.1 L89.7,154.9 L90.8,156.6 L91.8,158.5 L92.8,160.3 L93.8,162.3 L94.9,164.2 L95.9,166.2 L96.9,168.3 L97.9,170.4 L99.0,172.5 L100.0,174.6 L101.0,176.8 L102.0,179.0 L103.0,181.2 L104.1,183.4 L105.1,185.7 L106.1,187.9 L107.1,190.2 L108.2,192.5 L109.2,194.7 L110.2,197.0 L111.2,199.3 L112.3,201.5 L113.3,203.8 L114.3,206.0 L115.3,208.2 L116.4,210.4 L117.4,212.6 L118.4,214.8 L119.4,216.9 L120.5,219.0 L121.5,221.1 L122.5,223.1 L123.5,225.1 L124.5,227.0 L125.6,228.9 L126.6,230.8 L127.6,232.6 L128.6,234.4 L129.7,236.1 L130.7,237.8 L131.7,239.4 L132.7,241.0 L133.8,242.5 L134.8,244.0 L135.8,245.4 L136.8,246.7 L137.9,248.0 L138.9,249.2 L139.9,250.3 L140.9,251.4 L142.0,252.5 L143.0,253.4 L144.0,254.3 L145.0,255.1 L146.0,255.9 L147.1,256.6 L148.1,257.3 L149.1,257.8 L150.1,258.3 L151.2,258.8 L152.2,259.2 L153.2,259.5 L154.2,259.7 L155.3,259.9 L156.3,260.1 L157.3,260.1 L158.3,260.2 L159.4,260.1 L160.4,260.0 L161.4,259.9 L162.4,259.7 L163.5,259.5 L164.5,259.2 L165.5,258.8 L166.5,258.4 L167.5,258.0 L168.6,257.5 L169.6,257.0 L170.6,256.5 L171.6,255.9 L172.7,255.2 L173.7,254.6 L174.7,253.9 L175.7,253.2 L176.8,252.4 L177.8,251.7 L178.8,250.9 L179.8,250.1 L180.9,249.3 L181.9,248.5 L182.9,247.6 L183.9,246.7 L185.0,245.9 L186.0,245.0 L187.0,244.1 L188.0,243.3 L189.0,242.4 L190.1,241.5 L191.1,240.7 L192.1,239.8 L193.1,238.9 L194.2,238.1 L195.2,237.3 L196.2,236.4 L197.2,235.6 L198.3,234.9 L199.3,234.1 L200.3,233.3 L201.3,232.6 L202.4,231.9 L203.4,231.2 L204.4,230.6 L205.4,230.0 L206.5,229.4 L207.5,228.8 L208.5,228.3 L209.5,227.8 L210.5,227.3 L211.6,226.8 L212.6,226.4 L213.6,226.1 L214.6,225.7 L215.7,225.4 L216.7,225.1 L217.7,224.9 L218.7,224.7 L219.8,224.5 L220.8,224.4 L221.8,224.3 L222.8,224.2 L223.9,224.2 L224.9,224.2 L225.9,224.2 L226.9,224.3 L228.0,224.4 L229.0,224.5 L230.0,224.7 L231.0,224.8 L232.0,225.1 L233.1,225.3 L234.1,225.6 L235.1,225.9 L236.1,226.2 L237.2,226.6 L238.2,226.9 L239.2,227.3 L240.2,227.8 L241.3,228.2 L242.3,228.6 L243.3,229.1 L244.3,229.6 L245.4,230.1 L246.4,230.6 L247.4,231.1 L248.4,231.7 L249.5,232.2 L250.5,232.8 L251.5,233.3 L252.5,233.9 L253.5,234.5 L254.6,235.0 L255.6,235.6 L256.6,236.1 L257.6,236.7 L258.7,237.3 L259.7,237.8 L260.7,238.4 L261.7,238.9 L262.8,239.4 L263.8,240.0 L264.8,240.5 L265.8,241.0 L266.9,241.4 L267.9,241.9 L268.9,242.4 L269.9,242.8 L271.0,243.2 L272.0,243.6 L273.0,244.0 L274.0,244.3 L275.0,244.7 L276.1,245.0 L277.1,245.3 L278.1,245.6 L279.1,245.8 L280.2,246.1 L281.2,246.3 L282.2,246.5 L283.2,246.6 L284.3,246.7 L285.3,246.9 L286.3,246.9 L287.3,247.0 L288.4,247.0 L289.4,247.1 L290.4,247.0 L291.4,247.0 L292.5,247.0 L293.5,246.9 L294.5,246.8 L295.5,246.6 L296.5,246.5 L297.6,246.3 L298.6,246.1 L299.6,245.9 L300.6,245.7 L301.7,245.5 L302.7,245.2 L303.7,244.9 L304.7,244.6 L305.8,244.3 L306.8,244.0 L307.8,243.7 L308.8,243.3 L309.9,243.0 L310.9,242.6 L311.9,242.2 L312.9,241.8 L314.0,241.4 L315.0,241.0 L316.0,240.6 L317.0,240.2 L318.0,239.8 L319.1,239.4 L320.1,238.9 L321.1,238.5 L322.1,238.1 L323.2,237.7 L324.2,237.3 L325.2,236.9 L326.2,236.4 L327.3,236.0 L328.3,235.7 L329.3,235.3 L330.3,234.9 L331.4,234.5 L332.4,234.2 L333.4,233.8 L334.4,233.5 L335.5,233.2 L336.5,232.9 L337.5,232.6 L338.5,232.3 L339.5,232.0 L340.6,231.8 L341.6,231.6 L342.6,231.3 L343.6,231.1 L344.7,231.0 L345.7,230.8 L346.7,230.7 L347.7,230.5 L348.8,230.4 L349.8,230.3 L350.8,230.3 L351.8,230.2 L352.9,230.2 L353.9,230.2 L354.9,230.2 L355.9,230.2 L357.0,230.2 L358.0,230.3 L359.0,230.4 L360.0,230.4 L361.0,230.6 L362.1,230.7 L363.1,230.8 L364.1,231.0 L365.1,231.2 L366.2,231.3 L367.2,231.5 L368.2,231.8 L369.2,232.0 L370.3,232.2 L371.3,232.5 L372.3,232.8 L373.3,233.0 L374.4,233.3 L375.4,233.6 L376.4,233.9 L377.4,234.2 L378.5,234.5 L379.5,234.8 L380.5,235.2 L381.5,235.5 L382.5,235.8 L383.6,236.2 L384.6,236.5 L385.6,236.8 L386.6,237.2 L387.7,237.5 L388.7,237.8 L389.7,238.1 L390.7,238.5 L391.8,238.8 L392.8,239.1 L393.8,239.4 L394.8,239.7 L395.9,240.0 L396.9,240.3 L397.9,240.6 L398.9,240.8 L400.0,241.1 L401.0,241.4 L402.0,241.6 L403.0,241.8 L404.0,242.0 L405.1,242.2 L406.1,242.4 L407.1,242.6 L408.1,242.8 L409.2,242.9 L410.2,243.0 L411.2,243.2 L412.2,243.3 L413.3,243.4 L414.3,243.4 L415.3,243.5 L416.3,243.5 L417.4,243.6 L418.4,243.6 L419.4,243.6 L420.4,243.6 L421.5,243.5 L422.5,243.5 L423.5,243.4 L424.5,243.3 L425.5,243.3 L426.6,243.2 L427.6,243.0 L428.6,242.9 L429.6,242.8 L430.7,242.6 L431.7,242.5 L432.7,242.3 L433.7,242.1 L434.8,241.9 L435.8,241.7 L436.8,241.5 L437.8,241.2 L438.9,241.0 L439.9,240.8 L440.9,240.5 L441.9,240.3 L443.0,240.0 L444.0,239.7 L445.0,239.5 L446.0,239.2 L447.0,238.9 L448.1,238.6 L449.1,238.4 L450.1,238.1 L451.1,237.8 L452.2,237.5 L453.2,237.3 L454.2,237.0 L455.2,236.7 L456.3,236.5 L457.3,236.2 L458.3,235.9 L459.3,235.7 L460.4,235.4 L461.4,235.2 L462.4,235.0 L463.4,234.7 L464.5,234.5 L465.5,234.3 L466.5,234.1 L467.5,233.9 L468.5,233.7 L469.6,233.6 L470.6,233.4 L471.6,233.3 L472.6,233.1 L473.7,233.0 L474.7,232.9 L475.7,232.8" fill="none" stroke="var(--color-remark)" stroke-width="1.4" opacity="0.85" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M66.2,237.5 L67.2,232.3 L68.2,227.1 L69.3,221.9 L70.3,216.8 L71.3,211.6 L72.3,206.4 L73.4,201.3 L74.4,196.2 L75.4,191.2 L76.4,186.2 L77.5,181.2 L78.5,176.3 L79.5,171.4 L80.5,166.6 L81.5,161.8 L82.6,157.1 L83.6,152.5 L84.6,147.9 L85.6,143.4 L86.7,139.0 L87.7,134.7 L88.7,130.4 L89.7,126.2 L90.8,122.1 L91.8,118.1 L92.8,114.2 L93.8,110.4 L94.9,106.7 L95.9,103.1 L96.9,99.6 L97.9,96.2 L99.0,92.8 L100.0,89.6 L101.0,86.6 L102.0,83.6 L103.0,80.7 L104.1,77.9 L105.1,75.3 L106.1,72.7 L107.1,70.3 L108.2,68.0 L109.2,65.8 L110.2,63.7 L111.2,61.8 L112.3,59.9 L113.3,58.2 L114.3,56.5 L115.3,55.0 L116.4,53.6 L117.4,52.3 L118.4,51.1 L119.4,50.0 L120.5,49.0 L121.5,48.2 L122.5,47.4 L123.5,46.7 L124.5,46.1 L125.6,45.7 L126.6,45.3 L127.6,45.0 L128.6,44.8 L129.7,44.7 L130.7,44.6 L131.7,44.7 L132.7,44.8 L133.8,45.0 L134.8,45.3 L135.8,45.7 L136.8,46.1 L137.9,46.6 L138.9,47.1 L139.9,47.8 L140.9,48.4 L142.0,49.1 L143.0,49.9 L144.0,50.7 L145.0,51.6 L146.0,52.5 L147.1,53.4 L148.1,54.4 L149.1,55.4 L150.1,56.4 L151.2,57.5 L152.2,58.5 L153.2,59.6 L154.2,60.7 L155.3,61.9 L156.3,63.0 L157.3,64.1 L158.3,65.2 L159.4,66.4 L160.4,67.5 L161.4,68.6 L162.4,69.7 L163.5,70.8 L164.5,71.9 L165.5,73.0 L166.5,74.0 L167.5,75.1 L168.6,76.1 L169.6,77.1 L170.6,78.0 L171.6,79.0 L172.7,79.9 L173.7,80.7 L174.7,81.6 L175.7,82.4 L176.8,83.1 L177.8,83.9 L178.8,84.5 L179.8,85.2 L180.9,85.8 L181.9,86.4 L182.9,86.9 L183.9,87.4 L185.0,87.8 L186.0,88.2 L187.0,88.6 L188.0,88.9 L189.0,89.1 L190.1,89.4 L191.1,89.5 L192.1,89.7 L193.1,89.8 L194.2,89.8 L195.2,89.8 L196.2,89.8 L197.2,89.7 L198.3,89.6 L199.3,89.4 L200.3,89.2 L201.3,89.0 L202.4,88.8 L203.4,88.5 L204.4,88.1 L205.4,87.8 L206.5,87.4 L207.5,86.9 L208.5,86.5 L209.5,86.0 L210.5,85.5 L211.6,85.0 L212.6,84.4 L213.6,83.9 L214.6,83.3 L215.7,82.7 L216.7,82.1 L217.7,81.5 L218.7,80.8 L219.8,80.2 L220.8,79.5 L221.8,78.9 L222.8,78.2 L223.9,77.5 L224.9,76.9 L225.9,76.2 L226.9,75.5 L228.0,74.9 L229.0,74.2 L230.0,73.6 L231.0,72.9 L232.0,72.3 L233.1,71.7 L234.1,71.1 L235.1,70.5 L236.1,69.9 L237.2,69.4 L238.2,68.8 L239.2,68.3 L240.2,67.8 L241.3,67.3 L242.3,66.9 L243.3,66.4 L244.3,66.0 L245.4,65.6 L246.4,65.3 L247.4,64.9 L248.4,64.6 L249.5,64.4 L250.5,64.1 L251.5,63.9 L252.5,63.7 L253.5,63.5 L254.6,63.4 L255.6,63.3 L256.6,63.2 L257.6,63.1 L258.7,63.1 L259.7,63.1 L260.7,63.1 L261.7,63.2 L262.8,63.3 L263.8,63.4 L264.8,63.5 L265.8,63.7 L266.9,63.8 L267.9,64.0 L268.9,64.3 L269.9,64.5 L271.0,64.8 L272.0,65.1 L273.0,65.4 L274.0,65.7 L275.0,66.1 L276.1,66.5 L277.1,66.8 L278.1,67.2 L279.1,67.6 L280.2,68.1 L281.2,68.5 L282.2,68.9 L283.2,69.4 L284.3,69.8 L285.3,70.3 L286.3,70.8 L287.3,71.2 L288.4,71.7 L289.4,72.2 L290.4,72.7 L291.4,73.1 L292.5,73.6 L293.5,74.1 L294.5,74.5 L295.5,75.0 L296.5,75.4 L297.6,75.9 L298.6,76.3 L299.6,76.8 L300.6,77.2 L301.7,77.6 L302.7,78.0 L303.7,78.3 L304.7,78.7 L305.8,79.0 L306.8,79.4 L307.8,79.7 L308.8,80.0 L309.9,80.3 L310.9,80.5 L311.9,80.8 L312.9,81.0 L314.0,81.2 L315.0,81.4 L316.0,81.5 L317.0,81.7 L318.0,81.8 L319.1,81.9 L320.1,82.0 L321.1,82.1 L322.1,82.1 L323.2,82.1 L324.2,82.1 L325.2,82.1 L326.2,82.0 L327.3,82.0 L328.3,81.9 L329.3,81.8 L330.3,81.7 L331.4,81.5 L332.4,81.4 L333.4,81.2 L334.4,81.0 L335.5,80.8 L336.5,80.5 L337.5,80.3 L338.5,80.1 L339.5,79.8 L340.6,79.5 L341.6,79.2 L342.6,78.9 L343.6,78.6 L344.7,78.3 L345.7,77.9 L346.7,77.6 L347.7,77.2 L348.8,76.9 L349.8,76.5 L350.8,76.2 L351.8,75.8 L352.9,75.4 L353.9,75.1 L354.9,74.7 L355.9,74.3 L357.0,74.0 L358.0,73.6 L359.0,73.2 L360.0,72.9 L361.0,72.5 L362.1,72.2 L363.1,71.8 L364.1,71.5 L365.1,71.2 L366.2,70.9 L367.2,70.6 L368.2,70.3 L369.2,70.0 L370.3,69.7 L371.3,69.5 L372.3,69.2 L373.3,69.0 L374.4,68.8 L375.4,68.6 L376.4,68.4 L377.4,68.2 L378.5,68.0 L379.5,67.9 L380.5,67.8 L381.5,67.7 L382.5,67.6 L383.6,67.5 L384.6,67.4 L385.6,67.4 L386.6,67.3 L387.7,67.3 L388.7,67.3 L389.7,67.4 L390.7,67.4 L391.8,67.5 L392.8,67.5 L393.8,67.6 L394.8,67.7 L395.9,67.8 L396.9,68.0 L397.9,68.1 L398.9,68.3 L400.0,68.4 L401.0,68.6 L402.0,68.8 L403.0,69.0 L404.0,69.2 L405.1,69.5 L406.1,69.7 L407.1,70.0 L408.1,70.2 L409.2,70.5 L410.2,70.8 L411.2,71.0 L412.2,71.3 L413.3,71.6 L414.3,71.9 L415.3,72.2 L416.3,72.5 L417.4,72.8 L418.4,73.1 L419.4,73.4 L420.4,73.7 L421.5,74.0 L422.5,74.3 L423.5,74.6 L424.5,74.9 L425.5,75.2 L426.6,75.5 L427.6,75.7 L428.6,76.0 L429.6,76.3 L430.7,76.5 L431.7,76.8 L432.7,77.0 L433.7,77.3 L434.8,77.5 L435.8,77.7 L436.8,77.9 L437.8,78.1 L438.9,78.3 L439.9,78.4 L440.9,78.6 L441.9,78.7 L443.0,78.9 L444.0,79.0 L445.0,79.1 L446.0,79.2 L447.0,79.2 L448.1,79.3 L449.1,79.3 L450.1,79.4 L451.1,79.4 L452.2,79.4 L453.2,79.4 L454.2,79.4 L455.2,79.3 L456.3,79.3 L457.3,79.2 L458.3,79.2 L459.3,79.1 L460.4,79.0 L461.4,78.9 L462.4,78.7 L463.4,78.6 L464.5,78.5 L465.5,78.3 L466.5,78.1 L467.5,78.0 L468.5,77.8 L469.6,77.6 L470.6,77.4 L471.6,77.2 L472.6,77.0 L473.7,76.7 L474.7,76.5 L475.7,76.3" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="130.7" cy="44.6" r="4.0" fill="var(--color-practice)"/>
+  <text x="138.7" y="36.6" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">(3,15; 1,8519)</text>
+  <text x="230.0" y="58.8" fill="var(--color-theory)" font-size="12.5" text-anchor="middle" font-weight="600">Si(<tspan font-style="italic">x</tspan>)</text>
+  <text x="107.1" y="173.0" fill="var(--color-remark)" font-size="12" text-anchor="start" font-weight="600">sin <tspan font-style="italic">t</tspan>/<tspan font-style="italic">t</tspan></text>
+</svg>
+<figcaption><code>cumulative_trapezoid</code> kodunun 401 noktada hesapladığı Si(<em>x</em>) değerleri (mavi) ve integrali alınan sin <em>t</em>/<em>t</em> fonksiyonu (gri). Si(<em>x</em>), sin <em>t</em>/<em>t</em> pozitifken artar, negatifken azalır; en büyük değerine <em>x</em> = &#960; civarında ulaşır ve &#960;/2 doğrusu etrafında sönen salınımlarla ona yaklaşır.</figcaption>
+</figure>
+```
+
+Şekil, $x \to \infty$ iken $\mathrm{Si}(x)$'in $\pi/2$'ye yaklaştığını düşündürüyor. Bu genelleştirilmiş integrali birazdan `quad` ile hesaplayacağız.
+
+## Uyarlamalı İntegral: quad
+
+İntegrand bir Python fonksiyonu olarak verildiğinde en pratik araç `scipy.integrate.quad` fonksiyonudur. Bu fonksiyon noktaları kendisi seçer ve sonucun yanında bir hata tahmini de verir.
+
+::: {#def-int-quad name="scipy.integrate.quad"}
+`quad(f, a, b)` çağrısı $\int_a^b f(x)\,dx$ için bir `(değer, hata)` ikilisi döndürür; buradaki `hata`, değerin mutlak hatası için bir tahmindir. `quad` her alt aralıkta integrali ve hatasını yüksek dereceli bir kuralla tahmin eder ve toplam hata tahmini istenen sınırın altına inene kadar hata tahmini en büyük olan alt aralığı ikiye böler. Sınırlar `np.inf` ya da `-np.inf` olabilir. Varsayılan hedef, mutlak ya da bağıl hatanın yaklaşık $1{,}5 \cdot 10^{-8}$'in altına inmesidir (`epsabs` ve `epsrel` parametreleri).
+:::
+
+Yani `quad` bizden $n$ istemez: zor bölgelerde alt aralıkları sıklaştırır, kolay bölgelerde geniş tutar. Bu tür yöntemlere **uyarlamalı** (adaptive) integral yöntemleri denir. `quad`, uzun yıllardır kullanılan QUADPACK kütüphanesinin algoritmalarına dayanır.
+
+```python
+import math
+
+import numpy as np
+from scipy.integrate import quad
+
+
+def f(x):
+    return np.exp(-x**2)
+
+
+value, err = quad(f, 0, 2)
+exact = math.sqrt(math.pi) / 2 * math.erf(2)
+print(value, err)
+print("gerçek hata:", abs(value - exact))
+info = quad(f, 0, 2, full_output=1)[2]
+print("fonksiyon çağrısı:", info["neval"])
+```
+
+Çıktı:
+
+```text
+0.8820813907624215 9.793070696178202e-15
+gerçek hata: 0.0
+fonksiyon çağrısı: 21
+```
+
+`full_output=1` verilirse `quad` üçüncü bir eleman olarak ayrıntılı bir bilgi sözlüğü de döndürür; kodda bu demetin `[2]` indisli elemanını aldık. Sözlüğün `neval` anahtarı, fonksiyonun kaç kez hesaplandığını verir. `quad` sonucu yalnız 21 fonksiyon değeriyle makine duyarlığında buldu; Simpson kuralı 257 noktayla ancak $10^{-11}$'e inmişti. Hata tahmini $10^{-14}$ mertebesindedir ve gerçek hata ondan da küçüktür.
+
+İntegrand başka parametrelere de bağlıysa bu parametrelerin değerleri `args` ile verilir.
+
+:::: {#exm-int-bessel name="Bessel Fonksiyonlarını İntegralle Hesaplamak"}
+$n$ bir tam sayı olmak üzere birinci tür Bessel fonksiyonu
+
+$$J_n(x) = \frac{1}{\pi}\int_0^\pi \cos(n\tau - x\sin\tau)\,d\tau$$
+
+integraliyle verilebilir. $J_0(2{,}5)$, $J_1(2{,}5)$ ve $J_2(2{,}5)$ değerlerini `quad` ile hesaplayıp `scipy.special.jv` fonksiyonunun değerleriyle karşılaştırın.
+
+::: {.cozum}
+**Parametreler.** İntegrand $\tau$'nun yanında $n$ ve $x$'e de bağlıdır. `quad` integrali her zaman fonksiyonun **ilk** argümanına göre alır; geri kalan argümanların değerleri `args` demetiyle verilir:
+
+```python
+import numpy as np
+from scipy.integrate import quad
+from scipy.special import jv
+
+
+def integrand(tau, n, x):
+    return np.cos(n * tau - x * np.sin(tau))
+
+
+x = 2.5
+for n in [0, 1, 2]:
+    value, err = quad(integrand, 0, np.pi, args=(n, x))
+    print(n, value / np.pi, jv(n, x))
+```
+
+Çıktı:
+
+```text
+0 -0.048383776468198046 -0.048383776468197914
+1 0.49709410246427405 0.4970941024642741
+2 0.4460590584396172 0.44605905843961724
+```
+
+**Sonuç.** Üç değer de SciPy'nin özel fonksiyonuyla son bir iki basamak dışında aynıdır. `args` yerine `lambda tau: integrand(tau, n, x)` de yazılabilirdi; `args` daha okunaklıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Gauss Kuralları
+
+`quad`'ın 21 değerle bu kadar iyi sonuç vermesinin nedeni, düğümleri akıllıca seçmesidir. Yamuk ve Simpson kuralları düğümleri eşit aralıklı alır. Düğümleri de serbest bırakırsak, $n$ düğümlü bir kural derecesi en çok $2n - 1$ olan bütün polinomları tam integre edecek biçimde kurulabilir. Bu kurallara **Gauss–Legendre kuralları** denir; ispatlarını burada vermeyeceğiz. NumPy'de `np.polynomial.legendre.leggauss(n)` fonksiyonu $[-1, 1]$ aralığı için düğümleri ve ağırlıkları verir:
+
+```python
+import numpy as np
+
+t, w = np.polynomial.legendre.leggauss(3)     # 3 düğüm ve ağırlık
+print(t)
+print(w)
+for k in range(7):
+    approx = (w * t**k).sum()
+    exact = (1 - (-1) ** (k + 1)) / (k + 1)   # [-1, 1] üzerinde x^k
+    print(f"k = {k}   Gauss = {approx:.12f}   kesin = {exact:.12f}")
+```
+
+Çıktı:
+
+```text
+[-0.77459667  0.          0.77459667]
+[0.55555556 0.88888889 0.55555556]
+k = 0   Gauss = 2.000000000000   kesin = 2.000000000000
+k = 1   Gauss = 0.000000000000   kesin = 0.000000000000
+k = 2   Gauss = 0.666666666667   kesin = 0.666666666667
+k = 3   Gauss = 0.000000000000   kesin = 0.000000000000
+k = 4   Gauss = 0.400000000000   kesin = 0.400000000000
+k = 5   Gauss = 0.000000000000   kesin = 0.000000000000
+k = 6   Gauss = 0.240000000000   kesin = 0.285714285714
+```
+
+Üç düğümlü kural $k = 0, 1, \dots, 5$ için kesin sonucu verir ve $k = 6$'da yanılır: $2 \cdot 3 - 1 = 5$. Düğümler simetriktir ve aralığın uç noktaları düğüm değildir. $\int_0^2 e^{-x^2}\,dx$ integralini $x = 1 + t$ değişkeniyle $[-1, 1]$'e taşıyıp düğüm sayısını artıralım:
+
+```python
+import math
+
+import numpy as np
+
+exact = math.sqrt(math.pi) / 2 * math.erf(2)
+for n in range(2, 9):
+    t, w = np.polynomial.legendre.leggauss(n)
+    # [0, 2] -> [-1, 1]: x = 1 + t, dx = dt
+    approx = (w * np.exp(-(1 + t) ** 2)).sum()
+    print(f"n = {n}   hata = {abs(approx - exact):.1e}")
+```
+
+Çıktı:
+
+```text
+n = 2   hata = 3.7e-02
+n = 3   hata = 3.2e-03
+n = 4   hata = 1.5e-04
+n = 5   hata = 3.4e-06
+n = 6   hata = 3.5e-08
+n = 7   hata = 6.8e-09
+n = 8   hata = 3.4e-10
+```
+
+Sekiz fonksiyon değeriyle hata $3 \cdot 10^{-10}$'a iniyor; Simpson kuralı bu doğruluk için yaklaşık 130 nokta istiyordu. `quad` her alt aralıkta 21 noktalı bir Gauss–Kronrod kuralı kullanır: bu kural 10 noktalı Gauss kuralının düğümlerine 11 düğüm ekler. Değer olarak 21 noktalı kuralın sonucu alınır; iki kuralın sonuçları arasındaki fark ise hata tahmininin temelidir. `quad` bu farkı deneyimle belirlenmiş bir formülle ölçekler ve tahminin yuvarlama düzeyinin altına inmesine izin vermez. İlk `quad` örneğindeki $9{,}8 \cdot 10^{-15}$ tahmini bu yuvarlama tabanıdır: $50\,\varepsilon \cdot 0{,}8821 \approx 9{,}8 \cdot 10^{-15}$, yani makine epsilonunun 50 katı ile integralin değerinin çarpımı.
+
+### Zor İntegrandlar
+
+Uyarlamalı bölmenin gücü, integrand bir yerde hızla değiştiğinde ortaya çıkar. $x = 0{,}3$'te dar ve yüksek bir tepesi olan
+
+$$f(x) = \frac{1}{(x - 0{,}3)^2 + 10^{-4}}$$
+
+fonksiyonunu $[0, 1]$'de integre edelim. Kesin değer $100\,(\arctan 70 + \arctan 30)$'dur. `quad`'ın hangi noktalara baktığını görmek için fonksiyonu, her çağrıda $x$'i bir listeye ekleyecek biçimde yazıyoruz:
+
+```python
+import math
+
+import numpy as np
+from scipy.integrate import quad
+
+calls = []
+
+
+def f(x):
+    calls.append(x)                    # quad'ın baktığı noktaları kaydet
+    return 1 / ((x - 0.3)**2 + 1e-4)
+
+
+exact = 100 * (math.atan(70) + math.atan(30))
+value, err, info = quad(f, 0, 1, full_output=1)
+print(value, err, abs(value - exact))
+print("çağrı sayısı:", len(calls), "  alt aralık:", info["last"])
+left = info["alist"][:info["last"]]            # alt aralıkların sol uçları
+ends = np.sort(np.concatenate([left, [1.0]]))  # sağ uç 1'i de ekle
+print(ends)
+x = np.linspace(0, 1, 1001)
+print("yamuk, 1001 nokta, hata:", abs(np.trapezoid(f(x), x) - exact))
+```
+
+Çıktı:
+
+```text
+309.3986915124147 2.3722903395168027e-08 2.2737367544323206e-13
+çağrı sayısı: 315   alt aralık: 8
+[0.       0.125    0.25     0.28125  0.296875 0.3125   0.375    0.5
+ 1.      ]
+yamuk, 1001 nokta, hata: 6.6448414486330876e-06
+```
+
+Bilgi sözlüğünde `info["last"]` alt aralık sayısı, `info["alist"]` alt aralıkların sol uçlarıdır; bu sol uçlara `np.concatenate` ile son sağ uç $1$'i ekleyip sıralayınca bütün uçları elde ederiz. `quad` 315 fonksiyon değeriyle $10^{-13}$ hataya ulaştı; 1001 eşit aralıklı noktayla yamuk kuralı ise $7 \cdot 10^{-6}$ hatada kaldı. Şekil, alt aralıkların tepeye doğru nasıl daraldığını gösteriyor.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="15.0 2.0 509.0 294.0" role="img" aria-label="The sharp peak 1/((x - 0.3)^2 + 1e-4) on [0, 1] with the end points of the 8 subintervals chosen by quad, which shrink near x = 0.3, and a rug of the 315 evaluation points under the axis">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="179.0" y1="24.0" x2="179.0" y2="264.0"/><line x1="280.0" y1="24.0" x2="280.0" y2="264.0"/><line x1="381.0" y1="24.0" x2="381.0" y2="264.0"/><line x1="481.9" y1="24.0" x2="481.9" y2="264.0"/><line x1="70.0" y1="193.0" x2="490.0" y2="193.0"/><line x1="70.0" y1="140.9" x2="490.0" y2="140.9"/><line x1="70.0" y1="88.7" x2="490.0" y2="88.7"/><line x1="70.0" y1="36.5" x2="490.0" y2="36.5"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="264.0" x2="498.0" y2="264.0"/>
+  <line x1="70.0" y1="16.0" x2="70.0" y2="264.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="78.1" y="280.0" text-anchor="middle">0</text>
+  <text x="179.0" y="280.0" text-anchor="middle">0,25</text>
+  <text x="280.0" y="280.0" text-anchor="middle">0,5</text>
+  <text x="381.0" y="280.0" text-anchor="middle">0,75</text>
+  <text x="481.9" y="280.0" text-anchor="middle">1</text>
+  <text x="63.0" y="249.2" text-anchor="end">0</text>
+  <text x="63.0" y="144.9" text-anchor="end">5.000</text>
+  <text x="63.0" y="40.5" text-anchor="end">10.000</text>
+  <text x="504.0" y="268.0" font-style="italic"><tspan font-style="italic">x</tspan></text>
+  </g>
+  <path d="M78.1,245.0 L80.1,245.0 L82.1,245.0 L84.1,245.0 L86.2,245.0 L88.2,244.9 L90.2,244.9 L92.2,244.9 L94.2,244.9 L96.2,244.9 L98.3,244.9 L100.3,244.9 L102.3,244.9 L104.3,244.8 L106.3,244.8 L108.4,244.8 L110.4,244.8 L112.4,244.8 L114.4,244.7 L116.4,244.7 L118.5,244.7 L120.5,244.7 L122.5,244.6 L124.5,244.6 L126.5,244.6 L128.6,244.5 L130.6,244.5 L132.6,244.5 L134.6,244.4 L136.6,244.4 L138.7,244.3 L140.7,244.2 L142.7,244.2 L144.7,244.1 L146.7,244.0 L148.8,243.9 L150.8,243.8 L152.8,243.7 L154.8,243.5 L156.8,243.3 L158.8,243.2 L160.9,242.9 L162.9,242.7 L164.9,242.4 L166.9,242.0 L168.9,241.6 L171.0,241.0 L173.0,240.4 L175.0,239.6 L177.0,238.5 L179.0,237.2 L181.1,235.4 L183.1,232.9 L183.2,232.7 L183.3,232.5 L183.5,232.3 L183.6,232.1 L183.8,231.9 L183.9,231.7 L184.0,231.5 L184.2,231.2 L184.3,231.0 L184.4,230.8 L184.6,230.5 L184.7,230.3 L184.8,230.0 L185.0,229.7 L185.1,229.5 L185.2,229.2 L185.4,228.9 L185.5,228.6 L185.6,228.3 L185.8,228.0 L185.9,227.7 L186.0,227.3 L186.2,227.0 L186.3,226.7 L186.4,226.3 L186.6,225.9 L186.7,225.5 L186.8,225.2 L187.0,224.8 L187.1,224.3 L187.3,223.9 L187.4,223.5 L187.5,223.0 L187.7,222.6 L187.8,222.1 L187.9,221.6 L188.1,221.1 L188.2,220.6 L188.3,220.0 L188.5,219.5 L188.6,218.9 L188.7,218.3 L188.9,217.7 L189.0,217.1 L189.1,216.4 L189.3,215.8 L189.4,215.1 L189.5,214.3 L189.7,213.6 L189.8,212.8 L189.9,212.0 L190.1,211.2 L190.2,210.4 L190.3,209.5 L190.5,208.6 L190.6,207.6 L190.8,206.6 L190.9,205.6 L191.0,204.6 L191.2,203.5 L191.3,202.3 L191.4,201.2 L191.6,199.9 L191.7,198.7 L191.8,197.4 L192.0,196.0 L192.1,194.6 L192.2,193.1 L192.4,191.6 L192.5,190.0 L192.6,188.3 L192.8,186.6 L192.9,184.8 L193.0,182.9 L193.2,181.0 L193.3,179.0 L193.4,176.9 L193.6,174.7 L193.7,172.4 L193.8,170.1 L194.0,167.6 L194.1,165.1 L194.2,162.4 L194.4,159.7 L194.5,156.8 L194.7,153.9 L194.8,150.8 L194.9,147.6 L195.1,144.3 L195.2,140.9 L195.2,140.9 L195.3,137.3 L195.5,133.7 L195.6,129.9 L195.7,126.0 L195.9,122.1 L196.0,118.0 L196.1,113.8 L196.3,109.5 L196.4,105.2 L196.5,100.7 L196.7,96.3 L196.8,91.8 L196.9,87.2 L197.1,82.7 L197.2,78.3 L197.2,78.3 L197.3,73.8 L197.5,69.5 L197.6,65.3 L197.8,61.3 L197.9,57.4 L198.0,53.8 L198.2,50.4 L198.3,47.3 L198.4,44.5 L198.6,42.2 L198.7,40.2 L198.8,38.6 L199.0,37.4 L199.1,36.8 L199.2,36.5 L199.2,36.5 L199.4,36.8 L199.5,37.4 L199.6,38.6 L199.8,40.2 L199.9,42.2 L200.0,44.5 L200.2,47.3 L200.3,50.4 L200.4,53.8 L200.6,57.4 L200.7,61.3 L200.8,65.3 L201.0,69.5 L201.1,73.8 L201.2,78.3 L201.4,82.7 L201.5,87.2 L201.7,91.8 L201.8,96.3 L201.9,100.7 L202.1,105.2 L202.2,109.5 L202.3,113.8 L202.5,118.0 L202.6,122.1 L202.7,126.0 L202.9,129.9 L203.0,133.7 L203.1,137.3 L203.3,140.9 L203.4,144.3 L203.5,147.6 L203.7,150.8 L203.8,153.9 L203.9,156.8 L204.1,159.7 L204.2,162.4 L204.3,165.1 L204.5,167.6 L204.6,170.1 L204.8,172.4 L204.9,174.7 L205.0,176.9 L205.2,179.0 L205.3,181.0 L205.4,182.9 L205.6,184.8 L205.7,186.6 L205.8,188.3 L206.0,190.0 L206.1,191.6 L206.2,193.1 L206.4,194.6 L206.5,196.0 L206.6,197.4 L206.8,198.7 L206.9,199.9 L207.0,201.2 L207.2,202.3 L207.3,203.5 L207.4,204.6 L207.6,205.6 L207.7,206.6 L207.8,207.6 L208.0,208.6 L208.1,209.5 L208.3,210.4 L208.4,211.2 L208.5,212.0 L208.7,212.8 L208.8,213.6 L208.9,214.3 L209.1,215.1 L209.2,215.8 L209.3,216.4 L209.5,217.1 L209.6,217.7 L209.7,218.3 L209.9,218.9 L210.0,219.5 L210.1,220.0 L210.3,220.6 L210.4,221.1 L210.5,221.6 L210.7,222.1 L210.8,222.6 L210.9,223.0 L211.1,223.5 L211.2,223.9 L211.3,224.3 L211.5,224.8 L211.6,225.2 L211.8,225.5 L211.9,225.9 L212.0,226.3 L212.2,226.7 L212.3,227.0 L212.4,227.3 L212.6,227.7 L212.7,228.0 L212.8,228.3 L213.0,228.6 L213.1,228.9 L213.2,229.2 L213.4,229.5 L213.5,229.7 L213.6,230.0 L213.8,230.3 L213.9,230.5 L214.0,230.8 L214.2,231.0 L214.3,231.2 L214.4,231.5 L214.6,231.7 L214.7,231.9 L214.8,232.1 L215.0,232.3 L215.1,232.5 L215.2,232.7 L215.4,232.9 L217.4,235.4 L219.4,237.2 L221.4,238.5 L223.5,239.6 L225.5,240.4 L227.5,241.0 L229.5,241.6 L231.5,242.0 L233.6,242.4 L235.6,242.7 L237.6,242.9 L239.6,243.2 L241.6,243.3 L243.7,243.5 L245.7,243.7 L247.7,243.8 L249.7,243.9 L251.7,244.0 L253.8,244.1 L255.8,244.2 L257.8,244.2 L259.8,244.3 L261.8,244.4 L263.8,244.4 L265.9,244.5 L267.9,244.5 L269.9,244.5 L271.9,244.6 L273.9,244.6 L276.0,244.6 L278.0,244.7 L280.0,244.7 L282.0,244.7 L284.0,244.7 L286.1,244.8 L288.1,244.8 L290.1,244.8 L292.1,244.8 L294.1,244.8 L296.2,244.9 L298.2,244.9 L300.2,244.9 L302.2,244.9 L304.2,244.9 L306.2,244.9 L308.3,244.9 L310.3,244.9 L312.3,245.0 L314.3,245.0 L316.3,245.0 L318.4,245.0 L320.4,245.0 L322.4,245.0 L324.4,245.0 L326.4,245.0 L328.5,245.0 L330.5,245.0 L332.5,245.0 L334.5,245.0 L336.5,245.0 L338.6,245.0 L340.6,245.0 L342.6,245.1 L344.6,245.1 L346.6,245.1 L348.7,245.1 L350.7,245.1 L352.7,245.1 L354.7,245.1 L356.7,245.1 L358.8,245.1 L360.8,245.1 L362.8,245.1 L364.8,245.1 L366.8,245.1 L368.8,245.1 L370.9,245.1 L372.9,245.1 L374.9,245.1 L376.9,245.1 L378.9,245.1 L381.0,245.1 L383.0,245.1 L385.0,245.1 L387.0,245.1 L389.0,245.1 L391.1,245.1 L393.1,245.1 L395.1,245.1 L397.1,245.1 L399.1,245.1 L401.2,245.1 L403.2,245.1 L405.2,245.1 L407.2,245.1 L409.2,245.1 L411.2,245.1 L413.3,245.1 L415.3,245.1 L417.3,245.1 L419.3,245.1 L421.3,245.1 L423.4,245.1 L425.4,245.2 L427.4,245.2 L429.4,245.2 L431.4,245.2 L433.5,245.2 L435.5,245.2 L437.5,245.2 L439.5,245.2 L441.5,245.2 L443.6,245.2 L445.6,245.2 L447.6,245.2 L449.6,245.2 L451.6,245.2 L453.7,245.2 L455.7,245.2 L457.7,245.2 L459.7,245.2 L461.7,245.2 L463.8,245.2 L465.8,245.2 L467.8,245.2 L469.8,245.2 L471.8,245.2 L473.8,245.2 L475.9,245.2 L477.9,245.2 L479.9,245.2 L481.9,245.2" fill="none" stroke="var(--color-theory)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="78.1" y1="264.0" x2="78.1" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="128.6" y1="264.0" x2="128.6" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="179.0" y1="264.0" x2="179.0" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="191.7" y1="264.0" x2="191.7" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="198.0" y1="264.0" x2="198.0" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="204.3" y1="264.0" x2="204.3" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="229.5" y1="264.0" x2="229.5" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="280.0" y1="264.0" x2="280.0" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <line x1="481.9" y1="264.0" x2="481.9" y2="24.0" stroke="var(--color-base)" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+  <path d="M280.0,249.2V264.0 M83.3,249.2V264.0 M476.7,249.2V264.0 M105.3,249.2V264.0 M454.7,249.2V264.0 M142.8,249.2V264.0 M417.2,249.2V264.0 M192.5,249.2V264.0 M367.5,249.2V264.0 M249.9,249.2V264.0 M310.1,249.2V264.0 M79.0,249.2V264.0 M481.0,249.2V264.0 M92.2,249.2V264.0 M467.8,249.2V264.0 M122.3,249.2V264.0 M437.7,249.2V264.0 M166.4,249.2V264.0 M393.6,249.2V264.0 M220.6,249.2V264.0 M339.4,249.2V264.0 M179.0,249.2V264.0 M80.7,249.2V264.0 M277.4,249.2V264.0 M91.7,249.2V264.0 M266.4,249.2V264.0 M110.4,249.2V264.0 M247.6,249.2V264.0 M135.3,249.2V264.0 M222.8,249.2V264.0 M164.0,249.2V264.0 M194.1,249.2V264.0 M78.5,249.2V264.0 M279.6,249.2V264.0 M85.1,249.2V264.0 M272.9,249.2V264.0 M100.2,249.2V264.0 M257.9,249.2V264.0 M122.2,249.2V264.0 M235.9,249.2V264.0 M149.3,249.2V264.0 M208.8,249.2V264.0 M381.0,249.2V264.0 M282.6,249.2V264.0 M479.3,249.2V264.0 M293.6,249.2V264.0 M468.3,249.2V264.0 M312.4,249.2V264.0 M449.6,249.2V264.0 M337.2,249.2V264.0 M424.7,249.2V264.0 M365.9,249.2V264.0 M396.0,249.2V264.0 M280.4,249.2V264.0 M481.5,249.2V264.0 M287.1,249.2V264.0 M474.9,249.2V264.0 M302.1,249.2V264.0 M459.8,249.2V264.0 M324.1,249.2V264.0 M437.8,249.2V264.0 M351.2,249.2V264.0 M410.7,249.2V264.0 M128.6,249.2V264.0 M79.4,249.2V264.0 M177.7,249.2V264.0 M84.9,249.2V264.0 M172.2,249.2V264.0 M94.3,249.2V264.0 M162.9,249.2V264.0 M106.7,249.2V264.0 M150.4,249.2V264.0 M121.0,249.2V264.0 M136.1,249.2V264.0 M78.3,249.2V264.0 M178.8,249.2V264.0 M81.6,249.2V264.0 M175.5,249.2V264.0 M89.1,249.2V264.0 M168.0,249.2V264.0 M100.1,249.2V264.0 M157.0,249.2V264.0 M113.7,249.2V264.0 M143.4,249.2V264.0 M229.5,249.2V264.0 M180.4,249.2V264.0 M278.7,249.2V264.0 M185.9,249.2V264.0 M273.2,249.2V264.0 M195.2,249.2V264.0 M263.8,249.2V264.0 M207.6,249.2V264.0 M251.4,249.2V264.0 M222.0,249.2V264.0 M237.0,249.2V264.0 M179.3,249.2V264.0 M279.8,249.2V264.0 M182.6,249.2V264.0 M276.5,249.2V264.0 M190.1,249.2V264.0 M268.9,249.2V264.0 M201.1,249.2V264.0 M257.9,249.2V264.0 M214.7,249.2V264.0 M244.4,249.2V264.0 M204.3,249.2V264.0 M179.7,249.2V264.0 M228.9,249.2V264.0 M182.4,249.2V264.0 M226.1,249.2V264.0 M187.1,249.2V264.0 M221.4,249.2V264.0 M193.3,249.2V264.0 M215.2,249.2V264.0 M200.5,249.2V264.0 M208.0,249.2V264.0 M179.1,249.2V264.0 M229.4,249.2V264.0 M180.8,249.2V264.0 M227.8,249.2V264.0 M184.6,249.2V264.0 M224.0,249.2V264.0 M190.1,249.2V264.0 M218.5,249.2V264.0 M196.8,249.2V264.0 M211.7,249.2V264.0 M254.8,249.2V264.0 M230.2,249.2V264.0 M279.3,249.2V264.0 M232.9,249.2V264.0 M276.6,249.2V264.0 M237.6,249.2V264.0 M271.9,249.2V264.0 M243.8,249.2V264.0 M265.7,249.2V264.0 M251.0,249.2V264.0 M258.5,249.2V264.0 M229.6,249.2V264.0 M279.9,249.2V264.0 M231.3,249.2V264.0 M278.2,249.2V264.0 M235.1,249.2V264.0 M274.5,249.2V264.0 M240.6,249.2V264.0 M269.0,249.2V264.0 M247.3,249.2V264.0 M262.2,249.2V264.0 M103.3,249.2V264.0 M78.7,249.2V264.0 M127.9,249.2V264.0 M81.5,249.2V264.0 M125.2,249.2V264.0 M86.2,249.2V264.0 M120.5,249.2V264.0 M92.4,249.2V264.0 M114.3,249.2V264.0 M99.6,249.2V264.0 M107.1,249.2V264.0 M78.2,249.2V264.0 M128.4,249.2V264.0 M79.8,249.2V264.0 M126.8,249.2V264.0 M83.6,249.2V264.0 M123.0,249.2V264.0 M89.1,249.2V264.0 M117.5,249.2V264.0 M95.9,249.2V264.0 M110.7,249.2V264.0 M153.8,249.2V264.0 M129.2,249.2V264.0 M178.4,249.2V264.0 M132.0,249.2V264.0 M175.6,249.2V264.0 M136.6,249.2V264.0 M170.9,249.2V264.0 M142.9,249.2V264.0 M164.7,249.2V264.0 M150.0,249.2V264.0 M157.6,249.2V264.0 M128.7,249.2V264.0 M178.9,249.2V264.0 M130.3,249.2V264.0 M177.3,249.2V264.0 M134.1,249.2V264.0 M173.5,249.2V264.0 M139.6,249.2V264.0 M168.0,249.2V264.0 M146.4,249.2V264.0 M161.2,249.2V264.0 M191.7,249.2V264.0 M179.4,249.2V264.0 M203.9,249.2V264.0 M180.7,249.2V264.0 M202.6,249.2V264.0 M183.1,249.2V264.0 M200.2,249.2V264.0 M186.2,249.2V264.0 M197.1,249.2V264.0 M189.8,249.2V264.0 M193.5,249.2V264.0 M179.1,249.2V264.0 M204.2,249.2V264.0 M179.9,249.2V264.0 M203.4,249.2V264.0 M181.8,249.2V264.0 M201.5,249.2V264.0 M184.6,249.2V264.0 M198.8,249.2V264.0 M187.9,249.2V264.0 M195.4,249.2V264.0 M216.9,249.2V264.0 M204.6,249.2V264.0 M229.2,249.2V264.0 M206.0,249.2V264.0 M227.8,249.2V264.0 M208.3,249.2V264.0 M225.5,249.2V264.0 M211.4,249.2V264.0 M222.4,249.2V264.0 M215.0,249.2V264.0 M218.8,249.2V264.0 M204.3,249.2V264.0 M229.5,249.2V264.0 M205.2,249.2V264.0 M228.6,249.2V264.0 M207.0,249.2V264.0 M226.8,249.2V264.0 M209.8,249.2V264.0 M224.0,249.2V264.0 M213.2,249.2V264.0 M220.6,249.2V264.0 M185.3,249.2V264.0 M179.2,249.2V264.0 M191.5,249.2V264.0 M179.9,249.2V264.0 M190.8,249.2V264.0 M181.1,249.2V264.0 M189.6,249.2V264.0 M182.6,249.2V264.0 M188.1,249.2V264.0 M184.4,249.2V264.0 M186.3,249.2V264.0 M179.1,249.2V264.0 M191.6,249.2V264.0 M179.5,249.2V264.0 M191.2,249.2V264.0 M180.4,249.2V264.0 M190.3,249.2V264.0 M181.8,249.2V264.0 M188.9,249.2V264.0 M183.5,249.2V264.0 M187.2,249.2V264.0 M198.0,249.2V264.0 M191.8,249.2V264.0 M204.1,249.2V264.0 M192.5,249.2V264.0 M203.4,249.2V264.0 M193.7,249.2V264.0 M202.3,249.2V264.0 M195.2,249.2V264.0 M200.7,249.2V264.0 M197.0,249.2V264.0 M198.9,249.2V264.0 M191.7,249.2V264.0 M204.3,249.2V264.0 M192.1,249.2V264.0 M203.8,249.2V264.0 M193.0,249.2V264.0 M202.9,249.2V264.0 M194.4,249.2V264.0 M201.5,249.2V264.0 M196.1,249.2V264.0 M199.8,249.2V264.0 M194.8,249.2V264.0 M191.7,249.2V264.0 M197.9,249.2V264.0 M192.1,249.2V264.0 M197.5,249.2V264.0 M192.7,249.2V264.0 M197.0,249.2V264.0 M193.4,249.2V264.0 M196.2,249.2V264.0 M194.3,249.2V264.0 M195.3,249.2V264.0 M191.7,249.2V264.0 M198.0,249.2V264.0 M191.9,249.2V264.0 M197.7,249.2V264.0 M192.4,249.2V264.0 M197.3,249.2V264.0 M193.0,249.2V264.0 M196.6,249.2V264.0 M193.9,249.2V264.0 M195.7,249.2V264.0 M201.1,249.2V264.0 M198.1,249.2V264.0 M204.2,249.2V264.0 M198.4,249.2V264.0 M203.9,249.2V264.0 M199.0,249.2V264.0 M203.3,249.2V264.0 M199.8,249.2V264.0 M202.5,249.2V264.0 M200.7,249.2V264.0 M201.6,249.2V264.0 M198.0,249.2V264.0 M204.3,249.2V264.0 M198.2,249.2V264.0 M204.1,249.2V264.0 M198.7,249.2V264.0 M203.6,249.2V264.0 M199.3,249.2V264.0 M202.9,249.2V264.0 M200.2,249.2V264.0 M202.1,249.2V264.0" stroke="var(--color-practice)" stroke-width="0.8" opacity="0.8" fill="none"/>
+  <text x="219.3" y="57.4" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>) = 1/((<tspan font-style="italic">x</tspan> &#8722; 0,3)² + 10<tspan font-size="8.5" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan>)</text>
+  <text x="381.0" y="157.6" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">8 alt aralık</text>
+  <text x="381.0" y="174.6" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">315 çağrı</text>
+</svg>
+<figcaption><code>quad</code>'ın <em>x</em> = 0,3'teki dar tepeyi nasıl çözdüğü: tepe fonksiyonu kodunun kaydettiği veriler. Kesikli çizgiler <code>quad</code>'ın böldüğü 8 alt aralığın uçları, eksenin altındaki kısa çizgiler fonksiyonun hesaplandığı 315 nokta. Alt aralıklar tepenin yanında ikiye bölüne bölüne daralır; fonksiyonun düz olduğu yerde tek geniş aralık yeter.</figcaption>
+</figure>
+```
+
+`quad`, sonsuz aralıkları ve uç noktada sonsuza giden integrandları da çoğu zaman sorunsuz işler (genelleştirilmiş integraller için bkz. [Analiz 3](../analiz-3/genellestirilmis-integraller.html#def-gbt-birinci-tip) ve [Analiz 3](../analiz-3/ikinci-tip-genellestirilmis-integraller.html#def-git-ikinci-tip)):
+
+```python
+import math
+
+import numpy as np
+from scipy.integrate import quad
+
+print(quad(lambda x: np.exp(-x**2), 0, np.inf), math.sqrt(math.pi) / 2)
+print(quad(lambda x: np.exp(-x**2), -np.inf, np.inf), math.sqrt(math.pi))
+print(quad(lambda x: 1 / np.sqrt(x), 0, 1))
+print(quad(np.log, 0, 1))
+```
+
+Çıktı:
+
+```text
+(0.8862269254527579, 7.101318390472462e-09) 0.8862269254527579
+(1.7724538509055159, 1.4202636780944923e-08) 1.7724538509055159
+(1.9999999999999984, 5.773159728050814e-15)
+(-0.9999999999999999, 1.1102230246251563e-15)
+```
+
+$\int_0^\infty e^{-x^2}\,dx = \sqrt{\pi}/2$, $\int_{-\infty}^\infty e^{-x^2}\,dx = \sqrt{\pi}$, $\int_0^1 x^{-1/2}\,dx = 2$ ve $\int_0^1 \ln x\,dx = -1$ değerleri son bir iki basamağa kadar doğru. Sonsuz aralıkta `quad` önce bir değişken değiştirmeyle aralığı sonlu yapar. Uçtaki tekillikleri ise integrandı uç noktada hiç hesaplamadan, uca doğru sıklaşan alt aralıklar ve bir ekstrapolasyonla aşar. Tekillik aralığın içindeyse `quad`'a yerini söylemek gerekir:
+
+```python
+import numpy as np
+from scipy.integrate import quad
+
+
+def f(x):
+    return 1 / np.sqrt(abs(x))
+
+
+with np.errstate(divide="ignore"):       # 1/0 uyarısını sustur
+    print(quad(f, -1, 1))
+print(quad(f, -1, 1, points=[0]))
+```
+
+Çıktı:
+
+```text
+(inf, inf)
+(3.9999999999999813, 5.684341886080802e-14)
+```
+
+$1/\sqrt{|x|}$ fonksiyonu $x = 0$'da sonsuza gider. 21 noktalı kuralın orta düğümü $[-1, 1]$'in tam ortası olduğundan `quad` fonksiyonu $0$'da hesaplamaya çalıştı ve `inf` döndürdü. `points=[0]` parametresi aralığı tekil noktadan böler. Tekillik böylece iki alt aralığın ucuna gelir ve sonuç doğru çıkar: $\int_{-1}^1 |x|^{-1/2}\,dx = 4$.
+
+Iraksak bir integralde ise `quad` yine bir sayı döndürür ve yalnız bir uyarı verir. $\int_0^1 dx/x$ integrali ıraksaktır:
+
+```python
+import warnings
+
+from scipy.integrate import quad
+
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")       # uyarıları yakala
+    value, err = quad(lambda x: 1 / x, 0, 1)
+print(value, err)
+print(caught[0].category.__name__)
+print(str(caught[0].message).splitlines()[0])
+```
+
+Çıktı:
+
+```text
+41.67684067538809 9.35056037314051
+IntegrationWarning
+The maximum number of subdivisions (50) has been achieved.
+```
+
+`quad` 50 alt aralık sınırına takılıp $41{,}68$ değerini ve $9{,}35$ gibi büyük bir hata tahmini döndürdü; sonuç anlamsızdır. `warnings.catch_warnings(record=True)` bloğu, blok içinde verilen uyarıları bir listede toplar; böylece uyarıyı program içinde denetleyebiliriz.
+
+::: {.callout-warning title="Uyarıları ve hata tahminini okuyun"}
+`quad` başarısız olduğunda hata vermez; `IntegrationWarning` türünde bir uyarı basar ve bir sayı döndürmeye devam eder. Hata tahmini değere göre büyükse ya da bir uyarı çıktıysa sonuç güvenilir değildir. Tersine, küçük bir hata tahmini de kanıt değildir: integrand `quad`'ın baktığı noktaların arasında beklenmedik biçimde davranıyorsa tahmin yanılabilir. Önemli bir sonucu bağımsız bir yolla, örneğin değişken değiştirerek ya da integrali parçalara bölerek yeniden hesaplayın.
+:::
+
+Yavaş sönen salınımlar da `quad`'ı zorlar. Şekildeki $\mathrm{Si}(x)$'in limiti olan $\int_0^\infty \frac{\sin x}{x}\,dx = \frac{\pi}{2}$ integralini (bkz. [Analiz 3](../analiz-3/parametreye-bagli-genellestirilmis-integraller.html#exm-pgi-dirichlet-integrali)) doğrudan hesaplamaya çalışmak başarısız olur. Çare, salınımı `quad`'a ağırlık olarak bildirmektir: `weight="sin", wvar=1` seçenekleri $\int g(x)\sin x\,dx$ biçimindeki integraller için özel bir yöntem kullanır.
+
+```python
+import math
+import warnings
+
+import numpy as np
+from scipy.integrate import quad
+
+
+def sinc(x):
+    return np.sinc(x / np.pi)             # sin(x)/x
+
+
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    print(quad(sinc, 0, np.inf))
+print(str(caught[0].message).splitlines()[0])
+
+# [0, 1] olağan; [1, oo) üzerinde 1/x, sin(x) ağırlığıyla
+part1, _ = quad(sinc, 0, 1)
+part2, _ = quad(lambda x: 1 / x, 1, np.inf, weight="sin", wvar=1)
+print(part1 + part2, math.pi / 2)
+```
+
+Çıktı:
+
+```text
+(2.2478679634674115, 3.2903230521899287)
+The integral is probably divergent, or slowly convergent.
+1.5707963268467806 1.5707963267948966
+```
+
+Doğrudan çağrı $2{,}25$ gibi yanlış bir değer ve "integral muhtemelen ıraksak ya da yavaş yakınsak" uyarısı verdi. İntegrali $[0, 1]$ ve $[1, \infty)$ olarak ikiye bölüp ikinci parçayı $g(x) = 1/x$ ve $\sin x$ ağırlığıyla hesaplayınca sonuç $\pi/2$'ye $5 \cdot 10^{-11}$ yakınlıkta çıktı.
+
+::: {.callout-tip title="quad ile güvenilir integral üç adımda"}
+1. İntegrandı incele: aralık sonsuz mu, integrand bir yerde sonsuza gidiyor mu, yavaş sönen bir salınımı var mı?
+2. Zorlukları `quad`'a bildir: tekil noktaları aralığın ucuna getir (aralığı böl ya da `points` ver), sonsuz aralığı ayrı bir parça yap, salınımlar için `weight` kullan.
+3. Uyarıları ve hata tahminini oku; sonucu bilinen bir değerle ya da başka bir yolla denetle.
+:::
+
+:::: {#exm-int-gamma name="Gamma Fonksiyonunun Yarımdaki Değeri"}
+$\Gamma(1/2) = \int_0^\infty t^{-1/2} e^{-t}\,dt$ değerini `quad` ile hesaplayın ve $\sqrt{\pi}$ ile karşılaştırın (bkz. [Analiz 3](../analiz-3/euler-integralleri.html#cor-eul-gamma-yarim)).
+
+::: {.cozum}
+**1. adım.** İntegrand $t = 0$'da sonsuza gider ve aralık sonsuzdur; iki zorluk birden vardır.
+
+**2. adım.** İntegrali $t = 1$'den bölüp iki parçayı ayrı hesaplarız: $[0, 1]$'de tekillik aralığın ucundadır, $[1, \infty)$'da integrand üstel olarak söner.
+
+```python
+import math
+
+import numpy as np
+from scipy.integrate import quad
+
+
+def g(t):
+    return np.exp(-t) / np.sqrt(t)
+
+
+left, err1 = quad(g, 0, 1)            # t = 0'da tekil
+right, err2 = quad(g, 1, np.inf)      # sonsuz aralık
+print(left, err1)
+print(right, err2)
+print(left + right)
+print(math.sqrt(math.pi), math.gamma(0.5))
+```
+
+Çıktı:
+
+```text
+1.4936482656248504 4.0730441241976223e-10
+0.2788055852806195 4.764513549588497e-09
+1.77245385090547
+1.7724538509055159 1.7724538509055159
+```
+
+**3. adım.** Uyarı çıkmadı ve iki parçanın hata tahminleri $10^{-9}$ mertebesinde kaldı. Toplam, $\sqrt{\pi}$ ile ve `math.gamma(0.5)` ile $5 \cdot 10^{-14}$ yakınlıkta uyuşuyor.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Katlı İntegraller: dblquad ve tplquad
+
+`quad`'ı iç içe kullanarak katlı integraller de hesaplanabilir; SciPy bunu hazır fonksiyonlarla yapar.
+
+::: {#def-int-dblquad name="dblquad ile İki Katlı İntegral"}
+`dblquad(func, a, b, gfun, hfun)` çağrısı
+
+$$\int_a^b \int_{g(x)}^{h(x)} \mathrm{func}(y, x)\,dy\,dx$$
+
+ardışık integralini hesaplar ve bir `(değer, hata)` ikilisi döndürür. `gfun` ve `hfun`, $x$'e bağlı alt ve üst sınırları veren fonksiyonlardır; sınırlar sabitse sayı olarak da verilebilirler. `func` fonksiyonunun **ilk** argümanı iç değişken $y$, ikincisi dış değişken $x$'tir.
+:::
+
+Yani `dblquad`, birinci tip bir bölgede (bkz. [İntegral Calculus](../integral-calculus/genel-bolgelerde-iki-katli-integraller.html#def-gbi-tip-1)) yazılan ardışık integrali (bkz. [İntegral Calculus](../integral-calculus/genel-bolgelerde-iki-katli-integraller.html#thm-gbi-tip-1-formul)) iç içe iki `quad` çağrısıyla hesaplar: dış integral $x$ üzerinden, iç integral $y$ üzerinden alınır.
+
+::: {.callout-warning title="dblquad'da argüman sırası"}
+`func(y, x)` sırası, matematikteki $f(x, y)$ alışkanlığının tersidir. `lambda x, y: ...` yazmak hata vermez ama sessizce başka bir integral hesaplar; integrand $x$ ile $y$'de simetrik değilse sonuç yanlış çıkar. `tplquad`'da sıra `func(z, y, x)`'tir: en içteki değişken her zaman önce gelir.
+:::
+
+:::: {#exm-int-iki-parabol name="İki Parabol Arasındaki Bölgede İntegral"}
+$D$, $y = 2x^2$ ve $y = 1 + x^2$ parabollerinin sınırladığı bölge olmak üzere $\iint_D (x + 2y)\,dA$ integralini `dblquad` ile hesaplayın. Bu integral İntegral Calculus notlarında elle hesaplanmış ve $\frac{32}{15}$ bulunmuştur (bkz. [İntegral Calculus](../integral-calculus/genel-bolgelerde-iki-katli-integraller.html#exm-gbi-iki-parabol)).
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="38.0 -11.5 376.0 359.5" role="img" aria-label="The region D between the parabolas y = 2x^2 (lower, gfun) and y = 1 + x^2 (upper, hfun) for x from a = -1 to b = 1, with a vertical arrow from the lower to the upper parabola">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="52.0" y1="297.3" x2="400.0" y2="297.3"/>
+  <line x1="226.0" y1="334.0" x2="226.0" y2="26.0"/>
+  <polygon points="400.0,297.3 392.0,293.8 392.0,300.8" stroke="none"/>
+  <polygon points="226.0,26.0 222.5,34.0 229.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="223.0" y1="188.2" x2="229.0" y2="188.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="219.0" y="192.2" text-anchor="end">1</text>
+  <line x1="223.0" y1="79.1" x2="229.0" y2="79.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="219.0" y="83.1" text-anchor="end">2</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="398.0" y="312.3" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="233.0" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="100.1,79.1 101.3,83.5 102.6,87.8 103.9,92.0 105.1,96.3 106.4,100.5 107.7,104.6 108.9,108.7 110.2,112.8 111.5,116.8 112.7,120.7 114.0,124.7 115.3,128.5 116.5,132.4 117.8,136.2 119.1,139.9 120.3,143.6 121.6,147.3 122.9,150.9 124.1,154.5 125.4,158.0 126.7,161.5 127.9,164.9 129.2,168.3 130.4,171.7 131.7,175.0 133.0,178.2 134.2,181.4 135.5,184.6 136.8,187.7 138.0,190.8 139.3,193.9 140.6,196.9 141.8,199.8 143.1,202.7 144.4,205.6 145.6,208.4 146.9,211.2 148.2,213.9 149.4,216.6 150.7,219.3 152.0,221.9 153.2,224.4 154.5,226.9 155.8,229.4 157.0,231.8 158.3,234.2 159.6,236.5 160.8,238.8 162.1,241.1 163.4,243.3 164.6,245.4 165.9,247.5 167.2,249.6 168.4,251.6 169.7,253.6 170.9,255.6 172.2,257.5 173.5,259.3 174.7,261.1 176.0,262.9 177.3,264.6 178.5,266.3 179.8,267.9 181.1,269.5 182.3,271.0 183.6,272.5 184.9,274.0 186.1,275.4 187.4,276.8 188.7,278.1 189.9,279.4 191.2,280.6 192.5,281.8 193.7,282.9 195.0,284.0 196.3,285.1 197.5,286.1 198.8,287.1 200.1,288.0 201.3,288.9 202.6,289.7 203.9,290.5 205.1,291.3 206.4,292.0 207.6,292.6 208.9,293.3 210.2,293.8 211.4,294.4 212.7,294.8 214.0,295.3 215.2,295.7 216.5,296.0 217.8,296.3 219.0,296.6 220.3,296.8 221.6,297.0 222.8,297.1 224.1,297.2 225.4,297.3 226.6,297.3 227.9,297.2 229.2,297.1 230.4,297.0 231.7,296.8 233.0,296.6 234.2,296.3 235.5,296.0 236.8,295.7 238.0,295.3 239.3,294.8 240.6,294.4 241.8,293.8 243.1,293.3 244.4,292.6 245.6,292.0 246.9,291.3 248.1,290.5 249.4,289.7 250.7,288.9 251.9,288.0 253.2,287.1 254.5,286.1 255.7,285.1 257.0,284.0 258.3,282.9 259.5,281.8 260.8,280.6 262.1,279.4 263.3,278.1 264.6,276.8 265.9,275.4 267.1,274.0 268.4,272.5 269.7,271.0 270.9,269.5 272.2,267.9 273.5,266.3 274.7,264.6 276.0,262.9 277.3,261.1 278.5,259.3 279.8,257.5 281.1,255.6 282.3,253.6 283.6,251.6 284.8,249.6 286.1,247.5 287.4,245.4 288.6,243.3 289.9,241.1 291.2,238.8 292.4,236.5 293.7,234.2 295.0,231.8 296.2,229.4 297.5,226.9 298.8,224.4 300.0,221.9 301.3,219.3 302.6,216.6 303.8,213.9 305.1,211.2 306.4,208.4 307.6,205.6 308.9,202.7 310.2,199.8 311.4,196.9 312.7,193.9 314.0,190.8 315.2,187.7 316.5,184.6 317.8,181.4 319.0,178.2 320.3,175.0 321.6,171.7 322.8,168.3 324.1,164.9 325.3,161.5 326.6,158.0 327.9,154.5 329.1,150.9 330.4,147.3 331.7,143.6 332.9,139.9 334.2,136.2 335.5,132.4 336.7,128.5 338.0,124.7 339.3,120.7 340.5,116.8 341.8,112.8 343.1,108.7 344.3,104.6 345.6,100.5 346.9,96.3 348.1,92.0 349.4,87.8 350.7,83.5 351.9,79.1 351.9,79.1 350.7,81.3 349.4,83.4 348.1,85.6 346.9,87.7 345.6,89.8 344.3,91.9 343.1,93.9 341.8,95.9 340.5,97.9 339.3,99.9 338.0,101.9 336.7,103.8 335.5,105.7 334.2,107.6 332.9,109.5 331.7,111.4 330.4,113.2 329.1,115.0 327.9,116.8 326.6,118.5 325.3,120.3 324.1,122.0 322.8,123.7 321.6,125.4 320.3,127.0 319.0,128.7 317.8,130.3 316.5,131.8 315.2,133.4 314.0,135.0 312.7,136.5 311.4,138.0 310.2,139.5 308.9,140.9 307.6,142.3 306.4,143.8 305.1,145.1 303.8,146.5 302.6,147.8 301.3,149.2 300.0,150.5 298.8,151.8 297.5,153.0 296.2,154.2 295.0,155.5 293.7,156.6 292.4,157.8 291.2,159.0 289.9,160.1 288.6,161.2 287.4,162.3 286.1,163.3 284.8,164.4 283.6,165.4 282.3,166.4 281.1,167.3 279.8,168.3 278.5,169.2 277.3,170.1 276.0,171.0 274.7,171.8 273.5,172.7 272.2,173.5 270.9,174.3 269.7,175.1 268.4,175.8 267.1,176.5 265.9,177.2 264.6,177.9 263.3,178.6 262.1,179.2 260.8,179.8 259.5,180.4 258.3,181.0 257.0,181.6 255.7,182.1 254.5,182.6 253.2,183.1 251.9,183.6 250.7,184.0 249.4,184.4 248.1,184.8 246.9,185.2 245.6,185.5 244.4,185.9 243.1,186.2 241.8,186.5 240.6,186.7 239.3,187.0 238.0,187.2 236.8,187.4 235.5,187.6 234.2,187.7 233.0,187.8 231.7,188.0 230.4,188.0 229.2,188.1 227.9,188.2 226.6,188.2 225.4,188.2 224.1,188.2 222.8,188.1 221.6,188.0 220.3,188.0 219.0,187.8 217.8,187.7 216.5,187.6 215.2,187.4 214.0,187.2 212.7,187.0 211.4,186.7 210.2,186.5 208.9,186.2 207.6,185.9 206.4,185.5 205.1,185.2 203.9,184.8 202.6,184.4 201.3,184.0 200.1,183.6 198.8,183.1 197.5,182.6 196.3,182.1 195.0,181.6 193.7,181.0 192.5,180.4 191.2,179.8 189.9,179.2 188.7,178.6 187.4,177.9 186.1,177.2 184.9,176.5 183.6,175.8 182.3,175.1 181.1,174.3 179.8,173.5 178.5,172.7 177.3,171.8 176.0,171.0 174.7,170.1 173.5,169.2 172.2,168.3 170.9,167.3 169.7,166.4 168.4,165.4 167.2,164.4 165.9,163.3 164.6,162.3 163.4,161.2 162.1,160.1 160.8,159.0 159.6,157.8 158.3,156.6 157.0,155.5 155.8,154.2 154.5,153.0 153.2,151.8 152.0,150.5 150.7,149.2 149.4,147.8 148.2,146.5 146.9,145.1 145.6,143.8 144.4,142.3 143.1,140.9 141.8,139.5 140.6,138.0 139.3,136.5 138.0,135.0 136.8,133.4 135.5,131.8 134.2,130.3 133.0,128.7 131.7,127.0 130.4,125.4 129.2,123.7 127.9,122.0 126.7,120.3 125.4,118.5 124.1,116.8 122.9,115.0 121.6,113.2 120.3,111.4 119.1,109.5 117.8,107.6 116.5,105.7 115.3,103.8 114.0,101.9 112.7,99.9 111.5,97.9 110.2,95.9 108.9,93.9 107.7,91.9 106.4,89.8 105.1,87.7 103.9,85.6 102.6,83.4 101.3,81.3 100.1,79.1" fill="var(--color-base)" fill-opacity="0.16" stroke="none" stroke-width="1.2"/>
+  <path d="M62.3,3.8 L63.6,6.7 L64.8,9.5 L66.1,12.3 L67.4,15.0 L68.6,17.8 L69.9,20.5 L71.1,23.2 L72.4,25.9 L73.7,28.6 L74.9,31.2 L76.2,33.8 L77.5,36.4 L78.7,39.0 L80.0,41.5 L81.3,44.1 L82.5,46.6 L83.8,49.0 L85.1,51.5 L86.3,53.9 L87.6,56.4 L88.8,58.8 L90.1,61.1 L91.4,63.5 L92.6,65.8 L93.9,68.1 L95.2,70.4 L96.4,72.7 L97.7,74.9 L99.0,77.1 L100.2,79.3 L101.5,81.5 L102.7,83.7 L104.0,85.8 L105.3,87.9 L106.5,90.0 L107.8,92.1 L109.1,94.1 L110.3,96.1 L111.6,98.1 L112.9,100.1 L114.1,102.1 L115.4,104.0 L116.7,105.9 L117.9,107.8 L119.2,109.7 L120.4,111.5 L121.7,113.4 L123.0,115.2 L124.2,116.9 L125.5,118.7 L126.8,120.4 L128.0,122.2 L129.3,123.8 L130.6,125.5 L131.8,127.2 L133.1,128.8 L134.4,130.4 L135.6,132.0 L136.9,133.5 L138.1,135.1 L139.4,136.6 L140.7,138.1 L141.9,139.6 L143.2,141.0 L144.5,142.4 L145.7,143.9 L147.0,145.2 L148.3,146.6 L149.5,147.9 L150.8,149.3 L152.0,150.6 L153.3,151.8 L154.6,153.1 L155.8,154.3 L157.1,155.5 L158.4,156.7 L159.6,157.9 L160.9,159.0 L162.2,160.1 L163.4,161.2 L164.7,162.3 L166.0,163.4 L167.2,164.4 L168.5,165.4 L169.7,166.4 L171.0,167.4 L172.3,168.3 L173.5,169.2 L174.8,170.1 L176.1,171.0 L177.3,171.9 L178.6,172.7 L179.9,173.5 L181.1,174.3 L182.4,175.1 L183.7,175.8 L184.9,176.6 L186.2,177.3 L187.4,178.0 L188.7,178.6 L190.0,179.3 L191.2,179.9 L192.5,180.5 L193.8,181.0 L195.0,181.6 L196.3,182.1 L197.6,182.6 L198.8,183.1 L200.1,183.6 L201.3,184.0 L202.6,184.4 L203.9,184.8 L205.1,185.2 L206.4,185.5 L207.7,185.9 L208.9,186.2 L210.2,186.5 L211.5,186.7 L212.7,187.0 L214.0,187.2 L215.3,187.4 L216.5,187.6 L217.8,187.7 L219.0,187.8 L220.3,188.0 L221.6,188.0 L222.8,188.1 L224.1,188.2 L225.4,188.2 L226.6,188.2 L227.9,188.2 L229.2,188.1 L230.4,188.0 L231.7,188.0 L233.0,187.8 L234.2,187.7 L235.5,187.6 L236.7,187.4 L238.0,187.2 L239.3,187.0 L240.5,186.7 L241.8,186.5 L243.1,186.2 L244.3,185.9 L245.6,185.5 L246.9,185.2 L248.1,184.8 L249.4,184.4 L250.7,184.0 L251.9,183.6 L253.2,183.1 L254.4,182.6 L255.7,182.1 L257.0,181.6 L258.2,181.0 L259.5,180.5 L260.8,179.9 L262.0,179.3 L263.3,178.6 L264.6,178.0 L265.8,177.3 L267.1,176.6 L268.3,175.8 L269.6,175.1 L270.9,174.3 L272.1,173.5 L273.4,172.7 L274.7,171.9 L275.9,171.0 L277.2,170.1 L278.5,169.2 L279.7,168.3 L281.0,167.4 L282.3,166.4 L283.5,165.4 L284.8,164.4 L286.0,163.4 L287.3,162.3 L288.6,161.2 L289.8,160.1 L291.1,159.0 L292.4,157.9 L293.6,156.7 L294.9,155.5 L296.2,154.3 L297.4,153.1 L298.7,151.8 L300.0,150.6 L301.2,149.3 L302.5,147.9 L303.7,146.6 L305.0,145.2 L306.3,143.9 L307.5,142.4 L308.8,141.0 L310.1,139.6 L311.3,138.1 L312.6,136.6 L313.9,135.1 L315.1,133.5 L316.4,132.0 L317.6,130.4 L318.9,128.8 L320.2,127.2 L321.4,125.5 L322.7,123.8 L324.0,122.2 L325.2,120.4 L326.5,118.7 L327.8,116.9 L329.0,115.2 L330.3,113.4 L331.6,111.5 L332.8,109.7 L334.1,107.8 L335.3,105.9 L336.6,104.0 L337.9,102.1 L339.1,100.1 L340.4,98.1 L341.7,96.1 L342.9,94.1 L344.2,92.1 L345.5,90.0 L346.7,87.9 L348.0,85.8 L349.3,83.7 L350.5,81.5 L351.8,79.3 L353.0,77.1 L354.3,74.9 L355.6,72.7 L356.8,70.4 L358.1,68.1 L359.4,65.8 L360.6,63.5 L361.9,61.1 L363.2,58.8 L364.4,56.4 L365.7,53.9 L366.9,51.5 L368.2,49.0 L369.5,46.6 L370.7,44.1 L372.0,41.5 L373.3,39.0 L374.5,36.4 L375.8,33.8 L377.1,31.2 L378.3,28.6 L379.6,25.9 L380.9,23.2 L382.1,20.5 L383.4,17.8 L384.6,15.0 L385.9,12.3 L387.2,9.5 L388.4,6.7 L389.7,3.8" fill="none" stroke="var(--color-theory)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M87.5,33.3 L88.7,38.1 L90.0,42.8 L91.3,47.5 L92.5,52.2 L93.8,56.8 L95.1,61.4 L96.3,65.9 L97.6,70.4 L98.9,74.9 L100.1,79.3 L101.4,83.6 L102.7,88.0 L103.9,92.2 L105.2,96.5 L106.5,100.6 L107.7,104.8 L109.0,108.9 L110.3,112.9 L111.5,116.9 L112.8,120.9 L114.0,124.8 L115.3,128.7 L116.6,132.5 L117.8,136.3 L119.1,140.1 L120.4,143.8 L121.6,147.4 L122.9,151.0 L124.2,154.6 L125.4,158.1 L126.7,161.6 L128.0,165.0 L129.2,168.4 L130.5,171.8 L131.8,175.1 L133.0,178.3 L134.3,181.5 L135.6,184.7 L136.8,187.8 L138.1,190.9 L139.3,194.0 L140.6,197.0 L141.9,199.9 L143.1,202.8 L144.4,205.7 L145.7,208.5 L146.9,211.3 L148.2,214.0 L149.5,216.7 L150.7,219.3 L152.0,221.9 L153.3,224.5 L154.5,227.0 L155.8,229.5 L157.1,231.9 L158.3,234.3 L159.6,236.6 L160.9,238.9 L162.1,241.1 L163.4,243.3 L164.6,245.5 L165.9,247.6 L167.2,249.7 L168.4,251.7 L169.7,253.7 L171.0,255.6 L172.2,257.5 L173.5,259.4 L174.8,261.2 L176.0,262.9 L177.3,264.6 L178.6,266.3 L179.8,267.9 L181.1,269.5 L182.4,271.1 L183.6,272.6 L184.9,274.0 L186.2,275.4 L187.4,276.8 L188.7,278.1 L189.9,279.4 L191.2,280.6 L192.5,281.8 L193.7,283.0 L195.0,284.1 L196.3,285.1 L197.5,286.1 L198.8,287.1 L200.1,288.0 L201.3,288.9 L202.6,289.7 L203.9,290.5 L205.1,291.3 L206.4,292.0 L207.7,292.6 L208.9,293.3 L210.2,293.8 L211.5,294.4 L212.7,294.8 L214.0,295.3 L215.2,295.7 L216.5,296.0 L217.8,296.3 L219.0,296.6 L220.3,296.8 L221.6,297.0 L222.8,297.1 L224.1,297.2 L225.4,297.3 L226.6,297.3 L227.9,297.2 L229.2,297.1 L230.4,297.0 L231.7,296.8 L233.0,296.6 L234.2,296.3 L235.5,296.0 L236.8,295.7 L238.0,295.3 L239.3,294.8 L240.5,294.4 L241.8,293.8 L243.1,293.3 L244.3,292.6 L245.6,292.0 L246.9,291.3 L248.1,290.5 L249.4,289.7 L250.7,288.9 L251.9,288.0 L253.2,287.1 L254.5,286.1 L255.7,285.1 L257.0,284.1 L258.3,283.0 L259.5,281.8 L260.8,280.6 L262.1,279.4 L263.3,278.1 L264.6,276.8 L265.8,275.4 L267.1,274.0 L268.4,272.6 L269.6,271.1 L270.9,269.5 L272.2,267.9 L273.4,266.3 L274.7,264.6 L276.0,262.9 L277.2,261.2 L278.5,259.4 L279.8,257.5 L281.0,255.6 L282.3,253.7 L283.6,251.7 L284.8,249.7 L286.1,247.6 L287.4,245.5 L288.6,243.3 L289.9,241.1 L291.1,238.9 L292.4,236.6 L293.7,234.3 L294.9,231.9 L296.2,229.5 L297.5,227.0 L298.7,224.5 L300.0,221.9 L301.3,219.3 L302.5,216.7 L303.8,214.0 L305.1,211.3 L306.3,208.5 L307.6,205.7 L308.9,202.8 L310.1,199.9 L311.4,197.0 L312.7,194.0 L313.9,190.9 L315.2,187.8 L316.4,184.7 L317.7,181.5 L319.0,178.3 L320.2,175.1 L321.5,171.8 L322.8,168.4 L324.0,165.0 L325.3,161.6 L326.6,158.1 L327.8,154.6 L329.1,151.0 L330.4,147.4 L331.6,143.8 L332.9,140.1 L334.2,136.3 L335.4,132.5 L336.7,128.7 L338.0,124.8 L339.2,120.9 L340.5,116.9 L341.7,112.9 L343.0,108.9 L344.3,104.8 L345.5,100.6 L346.8,96.5 L348.1,92.2 L349.3,88.0 L350.6,83.6 L351.9,79.3 L353.1,74.9 L354.4,70.4 L355.7,65.9 L356.9,61.4 L358.2,56.8 L359.5,52.2 L360.7,47.5 L362.0,42.8 L363.3,38.1 L364.5,33.3" fill="none" stroke="var(--color-practice)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="282.7" y1="253.1" x2="282.7" y2="172.5" stroke="var(--academic-text)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="282.7,166.1 286.0,174.1 279.3,174.1" fill="var(--academic-text)" opacity="1.0"/>
+  <circle cx="282.7" cy="253.1" r="3.0" fill="var(--academic-text)"/>
+  <line x1="100.1" y1="297.3" x2="100.1" y2="79.1" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+  <line x1="351.9" y1="297.3" x2="351.9" y2="79.1" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+  <circle cx="100.1" cy="79.1" r="3.4" fill="var(--academic-text)"/>
+  <circle cx="351.9" cy="79.1" r="3.4" fill="var(--academic-text)"/>
+  <text x="100.1" y="313.3" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">a</tspan> = &#8722;1</text>
+  <text x="351.9" y="313.3" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">b</tspan> = 1</text>
+  <text x="282.7" y="313.3" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">x</tspan></text>
+  <line x1="282.7" y1="297.3" x2="282.7" y2="253.1" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+  <text x="175.6" y="106.4" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">hfun: 1 + <tspan font-style="italic">x</tspan>²</text>
+  <text x="314.1" y="221.4" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">gfun: 2<tspan font-style="italic">x</tspan>²</text>
+  <text x="169.3" y="204.5" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">D</tspan></text>
+</svg>
+<figcaption><code>dblquad</code> örneğindeki <em>D</em> bölgesi. Dış integral <em>x</em>'i <em>a</em> = &#8722;1'den <em>b</em> = 1'e götürür; her <em>x</em> için iç integral <em>y</em>'yi alttaki <code>gfun(x)</code> = 2<em>x</em>² parabolünden üstteki <code>hfun(x)</code> = 1 + <em>x</em>² parabolüne kadar tarar (ok).</figcaption>
+</figure>
+```
+
+::: {.cozum}
+**Sınırlar.** Paraboller $2x^2 = 1 + x^2$, yani $x = \pm 1$ iken kesişir. $-1 \le x \le 1$ için $x^2 \le 1$ olduğundan alttaki parabol $y = 2x^2$, üstteki $y = 1 + x^2$'dir. Dolayısıyla $a = -1$, $b = 1$, `gfun` fonksiyonu $2x^2$ ve `hfun` fonksiyonu $1 + x^2$'dir.
+
+**Kod.**
+
+```python
+from fractions import Fraction
+
+from scipy.integrate import dblquad
+
+value, err = dblquad(lambda y, x: x + 2 * y,       # önce y, sonra x
+                     -1, 1,                        # x sınırları
+                     lambda x: 2 * x**2,           # alttaki parabol
+                     lambda x: 1 + x**2)           # üstteki parabol
+print(value, err)
+print(float(Fraction(32, 15)))
+```
+
+Çıktı:
+
+```text
+2.1333333333333333 2.3684757858670007e-14
+2.1333333333333333
+```
+
+**Sonuç.** `dblquad`, $\frac{32}{15} = 2{,}1333\ldots$ değerini $10^{-14}$ mertebesinde bir hata tahminiyle verdi; elle yapılan hesapla aynı.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {#def-int-tplquad name="tplquad ile Üç Katlı İntegral"}
+`tplquad(func, a, b, gfun, hfun, qfun, rfun)` çağrısı
+
+$$\int_a^b \int_{g(x)}^{h(x)} \int_{q(x, y)}^{r(x, y)} \mathrm{func}(z, y, x)\,dz\,dy\,dx$$
+
+ardışık integralini hesaplar. `gfun` ve `hfun` $x$'e, `qfun` ve `rfun` ise $x$ ile $y$'ye bağlı sınırlardır; sabit sınırlar sayı olarak verilebilir.
+:::
+
+Yani `tplquad`, tip 1 bir cisim için (bkz. [İntegral Calculus](../integral-calculus/uc-katli-integraller.html#def-uki-tip-1)) yazılan ardışık integrali hesaplar: en içte $z$, ortada $y$, dışta $x$ üzerinden integral alınır.
+
+:::: {#exm-int-12xy name="Bir Yüzeyin Altındaki Cisimde Üç Katlı İntegral"}
+$E$, birinci oktantta $z = 12xy$ yüzeyi ile $y = x$, $x = 1$ ve $z = 0$ düzlemleri arasında kalan cisim olsun. $\iiint_E z\,dV$ integralini `tplquad` ile hesaplayın ve İntegral Calculus notlarında bulunan $4$ sonucuyla karşılaştırın (bkz. [İntegral Calculus](../integral-calculus/uc-katli-integraller.html#exm-uki-z-12xy)).
+
+::: {.cozum}
+**Sınırlar.** Cisim $0 \le x \le 1$, $0 \le y \le x$ ve $0 \le z \le 12xy$ eşitsizlikleriyle betimlenir. Sabit alt sınırları doğrudan `0` olarak yazarız:
+
+```python
+from scipy.integrate import tplquad
+
+value, err = tplquad(lambda z, y, x: z,
+                     0, 1,                           # x sınırları
+                     0, lambda x: x,                 # y sınırları
+                     0, lambda x, y: 12 * x * y)     # z sınırları
+print(value, err)
+```
+
+Çıktı:
+
+```text
+4.0 7.890024717707689e-13
+```
+
+**Sonuç.** Değer $4$, hata tahmini $10^{-12}$ mertebesinde; elle bulunan sonuçla aynı.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Dört ve daha çok katlı integraller için `scipy.integrate.nquad` vardır. Ancak boyut arttıkça iç içe kuralların maliyeti üstel büyür: her boyutta 21 nokta kullanılırsa $d$ boyutta en az $21^d$ fonksiyon değeri gerekir. Yüksek boyutlarda bu yüzden Monte Carlo yöntemleri tercih edilir (bkz. [Rastgele Sayılar ve Monte Carlo Yöntemleri](rastgele-sayilar-ve-monte-carlo.qmd)).
+
+## Alıştırmalar
+
+:::: {#exr-int-kup name="Küp Fonksiyonunda İleri Farkın Hatası"}
+$f(x) = x^3$ için $x = 2$'deki ileri fark bölümünün hatasının tam olarak $6h + h^2$ olduğunu gösterin ve bunu $h = 0{,}1;\ 0{,}01;\ 0{,}001$ için Python ile doğrulayın.
+
+::: {.cozum}
+**Hesap.** $(2 + h)^3 = 8 + 12h + 6h^2 + h^3$ olduğundan
+
+$$D_h^{+} f(2) = \frac{(2 + h)^3 - 8}{h} = 12 + 6h + h^2$$
+
+olur. $f'(2) = 3 \cdot 2^2 = 12$ olduğundan hata $6h + h^2$'dir. Bu, @prp-int-kesme-hatasi ile uyumludur: $f''(\xi) = 6\xi$ olduğundan $\frac{h}{2} f''(\xi) = 3h\xi$'dir ve $\xi = 2 + h/3$ için $3h\xi = 6h + h^2$ olur.
+
+**Kod.**
+
+```python
+def f(x):
+    return x**3
+
+
+x = 2.0
+for h in [0.1, 0.01, 0.001]:
+    err = (f(x + h) - f(x)) / h - 12.0     # f'(2) = 12
+    print(f"h = {h:5.3f}   hata = {err:.10f}"
+          f"   6h + h^2 = {6 * h + h**2:.10f}   hata/h = {err / h:.4f}")
+```
+
+Çıktı:
+
+```text
+h = 0.100   hata = 0.6100000000   6h + h^2 = 0.6100000000   hata/h = 6.1000
+h = 0.010   hata = 0.0601000000   6h + h^2 = 0.0601000000   hata/h = 6.0100
+h = 0.001   hata = 0.0060010000   6h + h^2 = 0.0060010000   hata/h = 6.0010
+```
+
+**Sonuç.** Kayan noktalı hesap on ondalık basamağa kadar formülle aynı. Hata $h$ ile orantılıdır ve hata bölü $h$ oranı $f''(2)/2 = 6$'ya yaklaşır: ileri fark birinci mertebedendir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-bes-nokta name="Beş Noktalı Merkezi Fark"}
+Beş noktalı merkezi fark formülü
+
+$$f'(x) \approx \frac{f(x - 2h) - 8f(x - h) + 8f(x + h) - f(x + 2h)}{12h}$$
+
+ile verilir ve kesme hatası $\frac{h^4}{30}\,|f^{(5)}(\xi)|$ kadardır. $f(x) = \sin x$ için $x = 1$'de bu formülü $h = 10^{-1}, \dots, 10^{-6}$ adımlarıyla deneyin. Hatanın $h^4$ ile küçüldüğü adımları ve en iyi adımı bulun.
+
+::: {.cozum}
+**Toplam hata.** Formüldeki katsayıların mutlak değerlerinin toplamı $1 + 8 + 8 + 1 = 18$'dir. Her fonksiyon değeri en çok $\delta$ kadar yanlışsa yuvarlamadan gelen hata en çok $\frac{18\delta}{12h} = \frac{3\delta}{2h}$ olur. Toplam hata sınırı $E(h) = \frac{M_5 h^4}{30} + \frac{3\delta}{2h}$'dir. $E'(h) = \frac{4 M_5 h^3}{30} - \frac{3\delta}{2h^2} = 0$ denklemi $h^5 = \frac{45\delta}{4M_5}$ verir. $\delta = \varepsilon \sin 1$ ve $M_5 = \cos 1$ alırız.
+
+**Kod.**
+
+```python
+import math
+
+
+def five_point(f, x, h):
+    """Beş noktalı merkezi fark formülü."""
+    return (f(x - 2 * h) - 8 * f(x - h)
+            + 8 * f(x + h) - f(x + 2 * h)) / (12 * h)
+
+
+x = 1.0
+exact = math.cos(x)
+old = None
+for k in range(1, 7):
+    h = 10.0**-k
+    err = abs(five_point(math.sin, x, h) - exact)
+    ratio = f"{old / err:8.0f}" if old else "       -"
+    print(f"h = {h:6.0e}   hata = {err:.3e}   oran = {ratio}")
+    old = err
+eps = 2.0**-52
+h_best = (45 * eps * math.sin(x) / (4 * math.cos(x))) ** (1 / 5)
+print(f"teorik en iyi h = {h_best:.1e}")
+```
+
+Çıktı:
+
+```text
+h =  1e-01   hata = 1.799e-06   oran =        -
+h =  1e-02   hata = 1.801e-10   oran =     9988
+h =  1e-03   hata = 1.497e-13   oran =     1203
+h =  1e-04   hata = 5.385e-14   oran =        3
+h =  1e-05   hata = 4.665e-12   oran =        0
+h =  1e-06   hata = 1.847e-11   oran =        0
+teorik en iyi h = 1.3e-03
+```
+
+**Sonuç.** $h = 10^{-1}$'den $10^{-2}$'ye geçerken hata yaklaşık $10^4$ kat küçülüyor: formül dördüncü mertebedendir. $h = 10^{-1}$'deki hata da $\frac{h^4}{30}\cos 1 \approx 1{,}80 \cdot 10^{-6}$ tahminiyle uyuşuyor. $h = 10^{-3}$'te yuvarlama hatası öne geçmeye başlıyor ve oran düşüyor: bu adımda kesme hatası yalnız $1{,}8 \cdot 10^{-14}$ kadardır, gerçek hata ise $1{,}5 \cdot 10^{-13}$'tür. Teorik en iyi adım $1{,}3 \cdot 10^{-3}$'tür. Gerçekten de en küçük hatalar $10^{-3}$ ve $10^{-4}$ adımlarında, $10^{-13}$ mertebesinde çıktı. Merkezi farkla ulaşılabilen en iyi hata $\varepsilon^{2/3} \approx 10^{-11}$ mertebesindeydi; dört fonksiyon değeri kullanan bu formül yaklaşık yüz kat daha iyi sonuç veriyor.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-karmasik-adim name="Karmaşık Adımla Türev"}
+$f$, gerçel eksende gerçel değerler alan analitik bir fonksiyon olsun. Taylor açılımından $f'(x) \approx \mathrm{Im}\, f(x + ih)/h$ yaklaşımının hatasının $h^2$ mertebesinde olduğunu gösterin. Bu **karmaşık adım** (complex step) yaklaşımını $f(x) = e^x \sin x$ için $x = 1$'de $h = 10^{-2}$, $10^{-5}$, $10^{-10}$, $10^{-20}$ ve $10^{-100}$ adımlarıyla deneyin ve $h$ çok küçükken bile sadeleşme hatası oluşmamasının nedenini açıklayın.
+
+::: {.cozum}
+**Taylor açılımı.** $i^2 = -1$ ve $i^3 = -i$ olduğundan
+
+$$f(x + ih) = f(x) + ih f'(x) - \frac{h^2}{2} f''(x) - i\,\frac{h^3}{6} f'''(x) + \cdots$$
+
+olur. $x$ gerçel ve $f$'nin türevleri gerçel olduğundan sanal kısım $h f'(x) - \frac{h^3}{6} f'''(x) + \cdots$'dır. $h$'ye bölünce
+
+$$\frac{\mathrm{Im}\, f(x + ih)}{h} = f'(x) - \frac{h^2}{6} f'''(x) + \cdots$$
+
+bulunur; hata $h^2$ mertebesindedir.
+
+**Kod.** `np.exp` ve `np.sin` karmaşık sayılarla da çalışır; `math.exp` ve `math.sin` çalışmaz. Kesin türev $f'(x) = e^x(\sin x + \cos x)$'tir.
+
+```python
+import math
+
+import numpy as np
+
+
+def f(z):
+    return np.exp(z) * np.sin(z)       # karmaşık sayılarla da çalışır
+
+
+x = 1.0
+exact = math.e * (math.sin(1) + math.cos(1))
+for h in [1e-2, 1e-5, 1e-10, 1e-20, 1e-100]:
+    d = f(x + 1j * h).imag / h
+    print(f"h = {h:7.0e}   türev = {d:.16f}   hata = {abs(d - exact):.1e}")
+```
+
+Çıktı:
+
+```text
+h =   1e-02   türev = 3.7560765145542852   hata = 2.7e-05
+h =   1e-05   türev = 3.7560492271220163   hata = 2.7e-11
+h =   1e-10   türev = 3.7560492270947270   hata = 4.4e-16
+h =   1e-20   türev = 3.7560492270947274   hata = 0.0e+00
+h =  1e-100   türev = 3.7560492270947279   hata = 4.4e-16
+```
+
+**Sonuç.** Formülde birbirine yakın iki sayının farkı yoktur: $h f'(x)$ terimi sanal kısım olarak doğrudan hesaplanır. Bu yüzden yuvarlama hatası $h$ küçüldükçe büyümez. $h \le 10^{-10}$ için kesme hatası ($h^2$ mertebesinde) makine duyarlığının altına düşer ve sonuç son basamağına kadar doğru çıkar; $h = 10^{-100}$ bile sorun yaratmaz. Yöntemin bedeli, $f$'nin karmaşık sayılarla hesaplanabilmesinin gerekmesidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-ivme name="Yuvarlanmış Ölçümlerden İvme"}
+Yukarı atılan bir topun yüksekliği $s(t) = 20t - 4{,}9t^2$ metre olsun. Yükseklik $[0, 4]$ saniye aralığında $\Delta t$ aralıklarla ölçülüp santimetreye yuvarlanmış olsun. `np.gradient`'i iki kez uygulayarak hızı ve ivmeyi $\Delta t = 0{,}1;\ 0{,}05;\ 0{,}01$ için hesaplayın ve en büyük hataları kesin değerler $v(t) = 20 - 9{,}8t$ ve $a = -9{,}8$ ile karşılaştırın.
+
+::: {.cozum}
+**Kesme hatası yok.** $s$ ikinci dereceden bir polinomdur; `np.gradient` (`edge_order=2` ile) böyle bir fonksiyonun türevini tam verir. Hızın kendisi de birinci dereceden olduğundan ikinci uygulama da tamdır. Demek ki bütün hata yükseklik değerlerinin yuvarlanmasından gelir.
+
+**Kod.**
+
+```python
+import numpy as np
+
+for dt in [0.1, 0.05, 0.01]:
+    t = np.arange(0, 4 + dt / 2, dt)
+    s = np.round(20 * t - 4.9 * t**2, 2)      # santimetreye yuvarlanmış
+    v = np.gradient(s, t, edge_order=2)
+    a = np.gradient(v, t, edge_order=2)
+    err_v = np.abs(v - (20 - 9.8 * t)).max()
+    err_a = np.abs(a + 9.8).max()
+    print(f"dt = {dt:4.2f}   hız hatası = {err_v:.3f}"
+          f"   ivme hatası = {err_a:.2f}")
+```
+
+Çıktı:
+
+```text
+dt = 0.10   hız hatası = 0.040   ivme hatası = 0.45
+dt = 0.05   hız hatası = 0.100   ivme hatası = 3.20
+dt = 0.01   hız hatası = 0.464   ivme hatası = 40.20
+```
+
+**Sonuç.** Ölçüm aralığı küçüldükçe hatalar büyüyor. Yuvarlama hatası en çok $\delta = 0{,}005$ metredir. Hızda bu hata $\delta/\Delta t$ ile, ivmede iki kez bölündüğü için $\delta/\Delta t^2$ ile büyür: $\Delta t$ on kat küçülünce ivme hatası yaklaşık yüz kat büyüdü ($0{,}45$'ten $40{,}2$'ye). Türev almak verideki hatayı büyütür. Gürültülü bir veriden türev alırken çözüm aralığı küçültmek değil, veriye önce düzgün bir eğri uydurmaktır (bkz. [Polinomlar, İnterpolasyon ve Eğri Uydurma](interpolasyon-ve-egri-uydurma.qmd)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-yamuk-sinir name="Yamuk Kuralı İçin Yeterli Alt Aralık Sayısı"}
+$\int_0^1 e^x\,dx$ integralini bileşik yamuk kuralıyla $10^{-6}$'dan küçük hatayla hesaplamak için @prp-int-bilesik-hata sınırına göre kaç alt aralık yeter? Bu sayı için gerçek hatayı hesaplayın ve gerçekte yeten en küçük alt aralık sayısını Python ile bulun.
+
+::: {.cozum}
+**Sınır.** $[0, 1]$'de $|f''(x)| = e^x \le e$ ve $h = 1/n$ olduğundan hata en çok $\frac{e}{12 n^2}$'dir. $\frac{e}{12 n^2} \le 10^{-6}$ eşitsizliği $n \ge \sqrt{e/(12 \cdot 10^{-6})} \approx 475{,}9$ verir; sınır $n = 476$'yı önerir.
+
+**Kod.** Kesin değer $e - 1$'dir. Gerçekte yeten en küçük $n$'yi $n = 1$'den başlayıp sayarak buluruz:
+
+```python
+import math
+
+import numpy as np
+
+
+def trap_error(n):
+    x = np.linspace(0, 1, n + 1)
+    return abs(np.trapezoid(np.exp(x), x) - (math.e - 1))
+
+
+tol = 1e-6
+n_bound = math.ceil(math.sqrt(math.e / (12 * tol)))
+print("sınırın verdiği n:", n_bound, "  hata:", trap_error(n_bound))
+n = 1
+while trap_error(n) > tol:
+    n += 1
+print("yeterli en küçük n:", n, "  hata:", trap_error(n))
+print("bir eksiği:", n - 1, "  hata:", trap_error(n - 1))
+```
+
+Çıktı:
+
+```text
+sınırın verdiği n: 476   hata: 6.319740037952215e-07
+yeterli en küçük n: 379   hata: 9.96861172941621e-07
+bir eksiği: 378   hata: 1.0021425469464162e-06
+```
+
+**Sonuç.** Sınırın önerdiği $n = 476$'da hata $6{,}3 \cdot 10^{-7}$'dir; gerçekte $n = 379$ yeter. Sınır kötümserdir, çünkü $f''$ yerine onun $[0, 1]$'deki en büyük değeri $e$'yi kullanır. Oysa $f''(\mu)$ değeri $f''$'nin bir ortalamasıdır ve $e^x$'in $[0, 1]$'deki ortalaması $e - 1 \approx 1{,}72$'dir. Sınırdaki $e$ yerine bu değer yazılırsa $n \ge 378{,}4$ bulunur; bu da gerçekte yeten $n = 379$ ile uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-simpson-hiz name="Simpson Kuralında Beklenmedik Hız"}
+$\int_0^1 \frac{4}{1 + x^2}\,dx = \pi$ integralini `simpson` ile $n = 2, 4, 8, 16, 32, 64$ alt aralık için hesaplayın. Ardışık hataların oranına bakın ve beklenen $16$ yerine neden başka bir oran çıktığını açıklayın.
+
+::: {.cozum}
+**Kod.** Hataların yanında $f'''$'nün uç noktalardaki değerlerini SymPy ile hesaplıyoruz; nedenini birazdan göreceğiz:
+
+```python
+import math
+
+import numpy as np
+import sympy as sp
+from scipy.integrate import simpson
+
+old = None
+for n in [2, 4, 8, 16, 32, 64]:
+    x = np.linspace(0, 1, n + 1)
+    err = abs(simpson(4 / (1 + x**2), x=x) - math.pi)
+    ratio = f"{old / err:6.1f}" if old else "     -"
+    print(f"n = {n:2d}   hata = {err:.3e}   oran = {ratio}")
+    old = err
+
+t = sp.symbols("t")
+d3 = sp.diff(4 / (1 + t**2), t, 3)
+print(d3.subs(t, 0), d3.subs(t, 1))
+```
+
+Çıktı:
+
+```text
+n =  2   hata = 8.259e-03   oran =      -
+n =  4   hata = 2.403e-05   oran =  343.8
+n =  8   hata = 1.511e-07   oran =  159.0
+n = 16   hata = 2.365e-09   oran =   63.9
+n = 32   hata = 3.696e-11   oran =   64.0
+n = 64   hata = 5.773e-13   oran =   64.0
+0 0
+```
+
+**Oran.** Küçük $n$'lerden sonra oran $16$ değil, $64 = 2^6$ çıkıyor: hata $h^6$ ile küçülüyor.
+
+**Açıklama.** @prp-int-bilesik-hata hatayı $-\frac{(b - a)h^4}{180} f^{(4)}(\mu)$ olarak verir. İspattaki toplam bir Riemann toplamı gibidir: $(b - a) f^{(4)}(\mu)$, $\int_a^b f^{(4)}(x)\,dx = f'''(b) - f'''(a)$ değerine yaklaşır. Daha ayrıntılı bir analiz (Euler–Maclaurin formülü) hatanın
+
+$$\int_a^b f(x)\,dx - S_n = -\frac{h^4}{180}\big[f'''(b) - f'''(a)\big] + O(h^6)$$
+
+biçiminde açıldığını gösterir. Burada $f'''(0) = f'''(1) = 0$ olduğu için $h^4$ terimi yok olur ve geriye $h^6$ mertebesindeki terim kalır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-periyodik name="Periyodik Fonksiyonda Yamuk Kuralı"}
+$\int_0^{2\pi} e^{\cos x}\,dx = 2\pi I_0(1)$'dir; burada $I_0$, `scipy.special.i0` ile hesaplanan değiştirilmiş Bessel fonksiyonudur. Bu integrali yamuk kuralıyla $n = 2, 4, 8, 16, 32$ alt aralık için hesaplayın ve hatanın neden $h^2$'den çok daha hızlı küçüldüğünü açıklayın.
+
+::: {.cozum}
+**Kod.**
+
+```python
+import numpy as np
+from scipy.special import i0
+
+exact = 2 * np.pi * i0(1)
+print(exact)
+for n in [2, 4, 8, 16, 32]:
+    x = np.linspace(0, 2 * np.pi, n + 1)
+    err = abs(np.trapezoid(np.exp(np.cos(x)), x) - exact)
+    print(f"n = {n:2d}   hata = {err:.1e}")
+```
+
+Çıktı:
+
+```text
+7.954926521012844
+n =  2   hata = 1.7e+00
+n =  4   hata = 3.4e-02
+n =  8   hata = 1.3e-06
+n = 16   hata = 0.0e+00
+n = 32   hata = 0.0e+00
+```
+
+**Açıklama.** Hata $n = 4$'ten $n = 8$'e geçerken yirmi binden fazla kat küçüldü; $n = 16$'da makine duyarlığına ulaştı. Simpson kuralındaki akıl yürütmenin yamuk kuralı için karşılığı, hatanın
+
+$$\int_a^b f(x)\,dx - T_n = -\frac{h^2}{12}\big[f'(b) - f'(a)\big] + O(h^4)$$
+
+biçiminde açılmasıdır; sonraki terimler de $f'''$, $f^{(5)}, \dots$ türevlerinin uç noktalardaki değerlerinin farklarını içerir. $e^{\cos x}$ fonksiyonu $2\pi$ periyotlu ve sonsuz kez türevlenebilir olduğundan bütün türevleri $0$ ile $2\pi$'de aynı değeri alır. Bu yüzden açılımın bütün terimleri yok olur ve hata $h$'nin her kuvvetinden hızlı küçülür. Periyodik fonksiyonların tam periyot üzerindeki integralinde en iyi kural, en basit kural olan yamuk kuralıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-yay name="Sinüs Eğrisinin Uzunluğu"}
+$y = \sin x$ eğrisinin $0 \le x \le \pi$ arasındaki yayının uzunluğunu
+
+$$L = \int_0^\pi \sqrt{1 + \cos^2 x}\,dx$$
+
+formülüyle `quad` kullanarak hesaplayın. Sonucu, eğri üzerindeki $n + 1$ eşit aralıklı noktayı birleştiren kırık çizgilerin $n = 4, 16, 64, 256$ için uzunluklarıyla karşılaştırın.
+
+::: {.cozum}
+**Kırık çizgi.** Ardışık noktalar arasındaki kirişin boyu $\sqrt{(\Delta x)^2 + (\Delta y)^2}$'dir; `np.diff` farkları, `np.hypot` bu karekökü verir.
+
+```python
+import numpy as np
+from scipy.integrate import quad
+
+L, err = quad(lambda x: np.sqrt(1 + np.cos(x)**2), 0, np.pi)
+print(L, err)
+for n in [4, 16, 64, 256]:
+    x = np.linspace(0, np.pi, n + 1)
+    chords = np.hypot(np.diff(x), np.diff(np.sin(x)))   # kiriş boyları
+    print(f"n = {n:3d}   kırık çizgi = {chords.sum():.10f}"
+          f"   fark = {L - chords.sum():.1e}")
+```
+
+Çıktı:
+
+```text
+3.8201977890277115 1.3015768476030976e-13
+n =   4   kırık çizgi = 3.7900913085   fark = 3.0e-02
+n =  16   kırık çizgi = 3.8182749650   fark = 1.9e-03
+n =  64   kırık çizgi = 3.8200775044   fark = 1.2e-04
+n = 256   kırık çizgi = 3.8201902708   fark = 7.5e-06
+```
+
+**Sonuç.** İntegral elementer fonksiyonlarla hesaplanamaz (bir eliptik integraldir); `quad` onu $10^{-13}$ hata tahminiyle $L \approx 3{,}8201977890$ olarak verdi. Kırık çizgilerin uzunlukları bu değere alttan yaklaşır, çünkü her kiriş, gerdiği yaydan kısadır. $n$ dört katına çıkınca fark yaklaşık 16 kat küçülüyor; kırık çizginin hatası $h^2$ ile orantılıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-normal name="Normal Dağılımda Bir, İki ve Üç Standart Sapma"}
+Standart normal dağılımın yoğunluğu $\varphi(x) = e^{-x^2/2}/\sqrt{2\pi}$'dir (bkz. [Olasılık Teorisi](../olasilik-teorisi/temel-surekli-dagilimlar.html#def-normal-dagilim)). $Z$ standart normal dağılımlı olmak üzere $k = 1, 2, 3$ için $P(|Z| \le k) = \int_{-k}^{k} \varphi(x)\,dx$ olasılıklarını `quad` ile hesaplayın ve $\mathrm{erf}(k/\sqrt{2})$ değerleriyle karşılaştırın.
+
+::: {.cozum}
+**Denetim.** Önce $\varphi$'nin bütün doğru üzerindeki integralinin $1$ olduğunu, yani $\varphi$'nin gerçekten bir yoğunluk olduğunu doğrularız. Sonra her $k$ için integrali alırız. $x = \sqrt{2}\,u$ değişken değiştirmesi $\int_{-k}^{k} \varphi(x)\,dx = \mathrm{erf}(k/\sqrt{2})$ verir.
+
+```python
+import math
+
+import numpy as np
+from scipy.integrate import quad
+
+
+def phi(x):
+    return np.exp(-x**2 / 2) / np.sqrt(2 * np.pi)
+
+
+print(quad(phi, -np.inf, np.inf))
+for k in [1, 2, 3]:
+    p, err = quad(phi, -k, k)
+    print(f"k = {k}   olasılık = {p:.10f}"
+          f"   erf = {math.erf(k / math.sqrt(2)):.10f}")
+```
+
+Çıktı:
+
+```text
+(0.9999999999999998, 1.0178191320905743e-08)
+k = 1   olasılık = 0.6826894921   erf = 0.6826894921
+k = 2   olasılık = 0.9544997361   erf = 0.9544997361
+k = 3   olasılık = 0.9973002039   erf = 0.9973002039
+```
+
+**Sonuç.** Olasılıklar yaklaşık $0{,}6827$, $0{,}9545$ ve $0{,}9973$'tür ve on ondalık basamağa kadar `math.erf` ile aynıdır. İstatistikteki "68–95–99,7 kuralı" bu üç sayıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-paraboloit name="Paraboloidin Altındaki Hacim"}
+$z = 1 - x^2 - y^2$ paraboloidi ile $z = 0$ düzlemi arasındaki cismin hacmini `dblquad` ile önce dik koordinatlarda, sonra kutupsal koordinatlarda hesaplayın ve sonuçları $\pi/2$ ile karşılaştırın (bkz. [İntegral Calculus](../integral-calculus/kutupsal-koordinatlarda-iki-katli-integraller.html#exm-kki-paraboloit)).
+
+::: {.cozum}
+**Sınırlar.** Taban birim disktir. Dik koordinatlarda $-1 \le x \le 1$ ve $-\sqrt{1 - x^2} \le y \le \sqrt{1 - x^2}$'dir. Kutupsal koordinatlarda $0 \le \theta \le 2\pi$, $0 \le r \le 1$'dir ve $dA = r\,dr\,d\theta$ olduğundan integrand $(1 - r^2)\,r$ olur. `dblquad`'da iç değişken önce gelir: dik koordinatlarda `func(y, x)`, kutupsal koordinatlarda `func(r, theta)`.
+
+```python
+import numpy as np
+from scipy.integrate import dblquad
+
+# Dik koordinatlar: -1 <= x <= 1, -sqrt(1 - x^2) <= y <= sqrt(1 - x^2)
+v1, e1 = dblquad(lambda y, x: 1 - x**2 - y**2, -1, 1,
+                 lambda x: -np.sqrt(1 - x**2),
+                 lambda x: np.sqrt(1 - x**2))
+# Kutupsal koordinatlar: 0 <= theta <= 2 pi, 0 <= r <= 1, dA = r dr dtheta
+v2, e2 = dblquad(lambda r, theta: (1 - r**2) * r, 0, 2 * np.pi, 0, 1)
+print(v1, e1)
+print(v2, e2)
+print(np.pi / 2)
+```
+
+Çıktı:
+
+```text
+1.5707963267740037 2.2114190221070963e-08
+1.5707963267948966 1.743934249004316e-14
+1.5707963267948966
+```
+
+**Sonuç.** Kutupsal koordinatlardaki sonuç son basamağına kadar $\pi/2$'dir; dik koordinatlardaki sonuç ise $2 \cdot 10^{-11}$ kadar sapıyor. Fark integrandın düzgünlüğünden gelir. Kutupsal koordinatlarda iki integral de polinom integralidir. Dik koordinatlarda iç integral $\frac{4}{3}(1 - x^2)^{3/2}$ fonksiyonunu verir; bu fonksiyonun $x = \pm 1$'de ikinci türevi sınırsızdır ve dış integrali zorlaştırır. İki sonuç da varsayılan $1{,}5 \cdot 10^{-8}$ hedefinin çok altındadır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-int-dortyuzlu name="Bir Dörtyüzlünün Hacmi"}
+$x + 2y + z = 2$, $x = 2y$, $x = 0$ ve $z = 0$ düzlemleriyle sınırlı dörtyüzlünün hacmini `tplquad` ile hesaplayın (bkz. [İntegral Calculus](../integral-calculus/uc-katli-integraller.html#exm-uki-dortyuzlu)).
+
+::: {.cozum}
+**Sınırlar.** Dörtyüzlü alttan $z = 0$, üstten $z = 2 - x - 2y$ düzlemiyle sınırlıdır. Üst düzlem $z = 0$ düzlemini $y = 1 - x/2$ doğrusu boyunca keser. Bu doğru $y = x/2$ doğrusuyla $x = 1$'de buluşur. Dolayısıyla cisim
+
+$$0 \le x \le 1, \qquad \frac{x}{2} \le y \le 1 - \frac{x}{2}, \qquad 0 \le z \le 2 - x - 2y$$
+
+eşitsizlikleriyle betimlenir. Hacim, $1$ fonksiyonunun bu cisim üzerindeki integralidir.
+
+```python
+from scipy.integrate import tplquad
+
+value, err = tplquad(lambda z, y, x: 1.0,
+                     0, 1,                                  # x
+                     lambda x: x / 2, lambda x: 1 - x / 2,  # y
+                     0, lambda x, y: 2 - x - 2 * y)         # z
+print(value, err, 1 / 3)
+```
+
+Çıktı:
+
+```text
+0.3333333333333333 2.210813483580885e-14 0.3333333333333333
+```
+
+**Sonuç.** Hacim $\frac{1}{3}$'tür; İntegral Calculus notlarındaki elle hesapla aynı.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde türev ve integrali fonksiyonun sonlu sayıda noktadaki değerlerinden hesapladık. Fark bölümlerinde kesme hatası ile yuvarlama hatasının dengesini, yamuk ve Simpson kurallarında mertebenin anlamını, `quad` ile de uyarlamalı yöntemlerin gücünü ve sınırlarını gördük. Bu formüllerin çoğu aslında bir interpolasyon polinomunun türevi ya da integralidir. Sonraki bölümde, [Polinomlar, İnterpolasyon ve Eğri Uydurma](interpolasyon-ve-egri-uydurma.qmd), verilen noktalardan geçen ya da onlara en iyi uyan fonksiyonları kuracağız.

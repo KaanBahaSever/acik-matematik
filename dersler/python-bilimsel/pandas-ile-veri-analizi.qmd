@@ -1,0 +1,2659 @@
+---
+title: "Pandas ile Veri Analizi"
+pagetitle: "Pandas ile Veri Analizi"
+description: "Python'da pandas ile tablo verisinin analizi: Series ve DataFrame, etiket hizalaması, CSV okuma ve yazma, loc ve iloc ile seçim, eksik değerler, betimsel istatistikler, groupby ile gruplama, merge ile tablo birleştirme ve zaman serileri; bölümün içinde üretilen bir hava ölçümleri veri kümesi üzerinde çalıştırılmış kodlarla."
+---
+
+Şimdiye kadar verilerimiz hep aynı türden sayılardan oluşan dizilerdi: bir fonksiyonun ızgaradaki değerleri, bir matrisin elemanları, bir simülasyonun sonuçları. Gerçek veriler çoğu zaman böyle gelmez. Bir hava istasyonunun ölçüm kaydında her satır bir gündür ve satırda bir tarih, istasyonun adı, sıcaklık ve yağış yan yana durur. Sütunların türleri farklıdır, bazı hücreler boştur ve sorduğumuz sorular "Erzurum'un ortalama sıcaklığı nedir?" ya da "hangi ay en yağışlıdır?" gibi gruplara ve zamana bağlı sorulardır. NumPy dizisi bütün elemanların aynı türden olmasını ister ve satırlara yalnız $0, 1, 2, \ldots$ konumlarıyla ulaşır; böyle bir tabloyu taşımak için tek başına elverişli değildir.
+
+**pandas** bu boşluğu dolduran kütüphanedir. NumPy dizilerinin üzerine iki yapı kurar: etiketli bir boyutlu dizi olan **Series** ve sütunları adlandırılmış iki boyutlu tablo olan **DataFrame**. Satırlara ve sütunlara adlarıyla ulaşılır, eksik değerler tanınır, gruplama, birleştirme ve zamana göre özetleme gibi işlemler tek satırda yapılır. Kütüphane geleneksel kısaltmasıyla `import pandas as pd` diye yüklenir.
+
+Bu bölümde önce iki temel yapıyı tanıyacak, sonra bölümün içinde ürettiğimiz bir veri kümesini bir CSV dosyasına yazıp geri okuyacağız: Ankara, İzmir ve Erzurum'daki üç istasyonun 2025 yılına ait günlük sıcaklık ve yağış değerleri. Bu sayılar gerçek ölçüm değildir; bir kosinüs dalgasına rastgele gürültü eklenerek üretilmiştir, böylece her sonucu bildiğimiz modelle karşılaştırabiliriz. Ortalama, medyan, varyans ve çeyreklik gibi kavramların kuramı [Matematiksel İstatistik](../matematiksel-istatistik/istatistige-giris.html) notlarındadır; burada onları pandas ile hesaplamayı öğreniyoruz. Önce kısa bir tadımlık:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "istasyon": ["Ankara", "İzmir", "Ankara", "Erzurum", "İzmir",
+                 "Erzurum"],
+    "ay": ["Ocak", "Ocak", "Temmuz", "Ocak", "Temmuz", "Temmuz"],
+    "sicaklik": [0.4, 9.1, 23.6, -8.9, 27.8, 19.7],
+})
+print(df)
+print(df.groupby("istasyon")["sicaklik"].mean())
+```
+
+Çıktı:
+
+```text
+  istasyon      ay  sicaklik
+0   Ankara    Ocak       0.4
+1    İzmir    Ocak       9.1
+2   Ankara  Temmuz      23.6
+3  Erzurum    Ocak      -8.9
+4    İzmir  Temmuz      27.8
+5  Erzurum  Temmuz      19.7
+istasyon
+Ankara     12.00
+Erzurum     5.40
+İzmir      18.45
+Name: sicaklik, dtype: float64
+```
+
+Altı satırlık tabloda her istasyonun ortalamasını tek satırla bulduk. Aynı işi NumPy ile yapmak için istasyon adlarını ayrı bir dizide tutmak, her istasyon için bir maske kurmak ve sonuçları elle bir araya getirmek gerekirdi. Bu satırın nasıl çalıştığını gruplama başlığında ayrıntılı göreceğiz.
+
+## Series: Etiketli Bir Boyutlu Dizi
+
+pandas'ın en basit yapısı, her elemanına bir etiket iliştirilmiş bir boyutlu dizidir. Asal sayı sayma fonksiyonu $\pi(x)$'in, yani $x$'e kadar olan asal sayıların sayısının birkaç değeriyle başlayalım:
+
+```python
+import pandas as pd
+
+# pi(x): x'e kadar olan asal sayıların sayısı
+pi_x = pd.Series([4, 25, 168, 1229, 9592, 78498],
+                 index=[10, 100, 10**3, 10**4, 10**5, 10**6],
+                 name="pi(x)")
+print(pi_x)
+print(pi_x.index)
+print(pi_x.to_numpy(), pi_x.dtype)
+```
+
+Çıktı:
+
+```text
+10             4
+100           25
+1000         168
+10000       1229
+100000      9592
+1000000    78498
+Name: pi(x), dtype: int64
+Index([10, 100, 1000, 10000, 100000, 1000000], dtype='int64')
+[    4    25   168  1229  9592 78498] int64
+```
+
+Çıktının solundaki sütun etiketleri, sağdaki sütun değerleri gösterir. `index` özelliği etiketleri, `to_numpy()` yöntemi değerleri bir NumPy dizisi olarak verir; değerlerin türü `int64`'tür. `name` ile verdiğimiz ad çıktının en altında görünür.
+
+::: {#def-pdn-series name="Series"}
+Bir **Series**, aynı türden $n$ değer $v_0, v_1, \ldots, v_{n-1}$ ile bu değerlere birer **etiket** veren bir **indeksin** (index) $\ell_0, \ell_1, \ldots, \ell_{n-1}$ birleşimidir. $k$ numaralı **konumdaki** değer $v_k$, onun etiketi $\ell_k$'dir. Değerlerin ortak türüne Series'in `dtype`'ı denir; Series'e isteğe bağlı bir ad (`name`) da verilebilir.
+:::
+
+Yani bir Series, bir NumPy dizisinin yanına bir etiketler sütunu eklenmiş hâlidir. Etiketler birbirinden farklıysa Series, etiket kümesinden değerlere giden $\ell_k \mapsto v_k$ fonksiyonu gibi okunabilir. Her değere iki yoldan ulaşılır: $k$ konumuyla ya da $\ell_k$ etiketiyle. Etiket verilmezse pandas $0, 1, \ldots, n-1$ etiketlerini kendisi koyar; o zaman konum ile etiket aynı sayıdır.
+
+Bir sözlükten kurulan Series'te anahtarlar etiket, değerler değer olur:
+
+```python
+import pandas as pd
+
+squares = pd.Series({"bir": 1, "iki": 4, "üç": 9, "dört": 16})
+print(squares)
+print(squares.index.tolist(), squares.size)
+```
+
+Çıktı:
+
+```text
+bir      1
+iki      4
+üç       9
+dört    16
+dtype: int64
+['bir', 'iki', 'üç', 'dört'] 4
+```
+
+Konumla ve etiketle ulaşmanın iki ayrı aracı vardır: `loc` etiketle, `iloc` konumla seçer. İkisi dilimlerde de farklı davranır:
+
+```python
+import pandas as pd
+
+pi_x = pd.Series([4, 25, 168, 1229, 9592, 78498],
+                 index=[10, 100, 10**3, 10**4, 10**5, 10**6])
+print(pi_x.loc[1000])           # etiketi 1000 olan eleman
+print(pi_x.iloc[2])             # 2 numaralı konumdaki eleman
+print(pi_x.iloc[-1])            # son eleman
+print(pi_x.loc[100:10**4])      # etiket dilimi: iki uç da dahil
+print(pi_x.iloc[1:3])           # konum dilimi: sağ uç hariç
+```
+
+Çıktı:
+
+```text
+168
+168
+78498
+100        25
+1000      168
+10000    1229
+dtype: int64
+100      25
+1000    168
+dtype: int64
+```
+
+`pi_x.loc[1000]` etiketi 1000 olan elemanı, `pi_x.iloc[2]` ise sıfırdan saymaya başlayınca 2 numaralı konumdaki elemanı verir; burada ikisi de 168'dir. Dilimlerdeki fark önemlidir: etiket dilimi `loc[100:10**4]` iki ucu da içerir, konum dilimi `iloc[1:3]` ise Python'daki bütün dilimler gibi sağ ucu dışarıda bırakır. Etiketler sıralı olmak zorunda olmadığından "son etiketten bir önceki etiket" diye bir kavram yoktur; bu yüzden etiket dilimleri iki ucu da kapsar.
+
+Series üzerindeki aritmetik, NumPy dizilerinde olduğu gibi eleman eleman yapılır ve etiketler korunur. Asal sayı teoremi, $\pi(x)$'in $x / \ln x$ ile aynı hızda büyüdüğünü, yani $\pi(x) \ln x / x$ oranının $x \to \infty$ iken $1$'e gittiğini söyler. Oranı tablomuzdaki değerler için hesaplayalım:
+
+```python
+import numpy as np
+import pandas as pd
+
+pi_x = pd.Series([4, 25, 168, 1229, 9592, 78498],
+                 index=[10, 100, 10**3, 10**4, 10**5, 10**6])
+x = pi_x.index.to_numpy()
+ratio = pi_x / (x / np.log(x))       # asal sayı teoremindeki oran
+print(ratio.round(4))
+print(ratio[ratio > 1.12])           # boolean maskeyle seçim
+print(ratio.idxmax(), round(ratio.max(), 4))
+```
+
+Çıktı:
+
+```text
+10         0.9210
+100        1.1513
+1000       1.1605
+10000      1.1320
+100000     1.1043
+1000000    1.0845
+dtype: float64
+100      1.151293
+1000     1.160503
+10000    1.131951
+dtype: float64
+1000 1.1605
+```
+
+`ratio` yine bir Series'tir ve etiketleri hâlâ $x$ değerleridir. `ratio > 1.12` bir boolean Series verir; onu köşeli parantez içine yazınca yalnız `True` olan satırlar kalır. `idxmax` en büyük değerin konumunu değil **etiketini** döndürür. Tablodaki noktalar arasında oran en büyük değerine ($1{,}16$) $x = 10^3$'te ulaşır, sonra yavaş yavaş $1$'e doğru iner: $x = 10^6$'da bile $1{,}08$'dir. Teoremdeki yakınsama oldukça yavaştır.
+
+İki Series arasındaki işlemlerde pandas'ın NumPy'dan en önemli farkı ortaya çıkar: değerler konumlarına göre değil, etiketlerine göre eşlenir.
+
+```python
+import pandas as pd
+
+a = pd.Series([1, 2, 3], index=["x", "y", "z"])
+b = pd.Series([10, 20, 30], index=["y", "z", "w"])
+print(a + b)
+print(a.add(b, fill_value=0))
+```
+
+Çıktı:
+
+```text
+w     NaN
+x     NaN
+y    12.0
+z    23.0
+dtype: float64
+w    30.0
+x     1.0
+y    12.0
+z    23.0
+dtype: float64
+```
+
+::: {#def-pdn-hizalama name="İndeks Hizalaması"}
+$a$ ve $b$ iki Series olsun. $a + b$ toplamının (ve öteki aritmetik işlemlerin) indeksi, iki indeksin birleşimidir. Bu birleşimdeki her $\ell$ etiketi için $\ell$ hem $a$'da hem $b$'de varsa sonuç $a[\ell] + b[\ell]$ olur; $\ell$ yalnız birinde varsa sonuç **eksik değer** `NaN` olur.
+:::
+
+Yani pandas iki Series'i önce ortak bir etiket kümesine **hizalar**, sonra işlemi satır satır yapar. Etiketi olmayan tarafa `NaN` ("not a number") yazılır ve `NaN` içeren her toplam yine `NaN` olur. Eksik tarafın $0$ sayılmasını istiyorsak `+` yerine `add` yöntemini `fill_value=0` parametresiyle çağırırız; `sub`, `mul` ve `div` yöntemleri de aynı parametreyi alır. Sonucun etiketleri sıralanmıştır ve değerleri `float64` türündedir, çünkü `NaN` bir ondalıklı sayı değeridir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="1.5 19.5 647.0 265.0" role="img" aria-label="Series a with labels x y z and values 1 2 3, Series b with labels y z w and values 10 20 30. Both are aligned to the union index w x y z with NaN where a label is missing; the sum a + b is NaN NaN 12 23, and with fill_value=0 it is 30 1 12 23.">
+  <text x="54.0" y="40.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600" font-style="italic">a</text>
+  <rect x="16.0" y="52.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="31.0" y="70.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">x</text>
+  <rect x="46.0" y="52.0" width="46.0" height="28.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="69.0" y="70.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">1</text>
+  <rect x="16.0" y="80.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="31.0" y="98.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">y</text>
+  <rect x="46.0" y="80.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="69.0" y="98.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">2</text>
+  <rect x="16.0" y="108.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="31.0" y="126.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">z</text>
+  <rect x="46.0" y="108.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="69.0" y="126.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">3</text>
+  <text x="54.0" y="174.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600" font-style="italic">b</text>
+  <rect x="16.0" y="186.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="31.0" y="204.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">y</text>
+  <rect x="46.0" y="186.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="69.0" y="204.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">10</text>
+  <rect x="16.0" y="214.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="31.0" y="232.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">z</text>
+  <rect x="46.0" y="214.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="69.0" y="232.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">20</text>
+  <rect x="16.0" y="242.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="31.0" y="260.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">w</text>
+  <rect x="46.0" y="242.0" width="46.0" height="28.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="69.0" y="260.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">30</text>
+  <text x="290.0" y="60.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">birleşim indeksine hizalanmış</text>
+  <rect x="214.0" y="72.0" width="30.0" height="28.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="229.0" y="90.3" fill="var(--academic-text)" font-size="12" text-anchor="middle"></text>
+  <rect x="244.0" y="72.0" width="46.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="267.0" y="90.3" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">a</text>
+  <rect x="290.0" y="72.0" width="46.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="313.0" y="90.3" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">b</text>
+  <rect x="214.0" y="100.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="229.0" y="118.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">w</text>
+  <rect x="244.0" y="100.0" width="46.0" height="28.0" fill="var(--color-practice)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="267.0" y="118.3" fill="var(--color-practice)" font-size="12" text-anchor="middle">NaN</text>
+  <rect x="290.0" y="100.0" width="46.0" height="28.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="313.0" y="118.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">30.0</text>
+  <rect x="214.0" y="128.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="229.0" y="146.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">x</text>
+  <rect x="244.0" y="128.0" width="46.0" height="28.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="267.0" y="146.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">1.0</text>
+  <rect x="290.0" y="128.0" width="46.0" height="28.0" fill="var(--color-practice)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="313.0" y="146.3" fill="var(--color-practice)" font-size="12" text-anchor="middle">NaN</text>
+  <rect x="214.0" y="156.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="229.0" y="174.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">y</text>
+  <rect x="244.0" y="156.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="267.0" y="174.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">2.0</text>
+  <rect x="290.0" y="156.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="313.0" y="174.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">10.0</text>
+  <rect x="214.0" y="184.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="229.0" y="202.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">z</text>
+  <rect x="244.0" y="184.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="267.0" y="202.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">3.0</text>
+  <rect x="290.0" y="184.0" width="46.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="313.0" y="202.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">20.0</text>
+  <rect x="436.0" y="72.0" width="30.0" height="28.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="451.0" y="90.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle"></text>
+  <rect x="466.0" y="72.0" width="64.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="498.0" y="90.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">a + b</text>
+  <rect x="530.0" y="72.0" width="104.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="582.0" y="90.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">fill_value=0</text>
+  <rect x="436.0" y="100.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="451.0" y="118.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">w</text>
+  <rect x="466.0" y="100.0" width="64.0" height="28.0" fill="var(--color-practice)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="498.0" y="118.3" fill="var(--color-practice)" font-size="12" text-anchor="middle">NaN</text>
+  <rect x="530.0" y="100.0" width="104.0" height="28.0" fill="var(--color-base)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="582.0" y="118.3" fill="var(--color-base)" font-size="12" text-anchor="middle">30.0</text>
+  <rect x="436.0" y="128.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="451.0" y="146.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">x</text>
+  <rect x="466.0" y="128.0" width="64.0" height="28.0" fill="var(--color-practice)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="498.0" y="146.3" fill="var(--color-practice)" font-size="12" text-anchor="middle">NaN</text>
+  <rect x="530.0" y="128.0" width="104.0" height="28.0" fill="var(--color-base)" fill-opacity="0.14" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="582.0" y="146.3" fill="var(--color-base)" font-size="12" text-anchor="middle">1.0</text>
+  <rect x="436.0" y="156.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="451.0" y="174.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">y</text>
+  <rect x="466.0" y="156.0" width="64.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="498.0" y="174.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">12.0</text>
+  <rect x="530.0" y="156.0" width="104.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="582.0" y="174.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">12.0</text>
+  <rect x="436.0" y="184.0" width="30.0" height="28.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="451.0" y="202.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">z</text>
+  <rect x="466.0" y="184.0" width="64.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="498.0" y="202.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">23.0</text>
+  <rect x="530.0" y="184.0" width="104.0" height="28.0" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="582.0" y="202.3" fill="var(--academic-text)" font-size="12" text-anchor="middle">23.0</text>
+  <line x1="100.0" y1="94.0" x2="200.8" y2="131.6" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="206.0,133.6 198.4,133.9 200.5,128.4" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="100.0" y1="228.0" x2="200.9" y2="180.8" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="206.0,178.4 200.9,184.0 198.4,178.7" fill="var(--academic-text)" opacity="0.7"/>
+  <line x1="344.0" y1="156.0" x2="422.4" y2="156.0" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="428.0,156.0 421.0,158.9 421.0,153.1" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="386.0" y="148.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">topla</text>
+  <text x="582.0" y="234.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle">eksik taraf 0 sayılır</text>
+</svg>
+<figcaption><code>a + b</code> işleminin iki adımı. Önce iki Series etiketlerin birleşimi olan {w, x, y, z} indeksine hizalanır; etiketi olmayan taraf <code>NaN</code> ile doldurulur. Sonra değerler satır satır toplanır. Yalnız iki tarafta da bulunan y ve z etiketlerinde sayı çıkar. <code>a.add(b, fill_value=0)</code> ise eksik tarafı 0 sayar ve w ile x satırlarında da sonuç verir.</figcaption>
+</figure>
+```
+
+Hizalama, aynı etiketin aynı şeyi anlattığı verilerde büyük kolaylıktır: farklı sırada kaydedilmiş iki ölçüm listesini toplarken satırların karışmasından korkmayız. Beklenmedik `NaN` değerleri görürseniz ilk bakmanız gereken yer, iki tarafın etiketleridir.
+
+::: {.callout-warning title="Köşeli parantez konum değil etiket arar"}
+Bir Series'te `s[...]` yazımı etiketle seçer. Etiketler tamsayıysa bu kafa karıştırır: `pi_x[0]` "ilk eleman" değil "etiketi 0 olan eleman" demektir. pandas 3.0'dan itibaren metin etiketli bir Series'te de `s[0]` konum olarak yorumlanmaz:
+
+```python
+import pandas as pd
+
+pi_x = pd.Series([4, 25, 168], index=[10, 100, 1000])
+print(pi_x[100])                # köşeli parantez: etiket 100
+try:
+    pi_x[0]                     # 0 diye bir etiket yok
+except KeyError as err:
+    print("KeyError:", err)
+s = pd.Series([3, 5, 7], index=["a", "b", "c"])
+try:
+    s[0]                        # metin indekste de konum aranmaz
+except KeyError as err:
+    print("KeyError:", err)
+print(s.iloc[0], pi_x.iloc[0])
+```
+
+Çıktı:
+
+```text
+25
+KeyError: 0
+KeyError: 0
+3 4
+```
+
+Kural basittir: etiketle seçerken `loc`, konumla seçerken `iloc` yazın.
+:::
+
+Bir Series'teki farklı değerlerin kaçar kez geçtiğini `value_counts` sayar. Sonuç, etiketleri bu farklı değerler olan bir Series'tir ve en sık değerden başlayarak sıralanır. `sort_index()` sonucu etiketlere göre sıralar, `normalize=True` parametresi ise sayımlar yerine oranları verir.
+
+:::: {#exm-pdn-son-basamak name="Asal Sayıların Son Basamakları"}
+$10^6$'dan küçük asal sayıları Eratosthenes kalburunun NumPy sürümüyle bulun ve son basamaklarının dağılımını `value_counts` ile çıkarın.
+
+::: {.cozum}
+[Vektörizasyon ve Broadcasting](vektorizasyon-ve-broadcasting.qmd) bölümündeki maskeli kalburu kullanırız: $0, 1, \ldots, N$ sayıları için bir boolean dizi tutulur ve her asal $p$'nin $p^2$'den başlayan katları tek bir dilim atamasıyla silinir. `np.flatnonzero` kalan `True` değerlerinin konumlarını, yani asalları verir. Bunları bir Series'e koyup $10$'a bölümden kalanlarını sayarız. Son satırdaki `to_dict()` bir Series'i etiketlerden değerlere giden bir sözlüğe çevirir; kısa sonuçları tek satırda yazdırmak için bölüm boyunca bunu kullanacağız.
+
+```python
+import numpy as np
+import pandas as pd
+
+N = 10**6
+is_prime = np.ones(N + 1, dtype=bool)
+is_prime[:2] = False
+for p in range(2, int(N**0.5) + 1):
+    if is_prime[p]:
+        is_prime[p * p::p] = False
+primes = pd.Series(np.flatnonzero(is_prime))
+last = primes % 10                    # son basamaklar
+counts = last.value_counts().sort_index()
+print(len(primes))
+print(counts)
+print((counts / len(primes)).round(4).to_dict())
+```
+
+Çıktı:
+
+```text
+78498
+1    19617
+2        1
+3    19665
+5        1
+7    19621
+9    19593
+Name: count, dtype: int64
+{1: 0.2499, 2: 0.0, 3: 0.2505, 5: 0.0, 7: 0.25, 9: 0.2496}
+```
+
+$78498$ asalın son basamağı yalnız bir kez $2$ (asal $2$) ve bir kez $5$'tir (asal $5$). Geri kalan her asal $10$ ile aralarında asal olduğundan son basamağı $1$, $3$, $7$ ya da $9$'dur ve bu dört basamağın her biri asalların yaklaşık dörtte birinde görülür. Bu bir rastlantı değildir: asal sayı teoreminin aritmetik dizilerdeki karşılığına göre, $\gcd(a, 10) = 1$ olan her $a$ için son basamağı $a$ olan asalların payı $x \to \infty$ iken $1/4$'e yaklaşır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## DataFrame: Sütunları Adlandırılmış Tablo
+
+Series tek bir sütundur; birden çok sütunu aynı satır etiketleriyle yan yana koyunca bir DataFrame elde ederiz. İlk yedi asal sayıyı, ikilik gösterimlerini, kareköklerini ve $p + 2$'nin de asal olup olmadığını bir tabloda toplayalım:
+
+```python
+import math
+import pandas as pd
+
+
+def is_prime(m):
+    return m > 1 and all(m % d for d in range(2, math.isqrt(m) + 1))
+
+
+p = [2, 3, 5, 7, 11, 13, 17]
+df = pd.DataFrame({
+    "p": p,
+    "ikilik": [bin(q)[2:] for q in p],         # ikilik gösterim
+    "kok": [math.sqrt(q) for q in p],
+    "ikiz": [is_prime(q + 2) for q in p],      # p + 2 de asal mı?
+})
+print(df)
+print(df.shape)
+print(df.columns.tolist())
+print(df.dtypes)
+```
+
+Çıktı:
+
+```text
+    p ikilik       kok   ikiz
+0   2     10  1.414214  False
+1   3     11  1.732051   True
+2   5    101  2.236068   True
+3   7    111  2.645751  False
+4  11   1011  3.316625   True
+5  13   1101  3.605551  False
+6  17  10001  4.123106   True
+(7, 4)
+['p', 'ikilik', 'kok', 'ikiz']
+p           int64
+ikilik        str
+kok       float64
+ikiz         bool
+dtype: object
+```
+
+`pd.DataFrame`'e verdiğimiz sözlüğün her anahtarı bir sütunun adı, her değeri o sütunun değerleridir. `shape` satır ve sütun sayısını, `columns` sütun adlarını, `dtypes` her sütunun türünü verir. Dört sütunun dört farklı türü vardır: tamsayı (`int64`), metin (`str`), ondalıklı sayı (`float64`) ve mantıksal değer (`bool`). Bir NumPy dizisinde bu mümkün değildir. Sütun adlarında Türkçe harf kullanmak serbesttir; biz bu bölümde yazması kolay olsun diye ASCII harflerle yetiniyoruz.
+
+::: {#def-pdn-dataframe name="DataFrame"}
+Bir **DataFrame**, aynı indeksi paylaşan Series'lerin sütun sütun yan yana konmasıyla oluşan iki boyutlu bir tablodur. Satır etiketlerine **indeks** (`index`), sütun etiketlerine **sütunlar** (`columns`) denir ve her sütunun kendi `dtype`'ı vardır.
+:::
+
+Yani DataFrame'in her sütunu türdeş bir dizidir, ama tablonun bütünü türdeş olmak zorunda değildir. Bir satır etiketi ve bir sütun adı verildiğinde hücre tek türlü belirlenir; bu yüzden DataFrame, satır etiketleri ile sütun adlarının çarpım kümesinden değerlere giden bir fonksiyon gibi düşünülebilir. Bir sütunu seçmek bir Series verir; bir satırı seçmek de bir Series verir, bu kez indeksi sütun adlarıdır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.0 14.5 595.5 298.0" role="img" aria-label="A table with index 0 to 6 and columns p, ikilik, kok, ikiz holding the primes 2 to 17, their binary digits, square roots and a twin prime flag. The column kok and the row with label 4 are framed; the dtypes int64, str, float64, bool are listed below the columns.">
+  <rect x="132.0" y="64.0" width="34.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="81.3" fill="var(--academic-text)" font-size="12" text-anchor="middle"></text>
+  <rect x="166.0" y="64.0" width="46.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="81.3" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">p</text>
+  <rect x="212.0" y="64.0" width="72.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="81.3" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">ikilik</text>
+  <rect x="284.0" y="64.0" width="86.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="81.3" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">kok</text>
+  <rect x="370.0" y="64.0" width="62.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="81.3" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">ikiz</text>
+  <rect x="132.0" y="90.0" width="34.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.09" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="107.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">0</text>
+  <rect x="166.0" y="90.0" width="46.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="107.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">2</text>
+  <rect x="212.0" y="90.0" width="72.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="107.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">10</text>
+  <rect x="284.0" y="90.0" width="86.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="107.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">1.414214</text>
+  <rect x="370.0" y="90.0" width="62.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="107.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">False</text>
+  <rect x="132.0" y="116.0" width="34.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.09" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="133.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">1</text>
+  <rect x="166.0" y="116.0" width="46.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="133.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">3</text>
+  <rect x="212.0" y="116.0" width="72.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="133.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">11</text>
+  <rect x="284.0" y="116.0" width="86.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="133.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">1.732051</text>
+  <rect x="370.0" y="116.0" width="62.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="133.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">True</text>
+  <rect x="132.0" y="142.0" width="34.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.09" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="159.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">2</text>
+  <rect x="166.0" y="142.0" width="46.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="159.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">5</text>
+  <rect x="212.0" y="142.0" width="72.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="159.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">101</text>
+  <rect x="284.0" y="142.0" width="86.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="159.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">2.236068</text>
+  <rect x="370.0" y="142.0" width="62.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="159.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">True</text>
+  <rect x="132.0" y="168.0" width="34.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.09" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="185.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">3</text>
+  <rect x="166.0" y="168.0" width="46.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="185.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">7</text>
+  <rect x="212.0" y="168.0" width="72.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="185.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">111</text>
+  <rect x="284.0" y="168.0" width="86.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="185.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">2.645751</text>
+  <rect x="370.0" y="168.0" width="62.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="185.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">False</text>
+  <rect x="132.0" y="194.0" width="34.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.09" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="211.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">4</text>
+  <rect x="166.0" y="194.0" width="46.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="211.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">11</text>
+  <rect x="212.0" y="194.0" width="72.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="211.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">1011</text>
+  <rect x="284.0" y="194.0" width="86.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="211.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">3.316625</text>
+  <rect x="370.0" y="194.0" width="62.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="211.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">True</text>
+  <rect x="132.0" y="220.0" width="34.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.09" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="237.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">5</text>
+  <rect x="166.0" y="220.0" width="46.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="237.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">13</text>
+  <rect x="212.0" y="220.0" width="72.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="237.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">1101</text>
+  <rect x="284.0" y="220.0" width="86.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="237.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">3.605551</text>
+  <rect x="370.0" y="220.0" width="62.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="237.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">False</text>
+  <rect x="132.0" y="246.0" width="34.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.09" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="263.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">6</text>
+  <rect x="166.0" y="246.0" width="46.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="189.0" y="263.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">17</text>
+  <rect x="212.0" y="246.0" width="72.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="248.0" y="263.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">10001</text>
+  <rect x="284.0" y="246.0" width="86.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="327.0" y="263.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">4.123106</text>
+  <rect x="370.0" y="246.0" width="62.0" height="26.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="401.0" y="263.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">True</text>
+  <text x="189.0" y="296.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic" opacity="0.8">int64</text>
+  <text x="248.0" y="296.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic" opacity="0.8">str</text>
+  <text x="327.0" y="296.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic" opacity="0.8">float64</text>
+  <text x="401.0" y="296.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-style="italic" opacity="0.8">bool</text>
+  <text x="162.0" y="296.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end" font-weight="600" opacity="0.8">dtypes</text>
+  <rect x="285.5" y="65.5" width="83.0" height="205.0" fill="none" fill-opacity="0" stroke="var(--color-practice)" stroke-width="2.2" stroke-opacity="1.0"/>
+  <rect x="167.5" y="195.5" width="263.0" height="23.0" fill="none" fill-opacity="0" stroke="var(--color-base)" stroke-width="2.2" stroke-opacity="1.0"/>
+  <line x1="456.0" y1="116.0" x2="381.6" y2="116.0" stroke="var(--color-practice)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="376.0,116.0 383.0,113.1 383.0,118.9" fill="var(--color-practice)" opacity="1.0"/>
+  <rect x="458.0" y="104.0" width="144.8" height="58.0" fill="var(--color-practice)" fill-opacity="0.06" stroke="var(--color-practice)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <text x="466.0" y="120.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">df["kok"]</text>
+  <text x="466.0" y="137.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start">bir Series,</text>
+  <text x="466.0" y="154.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start">indeksi 0, 1, ..., 6</text>
+  <line x1="456.0" y1="207.0" x2="443.6" y2="207.0" stroke="var(--color-base)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="438.0,207.0 445.0,204.1 445.0,209.9" fill="var(--color-base)" opacity="1.0"/>
+  <rect x="458.0" y="195.0" width="144.8" height="58.0" fill="var(--color-base)" fill-opacity="0.06" stroke="var(--color-base)" stroke-width="1.0" stroke-opacity="0.45"/>
+  <text x="466.0" y="211.0" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600">df.loc[4]</text>
+  <text x="466.0" y="228.0" fill="var(--color-base)" font-size="11.5" text-anchor="start">bir Series,</text>
+  <text x="466.0" y="245.0" fill="var(--color-base)" font-size="11.5" text-anchor="start">indeksi sütun adları</text>
+  <text x="36.0" y="169.0" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600">index</text>
+  <text x="36.0" y="186.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">satır</text>
+  <text x="36.0" y="202.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">etiketleri</text>
+  <line x1="76.0" y1="155.0" x2="123.0" y2="143.3" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.7" stroke-linecap="round"/>
+  <polygon points="128.0,142.0 122.4,146.2 121.0,140.9" fill="var(--academic-text)" opacity="0.7"/>
+  <text x="170.0" y="38.0" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">columns: sütun etiketleri</text>
+  <line x1="162.0" y1="34.0" x2="162.0" y2="55.8" stroke="var(--color-theory)" stroke-width="1.2" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="162.0,61.0 159.3,54.5 164.7,54.5" fill="var(--color-theory)" opacity="0.8"/>
+</svg>
+<figcaption>Asal sayılar tablosu <code>df</code>'nin parçaları. Soldaki gri sütun satır etiketleri (index), üstteki satır sütun etiketleridir (columns). Her sütun kendi türünde bir Series'tir; türler en altta <code>df.dtypes</code> satırında yazılıdır. Çerçeveli sütun <code>df["kok"]</code>, çerçeveli satır <code>df.loc[4]</code> seçimidir; ikisi de birer Series olarak döner.</figcaption>
+</figure>
+```
+
+```python
+import math
+import pandas as pd
+
+p = [2, 3, 5, 7, 11, 13, 17]
+df = pd.DataFrame({"p": p, "kok": [math.sqrt(q) for q in p]})
+col = df["kok"]                     # bir sütun: Series
+print(type(col).__name__, col.name)
+row = df.loc[4]                     # bir satır: yine Series
+print(row)
+df["p2"] = df["p"] ** 2             # yeni sütun, vektörel hesap
+df["mod4"] = df["p"] % 4
+print(df.head(4))
+print(df["p2"].sum(), df["kok"].max())
+```
+
+Çıktı:
+
+```text
+Series kok
+p      11.000000
+kok     3.316625
+Name: 4, dtype: float64
+   p       kok  p2  mod4
+0  2  1.414214   4     2
+1  3  1.732051   9     3
+2  5  2.236068  25     1
+3  7  2.645751  49     3
+666 4.123105625617661
+```
+
+`df["kok"]`, adı `kok` olan bir Series'tir. `df.loc[4]` ise etiketi 4 olan satırdır. Satırdaki `p` değeri `11.000000` diye yazıldı, çünkü bir Series'in bütün değerleri tek bir türde olmalıdır ve tamsayı ile ondalıklı sayı ortak tür olan `float64`'te buluşur. Yeni bir sütun, sözlüğe yeni bir anahtar ekler gibi atamayla eklenir; sağ taraftaki ifade bütün sütun üzerinde vektörel olarak hesaplanır. `head(n)` ilk $n$ satırı, `tail(n)` son $n$ satırı gösterir. `mod4` sütununda $2$'den sonraki asalların $4$'e bölümünden kalanların $1$ ya da $3$ olduğunu görüyoruz.
+
+:::: {#exm-pdn-taylor-tablosu name="Sinüs İçin Taylor Polinomlarının Hata Tablosu"}
+$x = 0;\ 0{,}25;\ \ldots;\ 1{,}5$ noktalarında $\sin x$ değerlerini, $P_3(x) = x - x^3/6$ ve $P_5(x) = P_3(x) + x^5/120$ Taylor polinomlarını ve hatalarını bir DataFrame'in sütunlarında toplayarak $P_3$'ün hatasının $10^{-2}$'yi aştığı en küçük tablo noktasını bulun.
+
+::: {.cozum}
+Önce `x` ve `sin` sütunlarıyla tabloyu kurar, sonra her yeni sütunu var olan sütunlardan hesaplarız. `abs()` mutlak değeri alır. Son satırda `t.loc[maske, "x"]` hatası $10^{-2}$'yi aşan satırların `x` değerlerini seçer, `min()` bunların en küçüğünü verir.
+
+```python
+import numpy as np
+import pandas as pd
+
+x = np.arange(0, 1.75, 0.25)
+t = pd.DataFrame({"x": x, "sin": np.sin(x)})
+t["P3"] = t["x"] - t["x"]**3 / 6
+t["P5"] = t["P3"] + t["x"]**5 / 120
+t["hata3"] = (t["sin"] - t["P3"]).abs()
+t["hata5"] = (t["sin"] - t["P5"]).abs()
+print(t.round(6))
+print(t.loc[t["hata3"] > 1e-2, "x"].min())
+```
+
+Çıktı:
+
+```text
+      x       sin        P3        P5     hata3     hata5
+0  0.00  0.000000  0.000000  0.000000  0.000000  0.000000
+1  0.25  0.247404  0.247396  0.247404  0.000008  0.000000
+2  0.50  0.479426  0.479167  0.479427  0.000259  0.000002
+3  0.75  0.681639  0.679688  0.681665  0.001951  0.000026
+4  1.00  0.841471  0.833333  0.841667  0.008138  0.000196
+5  1.25  0.948985  0.924479  0.949910  0.024505  0.000926
+6  1.50  0.997495  0.937500  1.000781  0.059995  0.003286
+1.25
+```
+
+$P_3$'ün hatası $x = 1$'de $0{,}0081$, $x = 1{,}25$'te $0{,}0245$'tir; aranan nokta $x = 1{,}25$'tir. $\sin$ fonksiyonunda $P_3 = P_4$ olduğundan Taylor teoreminin kalan terimi ([Nümerik Analiz](../numerik-analiz/on-bilgiler-ve-taylor-teoremi.html#thm-onb-taylor)) hatayı $x^5/120$ ile sınırlar. $x = 1{,}25$ için bu sınır $0{,}0254$'tür ve tablodaki hatanın hemen üstündedir. $P_5$'in hatası aynı noktada $0{,}0009$'a iner. [$\blacksquare$]{.qed}
+:::
+::::
+
+## CSV Dosyaları
+
+Gerçek veri çoğu zaman bir dosyadan gelir ve tablo verisi için en yaygın biçim **CSV**'dir (comma-separated values): her satır bir kayıt, satırdaki alanlar virgülle ayrılmış, ilk satır da sütun adlarıdır. [Sınıflar, Hata Yakalama ve Dosyalar](siniflar-hatalar-ve-dosyalar.qmd) bölümünde `csv` modülüyle satır satır okuduğumuz bu dosyaları pandas tek bir fonksiyonla okur ve yazar.
+
+Bölümün geri kalanında kullanacağımız veri kümesini üretip `olcumler.csv` dosyasına yazalım. Model şudur: $t = 0, 1, \ldots, 364$ yılın günü olmak üzere bir istasyonun sıcaklığı
+
+$$
+T(t) = m - a\cos\frac{2\pi (t - 15)}{365} + \varepsilon_t, \qquad \varepsilon_t \sim N(0;\ 2{,}5^2)
+$$
+
+olsun; burada $m$ yıllık ortalama, $a$ genliktir. En soğuk gün $t = 15$ (16 Ocak), en sıcak gün ise ondan yarım yıl sonrasıdır. Her gün istasyona özgü bir $p$ olasılığıyla yağışlıdır ve yağış miktarı ortalaması $r$ olan üstel dağılımdan gelir. Rastgele seçilen 30 sıcaklık ölçümünü de bozuk bir sensörü taklit etmek için sileriz. Rastgele sayı üretecini [Rastgele Sayılar ve Monte Carlo Yöntemleri](rastgele-sayilar-ve-monte-carlo.qmd) bölümünde tanımıştık.
+
+```python
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(2025)
+days = pd.date_range("2025-01-01", "2025-12-31")     # 365 gün
+t = np.arange(days.size)
+# istasyon: (yıllık ortalama, genlik, yağış olasılığı, ortalama yağış)
+params = {"Ankara": (12.0, 11.5, 0.25, 4.0),
+          "İzmir": (18.0, 8.5, 0.20, 8.0),
+          "Erzurum": (6.0, 14.0, 0.30, 3.5)}
+names, temps, rains = [], [], []
+for name, (m, a, p, r) in params.items():
+    wave = m - a * np.cos(2 * np.pi * (t - 15) / 365)
+    temps.append(wave + rng.normal(0, 2.5, t.size))
+    wet = rng.random(t.size) < p                     # yağışlı gün mü?
+    rains.append(np.where(wet, rng.exponential(r, t.size), 0.0))
+    names += [name] * t.size
+temp = np.concatenate(temps).round(1) + 0.0          # -0.0 yerine 0.0
+lost = rng.choice(temp.size, size=30, replace=False)
+temp[lost] = np.nan                                  # arızalı sensör
+df = pd.DataFrame({"tarih": np.tile(days, 3), "istasyon": names,
+                   "sicaklik": temp,
+                   "yagis": np.concatenate(rains).round(1)})
+df.to_csv("olcumler.csv", index=False)
+print(df.shape)
+with open("olcumler.csv", encoding="utf-8") as f:
+    for _ in range(6):                    # dosyanın ilk altı satırı
+        print(f.readline(), end="")
+```
+
+Çıktı:
+
+```text
+(1095, 4)
+tarih,istasyon,sicaklik,yagis
+2025-01-01,Ankara,-4.7,0.0
+2025-01-02,Ankara,0.9,0.0
+2025-01-03,Ankara,-0.6,0.0
+2025-01-04,Ankara,-2.1,1.3
+2025-01-05,Ankara,,0.0
+```
+
+`pd.date_range` iki tarih arasındaki bütün günleri bir tarih dizisi olarak üretir; zaman serileri başlığında ona döneceğiz. Tablo $3 \cdot 365 = 1095$ satırlıdır: önce Ankara'nın 365 günü, sonra İzmir'in, en son Erzurum'unki. Bu yüzden `np.tile(days, 3)` tarih dizisini uç uca üç kez yazar (her istasyon için bir kopya); `names` listesi de her istasyonun adını 365 kez içerir. `to_csv` tabloyu dosyaya yazar; `index=False` satır etiketlerinin ($0, 1, \ldots, 1094$) dosyaya ayrı bir sütun olarak yazılmasını engeller. Dosyanın ilk satırlarında 5 Ocak'ın sıcaklık hücresinin boş kaldığını görüyoruz: silinen ölçümlerden biri. Bölümün bundan sonraki kodları bu dosyanın çalışma klasöründe durduğunu varsayar.
+
+Dosyayı geri okumak için `pd.read_csv` yeterlidir. Tarih sütununun metin olarak değil tarih olarak okunması için `parse_dates` parametresini veririz:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+print(df.shape)
+print(df.dtypes)
+print(df.head())
+print(df.tail(3))
+```
+
+Çıktı:
+
+```text
+(1095, 4)
+tarih       datetime64[us]
+istasyon               str
+sicaklik           float64
+yagis              float64
+dtype: object
+       tarih istasyon  sicaklik  yagis
+0 2025-01-01   Ankara      -4.7    0.0
+1 2025-01-02   Ankara       0.9    0.0
+2 2025-01-03   Ankara      -0.6    0.0
+3 2025-01-04   Ankara      -2.1    1.3
+4 2025-01-05   Ankara       NaN    0.0
+          tarih istasyon  sicaklik  yagis
+1092 2025-12-29  Erzurum      -7.5    0.0
+1093 2025-12-30  Erzurum      -4.7    0.0
+1094 2025-12-31  Erzurum      -7.9    0.0
+```
+
+Boş hücreler kendiliğinden `NaN` olarak okundu. `tarih` sütununun türü `datetime64[us]`'dir (mikrosaniye çözünürlüklü tarih), `istasyon` sütunu metindir. `parse_dates` verilmeseydi tarihler de düz metin (`str`) olarak kalırdı. `read_csv`'nin en çok kullanılan parametreleri şunlardır:
+
+| Parametre | Anlamı |
+|---|---|
+| `sep` | alan ayırıcı, varsayılanı `","` |
+| `decimal` | ondalık işareti, varsayılanı `"."` |
+| `na_values` | eksik değer sayılacak ek metinler, örneğin `"-"` |
+| `parse_dates` | tarihe çevrilecek sütunlar |
+| `date_format` | tarihlerin biçimi, örneğin `"%d.%m.%Y"` |
+| `index_col` | indeks yapılacak sütun |
+| `usecols` | okunacak sütunlar |
+| `encoding` | karakter kodlaması, varsayılanı `"utf-8"` |
+
+`to_csv` de `sep` ve `decimal` parametrelerini alır: `df.to_csv("dosya.csv", sep=";", decimal=",", index=False)` Türkçe ayarlı bir hesap tablosu programının doğrudan açabileceği bir dosya yazar. Elimizdeki metin bir dosyada değil de bir değişkendeyse `read_csv(io.StringIO(metin))` biçiminde okunabilir.
+
+::: {.callout-tip title="Bir CSV dosyasını üç adımda okumak"}
+1. Dosyanın ilk birkaç satırına bakın: alan ayırıcı (`,` mı, `;` mı), ondalık işareti (`.` mı, `,` mı), eksik değerlerin yazılışı (boş, `NA`, `-`) ve tarihlerin biçimi nedir?
+2. `pd.read_csv`'yi bu bilgilere karşılık gelen `sep`, `decimal`, `na_values`, `parse_dates` ve `date_format` parametreleriyle çağırın.
+3. Sonucu denetleyin: `shape` beklenen boyutta mı, sayı olması gereken sütunlar sayı türünde mi, `isna().sum()` kaç eksik değer gösteriyor? Sayı olması gereken bir sütun `str` geldiyse bir parametre eksiktir.
+:::
+
+:::: {#exm-pdn-sarkac name="Türkçe Biçimli Bir Dosyadan Yerçekimi İvmesi"}
+Bir sarkaç deneyinde farklı ip uzunlukları $L$ (metre) için ölçülen periyotlar $T$ (saniye), noktalı virgülle ayrılmış, ondalıkları virgüllü ve tarihleri gün.ay.yıl biçiminde olan bir dosyaya yazılmıştır; ölçülemeyen bir periyot `-` ile gösterilmiştir. Dosyayı okuyup küçük salınımlarda geçerli $T = 2\pi\sqrt{L/g}$ formülünden her ölçüm için $g = 4\pi^2 L / T^2$ değerini ve bunların ortalamasını hesaplayın.
+
+::: {.cozum}
+**Adım 1.** Alan ayırıcı `;`, ondalık işareti `,`, eksik değer `-`, tarih biçimi `%d.%m.%Y`'dir.
+
+**Adım 2.** Bu dört bilgiyi parametre olarak veririz. Kodun kendi başına çalışması için dosyayı da Python ile yazıyoruz.
+
+**Adım 3.** Türleri ve eksik değer sayılarını yazdırırız.
+
+```python
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+text = """tarih;uzunluk;periyot
+03.03.2025;0,25;1,004
+03.03.2025;0,50;1,417
+04.03.2025;0,75;1,739
+04.03.2025;1,00;-
+05.03.2025;1,25;2,241
+"""
+Path("sarkac.csv").write_text(text, encoding="utf-8")
+
+df = pd.read_csv("sarkac.csv", sep=";", decimal=",", na_values="-",
+                 parse_dates=["tarih"], date_format="%d.%m.%Y")
+print(df.dtypes)
+print(df.isna().sum().to_dict())
+df["g"] = 4 * np.pi**2 * df["uzunluk"] / df["periyot"]**2
+print(df.round({"g": 3}))
+print(round(df["g"].mean(), 3))
+```
+
+Çıktı:
+
+```text
+tarih      datetime64[us]
+uzunluk           float64
+periyot           float64
+dtype: object
+{'tarih': 0, 'uzunluk': 0, 'periyot': 1}
+       tarih  uzunluk  periyot      g
+0 2025-03-03     0.25    1.004  9.791
+1 2025-03-03     0.50    1.417  9.831
+2 2025-03-04     0.75    1.739  9.791
+3 2025-03-04     1.00      NaN    NaN
+4 2025-03-05     1.25    2.241  9.826
+9.81
+```
+
+Bütün sütunlar doğru türde geldi; tek eksik değer `periyot` sütunundadır. `g` sütunu vektörel olarak hesaplandı; periyodu eksik satırda $g$ de `NaN` oldu ve `mean` bu satırı atlayarak dört değerin ortalamasını aldı: $g \approx 9{,}81$ m/s². Adım 1'in neden gerekli olduğunu görmek için aynı dosyayı parametresiz okuyalım:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("sarkac.csv")         # parametresiz okuma
+print(df.shape)
+print(df.head(2))
+```
+
+Çıktı:
+
+```text
+(5, 1)
+                   tarih;uzunluk;periyot
+03.03.2025;0 25;1                    4.0
+             50;1                  417.0
+```
+
+Varsayılan ayırıcı virgül olduğundan başlık satırının tamamı tek bir sütun adı oldu. Veri satırlarındaki ondalık virgüller ise alan ayırıcı sanıldı; her satırdan fazladan alan çıkınca pandas bunları satır etiketi yaptı ve örneğin `1,004` sayısının `004` parçası `4.0` diye okundu. Hata vermeden okunan ama anlamsız bir tablo: Adım 3'teki denetim bu yüzden gereklidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Satır ve Sütun Seçmek
+
+Veri kümemiz elimizde; şimdi ondan istediğimiz parçaları alalım. DataFrame'de seçimin üç aracı vardır: sütun adlarıyla köşeli parantez, etiketlerle `loc` ve konumlarla `iloc`.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+print(df["sicaklik"].head(3))                    # tek sütun: Series
+print(df[["istasyon", "sicaklik"]].head(3))      # liste: DataFrame
+print(df.loc[365:367, ["tarih", "istasyon"]])    # etiketlerle
+print(df.iloc[730, 1:3])                         # konumlarla
+```
+
+Çıktı:
+
+```text
+0   -4.7
+1    0.9
+2   -0.6
+Name: sicaklik, dtype: float64
+  istasyon  sicaklik
+0   Ankara      -4.7
+1   Ankara       0.9
+2   Ankara      -0.6
+         tarih istasyon
+365 2025-01-01    İzmir
+366 2025-01-02    İzmir
+367 2025-01-03    İzmir
+istasyon    Erzurum
+sicaklik       -3.4
+Name: 730, dtype: object
+```
+
+Tek bir sütun adı bir Series, sütun adlarından oluşan bir liste ise bir DataFrame verir. `loc[365:367, ["tarih", "istasyon"]]` etiketi 365'ten 367'ye kadar olan satırları (iki uç dahil) ve iki sütunu seçer; 365 etiketli satır İzmir'in ilk günüdür. `iloc[730, 1:3]` ise 730 numaralı konumdaki satırın 1 ve 2 numaralı sütunlarını verir: Erzurum'un ilk günü.
+
+::: {#def-pdn-loc-iloc name="loc ve iloc ile Seçim"}
+`df.loc[satırlar, sütunlar]` satırları ve sütunları **etiketleriyle**, `df.iloc[satırlar, sütunlar]` ise **konumlarıyla** seçer. Her iki yere tek bir etiket (ya da konum), bir liste, bir dilim ya da bir boolean dizi yazılabilir; boolean dizinin uzunluğu satır yerinde satır sayısı, sütun yerinde sütun sayısı olmalıdır. `loc` dilimleri iki ucu da içerir, `iloc` dilimleri sağ ucu içermez.
+:::
+
+Yani `loc` tabloya "adı şu olan satır ve sütun", `iloc` ise "şu sıradaki satır ve sütun" diye sorar. İki yere de tek bir değer yazılırsa sonuç tek bir hücredir, biri liste ya da dilim olursa bir Series, ikisi de liste ya da dilim olursa bir DataFrame döner. Varsayılan indeksli bir tabloda etiket ile konum aynı sayılardır; ama tablo süzüldükten ya da sıralandıktan sonra etiketler karışır ve iki araç farklı satırları gösterir.
+
+Çoğu zaman satırları konumlarıyla değil bir koşulla seçeriz. Bir sütunu bir sayıyla karşılaştırmak boolean bir Series verir; onu köşeli parantez içine ya da `loc`'un satır yerine yazınca yalnız koşulu sağlayan satırlar kalır. Birden çok koşul, [Vektörizasyon ve Broadcasting](vektorizasyon-ve-broadcasting.qmd) bölümündeki maskelerde olduğu gibi `&` (ve), `|` (veya), `~` (değil) ile ve her koşul parantez içinde olmak üzere birleştirilir:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+cold = df[df["sicaklik"] < -12]
+print(len(cold), cold["istasyon"].unique().tolist())
+hot_dry = df[(df["sicaklik"] > 30) & (df["yagis"] == 0)]
+print(hot_dry["istasyon"].value_counts())
+print(df[df["istasyon"].isin(["Ankara", "İzmir"])].shape)
+print(df.query("istasyon == 'Ankara' and yagis > 15"))
+```
+
+Çıktı:
+
+```text
+3 ['Erzurum']
+istasyon
+İzmir     3
+Ankara    2
+Name: count, dtype: int64
+(730, 4)
+        tarih istasyon  sicaklik  yagis
+38 2025-02-08   Ankara      -1.4   33.3
+```
+
+Sıcaklığın $-12$ °C'nin altına indiği üç günün hepsi Erzurum'dadır. Sıcaklığın $30$ °C'yi aştığı ve yağışın olmadığı beş günün üçü İzmir'de, ikisi Ankara'dadır. `isin` bir sütundaki değerin verilen listede olup olmadığını sorar. `query` aynı süzmeyi bir metin ifadesiyle yazar: sütun adları değişken gibi kullanılır, metin sabitleri tırnak içine alınır. Ankara'da $15$ mm'den fazla yağışın düştüğü tek gün 8 Şubat'tır.
+
+`sort_values` tabloyu bir sütuna göre sıralar; `nlargest(k, sütun)` ve `nsmallest(k, sütun)` bir sütunun en büyük ya da en küçük $k$ değerini taşıyan satırları verir:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+print(df.nlargest(3, "sicaklik"))
+print(df.sort_values("yagis", ascending=False).head(3))
+```
+
+Çıktı:
+
+```text
+         tarih istasyon  sicaklik  yagis
+203 2025-07-23   Ankara      31.5    0.0
+598 2025-08-22    İzmir      31.4    0.0
+189 2025-07-09   Ankara      31.0    0.0
+         tarih istasyon  sicaklik  yagis
+521 2025-06-06    İzmir      21.0   33.7
+38  2025-02-08   Ankara      -1.4   33.3
+629 2025-09-22    İzmir      22.3   24.6
+```
+
+Yılın en sıcak üç ölçümünün ikisi Ankara'da, biri İzmir'dedir; en yağışlı üç günün ikisi İzmir'de, biri Ankara'dadır. Soldaki 203, 598, 189 sayıları satırların özgün tablodaki etiketleridir; satırlar sıralanırken etiketlerini yanlarında taşır. Bu küçük tabloda `iloc[0]` 203 etiketli satırı verir, `loc[0]` ise hata verir, çünkü 0 etiketi artık tabloda yoktur.
+
+::: {.callout-warning title="Zincirleme atama tabloyu değiştirmez"}
+Bir koşulu sağlayan satırlarda bir sütunu değiştirmek isterken `df[maske]["y"] = 0` yazmak doğal görünür. Ama `df[maske]` yeni bir tablodur; atama o geçici tabloya yapılır ve `df` değişmez. pandas 3.0 bu durumda `ChainedAssignmentError` uyarısı verir. Doğrusu, satırları ve sütunu tek bir `loc` içinde vermektir:
+
+```python
+import warnings
+
+import pandas as pd
+
+df = pd.DataFrame({"x": [1, -2, 3, -4], "y": [10, 20, 30, 40]})
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    df[df["x"] < 0]["y"] = 0          # zincirleme atama: etkisiz
+print(caught[0].category.__name__)
+print(df["y"].tolist())
+df.loc[df["x"] < 0, "y"] = 0          # doğru yol: tek bir loc
+print(df["y"].tolist())
+```
+
+Çıktı:
+
+```text
+ChainedAssignmentError
+[10, 20, 30, 40]
+[10, 0, 30, 0]
+```
+
+Kodda uyarıyı ekrana basmak yerine yakalayıp türünü yazdırdık. pandas 3.0'da bir tablodan seçilen her parça bir kopya gibi davranır; bir tabloyu değiştirmenin yolu ona doğrudan `df.loc[...] = ...` ya da `df[sütun] = ...` biçiminde atama yapmaktır.
+:::
+
+:::: {#exm-pdn-don-gunleri name="Erzurum'da Don Günlerinin Aylara Dağılımı"}
+`olcumler.csv` dosyasında Erzurum'da sıcaklığın $0$ °C'nin altında ölçüldüğü günleri aylara göre sayın.
+
+::: {.cozum}
+Önce Erzurum satırlarını, sonra bunların arasından sıcaklığı negatif olanları süzeriz. Tarih sütunlarının `.dt` erişimcisi tarihlerin parçalarını verir: `.dt.month` ay numarasını, `.dt.day` ayın gününü, `.dt.dayofyear` yılın kaçıncı günü olduğunu. Ay numaralarını `value_counts` ile sayıp aya göre sıralarız.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+erz = df[df["istasyon"] == "Erzurum"]
+frost = erz[erz["sicaklik"] < 0]
+months = frost["tarih"].dt.month           # tarihten ay numarası
+print(len(frost))
+print(months.value_counts().sort_index().to_dict())
+```
+
+Çıktı:
+
+```text
+120
+{1: 31, 2: 27, 3: 16, 11: 15, 12: 31}
+```
+
+Ölçülmüş 120 don günü vardır: ocakta ve aralıkta her gün, şubatta 27, martta 16, kasımda 15 gün. Nisandan ekime kadar hiç don yoktur. Modelde Erzurum'un ocak ortası sıcaklığı $6 - 14 = -8$ °C olduğundan ocakta her günün donlu çıkması beklenir. Sıcaklığı eksik olan günler sayılmadı, çünkü `NaN < 0` karşılaştırması `False` verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Eksik Değerler
+
+Veri kümemizde 30 sıcaklık ölçümü eksik. pandas eksik değerleri ondalıklı sayı sütunlarında `NaN` ile gösterir ve onları bulmak, saymak, atmak ya da doldurmak için araçlar sunar.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+print(df.isna().sum())
+print(df["sicaklik"].count(), df["sicaklik"].size)
+print(df[df["sicaklik"].isna()].head(4))
+```
+
+Çıktı:
+
+```text
+tarih        0
+istasyon     0
+sicaklik    30
+yagis        0
+dtype: int64
+1065 1095
+        tarih istasyon  sicaklik  yagis
+4  2025-01-05   Ankara       NaN    0.0
+8  2025-01-09   Ankara       NaN    0.0
+45 2025-02-15   Ankara       NaN    0.0
+49 2025-02-19   Ankara       NaN    0.0
+```
+
+`isna()` her hücre için eksik olup olmadığını söyleyen boolean bir tablo verir; `sum()` her sütundaki `True` değerlerini sayar. `count()` bir sütundaki eksik olmayan değerleri, `size` ise bütün değerleri sayar: $1095 - 30 = 1065$. Eksik satırları görmek için `isna()` maskesini süzmede kullanırız.
+
+::: {#def-pdn-eksik-deger name="Eksik Değer"}
+Bir hücrede değer bulunmadığını gösteren özel değere **eksik değer** denir. pandas ondalıklı sayı sütunlarında eksik değeri IEEE 754 standardındaki `NaN` ile gösterir. `isna()` eksik değerleri, `notna()` eksik olmayan değerleri `True` ile işaretler. Toplam, ortalama ve varyans gibi **indirgeme** işlemleri eksik değerleri varsayılan olarak atlar; eleman eleman aritmetik ise eksik değeri sonuca taşır.
+:::
+
+Yani eksik değerli bir sütunun ortalaması, yalnız mevcut değerlerin ortalamasıdır: toplam, satır sayısına değil `count()` kadar değere bölünür. Buna karşılık `NaN + 1` yine `NaN`'dır; bir değer bilinmiyorsa ona $1$ eklenmiş hâli de bilinmez. `NaN` kendisine bile eşit olmadığı için eksik değerler `==` ile değil `isna()` ile aranır:
+
+```python
+import numpy as np
+import pandas as pd
+
+s = pd.Series([1.0, np.nan, 3.0])
+print(s.sum(), s.mean(), s.count())     # toplamalarda NaN atlanır
+print(s.sum(skipna=False))              # atlanmasın istenirse
+print((s + 1).tolist())                 # aritmetikte NaN yayılır
+print(np.nan == np.nan, s.isna().tolist())
+```
+
+Çıktı:
+
+```text
+4.0 2.0 2
+nan
+[2.0, nan, 4.0]
+False [False, True, False]
+```
+
+Toplam $4$, ortalama $4/2 = 2$'dir: `NaN` hem toplamdan hem paydadan çıkarıldı. `skipna=False` verilince toplam da `NaN` olur.
+
+Eksik değerlerle üç şey yapılabilir: satırı atmak (`dropna`), sabit bir değerle doldurmak (`fillna`) ya da değeri komşularından kestirmek. Kestirmenin en basit iki yolu, son bilinen değeri ileri taşımak (`ffill`, forward fill) ve iki komşu bilinen değer arasında doğrusal interpolasyon yapmaktır (`interpolate`). Hangisinin daha iyi olduğunu görmek için doğru cevabı bildiğimiz bir tablo kuralım: $\sin x$'in $[0, \pi]$ aralığındaki dokuz eşit aralıklı değerinden üçünü silelim.
+
+```python
+import numpy as np
+import pandas as pd
+
+x = np.linspace(0, np.pi, 9)
+s = pd.Series(np.sin(x), index=x.round(3))
+s.iloc[[2, 3, 6]] = np.nan              # üç değer kayıp
+print(s.dropna().size)
+filled = pd.DataFrame({"kayipli": s,
+                       "ffill": s.ffill(),
+                       "ortalama": s.fillna(s.mean()),
+                       "dogrusal": s.interpolate()})
+print(filled.round(4))
+true = pd.Series(np.sin(x), index=s.index)
+err = filled.drop(columns="kayipli").sub(true, axis=0).abs().max()
+print(err.round(4).to_dict())
+```
+
+Çıktı:
+
+```text
+6
+       kayipli   ffill  ortalama  dogrusal
+0.000   0.0000  0.0000    0.0000    0.0000
+0.393   0.3827  0.3827    0.3827    0.3827
+0.785      NaN  0.3827    0.4482    0.5885
+1.178      NaN  0.3827    0.4482    0.7942
+1.571   1.0000  1.0000    1.0000    1.0000
+1.963   0.9239  0.9239    0.9239    0.9239
+2.356      NaN  0.9239    0.4482    0.6533
+2.749   0.3827  0.3827    0.3827    0.3827
+3.142   0.0000  0.0000    0.0000    0.0000
+{'ffill': 0.5412, 'ortalama': 0.4757, 'dogrusal': 0.1297}
+```
+
+`dropna()` eksikleri atınca 6 değer kaldı. Hataları hesaplayan satırda `drop(columns="kayipli")` kayıplı sütunu tablodan çıkarır. `sub(true, axis=0)` kalan her sütundan `true` serisini çıkarır; `axis=0`, serinin etiketlerinin tablonun satır etiketleriyle eşlenmesini söyler (varsayılan eşleme sütun adlarıyladır). Son olarak `abs().max()` her sütunun en büyük mutlak hatasını verir. Doldurma yöntemlerinin en büyük hataları çıktının son satırındadır: son değeri taşımak $0{,}54$, ortalamayla doldurmak $0{,}48$, doğrusal interpolasyon $0{,}13$ hata yapar. Doğrusal interpolasyonun hatası [Nümerik Analiz](../numerik-analiz/lagrange-interpolasyonu.html#cor-lag-hata-siniri) notlarındaki sınıra göre en çok $M H^2/8$'dir; burada $M$ ikinci türevin mutlak değeri için bir üst sınır, $H$ de iki bilinen komşu arasındaki uzaklıktır. İki ardışık değerin eksik olduğu aralıkta $H = 3\pi/8$ ve $M = 1$ olduğundan sınır $0{,}17$'dir ve bulunan $0{,}13$ bunun altındadır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="20.0 8.0 510.0 319.0" role="img" aria-label="The curve sin x on [0, pi] with nine grid points, three of them missing at pi/4, 3pi/8 and 3pi/4. Forward fill carries the last known value horizontally (hollow red circles); linear interpolation joins the neighbours by segments (filled green dots) and stays closer to the curve.">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="56.0" y1="260.0" x2="504.0" y2="260.0"/>
+  <line x1="56.0" y1="22.0" x2="56.0" y2="260.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="49.0" y="254.2" text-anchor="end">0</text>
+  <text x="49.0" y="155.9" text-anchor="end">0,5</text>
+  <text x="49.0" y="57.6" text-anchor="end">1</text>
+  <text x="510.0" y="264.0" font-style="italic">x</text>
+  </g>
+  <text x="56.0" y="277.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">0</text>
+  <text x="166.0" y="277.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#960;/4</text>
+  <text x="276.0" y="277.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#960;/2</text>
+  <text x="386.0" y="277.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">3&#960;/4</text>
+  <text x="496.0" y="277.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">&#960;</text>
+  <line x1="166.0" y1="260.0" x2="166.0" y2="37.9" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.35"/>
+  <line x1="221.0" y1="260.0" x2="221.0" y2="37.9" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.35"/>
+  <line x1="386.0" y1="260.0" x2="386.0" y2="37.9" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.35"/>
+  <path d="M56.0,250.2 L58.2,247.1 L60.4,244.0 L62.6,240.9 L64.8,237.8 L67.1,234.7 L69.3,231.6 L71.5,228.5 L73.7,225.4 L75.9,222.3 L78.1,219.3 L80.3,216.2 L82.5,213.2 L84.7,210.1 L87.0,207.1 L89.2,204.1 L91.4,201.0 L93.6,198.0 L95.8,195.1 L98.0,192.1 L100.2,189.1 L102.4,186.2 L104.6,183.3 L106.9,180.4 L109.1,177.5 L111.3,174.6 L113.5,171.7 L115.7,168.9 L117.9,166.1 L120.1,163.3 L122.3,160.5 L124.5,157.8 L126.8,155.0 L129.0,152.3 L131.2,149.6 L133.4,147.0 L135.6,144.4 L137.8,141.8 L140.0,139.2 L142.2,136.6 L144.4,134.1 L146.7,131.6 L148.9,129.2 L151.1,126.7 L153.3,124.3 L155.5,122.0 L157.7,119.6 L159.9,117.3 L162.1,115.1 L164.3,112.8 L166.6,110.6 L168.8,108.5 L171.0,106.3 L173.2,104.2 L175.4,102.2 L177.6,100.1 L179.8,98.2 L182.0,96.2 L184.2,94.3 L186.5,92.4 L188.7,90.6 L190.9,88.8 L193.1,87.0 L195.3,85.3 L197.5,83.7 L199.7,82.0 L201.9,80.4 L204.1,78.9 L206.4,77.4 L208.6,75.9 L210.8,74.5 L213.0,73.2 L215.2,71.8 L217.4,70.5 L219.6,69.3 L221.8,68.1 L224.0,67.0 L226.3,65.9 L228.5,64.8 L230.7,63.8 L232.9,62.8 L235.1,61.9 L237.3,61.0 L239.5,60.2 L241.7,59.4 L243.9,58.7 L246.2,58.0 L248.4,57.4 L250.6,56.8 L252.8,56.3 L255.0,55.8 L257.2,55.4 L259.4,55.0 L261.6,54.6 L263.8,54.3 L266.1,54.1 L268.3,53.9 L270.5,53.7 L272.7,53.6 L274.9,53.6 L277.1,53.6 L279.3,53.6 L281.5,53.7 L283.7,53.9 L285.9,54.1 L288.2,54.3 L290.4,54.6 L292.6,55.0 L294.8,55.4 L297.0,55.8 L299.2,56.3 L301.4,56.8 L303.6,57.4 L305.8,58.0 L308.1,58.7 L310.3,59.4 L312.5,60.2 L314.7,61.0 L316.9,61.9 L319.1,62.8 L321.3,63.8 L323.5,64.8 L325.7,65.9 L328.0,67.0 L330.2,68.1 L332.4,69.3 L334.6,70.5 L336.8,71.8 L339.0,73.2 L341.2,74.5 L343.4,75.9 L345.6,77.4 L347.9,78.9 L350.1,80.4 L352.3,82.0 L354.5,83.7 L356.7,85.3 L358.9,87.0 L361.1,88.8 L363.3,90.6 L365.5,92.4 L367.8,94.3 L370.0,96.2 L372.2,98.2 L374.4,100.1 L376.6,102.2 L378.8,104.2 L381.0,106.3 L383.2,108.5 L385.4,110.6 L387.7,112.8 L389.9,115.1 L392.1,117.3 L394.3,119.6 L396.5,122.0 L398.7,124.3 L400.9,126.7 L403.1,129.2 L405.3,131.6 L407.6,134.1 L409.8,136.6 L412.0,139.2 L414.2,141.8 L416.4,144.4 L418.6,147.0 L420.8,149.6 L423.0,152.3 L425.2,155.0 L427.5,157.8 L429.7,160.5 L431.9,163.3 L434.1,166.1 L436.3,168.9 L438.5,171.7 L440.7,174.6 L442.9,177.5 L445.1,180.4 L447.4,183.3 L449.6,186.2 L451.8,189.1 L454.0,192.1 L456.2,195.1 L458.4,198.0 L460.6,201.0 L462.8,204.1 L465.0,207.1 L467.3,210.1 L469.5,213.2 L471.7,216.2 L473.9,219.3 L476.1,222.3 L478.3,225.4 L480.5,228.5 L482.7,231.6 L484.9,234.7 L487.2,237.8 L489.4,240.9 L491.6,244.0 L493.8,247.1 L496.0,250.2" fill="none" stroke="var(--academic-text)" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="298.0" y="46.0" fill="var(--academic-text)" font-size="12" text-anchor="start">sin <tspan font-style="italic">x</tspan></text>
+  <path d="M111.0,174.9 L221.0,174.9" fill="none" stroke="var(--color-practice)" stroke-width="1.8" stroke-dasharray="6 3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M331.0,68.6 L386.0,68.6" fill="none" stroke="var(--color-practice)" stroke-width="1.8" stroke-dasharray="6 3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="166.0" cy="174.9" r="4.4" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="221.0" cy="174.9" r="4.4" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="386.0" cy="68.6" r="4.4" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <path d="M111.0,174.9 L276.0,53.6" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M331.0,68.6 L441.0,174.9" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="166.0" cy="134.5" r="4.2" fill="var(--color-base)"/>
+  <circle cx="221.0" cy="94.0" r="4.2" fill="var(--color-base)"/>
+  <circle cx="386.0" cy="121.7" r="4.2" fill="var(--color-base)"/>
+  <circle cx="56.0" cy="250.2" r="4.4" fill="var(--color-theory)"/>
+  <circle cx="111.0" cy="174.9" r="4.4" fill="var(--color-theory)"/>
+  <circle cx="276.0" cy="53.6" r="4.4" fill="var(--color-theory)"/>
+  <circle cx="331.0" cy="68.6" r="4.4" fill="var(--color-theory)"/>
+  <circle cx="441.0" cy="174.9" r="4.4" fill="var(--color-theory)"/>
+  <circle cx="496.0" cy="250.2" r="4.4" fill="var(--color-theory)"/>
+  <circle cx="62.0" cy="306.0" r="4.4" fill="var(--color-theory)"/>
+  <text x="72.0" y="310.0" fill="var(--academic-text)" font-size="12" text-anchor="start">bilinen değer</text>
+  <circle cx="196.0" cy="306.0" r="4.4" fill="none" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <text x="206.0" y="310.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">ffill()</text>
+  <circle cx="300.0" cy="306.0" r="4.2" fill="var(--color-base)"/>
+  <text x="310.0" y="310.0" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600">interpolate()</text>
+</svg>
+<figcaption>sin <em>x</em> fonksiyonunun dokuz noktalık tablosunda kaybolan üç değer (kesikli dikey çizgiler). <code>ffill()</code> son bilinen değeri ileri taşır (boş daireler), en büyük hatası 0,54'tür. <code>interpolate()</code> iki komşu bilinen değeri doğru parçasıyla birleştirir (dolu daireler), en büyük hatası 0,13'e iner. Kesikli eğri gerçek sin <em>x</em>'tir.</figcaption>
+</figure>
+```
+
+Hangi yöntemin uygun olduğu verinin doğasına bağlıdır. Sıcaklık gibi zamanla yavaş değişen bir büyüklükte interpolasyon iyi bir tahmindir. Bir günün yağışı gibi günden güne sıçrayan bir büyüklükte ise eksik bir günü komşularından kestirmek anlamsız olabilir; o zaman satırı atmak daha dürüsttür.
+
+:::: {#exm-pdn-eksik-istasyon name="Eksik Ölçümleri Doldurmanın Ortalamaya Etkisi"}
+`olcumler.csv` dosyasında her istasyon için eksik sıcaklıkları doğrusal interpolasyonla doldurmanın yıllık ortalama sıcaklığı ne kadar değiştirdiğini hesaplayın.
+
+::: {.cozum}
+İstasyon adlarını `unique()` ile alıp her biri için o istasyonun sıcaklık sütununu süzeriz. Bir istasyonun satırları tarih sırasında ve ardışık olduğundan `interpolate()` her eksik günü önceki ve sonraki ölçüm arasında doğrusal olarak doldurur.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+for name in df["istasyon"].unique():
+    temp = df.loc[df["istasyon"] == name, "sicaklik"]
+    filled = temp.interpolate()
+    print(f"{name:8} eksik: {temp.isna().sum():2d}   ortalama: "
+          f"{temp.mean():.3f} -> {filled.mean():.3f}")
+```
+
+Çıktı:
+
+```text
+Ankara   eksik:  8   ortalama: 12.143 -> 12.016
+İzmir    eksik:  9   ortalama: 17.848 -> 17.786
+Erzurum  eksik: 13   ortalama: 5.790 -> 5.880
+```
+
+Eksik ölçüm sayıları 8, 9 ve 13'tür; toplamları 30'dur. Doldurmak ortalamaları en çok $0{,}13$ °C değiştirir (Ankara: $12{,}143 \to 12{,}016$). Eksikler yılın rastgele günlerine dağıldığı için mevcut değerlerin ortalaması da iyi bir tahmindir ve doldurmak onu pek değiştirmez. Eksikler belirli bir mevsimde toplansaydı, örneğin sensör yalnız kışın bozulsaydı, mevcut değerlerin ortalaması sistematik olarak yukarı kayardı ve interpolasyon bu kaymayı azaltırdı. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Eksik değer tamsayı sütununu ondalıklı sayıya çevirir"}
+`NaN` bir ondalıklı sayı değeri olduğu için tamsayı bir sütuna eksik değer girince sütunun türü `float64` olur; tabloları birleştirirken bunun bir örneğini göreceğiz. Tamsayı kalması gereken bir sütun için pandas'ın eksik değeri `<NA>` ile gösteren `"Int64"` türü (büyük I ile) kullanılabilir:
+
+```python
+import pandas as pd
+
+print(pd.Series([1, 2, None]).dtype)        # tamsayılar float64 olur
+s = pd.Series([1, 2, None], dtype="Int64")  # tamsayı kalan sütun
+print(s.tolist(), s.dtype, s.sum())
+```
+
+Çıktı:
+
+```text
+float64
+[1, 2, <NA>] Int64 3
+```
+:::
+
+## Betimsel İstatistikler
+
+Veri okunup temizlendikten sonra ilk iş onu birkaç sayıyla özetlemektir. Ortalama, medyan, varyans ve çeyreklik gibi **betimsel istatistiklerin** tanımları [Matematiksel İstatistik](../matematiksel-istatistik/istatistige-giris.html#def-itg-betimsel-istatistik) notlarındadır; pandas bunların çoğunu tek bir çağrıyla verir:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+print(df[["sicaklik", "yagis"]].describe().round(2))
+```
+
+Çıktı:
+
+```text
+       sicaklik    yagis
+count   1065.00  1095.00
+mean      11.95     1.03
+std        9.78     3.01
+min      -13.60     0.00
+25%        5.00     0.00
+50%       13.00     0.00
+75%       19.70     0.00
+max       31.50    33.70
+```
+
+`describe` her sayısal sütun için gözlem sayısını (`count`, eksikler hariç), ortalamayı, standart sapmayı, en küçük değeri, üç çeyrekliği (`25%`, `50%`, `75%`) ve en büyük değeri verir. Yağış sütununun üç çeyrekliği de $0$'dır: günlerin dörtte üçünden fazlası kurudur. Aynı sayılar tek tek de alınabilir:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+t = df["sicaklik"]
+print(round(t.mean(), 3), t.median())
+print(round(t.var(), 3), round(t.std(), 3))
+print(t.max() - t.min(), t.quantile([0.1, 0.9]).round(2).tolist())
+print(round((df["yagis"] > 0).mean(), 3))   # yağışlı günlerin oranı
+print(df["istasyon"].value_counts().to_dict())
+```
+
+Çıktı:
+
+```text
+11.95 13.0
+95.721 9.784
+45.1 [-2.96, 23.66]
+0.223
+{'Ankara': 365, 'İzmir': 365, 'Erzurum': 365}
+```
+
+Yağışlı günlerin oranını `(df["yagis"] > 0).mean()` ile bulduk: `True` değerleri $1$, `False` değerleri $0$ sayıldığından boolean bir sütunun ortalaması `True` değerlerinin oranıdır. pandas yöntemlerinin karşılık geldiği istatistikler şunlardır:
+
+| Yöntem | İstatistik |
+|---|---|
+| `mean()` | [aritmetik ortalama](../matematiksel-istatistik/istatistige-giris.html#def-itg-aritmetik-ortalama) |
+| `median()` | [medyan](../matematiksel-istatistik/istatistige-giris.html#def-itg-medyan) |
+| `mode()` | [mod](../matematiksel-istatistik/istatistige-giris.html#def-itg-mod) |
+| `var()`, `std()` | [örneklem varyansı](../matematiksel-istatistik/istatistige-giris.html#def-itg-orneklem-varyansi) ve standart sapması |
+| `max() - min()` | [açıklık](../matematiksel-istatistik/istatistige-giris.html#def-itg-aciklik) |
+| `quantile(p)` | [yüzdelik](../matematiksel-istatistik/istatistige-giris.html#def-itg-yuzdelik) |
+| `cov()`, `corr()` | [kovaryans](../olasilik-teorisi/rastgele-vektorlerde-beklenen-deger.html#def-kovaryans) ve [korelasyon](../olasilik-teorisi/rastgele-vektorlerde-beklenen-deger.html#def-korelasyon) |
+| `value_counts()` | frekans tablosu |
+
+`var` ve `std` örneklem varyansını, yani $n - 1$ paydalı $s^2$'yi ve onun karekökünü hesaplar. NumPy'ın `np.var` ve `np.std` fonksiyonları ise varsayılan olarak $n$'ye böler.
+
+::: {.callout-warning title="pandas ile NumPy'ın standart sapması farklıdır"}
+Aynı veriye `pd.Series(x).std()` ile `np.std(x)` farklı sonuç verir. Fark paydadadır ve `ddof` ("delta degrees of freedom") parametresiyle seçilir: payda $n - \text{ddof}$'tur. pandas'ta varsayılan `ddof=1`, NumPy'da `ddof=0`'dır:
+
+```python
+import numpy as np
+import pandas as pd
+
+x = [2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0]
+print(pd.Series(x).std(), np.std(x))
+print(pd.Series(x).std(ddof=0), np.std(x, ddof=1))
+```
+
+Çıktı:
+
+```text
+2.138089935299395 2.0
+2.0 2.138089935299395
+```
+
+Bu sekiz sayının ortalaması $5$, sapma kareleri toplamı $32$'dir: $\sqrt{32/8} = 2$ ve $\sqrt{32/7} \approx 2{,}138$. Hangi paydayı kullandığınızı her zaman belirtin.
+:::
+
+Yüzdelikler için de bir kural seçmek gerekir. Matematiksel İstatistik notları $P$. yüzdeliğin sıralı verideki konumunu $(n+1)P/100$ ile belirler. pandas'ın `quantile` yöntemi ise varsayılan olarak başka bir konum kuralı kullanır.
+
+::: {#def-pdn-quantile name="Doğrusal Yüzdelik Kuralı"}
+$x_{(1)} \le x_{(2)} \le \cdots \le x_{(n)}$ sıralı veri ve $0 \le p \le 1$ olsun. $h = (n - 1)p + 1$ konumunu $h = k + d$ ($k$ tam sayı, $0 \le d < 1$) biçiminde yazalım. pandas'ın `quantile(p)` değeri
+
+$$
+Q(p) = x_{(k)} + d\,\big(x_{(k+1)} - x_{(k)}\big)
+$$
+
+sayısıdır ($d = 0$ ise $Q(p) = x_{(k)}$).
+:::
+
+Yani pandas en küçük gözleme $p = 0$, en büyüğüne $p = 1$ karşılığını verir ve aradaki $p$ değerleri için iki komşu sıralı gözlem arasında doğrusal interpolasyon yapar. Matematiksel İstatistik notlarındaki kuralla tek fark konum formülüdür: orada $h = (n + 1)p$'dir. NumPy'ın `np.quantile` fonksiyonu `method="weibull"` parametresiyle o kuralı uygular. Büyük veride iki kuralın farkı önemsizdir, küçük veride ise görünür.
+
+:::: {#exm-pdn-ceyreklik-kurali name="İki Yüzdelik Kuralıyla Çeyreklikler"}
+[Matematiksel İstatistik](../matematiksel-istatistik/istatistige-giris.html#exm-itg-ceyreklikler) notlarındaki $12, 15, 17, 20, 22, 25, 28, 30, 34, 41$ verisinin çeyrekliklerini doğrusal yüzdelik kuralıyla ve $(n+1)p$ kuralıyla hesaplayıp karşılaştırın.
+
+::: {.cozum}
+$n = 10$'dur. Doğrusal kuralda $Q_1$ için $h = 9 \cdot 0{,}25 + 1 = 3{,}25$, $Q_2$ için $h = 5{,}5$, $Q_3$ için $h = 7{,}75$'tir:
+
+$$
+\begin{aligned}
+Q_1 &= x_{(3)} + 0{,}25\,\big(x_{(4)} - x_{(3)}\big) = 17 + 0{,}25 \cdot 3 = 17{,}75,\\[1mm]
+Q_2 &= x_{(5)} + 0{,}5\,\big(x_{(6)} - x_{(5)}\big) = 22 + 0{,}5 \cdot 3 = 23{,}5,\\[1mm]
+Q_3 &= x_{(7)} + 0{,}75\,\big(x_{(8)} - x_{(7)}\big) = 28 + 0{,}75 \cdot 2 = 29{,}5.
+\end{aligned}
+$$
+
+Kodla doğrulayıp $(n+1)p$ kuralıyla karşılaştıralım:
+
+```python
+import numpy as np
+import pandas as pd
+
+x = pd.Series([12, 15, 17, 20, 22, 25, 28, 30, 34, 41])
+q = [0.25, 0.5, 0.75]
+print(x.quantile(q).tolist())                        # pandas kuralı
+print(np.quantile(x, q, method="weibull").tolist())  # (n + 1)p kuralı
+```
+
+Çıktı:
+
+```text
+[17.75, 23.5, 29.5]
+[16.5, 23.5, 31.0]
+```
+
+`method="weibull"` ile bulunan $16{,}5$, $23{,}5$ ve $31$ değerleri notlardaki sonuçların aynısıdır. Medyan iki kuralda da aynıdır, çeyreklikler ise farklıdır: doğrusal kural çeyreklikleri ortaya doğru, $(n+1)p$ kuralı uçlara doğru yerleştirir. Çeyrekler arası açıklık birinde $29{,}5 - 17{,}75 = 11{,}75$, ötekinde $31 - 16{,}5 = 14{,}5$'tir. Yüzdelik içeren bir sonucu başka bir hesapla karşılaştırırken hangi kuralın kullanıldığını kontrol edin. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir ortalamanın ne kadar güvenilir olduğunu, onu oluşturan gözlemlerin sayısı belirler. Bölümün geri kalanında birkaç kez kullanacağımız şu sonucu hatırlayalım.
+
+::: {#prp-pdn-ortalama-varyansi name="Bağımsız Gözlemlerin Ortalaması"}
+$X_1, \ldots, X_n$ bağımsız ve her biri $\mu$ beklenen değerli, $\sigma^2$ varyanslı rastgele değişkenler olsun. $\bar X = (X_1 + \cdots + X_n)/n$ için $E(\bar X) = \mu$ ve $\operatorname{Var}(\bar X) = \sigma^2 / n$'dir; yani $\bar X$'in standart sapması $\sigma/\sqrt{n}$'dir. İspatı için bkz. [Matematiksel İstatistik](../matematiksel-istatistik/orneklem-ve-istatistikler.html#thm-ois-ortalama-bagimsiz).
+:::
+
+:::: {#exm-pdn-zar name="Zar Atışlarının Frekans Tablosu"}
+`default_rng(7)` üreteciyle atılan 6000 zarın göreli frekanslarını, ortalamasını ve varyansını bir zarın kuramsal değerleriyle karşılaştırın.
+
+::: {.cozum}
+`rng.integers(1, 7, size=6000)` $\{1, \ldots, 6\}$ kümesinden eşit olasılıkla seçilmiş 6000 tamsayı verir (üst sınır dahil değildir). Tek bir atış $X$ için $E(X) = (1 + \cdots + 6)/6 = 7/2$ ve $E(X^2) = 91/6$'dır. Buradan [varyans](../olasilik-teorisi/beklenen-deger-ve-varyans.html#def-varyans) $\operatorname{Var}(X) = 91/6 - 49/4$ olarak bulunur; bu sayı $35/12 \approx 2{,}9167$'dir.
+
+```python
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(7)
+rolls = pd.Series(rng.integers(1, 7, size=6000))
+freq = rolls.value_counts(normalize=True).sort_index()
+print(freq.round(4))
+print(round(rolls.mean(), 4), round(rolls.var(), 4))
+print(3.5, round(35 / 12, 4))
+```
+
+Çıktı:
+
+```text
+1    0.1590
+2    0.1740
+3    0.1685
+4    0.1578
+5    0.1735
+6    0.1672
+Name: proportion, dtype: float64
+3.5143 2.9023
+3.5 2.9167
+```
+
+Göreli frekanslar $0{,}158$ ile $0{,}174$ arasında, $1/6 \approx 0{,}1667$ çevresindedir. Ortalama $3{,}5143$, varyans $2{,}9023$'tür. @prp-pdn-ortalama-varyansi gereği 6000 atışın ortalamasının standart sapması $\sqrt{(35/12)/6000} \approx 0{,}022$ olduğundan ortalamadaki $0{,}014$'lük sapma beklenen büyüklüktedir; aynı soru [Matematiksel İstatistik](../matematiksel-istatistik/yakinsama-ve-merkezi-limit-teoremi.html#exm-ymt-zar-bsy) notlarında büyük sayılar yasasıyla ele alınır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Gruplama: groupby
+
+Bölümün başındaki küçük örnekte istasyonların ortalamasını `groupby` ile bulmuştuk. Şimdi bu işlemin ne yaptığına yakından bakalım.
+
+::: {#def-pdn-groupby name="Ayır, Uygula, Birleştir"}
+Bir DataFrame'in satır etiketleri kümesi $I$, bir anahtar sütunu da $k$ olsun ve $k$ sütununun aldığı farklı değerler $g_1, \ldots, g_m$ olsun. Satırlar
+
+$$
+G_j = \{\, i \in I : k_i = g_j \,\}, \qquad j = 1, \ldots, m
+$$
+
+gruplarına **ayrılır**. Bir indirgeme fonksiyonu (ortalama, toplam, en büyük değer, …) her grubun değerlerine **uygulanır** ve $m$ sonuç, etiketleri $g_1, \ldots, g_m$ olan bir Series'te **birleştirilir**. `df.groupby(k)[sütun].mean()` gibi bir ifade bu üç adımı yapar.
+:::
+
+Yani `groupby`, satırlar kümesini "anahtarı aynı" denklik bağıntısının denklik sınıflarına ayırır ve her sınıfı tek bir sayıya indirger. Sonuçta grup sayısı kadar satır olur ve satırlar anahtarın sıralanmış değerleriyle etiketlenir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="1.5 6.0 665.0 264.5" role="img" aria-label="Split apply combine: a six row table of stations and temperatures is split into three groups Ankara, Erzurum, Izmir; the mean of each group, 12.00, 5.40 and 18.45, is collected into a result table indexed by the station names.">
+  <text x="89.0" y="30.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600">ayır</text>
+  <text x="312.0" y="30.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600">uygula: mean()</text>
+  <text x="576.0" y="30.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600">birleştir</text>
+  <rect x="16.0" y="44.0" width="76.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="54.0" y="61.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">istasyon</text>
+  <rect x="92.0" y="44.0" width="70.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="127.0" y="61.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">sicaklik</text>
+  <rect x="16.0" y="70.0" width="76.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="54.0" y="87.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="92.0" y="70.0" width="70.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="127.0" y="87.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">0.4</text>
+  <rect x="16.0" y="96.0" width="76.0" height="26.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="54.0" y="113.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="92.0" y="96.0" width="70.0" height="26.0" fill="var(--color-base)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="127.0" y="113.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">9.1</text>
+  <rect x="16.0" y="122.0" width="76.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="54.0" y="139.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="92.0" y="122.0" width="70.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="127.0" y="139.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">23.6</text>
+  <rect x="16.0" y="148.0" width="76.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="54.0" y="165.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="92.0" y="148.0" width="70.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="127.0" y="165.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8722;8.9</text>
+  <rect x="16.0" y="174.0" width="76.0" height="26.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="54.0" y="191.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="92.0" y="174.0" width="70.0" height="26.0" fill="var(--color-base)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="127.0" y="191.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">27.8</text>
+  <rect x="16.0" y="200.0" width="76.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="54.0" y="217.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="92.0" y="200.0" width="70.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="127.0" y="217.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">19.7</text>
+  <rect x="232.0" y="52.0" width="76.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="270.0" y="69.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="308.0" y="52.0" width="70.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="343.0" y="69.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">0.4</text>
+  <rect x="232.0" y="78.0" width="76.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="270.0" y="95.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="308.0" y="78.0" width="70.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="343.0" y="95.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">23.6</text>
+  <line x1="168.0" y1="148.0" x2="222.4" y2="82.3" stroke="var(--color-theory)" stroke-width="1.4" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="226.0,78.0 223.8,85.3 219.3,81.5" fill="var(--color-theory)" opacity="0.85"/>
+  <line x1="384.0" y1="78.0" x2="495.1" y2="137.4" stroke="var(--color-theory)" stroke-width="1.4" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="500.0,140.0 492.4,139.3 495.2,134.1" fill="var(--color-theory)" opacity="0.85"/>
+  <text x="390.0" y="69.0" fill="var(--color-theory)" font-size="11.5" text-anchor="start" font-weight="600">12.00</text>
+  <rect x="232.0" y="128.0" width="76.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="270.0" y="145.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="308.0" y="128.0" width="70.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="343.0" y="145.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">&#8722;8.9</text>
+  <rect x="232.0" y="154.0" width="76.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="270.0" y="171.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="308.0" y="154.0" width="70.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="343.0" y="171.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">19.7</text>
+  <line x1="168.0" y1="148.0" x2="220.4" y2="153.4" stroke="var(--color-practice)" stroke-width="1.4" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="226.0,154.0 218.7,156.2 219.3,150.4" fill="var(--color-practice)" opacity="0.85"/>
+  <line x1="384.0" y1="154.0" x2="494.4" y2="165.4" stroke="var(--color-practice)" stroke-width="1.4" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="500.0,166.0 492.7,168.2 493.3,162.4" fill="var(--color-practice)" opacity="0.85"/>
+  <text x="390.0" y="145.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start" font-weight="600">5.40</text>
+  <rect x="232.0" y="204.0" width="76.0" height="26.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="270.0" y="221.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="308.0" y="204.0" width="70.0" height="26.0" fill="var(--color-base)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="343.0" y="221.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">9.1</text>
+  <rect x="232.0" y="230.0" width="76.0" height="26.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="270.0" y="247.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="308.0" y="230.0" width="70.0" height="26.0" fill="var(--color-base)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="343.0" y="247.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">27.8</text>
+  <line x1="168.0" y1="148.0" x2="222.8" y2="225.4" stroke="var(--color-base)" stroke-width="1.4" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="226.0,230.0 219.6,226.0 224.4,222.6" fill="var(--color-base)" opacity="0.85"/>
+  <line x1="384.0" y1="230.0" x2="494.7" y2="193.7" stroke="var(--color-base)" stroke-width="1.4" opacity="0.85" stroke-linecap="round"/>
+  <polygon points="500.0,192.0 494.3,197.0 492.4,191.4" fill="var(--color-base)" opacity="0.85"/>
+  <text x="390.0" y="252.0" fill="var(--color-base)" font-size="11.5" text-anchor="start" font-weight="600">18.45</text>
+  <rect x="506.0" y="101.0" width="76.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="544.0" y="118.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">istasyon</text>
+  <rect x="582.0" y="101.0" width="70.0" height="26.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="617.0" y="118.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">sicaklik</text>
+  <rect x="506.0" y="127.0" width="76.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="544.0" y="144.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="582.0" y="127.0" width="70.0" height="26.0" fill="var(--color-theory)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="617.0" y="144.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">12.00</text>
+  <rect x="506.0" y="153.0" width="76.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="544.0" y="170.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="582.0" y="153.0" width="70.0" height="26.0" fill="var(--color-practice)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="617.0" y="170.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">5.40</text>
+  <rect x="506.0" y="179.0" width="76.0" height="26.0" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="544.0" y="196.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="582.0" y="179.0" width="70.0" height="26.0" fill="var(--color-base)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="617.0" y="196.1" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">18.45</text>
+</svg>
+<figcaption><code>df.groupby("istasyon")["sicaklik"].mean()</code> işleminin üç adımı. Ayır: satırlar istasyon adına göre üç gruba bölünür. Uygula: her grubun sıcaklıklarına <code>mean</code> uygulanır, örneğin Ankara için (0,4 + 23,6)/2 = 12. Birleştir: üç sonuç, indeksi grup adları olan tek bir Series'te toplanır.</figcaption>
+</figure>
+```
+
+Şimdi aynı işlemi bütün veri kümesine uygulayalım:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+g = df.groupby("istasyon")
+print(g["sicaklik"].mean().round(2))
+print(g.size())
+stats = g["sicaklik"].agg(["count", "mean", "std", "min", "max"])
+print(stats.round(2))
+```
+
+Çıktı:
+
+```text
+istasyon
+Ankara     12.14
+Erzurum     5.79
+İzmir      17.85
+Name: sicaklik, dtype: float64
+istasyon
+Ankara     365
+Erzurum    365
+İzmir      365
+dtype: int64
+          count   mean    std   min   max
+istasyon                                 
+Ankara      357  12.14   8.40  -4.7  31.5
+Erzurum     352   5.79  10.27 -13.6  25.6
+İzmir       356  17.85   6.27   6.4  31.4
+```
+
+`g = df.groupby("istasyon")` henüz bir şey hesaplamaz, yalnız grupları belirler. `g["sicaklik"].mean()` her grubun ortalama sıcaklığını, `g.size()` her grubun satır sayısını verir. `agg` birden çok indirgemeyi birlikte uygular ve her biri için bir sütun açar. `count` sütunu eksikleri saymaz: Erzurum'un 365 günün 352'sinde ölçümü vardır.
+
+Sonuçlar modelle uyumludur: ortalamalar $m = 12$, $6$ ve $18$ değerlerine yakındır. Standart sapmalar da önceden kestirilebilir. $a\cos\theta$ dalgasının bir tam periyottaki varyansı $a^2/2$'dir ve gürültü bundan bağımsız olarak $2{,}5^2$ ekler. Ankara için $\sqrt{11{,}5^2/2 + 2{,}5^2} \approx 8{,}51$, Erzurum için $10{,}21$, İzmir için $6{,}51$ çıkar; tablodaki değerler $8{,}40$, $10{,}27$ ve $6{,}27$'dir.
+
+`agg`'ye `yeni_ad=(sütun, fonksiyon)` biçiminde adlandırılmış argümanlar verilirse her sonuç sütununun adını ve hangi sütundan hesaplanacağını biz seçeriz:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+summary = df.groupby("istasyon").agg(
+    en_dusuk=("sicaklik", "min"),
+    en_yuksek=("sicaklik", "max"),
+    toplam_yagis=("yagis", "sum"),
+)
+summary["aciklik"] = summary["en_yuksek"] - summary["en_dusuk"]
+print(summary.round(1))
+```
+
+Çıktı:
+
+```text
+          en_dusuk  en_yuksek  toplam_yagis  aciklik
+istasyon                                            
+Ankara        -4.7       31.5         349.2     36.2
+Erzurum      -13.6       25.6         373.7     39.2
+İzmir          6.4       31.4         403.9     25.0
+```
+
+Erzurum'un yıllık sıcaklık açıklığı $39{,}2$ °C ile en büyük, İzmir'inki $25{,}0$ °C ile en küçüktür.
+
+Gruplama birden çok sütuna göre de yapılabilir. Tarihten ay numarasını yeni bir sütun olarak çıkarıp istasyon ve ay çiftlerine göre gruplayalım:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+df["ay"] = df["tarih"].dt.month
+monthly = df.groupby(["istasyon", "ay"])["sicaklik"].mean()
+print(monthly.head(3).round(2))
+table = monthly.unstack("istasyon")
+print(table.round(1))
+pt = df.pivot_table(index="ay", columns="istasyon", values="sicaklik",
+                    aggfunc="mean")
+print(pt.equals(table))
+```
+
+Çıktı:
+
+```text
+istasyon  ay
+Ankara    1     0.51
+          2     2.16
+          3     6.83
+Name: sicaklik, dtype: float64
+istasyon  Ankara  Erzurum  İzmir
+ay                              
+1            0.5     -8.0    9.9
+2            2.2     -6.4   10.1
+3            6.8     -1.0   13.9
+4           11.0      5.5   17.1
+5           17.0     12.6   21.5
+6           21.0     17.4   24.7
+7           24.2     19.4   26.3
+8           21.9     18.0   25.0
+9           17.4     13.5   21.7
+10          12.1      6.2   17.9
+11           6.8     -0.9   13.9
+12           2.5     -6.3   11.2
+True
+```
+
+İki anahtarla gruplamanın sonucu, iki düzeyli bir indeksle (`MultiIndex`) etiketlenmiş 36 elemanlı bir Series'tir. `unstack("istasyon")` istasyon düzeyini sütunlara taşıyıp okunaklı bir $12 \times 3$ tablo kurar. Aynı tablo `pivot_table` ile tek adımda da kurulur; `equals` iki tablonun aynı olduğunu doğruluyor. Tabloda mevsim dalgası açıkça görülür: her istasyonda en soğuk ay ocak, en sıcak ay temmuzdur.
+
+Gruplara `quantile` de uygulanabilir. Her istasyonun beş sayılı özetini, yani en küçük değerini, üç çeyrekliğini ve en büyük değerini çıkaralım:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+q = [0, 0.25, 0.5, 0.75, 1]
+five = df.groupby("istasyon")["sicaklik"].quantile(q).unstack()
+print(five)
+```
+
+Çıktı:
+
+```text
+          0.00  0.25  0.50    0.75  1.00
+istasyon                                
+Ankara    -4.7   4.8  11.6  19.800  31.5
+Erzurum  -13.6  -3.9   5.9  15.250  25.6
+İzmir      6.4  12.2  18.0  23.025  31.4
+```
+
+Bu beş sayı, [Matematiksel İstatistik](../matematiksel-istatistik/istatistige-giris.html#exm-itg-ceyreklikler) notlarında tanıtılan kutu grafiğiyle çizilir. Yaklaşık 350 gözlemde iki yüzdelik kuralının konumları yalnız yarım sıra farklıdır; fark ihmal edilebilir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="16.0 -2.0 544.5 234.0" role="img" aria-label="Horizontal box plots of the daily temperatures of Ankara, Erzurum and Izmir on an axis from -15 to 35 degrees: Ankara from -4.7 to 31.5 with quartiles 4.8, 11.6, 19.8; Erzurum from -13.6 to 25.6 with quartiles -3.9, 5.9, 15.25; Izmir from 6.4 to 31.4 with quartiles 12.2, 18.0, 23.0.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="142.0" y1="20.0" x2="142.0" y2="200.0"/><line x1="226.0" y1="20.0" x2="226.0" y2="200.0"/><line x1="310.0" y1="20.0" x2="310.0" y2="200.0"/><line x1="394.0" y1="20.0" x2="394.0" y2="200.0"/><line x1="478.0" y1="20.0" x2="478.0" y2="200.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="100.0" y1="200.0" x2="528.0" y2="200.0"/>
+  <line x1="100.0" y1="12.0" x2="100.0" y2="200.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="142.0" y="216.0" text-anchor="middle">&#8722;10</text>
+  <text x="226.0" y="216.0" text-anchor="middle">0</text>
+  <text x="310.0" y="216.0" text-anchor="middle">10</text>
+  <text x="394.0" y="216.0" text-anchor="middle">20</text>
+  <text x="478.0" y="216.0" text-anchor="middle">30</text>
+  <text x="534.0" y="204.0" font-style="italic">°C</text>
+  </g>
+  <path d="M186.5,50.0 L266.3,50.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M392.3,50.0 L490.6,50.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M186.5,57.2 L186.5,42.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M490.6,57.2 L490.6,42.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="266.3" y="36.8" width="126.0" height="26.4" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-width="1.6" stroke-opacity="0.95"/>
+  <path d="M323.4,63.2 L323.4,36.8" fill="none" stroke="var(--color-theory)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="88.0" y="54.0" fill="var(--color-theory)" font-size="12.5" text-anchor="end" font-weight="600">Ankara</text>
+  <path d="M111.8,110.0 L193.2,110.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M354.1,110.0 L441.0,110.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M111.8,117.2 L111.8,102.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M441.0,117.2 L441.0,102.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="193.2" y="96.8" width="160.9" height="26.4" fill="var(--color-practice)" fill-opacity="0.18" stroke="var(--color-practice)" stroke-width="1.6" stroke-opacity="0.95"/>
+  <path d="M275.6,123.2 L275.6,96.8" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="88.0" y="114.0" fill="var(--color-practice)" font-size="12.5" text-anchor="end" font-weight="600">Erzurum</text>
+  <path d="M279.8,170.0 L328.5,170.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M419.4,170.0 L489.8,170.0" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M279.8,177.2 L279.8,162.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M489.8,177.2 L489.8,162.8" fill="none" stroke="var(--academic-text)" stroke-width="1.3" opacity="0.75" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="328.5" y="156.8" width="90.9" height="26.4" fill="var(--color-base)" fill-opacity="0.18" stroke="var(--color-base)" stroke-width="1.6" stroke-opacity="0.95"/>
+  <path d="M377.2,183.2 L377.2,156.8" fill="none" stroke="var(--color-base)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="88.0" y="174.0" fill="var(--color-base)" font-size="12.5" text-anchor="end" font-weight="600">İzmir</text>
+  <text x="186.5" y="28.8" fill="var(--academic-text)" font-size="11" text-anchor="middle">en küçük</text>
+  <text x="266.3" y="28.8" fill="var(--academic-text)" font-size="11" text-anchor="middle"><tspan font-style="italic">Q</tspan>&#8321;</text>
+  <text x="323.4" y="28.8" fill="var(--academic-text)" font-size="11" text-anchor="middle">medyan</text>
+  <text x="392.3" y="28.8" fill="var(--academic-text)" font-size="11" text-anchor="middle"><tspan font-style="italic">Q</tspan>&#8323;</text>
+  <text x="490.6" y="28.8" fill="var(--academic-text)" font-size="11" text-anchor="middle">en büyük</text>
+</svg>
+<figcaption>Üç istasyonun sıcaklıkları için kutu grafiği, <code>quantile([0, 0.25, 0.5, 0.75, 1])</code> tablosundan. Kutu birinci çeyreklikten üçüncüye uzanır, kalın çizgi medyandır, bıyıklar en küçük ve en büyük ölçüme gider. İzmir'in kutusu sağda ve dar, Erzurum'unki solda ve geniştir: İzmir hem daha sıcak hem de yıl içinde daha az değişkendir.</figcaption>
+</figure>
+```
+
+`agg` her gruptan tek bir sayı döndürür. Bazen ise her satırın yanına kendi grubunun bir özetini yazmak isteriz; bunu `transform` yapar: grup sonucunu grubun her satırına yayar ve özgün tabloyla aynı uzunlukta bir Series döndürür.
+
+:::: {#exm-pdn-anomali name="Aylık Ortalamadan Sapmalar"}
+Bir ölçümün **anomalisi**, ölçümden ait olduğu istasyonun o ayki ortalamasının çıkarılmasıyla bulunur. En büyük pozitif anomalinin hangi gün ve hangi istasyonda görüldüğünü bulun.
+
+::: {.cozum}
+Gruplar istasyon ve ay çiftleridir. `transform("mean")` her satıra kendi grubunun ortalamasını yazar; anomali, ölçüm ile bu ortalamanın farkıdır. `idxmax` en büyük anomalinin satır etiketini verir, `loc` o satırı getirir.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+df["ay"] = df["tarih"].dt.month
+keys = ["istasyon", "ay"]
+df["normal"] = df.groupby(keys)["sicaklik"].transform("mean")
+df["anomali"] = df["sicaklik"] - df["normal"]
+cols = ["tarih", "istasyon", "sicaklik", "normal", "anomali"]
+print(df[cols].head(3).round({"normal": 2, "anomali": 2}))
+print(df.loc[df["anomali"].idxmax(), cols])
+print(df.groupby("istasyon")["anomali"].std().round(2))
+```
+
+Çıktı:
+
+```text
+       tarih istasyon  sicaklik  normal  anomali
+0 2025-01-01   Ankara      -4.7    0.51    -5.21
+1 2025-01-02   Ankara       0.9    0.51     0.39
+2 2025-01-03   Ankara      -0.6    0.51    -1.11
+tarih       2025-10-01 00:00:00
+istasyon                  İzmir
+sicaklik                   25.4
+normal                17.903226
+anomali                7.496774
+Name: 638, dtype: object
+istasyon
+Ankara     2.81
+Erzurum    2.92
+İzmir      2.50
+Name: anomali, dtype: float64
+```
+
+`normal` sütunu her satıra kendi istasyonunun o ayki ortalamasını yazdı: Ankara'nın ocak ortalaması $0{,}51$'dir. En büyük pozitif anomali 1 Ekim'de İzmir'dedir: o günkü $25{,}4$ °C, İzmir'in ekim ortalamasının $7{,}5$ °C üstündedir. Bu, gürültünün standart sapmasının ($2{,}5$) üç katıdır; 1065 ölçüm arasında böyle bir uç değerin bulunması şaşırtıcı değildir. Anomalilerin standart sapması gürültününkine yakındır. Ankara ve Erzurum'da biraz daha büyüktür, çünkü genliği büyük istasyonlarda aylık ortalama, sıcaklığın ay içindeki yükselişini ya da düşüşünü izleyemez ve bu eğilim de anomaliye karışır. [$\blacksquare$]{.qed}
+:::
+::::
+
+`pivot` uzun biçimli bir tabloyu (her satırda bir tarih ve istasyon çifti) geniş biçime (her satırda bir tarih, her istasyon ayrı bir sütunda) çevirir. Geniş tabloda `corr`, sütunlar arasındaki korelasyon katsayılarının tablosunu verir:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+wide = df.pivot(index="tarih", columns="istasyon", values="sicaklik")
+print(wide.head(3))
+print(wide.corr().round(3))
+```
+
+Çıktı:
+
+```text
+istasyon    Ankara  Erzurum  İzmir
+tarih                             
+2025-01-01    -4.7     -3.4    9.5
+2025-01-02     0.9     -5.8   12.1
+2025-01-03    -0.6     -7.6   10.1
+istasyon  Ankara  Erzurum  İzmir
+istasyon                        
+Ankara     1.000    0.920  0.876
+Erzurum    0.920    1.000  0.901
+İzmir      0.876    0.901  1.000
+```
+
+Korelasyonlar $0{,}88$ ile $0{,}92$ arasındadır. Bu yüksek değerler istasyonların birbirini etkilediğini göstermez: üçü de aynı mevsim dalgasını izlediği için sıcaklıkları birlikte yükselip alçalır. Modelde günlük gürültüler bağımsızdır; mevsim etkisi çıkarılınca korelasyonun neredeyse sıfıra indiğini bir alıştırmada göreceğiz. `corr` eksik değerli satırları her sütun çifti için ayrı ayrı atar.
+
+## Tabloları Birleştirmek
+
+Veriler çoğu zaman birden çok tabloya dağılmıştır: ölçümler bir tabloda, istasyonların bilgileri başka bir tabloda durur. İki tabloyu ortak bir sütun üzerinden yan yana birleştirmek `merge` yönteminin işidir. Aşağıda istasyonların ortalama sıcaklıklarını plaka ve bölge bilgilerini taşıyan küçük bir tabloyla birleştiriyoruz. `groupby`'a verilen `as_index=False`, grup anahtarını indekse taşımak yerine sıradan bir sütun olarak bırakır; böylece `mean_t`, `istasyon` ve `sicaklik` sütunlu bir DataFrame olur ve `merge` anahtarı iki tablonun da `istasyon` sütununda bulur.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+mean_t = df.groupby("istasyon", as_index=False)["sicaklik"].mean()
+mean_t["sicaklik"] = mean_t["sicaklik"].round(2)
+info = pd.DataFrame({"istasyon": ["Ankara", "İzmir", "Trabzon"],
+                     "plaka": [6, 35, 61],
+                     "bolge": ["İç Anadolu", "Ege", "Karadeniz"]})
+print(mean_t)
+print(info)
+for how in ["inner", "left", "outer"]:
+    print(f"how={how!r}")
+    print(mean_t.merge(info, on="istasyon", how=how))
+```
+
+Çıktı:
+
+```text
+  istasyon  sicaklik
+0   Ankara     12.14
+1  Erzurum      5.79
+2    İzmir     17.85
+  istasyon  plaka       bolge
+0   Ankara      6  İç Anadolu
+1    İzmir     35         Ege
+2  Trabzon     61   Karadeniz
+how='inner'
+  istasyon  sicaklik  plaka       bolge
+0   Ankara     12.14      6  İç Anadolu
+1    İzmir     17.85     35         Ege
+how='left'
+  istasyon  sicaklik  plaka       bolge
+0   Ankara     12.14    6.0  İç Anadolu
+1  Erzurum      5.79    NaN         NaN
+2    İzmir     17.85   35.0         Ege
+how='outer'
+  istasyon  sicaklik  plaka       bolge
+0   Ankara     12.14    6.0  İç Anadolu
+1  Erzurum      5.79    NaN         NaN
+2  Trabzon       NaN   61.0   Karadeniz
+3    İzmir     17.85   35.0         Ege
+```
+
+::: {#def-pdn-merge name="Anahtar Sütunuyla Birleştirme"}
+$L$ ve $R$ iki DataFrame, $k$ ikisinde de bulunan bir sütun olsun. `L.merge(R, on=k)` sonucu, $k$ değerleri eşit olan her $(\ell, r) \in L \times R$ satır çifti için $\ell$ ile $r$'nin sütunlarını yan yana koyan bir satırdan oluşur. `how` parametresi karşılığı olmayan anahtarlara ne olacağını belirler: `"inner"` yalnız iki tabloda da bulunan anahtarları tutar; `"left"` $L$'nin, `"right"` $R$'nin, `"outer"` iki tablonun bütün anahtarlarını tutar ve karşılığı olmayan hücrelere `NaN` yazar.
+:::
+
+Yani birleştirme, iki tablonun satır çiftlerinden anahtarları eşleşenleri seçer; ilişkisel veritabanlarındaki **join** işleminin aynısıdır. Anahtar kümeleri $A_L$ ve $A_R$ ise `inner` sonucunun anahtarları $A_L \cap A_R$, `outer` sonucununkiler $A_L \cup A_R$, `left` sonucununkiler $A_L$'dir. Örnekte Erzurum yalnız solda, Trabzon yalnız sağdadır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="1.5 4.5 677.0 365.0" role="img" aria-label="Two input tables: mean temperatures of Ankara, Erzurum, Izmir and plate numbers of Ankara, Izmir, Trabzon. Below, the inner join keeps Ankara and Izmir, the left join adds Erzurum with a NaN plate, the outer join also adds Trabzon with a NaN temperature.">
+  <text x="184.0" y="28.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">mean_t (sol)</text>
+  <rect x="110.0" y="40.0" width="78.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="56.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">istasyon</text>
+  <rect x="188.0" y="40.0" width="70.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="223.0" y="56.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">sicaklik</text>
+  <rect x="110.0" y="65.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="81.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="188.0" y="65.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="223.0" y="81.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">12.14</text>
+  <rect x="110.0" y="90.0" width="78.0" height="25.0" fill="var(--color-practice)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="106.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="188.0" y="90.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="223.0" y="106.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">5.79</text>
+  <rect x="110.0" y="115.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="149.0" y="131.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="188.0" y="115.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="223.0" y="131.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">17.85</text>
+  <text x="464.0" y="28.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">info (sağ)</text>
+  <rect x="390.0" y="40.0" width="78.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="429.0" y="56.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">istasyon</text>
+  <rect x="468.0" y="40.0" width="70.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="503.0" y="56.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">plaka</text>
+  <rect x="390.0" y="65.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="429.0" y="81.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="468.0" y="65.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="503.0" y="81.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">6</text>
+  <rect x="390.0" y="90.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="429.0" y="106.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="468.0" y="90.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="503.0" y="106.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">35</text>
+  <rect x="390.0" y="115.0" width="78.0" height="25.0" fill="var(--color-base)" fill-opacity="0.17" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="429.0" y="131.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Trabzon</text>
+  <rect x="468.0" y="115.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="503.0" y="131.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">61</text>
+  <text x="118.0" y="198.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">how="inner"</text>
+  <rect x="16.0" y="210.0" width="78.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="55.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">istasyon</text>
+  <rect x="94.0" y="210.0" width="70.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="129.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">sicaklik</text>
+  <rect x="164.0" y="210.0" width="56.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="192.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">plaka</text>
+  <rect x="16.0" y="235.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="55.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="94.0" y="235.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="129.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">12.14</text>
+  <rect x="164.0" y="235.0" width="56.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="192.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">6</text>
+  <rect x="16.0" y="260.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="55.0" y="276.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="94.0" y="260.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="129.0" y="276.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">17.85</text>
+  <rect x="164.0" y="260.0" width="56.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="192.0" y="276.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">35</text>
+  <text x="340.0" y="198.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">how="left"</text>
+  <rect x="238.0" y="210.0" width="78.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="277.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">istasyon</text>
+  <rect x="316.0" y="210.0" width="70.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="351.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">sicaklik</text>
+  <rect x="386.0" y="210.0" width="56.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="414.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">plaka</text>
+  <rect x="238.0" y="235.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="277.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="316.0" y="235.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="351.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">12.14</text>
+  <rect x="386.0" y="235.0" width="56.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="414.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">6.0</text>
+  <rect x="238.0" y="260.0" width="78.0" height="25.0" fill="var(--color-practice)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="277.0" y="276.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="316.0" y="260.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="351.0" y="276.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">5.79</text>
+  <rect x="386.0" y="260.0" width="56.0" height="25.0" fill="var(--color-remark)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="414.0" y="276.6" fill="var(--color-remark)" font-size="11.5" text-anchor="middle">NaN</text>
+  <rect x="238.0" y="285.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="277.0" y="301.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="316.0" y="285.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="351.0" y="301.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">17.85</text>
+  <rect x="386.0" y="285.0" width="56.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="414.0" y="301.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">35.0</text>
+  <text x="562.0" y="198.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">how="outer"</text>
+  <rect x="460.0" y="210.0" width="78.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="499.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">istasyon</text>
+  <rect x="538.0" y="210.0" width="70.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="573.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">sicaklik</text>
+  <rect x="608.0" y="210.0" width="56.0" height="25.0" fill="var(--academic-text)" fill-opacity="0.07" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="636.0" y="226.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle" font-weight="600">plaka</text>
+  <rect x="460.0" y="235.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="499.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Ankara</text>
+  <rect x="538.0" y="235.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="573.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">12.14</text>
+  <rect x="608.0" y="235.0" width="56.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="636.0" y="251.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">6.0</text>
+  <rect x="460.0" y="260.0" width="78.0" height="25.0" fill="var(--color-practice)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="499.0" y="276.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Erzurum</text>
+  <rect x="538.0" y="260.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="573.0" y="276.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">5.79</text>
+  <rect x="608.0" y="260.0" width="56.0" height="25.0" fill="var(--color-remark)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="636.0" y="276.6" fill="var(--color-remark)" font-size="11.5" text-anchor="middle">NaN</text>
+  <rect x="460.0" y="285.0" width="78.0" height="25.0" fill="var(--color-base)" fill-opacity="0.17" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="499.0" y="301.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Trabzon</text>
+  <rect x="538.0" y="285.0" width="70.0" height="25.0" fill="var(--color-remark)" fill-opacity="0.16" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="573.0" y="301.6" fill="var(--color-remark)" font-size="11.5" text-anchor="middle">NaN</text>
+  <rect x="608.0" y="285.0" width="56.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="636.0" y="301.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">61.0</text>
+  <rect x="460.0" y="310.0" width="78.0" height="25.0" fill="var(--color-theory)" fill-opacity="0.15" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="499.0" y="326.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">İzmir</text>
+  <rect x="538.0" y="310.0" width="70.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="573.0" y="326.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">17.85</text>
+  <rect x="608.0" y="310.0" width="56.0" height="25.0" fill="none" fill-opacity="0.0" stroke="var(--academic-text)" stroke-width="1.0" stroke-opacity="0.5"/>
+  <text x="636.0" y="326.6" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">35.0</text>
+  <line x1="118.0" y1="160.0" x2="118.0" y2="178.8" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="118.0,184.0 115.3,177.5 120.7,177.5" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="340.0" y1="160.0" x2="340.0" y2="178.8" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="340.0,184.0 337.3,177.5 342.7,177.5" fill="var(--academic-text)" opacity="0.55"/>
+  <line x1="562.0" y1="160.0" x2="562.0" y2="178.8" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.55" stroke-linecap="round"/>
+  <polygon points="562.0,184.0 559.3,177.5 564.7,177.5" fill="var(--academic-text)" opacity="0.55"/>
+  <rect x="30.0" y="303.0" width="14.0" height="12.0" fill="var(--color-theory)" fill-opacity="0.25" stroke="var(--color-theory)" stroke-width="1.0" stroke-opacity="0.8"/>
+  <text x="50.0" y="313.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">iki tabloda</text>
+  <rect x="30.0" y="323.0" width="14.0" height="12.0" fill="var(--color-practice)" fill-opacity="0.25" stroke="var(--color-practice)" stroke-width="1.0" stroke-opacity="0.8"/>
+  <text x="50.0" y="333.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">yalnız solda</text>
+  <rect x="30.0" y="343.0" width="14.0" height="12.0" fill="var(--color-base)" fill-opacity="0.27" stroke="var(--color-base)" stroke-width="1.0" stroke-opacity="0.8"/>
+  <text x="50.0" y="353.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">yalnız sağda</text>
+</svg>
+<figcaption><code>mean_t.merge(info, on="istasyon", how=...)</code> sonuçları (bölge sütunu yer kazanmak için çizilmedi). <code>inner</code> yalnız iki tabloda da bulunan anahtarları, <code>left</code> sol tablonun bütün anahtarlarını, <code>outer</code> iki tablonun bütün anahtarlarını tutar. Karşılığı olmayan hücreler <code>NaN</code> olur; bu yüzden <code>left</code> ve <code>outer</code> sonuçlarında plaka sütunu ondalıklı sayıya döner.</figcaption>
+</figure>
+```
+
+`left` ve `outer` sonuçlarında `plaka` sütunu `6.0` gibi yazıldı: sütuna `NaN` girdiği için türü `float64` oldu.
+
+::: {.callout-warning title="Tekrarlanan anahtar satırları çoğaltır"}
+Bir anahtar sağdaki tabloda iki kez geçiyorsa soldaki tablonun o anahtarlı her satırı iki kez eşleşir ve sonuç sessizce büyür. İstasyon tablosuna Ankara'yı yanlışlıkla iki kez yazdığımızı düşünelim:
+
+```python
+import pandas as pd
+from pandas.errors import MergeError
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+info = pd.DataFrame({"istasyon": ["Ankara", "Ankara", "İzmir", "Erzurum"],
+                     "plaka": [6, 6, 35, 25]})   # Ankara iki kez yazılmış
+m = df.merge(info, on="istasyon")
+print(len(df), len(m))
+try:
+    df.merge(info, on="istasyon", validate="m:1")
+except MergeError as err:
+    print("MergeError:", str(err).splitlines()[0])
+```
+
+Çıktı:
+
+```text
+1095 1460
+MergeError: Merge keys are not unique in right dataset; not a many-to-one merge
+```
+
+1095 ölçüm satırı 1460 satıra çıktı: Ankara'nın 365 günü iki kez sayıldı. `validate="m:1"` ("çoktan bire") sağdaki tablonun anahtarlarının tekrarsız olmasını şart koşar ve koşul bozulursa `MergeError` hatası verir. Bir ölçüm tablosunu bir bilgi tablosuyla birleştirirken bu denetimi eklemek iyi bir alışkanlıktır.
+:::
+
+`merge` tabloları yan yana birleştirir. Aynı sütunlara sahip tabloları alt alta eklemek için `pd.concat` kullanılır; `ignore_index=True` satırları $0$'dan yeniden numaralar. Eski pandas sürümlerindeki `DataFrame.append` yöntemi kaldırılmıştır.
+
+```python
+import pandas as pd
+
+a = pd.DataFrame({"n": [1, 2], "kare": [1, 4]})
+b = pd.DataFrame({"n": [3, 4], "kare": [9, 16]})
+print(pd.concat([a, b], ignore_index=True))
+```
+
+Çıktı:
+
+```text
+   n  kare
+0  1     1
+1  2     4
+2  3     9
+3  4    16
+```
+
+:::: {#exm-pdn-model-karsilastirma name="Gözlenen Aylık Ortalamalar ile Modelin Karşılaştırılması"}
+Her istasyon ve ay için gözlenen ortalama sıcaklığı, modelin o ayın 15'indeki değeriyle iki anahtarlı bir `merge` kullanarak karşılaştırın.
+
+::: {.cozum}
+Gözlenen ortalamaları `groupby` ile, model değerlerini bir liste comprehension ile 36 satırlık bir tabloda toplarız. `as_index=False` sayesinde `istasyon` ve `ay` anahtarları `obs` tablosunda sıradan sütunlar olarak kalır; `model` tablosunda da aynı iki sütun vardır. Her ayın 15'inin yılın kaçıncı günü olduğunu ay başlarından buluruz: `freq="MS"` ("month start") ay başlarını üretir, iki tarihin farkının `.days` özelliği aradaki gün sayısıdır. Birleştirmede iki anahtar vardır: `on=["istasyon", "ay"]`. Her istasyon ve ay çifti iki tabloda da bir kez geçtiğinden `validate="1:1"` istenir.
+
+```python
+import numpy as np
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+df["ay"] = df["tarih"].dt.month
+obs = df.groupby(["istasyon", "ay"], as_index=False)["sicaklik"].mean()
+# Modelin her ayın 15'indeki değeri: m - a cos(2 pi (t - 15) / 365)
+params = {"Ankara": (12.0, 11.5), "İzmir": (18.0, 8.5),
+          "Erzurum": (6.0, 14.0)}
+starts = pd.date_range("2025-01-01", periods=12, freq="MS")  # ay başları
+t = (starts - starts[0]).days.to_numpy() + 14                # ayın 15'i
+rows = [(name, k + 1, m - a * np.cos(2 * np.pi * (tk - 15) / 365))
+        for name, (m, a) in params.items() for k, tk in enumerate(t)]
+model = pd.DataFrame(rows, columns=["istasyon", "ay", "model"])
+both = obs.merge(model, on=["istasyon", "ay"], validate="1:1")
+both["fark"] = both["sicaklik"] - both["model"]
+print(both.shape)
+print(both.head(3).round(2))
+print(round(both["fark"].abs().max(), 2), round(both["fark"].std(), 2))
+```
+
+Çıktı:
+
+```text
+(36, 5)
+  istasyon  ay  sicaklik  model  fark
+0   Ankara   1      0.51   0.50  0.01
+1   Ankara   2      2.16   2.00  0.16
+2   Ankara   3      6.83   5.77  1.06
+1.06 0.43
+```
+
+36 satırın hepsi eşleşti. En büyük fark $1{,}06$ °C'dir (Ankara, mart), farkların standart sapması $0{,}43$'tür. Bu beklenen büyüklüktür: bir ayın ortalaması yaklaşık 30 bağımsız gürültü teriminin ortalamasını içerir ve @prp-pdn-ortalama-varyansi gereği bu ortalamanın standart sapması $2{,}5/\sqrt{30} \approx 0{,}46$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Zaman Serileri
+
+Ölçümlerimizin her biri bir tarihe bağlıdır. Tarihleri indeks yapınca pandas zamanla ilgili soruları kolaylaştırır: belirli bir dönemi seçmek, günlük veriyi aylığa çevirmek, hareketli ortalama almak.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+ank = df[df["istasyon"] == "Ankara"].set_index("tarih")["sicaklik"]
+print(type(ank.index).__name__, ank.index.dtype)
+print(ank.index[0], ank.index[-1])
+print(ank.loc["2025-07-01":"2025-07-04"])
+print(round(ank.loc["2025-02"].mean(), 2))       # yalnız şubat
+print(ank.idxmax().date(), ank.max())
+```
+
+Çıktı:
+
+```text
+DatetimeIndex datetime64[us]
+2025-01-01 00:00:00 2025-12-31 00:00:00
+tarih
+2025-07-01    23.9
+2025-07-02    22.9
+2025-07-03    23.2
+2025-07-04    24.6
+Name: sicaklik, dtype: float64
+2.16
+2025-07-23 31.5
+```
+
+`set_index("tarih")` tarih sütununu indekse taşır; Ankara satırlarından sıcaklık sütununu seçince indeksi tarihler olan bir Series elde ederiz. Böyle bir indekse `DatetimeIndex` denir. Tarih indeksinde etiket dilimleri tarih metinleriyle yazılabilir ve iki uç dahildir. Yalnız ayı yazmak (`"2025-02"`) o ayın bütün günlerini seçer: Ankara'nın şubat ortalaması $2{,}16$ °C'dir. En sıcak gün 23 Temmuz'dur.
+
+Günlük veriyi aylığa çevirmek de bir gruplamadır: her gün ait olduğu aya göre gruplanır ve her gruba bir indirgeme uygulanır. Zaman indeksli bir Series'te bunu `resample` yapar:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+ank = df[df["istasyon"] == "Ankara"].set_index("tarih")["sicaklik"]
+monthly = ank.resample("ME").mean()
+print(monthly.round(2))
+```
+
+Çıktı:
+
+```text
+tarih
+2025-01-31     0.51
+2025-02-28     2.16
+2025-03-31     6.83
+2025-04-30    10.97
+2025-05-31    17.00
+2025-06-30    20.99
+2025-07-31    24.15
+2025-08-31    21.93
+2025-09-30    17.39
+2025-10-31    12.12
+2025-11-30     6.76
+2025-12-31     2.45
+Freq: ME, Name: sicaklik, dtype: float64
+```
+
+`"ME"` kodu ("month end") günleri aylara göre gruplar ve her ayı son günüyle etiketler. Haftalık gruplama için `"W"`, yıllık için `"YE"` yazılır. Sonuç, gruplama başlığında `groupby` ile bulduğumuz aylık tablonun Ankara sütunuyla aynıdır.
+
+Aylık ortalama yılı on iki parçaya böler ve her parçayı tek bir sayıyla temsil eder. Her gün için o günün çevresindeki bir pencerenin ortalamasını almak ise günlük çözünürlüğü korur.
+
+::: {#def-pdn-hareketli-ortalama name="Merkezî Hareketli Ortalama"}
+$x_0, x_1, \ldots, x_{N-1}$ bir zaman serisi ve $w = 2q + 1$ tek bir pencere uzunluğu olsun. $q \le t \le N - 1 - q$ için
+
+$$
+\bar x_t = \frac{1}{w}\sum_{j=-q}^{q} x_{t+j}
+$$
+
+sayılarına serinin $w$ uzunluklu **merkezî hareketli ortalaması** denir. Pencerenin serinin dışına taştığı ilk ve son $q$ günde $\bar x_t$ tanımlı değildir. pandas'ta `s.rolling(w, center=True).mean()` ile hesaplanır.
+:::
+
+Yani her gün, kendisinin ve iki yanındaki $q$'şar günün ortalamasıyla değiştirilir. Günden güne bağımsız olan gürültü bu ortalamada büyük ölçüde birbirini götürür: @prp-pdn-ortalama-varyansi gereği $w$ bağımsız gürültü teriminin ortalamasının standart sapması $\sigma/\sqrt{w}$'dir ve $w = 31$, $\sigma = 2{,}5$ için bu $0{,}45$'tir. Yavaş değişen mevsim dalgası ise neredeyse olduğu gibi kalır. `center=True` verilmezse pencere $t - w + 1, \ldots, t$ günlerinden, yani yalnız o güne kadarki günlerden oluşur.
+
+::: {.callout-warning title="Tek bir NaN bütün pencereyi bozar"}
+`rolling(...).mean()` varsayılan olarak yalnız penceredeki değerlerin hepsi mevcutsa bir sonuç üretir. Ankara serisinde yalnız 8 gün eksik olduğu hâlde 31 günlük hareketli ortalamanın 124 değeri `NaN` çıkar, çünkü her eksik gün kendisini içeren 31 pencerenin hepsini bozar. Önce eksikleri `interpolate()` ile doldurmak ya da `min_periods` parametresiyle daha az değerle yetinmek gerekir:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+ank = df[df["istasyon"] == "Ankara"].set_index("tarih")["sicaklik"]
+r1 = ank.rolling(31, center=True).mean()
+r2 = ank.interpolate().rolling(31, center=True).mean()
+print(ank.isna().sum(), r1.isna().sum(), r2.isna().sum())
+print(r2.loc["2025-07-13":"2025-07-17"].round(2))
+print(round((ank - r2).std(), 3))
+```
+
+Çıktı:
+
+```text
+8 124 30
+tarih
+2025-07-13    24.30
+2025-07-14    24.17
+2025-07-15    24.17
+2025-07-16    24.15
+2025-07-17    23.99
+Name: sicaklik, dtype: float64
+2.635
+```
+
+Eksikler doldurulunca yalnız baştaki ve sondaki 15'er gün, toplam 30 değer tanımsız kalır. Günlük değerlerin hareketli ortalamadan sapmalarının standart sapması $2{,}635$'tir ve gürültünün standart sapması olan $2{,}5$'e yakındır.
+:::
+
+Zaman serilerini en iyi grafik anlatır. [Matplotlib ile Grafik Çizimi](matplotlib-ile-grafik-cizimi.qmd) bölümündeki nesne yönelimli arayüzle günlük değerleri, hareketli ortalamayı ve aylık ortalamaları aynı eksenlere çizelim. `ax.plot` bir Series'in indeksini ve değerlerini doğrudan kabul eder; tarih ekseni kendiliğinden biçimlenir.
+
+```python
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+raw = df[df["istasyon"] == "Ankara"].set_index("tarih")["sicaklik"]
+ank = raw.interpolate()
+smooth = ank.rolling(31, center=True).mean()
+monthly = raw.resample("ME").mean()
+mid = monthly.index - pd.Timedelta(days=15)          # ay ortaları
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.plot(ank.index, ank, lw=0.7, alpha=0.6, label="günlük")
+ax.plot(smooth.index, smooth, lw=2.2, label="31 günlük ortalama")
+ax.plot(mid, monthly, "o", label="aylık ortalama")
+ax.set_ylabel("sıcaklık (°C)")
+ax.legend()
+fig.savefig("ankara.png", dpi=150)
+print(len(ax.lines), monthly.idxmax().month, monthly.idxmin().month)
+```
+
+Çıktı:
+
+```text
+3 7 1
+```
+
+Kod üç çizgi çizip grafiği `ankara.png` dosyasına kaydetti; aylık ortalamaların en büyüğü 7. ayda, en küçüğü 1. aydadır. Aylık ortalamalar ayın son günüyle etiketlendiği için 15 gün geri kaydırılarak ay ortalarına yerleştirildi. Aşağıdaki şekil aynı grafiğin aynı veriden bu sitenin çizim aracıyla yeniden çizilmiş hâlidir. pandas'ın kendi `plot` yöntemi de vardır: `ank.plot(ax=ax)` aynı çizgiyi Matplotlib ile çizer.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="22.5 14.0 645.5 299.5" role="img" aria-label="Daily temperatures of Ankara in 2025 as a thin noisy line from about -5 to 31 degrees, a thick smooth 31-day centred moving average following a seasonal wave with minimum in January and maximum in July, and twelve dots for the monthly means placed at mid-month.">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="56.0" y1="240.7" x2="646.0" y2="240.7"/><line x1="56.0" y1="184.6" x2="646.0" y2="184.6"/><line x1="56.0" y1="128.5" x2="646.0" y2="128.5"/><line x1="56.0" y1="72.4" x2="646.0" y2="72.4"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="56.0" y1="280.0" x2="654.0" y2="280.0"/>
+  <line x1="56.0" y1="42.0" x2="56.0" y2="280.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="49.0" y="244.7" text-anchor="end">0</text>
+  <text x="49.0" y="188.6" text-anchor="end">10</text>
+  <text x="49.0" y="132.5" text-anchor="end">20</text>
+  <text x="49.0" y="76.4" text-anchor="end">30</text>
+  <text x="52.0" y="36.0" text-anchor="middle" font-style="italic">°C</text>
+  </g>
+  <line x1="56.0" y1="280.0" x2="56.0" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="80.3" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Oca</text>
+  <line x1="106.2" y1="280.0" x2="106.2" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="130.6" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Şub</text>
+  <line x1="151.6" y1="280.0" x2="151.6" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="175.9" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Mar</text>
+  <line x1="201.9" y1="280.0" x2="201.9" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="226.2" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Nis</text>
+  <line x1="250.5" y1="280.0" x2="250.5" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="274.8" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">May</text>
+  <line x1="300.8" y1="280.0" x2="300.8" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="325.1" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Haz</text>
+  <line x1="349.4" y1="280.0" x2="349.4" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="373.7" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Tem</text>
+  <line x1="399.6" y1="280.0" x2="399.6" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="423.9" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Ağu</text>
+  <line x1="449.9" y1="280.0" x2="449.9" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="474.2" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Eyl</text>
+  <line x1="498.5" y1="280.0" x2="498.5" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="522.8" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Eki</text>
+  <line x1="548.7" y1="280.0" x2="548.7" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="573.1" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Kas</text>
+  <line x1="597.4" y1="280.0" x2="597.4" y2="285.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.5"/>
+  <text x="621.7" y="297.0" fill="var(--academic-text)" font-size="11" text-anchor="middle">Ara</text>
+  <path d="M56.0,267.1 L57.6,235.7 L59.2,244.1 L60.9,252.5 L62.5,239.3 L64.1,226.1 L65.7,248.0 L67.3,233.4 L69.0,233.4 L70.6,233.4 L72.2,240.7 L73.8,228.4 L75.5,230.6 L77.1,229.5 L78.7,260.9 L80.3,243.5 L81.9,247.5 L83.6,197.0 L85.2,246.9 L86.8,220.0 L88.4,261.5 L90.0,243.0 L91.7,257.6 L93.3,234.6 L94.9,211.6 L96.5,249.7 L98.1,225.6 L99.8,225.6 L101.4,227.3 L103.0,239.0 L104.6,237.9 L106.2,233.4 L107.9,232.3 L109.5,232.9 L111.1,223.3 L112.7,235.7 L114.4,226.1 L116.0,229.0 L117.6,248.6 L119.2,245.2 L120.8,223.9 L122.5,225.0 L124.1,216.0 L125.7,262.0 L127.3,221.7 L128.9,225.6 L130.6,229.5 L132.2,263.2 L133.8,208.8 L135.4,202.3 L137.0,195.9 L138.7,222.8 L140.3,213.2 L141.9,216.6 L143.5,198.7 L145.1,218.6 L146.8,238.5 L148.4,238.5 L150.0,234.0 L151.6,219.4 L153.3,214.4 L154.9,222.2 L156.5,215.5 L158.1,195.3 L159.7,241.3 L161.4,223.3 L163.0,200.3 L164.6,229.0 L166.2,198.1 L167.8,217.7 L169.5,219.4 L171.1,212.7 L172.7,207.1 L174.3,213.2 L175.9,186.3 L177.6,211.6 L179.2,188.6 L180.8,189.1 L182.4,206.5 L184.0,183.0 L185.7,175.7 L187.3,191.4 L188.9,186.9 L190.5,222.8 L192.2,189.1 L193.8,180.7 L195.4,169.5 L197.0,200.3 L198.6,189.7 L200.3,175.1 L201.9,200.3 L203.5,180.7 L205.1,229.5 L206.7,179.0 L208.4,209.3 L210.0,208.8 L211.6,189.1 L213.2,190.8 L214.8,182.4 L216.5,216.6 L218.1,195.3 L219.7,153.8 L221.3,177.9 L223.0,191.9 L224.6,166.1 L226.2,177.9 L227.8,162.8 L229.4,177.3 L231.1,144.8 L232.7,167.8 L234.3,164.4 L235.9,193.6 L237.5,180.1 L239.2,151.0 L240.8,176.8 L242.4,150.4 L244.0,186.9 L245.6,163.3 L247.3,148.7 L248.9,158.3 L250.5,163.9 L252.1,144.8 L253.7,131.3 L255.4,148.2 L257.0,131.9 L258.6,139.2 L260.2,160.0 L261.9,147.0 L263.5,128.5 L265.1,165.6 L266.7,163.9 L268.3,154.9 L270.0,178.5 L271.6,147.0 L273.2,133.0 L274.8,148.7 L276.4,164.4 L278.1,172.3 L279.7,137.0 L281.3,129.1 L282.9,121.2 L284.5,140.9 L286.2,161.1 L287.8,132.5 L289.4,145.4 L291.0,158.3 L292.6,116.2 L294.3,156.6 L295.9,118.4 L297.5,145.4 L299.1,124.0 L300.8,119.6 L302.4,118.4 L304.0,134.7 L305.6,116.2 L307.2,150.4 L308.9,154.3 L310.5,138.6 L312.1,115.1 L313.7,117.3 L315.3,118.4 L317.0,116.8 L318.6,135.3 L320.2,111.7 L321.8,134.1 L323.4,138.1 L325.1,115.1 L326.7,129.7 L328.3,138.1 L329.9,119.6 L331.5,108.3 L333.2,120.1 L334.8,129.1 L336.4,115.6 L338.0,96.6 L339.7,126.3 L341.3,108.3 L342.9,124.6 L344.5,117.9 L346.1,103.3 L347.8,117.3 L349.4,106.7 L351.0,112.3 L352.6,110.6 L354.2,102.7 L355.9,88.7 L357.5,129.7 L359.1,122.9 L360.7,105.5 L362.3,66.8 L364.0,100.5 L365.6,84.2 L367.2,129.1 L368.8,112.3 L370.5,83.1 L372.1,85.9 L373.7,107.8 L375.3,105.5 L376.9,104.4 L378.6,94.3 L380.2,98.8 L381.8,105.0 L383.4,94.3 L385.0,64.0 L386.7,122.4 L388.3,116.8 L389.9,116.8 L391.5,110.0 L393.1,116.8 L394.8,141.4 L396.4,103.3 L398.0,119.6 L399.6,135.8 L401.2,129.1 L402.9,128.0 L404.5,130.8 L406.1,118.4 L407.7,96.0 L409.4,107.8 L411.0,119.0 L412.6,92.6 L414.2,122.4 L415.8,121.2 L417.5,126.9 L419.1,118.4 L420.7,108.3 L422.3,138.1 L423.9,127.4 L425.6,87.0 L427.2,133.0 L428.8,114.5 L430.4,121.8 L432.0,120.1 L433.7,123.5 L435.3,130.8 L436.9,119.6 L438.5,120.1 L440.1,110.6 L441.8,89.8 L443.4,129.1 L445.0,102.7 L446.6,102.7 L448.3,123.5 L449.9,143.7 L451.5,126.3 L453.1,150.4 L454.7,132.5 L456.4,142.6 L458.0,120.7 L459.6,130.2 L461.2,161.6 L462.8,128.0 L464.5,122.4 L466.1,165.0 L467.7,125.2 L469.3,168.9 L470.9,148.2 L472.6,140.9 L474.2,138.1 L475.8,143.7 L477.4,124.6 L479.0,131.9 L480.7,143.1 L482.3,137.5 L483.9,162.2 L485.5,148.2 L487.2,153.8 L488.8,130.2 L490.4,154.3 L492.0,142.0 L493.6,158.8 L495.3,172.9 L496.9,147.6 L498.5,148.7 L500.1,161.1 L501.7,194.2 L503.4,173.4 L505.0,142.0 L506.6,150.4 L508.2,152.1 L509.8,155.5 L511.5,163.3 L513.1,163.3 L514.7,148.7 L516.3,181.8 L518.0,151.0 L519.6,162.8 L521.2,186.9 L522.8,169.5 L524.4,166.7 L526.1,175.7 L527.7,184.6 L529.3,195.3 L530.9,193.0 L532.5,184.6 L534.2,193.0 L535.8,166.1 L537.4,180.1 L539.0,206.5 L540.6,177.9 L542.3,180.7 L543.9,185.2 L545.5,181.8 L547.1,178.5 L548.7,180.1 L550.4,177.9 L552.0,180.7 L553.6,183.0 L555.2,187.4 L556.9,200.3 L558.5,191.4 L560.1,193.0 L561.7,219.4 L563.3,213.8 L565.0,221.1 L566.6,212.1 L568.2,191.9 L569.8,199.8 L571.4,216.0 L573.1,206.0 L574.7,207.1 L576.3,213.8 L577.9,220.0 L579.5,212.1 L581.2,202.6 L582.8,210.4 L584.4,203.7 L586.0,190.2 L587.6,202.0 L589.3,200.9 L590.9,224.5 L592.5,193.0 L594.1,216.6 L595.8,213.8 L597.4,252.0 L599.0,229.0 L600.6,217.7 L602.2,233.4 L603.9,227.3 L605.5,230.6 L607.1,202.0 L608.7,230.6 L610.3,237.9 L612.0,220.0 L613.6,238.5 L615.2,211.6 L616.8,241.3 L618.4,224.5 L620.1,239.6 L621.7,226.7 L623.3,217.2 L624.9,236.8 L626.5,209.9 L628.2,209.9 L629.8,232.9 L631.4,227.8 L633.0,243.5 L634.7,207.1 L636.3,206.5 L637.9,223.9 L639.5,213.2 L641.1,226.1 L642.8,239.0 L644.4,218.9 L646.0,259.8" fill="none" stroke="var(--color-theory)" stroke-width="0.9" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M80.3,237.8 L81.9,236.7 L83.6,236.6 L85.2,236.2 L86.8,235.3 L88.4,235.2 L90.0,235.2 L91.7,234.6 L93.3,235.0 L94.9,235.4 L96.5,235.1 L98.1,234.6 L99.8,234.2 L101.4,235.2 L103.0,235.0 L104.6,233.8 L106.2,233.4 L107.9,233.9 L109.5,234.3 L111.1,232.8 L112.7,232.1 L114.4,230.8 L116.0,229.8 L117.6,228.5 L119.2,227.4 L120.8,227.6 L122.5,227.2 L124.1,227.6 L125.7,227.9 L127.3,227.7 L128.9,226.9 L130.6,226.4 L132.2,225.8 L133.8,224.6 L135.4,224.9 L137.0,224.9 L138.7,223.7 L140.3,223.8 L141.9,222.8 L143.5,221.8 L145.1,221.0 L146.8,220.6 L148.4,220.0 L150.0,220.0 L151.6,217.5 L153.3,217.2 L154.9,216.0 L156.5,214.7 L158.1,212.9 L159.7,212.0 L161.4,211.2 L163.0,211.0 L164.6,209.9 L166.2,210.2 L167.8,209.3 L169.5,208.7 L171.1,207.1 L172.7,205.9 L174.3,204.3 L175.9,202.4 L177.6,201.8 L179.2,200.7 L180.8,201.0 L182.4,199.8 L184.0,200.2 L185.7,199.2 L187.3,198.1 L188.9,197.8 L190.5,196.3 L192.2,196.9 L193.8,196.1 L195.4,194.0 L197.0,192.9 L198.6,192.4 L200.3,190.9 L201.9,190.6 L203.5,189.0 L205.1,188.7 L206.7,187.3 L208.4,186.0 L210.0,185.4 L211.6,186.0 L213.2,185.6 L214.8,184.5 L216.5,183.0 L218.1,181.7 L219.7,181.9 L221.3,181.7 L223.0,180.1 L224.6,179.1 L226.2,178.7 L227.8,176.9 L229.4,175.3 L231.1,172.7 L232.7,171.2 L234.3,168.9 L235.9,167.3 L237.5,166.0 L239.2,164.0 L240.8,163.4 L242.4,161.7 L244.0,160.4 L245.6,161.2 L247.3,160.2 L248.9,158.3 L250.5,157.8 L252.1,157.3 L253.7,157.6 L255.4,156.3 L257.0,155.8 L258.6,154.3 L260.2,153.6 L261.9,152.5 L263.5,151.0 L265.1,150.8 L266.7,150.2 L268.3,149.1 L270.0,148.1 L271.6,146.7 L273.2,146.6 L274.8,145.5 L276.4,144.0 L278.1,143.2 L279.7,143.3 L281.3,142.3 L282.9,142.9 L284.5,143.3 L286.2,142.7 L287.8,141.6 L289.4,141.3 L291.0,139.7 L292.6,138.2 L294.3,137.6 L295.9,135.4 L297.5,135.0 L299.1,135.2 L300.8,134.1 L302.4,133.0 L304.0,131.9 L305.6,131.3 L307.2,130.6 L308.9,130.6 L310.5,130.2 L312.1,128.8 L313.7,127.6 L315.3,127.0 L317.0,125.4 L318.6,125.6 L320.2,124.4 L321.8,123.9 L323.4,123.0 L325.1,122.4 L326.7,122.2 L328.3,121.9 L329.9,120.9 L331.5,120.0 L333.2,119.4 L334.8,118.3 L336.4,117.3 L338.0,115.7 L339.7,115.2 L341.3,114.1 L342.9,114.5 L344.5,113.7 L346.1,112.8 L347.8,111.3 L349.4,110.3 L351.0,110.0 L352.6,109.2 L354.2,107.7 L355.9,107.1 L357.5,107.0 L359.1,106.1 L360.7,104.0 L362.3,104.3 L364.0,104.9 L365.6,104.6 L367.2,104.6 L368.8,104.4 L370.5,105.2 L372.1,105.2 L373.7,105.2 L375.3,106.2 L376.9,106.7 L378.6,107.3 L380.2,108.2 L381.8,109.1 L383.4,108.1 L385.0,107.6 L386.7,108.0 L388.3,108.8 L389.9,109.5 L391.5,110.7 L393.1,110.7 L394.8,110.9 L396.4,111.7 L398.0,113.4 L399.6,114.0 L401.2,113.4 L402.9,114.3 L404.5,115.0 L406.1,115.7 L407.7,116.2 L409.4,117.1 L411.0,119.3 L412.6,119.2 L414.2,119.3 L415.8,119.1 L417.5,118.5 L419.1,118.9 L420.7,117.6 L422.3,117.6 L423.9,117.7 L425.6,118.0 L427.2,117.9 L428.8,118.6 L430.4,118.7 L432.0,119.4 L433.7,120.2 L435.3,121.0 L436.9,122.3 L438.5,123.5 L440.1,123.5 L441.8,124.9 L443.4,124.8 L445.0,126.5 L446.6,127.7 L448.3,127.8 L449.9,128.2 L451.5,130.0 L453.1,129.7 L454.7,130.3 L456.4,131.0 L458.0,131.5 L459.6,132.8 L461.2,133.4 L462.8,134.5 L464.5,134.8 L466.1,136.2 L467.7,137.9 L469.3,138.8 L470.9,141.1 L472.6,142.5 L474.2,143.4 L475.8,143.9 L477.4,146.1 L479.0,146.8 L480.7,147.2 L482.3,147.4 L483.9,148.4 L485.5,149.2 L487.2,149.3 L488.8,150.4 L490.4,151.3 L492.0,151.8 L493.6,152.7 L495.3,152.5 L496.9,153.7 L498.5,154.6 L500.1,155.6 L501.7,156.6 L503.4,158.5 L505.0,160.6 L506.6,162.2 L508.2,163.7 L509.8,164.7 L511.5,165.3 L513.1,166.1 L514.7,168.6 L516.3,169.3 L518.0,170.6 L519.6,171.4 L521.2,171.7 L522.8,172.7 L524.4,173.7 L526.1,174.3 L527.7,173.8 L529.3,174.2 L530.9,175.6 L532.5,177.2 L534.2,178.5 L535.8,179.7 L537.4,181.5 L539.0,183.2 L540.6,185.5 L542.3,186.5 L543.9,187.8 L545.5,189.0 L547.1,189.9 L548.7,191.1 L550.4,192.4 L552.0,193.6 L553.6,194.8 L555.2,195.3 L556.9,195.6 L558.5,196.5 L560.1,196.8 L561.7,197.6 L563.3,198.3 L565.0,198.1 L566.6,199.6 L568.2,200.0 L569.8,201.0 L571.4,202.0 L573.1,204.4 L574.7,206.0 L576.3,207.3 L577.9,209.0 L579.5,210.4 L581.2,211.8 L582.8,211.9 L584.4,213.1 L586.0,214.6 L587.6,214.6 L589.3,215.4 L590.9,215.1 L592.5,216.0 L594.1,217.1 L595.8,218.3 L597.4,218.7 L599.0,219.1 L600.6,220.0 L602.2,219.9 L603.9,219.6 L605.5,220.2 L607.1,221.0 L608.7,222.1 L610.3,222.2 L612.0,222.7 L613.6,223.5 L615.2,223.8 L616.8,223.9 L618.4,225.4 L620.1,225.5 L621.7,226.9" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="80.3" cy="237.9" r="4.2" fill="var(--color-base)"/>
+  <circle cx="125.7" cy="228.6" r="4.2" fill="var(--color-base)"/>
+  <circle cx="175.9" cy="202.4" r="4.2" fill="var(--color-base)"/>
+  <circle cx="224.6" cy="179.2" r="4.2" fill="var(--color-base)"/>
+  <circle cx="274.8" cy="145.3" r="4.2" fill="var(--color-base)"/>
+  <circle cx="323.4" cy="123.0" r="4.2" fill="var(--color-base)"/>
+  <circle cx="373.7" cy="105.2" r="4.2" fill="var(--color-base)"/>
+  <circle cx="423.9" cy="117.7" r="4.2" fill="var(--color-base)"/>
+  <circle cx="472.6" cy="143.2" r="4.2" fill="var(--color-base)"/>
+  <circle cx="522.8" cy="172.7" r="4.2" fill="var(--color-base)"/>
+  <circle cx="571.4" cy="202.8" r="4.2" fill="var(--color-base)"/>
+  <circle cx="621.7" cy="227.0" r="4.2" fill="var(--color-base)"/>
+  <line x1="70.0" y1="54.0" x2="92.0" y2="54.0" stroke="var(--color-theory)" stroke-width="1.2" opacity="0.7"/>
+  <text x="100.0" y="58.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">günlük</text>
+  <line x1="70.0" y1="74.0" x2="92.0" y2="74.0" stroke="var(--color-practice)" stroke-width="2.6"/>
+  <text x="100.0" y="78.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">31 günlük ortalama</text>
+  <circle cx="81.0" cy="94.0" r="4.2" fill="var(--color-base)"/>
+  <text x="100.0" y="98.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">aylık ortalama</text>
+</svg>
+<figcaption>Ankara'nın 2025 sıcaklıkları; grafik çizme kodunun çizdiği üç katman. İnce çizgi eksikleri interpolasyonla doldurulmuş günlük değerlerdir. Kalın çizgi 31 günlük merkezî hareketli ortalamadır ve baştaki ile sondaki 15 günde tanımlı değildir. Noktalar <code>resample("ME").mean()</code> ile bulunan aylık ortalamalardır ve ay ortalarına yerleştirilmiştir. Hareketli ortalama günlük gürültüyü bastırır, mevsim dalgası kalır.</figcaption>
+</figure>
+```
+
+Zaman serilerinde sık kullanılan birkaç işlem daha vardır: `shift(k)` seriyi $k$ adım kaydırır, yani her güne $k$ gün önceki değeri yazar; `diff()` ardışık farkları $x_t - x_{t-1}$ verir; `cumsum()` birikimli toplamı, `expanding().mean()` ise başlangıçtan o güne kadarki ortalamayı hesaplar. Aşağıdaki örnek `shift` ile ardışık donlu günlerden oluşan dizileri buluyor.
+
+:::: {#exm-pdn-don-serisi name="Erzurum'da En Uzun Don Dizisi"}
+Eksik günleri doğrusal interpolasyonla doldurarak Erzurum'da sıcaklığın üst üste $0$ °C'nin altında kaldığı en uzun dönemi bulun.
+
+::: {.cozum}
+Önce her günün donlu olup olmadığını gösteren boolean bir `frost` serisi kurarız. Bir dizi, `frost` değerinin bir önceki günden farklı olduğu günde başlar; `frost != frost.shift()` bu günlerde `True` olur. İlk gün de `True` olur, çünkü `shift` ilk güne `NaN` yazar. Bu boolean serinin birikimli toplamı, her güne kaçıncı dizide olduğunu gösteren bir numara verir. İki seriyi bir tabloda yan yana koyduğumuzda tarihler indekste durur; `set_index`'in tersi olan `reset_index()` onları yeniden `tarih` sütununa taşır, çünkü her dizinin tarihlerini bu sütundan alacağız. Son olarak yalnız donlu günleri alıp dizi numarasına göre gruplar, her dizinin ilk ve son tarihini ve uzunluğunu buluruz.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+erz = df[df["istasyon"] == "Erzurum"].set_index("tarih")["sicaklik"]
+frost = erz.interpolate() < 0                  # don günü mü?
+run_id = (frost != frost.shift()).cumsum()     # değişince yeni dizi
+days = pd.DataFrame({"don": frost, "dizi": run_id}).reset_index()
+runs = days[days["don"]].groupby("dizi")["tarih"].agg(
+    ["min", "max", "size"])
+print(len(runs))
+print(runs.nlargest(3, "size"))
+```
+
+Çıktı:
+
+```text
+10
+            min        max  size
+dizi                            
+1    2025-01-01 2025-03-01    60
+19   2025-11-20 2025-12-31    42
+3    2025-03-03 2025-03-11     9
+```
+
+Yıl içinde 10 ayrı don dizisi vardır. En uzunu 1 Ocak'tan 1 Mart'a kadar $31 + 28 + 1 = 60$ gün sürmüştür. İkinci en uzun dizi 20 Kasım'da başlar ve yılın son gününe kadar 42 gün sürer; veri yıl sonunda kesildiği için bu dizinin gerçek uzunluğunu bilmiyoruz. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Alıştırmaların çoğu, bölümde ürettiğimiz `olcumler.csv` dosyasını kullanır.
+
+:::: {#exr-pdn-zar-toplami name="İki Zarın Toplamının Dağılımı"}
+`default_rng(12)` üreteciyle iki zarı 36000 kez atın. Toplamın göreli frekanslarını $s = 2, \ldots, 12$ için kuramsal olasılıklar $(6 - |s - 7|)/36$ ile bir DataFrame'de yan yana koyarak en büyük mutlak farkı bulun.
+
+::: {.cozum}
+`rng.integers(1, 7, size=(36000, 2))` her satırı bir atış olan iki sütunlu bir tamsayı dizisi verir; satır toplamları zarların toplamıdır. `value_counts(normalize=True).sort_index()` göreli frekansları $2$'den $12$'ye sıralar. Kuramsal olasılıkları aynı indeksle bir Series olarak kurarız ki DataFrame'de satırlar etiketlerine göre hizalansın.
+
+```python
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(12)
+dice = rng.integers(1, 7, size=(36000, 2))
+total = pd.Series(dice.sum(axis=1))
+freq = total.value_counts(normalize=True).sort_index()
+s = freq.index.to_numpy()
+exact = pd.Series((6 - np.abs(s - 7)) / 36, index=freq.index)
+table = pd.DataFrame({"goreli": freq, "kuramsal": exact})
+table["fark"] = table["goreli"] - table["kuramsal"]
+print(table.round(4))
+print(round(table["fark"].abs().max(), 4))
+```
+
+Çıktı:
+
+```text
+    goreli  kuramsal    fark
+2   0.0259    0.0278 -0.0019
+3   0.0566    0.0556  0.0010
+4   0.0826    0.0833 -0.0007
+5   0.1130    0.1111  0.0019
+6   0.1379    0.1389 -0.0010
+7   0.1668    0.1667  0.0002
+8   0.1402    0.1389  0.0013
+9   0.1127    0.1111  0.0016
+10  0.0816    0.0833 -0.0018
+11  0.0569    0.0556  0.0014
+12  0.0258    0.0278 -0.0020
+0.002
+```
+
+Göreli frekanslar kuramsal olasılıklardan en çok $0{,}002$ uzaktadır. Örneğin $P(S = 7) = 6/36 \approx 0{,}1667$, gözlenen oran $0{,}1668$'dir. 36000 atışta bir oranın standart sapması en çok $\sqrt{0{,}25/36000} \approx 0{,}0026$ olduğundan farklar beklenen büyüklüktedir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-collatz name="Collatz Adım Sayıları"}
+[Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd) bölümündeki Collatz dizisinde $n$'den $1$'e ulaşmak için gereken adım sayısını $n = 1, \ldots, 9999$ için indeksi $n$ olan bir Series'te toplayın ve en çok adım gerektiren üç sayıyı bulun.
+
+::: {.cozum}
+Adım sayısını bir fonksiyonla hesaplayıp sonuçları bir liste comprehension ile toplarız. `index=n` ile etiketler $1, \ldots, 9999$ olur; böylece `idxmax` ve `nlargest` doğrudan sayıları verir.
+
+```python
+import pandas as pd
+
+
+def collatz_steps(n):
+    steps = 0
+    while n != 1:
+        n = n // 2 if n % 2 == 0 else 3 * n + 1
+        steps += 1
+    return steps
+
+
+n = range(1, 10**4)
+steps = pd.Series([collatz_steps(k) for k in n], index=n)
+print(steps.idxmax(), steps.max())
+print(steps.nlargest(3))
+print(round(steps.mean(), 2), steps.median())
+```
+
+Çıktı:
+
+```text
+6171 261
+6171    261
+9257    259
+6943    256
+dtype: int64
+84.97 73.0
+```
+
+En çok adımı $6171$ gerektirir: $261$ adım. Onu $9257$ ($259$ adım) ve $6943$ ($256$ adım) izler. Ortalama adım sayısı yaklaşık $85$, medyan $73$'tür; ortalamanın medyandan büyük olması, az sayıdaki çok uzun dizinin dağılımı sağa çektiğini gösterir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-temmuz name="Ankara'da Sıcak Temmuz Günleri"}
+`olcumler.csv` dosyasında Ankara'da temmuz ayında sıcaklığın $28$ °C'yi aştığı günleri bulun.
+
+::: {.cozum}
+Koşulları art arda uygularız: önce Ankara satırları, sonra bunların arasından ay numarası 7 olanlar, en son sıcaklığı $28$'i aşanlar. `count()` temmuzda eksik ölçüm olup olmadığını da gösterir.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+ank = df[df["istasyon"] == "Ankara"]
+july = ank[ank["tarih"].dt.month == 7]
+hot = july[july["sicaklik"] > 28]
+print(len(july), july["sicaklik"].count(), len(hot))
+print(hot["tarih"].dt.day.tolist())
+print(hot["sicaklik"].tolist())
+```
+
+Çıktı:
+
+```text
+31 31 3
+[9, 14, 23]
+[31.0, 28.1, 31.5]
+```
+
+Temmuzun 31 gününün hepsinde ölçüm vardır. Sıcaklık yalnız 3 günde $28$ °C'yi aşmıştır: 9 Temmuz ($31{,}0$), 14 Temmuz ($28{,}1$) ve 23 Temmuz ($31{,}5$). Modelde temmuz ortası sıcaklığı $12 + 11{,}5 = 23{,}5$ °C olduğundan $28$ °C, ortalamanın $1{,}8$ standart sapma üstündedir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-interpolasyon name="Doğrusal, Karesel ve Kübik İnterpolasyon"}
+$[0, 2]$ aralığında $0{,}2$ adımlı ızgaradaki $e^x$ değerlerinden 3, 4 ve 8 numaralı konumdakileri silin. Eksikleri `interpolate` yönteminin `"linear"`, `"quadratic"` ve `"cubic"` seçenekleriyle doldurup hataları karşılaştırın.
+
+::: {.cozum}
+`"quadratic"` ve `"cubic"` seçenekleri SciPy'ın ikinci ve üçüncü dereceden spline interpolasyonunu kullanır ve indeksin değerlerini $x$ koordinatı olarak alır. Spline'ları [Polinomlar, İnterpolasyon ve Eğri Uydurma](interpolasyon-ve-egri-uydurma.qmd) bölümünde ayrıntılı ele alıyoruz. `"linear"` değerleri eşit aralıklı sayar; bizim ızgaramız eşit aralıklı olduğu için bu bir şey değiştirmez.
+
+```python
+import numpy as np
+import pandas as pd
+
+x = np.linspace(0, 2, 11)
+s = pd.Series(np.exp(x), index=x)
+s.iloc[[3, 4, 8]] = np.nan
+true = np.exp(x[[3, 4, 8]])
+for method in ["linear", "quadratic", "cubic"]:
+    filled = s.interpolate(method=method)
+    err = np.abs(filled.iloc[[3, 4, 8]].to_numpy() - true)
+    print(f"{method:9}", err.round(5), f"{err.max():.1e}")
+```
+
+Çıktı:
+
+```text
+linear    [0.07852 0.08392 0.09939] 9.9e-02
+quadratic [0.00103 0.00332 0.00199] 3.3e-03
+cubic     [0.00086 0.00087 0.0009 ] 9.0e-04
+```
+
+Doğrusal interpolasyonun en büyük hatası $0{,}099$, karesel spline'ınki $0{,}0033$, kübik spline'ınki $0{,}0009$'dur. $e^x$ dışbükey olduğundan doğru parçaları eğrinin hep üstünde kalır ve hata $f''$ ile orantılıdır; yüksek dereceli spline'lar eğriliği de izlediği için çok daha isabetlidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-aykiri name="Çeyrekler Arası Açıklık Kuralıyla Aykırı Değerler"}
+Bir veride [çeyrekler arası açıklık](../matematiksel-istatistik/istatistige-giris.html#def-itg-ceyrekler-arasi-aciklik) $\text{ÇAA} = Q_3 - Q_1$ olmak üzere
+
+$$
+\big[\,Q_1 - 1{,}5\,\text{ÇAA},\ \ Q_3 + 1{,}5\,\text{ÇAA}\,\big]
+$$
+
+aralığının dışındaki gözlemlere aykırı değer diyelim. Ankara'nın yağışlı günlerindeki yağış miktarlarında doğrusal yüzdelik kuralına göre kaç aykırı değer vardır?
+
+::: {.cozum}
+Yağışlı Ankara günlerini iki koşulla süzeriz. `quantile([0.25, 0.75])` iki değerli bir Series döndürür; onu iki değişkene açabiliriz. Alt sınır negatif çıkacağından (yağış negatif olamaz) aykırı değerlerin hepsi üst taraftadır.
+
+```python
+import numpy as np
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+wet = (df["istasyon"] == "Ankara") & (df["yagis"] > 0)
+rain = df.loc[wet, "yagis"]
+q1, q3 = rain.quantile([0.25, 0.75])
+iqr = q3 - q1
+low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+out = rain[(rain < low) | (rain > high)]
+print(len(rain), q1, q3, high)
+print(len(out), round(len(out) / len(rain), 3))
+print(round(np.exp(-(np.log(4) + 1.5 * np.log(3))), 3))
+```
+
+Çıktı:
+
+```text
+88 1.275 5.4 11.5875
+3 0.034
+0.048
+```
+
+88 yağışlı günde $Q_1 = 1{,}275$ mm, $Q_3 = 5{,}4$ mm, çeyrekler arası açıklık $4{,}125$ mm ve üst sınır $11{,}5875$ mm'dir. Bu sınırı 3 gün, yani günlerin $\%3{,}4$'ü aşmıştır. Veride hiçbir hata olmadığı hâlde kural birkaç günü aykırı saydı. Bunun nedeni dağılımın biçimidir: ortalaması $r$ olan üstel dağılımda $Q_1 = r\ln(4/3)$ ve $Q_3 = r\ln 4$ olduğundan üst sınır $r(\ln 4 + 1{,}5\ln 3)$'tür ve bir gözlemin bu sınırı aşma olasılığı
+
+$$
+e^{-(\ln 4 + 1{,}5\ln 3)} = \frac{1}{4 \cdot 3^{1{,}5}} \approx 0{,}048
+$$
+
+olur. Çarpık dağılımlarda bu kural hatalı ölçümlerden çok dağılımın uzun kuyruğunu yakalar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-zskor name="Grup İçinde Standartlaştırma"}
+Her sıcaklık ölçümünü kendi istasyonunun ortalaması $\bar x_g$ ve standart sapması $s_g$ ile $z = (x - \bar x_g)/s_g$ biçiminde standartlaştırın ve mutlak değerce en büyük $z$ değerinin hangi ölçüme ait olduğunu bulun.
+
+::: {.cozum}
+[Vektörizasyon ve Broadcasting](vektorizasyon-ve-broadcasting.qmd) bölümünde bir veri matrisini sütun sütun standartlaştırmıştık; burada sütunların yerini istasyonlar alır. `transform("mean")` ve `transform("std")` her satıra kendi istasyonunun ortalamasını ve standart sapmasını yazar, böylece formül bütün sütuna tek ifadeyle uygulanır. Doğrulama için her istasyonda $z$'nin ortalamasına ve standart sapmasına da bakarız.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+g = df.groupby("istasyon")["sicaklik"]
+df["z"] = (df["sicaklik"] - g.transform("mean")) / g.transform("std")
+check = df.groupby("istasyon")["z"].agg(["mean", "std"])
+print(check.abs().round(10))
+row = df.loc[df["z"].abs().idxmax()]
+print(row["tarih"].date(), row["istasyon"], row["sicaklik"],
+      round(row["z"], 3))
+```
+
+Çıktı:
+
+```text
+          mean  std
+istasyon           
+Ankara     0.0  1.0
+Erzurum    0.0  1.0
+İzmir      0.0  1.0
+2025-07-23 Ankara 31.5 2.304
+```
+
+Standartlaştırılmış değerlerin ortalaması her istasyonda $0$, standart sapması $1$'dir (yuvarlama hataları $10^{-10}$'un altında). Mutlak değerce en büyük $z$ değeri $2{,}304$'tür ve Ankara'nın 23 Temmuz'daki $31{,}5$ °C ölçümüne aittir. Bir kosinüs dalgası ile küçük bir gürültünün toplamında $|z|$ değerleri $3$'e pek yaklaşmaz, çünkü $a\cos\theta$ dalgasının tepesi ortalamasından yalnız $\sqrt 2$ standart sapma uzaktadır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-yagisli-gun name="Yağışlı Günlerin Oranı ve Ortalaması"}
+Her istasyon için yağışlı günlerin yıl içindeki oranını ve yağışlı günlerdeki ortalama yağışı hesaplayıp veri üretiminde kullanılan $p$ ve $r$ değerleriyle karşılaştırın.
+
+::: {.cozum}
+Önce yağışlı günleri süzer, sonra istasyona göre gruplayıp `agg` ile gün sayısını, ortalamayı ve en büyük değeri alırız. Oran, gün sayısının 365'e bölümüdür.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+wet = df[df["yagis"] > 0]
+table = wet.groupby("istasyon")["yagis"].agg(["size", "mean", "max"])
+table["oran"] = table["size"] / 365
+print(table.round(3))
+```
+
+Çıktı:
+
+```text
+          size   mean   max   oran
+istasyon                          
+Ankara      88  3.968  33.3  0.241
+Erzurum    101  3.700  22.0  0.277
+İzmir       55  7.344  33.7  0.151
+```
+
+Oranlar Ankara için $0{,}241$ ($p = 0{,}25$), Erzurum için $0{,}277$ ($p = 0{,}30$), İzmir için $0{,}151$'dir ($p = 0{,}20$). Yağışlı gün sayısı $n = 365$ ve $p$ parametreli [binom dağılımına](../olasilik-teorisi/bernoulli-ve-binom-dagilimlari.html) uyar. İzmir için beklenen sayı $73$ gün, standart sapma $\sqrt{365 \cdot 0{,}2 \cdot 0{,}8} \approx 7{,}6$ gündür; gözlenen $55$ gün beklenenin yaklaşık $2{,}4$ standart sapma altındadır. Bu seyrek ama imkânsız olmayan bir sapmadır. Yağışlı günlerdeki ortalamalar $3{,}97$, $3{,}70$ ve $7{,}34$ mm'dir ve $r = 4$, $3{,}5$ ve $8$ değerlerine yakındır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-indicator name="Yalnız Bir Tabloda Geçen Anahtarlar"}
+`a` tablosunda Ankara, Erzurum ve İzmir'in ortalama sıcaklıkları, `b` tablosunda Ankara, İzmir, Trabzon ve Van'ın plaka numaraları var. `outer` birleştirme ve `indicator=True` parametresiyle yalnız bir tabloda geçen istasyonları bulun.
+
+::: {.cozum}
+`indicator=True` sonuca `_merge` adlı bir sütun ekler. Bu sütunun değeri, anahtarın iki tabloda da (`both`), yalnız solda (`left_only`) ya da yalnız sağda (`right_only`) bulunduğunu söyler.
+
+```python
+import pandas as pd
+
+a = pd.DataFrame({"istasyon": ["Ankara", "Erzurum", "İzmir"],
+                  "sicaklik": [12.14, 5.79, 17.85]})
+b = pd.DataFrame({"istasyon": ["Ankara", "İzmir", "Trabzon", "Van"],
+                  "plaka": [6, 35, 61, 65]})
+m = a.merge(b, on="istasyon", how="outer", indicator=True)
+print(m)
+print(m["_merge"].value_counts().to_dict())
+print(m.loc[m["_merge"] != "both", "istasyon"].tolist())
+```
+
+Çıktı:
+
+```text
+  istasyon  sicaklik  plaka      _merge
+0   Ankara     12.14    6.0        both
+1  Erzurum      5.79    NaN   left_only
+2  Trabzon       NaN   61.0  right_only
+3      Van       NaN   65.0  right_only
+4    İzmir     17.85   35.0        both
+{'right_only': 2, 'both': 2, 'left_only': 1}
+['Erzurum', 'Trabzon', 'Van']
+```
+
+Ankara ve İzmir iki tabloda da vardır; Erzurum yalnız solda, Trabzon ve Van yalnız sağdadır. Anahtar kümeleriyle söylersek aradığımız küme simetrik farktır: $(A_L \cup A_R) \setminus (A_L \cap A_R)$. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-en-sicak-ay name="Aylık Ortalamaların Yarı Açıklığı"}
+`pivot_table` ile kurduğunuz ay ve istasyon tablosundan her istasyonun aylık ortalamalarının yarı açıklığını, yani en büyük ile en küçük aylık ortalamanın farkının yarısını hesaplayıp modeldeki $a$ genliğiyle karşılaştırın.
+
+::: {.cozum}
+Tablonun her sütunu bir istasyondur. `idxmax()` ve `idxmin()` her sütunda en büyük ve en küçük değerin etiketini, yani en sıcak ve en soğuk ayın numarasını verir; `max() - min()` de sütun sütun hesaplanır.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+df["ay"] = df["tarih"].dt.month
+pt = df.pivot_table(index="ay", columns="istasyon", values="sicaklik",
+                    aggfunc="mean")
+print(pt.idxmax().to_dict(), pt.idxmin().to_dict())
+print(((pt.max() - pt.min()) / 2).round(2).to_dict())
+```
+
+Çıktı:
+
+```text
+{'Ankara': 7, 'Erzurum': 7, 'İzmir': 7} {'Ankara': 1, 'Erzurum': 1, 'İzmir': 1}
+{'Ankara': 11.82, 'Erzurum': 13.7, 'İzmir': 8.23}
+```
+
+Üç istasyonda da en sıcak ay temmuz, en soğuk ay ocaktır. Yarı açıklıklar $11{,}82$, $13{,}70$ ve $8{,}23$'tür; model genlikleri $11{,}5$, $14$ ve $8{,}5$'tir. Aylık ortalama dalganın tepesini biraz düzleştirir: tepe çevresindeki 31 günlük bir pencerede kosinüs dalgasının ortalaması, tepe değerinin yaklaşık $0{,}988$ katıdır. Kalan farklar ay ortalamalarına giren gürültüden gelir; @prp-pdn-ortalama-varyansi gereği bir ay ortalamasındaki gürültünün standart sapması yaklaşık $2{,}5/\sqrt{30} \approx 0{,}46$'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-mevsim name="Mevsim Dalgasını En Küçük Karelerle Kestirmek"}
+$\omega = 2\pi/365$ olmak üzere Ankara'nın eksik olmayan ölçümlerine
+
+$$
+T(t) \approx c_0 + c_1\cos\omega t + c_2\sin\omega t
+$$
+
+modelini en küçük kareler yöntemiyle uydurun ve buradan yıllık ortalama $m$'yi, genlik $a$'yı ve en soğuk günü veren $t_0$'ı kestirin.
+
+::: {.cozum}
+Model katsayılarda doğrusaldır; dolayısıyla bu bir doğrusal [en küçük kareler](../numerik-analiz/en-kucuk-kareler-yontemi.html#def-ekk-en-kucuk-kareler) problemidir. Sütunları $1$, $\cos\omega t$ ve $\sin\omega t$ olan $A$ matrisiyle $Ac \approx y$ sistemini [NumPy ile Lineer Cebir](numpy-ile-lineer-cebir.qmd) bölümündeki `np.linalg.lstsq` ile çözeriz. Gün numarası $t$, tarihten 1 Ocak çıkarılarak bulunur. Katsayılardan parametrelere geçmek için
+
+$$
+m - a\cos\omega(t - t_0) = m - a\cos\omega t_0\,\cos\omega t - a\sin\omega t_0\,\sin\omega t
+$$
+
+özdeşliğini kullanırız: $c_0 = m$, $c_1 = -a\cos\omega t_0$ ve $c_2 = -a\sin\omega t_0$. Buradan $a = \sqrt{c_1^2 + c_2^2}$ ve $\omega t_0 = \operatorname{atan2}(-c_2, -c_1)$ bulunur.
+
+```python
+import numpy as np
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+ank = df[df["istasyon"] == "Ankara"].dropna(subset=["sicaklik"])
+t = (ank["tarih"] - pd.Timestamp("2025-01-01")).dt.days.to_numpy()
+y = ank["sicaklik"].to_numpy()
+w = 2 * np.pi / 365
+A = np.column_stack([np.ones(t.size), np.cos(w * t), np.sin(w * t)])
+coef, *_ = np.linalg.lstsq(A, y, rcond=None)
+c0, c1, c2 = coef
+amp = np.hypot(c1, c2)
+t0 = np.arctan2(-c2, -c1) / w
+resid = y - A @ coef
+print(len(t), np.round(coef, 3))
+print(round(c0, 2), round(amp, 2), round(t0, 1))
+print(round(resid.std(ddof=3), 3))
+```
+
+Çıktı:
+
+```text
+357 [ 12.005 -10.924  -2.94 ]
+12.01 11.31 15.3
+2.65
+```
+
+357 ölçümden $m \approx 12{,}01$, $a \approx 11{,}31$ ve $t_0 \approx 15{,}3$ gün kestirilir; gerçek değerler $12$, $11{,}5$ ve $15$'tir. Artıkların standart sapması $2{,}65$'tir ve gürültünün $2{,}5$'lik standart sapmasına yakındır; `ddof=3`, üç parametre kestirdiğimiz için paydayı $n - 3$ yapar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-anomali-korelasyon name="Mevsim Etkisi Çıkarılınca Korelasyon"}
+İstasyonların sıcaklıkları arasındaki korelasyonu, her istasyonun 31 günlük merkezî hareketli ortalamasını çıkardıktan sonra yeniden hesaplayın.
+
+::: {.cozum}
+`pivot` ile geniş tabloyu kurarız. DataFrame'in `interpolate` ve `rolling` yöntemleri her sütuna ayrı ayrı uygulanır; böylece üç istasyonun hareketli ortalaması tek satırda bulunur. Ölçülen değerden hareketli ortalamayı çıkarınca mevsim dalgası gider, gürültü kalır. Eksik günler ile baştaki ve sondaki 15'er gün `NaN` olur ve `corr` bunları atar; `count()` her sütunda kullanılabilen değer sayısını gösterir.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+wide = df.pivot(index="tarih", columns="istasyon", values="sicaklik")
+trend = wide.interpolate().rolling(31, center=True).mean()
+anom = wide - trend
+print(wide.corr().round(3))
+print(anom.corr().round(3))
+print(anom.count().to_dict())
+```
+
+Çıktı:
+
+```text
+istasyon  Ankara  Erzurum  İzmir
+istasyon                        
+Ankara     1.000    0.920  0.876
+Erzurum    0.920    1.000  0.901
+İzmir      0.876    0.901  1.000
+istasyon  Ankara  Erzurum  İzmir
+istasyon                        
+Ankara     1.000    0.057 -0.062
+Erzurum    0.057    1.000 -0.016
+İzmir     -0.062   -0.016  1.000
+{'Ankara': 330, 'Erzurum': 322, 'İzmir': 330}
+```
+
+Ham sıcaklıklar arasındaki $0{,}88$–$0{,}92$ korelasyonlar, mevsim etkisi çıkarılınca $-0{,}06$ ile $0{,}06$ arasına iner. Modelde istasyonların günlük gürültüleri bağımsızdır; yüksek korelasyonun tek kaynağı ortak mevsim dalgasıydı. Gerçek verilerde komşu istasyonların sapmaları da birlikte hareket eder, çünkü aynı hava sistemlerinden etkilenirler; ama o ilişkiyi görmek için de önce ortak eğilimi çıkarmak gerekir. Korelasyonun $0$ olmasının bağımsızlık anlamına gelmediğini [Olasılık Teorisi](../olasilik-teorisi/rastgele-vektorlerde-beklenen-deger.html#exm-kovaryans-sifir-bagimli) notlarındaki örnek gösterir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pdn-yari-yagis name="Yıllık Yağışın Yarısı"}
+İzmir'de 2025 yılı boyunca düşen toplam yağışın yarısı hangi gün tamamlanmıştır?
+
+::: {.cozum}
+`cumsum()` her gün için yılbaşından o güne kadar düşen toplam yağışı verir. `cum >= total / 2` boolean serisi o günden itibaren hep `True`'dur. Boolean bir serinin `idxmax()` değeri ilk `True` değerin etiketi olduğundan aradığımız günü verir. Son satır, aylık toplamların en büyüğünün hangi ayda olduğunu da yazdırır.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("olcumler.csv", parse_dates=["tarih"])
+izm = df[df["istasyon"] == "İzmir"].set_index("tarih")["yagis"]
+cum = izm.cumsum()
+total = cum.iloc[-1]
+reached = cum >= total / 2
+day = reached.idxmax()                 # ilk True değerin etiketi
+print(round(total, 1), day.date(), round(cum.loc[day], 1))
+print(izm.resample("ME").sum().idxmax().month)
+```
+
+Çıktı:
+
+```text
+403.9 2025-06-06 203.3
+6
+```
+
+Yıllık toplam $403{,}9$ mm'dir ve yarısı ($201{,}95$ mm) 6 Haziran'da aşılmıştır; o günün sonunda birikimli toplam $203{,}3$ mm'dir. Yılın ortası 2 Temmuz olduğu hâlde yarıya daha erken ulaşıldı: yılın en yağışlı günü ($33{,}7$ mm) 6 Haziran'dır ve en yağışlı ay da hazirandır. Modelde yağış olasılığı mevsime bağlı olmadığından bu erkenlik yalnız bir rastlantıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde pandas'ın iki temel yapısını, Series ve DataFrame'i tanıdık. Etiketlerin işlemlerde nasıl hizalandığını, CSV dosyalarını okuyup yazmayı, `loc` ve `iloc` ile seçimi, eksik değerleri, betimsel istatistikleri, `groupby` ile ayır, uygula, birleştir düzenini, `merge` ile tablo birleştirmeyi ve zaman serilerini gördük. Bu, dersin son bölümüdür: Python'ın temel yapılarından başlayıp NumPy, Matplotlib, SymPy ve SciPy'dan geçerek bir veri tablosunun analizine geldik. Burada hesapladığımız ortalama, varyans, korelasyon ve yüzdeliklerin arkasındaki kuram için [Matematiksel İstatistik](../matematiksel-istatistik/) notlarına geçebilir, dersin genel planı için [Müfredat ve Giriş](index.qmd) sayfasına dönebilirsiniz.

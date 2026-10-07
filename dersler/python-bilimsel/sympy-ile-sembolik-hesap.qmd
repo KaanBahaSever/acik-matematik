@@ -1,0 +1,1769 @@
+---
+title: "SymPy ile Sembolik Hesap"
+pagetitle: "SymPy ile Sembolik Hesap"
+description: "SymPy ile semboller ve varsayımlar, ifadeleri açma, çarpanlara ayırma ve sadeleştirme, limit, türev, integral, seri, denklem ve diferansiyel denklem çözümü, kesin matris hesabı ve lambdify ile sembolik sonuçları NumPy'ye taşıma."
+---
+
+Şimdiye kadar bilgisayara hep sayılarla hesap yaptırdık. Bu sayılar yaklaşıktır: [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd) bölümünde $0{,}1 + 0{,}2$ toplamının tam olarak $0{,}3$ çıkmadığını gördük ve NumPy de aynı 64 bitlik sayılarla çalışır. Oysa matematik yaparken çoğu zaman bir sayı değil, bir formül isteriz. $x^x$ fonksiyonunun türevini, $\int x e^x\,dx$ integralini ya da $\sin x / x$ oranının sıfırdaki limitini kâğıt üzerinde harflerle ve kesin olarak hesaplarız.
+
+Bu tür hesapları yapan programlara **bilgisayar cebir sistemi** (computer algebra system) denir. SymPy, tamamen Python ile yazılmış, açık kaynaklı bir bilgisayar cebir sistemidir. Ayrı bir program değil, `import` ile yüklenen sıradan bir kütüphanedir. Bu bölümde SymPy ile sembol tanımlamayı, ifadeleri açıp çarpanlarına ayırmayı, limit, türev, integral ve seri hesaplamayı, denklem ve diferansiyel denklem çözmeyi ve matrislerle kesin hesap yapmayı öğreneceğiz. En sonda da sembolik sonuçları `lambdify` ile NumPy'ye aktarıp sayısal hesapta kullanacağız.
+
+SymPy `pip install sympy` komutuyla kurulur; Colab gibi çevrim içi Jupyter ortamlarında hazır gelir. Bütün kodlarda kütüphaneyi `import sympy as sp` kısaltmasıyla yükleyeceğiz. Analiz ve Lineer Cebir derslerinde elle yaptığınız hesapları SymPy ile denetleyebilirsiniz. Yine de SymPy'nin yanıtını doğru yorumlamak, arkasındaki matematiği bilmeyi gerektirir. Bu yüzden bölüm boyunca her hesabı ilgili ders notuna bağlayacağız.
+
+## Sayısal ve Sembolik Hesap
+
+İlk iş, sembolik hesabın sayısal hesaptan nerede ayrıldığını görmek.
+
+::: {#def-sym-sembolik-hesap name="Sembolik Hesap"}
+Sayıların ve değişkenlerin yaklaşık değerleriyle değil, kesin matematiksel ifadeler olarak işlendiği hesaba **sembolik hesap** denir. Sembolik hesabın sonucu bir ifadedir: $\sqrt{8}$ yerine $2\sqrt{2}$, $\frac{1}{3} + \frac{1}{6}$ yerine $\frac{1}{2}$, $(\sin x)'$ yerine $\cos x$.
+:::
+
+Yani sembolik hesap, kâğıt kalemle yaptığımız hesabın bilgisayardaki karşılığıdır. Sayısal hesapta $\sqrt{2}$, bellekte sonlu bir ikili açılımla tutulur (ekranda $1{,}4142135623730951$ olarak görünür) ve her işlemde küçük bir yuvarlama hatası birikir (bkz. [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-ieee)). Sembolik hesapta ise $\sqrt{2}$, karesi tam olarak $2$ olan sayı olarak kalır.
+
+Farkı aynı hesabı iki kütüphaneyle yaparak görelim:
+
+```python
+import math
+
+import sympy as sp
+
+print(math.sqrt(8))
+print(sp.sqrt(8))
+print(math.sqrt(2) ** 2)
+print(sp.sqrt(2) ** 2)
+```
+
+Çıktı:
+
+```text
+2.8284271247461903
+2*sqrt(2)
+2.0000000000000004
+2
+```
+
+`math.sqrt` bir `float` döndürür. `sp.sqrt` ise $\sqrt{8} = 2\sqrt{2}$ sadeleştirmesini yapar ve sonucu kesin biçimde saklar; bu yüzden $\sqrt{2}$'nin karesi tam olarak $2$ çıkar. Kesin bir ifadenin ondalık açılımını istediğimiz anda, istediğimiz basamak sayısıyla `evalf` metodu ya da `sp.N` fonksiyonu verir. Kesirler için `sp.Rational` kullanılır:
+
+```python
+import sympy as sp
+
+a = sp.Rational(1, 3) + sp.Rational(1, 6)
+print(a)
+print(sp.pi)
+print(sp.pi.evalf(30))
+print(sp.N(sp.sqrt(2), 50))
+print(float(sp.sqrt(2)))
+```
+
+Çıktı:
+
+```text
+1/2
+pi
+3.14159265358979323846264338328
+1.4142135623730950488016887242096980785696718753769
+1.4142135623730951
+```
+
+`sp.pi` sembolik $\pi$ sayısıdır; `evalf(30)` onun 30 anlamlı basamağa doğru yuvarlanmış değerini verir. $\pi$'nin açılımı $\ldots 3832795\ldots$ diye sürdüğünden otuzuncu basamaktaki $7$ yukarı yuvarlanıp $8$ olmuştur; öncekilerin hepsi $\pi$'nin basamaklarıyla aynıdır. Bu doğruluk tesadüf değildir: SymPy ondalık açılımı istenen duyarlıkta yeniden hesaplar. `float(...)` ise ifadeyi sıradan bir Python `float`'una çevirir. Sembolik dünyadan sayısal dünyaya geçmenin en basit yolu budur; daha güçlüsünü bölümün sonunda `lambdify` ile göreceğiz.
+
+## Semboller ve İfadeler
+
+Sembolik hesabın ilk adımı, harflerle gösterilen değişkenleri SymPy'ye tanıtmaktır.
+
+::: {#def-sym-sembol name="Sembol"}
+SymPy'de bir matematiksel değişkeni temsil eden nesneye **sembol** denir. Semboller `sp.symbols` fonksiyonuyla oluşturulur: `x, y = sp.symbols("x y")` satırı adları `x` ve `y` olan iki sembol üretir ve onları aynı adlı iki Python değişkenine bağlar.
+:::
+
+Yani `x` artık bir sayı değil, değeri belirsiz bir harftir. Semboller ve sayılar `+`, `-`, `*`, `/`, `**` işlemleriyle ve `sp.sin`, `sp.exp`, `sp.log` gibi SymPy fonksiyonlarıyla birleştirilerek **ifadeler** (expression) kurulur. Bir ifadedeki sembolün yerine bir sayı ya da başka bir ifade koymak için `subs` metodu kullanılır:
+
+```python
+import sympy as sp
+
+x, y = sp.symbols("x y")
+f = x**2 + 2*x*y + sp.sin(x)
+print(f)
+print(f.subs(x, 1))
+print(f.subs({x: 2, y: 3}))
+print(f.subs(x, sp.pi))
+print(f.subs(y, x**2))
+```
+
+Çıktı:
+
+```text
+x**2 + 2*x*y + sin(x)
+2*y + sin(1) + 1
+sin(2) + 16
+2*pi*y + pi**2
+2*x**3 + x**2 + sin(x)
+```
+
+`subs` sonucu kendiliğinden sadeleştirir: $x = \pi$ konunca $\sin \pi = 0$ terimi düşer. $\sin 1$ ve $\sin 2$ ise kesin sayılar olarak kalır, ondalığa çevrilmez. Burada `sp.sin` yerine `math.sin` yazılamaz, çünkü `math.sin` yalnız sayı kabul eder ve sembolle çağrılınca hata verir. NumPy'nin `np.sin` fonksiyonu da sembollerle çalışmaz; sembolik ifadelerde daima `sp.` önekli fonksiyonları kullanırız.
+
+::: {.callout-warning title="Python sayıları SymPy'ye ulaşmadan hesaplanır"}
+`x + 1/3` yazıldığında Python önce kendi kuralıyla `1/3` bölmesini yapar ve bir `float` üretir; SymPy yalnız bu yaklaşık sayıyı görür. Kesin kesir için `sp.Rational(1, 3)` yazılmalıdır. Kuvvet işaretine de dikkat: Python'da üs alma `**` ile yapılır. `^` başka bir işlemdir (bitlerde dışlayan veya, XOR) ve `2 ^ 3` ifadesinin değeri `1`'dir.
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+print(x + 1/3)
+print(x + sp.Rational(1, 3))
+print(2 ^ 3, 2 ** 3)
+```
+
+Çıktı:
+
+```text
+x + 0.333333333333333
+x + 1/3
+1 8
+```
+:::
+
+SymPy bir ifadeyi bir metin olarak değil, bir ağaç olarak saklar.
+
+::: {#def-sym-ifade-agaci name="İfade Ağacı"}
+Bir SymPy ifadesinin **ifade ağacı**, iç düğümleri işlemler ve fonksiyonlar (`Add`, `Mul`, `Pow`, `sin`, …), yaprakları semboller ve sayılar olan ağaçtır. Kökteki düğümün türü `func` niteliğiyle, alt ağaçları `args` niteliğiyle okunur.
+:::
+
+Yani $x^2 + 2xy + \sin x$ ifadesi SymPy için "üç terimin toplamı"dır: kökte bir `Add` düğümü, onun altında bir kuvvet (`Pow`), bir çarpım (`Mul`) ve bir `sin` düğümü vardır. Çıkarma ve bölme için ayrı düğüm yoktur: $a - b$ ifadesi `Add(a, Mul(-1, b))`, $a/b$ ifadesi de `Mul(a, Pow(b, -1))` olarak saklanır. Her alt ağacın ham yapısını `sp.srepr` gösterir:
+
+```python
+import sympy as sp
+
+x, y = sp.symbols("x y")
+f = x**2 + 2*x*y + sp.sin(x)
+print(f.func)
+print(f.args)
+for term in f.args:
+    print(sp.srepr(term))
+```
+
+Çıktı:
+
+```text
+<class 'sympy.core.add.Add'>
+(x**2, 2*x*y, sin(x))
+Pow(Symbol('x'), Integer(2))
+Mul(Integer(2), Symbol('x'), Symbol('y'))
+sin(Symbol('x'))
+```
+
+Çıktıdan ağacın tamamı okunabilir:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="45.5 11.0 502.0 218.0" role="img" aria-label="Expression tree of x**2 + 2*x*y + sin(x): the root Add has three children Pow, Mul and sin; Pow has leaves x and 2, Mul has leaves 2, x and y, sin has the leaf x">
+  <line x1="285.5" y1="54.0" x2="104.0" y2="106.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="285.5" y1="54.0" x2="301.0" y2="106.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="285.5" y1="54.0" x2="467.0" y2="106.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="104.0" y1="134.0" x2="73.0" y2="186.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="104.0" y1="134.0" x2="135.0" y2="186.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="301.0" y1="134.0" x2="239.0" y2="186.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="301.0" y1="134.0" x2="301.0" y2="186.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="301.0" y1="134.0" x2="363.0" y2="186.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="467.0" y1="134.0" x2="467.0" y2="186.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.5"/>
+  <rect x="264.0" y="26.0" width="43.0" height="28" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.4"/>
+  <text x="285.5" y="44.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">Add</text>
+  <rect x="82.5" y="106.0" width="43.0" height="28" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.4"/>
+  <text x="104.0" y="124.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">Pow</text>
+  <rect x="60.5" y="186.0" width="25.0" height="28" rx="14.0" fill="var(--color-base)" fill-opacity="0.12" stroke="var(--color-base)" stroke-width="1.4"/>
+  <text x="73.0" y="204.5" fill="var(--color-base)" font-size="13" text-anchor="middle"><tspan font-style="italic">x</tspan></text>
+  <rect x="122.5" y="186.0" width="25.0" height="28" rx="14.0" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.4"/>
+  <text x="135.0" y="204.5" fill="var(--color-practice)" font-size="13" text-anchor="middle">2</text>
+  <rect x="279.5" y="106.0" width="43.0" height="28" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.4"/>
+  <text x="301.0" y="124.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">Mul</text>
+  <rect x="226.5" y="186.0" width="25.0" height="28" rx="14.0" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.4"/>
+  <text x="239.0" y="204.5" fill="var(--color-practice)" font-size="13" text-anchor="middle">2</text>
+  <rect x="288.5" y="186.0" width="25.0" height="28" rx="14.0" fill="var(--color-base)" fill-opacity="0.12" stroke="var(--color-base)" stroke-width="1.4"/>
+  <text x="301.0" y="204.5" fill="var(--color-base)" font-size="13" text-anchor="middle"><tspan font-style="italic">x</tspan></text>
+  <rect x="350.5" y="186.0" width="25.0" height="28" rx="14.0" fill="var(--color-base)" fill-opacity="0.12" stroke="var(--color-base)" stroke-width="1.4"/>
+  <text x="363.0" y="204.5" fill="var(--color-base)" font-size="13" text-anchor="middle"><tspan font-style="italic">y</tspan></text>
+  <rect x="445.5" y="106.0" width="43.0" height="28" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.4"/>
+  <text x="467.0" y="124.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">sin</text>
+  <rect x="454.5" y="186.0" width="25.0" height="28" rx="14.0" fill="var(--color-base)" fill-opacity="0.12" stroke="var(--color-base)" stroke-width="1.4"/>
+  <text x="467.0" y="204.5" fill="var(--color-base)" font-size="13" text-anchor="middle"><tspan font-style="italic">x</tspan></text>
+  <text x="133.5" y="124.5" fill="var(--academic-text)" font-size="12.5" text-anchor="start">= <tspan font-style="italic">x</tspan>²</text>
+  <text x="330.5" y="124.5" fill="var(--academic-text)" font-size="12.5" text-anchor="start">= 2<tspan font-style="italic">x</tspan><tspan font-style="italic">y</tspan></text>
+  <text x="496.5" y="124.5" fill="var(--academic-text)" font-size="12.5" text-anchor="start">= sin <tspan font-style="italic">x</tspan></text>
+  <text x="315.0" y="44.5" fill="var(--academic-text)" font-size="12.5" text-anchor="start">= <tspan font-style="italic">x</tspan>² + 2<tspan font-style="italic">x</tspan><tspan font-style="italic">y</tspan> + sin <tspan font-style="italic">x</tspan></text>
+</svg>
+<figcaption><em>x</em>² + 2<em>xy</em> + sin <em>x</em> ifadesinin ağacı. Kökteki <code>Add</code> düğümünün üç alt ağacı vardır: <code>Pow</code>, <code>Mul</code> ve <code>sin</code>. Yapraklar semboller (<em>x</em>, <em>y</em>) ve tam sayılardır (2). Şekil, yukarıdaki <code>sp.srepr</code> çıktılarının çizimidir.</figcaption>
+</figure>
+```
+
+`subs` gibi işlemler bu ağacı dolaşarak çalışır: `f.subs(x, 1)` her `x` yaprağını `1` ile değiştirir, sonra düğümleri aşağıdan yukarıya yeniden hesaplar. SymPy'nin birçok davranışı bu yapıdan gelir. Örneğin iki ifadenin "aynı" olup olmadığı sorusu, ileride göreceğimiz gibi, ağaçların aynı olup olmadığı sorusudur.
+
+## Varsayımlar
+
+Bir sembol hakkında bildiklerimizi SymPy'ye söylemezsek, SymPy en genel durumu düşünür.
+
+::: {#def-sym-varsayim name="Varsayım"}
+Bir sembol oluşturulurken `real=True`, `positive=True`, `integer=True`, `nonnegative=True` gibi anahtar sözcüklerle verilen bilgilere o sembolün **varsayımları** (assumptions) denir. Varsayımı verilmemiş bir sembol, keyfi bir karmaşık sayıyı temsil eder.
+:::
+
+Yani SymPy bir dönüşümü ancak sembolün alabileceği **her** değer için doğruysa yapar. $\sqrt{x^2} = x$ eşitliği $x = -1$ için yanlıştır. $\sqrt{x^2} = |x|$ eşitliği de $x = i$ için yanlıştır: $\sqrt{i^2} = \sqrt{-1} = i$ iken $|i| = 1$'dir. Bu yüzden varsayımsız bir sembolde $\sqrt{x^2}$ olduğu gibi kalır; sembolün reel ya da pozitif olduğunu söyleyince sadeleşir:
+
+```python
+import sympy as sp
+
+z = sp.symbols("z")
+x = sp.symbols("x", real=True)
+p = sp.symbols("p", positive=True)
+n = sp.symbols("n", integer=True)
+print(sp.sqrt(z**2), sp.sqrt(x**2), sp.sqrt(p**2))
+print(sp.sin(n * sp.pi), sp.cos(n * sp.pi))
+print(p.is_positive, x.is_positive, n.is_integer)
+```
+
+Çıktı:
+
+```text
+sqrt(z**2) Abs(x) p
+0 (-1)**n
+True None True
+```
+
+`n` tam sayı olduğundan SymPy $\sin n\pi = 0$ ve $\cos n\pi = (-1)^n$ dönüşümlerini de yapar. Son satırdaki `is_positive` gibi nitelikler üç değerden birini alır: `True`, `False` ya da `None`. `None` "bilinmiyor" demektir: reel bir $x$ pozitif de olabilir, olmayabilir de. Bir `if` koşulunda `None` yanlış sayılır. Bu yüzden `if x.is_positive:` bloğunun çalışmaması "x pozitif değil" demek değildir; yalnız "pozitif olduğu bilinmiyor" demektir.
+
+:::: {#exm-sym-log-kurali name="Logaritmanın Çarpım Kuralı ve Varsayımlar"}
+$\ln(ab) = \ln a + \ln b$ dönüşümünü `sp.expand_log` fonksiyonuyla önce varsayımsız, sonra pozitif $a$, $b$ sembolleriyle yaptırınız. Sonuçların farkını açıklayınız.
+
+::: {.cozum}
+İki durumu aynı kodda deneyelim. İkinci satırdaki `sp.symbols` çağrısı `a` ve `b` adlarını yeni, pozitif sembollere bağlar:
+
+```python
+import sympy as sp
+
+a, b = sp.symbols("a b")
+print(sp.expand_log(sp.log(a * b)))
+
+a, b = sp.symbols("a b", positive=True)
+print(sp.expand_log(sp.log(a * b)))
+print(sp.expand_log(sp.log(a**3 / b)))
+```
+
+Çıktı:
+
+```text
+log(a*b)
+log(a) + log(b)
+3*log(a) - log(b)
+```
+
+Varsayımsız sembollerde ifade değişmez, çünkü kural karmaşık sayılarda genel olarak yanlıştır. Örneğin $a = b = -1$ için $\ln(ab) = \ln 1 = 0$'dır; oysa karmaşık logaritmanın esas değeriyle $\ln(-1) = i\pi$ olduğundan $\ln(-1) + \ln(-1) = 2\pi i$ olur. $a, b > 0$ olduğu bilinince kural her değer için doğrudur ve SymPy onu uygular; $\ln(a^3/b) = 3\ln a - \ln b$ dönüşümü de aynı nedenle yapılır. Reel pozitif sayılarla çalışılacaksa sembolleri baştan `positive=True` ile tanımlamak, `force=True` seçeneğiyle SymPy'yi kuralı uygulamaya zorlamaktan daha güvenlidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İfadeleri Dönüştürmek
+
+Aynı matematiksel ifadenin birçok yazılışı vardır ve SymPy'de her yazılışa götüren ayrı bir fonksiyon bulunur. En sık kullanılanlar şunlardır:
+
+- `sp.expand`: çarpımları ve kuvvetleri açar.
+- `sp.factor`: bir polinomu rasyonel katsayılı indirgenemez çarpanlarına ayırır.
+- `sp.collect`: bir sembolün kuvvetlerine göre terimleri toplar.
+- `sp.cancel`: bir rasyonel fonksiyonu ortak çarpanları sadeleşmiş pay/payda biçimine getirir.
+- `sp.apart`: bir rasyonel fonksiyonu basit kesirlere ayırır.
+- `sp.together`: kesirleri ortak paydada toplar.
+- `sp.expand_trig`, `sp.trigsimp`: trigonometrik ifadeleri açar ya da sadeleştirir.
+
+Önce polinomlarla başlayalım:
+
+```python
+import sympy as sp
+
+x, y = sp.symbols("x y")
+print(sp.expand((x + 1)**5))
+print(sp.factor(x**4 - 1))
+print(sp.factor(x**3 - x**2*y - x*y**2 + y**3))
+print(sp.factor(x**2 - 2))
+print(sp.factor(x**2 - 2, extension=sp.sqrt(2)))
+print(sp.collect(sp.expand((x + y + 1)**2), x))
+```
+
+Çıktı:
+
+```text
+x**5 + 5*x**4 + 10*x**3 + 10*x**2 + 5*x + 1
+(x - 1)*(x + 1)*(x**2 + 1)
+(x - y)**2*(x + y)
+x**2 - 2
+(x - sqrt(2))*(x + sqrt(2))
+x**2 + x*(2*y + 2) + y**2 + 2*y + 1
+```
+
+`factor`, çarpanlara ayırmayı rasyonel sayılar üzerinde yapar. $x^2 + 1$ ve $x^2 - 2$ rasyonel katsayılı çarpanlara ayrılmaz; bu yüzden ilki bir çarpan olarak kalır, ikincisi de değişmeden geri döner. `extension=sp.sqrt(2)` seçeneği sayı kümesine $\sqrt{2}$'yi ekler; o zaman $x^2 - 2 = (x - \sqrt{2})(x + \sqrt{2})$ ayrışması bulunur.
+
+Rasyonel fonksiyonlarda üç fonksiyon birbirini tamamlar:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+r = (x**3 - 1) / (x**2 - 1)
+print(r)
+print(sp.cancel(r))
+print(sp.apart((x**2 + 1) / (x**3 - x)))
+print(sp.together(1/x + 1/(x + 1)))
+```
+
+Çıktı:
+
+```text
+(x**3 - 1)/(x**2 - 1)
+(x**2 + x + 1)/(x + 1)
+1/(x + 1) + 1/(x - 1) - 1/x
+(2*x + 1)/(x*(x + 1))
+```
+
+`cancel`, pay ve paydadaki ortak $x - 1$ çarpanını sadeleştirdi. Bu, $x = 1$ dışında geçerli bir eşitliktir; özgün kesir $x = 1$'de tanımsızdır, sadeleşmiş kesir değildir. `apart`, Analiz 2'deki basit kesirlere ayırma algoritmasını uygular (bkz. [Analiz 2](../analiz-2/rasyonel-fonksiyonlarin-integrali.html#thm-basit-kesirlere-ayirma)). `together` ise bunun tersini yapar.
+
+Trigonometrik ifadeler ve genel amaçlı `sp.simplify` için:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+print(sp.expand_trig(sp.sin(2*x)))
+print(sp.expand_trig(sp.cos(3*x)))
+print(sp.trigsimp(sp.sin(x)**4 - sp.cos(x)**4))
+print(sp.simplify(sp.sin(x)**2 + sp.cos(x)**2))
+print(sp.simplify((x**2 - 1) / (x - 1)))
+```
+
+Çıktı:
+
+```text
+2*sin(x)*cos(x)
+4*cos(x)**3 - 3*cos(x)
+-cos(2*x)
+1
+x + 1
+```
+
+`simplify`, yukarıdaki dönüşümlerin birçoğunu sırayla dener ve bulduğu en kısa ifadeyi döndürür. Hangi dönüşümün işe yarayacağını bilmediğimizde kullanışlıdır. Ama yavaştır ve "en sade biçim" kesin tanımlı bir kavram olmadığından sonucun biçimi önceden kestirilemez. Hedef biçim belliyse (çarpanlara ayrılmış, açılmış, basit kesirlere ayrılmış) ona götüren özel fonksiyonu kullanmak daha iyidir.
+
+İki ifadeyi karşılaştırırken bir inceliğe dikkat etmek gerekir.
+
+::: {#def-sym-yapisal-esitlik name="Yapısal Eşitlik"}
+SymPy'de `a == b` karşılaştırması, iki ifadenin ağaçlarının aynı olup olmadığını sınar. Buna **yapısal eşitlik** denir. İki ifadenin matematiksel olarak eşit olması, yani değişkenlerin her değeri için aynı sayıyı vermesi ayrı bir sorudur.
+:::
+
+Yani $(x+1)^2$ ile $x^2 + 2x + 1$ matematiksel olarak eşit, yapısal olarak farklıdır: birinin kökünde `Pow`, ötekinin kökünde `Add` vardır. Matematiksel eşitliği sınamak için farkı sadeleştirip sıfırla karşılaştırırız ya da `equals` metodunu kullanırız:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+a = (x + 1)**2
+b = x**2 + 2*x + 1
+print(a == b)
+print(sp.expand(a) == b)
+print(sp.simplify(a - b) == 0)
+print(a.equals(b))
+```
+
+Çıktı:
+
+```text
+False
+True
+True
+True
+```
+
+::: {.callout-tip title="Bir özdeşliği üç adımda doğrulamak"}
+1. Eşitliğin iki tarafını ayrı ifadeler olarak yazın: `lhs` ve `rhs`.
+2. Farkı sadeleştirin: `sp.simplify(lhs - rhs)`.
+3. Sonuç `0` ise özdeşlik doğrudur. Sıfırdan farklı bir ifade çıkarsa farkı birkaç sayıda `subs` ile hesaplayın: sıfırdan farklı bir değer görülürse iddia yanlıştır. Bu kontrol gereklidir, çünkü `simplify` her sıfırı tanıyamayabilir.
+:::
+
+:::: {#exm-sym-ozdeslik name="Bir Trigonometrik Özdeşlik"}
+$(\sin x + \cos x)^2 = 1 + \sin 2x$ özdeşliğini SymPy ile doğrulayınız.
+
+::: {.cozum}
+Tarifin üç adımını uygulayalım:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+lhs = (sp.sin(x) + sp.cos(x))**2
+rhs = 1 + sp.sin(2*x)
+print(sp.simplify(lhs - rhs))
+print(lhs == rhs)
+```
+
+Çıktı:
+
+```text
+0
+False
+```
+
+Fark sıfıra sadeleştiğinden özdeşlik her $x$ için doğrudur. İkinci satır, iki tarafın yapısal olarak farklı olduğunu hatırlatır (@def-sym-yapisal-esitlik). Elle de kolayca görülür:
+
+$$(\sin x + \cos x)^2 = \sin^2 x + \cos^2 x + 2\sin x \cos x = 1 + \sin 2x.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Limit
+
+Analiz 1'de ε–δ ile tanımladığımız limit (bkz. [Analiz 1](../analiz-1/fonksiyon-limiti.html#def-fonksiyon-limiti)) SymPy'de tek bir fonksiyonla hesaplanır: `sp.limit(f, x, a)`. Sonsuz, iki küçük o harfiyle `sp.oo` olarak yazılır.
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+n = sp.symbols("n", positive=True, integer=True)
+print(sp.limit(sp.sin(x) / x, x, 0))
+print(sp.limit((1 - sp.cos(x)) / x**2, x, 0))
+print(sp.limit((1 + 1/n)**n, n, sp.oo))
+print(sp.limit(x * sp.log(x), x, 0, dir="+"))
+print(sp.limit(x**2 / sp.exp(x), x, sp.oo))
+```
+
+Çıktı:
+
+```text
+1
+1/2
+E
+0
+0
+```
+
+Üçüncü satırdaki `E`, SymPy'nin $e$ sayısıdır (bkz. [Analiz 1](../analiz-1/monoton-diziler-ve-e-sayisi.html#def-e-sayisi)). SymPy limitleri, değişkene küçük sayılar koyarak tahmin etmez; ifadenin seri açılımları üzerinde çalışan bir algoritmayla kesin olarak hesaplar. Bu yüzden $0 \cdot \infty$ ya da $\infty/\infty$ gibi belirsiz biçimler de sorun çıkarmaz.
+
+Tek yönlü limitler `dir` seçeneğiyle istenir: `dir="+"` sağdan, `dir="-"` soldan, `dir="+-"` iki yönlü limit demektir. $\arctan(1/x)$ fonksiyonunun sıfırdaki davranışına bakalım:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+f = sp.atan(1 / x)
+print(sp.limit(f, x, 0, dir="+"))
+print(sp.limit(f, x, 0, dir="-"))
+try:
+    print(sp.limit(f, x, 0, dir="+-"))
+except ValueError:
+    print("İki yönlü limit yok: sol ve sağ limit farklı.")
+```
+
+Çıktı:
+
+```text
+pi/2
+-pi/2
+İki yönlü limit yok: sol ve sağ limit farklı.
+```
+
+$x$ sağdan sıfıra yaklaşırken $1/x \to +\infty$ olduğundan $\arctan(1/x) \to \pi/2$; soldan yaklaşırken $1/x \to -\infty$ olduğundan $\arctan(1/x) \to -\pi/2$ olur. Sağ ve sol limit farklı olduğundan iki yönlü limit yoktur (bkz. [Analiz 1](../analiz-1/tek-yonlu-limitler.html#thm-tek-yonlu-limit-denklik)) ve SymPy `ValueError` hatası verir. Hatayı `try`/`except` ile yakaladık.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 6.0 476.0 286.0" role="img" aria-label="Graph of y = arctan(1/x) on [-4.4, 4.4]; the right branch tends to pi/2 and the left branch to -pi/2 as x approaches 0, marked by two hollow points on the y axis and dashed horizontal lines">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="149.0" x2="484.0" y2="149.0"/>
+  <line x1="260.0" y1="278.0" x2="260.0" y2="20.0"/>
+  <polygon points="484.0,149.0 476.0,145.5 476.0,152.5" stroke="none"/>
+  <polygon points="260.0,20.0 256.5,28.0 263.5,28.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="60.0" y1="146.0" x2="60.0" y2="152.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="60.0" y="164.0" text-anchor="middle">&#8722;4</text>
+  <line x1="160.0" y1="146.0" x2="160.0" y2="152.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="160.0" y="164.0" text-anchor="middle">&#8722;2</text>
+  <line x1="360.0" y1="146.0" x2="360.0" y2="152.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="360.0" y="164.0" text-anchor="middle">2</text>
+  <line x1="460.0" y1="146.0" x2="460.0" y2="152.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="460.0" y="164.0" text-anchor="middle">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="482.0" y="164.0" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="267.0" y="29.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M40.0,53.2 L480.0,53.2" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M40.0,244.8 L480.0,244.8" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M261.0,54.4 L261.5,55.1 L262.1,55.8 L262.6,56.4 L263.2,57.1 L263.7,57.8 L264.3,58.4 L264.8,59.1 L265.4,59.8 L265.9,60.4 L266.5,61.1 L267.0,61.7 L267.6,62.4 L268.1,63.1 L268.7,63.7 L269.2,64.4 L269.8,65.0 L270.3,65.6 L270.9,66.3 L271.4,66.9 L272.0,67.6 L272.5,68.2 L273.1,68.8 L273.6,69.4 L274.2,70.1 L274.7,70.7 L275.3,71.3 L275.8,71.9 L276.4,72.5 L276.9,73.1 L277.5,73.7 L278.0,74.3 L278.6,74.9 L279.1,75.5 L279.7,76.1 L280.2,76.6 L280.8,77.2 L281.3,77.8 L281.9,78.3 L282.4,78.9 L283.0,79.5 L283.5,80.0 L284.1,80.6 L284.6,81.1 L285.2,81.6 L285.7,82.2 L286.2,82.7 L286.8,83.2 L287.3,83.7 L287.9,84.2 L288.4,84.8 L289.0,85.3 L289.5,85.8 L290.1,86.3 L290.6,86.7 L291.2,87.2 L291.7,87.7 L292.3,88.2 L292.8,88.7 L293.4,89.1 L293.9,89.6 L294.5,90.0 L295.0,90.5 L295.6,90.9 L296.1,91.4 L296.7,91.8 L297.2,92.2 L297.8,92.7 L298.3,93.1 L298.9,93.5 L299.4,93.9 L300.0,94.3 L300.5,94.7 L301.1,95.1 L301.6,95.5 L302.2,95.9 L302.7,96.3 L303.3,96.7 L303.8,97.1 L304.4,97.5 L304.9,97.8 L305.5,98.2 L306.0,98.6 L306.6,98.9 L307.1,99.3 L307.7,99.6 L308.2,100.0 L308.8,100.3 L309.3,100.7 L309.8,101.0 L310.4,101.4 L310.9,101.7 L311.5,102.0 L312.0,102.3 L312.6,102.7 L313.1,103.0 L313.7,103.3 L314.2,103.6 L314.8,103.9 L315.3,104.2 L315.9,104.5 L316.4,104.8 L317.0,105.1 L317.5,105.4 L318.1,105.7 L318.6,105.9 L319.2,106.2 L319.7,106.5 L320.3,106.8 L320.8,107.0 L321.4,107.3 L321.9,107.6 L322.5,107.8 L323.0,108.1 L323.6,108.4 L324.1,108.6 L324.7,108.9 L325.2,109.1 L325.8,109.4 L326.3,109.6 L326.9,109.8 L327.4,110.1 L328.0,110.3 L328.5,110.6 L329.1,110.8 L329.6,111.0 L330.2,111.2 L330.7,111.5 L331.3,111.7 L331.8,111.9 L332.4,112.1 L332.9,112.3 L333.5,112.6 L334.0,112.8 L334.5,113.0 L335.1,113.2 L335.6,113.4 L336.2,113.6 L336.7,113.8 L337.3,114.0 L337.8,114.2 L338.4,114.4 L338.9,114.6 L339.5,114.8 L340.0,115.0 L340.6,115.1 L341.1,115.3 L341.7,115.5 L342.2,115.7 L342.8,115.9 L343.3,116.0 L343.9,116.2 L344.4,116.4 L345.0,116.6 L345.5,116.7 L346.1,116.9 L346.6,117.1 L347.2,117.2 L347.7,117.4 L348.3,117.6 L348.8,117.7 L349.4,117.9 L349.9,118.1 L350.5,118.2 L351.0,118.4 L351.6,118.5 L352.1,118.7 L352.7,118.8 L353.2,119.0 L353.8,119.1 L354.3,119.3 L354.9,119.4 L355.4,119.6 L356.0,119.7 L356.5,119.9 L357.1,120.0 L357.6,120.1 L358.2,120.3 L358.7,120.4 L359.2,120.5 L359.8,120.7 L360.3,120.8 L360.9,120.9 L361.4,121.1 L362.0,121.2 L362.5,121.3 L363.1,121.5 L363.6,121.6 L364.2,121.7 L364.7,121.8 L365.3,122.0 L365.8,122.1 L366.4,122.2 L366.9,122.3 L367.5,122.4 L368.0,122.6 L368.6,122.7 L369.1,122.8 L369.7,122.9 L370.2,123.0 L370.8,123.1 L371.3,123.3 L371.9,123.4 L372.4,123.5 L373.0,123.6 L373.5,123.7 L374.1,123.8 L374.6,123.9 L375.2,124.0 L375.7,124.1 L376.3,124.2 L376.8,124.3 L377.4,124.4 L377.9,124.5 L378.5,124.6 L379.0,124.7 L379.6,124.8 L380.1,124.9 L380.7,125.0 L381.2,125.1 L381.8,125.2 L382.3,125.3 L382.8,125.4 L383.4,125.5 L383.9,125.6 L384.5,125.7 L385.0,125.8 L385.6,125.9 L386.1,126.0 L386.7,126.1 L387.2,126.2 L387.8,126.3 L388.3,126.3 L388.9,126.4 L389.4,126.5 L390.0,126.6 L390.5,126.7 L391.1,126.8 L391.6,126.9 L392.2,126.9 L392.7,127.0 L393.3,127.1 L393.8,127.2 L394.4,127.3 L394.9,127.4 L395.5,127.4 L396.0,127.5 L396.6,127.6 L397.1,127.7 L397.7,127.8 L398.2,127.8 L398.8,127.9 L399.3,128.0 L399.9,128.1 L400.4,128.1 L401.0,128.2 L401.5,128.3 L402.1,128.4 L402.6,128.4 L403.2,128.5 L403.7,128.6 L404.3,128.7 L404.8,128.7 L405.4,128.8 L405.9,128.9 L406.5,128.9 L407.0,129.0 L407.5,129.1 L408.1,129.1 L408.6,129.2 L409.2,129.3 L409.7,129.3 L410.3,129.4 L410.8,129.5 L411.4,129.5 L411.9,129.6 L412.5,129.7 L413.0,129.7 L413.6,129.8 L414.1,129.9 L414.7,129.9 L415.2,130.0 L415.8,130.1 L416.3,130.1 L416.9,130.2 L417.4,130.2 L418.0,130.3 L418.5,130.4 L419.1,130.4 L419.6,130.5 L420.2,130.6 L420.7,130.6 L421.3,130.7 L421.8,130.7 L422.4,130.8 L422.9,130.8 L423.5,130.9 L424.0,131.0 L424.6,131.0 L425.1,131.1 L425.7,131.1 L426.2,131.2 L426.8,131.2 L427.3,131.3 L427.9,131.3 L428.4,131.4 L429.0,131.5 L429.5,131.5 L430.1,131.6 L430.6,131.6 L431.2,131.7 L431.7,131.7 L432.2,131.8 L432.8,131.8 L433.3,131.9 L433.9,131.9 L434.4,132.0 L435.0,132.0 L435.5,132.1 L436.1,132.1 L436.6,132.2 L437.2,132.2 L437.7,132.3 L438.3,132.3 L438.8,132.4 L439.4,132.4 L439.9,132.5 L440.5,132.5 L441.0,132.6 L441.6,132.6 L442.1,132.7 L442.7,132.7 L443.2,132.8 L443.8,132.8 L444.3,132.8 L444.9,132.9 L445.4,132.9 L446.0,133.0 L446.5,133.0 L447.1,133.1 L447.6,133.1 L448.2,133.2 L448.7,133.2 L449.3,133.3 L449.8,133.3 L450.4,133.3 L450.9,133.4 L451.5,133.4 L452.0,133.5 L452.6,133.5 L453.1,133.6 L453.7,133.6 L454.2,133.6 L454.8,133.7 L455.3,133.7 L455.8,133.8 L456.4,133.8 L456.9,133.8 L457.5,133.9 L458.0,133.9 L458.6,134.0 L459.1,134.0 L459.7,134.0 L460.2,134.1 L460.8,134.1 L461.3,134.2 L461.9,134.2 L462.4,134.2 L463.0,134.3 L463.5,134.3 L464.1,134.3 L464.6,134.4 L465.2,134.4 L465.7,134.5 L466.3,134.5 L466.8,134.5 L467.4,134.6 L467.9,134.6 L468.5,134.6 L469.0,134.7 L469.6,134.7 L470.1,134.8 L470.7,134.8 L471.2,134.8 L471.8,134.9 L472.3,134.9 L472.9,134.9 L473.4,135.0 L474.0,135.0 L474.5,135.0 L475.1,135.1 L475.6,135.1 L476.2,135.1 L476.7,135.2 L477.3,135.2 L477.8,135.2 L478.4,135.3 L478.9,135.3 L479.5,135.3 L480.0,135.4" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M40.0,162.6 L40.5,162.7 L41.1,162.7 L41.6,162.7 L42.2,162.8 L42.7,162.8 L43.3,162.8 L43.8,162.9 L44.4,162.9 L44.9,162.9 L45.5,163.0 L46.0,163.0 L46.6,163.0 L47.1,163.1 L47.7,163.1 L48.2,163.1 L48.8,163.2 L49.3,163.2 L49.9,163.2 L50.4,163.3 L51.0,163.3 L51.5,163.4 L52.1,163.4 L52.6,163.4 L53.2,163.5 L53.7,163.5 L54.3,163.5 L54.8,163.6 L55.4,163.6 L55.9,163.7 L56.5,163.7 L57.0,163.7 L57.6,163.8 L58.1,163.8 L58.7,163.8 L59.2,163.9 L59.8,163.9 L60.3,164.0 L60.9,164.0 L61.4,164.0 L62.0,164.1 L62.5,164.1 L63.1,164.2 L63.6,164.2 L64.2,164.2 L64.7,164.3 L65.2,164.3 L65.8,164.4 L66.3,164.4 L66.9,164.4 L67.4,164.5 L68.0,164.5 L68.5,164.6 L69.1,164.6 L69.6,164.7 L70.2,164.7 L70.7,164.7 L71.3,164.8 L71.8,164.8 L72.4,164.9 L72.9,164.9 L73.5,165.0 L74.0,165.0 L74.6,165.1 L75.1,165.1 L75.7,165.2 L76.2,165.2 L76.8,165.2 L77.3,165.3 L77.9,165.3 L78.4,165.4 L79.0,165.4 L79.5,165.5 L80.1,165.5 L80.6,165.6 L81.2,165.6 L81.7,165.7 L82.3,165.7 L82.8,165.8 L83.4,165.8 L83.9,165.9 L84.5,165.9 L85.0,166.0 L85.6,166.0 L86.1,166.1 L86.7,166.1 L87.2,166.2 L87.8,166.2 L88.3,166.3 L88.8,166.3 L89.4,166.4 L89.9,166.4 L90.5,166.5 L91.0,166.5 L91.6,166.6 L92.1,166.7 L92.7,166.7 L93.2,166.8 L93.8,166.8 L94.3,166.9 L94.9,166.9 L95.4,167.0 L96.0,167.0 L96.5,167.1 L97.1,167.2 L97.6,167.2 L98.2,167.3 L98.7,167.3 L99.3,167.4 L99.8,167.4 L100.4,167.5 L100.9,167.6 L101.5,167.6 L102.0,167.7 L102.6,167.8 L103.1,167.8 L103.7,167.9 L104.2,167.9 L104.8,168.0 L105.3,168.1 L105.9,168.1 L106.4,168.2 L107.0,168.3 L107.5,168.3 L108.1,168.4 L108.6,168.5 L109.2,168.5 L109.7,168.6 L110.3,168.7 L110.8,168.7 L111.4,168.8 L111.9,168.9 L112.5,168.9 L113.0,169.0 L113.5,169.1 L114.1,169.1 L114.6,169.2 L115.2,169.3 L115.7,169.3 L116.3,169.4 L116.8,169.5 L117.4,169.6 L117.9,169.6 L118.5,169.7 L119.0,169.8 L119.6,169.9 L120.1,169.9 L120.7,170.0 L121.2,170.1 L121.8,170.2 L122.3,170.2 L122.9,170.3 L123.4,170.4 L124.0,170.5 L124.5,170.6 L125.1,170.6 L125.6,170.7 L126.2,170.8 L126.7,170.9 L127.3,171.0 L127.8,171.1 L128.4,171.1 L128.9,171.2 L129.5,171.3 L130.0,171.4 L130.6,171.5 L131.1,171.6 L131.7,171.7 L132.2,171.7 L132.8,171.8 L133.3,171.9 L133.9,172.0 L134.4,172.1 L135.0,172.2 L135.5,172.3 L136.1,172.4 L136.6,172.5 L137.2,172.6 L137.7,172.7 L138.2,172.8 L138.8,172.9 L139.3,173.0 L139.9,173.1 L140.4,173.2 L141.0,173.3 L141.5,173.4 L142.1,173.5 L142.6,173.6 L143.2,173.7 L143.7,173.8 L144.3,173.9 L144.8,174.0 L145.4,174.1 L145.9,174.2 L146.5,174.3 L147.0,174.4 L147.6,174.5 L148.1,174.6 L148.7,174.7 L149.2,174.9 L149.8,175.0 L150.3,175.1 L150.9,175.2 L151.4,175.3 L152.0,175.4 L152.5,175.6 L153.1,175.7 L153.6,175.8 L154.2,175.9 L154.7,176.0 L155.3,176.2 L155.8,176.3 L156.4,176.4 L156.9,176.5 L157.5,176.7 L158.0,176.8 L158.6,176.9 L159.1,177.1 L159.7,177.2 L160.2,177.3 L160.8,177.5 L161.3,177.6 L161.8,177.7 L162.4,177.9 L162.9,178.0 L163.5,178.1 L164.0,178.3 L164.6,178.4 L165.1,178.6 L165.7,178.7 L166.2,178.9 L166.8,179.0 L167.3,179.2 L167.9,179.3 L168.4,179.5 L169.0,179.6 L169.5,179.8 L170.1,179.9 L170.6,180.1 L171.2,180.3 L171.7,180.4 L172.3,180.6 L172.8,180.8 L173.4,180.9 L173.9,181.1 L174.5,181.3 L175.0,181.4 L175.6,181.6 L176.1,181.8 L176.7,182.0 L177.2,182.1 L177.8,182.3 L178.3,182.5 L178.9,182.7 L179.4,182.9 L180.0,183.0 L180.5,183.2 L181.1,183.4 L181.6,183.6 L182.2,183.8 L182.7,184.0 L183.3,184.2 L183.8,184.4 L184.4,184.6 L184.9,184.8 L185.5,185.0 L186.0,185.2 L186.5,185.4 L187.1,185.7 L187.6,185.9 L188.2,186.1 L188.7,186.3 L189.3,186.5 L189.8,186.8 L190.4,187.0 L190.9,187.2 L191.5,187.4 L192.0,187.7 L192.6,187.9 L193.1,188.2 L193.7,188.4 L194.2,188.6 L194.8,188.9 L195.3,189.1 L195.9,189.4 L196.4,189.6 L197.0,189.9 L197.5,190.2 L198.1,190.4 L198.6,190.7 L199.2,191.0 L199.7,191.2 L200.3,191.5 L200.8,191.8 L201.4,192.1 L201.9,192.3 L202.5,192.6 L203.0,192.9 L203.6,193.2 L204.1,193.5 L204.7,193.8 L205.2,194.1 L205.8,194.4 L206.3,194.7 L206.9,195.0 L207.4,195.3 L208.0,195.7 L208.5,196.0 L209.1,196.3 L209.6,196.6 L210.2,197.0 L210.7,197.3 L211.2,197.7 L211.8,198.0 L212.3,198.4 L212.9,198.7 L213.4,199.1 L214.0,199.4 L214.5,199.8 L215.1,200.2 L215.6,200.5 L216.2,200.9 L216.7,201.3 L217.3,201.7 L217.8,202.1 L218.4,202.5 L218.9,202.9 L219.5,203.3 L220.0,203.7 L220.6,204.1 L221.1,204.5 L221.7,204.9 L222.2,205.3 L222.8,205.8 L223.3,206.2 L223.9,206.6 L224.4,207.1 L225.0,207.5 L225.5,208.0 L226.1,208.4 L226.6,208.9 L227.2,209.3 L227.7,209.8 L228.3,210.3 L228.8,210.8 L229.4,211.3 L229.9,211.7 L230.5,212.2 L231.0,212.7 L231.6,213.2 L232.1,213.8 L232.7,214.3 L233.2,214.8 L233.8,215.3 L234.3,215.8 L234.8,216.4 L235.4,216.9 L235.9,217.4 L236.5,218.0 L237.0,218.5 L237.6,219.1 L238.1,219.7 L238.7,220.2 L239.2,220.8 L239.8,221.4 L240.3,221.9 L240.9,222.5 L241.4,223.1 L242.0,223.7 L242.5,224.3 L243.1,224.9 L243.6,225.5 L244.2,226.1 L244.7,226.7 L245.3,227.3 L245.8,227.9 L246.4,228.6 L246.9,229.2 L247.5,229.8 L248.0,230.4 L248.6,231.1 L249.1,231.7 L249.7,232.4 L250.2,233.0 L250.8,233.6 L251.3,234.3 L251.9,234.9 L252.4,235.6 L253.0,236.3 L253.5,236.9 L254.1,237.6 L254.6,238.2 L255.2,238.9 L255.7,239.6 L256.3,240.2 L256.8,240.9 L257.4,241.6 L257.9,242.2 L258.5,242.9 L259.0,243.6" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="260.0" cy="53.2" r="4.2" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <circle cx="260.0" cy="244.8" r="4.2" fill="var(--academic-bg)" stroke="var(--color-practice)" stroke-width="1.8"/>
+  <text x="42.0" y="46.2" fill="var(--academic-text)" font-size="12" text-anchor="start">&#960;/2</text>
+  <text x="478.0" y="260.8" fill="var(--academic-text)" font-size="12" text-anchor="end">&#8722;&#960;/2</text>
+  <text x="270.0" y="44.2" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">sağ limit &#960;/2</text>
+  <text x="250.0" y="263.8" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">sol limit &#8722;&#960;/2</text>
+  <text x="350.0" y="88.0" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">y</tspan> = arctan(1/<tspan font-style="italic">x</tspan>)</text>
+</svg>
+<figcaption><em>y</em> = arctan(1/<em>x</em>) fonksiyonunun grafiği. Sağdan yaklaşırken değerler &#960;/2'ye, soldan yaklaşırken &#8722;&#960;/2'ye gider; içi boş noktalar bu iki tek yönlü limiti gösterir. Sağ ve sol limit farklı olduğundan sıfırda iki yönlü limit yoktur.</figcaption>
+</figure>
+```
+
+::: {.callout-warning title="Limit fonksiyonu varsayılan olarak sağ limiti alır"}
+`dir` verilmezse `sp.limit` sağ limiti hesaplar. Bu yüzden `sp.limit(1/x, x, 0)` sonucu `oo` olur, oysa $1/x$ fonksiyonunun sıfırda iki yönlü limiti yoktur. İki yönlü limit isteniyorsa `dir="+-"` yazılmalı ya da iki yön ayrı ayrı hesaplanmalıdır:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+print(sp.limit(1 / x, x, 0))
+print(sp.limit(1 / x, x, 0, dir="-"))
+print(sp.limit(1 / x**2, x, 0, dir="+-"))
+```
+
+Çıktı:
+
+```text
+oo
+-oo
+oo
+```
+:::
+
+## Türev
+
+Türev `sp.diff` fonksiyonuyla alınır: `sp.diff(f, x)` birinci türevi, `sp.diff(f, x, n)` $n$'inci türevi, `sp.diff(f, x, y)` önce $x$'e, sonra $y$'ye göre kısmi türevi verir. Türevin tanımı ve kuralları için bkz. [Analiz 2](../analiz-2/turev-kavrami.html#def-turev-noktada).
+
+```python
+import sympy as sp
+
+x, y = sp.symbols("x y")
+print(sp.diff(x**x, x))
+print(sp.diff(sp.sin(x)**2, x, 2))
+print(sp.diff(sp.exp(x * y**2), x, y))
+d = sp.Derivative(sp.atan(x), x)
+print(d, "=", d.doit())
+```
+
+Çıktı:
+
+```text
+x**x*(log(x) + 1)
+2*(-sin(x)**2 + cos(x)**2)
+2*y*(x*y**2 + 1)*exp(x*y**2)
+Derivative(atan(x), x) = 1/(x**2 + 1)
+```
+
+İlk satır, logaritmik türevle bulunan $(x^x)' = x^x(\ln x + 1)$ formülüdür. İkinci satır $(\sin^2 x)'' = 2(\cos^2 x - \sin^2 x) = 2\cos 2x$ sonucunu açılmış biçimde verir. `sp.Derivative` türevi hesaplamadan, yalnız gösterir; `doit` metodu hesabı yapar. Aynı ayrım integral, limit ve toplam için de vardır: `sp.Integral`, `sp.Limit`, `sp.Sum`.
+
+Türevi bir noktada hesaplamak için önce türev ifadesini bulur, sonra `subs` ile noktayı koyarız. $f(x) = x^3 - 2x$ eğrisinin $x = 1$ noktasındaki teğetini bulalım. Teğet doğrusu $y = f(a) + f'(a)(x - a)$ denklemiyle verilir (bkz. [Analiz 2](../analiz-2/turev-kavrami.html#def-teget-dogrusu)):
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+f = x**3 - 2*x
+a = 1
+slope = sp.diff(f, x).subs(x, a)
+tangent = f.subs(x, a) + slope * (x - a)
+print("eğim:", slope)
+print("teğet: y =", sp.expand(tangent))
+print(sp.factor(f - tangent))
+```
+
+Çıktı:
+
+```text
+eğim: 1
+teğet: y = x - 2
+(x - 1)**2*(x + 2)
+```
+
+Son satır ilginç bir şey söyler: eğri ile teğet arasındaki fark $(x - 1)^2(x + 2)$'dir. $x = 1$'deki **çift** kök teğetliği gösterir; eğri doğruya bu noktada değer ama onu kesmez. Basit kök $x = -2$ ise teğetin eğriyi ikinci kez kestiği $(-2, -4)$ noktasıdır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 6.0 511.5 336.0" role="img" aria-label="The cubic y = x^3 - 2x with its tangent line y = x - 2 at x = 1; the tangent touches the curve at (1, -1) and crosses it again at (-2, -4)">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="160.8" x2="464.0" y2="160.8"/>
+  <line x1="254.0" y1="328.0" x2="254.0" y2="20.0"/>
+  <polygon points="464.0,160.8 456.0,157.3 456.0,164.3" stroke="none"/>
+  <polygon points="254.0,20.0 250.5,28.0 257.5,28.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="95.5" y1="157.8" x2="95.5" y2="163.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="95.5" y="175.8" text-anchor="middle">&#8722;2</text>
+  <line x1="174.7" y1="157.8" x2="174.7" y2="163.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="174.7" y="175.8" text-anchor="middle">&#8722;1</text>
+  <line x1="333.2" y1="157.8" x2="333.2" y2="163.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="333.2" y="175.8" text-anchor="middle">1</text>
+  <line x1="412.5" y1="157.8" x2="412.5" y2="163.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="412.5" y="175.8" text-anchor="middle">2</text>
+  <line x1="251.0" y1="266.1" x2="257.0" y2="266.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="247.0" y="270.1" text-anchor="end">&#8722;4</text>
+  <line x1="251.0" y1="108.2" x2="257.0" y2="108.2" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="247.0" y="112.2" text-anchor="end">2</text>
+  <line x1="251.0" y1="55.6" x2="257.0" y2="55.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="247.0" y="59.6" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="462.0" y="175.8" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="261.0" y="29.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M79.9,324.0 L80.4,322.0 L81.2,318.6 L82.1,315.2 L82.9,311.8 L83.8,308.5 L84.6,305.2 L85.5,302.0 L86.3,298.7 L87.1,295.6 L88.0,292.4 L88.8,289.3 L89.7,286.3 L90.5,283.2 L91.3,280.2 L92.2,277.3 L93.0,274.4 L93.9,271.5 L94.7,268.7 L95.6,265.8 L96.4,263.1 L97.2,260.3 L98.1,257.6 L98.9,255.0 L99.8,252.3 L100.6,249.7 L101.4,247.2 L102.3,244.6 L103.1,242.1 L104.0,239.7 L104.8,237.2 L105.7,234.9 L106.5,232.5 L107.3,230.2 L108.2,227.9 L109.0,225.6 L109.9,223.4 L110.7,221.2 L111.5,219.0 L112.4,216.9 L113.2,214.8 L114.1,212.7 L114.9,210.7 L115.8,208.7 L116.6,206.7 L117.4,204.7 L118.3,202.8 L119.1,200.9 L120.0,199.1 L120.8,197.3 L121.6,195.5 L122.5,193.7 L123.3,192.0 L124.2,190.3 L125.0,188.6 L125.9,186.9 L126.7,185.3 L127.5,183.7 L128.4,182.2 L129.2,180.6 L130.1,179.1 L130.9,177.7 L131.7,176.2 L132.6,174.8 L133.4,173.4 L134.3,172.0 L135.1,170.7 L136.0,169.4 L136.8,168.1 L137.6,166.8 L138.5,165.6 L139.3,164.4 L140.2,163.2 L141.0,162.0 L141.8,160.9 L142.7,159.8 L143.5,158.7 L144.4,157.7 L145.2,156.6 L146.1,155.6 L146.9,154.6 L147.7,153.7 L148.6,152.7 L149.4,151.8 L150.3,150.9 L151.1,150.1 L151.9,149.2 L152.8,148.4 L153.6,147.6 L154.5,146.8 L155.3,146.1 L156.2,145.4 L157.0,144.7 L157.8,144.0 L158.7,143.3 L159.5,142.7 L160.4,142.0 L161.2,141.4 L162.0,140.9 L162.9,140.3 L163.7,139.8 L164.6,139.2 L165.4,138.7 L166.3,138.3 L167.1,137.8 L167.9,137.4 L168.8,137.0 L169.6,136.6 L170.5,136.2 L171.3,135.8 L172.1,135.5 L173.0,135.1 L173.8,134.8 L174.7,134.5 L175.5,134.3 L176.4,134.0 L177.2,133.8 L178.0,133.6 L178.9,133.4 L179.7,133.2 L180.6,133.0 L181.4,132.9 L182.2,132.7 L183.1,132.6 L183.9,132.5 L184.8,132.4 L185.6,132.3 L186.5,132.3 L187.3,132.2 L188.1,132.2 L189.0,132.2 L189.8,132.2 L190.7,132.2 L191.5,132.2 L192.3,132.3 L193.2,132.3 L194.0,132.4 L194.9,132.5 L195.7,132.6 L196.6,132.7 L197.4,132.8 L198.2,133.0 L199.1,133.1 L199.9,133.3 L200.8,133.5 L201.6,133.7 L202.4,133.9 L203.3,134.1 L204.1,134.3 L205.0,134.5 L205.8,134.8 L206.7,135.0 L207.5,135.3 L208.3,135.6 L209.2,135.8 L210.0,136.1 L210.9,136.5 L211.7,136.8 L212.5,137.1 L213.4,137.4 L214.2,137.8 L215.1,138.1 L215.9,138.5 L216.8,138.9 L217.6,139.2 L218.4,139.6 L219.3,140.0 L220.1,140.4 L221.0,140.8 L221.8,141.2 L222.6,141.7 L223.5,142.1 L224.3,142.5 L225.2,143.0 L226.0,143.4 L226.9,143.9 L227.7,144.4 L228.5,144.8 L229.4,145.3 L230.2,145.8 L231.1,146.3 L231.9,146.8 L232.7,147.3 L233.6,147.8 L234.4,148.3 L235.3,148.8 L236.1,149.3 L237.0,149.8 L237.8,150.3 L238.6,150.9 L239.5,151.4 L240.3,151.9 L241.2,152.5 L242.0,153.0 L242.8,153.5 L243.7,154.1 L244.5,154.6 L245.4,155.2 L246.2,155.7 L247.1,156.3 L247.9,156.8 L248.7,157.4 L249.6,157.9 L250.4,158.5 L251.3,159.1 L252.1,159.6 L252.9,160.2 L253.8,160.7 L254.6,161.3 L255.5,161.8 L256.3,162.4 L257.2,163.0 L258.0,163.5 L258.8,164.1 L259.7,164.6 L260.5,165.2 L261.4,165.7 L262.2,166.3 L263.0,166.8 L263.9,167.4 L264.7,167.9 L265.6,168.5 L266.4,169.0 L267.3,169.5 L268.1,170.1 L268.9,170.6 L269.8,171.1 L270.6,171.7 L271.5,172.2 L272.3,172.7 L273.1,173.2 L274.0,173.7 L274.8,174.2 L275.7,174.7 L276.5,175.2 L277.4,175.7 L278.2,176.2 L279.0,176.7 L279.9,177.1 L280.7,177.6 L281.6,178.1 L282.4,178.5 L283.2,179.0 L284.1,179.4 L284.9,179.8 L285.8,180.3 L286.6,180.7 L287.5,181.1 L288.3,181.5 L289.1,181.9 L290.0,182.3 L290.8,182.7 L291.7,183.0 L292.5,183.4 L293.3,183.8 L294.2,184.1 L295.0,184.5 L295.9,184.8 L296.7,185.1 L297.6,185.4 L298.4,185.7 L299.2,186.0 L300.1,186.3 L300.9,186.6 L301.8,186.8 L302.6,187.1 L303.4,187.3 L304.3,187.5 L305.1,187.7 L306.0,187.9 L306.8,188.1 L307.7,188.3 L308.5,188.5 L309.3,188.6 L310.2,188.8 L311.0,188.9 L311.9,189.0 L312.7,189.1 L313.5,189.2 L314.4,189.3 L315.2,189.4 L316.1,189.4 L316.9,189.5 L317.8,189.5 L318.6,189.5 L319.4,189.5 L320.3,189.5 L321.1,189.4 L322.0,189.4 L322.8,189.3 L323.6,189.2 L324.5,189.1 L325.3,189.0 L326.2,188.9 L327.0,188.7 L327.9,188.6 L328.7,188.4 L329.5,188.2 L330.4,188.0 L331.2,187.8 L332.1,187.5 L332.9,187.3 L333.7,187.0 L334.6,186.7 L335.4,186.4 L336.3,186.0 L337.1,185.7 L338.0,185.3 L338.8,184.9 L339.6,184.5 L340.5,184.1 L341.3,183.6 L342.2,183.1 L343.0,182.6 L343.8,182.1 L344.7,181.6 L345.5,181.1 L346.4,180.5 L347.2,179.9 L348.1,179.3 L348.9,178.6 L349.7,178.0 L350.6,177.3 L351.4,176.6 L352.3,175.9 L353.1,175.2 L353.9,174.4 L354.8,173.6 L355.6,172.8 L356.5,172.0 L357.3,171.1 L358.2,170.2 L359.0,169.3 L359.8,168.4 L360.7,167.4 L361.5,166.5 L362.4,165.5 L363.2,164.5 L364.0,163.4 L364.9,162.3 L365.7,161.2 L366.6,160.1 L367.4,159.0 L368.3,157.8 L369.1,156.6 L369.9,155.4 L370.8,154.1 L371.6,152.9 L372.5,151.5 L373.3,150.2 L374.1,148.9 L375.0,147.5 L375.8,146.1 L376.7,144.6 L377.5,143.2 L378.4,141.7 L379.2,140.2 L380.0,138.6 L380.9,137.0 L381.7,135.4 L382.6,133.8 L383.4,132.1 L384.2,130.4 L385.1,128.7 L385.9,127.0 L386.8,125.2 L387.6,123.4 L388.5,121.5 L389.3,119.6 L390.1,117.7 L391.0,115.8 L391.8,113.8 L392.7,111.9 L393.5,109.8 L394.3,107.8 L395.2,105.7 L396.0,103.6 L396.9,101.4 L397.7,99.2 L398.6,97.0 L399.4,94.8 L400.2,92.5 L401.1,90.2 L401.9,87.8 L402.8,85.4 L403.6,83.0 L404.4,80.6 L405.3,78.1 L406.1,75.6 L407.0,73.0 L407.8,70.4 L408.7,67.8 L409.5,65.2 L410.3,62.5 L411.2,59.8 L412.0,57.0 L412.9,54.2 L413.7,51.4 L414.5,48.5 L415.4,45.6 L416.2,42.7 L417.1,39.7 L417.9,36.7 L418.8,33.6 L419.6,30.5 L420.4,27.4 L421.3,24.3 L421.4,24.0" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M40.0,284.5 L460.0,145.1" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="95.5" y1="160.8" x2="95.5" y2="266.1" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <line x1="333.2" y1="160.8" x2="333.2" y2="187.2" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>
+  <circle cx="333.2" cy="187.2" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="95.5" cy="266.1" r="4.6" fill="var(--color-remark)"/>
+  <text x="343.2" y="203.2" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">(1, &#8722;1)</text>
+  <text x="105.5" y="280.1" fill="var(--color-remark)" font-size="12" text-anchor="start" font-weight="600">(&#8722;2, &#8722;4)</text>
+  <text x="398.5" y="68.3" fill="var(--color-theory)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">x</tspan><tspan font-size="8.5" dy="-5">3</tspan><tspan dy="5">&#8203;</tspan> &#8722; 2<tspan font-style="italic">x</tspan></text>
+  <text x="466.0" y="149.1" fill="var(--color-base)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">x</tspan> &#8722; 2</text>
+</svg>
+<figcaption><em>y</em> = <em>x</em>³ &#8722; 2<em>x</em> eğrisi ve <em>x</em> = 1'deki teğeti <em>y</em> = <em>x</em> &#8722; 2. Teğet eğriye (1, &#8722;1) noktasında değer, farkın çift kökü <em>x</em> = 1 budur. Basit kök <em>x</em> = &#8722;2 ise teğetin eğriyi yeniden kestiği (&#8722;2, &#8722;4) noktasını verir.</figcaption>
+</figure>
+```
+
+## İntegral
+
+İntegral için tek fonksiyon vardır: `sp.integrate(f, x)` belirsiz integrali, `sp.integrate(f, (x, a, b))` $[a, b]$ üzerindeki belirli integrali hesaplar. Sınırlar `sp.oo` olabilir; birden çok sınır üçlüsü verilirse katlı integral içten dışa doğru hesaplanır.
+
+```python
+import sympy as sp
+
+x, y = sp.symbols("x y")
+print(sp.integrate(x * sp.exp(x), x))
+print(sp.integrate(1 / (1 + x**2), x))
+print(sp.integrate(sp.sin(x)**2, (x, 0, sp.pi)))
+print(sp.integrate(sp.exp(-x**2), (x, -sp.oo, sp.oo)))
+print(sp.integrate(1 / x**2, (x, 1, sp.oo)))
+print(sp.integrate(x * y, (y, 0, x), (x, 0, 1)))
+```
+
+Çıktı:
+
+```text
+(x - 1)*exp(x)
+atan(x)
+pi/2
+sqrt(pi)
+1
+1/8
+```
+
+İlk satır kısmi integrasyonla bulunan $\int x e^x\,dx = (x - 1)e^x$, ikinci satır da temel $\int \frac{dx}{1 + x^2} = \arctan x$ integralidir. Ardından $\int_0^\pi \sin^2 x\,dx = \pi/2$, Gauss integrali $\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}$ ve yakınsak bir genelleştirilmiş integral gelir. Son satır, önce $y$'ye göre $0$'dan $x$'e, sonra $x$'e göre $0$'dan $1$'e alınan
+
+$$\int_0^1 \int_0^x xy\,dy\,dx = \int_0^1 \frac{x^3}{2}\,dx = \frac{1}{8}$$
+
+katlı integralidir.
+
+::: {.callout-warning title="Belirsiz integralde sabit yoktur"}
+`sp.integrate(f, x)` bir ilkel fonksiyon döndürür, $+C$ sabitini yazmaz. Ayrıca $\int dx/x$ için `log(x)` verir, mutlak değer koymaz. Bu, $x > 0$ aralığında doğru bir ilkeldir; $x < 0$ için ilkel $\ln|x|$'tir. Bulunan ilkeli türev alarak denetlemek iyi bir alışkanlıktır:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+F = sp.integrate(x * sp.exp(x), x)
+print(sp.simplify(sp.diff(F, x) - x * sp.exp(x)))
+print(sp.integrate(1 / x, x))
+```
+
+Çıktı:
+
+```text
+0
+log(x)
+```
+:::
+
+Her integralin ilkeli temel fonksiyonlarla yazılamaz. SymPy böyle durumlarda ya integralle tanımlanan özel bir fonksiyon kullanır ya da integrali hesaplanmamış olarak geri verir:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+print(sp.integrate(sp.exp(-x**2), x))
+print(sp.integrate(sp.sin(x) / x, x))
+I = sp.Integral(x**x, (x, 0, 1))
+print(I.doit())
+print(I.evalf(20))
+```
+
+Çıktı:
+
+```text
+sqrt(pi)*erf(x)/2
+Si(x)
+Integral(x**x, (x, 0, 1))
+0.78343051071213440706
+```
+
+`erf` hata fonksiyonu, $\operatorname{erf}(x) = \frac{2}{\sqrt{\pi}}\int_0^x e^{-t^2}\,dt$ ile; `Si` sinüs integrali de $\operatorname{Si}(x) = \int_0^x \frac{\sin t}{t}\,dt$ ile tanımlanır. $\int_0^1 x^x\,dx$ için kapalı bir biçim bulunamadı ve `doit` integrali olduğu gibi döndürdü. `evalf(20)` ise integrali sayısal olarak 20 anlamlı basamakla hesapladı. Sayısal integrali [Sayısal Türev ve İntegral](sayisal-turev-ve-integral.qmd) bölümünde ayrıntısıyla göreceğiz.
+
+:::: {#exm-sym-alan name="İki Eğri Arasındaki Alan"}
+$y = x^2$ parabolü ile $y = x + 2$ doğrusu arasında kalan sınırlı bölgenin alanını SymPy ile hesaplayınız.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 6.0 493.5 336.0" role="img" aria-label="The parabola y = x^2 and the line y = x + 2; the bounded region between them is shaded and the two intersection points are marked">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="286.5" x2="444.0" y2="286.5"/>
+  <line x1="216.3" y1="328.0" x2="216.3" y2="20.0"/>
+  <polygon points="444.0,286.5 436.0,283.0 436.0,290.0" stroke="none"/>
+  <polygon points="216.3,20.0 212.8,28.0 219.8,28.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="80.7" y1="283.5" x2="80.7" y2="289.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="80.7" y="301.5" text-anchor="middle">&#8722;2</text>
+  <line x1="148.5" y1="283.5" x2="148.5" y2="289.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="148.5" y="301.5" text-anchor="middle">&#8722;1</text>
+  <line x1="284.1" y1="283.5" x2="284.1" y2="289.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="284.1" y="301.5" text-anchor="middle">1</text>
+  <line x1="351.9" y1="283.5" x2="351.9" y2="289.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="351.9" y="301.5" text-anchor="middle">2</text>
+  <line x1="419.7" y1="283.5" x2="419.7" y2="289.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="419.7" y="301.5" text-anchor="middle">3</text>
+  <line x1="213.3" y1="244.8" x2="219.3" y2="244.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="209.3" y="248.8" text-anchor="end">1</text>
+  <line x1="213.3" y1="119.8" x2="219.3" y2="119.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="209.3" y="123.8" text-anchor="end">4</text>
+  <line x1="213.3" y1="36.5" x2="219.3" y2="36.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="209.3" y="40.5" text-anchor="end">6</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="442.0" y="301.5" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="223.3" y="29.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <polygon points="148.5,244.8 149.5,244.2 150.5,243.6 151.5,242.9 152.6,242.3 153.6,241.7 154.6,241.1 155.6,240.4 156.7,239.8 157.7,239.2 158.7,238.6 159.7,237.9 160.7,237.3 161.8,236.7 162.8,236.0 163.8,235.4 164.8,234.8 165.8,234.2 166.9,233.5 167.9,232.9 168.9,232.3 169.9,231.6 171.0,231.0 172.0,230.4 173.0,229.8 174.0,229.1 175.0,228.5 176.1,227.9 177.1,227.2 178.1,226.6 179.1,226.0 180.2,225.4 181.2,224.7 182.2,224.1 183.2,223.5 184.2,222.8 185.3,222.2 186.3,221.6 187.3,221.0 188.3,220.3 189.4,219.7 190.4,219.1 191.4,218.5 192.4,217.8 193.4,217.2 194.5,216.6 195.5,215.9 196.5,215.3 197.5,214.7 198.6,214.1 199.6,213.4 200.6,212.8 201.6,212.2 202.6,211.5 203.7,210.9 204.7,210.3 205.7,209.7 206.7,209.0 207.8,208.4 208.8,207.8 209.8,207.1 210.8,206.5 211.8,205.9 212.9,205.3 213.9,204.6 214.9,204.0 215.9,203.4 217.0,202.7 218.0,202.1 219.0,201.5 220.0,200.9 221.0,200.2 222.1,199.6 223.1,199.0 224.1,198.4 225.1,197.7 226.2,197.1 227.2,196.5 228.2,195.8 229.2,195.2 230.2,194.6 231.3,194.0 232.3,193.3 233.3,192.7 234.3,192.1 235.3,191.4 236.4,190.8 237.4,190.2 238.4,189.6 239.4,188.9 240.5,188.3 241.5,187.7 242.5,187.0 243.5,186.4 244.5,185.8 245.6,185.2 246.6,184.5 247.6,183.9 248.6,183.3 249.7,182.6 250.7,182.0 251.7,181.4 252.7,180.8 253.7,180.1 254.8,179.5 255.8,178.9 256.8,178.3 257.8,177.6 258.9,177.0 259.9,176.4 260.9,175.7 261.9,175.1 262.9,174.5 264.0,173.9 265.0,173.2 266.0,172.6 267.0,172.0 268.1,171.3 269.1,170.7 270.1,170.1 271.1,169.5 272.1,168.8 273.2,168.2 274.2,167.6 275.2,166.9 276.2,166.3 277.3,165.7 278.3,165.1 279.3,164.4 280.3,163.8 281.3,163.2 282.4,162.5 283.4,161.9 284.4,161.3 285.4,160.7 286.5,160.0 287.5,159.4 288.5,158.8 289.5,158.1 290.5,157.5 291.6,156.9 292.6,156.3 293.6,155.6 294.6,155.0 295.7,154.4 296.7,153.8 297.7,153.1 298.7,152.5 299.7,151.9 300.8,151.2 301.8,150.6 302.8,150.0 303.8,149.4 304.8,148.7 305.9,148.1 306.9,147.5 307.9,146.8 308.9,146.2 310.0,145.6 311.0,145.0 312.0,144.3 313.0,143.7 314.0,143.1 315.1,142.4 316.1,141.8 317.1,141.2 318.1,140.6 319.2,139.9 320.2,139.3 321.2,138.7 322.2,138.0 323.2,137.4 324.3,136.8 325.3,136.2 326.3,135.5 327.3,134.9 328.4,134.3 329.4,133.7 330.4,133.0 331.4,132.4 332.4,131.8 333.5,131.1 334.5,130.5 335.5,129.9 336.5,129.3 337.6,128.6 338.6,128.0 339.6,127.4 340.6,126.7 341.6,126.1 342.7,125.5 343.7,124.9 344.7,124.2 345.7,123.6 346.8,123.0 347.8,122.3 348.8,121.7 349.8,121.1 350.8,120.5 351.9,119.8 351.9,119.8 350.8,122.3 349.8,124.8 348.8,127.3 347.8,129.7 346.8,132.2 345.7,134.6 344.7,137.0 343.7,139.3 342.7,141.7 341.6,144.0 340.6,146.3 339.6,148.6 338.6,150.9 337.6,153.2 336.5,155.4 335.5,157.6 334.5,159.8 333.5,162.0 332.4,164.2 331.4,166.3 330.4,168.4 329.4,170.5 328.4,172.6 327.3,174.7 326.3,176.7 325.3,178.8 324.3,180.8 323.2,182.8 322.2,184.7 321.2,186.7 320.2,188.6 319.2,190.5 318.1,192.4 317.1,194.3 316.1,196.2 315.1,198.0 314.0,199.8 313.0,201.6 312.0,203.4 311.0,205.2 310.0,206.9 308.9,208.7 307.9,210.4 306.9,212.1 305.9,213.7 304.8,215.4 303.8,217.0 302.8,218.6 301.8,220.2 300.8,221.8 299.7,223.3 298.7,224.9 297.7,226.4 296.7,227.9 295.7,229.4 294.6,230.8 293.6,232.3 292.6,233.7 291.6,235.1 290.5,236.5 289.5,237.9 288.5,239.2 287.5,240.5 286.5,241.9 285.4,243.1 284.4,244.4 283.4,245.7 282.4,246.9 281.3,248.1 280.3,249.3 279.3,250.5 278.3,251.6 277.3,252.8 276.2,253.9 275.2,255.0 274.2,256.1 273.2,257.2 272.1,258.2 271.1,259.2 270.1,260.2 269.1,261.2 268.1,262.2 267.0,263.1 266.0,264.1 265.0,265.0 264.0,265.9 262.9,266.8 261.9,267.6 260.9,268.4 259.9,269.3 258.9,270.1 257.8,270.8 256.8,271.6 255.8,272.3 254.8,273.1 253.7,273.8 252.7,274.5 251.7,275.1 250.7,275.8 249.7,276.4 248.6,277.0 247.6,277.6 246.6,278.2 245.6,278.7 244.5,279.3 243.5,279.8 242.5,280.3 241.5,280.7 240.5,281.2 239.4,281.6 238.4,282.1 237.4,282.5 236.4,282.8 235.3,283.2 234.3,283.5 233.3,283.9 232.3,284.2 231.3,284.5 230.2,284.7 229.2,285.0 228.2,285.2 227.2,285.4 226.2,285.6 225.1,285.8 224.1,285.9 223.1,286.1 222.1,286.2 221.0,286.3 220.0,286.4 219.0,286.4 218.0,286.5 217.0,286.5 215.9,286.5 214.9,286.5 213.9,286.4 212.9,286.4 211.8,286.3 210.8,286.2 209.8,286.1 208.8,286.0 207.8,285.8 206.7,285.7 205.7,285.5 204.7,285.3 203.7,285.1 202.6,284.8 201.6,284.6 200.6,284.3 199.6,284.0 198.6,283.7 197.5,283.3 196.5,283.0 195.5,282.6 194.5,282.2 193.4,281.8 192.4,281.3 191.4,280.9 190.4,280.4 189.4,279.9 188.3,279.4 187.3,278.9 186.3,278.4 185.3,277.8 184.2,277.2 183.2,276.6 182.2,276.0 181.2,275.3 180.2,274.7 179.1,274.0 178.1,273.3 177.1,272.6 176.1,271.8 175.0,271.1 174.0,270.3 173.0,269.5 172.0,268.7 171.0,267.9 169.9,267.0 168.9,266.2 167.9,265.3 166.9,264.4 165.8,263.5 164.8,262.5 163.8,261.5 162.8,260.6 161.8,259.6 160.7,258.5 159.7,257.5 158.7,256.4 157.7,255.4 156.7,254.3 155.6,253.2 154.6,252.0 153.6,250.9 152.6,249.7 151.5,248.5 150.5,247.3 149.5,246.1 148.5,244.8" fill="var(--color-practice)" fill-opacity="0.18" stroke="none" stroke-width="1.2"/>
+  <path d="M46.1,24.0 L47.2,27.5 L48.4,31.0 L49.5,34.4 L50.7,37.9 L51.8,41.3 L52.9,44.6 L54.1,48.0 L55.2,51.3 L56.3,54.7 L57.5,57.9 L58.6,61.2 L59.8,64.4 L60.9,67.7 L62.0,70.9 L63.2,74.0 L64.3,77.2 L65.5,80.3 L66.6,83.4 L67.7,86.5 L68.9,89.5 L70.0,92.6 L71.1,95.6 L72.3,98.6 L73.4,101.5 L74.6,104.5 L75.7,107.4 L76.8,110.3 L78.0,113.1 L79.1,116.0 L80.3,118.8 L81.4,121.6 L82.5,124.3 L83.7,127.1 L84.8,129.8 L85.9,132.5 L87.1,135.2 L88.2,137.9 L89.4,140.5 L90.5,143.1 L91.6,145.7 L92.8,148.2 L93.9,150.8 L95.0,153.3 L96.2,155.8 L97.3,158.2 L98.5,160.7 L99.6,163.1 L100.7,165.5 L101.9,167.9 L103.0,170.2 L104.2,172.5 L105.3,174.9 L106.4,177.1 L107.6,179.4 L108.7,181.6 L109.8,183.8 L111.0,186.0 L112.1,188.2 L113.3,190.3 L114.4,192.4 L115.5,194.5 L116.7,196.6 L117.8,198.6 L119.0,200.6 L120.1,202.6 L121.2,204.6 L122.4,206.6 L123.5,208.5 L124.6,210.4 L125.8,212.3 L126.9,214.1 L128.1,216.0 L129.2,217.8 L130.3,219.6 L131.5,221.3 L132.6,223.1 L133.7,224.8 L134.9,226.5 L136.0,228.1 L137.2,229.8 L138.3,231.4 L139.4,233.0 L140.6,234.6 L141.7,236.1 L142.9,237.6 L144.0,239.1 L145.1,240.6 L146.3,242.1 L147.4,243.5 L148.5,244.9 L149.7,246.3 L150.8,247.7 L152.0,249.0 L153.1,250.3 L154.2,251.6 L155.4,252.9 L156.5,254.1 L157.7,255.3 L158.8,256.5 L159.9,257.7 L161.1,258.9 L162.2,260.0 L163.3,261.1 L164.5,262.2 L165.6,263.2 L166.8,264.3 L167.9,265.3 L169.0,266.3 L170.2,267.2 L171.3,268.2 L172.4,269.1 L173.6,270.0 L174.7,270.9 L175.9,271.7 L177.0,272.5 L178.1,273.3 L179.3,274.1 L180.4,274.8 L181.6,275.6 L182.7,276.3 L183.8,277.0 L185.0,277.6 L186.1,278.3 L187.2,278.9 L188.4,279.5 L189.5,280.0 L190.7,280.6 L191.8,281.1 L192.9,281.6 L194.1,282.0 L195.2,282.5 L196.4,282.9 L197.5,283.3 L198.6,283.7 L199.8,284.0 L200.9,284.4 L202.0,284.7 L203.2,284.9 L204.3,285.2 L205.5,285.4 L206.6,285.7 L207.7,285.8 L208.9,286.0 L210.0,286.1 L211.1,286.3 L212.3,286.4 L213.4,286.4 L214.6,286.5 L215.7,286.5 L216.8,286.5 L218.0,286.5 L219.1,286.4 L220.3,286.4 L221.4,286.3 L222.5,286.1 L223.7,286.0 L224.8,285.8 L225.9,285.7 L227.1,285.4 L228.2,285.2 L229.4,284.9 L230.5,284.7 L231.6,284.4 L232.8,284.0 L233.9,283.7 L235.1,283.3 L236.2,282.9 L237.3,282.5 L238.5,282.0 L239.6,281.6 L240.7,281.1 L241.9,280.6 L243.0,280.0 L244.2,279.5 L245.3,278.9 L246.4,278.3 L247.6,277.6 L248.7,277.0 L249.8,276.3 L251.0,275.6 L252.1,274.8 L253.3,274.1 L254.4,273.3 L255.5,272.5 L256.7,271.7 L257.8,270.9 L259.0,270.0 L260.1,269.1 L261.2,268.2 L262.4,267.2 L263.5,266.3 L264.6,265.3 L265.8,264.3 L266.9,263.2 L268.1,262.2 L269.2,261.1 L270.3,260.0 L271.5,258.9 L272.6,257.7 L273.8,256.5 L274.9,255.3 L276.0,254.1 L277.2,252.9 L278.3,251.6 L279.4,250.3 L280.6,249.0 L281.7,247.7 L282.9,246.3 L284.0,244.9 L285.1,243.5 L286.3,242.1 L287.4,240.6 L288.5,239.1 L289.7,237.6 L290.8,236.1 L292.0,234.6 L293.1,233.0 L294.2,231.4 L295.4,229.8 L296.5,228.1 L297.7,226.5 L298.8,224.8 L299.9,223.1 L301.1,221.3 L302.2,219.6 L303.3,217.8 L304.5,216.0 L305.6,214.1 L306.8,212.3 L307.9,210.4 L309.0,208.5 L310.2,206.6 L311.3,204.6 L312.5,202.6 L313.6,200.6 L314.7,198.6 L315.9,196.6 L317.0,194.5 L318.1,192.4 L319.3,190.3 L320.4,188.2 L321.6,186.0 L322.7,183.8 L323.8,181.6 L325.0,179.4 L326.1,177.1 L327.3,174.9 L328.4,172.5 L329.5,170.2 L330.7,167.9 L331.8,165.5 L332.9,163.1 L334.1,160.7 L335.2,158.2 L336.4,155.8 L337.5,153.3 L338.6,150.8 L339.8,148.2 L340.9,145.7 L342.0,143.1 L343.2,140.5 L344.3,137.9 L345.5,135.2 L346.6,132.5 L347.7,129.8 L348.9,127.1 L350.0,124.3 L351.2,121.6 L352.3,118.8 L353.4,116.0 L354.6,113.1 L355.7,110.3 L356.8,107.4 L358.0,104.5 L359.1,101.5 L360.3,98.6 L361.4,95.6 L362.5,92.6 L363.7,89.5 L364.8,86.5 L366.0,83.4 L367.1,80.3 L368.2,77.2 L369.4,74.0 L370.5,70.9 L371.6,67.7 L372.8,64.4 L373.9,61.2 L375.1,57.9 L376.2,54.7 L377.3,51.3 L378.5,48.0 L379.6,44.6 L380.7,41.3 L381.9,37.9 L383.0,34.4 L384.2,31.0 L385.3,27.5 L386.4,24.0" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M40.0,311.5 L440.0,65.7" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="148.5" cy="244.8" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="351.9" cy="119.8" r="4.4" fill="var(--color-practice)"/>
+  <text x="394.4" y="30.0" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">x</tspan>²</text>
+  <text x="448.0" y="71.7" fill="var(--color-base)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">x</tspan> + 2</text>
+</svg>
+<figcaption><em>y</em> = <em>x</em>² parabolü ile <em>y</em> = <em>x</em> + 2 doğrusu arasında kalan sınırlı bölge (gölgeli). İki eğri bölgenin uç noktalarında kesişir.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+Önce iki eğrinin kesiştiği noktaları buluruz. Bunun için `sp.solve` fonksiyonunu kullanacağız. Fonksiyonu Denklem Çözmek kısmında ayrıntısıyla göreceğiz; burada denklemin çözümlerini bir liste olarak verir. `sp.Eq(top, bottom)` de iki tarafın eşitliğini, yani $x + 2 = x^2$ denklemini yazar. Sonra kesişimler arasında üstteki eğriden alttakini çıkarıp integral alırız (bkz. [Analiz 2](../analiz-2/belirli-integralin-uygulamalari.html#thm-iki-egri-arasi-alan)):
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+top = x + 2
+bottom = x**2
+a, b = sp.solve(sp.Eq(top, bottom), x)
+print("kesişimler:", a, b)
+print("orta noktada fark:", (top - bottom).subs(x, (a + b) / 2))
+area = sp.integrate(top - bottom, (x, a, b))
+print("alan:", area, "=", area.evalf())
+```
+
+Çıktı:
+
+```text
+kesişimler: -1 2
+orta noktada fark: 9/4
+alan: 9/2 = 4.50000000000000
+```
+
+Eğriler $x = -1$ ve $x = 2$'de kesişir. Aradaki bir noktada farkın pozitif çıkması, bu aralıkta doğrunun parabolün üstünde kaldığını doğrular. Elle hesap aynı sonucu verir:
+
+$$\int_{-1}^{2} (x + 2 - x^2)\,dx = \left[\frac{x^2}{2} + 2x - \frac{x^3}{3}\right]_{-1}^{2} = \frac{10}{3} + \frac{7}{6} = \frac{9}{2}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Seriler ve Toplamlar
+
+Bir fonksiyonun bir nokta etrafındaki Taylor açılımı `sp.series(f, x, a, n)` ile bulunur. Sonuç $(x - a)^{n-1}$ terimine kadar olan açılım ile bir $O\big((x - a)^n\big)$ kalan teriminden oluşur. `removeO` metodu kalan terimini atar ve geriye Taylor polinomu kalır (bkz. [Analiz 2](../analiz-2/taylor-formulu.html#def-taylor-polinomu)).
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+s = sp.series(sp.exp(x), x, 0, 6)
+print(s)
+print(s.removeO())
+print(sp.series(sp.tan(x), x, 0, 8))
+print(sp.series(sp.sqrt(x), x, 4, 3))
+```
+
+Çıktı:
+
+```text
+1 + x + x**2/2 + x**3/6 + x**4/24 + x**5/120 + O(x**6)
+x**5/120 + x**4/24 + x**3/6 + x**2/2 + x + 1
+x + x**3/3 + 2*x**5/15 + 17*x**7/315 + O(x**8)
+1 - (x - 4)**2/64 + x/4 + O((x - 4)**3, (x, 4))
+```
+
+`n` parametresi terim sayısını değil, kalanın kuvvetini belirler: `sp.series(sp.exp(x), x, 0, 6)` en çok $x^5$ terimini içerir. Son satır $\sqrt{x}$'in $4$ etrafındaki açılımıdır. SymPy $2 + \frac{x - 4}{4}$ toplamını $1 + \frac{x}{4}$ olarak yazdığından açılım ilk bakışta tanıdık görünmez; ama $\sqrt{x} \approx 2 + \frac{x-4}{4} - \frac{(x-4)^2}{64}$ ile aynıdır.
+
+Sonlu ve sonsuz toplamlar `sp.summation` ile hesaplanır:
+
+```python
+import sympy as sp
+
+k, n = sp.symbols("k n", integer=True, positive=True)
+s = sp.summation(k**2, (k, 1, n))
+print(s)
+print(sp.factor(s))
+print(sp.summation(1 / k**2, (k, 1, sp.oo)))
+print(sp.summation(sp.Rational(1, 2)**k, (k, 0, sp.oo)))
+```
+
+Çıktı:
+
+```text
+n**3/3 + n**2/2 + n/6
+n*(n + 1)*(2*n + 1)/6
+pi**2/6
+2
+```
+
+İlk iki satır $1^2 + 2^2 + \cdots + n^2 = \frac{n(n+1)(2n+1)}{6}$ formülüdür. Ardından Basel problemi olarak bilinen $\sum 1/k^2 = \pi^2/6$ eşitliği ve $1/2$ oranlı geometrik serinin toplamı gelir.
+
+:::: {#exm-sym-e-yaklasim name="e Sayısına Taylor Polinomlarıyla Yaklaşmak"}
+$e^x$ fonksiyonunun $0$ etrafındaki $n$'inci Taylor polinomu $T_n$ olsun. $|e - T_n(1)| < 10^{-4}$ eşitsizliğini sağlayan en küçük $n$'yi SymPy ile bulunuz.
+
+::: {.cozum}
+$T_n(1) = \sum_{k=0}^{n} 1/k!$ değerini kesir olarak hesaplayıp hatayı `evalf` ile ölçelim:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+for n in range(4, 9):
+    T = sp.series(sp.exp(x), x, 0, n + 1).removeO()
+    value = T.subs(x, 1)
+    error = (sp.E - value).evalf(5)
+    print(n, value, error)
+```
+
+Çıktı:
+
+```text
+4 65/24 0.0099485
+5 163/60 0.0016152
+6 1957/720 0.00022627
+7 685/252 2.7860e-5
+8 109601/40320 3.0586e-6
+```
+
+Hata $n = 6$ için $2{,}26 \cdot 10^{-4}$, $n = 7$ için $2{,}79 \cdot 10^{-5}$'tir. İstenen en küçük değer $n = 7$'dir ve $e \approx T_7(1) = \frac{685}{252}$ olur. Hata kesin bir kesir olan $T_n(1)$ ile sembolik $e$ arasındaki farktan hesaplandığından, kendisi bir yuvarlama hatası taşımaz. Benzer bir soruyu $5 \cdot 10^{-5}$ duyarlıkla, Lagrange kalanıyla ve hesap yapmadan önce çözen bir örnek için bkz. [Analiz 2](../analiz-2/taylor-formulu.html#exm-taylor-kalan-kestirimi). Oradaki $e - T_n(1) < \frac{3}{(n+1)!}$ sınırı bizim $10^{-4}$ duyarlığımızda da $n = 7$ verir: sınırın $10^{-4}$'ten küçük olması için $(n+1)! > 30\,000$ gerekir ve $7! = 5040 < 30\,000 < 40\,320 = 8!$ olduğundan en küçük seçim $n + 1 = 8$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Denklem Çözmek
+
+Alan örneğinde kısaca kullandığımız `sp.solve`, SymPy'nin en çok başvurulan fonksiyonlarından biridir. `sp.solve(expr, x)`, $\text{expr} = 0$ denkleminin çözümlerini bir liste olarak verir. Denklemi iki taraflı yazmak için `sp.Eq(lhs, rhs)` kullanılır. Python'da `=` atama, `==` de yapısal eşitlik olduğundan denklem için ayrı bir nesne gerekir.
+
+```python
+import sympy as sp
+
+x, a, b, c = sp.symbols("x a b c")
+print(sp.solve(x**2 - 5*x + 6, x))
+print(sp.solve(sp.Eq(x**3, 8), x))
+print(sp.solve(x**2 + 1, x))
+print(sp.solve(a*x**2 + b*x + c, x))
+```
+
+Çıktı:
+
+```text
+[2, 3]
+[2, -1 - sqrt(3)*I, -1 + sqrt(3)*I]
+[-I, I]
+[(-b - sqrt(-4*a*c + b**2))/(2*a), (-b + sqrt(-4*a*c + b**2))/(2*a)]
+```
+
+`I`, SymPy'nin sanal birimidir: $x^3 = 8$ denkleminin bir reel, iki karmaşık kökü vardır. Son satır ikinci derece denklemin kök formülüdür. Ancak dikkat: SymPy burada $a \ne 0$ olduğunu sessizce varsaydı. `solve` "genel" durumu çözer; parametrelerin özel değerlerini ayrıca incelemek bize düşer.
+
+Çözümleri belli bir kümede aramak için `sp.solveset` daha uygundur. `domain` seçeneği çözüm kümesini belirler ve sonuç her zaman bir küme olur; eşitsizlikler de çözülebilir:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+print(sp.solveset(x**2 + 1, x, domain=sp.S.Reals))
+print(sp.solveset(sp.sin(x), x, domain=sp.Interval(0, 10)))
+print(sp.solveset(x**2 - 4 > 0, x, domain=sp.S.Reals))
+```
+
+Çıktı:
+
+```text
+EmptySet
+{0, pi, 2*pi, 3*pi}
+Union(Interval.open(-oo, -2), Interval.open(2, oo))
+```
+
+$x^2 + 1 = 0$ denkleminin reel çözümü yoktur (`EmptySet`, boş küme). $[0, 10]$ aralığında $\sin x = 0$ denkleminin çözümleri $0, \pi, 2\pi, 3\pi$'dir. $x^2 > 4$ eşitsizliğinin çözümü de $(-\infty, -2) \cup (2, \infty)$ kümesidir.
+
+Denklem sistemleri için denklemler bir liste, bilinmeyenler ikinci bir liste olarak verilir. Bir çember ile bir doğrunun kesişimini bulalım: $x^2 + y^2 = 5$, $y = x + 1$.
+
+```python
+import sympy as sp
+
+x, y = sp.symbols("x y")
+eqs = [sp.Eq(x**2 + y**2, 5), sp.Eq(y, x + 1)]
+sols = sp.solve(eqs, [x, y], dict=True)
+print(sols)
+for s in sols:
+    print(s[x], s[y], [e.subs(s) for e in eqs])
+```
+
+Çıktı:
+
+```text
+[{x: -2, y: -1}, {x: 1, y: 2}]
+-2 -1 [True, True]
+1 2 [True, True]
+```
+
+`dict=True` seçeneği her çözümü `{x: ..., y: ...}` biçiminde bir sözlük olarak verir. Böylece çözüm doğrudan `subs`'a verilebilir. Son iki satırdaki `[True, True]` listeleri, iki çözümün de iki denklemi sağladığını gösterir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="22.0 6.0 403.0 385.5" role="img" aria-label="The circle x^2 + y^2 = 5 and the line y = x + 1 meeting at the points (-2, -1) and (1, 2)">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="209.5" x2="404.0" y2="209.5"/>
+  <line x1="220.0" y1="377.1" x2="220.0" y2="20.0"/>
+  <polygon points="404.0,209.5 396.0,206.0 396.0,213.0" stroke="none"/>
+  <polygon points="220.0,20.0 216.5,28.0 223.5,28.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="110.9" y1="206.5" x2="110.9" y2="212.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="110.9" y="224.5" text-anchor="middle">&#8722;2</text>
+  <line x1="165.5" y1="206.5" x2="165.5" y2="212.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="165.5" y="224.5" text-anchor="middle">&#8722;1</text>
+  <line x1="274.5" y1="206.5" x2="274.5" y2="212.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="274.5" y="224.5" text-anchor="middle">1</text>
+  <line x1="329.1" y1="206.5" x2="329.1" y2="212.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="329.1" y="224.5" text-anchor="middle">2</text>
+  <line x1="217.0" y1="318.5" x2="223.0" y2="318.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="213.0" y="322.5" text-anchor="end">&#8722;2</text>
+  <line x1="217.0" y1="264.0" x2="223.0" y2="264.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="213.0" y="268.0" text-anchor="end">&#8722;1</text>
+  <line x1="217.0" y1="154.9" x2="223.0" y2="154.9" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="213.0" y="158.9" text-anchor="end">1</text>
+  <line x1="217.0" y1="100.4" x2="223.0" y2="100.4" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="213.0" y="104.4" text-anchor="end">2</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="402.0" y="224.5" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="227.0" y="29.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <circle cx="220.0" cy="209.5" r="122.0" fill="none" stroke="var(--color-theory)" stroke-width="2.1" opacity="1.0"/>
+  <path d="M40.0,334.9 L350.9,24.0" fill="none" stroke="var(--color-base)" stroke-width="2.0" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="110.9" cy="264.0" r="4.6" fill="var(--color-practice)"/>
+  <circle cx="274.5" cy="100.4" r="4.6" fill="var(--color-practice)"/>
+  <text x="100.9" y="268.0" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">(&#8722;2, &#8722;1)</text>
+  <text x="278.5" y="82.4" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">(1, 2)</text>
+  <text x="314.2" y="309.7" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">x</tspan>² + <tspan font-style="italic">y</tspan>² = 5</text>
+  <text x="358.9" y="30.0" fill="var(--color-base)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">x</tspan> + 1</text>
+</svg>
+<figcaption><em>x</em>² + <em>y</em>² = 5 çemberi ile <em>y</em> = <em>x</em> + 1 doğrusu (&#8722;2, &#8722;1) ve (1, 2) noktalarında kesişir. Bu iki nokta, <code>sp.solve</code> fonksiyonunun bulduğu iki çözümdür.</figcaption>
+</figure>
+```
+
+Doğrusal sistemlerde `sp.linsolve` çözüm kümesini verir; sonsuz çözüm varsa onu serbest değişkenlere bağlı olarak yazar:
+
+```python
+import sympy as sp
+
+x, y, z = sp.symbols("x y z")
+eqs = [x + y + z - 6, x - y + 2*z - 5, 2*x + y - z - 1]
+print(sp.linsolve(eqs, [x, y, z]))
+print(sp.linsolve([x + y - 2, 2*x + 2*y - 4], [x, y]))
+```
+
+Çıktı:
+
+```text
+{(1, 2, 3)}
+{(2 - y, y)}
+```
+
+İlk sistemin tek çözümü $(1, 2, 3)$'tür. İkinci sistemin iki denklemi aynı doğruyu verdiğinden sonsuz çözüm vardır: her $y$ için $(2 - y, y)$ bir çözümdür.
+
+Her denklemin kapalı biçimde bir çözümü yoktur. $\cos x = x$ denkleminin kökü temel fonksiyonlarla yazılamaz ve `sp.solve` bunu `NotImplementedError` hatasıyla bildirir. Böyle durumlarda `sp.nsolve`, verilen bir başlangıç noktasından sayısal bir yöntemle kökü bulur:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+try:
+    sp.solve(sp.cos(x) - x, x)
+except NotImplementedError:
+    print("solve kapalı biçimde bir çözüm bulamadı.")
+print(sp.nsolve(sp.cos(x) - x, x, 0.7))
+```
+
+Çıktı:
+
+```text
+solve kapalı biçimde bir çözüm bulamadı.
+0.739085133215161
+```
+
+Aynı kökü Newton-Raphson yöntemiyle elle hesaplayan örnek için bkz. [Nümerik Analiz](../numerik-analiz/newton-raphson-metodu.html#exm-nwt-cos). Sayısal kök bulmayı bir sonraki bölümde SciPy ile ayrıntılı olarak ele alacağız.
+
+## Diferansiyel Denklem Çözmek
+
+SymPy bazı diferansiyel denklem türlerini de kapalı biçimde çözer. Bilinmeyen fonksiyon `sp.Function("y")` ile tanımlanır ve `y(x).diff(x)` onun türevini gösterir. Denklem `sp.Eq` ile kurulur, `sp.dsolve` ile çözülür. Başlangıç koşulları `ics` sözlüğüyle verilir.
+
+Birinci mertebeden doğrusal $y' + y = x$ denklemini önce genel olarak, sonra $y(0) = 1$ koşuluyla çözelim:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+y = sp.Function("y")
+ode = sp.Eq(y(x).diff(x) + y(x), x)
+print(sp.dsolve(ode, y(x)))
+sol = sp.dsolve(ode, y(x), ics={y(0): 1})
+print(sol)
+print(sp.checkodesol(ode, sol))
+```
+
+Çıktı:
+
+```text
+Eq(y(x), C1*exp(-x) + x - 1)
+Eq(y(x), x - 1 + 2*exp(-x))
+(True, 0)
+```
+
+Genel çözüm $y = C_1 e^{-x} + x - 1$ ailesidir; `C1` keyfi sabittir. $y(0) = 1$ koşulu $C_1 - 1 = 1$, yani $C_1 = 2$ verir. `sp.checkodesol`, çözümü denkleme koyar ve artığın sıfır olduğunu `(True, 0)` ile bildirir. Aynı sonuca elle de ulaşılır. Denklemi $e^x$ integrasyon çarpanıyla çarparsak (bkz. [Diferansiyel Denklemler](../diferansiyel-denklemler/integrasyon-carpani.html#thm-carpan-x-carpani))
+
+$$(e^x y)' = x e^x \quad\Longrightarrow\quad e^x y = (x - 1)e^x + C_1$$
+
+olur. Aşağıdaki şekil denklemin yön alanını ve aileden birkaç çözümü gösterir:
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="3.0 -5.5 415.0 370.0" role="img" aria-label="Direction field of y' = x - y on [-1, 4] x [-2, 4] with the solution curves y = C1 exp(-x) + x - 1 for C1 = -1, 0, 1, 2, 3; the curve for C1 = 2 through (0, 1) is highlighted and all curves approach the line y = x - 1">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="56.0" y1="230.7" x2="404.0" y2="230.7"/>
+  <line x1="128.0" y1="338.0" x2="128.0" y2="20.0"/>
+  <polygon points="404.0,230.7 396.0,227.2 396.0,234.2" stroke="none"/>
+  <polygon points="128.0,20.0 124.5,28.0 131.5,28.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="196.0" y1="227.7" x2="196.0" y2="233.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="196.0" y="245.7" text-anchor="middle">1</text>
+  <line x1="264.0" y1="227.7" x2="264.0" y2="233.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="264.0" y="245.7" text-anchor="middle">2</text>
+  <line x1="332.0" y1="227.7" x2="332.0" y2="233.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="332.0" y="245.7" text-anchor="middle">3</text>
+  <line x1="125.0" y1="282.3" x2="131.0" y2="282.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="121.0" y="286.3" text-anchor="end">&#8722;1</text>
+  <line x1="125.0" y1="179.0" x2="131.0" y2="179.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="121.0" y="183.0" text-anchor="end">1</text>
+  <line x1="125.0" y1="127.3" x2="131.0" y2="127.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="121.0" y="131.3" text-anchor="end">2</text>
+  <line x1="125.0" y1="75.7" x2="131.0" y2="75.7" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="121.0" y="79.7" text-anchor="end">3</text>
+  <line x1="125.0" y1="24.0" x2="131.0" y2="24.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="121.0" y="28.0" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="402.0" y="245.7" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="135.0" y="29.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.38" stroke-linecap="round"><line x1="72.2" y1="324.7" x2="81.8" y2="317.5"/><line x1="71.4" y1="297.4" x2="82.6" y2="293.1"/><line x1="71.0" y1="269.4" x2="83.0" y2="269.4"/><line x1="71.4" y1="241.5" x2="82.6" y2="245.7"/><line x1="72.2" y1="214.1" x2="81.8" y2="221.4"/><line x1="73.0" y1="187.4" x2="81.0" y2="196.4"/><line x1="73.7" y1="161.1" x2="80.3" y2="171.1"/><line x1="74.2" y1="134.9" x2="79.8" y2="145.6"/><line x1="74.6" y1="108.9" x2="79.4" y2="119.9"/><line x1="74.9" y1="83.0" x2="79.1" y2="94.2"/><line x1="75.1" y1="57.1" x2="78.9" y2="68.4"/><line x1="75.3" y1="31.2" x2="78.7" y2="42.7"/><line x1="107.0" y1="325.6" x2="115.0" y2="316.6"/><line x1="106.2" y1="298.9" x2="115.8" y2="291.6"/><line x1="105.4" y1="271.5" x2="116.6" y2="267.3"/><line x1="105.0" y1="243.6" x2="117.0" y2="243.6"/><line x1="105.4" y1="215.6" x2="116.6" y2="219.9"/><line x1="106.2" y1="188.3" x2="115.8" y2="195.5"/><line x1="107.0" y1="161.6" x2="115.0" y2="170.6"/><line x1="107.7" y1="135.2" x2="114.3" y2="145.3"/><line x1="108.2" y1="109.1" x2="113.8" y2="119.7"/><line x1="108.6" y1="83.1" x2="113.4" y2="94.1"/><line x1="108.9" y1="57.1" x2="113.1" y2="68.4"/><line x1="109.1" y1="31.2" x2="112.9" y2="42.6"/><line x1="141.7" y1="326.1" x2="148.3" y2="316.1"/><line x1="141.0" y1="299.8" x2="149.0" y2="290.7"/><line x1="140.2" y1="273.0" x2="149.8" y2="265.8"/><line x1="139.4" y1="245.7" x2="150.6" y2="241.5"/><line x1="139.0" y1="217.8" x2="151.0" y2="217.8"/><line x1="139.4" y1="189.8" x2="150.6" y2="194.0"/><line x1="140.2" y1="162.5" x2="149.8" y2="169.7"/><line x1="141.0" y1="135.7" x2="149.0" y2="144.8"/><line x1="141.7" y1="109.4" x2="148.3" y2="119.4"/><line x1="142.2" y1="83.3" x2="147.8" y2="93.9"/><line x1="142.6" y1="57.3" x2="147.4" y2="68.2"/><line x1="142.9" y1="31.3" x2="147.1" y2="42.5"/><line x1="176.2" y1="326.4" x2="181.8" y2="315.8"/><line x1="175.7" y1="300.3" x2="182.3" y2="290.2"/><line x1="175.0" y1="273.9" x2="183.0" y2="264.9"/><line x1="174.2" y1="247.2" x2="183.8" y2="240.0"/><line x1="173.4" y1="219.9" x2="184.6" y2="215.6"/><line x1="173.0" y1="191.9" x2="185.0" y2="191.9"/><line x1="173.4" y1="164.0" x2="184.6" y2="168.2"/><line x1="174.2" y1="136.6" x2="183.8" y2="143.9"/><line x1="175.0" y1="109.9" x2="183.0" y2="118.9"/><line x1="175.7" y1="83.6" x2="182.3" y2="93.6"/><line x1="176.2" y1="57.4" x2="181.8" y2="68.1"/><line x1="176.6" y1="31.4" x2="181.4" y2="42.4"/><line x1="210.6" y1="326.6" x2="215.4" y2="315.6"/><line x1="210.2" y1="300.6" x2="215.8" y2="289.9"/><line x1="209.7" y1="274.4" x2="216.3" y2="264.4"/><line x1="209.0" y1="248.1" x2="217.0" y2="239.1"/><line x1="208.2" y1="221.4" x2="217.8" y2="214.1"/><line x1="207.4" y1="194.0" x2="218.6" y2="189.8"/><line x1="207.0" y1="166.1" x2="219.0" y2="166.1"/><line x1="207.4" y1="138.1" x2="218.6" y2="142.4"/><line x1="208.2" y1="110.8" x2="217.8" y2="118.0"/><line x1="209.0" y1="84.1" x2="217.0" y2="93.1"/><line x1="209.7" y1="57.7" x2="216.3" y2="67.8"/><line x1="210.2" y1="31.6" x2="215.8" y2="42.2"/><line x1="244.9" y1="326.7" x2="249.1" y2="315.5"/><line x1="244.6" y1="300.7" x2="249.4" y2="289.8"/><line x1="244.2" y1="274.7" x2="249.8" y2="264.1"/><line x1="243.7" y1="248.6" x2="250.3" y2="238.6"/><line x1="243.0" y1="222.3" x2="251.0" y2="213.2"/><line x1="242.2" y1="195.5" x2="251.8" y2="188.3"/><line x1="241.4" y1="168.2" x2="252.6" y2="164.0"/><line x1="241.0" y1="140.2" x2="253.0" y2="140.2"/><line x1="241.4" y1="112.3" x2="252.6" y2="116.5"/><line x1="242.2" y1="85.0" x2="251.8" y2="92.2"/><line x1="243.0" y1="58.2" x2="251.0" y2="67.3"/><line x1="243.7" y1="31.9" x2="250.3" y2="41.9"/><line x1="279.1" y1="326.8" x2="282.9" y2="315.4"/><line x1="278.9" y1="300.9" x2="283.1" y2="289.6"/><line x1="278.6" y1="274.9" x2="283.4" y2="263.9"/><line x1="278.2" y1="248.9" x2="283.8" y2="238.3"/><line x1="277.7" y1="222.8" x2="284.3" y2="212.7"/><line x1="277.0" y1="196.4" x2="285.0" y2="187.4"/><line x1="276.2" y1="169.7" x2="285.8" y2="162.5"/><line x1="275.4" y1="142.4" x2="286.6" y2="138.1"/><line x1="275.0" y1="114.4" x2="287.0" y2="114.4"/><line x1="275.4" y1="86.5" x2="286.6" y2="90.7"/><line x1="276.2" y1="59.1" x2="285.8" y2="66.4"/><line x1="277.0" y1="32.4" x2="285.0" y2="41.4"/><line x1="313.3" y1="326.8" x2="316.7" y2="315.3"/><line x1="313.1" y1="300.9" x2="316.9" y2="289.6"/><line x1="312.9" y1="275.0" x2="317.1" y2="263.8"/><line x1="312.6" y1="249.1" x2="317.4" y2="238.1"/><line x1="312.2" y1="223.1" x2="317.8" y2="212.4"/><line x1="311.7" y1="196.9" x2="318.3" y2="186.9"/><line x1="311.0" y1="170.6" x2="319.0" y2="161.6"/><line x1="310.2" y1="143.9" x2="319.8" y2="136.6"/><line x1="309.4" y1="116.5" x2="320.6" y2="112.3"/><line x1="309.0" y1="88.6" x2="321.0" y2="88.6"/><line x1="309.4" y1="60.6" x2="320.6" y2="64.9"/><line x1="310.2" y1="33.3" x2="319.8" y2="40.5"/><line x1="347.5" y1="326.9" x2="350.5" y2="315.3"/><line x1="347.3" y1="301.0" x2="350.7" y2="289.5"/><line x1="347.1" y1="275.1" x2="350.9" y2="263.7"/><line x1="346.9" y1="249.2" x2="351.1" y2="238.0"/><line x1="346.6" y1="223.2" x2="351.4" y2="212.3"/><line x1="346.2" y1="197.2" x2="351.8" y2="186.6"/><line x1="345.7" y1="171.1" x2="352.3" y2="161.1"/><line x1="345.0" y1="144.8" x2="353.0" y2="135.7"/><line x1="344.2" y1="118.0" x2="353.8" y2="110.8"/><line x1="343.4" y1="90.7" x2="354.6" y2="86.5"/><line x1="343.0" y1="62.8" x2="355.0" y2="62.8"/><line x1="343.4" y1="34.8" x2="354.6" y2="39.0"/><line x1="381.6" y1="326.9" x2="384.4" y2="315.2"/><line x1="381.5" y1="301.1" x2="384.5" y2="289.4"/><line x1="381.3" y1="275.2" x2="384.7" y2="263.7"/><line x1="381.1" y1="249.3" x2="384.9" y2="237.9"/><line x1="380.9" y1="223.4" x2="385.1" y2="212.1"/><line x1="380.6" y1="197.4" x2="385.4" y2="186.4"/><line x1="380.2" y1="171.4" x2="385.8" y2="160.8"/><line x1="379.7" y1="145.3" x2="386.3" y2="135.2"/><line x1="379.0" y1="118.9" x2="387.0" y2="109.9"/><line x1="378.2" y1="92.2" x2="387.8" y2="85.0"/><line x1="377.4" y1="64.9" x2="388.6" y2="60.6"/><line x1="377.0" y1="36.9" x2="389.0" y2="36.9"/></g>
+  <path d="M128.0,334.0 L128.1,333.8 L128.7,333.0 L129.2,332.1 L129.8,331.3 L130.4,330.4 L131.0,329.6 L131.5,328.7 L132.1,327.9 L132.7,327.0 L133.2,326.2 L133.8,325.4 L134.4,324.6 L134.9,323.7 L135.5,322.9 L136.1,322.1 L136.6,321.3 L137.2,320.5 L137.8,319.7 L138.3,318.9 L138.9,318.1 L139.5,317.3 L140.0,316.5 L140.6,315.7 L141.2,314.9 L141.7,314.1 L142.3,313.3 L142.9,312.6 L143.4,311.8 L144.0,311.0 L144.6,310.2 L145.1,309.5 L145.7,308.7 L146.3,307.9 L146.8,307.2 L147.4,306.4 L148.0,305.7 L148.5,304.9 L149.1,304.2 L149.7,303.4 L150.3,302.7 L150.8,301.9 L151.4,301.2 L152.0,300.5 L152.5,299.7 L153.1,299.0 L153.7,298.3 L154.2,297.5 L154.8,296.8 L155.4,296.1 L155.9,295.4 L156.5,294.7 L157.1,293.9 L157.6,293.2 L158.2,292.5 L158.8,291.8 L159.3,291.1 L159.9,290.4 L160.5,289.7 L161.0,289.0 L161.6,288.3 L162.2,287.6 L162.7,286.9 L163.3,286.2 L163.9,285.6 L164.4,284.9 L165.0,284.2 L165.6,283.5 L166.1,282.8 L166.7,282.2 L167.3,281.5 L167.8,280.8 L168.4,280.1 L169.0,279.5 L169.5,278.8 L170.1,278.1 L170.7,277.5 L171.3,276.8 L171.8,276.2 L172.4,275.5 L173.0,274.9 L173.5,274.2 L174.1,273.5 L174.7,272.9 L175.2,272.2 L175.8,271.6 L176.4,271.0 L176.9,270.3 L177.5,269.7 L178.1,269.0 L178.6,268.4 L179.2,267.8 L179.8,267.1 L180.3,266.5 L180.9,265.9 L181.5,265.2 L182.0,264.6 L182.6,264.0 L183.2,263.4 L183.7,262.7 L184.3,262.1 L184.9,261.5 L185.4,260.9 L186.0,260.3 L186.6,259.7 L187.1,259.0 L187.7,258.4 L188.3,257.8 L188.8,257.2 L189.4,256.6 L190.0,256.0 L190.6,255.4 L191.1,254.8 L191.7,254.2 L192.3,253.6 L192.8,253.0 L193.4,252.4 L194.0,251.8 L194.5,251.2 L195.1,250.6 L195.7,250.0 L196.2,249.4 L196.8,248.8 L197.4,248.3 L197.9,247.7 L198.5,247.1 L199.1,246.5 L199.6,245.9 L200.2,245.3 L200.8,244.8 L201.3,244.2 L201.9,243.6 L202.5,243.0 L203.0,242.5 L203.6,241.9 L204.2,241.3 L204.7,240.7 L205.3,240.2 L205.9,239.6 L206.4,239.0 L207.0,238.5 L207.6,237.9 L208.1,237.3 L208.7,236.8 L209.3,236.2 L209.8,235.6 L210.4,235.1 L211.0,234.5 L211.6,234.0 L212.1,233.4 L212.7,232.9 L213.3,232.3 L213.8,231.7 L214.4,231.2 L215.0,230.6 L215.5,230.1 L216.1,229.5 L216.7,229.0 L217.2,228.4 L217.8,227.9 L218.4,227.4 L218.9,226.8 L219.5,226.3 L220.1,225.7 L220.6,225.2 L221.2,224.6 L221.8,224.1 L222.3,223.6 L222.9,223.0 L223.5,222.5 L224.0,221.9 L224.6,221.4 L225.2,220.9 L225.7,220.3 L226.3,219.8 L226.9,219.3 L227.4,218.7 L228.0,218.2 L228.6,217.7 L229.1,217.2 L229.7,216.6 L230.3,216.1 L230.9,215.6 L231.4,215.0 L232.0,214.5 L232.6,214.0 L233.1,213.5 L233.7,212.9 L234.3,212.4 L234.8,211.9 L235.4,211.4 L236.0,210.9 L236.5,210.3 L237.1,209.8 L237.7,209.3 L238.2,208.8 L238.8,208.3 L239.4,207.8 L239.9,207.2 L240.5,206.7 L241.1,206.2 L241.6,205.7 L242.2,205.2 L242.8,204.7 L243.3,204.2 L243.9,203.7 L244.5,203.2 L245.0,202.6 L245.6,202.1 L246.2,201.6 L246.7,201.1 L247.3,200.6 L247.9,200.1 L248.4,199.6 L249.0,199.1 L249.6,198.6 L250.2,198.1 L250.7,197.6 L251.3,197.1 L251.9,196.6 L252.4,196.1 L253.0,195.6 L253.6,195.1 L254.1,194.6 L254.7,194.1 L255.3,193.6 L255.8,193.1 L256.4,192.6 L257.0,192.1 L257.5,191.6 L258.1,191.1 L258.7,190.6 L259.2,190.1 L259.8,189.6 L260.4,189.1 L260.9,188.6 L261.5,188.2 L262.1,187.7 L262.6,187.2 L263.2,186.7 L263.8,186.2 L264.3,185.7 L264.9,185.2 L265.5,184.7 L266.0,184.2 L266.6,183.7 L267.2,183.3 L267.7,182.8 L268.3,182.3 L268.9,181.8 L269.4,181.3 L270.0,180.8 L270.6,180.3 L271.2,179.9 L271.7,179.4 L272.3,178.9 L272.9,178.4 L273.4,177.9 L274.0,177.4 L274.6,177.0 L275.1,176.5 L275.7,176.0 L276.3,175.5 L276.8,175.0 L277.4,174.6 L278.0,174.1 L278.5,173.6 L279.1,173.1 L279.7,172.7 L280.2,172.2 L280.8,171.7 L281.4,171.2 L281.9,170.7 L282.5,170.3 L283.1,169.8 L283.6,169.3 L284.2,168.8 L284.8,168.4 L285.3,167.9 L285.9,167.4 L286.5,166.9 L287.0,166.5 L287.6,166.0 L288.2,165.5 L288.7,165.1 L289.3,164.6 L289.9,164.1 L290.5,163.6 L291.0,163.2 L291.6,162.7 L292.2,162.2 L292.7,161.8 L293.3,161.3 L293.9,160.8 L294.4,160.4 L295.0,159.9 L295.6,159.4 L296.1,158.9 L296.7,158.5 L297.3,158.0 L297.8,157.5 L298.4,157.1 L299.0,156.6 L299.5,156.1 L300.1,155.7 L300.7,155.2 L301.2,154.8 L301.8,154.3 L302.4,153.8 L302.9,153.4 L303.5,152.9 L304.1,152.4 L304.6,152.0 L305.2,151.5 L305.8,151.0 L306.3,150.6 L306.9,150.1 L307.5,149.7 L308.0,149.2 L308.6,148.7 L309.2,148.3 L309.7,147.8 L310.3,147.3 L310.9,146.9 L311.5,146.4 L312.0,146.0 L312.6,145.5 L313.2,145.0 L313.7,144.6 L314.3,144.1 L314.9,143.7 L315.4,143.2 L316.0,142.8 L316.6,142.3 L317.1,141.8 L317.7,141.4 L318.3,140.9 L318.8,140.5 L319.4,140.0 L320.0,139.5 L320.5,139.1 L321.1,138.6 L321.7,138.2 L322.2,137.7 L322.8,137.3 L323.4,136.8 L323.9,136.4 L324.5,135.9 L325.1,135.4 L325.6,135.0 L326.2,134.5 L326.8,134.1 L327.3,133.6 L327.9,133.2 L328.5,132.7 L329.0,132.3 L329.6,131.8 L330.2,131.4 L330.8,130.9 L331.3,130.4 L331.9,130.0 L332.5,129.5 L333.0,129.1 L333.6,128.6 L334.2,128.2 L334.7,127.7 L335.3,127.3 L335.9,126.8 L336.4,126.4 L337.0,125.9 L337.6,125.5 L338.1,125.0 L338.7,124.6 L339.3,124.1 L339.8,123.7 L340.4,123.2 L341.0,122.8 L341.5,122.3 L342.1,121.9 L342.7,121.4 L343.2,121.0 L343.8,120.5 L344.4,120.1 L344.9,119.6 L345.5,119.2 L346.1,118.7 L346.6,118.3 L347.2,117.8 L347.8,117.4 L348.3,116.9 L348.9,116.5 L349.5,116.0 L350.1,115.6 L350.6,115.1 L351.2,114.7 L351.8,114.2 L352.3,113.8 L352.9,113.4 L353.5,112.9 L354.0,112.5 L354.6,112.0 L355.2,111.6 L355.7,111.1 L356.3,110.7 L356.9,110.2 L357.4,109.8 L358.0,109.3 L358.6,108.9 L359.1,108.4 L359.7,108.0 L360.3,107.6 L360.8,107.1 L361.4,106.7 L362.0,106.2 L362.5,105.8 L363.1,105.3 L363.7,104.9 L364.2,104.4 L364.8,104.0 L365.4,103.5 L365.9,103.1 L366.5,102.7 L367.1,102.2 L367.6,101.8 L368.2,101.3 L368.8,100.9 L369.3,100.4 L369.9,100.0 L370.5,99.6 L371.1,99.1 L371.6,98.7 L372.2,98.2 L372.8,97.8 L373.3,97.3 L373.9,96.9 L374.5,96.5 L375.0,96.0 L375.6,95.6 L376.2,95.1 L376.7,94.7 L377.3,94.2 L377.9,93.8 L378.4,93.4 L379.0,92.9 L379.6,92.5 L380.1,92.0 L380.7,91.6 L381.3,91.1 L381.8,90.7 L382.4,90.3 L383.0,89.8 L383.5,89.4 L384.1,88.9 L384.7,88.5 L385.2,88.1 L385.8,87.6 L386.4,87.2 L386.9,86.7 L387.5,86.3 L388.1,85.9 L388.6,85.4 L389.2,85.0 L389.8,84.5 L390.4,84.1 L390.9,83.6 L391.5,83.2 L392.1,82.8 L392.6,82.3 L393.2,81.9 L393.8,81.4 L394.3,81.0 L394.9,80.6 L395.5,80.1 L396.0,79.7 L396.6,79.2 L397.2,78.8 L397.7,78.4 L398.3,77.9 L398.9,77.5 L399.4,77.1 L400.0,76.6" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="128.0" y="350.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">C</tspan>₁ = &#8722;1</text>
+  <path d="M60.0,334.0 L60.6,333.6 L61.1,333.1 L61.7,332.7 L62.3,332.3 L62.8,331.8 L63.4,331.4 L64.0,331.0 L64.5,330.5 L65.1,330.1 L65.7,329.7 L66.2,329.3 L66.8,328.8 L67.4,328.4 L67.9,328.0 L68.5,327.5 L69.1,327.1 L69.6,326.7 L70.2,326.2 L70.8,325.8 L71.4,325.4 L71.9,324.9 L72.5,324.5 L73.1,324.1 L73.6,323.6 L74.2,323.2 L74.8,322.8 L75.3,322.4 L75.9,321.9 L76.5,321.5 L77.0,321.1 L77.6,320.6 L78.2,320.2 L78.7,319.8 L79.3,319.3 L79.9,318.9 L80.4,318.5 L81.0,318.0 L81.6,317.6 L82.1,317.2 L82.7,316.7 L83.3,316.3 L83.8,315.9 L84.4,315.5 L85.0,315.0 L85.5,314.6 L86.1,314.2 L86.7,313.7 L87.2,313.3 L87.8,312.9 L88.4,312.4 L88.9,312.0 L89.5,311.6 L90.1,311.1 L90.7,310.7 L91.2,310.3 L91.8,309.8 L92.4,309.4 L92.9,309.0 L93.5,308.6 L94.1,308.1 L94.6,307.7 L95.2,307.3 L95.8,306.8 L96.3,306.4 L96.9,306.0 L97.5,305.5 L98.0,305.1 L98.6,304.7 L99.2,304.2 L99.7,303.8 L100.3,303.4 L100.9,302.9 L101.4,302.5 L102.0,302.1 L102.6,301.7 L103.1,301.2 L103.7,300.8 L104.3,300.4 L104.8,299.9 L105.4,299.5 L106.0,299.1 L106.5,298.6 L107.1,298.2 L107.7,297.8 L108.2,297.3 L108.8,296.9 L109.4,296.5 L109.9,296.0 L110.5,295.6 L111.1,295.2 L111.7,294.8 L112.2,294.3 L112.8,293.9 L113.4,293.5 L113.9,293.0 L114.5,292.6 L115.1,292.2 L115.6,291.7 L116.2,291.3 L116.8,290.9 L117.3,290.4 L117.9,290.0 L118.5,289.6 L119.0,289.1 L119.6,288.7 L120.2,288.3 L120.7,287.9 L121.3,287.4 L121.9,287.0 L122.4,286.6 L123.0,286.1 L123.6,285.7 L124.1,285.3 L124.7,284.8 L125.3,284.4 L125.8,284.0 L126.4,283.5 L127.0,283.1 L127.5,282.7 L128.1,282.2 L128.7,281.8 L129.2,281.4 L129.8,281.0 L130.4,280.5 L131.0,280.1 L131.5,279.7 L132.1,279.2 L132.7,278.8 L133.2,278.4 L133.8,277.9 L134.4,277.5 L134.9,277.1 L135.5,276.6 L136.1,276.2 L136.6,275.8 L137.2,275.3 L137.8,274.9 L138.3,274.5 L138.9,274.1 L139.5,273.6 L140.0,273.2 L140.6,272.8 L141.2,272.3 L141.7,271.9 L142.3,271.5 L142.9,271.0 L143.4,270.6 L144.0,270.2 L144.6,269.7 L145.1,269.3 L145.7,268.9 L146.3,268.4 L146.8,268.0 L147.4,267.6 L148.0,267.2 L148.5,266.7 L149.1,266.3 L149.7,265.9 L150.3,265.4 L150.8,265.0 L151.4,264.6 L152.0,264.1 L152.5,263.7 L153.1,263.3 L153.7,262.8 L154.2,262.4 L154.8,262.0 L155.4,261.5 L155.9,261.1 L156.5,260.7 L157.1,260.3 L157.6,259.8 L158.2,259.4 L158.8,259.0 L159.3,258.5 L159.9,258.1 L160.5,257.7 L161.0,257.2 L161.6,256.8 L162.2,256.4 L162.7,255.9 L163.3,255.5 L163.9,255.1 L164.4,254.6 L165.0,254.2 L165.6,253.8 L166.1,253.4 L166.7,252.9 L167.3,252.5 L167.8,252.1 L168.4,251.6 L169.0,251.2 L169.5,250.8 L170.1,250.3 L170.7,249.9 L171.3,249.5 L171.8,249.0 L172.4,248.6 L173.0,248.2 L173.5,247.7 L174.1,247.3 L174.7,246.9 L175.2,246.5 L175.8,246.0 L176.4,245.6 L176.9,245.2 L177.5,244.7 L178.1,244.3 L178.6,243.9 L179.2,243.4 L179.8,243.0 L180.3,242.6 L180.9,242.1 L181.5,241.7 L182.0,241.3 L182.6,240.8 L183.2,240.4 L183.7,240.0 L184.3,239.6 L184.9,239.1 L185.4,238.7 L186.0,238.3 L186.6,237.8 L187.1,237.4 L187.7,237.0 L188.3,236.5 L188.8,236.1 L189.4,235.7 L190.0,235.2 L190.6,234.8 L191.1,234.4 L191.7,233.9 L192.3,233.5 L192.8,233.1 L193.4,232.7 L194.0,232.2 L194.5,231.8 L195.1,231.4 L195.7,230.9 L196.2,230.5 L196.8,230.1 L197.4,229.6 L197.9,229.2 L198.5,228.8 L199.1,228.3 L199.6,227.9 L200.2,227.5 L200.8,227.0 L201.3,226.6 L201.9,226.2 L202.5,225.8 L203.0,225.3 L203.6,224.9 L204.2,224.5 L204.7,224.0 L205.3,223.6 L205.9,223.2 L206.4,222.7 L207.0,222.3 L207.6,221.9 L208.1,221.4 L208.7,221.0 L209.3,220.6 L209.8,220.1 L210.4,219.7 L211.0,219.3 L211.6,218.8 L212.1,218.4 L212.7,218.0 L213.3,217.6 L213.8,217.1 L214.4,216.7 L215.0,216.3 L215.5,215.8 L216.1,215.4 L216.7,215.0 L217.2,214.5 L217.8,214.1 L218.4,213.7 L218.9,213.2 L219.5,212.8 L220.1,212.4 L220.6,211.9 L221.2,211.5 L221.8,211.1 L222.3,210.7 L222.9,210.2 L223.5,209.8 L224.0,209.4 L224.6,208.9 L225.2,208.5 L225.7,208.1 L226.3,207.6 L226.9,207.2 L227.4,206.8 L228.0,206.3 L228.6,205.9 L229.1,205.5 L229.7,205.0 L230.3,204.6 L230.9,204.2 L231.4,203.8 L232.0,203.3 L232.6,202.9 L233.1,202.5 L233.7,202.0 L234.3,201.6 L234.8,201.2 L235.4,200.7 L236.0,200.3 L236.5,199.9 L237.1,199.4 L237.7,199.0 L238.2,198.6 L238.8,198.1 L239.4,197.7 L239.9,197.3 L240.5,196.9 L241.1,196.4 L241.6,196.0 L242.2,195.6 L242.8,195.1 L243.3,194.7 L243.9,194.3 L244.5,193.8 L245.0,193.4 L245.6,193.0 L246.2,192.5 L246.7,192.1 L247.3,191.7 L247.9,191.2 L248.4,190.8 L249.0,190.4 L249.6,190.0 L250.2,189.5 L250.7,189.1 L251.3,188.7 L251.9,188.2 L252.4,187.8 L253.0,187.4 L253.6,186.9 L254.1,186.5 L254.7,186.1 L255.3,185.6 L255.8,185.2 L256.4,184.8 L257.0,184.3 L257.5,183.9 L258.1,183.5 L258.7,183.1 L259.2,182.6 L259.8,182.2 L260.4,181.8 L260.9,181.3 L261.5,180.9 L262.1,180.5 L262.6,180.0 L263.2,179.6 L263.8,179.2 L264.3,178.7 L264.9,178.3 L265.5,177.9 L266.0,177.4 L266.6,177.0 L267.2,176.6 L267.7,176.2 L268.3,175.7 L268.9,175.3 L269.4,174.9 L270.0,174.4 L270.6,174.0 L271.2,173.6 L271.7,173.1 L272.3,172.7 L272.9,172.3 L273.4,171.8 L274.0,171.4 L274.6,171.0 L275.1,170.5 L275.7,170.1 L276.3,169.7 L276.8,169.3 L277.4,168.8 L278.0,168.4 L278.5,168.0 L279.1,167.5 L279.7,167.1 L280.2,166.7 L280.8,166.2 L281.4,165.8 L281.9,165.4 L282.5,164.9 L283.1,164.5 L283.6,164.1 L284.2,163.6 L284.8,163.2 L285.3,162.8 L285.9,162.4 L286.5,161.9 L287.0,161.5 L287.6,161.1 L288.2,160.6 L288.7,160.2 L289.3,159.8 L289.9,159.3 L290.5,158.9 L291.0,158.5 L291.6,158.0 L292.2,157.6 L292.7,157.2 L293.3,156.7 L293.9,156.3 L294.4,155.9 L295.0,155.5 L295.6,155.0 L296.1,154.6 L296.7,154.2 L297.3,153.7 L297.8,153.3 L298.4,152.9 L299.0,152.4 L299.5,152.0 L300.1,151.6 L300.7,151.1 L301.2,150.7 L301.8,150.3 L302.4,149.8 L302.9,149.4 L303.5,149.0 L304.1,148.6 L304.6,148.1 L305.2,147.7 L305.8,147.3 L306.3,146.8 L306.9,146.4 L307.5,146.0 L308.0,145.5 L308.6,145.1 L309.2,144.7 L309.7,144.2 L310.3,143.8 L310.9,143.4 L311.5,142.9 L312.0,142.5 L312.6,142.1 L313.2,141.7 L313.7,141.2 L314.3,140.8 L314.9,140.4 L315.4,139.9 L316.0,139.5 L316.6,139.1 L317.1,138.6 L317.7,138.2 L318.3,137.8 L318.8,137.3 L319.4,136.9 L320.0,136.5 L320.5,136.0 L321.1,135.6 L321.7,135.2 L322.2,134.8 L322.8,134.3 L323.4,133.9 L323.9,133.5 L324.5,133.0 L325.1,132.6 L325.6,132.2 L326.2,131.7 L326.8,131.3 L327.3,130.9 L327.9,130.4 L328.5,130.0 L329.0,129.6 L329.6,129.1 L330.2,128.7 L330.8,128.3 L331.3,127.9 L331.9,127.4 L332.5,127.0 L333.0,126.6 L333.6,126.1 L334.2,125.7 L334.7,125.3 L335.3,124.8 L335.9,124.4 L336.4,124.0 L337.0,123.5 L337.6,123.1 L338.1,122.7 L338.7,122.2 L339.3,121.8 L339.8,121.4 L340.4,121.0 L341.0,120.5 L341.5,120.1 L342.1,119.7 L342.7,119.2 L343.2,118.8 L343.8,118.4 L344.4,117.9 L344.9,117.5 L345.5,117.1 L346.1,116.6 L346.6,116.2 L347.2,115.8 L347.8,115.3 L348.3,114.9 L348.9,114.5 L349.5,114.1 L350.1,113.6 L350.6,113.2 L351.2,112.8 L351.8,112.3 L352.3,111.9 L352.9,111.5 L353.5,111.0 L354.0,110.6 L354.6,110.2 L355.2,109.7 L355.7,109.3 L356.3,108.9 L356.9,108.4 L357.4,108.0 L358.0,107.6 L358.6,107.1 L359.1,106.7 L359.7,106.3 L360.3,105.9 L360.8,105.4 L361.4,105.0 L362.0,104.6 L362.5,104.1 L363.1,103.7 L363.7,103.3 L364.2,102.8 L364.8,102.4 L365.4,102.0 L365.9,101.5 L366.5,101.1 L367.1,100.7 L367.6,100.2 L368.2,99.8 L368.8,99.4 L369.3,99.0 L369.9,98.5 L370.5,98.1 L371.1,97.7 L371.6,97.2 L372.2,96.8 L372.8,96.4 L373.3,95.9 L373.9,95.5 L374.5,95.1 L375.0,94.6 L375.6,94.2 L376.2,93.8 L376.7,93.3 L377.3,92.9 L377.9,92.5 L378.4,92.1 L379.0,91.6 L379.6,91.2 L380.1,90.8 L380.7,90.3 L381.3,89.9 L381.8,89.5 L382.4,89.0 L383.0,88.6 L383.5,88.2 L384.1,87.7 L384.7,87.3 L385.2,86.9 L385.8,86.4 L386.4,86.0 L386.9,85.6 L387.5,85.2 L388.1,84.7 L388.6,84.3 L389.2,83.9 L389.8,83.4 L390.4,83.0 L390.9,82.6 L391.5,82.1 L392.1,81.7 L392.6,81.3 L393.2,80.8 L393.8,80.4 L394.3,80.0 L394.9,79.5 L395.5,79.1 L396.0,78.7 L396.6,78.3 L397.2,77.8 L397.7,77.4 L398.3,77.0 L398.9,76.5 L399.4,76.1 L400.0,75.7" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="54.0" y="338.0" fill="var(--color-theory)" font-size="11.5" text-anchor="end"><tspan font-style="italic">C</tspan>₁ = 0</text>
+  <path d="M60.0,193.6 L60.6,194.3 L61.1,195.0 L61.7,195.7 L62.3,196.4 L62.8,197.1 L63.4,197.8 L64.0,198.5 L64.5,199.2 L65.1,199.8 L65.7,200.5 L66.2,201.1 L66.8,201.8 L67.4,202.4 L67.9,203.0 L68.5,203.6 L69.1,204.2 L69.6,204.8 L70.2,205.4 L70.8,206.0 L71.4,206.5 L71.9,207.1 L72.5,207.6 L73.1,208.2 L73.6,208.7 L74.2,209.2 L74.8,209.7 L75.3,210.3 L75.9,210.8 L76.5,211.2 L77.0,211.7 L77.6,212.2 L78.2,212.7 L78.7,213.1 L79.3,213.6 L79.9,214.0 L80.4,214.5 L81.0,214.9 L81.6,215.3 L82.1,215.8 L82.7,216.2 L83.3,216.6 L83.8,217.0 L84.4,217.4 L85.0,217.7 L85.5,218.1 L86.1,218.5 L86.7,218.9 L87.2,219.2 L87.8,219.6 L88.4,219.9 L88.9,220.3 L89.5,220.6 L90.1,220.9 L90.7,221.2 L91.2,221.5 L91.8,221.8 L92.4,222.1 L92.9,222.4 L93.5,222.7 L94.1,223.0 L94.6,223.3 L95.2,223.6 L95.8,223.8 L96.3,224.1 L96.9,224.3 L97.5,224.6 L98.0,224.8 L98.6,225.1 L99.2,225.3 L99.7,225.5 L100.3,225.7 L100.9,225.9 L101.4,226.2 L102.0,226.4 L102.6,226.6 L103.1,226.8 L103.7,226.9 L104.3,227.1 L104.8,227.3 L105.4,227.5 L106.0,227.6 L106.5,227.8 L107.1,228.0 L107.7,228.1 L108.2,228.3 L108.8,228.4 L109.4,228.5 L109.9,228.7 L110.5,228.8 L111.1,228.9 L111.7,229.0 L112.2,229.2 L112.8,229.3 L113.4,229.4 L113.9,229.5 L114.5,229.6 L115.1,229.7 L115.6,229.8 L116.2,229.8 L116.8,229.9 L117.3,230.0 L117.9,230.1 L118.5,230.1 L119.0,230.2 L119.6,230.3 L120.2,230.3 L120.7,230.4 L121.3,230.4 L121.9,230.5 L122.4,230.5 L123.0,230.5 L123.6,230.6 L124.1,230.6 L124.7,230.6 L125.3,230.6 L125.8,230.6 L126.4,230.7 L127.0,230.7 L127.5,230.7 L128.1,230.7 L128.7,230.7 L129.2,230.7 L129.8,230.6 L130.4,230.6 L131.0,230.6 L131.5,230.6 L132.1,230.6 L132.7,230.5 L133.2,230.5 L133.8,230.5 L134.4,230.4 L134.9,230.4 L135.5,230.4 L136.1,230.3 L136.6,230.3 L137.2,230.2 L137.8,230.2 L138.3,230.1 L138.9,230.0 L139.5,230.0 L140.0,229.9 L140.6,229.8 L141.2,229.8 L141.7,229.7 L142.3,229.6 L142.9,229.5 L143.4,229.4 L144.0,229.3 L144.6,229.2 L145.1,229.2 L145.7,229.1 L146.3,229.0 L146.8,228.9 L147.4,228.7 L148.0,228.6 L148.5,228.5 L149.1,228.4 L149.7,228.3 L150.3,228.2 L150.8,228.1 L151.4,227.9 L152.0,227.8 L152.5,227.7 L153.1,227.5 L153.7,227.4 L154.2,227.3 L154.8,227.1 L155.4,227.0 L155.9,226.8 L156.5,226.7 L157.1,226.6 L157.6,226.4 L158.2,226.2 L158.8,226.1 L159.3,225.9 L159.9,225.8 L160.5,225.6 L161.0,225.4 L161.6,225.3 L162.2,225.1 L162.7,224.9 L163.3,224.8 L163.9,224.6 L164.4,224.4 L165.0,224.2 L165.6,224.1 L166.1,223.9 L166.7,223.7 L167.3,223.5 L167.8,223.3 L168.4,223.1 L169.0,222.9 L169.5,222.7 L170.1,222.5 L170.7,222.3 L171.3,222.1 L171.8,221.9 L172.4,221.7 L173.0,221.5 L173.5,221.3 L174.1,221.1 L174.7,220.9 L175.2,220.7 L175.8,220.4 L176.4,220.2 L176.9,220.0 L177.5,219.8 L178.1,219.6 L178.6,219.3 L179.2,219.1 L179.8,218.9 L180.3,218.6 L180.9,218.4 L181.5,218.2 L182.0,217.9 L182.6,217.7 L183.2,217.5 L183.7,217.2 L184.3,217.0 L184.9,216.7 L185.4,216.5 L186.0,216.2 L186.6,216.0 L187.1,215.7 L187.7,215.5 L188.3,215.2 L188.8,215.0 L189.4,214.7 L190.0,214.5 L190.6,214.2 L191.1,214.0 L191.7,213.7 L192.3,213.4 L192.8,213.2 L193.4,212.9 L194.0,212.6 L194.5,212.4 L195.1,212.1 L195.7,211.8 L196.2,211.6 L196.8,211.3 L197.4,211.0 L197.9,210.7 L198.5,210.4 L199.1,210.2 L199.6,209.9 L200.2,209.6 L200.8,209.3 L201.3,209.0 L201.9,208.8 L202.5,208.5 L203.0,208.2 L203.6,207.9 L204.2,207.6 L204.7,207.3 L205.3,207.0 L205.9,206.7 L206.4,206.4 L207.0,206.1 L207.6,205.8 L208.1,205.5 L208.7,205.2 L209.3,204.9 L209.8,204.6 L210.4,204.3 L211.0,204.0 L211.6,203.7 L212.1,203.4 L212.7,203.1 L213.3,202.8 L213.8,202.5 L214.4,202.2 L215.0,201.9 L215.5,201.6 L216.1,201.3 L216.7,200.9 L217.2,200.6 L217.8,200.3 L218.4,200.0 L218.9,199.7 L219.5,199.4 L220.1,199.0 L220.6,198.7 L221.2,198.4 L221.8,198.1 L222.3,197.8 L222.9,197.4 L223.5,197.1 L224.0,196.8 L224.6,196.5 L225.2,196.1 L225.7,195.8 L226.3,195.5 L226.9,195.1 L227.4,194.8 L228.0,194.5 L228.6,194.1 L229.1,193.8 L229.7,193.5 L230.3,193.1 L230.9,192.8 L231.4,192.5 L232.0,192.1 L232.6,191.8 L233.1,191.5 L233.7,191.1 L234.3,190.8 L234.8,190.4 L235.4,190.1 L236.0,189.7 L236.5,189.4 L237.1,189.1 L237.7,188.7 L238.2,188.4 L238.8,188.0 L239.4,187.7 L239.9,187.3 L240.5,187.0 L241.1,186.6 L241.6,186.3 L242.2,185.9 L242.8,185.6 L243.3,185.2 L243.9,184.9 L244.5,184.5 L245.0,184.2 L245.6,183.8 L246.2,183.5 L246.7,183.1 L247.3,182.7 L247.9,182.4 L248.4,182.0 L249.0,181.7 L249.6,181.3 L250.2,181.0 L250.7,180.6 L251.3,180.2 L251.9,179.9 L252.4,179.5 L253.0,179.1 L253.6,178.8 L254.1,178.4 L254.7,178.1 L255.3,177.7 L255.8,177.3 L256.4,177.0 L257.0,176.6 L257.5,176.2 L258.1,175.9 L258.7,175.5 L259.2,175.1 L259.8,174.8 L260.4,174.4 L260.9,174.0 L261.5,173.6 L262.1,173.3 L262.6,172.9 L263.2,172.5 L263.8,172.2 L264.3,171.8 L264.9,171.4 L265.5,171.0 L266.0,170.7 L266.6,170.3 L267.2,169.9 L267.7,169.5 L268.3,169.2 L268.9,168.8 L269.4,168.4 L270.0,168.0 L270.6,167.7 L271.2,167.3 L271.7,166.9 L272.3,166.5 L272.9,166.1 L273.4,165.8 L274.0,165.4 L274.6,165.0 L275.1,164.6 L275.7,164.2 L276.3,163.8 L276.8,163.5 L277.4,163.1 L278.0,162.7 L278.5,162.3 L279.1,161.9 L279.7,161.5 L280.2,161.2 L280.8,160.8 L281.4,160.4 L281.9,160.0 L282.5,159.6 L283.1,159.2 L283.6,158.8 L284.2,158.5 L284.8,158.1 L285.3,157.7 L285.9,157.3 L286.5,156.9 L287.0,156.5 L287.6,156.1 L288.2,155.7 L288.7,155.3 L289.3,154.9 L289.9,154.6 L290.5,154.2 L291.0,153.8 L291.6,153.4 L292.2,153.0 L292.7,152.6 L293.3,152.2 L293.9,151.8 L294.4,151.4 L295.0,151.0 L295.6,150.6 L296.1,150.2 L296.7,149.8 L297.3,149.4 L297.8,149.0 L298.4,148.6 L299.0,148.3 L299.5,147.9 L300.1,147.5 L300.7,147.1 L301.2,146.7 L301.8,146.3 L302.4,145.9 L302.9,145.5 L303.5,145.1 L304.1,144.7 L304.6,144.3 L305.2,143.9 L305.8,143.5 L306.3,143.1 L306.9,142.7 L307.5,142.3 L308.0,141.9 L308.6,141.5 L309.2,141.1 L309.7,140.7 L310.3,140.3 L310.9,139.9 L311.5,139.5 L312.0,139.1 L312.6,138.7 L313.2,138.3 L313.7,137.9 L314.3,137.5 L314.9,137.0 L315.4,136.6 L316.0,136.2 L316.6,135.8 L317.1,135.4 L317.7,135.0 L318.3,134.6 L318.8,134.2 L319.4,133.8 L320.0,133.4 L320.5,133.0 L321.1,132.6 L321.7,132.2 L322.2,131.8 L322.8,131.4 L323.4,131.0 L323.9,130.6 L324.5,130.2 L325.1,129.7 L325.6,129.3 L326.2,128.9 L326.8,128.5 L327.3,128.1 L327.9,127.7 L328.5,127.3 L329.0,126.9 L329.6,126.5 L330.2,126.1 L330.8,125.7 L331.3,125.3 L331.9,124.8 L332.5,124.4 L333.0,124.0 L333.6,123.6 L334.2,123.2 L334.7,122.8 L335.3,122.4 L335.9,122.0 L336.4,121.6 L337.0,121.1 L337.6,120.7 L338.1,120.3 L338.7,119.9 L339.3,119.5 L339.8,119.1 L340.4,118.7 L341.0,118.3 L341.5,117.9 L342.1,117.4 L342.7,117.0 L343.2,116.6 L343.8,116.2 L344.4,115.8 L344.9,115.4 L345.5,115.0 L346.1,114.5 L346.6,114.1 L347.2,113.7 L347.8,113.3 L348.3,112.9 L348.9,112.5 L349.5,112.1 L350.1,111.6 L350.6,111.2 L351.2,110.8 L351.8,110.4 L352.3,110.0 L352.9,109.6 L353.5,109.2 L354.0,108.7 L354.6,108.3 L355.2,107.9 L355.7,107.5 L356.3,107.1 L356.9,106.7 L357.4,106.2 L358.0,105.8 L358.6,105.4 L359.1,105.0 L359.7,104.6 L360.3,104.2 L360.8,103.7 L361.4,103.3 L362.0,102.9 L362.5,102.5 L363.1,102.1 L363.7,101.7 L364.2,101.2 L364.8,100.8 L365.4,100.4 L365.9,100.0 L366.5,99.6 L367.1,99.1 L367.6,98.7 L368.2,98.3 L368.8,97.9 L369.3,97.5 L369.9,97.1 L370.5,96.6 L371.1,96.2 L371.6,95.8 L372.2,95.4 L372.8,95.0 L373.3,94.5 L373.9,94.1 L374.5,93.7 L375.0,93.3 L375.6,92.9 L376.2,92.4 L376.7,92.0 L377.3,91.6 L377.9,91.2 L378.4,90.8 L379.0,90.3 L379.6,89.9 L380.1,89.5 L380.7,89.1 L381.3,88.7 L381.8,88.2 L382.4,87.8 L383.0,87.4 L383.5,87.0 L384.1,86.5 L384.7,86.1 L385.2,85.7 L385.8,85.3 L386.4,84.9 L386.9,84.4 L387.5,84.0 L388.1,83.6 L388.6,83.2 L389.2,82.8 L389.8,82.3 L390.4,81.9 L390.9,81.5 L391.5,81.1 L392.1,80.6 L392.6,80.2 L393.2,79.8 L393.8,79.4 L394.3,79.0 L394.9,78.5 L395.5,78.1 L396.0,77.7 L396.6,77.3 L397.2,76.8 L397.7,76.4 L398.3,76.0 L398.9,75.6 L399.4,75.1 L400.0,74.7" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="54.0" y="197.6" fill="var(--color-theory)" font-size="11.5" text-anchor="end"><tspan font-style="italic">C</tspan>₁ = 1</text>
+  <path d="M85.2,24.0 L85.5,25.2 L86.1,27.2 L86.7,29.1 L87.2,31.1 L87.8,33.0 L88.4,34.9 L88.9,36.7 L89.5,38.6 L90.1,40.4 L90.7,42.3 L91.2,44.1 L91.8,45.8 L92.4,47.6 L92.9,49.3 L93.5,51.1 L94.1,52.8 L94.6,54.5 L95.2,56.1 L95.8,57.8 L96.3,59.4 L96.9,61.1 L97.5,62.7 L98.0,64.3 L98.6,65.8 L99.2,67.4 L99.7,68.9 L100.3,70.4 L100.9,71.9 L101.4,73.4 L102.0,74.9 L102.6,76.4 L103.1,77.8 L103.7,79.2 L104.3,80.6 L104.8,82.0 L105.4,83.4 L106.0,84.8 L106.5,86.1 L107.1,87.5 L107.7,88.8 L108.2,90.1 L108.8,91.4 L109.4,92.7 L109.9,93.9 L110.5,95.2 L111.1,96.4 L111.7,97.6 L112.2,98.8 L112.8,100.0 L113.4,101.2 L113.9,102.4 L114.5,103.5 L115.1,104.7 L115.6,105.8 L116.2,106.9 L116.8,108.0 L117.3,109.1 L117.9,110.2 L118.5,111.2 L119.0,112.3 L119.6,113.3 L120.2,114.4 L120.7,115.4 L121.3,116.4 L121.9,117.4 L122.4,118.3 L123.0,119.3 L123.6,120.3 L124.1,121.2 L124.7,122.1 L125.3,123.1 L125.8,124.0 L126.4,124.9 L127.0,125.8 L127.5,126.6 L128.1,127.5 L128.7,128.4 L129.2,129.2 L129.8,130.0 L130.4,130.9 L131.0,131.7 L131.5,132.5 L132.1,133.3 L132.7,134.1 L133.2,134.8 L133.8,135.6 L134.4,136.3 L134.9,137.1 L135.5,137.8 L136.1,138.5 L136.6,139.2 L137.2,140.0 L137.8,140.6 L138.3,141.3 L138.9,142.0 L139.5,142.7 L140.0,143.3 L140.6,144.0 L141.2,144.6 L141.7,145.2 L142.3,145.9 L142.9,146.5 L143.4,147.1 L144.0,147.7 L144.6,148.3 L145.1,148.8 L145.7,149.4 L146.3,150.0 L146.8,150.5 L147.4,151.1 L148.0,151.6 L148.5,152.1 L149.1,152.7 L149.7,153.2 L150.3,153.7 L150.8,154.2 L151.4,154.7 L152.0,155.2 L152.5,155.6 L153.1,156.1 L153.7,156.6 L154.2,157.0 L154.8,157.5 L155.4,157.9 L155.9,158.3 L156.5,158.7 L157.1,159.2 L157.6,159.6 L158.2,160.0 L158.8,160.4 L159.3,160.8 L159.9,161.1 L160.5,161.5 L161.0,161.9 L161.6,162.2 L162.2,162.6 L162.7,162.9 L163.3,163.3 L163.9,163.6 L164.4,163.9 L165.0,164.3 L165.6,164.6 L166.1,164.9 L166.7,165.2 L167.3,165.5 L167.8,165.8 L168.4,166.1 L169.0,166.4 L169.5,166.6 L170.1,166.9 L170.7,167.2 L171.3,167.4 L171.8,167.7 L172.4,167.9 L173.0,168.2 L173.5,168.4 L174.1,168.6 L174.7,168.8 L175.2,169.1 L175.8,169.3 L176.4,169.5 L176.9,169.7 L177.5,169.9 L178.1,170.1 L178.6,170.2 L179.2,170.4 L179.8,170.6 L180.3,170.8 L180.9,170.9 L181.5,171.1 L182.0,171.3 L182.6,171.4 L183.2,171.6 L183.7,171.7 L184.3,171.8 L184.9,172.0 L185.4,172.1 L186.0,172.2 L186.6,172.3 L187.1,172.4 L187.7,172.6 L188.3,172.7 L188.8,172.8 L189.4,172.9 L190.0,172.9 L190.6,173.0 L191.1,173.1 L191.7,173.2 L192.3,173.3 L192.8,173.3 L193.4,173.4 L194.0,173.5 L194.5,173.5 L195.1,173.6 L195.7,173.6 L196.2,173.7 L196.8,173.7 L197.4,173.7 L197.9,173.8 L198.5,173.8 L199.1,173.8 L199.6,173.9 L200.2,173.9 L200.8,173.9 L201.3,173.9 L201.9,173.9 L202.5,173.9 L203.0,173.9 L203.6,173.9 L204.2,173.9 L204.7,173.9 L205.3,173.9 L205.9,173.8 L206.4,173.8 L207.0,173.8 L207.6,173.8 L208.1,173.7 L208.7,173.7 L209.3,173.7 L209.8,173.6 L210.4,173.6 L211.0,173.5 L211.6,173.5 L212.1,173.4 L212.7,173.4 L213.3,173.3 L213.8,173.3 L214.4,173.2 L215.0,173.1 L215.5,173.0 L216.1,173.0 L216.7,172.9 L217.2,172.8 L217.8,172.7 L218.4,172.6 L218.9,172.5 L219.5,172.5 L220.1,172.4 L220.6,172.3 L221.2,172.2 L221.8,172.1 L222.3,171.9 L222.9,171.8 L223.5,171.7 L224.0,171.6 L224.6,171.5 L225.2,171.4 L225.7,171.2 L226.3,171.1 L226.9,171.0 L227.4,170.9 L228.0,170.7 L228.6,170.6 L229.1,170.5 L229.7,170.3 L230.3,170.2 L230.9,170.0 L231.4,169.9 L232.0,169.7 L232.6,169.6 L233.1,169.4 L233.7,169.3 L234.3,169.1 L234.8,169.0 L235.4,168.8 L236.0,168.6 L236.5,168.5 L237.1,168.3 L237.7,168.1 L238.2,167.9 L238.8,167.8 L239.4,167.6 L239.9,167.4 L240.5,167.2 L241.1,167.0 L241.6,166.8 L242.2,166.7 L242.8,166.5 L243.3,166.3 L243.9,166.1 L244.5,165.9 L245.0,165.7 L245.6,165.5 L246.2,165.3 L246.7,165.1 L247.3,164.9 L247.9,164.7 L248.4,164.4 L249.0,164.2 L249.6,164.0 L250.2,163.8 L250.7,163.6 L251.3,163.4 L251.9,163.1 L252.4,162.9 L253.0,162.7 L253.6,162.5 L254.1,162.2 L254.7,162.0 L255.3,161.8 L255.8,161.6 L256.4,161.3 L257.0,161.1 L257.5,160.8 L258.1,160.6 L258.7,160.4 L259.2,160.1 L259.8,159.9 L260.4,159.6 L260.9,159.4 L261.5,159.1 L262.1,158.9 L262.6,158.6 L263.2,158.4 L263.8,158.1 L264.3,157.9 L264.9,157.6 L265.5,157.4 L266.0,157.1 L266.6,156.8 L267.2,156.6 L267.7,156.3 L268.3,156.0 L268.9,155.8 L269.4,155.5 L270.0,155.2 L270.6,155.0 L271.2,154.7 L271.7,154.4 L272.3,154.1 L272.9,153.9 L273.4,153.6 L274.0,153.3 L274.6,153.0 L275.1,152.7 L275.7,152.5 L276.3,152.2 L276.8,151.9 L277.4,151.6 L278.0,151.3 L278.5,151.0 L279.1,150.7 L279.7,150.4 L280.2,150.1 L280.8,149.8 L281.4,149.6 L281.9,149.3 L282.5,149.0 L283.1,148.7 L283.6,148.4 L284.2,148.1 L284.8,147.8 L285.3,147.5 L285.9,147.2 L286.5,146.8 L287.0,146.5 L287.6,146.2 L288.2,145.9 L288.7,145.6 L289.3,145.3 L289.9,145.0 L290.5,144.7 L291.0,144.4 L291.6,144.1 L292.2,143.7 L292.7,143.4 L293.3,143.1 L293.9,142.8 L294.4,142.5 L295.0,142.2 L295.6,141.8 L296.1,141.5 L296.7,141.2 L297.3,140.9 L297.8,140.5 L298.4,140.2 L299.0,139.9 L299.5,139.6 L300.1,139.2 L300.7,138.9 L301.2,138.6 L301.8,138.2 L302.4,137.9 L302.9,137.6 L303.5,137.2 L304.1,136.9 L304.6,136.6 L305.2,136.2 L305.8,135.9 L306.3,135.6 L306.9,135.2 L307.5,134.9 L308.0,134.6 L308.6,134.2 L309.2,133.9 L309.7,133.5 L310.3,133.2 L310.9,132.8 L311.5,132.5 L312.0,132.2 L312.6,131.8 L313.2,131.5 L313.7,131.1 L314.3,130.8 L314.9,130.4 L315.4,130.1 L316.0,129.7 L316.6,129.4 L317.1,129.0 L317.7,128.7 L318.3,128.3 L318.8,128.0 L319.4,127.6 L320.0,127.3 L320.5,126.9 L321.1,126.6 L321.7,126.2 L322.2,125.8 L322.8,125.5 L323.4,125.1 L323.9,124.8 L324.5,124.4 L325.1,124.1 L325.6,123.7 L326.2,123.3 L326.8,123.0 L327.3,122.6 L327.9,122.2 L328.5,121.9 L329.0,121.5 L329.6,121.2 L330.2,120.8 L330.8,120.4 L331.3,120.1 L331.9,119.7 L332.5,119.3 L333.0,119.0 L333.6,118.6 L334.2,118.2 L334.7,117.8 L335.3,117.5 L335.9,117.1 L336.4,116.7 L337.0,116.4 L337.6,116.0 L338.1,115.6 L338.7,115.3 L339.3,114.9 L339.8,114.5 L340.4,114.1 L341.0,113.8 L341.5,113.4 L342.1,113.0 L342.7,112.6 L343.2,112.3 L343.8,111.9 L344.4,111.5 L344.9,111.1 L345.5,110.7 L346.1,110.4 L346.6,110.0 L347.2,109.6 L347.8,109.2 L348.3,108.8 L348.9,108.5 L349.5,108.1 L350.1,107.7 L350.6,107.3 L351.2,106.9 L351.8,106.6 L352.3,106.2 L352.9,105.8 L353.5,105.4 L354.0,105.0 L354.6,104.6 L355.2,104.2 L355.7,103.9 L356.3,103.5 L356.9,103.1 L357.4,102.7 L358.0,102.3 L358.6,101.9 L359.1,101.5 L359.7,101.2 L360.3,100.8 L360.8,100.4 L361.4,100.0 L362.0,99.6 L362.5,99.2 L363.1,98.8 L363.7,98.4 L364.2,98.0 L364.8,97.6 L365.4,97.3 L365.9,96.9 L366.5,96.5 L367.1,96.1 L367.6,95.7 L368.2,95.3 L368.8,94.9 L369.3,94.5 L369.9,94.1 L370.5,93.7 L371.1,93.3 L371.6,92.9 L372.2,92.5 L372.8,92.1 L373.3,91.7 L373.9,91.3 L374.5,90.9 L375.0,90.5 L375.6,90.1 L376.2,89.7 L376.7,89.4 L377.3,89.0 L377.9,88.6 L378.4,88.2 L379.0,87.8 L379.6,87.4 L380.1,87.0 L380.7,86.6 L381.3,86.2 L381.8,85.8 L382.4,85.4 L383.0,85.0 L383.5,84.6 L384.1,84.2 L384.7,83.8 L385.2,83.4 L385.8,83.0 L386.4,82.5 L386.9,82.1 L387.5,81.7 L388.1,81.3 L388.6,80.9 L389.2,80.5 L389.8,80.1 L390.4,79.7 L390.9,79.3 L391.5,78.9 L392.1,78.5 L392.6,78.1 L393.2,77.7 L393.8,77.3 L394.3,76.9 L394.9,76.5 L395.5,76.1 L396.0,75.7 L396.6,75.3 L397.2,74.9 L397.7,74.5 L398.3,74.0 L398.9,73.6 L399.4,73.2 L400.0,72.8" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="85.2" y="17.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle"><tspan font-style="italic">C</tspan>₁ = 3</text>
+  <path d="M60.0,53.1 L60.6,55.0 L61.1,56.9 L61.7,58.8 L62.3,60.6 L62.8,62.4 L63.4,64.2 L64.0,66.0 L64.5,67.8 L65.1,69.6 L65.7,71.3 L66.2,73.0 L66.8,74.7 L67.4,76.4 L67.9,78.1 L68.5,79.7 L69.1,81.3 L69.6,82.9 L70.2,84.5 L70.8,86.1 L71.4,87.7 L71.9,89.2 L72.5,90.7 L73.1,92.3 L73.6,93.8 L74.2,95.2 L74.8,96.7 L75.3,98.1 L75.9,99.6 L76.5,101.0 L77.0,102.4 L77.6,103.8 L78.2,105.2 L78.7,106.5 L79.3,107.9 L79.9,109.2 L80.4,110.5 L81.0,111.8 L81.6,113.1 L82.1,114.3 L82.7,115.6 L83.3,116.8 L83.8,118.1 L84.4,119.3 L85.0,120.5 L85.5,121.7 L86.1,122.8 L86.7,124.0 L87.2,125.1 L87.8,126.3 L88.4,127.4 L88.9,128.5 L89.5,129.6 L90.1,130.7 L90.7,131.7 L91.2,132.8 L91.8,133.8 L92.4,134.9 L92.9,135.9 L93.5,136.9 L94.1,137.9 L94.6,138.9 L95.2,139.9 L95.8,140.8 L96.3,141.8 L96.9,142.7 L97.5,143.6 L98.0,144.5 L98.6,145.4 L99.2,146.3 L99.7,147.2 L100.3,148.1 L100.9,148.9 L101.4,149.8 L102.0,150.6 L102.6,151.5 L103.1,152.3 L103.7,153.1 L104.3,153.9 L104.8,154.7 L105.4,155.4 L106.0,156.2 L106.5,157.0 L107.1,157.7 L107.7,158.5 L108.2,159.2 L108.8,159.9 L109.4,160.6 L109.9,161.3 L110.5,162.0 L111.1,162.7 L111.7,163.3 L112.2,164.0 L112.8,164.7 L113.4,165.3 L113.9,165.9 L114.5,166.6 L115.1,167.2 L115.6,167.8 L116.2,168.4 L116.8,169.0 L117.3,169.6 L117.9,170.1 L118.5,170.7 L119.0,171.2 L119.6,171.8 L120.2,172.3 L120.7,172.9 L121.3,173.4 L121.9,173.9 L122.4,174.4 L123.0,174.9 L123.6,175.4 L124.1,175.9 L124.7,176.4 L125.3,176.8 L125.8,177.3 L126.4,177.8 L127.0,178.2 L127.5,178.7 L128.1,179.1 L128.7,179.5 L129.2,179.9 L129.8,180.3 L130.4,180.7 L131.0,181.1 L131.5,181.5 L132.1,181.9 L132.7,182.3 L133.2,182.7 L133.8,183.0 L134.4,183.4 L134.9,183.7 L135.5,184.1 L136.1,184.4 L136.6,184.8 L137.2,185.1 L137.8,185.4 L138.3,185.7 L138.9,186.0 L139.5,186.3 L140.0,186.6 L140.6,186.9 L141.2,187.2 L141.7,187.5 L142.3,187.7 L142.9,188.0 L143.4,188.3 L144.0,188.5 L144.6,188.8 L145.1,189.0 L145.7,189.2 L146.3,189.5 L146.8,189.7 L147.4,189.9 L148.0,190.1 L148.5,190.3 L149.1,190.5 L149.7,190.7 L150.3,190.9 L150.8,191.1 L151.4,191.3 L152.0,191.5 L152.5,191.7 L153.1,191.8 L153.7,192.0 L154.2,192.1 L154.8,192.3 L155.4,192.4 L155.9,192.6 L156.5,192.7 L157.1,192.9 L157.6,193.0 L158.2,193.1 L158.8,193.2 L159.3,193.3 L159.9,193.5 L160.5,193.6 L161.0,193.7 L161.6,193.8 L162.2,193.9 L162.7,193.9 L163.3,194.0 L163.9,194.1 L164.4,194.2 L165.0,194.3 L165.6,194.3 L166.1,194.4 L166.7,194.4 L167.3,194.5 L167.8,194.5 L168.4,194.6 L169.0,194.6 L169.5,194.7 L170.1,194.7 L170.7,194.7 L171.3,194.8 L171.8,194.8 L172.4,194.8 L173.0,194.8 L173.5,194.8 L174.1,194.8 L174.7,194.9 L175.2,194.9 L175.8,194.9 L176.4,194.8 L176.9,194.8 L177.5,194.8 L178.1,194.8 L178.6,194.8 L179.2,194.8 L179.8,194.7 L180.3,194.7 L180.9,194.7 L181.5,194.6 L182.0,194.6 L182.6,194.6 L183.2,194.5 L183.7,194.5 L184.3,194.4 L184.9,194.3 L185.4,194.3 L186.0,194.2 L186.6,194.2 L187.1,194.1 L187.7,194.0 L188.3,193.9 L188.8,193.9 L189.4,193.8 L190.0,193.7 L190.6,193.6 L191.1,193.5 L191.7,193.4 L192.3,193.3 L192.8,193.2 L193.4,193.1 L194.0,193.0 L194.5,192.9 L195.1,192.8 L195.7,192.7 L196.2,192.6 L196.8,192.5 L197.4,192.4 L197.9,192.2 L198.5,192.1 L199.1,192.0 L199.6,191.9 L200.2,191.7 L200.8,191.6 L201.3,191.5 L201.9,191.3 L202.5,191.2 L203.0,191.0 L203.6,190.9 L204.2,190.7 L204.7,190.6 L205.3,190.4 L205.9,190.3 L206.4,190.1 L207.0,190.0 L207.6,189.8 L208.1,189.6 L208.7,189.5 L209.3,189.3 L209.8,189.1 L210.4,189.0 L211.0,188.8 L211.6,188.6 L212.1,188.4 L212.7,188.2 L213.3,188.1 L213.8,187.9 L214.4,187.7 L215.0,187.5 L215.5,187.3 L216.1,187.1 L216.7,186.9 L217.2,186.7 L217.8,186.5 L218.4,186.3 L218.9,186.1 L219.5,185.9 L220.1,185.7 L220.6,185.5 L221.2,185.3 L221.8,185.1 L222.3,184.8 L222.9,184.6 L223.5,184.4 L224.0,184.2 L224.6,184.0 L225.2,183.7 L225.7,183.5 L226.3,183.3 L226.9,183.1 L227.4,182.8 L228.0,182.6 L228.6,182.4 L229.1,182.1 L229.7,181.9 L230.3,181.7 L230.9,181.4 L231.4,181.2 L232.0,180.9 L232.6,180.7 L233.1,180.4 L233.7,180.2 L234.3,179.9 L234.8,179.7 L235.4,179.4 L236.0,179.2 L236.5,178.9 L237.1,178.7 L237.7,178.4 L238.2,178.2 L238.8,177.9 L239.4,177.6 L239.9,177.4 L240.5,177.1 L241.1,176.8 L241.6,176.6 L242.2,176.3 L242.8,176.0 L243.3,175.7 L243.9,175.5 L244.5,175.2 L245.0,174.9 L245.6,174.6 L246.2,174.4 L246.7,174.1 L247.3,173.8 L247.9,173.5 L248.4,173.2 L249.0,173.0 L249.6,172.7 L250.2,172.4 L250.7,172.1 L251.3,171.8 L251.9,171.5 L252.4,171.2 L253.0,170.9 L253.6,170.6 L254.1,170.3 L254.7,170.0 L255.3,169.7 L255.8,169.4 L256.4,169.1 L257.0,168.8 L257.5,168.5 L258.1,168.2 L258.7,167.9 L259.2,167.6 L259.8,167.3 L260.4,167.0 L260.9,166.7 L261.5,166.4 L262.1,166.1 L262.6,165.8 L263.2,165.5 L263.8,165.1 L264.3,164.8 L264.9,164.5 L265.5,164.2 L266.0,163.9 L266.6,163.6 L267.2,163.2 L267.7,162.9 L268.3,162.6 L268.9,162.3 L269.4,162.0 L270.0,161.6 L270.6,161.3 L271.2,161.0 L271.7,160.7 L272.3,160.3 L272.9,160.0 L273.4,159.7 L274.0,159.3 L274.6,159.0 L275.1,158.7 L275.7,158.3 L276.3,158.0 L276.8,157.7 L277.4,157.3 L278.0,157.0 L278.5,156.7 L279.1,156.3 L279.7,156.0 L280.2,155.7 L280.8,155.3 L281.4,155.0 L281.9,154.6 L282.5,154.3 L283.1,153.9 L283.6,153.6 L284.2,153.3 L284.8,152.9 L285.3,152.6 L285.9,152.2 L286.5,151.9 L287.0,151.5 L287.6,151.2 L288.2,150.8 L288.7,150.5 L289.3,150.1 L289.9,149.8 L290.5,149.4 L291.0,149.1 L291.6,148.7 L292.2,148.4 L292.7,148.0 L293.3,147.7 L293.9,147.3 L294.4,146.9 L295.0,146.6 L295.6,146.2 L296.1,145.9 L296.7,145.5 L297.3,145.2 L297.8,144.8 L298.4,144.4 L299.0,144.1 L299.5,143.7 L300.1,143.3 L300.7,143.0 L301.2,142.6 L301.8,142.3 L302.4,141.9 L302.9,141.5 L303.5,141.2 L304.1,140.8 L304.6,140.4 L305.2,140.1 L305.8,139.7 L306.3,139.3 L306.9,139.0 L307.5,138.6 L308.0,138.2 L308.6,137.8 L309.2,137.5 L309.7,137.1 L310.3,136.7 L310.9,136.4 L311.5,136.0 L312.0,135.6 L312.6,135.2 L313.2,134.9 L313.7,134.5 L314.3,134.1 L314.9,133.7 L315.4,133.4 L316.0,133.0 L316.6,132.6 L317.1,132.2 L317.7,131.9 L318.3,131.5 L318.8,131.1 L319.4,130.7 L320.0,130.3 L320.5,130.0 L321.1,129.6 L321.7,129.2 L322.2,128.8 L322.8,128.4 L323.4,128.0 L323.9,127.7 L324.5,127.3 L325.1,126.9 L325.6,126.5 L326.2,126.1 L326.8,125.7 L327.3,125.4 L327.9,125.0 L328.5,124.6 L329.0,124.2 L329.6,123.8 L330.2,123.4 L330.8,123.0 L331.3,122.7 L331.9,122.3 L332.5,121.9 L333.0,121.5 L333.6,121.1 L334.2,120.7 L334.7,120.3 L335.3,119.9 L335.9,119.5 L336.4,119.1 L337.0,118.8 L337.6,118.4 L338.1,118.0 L338.7,117.6 L339.3,117.2 L339.8,116.8 L340.4,116.4 L341.0,116.0 L341.5,115.6 L342.1,115.2 L342.7,114.8 L343.2,114.4 L343.8,114.0 L344.4,113.6 L344.9,113.2 L345.5,112.9 L346.1,112.5 L346.6,112.1 L347.2,111.7 L347.8,111.3 L348.3,110.9 L348.9,110.5 L349.5,110.1 L350.1,109.7 L350.6,109.3 L351.2,108.9 L351.8,108.5 L352.3,108.1 L352.9,107.7 L353.5,107.3 L354.0,106.9 L354.6,106.5 L355.2,106.1 L355.7,105.7 L356.3,105.3 L356.9,104.9 L357.4,104.5 L358.0,104.1 L358.6,103.7 L359.1,103.3 L359.7,102.9 L360.3,102.5 L360.8,102.1 L361.4,101.7 L362.0,101.3 L362.5,100.8 L363.1,100.4 L363.7,100.0 L364.2,99.6 L364.8,99.2 L365.4,98.8 L365.9,98.4 L366.5,98.0 L367.1,97.6 L367.6,97.2 L368.2,96.8 L368.8,96.4 L369.3,96.0 L369.9,95.6 L370.5,95.2 L371.1,94.8 L371.6,94.4 L372.2,94.0 L372.8,93.5 L373.3,93.1 L373.9,92.7 L374.5,92.3 L375.0,91.9 L375.6,91.5 L376.2,91.1 L376.7,90.7 L377.3,90.3 L377.9,89.9 L378.4,89.5 L379.0,89.0 L379.6,88.6 L380.1,88.2 L380.7,87.8 L381.3,87.4 L381.8,87.0 L382.4,86.6 L383.0,86.2 L383.5,85.8 L384.1,85.4 L384.7,84.9 L385.2,84.5 L385.8,84.1 L386.4,83.7 L386.9,83.3 L387.5,82.9 L388.1,82.5 L388.6,82.1 L389.2,81.6 L389.8,81.2 L390.4,80.8 L390.9,80.4 L391.5,80.0 L392.1,79.6 L392.6,79.2 L393.2,78.7 L393.8,78.3 L394.3,77.9 L394.9,77.5 L395.5,77.1 L396.0,76.7 L396.6,76.3 L397.2,75.8 L397.7,75.4 L398.3,75.0 L398.9,74.6 L399.4,74.2 L400.0,73.8" fill="none" stroke="var(--color-practice)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="54.0" y="57.1" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">C</tspan>₁ = 2</text>
+  <circle cx="128.0" cy="179.0" r="4.8" fill="var(--color-practice)"/>
+  <text x="120.0" y="196.0" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">y</tspan>(0) = 1</text>
+</svg>
+<figcaption><em>y</em>&#8242; = <em>x</em> &#8722; <em>y</em> denkleminin yön alanı (kısa çizgiler her noktadaki eğimi gösterir) ve <em>y</em> = <em>C</em>₁<em>e</em><sup>&#8722;<em>x</em></sup> + <em>x</em> &#8722; 1 çözüm ailesinden <em>C</em>₁ = &#8722;1, 0, 1, 2, 3 eğrileri. Kalın eğri, (0, 1) noktasından geçen <em>C</em>₁ = 2 çözümüdür. Bütün çözümler <em>C</em>₁ = 0 için elde edilen <em>y</em> = <em>x</em> &#8722; 1 doğrusuna yaklaşır.</figcaption>
+</figure>
+```
+
+$C_1 = 0$ için çözüm $y = x - 1$ doğrusudur. Diğer bütün çözümler $C_1 e^{-x} \to 0$ olduğundan $x \to \infty$ iken bu doğruya yaklaşır. Kapalı biçimde çözülemeyen denklemleri [Diferansiyel Denklemlerin Sayısal Çözümü](diferansiyel-denklemlerin-sayisal-cozumu.qmd) bölümünde sayısal yöntemlerle çözeceğiz.
+
+## Matrisler
+
+Lineer cebirin hesapları da sembolik olarak, yani kesin kesirlerle yapılabilir. `sp.Matrix` ile kurulan matrislerin girdileri kesin sayılar ya da ifadelerdir. Matris çarpımı `*` ya da `@` ile yapılır; `.T` transpozu, `.det()` determinantı, `.inv()` tersi, `.rank()` rankı verir. [NumPy ile Lineer Cebir](numpy-ile-lineer-cebir.qmd) bölümündeki `np.linalg` fonksiyonlarından farkı, sonuçların yaklaşık ondalık sayılar değil, kesin kesirler olmasıdır.
+
+```python
+import sympy as sp
+
+A = sp.Matrix([[2, 1, 0], [1, 3, 1], [0, 1, 2]])
+print(A.det())
+print(A.inv())
+print(A * A.inv() == sp.eye(3))
+```
+
+Çıktı:
+
+```text
+8
+Matrix([[5/8, -1/4, 1/8], [-1/4, 1/2, -1/4], [1/8, -1/4, 5/8]])
+True
+```
+
+`sp.eye(3)` $3 \times 3$ birim matristir. Ters matrisin girdileri kesin kesirler olduğundan $AA^{-1} = I$ eşitliği yapısal olarak da tam tutar.
+
+Satır indirgenmiş merdiven biçim (bkz. [Lineer Cebir](../lineer-cebir/matrisler/merdiven-matrisler.html#def-satir-indirgenmis)) `rref` metoduyla, sıfır uzayının bir tabanı da `nullspace` metoduyla bulunur:
+
+```python
+import sympy as sp
+
+B = sp.Matrix([[1, 2, 1, 1],
+               [2, 4, 0, 6],
+               [1, 2, 3, -1]])
+R, pivots = B.rref()
+print(R)
+print(pivots)
+print([v.T for v in B.nullspace()])
+```
+
+Çıktı:
+
+```text
+Matrix([[1, 2, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+(0, 2, 3)
+[Matrix([[-2, 1, 0, 0]])]
+```
+
+`rref` iki şey döndürür: indirgenmiş matrisi ve pivot sütunlarının indislerini. İndisler Python alışkanlığıyla $0$'dan başlar; yani pivotlar 1., 3. ve 4. sütunlardadır. Pivotsuz tek sütun ikincisi olduğundan sıfır uzayı tek boyutludur. Tabanı $(-2, 1, 0, 0)$ vektörüdür: $x_1 + 2x_2 = 0$, $x_3 = x_4 = 0$. Vektörleri tek satırda yazdırmak için transpozlarını (`v.T`) yazdırdık.
+
+Özdeğer ve özvektörler (bkz. [Lineer Cebir](../lineer-cebir/ozdegerler/ozdeger-ozvektor.html#def-ozdeger)) için `charpoly`, `eigenvals`, `eigenvects` ve `diagonalize` metodları vardır. Karakteristik polinomun değişkeni olan $\lambda$ sembolünü `lam` adlı değişkene bağlıyoruz, çünkü `lambda` Python'da ayrılmış bir sözcüktür (bkz. @def-kon-lambda):
+
+```python
+import sympy as sp
+
+lam = sp.symbols("lambda")
+A = sp.Matrix([[4, 1], [2, 3]])
+p = A.charpoly(lam).as_expr()
+print(p, "=", sp.factor(p))
+print(A.eigenvals())
+for value, mult, vectors in A.eigenvects():
+    print(value, mult, [v.T for v in vectors])
+P, D = A.diagonalize()
+print(P, D)
+print(P * D * P.inv() == A)
+```
+
+Çıktı:
+
+```text
+lambda**2 - 7*lambda + 10 = (lambda - 5)*(lambda - 2)
+{5: 1, 2: 1}
+2 1 [Matrix([[-1/2, 1]])]
+5 1 [Matrix([[1, 1]])]
+Matrix([[-1, 1], [2, 1]]) Matrix([[2, 0], [0, 5]])
+True
+```
+
+Karakteristik polinom $\lambda^2 - 7\lambda + 10 = (\lambda - 2)(\lambda - 5)$'tir. `eigenvals` her özdeğeri cebirsel katıyla birlikte bir sözlük olarak verir. `eigenvects` her özdeğer için katı ve öz uzayın bir tabanını listeler. `diagonalize`, $A = PDP^{-1}$ olacak biçimde $P$ ve köşegen $D$ matrislerini döndürür. $P$'nin sütunları özvektörlerdir; SymPy $(-1/2, 1)$ özvektörünü $2$ ile çarpıp $(-1, 2)$ olarak almıştır (bkz. [Lineer Cebir](../lineer-cebir/ozdegerler/kosegenlestirme.html#thm-kosegenlestirme)).
+
+Girdileri sembol olan matrislerle de çalışılabilir. $\theta$ ve $\varphi$ açılı iki dönme matrisinin çarpımını hesaplayalım:
+
+```python
+import sympy as sp
+
+theta, phi = sp.symbols("theta phi", real=True)
+
+
+def rot(a):
+    return sp.Matrix([[sp.cos(a), -sp.sin(a)],
+                      [sp.sin(a), sp.cos(a)]])
+
+
+M = sp.simplify(rot(theta) * rot(phi))
+for row in M.tolist():
+    print(row)
+print(M == rot(theta + phi))
+print(sp.simplify(rot(theta).det()))
+```
+
+Çıktı:
+
+```text
+[cos(phi + theta), -sin(phi + theta)]
+[sin(phi + theta), cos(phi + theta)]
+True
+1
+```
+
+İki dönmenin bileşkesi, açıları toplanmış dönmedir. `simplify` bunu görmek için $\cos(\theta + \varphi) = \cos\theta\cos\varphi - \sin\theta\sin\varphi$ toplam formüllerini kullandı. Dönme matrisinin determinantı da $\cos^2\theta + \sin^2\theta = 1$'dir.
+
+## Sembolikten Sayısala: lambdify
+
+Sembolik bir sonuç çoğu zaman yolun yarısıdır. Bulduğumuz bir türevi binlerce noktada hesaplamak, grafiğini çizmek ya da bir sayısal yöntemde kullanmak isteriz. `subs` ile `evalf` bunu yapabilir, ama her noktada ifade ağacını baştan dolaştığı için yavaştır.
+
+::: {#def-sym-lambdify name="Lambdify"}
+`sp.lambdify(x, expr, "numpy")` çağrısı, `expr` ifadesini, `x` yerine bir sayı ya da bir NumPy dizisi alan sıradan bir Python fonksiyonuna çevirir. Üretilen fonksiyonda `sp.sin`, `sp.exp` gibi SymPy fonksiyonlarının yerini `np.sin`, `np.exp` gibi NumPy karşılıkları alır.
+:::
+
+Yani `lambdify` sembolik dünyadan sayısal dünyaya geçen köprüdür: formülü SymPy ile bir kez türetiriz, sonra NumPy hızıyla bir dizinin bütün elemanları üzerinde hesaplarız (bkz. [Vektörizasyon ve Broadcasting](vektorizasyon-ve-broadcasting.qmd)).
+
+```python
+import numpy as np
+import sympy as sp
+
+x = sp.symbols("x")
+expr = sp.diff(x**2 * sp.exp(-x), x)
+print(expr)
+f = sp.lambdify(x, expr, "numpy")
+xs = np.linspace(0, 4, 5)
+print(f(xs))
+print(f(1.0), expr.subs(x, 1).evalf())
+```
+
+Çıktı:
+
+```text
+-x**2*exp(-x) + 2*x*exp(-x)
+[ 0.          0.36787944  0.         -0.14936121 -0.14652511]
+0.36787944117144233 0.367879441171442
+```
+
+`f`, $x^2 e^{-x}$ fonksiyonunun $(2x - x^2)e^{-x}$ türevini hesaplayan bir NumPy fonksiyonudur. Bir dizi alınca bütün elemanlarda birden hesaplar; tek bir sayıda ise `subs` ve `evalf` ile aynı değeri verir. Hız farkını ölçelim:
+
+```python
+import time
+
+import numpy as np
+import sympy as sp
+
+x = sp.symbols("x")
+expr = sp.exp(-x**2) * sp.cos(3 * x)
+xs = np.linspace(0, 2, 2000)
+
+t0 = time.perf_counter()
+slow = np.array([float(expr.subs(x, v)) for v in xs])
+t1 = time.perf_counter()
+f = sp.lambdify(x, expr, "numpy")
+t2 = time.perf_counter()
+fast = f(xs)
+t3 = time.perf_counter()
+
+print(f"subs ile döngü    : {1000 * (t1 - t0):.0f} ms")
+print(f"lambdify (üretim) : {1000 * (t2 - t1):.0f} ms")
+print(f"lambdify (hesap)  : {1000 * (t3 - t2):.2f} ms")
+print("en büyük fark     :", np.max(np.abs(slow - fast)))
+```
+
+Çıktı:
+
+```text
+subs ile döngü    : 962 ms
+lambdify (üretim) : 110 ms
+lambdify (hesap)  : 0.05 ms
+en büyük fark     : 2.220446049250313e-16
+```
+
+Süreler bu notların yazıldığı bilgisayarda ölçülmüştür; başka bir bilgisayarda, hatta aynı bilgisayarda her çalıştırmada biraz farklı çıkar. Oranlar ise kabaca aynı kalır. `subs` ile 2000 noktalık döngü yaklaşık bir saniye sürdü. `lambdify` ile üretilen fonksiyon aynı hesabı milisaniyenin çok altında, binlerce kat hızlı yaptı. Fonksiyonu üretmenin maliyeti bir kerelik bir bedeldir: fonksiyon bir kez üretilir, sonra istenen kadar çağrılır. Sonuçlar ise neredeyse tıpatıp aynıdır; en büyük fark son birkaç ikili basamaktaki yuvarlamadan gelir.
+
+::: {.callout-tip title="Sembolik sonucu sayısal hesaba üç adımda taşımak"}
+1. Formülü SymPy ile türetin (`diff`, `integrate`, `series`, `solve`, …).
+2. `sp.lambdify(x, expr, "numpy")` ile ifadeyi bir Python fonksiyonuna çevirin.
+3. Fonksiyonu NumPy dizileriyle çağırıp sonuçları hesaplayın ya da çizin.
+:::
+
+Tarifi sinüsün Taylor polinomlarına uygulayalım. $T_1, T_3, T_5, T_7$ polinomlarını SymPy ile bulup NumPy ile hesaplayacak ve [Matplotlib ile Grafik Çizimi](matplotlib-ile-grafik-cizimi.qmd) bölümündeki gibi $\sin x$ ile aynı eksende çizeceğiz:
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+import sympy as sp
+
+x = sp.symbols("x")
+xs = np.linspace(-2 * np.pi, 2 * np.pi, 400)
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(xs, np.sin(xs), color="black", lw=2.5, label="sin x")
+for n in [1, 3, 5, 7]:
+    T = sp.series(sp.sin(x), x, 0, n + 1).removeO()  # 1. adım
+    T_num = sp.lambdify(x, T, "numpy")               # 2. adım
+    ax.plot(xs, T_num(xs), label=f"T{n}")            # 3. adım
+    print(f"T{n}(x) =", T)
+ax.set_ylim(-3, 3)
+ax.axhline(0, color="gray", lw=0.5)
+ax.legend()
+fig.savefig("taylor-sin.png", dpi=150)
+```
+
+Çıktı:
+
+```text
+T1(x) = x
+T3(x) = -x**3/6 + x
+T5(x) = x**5/120 - x**3/6 + x
+T7(x) = -x**7/5040 + x**5/120 - x**3/6 + x
+```
+
+Kod, polinomları yazdırır ve grafiği `taylor-sin.png` dosyasına kaydeder. Aşağıdaki şekil aynı grafiğin aynı verilerle çizilmiş hâlidir:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 0.0 516.0 331.5" role="img" aria-label="sin x on [-2 pi, 2 pi] with its Taylor polynomials T1, T3, T5 and T7 clipped to the window y from -3 to 3; higher degrees follow the sine curve on wider intervals">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="165.0" x2="524.0" y2="165.0"/>
+  <line x1="266.1" y1="304.0" x2="266.1" y2="26.0"/>
+  <polygon points="524.0,165.0 516.0,161.5 516.0,168.5" stroke="none"/>
+  <polygon points="266.1,26.0 262.6,34.0 269.6,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="47.0" y1="162.0" x2="47.0" y2="168.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="47.0" y="180.0" text-anchor="middle">&#8722;2&#960;</text>
+  <line x1="156.5" y1="162.0" x2="156.5" y2="168.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="156.5" y="180.0" text-anchor="middle">&#8722;&#960;</text>
+  <line x1="375.6" y1="162.0" x2="375.6" y2="168.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="375.6" y="180.0" text-anchor="middle">&#960;</text>
+  <line x1="485.1" y1="162.0" x2="485.1" y2="168.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="485.1" y="180.0" text-anchor="middle">2&#960;</text>
+  <line x1="263.1" y1="255.0" x2="269.1" y2="255.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.1" y="259.0" text-anchor="end">&#8722;2</text>
+  <line x1="263.1" y1="210.0" x2="269.1" y2="210.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.1" y="214.0" text-anchor="end">&#8722;1</text>
+  <line x1="263.1" y1="120.0" x2="269.1" y2="120.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.1" y="124.0" text-anchor="end">1</text>
+  <line x1="263.1" y1="75.0" x2="269.1" y2="75.0" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="259.1" y="79.0" text-anchor="end">2</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="522.0" y="180.0" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="273.1" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M47.0,165.0 L48.1,163.6 L49.2,162.2 L50.3,160.8 L51.4,159.3 L52.5,157.9 L53.6,156.5 L54.7,155.2 L55.8,153.8 L56.9,152.4 L58.0,151.1 L59.1,149.7 L60.2,148.4 L61.2,147.1 L62.3,145.8 L63.4,144.5 L64.5,143.3 L65.6,142.0 L66.7,140.8 L67.8,139.7 L68.9,138.5 L70.0,137.4 L71.1,136.3 L72.2,135.2 L73.3,134.1 L74.4,133.1 L75.5,132.1 L76.6,131.2 L77.7,130.3 L78.8,129.4 L79.9,128.5 L81.0,127.7 L82.1,126.9 L83.2,126.2 L84.3,125.5 L85.4,124.8 L86.5,124.2 L87.6,123.6 L88.7,123.1 L89.8,122.6 L90.9,122.2 L92.0,121.7 L93.1,121.4 L94.2,121.1 L95.3,120.8 L96.4,120.5 L97.5,120.3 L98.6,120.2 L99.7,120.1 L100.8,120.0 L101.9,120.0 L103.0,120.0 L104.1,120.1 L105.2,120.2 L106.3,120.4 L107.4,120.6 L108.5,120.8 L109.6,121.1 L110.7,121.5 L111.8,121.8 L112.9,122.3 L114.0,122.7 L115.1,123.2 L116.2,123.8 L117.3,124.4 L118.4,125.0 L119.5,125.7 L120.5,126.4 L121.6,127.1 L122.7,127.9 L123.8,128.7 L124.9,129.6 L126.0,130.5 L127.1,131.4 L128.2,132.4 L129.3,133.4 L130.4,134.4 L131.5,135.4 L132.6,136.5 L133.7,137.6 L134.8,138.8 L135.9,139.9 L137.0,141.1 L138.1,142.3 L139.2,143.6 L140.3,144.8 L141.4,146.1 L142.5,147.4 L143.6,148.7 L144.7,150.1 L145.8,151.4 L146.9,152.8 L148.0,154.1 L149.1,155.5 L150.2,156.9 L151.3,158.3 L152.4,159.7 L153.5,161.1 L154.6,162.5 L155.7,163.9 L156.8,165.4 L157.9,166.8 L159.0,168.2 L160.1,169.6 L161.2,171.0 L162.3,172.4 L163.4,173.8 L164.5,175.2 L165.6,176.6 L166.7,177.9 L167.8,179.3 L168.9,180.6 L170.0,181.9 L171.1,183.2 L172.2,184.5 L173.3,185.8 L174.4,187.0 L175.5,188.3 L176.6,189.5 L177.7,190.6 L178.8,191.8 L179.8,192.9 L180.9,194.0 L182.0,195.1 L183.1,196.1 L184.2,197.1 L185.3,198.1 L186.4,199.1 L187.5,200.0 L188.6,200.8 L189.7,201.7 L190.8,202.5 L191.9,203.2 L193.0,204.0 L194.1,204.7 L195.2,205.3 L196.3,205.9 L197.4,206.5 L198.5,207.0 L199.6,207.5 L200.7,207.9 L201.8,208.3 L202.9,208.7 L204.0,209.0 L205.1,209.3 L206.2,209.5 L207.3,209.7 L208.4,209.8 L209.5,209.9 L210.6,210.0 L211.7,210.0 L212.8,210.0 L213.9,209.9 L215.0,209.7 L216.1,209.6 L217.2,209.4 L218.3,209.1 L219.4,208.8 L220.5,208.4 L221.6,208.1 L222.7,207.6 L223.8,207.1 L224.9,206.6 L226.0,206.1 L227.1,205.5 L228.2,204.8 L229.3,204.1 L230.4,203.4 L231.5,202.7 L232.6,201.9 L233.7,201.0 L234.8,200.2 L235.9,199.3 L237.0,198.3 L238.1,197.4 L239.1,196.4 L240.2,195.3 L241.3,194.3 L242.4,193.2 L243.5,192.1 L244.6,190.9 L245.7,189.8 L246.8,188.6 L247.9,187.3 L249.0,186.1 L250.1,184.8 L251.2,183.6 L252.3,182.3 L253.4,180.9 L254.5,179.6 L255.6,178.3 L256.7,176.9 L257.8,175.5 L258.9,174.1 L260.0,172.8 L261.1,171.4 L262.2,170.0 L263.3,168.5 L264.4,167.1 L265.5,165.7 L266.6,164.3 L267.7,162.9 L268.8,161.5 L269.9,160.0 L271.0,158.6 L272.1,157.2 L273.2,155.9 L274.3,154.5 L275.4,153.1 L276.5,151.7 L277.6,150.4 L278.7,149.1 L279.8,147.7 L280.9,146.4 L282.0,145.2 L283.1,143.9 L284.2,142.7 L285.3,141.4 L286.4,140.2 L287.5,139.1 L288.6,137.9 L289.7,136.8 L290.8,135.7 L291.9,134.7 L293.0,133.6 L294.1,132.6 L295.2,131.7 L296.3,130.7 L297.4,129.8 L298.4,129.0 L299.5,128.1 L300.6,127.3 L301.7,126.6 L302.8,125.9 L303.9,125.2 L305.0,124.5 L306.1,123.9 L307.2,123.4 L308.3,122.9 L309.4,122.4 L310.5,121.9 L311.6,121.6 L312.7,121.2 L313.8,120.9 L314.9,120.6 L316.0,120.4 L317.1,120.3 L318.2,120.1 L319.3,120.0 L320.4,120.0 L321.5,120.0 L322.6,120.1 L323.7,120.2 L324.8,120.3 L325.9,120.5 L327.0,120.7 L328.1,121.0 L329.2,121.3 L330.3,121.7 L331.4,122.1 L332.5,122.5 L333.6,123.0 L334.7,123.5 L335.8,124.1 L336.9,124.7 L338.0,125.3 L339.1,126.0 L340.2,126.8 L341.3,127.5 L342.4,128.3 L343.5,129.2 L344.6,130.0 L345.7,130.9 L346.8,131.9 L347.9,132.9 L349.0,133.9 L350.1,134.9 L351.2,136.0 L352.3,137.1 L353.4,138.2 L354.5,139.4 L355.6,140.5 L356.6,141.7 L357.7,143.0 L358.8,144.2 L359.9,145.5 L361.0,146.8 L362.1,148.1 L363.2,149.4 L364.3,150.7 L365.4,152.1 L366.5,153.4 L367.6,154.8 L368.7,156.2 L369.8,157.6 L370.9,159.0 L372.0,160.4 L373.1,161.8 L374.2,163.2 L375.3,164.6 L376.4,166.1 L377.5,167.5 L378.6,168.9 L379.7,170.3 L380.8,171.7 L381.9,173.1 L383.0,174.5 L384.1,175.9 L385.2,177.2 L386.3,178.6 L387.4,179.9 L388.5,181.3 L389.6,182.6 L390.7,183.9 L391.8,185.2 L392.9,186.4 L394.0,187.7 L395.1,188.9 L396.2,190.1 L397.3,191.2 L398.4,192.4 L399.5,193.5 L400.6,194.6 L401.7,195.6 L402.8,196.6 L403.9,197.6 L405.0,198.6 L406.1,199.5 L407.2,200.4 L408.3,201.3 L409.4,202.1 L410.5,202.9 L411.6,203.6 L412.7,204.3 L413.8,205.0 L414.9,205.6 L415.9,206.2 L417.0,206.8 L418.1,207.3 L419.2,207.7 L420.3,208.2 L421.4,208.5 L422.5,208.9 L423.6,209.2 L424.7,209.4 L425.8,209.6 L426.9,209.8 L428.0,209.9 L429.1,210.0 L430.2,210.0 L431.3,210.0 L432.4,209.9 L433.5,209.8 L434.6,209.7 L435.7,209.5 L436.8,209.2 L437.9,208.9 L439.0,208.6 L440.1,208.3 L441.2,207.8 L442.3,207.4 L443.4,206.9 L444.5,206.4 L445.6,205.8 L446.7,205.2 L447.8,204.5 L448.9,203.8 L450.0,203.1 L451.1,202.3 L452.2,201.5 L453.3,200.6 L454.4,199.7 L455.5,198.8 L456.6,197.9 L457.7,196.9 L458.8,195.9 L459.9,194.8 L461.0,193.7 L462.1,192.6 L463.2,191.5 L464.3,190.3 L465.4,189.2 L466.5,188.0 L467.6,186.7 L468.7,185.5 L469.8,184.2 L470.9,182.9 L472.0,181.6 L473.1,180.3 L474.2,178.9 L475.2,177.6 L476.3,176.2 L477.4,174.8 L478.5,173.5 L479.6,172.1 L480.7,170.7 L481.8,169.2 L482.9,167.8 L484.0,166.4 L485.1,165.0" fill="none" stroke="var(--academic-text)" stroke-width="2.6" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M161.5,300.0 L162.3,298.9 L163.4,297.5 L164.5,296.1 L165.6,294.7 L166.7,293.3 L167.8,291.8 L168.9,290.4 L170.0,289.0 L171.1,287.6 L172.2,286.2 L173.3,284.8 L174.4,283.3 L175.5,281.9 L176.6,280.5 L177.7,279.1 L178.8,277.7 L179.8,276.3 L180.9,274.8 L182.0,273.4 L183.1,272.0 L184.2,270.6 L185.3,269.2 L186.4,267.8 L187.5,266.3 L188.6,264.9 L189.7,263.5 L190.8,262.1 L191.9,260.7 L193.0,259.2 L194.1,257.8 L195.2,256.4 L196.3,255.0 L197.4,253.6 L198.5,252.2 L199.6,250.7 L200.7,249.3 L201.8,247.9 L202.9,246.5 L204.0,245.1 L205.1,243.7 L206.2,242.2 L207.3,240.8 L208.4,239.4 L209.5,238.0 L210.6,236.6 L211.7,235.2 L212.8,233.7 L213.9,232.3 L215.0,230.9 L216.1,229.5 L217.2,228.1 L218.3,226.7 L219.4,225.2 L220.5,223.8 L221.6,222.4 L222.7,221.0 L223.8,219.6 L224.9,218.1 L226.0,216.7 L227.1,215.3 L228.2,213.9 L229.3,212.5 L230.4,211.1 L231.5,209.6 L232.6,208.2 L233.7,206.8 L234.8,205.4 L235.9,204.0 L237.0,202.6 L238.1,201.1 L239.1,199.7 L240.2,198.3 L241.3,196.9 L242.4,195.5 L243.5,194.1 L244.6,192.6 L245.7,191.2 L246.8,189.8 L247.9,188.4 L249.0,187.0 L250.1,185.6 L251.2,184.1 L252.3,182.7 L253.4,181.3 L254.5,179.9 L255.6,178.5 L256.7,177.0 L257.8,175.6 L258.9,174.2 L260.0,172.8 L261.1,171.4 L262.2,170.0 L263.3,168.5 L264.4,167.1 L265.5,165.7 L266.6,164.3 L267.7,162.9 L268.8,161.5 L269.9,160.0 L271.0,158.6 L272.1,157.2 L273.2,155.8 L274.3,154.4 L275.4,153.0 L276.5,151.5 L277.6,150.1 L278.7,148.7 L279.8,147.3 L280.9,145.9 L282.0,144.4 L283.1,143.0 L284.2,141.6 L285.3,140.2 L286.4,138.8 L287.5,137.4 L288.6,135.9 L289.7,134.5 L290.8,133.1 L291.9,131.7 L293.0,130.3 L294.1,128.9 L295.2,127.4 L296.3,126.0 L297.4,124.6 L298.4,123.2 L299.5,121.8 L300.6,120.4 L301.7,118.9 L302.8,117.5 L303.9,116.1 L305.0,114.7 L306.1,113.3 L307.2,111.9 L308.3,110.4 L309.4,109.0 L310.5,107.6 L311.6,106.2 L312.7,104.8 L313.8,103.3 L314.9,101.9 L316.0,100.5 L317.1,99.1 L318.2,97.7 L319.3,96.3 L320.4,94.8 L321.5,93.4 L322.6,92.0 L323.7,90.6 L324.8,89.2 L325.9,87.8 L327.0,86.3 L328.1,84.9 L329.2,83.5 L330.3,82.1 L331.4,80.7 L332.5,79.3 L333.6,77.8 L334.7,76.4 L335.8,75.0 L336.9,73.6 L338.0,72.2 L339.1,70.8 L340.2,69.3 L341.3,67.9 L342.4,66.5 L343.5,65.1 L344.6,63.7 L345.7,62.2 L346.8,60.8 L347.9,59.4 L349.0,58.0 L350.1,56.6 L351.2,55.2 L352.3,53.7 L353.4,52.3 L354.5,50.9 L355.6,49.5 L356.6,48.1 L357.7,46.7 L358.8,45.2 L359.9,43.8 L361.0,42.4 L362.1,41.0 L363.2,39.6 L364.3,38.2 L365.4,36.7 L366.5,35.3 L367.6,33.9 L368.7,32.5 L369.8,31.1 L370.7,30.0" fill="none" stroke="var(--color-theory)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="370.7" y="23.0" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">T</tspan>₁</text>
+  <path d="M148.6,30.0 L149.1,32.9 L150.2,39.4 L151.3,45.7 L152.4,51.9 L153.5,58.0 L154.6,63.8 L155.7,69.6 L156.8,75.2 L157.9,80.7 L159.0,86.0 L160.1,91.2 L161.2,96.3 L162.3,101.2 L163.4,106.0 L164.5,110.7 L165.6,115.2 L166.7,119.6 L167.8,123.9 L168.9,128.0 L170.0,132.0 L171.1,136.0 L172.2,139.7 L173.3,143.4 L174.4,146.9 L175.5,150.4 L176.6,153.7 L177.7,156.9 L178.8,159.9 L179.8,162.9 L180.9,165.8 L182.0,168.5 L183.1,171.2 L184.2,173.7 L185.3,176.1 L186.4,178.5 L187.5,180.7 L188.6,182.8 L189.7,184.8 L190.8,186.8 L191.9,188.6 L193.0,190.3 L194.1,192.0 L195.2,193.5 L196.3,195.0 L197.4,196.4 L198.5,197.7 L199.6,198.9 L200.7,200.0 L201.8,201.0 L202.9,201.9 L204.0,202.8 L205.1,203.6 L206.2,204.3 L207.3,204.9 L208.4,205.5 L209.5,206.0 L210.6,206.4 L211.7,206.7 L212.8,207.0 L213.9,207.2 L215.0,207.3 L216.1,207.4 L217.2,207.4 L218.3,207.4 L219.4,207.2 L220.5,207.1 L221.6,206.8 L222.7,206.5 L223.8,206.2 L224.9,205.8 L226.0,205.3 L227.1,204.8 L228.2,204.3 L229.3,203.7 L230.4,203.0 L231.5,202.3 L232.6,201.6 L233.7,200.8 L234.8,200.0 L235.9,199.1 L237.0,198.2 L238.1,197.3 L239.1,196.3 L240.2,195.3 L241.3,194.2 L242.4,193.1 L243.5,192.0 L244.6,190.9 L245.7,189.7 L246.8,188.5 L247.9,187.3 L249.0,186.1 L250.1,184.8 L251.2,183.6 L252.3,182.3 L253.4,180.9 L254.5,179.6 L255.6,178.3 L256.7,176.9 L257.8,175.5 L258.9,174.1 L260.0,172.8 L261.1,171.4 L262.2,170.0 L263.3,168.5 L264.4,167.1 L265.5,165.7 L266.6,164.3 L267.7,162.9 L268.8,161.5 L269.9,160.0 L271.0,158.6 L272.1,157.2 L273.2,155.9 L274.3,154.5 L275.4,153.1 L276.5,151.7 L277.6,150.4 L278.7,149.1 L279.8,147.7 L280.9,146.4 L282.0,145.2 L283.1,143.9 L284.2,142.7 L285.3,141.5 L286.4,140.3 L287.5,139.1 L288.6,138.0 L289.7,136.9 L290.8,135.8 L291.9,134.7 L293.0,133.7 L294.1,132.7 L295.2,131.8 L296.3,130.9 L297.4,130.0 L298.4,129.2 L299.5,128.4 L300.6,127.7 L301.7,127.0 L302.8,126.3 L303.9,125.7 L305.0,125.2 L306.1,124.7 L307.2,124.2 L308.3,123.8 L309.4,123.5 L310.5,123.2 L311.6,122.9 L312.7,122.8 L313.8,122.6 L314.9,122.6 L316.0,122.6 L317.1,122.7 L318.2,122.8 L319.3,123.0 L320.4,123.3 L321.5,123.6 L322.6,124.0 L323.7,124.5 L324.8,125.1 L325.9,125.7 L327.0,126.4 L328.1,127.2 L329.2,128.1 L330.3,129.0 L331.4,130.0 L332.5,131.1 L333.6,132.3 L334.7,133.6 L335.8,135.0 L336.9,136.5 L338.0,138.0 L339.1,139.7 L340.2,141.4 L341.3,143.2 L342.4,145.2 L343.5,147.2 L344.6,149.3 L345.7,151.5 L346.8,153.9 L347.9,156.3 L349.0,158.8 L350.1,161.5 L351.2,164.2 L352.3,167.1 L353.4,170.1 L354.5,173.1 L355.6,176.3 L356.6,179.6 L357.7,183.1 L358.8,186.6 L359.9,190.3 L361.0,194.0 L362.1,198.0 L363.2,202.0 L364.3,206.1 L365.4,210.4 L366.5,214.8 L367.6,219.3 L368.7,224.0 L369.8,228.8 L370.9,233.7 L372.0,238.8 L373.1,244.0 L374.2,249.3 L375.3,254.8 L376.4,260.4 L377.5,266.2 L378.6,272.0 L379.7,278.1 L380.8,284.3 L381.9,290.6 L383.0,297.1 L383.5,300.0" fill="none" stroke="var(--color-base)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="383.5" y="317.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">T</tspan>₃</text>
+  <path d="M117.9,300.0 L118.4,297.0 L119.5,289.5 L120.5,282.3 L121.6,275.5 L122.7,269.0 L123.8,262.9 L124.9,257.1 L126.0,251.6 L127.1,246.4 L128.2,241.5 L129.3,236.9 L130.4,232.5 L131.5,228.5 L132.6,224.6 L133.7,221.1 L134.8,217.7 L135.9,214.6 L137.0,211.7 L138.1,209.0 L139.2,206.5 L140.3,204.3 L141.4,202.2 L142.5,200.2 L143.6,198.5 L144.7,196.9 L145.8,195.5 L146.9,194.2 L148.0,193.1 L149.1,192.1 L150.2,191.3 L151.3,190.5 L152.4,189.9 L153.5,189.4 L154.6,189.0 L155.7,188.7 L156.8,188.5 L157.9,188.4 L159.0,188.4 L160.1,188.5 L161.2,188.6 L162.3,188.8 L163.4,189.0 L164.5,189.4 L165.6,189.7 L166.7,190.1 L167.8,190.6 L168.9,191.1 L170.0,191.6 L171.1,192.2 L172.2,192.8 L173.3,193.5 L174.4,194.1 L175.5,194.8 L176.6,195.5 L177.7,196.1 L178.8,196.8 L179.8,197.6 L180.9,198.3 L182.0,199.0 L183.1,199.7 L184.2,200.4 L185.3,201.1 L186.4,201.7 L187.5,202.4 L188.6,203.1 L189.7,203.7 L190.8,204.3 L191.9,204.9 L193.0,205.5 L194.1,206.0 L195.2,206.5 L196.3,207.0 L197.4,207.5 L198.5,207.9 L199.6,208.3 L200.7,208.6 L201.8,209.0 L202.9,209.3 L204.0,209.5 L205.1,209.7 L206.2,209.9 L207.3,210.0 L208.4,210.1 L209.5,210.2 L210.6,210.2 L211.7,210.2 L212.8,210.1 L213.9,210.0 L215.0,209.9 L216.1,209.7 L217.2,209.4 L218.3,209.2 L219.4,208.9 L220.5,208.5 L221.6,208.1 L222.7,207.7 L223.8,207.2 L224.9,206.7 L226.0,206.1 L227.1,205.5 L228.2,204.8 L229.3,204.2 L230.4,203.4 L231.5,202.7 L232.6,201.9 L233.7,201.1 L234.8,200.2 L235.9,199.3 L237.0,198.3 L238.1,197.4 L239.1,196.4 L240.2,195.3 L241.3,194.3 L242.4,193.2 L243.5,192.1 L244.6,190.9 L245.7,189.8 L246.8,188.6 L247.9,187.3 L249.0,186.1 L250.1,184.8 L251.2,183.6 L252.3,182.3 L253.4,180.9 L254.5,179.6 L255.6,178.3 L256.7,176.9 L257.8,175.5 L258.9,174.1 L260.0,172.8 L261.1,171.4 L262.2,170.0 L263.3,168.5 L264.4,167.1 L265.5,165.7 L266.6,164.3 L267.7,162.9 L268.8,161.5 L269.9,160.0 L271.0,158.6 L272.1,157.2 L273.2,155.9 L274.3,154.5 L275.4,153.1 L276.5,151.7 L277.6,150.4 L278.7,149.1 L279.8,147.7 L280.9,146.4 L282.0,145.2 L283.1,143.9 L284.2,142.7 L285.3,141.4 L286.4,140.2 L287.5,139.1 L288.6,137.9 L289.7,136.8 L290.8,135.7 L291.9,134.7 L293.0,133.6 L294.1,132.6 L295.2,131.7 L296.3,130.7 L297.4,129.8 L298.4,128.9 L299.5,128.1 L300.6,127.3 L301.7,126.6 L302.8,125.8 L303.9,125.2 L305.0,124.5 L306.1,123.9 L307.2,123.3 L308.3,122.8 L309.4,122.3 L310.5,121.9 L311.6,121.5 L312.7,121.1 L313.8,120.8 L314.9,120.6 L316.0,120.3 L317.1,120.1 L318.2,120.0 L319.3,119.9 L320.4,119.8 L321.5,119.8 L322.6,119.8 L323.7,119.9 L324.8,120.0 L325.9,120.1 L327.0,120.3 L328.1,120.5 L329.2,120.7 L330.3,121.0 L331.4,121.4 L332.5,121.7 L333.6,122.1 L334.7,122.5 L335.8,123.0 L336.9,123.5 L338.0,124.0 L339.1,124.5 L340.2,125.1 L341.3,125.7 L342.4,126.3 L343.5,126.9 L344.6,127.6 L345.7,128.3 L346.8,128.9 L347.9,129.6 L349.0,130.3 L350.1,131.0 L351.2,131.7 L352.3,132.4 L353.4,133.2 L354.5,133.9 L355.6,134.5 L356.6,135.2 L357.7,135.9 L358.8,136.5 L359.9,137.2 L361.0,137.8 L362.1,138.4 L363.2,138.9 L364.3,139.4 L365.4,139.9 L366.5,140.3 L367.6,140.6 L368.7,141.0 L369.8,141.2 L370.9,141.4 L372.0,141.5 L373.1,141.6 L374.2,141.6 L375.3,141.5 L376.4,141.3 L377.5,141.0 L378.6,140.6 L379.7,140.1 L380.8,139.5 L381.9,138.7 L383.0,137.9 L384.1,136.9 L385.2,135.8 L386.3,134.5 L387.4,133.1 L388.5,131.5 L389.6,129.8 L390.7,127.8 L391.8,125.7 L392.9,123.5 L394.0,121.0 L395.1,118.3 L396.2,115.4 L397.3,112.3 L398.4,108.9 L399.5,105.4 L400.6,101.5 L401.7,97.5 L402.8,93.1 L403.9,88.5 L405.0,83.6 L406.1,78.4 L407.2,72.9 L408.3,67.1 L409.4,61.0 L410.5,54.5 L411.6,47.7 L412.7,40.5 L413.8,33.0 L414.2,30.0" fill="none" stroke="var(--color-practice)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="414.2" y="23.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">T</tspan>₅</text>
+  <path d="M106.6,30.0 L107.4,33.9 L108.5,39.2 L109.6,44.3 L110.7,49.2 L111.8,53.9 L112.9,58.4 L114.0,62.7 L115.1,66.9 L116.2,70.9 L117.3,74.8 L118.4,78.5 L119.5,82.1 L120.5,85.6 L121.6,88.9 L122.7,92.2 L123.8,95.3 L124.9,98.3 L126.0,101.3 L127.1,104.2 L128.2,106.9 L129.3,109.6 L130.4,112.3 L131.5,114.9 L132.6,117.4 L133.7,119.8 L134.8,122.2 L135.9,124.5 L137.0,126.8 L138.1,129.1 L139.2,131.3 L140.3,133.4 L141.4,135.6 L142.5,137.6 L143.6,139.7 L144.7,141.7 L145.8,143.7 L146.9,145.7 L148.0,147.6 L149.1,149.5 L150.2,151.3 L151.3,153.2 L152.4,155.0 L153.5,156.8 L154.6,158.6 L155.7,160.3 L156.8,162.0 L157.9,163.7 L159.0,165.4 L160.1,167.1 L161.2,168.7 L162.3,170.3 L163.4,171.9 L164.5,173.4 L165.6,175.0 L166.7,176.5 L167.8,178.0 L168.9,179.4 L170.0,180.9 L171.1,182.3 L172.2,183.7 L173.3,185.0 L174.4,186.3 L175.5,187.6 L176.6,188.9 L177.7,190.1 L178.8,191.3 L179.8,192.5 L180.9,193.7 L182.0,194.8 L183.1,195.8 L184.2,196.9 L185.3,197.9 L186.4,198.9 L187.5,199.8 L188.6,200.7 L189.7,201.5 L190.8,202.4 L191.9,203.1 L193.0,203.9 L194.1,204.6 L195.2,205.2 L196.3,205.9 L197.4,206.4 L198.5,207.0 L199.6,207.5 L200.7,207.9 L201.8,208.3 L202.9,208.7 L204.0,209.0 L205.1,209.3 L206.2,209.5 L207.3,209.7 L208.4,209.8 L209.5,209.9 L210.6,210.0 L211.7,210.0 L212.8,210.0 L213.9,209.9 L215.0,209.7 L216.1,209.6 L217.2,209.4 L218.3,209.1 L219.4,208.8 L220.5,208.4 L221.6,208.1 L222.7,207.6 L223.8,207.1 L224.9,206.6 L226.0,206.1 L227.1,205.5 L228.2,204.8 L229.3,204.1 L230.4,203.4 L231.5,202.7 L232.6,201.9 L233.7,201.0 L234.8,200.2 L235.9,199.3 L237.0,198.3 L238.1,197.4 L239.1,196.4 L240.2,195.3 L241.3,194.3 L242.4,193.2 L243.5,192.1 L244.6,190.9 L245.7,189.8 L246.8,188.6 L247.9,187.3 L249.0,186.1 L250.1,184.8 L251.2,183.6 L252.3,182.3 L253.4,180.9 L254.5,179.6 L255.6,178.3 L256.7,176.9 L257.8,175.5 L258.9,174.1 L260.0,172.8 L261.1,171.4 L262.2,170.0 L263.3,168.5 L264.4,167.1 L265.5,165.7 L266.6,164.3 L267.7,162.9 L268.8,161.5 L269.9,160.0 L271.0,158.6 L272.1,157.2 L273.2,155.9 L274.3,154.5 L275.4,153.1 L276.5,151.7 L277.6,150.4 L278.7,149.1 L279.8,147.7 L280.9,146.4 L282.0,145.2 L283.1,143.9 L284.2,142.7 L285.3,141.4 L286.4,140.2 L287.5,139.1 L288.6,137.9 L289.7,136.8 L290.8,135.7 L291.9,134.7 L293.0,133.6 L294.1,132.6 L295.2,131.7 L296.3,130.7 L297.4,129.8 L298.4,129.0 L299.5,128.1 L300.6,127.3 L301.7,126.6 L302.8,125.9 L303.9,125.2 L305.0,124.5 L306.1,123.9 L307.2,123.4 L308.3,122.9 L309.4,122.4 L310.5,121.9 L311.6,121.6 L312.7,121.2 L313.8,120.9 L314.9,120.6 L316.0,120.4 L317.1,120.3 L318.2,120.1 L319.3,120.0 L320.4,120.0 L321.5,120.0 L322.6,120.1 L323.7,120.2 L324.8,120.3 L325.9,120.5 L327.0,120.7 L328.1,121.0 L329.2,121.3 L330.3,121.7 L331.4,122.1 L332.5,122.5 L333.6,123.0 L334.7,123.6 L335.8,124.1 L336.9,124.8 L338.0,125.4 L339.1,126.1 L340.2,126.9 L341.3,127.6 L342.4,128.5 L343.5,129.3 L344.6,130.2 L345.7,131.1 L346.8,132.1 L347.9,133.1 L349.0,134.2 L350.1,135.2 L351.2,136.3 L352.3,137.5 L353.4,138.7 L354.5,139.9 L355.6,141.1 L356.6,142.4 L357.7,143.7 L358.8,145.0 L359.9,146.3 L361.0,147.7 L362.1,149.1 L363.2,150.6 L364.3,152.0 L365.4,153.5 L366.5,155.0 L367.6,156.6 L368.7,158.1 L369.8,159.7 L370.9,161.3 L372.0,162.9 L373.1,164.6 L374.2,166.3 L375.3,168.0 L376.4,169.7 L377.5,171.4 L378.6,173.2 L379.7,175.0 L380.8,176.8 L381.9,178.7 L383.0,180.5 L384.1,182.4 L385.2,184.3 L386.3,186.3 L387.4,188.3 L388.5,190.3 L389.6,192.4 L390.7,194.4 L391.8,196.6 L392.9,198.7 L394.0,200.9 L395.1,203.2 L396.2,205.5 L397.3,207.8 L398.4,210.2 L399.5,212.6 L400.6,215.1 L401.7,217.7 L402.8,220.4 L403.9,223.1 L405.0,225.8 L406.1,228.7 L407.2,231.7 L408.3,234.7 L409.4,237.8 L410.5,241.1 L411.6,244.4 L412.7,247.9 L413.8,251.5 L414.9,255.2 L415.9,259.1 L417.0,263.1 L418.1,267.3 L419.2,271.6 L420.3,276.1 L421.4,280.8 L422.5,285.7 L423.6,290.8 L424.7,296.1 L425.5,300.0" fill="none" stroke="var(--color-remark)" stroke-width="1.9" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="425.5" y="317.0" fill="var(--color-remark)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">T</tspan>₇</text>
+  <text x="489.1" y="155.0" fill="var(--academic-text)" font-size="12.5" text-anchor="start" font-weight="600">sin <tspan font-style="italic">x</tspan></text>
+</svg>
+<figcaption>sin <em>x</em> (kalın) ve Taylor polinomları <em>T</em>₁, <em>T</em>₃, <em>T</em>₅, <em>T</em>₇; Matplotlib kodunun çizdiği grafiğin aynı verilerle (400 nokta, &#8722;3 &#8804; <em>y</em> &#8804; 3 penceresi) çizilmiş hâli. Derece arttıkça polinom sinüsü daha geniş bir aralıkta izler.</figcaption>
+</figure>
+```
+
+Bütün polinomlar $0$ yakınında $\sin x$ ile çakışır; derece arttıkça çakışmanın sürdüğü aralık genişler. Uzakta ise her polinom en yüksek dereceli teriminin işaretine göre $\pm\infty$'a gider. Taylor polinomu yerel bir yaklaşımdır ve hatası Lagrange kalanıyla kestirilir (bkz. [Analiz 2](../analiz-2/taylor-formulu.html#thm-taylor-lagrange)).
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmaları önce kendiniz çözmeye çalışın; her çözümde kod ve çıktısı verilmiştir.
+
+:::: {#exr-sym-ozdeslik-kosinus name="Kosinüsün Dördüncü Kuvveti"}
+$\cos^4 x - \sin^4 x = \cos 2x$ özdeşliğini SymPy ile doğrulayınız.
+
+::: {.cozum}
+**Adım 1.** İki tarafı ayrı ifadeler olarak yazıp farkı sadeleştiririz. Bu, özdeşlik doğrulama tarifidir (bkz. @exm-sym-ozdeslik).
+
+**Adım 2.** Sol tarafı çarpanlarına ayırarak özdeşliğin neden doğru olduğunu da görelim:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+lhs = sp.cos(x)**4 - sp.sin(x)**4
+rhs = sp.cos(2*x)
+print(sp.simplify(lhs - rhs))
+print(sp.factor(lhs))
+```
+
+Çıktı:
+
+```text
+0
+(-sin(x) + cos(x))*(sin(x) + cos(x))*(sin(x)**2 + cos(x)**2)
+```
+
+**Adım 3.** Fark $0$ olduğundan özdeşlik doğrudur. Çarpanlara ayrılmış biçim elle ispatı da verir. `factor`, $a^4 - b^4 = (a - b)(a + b)(a^2 + b^2)$ ayrışımını yaptı; ilk iki çarpanın çarpımı $\cos^2 x - \sin^2 x = \cos 2x$, üçüncü çarpan da $1$'dir:
+
+$$\cos^4 x - \sin^4 x = (\cos^2 x - \sin^2 x)(\cos^2 x + \sin^2 x) = \cos 2x \cdot 1.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-limit-kok name="Köklü Bir Limit"}
+$\displaystyle\lim_{x \to 0} \frac{\sqrt{x + 4} - 2}{x}$ limitini SymPy ile hesaplayınız ve sonucu eşlenikle çarparak doğrulayınız.
+
+::: {.cozum}
+**Adım 1.** Limiti doğrudan hesaplarız.
+
+**Adım 2.** Payı eşleniği $\sqrt{x + 4} + 2$ ile çarpınca paydaki köklerin gittiğini görürüz. Böylece kesir $1/(\sqrt{x + 4} + 2)$ olur ve bunun limiti doğrudan alınır:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+f = (sp.sqrt(x + 4) - 2) / x
+print(sp.limit(f, x, 0))
+conj = sp.sqrt(x + 4) + 2
+print(sp.expand((sp.sqrt(x + 4) - 2) * conj))
+print(sp.limit(1 / conj, x, 0))
+```
+
+Çıktı:
+
+```text
+1/4
+x
+1/4
+```
+
+**Adım 3.** $(\sqrt{x + 4} - 2)(\sqrt{x + 4} + 2) = x$ olduğundan $x \ne 0$ için
+
+$$\frac{\sqrt{x + 4} - 2}{x} = \frac{1}{\sqrt{x + 4} + 2} \longrightarrow \frac{1}{2 + 2} = \frac{1}{4}$$
+
+bulunur. İki yol aynı sonucu verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-ekstremum name="Bir Kübik Polinomun Yerel Ekstremumları"}
+$f(x) = x^3 - 3x + 1$ fonksiyonunun yerel ekstremum noktalarını ve değerlerini SymPy ile bulunuz.
+
+::: {.cozum}
+**Adım 1.** Kritik noktalar $f'(x) = 0$ denkleminin çözümleridir.
+
+**Adım 2.** Her kritik noktada ikinci türevin işaretine bakarız: $f''(c) < 0$ ise yerel maksimum, $f''(c) > 0$ ise yerel minimum vardır (bkz. [Analiz 2](../analiz-2/monotonluk-ve-ekstremum-testleri.html#thm-ikinci-turev-testi)).
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+f = x**3 - 3*x + 1
+f1 = sp.diff(f, x)
+f2 = sp.diff(f, x, 2)
+critical = sp.solve(f1, x)
+print("f'(x) =", f1, "  kritik noktalar:", critical)
+for c in critical:
+    print(c, "f'' =", f2.subs(x, c), "f =", f.subs(x, c))
+```
+
+Çıktı:
+
+```text
+f'(x) = 3*x**2 - 3   kritik noktalar: [-1, 1]
+-1 f'' = -6 f = 3
+1 f'' = 6 f = -1
+```
+
+**Adım 3.** $f'(x) = 3x^2 - 3 = 0$ denkleminin kökleri $\pm 1$'dir. $f''(-1) = -6 < 0$ olduğundan $x = -1$'de yerel maksimum vardır ve değeri $f(-1) = 3$'tür. $f''(1) = 6 > 0$ olduğundan $x = 1$'de yerel minimum vardır ve değeri $f(1) = -1$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-belirli-integral name="Kısmi İntegrasyonlu Bir Belirli İntegral"}
+$\displaystyle\int_0^1 x^2 e^x\,dx$ integralini kesin olarak hesaplayınız ve ondalık değerini veriniz.
+
+::: {.cozum}
+**Adım 1.** Önce ilkeli, sonra belirli integrali hesaplarız.
+
+**Adım 2.** Kesin sonucu `evalf` ile ondalığa çeviririz:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+F = sp.integrate(x**2 * sp.exp(x), x)
+print(F)
+I = sp.integrate(x**2 * sp.exp(x), (x, 0, 1))
+print(I, "=", I.evalf())
+```
+
+Çıktı:
+
+```text
+(x**2 - 2*x + 2)*exp(x)
+-2 + E = 0.718281828459045
+```
+
+**Adım 3.** İlkel $(x^2 - 2x + 2)e^x$'tir; iki kez kısmi integrasyonla elle de bulunur. Sınırları koyarsak
+
+$$\int_0^1 x^2 e^x\,dx = (1 - 2 + 2)e - 2 = e - 2 \approx 0{,}718281828$$
+
+olur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-basit-kesirler name="Basit Kesirlerle İntegral"}
+$\displaystyle\int \frac{3x + 5}{(x - 1)(x + 2)}\,dx$ integralini önce `apart` ile basit kesirlere ayırarak, sonra `integrate` ile hesaplayınız.
+
+::: {.cozum}
+**Adım 1.** `apart` ile kesri basit kesirlere ayırırız.
+
+**Adım 2.** İntegrali alır ve bulunan ilkeli türev alarak denetleriz:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+r = (3*x + 5) / ((x - 1) * (x + 2))
+print(sp.apart(r))
+F = sp.integrate(r, x)
+print(F)
+print(sp.simplify(sp.diff(F, x) - r))
+```
+
+Çıktı:
+
+```text
+1/(3*(x + 2)) + 8/(3*(x - 1))
+8*log(x - 1)/3 + log(x + 2)/3
+0
+```
+
+**Adım 3.** Ayrışım
+
+$$\frac{3x + 5}{(x - 1)(x + 2)} = \frac{8}{3(x - 1)} + \frac{1}{3(x + 2)}$$
+
+biçimindedir. Gerçekten $x = 1$ koyunca $A = 8/3$, $x = -2$ koyunca $B = (-1)/(-3) = 1/3$ bulunur. Buradan
+
+$$\int \frac{3x + 5}{(x - 1)(x + 2)}\,dx = \frac{8}{3}\ln|x - 1| + \frac{1}{3}\ln|x + 2| + C$$
+
+olur. SymPy mutlak değerleri ve sabiti yazmaz; bu farkı İntegral kısmındaki uyarıda görmüştük (bkz. [Analiz 2](../analiz-2/rasyonel-fonksiyonlarin-integrali.html#exm-farkli-dogrusal-carpanlar)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-taylor-log name="Logaritmanın Taylor Polinomu"}
+$\ln(1 + x)$ fonksiyonunun $0$ etrafındaki beşinci Taylor polinomu $T_5$'i bulunuz. $T_5(0{,}1)$ değerinin $\ln 1{,}1$ sayısından farkını hesaplayıp $0{,}1^6/6$ sınırıyla karşılaştırınız.
+
+::: {.cozum}
+**Adım 1.** `series` ile $x^5$ terimine kadar açılımı alırız.
+
+**Adım 2.** $0{,}1$'i `sp.Rational(1, 10)` olarak koyarız. Böylece $T_5(0{,}1)$ kesin bir kesir olur; hesaplanan fark yuvarlamadan değil, yalnız açılımın kesilmesinden gelir:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+T5 = sp.series(sp.log(1 + x), x, 0, 6).removeO()
+print(T5)
+h = sp.Rational(1, 10)
+approx = T5.subs(x, h)
+exact = sp.log(1 + h)
+print(approx, "=", approx.evalf(12))
+print("ln(1.1) =", exact.evalf(12))
+print("hata =", (approx - exact).evalf(5))
+print("sınır =", (h**6 / 6).evalf(5))
+```
+
+Çıktı:
+
+```text
+x**5/5 - x**4/4 + x**3/3 - x**2/2 + x
+285931/3000000 = 0.0953103333333
+ln(1.1) = 0.0953101798043
+hata = 1.5353e-7
+sınır = 1.6667e-7
+```
+
+**Adım 3.** $T_5(x) = x - \frac{x^2}{2} + \frac{x^3}{3} - \frac{x^4}{4} + \frac{x^5}{5}$'tir. Hata yaklaşık $1{,}535 \cdot 10^{-7}$'dir ve $0{,}1^6/6 \approx 1{,}667 \cdot 10^{-7}$ sınırının altında kalır. $x = 0{,}1$ için açılım alterne bir seridir ve terimlerin mutlak değeri azalır. Bu yüzden hata, atılan ilk terimin mutlak değerinden küçüktür; atılan ilk terim de $-x^6/6$'dır (bkz. [Analiz 2](../analiz-2/taylor-formulu.html#exm-taylor-logaritma)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-teleskopik name="Teleskopik Bir Toplam"}
+$\displaystyle\sum_{k=1}^{n} \frac{1}{k(k+1)}$ toplamının kapalı biçimini ve $n \to \infty$ iken limitini SymPy ile bulunuz.
+
+::: {.cozum}
+**Adım 1.** Genel terimi `apart` ile basit kesirlere ayırırız; ikinci argüman `k`, ayrıştırmanın hangi değişkene göre yapılacağını söyler.
+
+**Adım 2.** Kısmi toplamı `summation` ile hesaplar, sonra limitini alır ve sonsuz toplamla karşılaştırırız:
+
+```python
+import sympy as sp
+
+k, n = sp.symbols("k n", integer=True, positive=True)
+a = 1 / (k * (k + 1))
+print(sp.apart(a, k))
+S = sp.simplify(sp.summation(a, (k, 1, n)))
+print(S)
+print(sp.limit(S, n, sp.oo), sp.summation(a, (k, 1, sp.oo)))
+```
+
+Çıktı:
+
+```text
+-1/(k + 1) + 1/k
+n/(n + 1)
+1 1
+```
+
+**Adım 3.** $\frac{1}{k(k+1)} = \frac{1}{k} - \frac{1}{k+1}$ olduğundan toplamda ardışık terimler birbirini götürür:
+
+$$\sum_{k=1}^{n} \left(\frac{1}{k} - \frac{1}{k+1}\right) = 1 - \frac{1}{n+1} = \frac{n}{n+1}.$$
+
+Limiti $1$'dir; serinin toplamı da $1$'dir (bkz. [Analiz 2](../analiz-2/serilere-giris.html#def-teleskopik-seri)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-dogrusal-olmayan-sistem name="Doğrusal Olmayan Bir Sistem"}
+$x^2 + y^2 = 25$, $xy = 12$ sisteminin bütün çözümlerini SymPy ile bulunuz ve doğrulayınız.
+
+::: {.cozum}
+**Adım 1.** Denklemleri `sp.Eq` ile yazıp `solve`'a veririz. Sözlük seçeneği olmadan `solve` çözümleri $(x, y)$ demetleri olarak döndürür.
+
+**Adım 2.** Her çözümü iki denkleme koyup hepsinin sağlandığını `all` ile denetleriz:
+
+```python
+import sympy as sp
+
+x, y = sp.symbols("x y")
+eqs = [sp.Eq(x**2 + y**2, 25), sp.Eq(x * y, 12)]
+sols = sp.solve(eqs, [x, y])
+print(sols)
+print(all(e.subs({x: a, y: b}) for a, b in sols for e in eqs))
+```
+
+Çıktı:
+
+```text
+[(-4, -3), (-3, -4), (3, 4), (4, 3)]
+True
+```
+
+**Adım 3.** Dört çözüm vardır: $(3, 4)$, $(4, 3)$, $(-3, -4)$, $(-4, -3)$. Elle de bulunur: $(x + y)^2 = 25 + 24 = 49$ ve $(x - y)^2 = 25 - 24 = 1$ olduğundan $x + y = \pm 7$, $x - y = \pm 1$'dir. Dört işaret seçimi dört çözümü verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-matris-kuvveti name="Köşegenleştirmeyle Matris Kuvveti"}
+$A = \begin{pmatrix} 2 & 1 \\ 1 & 2 \end{pmatrix}$ matrisini köşegenleştirerek $A^n$ için genel bir formül bulunuz ve $n = 10$ için doğrulayınız.
+
+::: {.cozum}
+**Adım 1.** `diagonalize` ile $A = PDP^{-1}$ ayrışımını buluruz.
+
+**Adım 2.** $A^n = PD^nP^{-1}$'dir ve köşegen matrisin kuvveti köşegen girdilerin kuvvetidir. $n$'yi negatif olmayan bir tam sayı sembolü olarak tanımlarsak SymPy formülü sembolik olarak hesaplar:
+
+```python
+import sympy as sp
+
+n = sp.symbols("n", integer=True, nonnegative=True)
+A = sp.Matrix([[2, 1], [1, 2]])
+P, D = A.diagonalize()
+print(P, D)
+An = P * D**n * P.inv()
+print(An)
+print(An.subs(n, 10) == A**10, A**10)
+```
+
+Çıktı:
+
+```text
+Matrix([[-1, 1], [1, 1]]) Matrix([[1, 0], [0, 3]])
+Matrix([[3**n/2 + 1/2, 3**n/2 - 1/2], [3**n/2 - 1/2, 3**n/2 + 1/2]])
+True Matrix([[29525, 29524], [29524, 29525]])
+```
+
+**Adım 3.** Özdeğerler $1$ ve $3$'tür, özvektörler $(-1, 1)$ ve $(1, 1)$'dir. Buradan
+
+$$A^n = \frac{1}{2}\begin{pmatrix} 3^n + 1 & 3^n - 1 \\ 3^n - 1 & 3^n + 1 \end{pmatrix}$$
+
+bulunur. $n = 10$ için $3^{10} = 59049$ olduğundan köşegen girdiler $29525$, diğerleri $29524$'tür ve doğrudan hesaplanan $A^{10}$ ile aynıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-parametreli-matris name="Parametreli Bir Matrisin Tersinirliği"}
+$K = \begin{pmatrix} 1 & k & 0 \\ k & 1 & k \\ 0 & k & 1 \end{pmatrix}$ matrisinin hangi $k$ değerleri için tersinir olmadığını SymPy ile bulunuz.
+
+::: {.cozum}
+**Adım 1.** Bir kare matris ancak ve ancak determinantı sıfırdan farklıysa tersinirdir (bkz. [Lineer Cebir](../lineer-cebir/determinantlar/determinant.html#thm-determinant-regulerlik)). Determinantı $k$'ye bağlı bir ifade olarak hesaplarız.
+
+**Adım 2.** Determinantı sıfır yapan $k$ değerlerini `solve` ile bulur, bu değerlerde rankı da denetleriz:
+
+```python
+import sympy as sp
+
+k = sp.symbols("k")
+K = sp.Matrix([[1, k, 0], [k, 1, k], [0, k, 1]])
+d = K.det()
+print(d)
+roots = sp.solve(d, k)
+print(roots)
+for r in roots:
+    print(r, K.subs(k, r).rank())
+```
+
+Çıktı:
+
+```text
+1 - 2*k**2
+[-sqrt(2)/2, sqrt(2)/2]
+-sqrt(2)/2 2
+sqrt(2)/2 2
+```
+
+**Adım 3.** $\det K = 1 - 2k^2$'dir ve $k = \pm\frac{\sqrt{2}}{2}$ için sıfır olur. Bu iki değerde rank $2$'ye düşer, yani $K$ tersinir değildir. Diğer bütün $k$ değerlerinde $K$ tersinirdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-sym-newton name="Sembolik Türevle Newton Yöntemi"}
+$x^3 - 2x - 5 = 0$ denkleminin kökünü Newton yöntemiyle $x_0 = 2$'den başlayarak beş adımda hesaplayınız. Türevi `sp.diff` ile bulunuz, fonksiyonları `lambdify` ile sayısallaştırınız ve sonucu `sp.nsolve` ile karşılaştırınız.
+
+::: {.cozum}
+**Adım 1.** Newton yinelemesi $x_{k+1} = x_k - f(x_k)/f'(x_k)$'dir (bkz. [Nümerik Analiz](../numerik-analiz/newton-raphson-metodu.html#def-nwt-metot)). Türevi elle yazmak yerine SymPy'ye bulduruyoruz.
+
+**Adım 2.** $f$ ve $f'$'yi `lambdify` ile Python fonksiyonlarına çevirip yinelemeyi sıradan bir döngüyle yaparız:
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+expr = x**3 - 2*x - 5
+f = sp.lambdify(x, expr, "numpy")
+fp = sp.lambdify(x, sp.diff(expr, x), "numpy")
+xk = 2.0
+for k in range(1, 6):
+    xk = xk - f(xk) / fp(xk)
+    print(k, xk)
+print(sp.nsolve(expr, x, 2))
+```
+
+Çıktı:
+
+```text
+1 2.1
+2 2.094568121104185
+3 2.094551481698199
+4 2.0945514815423265
+5 2.0945514815423265
+2.09455148154233
+```
+
+**Adım 3.** $f'(x) = 3x^2 - 2$'dir. İlk adım $x_1 = 2 - \frac{-1}{10} = 2{,}1$'dir. Yineleme dördüncü adımda $2{,}0945514815423265$ değerine oturur ve `nsolve` aynı kökü verir. Doğru basamak sayısının her adımda kabaca ikiye katlanması, Newton yönteminin karesel yakınsamasıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde SymPy ile kesin hesap yapmayı öğrendik: semboller ve varsayımlar, ifade dönüşümleri, limit, türev, integral, seri, denklem, diferansiyel denklem ve matris hesapları. Sembolik sonuçları da `lambdify` ile NumPy'ye taşıdık. Ancak birçok problemin kapalı biçimde çözümü yoktur. $\cos x = x$ denkleminde gördüğümüz gibi o zaman sayısal yöntemlere başvururuz. Bir sonraki bölüm [Kök Bulma ve Optimizasyon](kok-bulma-ve-optimizasyon.qmd), denklemlerin köklerini ve fonksiyonların minimumlarını SciPy ile sayısal olarak bulmayı anlatıyor.

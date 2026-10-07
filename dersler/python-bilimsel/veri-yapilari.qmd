@@ -1,0 +1,2602 @@
+---
+title: "Veri Yapıları ve Comprehension"
+pagetitle: "Veri Yapıları ve Comprehension"
+description: "Python'da liste, demet, sözlük ve küme yapıları, indeksleme ve dilimleme, takma ad tuzakları, comprehension yazımı, zip, enumerate, sorted ve itertools ile Eratosthenes kalburu, Pascal üçgeni ve sayma problemleri."
+---
+
+Matematikte çoğu zaman tek tek sayılarla değil, sayı topluluklarıyla çalışırız: bir dizinin ilk on terimi, düzlemde bir nokta belirten $(x, y)$ ikilisi, bir sayının bölenler kümesi, her asal çarpana bir üs karşılık getiren çarpanlara ayırma. [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd) ve [Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd) bölümlerinde tek tek değerlerle, döngülerle ve fonksiyonlarla çalıştık. Bu bölümde bu toplulukları tutan dört yerleşik yapıyı tanıyacağız: liste, demet, sözlük ve küme.
+
+Bu yapıların her birinin matematikte tanıdık bir karşılığı vardır. Liste sonlu bir diziye, demet sıralı bir $n$'liye, küme sonlu bir kümeye, sözlük de tanım kümesi sonlu bir fonksiyona benzer. Python'un **comprehension** yazımı ise küme kurucu gösterimin, yani $\{k^2 : k \in A,\ k \text{ tek}\}$ gibi ifadelerin neredeyse birebir karşılığıdır.
+
+Bölümün sonunda bu araçlarla Pascal üçgenini ve Eratosthenes kalburunu kuracak, `itertools` modülüyle permütasyonları ve kombinasyonları tek tek üretip sayacağız.
+
+## Listeler
+
+İlk yapımız, sonlu dizilerin Python'daki karşılığı olan listedir.
+
+::: {#def-ver-liste name="Liste"}
+**Liste** (list), köşeli parantez içinde virgülle ayrılarak yazılan nesnelerin sıralı topluluğudur: `[2, 3, 5, 7]`. Bir `a` listesinin eleman sayısı `len(a)` ile bulunur. $n$ elemanlı bir `a` listesinin elemanlarına `a[0]`, `a[1]`, …, `a[n - 1]` biçiminde **indis** (index) ile ulaşılır.
+:::
+
+Yani liste, $(a_0, a_1, \dots, a_{n-1})$ sonlu dizisinin Python'daki karşılığıdır. İndisler $0$'dan başlar; bu yüzden son elemanın indisi $n$ değil $n - 1$'dir. Bir liste aynı elemanı birden çok kez içerebilir, elemanlarının sırası önemlidir ve farklı türden nesneleri bir arada tutabilir.
+
+Python negatif indislere de izin verir: `a[-1]` son elemanı, `a[-2]` sondan ikinci elemanı gösterir. Genel olarak $-n \le i < 0$ için `a[i]` ile `a[i + n]` aynı elemandır. Listenin dışına düşen bir indis, örneğin $n$ elemanlı bir listede `a[n]`, `IndexError` hatası verir.
+
+::: {#exm-ver-liste-erisim name="Bir Listenin Elemanlarına Erişim"}
+İlk altı asalı bir listede toplayıp elemanlarına pozitif ve negatif indislerle ulaşalım. `in` işleci bir nesnenin listede bulunup bulunmadığını sorar; `sum`, `min` ve `max` ise listenin bütün elemanları üzerinde çalışır.
+
+```python
+primes = [2, 3, 5, 7, 11, 13]
+print(len(primes))      # eleman sayısı
+print(primes[0])        # ilk eleman: indis 0
+print(primes[5])        # son eleman: indis len - 1
+print(primes[-1])       # sondan birinci
+print(primes[-6])       # sondan altıncı, yani ilk eleman
+print(sum(primes), min(primes), max(primes))
+print(7 in primes, 9 in primes)
+mixed = [1, 2.5, "üç", [4, 5]]   # farklı türler bir arada
+print(len(mixed), mixed[3][0])
+```
+
+Çıktı:
+
+```text
+6
+2
+13
+13
+2
+41 2 13
+True False
+4 4
+```
+
+`mixed` listesinin son elemanı da bir listedir; `mixed[3][0]` önce bu iç listeyi, sonra onun ilk elemanını alır. Aşağıdaki şekil, `primes` listesindeki her elemanın iki ayrı indisle çağrılabildiğini gösteriyor.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="97.0 23.5 568.0 127.5" role="img" aria-label="Six cells holding 2, 3, 5, 7, 11, 13; indices 0 to 5 above the cells and negative indices -6 to -1 below them">
+  <rect x="170.0" y="62.0" width="80.0" height="46.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="210.0" y="90.4" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">2</text>
+  <text x="210.0" y="48.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">0</text>
+  <text x="210.0" y="134.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">&#8722;6</text>
+  <rect x="250.0" y="62.0" width="80.0" height="46.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="290.0" y="90.4" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">3</text>
+  <text x="290.0" y="48.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">1</text>
+  <text x="290.0" y="134.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">&#8722;5</text>
+  <rect x="330.0" y="62.0" width="80.0" height="46.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="370.0" y="90.4" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">5</text>
+  <text x="370.0" y="48.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">2</text>
+  <text x="370.0" y="134.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">&#8722;4</text>
+  <rect x="410.0" y="62.0" width="80.0" height="46.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="450.0" y="90.4" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">7</text>
+  <text x="450.0" y="48.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">3</text>
+  <text x="450.0" y="134.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">&#8722;3</text>
+  <rect x="490.0" y="62.0" width="80.0" height="46.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="530.0" y="90.4" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">11</text>
+  <text x="530.0" y="48.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">4</text>
+  <text x="530.0" y="134.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">&#8722;2</text>
+  <rect x="570.0" y="62.0" width="80.0" height="46.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="610.0" y="90.4" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">13</text>
+  <text x="610.0" y="48.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">5</text>
+  <text x="610.0" y="134.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">&#8722;1</text>
+  <text x="154.0" y="48.0" fill="var(--color-theory)" font-size="14" text-anchor="end" font-style="italic">i</text>
+  <text x="154.0" y="90.0" fill="var(--academic-text)" font-size="14" text-anchor="end">primes</text>
+  <text x="154.0" y="134.0" fill="var(--color-practice)" font-size="14" text-anchor="end"><tspan font-style="italic">i</tspan> &#8722; 6</text>
+</svg>
+<figcaption><code>primes</code> listesinin altı hücresi. Üstteki sayılar baştan sayılan indislerdir (0, 1, …, 5), alttakiler sondan sayılan negatif indislerdir (&#8722;6, …, &#8722;1). Aynı sütundaki iki indis aynı elemanı gösterir: <code>primes[i]</code> ile <code>primes[i - 6]</code> aynı sayıdır.</figcaption>
+</figure>
+```
+:::
+
+Listeler kurulduktan sonra değiştirilebilir: eleman eklenebilir, silinebilir ya da bir elemanın yerine başkası konabilir. Bu işlerin çoğu listenin **metotlarıyla** (method) yapılır. Metot, `a.append(x)` yazımındaki gibi nesnenin adından sonra nokta konularak çağrılan bir fonksiyondur. En sık kullanılanlar şunlardır:
+
+| Yazım | Etkisi |
+|---|---|
+| `a.append(x)` | `x`'i listenin sonuna ekler |
+| `a.extend(b)` | `b`'nin bütün elemanlarını sona ekler |
+| `a.insert(i, x)` | `x`'i `i` indisine yerleştirir, sonrakileri bir kaydırır |
+| `a.pop()` | son elemanı çıkarıp döndürür; `a.pop(i)` bunu `i` indisinde yapar |
+| `a.remove(x)` | `x`'e eşit ilk elemanı siler |
+| `a.index(x)` | `x`'in ilk geçtiği indisi döndürür |
+| `a.count(x)` | `x`'in kaç kez geçtiğini sayar |
+| `a[i] = x` | `i` indisindeki elemanın yerine `x`'i koyar |
+
+Ayrıca `a + b` iki listeyi uç uca ekleyen yeni bir liste, `a * k` de `a`'nın `k` kez tekrarından oluşan yeni bir liste kurar.
+
+```python
+a = [3, 1, 4]
+a.append(1)         # sona bir eleman ekle
+a.extend([5, 9])    # bir listenin bütün elemanlarını ekle
+a.insert(0, 2)      # 0 indisine 2'yi yerleştir
+print(a)
+last = a.pop()      # son elemanı çıkar ve döndür
+print(last, a)
+a.remove(1)         # ilk 1'i sil
+print(a)
+print(a.index(4), a.count(1))
+print([0] * 4, [1, 2] + [3])
+```
+
+Çıktı:
+
+```text
+[2, 3, 1, 4, 1, 5, 9]
+9 [2, 3, 1, 4, 1, 5]
+[2, 3, 4, 1, 5]
+2 1
+[0, 0, 0, 0] [1, 2, 3]
+```
+
+`append`, `extend`, `insert` ve `remove` listeyi yerinde değiştirir ve geriye bir değer döndürmez; daha doğrusu `None` döndürür. `pop` ise hem listeyi değiştirir hem de çıkardığı elemanı döndürür.
+
+::: {#exm-ver-fibonacci-listesi name="Fibonacci Sayılarını Bir Listede Biriktirme"}
+$F_0 = 0$, $F_1 = 1$ ve $n \ge 2$ için $F_n = F_{n-1} + F_{n-2}$ kuralıyla tanımlanan Fibonacci dizisinin ilk $15$ terimini bir listede toplayalım. Listenin son iki elemanı her zaman `fib[-1]` ve `fib[-2]` olduğundan yeni terim bunların toplamıdır.
+
+```python
+fib = [0, 1]
+while len(fib) < 15:
+    fib.append(fib[-1] + fib[-2])   # son iki terimin toplamı
+print(fib)
+print(fib[-1] / fib[-2])            # ardışık terimlerin oranı
+print((1 + 5 ** 0.5) / 2)           # altın oran
+```
+
+Çıktı:
+
+```text
+[0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]
+1.6180257510729614
+1.618033988749895
+```
+
+Son iki terimin oranı $377/233 \approx 1{,}6180258$ olup altın oran $\varphi = (1 + \sqrt{5})/2 \approx 1{,}6180340$ değerinden yalnızca $8{,}2 \cdot 10^{-6}$ kadar farklıdır.
+:::
+
+## Dilimleme
+
+Bir listenin tek bir elemanı yerine ardışık bir parçasını, ya da düzenli aralıklarla seçilmiş elemanlarını almak için dilimleme kullanılır.
+
+::: {#def-ver-dilim name="Dilim"}
+`a` bir liste ve `i`, `j`, `k` tam sayılar olsun ($k \ne 0$). `a[i:j:k]` ifadesine `a`'nın bir **dilimi** (slice) denir. $k > 0$ ise dilim, `a`'nın `i`, `i + k`, `i + 2k`, … indisli elemanlarından `j`'den küçük olanları bu sırayla içeren **yeni** bir listedir. `i` yazılmazsa $0$, `j` yazılmazsa `len(a)`, `k` yazılmazsa $1$ alınır. $k < 0$ ise dilim `i`'den başlayıp indisleri $|k|$'şar azaltarak ilerler ve `j`'den büyük indisleri alır; bu durumda `i` yazılmazsa son eleman, `j` yazılmazsa listenin başı esas alınır.
+:::
+
+Yani `a[i:j]`, indisleri $[i, j)$ yarı açık aralığında kalan elemanları verir ve $0 \le i \le j \le n$ ise tam $j - i$ eleman içerir. Kural `range` ile aynıdır: $0 \le i \le j \le n$ ve $k > 0$ iken `a[i:j:k]`, tam olarak `range(i, j, k)` indislerindeki elemanlardan oluşur. Dilimdeki negatif sınırlar negatif indisler gibi sondan sayılır. İndisten farklı olarak dilim, listenin dışına taşan sınırlarda hata vermez: $8$ elemanlı bir listede `a[5:100]` yalnızca var olan son üç elemanı alır.
+
+Dilimleri, elemanların arasındaki **kesim noktalarıyla** düşünmek işi kolaylaştırır: $0$ numaralı kesim ilk elemanın soluna, $n$ numaralı kesim son elemanın sağına düşer ve `a[i:j]`, $i$ ile $j$ numaralı kesimlerin arasında kalan elemanlardır.
+
+::: {#exm-ver-dilimler name="Bir Listeden Dilimler"}
+$10$'dan $17$'ye kadar olan sayıların listesinden çeşitli dilimler alalım. `list(range(10, 18))` ifadesi, `range` nesnesinin ürettiği sayılardan bir liste kurar.
+
+```python
+a = list(range(10, 18))
+print(a)
+print(a[2:5])     # indis 2, 3, 4
+print(a[:3])      # baştan üç eleman
+print(a[5:])      # indis 5'ten sona kadar
+print(a[::2])     # çift indisli elemanlar
+print(a[1::2])    # tek indisli elemanlar
+print(a[::-1])    # ters sıra
+print(a[-3:])     # son üç eleman
+```
+
+Çıktı:
+
+```text
+[10, 11, 12, 13, 14, 15, 16, 17]
+[12, 13, 14]
+[10, 11, 12]
+[15, 16, 17]
+[10, 12, 14, 16]
+[11, 13, 15, 17]
+[17, 16, 15, 14, 13, 12, 11, 10]
+[15, 16, 17]
+```
+
+`a[2:5]` diliminde $5$ numaralı indis yer almaz. `a[::-1]` ise adım $-1$ olduğundan listeyi sondan başa doğru okur. İlk ve dördüncü dilim aşağıda gösterilmiştir.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="72.0 25.5 607.5 245.0" role="img" aria-label="The list 10 to 17 drawn twice: above, cut points 0 to 8 between the cells and the slice a[2:5] taking 12, 13, 14; below, arcs jumping two cells at a time for a[::2] taking 10, 12, 14, 16">
+  <line x1="150.0" y1="56.0" x2="150.0" y2="116.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <text x="150.0" y="50.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <line x1="214.0" y1="56.0" x2="214.0" y2="116.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <text x="214.0" y="50.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">1</text>
+  <line x1="278.0" y1="56.0" x2="278.0" y2="116.0" stroke="var(--color-practice)" stroke-width="2.2" opacity="1"/>
+  <text x="278.0" y="50.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">2</text>
+  <line x1="342.0" y1="56.0" x2="342.0" y2="116.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <text x="342.0" y="50.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">3</text>
+  <line x1="406.0" y1="56.0" x2="406.0" y2="116.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <text x="406.0" y="50.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">4</text>
+  <line x1="470.0" y1="56.0" x2="470.0" y2="116.0" stroke="var(--color-practice)" stroke-width="2.2" opacity="1"/>
+  <text x="470.0" y="50.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">5</text>
+  <line x1="534.0" y1="56.0" x2="534.0" y2="116.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <text x="534.0" y="50.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">6</text>
+  <line x1="598.0" y1="56.0" x2="598.0" y2="116.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <text x="598.0" y="50.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">7</text>
+  <line x1="662.0" y1="56.0" x2="662.0" y2="116.0" stroke="var(--academic-text)" stroke-width="1" opacity="0.35"/>
+  <text x="662.0" y="50.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">8</text>
+  <rect x="153.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="182.0" y="91.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">10</text>
+  <rect x="217.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="246.0" y="91.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">11</text>
+  <rect x="281.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-opacity="1" stroke-width="1.2"/>
+  <text x="310.0" y="91.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">12</text>
+  <rect x="345.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-opacity="1" stroke-width="1.2"/>
+  <text x="374.0" y="91.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">13</text>
+  <rect x="409.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--color-practice)" fill-opacity="0.2" stroke="var(--color-practice)" stroke-opacity="1" stroke-width="1.2"/>
+  <text x="438.0" y="91.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">14</text>
+  <rect x="473.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="502.0" y="91.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">15</text>
+  <rect x="537.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="566.0" y="91.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">16</text>
+  <rect x="601.0" y="66.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="630.0" y="91.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">17</text>
+  <text x="132.0" y="50.0" fill="var(--academic-text)" font-size="13.5" text-anchor="end">kesim</text>
+  <text x="132.0" y="91.0" fill="var(--color-practice)" font-size="15" text-anchor="end" font-weight="600">a[2:5]</text>
+  <path d="M278.0,118.0 L278.0,124.0 L470.0,124.0 L470.0,118.0" fill="none" stroke="var(--color-practice)" stroke-width="1.5"/>
+  <text x="374.0" y="144.0" fill="var(--color-practice)" font-size="14" text-anchor="middle">5 &#8722; 2 = 3 eleman: [12, 13, 14]</text>
+  <rect x="153.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-opacity="1" stroke-width="1.2"/>
+  <text x="182.0" y="221.4" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600">10</text>
+  <text x="182.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">0</text>
+  <rect x="217.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="246.0" y="221.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">11</text>
+  <text x="246.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">1</text>
+  <rect x="281.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-opacity="1" stroke-width="1.2"/>
+  <text x="310.0" y="221.4" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600">12</text>
+  <text x="310.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">2</text>
+  <rect x="345.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="374.0" y="221.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">13</text>
+  <text x="374.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">3</text>
+  <rect x="409.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-opacity="1" stroke-width="1.2"/>
+  <text x="438.0" y="221.4" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600">14</text>
+  <text x="438.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">4</text>
+  <rect x="473.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="502.0" y="221.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">15</text>
+  <text x="502.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">5</text>
+  <rect x="537.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.18" stroke="var(--color-theory)" stroke-opacity="1" stroke-width="1.2"/>
+  <text x="566.0" y="221.4" fill="var(--color-theory)" font-size="15" text-anchor="middle" font-weight="600">16</text>
+  <text x="566.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">6</text>
+  <rect x="601.0" y="196.0" width="58.0" height="40.0" rx="0" fill="var(--academic-bg)" fill-opacity="1" stroke="var(--academic-text)" stroke-opacity="0.5" stroke-width="1.2"/>
+  <text x="630.0" y="221.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">17</text>
+  <text x="630.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">7</text>
+  <path d="M186.0,193.0 Q246.0,171.0 300.7,191.1" fill="none" stroke="var(--color-theory)" stroke-width="1.5" stroke-linecap="round"/>
+  <polygon points="306.0,193.0 298.4,193.4 300.4,187.8" fill="var(--color-theory)"/>
+  <path d="M314.0,193.0 Q374.0,171.0 428.7,191.1" fill="none" stroke="var(--color-theory)" stroke-width="1.5" stroke-linecap="round"/>
+  <polygon points="434.0,193.0 426.4,193.4 428.4,187.8" fill="var(--color-theory)"/>
+  <path d="M442.0,193.0 Q502.0,171.0 556.7,191.1" fill="none" stroke="var(--color-theory)" stroke-width="1.5" stroke-linecap="round"/>
+  <polygon points="562.0,193.0 554.4,193.4 556.4,187.8" fill="var(--color-theory)"/>
+  <text x="246.0" y="174.0" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">+2</text>
+  <text x="132.0" y="221.0" fill="var(--color-theory)" font-size="15" text-anchor="end" font-weight="600">a[::2]</text>
+  <text x="132.0" y="254.0" fill="var(--academic-text)" font-size="12.5" text-anchor="end">indis</text>
+</svg>
+<figcaption>Dilimleme, elemanların arasındaki kesim noktalarıyla düşünülür. Üstte <code>a[2:5]</code>, 2 ve 5 numaralı kesimlerin arasında kalan üç elemanı alır; 5 numaralı indis dahil değildir. Altta <code>a[::2]</code>, baştan başlayıp ikişer atlayarak çift indisli elemanları seçer: [10, 12, 14, 16].</figcaption>
+</figure>
+```
+:::
+
+Dilim yalnızca okumak için değil, yazmak için de kullanılabilir. `a[i:j] = b` ataması `a`'nın o parçasını `b`'nin elemanlarıyla yerinde değiştirir. Adımsız dilimde `b`'nin uzunluğu dilimden farklı olabilir; liste buna göre uzar ya da kısalır. Adımlı bir dilime yapılan atamada ise sağ taraf dilimle aynı sayıda eleman içermelidir. `del a[i:j]` o parçayı siler.
+
+```python
+a = list(range(10))
+a[2:5] = [0, 0, 0]    # dilime atama listeyi yerinde değiştirir
+print(a)
+a[::3] = [-1] * 4     # adımlı dilimde uzunluklar tutmalı
+print(a)
+del a[-2:]            # son iki elemanı sil
+print(a)
+```
+
+Çıktı:
+
+```text
+[0, 1, 0, 0, 0, 5, 6, 7, 8, 9]
+[-1, 1, 0, -1, 0, 5, -1, 7, 8, -1]
+[-1, 1, 0, -1, 0, 5, -1, 7]
+```
+
+`a[::3]` dilimi $0, 3, 6, 9$ indislerini kapsar; bu yüzden sağ tarafta tam dört eleman olmalıdır. Bölümün sonunda Eratosthenes kalburunu bu adımlı dilim atamasıyla kuracağız.
+
+Karakter dizileri (string) de birer dizidir; indeksleme ve dilimleme onlarda da aynen çalışır. Bir sayının rakamlarıyla uğraşmanın en kısa yolu, onu `str` ile karakter dizisine çevirmek, gerekirse `int` ile geri çevirmektir.
+
+::: {#exm-ver-palindrom name="Ters Çevirme ve Palindromlar"}
+Soldan ve sağdan aynı okunan dizilere **palindrom** denir; bir `s` karakter dizisinin palindrom olup olmadığını `s == s[::-1]` karşılaştırması söyler. $2^{20}$ sayısının rakamlarını da aynı yolla inceleyelim.
+
+```python
+word = "kayak"
+print(word[0], word[-1], word[1:4])
+print(word[::-1], word == word[::-1])   # palindrom mu?
+n = 2**20
+digits = str(n)       # sayının rakamları, bir karakter dizisi
+print(digits, len(digits))
+print(digits[:3], digits[-3:], digits[::-1])
+diff = int(digits[::-1]) - n      # ters okunuş ile fark
+print(diff, diff % 9)
+```
+
+Çıktı:
+
+```text
+k k aya
+kayak True
+1048576 7
+104 576 6758401
+5709825 0
+```
+
+Son satırdaki $5709825$ farkı $9$'a bölünür. Bu bir rastlantı değildir: bir sayı, rakamları toplamıyla $9$'a bölümden aynı kalanı verir (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/bolunebilme-kurallari.html#thm-dokuz-bolunebilme)). Bir sayı ile tersten okunuşu aynı rakamlardan oluştuğu için rakam toplamları eşittir; dolayısıyla farkları $9$'un katıdır.
+:::
+
+Karakter dizileri listelerden farklı olarak değiştirilemez: `word[0] = "K"` ataması `TypeError` hatası verir. Bir sonraki kısım bu farkı ele alıyor.
+
+## Değiştirilebilirlik ve Takma Adlar
+
+Listelerle çalışırken yapılan hataların önemli bir kısmı, Python'da bir değişken adının neyi temsil ettiğini yanlış anlamaktan doğar.
+
+Python'da `a = [1, 2, 3]` ataması bellekte bir liste nesnesi kurar ve `a` adını bu nesneye bağlar. `b = a` ataması ise yeni bir liste kurmaz; aynı nesneye ikinci bir ad bağlar. Bunun sonuçlarını anlamak için iki kavrama ihtiyacımız var.
+
+::: {#def-ver-degistirilebilir name="Değiştirilebilir ve Değiştirilemez Nesne"}
+Kurulduktan sonra içeriği değiştirilebilen nesnelere **değiştirilebilir** (mutable), değiştirilemeyenlere **değiştirilemez** (immutable) nesneler denir. Listeler, sözlükler ve kümeler değiştirilebilir; `int`, `float`, `complex`, `bool` türünden sayılar, karakter dizileri ve demetler değiştirilemez nesnelerdir.
+:::
+
+Yani bir listenin elemanını değiştirdiğimizde aynı liste nesnesi yerinde kalır, yalnızca içeriği değişir. Buna karşılık bir sayıyı "değiştiren" her işlem aslında yeni bir sayı nesnesi kurar.
+
+::: {#def-ver-takma-ad name="Takma Ad"}
+Aynı nesneye bağlı iki farklı ada birbirinin **takma adı** (alias) denir. `x is y` ifadesi `x` ile `y`'nin aynı nesneye bağlı olup olmadığını, `x == y` ise içeriklerinin eşit olup olmadığını sorar.
+:::
+
+Yani değiştirilebilir bir nesnenin iki takma adı varsa, adlardan biri üzerinden yapılan her değişiklik ötekinden de görünür. İki ayrı nesnenin içeriği eşit olabilir; bu durumda `==` doğru, `is` yanlış sonuç verir.
+
+::: {#exm-ver-takma-ad name="Takma Ad ile Kopya Arasındaki Fark"}
+Bir listeyi önce yalnızca yeni bir ada bağlayalım, sonra kopyalayalım ve ardından özgün listeye bir eleman ekleyelim.
+
+```python
+a = [1, 2, 3]
+b = a              # b, aynı listenin ikinci adı
+c = a.copy()       # c, içeriği aynı olan yeni bir liste
+a.append(4)
+print(a, b, c)
+print(b is a, c is a)    # aynı nesne mi?
+print(c == [1, 2, 3])    # içerik eşit mi?
+```
+
+Çıktı:
+
+```text
+[1, 2, 3, 4] [1, 2, 3, 4] [1, 2, 3]
+True False
+True
+```
+
+`a.append(4)` değişikliği `b` üzerinden de görünüyor, çünkü `b` aynı nesnenin ikinci adıdır. `c` ise kopyalama anındaki içerikle kurulmuş ayrı bir nesne olduğundan değişmedi.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="35.0 18.0 548.0 238.5" role="img" aria-label="Names a and b both point to one list object [1, 2, 3, 4]; name c points to a separate list object [1, 2, 3]">
+  <rect x="50.0" y="43.0" width="50.0" height="38.0" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.2"/>
+  <text x="75.0" y="67.2" fill="var(--color-theory)" font-size="14.5" text-anchor="middle" font-weight="600">a</text>
+  <rect x="50.0" y="107.0" width="50.0" height="38.0" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.2"/>
+  <text x="75.0" y="131.2" fill="var(--color-theory)" font-size="14.5" text-anchor="middle" font-weight="600">b</text>
+  <rect x="50.0" y="177.0" width="50.0" height="38.0" rx="6" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-opacity="0.9" stroke-width="1.2"/>
+  <text x="75.0" y="201.2" fill="var(--color-practice)" font-size="14.5" text-anchor="middle" font-weight="600">c</text>
+  <rect x="360.0" y="55.0" width="52.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="386.0" y="81.2" fill="var(--academic-text)" font-size="14.5" text-anchor="middle">1</text>
+  <rect x="412.0" y="55.0" width="52.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="438.0" y="81.2" fill="var(--academic-text)" font-size="14.5" text-anchor="middle">2</text>
+  <rect x="464.0" y="55.0" width="52.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="490.0" y="81.2" fill="var(--academic-text)" font-size="14.5" text-anchor="middle">3</text>
+  <rect x="516.0" y="55.0" width="52.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="542.0" y="81.2" fill="var(--academic-text)" font-size="14.5" text-anchor="middle">4</text>
+  <rect x="360.0" y="175.0" width="52.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="386.0" y="201.2" fill="var(--academic-text)" font-size="14.5" text-anchor="middle">1</text>
+  <rect x="412.0" y="175.0" width="52.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="438.0" y="201.2" fill="var(--academic-text)" font-size="14.5" text-anchor="middle">2</text>
+  <rect x="464.0" y="175.0" width="52.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="490.0" y="201.2" fill="var(--academic-text)" font-size="14.5" text-anchor="middle">3</text>
+  <line x1="104.0" y1="62.0" x2="349.6" y2="69.8" stroke="var(--color-theory)" stroke-width="1.7" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="356.0,70.0 347.9,73.1 348.1,66.4" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="104.0" y1="126.0" x2="349.7" y2="85.1" stroke="var(--color-theory)" stroke-width="1.7" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="356.0,84.0 348.7,88.6 347.6,82.0" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="104.0" y1="196.0" x2="349.6" y2="196.0" stroke="var(--color-practice)" stroke-width="1.7" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="356.0,196.0 348.0,199.4 348.0,192.6" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="464.0" y="43.0" fill="var(--color-theory)" font-size="14" text-anchor="middle">tek bir liste nesnesi</text>
+  <text x="438.0" y="239.0" fill="var(--color-practice)" font-size="14" text-anchor="middle">a.copy() ile kurulan yeni nesne</text>
+</svg>
+<figcaption>Kodun sonundaki durum. <code>a</code> ve <code>b</code> adları aynı liste nesnesine bağlıdır; bu yüzden <code>a.append(4)</code> değişikliği <code>b</code> üzerinden de görünür ve <code>b is a</code> doğrudur. <code>c</code> ise kopyalama anındaki içerikle kurulmuş ayrı bir nesnedir.</figcaption>
+</figure>
+```
+:::
+
+Değiştirilemez nesnelerde bu sorun doğmaz, çünkü onları yerinde değiştiren bir işlem yoktur: `x += 1` ataması yeni bir `int` nesnesi kurup `x` adını ona bağlar. Listelerde ise iki yazım arasında önemli bir fark vardır. `u += [3]` listeyi yerinde genişletir; `u = u + [4]` ise yeni bir liste kurup `u` adını ona bağlar.
+
+```python
+x = 5
+y = x
+x += 1            # yeni bir int nesnesi oluşur
+print(x, y)
+u = [1, 2]
+v = u
+u += [3]          # liste yerinde genişletilir
+print(u, v)
+u = u + [4]       # + yeni bir liste kurar
+print(u, v)
+```
+
+Çıktı:
+
+```text
+6 5
+[1, 2, 3] [1, 2, 3]
+[1, 2, 3, 4] [1, 2, 3]
+```
+
+::: {.callout-warning title="Takma ad tuzağı"}
+`b = a` bir kopya değildir. Bir listeyi değiştirmeden önce özgün hâlini saklamak istiyorsanız `a.copy()`, `a[:]` ya da `list(a)` ile bir kopya alın. Bir fonksiyona liste gönderdiğinizde fonksiyon aynı nesne üzerinde çalışır: fonksiyonun içindeki bir `append` dışarıdaki listeyi de değiştirir. Yerinde çalışan metotlar `None` döndürdüğü için `a = a.append(1)` yazmak da listeyi kaybettirir; `a` adı artık `None`'a bağlıdır.
+:::
+
+Matrisleri satırlarının listesi olarak tutmak doğaldır: $\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$ matrisi `[[1, 2], [3, 4]]` biçiminde yazılır ve `A[i][j]`, $i$ numaralı satırın $j$ numaralı elemanını verir (ikisi de $0$'dan sayılır). İç içe listelerde takma ad sorunu daha sinsi bir biçimde ortaya çıkar.
+
+::: {#exm-ver-satir-paylasimi name="Satırları Ortak Bir Sıfır Matrisi"}
+$3 \times 3$ sıfır matrisini iki yolla kuralım ve her birinin sol üst köşesine $1$ yazalım.
+
+```python
+bad = [[0] * 3] * 3      # aynı satıra üç başvuru
+good = []
+for _ in range(3):
+    good.append([0] * 3)  # her turda yeni bir satır
+bad[0][0] = 1
+good[0][0] = 1
+print(bad)
+print(good)
+print(bad[0] is bad[2], good[0] is good[2])
+```
+
+Çıktı:
+
+```text
+[[1, 0, 0], [1, 0, 0], [1, 0, 0]]
+[[1, 0, 0], [0, 0, 0], [0, 0, 0]]
+True False
+```
+
+`[0] * 3` tek bir satır kurar. Dıştaki `* 3` bu satırı kopyalamaz, ona üç kez başvurur; bu yüzden `bad` matrisinin üç satırı aynı nesnedir ve tek bir atama üç satırda birden görünür. Döngü ise her turda yeni bir `[0] * 3` listesi kurduğu için `good` matrisinin satırları birbirinden bağımsızdır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="28.5 5.0 716.5 233.0" role="img" aria-label="Left: three slots of an outer list all pointing to one row [1, 0, 0]. Right: three slots pointing to three separate rows [1, 0, 0], [0, 0, 0], [0, 0, 0]">
+  <text x="190.0" y="30.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">bad = [[0] * 3] * 3</text>
+  <rect x="60.0" y="62.0" width="42.0" height="38.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--color-practice)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <text x="50.0" y="86.0" fill="var(--academic-text)" font-size="13" text-anchor="end">0</text>
+  <circle cx="81.0" cy="81.0" r="3.2" fill="var(--color-practice)"/>
+  <rect x="60.0" y="100.0" width="42.0" height="38.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--color-practice)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <text x="50.0" y="124.0" fill="var(--academic-text)" font-size="13" text-anchor="end">1</text>
+  <circle cx="81.0" cy="119.0" r="3.2" fill="var(--color-practice)"/>
+  <rect x="60.0" y="138.0" width="42.0" height="38.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--color-practice)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <text x="50.0" y="162.0" fill="var(--academic-text)" font-size="13" text-anchor="end">2</text>
+  <circle cx="81.0" cy="157.0" r="3.2" fill="var(--color-practice)"/>
+  <rect x="230.0" y="103.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="250.0" y="124.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">1</text>
+  <rect x="270.0" y="103.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="290.0" y="124.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <rect x="310.0" y="103.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="330.0" y="124.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <line x1="85.0" y1="81.0" x2="219.7" y2="108.7" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="226.0,110.0 217.5,111.7 218.8,105.1" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="85.0" y1="119.0" x2="219.6" y2="119.0" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="226.0,119.0 218.0,122.4 218.0,115.6" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="85.0" y1="157.0" x2="219.7" y2="129.3" stroke="var(--color-practice)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="226.0,128.0 218.8,132.9 217.5,126.3" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="190.0" y="214.0" fill="var(--color-practice)" font-size="13.5" text-anchor="middle">bad[0] is bad[2]  →  True</text>
+  <text x="570.0" y="30.0" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600">good: döngüyle kurulan</text>
+  <rect x="440.0" y="62.0" width="42.0" height="38.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <text x="430.0" y="86.0" fill="var(--academic-text)" font-size="13" text-anchor="end">0</text>
+  <circle cx="461.0" cy="81.0" r="3.2" fill="var(--color-theory)"/>
+  <rect x="440.0" y="100.0" width="42.0" height="38.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <text x="430.0" y="124.0" fill="var(--academic-text)" font-size="13" text-anchor="end">1</text>
+  <circle cx="461.0" cy="119.0" r="3.2" fill="var(--color-theory)"/>
+  <rect x="440.0" y="138.0" width="42.0" height="38.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--color-theory)" stroke-opacity="0.9" stroke-width="1.4"/>
+  <text x="430.0" y="162.0" fill="var(--academic-text)" font-size="13" text-anchor="end">2</text>
+  <circle cx="461.0" cy="157.0" r="3.2" fill="var(--color-theory)"/>
+  <rect x="610.0" y="65.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="630.0" y="86.0" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600">1</text>
+  <rect x="650.0" y="65.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="670.0" y="86.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <rect x="690.0" y="65.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="710.0" y="86.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <line x1="465.0" y1="81.0" x2="599.6" y2="81.0" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="606.0,81.0 598.0,84.4 598.0,77.6" fill="var(--color-theory)" opacity="1.0"/>
+  <rect x="610.0" y="103.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="630.0" y="124.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <rect x="650.0" y="103.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="670.0" y="124.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <rect x="690.0" y="103.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="710.0" y="124.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <line x1="465.0" y1="119.0" x2="599.6" y2="119.0" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="606.0,119.0 598.0,122.4 598.0,115.6" fill="var(--color-theory)" opacity="1.0"/>
+  <rect x="610.0" y="141.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="630.0" y="162.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <rect x="650.0" y="141.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="670.0" y="162.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <rect x="690.0" y="141.0" width="40.0" height="32.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.2"/>
+  <text x="710.0" y="162.0" fill="var(--academic-text)" font-size="14" text-anchor="middle">0</text>
+  <line x1="465.0" y1="157.0" x2="599.6" y2="157.0" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="606.0,157.0 598.0,160.4 598.0,153.6" fill="var(--color-theory)" opacity="1.0"/>
+  <text x="570.0" y="214.0" fill="var(--color-theory)" font-size="13.5" text-anchor="middle">good[0] is good[2]  →  False</text>
+  <line x1="380" y1="20" x2="380" y2="226" stroke="var(--academic-text)" stroke-width="1" opacity="0.2" stroke-dasharray="4 4"/>
+</svg>
+<figcaption>Solda <code>[[0] * 3] * 3</code> ifadesinin kurduğu yapı: dış listenin üç gözü de aynı satır nesnesini gösterir, bu yüzden <code>bad[0][0] = 1</code> ataması üç satırda birden görünür. Sağda döngü her turda yeni bir <code>[0] * 3</code> listesi kurar; atama yalnız ilk satırı değiştirir.</figcaption>
+</figure>
+```
+:::
+
+Aynı sorun kopyalamada da vardır. `A.copy()` yalnızca dış listeyi kopyalar: yeni dış liste, eski satır nesnelerine başvurur. Buna **sığ kopya** (shallow copy) denir. İç listeleri de kopyalayan **derin kopya** (deep copy) için `copy` modülünün `deepcopy` fonksiyonu kullanılır.
+
+```python
+import copy
+
+A = [[1, 2], [3, 4]]
+B = A.copy()            # sığ kopya: satırlar ortak
+C = copy.deepcopy(A)    # derin kopya: satırlar da kopyalanır
+A[0][0] = 99
+print(A)
+print(B)
+print(C)
+```
+
+Çıktı:
+
+```text
+[[99, 2], [3, 4]]
+[[99, 2], [3, 4]]
+[[1, 2], [3, 4]]
+```
+
+`A[0][0] = 99` ataması, sığ kopya `B` ile ortak olan ilk satırı değiştirdi; derin kopya `C` ise etkilenmedi.
+
+## Demetler
+
+Listelerin değiştirilemez kardeşi demettir. Matematikteki sıralı ikililer ve $n$'liler en doğal biçimde demetlerle tutulur.
+
+::: {#def-ver-demet name="Demet"}
+**Demet** (tuple), virgülle ayrılmış nesnelerin sıralı ve değiştirilemez topluluğudur. Genellikle parantez içinde yazılır: `(3, 4)`. Tek elemanlı demet sondaki virgülle `(5,)`, boş demet `()` biçiminde yazılır.
+:::
+
+Yani demet, matematikteki $(x_1, \dots, x_n)$ sıralı $n$'lisinin karşılığıdır. İndeksleme, dilimleme, `len`, `in` ve `+` demetlerde de listelerdeki gibi çalışır; ancak kurulduktan sonra bir demetin elemanı değiştirilemez, demete eleman eklenemez ve demetten eleman çıkarılamaz. Demeti asıl kuran parantez değil virgüldür: `p = 3, 4` ataması da bir demet kurar.
+
+Bir demetin elemanlarını tek satırda ayrı adlara bağlamaya **açma** (unpacking) denir: `x, y = p`. Bu yazımda sağ taraf önce tamamen hesaplanır, sonra soldaki adlara dağıtılır. Bu yüzden `a, b = b, a + b` ataması iki eski değeri de kullanır ve yardımcı bir değişkene gerek bırakmaz. Soldaki yıldızlı bir ad (`*rest`) geriye kalan elemanları bir listede toplar.
+
+```python
+p = (3, 4)               # düzlemde bir nokta
+x, y = p                 # demeti açma
+print(x, y, (x**2 + y**2) ** 0.5)
+print(divmod(17, 5))     # divmod bir demet döndürür
+q, r = divmod(17, 5)
+print(q, r)
+a, b = 0, 1
+for _ in range(10):
+    a, b = b, a + b      # önce sağ taraf hesaplanır
+print(a, b)
+first, *rest = [2, 3, 5, 7]
+print(first, rest)
+print(len(()), len((5,)), (1, 2) + (3,))
+```
+
+Çıktı:
+
+```text
+3 4 5.0
+(3, 2)
+3 2
+55 89
+2 [3, 5, 7]
+0 1 (1, 2, 3)
+```
+
+Döngüdeki `a, b = b, a + b` ataması Fibonacci dizisini ilerletir: on adımdan sonra $(a, b) = (F_{10}, F_{11}) = (55, 89)$ olur. Son satır boş demetin ve tek elemanlı demetin uzunluklarını veriyor.
+
+::: {#exm-ver-genisletilmis-oklid name="Genişletilmiş Öklid Algoritmasının Döngülü Biçimi"}
+[Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd#exr-kon-genisletilmis-oklid) bölümünde, $\gcd(a, b)$ ile birlikte $ax + by = \gcd(a, b)$ eşitliğini sağlayan $x, y$ tam sayılarını da bulan `ext_gcd` fonksiyonunu özyinelemeyle yazmıştık. Oradaki `return g, y, x - (a // b) * y` satırı üç değeri tek bir demet olarak döndürür; `g, x, y = ext_gcd(b, a % b)` ataması da bu demeti açar. Şimdi aynı fonksiyonu bir `while` döngüsüyle yazalım ve döngüdeki çiftleri demet atamasıyla güncelleyelim. $\gcd(252, 198)$ değerini ve Bézout katsayılarını bulalım.
+
+```python
+def ext_gcd(a, b):
+    """(g, x, y) döndürür: g = ebob(a, b) ve a*x + b*y = g."""
+    x0, y0, x1, y1 = 1, 0, 0, 1
+    while b != 0:
+        q, r = divmod(a, b)
+        a, b = b, r
+        x0, x1 = x1, x0 - q * x1
+        y0, y1 = y1, y0 - q * y1
+    return a, x0, y0
+
+
+result = ext_gcd(252, 198)
+print(result)
+g, x, y = result
+print(252 * x + 198 * y == g)
+```
+
+Çıktı:
+
+```text
+(18, 4, -5)
+True
+```
+
+Fonksiyon her adımda $a = qb + r$ bölmesini yapar. `(x0, y0)` ve `(x1, y1)` çiftleri, o anki `a` ve `b` değerlerini başlangıçtaki iki sayının doğrusal birleşimi olarak yazan katsayılardır; her adımda `a` ve `b` ile aynı kuralla güncellenirler. Sonuçta $\gcd(252, 198) = 18$ ve
+
+$$252 \cdot 4 + 198 \cdot (-5) = 1008 - 990 = 18$$
+
+bulunur. Özyinelemeli `ext_gcd(252, 198)` çağrısı da aynı `(18, 4, -5)` demetini döndürür.
+:::
+
+Demetler değiştirilemez oldukları için, bir sonraki kısımda göreceğimiz sözlüklerde anahtar ve kümelerde eleman olabilirler; listeler olamaz.
+
+## Sözlükler
+
+Bir listede elemana konumuyla, yani $0, 1, 2, \dots$ indisleriyle ulaşırız. Pek çok problemde ise elemana bir adla ya da bir değerle ulaşmak isteriz: bir asalın üssü, bir kelimenin metinde kaç kez geçtiği, bir permütasyonun bir noktayı nereye götürdüğü gibi.
+
+::: {#def-ver-sozluk name="Sözlük"}
+**Sözlük** (dictionary, `dict`), `anahtar: değer` çiftlerinden oluşan bir topluluktur: `{"I": 1, "V": 5, "X": 10}`. Bir sözlükte her anahtar en fazla bir kez geçer ve `d[k]` ifadesi `k` anahtarına karşılık gelen değeri verir. Sözlükler değiştirilebilir: `d[k] = v` ataması `k` anahtarı yoksa yeni bir çift ekler, varsa onun değerini değiştirir.
+:::
+
+Yani bir sözlük, tanım kümesi sonlu olan bir fonksiyondur: anahtarlar tanım kümesini, değerler de görüntüleri oluşturur. Sözlükte olmayan bir anahtarı `d[k]` ile istemek `KeyError` hatası verir; `d.get(k, varsayılan)` ise anahtar yoksa verilen varsayılan değeri döndürür. Sözlükler çiftleri eklendikleri sırayla saklar ve o sırayla dolaşır.
+
+::: {#exm-ver-sonlu-fonksiyon name="Sonlu Bir Fonksiyonu Sözlükle Tutma"}
+$f(x) = x^2 \bmod 7$ fonksiyonunu önce $\{0, 1, 2, 3\}$ üzerinde bir sözlük olarak yazalım, sonra tanım kümesine $4$'ü ekleyelim.
+
+```python
+f = {0: 0, 1: 1, 2: 4, 3: 2}    # f(x) = x**2 mod 7, x = 0, 1, 2, 3
+print(f[2])                      # f(2)
+f[4] = 2                         # tanım kümesine 4'ü ekle
+print(f)
+print(len(f), 5 in f, f.get(5, "tanımsız"))
+print(list(f.keys()))
+print(list(f.values()))
+print(list(f.items())[:2])
+```
+
+Çıktı:
+
+```text
+4
+{0: 0, 1: 1, 2: 4, 3: 2, 4: 2}
+5 False tanımsız
+[0, 1, 2, 3, 4]
+[0, 1, 4, 2, 2]
+[(0, 0), (1, 1)]
+```
+
+`keys`, `values` ve `items` metotları sırasıyla anahtarları, değerleri ve `(anahtar, değer)` demetlerini verir; bunları `list` ile listeye çevirdik. $f(3) = f(4) = 2$ olduğundan $f$ birebir değildir: değerler arasında $2$ iki kez geçiyor.
+:::
+
+Sözlüğün anahtarları her türden nesne olamaz.
+
+::: {#def-ver-hashlenebilir name="Hashlenebilir Nesne"}
+Python'un, içeriğinden hesaplanan ve nesnenin ömrü boyunca değişmeyen bir tam sayı atayabildiği nesnelere **hashlenebilir** (hashable) nesneler denir; bu tam sayıya nesnenin **hash değeri** denir ve `hash(x)` ile bulunur. Sayılar, karakter dizileri ve elemanları hashlenebilir olan demetler hashlenebilir; listeler, sözlükler ve kümeler hashlenebilir değildir. Sözlük anahtarlarının ve küme elemanlarının hashlenebilir olması gerekir.
+:::
+
+Yani anahtar olarak `3`, `"asal"` ya da `(2, 3)` kullanılabilir, `[2, 3]` kullanılamaz. Bunun nedeni, sözlüğün bir anahtarı hash değerinden yararlanarak doğrudan bulmasıdır. İçeriği değişebilen bir nesnenin hash değeri de değişeceğinden sözlük onu yerinde bulamaz. Aynı mekanizma sayesinde `k in d` sorgusu, sözlük ne kadar büyük olursa olsun ortalama olarak sabit sürede yanıtlanır.
+
+::: {#exm-ver-asal-carpanlar name="Asal Çarpanlara Ayırma Sözlüğü"}
+Her $n > 1$ tam sayısı asal çarpanlarına tek türlü ayrılır (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/aritmetigin-esas-teoremi.html#thm-aritmetigin-esas)). $n = p_1^{k_1} \cdots p_r^{k_r}$ ayrılışını `{p1: k1, ..., pr: kr}` sözlüğü olarak döndüren bir fonksiyon yazalım. Bu sözlükten $n$'nin bölen sayısı
+
+$$\tau(n) = \prod_{i=1}^{r} (k_i + 1)$$
+
+(bkz. [Sayılar Teorisi](../sayilar-teorisi/1/bolenler.html#cor-bolen-sayisi)) ve bölenlerinin toplamı hemen hesaplanır. Her bölen $p_1^{m_1} \cdots p_r^{m_r}$ ($0 \le m_i \le k_i$) biçiminde olduğundan bölenlerin toplamı, $1 + p_i + \dots + p_i^{k_i}$ geometrik toplamlarının çarpımıdır:
+
+$$\sigma(n) = \prod_{i=1}^{r} \frac{p_i^{k_i + 1} - 1}{p_i - 1}.$$
+
+$n = 720$ için deneyelim ve sonucu bütün bölenleri tek tek sayarak kontrol edelim.
+
+```python
+def factorize(n):
+    """n'nin asal çarpanlarını {asal: üs} sözlüğü olarak döndürür."""
+    factors = {}
+    p = 2
+    while p * p <= n:
+        while n % p == 0:
+            factors[p] = factors.get(p, 0) + 1
+            n //= p
+        p += 1
+    if n > 1:                    # geriye kalan büyük bir asal
+        factors[n] = factors.get(n, 0) + 1
+    return factors
+
+
+f = factorize(720)
+print(f)
+tau, sigma = 1, 1
+for p, e in f.items():
+    tau *= e + 1                              # bölen sayısı
+    sigma *= (p ** (e + 1) - 1) // (p - 1)    # bölenler toplamı
+print(tau, sigma)
+count, total = 0, 0                           # kaba kuvvetle kontrol
+for d in range(1, 721):
+    if 720 % d == 0:
+        count += 1
+        total += d
+print(count, total)
+```
+
+Çıktı:
+
+```text
+{2: 4, 3: 2, 5: 1}
+30 2418
+30 2418
+```
+
+$720 = 2^4 \cdot 3^2 \cdot 5$ olduğundan $\tau(720) = 5 \cdot 3 \cdot 2 = 30$ ve $\sigma(720) = 31 \cdot 13 \cdot 6 = 2418$'dir; kaba kuvvetle yapılan sayım aynı sonucu veriyor. `factors.get(p, 0) + 1` kalıbı, `p` henüz sözlükte yoksa sayımı $0$'dan başlatır.
+:::
+
+::: {#exm-ver-kelime-sayimi name="Kelime Sayımı"}
+Bir metinde her kelimenin kaç kez geçtiğini bulalım. `text.split()` metni boşluklardan bölerek kelimelerin listesini verir; her kelime için sözlükteki sayacı bir artırırız.
+
+```python
+from collections import Counter
+
+text = ("asal sayı yalnız bir ve kendisine bölünen sayıdır "
+        "bir sayı asal değilse bileşik sayıdır "
+        "bir sayının asal çarpanları tek türlü belirlidir")
+words = text.split()       # boşluklardan bölüp kelime listesi kur
+counts = {}
+for word in words:
+    counts[word] = counts.get(word, 0) + 1
+print(len(words), len(counts))
+print(counts["asal"], counts["sayı"], counts.get("küme", 0))
+print(Counter(words).most_common(3))
+```
+
+Çıktı:
+
+```text
+21 15
+3 2 0
+[('asal', 3), ('bir', 3), ('sayı', 2)]
+```
+
+Metinde $21$ kelime vardır ama bunların yalnız $15$'i farklıdır. Bu sayma kalıbı o kadar sık kullanılır ki `collections` modülü onu hazır bir sözlük türü olarak sunar: `Counter`, bir listedeki her elemanın kaç kez geçtiğini sayar ve `most_common(k)` metoduyla en sık geçen `k` elemanı verir. Sayıları eşit olan elemanlar, ilk görüldükleri sırayla gelir.
+:::
+
+## Kümeler
+
+Matematikteki kümelerin iki temel özelliği, elemanların sırasının önemsiz olması ve her elemanın en fazla bir kez sayılmasıdır. Python'un küme yapısı tam olarak bu iki özelliği taşır.
+
+::: {#def-ver-kume name="Küme"}
+**Küme** (set), hashlenebilir nesnelerin sırasız ve tekrarsız topluluğudur. Küme parantezleri içinde yazılır: `{2, 3, 5}`. Boş küme `set()` ile kurulur, çünkü `{}` boş bir sözlüktür. `set(a)` ifadesi, yinelenebilir bir `a` nesnesinin farklı elemanlarından oluşan kümeyi verir.
+:::
+
+Yani `{1, 2, 2, 3}` ile `{3, 2, 1}` aynı kümedir. Kümelerde indeksleme yoktur, çünkü elemanların bir sırası yoktur. Bir kümeyi yazdırdığımızda gördüğümüz sıra yalnızca iç düzenlemenin sonucudur ve ona güvenilmez. Küme elemanları hashlenebilir olduğundan `x in A` sorgusu da sözlüklerdeki gibi ortalama olarak sabit sürede yanıtlanır; aynı sorgu bir listede bütün elemanları tek tek dolaşmayı gerektirebilir.
+
+Kümeler üzerindeki işlemler matematikteki karşılıklarıyla aynı adları taşır (bkz. [Matematiğin Temelleri](../matematigin-temelleri/3-kumeler/birlesim-ve-kesisim.html#def-birlesim)):
+
+- `A | B` birleşim $A \cup B$, `A & B` kesişim $A \cap B$,
+- `A - B` fark $A \setminus B$, `A ^ B` simetrik fark $A \triangle B$,
+- `A <= B` alt küme $A \subseteq B$, `A < B` öz alt küme,
+- `x in A` elemanlık $x \in A$, `len(A)` eleman sayısı $|A|$.
+
+```python
+A = {2, 4, 6, 8, 10, 12}     # 12'ye kadar çift sayılar
+B = {3, 6, 9, 12}            # 12'ye kadar 3'ün katları
+print(A | B)                 # birleşim
+print(A & B)                 # kesişim
+print(A - B, B - A)          # farklar
+print(A ^ B)                 # simetrik fark
+print({6, 12} <= A, len(A | B))
+print(set([1, 1, 2, 3, 3, 3]))   # tekrarlar kaybolur
+print(set(), type({}))       # boş küme ve boş sözlük
+```
+
+Çıktı:
+
+```text
+{2, 3, 4, 6, 8, 9, 10, 12}
+{12, 6}
+{8, 2, 10, 4} {9, 3}
+{2, 3, 4, 8, 9, 10}
+True 8
+{1, 2, 3}
+set() <class 'dict'>
+```
+
+Çıktıdaki `{12, 6}` ve `{8, 2, 10, 4}` sıraları kümelerin sırasız olduğunu açıkça gösteriyor. Son satır da `{}` yazımının boş küme değil boş sözlük olduğunu doğruluyor. Kümeler değiştirilebilir: `A.add(x)` kümeye `x`'i ekler (`x` zaten kümedeyse küme değişmez), `A.discard(x)` de `x`'i kümeden çıkarır. `A.remove(x)` aynı işi yapar ama `x` kümede yoksa `KeyError` hatası verir. Değiştirilebilir oldukları için bir kümenin elemanı başka bir küme olamaz; kümelerden oluşan bir küme gerektiğinde değiştirilemez `frozenset` türü kullanılır.
+
+::: {#exm-ver-venn name="İki Kümenin Venn Bölgeleri"}
+$U = \{1, 2, \dots, 20\}$ evreninde $A$ çift sayıların, $B$ de $3$'ün katlarının kümesi olsun. Venn şemasının dört bölgesini Python işlemleriyle hesaplayıp $|A \cup B| = |A| + |B| - |A \cap B|$ eşitliğini kontrol edelim.
+
+```python
+U = set(range(1, 21))
+A = set(range(2, 21, 2))     # çift sayılar
+B = set(range(3, 21, 3))     # 3'ün katları
+print(A - B)                 # yalnız A'da
+print(A & B)                 # ikisinde birden
+print(B - A)                 # yalnız B'de
+print(U - (A | B))           # hiçbirinde
+print(len(A | B), len(A) + len(B) - len(A & B))
+```
+
+Çıktı:
+
+```text
+{2, 4, 8, 10, 14, 16, 20}
+{18, 12, 6}
+{9, 3, 15}
+{1, 5, 7, 11, 13, 17, 19}
+13 13
+```
+
+$|A| = 10$, $|B| = 6$ ve $|A \cap B| = 3$ olduğundan iki taraf da $13$'tür. Her bölgenin elemanları aşağıdaki şekilde, bölgeyi veren Python ifadesiyle birlikte görülüyor.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="5.0 25.0 590.0 330.0" role="img" aria-label="Venn diagram inside the rectangle U = 1..20: circle A of even numbers and circle B of multiples of 3; A only holds 2 4 8 10 14 16 20, the overlap 6 12 18, B only 3 9 15 and the outside 1 5 7 11 13 17 19">
+  <rect x="20" y="40" width="560" height="300" rx="10" fill="none" stroke="var(--academic-text)" stroke-opacity="0.55" stroke-width="1.3"/>
+  <circle cx="240" cy="190" r="120" fill="var(--color-theory)" fill-opacity="0.10" stroke="var(--color-theory)" stroke-width="1.8"/>
+  <circle cx="370" cy="190" r="120" fill="var(--color-base)" fill-opacity="0.10" stroke="var(--color-base)" stroke-width="1.8"/>
+  <text x="170.0" y="137.0" fill="var(--color-theory)" font-size="15" text-anchor="middle">2</text>
+  <text x="220.0" y="137.0" fill="var(--color-theory)" font-size="15" text-anchor="middle">4</text>
+  <text x="165.0" y="175.0" fill="var(--color-theory)" font-size="15" text-anchor="middle">8</text>
+  <text x="215.0" y="175.0" fill="var(--color-theory)" font-size="15" text-anchor="middle">10</text>
+  <text x="165.0" y="213.0" fill="var(--color-theory)" font-size="15" text-anchor="middle">14</text>
+  <text x="215.0" y="213.0" fill="var(--color-theory)" font-size="15" text-anchor="middle">16</text>
+  <text x="190.0" y="251.0" fill="var(--color-theory)" font-size="15" text-anchor="middle">20</text>
+  <text x="305.0" y="140.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">6</text>
+  <text x="305.0" y="180.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">12</text>
+  <text x="305.0" y="220.0" fill="var(--academic-text)" font-size="15" text-anchor="middle" font-weight="600">18</text>
+  <text x="425.0" y="155.0" fill="var(--color-base)" font-size="15" text-anchor="middle">3</text>
+  <text x="425.0" y="195.0" fill="var(--color-base)" font-size="15" text-anchor="middle">9</text>
+  <text x="425.0" y="235.0" fill="var(--color-base)" font-size="15" text-anchor="middle">15</text>
+  <text x="52.0" y="100.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">1</text>
+  <text x="305.0" y="69.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">5</text>
+  <text x="550.0" y="100.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">7</text>
+  <text x="52.0" y="195.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">11</text>
+  <text x="550.0" y="195.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">13</text>
+  <text x="52.0" y="295.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">17</text>
+  <text x="550.0" y="295.0" fill="var(--academic-text)" font-size="15" text-anchor="middle">19</text>
+  <text x="140.0" y="92.0" fill="var(--color-theory)" font-size="15.5" text-anchor="middle" font-weight="600">A</text>
+  <text x="470.0" y="92.0" fill="var(--color-base)" font-size="15.5" text-anchor="middle" font-weight="600">B</text>
+  <text x="34.0" y="64.0" fill="var(--academic-text)" font-size="15" text-anchor="start" font-weight="600">U</text>
+  <text x="205.0" y="290.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle">A - B</text>
+  <text x="305.0" y="262.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle">A &amp; B</text>
+  <text x="408.0" y="290.0" fill="var(--color-remark)" font-size="13.5" text-anchor="middle">B - A</text>
+  <text x="32.0" y="330.0" fill="var(--color-remark)" font-size="13.5" text-anchor="start">U - (A | B)</text>
+</svg>
+<figcaption><em>U</em> = {1, …, 20} içinde <em>A</em> çift sayılar, <em>B</em> 3'ün katları. Her bölgedeki sayılar, altındaki Python ifadesinin verdiği kümedir: <code>A - B</code> yedi, <code>A &amp; B</code> üç, <code>B - A</code> üç, <code>U - (A | B)</code> yedi eleman içerir.</figcaption>
+</figure>
+```
+:::
+
+::: {#exm-ver-icerme-disarma name="İçerme ve Dışarma ile Sayma"}
+$1$'den $1000$'e kadar olan tam sayılardan kaçı $2$, $3$ ve $5$'ten en az birine bölünür? Kümeleri doğrudan kurarak sayalım ve sonucu üç küme için içerme–dışarma formülüyle (bkz. [Matematiğin Temelleri](../matematigin-temelleri/3-kumeler/tumleyen-fark-ve-simetrik-fark.html#exm-icerme-disarma)) karşılaştıralım.
+
+```python
+N = 1000
+A = set(range(2, N + 1, 2))
+B = set(range(3, N + 1, 3))
+C = set(range(5, N + 1, 5))
+print(len(A | B | C))
+print(len(A) + len(B) + len(C)
+      - len(A & B) - len(A & C) - len(B & C)
+      + len(A & B & C))
+```
+
+Çıktı:
+
+```text
+734
+734
+```
+
+Formüldeki terimlerin toplamı da aynıdır:
+
+$$500 + 333 + 200 - 166 - 100 - 66 + 33 = 734.$$
+
+Kesişimler ortak katlardan oluşur: örneğin $A \cap B$, $6$'nın katlarının kümesidir ve $\lfloor 1000/6 \rfloor = 166$ elemanlıdır.
+:::
+
+## Comprehension
+
+Matematikte bir kümeyi çoğu zaman elemanlarını tek tek yazmak yerine bir kuralla tanımlarız: $\{k^2 : 1 \le k \le 10\}$ ya da $\{d \in \mathbb{N} : d \mid 36\}$ gibi. Python'da da listeler, kümeler ve sözlükler aynı biçimde bir kuralla kurulabilir. Önce bu kuralın üzerinde döndüğü nesneleri adlandıralım.
+
+::: {#def-ver-yinelenebilir name="Yinelenebilir Nesne"}
+Bir `for` döngüsüyle elemanları tek tek dolaşılabilen nesnelere **yinelenebilir** (iterable) nesneler denir. Listeler, demetler, karakter dizileri, kümeler, sözlükler ve `range` nesneleri yinelenebilirdir; bir sözlük dolaşılırken anahtarları verilir.
+:::
+
+Yani `for x in nesne:` yazabildiğimiz her şey yinelenebilirdir. `list`, `set`, `sum`, `min`, `max` gibi fonksiyonlar herhangi bir yinelenebilir nesneyi kabul eder.
+
+::: {#def-ver-comprehension name="Comprehension"}
+`ifade`, `x` adını içeren bir ifade, `nesne` yinelenebilir bir nesne ve `koşul` doğru ya da yanlış değer alan bir ifade olsun. `[ifade for x in nesne if koşul]` yazımı, `nesne`'nin `koşul`'u sağlayan her `x` elemanı için `ifade`'nin değerini sırayla içeren listeyi kurar; buna **liste comprehension** denir. Köşeli parantez yerine küme parantezi yazılırsa aynı kuralla bir küme, `{anahtar: değer for x in nesne if koşul}` yazımıyla da bir sözlük kurulur. `if koşul` kısmı yazılmayabilir; birden çok `for` ve `if` art arda yazılabilir.
+:::
+
+Yani `[k**2 for k in range(1, 11) if k % 2 == 1]` ifadesi $\{k^2 : 1 \le k \le 10,\ k \text{ tek}\}$ gösteriminin Python'daki karşılığıdır; tek farkı, sonucun sıralı bir liste olmasıdır. Bir comprehension, boş bir listeyle başlayıp döngüde `append` yapan kalıbın kısa yazımıdır.
+
+```python
+squares = []
+for k in range(1, 11):
+    squares.append(k**2)
+print(squares == [k**2 for k in range(1, 11)])
+
+print([k**2 for k in range(1, 11) if k % 2 == 1])
+print({k**2 % 7 for k in range(7)})      # küme: tekrarlar düşer
+print({k: k**3 for k in range(1, 6)})    # sözlük
+print([d for d in range(1, 37) if 36 % d == 0])
+```
+
+Çıktı:
+
+```text
+True
+[1, 9, 25, 49, 81]
+{0, 1, 2, 4}
+{1: 1, 2: 8, 3: 27, 4: 64, 5: 125}
+[1, 2, 3, 4, 6, 9, 12, 18, 36]
+```
+
+İlk satır, döngüyle kurulan listenin comprehension ile kurulanla aynı olduğunu doğruluyor. Küme comprehension, $\mathbb{Z}_7$'deki tam karelerin kümesini $\{0, 1, 2, 4\}$ olarak verdi (bkz. [Sayılar Teorisi](../sayilar-teorisi/2/rezidu-kavrami.html#exm-mod7-kr-knr)). Son satır da $36$'nın bölenlerini $\{d : d \mid 36\}$ tanımına harfiyen uyarak listeliyor.
+
+Bir comprehension içinde birden çok `for` yazıldığında bunlar soldan sağa iç içe döngüler gibi okunur: ilk `for` en dıştaki döngüdür. Bir comprehension'ın ifadesi de bir comprehension olabilir; matrisleri bu yolla kurarız.
+
+```python
+pairs = [(i, j) for i in range(1, 4) for j in range(1, 4) if i < j]
+print(pairs)
+A = [[1, 2, 3],
+     [4, 5, 6]]
+At = [[row[j] for row in A] for j in range(3)]   # devrik matris
+print(At)
+I = [[1 if i == j else 0 for j in range(3)] for i in range(3)]
+print(I)
+print([x for row in A for x in row])            # düzleştirme
+```
+
+Çıktı:
+
+```text
+[(1, 2), (1, 3), (2, 3)]
+[[1, 4], [2, 5], [3, 6]]
+[[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+[1, 2, 3, 4, 5, 6]
+```
+
+`At` için dış comprehension sütun indisi `j` üzerinde döner ve her `j` için `A`'nın `j` numaralı sütununu bir liste olarak kurar; bu liste devrik matrisin `j` numaralı satırıdır. Son satır, iki `for` ile matrisi tek bir listeye düzleştiriyor: önce satırlar, her satırın içinde de elemanlar dolaşılır.
+
+Köşeli parantezsiz bir comprehension, `sum(k**2 for k in range(10))` örneğindeki gibi bir fonksiyonun tek argümanı olarak yazılabilir. Buna **üreteç ifadesi** (generator expression) denir: değerler bir listede biriktirilmez, fonksiyon onları sırayla birer birer tüketir. Çok terimli toplamlarda bellek harcamamanın yolu budur. `all` ve `any` fonksiyonları da üreteç ifadeleriyle sık kullanılır: `all(...)` kendisine verilen değerlerin hepsi doğruysa, `any(...)` en az biri doğruysa `True` döndürür.
+
+::: {#exm-ver-basel name="Basel Toplamının Kısmi Toplamları"}
+$\sum_{k=1}^{\infty} 1/k^2 = \pi^2/6$ serisinin $S_N = \sum_{k=1}^{N} 1/k^2$ kısmi toplamlarını bir üreteç ifadesiyle hesaplayalım; kalanı $R_N = \pi^2/6 - S_N$ ve $N R_N$ çarpımını da yazdıralım.
+
+```python
+import math
+
+target = math.pi**2 / 6
+for N in [10, 100, 1000, 10000]:
+    S = sum(1 / k**2 for k in range(1, N + 1))   # liste kurulmaz
+    err = target - S
+    print(f"{N:6d}  {S:.10f}  {err:.3e}  {N * err:.4f}")
+```
+
+Çıktı:
+
+```text
+    10  1.5497677312  9.517e-02  0.9517
+   100  1.6349839002  9.950e-03  0.9950
+  1000  1.6439345667  9.995e-04  0.9995
+ 10000  1.6448340718  1.000e-04  1.0000
+```
+
+Son sütun $1$'e yaklaşıyor, yani $R_N \approx 1/N$'dir. Bu, integral testinden gelen $\frac{1}{N+1} \le R_N \le \frac{1}{N}$ kestirimiyle uyumludur (bkz. [Analiz 2](../analiz-2/yogunlastirma-ve-p-serileri.html#prp-integral-testi-kalan-kestirimi)). Seri yavaş yakınsar: hatayı $10^{-6}$'nın altına indirmek için yaklaşık bir milyon terim gerekir.
+:::
+
+::: {.callout-warning title="Comprehension ne zaman kullanılmamalı"}
+Comprehension bir değer kurmak içindir. Yalnızca yan etkisi için, örneğin `[print(x) for x in a]` biçiminde yazdırmak için kullanılmaz; bunun için düz bir `for` döngüsü daha açıktır. İkiden fazla iç içe `for` ya da uzun koşullar içeren bir comprehension okunaksızlaşır; o durumda bir döngüye ya da yardımcı bir fonksiyona geçmek daha iyidir.
+:::
+
+## zip, enumerate ve sorted
+
+Yinelenebilir nesnelerle çalışırken üç yerleşik fonksiyon sürekli karşımıza çıkar: birkaç diziyi eş zamanlı dolaşan `zip`, elemanları indisleriyle birlikte veren `enumerate` ve sıralayan `sorted`.
+
+::: {#def-ver-zip-enumerate name="zip ve enumerate"}
+`zip(a, b)`, yinelenebilir `a` ve `b` nesnelerinin aynı sıradaki elemanlarını `(a[0], b[0])`, `(a[1], b[1])`, … demetleri olarak sırayla verir ve nesnelerden kısa olanı bittiğinde durur; ikiden çok nesneyle de çalışır. `enumerate(a, start=0)` ise `a`'nın her elemanını sırasıyla `(indis, eleman)` demeti olarak verir; indisler `start`'tan başlar.
+:::
+
+Yani `zip` iki diziyi bir fermuar gibi eşleştirir. `enumerate` ise `for i in range(len(a))` yazıp `a[i]`'ye ulaşmak yerine indisi ve elemanı birlikte verir. İkisi de demet ürettiğinden döngü değişkenleri doğrudan açılabilir: `for x, y in zip(u, v)`.
+
+```python
+u = [1, 2, 3]
+v = [4, -5, 6]
+print(list(zip(u, v)))
+print(sum(x * y for x, y in zip(u, v)))      # iç çarpım
+print(list(zip("abc", [1, 2])))              # kısa olan belirler
+for i, p in enumerate([2, 3, 5, 7], start=1):
+    print(f"{i}. asal: {p}")
+```
+
+Çıktı:
+
+```text
+[(1, 4), (2, -5), (3, 6)]
+12
+[('a', 1), ('b', 2)]
+1. asal: 2
+2. asal: 3
+3. asal: 5
+4. asal: 7
+```
+
+İkinci satır, $u = (1, 2, 3)$ ve $v = (4, -5, 6)$ vektörlerinin iç çarpımını $1 \cdot 4 + 2 \cdot (-5) + 3 \cdot 6 = 12$ olarak hesaplıyor.
+
+::: {#def-ver-sorted name="sorted ve Sıralama Anahtarı"}
+`sorted(a, key=f, reverse=False)`, yinelenebilir `a` nesnesinin elemanlarını `f(x)` değerleri artacak biçimde sıralayan **yeni** bir liste döndürür. `key` verilmezse elemanların kendileri karşılaştırılır; `reverse=True` sıralamayı azalan yapar. Listelerin `a.sort(key=f, reverse=False)` metodu aynı sıralamayı listenin kendisi üzerinde yapar ve `None` döndürür.
+:::
+
+Yani `key`, her elemana sıralamada kullanılacak karşılaştırılabilir bir değer atayan fonksiyondur ve çoğu zaman bir `lambda` ifadesiyle yazılır. Demetler sözlük sırasıyla karşılaştırılır: önce ilk elemanlara, onlar eşitse ikinci elemanlara bakılır. Python'un sıralaması **kararlıdır**: anahtarları eşit olan elemanlar aralarındaki ilk sırayı korur. `min` ve `max` da aynı `key` argümanını kabul eder.
+
+```python
+a = [5, 2, 9, 1]
+b = sorted(a)                  # yeni liste; a değişmez
+print(a, b)
+a.sort(reverse=True)           # yerinde, büyükten küçüğe
+print(a)
+words = ["küme", "dizi", "an", "sözlük", "demet"]
+print(sorted(words))           # alfabetik
+print(sorted(words, key=len))  # uzunluğa göre
+points = [(3, 4), (-1, 1), (0, -2), (2, 2)]
+print(sorted(points, key=lambda p: p[0]**2 + p[1]**2))
+print(max(points, key=lambda p: p[1]))
+```
+
+Çıktı:
+
+```text
+[5, 2, 9, 1] [1, 2, 5, 9]
+[9, 5, 2, 1]
+['an', 'demet', 'dizi', 'küme', 'sözlük']
+['an', 'küme', 'dizi', 'demet', 'sözlük']
+[(-1, 1), (0, -2), (2, 2), (3, 4)]
+(3, 4)
+```
+
+Uzunluğa göre sıralamada `küme` ile `dizi` eşit uzunluktadır ve kararlılık gereği listedeki sıralarıyla gelir. Noktalar da orijine uzaklıklarının kareleri $2, 4, 8, 25$ olacak biçimde sıralanmıştır. Karakter dizileri harflerin Unicode kod numaralarına göre karşılaştırılır. Bu yüzden `ç`, `ğ`, `ı`, `ö`, `ş`, `ü` ile başlayan kelimeler `z`'den sonraya düşer ve sıralama Türk alfabesine uymaz.
+
+::: {#exm-ver-kelime-siralama name="Kelimeleri Sıklığa Göre Sıralama"}
+@exm-ver-kelime-sayimi içindeki metnin en sık geçen beş kelimesini, eşit sayıda geçenleri alfabetik sırada vererek listeleyelim. Anahtar olarak `(-sayı, kelime)` demetini kullanırsak demet karşılaştırması önce sayıya göre azalan, sonra kelimeye göre artan bir sıra kurar.
+
+```python
+text = ("asal sayı yalnız bir ve kendisine bölünen sayıdır "
+        "bir sayı asal değilse bileşik sayıdır "
+        "bir sayının asal çarpanları tek türlü belirlidir")
+counts = {}
+for word in text.split():
+    counts[word] = counts.get(word, 0) + 1
+# önce sayıya göre azalan, eşitlikte kelimeye göre artan
+ranking = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+for word, c in ranking[:5]:
+    print(f"{word:<12}{c}")
+```
+
+Çıktı:
+
+```text
+asal        3
+bir         3
+sayı        2
+sayıdır     2
+belirlidir  1
+```
+
+`counts.items()` her çifti `(kelime, sayı)` demeti olarak verir; `kv[1]` sayı, `kv[0]` kelimedir. Sayıyı eksi işaretiyle almak, `reverse=True` kullanmadan yalnız o bileşende sırayı tersine çevirir.
+:::
+
+::: {#exm-ver-pascal name="Pascal Üçgeni"}
+Pascal üçgeninin $n$ numaralı satırı $\binom{n}{0}, \binom{n}{1}, \dots, \binom{n}{n}$ binom katsayılarından oluşur. Her iç eleman, Pascal özdeşliği $\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}$ gereği üstündeki iki elemanın toplamıdır (bkz. [Olasılık Teorisi](../olasilik-teorisi/sayma-teknikleri.html#lem-pascal-sayma)). Bir satırın başına ve sonuna birer $0$ ekleyip iki listeyi `zip` ile eleman eleman toplarsak bir sonraki satırı buluruz.
+
+```python
+row = [1]
+for n in range(7):
+    print(row)
+    row = [a + b for a, b in zip([0] + row, row + [0])]
+```
+
+Çıktı:
+
+```text
+[1]
+[1, 1]
+[1, 2, 1]
+[1, 3, 3, 1]
+[1, 4, 6, 4, 1]
+[1, 5, 10, 10, 5, 1]
+[1, 6, 15, 20, 15, 6, 1]
+```
+
+Örneğin `row = [1, 3, 3, 1]` iken `[0, 1, 3, 3, 1]` ile `[1, 3, 3, 1, 0]` listeleri eşleştirilir ve toplamları `[1, 4, 6, 4, 1]` olur. Uçlara eklenen $0$'lar sayesinde satırın iki ucundaki $1$'leri ayrıca yazmak gerekmez.
+:::
+
+::: {#exm-ver-pascal-mod2 name="Pascal Üçgenindeki Tek Sayılar"}
+Pascal üçgeninin ilk $16$ satırını kuralım ve tek katsayıları `#`, çiftleri `.` ile göstererek yazdıralım. Satırlar `rows` listesinde biriktirilir; her yeni satır, `rows[-1]` ile alınan son satırdan üretilir. `" ".join(...)` ifadesi, karakter dizilerini aralarına birer boşluk koyarak birleştirir.
+
+```python
+rows = [[1]]
+for n in range(1, 16):
+    prev = rows[-1]
+    rows.append([a + b for a, b in zip([0] + prev, prev + [0])])
+for n, row in enumerate(rows):
+    marks = " ".join("#" if c % 2 == 1 else "." for c in row)
+    print(" " * (15 - n) + marks)
+```
+
+Çıktı:
+
+```text
+               #
+              # #
+             # . #
+            # # # #
+           # . . . #
+          # # . . # #
+         # . # . # . #
+        # # # # # # # #
+       # . . . . . . . #
+      # # . . . . . . # #
+     # . # . . . . . # . #
+    # # # # . . . . # # # #
+   # . . . # . . . # . . . #
+  # # . . # # . . # # . . # #
+ # . # . # . # . # . # . # . #
+# # # # # # # # # # # # # # # #
+```
+
+Tek katsayılar kendini tekrarlayan bir desen oluşturuyor: ilk $2^m$ satırın deseni, sonraki $2^m$ satırda yan yana iki kez yinelenir ve ortada çift sayılardan oluşan ters bir üçgen kalır. Aynı kod `range(1, 32)` ile çalıştırıldığında elde edilen $32$ satır aşağıda çizilmiştir; bu desen **Sierpinski üçgeni** olarak bilinir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="-15.0 30.5 521.5 417.5" role="img" aria-label="The first 32 rows of Pascal's triangle as dots, filled for odd and hollow for even binomial coefficients, forming the Sierpinski triangle">
+  <circle cx="270.0" cy="50.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="256.0" y="55.0" fill="var(--academic-text)" font-size="15" text-anchor="end">n = 0</text>
+  <circle cx="263.0" cy="62.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="277.0" cy="62.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="256.0" cy="74.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="270.0" cy="74.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="74.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="86.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="263.0" cy="86.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="277.0" cy="86.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="291.0" cy="86.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="242.0" cy="98.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="256.0" cy="98.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="98.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="98.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="98.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="110.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="110.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="263.0" cy="110.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="110.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="110.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="305.0" cy="110.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="228.0" cy="122.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="242.0" cy="122.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="122.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="270.0" cy="122.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="122.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="298.0" cy="122.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="122.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="263.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="277.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="291.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="305.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="319.0" cy="134.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="214.0" cy="147.0" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="228.0" cy="147.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="147.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="147.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="147.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="147.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="147.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="147.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="147.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="200.0" y="152.0" fill="var(--academic-text)" font-size="15" text-anchor="end">n = 8</text>
+  <circle cx="207.0" cy="159.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="159.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="159.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="249.0" cy="159.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="159.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="159.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="159.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="159.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="319.0" cy="159.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="333.0" cy="159.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="200.0" cy="171.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="214.0" cy="171.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="171.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="242.0" cy="171.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="171.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="171.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="171.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="171.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="171.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="326.0" cy="171.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="171.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="183.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="183.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="183.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="183.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="319.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="333.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="347.0" cy="183.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="186.0" cy="195.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="200.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="214.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="195.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="256.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="195.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="312.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="195.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="354.0" cy="195.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="179.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="207.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="221.0" cy="207.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="235.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="263.0" cy="207.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="207.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="305.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="319.0" cy="207.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="333.0" cy="207.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="347.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="361.0" cy="207.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="172.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="186.0" cy="219.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="200.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="214.0" cy="219.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="242.0" cy="219.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="270.0" cy="219.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="298.0" cy="219.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="326.0" cy="219.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="354.0" cy="219.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="368.0" cy="219.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="165.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="179.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="263.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="277.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="291.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="305.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="319.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="333.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="347.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="361.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="375.0" cy="231.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="158.0" cy="244.0" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="172.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="186.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="200.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="214.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="354.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="368.0" cy="244.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="382.0" cy="244.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="144.0" y="249.0" fill="var(--academic-text)" font-size="15" text-anchor="end">n = 16</text>
+  <circle cx="151.0" cy="256.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="165.0" cy="256.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="179.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="193.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="207.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="221.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="235.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="249.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="319.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="333.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="347.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="361.0" cy="256.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="375.0" cy="256.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="389.0" cy="256.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="144.0" cy="268.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="158.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="172.0" cy="268.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="186.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="200.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="214.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="354.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="368.0" cy="268.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="382.0" cy="268.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="396.0" cy="268.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="137.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="151.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="165.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="179.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="207.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="221.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="235.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="249.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="319.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="333.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="347.0" cy="280.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="361.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="375.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="389.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="403.0" cy="280.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="130.0" cy="292.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="144.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="158.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="172.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="186.0" cy="292.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="200.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="214.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="354.0" cy="292.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="368.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="382.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="396.0" cy="292.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="410.0" cy="292.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="123.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="137.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="151.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="165.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="179.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="221.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="235.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="249.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="319.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="333.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="347.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="361.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="375.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="389.0" cy="304.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="403.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="417.0" cy="304.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="116.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="130.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="144.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="158.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="172.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="186.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="200.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="214.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="354.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="368.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="382.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="396.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="410.0" cy="316.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="424.0" cy="316.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="109.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="123.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="137.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="151.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="165.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="179.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="235.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="249.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="319.0" cy="328.9" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="333.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="347.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="361.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="375.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="389.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="403.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="417.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="431.0" cy="328.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="102.0" cy="341.0" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="116.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="130.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="144.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="158.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="172.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="186.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="200.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="214.0" cy="341.0" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="228.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="341.0" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="340.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="354.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="368.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="382.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="396.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="410.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="424.0" cy="341.0" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="438.0" cy="341.0" r="5.4" fill="var(--color-theory)"/>
+  <text x="88.0" y="346.0" fill="var(--academic-text)" font-size="15" text-anchor="end">n = 24</text>
+  <circle cx="95.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="109.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="123.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="137.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="151.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="165.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="179.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="193.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="207.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="249.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="319.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="333.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="347.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="361.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="375.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="389.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="403.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="417.0" cy="353.1" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="431.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="445.0" cy="353.1" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="88.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="102.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="116.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="130.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="144.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="158.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="172.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="186.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="200.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="214.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="242.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="326.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="354.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="368.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="382.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="396.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="410.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="424.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="438.0" cy="365.2" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="452.0" cy="365.2" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="81.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="109.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="123.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="137.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="151.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="165.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="179.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="193.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="263.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="305.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="319.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="333.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="347.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="361.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="375.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="389.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="403.0" cy="377.4" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="417.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="431.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="445.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="459.0" cy="377.4" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="74.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="88.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="102.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="116.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="130.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="144.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="158.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="172.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="186.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="200.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="214.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="242.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="256.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="270.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="298.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="312.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="326.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="354.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="368.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="382.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="396.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="410.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="424.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="438.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="452.0" cy="389.5" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="466.0" cy="389.5" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="67.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="81.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="109.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="123.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="137.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="151.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="165.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="179.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="221.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="235.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="263.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="277.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="291.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="305.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="319.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="333.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="347.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="361.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="375.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="389.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="403.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="417.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="431.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="445.0" cy="401.6" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="459.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="473.0" cy="401.6" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="60.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="74.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="88.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="102.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="116.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="130.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="144.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="158.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="172.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="186.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="200.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="214.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="228.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="242.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="256.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="270.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="284.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="298.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="312.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="326.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="340.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="354.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="368.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="382.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="396.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="410.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="424.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="438.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="452.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="466.0" cy="413.7" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="480.0" cy="413.7" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="53.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="67.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="81.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="109.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="123.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="137.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="151.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="165.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="179.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="193.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="207.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="221.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="235.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="249.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="263.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="277.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="291.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="305.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="319.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="333.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="347.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="361.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="375.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="389.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="403.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="417.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="431.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="445.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="459.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="473.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <circle cx="487.0" cy="425.9" r="5.4" fill="var(--color-theory)"/>
+  <text x="39.0" y="430.9" fill="var(--academic-text)" font-size="15" text-anchor="end">n = 31</text>
+  <circle cx="400" cy="60" r="5.4" fill="var(--color-theory)"/>
+  <text x="412.0" y="65.0" fill="var(--academic-text)" font-size="15" text-anchor="start">tek</text>
+  <circle cx="400" cy="86" r="4.800000000000001" fill="none" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="412.0" y="91.0" fill="var(--academic-text)" font-size="15" text-anchor="start">çift</text>
+</svg>
+<figcaption>Pascal üçgeninin ilk 32 satırı (<em>n</em> = 0, …, 31); her nokta bir binom katsayısıdır. Dolu noktalar tek, boş noktalar çift katsayılardır. Satırlar koddaki <code>zip</code> kuralıyla üretildi; tek katsayılar Sierpinski üçgenini çizer ve sayıları 3<sup>5</sup> = 243'tür.</figcaption>
+</figure>
+```
+:::
+
+## itertools ile Sayma
+
+Sayma problemlerinde bir formüle güvenmeden önce küçük durumları tek tek listelemek çoğu zaman öğreticidir. Standart kütüphanedeki `itertools` modülü, bir kümenin sıralamalarını, seçimlerini ve kartezyen çarpımlarını üreten hazır fonksiyonlar sunar.
+
+::: {#def-ver-itertools name="permutations, combinations ve product"}
+`itertools` modülünün üç fonksiyonu, yinelenebilir bir `a` nesnesinin elemanlarından demetler üretir. `permutations(a, k)`, `a`'nın farklı konumlardaki `k` elemanının bütün sıralı dizilişlerini, yani `k`'lı permütasyonlarını verir; `k` yazılmazsa `len(a)` alınır. `combinations(a, k)`, `a`'nın `k` elemanlı bütün sırasız seçimlerini verir; her seçim, elemanların `a`'daki sırasıyla bir kez üretilir. `product(a, b)` ise `a` ile `b`'nin kartezyen çarpımının bütün elemanlarını verir; `product(a, repeat=k)`, `a`'nın kendisiyle `k` katlı kartezyen çarpımıdır. Üç fonksiyon da sonuçlarını girdideki sıraya göre sözlük sırasıyla üretir.
+:::
+
+Yani bu fonksiyonlar, sayma tekniklerinde sayısını formülle bulduğumuz nesneleri tek tek önümüze serer. $n$ elemanlı bir kümenin $k$'lı permütasyonlarının sayısı $n!/(n-k)!$, kombinasyonlarının sayısı $\binom{n}{k}$, kendisiyle $k$ katlı kartezyen çarpımının eleman sayısı da çarpma kuralı gereği $n^k$'dir (bkz. Olasılık Teorisi: [permütasyon sayısı](../olasilik-teorisi/sayma-teknikleri.html#thm-permutasyon-sayisi), [kombinasyon sayısı](../olasilik-teorisi/sayma-teknikleri.html#thm-kombinasyon-sayisi), [çarpma kuralı](../olasilik-teorisi/sayma-teknikleri.html#prp-carpma-kurali)). `math.perm(n, k)` ve `math.comb(n, k)` ilk iki sayıyı doğrudan hesaplar.
+
+```python
+import math
+from itertools import combinations, permutations, product
+
+print(["".join(p) for p in permutations("abc")])
+print(list(combinations([1, 2, 3, 4], 2)))
+print(["".join(t) for t in product("01", repeat=3)])
+n, k = 6, 3
+print(len(list(permutations(range(n), k))), math.perm(n, k))
+print(len(list(combinations(range(n), k))), math.comb(n, k))
+print(len(list(product(range(n), repeat=k))), n**k)
+```
+
+Çıktı:
+
+```text
+['abc', 'acb', 'bac', 'bca', 'cab', 'cba']
+[(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
+['000', '001', '010', '011', '100', '101', '110', '111']
+120 120
+20 20
+216 216
+```
+
+Üç fonksiyon da sonuçlarını bir liste olarak değil, istendikçe üretir; bu yüzden hepsini görmek için `list` ile listeye çevirdik. $6$ elemanlı bir kümeden $3$ eleman için $6 \cdot 5 \cdot 4 = 120$ sıralı seçim, $\binom{6}{3} = 20$ sırasız seçim ve $6^3 = 216$ sıralı üçlü vardır.
+
+::: {#exm-ver-kuvvet-kumesi name="Kuvvet Kümesini Listeleme"}
+$S = \{1, 2, 3\}$ kümesinin bütün alt kümelerini, $k = 0, 1, 2, 3$ için $k$ elemanlı alt kümeleri art arda `combinations` ile üreterek listeleyelim.
+
+```python
+from itertools import combinations
+
+S = [1, 2, 3]
+power = [set(c) for k in range(len(S) + 1)
+         for c in combinations(S, k)]
+print(power)
+print(len(power), 2 ** len(S))
+```
+
+Çıktı:
+
+```text
+[set(), {1}, {2}, {3}, {1, 2}, {1, 3}, {2, 3}, {1, 2, 3}]
+8 8
+```
+
+Boş küme `set()` olarak yazdırılır. Alt küme sayısı $\binom{3}{0} + \binom{3}{1} + \binom{3}{2} + \binom{3}{3} = 8 = 2^3$'tür (bkz. [Matematiğin Temelleri](../matematigin-temelleri/3-kumeler/bos-kume-ve-kuvvet-kumesi.html#thm-kuvvet-sayisi)).
+:::
+
+::: {#exm-ver-iki-zar name="İki Zarın Toplamının Dağılımı"}
+İki zar atıldığında üste gelen sayıların toplamı hangi değeri kaç farklı biçimde alır? $36$ sıralı sonucu `product` ile üretelim, toplamları `Counter` ile sayalım ve her toplamın olasılığını `Fraction` ile kesir olarak yazalım (`Fraction` için bkz. [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd)).
+
+```python
+from collections import Counter
+from fractions import Fraction
+from itertools import product
+
+sums = Counter(a + b for a, b in product(range(1, 7), repeat=2))
+for s in sorted(sums):
+    print(f"{s:2d}  {sums[s]}  {Fraction(sums[s], 36)}")
+```
+
+Çıktı:
+
+```text
+ 2  1  1/36
+ 3  2  1/18
+ 4  3  1/12
+ 5  4  1/9
+ 6  5  5/36
+ 7  6  1/6
+ 8  5  5/36
+ 9  4  1/9
+10  3  1/12
+11  2  1/18
+12  1  1/36
+```
+
+Dağılım $7$ etrafında simetriktir: $s$ toplamı $6 - |s - 7|$ farklı sonuçla elde edilir, bu yüzden en olası toplam $7$'dir ve olasılığı $6/36 = 1/6$'dır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="20.5 3.5 552.5 268.5" role="img" aria-label="Bar chart of the number of outcomes for each sum of two dice, 2 to 12: 1 2 3 4 5 6 5 4 3 2 1">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="70.0" y1="209.7" x2="510.0" y2="209.7"/><line x1="70.0" y1="179.4" x2="510.0" y2="179.4"/><line x1="70.0" y1="149.1" x2="510.0" y2="149.1"/><line x1="70.0" y1="118.8" x2="510.0" y2="118.8"/><line x1="70.0" y1="88.5" x2="510.0" y2="88.5"/><line x1="70.0" y1="58.2" x2="510.0" y2="58.2"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="240.0" x2="518.0" y2="240.0"/>
+  <line x1="70.0" y1="32.0" x2="70.0" y2="240.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="93.6" y="256.0" text-anchor="middle">2</text>
+  <text x="132.9" y="256.0" text-anchor="middle">3</text>
+  <text x="172.1" y="256.0" text-anchor="middle">4</text>
+  <text x="211.4" y="256.0" text-anchor="middle">5</text>
+  <text x="250.7" y="256.0" text-anchor="middle">6</text>
+  <text x="290.0" y="256.0" text-anchor="middle">7</text>
+  <text x="329.3" y="256.0" text-anchor="middle">8</text>
+  <text x="368.6" y="256.0" text-anchor="middle">9</text>
+  <text x="407.9" y="256.0" text-anchor="middle">10</text>
+  <text x="447.1" y="256.0" text-anchor="middle">11</text>
+  <text x="486.4" y="256.0" text-anchor="middle">12</text>
+  <text x="63.0" y="244.0" text-anchor="end">0</text>
+  <text x="63.0" y="213.7" text-anchor="end">1</text>
+  <text x="63.0" y="183.4" text-anchor="end">2</text>
+  <text x="63.0" y="153.1" text-anchor="end">3</text>
+  <text x="63.0" y="122.8" text-anchor="end">4</text>
+  <text x="63.0" y="92.5" text-anchor="end">5</text>
+  <text x="63.0" y="62.2" text-anchor="end">6</text>
+  <text x="524.0" y="244.0" font-style="italic">toplam</text>
+  </g>
+  <text x="70.0" y="24.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-style="italic">sonuç sayısı</text>
+  <rect x="79.4" y="209.7" width="28.3" height="30.3" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="93.6" y="202.7" fill="var(--color-theory)" font-size="13" text-anchor="middle">1</text>
+  <rect x="118.7" y="179.4" width="28.3" height="60.6" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="132.9" y="172.4" fill="var(--color-theory)" font-size="13" text-anchor="middle">2</text>
+  <rect x="158.0" y="149.1" width="28.3" height="90.9" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="172.1" y="142.1" fill="var(--color-theory)" font-size="13" text-anchor="middle">3</text>
+  <rect x="197.3" y="118.8" width="28.3" height="121.2" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="211.4" y="111.8" fill="var(--color-theory)" font-size="13" text-anchor="middle">4</text>
+  <rect x="236.6" y="88.5" width="28.3" height="151.5" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="250.7" y="81.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">5</text>
+  <rect x="275.9" y="58.2" width="28.3" height="181.8" fill="var(--color-theory)" fill-opacity="0.85" rx="1.5"/>
+  <text x="290.0" y="51.2" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">6</text>
+  <rect x="315.1" y="88.5" width="28.3" height="151.5" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="329.3" y="81.5" fill="var(--color-theory)" font-size="13" text-anchor="middle">5</text>
+  <rect x="354.4" y="118.8" width="28.3" height="121.2" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="368.6" y="111.8" fill="var(--color-theory)" font-size="13" text-anchor="middle">4</text>
+  <rect x="393.7" y="149.1" width="28.3" height="90.9" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="407.9" y="142.1" fill="var(--color-theory)" font-size="13" text-anchor="middle">3</text>
+  <rect x="433.0" y="179.4" width="28.3" height="60.6" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="447.1" y="172.4" fill="var(--color-theory)" font-size="13" text-anchor="middle">2</text>
+  <rect x="472.3" y="209.7" width="28.3" height="30.3" fill="var(--color-theory)" fill-opacity="0.45" rx="1.5"/>
+  <text x="486.4" y="202.7" fill="var(--color-theory)" font-size="13" text-anchor="middle">1</text>
+  <text x="316.0" y="56.2" fill="var(--color-practice)" font-size="13.5" text-anchor="start" font-weight="600">6/36 = 1/6</text>
+</svg>
+<figcaption>İki zarın toplamı için <code>product(range(1, 7), repeat=2)</code> ile sayılan 36 sonucun dağılımı. Çubuk yükseklikleri <code>Counter</code> nesnesindeki sayılardır; en olası toplam 7'dir.</figcaption>
+</figure>
+```
+:::
+
+## Eratosthenes Kalburu
+
+Bölümün araçlarını bir araya getiren klasik bir örnekle bitirelim: belli bir sınıra kadar bütün asalları bulmak. Her sayının asallığını tek tek bölme denemesiyle sınamak yerine, Eratosthenes kalburu bütün bileşik sayıları asalların katları olarak eler. Yöntem şu gerçeğe dayanır: asal olmayan her $n > 1$ sayısının $\sqrt{n}$'den büyük olmayan bir asal böleni vardır (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/asal-sayilar.html#thm-eratosthenes)). Bu yüzden $N$'ye kadar eleme yaparken $p^2 \le N$ olan asallar yeter. Ayrıca her $p$ için eleme $p^2$'den başlayabilir, çünkü $p^2$'den küçük bileşik katlar daha küçük bir asal böleni olduğundan zaten elenmiştir.
+
+::: {.callout-tip title="Dört adımda Eratosthenes kalburu"}
+1. $0, 1, \dots, N$ indisli, bütün elemanları `True` olan bir `is_prime` listesi kurun ve $0$ ile $1$'in değerini `False` yapın.
+2. $p = 2$'den başlayıp $p^2 \le N$ olduğu sürece $p$'yi birer artırın.
+3. `is_prime[p]` hâlâ `True` ise $p$ asaldır: $p^2, p^2 + p, p^2 + 2p, \dots$ indislerini adımlı dilim atamasıyla `False` yapın.
+4. Değeri `True` kalan indisleri `enumerate` ve bir comprehension ile toplayın.
+:::
+
+::: {#exm-ver-kalbur-100 name="Yüze Kadar Asallar"}
+Kalburu bir fonksiyon olarak yazıp $100$'e kadar olan asalları bulalım ve onar onar yazdıralım.
+
+```python
+def sieve(n):
+    """n'ye kadar (n dahil) asalların listesini döndürür."""
+    is_prime = [True] * (n + 1)
+    is_prime[0] = is_prime[1] = False
+    p = 2
+    while p * p <= n:
+        if is_prime[p]:
+            # p*p, p*p + p, p*p + 2p, ... sayılarını tek atamayla ele
+            is_prime[p * p::p] = [False] * len(range(p * p, n + 1, p))
+        p += 1
+    return [k for k, flag in enumerate(is_prime) if flag]
+
+
+primes = sieve(100)
+print(len(primes))
+for i in range(0, len(primes), 10):
+    print(primes[i:i + 10])
+```
+
+Çıktı:
+
+```text
+25
+[2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+[31, 37, 41, 43, 47, 53, 59, 61, 67, 71]
+[73, 79, 83, 89, 97]
+```
+
+`is_prime[p * p::p]` dilimi $p^2$'den başlayıp $p$'şer ilerleyen bütün indisleri kapsar; sağ taraftaki liste de tam o uzunluktadır. $100$ için yalnız $p = 2, 3, 5, 7$ ile eleme yapılır, çünkü $11^2 = 121 > 100$'dür. Aşağıdaki şekil, her bileşik sayının hangi asalla ilk kez elendiğini gösteriyor.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="5.5 5.5 449.0 511.0" role="img" aria-label="A 10 by 10 grid of the numbers 1 to 100; the 25 primes are highlighted and every composite is shaded by its smallest prime factor 2, 3, 5 or 7; the squares 4, 9, 25, 49 have thick frames">
+  <rect x="20.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--academic-bg)" fill-opacity="1.0" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="46.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">1</text>
+  <rect x="62.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="46.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">2</text>
+  <rect x="104.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="46.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">3</text>
+  <rect x="146.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="46.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">4</text>
+  <rect x="188.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="46.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">5</text>
+  <rect x="230.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="46.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">6</text>
+  <rect x="272.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="46.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">7</text>
+  <rect x="314.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="46.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">8</text>
+  <rect x="356.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="46.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">9</text>
+  <rect x="398.0" y="20.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="46.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">10</text>
+  <rect x="20.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="88.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">11</text>
+  <rect x="62.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="88.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">12</text>
+  <rect x="104.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="88.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">13</text>
+  <rect x="146.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="88.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">14</text>
+  <rect x="188.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="88.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">15</text>
+  <rect x="230.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="88.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">16</text>
+  <rect x="272.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="88.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">17</text>
+  <rect x="314.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="88.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">18</text>
+  <rect x="356.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="88.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">19</text>
+  <rect x="398.0" y="62.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="88.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">20</text>
+  <rect x="20.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">21</text>
+  <rect x="62.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">22</text>
+  <rect x="104.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="130.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">23</text>
+  <rect x="146.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">24</text>
+  <rect x="188.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--color-base)" fill-opacity="0.28" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">25</text>
+  <rect x="230.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">26</text>
+  <rect x="272.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">27</text>
+  <rect x="314.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">28</text>
+  <rect x="356.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="130.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">29</text>
+  <rect x="398.0" y="104.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="130.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">30</text>
+  <rect x="20.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="172.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">31</text>
+  <rect x="62.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">32</text>
+  <rect x="104.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">33</text>
+  <rect x="146.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">34</text>
+  <rect x="188.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--color-base)" fill-opacity="0.28" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">35</text>
+  <rect x="230.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">36</text>
+  <rect x="272.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="172.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">37</text>
+  <rect x="314.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">38</text>
+  <rect x="356.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">39</text>
+  <rect x="398.0" y="146.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="172.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">40</text>
+  <rect x="20.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="214.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">41</text>
+  <rect x="62.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="214.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">42</text>
+  <rect x="104.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="214.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">43</text>
+  <rect x="146.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="214.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">44</text>
+  <rect x="188.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="214.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">45</text>
+  <rect x="230.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="214.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">46</text>
+  <rect x="272.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="214.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">47</text>
+  <rect x="314.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="214.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">48</text>
+  <rect x="356.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--color-remark)" fill-opacity="0.4" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="214.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">49</text>
+  <rect x="398.0" y="188.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="214.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">50</text>
+  <rect x="20.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">51</text>
+  <rect x="62.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">52</text>
+  <rect x="104.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="256.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">53</text>
+  <rect x="146.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">54</text>
+  <rect x="188.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--color-base)" fill-opacity="0.28" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">55</text>
+  <rect x="230.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">56</text>
+  <rect x="272.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">57</text>
+  <rect x="314.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">58</text>
+  <rect x="356.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="256.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">59</text>
+  <rect x="398.0" y="230.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="256.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">60</text>
+  <rect x="20.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="298.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">61</text>
+  <rect x="62.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">62</text>
+  <rect x="104.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">63</text>
+  <rect x="146.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">64</text>
+  <rect x="188.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--color-base)" fill-opacity="0.28" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">65</text>
+  <rect x="230.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">66</text>
+  <rect x="272.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="298.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">67</text>
+  <rect x="314.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">68</text>
+  <rect x="356.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">69</text>
+  <rect x="398.0" y="272.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="298.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">70</text>
+  <rect x="20.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="340.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">71</text>
+  <rect x="62.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="340.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">72</text>
+  <rect x="104.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="340.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">73</text>
+  <rect x="146.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="340.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">74</text>
+  <rect x="188.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="340.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">75</text>
+  <rect x="230.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="340.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">76</text>
+  <rect x="272.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--color-remark)" fill-opacity="0.4" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="340.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">77</text>
+  <rect x="314.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="340.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">78</text>
+  <rect x="356.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="340.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">79</text>
+  <rect x="398.0" y="314.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="340.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">80</text>
+  <rect x="20.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">81</text>
+  <rect x="62.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">82</text>
+  <rect x="104.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="382.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">83</text>
+  <rect x="146.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">84</text>
+  <rect x="188.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--color-base)" fill-opacity="0.28" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">85</text>
+  <rect x="230.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">86</text>
+  <rect x="272.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">87</text>
+  <rect x="314.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">88</text>
+  <rect x="356.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="382.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">89</text>
+  <rect x="398.0" y="356.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="382.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">90</text>
+  <rect x="20.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--color-remark)" fill-opacity="0.4" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="41.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">91</text>
+  <rect x="62.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="83.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">92</text>
+  <rect x="104.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="125.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">93</text>
+  <rect x="146.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="167.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">94</text>
+  <rect x="188.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--color-base)" fill-opacity="0.28" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="209.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">95</text>
+  <rect x="230.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="251.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">96</text>
+  <rect x="272.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="293.0" y="424.4" fill="var(--color-practice)" font-size="15" text-anchor="middle" font-weight="600">97</text>
+  <rect x="314.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="335.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">98</text>
+  <rect x="356.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="377.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">99</text>
+  <rect x="398.0" y="398.0" width="42.0" height="42.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="419.0" y="424.4" fill="var(--academic-text)" font-size="15" text-anchor="middle">100</text>
+  <rect x="148.0" y="22.0" width="38" height="38" fill="none" stroke="var(--academic-text)" stroke-width="2.6"/>
+  <rect x="358.0" y="22.0" width="38" height="38" fill="none" stroke="var(--color-theory)" stroke-width="2.6"/>
+  <rect x="190.0" y="106.0" width="38" height="38" fill="none" stroke="var(--color-base)" stroke-width="2.6"/>
+  <rect x="358.0" y="190.0" width="38" height="38" fill="none" stroke="var(--color-remark)" stroke-width="2.6"/>
+  <rect x="20.0" y="453.0" width="18.0" height="18.0" rx="0" fill="var(--color-practice)" fill-opacity="0.26" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="46.0" y="467.0" fill="var(--academic-text)" font-size="14" text-anchor="start">asal</text>
+  <rect x="160.0" y="453.0" width="18.0" height="18.0" rx="0" fill="var(--academic-text)" fill-opacity="0.1" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="186.0" y="467.0" fill="var(--academic-text)" font-size="14" text-anchor="start">2 ile elenen</text>
+  <rect x="300.0" y="453.0" width="18.0" height="18.0" rx="0" fill="var(--color-theory)" fill-opacity="0.24" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="326.0" y="467.0" fill="var(--academic-text)" font-size="14" text-anchor="start">3 ile elenen</text>
+  <rect x="20.0" y="483.0" width="18.0" height="18.0" rx="0" fill="var(--color-base)" fill-opacity="0.28" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="46.0" y="497.0" fill="var(--academic-text)" font-size="14" text-anchor="start">5 ile elenen</text>
+  <rect x="160.0" y="483.0" width="18.0" height="18.0" rx="0" fill="var(--color-remark)" fill-opacity="0.4" stroke="var(--academic-text)" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="186.0" y="497.0" fill="var(--academic-text)" font-size="14" text-anchor="start">7 ile elenen</text>
+  <rect x="300.0" y="483.0" width="18" height="18" fill="none" stroke="var(--academic-text)" stroke-width="2.6"/>
+  <text x="326.0" y="497.0" fill="var(--academic-text)" font-size="14" text-anchor="start">eleme başı p²</text>
+</svg>
+<figcaption>Eratosthenes kalburu 1'den 100'e kadar. Her bileşik sayı, onu ilk kez eleyen asalın rengini taşır; bu asal, sayının en küçük asal bölenidir. Kalın çerçeveli 4, 9, 25 ve 49, sırasıyla 2, 3, 5 ve 7 ile elemenin başladığı <em>p</em>² sayılarıdır. &#8730;100 = 10 olduğundan 7'den sonra eleme gerekmez; 1 dışında elenmeden kalan 25 sayı asaldır.</figcaption>
+</figure>
+```
+:::
+
+::: {#exm-ver-asal-sayma name="Asalları Sayma"}
+$n$'den büyük olmayan asalların sayısını $\pi(n)$ ile gösterelim. Kalburla $10^6$'ya kadar bütün asalları bir kez bulup $\pi(10^k)$ değerlerini ve $\pi(n)$'nin $n / \ln n$'ye oranını hesaplayalım. Aşağıdaki kod, bir önceki kod bloğunun devamıdır: `sieve` fonksiyonunu yeniden tanımlamadan kullanır.
+
+```python
+import math
+
+primes = sieve(10**6)
+for k in range(1, 7):
+    n = 10**k
+    count = sum(1 for p in primes if p <= n)
+    print(f"{n:>8}  {count:>6}  {count / (n / math.log(n)):.4f}")
+```
+
+Çıktı:
+
+```text
+      10       4  0.9210
+     100      25  1.1513
+    1000     168  1.1605
+   10000    1229  1.1320
+  100000    9592  1.1043
+ 1000000   78498  1.0845
+```
+
+Oran önce artıyor; $n = 1000$'den sonra ise $1$'in üstünde kalarak yavaşça $1$'e doğru iniyor. Asal sayı teoremi, $n \to \infty$ iken $\pi(n)$ ile $n / \ln n$'nin oranının $1$'e gittiğini söyler.
+:::
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmaların her biri bu bölümdeki yapılardan en az birini kullanır. Çözümü açmadan önce kodu kendiniz yazmayı deneyin.
+
+:::: {#exr-ver-palindrom-asallar name="Üç Basamaklı Palindrom Asallar"}
+Üç basamaklı palindrom asal sayıları bir liste comprehension ile bulun.
+
+::: {.cozum}
+**Palindrom testi.** Sayıyı karakter dizisine çevirip tersiyle karşılaştırırız: `s == s[::-1]`.
+
+**Asallık testi.** [Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd) bölümündeki gibi $2$'den $\sqrt{n}$'ye kadar bir bölen ararız.
+
+**Süzme.** `range(100, 1000)` üzerinde iki koşulu `and` ile birleştiren bir comprehension yazarız.
+
+```python
+def is_prime(n):
+    if n < 2:
+        return False
+    d = 2
+    while d * d <= n:
+        if n % d == 0:
+            return False
+        d += 1
+    return True
+
+
+def is_palindrome(n):
+    s = str(n)
+    return s == s[::-1]
+
+
+pals = [n for n in range(100, 1000) if is_palindrome(n) and is_prime(n)]
+print(len(pals))
+print(pals)
+four = [n for n in range(1000, 10000) if is_palindrome(n)]
+print(len(four), all(n % 11 == 0 for n in four))
+```
+
+Çıktı:
+
+```text
+15
+[101, 131, 151, 181, 191, 313, 353, 373, 383, 727, 757, 787, 797, 919, 929]
+90 True
+```
+
+Üç basamaklı $90$ palindromdan $15$'i asaldır. Son satır ilginç bir gözlemi doğruluyor: dört basamaklı $90$ palindromun hepsi $11$'e bölünür, çünkü
+
+$$\overline{abba} = 1001a + 110b = 11(91a + 10b)$$
+
+olur. Bu yüzden dört basamaklı palindrom asal yoktur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-pisagor name="İlkel Pisagor Üçlüleri"}
+$a < b < c \le 50$ ve $\gcd(a, b) = 1$ olmak üzere $a^2 + b^2 = c^2$ eşitliğini sağlayan bütün $(a, b, c)$ üçlülerini iç içe bir comprehension ile listeleyin.
+
+::: {.cozum}
+**Döngülerin sırası.** Üçlüleri $c$'ye göre sıralı almak için en dıştaki `for` $c$ üzerinde, içtekiler $b < c$ ve $a < b$ üzerinde döner. Böylece her üçlü bir kez, $a < b$ biçiminde üretilir.
+
+**Koşullar.** Pisagor eşitliği ve `gcd(a, b) == 1` koşulu tek bir `if` içinde `and` ile birleştirilir; `gcd` fonksiyonu `math` modülünden gelir.
+
+```python
+from math import gcd
+
+triples = [(a, b, c)
+           for c in range(1, 51)
+           for b in range(1, c)
+           for a in range(1, b)
+           if a * a + b * b == c * c and gcd(a, b) == 1]
+for t in triples:
+    print(t)
+print(len(triples))
+```
+
+Çıktı:
+
+```text
+(3, 4, 5)
+(5, 12, 13)
+(8, 15, 17)
+(7, 24, 25)
+(20, 21, 29)
+(12, 35, 37)
+(9, 40, 41)
+7
+```
+
+$c \le 50$ için $7$ ilkel üçlü vardır. Örneğin $(6, 8, 10)$ eşitliği sağlar ama $\gcd(6, 8) = 2$ olduğundan ilkel değildir ve listeye girmez. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-matris-carpimi name="Comprehension ile Matris Çarpımı"}
+$A = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{pmatrix}$ ve $B = \begin{pmatrix} 7 & 8 \\ 9 & 10 \\ 11 & 12 \end{pmatrix}$ matrislerini satırlarının listesi olarak tutun ve $AB$ çarpımını yalnız comprehension, `zip` ve `sum` kullanarak hesaplayın.
+
+::: {.cozum}
+**Sütunlar.** $AB$'nin $(i, j)$ elemanı, $A$'nın $i$ numaralı satırı ile $B$'nin $j$ numaralı sütununun iç çarpımıdır. $B$'nin sütunlarını devrik alma kalıbıyla kurarız: `cols[j]`, `B`'nin `j` numaralı sütunudur.
+
+**İç çarpım.** Bir satır ile bir sütunun iç çarpımı `sum(a * b for a, b in zip(row, col))` ifadesidir.
+
+**Çarpım.** Dış comprehension `A`'nın satırları, iç comprehension `B`'nin sütunları üzerinde döner; böylece `C[i][j]` doğru yere düşer.
+
+```python
+A = [[1, 2, 3],
+     [4, 5, 6]]
+B = [[7, 8],
+     [9, 10],
+     [11, 12]]
+cols = [[row[j] for row in B] for j in range(len(B[0]))]
+C = [[sum(a * b for a, b in zip(row, col)) for col in cols]
+     for row in A]
+print(cols)
+print(C)
+```
+
+Çıktı:
+
+```text
+[[7, 9, 11], [8, 10, 12]]
+[[58, 64], [139, 154]]
+```
+
+Elle kontrol edelim: sol üst eleman $1 \cdot 7 + 2 \cdot 9 + 3 \cdot 11 = 58$, sağ alt eleman $4 \cdot 8 + 5 \cdot 10 + 6 \cdot 12 = 154$'tür. Bu hesap [NumPy ile Lineer Cebir](numpy-ile-lineer-cebir.qmd) bölümünde tek bir `A @ B` yazımına dönüşecek. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-mukemmel name="On Binden Küçük Mükemmel Sayılar"}
+Kendisi dışındaki pozitif bölenlerinin toplamına eşit olan sayılara mükemmel sayı denir; örneğin $6 = 1 + 2 + 3$. $10\,000$'den küçük mükemmel sayıları, bölen toplamlarını bir listede biriktiren kalbur benzeri bir yöntemle bulun.
+
+::: {.cozum}
+**Fikir.** Her $n$ için bölen aramak yerine işi tersine çeviririz: her $d$ için $d$'yi, $d$'nin $2d, 3d, \dots$ katlarının hanesine ekleriz. Döngüler bittiğinde `s[m]`, $m$'nin kendisinden küçük bütün pozitif bölenlerinin toplamı olur.
+
+**Maliyet.** Her $d$ için yaklaşık $N/d$ ekleme yapılır. Toplam işlem sayısı $N(1 + \frac12 + \frac13 + \cdots)$ mertebesinde, yani yaklaşık $N \ln N$'dir; her sayıyı ayrı ayrı bölme denemesine sokmaktan çok daha azdır.
+
+**Süzme.** `s[n] == n` olan sayılar mükemmeldir.
+
+```python
+N = 10000
+s = [0] * N        # s[m]: m'nin kendisinden küçük bölenlerinin toplamı
+for d in range(1, N // 2):
+    for m in range(2 * d, N, d):    # d'nin 2d, 3d, ... katları
+        s[m] += d
+print(s[1:13])
+perfect = [n for n in range(2, N) if s[n] == n]
+print(perfect)
+print([2**(p - 1) * (2**p - 1) for p in [2, 3, 5, 7]])
+```
+
+Çıktı:
+
+```text
+[0, 1, 1, 3, 1, 6, 1, 7, 4, 8, 1, 16]
+[6, 28, 496, 8128]
+[6, 28, 496, 8128]
+```
+
+İlk satır yöntemi küçük sayılarda doğruluyor: örneğin $12$'nin kendisinden küçük bölenlerinin toplamı $1 + 2 + 3 + 4 + 6 = 16$'dır. Bulunan dört sayı $2^{p-1}(2^p - 1)$ biçimindedir; $p = 2, 3, 5, 7$ için $2^p - 1$ sayıları $3, 7, 31, 127$ asaldır. $2^p - 1$ asal olduğunda $2^{p-1}(2^p - 1)$ sayısının mükemmel olduğunu Öklid, her çift mükemmel sayının bu biçimde olduğunu Euler göstermiştir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-de-morgan name="De Morgan Kurallarını Bütün Alt Kümelerde Sınama"}
+$U = \{1, 2, 3, 4\}$ olsun. $U$'nun bütün $A, B$ alt küme çiftleri için De Morgan kurallarının, yani
+
+$$U \setminus (A \cup B) = (U \setminus A) \cap (U \setminus B), \qquad U \setminus (A \cap B) = (U \setminus A) \cup (U \setminus B)$$
+
+eşitliklerinin sağlandığını Python ile doğrulayın.
+
+::: {.cozum}
+**Alt kümeler.** @exm-ver-kuvvet-kumesi içindeki gibi, $k = 0, \dots, 4$ için `combinations` ile $U$'nun $2^4 = 16$ alt kümesini kurarız. Kümenin elemanlarını önce `sorted(U)` ile sıralı bir listeye çeviririz ki alt kümeler belirli bir sırayla üretilsin.
+
+**Çiftler.** İki `for` içeren bir comprehension $16 \cdot 16 = 256$ çiftin hepsini kurar.
+
+**Sınama.** Her kural için bir üreteç ifadesini `all` ile denetleriz; `all`, ancak bütün çiftlerde eşitlik sağlanıyorsa `True` döndürür.
+
+```python
+from itertools import combinations
+
+U = {1, 2, 3, 4}
+subsets = [set(c) for k in range(len(U) + 1)
+           for c in combinations(sorted(U), k)]
+pairs = [(A, B) for A in subsets for B in subsets]
+ok1 = all(U - (A | B) == (U - A) & (U - B) for A, B in pairs)
+ok2 = all(U - (A & B) == (U - A) | (U - B) for A, B in pairs)
+print(len(subsets), len(pairs), ok1, ok2)
+wrong = [(A, B) for A, B in pairs if U - (A | B) != (U - A) | (U - B)]
+print(len(wrong))
+```
+
+Çıktı:
+
+```text
+16 256 True True
+240
+```
+
+İki kural da $256$ çiftin hepsinde sağlanıyor. Karşılaştırma için son satır, yanlış bir "kural" olan $U \setminus (A \cup B) = (U \setminus A) \cup (U \setminus B)$ eşitliğinin kaç çiftte bozulduğunu sayıyor: $240$ çiftte. De Morgan kuralına göre sol taraf $(U \setminus A) \cap (U \setminus B)$'ye eşittir. İki kümenin kesişimi ancak bu iki küme eşitse birleşimlerine eşit olur; bu yüzden yanlış kural yalnızca $A = B$ olan $16$ çiftte doğrudur. Sonlu bir evrende yapılan bu sınama bir ispat değildir; ispat için bkz. [Matematiğin Temelleri](../matematigin-temelleri/3-kumeler/tumleyen-fark-ve-simetrik-fark.html#thm-kume-de-morgan). [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-permutasyon-dongu name="Bir Permütasyonun Döngü Ayrışımı"}
+$\sigma$, $\{1, 2, \dots, 7\}$ kümesinin $1 \mapsto 3$, $2 \mapsto 5$, $3 \mapsto 1$, $4 \mapsto 6$, $5 \mapsto 2$, $6 \mapsto 7$, $7 \mapsto 4$ kuralıyla verilen permütasyonu olsun. $\sigma$'yı bir sözlük olarak tutup ayrık döngülerine ayıran bir program yazın.
+
+::: {.cozum}
+**Gösterim.** Permütasyon bir fonksiyon olduğundan sözlük olarak tutulur: `sigma[x]` değeri $\sigma(x)$'tir.
+
+**Bir döngüyü izleme.** Henüz görülmemiş bir `start` noktasından başlayıp $x \mapsto \sigma(x)$ adımlarını `start`'a geri dönene kadar sürdürürüz. Uğranan noktaları hem `append` ile döngünün listesine hem de `add` ile `seen` kümesine ekleriz. Biten döngüyü `tuple(cycle)` ile saklarız: `tuple`, tıpkı `list` gibi, verilen listenin elemanlarından bir demet kurar.
+
+**Bütün noktalar.** `start` sözlüğün bütün anahtarlarını dolaşır; daha önce bir döngüde görülen noktalar `seen` kümesi sayesinde atlanır. Küme kullanmak, "bu nokta görüldü mü?" sorusunu listede arama yapmadan yanıtlar.
+
+**Kontrol.** Kodun ikinci yarısı $\sigma$'nın kuvvetlerini bir sözlük comprehension ile hesaplar: `power` sözlüğü $\sigma^m$'yi tutar. Başlangıçta $m = 1$'dir ve `power`, `sigma`'nın bir kopyasıdır: `dict(sigma)`, tıpkı bir listeyi kopyalayan `list(a)` gibi, aynı çiftlerden oluşan yeni bir sözlük kurar. `power` her turda $\sigma^{m+1}(x) = \sigma(\sigma^m(x))$ kuralıyla güncellenir. Döngü, `power` birim permütasyon olunca durur.
+
+```python
+sigma = {1: 3, 2: 5, 3: 1, 4: 6, 5: 2, 6: 7, 7: 4}
+seen = set()
+cycles = []
+for start in sigma:
+    if start in seen:
+        continue
+    cycle = [start]
+    seen.add(start)
+    x = sigma[start]
+    while x != start:          # başlangıca dönene kadar izle
+        cycle.append(x)
+        seen.add(x)
+        x = sigma[x]
+    cycles.append(tuple(cycle))
+print(cycles)
+power, m = dict(sigma), 1      # sigma'nın kuvvetleri
+while any(power[x] != x for x in power):
+    power = {x: sigma[power[x]] for x in power}
+    m += 1
+print(m)
+```
+
+Çıktı:
+
+```text
+[(1, 3), (2, 5), (4, 6, 7)]
+6
+```
+
+Ayrışım $\sigma = (1\ 3)(2\ 5)(4\ 6\ 7)$'dir. Birim permütasyona ilk kez $m = 6$'da ulaşılması da bu ayrışımla uyumludur: $6$, döngü uzunlukları $2$, $2$ ve $3$'ün en küçük ortak katıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-dengesiz name="Hiçbir Elemanı Yerinde Bırakmayan Permütasyonlar"}
+$\{0, 1, 2, 3, 4\}$ kümesinin her $i$ için $p(i) \ne i$ koşulunu sağlayan $p$ permütasyonlarını `permutations` ile sayın ve sonucu içerme–dışarma ilkesinden gelen
+
+$$D_n = \sum_{k=0}^{n} (-1)^k \frac{n!}{k!}$$
+
+formülüyle karşılaştırın.
+
+::: {.cozum}
+**Permütasyonlar.** `permutations(range(5))` her permütasyonu $(p(0), \dots, p(4))$ demeti olarak verir.
+
+**Koşul.** Bir demetin hiçbir elemanı yerinde değilse `all(p[i] != i for i in range(n))` doğrudur. Bu demetleri `sum(1 for ...)` kalıbıyla sayarız.
+
+**Formül.** $k \le n$ için $n!/k!$ bir tam sayı olduğundan tam sayı bölmesi `//` kesin sonuç verir.
+
+```python
+import math
+from itertools import permutations
+
+n = 5
+count = sum(1 for p in permutations(range(n))
+            if all(p[i] != i for i in range(n)))
+formula = sum((-1)**k * (math.factorial(n) // math.factorial(k))
+              for k in range(n + 1))
+print(count, formula, math.factorial(n))
+print(count / math.factorial(n), 1 / math.e)
+```
+
+Çıktı:
+
+```text
+44 44 120
+0.36666666666666664 0.36787944117144233
+```
+
+$120$ permütasyondan $44$'ü hiçbir elemanı yerinde bırakmaz ve formül aynı sayıyı verir: $120 - 120 + 60 - 20 + 5 - 1 = 44$. Son satır, rastgele seçilen bir permütasyonun hiçbir elemanı yerinde bırakmama olasılığı olan $D_5/5! \approx 0{,}3667$ değerinin $1/e \approx 0{,}3679$'a şimdiden yakın olduğunu gösteriyor. Bunun nedeni, $D_n/n! = \sum_{k=0}^{n} (-1)^k/k!$ toplamının $e^{-1}$ serisinin bir kısmi toplamı olmasıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-uc-zar name="Üç Zarla Toplam On"}
+Üç zar atıldığında toplamın $10$ olma olasılığını, $216$ sıralı sonucu `product` ile üretip sayarak kesir olarak bulun.
+
+::: {.cozum}
+**Örnek uzay.** `product(range(1, 7), repeat=3)` bütün $(a, b, c)$ sonuçlarını üretir; eşit olasılıklı $6^3 = 216$ sonuç vardır.
+
+**Olay.** Toplamı $10$ olan demetleri bir comprehension ile süzeriz.
+
+**Olasılık.** İstenen sonuç sayısını toplam sonuç sayısına bölen `Fraction` sadeleşmiş kesri verir.
+
+```python
+from fractions import Fraction
+from itertools import product
+
+outcomes = list(product(range(1, 7), repeat=3))
+favorable = [t for t in outcomes if sum(t) == 10]
+print(len(outcomes), len(favorable))
+print(Fraction(len(favorable), len(outcomes)))
+print(favorable[:6])
+```
+
+Çıktı:
+
+```text
+216 27
+1/8
+[(1, 3, 6), (1, 4, 5), (1, 5, 4), (1, 6, 3), (2, 2, 6), (2, 3, 5)]
+```
+
+$27$ sonuç toplamı $10$ yapar, dolayısıyla olasılık $27/216 = 1/8$'dir. İlk altı sonuç, `product`'ın sonuçları sözlük sırasıyla ürettiğini gösteriyor: en sağdaki bileşen en hızlı değişir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-uc-ile-bolunen name="Toplamı Üçe Bölünen Üçlü Seçimler"}
+$\{1, 2, \dots, 20\}$ kümesinin, elemanlarının toplamı $3$'e bölünen $3$ elemanlı alt kümelerini `combinations` ile sayın ve sonucu kalanlara göre yapılan bir sayımla doğrulayın.
+
+::: {.cozum}
+**Doğrudan sayım.** `combinations(range(1, 21), 3)` bütün $\binom{20}{3} = 1140$ alt kümeyi üretir; toplamı $3$'e bölünenleri süzeriz.
+
+**Kalanlara göre sayım.** Üç sayının $3$'e bölümünden kalanlar ya üçü de aynı olmalı ya da $0$, $1$, $2$ kalanlarının her biri bir kez geçmelidir. Gerçekten iki kalan eşit ve üçüncüsü farklıysa, kalanlar toplamı $2a + b$ ile $b \not\equiv a$ için $2a + b \equiv b - a \not\equiv 0 \pmod 3$ olur. $r_j$, $3$'e bölümünden $j$ kalanını veren sayıların adedi olmak üzere istenen sayı
+
+$$\binom{r_0}{3} + \binom{r_1}{3} + \binom{r_2}{3} + r_0 r_1 r_2$$
+
+olur. $r_j$ değerlerini de birer üreteç ifadesiyle sayarız.
+
+```python
+import math
+from itertools import combinations
+
+triples = list(combinations(range(1, 21), 3))
+good = [t for t in triples if sum(t) % 3 == 0]
+print(len(triples), len(good))
+r = [sum(1 for n in range(1, 21) if n % 3 == j) for j in range(3)]
+by_residues = (math.comb(r[0], 3) + math.comb(r[1], 3)
+               + math.comb(r[2], 3) + r[0] * r[1] * r[2])
+print(r, by_residues)
+```
+
+Çıktı:
+
+```text
+1140 384
+[6, 7, 7] 384
+```
+
+$r_0 = 6$, $r_1 = r_2 = 7$ olduğundan
+
+$$\binom{6}{3} + 2\binom{7}{3} + 6 \cdot 7 \cdot 7 = 20 + 70 + 294 = 384$$
+
+bulunur; doğrudan sayım da aynı sonucu veriyor. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-farey name="Farey Dizisi"}
+Paydası $5$'i geçmeyen ve $[0, 1]$ aralığında kalan bütün kesirleri bir küme comprehension ile `Fraction` nesneleri olarak kurun ve küçükten büyüğe sıralayarak $F_5$ Farey dizisini elde edin.
+
+::: {.cozum}
+**Kesirler.** $1 \le b \le 5$ ve $0 \le a \le b$ için `Fraction(a, b)` kendiliğinden sadeleşir: `Fraction(2, 4)` ile `Fraction(1, 2)` eşit ve aynı hash değerine sahip nesnelerdir. Küme comprehension bu tekrarları kendiliğinden atar.
+
+**Sıralama.** `sorted` kümeyi artan sıralı bir listeye çevirir; `Fraction` nesneleri sayı olarak karşılaştırılır.
+
+**Kontrol.** Farey dizisinde ardışık iki kesir $a/b < c/d$ için $bc - ad = 1$ olduğu bilinir. Ardışık çiftleri `zip(F5, F5[1:])` ile eşleştirip bu özelliği sınarız.
+
+```python
+from fractions import Fraction
+
+F5 = sorted({Fraction(a, b) for b in range(1, 6) for a in range(b + 1)})
+print(len(F5))
+print(", ".join(str(x) for x in F5))
+print(all(x.denominator * y.numerator - x.numerator * y.denominator == 1
+          for x, y in zip(F5, F5[1:])))
+```
+
+Çıktı:
+
+```text
+11
+0, 1/5, 1/4, 1/3, 2/5, 1/2, 3/5, 2/3, 3/4, 4/5, 1
+True
+```
+
+$F_5$'in $11$ terimi vardır. Bu sayı
+
+$$1 + \sum_{b=1}^{5} \phi(b) = 1 + 1 + 1 + 2 + 2 + 4 = 11$$
+
+ile de bulunur, çünkü $[0, 1]$'deki paydası tam olarak $b \ge 2$ olan sadeleşmiş kesirlerin sayısı Euler fonksiyonu $\phi(b)$'dir (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/euler-fonksiyonu.html#def-phi)); $b = 1$ için $\phi(1) = 1$ terimi $1/1$'i, baştaki $1$ de $0/1$'i sayar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-kare-anagram name="Rakamları Aynı Olan Kareler"}
+Üç basamaklı tam kareleri, rakamlarının sıralı demetini anahtar olarak kullanan bir sözlükte gruplayın ve aynı rakamlardan oluşan birden çok kare içeren grupları bulun.
+
+::: {.cozum}
+**Kareler.** Üç basamaklı kareler $10^2 = 100$ ile $31^2 = 961$ arasındadır; dolayısıyla $10 \le k \le 31$ yeter.
+
+**Anahtar.** `sorted(str(sq))` rakamların sıralı bir listesini verir. Listeler hashlenebilir olmadığından onu `tuple` ile demete çeviririz. Rakamları aynı olan iki sayı aynı anahtarı alır.
+
+**Gruplama.** `d.setdefault(k, [])` metodu, `k` anahtarı yoksa onu boş bir listeyle ekler ve her durumda `k`'ya karşılık gelen listeyi döndürür; bu listeye `append` ile ekleme yaparız.
+
+```python
+groups = {}
+for k in range(10, 32):                 # üç basamaklı kareler
+    sq = k * k
+    key = tuple(sorted(str(sq)))        # rakamların sıralı demeti
+    groups.setdefault(key, []).append(sq)
+print(len(groups))
+print(groups[("1", "4", "4")])
+print([g for g in groups.values() if len(g) > 1])
+```
+
+Çıktı:
+
+```text
+18
+[144, 441]
+[[144, 441], [169, 196, 961], [256, 625]]
+```
+
+$22$ karenin rakamlarından $18$ farklı anahtar çıkar. Birden çok kare içeren üç grup vardır: $144 = 12^2$ ile $441 = 21^2$; $169 = 13^2$, $196 = 14^2$ ile $961 = 31^2$; $256 = 16^2$ ile $625 = 25^2$. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ver-pascal-tek name="Pascal Üçgenindeki Tek Katsayıların Sayısı"}
+Pascal üçgeninin ilk $2^k$ satırındaki tek katsayıların sayısını $k = 0, 1, \dots, 6$ için hesaplayın ve sonuçlardaki örüntüyü bulun.
+
+::: {.cozum}
+**Satırlar.** @exm-ver-pascal içindeki `zip` kuralıyla ilk $64$ satırı `rows` listesinde biriktiririz.
+
+**Sayım.** İlk $m$ satır `rows[:m]` dilimidir. İki `for` içeren bir üreteç ifadesi bu satırlardaki bütün katsayıları dolaşır ve tek olanları sayar.
+
+```python
+rows = [[1]]
+for n in range(1, 64):
+    prev = rows[-1]
+    rows.append([a + b for a, b in zip([0] + prev, prev + [0])])
+for k in range(7):
+    m = 2**k
+    odd = sum(1 for row in rows[:m] for c in row if c % 2 == 1)
+    print(m, odd, 3**k)
+```
+
+Çıktı:
+
+```text
+1 1 1
+2 3 3
+4 9 9
+8 27 27
+16 81 81
+32 243 243
+64 729 729
+```
+
+İkinci ve üçüncü sütunlar her satırda eşittir: ilk $2^k$ satırda tam $3^k$ tek katsayı vardır. Bu, @exm-ver-pascal-mod2 içinde gördüğümüz kendini tekrarlamanın sayısal karşılığıdır. İlk $2^{k+1}$ satırdaki tek katsayılar, ilk $2^k$ satırın deseninin üç kopyasında toplanır, ortadaki ters üçgen ise yalnız çift sayılardan oluşur. Bu yüzden tek katsayıların sayısı her adımda üçe katlanır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde Python'un dört yerleşik veri yapısını ve onları kurmanın en kısa yolu olan comprehension yazımını gördük. Bir sonraki bölüm, [Sınıflar, Hata Yakalama ve Dosyalar](siniflar-hatalar-ve-dosyalar.qmd), kendi veri türlerimizi tanımlamayı, hataları yakalamayı ve verileri dosyalara yazıp okumayı ele alıyor. Sayısal hesapta listelerin yavaş kaldığı yerde ise [NumPy Dizileri](numpy-dizileri.qmd) devreye girecek.

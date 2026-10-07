@@ -1,0 +1,2073 @@
+---
+title: "Sınıflar, Hata Yakalama ve Dosyalar"
+pagetitle: "Sınıflar, Hata Yakalama ve Dosyalar"
+description: "Python'da modüller ve import, try/except/else/finally ile hata yakalama, raise ve assert, metin, CSV ve JSON dosyalarını okuyup yazma, özel metotlarla vektör ve kesir sınıfları ile dataclass; hepsi matematik örnekleriyle."
+---
+
+Şimdiye kadar yazdığımız programların hepsi tek bir dosyada yaşadı, girdileri hep düzgündü ve sonuçlarını yalnız ekrana bastı. Gerçek bir hesap bundan fazlasını ister. Daha önce yazılmış fonksiyonları yeniden kullanmak isteriz; sıfıra bölme, yakınsamayan bir iterasyon ya da bozuk bir veri satırı karşısında programın anlamlı bir şey yapmasını isteriz; verileri bir dosyadan okuyup sonuçları başka bir dosyaya yazmak isteriz. Bir de matematiğin kendi nesneleri vardır: vektörler, kesirler, polinomlar, aralıklar. Bunları işlemleriyle birlikte, `u + v` ya da `p * q` yazarak kullanabilmek isteriz.
+
+Bu bölüm bu dört ihtiyaca karşılık gelen dört aracı sırayla tanıtıyor: modüller, istisnalar, dosyalar ve sınıflar. Sonunda hepsini birleştirip bir ölçüm dosyasını okuyan, bozuk satırları ayıklayan ve sonucu yeni bir dosyaya yazan küçük bir program kuracağız. Bir sonraki bölümde başlayacağımız NumPy da bir modüldür ve onun dizileri de bir sınıfın nesneleridir; burada öğrendiklerimiz o kütüphanelerin nasıl çalıştığını anlamanın da anahtarı olacak.
+
+## Modüller ve import {#sec-snf-moduller}
+
+Python'un gücünün büyük kısmı dilin kendisinden değil, hazır yazılmış kod kütüphanelerinden gelir; bu kodlara modüller üzerinden ulaşırız.
+
+Modül kavramını ve `math` modülünü [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd#def-gir-modul) bölümünde tanıdık: bir modül, içinde Python kodu bulunan bir `.py` dosyasıdır ve `import` deyimi onun tanımladığı adları programa açar. Python'la birlikte gelen modüllerin oluşturduğu koleksiyona **standart kütüphane** (standard library) denir; `math`, `fractions` ve `statistics` bunlardandır. Birden çok modülü bir klasörde toplayan yapıya da **paket** (package) denir. NumPy, SciPy ve Matplotlib birer pakettir; ayrıca kurulurlar ama aynı `import` deyimiyle kullanılırlar.
+
+`import` deyiminin dört biçimi vardır; ilk üçü aşağıdaki kodda görülüyor:
+
+```python
+import math
+import fractions as fr
+from statistics import mean, median
+
+print(math.lcm(4, 6, 10), math.isqrt(50))
+print(fr.Fraction(3, 4) + fr.Fraction(1, 6))
+data = [2, 3, 3, 5, 7, 10]
+print(mean(data), median(data))
+```
+
+Çıktı:
+
+```text
+60 7
+11/12
+5 4.0
+```
+
+- `import math`: modül `math` adıyla gelir; içindekilere `math.lcm`, `math.isqrt` diye ulaşılır.
+- `import fractions as fr`: modül daha kısa bir takma adla gelir. NumPy için her yerde göreceğiniz `import numpy as np` kalıbı budur.
+- `from statistics import mean, median`: modülden yalnız istenen adlar doğrudan programa gelir; `statistics.` öneki gerekmez.
+- `from math import *`: modüldeki bütün adlar programa dökülür. Bu biçimden kaçınılır; nedenini birazdan bir örnekle göreceğiz.
+
+Çıktıda $\operatorname{lcm}(4, 6, 10) = 60$, $\lfloor \sqrt{50} \rfloor = 7$ ve $\frac34 + \frac16 = \frac{11}{12}$ var. Verinin ortalaması tam sayı çıktığı için `5`, medyanı ise ortadaki iki değerin, $3$ ile $5$'in ortalaması olduğu için `4.0` olarak basıldı.
+
+Bir modülün içinde ne olduğunu `dir` fonksiyonu listeler; `help(math.log1p)` gibi bir çağrı da bir fonksiyonun belgesini gösterir. Aşağıda `math` modülündeki adlardan `log` ile başlayanları bir list comprehension ile süzüyoruz:
+
+```python
+import math
+
+names = [name for name in dir(math) if name.startswith("log")]
+print(names)
+x = 1e-12
+print(math.log(1 + x))
+print(math.log1p(x))
+```
+
+Çıktı:
+
+```text
+['log', 'log10', 'log1p', 'log2']
+1.000088900581841e-12
+9.999999999995e-13
+```
+
+`log1p(x)` fonksiyonu $\ln(1 + x)$ değerini hesaplar. Neden ayrı bir fonksiyon gerekiyor? $x = 10^{-12}$ iken $1 + x$ toplamı kayan noktada yuvarlanır ve $x$'in basamaklarının çoğu kaybolur; `math.log(1 + x)` bu yüzden yaklaşık $9 \cdot 10^{-5}$ bağıl hata yapar (bkz. [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-yuvarlama)). `log1p` ise toplamı hiç oluşturmadan doğru sonucu verir: $\ln(1 + x) = x - x^2/2 + \cdots$ olduğundan doğru değer $10^{-12} - 5 \cdot 10^{-25}$'tir. Modülleri gezmek, bu tür hazır çözümleri bulmanın en kısa yoludur.
+
+::: {.callout-warning title="Yıldızlı import ad çakışmasına yol açar"}
+`from modül import *` modüldeki bütün adları programa döker ve aynı adı taşıyan eski bir tanımın üstüne sessizce yazar; bunun ne kadar kafa karıştırıcı olabileceğini görelim. Karmaşık sayılar için matematik modülü olan `cmath` ile `math` modülünün ikisinde de `sqrt` ve `log` vardır:
+
+```python
+from math import *
+from cmath import *
+
+print(sqrt(-4))
+print(log(-1))
+```
+
+Çıktı:
+
+```text
+2j
+3.141592653589793j
+```
+
+Son import kazandığı için `sqrt` artık karmaşık karekök, `log(-1)` da $i\pi$ oldu. İki import satırının sırası değişseydi aynı kod `ValueError` verirdi. Hangi `sqrt`'nin çalıştığını anlamak için importları tek tek okumak gerekir; `math.sqrt` ve `cmath.sqrt` yazmak bu belirsizliği baştan ortadan kaldırır.
+:::
+
+Bu derste en sık kullanacağımız standart kütüphane modülleri şunlardır:
+
+| Modül | İçerik |
+|---|---|
+| `math` | gerçel sayılar için fonksiyonlar ve sabitler |
+| `cmath` | karmaşık sayılar için aynı fonksiyonlar |
+| `fractions`, `decimal` | tam kesirler ve ondalık aritmetik |
+| `statistics` | ortalama, medyan, varyans |
+| `itertools` | permütasyon, kombinasyon, kartezyen çarpım |
+| `csv`, `json` | tablo ve sözlük biçimindeki dosyalar |
+| `pathlib` | dosya yolları |
+| `time` | süre ölçümü |
+
+### Kendi modülümüz
+
+Kendi yazdığımız fonksiyonları da bir modüle koyup başka programlardan kullanabiliriz. Aşağıdaki kodu `numtools.py` adıyla kaydedelim. Öklid algoritması ve deneme bölmesi [Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd) bölümünden tanıdık; burada yalnız bir dosyada toplanıyorlar:
+
+```python
+"""Sayılar teorisi için küçük yardımcı fonksiyonlar."""
+
+
+def gcd(a, b):
+    """Öklid algoritmasıyla en büyük ortak böleni döndürür."""
+    while b != 0:
+        a, b = b, a % b
+    return abs(a)
+
+
+def is_prime(n):
+    """n asal ise True döndürür (deneme bölmesi)."""
+    if n < 2:
+        return False
+    d = 2
+    while d * d <= n:
+        if n % d == 0:
+            return False
+        d += 1
+    return True
+
+
+if __name__ == "__main__":
+    # Modül doğrudan çalıştırılınca küçük bir sınama yapılır
+    print("gcd(182, 70) =", gcd(182, 70))
+    print([p for p in range(30) if is_prime(p)])
+```
+
+Dosyanın sonundaki `if __name__ == "__main__":` bloğu yaygın bir kalıptır. Python her modüle `__name__` adında bir değişken verir. Dosya doğrudan çalıştırıldığında (`python numtools.py`) bu değişkenin değeri `"__main__"`, başka bir dosyadan import edildiğinde ise modülün adı, yani `"numtools"` olur. Böylece blok yalnız dosya doğrudan çalıştırıldığında işler ve modülü kendi kendini sınayan bir program gibi kullanmamızı sağlar. Dosya doğrudan çalıştırıldığında sınama bloğu şunu basar.
+
+Çıktı:
+
+```text
+gcd(182, 70) = 14
+[2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+```
+
+$\gcd(182, 70) = 14$ sonucunu [Sayılar Teorisi](../sayilar-teorisi/1/oklid-algoritmasi.html#exm-oklid-182-70) notlarındaki elle yapılan hesapla karşılaştırabilirsiniz. Şimdi aynı klasörde ikinci bir dosya açıp modülü kullanalım. Program 80'den küçük ikiz asalları, yani farkı $2$ olan asal çiftlerini buluyor:
+
+```python
+import numtools
+from numtools import is_prime
+
+print(numtools.gcd(2**10 * 3**5, 2**4 * 3**8))
+print(numtools.__name__, __name__)
+twins = [(p, p + 2) for p in range(3, 80)
+         if is_prime(p) and is_prime(p + 2)]
+print(twins)
+```
+
+Çıktı:
+
+```text
+3888
+numtools __main__
+[(3, 5), (5, 7), (11, 13), (17, 19), (29, 31), (41, 43), (59, 61), (71, 73)]
+```
+
+$\gcd(2^{10} \cdot 3^5,\ 2^4 \cdot 3^8) = 2^4 \cdot 3^5 = 3888$ beklendiği gibi çıktı. İkinci satır `__name__` değişkeninin iki dosyadaki değerini gösteriyor; modül import edildiği için `numtools.py`'deki sınama bloğu bu kez çalışmadı. Programın kullandığı adlar ve bağlandıkları nesneler aşağıdaki şekilde özetleniyor:
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="0.0 2.5 640.0 257.5" role="img" aria-label="Left column: the program names numtools, is_prime and twins. Right column: the module numtools holding gcd and is_prime, and a list object. Arrows: numtools points to the whole module, is_prime points to the function inside the module, twins points to the list">
+  <rect x="15.0" y="35.0" width="170.0" height="210.0" rx="10" fill="var(--academic-text)" fill-opacity="0.04" stroke="var(--academic-text)" stroke-width="1.2"/>
+  <text x="100.0" y="26.0" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">programın adları</text>
+  <rect x="36.0" y="57.0" width="128.0" height="30.0" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="100.0" y="76.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">numtools</text>
+  <rect x="36.0" y="135.0" width="128.0" height="30.0" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="100.0" y="154.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">is_prime</text>
+  <rect x="36.0" y="207.0" width="128.0" height="30.0" rx="6" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="100.0" y="226.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">twins</text>
+  <rect x="455.0" y="55.0" width="170.0" height="126.0" rx="10" fill="var(--color-base)" fill-opacity="0.06" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="540.0" y="26.0" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">numtools modülü</text>
+  <rect x="476.0" y="91.0" width="128.0" height="30.0" rx="6" fill="var(--color-base)" fill-opacity="0.14" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="540.0" y="110.5" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">gcd</text>
+  <rect x="476.0" y="135.0" width="128.0" height="30.0" rx="6" fill="var(--color-base)" fill-opacity="0.14" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="540.0" y="154.5" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">is_prime</text>
+  <rect x="455.0" y="206.0" width="170.0" height="32.0" rx="8" fill="var(--color-practice)" fill-opacity="0.08" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="540.0" y="226.5" fill="var(--color-practice)" font-size="12" text-anchor="middle">[(3, 5), &#8230;, (71, 73)]</text>
+  <line x1="164.0" y1="72.0" x2="448.6" y2="72.0" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="455.0,72.0 447.0,75.4 447.0,68.6" fill="var(--color-theory)" opacity="1.0"/>
+  <text x="309.5" y="64.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">import numtools</text>
+  <line x1="164.0" y1="150.0" x2="469.6" y2="150.0" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="476.0,150.0 468.0,153.4 468.0,146.6" fill="var(--color-theory)" opacity="1.0"/>
+  <text x="320.0" y="142.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">from numtools import is_prime</text>
+  <line x1="164.0" y1="222.0" x2="448.6" y2="222.0" stroke="var(--color-theory)" stroke-width="1.6" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="455.0,222.0 447.0,225.4 447.0,218.6" fill="var(--color-theory)" opacity="1.0"/>
+  <text x="309.5" y="214.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">twins = [&#8230;]</text>
+</svg>
+<figcaption>İkiz asalları bulan programdaki adlar ve bağlandıkları nesneler. <code>import numtools</code> programa yalnız <code>numtools</code> adını ekler; <code>gcd</code> fonksiyonuna <code>numtools.gcd</code> diye modülün içinden ulaşılır. <code>from numtools import is_prime</code> ise modüldeki fonksiyonu programın kendi adlarına <code>is_prime</code> adıyla bağlar.</figcaption>
+</figure>
+```
+
+Bir modül, programın ömrü boyunca yalnız bir kez yüklenir; ikinci bir `import numtools` satırı dosyayı yeniden okumaz. Jupyter'de `numtools.py`'yi düzenledikten sonra değişikliği görmek için ya çekirdeği yeniden başlatın ya da `import importlib` satırından sonra `importlib.reload(numtools)` çağırın.
+
+## Hatalar ve istisnalar {#sec-snf-istisnalar}
+
+Şimdiye kadar yazdığımız kodlar hep uygun girdilerle çalıştı; şimdi bir işlem yapılamadığında ne olduğuna bakalım. Aşağıdaki döngü $12$'yi bir listedeki sayılara sırayla bölüyor:
+
+```python
+values = [4, 2, 0, 5]
+for v in values:
+    print(12 / v)
+print("bu satıra hiç gelinmez")
+```
+
+Çıktı:
+
+```text
+3.0
+6.0
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+ZeroDivisionError: division by zero
+```
+
+İlk iki bölme yapıldı, üçüncüsü yapılamadı ve program orada durdu: listedeki $5$'e de, son satıra da hiç gelinmedi. Python'un bastığı bu metne **izleme kaydı** (traceback) denir ve alttan yukarı okunur. Son satır hatanın türünü (`ZeroDivisionError`) ve açıklamasını (`division by zero`, yani sıfıra bölme) verir; üstündeki satırlar hatanın hangi dosyanın hangi satırında çıktığını gösterir. [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd#sec-gir-math) bölümünde `math.sqrt(-1)` çağrısının da böyle bir kayıt bıraktığını görmüştük. Bu çıktıda kod Python'a standart girdiden verildiği için dosya adı `<stdin>` görünüyor; kodu bir dosyadan çalıştırdığınızda o dosyanın yolu ve hatalı satırın kendisi görünür.
+
+::: {#def-snf-istisna name="İstisna"}
+Çalışma sırasında bir işlem gerçekleştirilemediğinde Python bir **istisna** (exception) nesnesi oluşturur ve onu **fırlatır** (raise). Her istisnanın bir **türü** (`ValueError`, `ZeroDivisionError`, …) ve bir **mesajı** vardır. Fırlatılan istisna program tarafından **yakalanmazsa** program durur ve izleme kaydı basılır.
+:::
+
+Yani istisna, "bu adımı yapamıyorum" diyen bir sinyaldir. Sinyal, onu bekleyen bir kod parçasına ulaşana kadar fonksiyon çağrılarının zincirinde yukarı doğru ilerler; böyle bir kod yoksa en üste kadar çıkar ve programı durdurur. Bir istisnayı bekleyip yakalamanın yolu `try` deyimidir.
+
+::: {#def-snf-try name="try Deyimi"}
+Bir istisnayı yakalamak için **`try` deyimi** kullanılır. Genel biçimi şudur:
+
+```python
+try:
+    ...               # istisna fırlatabilecek kod
+except ValueError as e:
+    ...               # ValueError çıkarsa çalışır; e istisna nesnesidir
+except (TypeError, KeyError):
+    ...               # bu iki türden biri çıkarsa çalışır
+else:
+    ...               # try bloğu istisnasız biterse çalışır
+finally:
+    ...               # her durumda, en son çalışır
+```
+
+`except` blokları yukarıdan aşağı sınanır ve istisnanın türüne uyan **ilk** blok çalışır. `else` ve `finally` blokları isteğe bağlıdır; bir `try` deyiminde en az bir `except` ya da bir `finally` bloğu bulunur.
+:::
+
+Yani istisna fırlatabilecek kodu `try` bloğuna koyarız ve her olası hata için ne yapılacağını bir `except` bloğuna yazarız. `else` bloğu yalnız her şey yolunda gittiğinde, `finally` bloğu ise ne olursa olsun çalışır. Aşağıdaki şekil, birazdan inceleyeceğimiz `safe_ratio` fonksiyonu üzerinde blokların sırasını gösteriyor:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="10.0 16.0 580.0 325.0" role="img" aria-label="Flow chart: try block on top; if no exception the else block runs, if ZeroDivisionError the except block runs, any other exception goes straight down; all three paths pass through the finally block, after which a value is returned or the exception propagates">
+  <rect x="205.0" y="31.0" width="190.0" height="38.0" rx="6" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="300.0" y="54.5" fill="var(--color-theory)" font-size="13" text-anchor="middle" font-weight="600">try:  q = a / b</text>
+  <rect x="25.0" y="137.0" width="190.0" height="46.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="120.0" y="156.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">else:</text>
+  <text x="120.0" y="173.0" fill="var(--color-base)" font-size="12" text-anchor="middle">return q</text>
+  <rect x="385.0" y="137.0" width="190.0" height="46.0" rx="6" fill="var(--color-practice)" fill-opacity="0.1" stroke="var(--color-practice)" stroke-width="1.5"/>
+  <text x="480.0" y="156.0" fill="var(--color-practice)" font-size="12.5" text-anchor="middle" font-weight="600">except ZeroDivisionError:</text>
+  <text x="480.0" y="173.0" fill="var(--color-practice)" font-size="12" text-anchor="middle">return None</text>
+  <rect x="205.0" y="233.0" width="190.0" height="38.0" rx="6" fill="var(--color-remark)" fill-opacity="0.1" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="300.0" y="256.5" fill="var(--color-remark)" font-size="13" text-anchor="middle" font-weight="600">finally:</text>
+  <line x1="260.0" y1="69.0" x2="145.6" y2="133.8" stroke="var(--color-base)" stroke-width="1.7" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="140.0,137.0 145.3,130.1 148.6,136.0" fill="var(--color-base)" opacity="1.0"/>
+  <text x="154.0" y="101.0" fill="var(--color-base)" font-size="12" text-anchor="end">istisna yok</text>
+  <text x="154.0" y="116.0" fill="var(--color-base)" font-size="12" text-anchor="end">safe_ratio(7, 2)</text>
+  <line x1="340.0" y1="69.0" x2="454.4" y2="133.8" stroke="var(--color-practice)" stroke-width="1.7" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="460.0,137.0 451.4,136.0 454.7,130.1" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="446.0" y="101.0" fill="var(--color-practice)" font-size="12" text-anchor="start">ZeroDivisionError</text>
+  <text x="446.0" y="116.0" fill="var(--color-practice)" font-size="12" text-anchor="start">safe_ratio(7, 0)</text>
+  <line x1="300.0" y1="69.0" x2="300.0" y2="227.4" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="300.0,233.0 297.1,226.0 302.9,226.0" fill="var(--academic-text)" opacity="0.75"/>
+  <rect x="240.4" y="144.4" width="119.2" height="15.0" rx="3" fill="var(--academic-bg)" opacity="0.92"/>
+  <text x="300.0" y="155.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">başka bir istisna</text>
+  <line x1="140.0" y1="183.0" x2="234.3" y2="230.1" stroke="var(--color-base)" stroke-width="1.7" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="240.0,233.0 231.3,232.4 234.3,226.4" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="460.0" y1="183.0" x2="365.7" y2="230.1" stroke="var(--color-practice)" stroke-width="1.7" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="360.0,233.0 365.7,226.4 368.7,232.4" fill="var(--color-practice)" opacity="1.0"/>
+  <line x1="250.0" y1="271.0" x2="185.0" y2="305.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="180.0,308.0 184.8,302.1 187.6,307.3" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="175.0" y="324.0" fill="var(--academic-text)" font-size="12" text-anchor="end">değer döndürülür</text>
+  <line x1="350.0" y1="271.0" x2="415.0" y2="305.4" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="420.0,308.0 412.4,307.3 415.2,302.1" fill="var(--academic-text)" opacity="0.75"/>
+  <text x="425.0" y="324.0" fill="var(--academic-text)" font-size="12" text-anchor="start">istisna yukarı iletilir</text>
+</svg>
+<figcaption><code>safe_ratio</code> fonksiyonunda blokların çalışma sırası. Önce <code>try</code> bloğu çalışır. İstisna çıkmazsa <code>else</code>, <code>ZeroDivisionError</code> çıkarsa <code>except</code> bloğu çalışır; başka türden bir istisna hiçbir <code>except</code> ile eşleşmez. Üç yolun hepsi <code>finally</code> bloğundan geçer: bu blok <code>return</code> deyiminden sonra bile çalışır.</figcaption>
+</figure>
+```
+
+İlk örnek olarak, ondalık ayıracı virgül olan Türkçe yazımları da okuyabilen bir fonksiyon yazalım. `float("3,75")` bir `ValueError` fırlatır; bunu yakalayıp virgülü noktaya çevirerek ikinci bir deneme yapıyoruz:
+
+```python
+def parse_number(s):
+    """'3.75' ya da '3,75' biçimindeki metni float'a çevirir."""
+    try:
+        return float(s)
+    except ValueError:
+        return float(s.replace(",", "."))
+
+
+for s in ["2.5", "3,75", "1e-3", " 42 "]:
+    print(repr(s), "->", parse_number(s))
+```
+
+Çıktı:
+
+```text
+'2.5' -> 2.5
+'3,75' -> 3.75
+'1e-3' -> 0.001
+' 42 ' -> 42.0
+```
+
+`repr(s)` metni tırnaklarıyla birlikte, boşlukları ve satır sonu gibi özel karakterleri görünür biçimde yazar; `' 42 '` metnindeki boşluklar çıktıda bu yüzden görünüyor. `float` baştaki ve sondaki boşlukları kendisi atar. `parse_number("abc")` ise ikinci denemede de `ValueError` fırlatır; `except` bloğunun içinde çıkan bu istisnayı yakalayan başka bir blok olmadığından program durur. Bu doğru davranıştır: bir metni sayıya çeviremiyorsak bunu sessizce geçiştirmek yerine haber vermeliyiz.
+
+Bölüm boyunca karşılaşacağımız istisna türlerini, her birini tetikleyen küçük bir ifadeyle bir arada görelim. Her ifade bir `lambda` içinde duruyor ve döngü onları sırayla bir `try` bloğunda çağırıyor. `type(e).__name__` istisnanın türünün adını verir:
+
+```python
+import math
+
+tests = [
+    lambda: 1 / 0,
+    lambda: math.sqrt(-1),
+    lambda: int("3,5"),
+    lambda: "2" + 3,
+    lambda: [1, 2][2],
+    lambda: {"a": 1}["b"],
+    lambda: math.exp(1000),
+    lambda: 10.0 ** 400,
+]
+for f in tests:
+    try:
+        f()
+    except Exception as e:
+        print(f"{type(e).__name__}: {e}")
+```
+
+Çıktı:
+
+```text
+ZeroDivisionError: division by zero
+ValueError: math domain error
+ValueError: invalid literal for int() with base 10: '3,5'
+TypeError: can only concatenate str (not "int") to str
+IndexError: list index out of range
+KeyError: 'b'
+OverflowError: math range error
+OverflowError: (34, 'Result too large')
+```
+
+`int("3,5")` virgüllü metni tam sayı olarak okuyamadı, `"2" + 3` ise metinle sayıyı toplamaya çalıştı. Son iki satır **taşmadır** (bkz. [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#def-hat-tasma)): $e^{1000} \approx 10^{434}$ ve $10^{400}$ değerleri en büyük çift duyarlıklı sayıyı, yaklaşık $1{,}8 \cdot 10^{308}$'i aşar. Python'un tam sayılarında böyle bir sınır yoktur: `10 ** 400` hatasız hesaplanır, taşan yalnız `10.0 ** 400` biçimindeki kayan noktalı hesaptır.
+
+::: {.callout-warning title="Her şeyi yakalamayın"}
+Yukarıdaki döngü gösteri amacıyla `except Exception` kullandı; bu satır neredeyse bütün hataları yakalar. Gerçek kodda yalnız beklediğiniz ve ne yapacağınızı bildiğiniz türü yakalayın: geniş bir `except`, yanlış yazılmış bir değişken adının yol açtığı `NameError`'ı da yutar ve hatanın gerçek yerini gizler. Hiçbir tür yazılmayan çıplak `except:` daha da kötüdür: programı Ctrl+C ile durdurma isteğini (`KeyboardInterrupt`) ve programdan çıkma isteğini (`SystemExit`) bile yutar.
+:::
+
+:::: {#exm-snf-blok-sirasi name="Blokların Çalışma Sırası"}
+Aşağıdaki `safe_ratio` fonksiyonu `safe_ratio(7, 2)` ve `safe_ratio(7, 0)` biçiminde çağrıldığında hangi bloklar hangi sırayla çalışır?
+
+```python
+def safe_ratio(a, b):
+    try:
+        q = a / b
+    except ZeroDivisionError:
+        print("  except: sıfıra bölme")
+        return None
+    else:
+        print("  else: bölme başarılı")
+        return q
+    finally:
+        print("  finally: her durumda")
+
+
+print(safe_ratio(7, 2))
+print(safe_ratio(7, 0))
+```
+
+::: {.cozum}
+Kod çalıştırıldığında çıktı şöyledir.
+
+Çıktı:
+
+```text
+  else: bölme başarılı
+  finally: her durumda
+3.5
+  except: sıfıra bölme
+  finally: her durumda
+None
+```
+
+İlk çağrıda bölme başarılıdır: `try` bloğu istisnasız biter, `else` bloğu çalışır ve `return q` deyimine gelinir. Fonksiyon değeri döndürmeden hemen önce `finally` bloğu çalışır; `3.5` değeri bu yüzden `finally` mesajından **sonra** basıldı. İkinci çağrıda `7 / 0` bir `ZeroDivisionError` fırlatır, `try` bloğunun geri kalanı atlanır, `except` bloğu çalışır ve `None` döndürülmeden önce yine `finally` çalışır.
+
+Yani `finally`, `try`, `except` ve `else` bloklarından hangisi `return` ile biterse bitsin en son çalışan bloktur. Açık bir dosyayı kapatmak gibi ne olursa olsun yapılması gereken işler buraya yazılır. [$\blacksquare$]{.qed}
+:::
+::::
+
+### İstisna türlerinin soyağacı
+
+İstisna türleri de birbirleriyle akrabadır ve bir `except` satırının hangi istisnaları yakaladığı bu akrabalığa bağlıdır. Her türün `__mro__` niteliği, o türü ve bütün üst türlerini sırayla listeler:
+
+```python
+errors = [ZeroDivisionError, OverflowError, IndexError, KeyError,
+          ValueError, TypeError]
+for cls in errors:
+    print(" -> ".join(c.__name__ for c in cls.__mro__))
+```
+
+Çıktı:
+
+```text
+ZeroDivisionError -> ArithmeticError -> Exception -> BaseException -> object
+OverflowError -> ArithmeticError -> Exception -> BaseException -> object
+IndexError -> LookupError -> Exception -> BaseException -> object
+KeyError -> LookupError -> Exception -> BaseException -> object
+ValueError -> Exception -> BaseException -> object
+TypeError -> Exception -> BaseException -> object
+```
+
+Her satır bir türden başlayıp onun üst türlerini sıralıyor. `ZeroDivisionError` ile `OverflowError`'ın ortak üst türü `ArithmeticError`, `IndexError` ile `KeyError`'ınki `LookupError`'dır; hepsi `Exception`'dan, o da `BaseException`'dan türer. En sondaki `object`, Python'daki her sınıfın ortak atasıdır. Bir `except T` satırı `T` türündeki istisnaları **ve** `T`'nin bütün alt türlerini yakalar:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="10.0 9.0 453.0 301.5" role="img" aria-label="Indented tree: BaseException, Exception, then ArithmeticError with ZeroDivisionError and OverflowError, LookupError with IndexError and KeyError, ValueError and TypeError; the ArithmeticError and LookupError subtrees are framed">
+  <rect x="74.0" y="71.0" width="374.0" height="86.0" rx="8" fill="var(--color-practice)" fill-opacity="0.08" stroke="var(--color-practice)" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="262.0" y="112.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">except ArithmeticError</text>
+  <text x="262.0" y="128.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start">bu türlerin hepsini yakalar</text>
+  <rect x="74.0" y="158.0" width="374.0" height="86.0" rx="8" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="262.0" y="199.0" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">except LookupError</text>
+  <text x="262.0" y="215.0" fill="var(--color-theory)" font-size="11.5" text-anchor="start">bu türlerin hepsini yakalar</text>
+  <path d="M32.0,36.0 L32.0,57.0 L50.0,57.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.0,65.0 L62.0,86.0 L80.0,86.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M92.0,94.0 L92.0,115.0 L110.0,115.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M92.0,94.0 L92.0,144.0 L110.0,144.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.0,65.0 L62.0,173.0 L80.0,173.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M92.0,181.0 L92.0,202.0 L110.0,202.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M92.0,181.0 L92.0,231.0 L110.0,231.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.0,65.0 L62.0,260.0 L80.0,260.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M62.0,65.0 L62.0,289.0 L80.0,289.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="24.0" y="32.5" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600">BaseException</text>
+  <text x="54.0" y="61.5" fill="var(--academic-text)" font-size="12" text-anchor="start" font-weight="600">Exception</text>
+  <text x="84.0" y="90.5" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600">ArithmeticError</text>
+  <text x="114.0" y="119.5" fill="var(--color-practice)" font-size="12" text-anchor="start">ZeroDivisionError</text>
+  <text x="114.0" y="148.5" fill="var(--color-practice)" font-size="12" text-anchor="start">OverflowError</text>
+  <text x="84.0" y="177.5" fill="var(--color-theory)" font-size="12" text-anchor="start" font-weight="600">LookupError</text>
+  <text x="114.0" y="206.5" fill="var(--color-theory)" font-size="12" text-anchor="start">IndexError</text>
+  <text x="114.0" y="235.5" fill="var(--color-theory)" font-size="12" text-anchor="start">KeyError</text>
+  <text x="84.0" y="264.5" fill="var(--academic-text)" font-size="12" text-anchor="start">ValueError</text>
+  <text x="84.0" y="293.5" fill="var(--academic-text)" font-size="12" text-anchor="start">TypeError</text>
+</svg>
+<figcaption>Bölümde karşılaştığımız istisna türlerinin soyağacı; her türün üst türü <code>__mro__</code> zincirinden okunmuştur. Bir <code>except</code> satırı, yazılan türü ve onun altındaki bütün türleri yakalar: <code>except ArithmeticError</code> hem sıfıra bölmeyi hem taşmayı, <code>except LookupError</code> hem liste indisi hem sözlük anahtarı hatasını yakalar.</figcaption>
+</figure>
+```
+
+:::: {#exm-snf-ust-tur name="Bir Üst Türü Yakalamak"}
+Bir fonksiyonu verilen bir noktada hesaplayan, sıfıra bölme ya da taşma olursa programı durdurmak yerine hatanın türünü bildiren bir metin döndüren `try_compute(f, x)` fonksiyonunu, iki hata türünü tek bir `except` satırıyla yakalayarak yazınız.
+
+::: {.cozum}
+İki tür de `ArithmeticError`'ın alt türü olduğundan bu üst türü yakalamak yeterlidir:
+
+```python
+import math
+
+
+def try_compute(f, x):
+    try:
+        return f(x)
+    except ArithmeticError as e:
+        return f"{type(e).__name__} yakalandı"
+
+
+print(try_compute(lambda x: 1 / x, 0))
+print(try_compute(math.exp, 1000))
+print(try_compute(math.exp, 1))
+```
+
+Çıktı:
+
+```text
+ZeroDivisionError yakalandı
+OverflowError yakalandı
+2.718281828459045
+```
+
+`except ArithmeticError` hem $1/0$'daki `ZeroDivisionError`'ı hem $e^{1000}$'deki `OverflowError`'ı yakaladı; üçüncü çağrıda istisna çıkmadı ve $e$ döndü. Aynı fonksiyon `math.sqrt` ile $-1$'de çağrılsaydı `ValueError` yakalanmaz ve programı durdururdu, çünkü `ValueError`, `ArithmeticError`'ın alt türü değildir. Akraba olmayan türleri birlikte yakalamak için bir demet yazılır: `except (ValueError, ArithmeticError)`. [$\blacksquare$]{.qed}
+:::
+::::
+
+### İstisna fırlatmak
+
+Kendi fonksiyonlarımız da anlamsız bir girdi aldıklarında istisna fırlatabilir; bu, sessizce yanlış bir sonuç döndürmekten her zaman iyidir.
+
+::: {#def-snf-raise name="raise Deyimi"}
+`raise T(mesaj)` deyimi `T` türünden, verilen mesajı taşıyan bir istisna oluşturup fırlatır. Bir `except` bloğunun içinde tek başına yazılan `raise` ise o an yakalanmış olan istisnayı olduğu gibi yeniden fırlatır.
+:::
+
+Yani `raise`, Python'un kendi fonksiyonlarının hata bildirdiği mekanizmanın aynısını bizim kodumuza açar. Tür seçerken yerleşik türlerin anlamına uyulur: değer uygunsuzsa `ValueError`, tür uygunsuzsa `TypeError`, bir iterasyon sonuç vermiyorsa `RuntimeError`.
+
+:::: {#exm-snf-ikiye-bolme name="Girdisini Denetleyen İkiye Bölme"}
+İkiye bölme yönteminin (bkz. [Nümerik Analiz](../numerik-analiz/ikiye-bolme-metodu.html#def-ikb-ikiye-bolme)) bir kök bulacağı, $f$ sürekli, $a < b$ ve $f(a) f(b) \le 0$ iken güvencededir. Süreklilik kodla denetlenemez; son iki koşul sağlanmadığında `ValueError` fırlatan bir `bisect(f, a, b)` fonksiyonu yazıp $f(x) = x^3 - 2x - 5$ fonksiyonuyla deneyiniz.
+
+::: {.cozum}
+Koşulları fonksiyonun başında denetleyip ihlal edildiklerinde `raise` ile çıkıyoruz; geri kalanı, her adımda kökü içeren aralığı yarılayan bilinen döngüdür:
+
+```python
+def bisect(f, a, b, tol=1e-12):
+    """f'nin [a, b] aralığındaki bir kökünü ikiye bölmeyle bulur."""
+    if not a < b:
+        raise ValueError(f"a < b olmalı: a={a}, b={b}")
+    fa = f(a)
+    if fa * f(b) > 0:
+        raise ValueError("f(a) ile f(b) aynı işaretli")
+    while b - a > tol:
+        m = (a + b) / 2
+        fm = f(m)
+        if fa * fm <= 0:
+            b = m
+        else:
+            a, fa = m, fm
+    return (a + b) / 2
+
+
+def f(x):
+    return x**3 - 2 * x - 5
+
+
+print(bisect(f, 2, 3))
+for a, b in [(3, 4), (3, 2)]:
+    try:
+        bisect(f, a, b)
+    except ValueError as e:
+        print("Hata:", e)
+```
+
+Çıktı:
+
+```text
+2.0945514815425668
+Hata: f(a) ile f(b) aynı işaretli
+Hata: a < b olmalı: a=3, b=2
+```
+
+$[2, 3]$ aralığında $f(2) = -1 < 0 < 16 = f(3)$ olduğundan kök bulundu: $x \approx 2{,}0945514815$. $[3, 4]$ aralığında $f(3) = 16$ ile $f(4) = 51$ aynı işaretli olduğu, $(3, 2)$ çiftinde ise $a < b$ sağlanmadığı için fonksiyon hesaba hiç girmeden istisna fırlattı; çağıran kod da onu yakalayıp mesajı bastı.
+
+Denetim olmasaydı $[3, 4]$ için döngü her adımda sol ucu orta noktaya taşır ve sessizce $4$'e çok yakın bir sayı döndürürdü. Oysa $f(4) = 51$ olduğundan bu sayı bir kök değildir. [$\blacksquare$]{.qed}
+:::
+::::
+
+### Doğrulama: assert
+
+Bir fonksiyonun girdisini değil, kendi hesabının doğru gittiğini denetlemek için `assert` deyimi kullanılır.
+
+::: {#def-snf-assert name="assert Deyimi"}
+`assert koşul, mesaj` deyimi koşulu hesaplar. Koşul doğruysa hiçbir şey yapmaz; yanlışsa verilen mesajla bir `AssertionError` fırlatır. Mesaj isteğe bağlıdır.
+:::
+
+Yani `assert`, koda yazılmış bir "burada şu kesinlikle doğru olmalı" notudur; not yanlış çıkarsa program yüksek sesle durur. Bir hesabın, doğru olduğunu bildiğimiz bir özelliğini sınamak için idealdir. Örneğin $\sqrt 2$ için Newton iterasyonundan (bkz. [Kontrol Yapıları ve Fonksiyonlar](kontrol-yapilari-ve-fonksiyonlar.qmd)) yalnız üç adım atarsak sonuç henüz yeterince doğru değildir ve `assert` bunu yakalar:
+
+```python
+def newton_sqrt(a, steps):
+    x = a
+    for _ in range(steps):
+        x = (x + a / x) / 2
+    return x
+
+
+r = newton_sqrt(2, 3)
+print(r)
+assert abs(r * r - 2) < 1e-12, f"yakınsama yetersiz: {r * r - 2:.1e}"
+print("buraya gelinmez")
+```
+
+Çıktı:
+
+```text
+1.4142156862745097
+Traceback (most recent call last):
+  File "<stdin>", line 10, in <module>
+AssertionError: yakınsama yetersiz: 6.0e-06
+```
+
+Üç adımın sonunda $r^2 - 2 \approx 6 \cdot 10^{-6}$ kaldı; koşul sağlanmadığı için program son satıra gelmeden durdu.
+
+:::: {#exm-snf-bolme-algoritmasi name="Bölme Algoritmasını assert ile Güvenceye Almak"}
+Bölme Algoritması'na göre (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/bolme-algoritmasi.html#thm-bolme-algoritmasi)) her $a$ ve $b \ne 0$ tam sayısı için $a = bq + r$ ve $0 \le r < |b|$ koşullarını sağlayan tek bir $(q, r)$ çifti vardır. Python'un `divmod(a, b)` fonksiyonu negatif bölende farklı bir kalan kuralı izler. Bu çifti her işaret için doğru veren ve sonucunu `assert` ile denetleyen bir `division(a, b)` fonksiyonu yazınız.
+
+::: {.cozum}
+[Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd#def-gir-tam-bolme) bölümünde gördüğümüz gibi `a // b` bölümü aşağı yuvarlanır, yani $\lfloor a/b \rfloor$'dir, ve `a % b` kalanı **bölenin işaretini** taşır. $b > 0$ iken bu tam istediğimiz $0 \le r < b$ koşuludur. $b < 0$ iken ise $b < r \le 0$ olur; $r = 0$ ise düzeltme gerekmez. $b < 0$ ve $r < 0$ iken bölümü $1$ artırıp kalandan $b$ çıkarırsak
+
+$$a = bq + r = b(q + 1) + (r - b)$$
+
+eşitliği korunur ve yeni kalan $0 < r - b < |b|$ aralığına girer:
+
+```python
+def division(a, b):
+    """a = b*q + r ve 0 <= r < |b| olacak biçimde (q, r) döndürür."""
+    if b == 0:
+        raise ZeroDivisionError("b sıfır olamaz")
+    q, r = divmod(a, b)
+    if r < 0:              # b < 0 iken Python'un kalanı r <= 0 olur
+        q, r = q + 1, r - b
+    assert a == b * q + r and 0 <= r < abs(b), (a, b, q, r)
+    return q, r
+
+
+for a, b in [(17, 5), (-17, 5), (17, -5), (-17, -5)]:
+    print((a, b), "divmod:", divmod(a, b), "division:", division(a, b))
+```
+
+Çıktı:
+
+```text
+(17, 5) divmod: (3, 2) division: (3, 2)
+(-17, 5) divmod: (-4, 3) division: (-4, 3)
+(17, -5) divmod: (-4, -3) division: (-3, 2)
+(-17, -5) divmod: (3, -2) division: (4, 3)
+```
+
+$b = 5$ iken iki fonksiyon aynı sonucu veriyor. $b = -5$ iken `divmod` kalanları $-3$ ve $-2$ olarak, yani negatif veriyor; `division` ise $17 = (-5)(-3) + 2$ ve $-17 = (-5) \cdot 4 + 3$ ayrışımlarını buluyor. `assert` satırı her çağrıda hem eşitliği hem kalanın aralığını denetledi; dört durumda da koşul sağlandığı için sessiz kaldı. Mesaj olarak `(a, b, q, r)` demetini verdik: koşul bir gün bozulursa hangi girdide bozulduğunu hemen görürüz. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="assert girdi denetimi için değildir"}
+Python `-O` seçeneğiyle (`python -O program.py`) çalıştırıldığında bütün `assert` satırları atlanır. Bu yüzden kullanıcının verdiği girdiyi `assert` ile değil, `if` ve `raise` ile denetleyin. `bisect`'teki işaret denetimi bu yüzden bir `raise`'dir, `division`'daki son denetim ise bir `assert`. Kural basittir: hatalı girdi `raise` ile bildirilir, kodun kendi yanlışı `assert` ile yakalanır.
+:::
+
+## Dosyalarla çalışmak {#sec-snf-dosyalar}
+
+Hesapların girdisi çoğu zaman bir dosyadan gelir; sonuçları da kaybolmasınlar diye bir dosyaya yazarız.
+
+::: {#def-snf-metin-dosyasi name="Metin Dosyası"}
+Karakterlerden oluşan ve satır sonu karakteriyle (`"\n"`) satırlara ayrılan dosyaya **metin dosyası** denir. Diskte karakterler bayt olarak saklanır; karakterden bayta çeviri kuralına **kodlama** (encoding) denir. Türkçe karakterleri de kapsayan en yaygın kodlama UTF-8'dir.
+:::
+
+Yani bir metin dosyası, `"\n"` karakterleriyle bölünmüş uzun bir karakter dizisidir; sayılar bile dosyada rakam rakam, metin olarak durur. Dosyayı okurken bu metni yeniden sayıya çevirmek bizim işimizdir.
+
+Python'da bir dosya `open(yol, kip, encoding="utf-8")` ile açılır. Kip (mode), dosyayla ne yapacağımızı söyler:
+
+| Kip | Anlamı |
+|---|---|
+| `"r"` | okumak için aç (varsayılan); dosya yoksa `FileNotFoundError` |
+| `"w"` | yazmak için aç; dosya varsa içeriği silinir |
+| `"a"` | sonuna eklemek için aç |
+| `"x"` | yeni dosya oluştur; dosya varsa `FileExistsError` |
+
+`open` bir dosya nesnesi döndürür ve işimiz bitince dosyanın kapatılması gerekir. Bunu `with` bloğu kendiliğinden yapar: `with open(...) as f:` satırının altındaki blok bittiğinde, blokta bir istisna çıksa bile dosya kapatılır. Bu, bir `try` ve `finally` çifti yazmanın kısa ve güvenli yoludur.
+
+::: {.callout-tip title="Üç adımda dosyaya yazmak ve dosyadan okumak"}
+1. `with open(yol, kip, encoding="utf-8") as f:` ile dosyayı açın; yazmak için `"w"`, okumak için `"r"` kipini kullanın.
+2. Yazarken `f.write(metin)` kullanın ve satır sonlarını (`"\n"`) kendiniz ekleyin; okurken `for line in f:` ile satır satır dolaşın.
+3. Okuduğunuz her satırı `int`, `float` ya da `split` ile ihtiyacınız olan biçime çevirin.
+:::
+
+:::: {#exm-snf-fibonacci-dosyasi name="Fibonacci Sayılarını Dosyaya Yazıp Okumak"}
+İlk $30$ Fibonacci sayısını, her satıra bir sayı gelecek biçimde `fibonacci.txt` dosyasına yazınız. Sonra dosyayı okuyup son iki sayının oranını altın oran $\varphi = \frac{1 + \sqrt 5}{2}$ ile karşılaştırınız.
+
+::: {.cozum}
+**Yazmak.** Listeyi kurup her sayıyı bir f-string ile, satır sonuyla birlikte yazıyoruz:
+
+```python
+F = [1, 1]
+while len(F) < 30:
+    F.append(F[-1] + F[-2])
+
+with open("fibonacci.txt", "w", encoding="utf-8") as f:
+    for n in F:
+        f.write(f"{n}\n")
+print("yazılan satır sayısı:", len(F))
+```
+
+Çıktı:
+
+```text
+yazılan satır sayısı: 30
+```
+
+**Okumak.** Dosya nesnesi üzerinde kurulan bir `for` döngüsü dosyayı satır satır dolaşır; `readline()` ise tek bir satır okur. Dosyanın nasıl göründüğünü incelemek için ilk satırı bu yolla ayrı okuyalım. Bu kod, önceki kodun yazdığı dosyayı okur:
+
+```python
+with open("fibonacci.txt", encoding="utf-8") as f:
+    first = f.readline()
+    rest = [int(line) for line in f]
+print(repr(first))
+print(len(rest), rest[:6], rest[-1])
+phi = (1 + 5**0.5) / 2
+print(rest[-1] / rest[-2], phi)
+```
+
+Çıktı:
+
+```text
+'1\n'
+29 [1, 2, 3, 5, 8, 13] 832040
+1.6180339887482036 1.618033988749895
+```
+
+`repr` ilk satırın sonunda `"\n"` karakterinin durduğunu gösteriyor. `int` baştaki ve sondaki boşlukları ve satır sonunu kendisi attığı için `int(line)` doğrudan çalıştı. Okuma `readline`'ın kaldığı yerden devam ettiği için listede $29$ sayı var. $F_{30}/F_{29} = 832040/514229$ oranı $\varphi$ ile virgülden sonra $11$ basamak örtüşüyor. [$\blacksquare$]{.qed}
+:::
+::::
+
+Okunacak dosya yoksa `open` bir `FileNotFoundError` fırlatır. Bu, yakalamanın anlamlı olduğu tipik bir durumdur:
+
+```python
+from pathlib import Path
+
+path = Path("deney_verisi.txt")
+try:
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+except FileNotFoundError as e:
+    print("Dosya bulunamadı:", e.filename)
+    text = ""
+print(path.exists(), len(text))
+```
+
+Çıktı:
+
+```text
+Dosya bulunamadı: deney_verisi.txt
+False 0
+```
+
+`pathlib` modülündeki `Path` nesnesi bir dosya yolunu temsil eder. `exists()` metodu dosyanın var olup olmadığını söyler; `read_text` ve `write_text` metotları da küçük dosyaları tek satırda okuyup yazar.
+
+::: {.callout-warning title="Kodlamayı her zaman yazın"}
+`encoding` verilmezse Python işletim sisteminin varsayılan kodlamasını kullanır; Türkçe Windows'ta bu genellikle UTF-8 değil, `cp1254`'tür. UTF-8 ile yazılmış bir dosya başka bir kodlamayla okunursa Türkçe karakterler bozulur:
+
+```python
+text = "ağırlık, sıcaklık, ölçüm"
+with open("kodlama.txt", "w", encoding="utf-8") as f:
+    f.write(text)
+
+with open("kodlama.txt", encoding="cp1254") as f:
+    print(f.read())
+with open("kodlama.txt", encoding="utf-8") as f:
+    print(f.read())
+```
+
+Çıktı:
+
+```text
+aÄŸÄ±rlÄ±k, sÄ±caklÄ±k, Ã¶lÃ§Ã¼m
+ağırlık, sıcaklık, ölçüm
+```
+
+Diskteki baytlar iki okumada da aynıdır; değişen yalnız onları karakterlere çeviren kuraldır. Her `open` çağrısına `encoding="utf-8"` yazmak bu sorunu baştan önler.
+:::
+
+### CSV dosyaları
+
+Sayısal veriler çoğu zaman tablo biçiminde saklanır; bunun en yaygın düz metin biçimi CSV'dir.
+
+::: {#def-snf-csv name="CSV Dosyası"}
+Her satırı bir kayıt olan ve bir satırdaki alanların belirli bir ayraçla, çoğunlukla virgülle ayrıldığı metin dosyasına **CSV dosyası** (comma-separated values) denir. İlk satır genellikle sütun adlarını taşıyan **başlık satırıdır**.
+:::
+
+Yani CSV, bir tablonun düz metin hâlidir: satırlar tablonun satırları, ayraçlar da sütun çizgileridir. Satırı `split(",")` ile bölmek basit durumlarda işe yarar ama bir alanın içinde virgül geçtiğinde (`"Ankara, Türkiye"`) bozulur. Standart kütüphanedeki `csv` modülü tırnak içindeki alanlar gibi ayrıntıları bizim yerimize halleder.
+
+Aşağıdaki kod $[0, \pi/2]$ aralığında $\pi/12$ adımla $\sin$ ve $\cos$ değerlerinin tablosunu `trig.csv` dosyasına yazıyor ve dosyanın içeriğini olduğu gibi basıyor. `csv` modülüyle kullanılan dosyalar `newline=""` ile açılır; satır sonlarını modülün kendisi yönetir:
+
+```python
+import csv
+import math
+
+with open("trig.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow(["x", "sin", "cos"])
+    for k in range(7):
+        x = k * math.pi / 12
+        writer.writerow([f"{x:.6f}", f"{math.sin(x):.6f}",
+                         f"{math.cos(x):.6f}"])
+
+with open("trig.csv", encoding="utf-8") as f:
+    print(f.read(), end="")
+```
+
+Çıktı:
+
+```text
+x,sin,cos
+0.000000,0.000000,1.000000
+0.261799,0.258819,0.965926
+0.523599,0.500000,0.866025
+0.785398,0.707107,0.707107
+1.047198,0.866025,0.500000
+1.308997,0.965926,0.258819
+1.570796,1.000000,0.000000
+```
+
+Dosyayı geri okumanın en rahat yolu `csv.DictReader`'dır: başlık satırını okur ve sonraki her satırı, anahtarları sütun adları olan bir sözlüğe çevirir. Aşağıdaki kod önceki kodun yazdığı dosyayı okuyup her satırda $\sin^2 x + \cos^2 x = 1$ özdeşliğinden sapmayı ölçüyor:
+
+```python
+import csv
+
+with open("trig.csv", newline="", encoding="utf-8") as f:
+    rows = list(csv.DictReader(f))
+print(len(rows), rows[2])
+err = max(abs(float(r["sin"])**2 + float(r["cos"])**2 - 1)
+          for r in rows)
+print(f"en büyük sapma: {err:.1e}")
+```
+
+Çıktı:
+
+```text
+7 {'x': '0.523599', 'sin': '0.500000', 'cos': '0.866025'}
+en büyük sapma: 7.0e-07
+```
+
+Alanların hâlâ metin (`'0.500000'`) olduğuna dikkat edin; `float` ile sayıya çevirmek bize kalıyor. Sapma, değerleri altı ondalık basamağa yuvarlamamızdan geliyor: her değerdeki yuvarlama hatası en çok $5 \cdot 10^{-7}$ olduğundan özdeşlikten sapma da $10^{-6}$ mertebesinde kalıyor.
+
+:::: {#exm-snf-turkce-csv name="Noktalı Virgül ve Ondalık Virgül"}
+Türkçe ayarlı bir tablolama programı CSV dosyalarını ondalık virgülle yazar ve alanları virgül yerine noktalı virgülle ayırır. İçeriği
+
+```text
+x;f(x)
+0,5;0,4794
+1,0;0,8415
+1,5;0,9975
+```
+
+olan `tr.csv` dosyasını okuyup $(x, f(x))$ sayı çiftlerinin listesini oluşturunuz.
+
+::: {.cozum}
+Kod önce dosyayı verilen içerikle oluşturuyor. Sonra `csv.reader`'a `delimiter=";"` vererek alanları noktalı virgülden böldürüyoruz. Başlık satırını, okuyucudan bir sonraki satırı çeken `next(reader)` ile ayrı alıyoruz. Kalan her satırda iki alanın virgülünü noktaya çevirip `float` uyguluyoruz:
+
+```python
+import csv
+
+text = "x;f(x)\n0,5;0,4794\n1,0;0,8415\n1,5;0,9975\n"
+with open("tr.csv", "w", encoding="utf-8") as f:
+    f.write(text)
+
+points = []
+with open("tr.csv", newline="", encoding="utf-8") as f:
+    reader = csv.reader(f, delimiter=";")
+    header = next(reader)
+    for row in reader:
+        x, y = (float(s.replace(",", ".")) for s in row)
+        points.append((x, y))
+print(header)
+print(points)
+```
+
+Çıktı:
+
+```text
+['x', 'f(x)']
+[(0.5, 0.4794), (1.0, 0.8415), (1.5, 0.9975)]
+```
+
+Değerler, $\sin x$'in dört basamağa yuvarlanmış değerleridir. Ayraç olarak yanlışlıkla varsayılan virgül kullanılsaydı `0,5;0,4794` satırı `['0', '5;0', '4794']` biçiminde üç anlamsız alana bölünürdü. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir satırın dosyadan sayı çiftine dönüşmesi, ara adımlarıyla birlikte aşağıda görülüyor:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="5.0 -3.0 470.0 312.0" role="img" aria-label="Four stacked boxes: the file line 0,5;0,4794 with a newline, the list of strings 0,5 and 0,4794, the strings 0.5 and 0.4794, and the float pair (0.5, 0.4794); the arrows are labelled csv.reader with delimiter semicolon, replace comma by point, and float">
+  <rect x="20.0" y="12.0" width="440.0" height="36.0" rx="6" fill="var(--academic-text)" fill-opacity="0.08" stroke="var(--academic-text)" stroke-width="1.5"/>
+  <text x="32.0" y="34.5" fill="var(--academic-text)" font-size="12" text-anchor="start">dosyadaki satır</text>
+  <text x="330.0" y="34.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle" font-weight="600">0,5;0,4794\n</text>
+  <rect x="20.0" y="94.0" width="440.0" height="36.0" rx="6" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="32.0" y="116.5" fill="var(--academic-text)" font-size="12" text-anchor="start">metin listesi</text>
+  <text x="330.0" y="116.5" fill="var(--color-theory)" font-size="12.5" text-anchor="middle" font-weight="600">['0,5', '0,4794']</text>
+  <rect x="20.0" y="176.0" width="440.0" height="36.0" rx="6" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="32.0" y="198.5" fill="var(--academic-text)" font-size="12" text-anchor="start">noktalı metinler</text>
+  <text x="330.0" y="198.5" fill="var(--color-theory)" font-size="12.5" text-anchor="middle" font-weight="600">['0.5', '0.4794']</text>
+  <rect x="20.0" y="258.0" width="440.0" height="36.0" rx="6" fill="var(--color-practice)" fill-opacity="0.08" stroke="var(--color-practice)" stroke-width="1.5"/>
+  <text x="32.0" y="280.5" fill="var(--academic-text)" font-size="12" text-anchor="start">sayı çifti</text>
+  <text x="330.0" y="280.5" fill="var(--color-practice)" font-size="12.5" text-anchor="middle" font-weight="600">(0.5, 0.4794)</text>
+  <line x1="330.0" y1="49.0" x2="330.0" y2="86.6" stroke="var(--academic-text)" stroke-width="1.5" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.0,93.0 326.6,85.0 333.4,85.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="318.0" y="75.5" fill="var(--color-base)" font-size="12" text-anchor="end" font-weight="600">csv.reader(f, delimiter=";")</text>
+  <line x1="330.0" y1="131.0" x2="330.0" y2="168.6" stroke="var(--academic-text)" stroke-width="1.5" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.0,175.0 326.6,167.0 333.4,167.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="318.0" y="157.5" fill="var(--color-base)" font-size="12" text-anchor="end" font-weight="600">s.replace(",", ".")</text>
+  <line x1="330.0" y1="213.0" x2="330.0" y2="250.6" stroke="var(--academic-text)" stroke-width="1.5" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.0,257.0 326.6,249.0 333.4,249.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="318.0" y="239.5" fill="var(--color-base)" font-size="12" text-anchor="end" font-weight="600">float(s)</text>
+</svg>
+<figcaption><code>tr.csv</code> dosyasının ikinci satırının yolculuğu. <code>csv.reader</code> satırı noktalı virgülden böler ve satır sonunu atar; alanlar hâlâ metindir. Ondalık virgül noktaya çevrildikten sonra <code>float</code> her alanı sayıya dönüştürür.</figcaption>
+</figure>
+```
+
+### Sözlükleri saklamak: JSON
+
+Tablo olmayan verileri, örneğin bir hesabın ayarlarını ya da iç içe sonuçları saklamak için JSON biçimi daha uygundur. `json` modülü sözlükleri, listeleri, sayıları ve metinleri insanın da okuyabildiği bir metne çevirip dosyaya yazar (`json.dump`) ve geri okur (`json.load`):
+
+```python
+import json
+
+params = {"method": "simpson", "a": 0, "b": 3.14159, "n": [10, 20, 40]}
+with open("ayarlar.json", "w", encoding="utf-8") as f:
+    json.dump(params, f, indent=2)
+
+with open("ayarlar.json", encoding="utf-8") as f:
+    loaded = json.load(f)
+print(loaded == params, loaded["n"][-1])
+```
+
+Çıktı:
+
+```text
+True 40
+```
+
+Çıktının ilk değeri, okunan sözlüğün yazılanla aynı olduğunu söylüyor. JSON'un demet, küme ya da `Fraction` gibi türleri yoktur; bir demet yazılırsa listeye dönüşerek geri gelir.
+
+## Sınıflar {#sec-snf-siniflar}
+
+Python'daki her değer bir nesnedir ve her nesnenin bir sınıfı vardır; şimdi bu kavramı kendi matematik nesnelerimizi tanımlamak için kullanacağız.
+
+```python
+from fractions import Fraction
+
+q = Fraction(6, 8)
+print(type(7), type(0.75), type(q))
+print(q, q.numerator, q.denominator)
+print((0.75).as_integer_ratio(), isinstance(q, Fraction))
+```
+
+Çıktı:
+
+```text
+<class 'int'> <class 'float'> <class 'fractions.Fraction'>
+3/4 3 4
+(3, 4) True
+```
+
+`type` bir nesnenin sınıfını söyler. `Fraction(6, 8)` nesnesi kendi verisini, yani pay ve paydasını, `numerator` ve `denominator` **niteliklerinde** (attribute) taşır. `as_integer_ratio` gibi, nesneye nokta ile bağlanan fonksiyonlar ise **metotlardır**. `isinstance(q, Fraction)` bir nesnenin verilen sınıftan olup olmadığını sınar.
+
+::: {#def-snf-sinif name="Sınıf ve Nesne"}
+Bir **sınıf** (class), nesnelerinin hangi verileri (**nitelikler**) ve hangi işlemleri (**metotlar**) taşıyacağını tanımlayan bir kalıptır. Bu kalıptan üretilen her değere o sınıfın bir **nesnesi** (object, instance) denir. Sınıf `class Ad:` bloğuyla tanımlanır; `Ad(...)` çağrısı yeni bir nesne üretir ve onu ilk değerleriyle donatmak için sınıfın `__init__` metodunu çalıştırır.
+:::
+
+Yani sınıf bir türün tarifidir, nesne ise o tariften yapılmış somut bir örnek. Matematikte "düzlemde bir vektör" demek bir sınıf tanımlamaya, $u = (3, 4)$ demek de o sınıftan bir nesne üretmeye benzer. İlk sınıfımız da düzlemde bir vektör olsun:
+
+```python
+import math
+
+
+class Vec2:
+    """Düzlemde bir vektör."""
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def norm(self):
+        """Öklid normu."""
+        return math.hypot(self.x, self.y)
+
+
+u = Vec2(3, 4)
+v = Vec2(1, 1)
+v.x = 5
+print(u.x, u.y, u.norm())
+print(v.x, v.y, v.norm(), Vec2.norm(v))
+```
+
+Çıktı:
+
+```text
+3 4 5.0
+5 1 5.0990195135927845 5.0990195135927845
+```
+
+Kodu satır satır okuyalım:
+
+- `class Vec2:` sınıfı başlatır. Sınıf adları geleneksel olarak büyük harfle başlar; altındaki üç tırnaklı metin sınıfın belgesidir.
+- Metotlar, sınıfın içinde `def` ile tanımlanan fonksiyonlardır. İlk parametreleri **üzerinde çalışılan nesnedir** ve geleneksel adı `self`'tir.
+- `Vec2(3, 4)` çağrısı yeni bir nesne oluşturur ve onun için `__init__(self, 3, 4)` metodunu çalıştırır; `self.x = x` satırı nesneye `x` niteliğini ekler.
+- `v.norm()` yazdığımızda Python bunu `Vec2.norm(v)` olarak çalıştırır, yani `self` yerine `v` konur. Çıktının son iki değeri bu iki yazımın aynı olduğunu gösteriyor.
+- Nitelikler sonradan değiştirilebilir: `v.x = 5` yalnız `v` nesnesini değiştirdi, `u`'ya dokunmadı.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="30.0 -11.5 500.0 301.0" role="img" aria-label="A box for the class Vec2 with the methods __init__ and norm; below it two object boxes u with x = 3, y = 4 and v with x = 5, y = 1, each with a dashed arrow to the class; u.norm() = 5.0 and v.norm() = 5.099">
+  <rect x="165.0" y="20.0" width="230.0" height="100.0" rx="10" fill="var(--color-base)" fill-opacity="0.08" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="280.0" y="12.0" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">sınıf Vec2</text>
+  <text x="280.0" y="58.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">__init__(self, x, y)</text>
+  <text x="280.0" y="84.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">norm(self)</text>
+  <line x1="180.0" y1="71.0" x2="380.0" y2="71.0" stroke="var(--color-base)" stroke-width="0.8" opacity="0.5"/>
+  <rect x="45.0" y="179.0" width="150.0" height="72.0" rx="10" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="45.0" y="171.0" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600">nesne u</text>
+  <text x="120.0" y="207.0" fill="var(--color-theory)" font-size="13" text-anchor="middle">x = 3</text>
+  <text x="120.0" y="231.0" fill="var(--color-theory)" font-size="13" text-anchor="middle">y = 4</text>
+  <text x="120.0" y="273.0" fill="var(--color-practice)" font-size="12" text-anchor="middle">u.norm() = 5.0</text>
+  <line x1="160.0" y1="179.0" x2="216.0" y2="123.9" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="220.0,120.0 217.1,127.0 212.9,122.8" fill="var(--academic-text)" opacity="0.8"/>
+  <rect x="365.0" y="179.0" width="150.0" height="72.0" rx="10" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="365.0" y="171.0" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600">nesne v</text>
+  <text x="440.0" y="207.0" fill="var(--color-theory)" font-size="13" text-anchor="middle">x = 5</text>
+  <text x="440.0" y="231.0" fill="var(--color-theory)" font-size="13" text-anchor="middle">y = 1</text>
+  <text x="440.0" y="273.0" fill="var(--color-practice)" font-size="12" text-anchor="middle">v.norm() = 5.099&#8230;</text>
+  <line x1="400.0" y1="179.0" x2="344.0" y2="123.9" stroke="var(--academic-text)" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.8" stroke-linecap="round"/>
+  <polygon points="340.0,120.0 347.1,122.8 342.9,127.0" fill="var(--academic-text)" opacity="0.8"/>
+  <text x="178.0" y="150.0" fill="var(--academic-text)" font-size="11.5" text-anchor="end">type(u)</text>
+  <text x="382.0" y="150.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">type(v)</text>
+</svg>
+<figcaption>Bir sınıf ve ondan üretilen iki nesne. Metotlar (<code>__init__</code>, <code>norm</code>) sınıfta bir kez tanımlıdır; her nesne kendi <code>x</code>, <code>y</code> niteliklerini taşır. <code>u.norm()</code> çağrısı <code>Vec2.norm(u)</code> demektir: metot, <code>self</code> yerine <code>u</code> konarak çalışır.</figcaption>
+</figure>
+```
+
+Bu sınıfın bir nesnesini `print` ile basmayı denerseniz `<__main__.Vec2 object at 0x...>` gibi, sonu bellekteki adrese göre değişen anlamsız bir metin görürsünüz; `u + v` yazarsanız da `TypeError` alırsınız. Python iki `Vec2` nesnesinin nasıl yazılacağını ve toplanacağını henüz bilmiyor. Bunu ona özel metotlarla öğretiriz.
+
+::: {#def-snf-ozel-metot name="Özel Metot"}
+Adı iki alt çizgiyle başlayıp iki alt çizgiyle biten metotlara **özel metot** (special method) denir. Python bu metotları dilin kendi sözdizimi için çağırır: `a + b` ifadesi `a.__add__(b)` çağrısına, `a == b` ifadesi `a.__eq__(b)` çağrısına, `repr(a)` de `a.__repr__()` çağrısına dönüşür.
+:::
+
+Yani bir sınıfa özel metotlar ekleyerek onun nesnelerine `+`, `*`, `==`, `abs` gibi tanıdık işlemleri öğretebiliriz. Sık kullanılanlar şunlardır:
+
+| Yazım | Çağrılan metot |
+|---|---|
+| `a + b`, `a - b` | `a.__add__(b)`, `a.__sub__(b)` |
+| `a * b` | `a.__mul__(b)`; o işe yaramazsa ve `b` başka türdense `b.__rmul__(a)` |
+| `-a`, `abs(a)` | `a.__neg__()`, `a.__abs__()` |
+| `a == b` | `a.__eq__(b)` |
+| `repr(a)`, `print(a)` | `a.__repr__()` |
+| `a(x)` | `a.__call__(x)` |
+| `x in a` | `a.__contains__(x)` |
+
+`print` aslında `__str__` metodunu arar; sınıfta yalnız `__repr__` varsa onu kullanır. `Vec2`'yi bu metotlarla yeniden yazalım:
+
+```python
+import math
+
+
+class Vec2:
+    """Düzlemde, işlemleriyle birlikte bir vektör."""
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f"Vec2({self.x}, {self.y})"
+
+    def __add__(self, other):
+        return Vec2(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        return Vec2(self.x - other.x, self.y - other.y)
+
+    def __neg__(self):
+        return Vec2(-self.x, -self.y)
+
+    def __mul__(self, k):
+        """Skalerle çarpım: v * k."""
+        if not isinstance(k, (int, float)):
+            return NotImplemented
+        return Vec2(k * self.x, k * self.y)
+
+    __rmul__ = __mul__          # k * v de aynı sonucu versin
+
+    def __eq__(self, other):
+        if not isinstance(other, Vec2):
+            return NotImplemented
+        return self.x == other.x and self.y == other.y
+
+    def __abs__(self):
+        return math.hypot(self.x, self.y)
+
+    def dot(self, other):
+        """İç çarpım."""
+        return self.x * other.x + self.y * other.y
+```
+
+Birkaç ayrıntı:
+
+- `__repr__` bir metin döndürür; Python'un konsolu ve `print` nesneyi bu metinle gösterir. Metni, nesneyi yeniden üreten koda benzetmek (`Vec2(4, 3)`) iyi bir alışkanlıktır.
+- İşlem metotları **yeni** bir `Vec2` döndürür; `u + v` işlemi `u`'yu değiştirmez.
+- `__mul__` yalnız sayılarla çarpımı tanımlar ve çarpan sayı değilse `NotImplemented` döndürür. Bu özel değer Python'a "bu işlemi bilmiyorum" der: öbür terim farklı türdense Python o zaman onun metodunu dener, o da bilmiyorsa `TypeError` fırlatır.
+- `2 * u` yazıldığında önce `int` sınıfının `__mul__` metodu denenir. O bir `Vec2` ile çarpmayı bilmediği için Python `u.__rmul__(2)` çağrısına geçer. Skalerle çarpma değişmeli olduğundan `__rmul__ = __mul__` satırı aynı metodu ikinci bir adla bağlıyor.
+
+Sınıfı kullanalım. Bu kod önceki kodun devamıdır:
+
+```python
+u, v = Vec2(3, 1), Vec2(1, 2)
+print(u + v, u - v, -v)
+print(2 * u, u * 0.5)
+print(abs(Vec2(3, 4)), u.dot(v))
+print(u + v == v + u, u == Vec2(3.0, 1.0))
+```
+
+Çıktı:
+
+```text
+Vec2(4, 3) Vec2(2, -1) Vec2(-1, -2)
+Vec2(6, 2) Vec2(1.5, 0.5)
+5.0 5
+True True
+```
+
+`u + v == v + u` toplamanın değişmeliliğini sınadı; `Vec2(3.0, 1.0)` ise `3 == 3.0` olduğundan `u`'ya eşit çıktı. `Vec2`'nin toplama ve skalerle çarpma işlemleri, $\mathbb{R}^2$'yi bir vektör uzayı yapan işlemlerin ta kendisidir (bkz. [Lineer Cebir](../lineer-cebir/vektor-uzaylari/vektor-uzaylari.html#def-vektor-uzayi)). Toplamın ve farkın geometrisi paralelkenar kuralıdır:
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="22.0 6.0 386.0 379.5" role="img" aria-label="Vectors from the origin: u = (3, 1), v = (1, 2), u + v = (4, 3) as the diagonal of the dashed parallelogram, and u - v = (2, -1), equal to the dashed arrow from the tip of v to the tip of u">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="145.6" y1="24.0" x2="145.6" y2="367.2"/><line x1="211.6" y1="24.0" x2="211.6" y2="367.2"/><line x1="277.6" y1="24.0" x2="277.6" y2="367.2"/><line x1="343.6" y1="24.0" x2="343.6" y2="367.2"/><line x1="40.0" y1="327.6" x2="389.8" y2="327.6"/><line x1="40.0" y1="195.6" x2="389.8" y2="195.6"/><line x1="40.0" y1="129.6" x2="389.8" y2="129.6"/><line x1="40.0" y1="63.6" x2="389.8" y2="63.6"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="36.0" y1="261.6" x2="393.8" y2="261.6"/>
+  <line x1="79.6" y1="371.2" x2="79.6" y2="20.0"/>
+  <polygon points="393.8,261.6 385.8,258.1 385.8,265.1" stroke="none"/>
+  <polygon points="79.6,20.0 76.1,28.0 83.1,28.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="145.6" y1="258.6" x2="145.6" y2="264.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="145.6" y="276.6" text-anchor="middle">1</text>
+  <line x1="211.6" y1="258.6" x2="211.6" y2="264.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="211.6" y="276.6" text-anchor="middle">2</text>
+  <line x1="277.6" y1="258.6" x2="277.6" y2="264.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="277.6" y="276.6" text-anchor="middle">3</text>
+  <line x1="343.6" y1="258.6" x2="343.6" y2="264.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="343.6" y="276.6" text-anchor="middle">4</text>
+  <line x1="76.6" y1="327.6" x2="82.6" y2="327.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="72.6" y="331.6" text-anchor="end">&#8722;1</text>
+  <line x1="76.6" y1="195.6" x2="82.6" y2="195.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="72.6" y="199.6" text-anchor="end">1</text>
+  <line x1="76.6" y1="129.6" x2="82.6" y2="129.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="72.6" y="133.6" text-anchor="end">2</text>
+  <line x1="76.6" y1="63.6" x2="82.6" y2="63.6" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="72.6" y="67.6" text-anchor="end">3</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="391.8" y="276.6" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="86.6" y="29.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M277.6,195.6 L343.6,63.6" fill="none" stroke="var(--color-base)" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M145.6,129.6 L343.6,63.6" fill="none" stroke="var(--color-theory)" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="145.6" y1="129.6" x2="272.6" y2="193.1" stroke="var(--color-practice)" stroke-width="1.4" stroke-dasharray="5 4" opacity="0.75" stroke-linecap="round"/>
+  <polygon points="277.6,195.6 270.0,195.1 272.7,189.8" fill="var(--color-practice)" opacity="0.75"/>
+  <line x1="79.6" y1="261.6" x2="270.8" y2="197.9" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="277.6,195.6 270.3,202.0 267.9,194.9" fill="var(--color-theory)" opacity="1.0"/>
+  <line x1="79.6" y1="261.6" x2="142.4" y2="136.0" stroke="var(--color-base)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="145.6,129.6 145.0,139.3 138.2,136.0" fill="var(--color-base)" opacity="1.0"/>
+  <line x1="79.6" y1="261.6" x2="337.8" y2="67.9" stroke="var(--academic-text)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="343.6,63.6 338.7,72.0 334.1,66.0" fill="var(--academic-text)" opacity="1.0"/>
+  <line x1="79.6" y1="261.6" x2="205.2" y2="324.4" stroke="var(--color-practice)" stroke-width="2.2" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="211.6,327.6 201.9,327.0 205.2,320.2" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="285.6" y="209.6" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600">u = Vec2(3, 1)</text>
+  <text x="137.6" y="121.6" fill="var(--color-base)" font-size="12.5" text-anchor="end" font-weight="600">v = Vec2(1, 2)</text>
+  <text x="337.6" y="53.6" fill="var(--academic-text)" font-size="12.5" text-anchor="end" font-weight="600">u + v = Vec2(4, 3)</text>
+  <text x="221.6" y="333.6" fill="var(--color-practice)" font-size="12.5" text-anchor="start" font-weight="600">u &#8722; v = Vec2(2, &#8722;1)</text>
+</svg>
+<figcaption><code>Vec2</code> ile hesaplanan <code>u + v</code> ve <code>u - v</code>. Toplam, <code>u</code> ile <code>v</code> üzerine kurulan paralelkenarın köşegenidir; fark ise <code>v</code>'nin ucundan <code>u</code>'nun ucuna giden vektördür (kesikli ok), başlangıç noktası orijine taşınmış olarak.</figcaption>
+</figure>
+```
+
+Tanımlamadığımız işlemler ise hâlâ hata verir, `__eq__` metodunun da bir yan etkisi vardır. Bu kod da önceki iki kodun devamıdır:
+
+```python
+u, v = Vec2(3, 1), Vec2(1, 2)
+try:
+    u * v
+except TypeError as e:
+    print("TypeError:", e)
+try:
+    {u, v}
+except TypeError as e:
+    print("TypeError:", e)
+w = Vec2(0.1, 0.2) + Vec2(0.2, 0.1)
+print(w, w == Vec2(0.3, 0.3))
+```
+
+Çıktı:
+
+```text
+TypeError: unsupported operand type(s) for *: 'Vec2' and 'Vec2'
+TypeError: unhashable type: 'Vec2'
+Vec2(0.30000000000000004, 0.30000000000000004) False
+```
+
+- İki vektörün `*` ile çarpımını tanımlamadık: `u.__mul__(v)` çağrısı `NotImplemented` döndürdü. İki terim aynı türden olduğu için Python `v.__rmul__(u)` çağrısını hiç denemez ve doğrudan `TypeError` fırlatır. İç çarpım için ayrı bir `dot` metodu yazmamız bilinçli bir seçimdir.
+- `__eq__` tanımlayan bir sınıfın nesneleri, ayrıca bir `__hash__` metodu yazılmadıkça **hashlenebilir** değildir (bkz. [Veri Yapıları ve Comprehension](veri-yapilari.qmd#def-ver-hashlenebilir)), yani kümeye konamaz ve sözlük anahtarı olamaz. Eşit nesnelerin hash değerleri de eşit olmalıdır ve nitelikleri değiştirilebilen bir nesnede bu koşul zamanla bozulabilir. Birazdan göreceğimiz `dataclass(frozen=True)` bu sorunu çözer.
+- Son satır, kayan nokta aritmetiğinin bilinen tuzağıdır.
+
+::: {.callout-warning title="Kayan noktalı nitelikleri == ile karşılaştırmayın"}
+$0{,}1 + 0{,}2$ makinede tam olarak $0{,}3$ etmediği için (bkz. [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd)) `Vec2(0.1, 0.2) + Vec2(0.2, 0.1)` toplamı `Vec2(0.3, 0.3)` nesnesine eşit çıkmadı. `__eq__` tam eşitlik sorar ve tam sayı bileşenlerde doğru çalışır. Ölçümden ya da hesaptan gelen vektörleri karşılaştırmak için `abs(u - v) < tol` biçiminde bir tolerans ya da bileşenler üzerinde `math.isclose` (bkz. [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd#def-gir-isclose)) kullanılır.
+:::
+
+:::: {#exm-snf-kesir-sinifi name="Kendi Kesir Sınıfımız"}
+Rasyonel sayıları $p/q$ biçiminde, hep sadeleşmiş ve paydası pozitif olarak tutan bir `Rational` sınıfı yazınız. Payda sıfırsa `ZeroDivisionError` fırlatılsın; toplama, çarpma, eşitlik ve `repr` tanımlansın. Sınıfı $H_{10} = 1 + \frac12 + \dots + \frac1{10}$ harmonik sayısıyla deneyip sonucu `fractions.Fraction` ile karşılaştırınız.
+
+::: {.cozum}
+Sadeleştirmeyi `__init__` içinde bir kez yapıyoruz: pay ve paydayı $g = \gcd(p, q)$'ya böleriz, payda negatifse ikisinin de işaretini değiştirmek için $-g$'ye böleriz. Böylece her kesrin tek bir gösterimi olur ve iki kesrin eşitliği, pay ve paydalarının eşitliğine indirgenir. Toplama ve çarpma
+
+$$\frac{p}{q} + \frac{r}{s} = \frac{ps + rq}{qs}, \qquad \frac{p}{q} \cdot \frac{r}{s} = \frac{pr}{qs}$$
+
+formüllerinden gelir; sonuç yeni bir `Rational` olarak kurulduğu için kendiliğinden sadeleşir.
+
+```python
+from fractions import Fraction
+from math import gcd
+
+
+class Rational:
+    """p/q kesri; hep sadeleşmiş ve paydası pozitif tutulur."""
+
+    def __init__(self, p, q=1):
+        if q == 0:
+            raise ZeroDivisionError("payda sıfır olamaz")
+        g = gcd(p, q)
+        if q < 0:
+            g = -g
+        self.p = p // g
+        self.q = q // g
+
+    def __repr__(self):
+        return f"{self.p}/{self.q}"
+
+    def __add__(self, other):
+        return Rational(self.p * other.q + other.p * self.q,
+                        self.q * other.q)
+
+    def __mul__(self, other):
+        return Rational(self.p * other.p, self.q * other.q)
+
+    def __eq__(self, other):
+        return self.p == other.p and self.q == other.q
+
+
+print(Rational(6, -8), Rational(-3, 4) == Rational(6, -8))
+H = Rational(0)
+for k in range(1, 11):
+    H = H + Rational(1, k)
+print("H_10 =", H)
+print("Fraction ile:", sum(Fraction(1, k) for k in range(1, 11)))
+try:
+    Rational(1, 0)
+except ZeroDivisionError as e:
+    print("Hata:", e)
+```
+
+Çıktı:
+
+```text
+-3/4 True
+H_10 = 7381/2520
+Fraction ile: 7381/2520
+Hata: payda sıfır olamaz
+```
+
+$6/(-8)$ kesri $-3/4$ olarak saklandı ve $-3/4$'e eşit çıktı. Harmonik sayı $H_{10} = 7381/2520$ bulundu ve `Fraction` ile aynı. Sıfır paydalı bir kesir oluşturma denemesi, kendi yazdığımız mesajla durduruldu. Sadeleştirmedeki $\gcd$, `math.gcd`'den geliyor ve Öklid algoritmasıyla hesaplanıyor (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/oklid-algoritmasi.html#thm-oklid-algoritmasi)). Gerçek bir hesapta elbette hazır `Fraction` sınıfı kullanılır; buradaki amaç, bir sınıfın içini kendi elimizle kurmaktı. [$\blacksquare$]{.qed}
+:::
+::::
+
+### Kalıtım ve kendi istisna türlerimiz
+
+Bir sınıf, var olan bir sınıfı genişleterek de tanımlanabilir; kendi istisna türlerimizi tanımlamanın yolu budur.
+
+::: {#def-snf-kalitim name="Kalıtım"}
+`class B(A):` biçiminde tanımlanan `B` sınıfı, `A` sınıfından **kalıtım** (inheritance) yoluyla türer: `A`'nın bütün metotlarına sahip olur, bunlara yenilerini ekleyebilir ya da aynı adla yeniden tanımlayarak onları değiştirebilir. `A`'ya **üst sınıf**, `B`'ye **alt sınıf** denir ve her `B` nesnesi aynı zamanda bir `A` nesnesidir.
+:::
+
+Yani alt sınıf, üst sınıfın özel bir hâlidir; istisna soyağacında `ZeroDivisionError`'ın bir `ArithmeticError` olması tam olarak budur. Kendi istisna türümüzü uygun bir yerleşik türden türetirsek onu hem kendi adıyla hem de üst türünün adıyla yakalayabiliriz. Alt sınıfın `__init__` metodunda `super().__init__(...)` çağrısı üst sınıfın `__init__` metodunu çalıştırır; böylece istisnanın mesajı gibi standart bilgiler üst sınıfça saklanır.
+
+:::: {#exm-snf-newton-dongusu name="Yakınsamayan Newton İterasyonu"}
+$f(x) = x^3 - 2x + 2$ için Newton yöntemi (bkz. [Nümerik Analiz](../numerik-analiz/newton-raphson-metodu.html#def-nwt-metot)) $x_0 = 0$'dan başlatıldığında $0$ ile $1$ arasında gidip gelir ve hiç yakınsamaz:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="30.0 4.0 466.0 318.0" role="img" aria-label="Graph of y = x^3 - 2x + 2 with its single root near -1.769; the tangent at x = 0 meets the x axis at 1 and the tangent at x = 1 meets it at 0, so the Newton iterates alternate 0, 1, 0, 1">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="78.7" y1="22.0" x2="78.7" y2="304.0"/><line x1="181.1" y1="22.0" x2="181.1" y2="304.0"/><line x1="385.9" y1="22.0" x2="385.9" y2="304.0"/><line x1="48.0" y1="259.5" x2="478.0" y2="259.5"/><line x1="48.0" y1="111.1" x2="478.0" y2="111.1"/><line x1="48.0" y1="36.8" x2="478.0" y2="36.8"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.5" fill="var(--academic-text)">
+  <line x1="44.0" y1="185.3" x2="482.0" y2="185.3"/>
+  <line x1="283.5" y1="308.0" x2="283.5" y2="18.0"/>
+  <polygon points="482.0,185.3 474.0,181.8 474.0,188.8" stroke="none"/>
+  <polygon points="283.5,18.0 280.0,26.0 287.0,26.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <line x1="78.7" y1="182.3" x2="78.7" y2="188.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="78.7" y="200.3" text-anchor="middle">&#8722;2</text>
+  <line x1="181.1" y1="182.3" x2="181.1" y2="188.3" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="181.1" y="200.3" text-anchor="middle">&#8722;1</text>
+  <line x1="280.5" y1="259.5" x2="286.5" y2="259.5" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="276.5" y="263.5" text-anchor="end">&#8722;2</text>
+  <line x1="280.5" y1="111.1" x2="286.5" y2="111.1" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="276.5" y="115.1" text-anchor="end">2</text>
+  <line x1="280.5" y1="36.8" x2="286.5" y2="36.8" stroke="var(--academic-text)" stroke-width="1"/>
+  <text x="276.5" y="40.8" text-anchor="end">4</text>
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="480.0" y="200.3" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="290.5" y="27.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <path d="M67.4,303.5 L68.4,299.1 L69.5,294.7 L70.6,290.4 L71.6,286.1 L72.7,281.9 L73.8,277.8 L74.9,273.7 L76.0,269.7 L77.0,265.7 L78.1,261.7 L79.2,257.8 L80.2,254.0 L81.3,250.2 L82.4,246.4 L83.5,242.7 L84.6,239.0 L85.6,235.4 L86.7,231.9 L87.8,228.4 L88.9,224.9 L89.9,221.5 L91.0,218.1 L92.1,214.8 L93.1,211.5 L94.2,208.2 L95.3,205.0 L96.4,201.9 L97.4,198.8 L98.5,195.7 L99.6,192.7 L100.7,189.8 L101.8,186.8 L102.8,184.0 L103.9,181.1 L105.0,178.3 L106.0,175.6 L107.1,172.9 L108.2,170.2 L109.3,167.6 L110.4,165.0 L111.4,162.4 L112.5,159.9 L113.6,157.5 L114.6,155.1 L115.7,152.7 L116.8,150.3 L117.9,148.0 L118.9,145.8 L120.0,143.6 L121.1,141.4 L122.2,139.2 L123.2,137.1 L124.3,135.1 L125.4,133.0 L126.5,131.1 L127.5,129.1 L128.6,127.2 L129.7,125.3 L130.8,123.5 L131.9,121.7 L132.9,119.9 L134.0,118.2 L135.1,116.5 L136.1,114.8 L137.2,113.2 L138.3,111.6 L139.4,110.1 L140.4,108.5 L141.5,107.1 L142.6,105.6 L143.7,104.2 L144.8,102.8 L145.8,101.5 L146.9,100.1 L148.0,98.9 L149.1,97.6 L150.1,96.4 L151.2,95.2 L152.3,94.0 L153.3,92.9 L154.4,91.8 L155.5,90.8 L156.6,89.7 L157.7,88.7 L158.7,87.8 L159.8,86.8 L160.9,85.9 L161.9,85.0 L163.0,84.2 L164.1,83.3 L165.2,82.5 L166.2,81.8 L167.3,81.0 L168.4,80.3 L169.5,79.6 L170.6,79.0 L171.6,78.4 L172.7,77.8 L173.8,77.2 L174.9,76.6 L175.9,76.1 L177.0,75.6 L178.1,75.1 L179.2,74.7 L180.2,74.3 L181.3,73.9 L182.4,73.5 L183.4,73.2 L184.5,72.8 L185.6,72.5 L186.7,72.2 L187.8,72.0 L188.8,71.8 L189.9,71.6 L191.0,71.4 L192.1,71.2 L193.1,71.1 L194.2,70.9 L195.3,70.8 L196.4,70.8 L197.4,70.7 L198.5,70.7 L199.6,70.7 L200.7,70.7 L201.7,70.7 L202.8,70.7 L203.9,70.8 L205.0,70.9 L206.0,71.0 L207.1,71.1 L208.2,71.2 L209.2,71.4 L210.3,71.6 L211.4,71.8 L212.5,72.0 L213.5,72.2 L214.6,72.4 L215.7,72.7 L216.8,73.0 L217.8,73.3 L218.9,73.6 L220.0,73.9 L221.1,74.2 L222.1,74.6 L223.2,74.9 L224.3,75.3 L225.4,75.7 L226.5,76.1 L227.5,76.6 L228.6,77.0 L229.7,77.4 L230.8,77.9 L231.8,78.4 L232.9,78.9 L234.0,79.4 L235.0,79.9 L236.1,80.4 L237.2,80.9 L238.3,81.5 L239.3,82.0 L240.4,82.6 L241.5,83.2 L242.6,83.8 L243.6,84.4 L244.7,85.0 L245.8,85.6 L246.9,86.2 L247.9,86.9 L249.0,87.5 L250.1,88.1 L251.2,88.8 L252.2,89.5 L253.3,90.1 L254.4,90.8 L255.5,91.5 L256.5,92.2 L257.6,92.9 L258.7,93.6 L259.8,94.3 L260.9,95.1 L261.9,95.8 L263.0,96.5 L264.1,97.2 L265.1,98.0 L266.2,98.7 L267.3,99.5 L268.4,100.2 L269.4,101.0 L270.5,101.7 L271.6,102.5 L272.7,103.3 L273.8,104.0 L274.8,104.8 L275.9,105.6 L277.0,106.3 L278.0,107.1 L279.1,107.9 L280.2,108.7 L281.3,109.5 L282.4,110.2 L283.4,111.0 L284.5,111.8 L285.6,112.6 L286.6,113.4 L287.7,114.1 L288.8,114.9 L289.9,115.7 L290.9,116.5 L292.0,117.2 L293.1,118.0 L294.2,118.8 L295.2,119.5 L296.3,120.3 L297.4,121.1 L298.5,121.8 L299.5,122.6 L300.6,123.3 L301.7,124.1 L302.8,124.8 L303.9,125.5 L304.9,126.3 L306.0,127.0 L307.1,127.7 L308.1,128.4 L309.2,129.1 L310.3,129.8 L311.4,130.5 L312.4,131.2 L313.5,131.9 L314.6,132.6 L315.7,133.2 L316.8,133.9 L317.8,134.5 L318.9,135.2 L320.0,135.8 L321.1,136.5 L322.1,137.1 L323.2,137.7 L324.3,138.3 L325.4,138.9 L326.4,139.4 L327.5,140.0 L328.6,140.6 L329.7,141.1 L330.7,141.7 L331.8,142.2 L332.9,142.7 L333.9,143.2 L335.0,143.7 L336.1,144.2 L337.2,144.6 L338.2,145.1 L339.3,145.5 L340.4,145.9 L341.5,146.3 L342.5,146.7 L343.6,147.1 L344.7,147.5 L345.8,147.8 L346.9,148.2 L347.9,148.5 L349.0,148.8 L350.1,149.1 L351.2,149.4 L352.2,149.6 L353.3,149.9 L354.4,150.1 L355.5,150.3 L356.5,150.5 L357.6,150.7 L358.7,150.9 L359.8,151.0 L360.8,151.1 L361.9,151.2 L363.0,151.3 L364.1,151.4 L365.1,151.4 L366.2,151.4 L367.3,151.4 L368.3,151.4 L369.4,151.4 L370.5,151.3 L371.6,151.3 L372.7,151.2 L373.7,151.1 L374.8,150.9 L375.9,150.8 L376.9,150.6 L378.0,150.4 L379.1,150.1 L380.2,149.9 L381.2,149.6 L382.3,149.3 L383.4,149.0 L384.5,148.6 L385.5,148.3 L386.6,147.9 L387.7,147.5 L388.8,147.0 L389.8,146.5 L390.9,146.0 L392.0,145.5 L393.1,145.0 L394.2,144.4 L395.2,143.8 L396.3,143.2 L397.4,142.5 L398.5,141.8 L399.5,141.1 L400.6,140.4 L401.7,139.6 L402.8,138.8 L403.8,138.0 L404.9,137.2 L406.0,136.3 L407.1,135.4 L408.1,134.4 L409.2,133.5 L410.3,132.5 L411.3,131.4 L412.4,130.4 L413.5,129.3 L414.6,128.2 L415.7,127.0 L416.7,125.8 L417.8,124.6 L418.9,123.4 L419.9,122.1 L421.0,120.8 L422.1,119.4 L423.2,118.0 L424.2,116.6 L425.3,115.2 L426.4,113.7 L427.5,112.2 L428.6,110.6 L429.6,109.1 L430.7,107.4 L431.8,105.8 L432.8,104.1 L433.9,102.4 L435.0,100.6 L436.1,98.8 L437.2,97.0 L438.2,95.1 L439.3,93.2 L440.4,91.2 L441.4,89.2 L442.5,87.2 L443.6,85.2 L444.7,83.1 L445.8,80.9 L446.8,78.8 L447.9,76.5 L449.0,74.3 L450.0,72.0 L451.1,69.7 L452.2,67.3 L453.3,64.9 L454.4,62.4 L455.4,59.9 L456.5,57.4 L457.6,54.8 L458.6,52.2 L459.7,49.5 L460.8,46.8 L461.9,44.0 L463.0,41.3 L464.0,38.4 L465.1,35.5 L466.2,32.6 L467.3,29.7 L468.3,26.7 L469.4,23.6" fill="none" stroke="var(--color-theory)" stroke-width="2.3" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M283.5,185.3 L283.5,111.1" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="283.5" y1="111.1" x2="380.7" y2="181.5" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="385.9,185.3 377.4,183.3 381.4,177.8" fill="var(--color-practice)" opacity="1.0"/>
+  <path d="M385.9,185.3 L385.9,148.2" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="385.9" y1="148.2" x2="289.5" y2="183.1" stroke="var(--color-practice)" stroke-width="1.8" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="283.5,185.3 289.9,179.4 292.1,185.7" fill="var(--color-practice)" opacity="1.0"/>
+  <circle cx="283.5" cy="111.1" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="385.9" cy="148.2" r="4.0" fill="var(--color-theory)"/>
+  <circle cx="102.3" cy="185.3" r="4.6" fill="var(--color-base)"/>
+  <text x="108.3" y="175.3" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600">kök &#8776; &#8722;1,769</text>
+  <text x="275.5" y="203.3" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan><tspan font-size="8.5" dy="3">0</tspan><tspan dy="-3">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="8.5" dy="3">2</tspan><tspan dy="-3">&#8203;</tspan>, &#8230; = 0</text>
+  <text x="385.9" y="203.3" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600"><tspan font-style="italic">x</tspan><tspan font-size="8.5" dy="3">1</tspan><tspan dy="-3">&#8203;</tspan>, <tspan font-style="italic">x</tspan><tspan font-size="8.5" dy="3">3</tspan><tspan dy="-3">&#8203;</tspan>, &#8230; = 1</text>
+  <text x="423.9" y="103.5" fill="var(--color-theory)" font-size="12.5" text-anchor="end" font-weight="600"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">x</tspan>³ &#8722; 2<tspan font-style="italic">x</tspan> + 2</text>
+</svg>
+<figcaption><em>f</em>(<em>x</em>) = <em>x</em>³ &#8722; 2<em>x</em> + 2 için Newton yöntemi <em>x</em><sub>0</sub> = 0'dan başlayınca: 0'daki teğet ekseni 1'de, 1'deki teğet ekseni yine 0'da keser. İterasyon 0, 1, 0, 1, … döngüsüne girer ve tek kök olan &#8722;1,769… noktasına hiç yaklaşmaz; <code>newton</code> fonksiyonu bu yüzden <code>ConvergenceError</code> fırlatır.</figcaption>
+</figure>
+```
+
+İzin verilen adım sayısında yakınsamazsa son iterasyonları da taşıyan bir `ConvergenceError` fırlatan bir `newton` fonksiyonu yazıp $x_0 = -2$ ve $x_0 = 0$ için deneyiniz.
+
+::: {.cozum}
+`ConvergenceError` sınıfını `RuntimeError`'dan türetiyoruz ve `__init__` metoduna iterasyon listesini saklayan bir nitelik ekliyoruz:
+
+```python
+class ConvergenceError(RuntimeError):
+    """Bir iterasyon izin verilen adım sayısında yakınsamazsa."""
+
+    def __init__(self, message, iterates):
+        super().__init__(message)
+        self.iterates = iterates
+
+
+def newton(f, df, x0, tol=1e-12, maxiter=20):
+    xs = [x0]
+    for _ in range(maxiter):
+        x = xs[-1]
+        x_new = x - f(x) / df(x)
+        xs.append(x_new)
+        if abs(x_new - x) < tol:
+            return x_new
+    raise ConvergenceError(f"{maxiter} adımda yakınsamadı", xs)
+
+
+def f(x):
+    return x**3 - 2 * x + 2
+
+
+def df(x):
+    return 3 * x**2 - 2
+
+
+print(newton(f, df, -2.0))
+try:
+    newton(f, df, 0.0)
+except ConvergenceError as e:
+    print("Hata:", e)
+    print("son iterasyonlar:", e.iterates[-4:])
+print(issubclass(ConvergenceError, RuntimeError))
+```
+
+Çıktı:
+
+```text
+-1.7692923542386314
+Hata: 20 adımda yakınsamadı
+son iterasyonlar: [1.0, 0.0, 1.0, 0.0]
+True
+```
+
+$x_0 = -2$'den başlayan iterasyon, tek gerçel kök olan $-1{,}7692923542\ldots$ sayısına yakınsadı. $x_0 = 0$ için
+
+$$x_1 = 0 - \frac{f(0)}{f'(0)} = 0 - \frac{2}{-2} = 1, \qquad x_2 = 1 - \frac{f(1)}{f'(1)} = 1 - \frac{1}{1} = 0$$
+
+olduğundan dizi $0, 1, 0, 1, \ldots$ döngüsüne girer. $20$ adımın sonunda fonksiyon istisnayı fırlattı ve çağıran kod, istisna nesnesinin `iterates` niteliğinden döngüyü okuyabildi. Son satır `ConvergenceError`'ın bir `RuntimeError` olduğunu doğruluyor: `except RuntimeError` yazan bir kod da bu istisnayı yakalardı. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Veri sınıfları: dataclass {#sec-snf-dataclass}
+
+`Vec2`'yi yazarken `__init__`, `__repr__` ve `__eq__` için hep aynı kalıbı tekrarladık; yalnız veri taşıyan sınıflar için standart kütüphane bu kalıbı bizim yerimize yazar.
+
+::: {#def-snf-dataclass name="Veri Sınıfı"}
+`dataclasses` modülündeki `@dataclass` **dekoratörü** bir sınıfın önüne yazıldığında, sınıfta `ad: tür` biçiminde bildirilen **alanlardan** `__init__`, `__repr__` ve `__eq__` metotlarını kendiliğinden üretir. Böyle bir sınıfa **veri sınıfı** (data class) denir. `@dataclass(frozen=True)` yazımı alanları salt okunur yapar ve nesneleri hashlenebilir kılar; `@dataclass(order=True)` ise nesneleri alanlarına göre sözlük sırasıyla karşılaştıran `<`, `<=` gibi metotları da ekler.
+:::
+
+Yani veri sınıfı, alanlarını saymamızın yettiği bir sınıftır: tekrarlanan metotları Python yazar, biz yalnız matematiğe özgü metotları ekleriz. Dekoratör, `@` ile başlayıp bir tanımın üstüne yazılan ve o tanımı alıp değiştiren bir fonksiyondur. Tür bildirimleri (`x: float`) okur için bir belgedir; Python çalışırken bunları denetlemez.
+
+```python
+import math
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Point:
+    x: float
+    y: float
+
+    def dist(self, other):
+        return math.hypot(self.x - other.x, self.y - other.y)
+
+
+A, B, C = Point(0, 0), Point(4, 0), Point(0, 3)
+print(A, B == Point(4.0, 0.0))
+print(A.dist(B), B.dist(C), C.dist(A))
+print(len({A, B, C, Point(0, 0)}))
+try:
+    A.x = 1
+except AttributeError as e:
+    print(type(e).__name__, "-", e)
+```
+
+Çıktı:
+
+```text
+Point(x=0, y=0) True
+4.0 5.0 3.0
+3
+FrozenInstanceError - cannot assign to field 'x'
+```
+
+`Point(0, 0)` yazdırılınca alan adlarıyla birlikte göründü. Üretilen `__eq__` alanları sırayla karşılaştırdığı için `Point(4, 0) == Point(4.0, 0.0)` doğru çıktı ve dik üçgenin kenarları $4$, $5$, $3$ bulundu. `frozen=True` sayesinde noktalar kümeye konabildi; iki eşit $(0, 0)$ noktası kümede tek eleman sayıldığı için küme $3$ elemanlı. Buna karşılık bir alanı değiştirme denemesi `FrozenInstanceError` fırlattı; bu tür `AttributeError`'ın alt türü olduğu için onu üst türünün adıyla yakaladık.
+
+Bir veri sınıfına alanlarını denetleyen bir metot da eklenebilir: `__post_init__` metodu, üretilen `__init__` alanları atadıktan hemen sonra çağrılır. Bir koşul bozuksa burada `raise` ile istisna fırlatmak, geçersiz bir nesnenin hiç oluşmamasını sağlar. Bölümün son örneğinde bunu kullanacağız.
+
+::: {.callout-warning title="Değiştirilebilen varsayılan değerler"}
+Bir alana varsayılan değer olarak boş bir liste vermek, bütün nesnelerin **aynı** listeyi paylaşmasına, yani her nesnede o listenin bir takma adının bulunmasına yol açardı (bkz. [Veri Yapıları ve Comprehension](veri-yapilari.qmd#def-ver-takma-ad)). `dataclass` bu hatayı daha sınıf tanımlanırken yakalar. Doğrusu, her nesne için yeni bir liste üreten `field(default_factory=list)` yazımıdır:
+
+```python
+from dataclasses import dataclass, field
+
+try:
+    @dataclass
+    class Run:
+        method: str
+        history: list = []
+except ValueError as e:
+    print("ValueError:", e)
+
+
+@dataclass
+class Run:
+    method: str
+    history: list = field(default_factory=list)
+
+
+r1, r2 = Run("newton"), Run("bisect")
+r1.history.append(1.5)
+print(r1, r2)
+```
+
+Çıktı:
+
+```text
+ValueError: mutable default <class 'list'> for field history is not allowed: use default_factory
+Run(method='newton', history=[1.5]) Run(method='bisect', history=[])
+```
+
+İki nesnenin listeleri ayrıdır: birine eklenen değer öbürünü etkilemedi.
+:::
+
+## Hepsi bir arada: bir ölçüm dosyasını işlemek {#sec-snf-hepsi-bir-arada}
+
+Bölümün araçlarını tek bir gerçekçi görevde birleştirelim: hatalı satırlar da içeren bir ölçüm dosyasından bir fiziksel sabiti tahmin edeceğiz.
+
+::: {.callout-tip title="Dört adımda bir veri dosyasını güvenle okumak"}
+1. Bir kaydı temsil eden bir veri sınıfı tanımlayın; fiziksel olarak imkânsız değerleri `__post_init__` içinde `ValueError` ile reddedin.
+2. Dosyayı `with` ve `encoding="utf-8"` ile açın, `csv.reader` ile satırlara ayırın ve başlık satırını `next` ile atlayın.
+3. Her satırı bir `try` bloğu içinde kayda dönüştürün; `except ValueError` bloğunda satır numarasını ve hatayı bir listeye yazıp sonraki satıra geçin.
+4. Hesabı geçerli kayıtlarla yapın, atlanan satırları raporlayın ve sonucu bir dosyaya yazın.
+:::
+
+:::: {#exm-snf-sogutma name="Soğuma Ölçümlerinden Bir Sabit Tahmin Etmek"}
+$90$ °C'deki bir sıvı $20$ °C'lik bir odada soğuyor. Newton'un soğuma yasasına göre sıcaklık $T(t) = 20 + 70e^{-kt}$ biçiminde azalır; burada $t$ dakika cinsinden zaman, $k > 0$ bir sabittir. İki dakikada bir alınan ölçümler Türkçe biçimde `sogutma.csv` dosyasına kaydedilmiş, ama bazı satırlar hatalı girilmiş. Dosyayı okuyup hatalı satırları raporlayan, her geçerli ölçümden
+
+$$k = \frac{1}{t} \ln \frac{70}{T - 20}$$
+
+değerini hesaplayıp bunların ortalamasını bir dosyaya yazan bir program yazınız.
+
+::: {.cozum}
+Dört adımı sırayla uyguluyoruz. Program önce dosyayı kendisi oluşturuyor; gerçek bir işte bu dosya bir ölçüm cihazından gelirdi.
+
+```python
+import csv
+import math
+from dataclasses import dataclass
+
+DATA = """t;T
+0;90,0
+2;77,7
+4;67,2
+6;58,2
+8;
+10;45,8
+12;4l,3
+14;37,4
+16;34,6
+18;3,18
+20;29,6
+"""
+with open("sogutma.csv", "w", encoding="utf-8") as f:
+    f.write(DATA)
+
+
+@dataclass
+class Measurement:
+    t: float        # dakika
+    T: float        # santigrat derece
+
+    def __post_init__(self):
+        if self.T <= 20:
+            raise ValueError(f"T = {self.T} oda sıcaklığının altında")
+
+
+def to_float(s):
+    return float(s.replace(",", "."))
+
+
+def read_measurements(path):
+    good, bad = [], []
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter=";")
+        next(reader)                          # başlık satırı
+        for line_no, row in enumerate(reader, start=2):
+            try:
+                t, T = row
+                good.append(Measurement(to_float(t), to_float(T)))
+            except ValueError as e:
+                bad.append((line_no, e))
+    return good, bad
+
+
+good, bad = read_measurements("sogutma.csv")
+for line_no, e in bad:
+    print(f"satır {line_no} atlandı: {e}")
+ks = [math.log(70 / (m.T - 20)) / m.t for m in good if m.t > 0]
+k = sum(ks) / len(ks)
+print(f"{len(good)} geçerli ölçüm, k ≈ {k:.4f}")
+with open("sogutma_ozet.txt", "w", encoding="utf-8") as f:
+    f.write(f"gecerli={len(good)}\nk={k:.6f}\n")
+```
+
+Çıktı:
+
+```text
+satır 6 atlandı: could not convert string to float: ''
+satır 8 atlandı: could not convert string to float: '4l.3'
+satır 11 atlandı: T = 3.18 oda sıcaklığının altında
+8 geçerli ölçüm, k ≈ 0.0989
+```
+
+**Hatalı satırlar.** Üç satır üç farklı nedenle atlandı:
+
+- 6\. satırdaki $T$ alanı boştu ve `float("")` bir `ValueError` fırlattı.
+- 8\. satırda bir rakamın yerine küçük L harfi girilmişti (`4l,3`). Mesajdaki `'4l.3'`, virgülün noktaya çevrilmiş hâlidir.
+- 11\. satırdaki `3,18` sayıya çevrilebildi ama oda sıcaklığının altında kaldığı için `__post_init__` onu reddetti; büyük olasılıkla `31,8` yazılmak istenmişti.
+
+Üç hata da aynı `except ValueError` satırıyla yakalandı, çünkü ikisini `float`, birini bizim `raise` deyimimiz fırlattı. Satırda iki alan olmasaydı `t, T = row` ataması da bir `ValueError` fırlatırdı ve o durum da aynı yere düşerdi.
+
+**Tahmin.** Formül, $T - 20 = 70e^{-kt}$ eşitliğinin iki tarafının logaritması alınarak bulunur. $t = 0$ satırı formüle giremeyeceği için hesaba katılmadı; kalan yedi ölçümün ortalaması $k \approx 0{,}0989$ verdi. Yani sıvı ile oda arasındaki sıcaklık farkı her dakika yaklaşık %9,4 azalıyor, çünkü $e^{-0{,}0989} \approx 0{,}906$'dır. Sonuç `sogutma_ozet.txt` dosyasına yazıldı. [$\blacksquare$]{.qed}
+:::
+::::
+
+Programın okuduğu ölçümler, atlanan satırlar ve tahmin edilen model aşağıdaki şekilde bir arada görülüyor:
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.0 -10.0 486.5 330.0" role="img" aria-label="Scatter of eight temperature readings T against time t from 0 to 20 minutes, decreasing from 90 towards 30, with the curve T = 20 + 70 exp(-0.0989 t); crosses near the time axis at t = 8, 12 and 18 mark the skipped rows">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="156.0" y1="26.0" x2="156.0" y2="288.0"/><line x1="256.0" y1="26.0" x2="256.0" y2="288.0"/><line x1="356.0" y1="26.0" x2="356.0" y2="288.0"/><line x1="456.0" y1="26.0" x2="456.0" y2="288.0"/><line x1="56.0" y1="232.8" x2="476.0" y2="232.8"/><line x1="56.0" y1="177.7" x2="476.0" y2="177.7"/><line x1="56.0" y1="122.5" x2="476.0" y2="122.5"/><line x1="56.0" y1="67.4" x2="476.0" y2="67.4"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="56.0" y1="288.0" x2="484.0" y2="288.0"/>
+  <line x1="56.0" y1="18.0" x2="56.0" y2="288.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="56.0" y="304.0" text-anchor="middle">0</text>
+  <text x="156.0" y="304.0" text-anchor="middle">5</text>
+  <text x="256.0" y="304.0" text-anchor="middle">10</text>
+  <text x="356.0" y="304.0" text-anchor="middle">15</text>
+  <text x="456.0" y="304.0" text-anchor="middle">20</text>
+  <text x="49.0" y="292.0" text-anchor="end">0</text>
+  <text x="49.0" y="236.8" text-anchor="end">20</text>
+  <text x="49.0" y="181.7" text-anchor="end">40</text>
+  <text x="49.0" y="126.5" text-anchor="end">60</text>
+  <text x="49.0" y="71.4" text-anchor="end">80</text>
+  <text x="490.0" y="292.0" font-style="italic"><tspan font-style="italic">t</tspan></text>
+  <text x="52.0" y="12.0" text-anchor="middle" font-style="italic"><tspan font-style="italic">T</tspan></text>
+  </g>
+  <path d="M56.0,232.8 L476.0,232.8" fill="none" stroke="var(--academic-text)" stroke-width="1.0" stroke-dasharray="4 3" opacity="0.55" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="476.0" y="226.8" fill="var(--academic-text)" font-size="11.5" text-anchor="end">oda sıcaklığı 20</text>
+  <path d="M56.0,39.8 L58.0,41.7 L60.0,43.6 L62.0,45.4 L64.0,47.3 L66.0,49.1 L68.0,50.9 L70.0,52.7 L72.0,54.5 L74.0,56.2 L76.0,58.0 L78.0,59.7 L80.0,61.4 L82.0,63.1 L84.0,64.8 L86.0,66.4 L88.0,68.1 L90.0,69.7 L92.0,71.3 L94.0,72.9 L96.0,74.5 L98.0,76.0 L100.0,77.6 L102.0,79.1 L104.0,80.6 L106.0,82.1 L108.0,83.6 L110.0,85.1 L112.0,86.5 L114.0,87.9 L116.0,89.4 L118.0,90.8 L120.0,92.2 L122.0,93.6 L124.0,94.9 L126.0,96.3 L128.0,97.6 L130.0,99.0 L132.0,100.3 L134.0,101.6 L136.0,102.9 L138.0,104.2 L140.0,105.4 L142.0,106.7 L144.0,107.9 L146.0,109.2 L148.0,110.4 L150.0,111.6 L152.0,112.8 L154.0,114.0 L156.0,115.1 L158.0,116.3 L160.0,117.4 L162.0,118.6 L164.0,119.7 L166.0,120.8 L168.0,121.9 L170.0,123.0 L172.0,124.1 L174.0,125.2 L176.0,126.2 L178.0,127.3 L180.0,128.3 L182.0,129.3 L184.0,130.4 L186.0,131.4 L188.0,132.4 L190.0,133.4 L192.0,134.3 L194.0,135.3 L196.0,136.3 L198.0,137.2 L200.0,138.2 L202.0,139.1 L204.0,140.0 L206.0,140.9 L208.0,141.8 L210.0,142.7 L212.0,143.6 L214.0,144.5 L216.0,145.4 L218.0,146.2 L220.0,147.1 L222.0,147.9 L224.0,148.8 L226.0,149.6 L228.0,150.4 L230.0,151.2 L232.0,152.0 L234.0,152.8 L236.0,153.6 L238.0,154.4 L240.0,155.2 L242.0,155.9 L244.0,156.7 L246.0,157.4 L248.0,158.2 L250.0,158.9 L252.0,159.6 L254.0,160.4 L256.0,161.1 L258.0,161.8 L260.0,162.5 L262.0,163.2 L264.0,163.9 L266.0,164.5 L268.0,165.2 L270.0,165.9 L272.0,166.5 L274.0,167.2 L276.0,167.8 L278.0,168.5 L280.0,169.1 L282.0,169.7 L284.0,170.4 L286.0,171.0 L288.0,171.6 L290.0,172.2 L292.0,172.8 L294.0,173.4 L296.0,174.0 L298.0,174.5 L300.0,175.1 L302.0,175.7 L304.0,176.2 L306.0,176.8 L308.0,177.4 L310.0,177.9 L312.0,178.4 L314.0,179.0 L316.0,179.5 L318.0,180.0 L320.0,180.5 L322.0,181.1 L324.0,181.6 L326.0,182.1 L328.0,182.6 L330.0,183.1 L332.0,183.6 L334.0,184.0 L336.0,184.5 L338.0,185.0 L340.0,185.5 L342.0,185.9 L344.0,186.4 L346.0,186.9 L348.0,187.3 L350.0,187.8 L352.0,188.2 L354.0,188.6 L356.0,189.1 L358.0,189.5 L360.0,189.9 L362.0,190.4 L364.0,190.8 L366.0,191.2 L368.0,191.6 L370.0,192.0 L372.0,192.4 L374.0,192.8 L376.0,193.2 L378.0,193.6 L380.0,194.0 L382.0,194.4 L384.0,194.7 L386.0,195.1 L388.0,195.5 L390.0,195.9 L392.0,196.2 L394.0,196.6 L396.0,196.9 L398.0,197.3 L400.0,197.6 L402.0,198.0 L404.0,198.3 L406.0,198.7 L408.0,199.0 L410.0,199.3 L412.0,199.7 L414.0,200.0 L416.0,200.3 L418.0,200.6 L420.0,201.0 L422.0,201.3 L424.0,201.6 L426.0,201.9 L428.0,202.2 L430.0,202.5 L432.0,202.8 L434.0,203.1 L436.0,203.4 L438.0,203.7 L440.0,204.0 L442.0,204.2 L444.0,204.5 L446.0,204.8 L448.0,205.1 L450.0,205.4 L452.0,205.6 L454.0,205.9 L456.0,206.2 L458.0,206.4 L460.0,206.7 L462.0,206.9 L464.0,207.2 L466.0,207.4 L468.0,207.7 L470.0,207.9 L472.0,208.2 L474.0,208.4 L476.0,208.7" fill="none" stroke="var(--color-theory)" stroke-width="2.2" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="56.0" cy="39.8" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="96.0" cy="73.7" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="136.0" cy="102.7" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="176.0" cy="127.5" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="256.0" cy="161.7" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="336.0" cy="184.9" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="376.0" cy="192.6" r="4.4" fill="var(--color-practice)"/>
+  <circle cx="456.0" cy="206.4" r="4.4" fill="var(--color-practice)"/>
+  <path d="M216.0,279.7 L216.0,249.4" fill="none" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.0,260.6 L220.0,268.6 M212.0,268.6 L220.0,260.6" stroke="var(--color-remark)" stroke-width="1.8" stroke-linecap="round"/>
+  <text x="216.0" y="243.4" fill="var(--color-remark)" font-size="11.5" text-anchor="middle" font-weight="600">boş</text>
+  <path d="M296.0,279.7 L296.0,249.4" fill="none" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M292.0,260.6 L300.0,268.6 M292.0,268.6 L300.0,260.6" stroke="var(--color-remark)" stroke-width="1.8" stroke-linecap="round"/>
+  <text x="296.0" y="243.4" fill="var(--color-remark)" font-size="11.5" text-anchor="middle" font-weight="600">'4l,3'</text>
+  <path d="M416.0,279.7 L416.0,249.4" fill="none" stroke="var(--color-remark)" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M412.0,260.6 L420.0,268.6 M412.0,268.6 L420.0,260.6" stroke="var(--color-remark)" stroke-width="1.8" stroke-linecap="round"/>
+  <text x="416.0" y="243.4" fill="var(--color-remark)" font-size="11.5" text-anchor="middle" font-weight="600">'3,18'</text>
+  <text x="256.0" y="147.4" fill="var(--color-theory)" font-size="12.5" text-anchor="start" font-weight="600"><tspan font-style="italic">T</tspan> = 20 + 70<tspan font-style="italic">e</tspan><tspan font-size="9" dy="-5">&#8722;0,0989<tspan font-style="italic">t</tspan></tspan><tspan dy="5">&#8203;</tspan></text>
+</svg>
+<figcaption><code>sogutma.csv</code> dosyasından okunan sekiz geçerli ölçüm (noktalar; <em>t</em> dakika, <em>T</em> santigrat derece) ve ortalama <em>k</em> &#8776; 0,0989 ile çizilen <em>T</em> = 20 + 70<em>e</em><sup>&#8722;<em>kt</em></sup> modeli. Alttaki çarpılar atlanan üç satırın zamanlarıdır: boş alan, harfli değer ve oda sıcaklığının altında kalan değer.</figcaption>
+</figure>
+```
+
+## Alıştırmalar {#sec-snf-alistirmalar}
+
+Aşağıdaki alıştırmalar bölümün araçlarını tek tek ve birlikte kullanıyor; her çözüm, çalıştırılmış kodu ve çıktısını içeriyor.
+
+:::: {#exr-snf-hiperbolik name="Hiperbolik Fonksiyonlar ve Kayıp Basamaklar"}
+`math` modülündeki hiperbolik fonksiyonları `dir` ile listeleyiniz. Sonra $\cosh^2 x - \sinh^2 x$ ifadesini $x = 0, 5, 10, 15, 20$ için hesaplayıp sonuçların $1$'den neden saptığını açıklayınız.
+
+::: {.cozum}
+Hiperbolik fonksiyonların adları `h` harfiyle bittiği için `dir(math)` listesini bu harfe göre süzmek yeterli:
+
+```python
+import math
+
+print([name for name in dir(math) if name.endswith("h")])
+for x in range(0, 21, 5):
+    d = math.cosh(x) ** 2 - math.sinh(x) ** 2
+    print(x, d)
+```
+
+Çıktı:
+
+```text
+['acosh', 'asinh', 'atanh', 'cosh', 'sinh', 'tanh']
+0 1.0
+5 1.000000000001819
+10 0.9999999850988388
+15 1.0
+20 0.0
+```
+
+Özdeşliğe göre her satırda $1$ çıkmalıydı. Büyük $x$ için $\cosh^2 x$ ve $\sinh^2 x$ yaklaşık $e^{2x}/4$ büyüklüğündedir; $x = 20$ için bu yaklaşık $5{,}9 \cdot 10^{16}$'dır. Bu büyüklükteki iki ardışık kayan noktalı sayının arası $8$'dir, yani iki kare yuvarlanırken $1$'lik fark tamamen kaybolur ve sonuç $0$ çıkar. $x = 10$ için iki ardışık sayının arası yaklaşık $1{,}5 \cdot 10^{-8}$'dir ve sapma tam bu büyüklüktedir; $x = 15$'te sonucun $1$ çıkması yuvarlamaların şanslı birleşimidir. Birbirine çok yakın iki büyük sayıyı çıkarmak öncü basamakları yok eder (bkz. [Nümerik Analiz](../numerik-analiz/hatalar-ve-makine-sayilari.html#exr-hat-sinh-maclaurin)). [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-esnek-okuma name="Esnek Bir Sayı Okuyucu"}
+`'12'`, `'3,5'`, `'7/2'` ve `'1e3'` gibi metinleri `float`'a çeviren bir `to_number` fonksiyonu yazınız; kesir biçimindeki yazımlar için `fractions.Fraction` kullanınız. Fonksiyonu `["12", "3,5", "7/2", "abc", "", "1e3", "1/0"]` listesine uygulayıp çevrilebilen değerleri bir listede, çevrilemeyen metinleri de hatanın türüyle birlikte başka bir listede toplayınız.
+
+::: {.cozum}
+Önce `float` deneniyor; o başarısız olursa `Fraction` deneniyor. `Fraction` da metni anlamazsa `ValueError`, payda sıfırsa `ZeroDivisionError` fırlatır. Çağıran döngü bu iki türü bir demetle birlikte yakalıyor:
+
+```python
+from fractions import Fraction
+
+
+def to_number(s):
+    """'12', '3,5', '7/2', '1e3' gibi metinleri float'a çevirir."""
+    s = s.strip().replace(",", ".")
+    try:
+        return float(s)
+    except ValueError:
+        return float(Fraction(s))
+
+
+inputs = ["12", "3,5", "7/2", "abc", "", "1e3", "1/0"]
+values, failed = [], []
+for s in inputs:
+    try:
+        values.append(to_number(s))
+    except (ValueError, ZeroDivisionError) as e:
+        failed.append((s, type(e).__name__))
+print(values)
+print(failed)
+```
+
+Çıktı:
+
+```text
+[12.0, 3.5, 3.5, 1000.0]
+[('abc', 'ValueError'), ('', 'ValueError'), ('1/0', 'ZeroDivisionError')]
+```
+
+`"7/2"` metni `float` ile okunamadı ama `Fraction("7/2")` onu $7/2$ olarak tanıdı. `"abc"` ve boş metin iki denemede de `ValueError` verdi; `"1/0"` ise metin olarak geçerli bir kesir olduğu hâlde paydası sıfır olduğundan `ZeroDivisionError` fırlattı. Hiçbir hata programı durdurmadı ve her biri türüyle kaydedildi. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-binom name="Girdisini Denetleyen Binom Katsayısı"}
+Pascal üçgeninin satırlarını kurarak $\binom{n}{k}$ değerini hesaplayan bir `binomial(n, k)` fonksiyonu yazınız. Fonksiyon tam sayı olmayan girdide `TypeError`, negatif girdide `ValueError` fırlatsın ve $k > n$ için $0$ döndürsün. Sonuçları $0 \le n < 30$, $0 \le k < 32$ için `math.comb` ile karşılaştırınız.
+
+::: {.cozum}
+Pascal üçgeninin bir sonraki satırı, satırın başına ve sonuna $0$ eklenmiş iki kopyasının terim terim toplamıdır: $[1, 2, 1]$ satırından $[0, 1, 2, 1]$ ile $[1, 2, 1, 0]$ toplanarak $[1, 3, 3, 1]$ elde edilir. Denetimler hesaptan önce yapılıyor:
+
+```python
+import math
+
+
+def binomial(n, k):
+    """C(n, k) değerini Pascal üçgeninin n. satırından hesaplar."""
+    if not isinstance(n, int) or not isinstance(k, int):
+        raise TypeError("n ve k tam sayı olmalı")
+    if n < 0 or k < 0:
+        raise ValueError("n ve k negatif olamaz")
+    if k > n:
+        return 0
+    row = [1]
+    for _ in range(n):
+        row = [a + b for a, b in zip([0] + row, row + [0])]
+    return row[k]
+
+
+print(all(binomial(n, k) == math.comb(n, k)
+          for n in range(30) for k in range(32)))
+for n, k in [(5.0, 2), (-1, 2), (10, 3)]:
+    try:
+        print((n, k), "->", binomial(n, k))
+    except (TypeError, ValueError) as e:
+        print((n, k), "->", type(e).__name__, "-", e)
+```
+
+Çıktı:
+
+```text
+True
+(5.0, 2) -> TypeError - n ve k tam sayı olmalı
+(-1, 2) -> ValueError - n ve k negatif olamaz
+(10, 3) -> 120
+```
+
+$30 \cdot 32 = 960$ karşılaştırmanın hepsi tuttu. `math.comb` da aynı kuralları izler: `math.comb(5.0, 2)` bir `TypeError`, `math.comb(-1, 2)` bir `ValueError` fırlatır ve $k > n$ için $0$ döndürür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-isqrt name="Tam Sayı Karekökü"}
+Newton iterasyonunun tam sayı sürümü $x \mapsto \lfloor (x + \lfloor n/x \rfloor)/2 \rfloor$ ile, yalnız tam sayı aritmetiği kullanarak $\lfloor \sqrt n \rfloor$ değerini hesaplayan bir `isqrt(n)` fonksiyonu yazınız. Sonucun $r^2 \le n < (r + 1)^2$ koşulunu sağladığını `assert` ile denetleyiniz ve sonucu $n < 10^5$ için `math.isqrt` ile, $n = (2^{53} + 1)^2$ için ayrıca `int(math.sqrt(n))` ile karşılaştırınız.
+
+::: {.cozum}
+$x_0 = n$'den başlayıp $y = \lfloor (x + \lfloor n/x \rfloor)/2 \rfloor$ değerini hesaplıyoruz ve $y$ küçülmeyi bıraktığında duruyoruz. $s = \lfloor \sqrt n \rfloor$ diyelim. Bu kuralın neden $s$'de durduğu iki gözlemden çıkar:
+
+- $x$ tam sayı olduğundan $y = \lfloor (x + n/x)/2 \rfloor$'dir ve aritmetik-geometrik ortalama eşitsizliğinden $(x + n/x)/2 \ge \sqrt n$ olur. Dolayısıyla her zaman $y \ge s$'dir.
+- $x > s$ ise $x > \sqrt n$, yani $n/x < x$ olur; bu durumda $y \le (x + n/x)/2 < x$'tir ve dizi kesin azalır.
+
+Dizi $s$'nin altına inemediğinden ve $s$'nin üstündeyken kesin azaldığından sonlu adımda $x = s$ değerine ulaşır; o noktada $y \ge s = x$ olduğu için döngü durur. `assert` satırı bu akıl yürütmenin sonucunu her çağrıda yeniden sınıyor:
+
+```python
+import math
+
+
+def isqrt(n):
+    """n >= 0 için karekökün tam kısmı; yalnız tam sayı aritmetiği."""
+    if n < 0:
+        raise ValueError("negatif sayının karekökü alınamaz")
+    if n < 2:
+        return n
+    x = n
+    y = (x + n // x) // 2
+    while y < x:
+        x = y
+        y = (x + n // x) // 2
+    assert x * x <= n < (x + 1) ** 2, n
+    return x
+
+
+print(all(isqrt(n) == math.isqrt(n) for n in range(10**5)))
+N = (2**53 + 1) ** 2
+print(isqrt(N), math.isqrt(N))
+print(int(math.sqrt(N)))
+```
+
+Çıktı:
+
+```text
+True
+9007199254740993 9007199254740993
+9007199254740992
+```
+
+$10^5$ değerin hepsinde sonuç `math.isqrt` ile aynı. $n = (2^{53} + 1)^2 \approx 8{,}1 \cdot 10^{31}$ için iki tam sayı fonksiyonu doğru kök olan $2^{53} + 1$'i verirken `int(math.sqrt(n))` bir eksiğini verdi. Asıl neden, doğru kökün kendisinin bir kayan noktalı sayı olmamasıdır: $2^{53} + 1$ sayısı $54$ anlamlı bit ister ve $53$ bitlik mantise sığmaz; `float(2**53 + 1)` zaten $2^{53}$'tür. $2^{53}$ civarında ardışık iki kayan noktalı sayının arası $2$ olduğundan `math.sqrt`, $n$ kendisine tam olarak verilse bile $2^{53} + 1$ döndüremez ve sonuç $2^{53}$'e yuvarlanır. $n$'nin kayan noktaya çevrilirken $2^{106} + 2^{54}$'e yuvarlanması ise ikincil bir etkidir: o sayının karekökü yaklaşık $2^{53} + 1 - 2^{-54}$'tür ve yine $2^{53}$'e yuvarlanır. Büyük tam sayılarla çalışırken kayan noktaya hiç geçmemek bu yüzden önemlidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-iz-surme name="Blokların İzini Sürmek"}
+Aşağıdaki kodun çıktısını çalıştırmadan tahmin ediniz, sonra çalıştırıp tahmininizi denetleyiniz.
+
+```python
+def g(x):
+    try:
+        r = 10 // x
+    except ZeroDivisionError:
+        print("A")
+        r = 0
+    except TypeError:
+        print("B")
+        raise
+    else:
+        print("C")
+    finally:
+        print("D")
+    return r
+
+
+print(g(3))
+print(g(0))
+try:
+    g("5")
+except TypeError:
+    print("E")
+```
+
+::: {.cozum}
+Üç çağrıyı tek tek izleyelim.
+
+- `g(3)`: `10 // 3 = 3` hatasız hesaplanır; `else` bloğu `C`, `finally` bloğu `D` basar ve fonksiyon `3` döndürür.
+- `g(0)`: `10 // 0` bir `ZeroDivisionError` fırlatır; ilk `except` bloğu `A` basıp `r = 0` atar, `finally` bloğu `D` basar ve fonksiyon `0` döndürür.
+- `g("5")`: `10 // "5"` bir `TypeError` fırlatır; ikinci `except` bloğu `B` basar ve tek başına yazılmış `raise` aynı istisnayı yeniden fırlatır. Fonksiyondan çıkılmadan önce `finally` yine `D` basar. `return r` satırına hiç gelinmez; istisna dışarıdaki `try` tarafından yakalanır ve `E` basılır.
+
+Kodu çalıştırmak bu tahmini doğruluyor.
+
+Çıktı:
+
+```text
+C
+D
+3
+A
+D
+0
+B
+D
+E
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-pascal-dosyasi name="Pascal Üçgeni Dosyada"}
+Pascal üçgeninin $0$'dan $10$'a kadar olan satırlarını, sayılar boşlukla ayrılmış olarak `pascal.txt` dosyasına yazınız. Dosyayı geri okuyup her satırdaki sayıların toplamının $2^n$ olduğunu doğrulayınız.
+
+::: {.cozum}
+Her satırı `" ".join` ile tek bir metne çevirip sonuna `"\n"` ekliyoruz. Okurken argümansız `split()` satırı boşluklardan böler ve satır sonunu da atar:
+
+```python
+from math import comb
+
+with open("pascal.txt", "w", encoding="utf-8") as f:
+    for n in range(11):
+        row = [comb(n, k) for k in range(n + 1)]
+        f.write(" ".join(str(c) for c in row) + "\n")
+
+with open("pascal.txt", encoding="utf-8") as f:
+    rows = [[int(s) for s in line.split()] for line in f]
+print(rows[4], rows[10])
+print(all(sum(r) == 2**n for n, r in enumerate(rows)))
+```
+
+Çıktı:
+
+```text
+[1, 4, 6, 4, 1] [1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1]
+True
+```
+
+Dördüncü ve onuncu satırlar beklenen katsayıları taşıyor ve on bir satırın hepsinde toplam $2^n$ çıktı. Bu, binom teoreminde $a = b = 1$ almanın sonucudur: $\sum_{k=0}^{n} \binom{n}{k} = (1 + 1)^n = 2^n$. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-faktoriyel-csv name="Faktöriyellerin Basamak Sayıları"}
+$n = 1, 2, \dots, 100$ için $n!$ sayısının basamak sayısını `n` ve `basamak` sütunlu bir CSV dosyasına yazınız. Dosyayı `csv.DictReader` ile okuyup basamak sayısı ilk kez $100$'e ulaşan ya da onu aşan $n$ değerini bulunuz.
+
+::: {.cozum}
+Python'un tam sayıları sınırsız olduğundan $n!$ tam olarak hesaplanır ve basamak sayısı `len(str(...))` ile okunur. Dosyayı okurken satırları bir sözlük comprehension ile `n → basamak` sözlüğünde topluyoruz:
+
+```python
+import csv
+import math
+
+with open("faktoriyel.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow(["n", "basamak"])
+    for n in range(1, 101):
+        writer.writerow([n, len(str(math.factorial(n)))])
+
+with open("faktoriyel.csv", newline="", encoding="utf-8") as f:
+    digits = {int(r["n"]): int(r["basamak"])
+              for r in csv.DictReader(f)}
+first = min(n for n, d in digits.items() if d >= 100)
+print(first, digits[first - 1], digits[first])
+```
+
+Çıktı:
+
+```text
+70 99 101
+```
+
+Aranan değer $n = 70$'tir. İlginç olan, $100$ basamaklı hiçbir faktöriyelin olmamasıdır: $69!$ sayısı $99$, $70!$ sayısı $101$ basamaklıdır. Basamak sayısı $\lfloor \log_{10} n! \rfloor + 1$ olduğundan $70$ ile çarpmak logaritmayı $\log_{10} 70 \approx 1{,}85$ kadar artırır; $\log_{10} 69! \approx 98{,}23$ iken $\log_{10} 70! \approx 100{,}08$ olur ve basamak sayısı bir adımda iki artar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-polinom-sinifi name="Bir Polinom Sınıfı"}
+Katsayıları artan derece sırasıyla bir listede tutan bir `Poly` sınıfı yazınız. Sınıf, `p(x)` yazımıyla Horner yöntemine göre değer hesaplasın (`__call__`), `+` ve `*` işlemlerini ve okunaklı bir `repr` metnini desteklesin. $(1 + x)^3$ polinomunu hesaplayıp $x = 2$'deki değerini $3^3$ ile karşılaştırınız.
+
+::: {.cozum}
+Çarpımın $x^m$ katsayısı, $i + j = m$ olan bütün $a_i b_j$ çarpımlarının toplamıdır; iç içe döngü her $a_i b_j$ çarpımını `prod[i + j]` hücresine ekliyor. Horner yöntemi $a_0 + a_1x + a_2x^2 + a_3x^3$ ifadesini $a_0 + x(a_1 + x(a_2 + x a_3))$ biçiminde, en yüksek dereceden başlayarak hesaplar. `reversed(self.c)` katsayı listesini sondan başa doğru dolaştığı için döngü en yüksek dereceli katsayıdan başlar:
+
+```python
+class Poly:
+    """Katsayıları artan derece sırasıyla tutulan polinom."""
+
+    def __init__(self, coeffs):
+        self.c = list(coeffs)
+
+    def __repr__(self):
+        terms = []
+        for k, a in enumerate(self.c):
+            if a == 0:
+                continue
+            coef = "" if a == 1 and k > 0 else str(a)
+            power = "" if k == 0 else "x" if k == 1 else f"x^{k}"
+            terms.append(coef + power)
+        return " + ".join(terms) or "0"
+
+    def __call__(self, x):
+        result = 0
+        for a in reversed(self.c):      # Horner yöntemi
+            result = result * x + a
+        return result
+
+    def __add__(self, other):
+        n = max(len(self.c), len(other.c))
+        a = self.c + [0] * (n - len(self.c))
+        b = other.c + [0] * (n - len(other.c))
+        return Poly([s + t for s, t in zip(a, b)])
+
+    def __mul__(self, other):
+        prod = [0] * (len(self.c) + len(other.c) - 1)
+        for i, a in enumerate(self.c):
+            for j, b in enumerate(other.c):
+                prod[i + j] += a * b
+        return Poly(prod)
+
+
+p = Poly([1, 1])                    # 1 + x
+q = p * p * p
+print(q)
+print(q(2), 3**3)
+print(q + Poly([0, -3, -3]))
+```
+
+Çıktı:
+
+```text
+1 + 3x + 3x^2 + x^3
+27 27
+1 + x^3
+```
+
+$(1 + x)^3 = 1 + 3x + 3x^2 + x^3$ bulundu ve $x = 2$'deki değeri $3^3 = 27$ ile aynı. Son satırda $-3x - 3x^2$ eklenince sıfır olan katsayılar `repr` tarafından atlandı. NumPy'nin `numpy.polynomial.Polynomial` sınıfı aynı fikrin hazır ve çok daha kapsamlı hâlidir (bkz. [Polinomlar, İnterpolasyon ve Eğri Uydurma](interpolasyon-ve-egri-uydurma.qmd)). [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-aralik-aritmetigi name="Aralık Aritmetiği"}
+Kapalı bir $[a, b]$ aralığını temsil eden, `frozen=True` ile tanımlanmış bir `Interval` veri sınıfı yazınız. $a > b$ ise `__post_init__` bir `ValueError` fırlatsın; işlemler
+
+$$
+\begin{aligned}
+[a, b] + [c, d] &= [a + c,\ b + d], \\[1mm]
+[a, b] - [c, d] &= [a - d,\ b - c], \\[1mm]
+[a, b] \cdot [c, d] &= [\min P,\ \max P], \quad P = \{ac, ad, bc, bd\}
+\end{aligned}
+$$
+
+kurallarıyla tanımlansın ve `x in I` yazımı desteklensin. $X = [0, 1]$ için $X(1 - X)$ ve $X - X^2$ ifadelerini hesaplayıp $x(1 - x)$ fonksiyonunun $[0, 1]$'deki gerçek değer kümesiyle karşılaştırınız.
+
+::: {.cozum}
+`__contains__` metodu `x in I` yazımını, `__post_init__` de geçersiz aralık denetimini sağlıyor. Sabit $1$'i $[1, 1]$ aralığı olarak yazıyoruz:
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Interval:
+    lo: float
+    hi: float
+
+    def __post_init__(self):
+        if self.lo > self.hi:
+            raise ValueError(f"boş aralık: [{self.lo}, {self.hi}]")
+
+    def __add__(self, other):
+        return Interval(self.lo + other.lo, self.hi + other.hi)
+
+    def __sub__(self, other):
+        return Interval(self.lo - other.hi, self.hi - other.lo)
+
+    def __mul__(self, other):
+        p = [self.lo * other.lo, self.lo * other.hi,
+             self.hi * other.lo, self.hi * other.hi]
+        return Interval(min(p), max(p))
+
+    def __contains__(self, x):
+        return self.lo <= x <= self.hi
+
+
+X = Interval(0, 1)
+one = Interval(1, 1)
+print(X * (one - X))
+print(X - X * X)
+print(0.25 in X * (one - X), 2 in X - X * X)
+try:
+    Interval(2, 1)
+except ValueError as e:
+    print("Hata:", e)
+```
+
+Çıktı:
+
+```text
+Interval(lo=0, hi=1)
+Interval(lo=-1, hi=1)
+True False
+Hata: boş aralık: [2, 1]
+```
+
+$x(1 - x)$ fonksiyonunun $[0, 1]$'deki gerçek değer kümesi $[0, \frac14]$'tür; en büyük değer $x = \frac12$'de alınır. Aralık aritmetiği iki yazım için de bu kümeyi **kapsayan** bir aralık verdi ($\frac14 \in X(1 - X)$), ama kümeyi büyüttü: $X(1 - X) = [0, 1]$ ve $X - X^2 = [-1, 1]$. Üstelik aynı fonksiyonun iki yazımı farklı sonuç verdi. Bunun nedeni, aralık aritmetiğinin $X$'in her geçişini birbirinden bağımsız bir sayı gibi ele almasıdır: $X - X^2$ hesabında ilk $X$ için $0$, $X^2$ için $1$ seçilebilir ve $-1$ alt sınırı böyle oluşur; oysa ikisi aynı $x$'tir. Bu olguya aralık aritmetiğinde **bağımlılık sorunu** denir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-snf-sabit-nokta name="Iraksamayı Bildiren Sabit Nokta İterasyonu"}
+$x_{n+1} = g(x_n)$ sabit nokta iterasyonunu (bkz. [Nümerik Analiz](../numerik-analiz/sabit-nokta-iterasyonu.html#def-snk-iterasyon)) uygulayan bir `fixed_point(g, x0)` fonksiyonu yazınız. İterasyon $|x| > 10^8$ değerine ulaşırsa `ArithmeticError`'dan türeyen bir `DivergenceError`, izin verilen adım sayısında yakınsamazsa bir `RuntimeError` fırlatılsın. Fonksiyonu $g(x) = \cos x$ ve $x_0 = 1$, $g(x) = x^2 - 2$ ve $x_0 = 2{,}1$, $g(x) = -x$ ve $x_0 = 1$ için deneyiniz.
+
+::: {.cozum}
+`DivergenceError` sınıfının gövdesinde yalnız belgesi var; davranışını tamamen `ArithmeticError`'dan alıyor. Fonksiyon her adımda önce büyüklüğü, sonra yakınsamayı denetliyor:
+
+```python
+import math
+
+
+class DivergenceError(ArithmeticError):
+    """İterasyon sınırsız büyüdüğünde fırlatılır."""
+
+
+def fixed_point(g, x0, tol=1e-12, maxiter=200, bound=1e8):
+    x = x0
+    for n in range(1, maxiter + 1):
+        x_new = g(x)
+        if abs(x_new) > bound:
+            raise DivergenceError(f"{n}. adımda |x| > {bound:g}")
+        if abs(x_new - x) < tol:
+            return x_new, n
+        x = x_new
+    raise RuntimeError(f"{maxiter} adımda yakınsamadı")
+
+
+print(fixed_point(math.cos, 1.0))
+for g, x0 in [(lambda x: x * x - 2, 2.1), (lambda x: -x, 1.0)]:
+    try:
+        fixed_point(g, x0)
+    except (DivergenceError, RuntimeError) as e:
+        print(type(e).__name__, "-", e)
+```
+
+Çıktı:
+
+```text
+(0.7390851332147725, 69)
+DivergenceError - 6. adımda |x| > 1e+08
+RuntimeError - 200 adımda yakınsamadı
+```
+
+Üç davranış, sabit noktadaki türevin büyüklüğüyle açıklanır (bkz. [Nümerik Analiz](../numerik-analiz/sabit-nokta-iterasyonu.html#thm-snk-sabit-nokta)):
+
+- $\cos x = x$ denkleminin kökü $p \approx 0{,}7390851332$'dir ve $|g'(p)| = \sin p \approx 0{,}67 < 1$ olduğundan iterasyon yakınsar. Hata her adımda yalnız yaklaşık $0{,}67$ katına indiği için $69$ adım gerekti.
+- $x^2 - 2 = x$ denkleminin $2{,}1$'e yakın kökü $p = 2$'dir ve $|g'(2)| = 4 > 1$ olduğundan iterasyon kökten uzaklaşır: $2{,}41$, $3{,}8081$, $12{,}50\ldots$ diye büyüyen değerler $6$. adımda $10^8$'i aştı.
+- $g(x) = -x$ için tek sabit nokta $0$'dır ve $|g'(0)| = 1$'dir. İterasyon $1, -1, 1, \ldots$ diye ne yaklaşır ne uzaklaşır; $200$ adımın sonunda `RuntimeError` fırlatıldı.
+
+İki hata türü bir demetle birlikte yakalandı ve `type(e).__name__` hangisinin çıktığını gösterdi. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümle Python'un temel araçlarını tamamladık: artık kodumuzu modüllere bölebiliyor, hataları yakalayıp anlamlı biçimde bildirebiliyor, verileri dosyalardan okuyup yazabiliyor ve matematik nesnelerini kendi sınıflarımızla temsil edebiliyoruz. Bir sonraki bölümde bilimsel hesabın temel taşı olan [NumPy Dizileri](numpy-dizileri.qmd) ile tanışacağız. NumPy bir pakettir ve dizileri, bu bölümde gördüğümüz özel metotlarla `+`, `*` ve `@` işlemlerini binlerce sayıya aynı anda uygulayan bir sınıfın nesneleridir.

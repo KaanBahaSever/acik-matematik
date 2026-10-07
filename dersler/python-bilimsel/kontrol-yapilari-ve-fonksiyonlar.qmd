@@ -1,0 +1,1986 @@
+---
+title: "Kontrol Yapıları ve Fonksiyonlar"
+pagetitle: "Kontrol Yapıları ve Fonksiyonlar"
+description: "Python'da if-elif-else ile karar vermeyi, for ve while döngülerini, break ve continue deyimlerini, fonksiyonları, varsayılan ve anahtar sözcüklü argümanları, lambda ifadelerini ve özyinelemeyi Öklid algoritması, Collatz dizisi, Newton yöntemiyle karekök ve asallık testi üzerinden anlatan bölüm."
+---
+
+[Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd) bölümünde Python'u güçlü bir hesap makinesi gibi kullandık: her satır bir kez ve yukarıdan aşağıya çalıştı. Oysa matematikteki hesapların çoğu böyle düz bir çizgi izlemez. "Diskriminant pozitifse iki gerçel kök vardır" bir karardır. $\sum_{k=1}^{n} k^2$ aynı işlemin $n$ kez tekrarıdır. Öklid algoritması ise "kalan sıfır olana dek böl" der ve kaç adım süreceğini önceden söylemez.
+
+Bu bölümde bu üç kalıbın Python karşılıklarını öğreneceğiz: karar için `if`, sayısı belli tekrar için `for`, koşula bağlı tekrar için `while`. Ardından bir hesabı bir ad altında toplayan **fonksiyonlara** ve kendini çağıran fonksiyonlara, yani **özyinelemeye** geçeceğiz. Her aracı tanıdık bir matematik problemi üzerinde göreceğiz: ebob, Collatz dizisi, karekökün Newton yöntemiyle hesabı, asallık testi ve Fibonacci sayıları.
+
+Bölümdeki her kod parçası kendi başına çalışır. Bir `.py` dosyasına ya da bir Jupyter hücresine yapıştırıp çalıştırdığınızda altındaki çıktının aynısını alırsınız.
+
+## Koşullar ve if Deyimi
+
+Bir program, bir koşulun doğru olup olmamasına göre farklı yollar izleyebilmelidir. [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd) bölümünde `7 > 2` karşılaştırmasının değerinin `True` olduğunu görmüştük; şimdi bu tür ifadeleri, yani koşulları yakından tanıyalım.
+
+::: {#def-kon-mantiksal name="Mantıksal Değer ve Koşul"}
+Python'da **mantıksal değer** (Boolean) tipi `bool`'dur ve yalnız iki değeri vardır: `True` (doğru) ve `False` (yanlış). `==` (eşit), `!=` (eşit değil), `<`, `<=`, `>`, `>=` **karşılaştırma işleçleri** iki değeri karşılaştırıp bir `bool` üretir. Mantıksal değerler `and` (ve), `or` (veya), `not` (değil) işleçleriyle birleştirilir. Değeri `True` ya da `False` olan her ifadeye **koşul** denir.
+:::
+
+Yani bir koşul, Python'a sorulmuş bir evet-hayır sorusudur. Matematikteki $p \wedge q$, $p \vee q$ ve $\neg p$ burada `p and q`, `p or q` ve `not p` olarak yazılır. $1 < x \le 10$ gibi zincirleme bir eşitsizlik de matematikteki gibi tek parça yazılabilir.
+
+```python
+x = 7
+print(x > 5)             # 7, 5'ten büyük mü?
+print(x % 2 == 0)        # 7 çift mi?
+print(x != 7)            # 7, 7'den farklı mı?
+print(1 < x <= 10)       # zincirleme karşılaştırma: 1 < x ve x <= 10
+print(x > 5 and x % 2 == 0)
+print(x > 5 or x % 2 == 0)
+print(not x > 5)
+print(type(x > 5))
+```
+
+Çıktı:
+
+```text
+True
+False
+False
+True
+False
+True
+False
+<class 'bool'>
+```
+
+Son satır, karşılaştırmanın sonucunun gerçekten `bool` tipinde olduğunu gösteriyor. Karşılaştırmalar aritmetik işlemlerden sonra yapılır: `x % 2 == 0` önce `x % 2`'yi hesaplar, sonra sonucu `0` ile karşılaştırır. Mantıksal işleçlerde öncelik sırası `not`, `and`, `or` biçimindedir; emin olmadığınızda parantez kullanın.
+
+::: {#def-kon-if name="if, elif ve else Deyimi"}
+Bir `if` deyiminin genel biçimi şudur:
+
+```
+if koşul_1:
+    blok_1
+elif koşul_2:
+    blok_2
+else:
+    blok_3
+```
+
+Python koşulları yukarıdan aşağıya sırayla sınar ve doğru çıkan **ilk** koşulun bloğunu çalıştırır; diğer bloklar atlanır. Hiçbir koşul doğru değilse `else` bloğu çalışır. `elif` kısmı istenildiği kadar tekrarlanabilir; `elif` ve `else` kısımları hiç yazılmayabilir de. Her `if`, `elif` ve `else` satırı iki nokta (`:`) ile biter. Ona bağlı blok, aynı miktarda (gelenek olarak dört boşluk) **girintili** satırlardan oluşur.
+:::
+
+Yani `if` deyimi, parçalı tanımlı bir fonksiyon gibi okunur: ilk uyan durum geçerlidir. Python'da blokların nerede başlayıp bittiğini süslü parantezler değil girinti belirler. Girintisi bozuk bir program ya hata verir ya da beklenmedik bir iş yapar.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="7.5 -1.0 627.5 300.0" role="img" aria-label="Flow chart: condition 1 is tested; if true block 1 runs, otherwise condition 2 is tested; if true block 2 runs, otherwise the else block 3 runs; all three paths join at the next line">
+  <line x1="105.0" y1="14.0" x2="105.0" y2="47.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="105.0,53.0 102.1,46.0 107.9,46.0" fill="var(--academic-text)" opacity="1.0"/>
+  <polygon points="105.0,53.0 187.0,95.0 105.0,137.0 23.0,95.0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <polygon points="330.0,53.0 412.0,95.0 330.0,137.0 248.0,95.0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="105.0" y="92.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">koşul 1</text>
+  <text x="105.0" y="108.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">doğru mu?</text>
+  <text x="330.0" y="92.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">koşul 2</text>
+  <text x="330.0" y="108.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">doğru mu?</text>
+  <text x="29.0" y="57.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">if</text>
+  <text x="254.0" y="57.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">elif</text>
+  <line x1="187.0" y1="95.0" x2="242.4" y2="95.0" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="248.0,95.0 241.0,97.9 241.0,92.1" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="217.5" y="88.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Hayır</text>
+  <path d="M412.0,95.0 L545.0,95.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="545.0" y1="95.0" x2="545.0" y2="166.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="545.0,172.0 542.1,165.0 547.9,165.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="478.5" y="88.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Hayır</text>
+  <line x1="105.0" y1="137.0" x2="105.0" y2="166.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="105.0,172.0 102.1,165.0 107.9,165.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="112.0" y="158.5" fill="var(--academic-text)" font-size="11.5" text-anchor="start">Evet</text>
+  <line x1="330.0" y1="137.0" x2="330.0" y2="166.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.0,172.0 327.1,165.0 332.9,165.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="337.0" y="158.5" fill="var(--academic-text)" font-size="11.5" text-anchor="start">Evet</text>
+  <rect x="45.0" y="172.0" width="120.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="105.0" y="194.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">blok 1</text>
+  <rect x="270.0" y="172.0" width="120.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="330.0" y="194.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">blok 2</text>
+  <rect x="485.0" y="172.0" width="120.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="545.0" y="194.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">blok 3</text>
+  <text x="479.0" y="166.0" fill="var(--color-base)" font-size="13" text-anchor="end" font-weight="600">else</text>
+  <line x1="105.0" y1="208.0" x2="105.0" y2="246.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="105.0,252.0 102.1,245.0 107.9,245.0" fill="var(--academic-text)" opacity="1.0"/>
+  <line x1="330.0" y1="208.0" x2="330.0" y2="246.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.0,252.0 327.1,245.0 332.9,245.0" fill="var(--academic-text)" opacity="1.0"/>
+  <line x1="545.0" y1="208.0" x2="545.0" y2="246.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="545.0,252.0 542.1,245.0 547.9,245.0" fill="var(--academic-text)" opacity="1.0"/>
+  <rect x="30.0" y="252.0" width="590.0" height="32.0" rx="6" fill="var(--academic-text)" fill-opacity="0.06" stroke="var(--academic-text)" stroke-width="1.5"/>
+  <text x="325.0" y="272.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">if deyiminden sonraki ilk satır</text>
+</svg>
+<figcaption>Bir <code>if</code>/<code>elif</code>/<code>else</code> deyiminin akışı. Koşullar yazıldıkları sırayla sınanır; doğru çıkan ilk koşulun bloğu çalışır ve geri kalanlar atlanır. Hiçbir koşul doğru değilse <code>else</code> bloğu çalışır. Hangi yoldan gidilirse gidilsin, sonunda deyimden sonraki satıra geçilir.</figcaption>
+</figure>
+```
+
+:::: {#exm-kon-ikinci-derece name="İkinci Dereceden Denklemin Kökleri"}
+$x^2 - 2x + 5 = 0$ denkleminin köklerini, diskriminantın işaretine göre üç durumu ayıran bir programla bulunuz.
+
+::: {.cozum}
+$a \ne 0$ olmak üzere $ax^2 + bx + c = 0$ denkleminin diskriminantı $\Delta = b^2 - 4ac$'dir. $\Delta > 0$ ise iki farklı gerçel kök, $\Delta = 0$ ise çift katlı bir kök vardır. $\Delta < 0$ ise kökler, birbirinin karmaşık eşleniği olan
+
+$$x_{1,2} = -\frac{b}{2a} \pm \frac{\sqrt{-\Delta}}{2a}\, i$$
+
+sayılarıdır. Bu üç durum, bir `if`-`elif`-`else` deyiminin üç dalına karşılık gelir.
+
+```python
+import math
+
+a, b, c = 1, -2, 5
+delta = b**2 - 4*a*c
+if delta > 0:
+    x1 = (-b + math.sqrt(delta)) / (2*a)
+    x2 = (-b - math.sqrt(delta)) / (2*a)
+    print(f"İki farklı gerçel kök: {x1} ve {x2}")
+elif delta == 0:
+    print(f"Çift katlı kök: {-b / (2*a)}")
+else:
+    re = -b / (2*a)
+    im = math.sqrt(-delta) / (2*a)
+    print(f"Gerçel kök yok; karmaşık kökler {re} ± {im}i")
+print("Diskriminant:", delta)
+```
+
+Çıktı:
+
+```text
+Gerçel kök yok; karmaşık kökler 1.0 ± 2.0i
+Diskriminant: -16
+```
+
+`a, b, c = 1, -2, 5` eşzamanlı ataması üç katsayıyı birden verir. Burada $\Delta = 4 - 20 = -16 < 0$ olduğundan ilk iki koşul yanlış çıktı ve `else` bloğu çalıştı: kökler $1 \pm 2i$'dir. Katsayıları değiştirip programı yeniden çalıştırırsanız diğer dallara da girersiniz. Bunu bölümün ilerleyen kısmında bir fonksiyonla daha rahat yapacağız. [$\blacksquare$]{.qed}
+:::
+::::
+
+İki değerden birini seçmek için `if` deyiminin tek satırlık bir kısaltması da vardır. `a if koşul else b` **koşullu ifadesi**, koşul doğruysa `a`'nın, yanlışsa `b`'nin değerini alır. Örneğin
+
+$$|x| = \begin{cases} x, & x \ge 0 \\ -x, & \text{diğer durumlarda} \end{cases}$$
+
+tanımı bu biçimde tek satıra sığar:
+
+```python
+x = -3.5
+abs_x = x if x >= 0 else -x
+n = 17
+parity = "çift" if n % 2 == 0 else "tek"
+print(abs_x, parity)
+```
+
+Çıktı:
+
+```text
+3.5 tek
+```
+
+::: {.callout-warning title="Ondalık sayıları == ile karşılaştırmayın"}
+`=` atama, `==` karşılaştırmadır; `if x = 3:` yazmak sözdizimi hatası verir. Daha sinsi tuzak `float` sayıların eşitliğidir. [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd) bölümünde gördüğümüz gibi $0{,}1$ ve $0{,}2$ ikili sistemde tam gösterilemez, bu yüzden toplamları `0.3` ile tam eşit çıkmaz. Ondalık sonuçları `math.isclose` ile ya da `abs(a - b) < tol` biçiminde bir toleransla karşılaştırın.
+
+```python
+import math
+
+s = 0.1 + 0.2
+if s == 0.3:
+    print("eşit")
+else:
+    print("eşit değil, s =", s)
+if math.isclose(s, 0.3):
+    print("math.isclose: yeterince yakın")
+```
+
+Çıktı:
+
+```text
+eşit değil, s = 0.30000000000000004
+math.isclose: yeterince yakın
+```
+:::
+
+## for Döngüsü ve range
+
+Bir işlemi önceden bilinen sayıda tekrarlamak için `for` döngüsünü kullanırız. Döngünün dolaşacağı tam sayıları çoğunlukla `range` üretir; önce onu tanıyalım.
+
+::: {#def-kon-range name="range Nesnesi"}
+$a$, $b$ ve $s \ne 0$ tam sayılar olsun. `range(a, b, s)` nesnesi $a, a + s, a + 2s, \dots$ tam sayılarını sırayla verir; $s > 0$ ise $b$'ye ulaşmadan, $s < 0$ ise $b$'ye inmeden durur. Örneğin $s > 0$ için verilen sayılar
+
+$$\{\, a + ks \;:\; k = 0, 1, 2, \dots \text{ ve } a + ks < b \,\}$$
+
+kümesinin küçükten büyüğe sıralanmış elemanlarıdır. `range(a, b)` yazımında adım $s = 1$ alınır; `range(b)` ise `range(0, b)` demektir.
+:::
+
+Yani `range(a, b)`, $[a, b)$ yarı açık aralığındaki tam sayıları verir: başlangıç dahil, bitiş hariç. Bu yüzden $1, 2, \dots, n$ için `range(1, n + 1)` yazılır; `range(n)` ise $0, 1, \dots, n - 1$ olmak üzere tam $n$ sayı verir. Bir `range`'in elemanlarını görmek için onu `list(...)` ile listeye çeviriyoruz. Listeleri [Veri Yapıları ve Comprehension](veri-yapilari.qmd) bölümünde ayrıntılı göreceğiz.
+
+```python
+print(list(range(5)))
+print(list(range(2, 11, 3)))
+print(list(range(10, 0, -2)))
+print(list(range(3, 3)))
+print(len(range(1, 101)))
+```
+
+Çıktı:
+
+```text
+[0, 1, 2, 3, 4]
+[2, 5, 8]
+[10, 8, 6, 4, 2]
+[]
+100
+```
+
+`range(3, 3)` boştur, çünkü $[3, 3)$ aralığında tam sayı yoktur. `len` ise bir `range`'in kaç sayı verdiğini söyler.
+
+::: {#def-kon-for name="for Döngüsü"}
+```
+for değişken in nesne:
+    blok
+```
+
+biçimindeki **`for` döngüsü**, `nesne`'nin (örneğin bir `range`'in ya da sonraki bölümde göreceğimiz bir listenin) elemanlarını sırayla `değişken`'e atar ve her atamadan sonra girintili bloğu bir kez çalıştırır. Bloğun her çalışmasına döngünün bir **adımı** (iterasyon) denir.
+:::
+
+Yani `for k in range(1, n + 1):` satırı, matematikteki "$k = 1, 2, \dots, n$ için" ifadesinin birebir karşılığıdır. Döngü değişkeni sıradan bir değişkendir ve döngü bittiğinde son aldığı değeri korur.
+
+```python
+for k in range(1, 6):
+    print(f"{k:2} {k**2:4} {k**3:5}")
+print("döngü bitti, k =", k)
+```
+
+Çıktı:
+
+```text
+ 1    1     1
+ 2    4     8
+ 3    9    27
+ 4   16    64
+ 5   25   125
+döngü bitti, k = 5
+```
+
+f-dizgisindeki `{k**2:4}` gibi biçim belirteçleri sayıyı 4 karakterlik bir alana sağa yaslar, böylece tablo hizalı çıkar.
+
+Döngülerin en sık kullanımı bir toplam ya da çarpım biriktirmektir. $\sum$ ve $\prod$ sembollerinin özyineli tanımı (bkz. [Analiz 1](../analiz-1/dogal-sayilar-ve-tumevarim.html#def-ozyineli-tanimlar)) tam olarak bu kalıbı anlatır: $S_0 = 0$ ve $S_k = S_{k-1} + a_k$.
+
+::: {.callout-tip title="Döngüyle toplam ve çarpım üç adımda"}
+1. Biriktirici değişkeni işlemin etkisiz elemanıyla başlatın: toplam için `s = 0`, çarpım için `p = 1`.
+2. Döngünün her adımında terimi ekleyin (`s += terim`) ya da terimle çarpın (`p *= terim`).
+3. Sonucu döngü bittikten sonra kullanın; biriktiriciyi döngünün içinde yeniden başlatmayın.
+:::
+
+:::: {#exm-kon-kareler-toplami name="Karelerin Toplamı"}
+$\sum_{k=1}^{100} k^2$ toplamını bir döngüyle hesaplayıp
+
+$$\sum_{k=1}^{n} k^2 = \frac{n(n+1)(2n+1)}{6}$$
+
+formülünün verdiği değerle karşılaştırınız.
+
+::: {.cozum}
+Tarifin üç adımı kodda yorum olarak işaretli. `s += k**2`, `s = s + k**2` atamasının kısa yazılışıdır.
+
+```python
+n = 100
+s = 0                        # 1. adım: toplamın etkisiz elemanı
+for k in range(1, n + 1):
+    s += k**2                # 2. adım: terimi biriktiriciye ekle
+print("döngüyle:", s)        # 3. adım: sonucu döngüden sonra kullan
+print("formülle:", n * (n + 1) * (2*n + 1) // 6)
+```
+
+Çıktı:
+
+```text
+döngüyle: 338350
+formülle: 338350
+```
+
+İki değer aynıdır:
+
+$$\frac{100 \cdot 101 \cdot 201}{6} = \frac{2030100}{6} = 338350.$$
+
+Formülde `/` yerine `//` kullandık. $n(n+1)(2n+1)$ her zaman $6$'ya bölündüğünden tam bölme kesin sonucu `int` olarak verir; `/` ise `338350.0` gibi bir `float` döndürürdü. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir döngünün bloğu başka bir döngü içerebilir; buna **iç içe döngü** denir. İç döngü, dış döngünün her adımında baştan sona bir kez çalışır.
+
+:::: {#exm-kon-basel name="Kareler Tersleri Serisinin Kısmi Toplamları"}
+$S_n = \sum_{k=1}^{n} \dfrac{1}{k^2}$ kısmi toplamlarını $n = 10, 10^2, \dots, 10^5$ için hesaplayıp serinin toplamı olan $\pi^2/6$ ile farklarını bulunuz.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="27.5 2.5 597.5 259.5" role="img" aria-label="Left: partial sums S_n of 1/k^2 for n = 1 to 30 increasing towards the dashed line pi^2/6. Right: log-log plot of pi^2/6 - S_n for n = 10 to 100000, lying just below the line 1/n">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="62.0" y1="175.7" x2="287.0" y2="175.7"/><line x1="62.0" y1="121.4" x2="287.0" y2="121.4"/><line x1="62.0" y1="67.1" x2="287.0" y2="67.1"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="62.0" y1="230.0" x2="295.0" y2="230.0"/>
+  <line x1="62.0" y1="32.0" x2="62.0" y2="230.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="62.0" y="246.0" text-anchor="middle">0</text>
+  <text x="134.6" y="246.0" text-anchor="middle">10</text>
+  <text x="207.2" y="246.0" text-anchor="middle">20</text>
+  <text x="279.7" y="246.0" text-anchor="middle">30</text>
+  <text x="55.0" y="234.0" text-anchor="end">1</text>
+  <text x="55.0" y="179.7" text-anchor="end">1,2</text>
+  <text x="55.0" y="125.4" text-anchor="end">1,4</text>
+  <text x="55.0" y="71.1" text-anchor="end">1,6</text>
+  </g>
+  <text x="301.0" y="234.0" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">n</tspan></text>
+  <text x="58.0" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">S</tspan><tspan font-size="8.5" dy="3"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3">&#8203;</tspan></text>
+  <path d="M62.0,54.9 L287.0,54.9" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="287.0" y="46.9" fill="var(--color-base)" font-size="11.5" text-anchor="end" font-weight="600">π²/6 ≈ 1,6449</text>
+  <circle cx="69.3" cy="230.0" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="76.5" cy="162.1" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="83.8" cy="132.0" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="91.0" cy="115.0" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="98.3" cy="104.2" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="105.5" cy="96.6" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="112.8" cy="91.1" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="120.1" cy="86.8" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="127.3" cy="83.5" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="134.6" cy="80.8" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="141.8" cy="78.5" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="149.1" cy="76.6" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="156.4" cy="75.0" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="163.6" cy="73.7" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="170.9" cy="72.5" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="178.1" cy="71.4" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="185.4" cy="70.5" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="192.6" cy="69.6" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="199.9" cy="68.9" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="207.2" cy="68.2" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="214.4" cy="67.6" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="221.7" cy="67.0" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="228.9" cy="66.5" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="236.2" cy="66.0" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="243.5" cy="65.6" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="250.7" cy="65.2" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="258.0" cy="64.8" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="265.2" cy="64.5" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="272.5" cy="64.1" r="2.8" fill="var(--color-theory)"/>
+  <circle cx="279.7" cy="63.8" r="2.8" fill="var(--color-theory)"/>
+  <text x="174.5" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">Kısmi toplamlar</text>
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="411.2" y1="40.0" x2="411.2" y2="230.0"/><line x1="451.9" y1="40.0" x2="451.9" y2="230.0"/><line x1="492.5" y1="40.0" x2="492.5" y2="230.0"/><line x1="533.1" y1="40.0" x2="533.1" y2="230.0"/><line x1="573.8" y1="40.0" x2="573.8" y2="230.0"/><line x1="395.0" y1="55.8" x2="590.0" y2="55.8"/><line x1="395.0" y1="95.4" x2="590.0" y2="95.4"/><line x1="395.0" y1="135.0" x2="590.0" y2="135.0"/><line x1="395.0" y1="174.6" x2="590.0" y2="174.6"/><line x1="395.0" y1="214.2" x2="590.0" y2="214.2"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="395.0" y1="230.0" x2="598.0" y2="230.0"/>
+  <line x1="395.0" y1="32.0" x2="395.0" y2="230.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="411.2" y="246.0" text-anchor="middle">10<tspan font-size="9.5" dy="-5">1</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="451.9" y="246.0" text-anchor="middle">10<tspan font-size="9.5" dy="-5">2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="492.5" y="246.0" text-anchor="middle">10<tspan font-size="9.5" dy="-5">3</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="533.1" y="246.0" text-anchor="middle">10<tspan font-size="9.5" dy="-5">4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="573.8" y="246.0" text-anchor="middle">10<tspan font-size="9.5" dy="-5">5</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="388.0" y="59.8" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;1</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="388.0" y="99.4" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="388.0" y="139.0" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;3</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="388.0" y="178.6" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="388.0" y="218.2" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;5</tspan><tspan dy="5">&#8203;</tspan></text>
+  </g>
+  <text x="604.0" y="234.0" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">n</tspan></text>
+  <path d="M395.0,40.0 L590.0,230.0" fill="none" stroke="var(--color-base)" stroke-width="1.4" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="431.4" y="61.7" fill="var(--color-base)" font-size="12" text-anchor="start" font-weight="600">1/<tspan font-style="italic">n</tspan></text>
+  <path d="M411.2,56.7 L451.9,95.5 L492.5,135.0 L533.1,174.6 L573.8,214.2" fill="none" stroke="var(--color-practice)" stroke-width="1.2" opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="411.2" cy="56.7" r="4.0" fill="var(--color-practice)"/>
+  <circle cx="451.9" cy="95.5" r="4.0" fill="var(--color-practice)"/>
+  <circle cx="492.5" cy="135.0" r="4.0" fill="var(--color-practice)"/>
+  <circle cx="533.1" cy="174.6" r="4.0" fill="var(--color-practice)"/>
+  <circle cx="573.8" cy="214.2" r="4.0" fill="var(--color-practice)"/>
+  <text x="492.5" y="26.0" fill="var(--academic-text)" font-size="12" text-anchor="middle" font-weight="600">Fark: π²/6 &#8722; <tspan font-style="italic">S</tspan><tspan font-size="8.5" dy="3"><tspan font-style="italic">n</tspan></tspan><tspan dy="-3">&#8203;</tspan></text>
+</svg>
+<figcaption>Sol: <em>S<sub>n</sub></em> = 1 + 1/4 + &#8943; + 1/<em>n</em>² kısmi toplamları artarak π²/6 ≈ 1,6449 değerine yaklaşır. Sağ: iç içe döngülü kodun yazdırdığı farklar (<em>n</em> = 10, 100, …, 100000) logaritmik eksenlerde; noktalar kesikli 1/<em>n</em> doğrusunun hemen altındadır, yani fark yaklaşık 1/<em>n</em> kadardır.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+Serinin yakınsadığını $p$-serisi ölçütü (bkz. [Analiz 2](../analiz-2/yogunlastirma-ve-p-serileri.html#thm-p-serisi)), toplamının $\pi^2/6$ olduğunu ise Fourier serileri (bkz. [Analiz 3](../analiz-3/fourier-serilerinin-noktasal-yakinsakligi.html#exm-fny-x-kare)) verir. Dış döngü $j = 1, \dots, 5$ için $n = 10^j$'yi seçer, iç döngü $S_n$'yi tarifteki gibi biriktirir. `s = 0.0` satırı dış döngünün içinde ama iç döngünün dışında durur: her $n$ için yeni bir toplam başlar, toplamın kendisi ise iç döngü boyunca birikir.
+
+```python
+import math
+
+limit = math.pi**2 / 6
+for j in range(1, 6):
+    n = 10**j
+    s = 0.0
+    for k in range(1, n + 1):
+        s += 1 / k**2
+    print(f"n = {n:6}  S_n = {s:.10f}  fark = {limit - s:.4e}")
+```
+
+Çıktı:
+
+```text
+n =     10  S_n = 1.5497677312  fark = 9.5166e-02
+n =    100  S_n = 1.6349839002  fark = 9.9502e-03
+n =   1000  S_n = 1.6439345667  fark = 9.9950e-04
+n =  10000  S_n = 1.6448340718  fark = 9.9995e-05
+n = 100000  S_n = 1.6449240669  fark = 9.9999e-06
+```
+
+Fark her seferinde yaklaşık on kat küçülüyor; $n$ ile farkın çarpımı hep $1$'e yakın. Gerçekten de fark
+
+$$\frac{\pi^2}{6} - S_n = \sum_{k=n+1}^{\infty} \frac{1}{k^2} \approx \int_n^{\infty} \frac{dx}{x^2} = \frac{1}{n}$$
+
+kuyruğudur. Yani bu seriyle $d$ ondalık basamak doğruluk için kabaca $10^d$ terim toplamak gerekir: seri yavaş yakınsar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kon-kafes name="Bir Dairedeki Kafes Noktaları"}
+$N(r)$, $x^2 + y^2 \le r^2$ eşitsizliğini sağlayan $(x, y)$ tam sayı çiftlerinin sayısı olsun. $r = 5, 10, 15, 20$ için $N(r)$'yi hesaplayıp dairenin alanı $\pi r^2$ ile karşılaştırınız.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="22.0 12.0 366.0 366.0" role="img" aria-label="Integer lattice points in the square from -5 to 5; 69 points strictly inside the circle x^2 + y^2 = 25 are filled, the 12 points on the circle are highlighted, the rest are hollow">
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45" fill="var(--academic-text)">
+  <line x1="36.0" y1="195.0" x2="374.0" y2="195.0"/>
+  <line x1="205.0" y1="364.0" x2="205.0" y2="26.0"/>
+  <polygon points="374.0,195.0 366.0,191.5 366.0,198.5" stroke="none"/>
+  <polygon points="205.0,26.0 201.5,34.0 208.5,34.0" stroke="none"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  </g>
+  <g fill="var(--academic-text)" font-size="11.5" font-style="italic" opacity="0.85">
+  <text x="372.0" y="210.0" text-anchor="end"><tspan font-style="italic">x</tspan></text>
+  <text x="212.0" y="35.0"><tspan font-style="italic">y</tspan></text>
+  </g>
+  <circle cx="205.0" cy="195.0" r="137.5" fill="none" stroke="var(--color-base)" stroke-width="1.8" opacity="1.0"/>
+  <circle cx="67.5" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="305.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="277.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="250.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="222.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="195.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="67.5" cy="167.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="140.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="112.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="85.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="67.5" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="95.0" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="95.0" cy="305.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="95.0" cy="277.5" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="95.0" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="95.0" cy="112.5" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="95.0" cy="85.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="95.0" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="122.5" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="122.5" cy="305.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="122.5" cy="277.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="122.5" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="122.5" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="122.5" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="122.5" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="122.5" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="122.5" cy="112.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="122.5" cy="85.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="122.5" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="150.0" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="150.0" cy="305.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="277.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="112.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="85.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="150.0" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="177.5" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="177.5" cy="305.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="277.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="112.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="85.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="177.5" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="205.0" cy="332.5" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="205.0" cy="305.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="277.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="112.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="85.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="205.0" cy="57.5" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="232.5" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="232.5" cy="305.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="277.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="112.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="85.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="232.5" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="260.0" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="260.0" cy="305.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="277.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="112.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="85.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="260.0" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="287.5" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="287.5" cy="305.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="287.5" cy="277.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="287.5" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="287.5" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="287.5" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="287.5" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="287.5" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="287.5" cy="112.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="287.5" cy="85.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="287.5" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="315.0" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="315.0" cy="305.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="315.0" cy="277.5" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="315.0" cy="250.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="315.0" cy="222.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="315.0" cy="195.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="315.0" cy="167.5" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="315.0" cy="140.0" r="3.2" fill="var(--color-theory)"/>
+  <circle cx="315.0" cy="112.5" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="315.0" cy="85.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="315.0" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="332.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="305.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="277.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="250.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="222.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="195.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="342.5" cy="167.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="140.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="112.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="85.0" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <circle cx="342.5" cy="57.5" r="2.6" fill="none" stroke="var(--academic-text)" stroke-width="1.8"/>
+  <text x="359.0" y="358.5" fill="var(--color-base)" font-size="12" text-anchor="end" font-weight="600"><tspan font-style="italic">x</tspan>² + <tspan font-style="italic">y</tspan>² = 25</text>
+</svg>
+<figcaption><em>r</em> = 5 için kodun saydığı kafes noktaları: dairenin içindeki 69 nokta (mavi) ile çemberin tam üstündeki 12 nokta (turuncu) birlikte <em>N</em>(5) = 81 eder; π·5² ≈ 78,54 ile karşılaştırın. Boş halkalar karenin içinde kalıp daireye girmeyen noktalardır.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+Böyle bir çiftte $|x| \le r$ ve $|y| \le r$ olmalıdır, bu yüzden $x$ ve $y$'yi $-r, \dots, r$ arasında dolaştırmak yeter. İki iç döngü karedeki $(2r + 1)^2$ noktanın hepsini dener; en dıştaki üçüncü döngü ise $r$'yi değiştirir.
+
+```python
+import math
+
+for r in range(5, 21, 5):
+    count = 0
+    for x in range(-r, r + 1):
+        for y in range(-r, r + 1):
+            if x*x + y*y <= r*r:
+                count += 1
+    area = math.pi * r**2
+    print(f"r = {r:2}  N(r) = {count:4}  pi r^2 = {area:8.2f}")
+```
+
+Çıktı:
+
+```text
+r =  5  N(r) =   81  pi r^2 =    78.54
+r = 10  N(r) =  317  pi r^2 =   314.16
+r = 15  N(r) =  709  pi r^2 =   706.86
+r = 20  N(r) = 1257  pi r^2 =  1256.64
+```
+
+$N(r)$ ile $\pi r^2$ arasındaki fark, alanın yanında çok küçüktür. Her kafes noktasının merkezde durduğu birim kareler düşünülürse bu karelerin toplam alanı $N(r)$'dir ve daireyi neredeyse tam kaplar. $r = 20$ için iki iç döngü $41^2 = 1681$ çift dener; toplam iş, karedeki nokta sayısıyla, yani yaklaşık $4r^2$ ile orantılıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## while Döngüsü
+
+`for` döngüsü, tekrar sayısı baştan belli olduğunda kullanışlıdır. Öklid algoritmasında ya da bir iterasyonu belirli bir hassasiyete ulaşana dek sürdürürken ise kaç adım gerektiğini önceden bilmeyiz; o zaman `while` kullanılır.
+
+::: {#def-kon-while name="while Döngüsü"}
+```
+while koşul:
+    blok
+```
+
+biçimindeki **`while` döngüsü** önce koşulu sınar. Koşul doğruysa bloğu bir kez çalıştırır ve koşulu yeniden sınar. Koşul yanlış çıktığı anda döngü biter ve program döngüden sonraki satırdan devam eder.
+:::
+
+Yani `while`, "koşul sağlandığı sürece tekrarla" demektir. Koşul ilk sınamada yanlışsa blok hiç çalışmaz; koşul hiç yanlış olmazsa döngü sonsuza dek sürer. Bu yüzden blok, koşuldaki değişkenleri eninde sonunda koşulu bozacak biçimde değiştirmelidir.
+
+Öklid algoritmasının dayandığı olgu şudur.
+
+::: {#prp-kon-ebob-kalan name="EBOB ve Bölme Kalanı"}
+$a, b$ tam sayılar ve $b \ne 0$ olsun. $a = qb + r$ olacak biçimde $q, r$ tam sayıları için $\gcd(a, b) = \gcd(b, r)$'dir. Ayrıca $\gcd(a, 0) = |a|$'dır.
+:::
+
+$r = a - qb$ olduğundan $(a, b)$ ile $(b, r)$ çiftlerinin ortak bölenleri aynıdır; ispat için bkz. [Sayılar Teorisi](../sayilar-teorisi/1/oklid-algoritmasi.html#prp-ebob-degismezlik). $r$ olarak bölme kalanını seçip önermeyi tekrar tekrar uygulamak [Öklid algoritmasıdır](../sayilar-teorisi/1/oklid-algoritmasi.html#thm-oklid-algoritmasi). Kalanlar kesin azalan doğal sayılar olduğundan bir gün sıfır olur ve son sıfırdan farklı kalan ebob'dur.
+
+:::: {#exm-kon-oklid name="Öklid Algoritması"}
+$\gcd(1071, 462)$'yi Öklid algoritmasıyla, her bölmeyi yazdırarak hesaplayınız.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="-1.0 -18.0 526.0 295.0" role="img" aria-label="A 1071 by 462 rectangle tiled greedily by squares: two squares of side 462, three of side 147 stacked in the remaining strip, and seven small squares of side 21 along the top of it">
+  <polygon points="40.0,242.7 242.7,242.7 242.7,40.0 40.0,40.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="141.4" y="145.9" fill="var(--color-theory)" font-size="12.5" text-anchor="middle" font-weight="600">462</text>
+  <polygon points="242.7,242.7 445.5,242.7 445.5,40.0 242.7,40.0" fill="var(--color-theory)" fill-opacity="0.1" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <text x="344.1" y="145.9" fill="var(--color-theory)" font-size="12.5" text-anchor="middle" font-weight="600">462</text>
+  <polygon points="445.5,242.7 510.0,242.7 510.0,178.2 445.5,178.2" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="477.7" y="215.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle" font-weight="600">147</text>
+  <polygon points="445.5,178.2 510.0,178.2 510.0,113.7 445.5,113.7" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="477.7" y="150.5" fill="var(--color-base)" font-size="11.5" text-anchor="middle" font-weight="600">147</text>
+  <polygon points="445.5,113.7 510.0,113.7 510.0,49.2 445.5,49.2" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.3"/>
+  <text x="477.7" y="86.0" fill="var(--color-base)" font-size="11.5" text-anchor="middle" font-weight="600">147</text>
+  <polygon points="445.5,49.2 454.7,49.2 454.7,40.0 445.5,40.0" fill="var(--color-practice)" fill-opacity="0.38" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="454.7,49.2 463.9,49.2 463.9,40.0 454.7,40.0" fill="var(--color-practice)" fill-opacity="0.38" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="463.9,49.2 473.1,49.2 473.1,40.0 463.9,40.0" fill="var(--color-practice)" fill-opacity="0.38" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="473.1,49.2 482.4,49.2 482.4,40.0 473.1,40.0" fill="var(--color-practice)" fill-opacity="0.38" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="482.4,49.2 491.6,49.2 491.6,40.0 482.4,40.0" fill="var(--color-practice)" fill-opacity="0.38" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="491.6,49.2 500.8,49.2 500.8,40.0 491.6,40.0" fill="var(--color-practice)" fill-opacity="0.38" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <polygon points="500.8,49.2 510.0,49.2 510.0,40.0 500.8,40.0" fill="var(--color-practice)" fill-opacity="0.38" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="275.0" y="260.7" fill="var(--academic-text)" font-size="12" text-anchor="middle">1071</text>
+  <text x="33.0" y="145.4" fill="var(--academic-text)" font-size="12" text-anchor="end">462</text>
+  <line x1="477.1" y1="7.1" x2="490.3" y2="33.9" stroke="var(--color-practice)" stroke-width="1.3" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="492.4,38.2 487.5,34.0 492.1,31.7" fill="var(--color-practice)" opacity="1.0"/>
+  <text x="473.1" y="5.1" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">21 kenarlı 7 kare</text>
+</svg>
+<figcaption>Öklid algoritması geometrik olarak: 1071 × 462 dikdörtgeninden sığdığı kadar büyük kare kesilir. 462 kenarlı 2 kare, kalan 147 × 462 şeritten 147 kenarlı 3 kare, kalan 147 × 21 şeritten 21 kenarlı 7 kare çıkar ve hiçbir şey artmaz. Bölümler 2, 3, 7 kare sayılarıdır; son karenin kenarı 21 = ebob(1071, 462)'dir.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+@prp-kon-ebob-kalan'a göre $(a, b)$ çiftini $(b,\ a \bmod b)$ ile değiştirmek ebob'u korur. Bunu $b$ sıfır olana dek yaparız. Kaç bölme gerektiğini önceden bilmediğimiz için döngüyü `while` ile yazarız. `divmod(a, b)` bölümü ve kalanı birlikte verir.
+
+```python
+a, b = 1071, 462
+while b != 0:
+    q, r = divmod(a, b)
+    print(f"{a} = {q} * {b} + {r}")
+    a, b = b, r
+print("ebob =", a)
+```
+
+Çıktı:
+
+```text
+1071 = 2 * 462 + 147
+462 = 3 * 147 + 21
+147 = 7 * 21 + 0
+ebob = 21
+```
+
+Son sıfırdan farklı kalan $21$'dir ve döngü bittiğinde bu değer `a`'dadır. Gerçekten $1071 = 3^2 \cdot 7 \cdot 17$ ve $462 = 2 \cdot 3 \cdot 7 \cdot 11$ olduğundan ebob $3 \cdot 7 = 21$'dir. Şekilde kare sayıları ($2$, $3$, $7$) bölümlere, karelerin kenarları ($462$, $147$, $21$) bölenlere karşılık gelir. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Eşzamanlı atama ile ardışık atama farklıdır"}
+`a, b = b, r` satırı, [Python ile İlk Adımlar](python-ile-ilk-adimlar.qmd) bölümünde gördüğümüz eşzamanlı atamadır: önce sağ taraftaki bütün değerler hesaplanır, sonra sola atanır. Aynı işi iki ayrı satırla yapmaya çalışmak yanlış sonuç verir, çünkü ikinci satır `a`'nın yeni değerini görür:
+
+```python
+a, b = 1071, 462
+a = b          # a artık 462
+b = a % b      # yanlış: 462 % 462 hesaplanır
+print(a, b)
+```
+
+Çıktı:
+
+```text
+462 0
+```
+
+Bu durumda döngü ilk adımda biter ve ebob yanlışlıkla $462$ çıkar.
+:::
+
+`while` döngüsünün en ünlü örneklerinden biri, her başlangıç değeri için durup durmadığını bugün bile kimsenin bilmediği bir döngüdür.
+
+::: {#def-kon-collatz name="Collatz Dizisi"}
+Bir $n_0$ pozitif tam sayısından başlayan **Collatz dizisi**
+
+$$n_{k+1} = \begin{cases} n_k / 2, & n_k \text{ çift ise} \\ 3n_k + 1, & n_k \text{ tek ise} \end{cases}$$
+
+kuralıyla tanımlanır. Dizinin $1$'e ilk ulaştığı $k$ indisine $n_0$'ın **adım sayısı** denir.
+:::
+
+Yani çift sayılar yarıya iner, tek sayılar ise $3n + 1$'e sıçrar; $1$'e ulaşan dizi bundan sonra $1, 4, 2, 1, \dots$ döngüsünde döner. **Collatz sanısı**, her başlangıç değerinden sonlu sayıda adımda $1$'e ulaşıldığını söyler. Sanı çok büyük sayılara kadar bilgisayarla doğrulanmıştır ama ispatı yoktur. Adım sayısı için bir formül bilmediğimizden dizi ancak `while` ile izlenebilir.
+
+:::: {#exm-kon-collatz name="Collatz Dizisi: Başlangıç Değeri 27"}
+$n_0 = 27$ için Collatz dizisinin adım sayısını ve dizinin en büyük terimini bulunuz.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="14.0 0.0 506.5 276.0" role="img" aria-label="Collatz orbit of 27 plotted against the step k: it wanders, climbs to the maximum 9232 at step 77 and reaches 1 after 111 steps">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="66.0" y1="191.5" x2="486.0" y2="191.5"/><line x1="66.0" y1="139.0" x2="486.0" y2="139.0"/><line x1="66.0" y1="86.5" x2="486.0" y2="86.5"/><line x1="66.0" y1="34.0" x2="486.0" y2="34.0"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="66.0" y1="244.0" x2="494.0" y2="244.0"/>
+  <line x1="66.0" y1="26.0" x2="66.0" y2="244.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="66.0" y="260.0" text-anchor="middle">0</text>
+  <text x="139.0" y="260.0" text-anchor="middle">20</text>
+  <text x="212.1" y="260.0" text-anchor="middle">40</text>
+  <text x="285.1" y="260.0" text-anchor="middle">60</text>
+  <text x="358.2" y="260.0" text-anchor="middle">80</text>
+  <text x="431.2" y="260.0" text-anchor="middle">100</text>
+  <text x="59.0" y="248.0" text-anchor="end">0</text>
+  <text x="59.0" y="195.5" text-anchor="end">2500</text>
+  <text x="59.0" y="143.0" text-anchor="end">5000</text>
+  <text x="59.0" y="90.5" text-anchor="end">7500</text>
+  <text x="59.0" y="38.0" text-anchor="end">10000</text>
+  </g>
+  <text x="500.0" y="248.0" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">k</tspan></text>
+  <text x="62.0" y="20.0" fill="var(--academic-text)" font-size="12" text-anchor="middle"><tspan font-style="italic">n</tspan><tspan font-size="8.5" dy="3"><tspan font-style="italic">k</tspan></tspan><tspan dy="-3">&#8203;</tspan></text>
+  <path d="M66.0,243.4 L69.7,242.3 L73.3,243.1 L77.0,241.4 L80.6,242.7 L84.3,243.3 L87.9,242.0 L91.6,243.0 L95.2,241.0 L98.9,242.5 L102.5,239.5 L106.2,241.8 L109.8,237.2 L113.5,240.6 L117.1,233.8 L120.8,238.9 L124.4,241.5 L128.1,236.4 L131.7,240.2 L135.4,242.1 L139.0,238.2 L142.7,241.1 L146.3,235.3 L150.0,239.7 L153.7,241.8 L157.3,237.5 L161.0,240.7 L164.6,234.2 L168.3,239.1 L171.9,229.3 L175.6,236.7 L179.2,240.3 L182.9,233.0 L186.5,238.5 L190.2,227.4 L193.8,235.7 L197.5,219.1 L201.1,231.5 L204.8,206.6 L208.4,225.3 L212.1,234.7 L215.7,215.9 L219.4,230.0 L223.0,237.0 L226.7,240.5 L230.3,233.5 L234.0,238.7 L237.7,228.2 L241.3,236.1 L245.0,220.2 L248.6,232.1 L252.3,238.1 L255.9,226.2 L259.6,235.1 L263.2,217.2 L266.9,230.6 L270.5,237.3 L274.2,223.9 L277.8,233.9 L281.5,213.8 L285.1,228.9 L288.8,198.7 L292.4,221.3 L296.1,176.0 L299.7,210.0 L303.4,142.0 L307.0,193.0 L310.7,91.0 L314.3,167.5 L318.0,205.7 L321.7,224.9 L325.3,186.6 L329.0,215.3 L332.6,157.9 L336.3,200.9 L339.9,114.8 L343.6,179.4 L347.2,50.1 L350.9,147.1 L354.5,195.5 L358.2,219.8 L361.8,231.9 L365.5,207.6 L369.1,225.8 L372.8,234.9 L376.4,216.7 L380.1,230.3 L383.7,237.2 L387.4,223.5 L391.0,233.8 L394.7,238.9 L398.3,241.4 L402.0,242.7 L405.7,240.1 L409.3,242.1 L413.0,243.0 L416.6,243.5 L420.3,242.5 L423.9,243.3 L427.6,241.8 L431.2,242.9 L434.9,240.6 L438.5,242.3 L442.2,243.2 L445.8,243.6 L449.5,243.8 L453.1,243.9 L456.8,243.7 L460.4,243.8 L464.1,243.9 L467.7,244.0 L471.4,244.0" fill="none" stroke="var(--color-theory)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="66.0" cy="243.4" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="347.2" cy="50.1" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="471.4" cy="244.0" r="4.2" fill="var(--color-practice)"/>
+  <text x="72.0" y="229.4" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">n</tspan><tspan font-size="8.5" dy="3">0</tspan><tspan dy="-3">&#8203;</tspan> = 27</text>
+  <text x="337.2" y="54.1" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">en büyük terim 9232 (<tspan font-style="italic">k</tspan> = 77)</text>
+  <text x="475.4" y="206.0" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">1'e ulaştı</text>
+  <text x="475.4" y="221.0" fill="var(--color-practice)" font-size="12" text-anchor="end" font-weight="600">(<tspan font-style="italic">k</tspan> = 111)</text>
+</svg>
+<figcaption>27'den başlayan Collatz dizisinin terimleri. Dizi 111 adımda 1'e iner; yol boyunca 77. adımda 9232 değerine kadar tırmanır. Başlangıç değeri küçük olsa da adım sayısını önceden kestirmek zordur; bu yüzden döngü <code>while</code> ile yazılır.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+Döngü $n \ne 1$ olduğu sürece döner. Her adımda $n$'yi kurala göre günceller, adım sayacını bir artırır ve o ana kadarki en büyük terimi Python'un hazır `max` fonksiyonuyla saklar. `n // 2` tam bölmedir; $n$ çift olduğundan sonuç kesin bir `int`'tir.
+
+```python
+n = 27
+steps = 0
+peak = n
+while n != 1:
+    if n % 2 == 0:
+        n = n // 2
+    else:
+        n = 3*n + 1
+    steps += 1
+    peak = max(peak, n)
+print("adım sayısı:", steps)
+print("en büyük terim:", peak)
+```
+
+Çıktı:
+
+```text
+adım sayısı: 111
+en büyük terim: 9232
+```
+
+Küçük bir başlangıç değeri $111$ adım sürer ve yolda $9232$'ye kadar tırmanır. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sonsuz döngü ve tam bölme"}
+Koşulu hiç bozulmayan bir `while` döngüsü durmaz. Örneğin Collatz döngüsünde `n`'yi güncellemeyi unutursanız program sonsuza dek çalışır. Böyle bir programı terminalde Ctrl+C ile, Jupyter'de ise çekirdeği durdurarak kesebilirsiniz. Güvenlik için iterasyon sayısına bir üst sınır koymak iyi bir alışkanlıktır; bölümün Newton örneklerinde `max_iter` bunu yapar. Ayrıca `n / 2` yazmak `n`'yi `float`'a çevirir. $2^{53}$'ten büyük tam sayıların hepsi `float` olarak tam tutulamadığından dizi bozulabilir. Tam sayı dizilerinde `//` kullanın.
+:::
+
+## break, continue ve else
+
+Bazen döngüyü koşulun belirlediği yerden önce bitirmek ya da bir adımın geri kalanını atlamak isteriz. Bunun için iki deyim vardır.
+
+::: {#def-kon-break-continue name="break ve continue"}
+Bir döngünün bloğunda **`break`** çalıştığında döngü hemen sona erer ve program döngüden sonraki satırdan devam eder. **`continue`** çalıştığında ise o adımın geri kalanı atlanır ve döngü bir sonraki adıma geçer. İç içe döngülerde ikisi de yalnız içinde bulundukları en içteki döngüyü etkiler.
+:::
+
+Yani `break` "aradığımı buldum, dur", `continue` ise "bu adım beni ilgilendirmiyor, sıradakine geç" demektir. Çıkış koşulu ancak bloğun ortasında hesaplanabiliyorsa `while True:` ile sonu olmayan bir döngü kurup çıkışı içerideki bir `break` ile yapmak yaygın bir kalıptır.
+
+:::: {#exm-kon-faktoriyel-esik name="Faktöriyelin Bir Gugolü Aştığı Yer"}
+$10^{100}$ sayısına gugol (googol) denir. $n! > 10^{100}$ eşitsizliğini sağlayan en küçük $n$ doğal sayısını bulunuz.
+
+::: {.cozum}
+$n!$'i `f` değişkeninde biriktirip $n$'yi birer artırırız; `f` ilk kez $10^{100}$'ü aştığında `break` ile döngüden çıkarız. Python'un tam sayıları istenildiği kadar büyük olabildiğinden `f` kesin olarak hesaplanır.
+
+```python
+import math
+
+n = 1
+f = 1                       # f = n!
+while True:
+    n += 1
+    f *= n
+    if f > 10**100:
+        break               # ilk kez 10^100'ü aştı: döngüden çık
+print("n =", n)
+print("log10(n!) =", round(math.log10(f), 3))
+print("log10((n-1)!) =", round(math.log10(f // n), 3))
+```
+
+Çıktı:
+
+```text
+n = 70
+log10(n!) = 100.078
+log10((n-1)!) = 98.233
+```
+
+$\log_{10}(70!) \approx 100{,}078 > 100$ ve $\log_{10}(69!) \approx 98{,}233 < 100$ olduğundan aranan sayı $n = 70$'tir. Son satırda $69! = 70!/70$ eşitliğini `f // n` ile kullandık. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kon-aralarinda-asal name="Bin ile Aralarında Asal Sayılar"}
+$1 \le k \le 1000$ ve $\gcd(k, 1000) = 1$ koşullarını sağlayan $k$ sayılarının kaç tane olduğunu ve toplamlarını bulunuz.
+
+::: {.cozum}
+Döngü $k = 1, \dots, 1000$ sayılarını dolaşır. $1000$ ile ortak böleni olan bir $k$ geldiğinde `continue` adımın geri kalanını atlar; böylece sayaç ve toplam yalnız aralarında asal sayılarla güncellenir. Ebob için Python'un hazır `math.gcd` fonksiyonunu kullanıyoruz.
+
+```python
+import math
+
+n = 1000
+count = 0
+total = 0
+for k in range(1, n + 1):
+    if math.gcd(k, n) != 1:
+        continue            # n ile ortak böleni var: bu k'yı atla
+    count += 1
+    total += k
+print("n ile aralarında asal olanların sayısı:", count)
+print("bunların toplamı:", total)
+print("n * phi(n) / 2 =", n * count // 2)
+```
+
+Çıktı:
+
+```text
+n ile aralarında asal olanların sayısı: 400
+bunların toplamı: 200000
+n * phi(n) / 2 = 200000
+```
+
+Sayı, Euler fonksiyonunun değeridir (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/euler-fonksiyonu.html#thm-phi-formul)):
+
+$$\phi(1000) = 1000\left(1 - \frac{1}{2}\right)\left(1 - \frac{1}{5}\right) = 400.$$
+
+Toplamın $1000 \cdot 400 / 2$ çıkması tesadüf değildir. $\gcd(k, n) = 1$ ise $\gcd(n - k, n) = 1$'dir, yani bu sayılar toplamı $n$ olan $\phi(n)/2$ çifte ayrılır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Döngülerin az bilinen bir parçası da `else` kısmıdır. Bir `for` ya da `while` döngüsünün sonuna yazılan `else` bloğu, döngü `break` ile kesilmeden **kendiliğinden bittiğinde** çalışır. Bu, "aradığımı bulamadım" durumunu yakalamanın temiz bir yoludur. Asallık testinde aradığımız şey bir bölendir; aramayı nerede bitirebileceğimizi aşağıdaki önerme söyler.
+
+::: {#prp-kon-karekok-bolen name="Bölen Aramak İçin Karekök Yeter"}
+$n > 1$ asal olmayan bir tam sayı ise $n$'nin $2 \le d \le \sqrt{n}$ koşulunu sağlayan bir $d$ böleni vardır. Dolayısıyla $2, 3, \dots, \lfloor \sqrt{n} \rfloor$ sayılarından hiçbiri $n$'yi bölmüyorsa $n$ asaldır.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="31.0 -9.0 478.0 311.5" role="img" aria-label="Divisors 1, 2, 3, 4, 6, 9, 12, 18, 36 on a logarithmic line; arcs join 1-36, 2-18, 3-12, 4-9 and are all centred at 6 = sqrt(36), so the smaller member of each pair is at most 6">
+  <rect x="59.4" y="14.0" width="210.6" height="236" fill="var(--color-practice)" fill-opacity="0.06"/>
+  <line x1="45.4" y1="250.0" x2="494.6" y2="250.0" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.6"/>
+  <line x1="270.0" y1="254.0" x2="270.0" y2="4.0" stroke="var(--academic-text)" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>
+  <polyline points="480.6,250.0 480.3,239.0 479.4,228.0 478.0,217.1 476.0,206.2 473.4,195.5 470.3,184.9 466.6,174.5 462.4,164.3 457.6,154.4 452.4,144.7 446.6,135.3 440.4,126.2 433.7,117.5 426.5,109.1 418.9,101.1 410.9,93.5 402.5,86.3 393.8,79.6 384.7,73.4 375.3,67.6 365.6,62.4 355.7,57.6 345.5,53.4 335.1,49.7 324.5,46.6 313.8,44.0 302.9,42.0 292.0,40.6 281.0,39.7 270.0,39.4 259.0,39.7 248.0,40.6 237.1,42.0 226.2,44.0 215.5,46.6 204.9,49.7 194.5,53.4 184.3,57.6 174.4,62.4 164.7,67.6 155.3,73.4 146.2,79.6 137.5,86.3 129.1,93.5 121.1,101.1 113.5,109.1 106.3,117.5 99.6,126.2 93.4,135.3 87.6,144.7 82.4,154.4 77.6,164.3 73.4,174.5 69.7,184.9 66.6,195.5 64.0,206.2 62.0,217.1 60.6,228.0 59.7,239.0 59.4,250.0" fill="none" stroke="var(--color-theory)" stroke-width="1.7" opacity="0.85"/>
+  <rect x="248.2" y="24.2" width="43.6" height="14.5" rx="3" fill="var(--academic-bg)" opacity="0.92"/>
+  <text x="270.0" y="34.4" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">1 &#183; 36</text>
+  <polyline points="399.1,250.0 399.0,243.2 398.4,236.5 397.5,229.8 396.3,223.2 394.7,216.6 392.8,210.1 390.6,203.7 388.0,197.5 385.1,191.4 381.8,185.4 378.3,179.7 374.5,174.1 370.4,168.7 366.0,163.6 361.3,158.7 356.4,154.0 351.3,149.6 345.9,145.5 340.3,141.7 334.6,138.2 328.6,134.9 322.5,132.0 316.3,129.4 309.9,127.2 303.4,125.3 296.8,123.7 290.2,122.5 283.5,121.6 276.8,121.0 270.0,120.9 263.2,121.0 256.5,121.6 249.8,122.5 243.2,123.7 236.6,125.3 230.1,127.2 223.7,129.4 217.5,132.0 211.4,134.9 205.4,138.2 199.7,141.7 194.1,145.5 188.7,149.6 183.6,154.0 178.7,158.7 174.0,163.6 169.6,168.7 165.5,174.1 161.7,179.7 158.2,185.4 154.9,191.4 152.0,197.5 149.4,203.7 147.2,210.1 145.3,216.6 143.7,223.2 142.5,229.8 141.6,236.5 141.0,243.2 140.9,250.0" fill="none" stroke="var(--color-theory)" stroke-width="1.7" opacity="0.85"/>
+  <rect x="248.2" y="105.7" width="43.6" height="14.5" rx="3" fill="var(--academic-bg)" opacity="0.92"/>
+  <text x="270.0" y="115.9" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">2 &#183; 18</text>
+  <polyline points="351.5,250.0 351.4,245.7 351.0,241.5 350.5,237.3 349.7,233.1 348.7,228.9 347.5,224.8 346.1,220.8 344.4,216.9 342.6,213.0 340.6,209.3 338.3,205.6 335.9,202.1 333.3,198.7 330.5,195.5 327.6,192.4 324.5,189.5 321.3,186.7 317.9,184.1 314.4,181.7 310.7,179.4 307.0,177.4 303.1,175.6 299.2,173.9 295.2,172.5 291.1,171.3 286.9,170.3 282.7,169.5 278.5,169.0 274.3,168.6 270.0,168.5 265.7,168.6 261.5,169.0 257.3,169.5 253.1,170.3 248.9,171.3 244.8,172.5 240.8,173.9 236.9,175.6 233.0,177.4 229.3,179.4 225.6,181.7 222.1,184.1 218.7,186.7 215.5,189.5 212.4,192.4 209.5,195.5 206.7,198.7 204.1,202.1 201.7,205.6 199.4,209.3 197.4,213.0 195.6,216.9 193.9,220.8 192.5,224.8 191.3,228.9 190.3,233.1 189.5,237.3 189.0,241.5 188.6,245.7 188.5,250.0" fill="none" stroke="var(--color-theory)" stroke-width="1.7" opacity="0.85"/>
+  <rect x="248.2" y="153.3" width="43.6" height="14.5" rx="3" fill="var(--academic-bg)" opacity="0.92"/>
+  <text x="270.0" y="163.5" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">3 &#183; 12</text>
+  <polyline points="317.7,250.0 317.6,247.5 317.4,245.0 317.1,242.5 316.6,240.1 316.0,237.7 315.3,235.3 314.5,232.9 313.5,230.6 312.5,228.4 311.3,226.2 310.0,224.0 308.6,222.0 307.0,220.0 305.4,218.1 303.7,216.3 301.9,214.6 300.0,213.0 298.0,211.4 296.0,210.0 293.8,208.7 291.6,207.5 289.4,206.5 287.1,205.5 284.7,204.7 282.3,204.0 279.9,203.4 277.5,202.9 275.0,202.6 272.5,202.4 270.0,202.3 267.5,202.4 265.0,202.6 262.5,202.9 260.1,203.4 257.7,204.0 255.3,204.7 252.9,205.5 250.6,206.5 248.4,207.5 246.2,208.7 244.0,210.0 242.0,211.4 240.0,213.0 238.1,214.6 236.3,216.3 234.6,218.1 233.0,220.0 231.4,222.0 230.0,224.0 228.7,226.2 227.5,228.4 226.5,230.6 225.5,232.9 224.7,235.3 224.0,237.7 223.4,240.1 222.9,242.5 222.6,245.0 222.4,247.5 222.3,250.0" fill="none" stroke="var(--color-theory)" stroke-width="1.7" opacity="0.85"/>
+  <rect x="251.4" y="187.1" width="37.2" height="14.5" rx="3" fill="var(--academic-bg)" opacity="0.92"/>
+  <text x="270.0" y="197.3" fill="var(--color-theory)" font-size="11.5" text-anchor="middle" font-weight="600">4 &#183; 9</text>
+  <circle cx="59.4" cy="250.0" r="3.8" fill="var(--color-practice)"/>
+  <text x="59.4" y="268.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">1</text>
+  <circle cx="140.9" cy="250.0" r="3.8" fill="var(--color-practice)"/>
+  <text x="140.9" y="268.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">2</text>
+  <circle cx="188.5" cy="250.0" r="3.8" fill="var(--color-practice)"/>
+  <text x="188.5" y="268.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">3</text>
+  <circle cx="222.3" cy="250.0" r="3.8" fill="var(--color-practice)"/>
+  <text x="222.3" y="268.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">4</text>
+  <circle cx="270.0" cy="250.0" r="3.8" fill="var(--color-practice)"/>
+  <text x="270.0" y="268.0" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">6</text>
+  <circle cx="317.7" cy="250.0" r="3.8" fill="var(--color-theory)"/>
+  <text x="317.7" y="268.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">9</text>
+  <circle cx="351.5" cy="250.0" r="3.8" fill="var(--color-theory)"/>
+  <text x="351.5" y="268.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">12</text>
+  <circle cx="399.1" cy="250.0" r="3.8" fill="var(--color-theory)"/>
+  <text x="399.1" y="268.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">18</text>
+  <circle cx="480.6" cy="250.0" r="3.8" fill="var(--color-theory)"/>
+  <text x="480.6" y="268.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">36</text>
+  <text x="278.0" y="238.0" fill="var(--color-practice)" font-size="11.5" text-anchor="start" font-weight="600">6 &#183; 6</text>
+  <text x="270.0" y="286.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">√36 = 6</text>
+  <text x="63.4" y="28.0" fill="var(--color-practice)" font-size="12" text-anchor="start" font-weight="600"><tspan font-style="italic">d</tspan> ≤ √<tspan font-style="italic">n</tspan></text>
+</svg>
+<figcaption>36'nın bölenleri logaritmik ölçekli bir doğru üzerinde. Her <em>d</em> böleni, <em>d</em> · (36/<em>d</em>) = 36 eşitliğindeki eşine bir yayla bağlıdır. Bütün yayların merkezi √36 = 6 noktasıdır, bu yüzden her çiftin küçük elemanı 6'yı aşmaz. Aynı eşleme her <em>n</em> için geçerlidir: <em>n</em>'nin 1 ve kendisi dışında bir böleni varsa, 2 ile √<em>n</em> arasında da bir böleni vardır.</figcaption>
+</figure>
+```
+:::
+
+$n = d \cdot e$ ise $d$ ile $e$'nin ikisi birden $\sqrt{n}$'den büyük olamaz, yoksa çarpımları $n$'yi aşardı; ispatın ayrıntısı için bkz. [Sayılar Teorisi](../sayilar-teorisi/1/asal-sayilar.html#thm-eratosthenes).
+
+:::: {#exm-kon-asal-mi name="Deneme Bölmesiyle Asallık"}
+$1001$, $1005$ ve $1009$ sayılarının asal olup olmadığını deneme bölmesiyle belirleyiniz.
+
+::: {.cozum}
+@prp-kon-karekok-bolen'e göre $d = 2, 3, \dots, \lfloor \sqrt{n} \rfloor$ bölenlerini denemek yeter. `math.isqrt(n)`, $\lfloor \sqrt{n} \rfloor$ tam sayı karekökünü kesin olarak verir. Bir bölen bulunduğunda `break` iç döngüyü keser ve `else` bloğu atlanır. Hiçbir bölen bulunamazsa iç döngü kendiliğinden biter ve `else` bloğu "asal" yazar. `else`'in `if` ile değil iç `for` ile aynı hizada olduğuna dikkat edin.
+
+```python
+import math
+
+for n in range(1001, 1010, 4):
+    for d in range(2, math.isqrt(n) + 1):
+        if n % d == 0:
+            print(f"{n} = {d} * {n // d}, asal değil")
+            break
+    else:
+        print(f"{n} asal")
+```
+
+Çıktı:
+
+```text
+1001 = 7 * 143, asal değil
+1005 = 3 * 335, asal değil
+1009 asal
+```
+
+$\lfloor \sqrt{1009} \rfloor = 31$ olduğundan $1009$ için yalnız $30$ aday bölen denendi. $1001 = 7 \cdot 11 \cdot 13$'tür; kod ilk bulduğu bölen olan $7$'de durdu. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Fonksiyonlar
+
+Öklid algoritmasını her ebob gerektiğinde yeniden yazmak istemeyiz. **Fonksiyon**, bir hesabı bir ad altında paketler: bir kez tanımlanır, istenildiği kadar çağrılır.
+
+::: {#def-kon-fonksiyon name="Fonksiyon Tanımı ve Çağrısı"}
+```
+def ad(parametre_1, parametre_2):
+    blok
+```
+
+biçimindeki `def` deyimi `ad` adlı bir **fonksiyon** tanımlar; parametre sayısı herhangi bir doğal sayı olabilir. `ad(argüman_1, argüman_2)` biçimindeki bir **çağrı**, parametrelere sırasıyla argümanların değerlerini atar ve bloğu çalıştırır. Blokta bir `return ifade` satırına gelindiğinde fonksiyon hemen sona erer ve çağrının değeri `ifade`'nin değeri olur. Blok bir `return`'e rastlamadan biterse çağrının değeri özel `None` değeridir.
+:::
+
+Yani $f(x) = x^2 - 2x + 5$ gibi bir matematiksel fonksiyon Python'da `def f(x):` satırı ve altındaki `return x**2 - 2*x + 5` satırıyla yazılır. Ama bir Python fonksiyonu bundan fazlasıdır: içinde döngüler, kararlar ve başka fonksiyon çağrıları olan bir hesap yordamıdır.
+
+```python
+def f(x):
+    return x**2 - 2*x + 5
+
+
+print(f(0), f(1), f(3))
+print(f(1 + 2j))
+y = f(2) + f(-2)
+print(y)
+```
+
+Çıktı:
+
+```text
+5 4 8
+0j
+18
+```
+
+Aynı fonksiyon karmaşık sayılarla da çalışır. $f(1 + 2i) = 0$ çıkması, @exm-kon-ikinci-derece'de bulduğumuz kökün sağlamasıdır. Bir çağrı, değeri olan bir ifadedir; `f(2) + f(-2)` gibi başka ifadelerin içinde kullanılabilir.
+
+::: {#def-kon-docstring name="Belge Dizgisi"}
+Bir fonksiyon bloğunun ilk satırına yazılan dizgiye o fonksiyonun **belge dizgisi** (docstring) denir. Belge dizgisi fonksiyonun ne yaptığını, parametrelerini ve döndürdüğü değeri anlatır; `help(ad)` çağrısı onu ekrana yazar.
+:::
+
+Yani belge dizgisi, fonksiyonun kodla birlikte taşınan kullanım kılavuzudur. Gelenek, onu üç tırnak arasında (`"""..."""`) yazmak, ilk satırda tek cümlelik bir özet vermek ve gerekiyorsa bir boş satırdan sonra ayrıntıya girmektir.
+
+:::: {#exm-kon-ebob-fonksiyonu name="Ebob Fonksiyonu"}
+Öklid algoritmasını belge dizgisi olan bir `gcd(a, b)` fonksiyonuna çeviriniz.
+
+::: {.cozum}
+@exm-kon-oklid'deki döngüyü fonksiyonun bloğuna taşırız, yazdırma satırını atar ve sonucu `return` ile döndürürüz. Negatif girdilerde de pozitif bir ebob vermek için sonucu `abs` ile döndürüyoruz.
+
+```python
+def gcd(a, b):
+    """a ile b'nin en büyük ortak bölenini döndürür.
+
+    Öklid algoritması: b sıfır olana dek (a, b) çiftini
+    (b, a % b) ile değiştirir.
+    """
+    while b != 0:
+        a, b = b, a % b
+    return abs(a)
+
+
+help(gcd)
+print(gcd(1071, 462), gcd(-12, 18), gcd(7, 0))
+```
+
+Çıktı:
+
+```text
+Help on function gcd in module __main__:
+
+gcd(a, b)
+    a ile b'nin en büyük ortak bölenini döndürür.
+
+    Öklid algoritması: b sıfır olana dek (a, b) çiftini
+    (b, a % b) ile değiştirir.
+
+21 6 7
+```
+
+`gcd(-12, 18)` çağrısında Python'un `%` işlemi kalanı bölenin işaretiyle verir: `-12 % 18` işleminin sonucu $6$'dır. Ardından $(18, 6)$ çifti $(6, 0)$'a döner ve sonuç $6$ olur. `gcd(7, 0)` ise döngüye hiç girmeden $7$ döndürür; bu, $\gcd(a, 0) = |a|$ kuralıdır. Python'un `math` modülünde aynı işi yapan hazır bir `math.gcd` fonksiyonu da vardır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir fonksiyon birden çok değeri virgülle ayırarak döndürebilir; çağıran taraf bunları `x1, x2 = ...` biçiminde ayrı değişkenlere açabilir. Python bu değerleri bir *demet* (tuple) içinde paketler. Demetleri de [Veri Yapıları ve Comprehension](veri-yapilari.qmd) bölümünde göreceğiz.
+
+:::: {#exm-kon-kokler name="Kökleri Döndüren Bir Fonksiyon"}
+@exm-kon-ikinci-derece'deki hesabı, $ax^2 + bx + c = 0$ denkleminin iki kökünü döndüren bir `roots(a, b, c)` fonksiyonuna çeviriniz ve üç durumu da deneyiniz.
+
+::: {.cozum}
+$\Delta \ge 0$ ise $\sqrt{\Delta}$ gerçeldir. $\Delta < 0$ ise $\sqrt{\Delta}$ yerine $i\sqrt{-\Delta}$ alırız ve bunu sanal birim `1j` ile `1j * math.sqrt(-delta)` olarak kurarız. Böylece kök formülü üç durumda da aynı satırla yazılır.
+
+```python
+import math
+
+
+def roots(a, b, c):
+    """ax^2 + bx + c = 0 denkleminin köklerini döndürür (a != 0)."""
+    delta = b**2 - 4*a*c
+    if delta >= 0:
+        r = math.sqrt(delta)
+    else:
+        r = 1j * math.sqrt(-delta)
+    return (-b + r) / (2*a), (-b - r) / (2*a)
+
+
+x1, x2 = roots(1, -3, 2)
+print(x1, x2)
+print(roots(1, -2, 1))
+print(roots(1, -2, 5))
+```
+
+Çıktı:
+
+```text
+2.0 1.0
+(1.0, 1.0)
+((1+2j), (1-2j))
+```
+
+$x^2 - 3x + 2 = (x - 1)(x - 2)$ denkleminin kökleri $2$ ve $1$'dir. $x^2 - 2x + 1 = (x - 1)^2$ çift katlı $1$ kökünü iki kez verir. $x^2 - 2x + 5$ için yine $1 \pm 2i$ bulunur. İlk çağrıda sonuçları iki değişkene açtık, diğerlerinde ise çağrının kendisini yazdırdık; Python iki değeri parantez içinde gösterdi. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="print bir değer döndürmez"}
+Fonksiyonun içinde sonucu `print` ile yazdırmak onu döndürmek demek değildir. `return` içermeyen bir fonksiyonun çağrısı `None` değerini alır ve bu değerle hesap yapmaya çalışmak hata verir:
+
+```python
+def square_print(x):
+    print(x**2)          # ekrana yazar ama değer döndürmez
+
+
+def square(x):
+    return x**2
+
+
+a = square_print(3)
+b = square(3)
+print(a, b)
+```
+
+Çıktı:
+
+```text
+9
+None 9
+```
+
+Hesapta kullanılacak sonuçları `return` ile döndürün; `print`'i yalnız ekrana bilgi vermek için kullanın.
+:::
+
+Fonksiyonun içindeki değişkenlerle dışarıdakiler arasındaki ilişki de net olmalıdır.
+
+::: {#def-kon-yerel name="Yerel ve Global Değişken"}
+Bir fonksiyonun bloğunda değer atanan değişkenler o fonksiyonun **yerel** değişkenleridir: yalnız çağrı süresince var olurlar ve fonksiyonun dışındaki aynı adlı değişkenleri etkilemezler. Parametreler de yereldir. Programın en üst düzeyinde, fonksiyonların dışında tanımlanan değişkenlere **global** değişken denir. Bir fonksiyon bir global değişkeni okuyabilir; ona yeni bir değer atayabilmesi için ise bloğun başında `global ad` bildirimi gerekir.
+:::
+
+Yani her çağrı kendi küçük çalışma alanında çalışır; fonksiyonun içindeki `x`, dışarıdaki `x`'in yalnız adaşıdır.
+
+```python
+x = 10
+
+
+def g(t):
+    x = 2 * t        # bu x, g'nin yerel değişkenidir
+    return x + 1
+
+
+print(g(5))
+print(x)             # dışarıdaki x değişmedi
+```
+
+Çıktı:
+
+```text
+11
+10
+```
+
+Fonksiyonların yalnız parametreler ve `return` üzerinden haberleşmesi onları güvenilir yapı taşları yapar. `global` bildirimini bu bölümde yalnız bir fonksiyonun kaç kez çağrıldığını ya da kaç işlem yaptığını saymak için kullanacağız.
+
+Sayısal yöntemlerde bir fonksiyonun asıl girdisinin yanında tolerans, en fazla adım sayısı gibi ayarları da olur. Bunları her çağrıda yazmak zorunda kalmamak için varsayılan değerler kullanılır.
+
+::: {#def-kon-varsayilan name="Varsayılan Değer ve Anahtar Sözcüklü Argüman"}
+Bir parametreye tanımda `ad=değer` biçiminde bir **varsayılan değer** verilebilir; çağrıda bu parametreye argüman yazılmazsa varsayılan değer kullanılır. Varsayılan değerli parametreler, varsayılanı olmayanlardan sonra gelir. Çağrıda bir argüman `ad=değer` biçiminde parametresinin adıyla da verilebilir; böyle bir **anahtar sözcüklü argüman**, sıraya bakılmaksızın adıyla eşleşir.
+:::
+
+Yani sık değiştirilmeyen ayarlar varsayılan değerlerle tanımlanır, çağıran yalnız değiştirmek istediğini adıyla yazar. Bu, uzun parametre listelerini okunur kılar: `sqrt_newton(10, tol=1e-6)` çağrısı, aynı işi yapan `sqrt_newton(10, 1.0, 1e-6)` çağrısından çok daha açıktır.
+
+Bu araçları sayısal analizin klasik bir algoritmasında birleştirelim. $a > 0$ için $\sqrt{a}$, $f(x) = x^2 - a$ fonksiyonunun pozitif köküdür. Newton yönteminin $x_{k+1} = x_k - f(x_k)/f'(x_k)$ adımı (bkz. [Nümerik Analiz](../numerik-analiz/newton-raphson-metodu.html#def-nwt-metot)) bu fonksiyon için
+
+$$x_{k+1} = x_k - \frac{x_k^2 - a}{2x_k} = \frac{1}{2}\left(x_k + \frac{a}{x_k}\right)$$
+
+olur. Bu, Babillilerden beri bilinen karekök iterasyonudur (bkz. [Analiz 1](../analiz-1/monoton-diziler-ve-e-sayisi.html#exm-ozyineli-kok-iki)).
+
+::: {.callout-tip title="Newton yöntemiyle karekök üç adımda"}
+1. Bir başlangıç değeri seçin: $x_0 > 0$, örneğin $x_0 = 1$.
+2. Yeni terimi $x_{k+1} = \frac{1}{2}\left(x_k + a/x_k\right)$ ile hesaplayın.
+3. $|x_{k+1} - x_k|$ bir `tol` toleransından küçükse durun ve $x_{k+1}$'i döndürün; değilse ikinci adıma dönün. Yakınsamama ihtimaline karşı adım sayısını `max_iter` ile sınırlayın.
+:::
+
+:::: {#exm-kon-newton-karekok name="Newton Yöntemiyle Karekök"}
+Tarifi varsayılan değerli parametreleri olan bir `sqrt_newton` fonksiyonu olarak yazıp $\sqrt{2}$'yi hesaplayınız; ara adımları da yazdırınız.
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="22.5 -6.0 452.0 288.0" role="img" aria-label="Semilog plot of the error of the Newton iterates for sqrt 2 starting at 1: about 4e-1, 9e-2, 2e-3, 2e-6, 2e-12 and 2e-16, the last one on the dashed machine epsilon line">
+  <g stroke="var(--academic-text)" stroke-width="0.7" opacity="0.13"><line x1="70.0" y1="37.5" x2="440.0" y2="37.5"/><line x1="70.0" y1="87.5" x2="440.0" y2="87.5"/><line x1="70.0" y1="137.5" x2="440.0" y2="137.5"/><line x1="70.0" y1="187.5" x2="440.0" y2="187.5"/><line x1="70.0" y1="237.5" x2="440.0" y2="237.5"/></g>
+  <g stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45">
+  <line x1="70.0" y1="250.0" x2="448.0" y2="250.0"/>
+  <line x1="70.0" y1="22.0" x2="70.0" y2="250.0"/>
+  </g>
+  <g fill="var(--academic-text)" font-size="11" opacity="0.7">
+  <text x="94.7" y="266.0" text-anchor="middle">0</text>
+  <text x="156.3" y="266.0" text-anchor="middle">1</text>
+  <text x="218.0" y="266.0" text-anchor="middle">2</text>
+  <text x="279.7" y="266.0" text-anchor="middle">3</text>
+  <text x="341.3" y="266.0" text-anchor="middle">4</text>
+  <text x="403.0" y="266.0" text-anchor="middle">5</text>
+  <text x="63.0" y="41.5" text-anchor="end">10<tspan font-size="9.5" dy="-5">0</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="91.5" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;4</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="141.5" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;8</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="191.5" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;12</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="63.0" y="241.5" text-anchor="end">10<tspan font-size="9.5" dy="-5">&#8722;16</tspan><tspan dy="5">&#8203;</tspan></text>
+  </g>
+  <text x="454.0" y="254.0" fill="var(--academic-text)" font-size="12" text-anchor="start"><tspan font-style="italic">k</tspan></text>
+  <text x="70.0" y="18.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">|<tspan font-style="italic">x</tspan><tspan font-size="8.5" dy="3"><tspan font-style="italic">k</tspan></tspan><tspan dy="-3">&#8203;</tspan> &#8722; √2|</text>
+  <path d="M70.0,233.2 L440.0,233.2" fill="none" stroke="var(--color-base)" stroke-width="1.3" stroke-dasharray="6 4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="80.2" y="226.2" fill="var(--color-base)" font-size="11.5" text-anchor="start" font-weight="600">makine duyarlığı 2,2&#183;10<tspan font-size="9.5" dy="-5">&#8722;16</tspan><tspan dy="5">&#8203;</tspan></text>
+  <path d="M94.7,42.3 L156.3,50.8 L218.0,70.1 L279.7,108.4 L341.3,185.0 L403.0,233.2" fill="none" stroke="var(--color-theory)" stroke-width="1.5" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="94.7" cy="42.3" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="156.3" cy="50.8" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="218.0" cy="70.1" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="279.7" cy="108.4" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="341.3" cy="185.0" r="4.2" fill="var(--color-practice)"/>
+  <circle cx="403.0" cy="233.2" r="4.2" fill="var(--color-practice)"/>
+  <text x="103.7" y="36.3" fill="var(--academic-text)" font-size="11.5" text-anchor="start">4,1&#183;10<tspan font-size="9.5" dy="-5">&#8722;1</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="165.3" y="44.8" fill="var(--academic-text)" font-size="11.5" text-anchor="start">8,6&#183;10<tspan font-size="9.5" dy="-5">&#8722;2</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="227.0" y="64.1" fill="var(--academic-text)" font-size="11.5" text-anchor="start">2,5&#183;10<tspan font-size="9.5" dy="-5">&#8722;3</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="288.7" y="102.4" fill="var(--academic-text)" font-size="11.5" text-anchor="start">2,1&#183;10<tspan font-size="9.5" dy="-5">&#8722;6</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="350.3" y="179.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">1,6&#183;10<tspan font-size="9.5" dy="-5">&#8722;12</tspan><tspan dy="5">&#8203;</tspan></text>
+  <text x="412.0" y="227.2" fill="var(--academic-text)" font-size="11.5" text-anchor="start">2,2&#183;10<tspan font-size="9.5" dy="-5">&#8722;16</tspan><tspan dy="5">&#8203;</tspan></text>
+</svg>
+<figcaption>√2 için Newton iterasyonunun (<em>x</em><sub>0</sub> = 1) hatası logaritmik ölçekte. Hata üssü her adımda kabaca ikiye katlanır: 10<sup>−1</sup>, 10<sup>−3</sup>, 10<sup>−6</sup>, 10<sup>−12</sup>. Beşinci adımda hata makine duyarlığına iner; daha fazla adım bir şey kazandırmaz.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+Fonksiyon $a$'yı zorunlu, `x0`, `tol`, `max_iter` ve `verbose` parametrelerini varsayılan değerli alır. Döngü en fazla `max_iter` adım süren bir `for` döngüsüdür. Durma koşulu sağlanınca `return` hem döngüyü hem de fonksiyonu bitirir. Fonksiyon kök ile adım sayısını birlikte döndürür.
+
+```python
+def sqrt_newton(a, x0=1.0, tol=1e-12, max_iter=50, verbose=False):
+    """a > 0 sayısının karekökünü Newton yöntemiyle hesaplar.
+
+    x_{k+1} = (x_k + a / x_k) / 2 iterasyonu, ardışık iki terimin
+    farkı tol'dan küçük olunca durur. (kök, adım sayısı) döndürür.
+    """
+    x = x0
+    for k in range(1, max_iter + 1):
+        x_new = (x + a / x) / 2
+        if verbose:
+            print(f"k = {k}  x = {x_new:.16f}")
+        if abs(x_new - x) < tol:
+            return x_new, k
+        x = x_new
+    return x, max_iter
+
+
+root, steps = sqrt_newton(2, verbose=True)
+print("sonuç:", root, "adım:", steps)
+print(sqrt_newton(10, tol=1e-6))
+print(sqrt_newton(10, 3.0, 1e-6))
+```
+
+Çıktı:
+
+```text
+k = 1  x = 1.5000000000000000
+k = 2  x = 1.4166666666666665
+k = 3  x = 1.4142156862745097
+k = 4  x = 1.4142135623746899
+k = 5  x = 1.4142135623730949
+k = 6  x = 1.4142135623730949
+sonuç: 1.414213562373095 adım: 6
+(3.162277660168379, 6)
+(3.162277660168379, 4)
+```
+
+İlk çağrıda yalnız `verbose`'u adıyla değiştirdik, diğer parametreler varsayılan değerlerini aldı. Doğru ondalık basamak sayısı her adımda kabaca ikiye katlanıyor: $x_2$'de $2$, $x_3$'te $5$, $x_4$'te $11$ basamak doğru. Bu, Newton yönteminin karesel yakınsamasının izidir. Aynı davranış $\cos x - x = 0$ denkleminde de görülür (bkz. [Nümerik Analiz](../numerik-analiz/newton-raphson-metodu.html#exm-nwt-cos)); hızın kesin ifadesine [Kök Bulma ve Optimizasyon](kok-bulma-ve-optimizasyon.qmd) bölümünde döneceğiz. Beşinci adımdan sonra terim değişmez; altıncı adımda fark sıfır olduğundan döngü durur. Sonuç, `math.sqrt(2)` değerinden yalnız son basamakta, yaklaşık $2{,}2 \cdot 10^{-16}$ kadar ayrılır; bu, makine duyarlığı düzeyinde bir farktır.
+
+Son iki çağrının ikisi de $\sqrt{10}$ sayısını aynı $10^{-6}$ toleransıyla hesaplar, ama farklı başlangıç değerlerinden. `tol=1e-6` adıyla verildiğinde `x0` varsayılan $1$ değerinde kalır ve altı adım gerekir. `sqrt_newton(10, 3.0, 1e-6)` çağrısında ise argümanlar sırayla eşleştiği için `x0 = 3.0` ve `tol = 1e-6` olur. $x_0 = 3$ köke yakın bir başlangıç olduğundan dört adım yeter. [$\blacksquare$]{.qed}
+:::
+::::
+
+Python'da fonksiyonlar da birer değerdir: bir değişkene atanabilir, başka bir fonksiyona argüman olarak verilebilir. Bu sayede $\sum$ sembolü gibi bir fonksiyonu girdi olarak alan kavramları doğrudan yazabiliriz. Argüman olarak verilecek kısa fonksiyonlar için ayrıca `def` yazmak da gerekmez.
+
+::: {#def-kon-lambda name="lambda İfadesi"}
+`lambda parametreler: ifade` biçimindeki bir **lambda ifadesi** adsız bir fonksiyon üretir; bu fonksiyon çağrıldığında `ifade`'nin değerini döndürür. Gövdesi tek bir ifadeden oluşur; içinde `if` deyimi, döngü ya da `return` bulunmaz.
+:::
+
+Yani `lambda x: x**2`, matematikteki $x \mapsto x^2$ gösteriminin Python yazımıdır. Aşağıdaki `sigma` fonksiyonu terimi bir fonksiyon olarak alır ve $\sum_{k=m}^{n} \mathrm{term}(k)$ toplamını hesaplar.
+
+```python
+def sigma(term, m, n):
+    """term(m) + term(m+1) + ... + term(n) toplamını döndürür."""
+    s = 0
+    for k in range(m, n + 1):
+        s += term(k)
+    return s
+
+
+print(sigma(lambda k: k**2, 1, 100))
+print(sigma(lambda k: 1 / 2**k, 0, 30))
+print(sigma(lambda k: k**3, 1, 10))
+print(sigma(abs, -3, 3))       # hazır bir fonksiyon da verilebilir
+```
+
+Çıktı:
+
+```text
+338350
+1.9999999990686774
+3025
+12
+```
+
+İkinci satır $\sum_{k=0}^{30} 2^{-k} = 2 - 2^{-30}$ geometrik toplamıdır, üçüncüsü $1^3 + \dots + 10^3 = 55^2 = 3025$'tir. Son satırdaki `abs` gibi `def` ile ya da hazır tanımlı her fonksiyon da argüman olabilir. Bir lambda'yı bir ada atamak mümkündür, ama adı olacak bir fonksiyon için `def` yazmak daha okunurdur. Lambda en çok, burada olduğu gibi, tek kullanımlık argüman fonksiyonlarında işe yarar.
+
+:::: {#exm-kon-newton-genel name="Genel Newton Fonksiyonu"}
+$f$ ile türevi $f'$'yi argüman olarak alan bir `newton(f, df, x0)` fonksiyonu yazıp $\cos x = x$ denkleminin kökünü bulunuz.
+
+::: {.cozum}
+@exm-kon-newton-karekok'teki döngü, $f$ ve $f'$ için yer tutan iki parametreyle her denkleme genelleşir. $f(x) = \cos x - x$ ve $f'(x) = -\sin x - 1$ fonksiyonlarını lambda ile verir, $x_0 = \pi/4$'ten başlarız. Döngü değişkenini blokta kullanmadığımız için ona gelenekteki gibi `_` adını verdik.
+
+```python
+import math
+
+
+def newton(f, df, x0, tol=1e-12, max_iter=50):
+    """f(x) = 0 denkleminin x0 yakınındaki kökünü döndürür."""
+    x = x0
+    for _ in range(max_iter):
+        x_new = x - f(x) / df(x)
+        if abs(x_new - x) < tol:
+            return x_new
+        x = x_new
+    return x
+
+
+p = newton(lambda x: math.cos(x) - x,
+           lambda x: -math.sin(x) - 1, math.pi / 4)
+print(p, math.cos(p) - p)
+print(newton(lambda x: x**3 - 2*x - 5, lambda x: 3*x**2 - 2, 2.0))
+```
+
+Çıktı:
+
+```text
+0.7390851332151606 1.1102230246251565e-16
+2.0945514815423265
+```
+
+Kök $p \approx 0{,}7390851332$'dir (bkz. [Nümerik Analiz](../numerik-analiz/newton-raphson-metodu.html#exm-nwt-cos)). $f(p)$'nin yaklaşık $1{,}1 \cdot 10^{-16}$ çıkması, sonucun makine duyarlığı düzeyinde doğru olduğunu gösterir. Aynı fonksiyon, Newton'un kendi örneği olan $x^3 - 2x - 5 = 0$ denkleminin $2{,}0945514815$ kökünü de verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Özyineleme
+
+Matematikte pek çok nesne kendisi cinsinden tanımlanır: $0! = 1$ ve $n! = n \cdot (n-1)!$; Fibonacci sayıları için $F_0 = 0$, $F_1 = 1$ ve $F_n = F_{n-1} + F_{n-2}$. Python'da bir fonksiyon kendini çağırabildiğinden bu tanımlar neredeyse kelimesi kelimesine koda dönüşür.
+
+::: {#def-kon-ozyineleme name="Özyinelemeli Fonksiyon"}
+Bloğunda kendisini çağıran fonksiyona **özyinelemeli** (recursive) fonksiyon denir. Böyle bir fonksiyonun en az bir **taban durumu**, yani kendini çağırmadan doğrudan sonuç döndürdüğü girdileri vardır. Diğer girdilerde fonksiyon, taban durumuna daha yakın girdilerle kendini çağırır ve bu çağrıların sonuçlarından kendi sonucunu kurar.
+:::
+
+Yani özyineleme, tümevarımın hesaptaki karşılığıdır (bkz. [Analiz 1](../analiz-1/dogal-sayilar-ve-tumevarim.html#def-ozyineli-tanimlar)): taban durumu başlangıç adımına, özyineli çağrı tümevarım adımına karşılık gelir. Taban durumu unutulursa ya da çağrılar tabana yaklaşmazsa fonksiyon kendini durmadan çağırır.
+
+:::: {#exm-kon-faktoriyel name="Özyinelemeli Faktöriyel"}
+$n!$'i özyinelemeyle hesaplayan bir fonksiyon yazınız ve $20!$ için sonucu döngüyle bulunan değerle karşılaştırınız.
+
+::: {.cozum}
+Tanım doğrudan koda dönüşür: taban durumu $0! = 1$, özyineli adım $n! = n \cdot (n-1)!$. Karşılaştırma için tarifteki çarpım kalıbıyla yazılmış bir döngü sürümü ile Python'un `math.factorial` fonksiyonunu kullanıyoruz.
+
+```python
+import math
+
+
+def fact(n):
+    """n! değerini özyinelemeyle hesaplar (n >= 0 tam sayı)."""
+    if n == 0:
+        return 1                # taban durumu
+    return n * fact(n - 1)      # özyineli adım
+
+
+def fact_loop(n):
+    p = 1
+    for k in range(2, n + 1):
+        p *= k
+    return p
+
+
+print(fact(5), fact(20))
+print(fact(20) == fact_loop(20) == math.factorial(20))
+```
+
+Çıktı:
+
+```text
+120 2432902008176640000
+True
+```
+
+`fact(5)` çağrısı `5 * fact(4)` değerini, o da `4 * fact(3)` değerini bekler. Zincir `fact(0)`'a ulaşınca geri dönüşte $1, 1, 2, 6, 24, 120$ değerleri sırayla oluşur. Üç yöntem de $20! = 2432902008176640000$ verir; zincirleme `==` üçünün eşitliğini tek satırda sınar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kon-fib-saf name="Saf Özyinelemeli Fibonacci"}
+$F_n$'yi tanımı doğrudan izleyen özyinelemeli bir fonksiyonla hesaplayınız ve $n = 5, 10, \dots, 30$ için fonksiyonun kaç kez çağrıldığını sayınız.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="8.0 5.0 616.0 294.0" role="img" aria-label="Call tree of the naive recursive fib(5): 15 nodes; fib(3) appears twice and fib(2) three times, each recomputed from scratch; the leaves are fib(1) and fib(0)">
+  <line x1="88.0" y1="224.0" x2="50.0" y2="260.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="88.0" y1="224.0" x2="126.0" y2="260.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="145.0" y1="164.0" x2="88.0" y2="200.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="145.0" y1="164.0" x2="202.0" y2="200.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="316.0" y1="164.0" x2="278.0" y2="200.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="316.0" y1="164.0" x2="354.0" y2="200.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="230.5" y1="104.0" x2="145.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="230.5" y1="104.0" x2="316.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="468.0" y1="164.0" x2="430.0" y2="200.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="468.0" y1="164.0" x2="506.0" y2="200.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="525.0" y1="104.0" x2="468.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="525.0" y1="104.0" x2="582.0" y2="140.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="377.8" y1="44.0" x2="230.5" y2="80.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <line x1="377.8" y1="44.0" x2="525.0" y2="80.0" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.55"/>
+  <rect x="350.8" y="20.0" width="54.0" height="24.0" rx="5" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="377.8" y="36.5" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">fib(5)</text>
+  <rect x="203.5" y="80.0" width="54.0" height="24.0" rx="5" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="230.5" y="96.5" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">fib(4)</text>
+  <rect x="118.0" y="140.0" width="54.0" height="24.0" rx="5" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.5"/>
+  <text x="145.0" y="156.5" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">fib(3)</text>
+  <rect x="61.0" y="200.0" width="54.0" height="24.0" rx="5" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="88.0" y="216.5" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">fib(2)</text>
+  <rect x="23.0" y="260.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="50.0" y="276.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(1)</text>
+  <rect x="99.0" y="260.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="126.0" y="276.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(0)</text>
+  <rect x="175.0" y="200.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="202.0" y="216.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(1)</text>
+  <rect x="289.0" y="140.0" width="54.0" height="24.0" rx="5" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="316.0" y="156.5" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">fib(2)</text>
+  <rect x="251.0" y="200.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="278.0" y="216.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(1)</text>
+  <rect x="327.0" y="200.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="354.0" y="216.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(0)</text>
+  <rect x="498.0" y="80.0" width="54.0" height="24.0" rx="5" fill="var(--color-practice)" fill-opacity="0.16" stroke="var(--color-practice)" stroke-width="1.5"/>
+  <text x="525.0" y="96.5" fill="var(--color-practice)" font-size="12" text-anchor="middle" font-weight="600">fib(3)</text>
+  <rect x="441.0" y="140.0" width="54.0" height="24.0" rx="5" fill="var(--color-base)" fill-opacity="0.16" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="468.0" y="156.5" fill="var(--color-base)" font-size="12" text-anchor="middle" font-weight="600">fib(2)</text>
+  <rect x="403.0" y="200.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="430.0" y="216.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(1)</text>
+  <rect x="479.0" y="200.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="506.0" y="216.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(0)</text>
+  <rect x="555.0" y="140.0" width="54.0" height="24.0" rx="5" fill="var(--color-remark)" fill-opacity="0.08" stroke="var(--color-remark)" stroke-width="1.5"/>
+  <text x="582.0" y="156.5" fill="var(--color-remark)" font-size="12" text-anchor="middle">fib(1)</text>
+</svg>
+<figcaption>Saf özyinelemeli <code>fib(5)</code> çağrısının ağacı: toplam 15 çağrı. <code>fib(3)</code> (turuncu) iki kez, <code>fib(2)</code> (yeşil) üç kez baştan hesaplanır. <em>n</em> büyüdükçe aynı alt ağaçlar katlanarak tekrarlanır; <code>fib(30)</code> için çağrı sayısı 2692537'dir.</figcaption>
+</figure>
+```
+
+::: {.cozum}
+Çağrıları saymak için global bir `calls` sayacı kullanırız. Fonksiyon bu sayaca değer atadığından blokta `global calls` bildirimi gerekir (@def-kon-yerel). Her $n$ için sayacı sıfırlayıp fonksiyonu çağırırız.
+
+```python
+calls = 0
+
+
+def fib(n):
+    """n. Fibonacci sayısı: saf özyineleme."""
+    global calls
+    calls += 1
+    if n < 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+
+for n in range(5, 31, 5):
+    calls = 0
+    value = fib(n)
+    print(f"fib({n:2}) = {value:6}   çağrı sayısı: {calls:7}")
+```
+
+Çıktı:
+
+```text
+fib( 5) =      5   çağrı sayısı:      15
+fib(10) =     55   çağrı sayısı:     177
+fib(15) =    610   çağrı sayısı:    1973
+fib(20) =   6765   çağrı sayısı:   21891
+fib(25) =  75025   çağrı sayısı:  242785
+fib(30) = 832040   çağrı sayısı: 2692537
+```
+
+Çağrı sayısı $C(n)$ için $C(0) = C(1) = 1$ ve $C(n) = 1 + C(n-1) + C(n-2)$ olduğundan tümevarımla $C(n) = 2F_{n+1} - 1$ bulunur; örneğin
+
+$$C(30) = 2 \cdot 1346269 - 1 = 2692537.$$
+
+$F_n$, yaklaşık $1{,}618^n/\sqrt{5}$ hızıyla büyür ($1{,}618 \approx (1 + \sqrt{5})/2$ altın orandır). Bu yüzden çağrı sayısı $n$ ile üstel olarak artar: $n$'yi $5$ artırmak işi yaklaşık $1{,}618^5 \approx 11$ katına çıkarır. Şekildeki ağaç sorunun kaynağını gösteriyor: aynı değerler tekrar tekrar baştan hesaplanıyor. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {#def-kon-hafizalama name="Hafızalama"}
+Bir fonksiyonun hesapladığı her sonucu girdisiyle birlikte bir depoya kaydetmesine ve aynı girdiyle yeniden çağrıldığında hesabı tekrarlamadan kayıtlı sonucu döndürmesine **hafızalama** (memoization) denir.
+:::
+
+Yani hafızalama, hesap süresini bellekle takas eder: Fibonacci ağacında her $F_k$ yalnız bir kez hesaplanır, sonraki istekler depodan karşılanır. Depo olarak Python'un **sözlük** (dict) yapısını kullanacağız. Sözlükleri [Veri Yapıları ve Comprehension](veri-yapilari.qmd) bölümünde ayrıntılı göreceğiz; burada üç işlem yeter. `memo = {0: 0, 1: 1}` iki başlangıç kaydıyla bir sözlük kurar, `n in memo` $n$ için kayıt olup olmadığını sorar, `memo[n] = değer` kaydı yazar ve `memo[n]` onu okur.
+
+:::: {#exm-kon-fib-memo name="Hafızalı Fibonacci"}
+Fibonacci fonksiyonunu hafızalı yazarak $F_{30}$ ve $F_{100}$ sayılarını hesaplayınız; çağrı sayılarını @exm-kon-fib-saf ile karşılaştırınız.
+
+::: {.cozum}
+Taban durumları sözlüğün başlangıç kayıtlarıdır. Fonksiyon önce depoya bakar; kayıt yoksa değeri iki özyineli çağrıyla hesaplayıp kaydeder. `calls += 1` satırı `calls` adına yeni bir değer atadığı için yine `global calls` bildirimi gerekir. `memo[n] = ...` satırı ise `memo` adına yeni bir değer atamaz, yalnız bu adın gösterdiği sözlüğün içeriğini değiştirir; bu yüzden `memo` için bildirim gerekmez.
+
+```python
+memo = {0: 0, 1: 1}    # hesaplanan değerlerin deposu (sözlük)
+calls = 0
+
+
+def fib(n):
+    """n. Fibonacci sayısı: hafızalı özyineleme."""
+    global calls
+    calls += 1
+    if n in memo:
+        return memo[n]           # daha önce hesaplandı: hazır değer
+    memo[n] = fib(n - 1) + fib(n - 2)
+    return memo[n]
+
+
+print(fib(30), "çağrı sayısı:", calls)
+calls = 0
+print(fib(100), "çağrı sayısı:", calls)
+```
+
+Çıktı:
+
+```text
+832040 çağrı sayısı: 59
+354224848179261915075 çağrı sayısı: 141
+```
+
+$F_{30}$ için çağrı sayısı $2692537$'den $59 = 2 \cdot 30 - 1$'e indi, çünkü her $F_k$ bir kez hesaplanıyor. $F_{100}$ yalnız $141$ çağrı tuttu, çünkü $F_0, \dots, F_{30}$ önceki hesaptan depoda duruyordu. Saf sürümle $F_{100}$ için $2F_{101} - 1 \approx 1{,}1 \cdot 10^{21}$ çağrı gerekirdi.
+
+Python'un standart kütüphanesi bu kalıbı hazır sunar. `functools` modülündeki `cache`, fonksiyon tanımının üstüne `@cache` satırı olarak yazıldığında fonksiyonu kendi deposuyla hafızalı hâle getirir. Bir fonksiyonu böyle saran `@` satırlarına **dekoratör** denir.
+
+```python
+from functools import cache
+
+
+@cache
+def fib(n):
+    if n < 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+
+print(fib(100))
+print(fib.cache_info())
+```
+
+Çıktı:
+
+```text
+354224848179261915075
+CacheInfo(hits=98, misses=101, maxsize=None, currsize=101)
+```
+
+`cache_info()` deponun durumunu bildirir: $F_0, \dots, F_{100}$ olmak üzere $101$ değer birer kez hesaplandı (`misses`), $98$ istek depodan karşılandı (`hits`). [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Özyineleme derinliği sınırlıdır"}
+Her özyineli çağrı, geri dönülecek yeri saklamak için bellek harcar. Python bu yüzden iç içe çağrıların derinliğini sınırlar; sınır aşılınca program `RecursionError` hatasıyla durur. Sınırı `sys` modülü söyler:
+
+```python
+import sys
+
+print(sys.getrecursionlimit())
+```
+
+Çıktı:
+
+```text
+1000
+```
+
+Bu yüzden `fact(5000)` gibi binlerce düzey inen bir özyineleme hata verir; hafızalı `fib(5000)` çağrısı da aynı nedenle başarısız olur. Derinliği girdiyle doğrusal büyüyen hesaplarda döngü kullanın. Özyinelemeyi, ebob ya da hızlı üs alma gibi derinliği logaritmik kalan hesaplara ve doğal olarak ağaç biçimli problemlere saklayın.
+:::
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalarda bölümdeki kalıpları kendi başınıza uygulayacaksınız. Her çözümdeki kod kendi başına çalışır.
+
+:::: {#exr-kon-artik-yil name="Artık Yıl Kuralı"}
+Gregoryen takvimde $4$'e bölünen yıllar artık yıldır; ancak $100$'e bölünen yıllar, $400$'e de bölünmedikçe artık yıl değildir. Bu kuralı bir `is_leap(year)` fonksiyonuyla yazıp $1901$ ile $2000$ arasındaki (ikisi de dahil) artık yılları sayınız.
+
+::: {.cozum}
+Kuralda en özel durum en önce sınanmalıdır: önce $400$, sonra $100$, en son $4$. `return` fonksiyonu hemen bitirdiğinden `elif` yazmaya gerek kalmaz; bir `return`'e ulaşan çağrı alttaki satırları hiç görmez. Son satırdaki `year % 4 == 0` zaten bir `bool` olduğundan doğrudan döndürülür.
+
+```python
+def is_leap(year):
+    """Gregoryen takvimde artık yıl mı?"""
+    if year % 400 == 0:
+        return True
+    if year % 100 == 0:
+        return False
+    return year % 4 == 0
+
+
+print(is_leap(1900), is_leap(2000), is_leap(2024), is_leap(2026))
+count = 0
+for y in range(1901, 2001):
+    if is_leap(y):
+        count += 1
+print("1901-2000 arası artık yıl:", count)
+```
+
+Çıktı:
+
+```text
+False True True False
+1901-2000 arası artık yıl: 25
+```
+
+$1900$, $100$'e bölünüp $400$'e bölünmediğinden artık yıl değildir; $2000$ ise $400$'e bölündüğünden artık yıldır. $1901$ ile $2000$ arasında $1904, 1908, \dots, 2000$ olmak üzere $25$ artık yıl vardır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-rakam-toplami name="Rakamlar Toplamı"}
+Bir doğal sayının onluk tabandaki rakamlarının toplamını `while` döngüsüyle hesaplayan bir `digit_sum(n)` fonksiyonu yazınız ve $2^{100}$ sayısının rakamları toplamını bulunuz.
+
+::: {.cozum}
+$n$'nin son rakamı $n \bmod 10$'dur, $\lfloor n/10 \rfloor$ ise son rakamı silinmiş sayıdır. `divmod(n, 10)` ikisini birlikte verir. $n$ sıfır olana dek son rakamı ayırıp toplama ekleriz.
+
+```python
+def digit_sum(n):
+    """n >= 0 tam sayısının onluk tabandaki rakamlarının toplamı."""
+    s = 0
+    while n > 0:
+        n, d = divmod(n, 10)    # son rakamı ayır
+        s += d
+    return s
+
+
+print(digit_sum(2026), digit_sum(9**9))
+print(2**100)
+print(digit_sum(2**100))
+```
+
+Çıktı:
+
+```text
+10 45
+1267650600228229401496703205376
+115
+```
+
+$9^9 = 387420489$ sayısının rakamları toplamı $45$'tir. Python'un sınırsız tam sayıları sayesinde $31$ basamaklı $2^{100}$ de kesin hesaplanır ve rakamları toplamı $115$ çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-mukemmel name="Mükemmel Sayılar"}
+Kendisinden küçük pozitif bölenlerinin toplamına eşit olan sayılara mükemmel sayı denir; örneğin $6 = 1 + 2 + 3$. $10000$'den küçük mükemmel sayıları bulunuz.
+
+::: {.cozum}
+@prp-kon-karekok-bolen'deki fikir bölen toplamını da hızlandırır: $d \le \sqrt{n}$ bir bölense eşi $n/d$ de bir bölendir. Bu yüzden $d$'yi yalnız $2, \dots, \lfloor \sqrt{n} \rfloor$ arasında dolaştırıp her bölende hem $d$'yi hem $n/d$'yi ekleriz. $d = n/d$ ise, yani $n$ tam kareyse bu bölen bir kez eklenir. $1$ her zaman bölen olduğundan toplam $1$'den başlar.
+
+```python
+import math
+
+
+def divisor_sum(n):
+    """n'nin kendisinden küçük pozitif bölenlerinin toplamı (n > 1)."""
+    s = 1
+    for d in range(2, math.isqrt(n) + 1):
+        if n % d == 0:
+            s += d
+            if d != n // d:
+                s += n // d    # eş bölen n/d de sayılır
+    return s
+
+
+for n in range(2, 10001):
+    if divisor_sum(n) == n:
+        print(n, "mükemmel")
+```
+
+Çıktı:
+
+```text
+6 mükemmel
+28 mükemmel
+496 mükemmel
+8128 mükemmel
+```
+
+Dört mükemmel sayı bulunur: $6$, $28$, $496$ ve $8128$. Bunlar $p = 2, 3, 5, 7$ için $2^{p-1}(2^p - 1)$ biçimindedir. Öklid, $2^p - 1$ asal olduğunda bu sayının mükemmel olduğunu göstermişti; Euler de her çift mükemmel sayının bu biçimde olduğunu kanıtladı. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-goldbach name="Yüzü İki Asalın Toplamı Olarak Yazmak"}
+$100$ sayısının, $p \le q$ olmak üzere iki asalın $p + q$ toplamı olarak bütün yazılışlarını bulunuz.
+
+::: {.cozum}
+Önce deneme bölmesini bir `is_prime` fonksiyonuna çeviririz. Bölen bulunduğu anda `return False` fonksiyonu bitirir; bu, @exm-kon-asal-mi'deki `break` ile `else` ikilisinin fonksiyon içindeki karşılığıdır. Sonra $p$'yi $2, \dots, 50$ arasında dolaştırıp hem $p$'nin hem $100 - p$'nin asal olduğu durumları yazdırırız. $p \le 50$ koşulu $p \le q$ demektir.
+
+```python
+import math
+
+
+def is_prime(n):
+    """n asal mı? (deneme bölmesi)"""
+    if n < 2:
+        return False
+    for d in range(2, math.isqrt(n) + 1):
+        if n % d == 0:
+            return False
+    return True
+
+
+n = 100
+count = 0
+for p in range(2, n // 2 + 1):
+    if is_prime(p) and is_prime(n - p):
+        print(f"{n} = {p} + {n - p}")
+        count += 1
+print("yazılış sayısı:", count)
+```
+
+Çıktı:
+
+```text
+100 = 3 + 97
+100 = 11 + 89
+100 = 17 + 83
+100 = 29 + 71
+100 = 41 + 59
+100 = 47 + 53
+yazılış sayısı: 6
+```
+
+Altı yazılış vardır. **Goldbach sanısı**, $2$'den büyük her çift sayının en az bir yazılışı olduğunu söyler. Sanı çok büyük sayılara kadar bilgisayarla doğrulanmıştır ama ispatlanmamıştır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-genisletilmis-oklid name="Genişletilmiş Öklid Algoritması"}
+$a, b$ doğal sayıları için $\gcd(a, b)$ ile birlikte $ax + by = \gcd(a, b)$ eşitliğini sağlayan $x, y$ tam sayılarını da bulan özyinelemeli bir `ext_gcd(a, b)` fonksiyonu yazınız ve $a = 240$, $b = 46$ için çalıştırınız.
+
+::: {.cozum}
+$b = 0$ ise $\gcd(a, 0) = a$ ve $a \cdot 1 + b \cdot 0 = a$'dır; taban durumu budur. $b \ne 0$ ise $q = \lfloor a/b \rfloor$ ve $r = a - qb$ olsun. @prp-kon-ebob-kalan gereği $\gcd(a, b) = \gcd(b, r) = g$'dir. Özyineli çağrı $bx' + ry' = g$ eşitliğini sağlayan $x', y'$ sayılarını verirse
+
+$$g = bx' + (a - qb)y' = ay' + b(x' - qy')$$
+
+olduğundan $x = y'$ ve $y = x' - qy'$ alınır.
+
+```python
+def ext_gcd(a, b):
+    """(g, x, y) döndürür: g = ebob(a, b) ve a*x + b*y = g."""
+    if b == 0:
+        return a, 1, 0
+    g, x, y = ext_gcd(b, a % b)
+    return g, y, x - (a // b) * y
+
+
+g, x, y = ext_gcd(240, 46)
+print(g, x, y)
+print(240 * x + 46 * y)
+g, x, y = ext_gcd(1071, 462)
+print(g, x, y, 1071 * x + 462 * y)
+```
+
+Çıktı:
+
+```text
+2 -9 47
+2
+21 -3 7 21
+```
+
+Sağlamalar:
+
+$$\begin{aligned}
+240 \cdot (-9) + 46 \cdot 47 &= -2160 + 2162 = 2, \\
+1071 \cdot (-3) + 462 \cdot 7 &= -3213 + 3234 = 21.
+\end{aligned}$$
+
+Böyle $x, y$ sayılarının varlığı Bézout teoremidir (bkz. [Sayılar Teorisi](../sayilar-teorisi/1/ebob.html#thm-bezout)); bu fonksiyon onları açıkça kurar. Özyinelemenin derinliği Öklid algoritmasının adım sayısı kadardır ve Lamé teoremine göre bu sayı en fazla $\log b$ ile orantılı büyür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-hizli-us name="Hızlı Üs Alma"}
+$n$ çiftse $a^n = (a^{n/2})^2$, tekse $a^n = (a^{\lfloor n/2 \rfloor})^2 \cdot a$ eşitliklerini kullanarak $a^n$'yi hesaplayan özyinelemeli bir `power(a, n)` fonksiyonu yazınız. $n = 100, 400, 700, 1000$ için $3^n$ hesabında kaç çarpma yapıldığını sayınız.
+
+::: {.cozum}
+Taban durumu $a^0 = 1$'dir. Her özyineli adım $n$'yi yarıya indirir; yarım kuvvet bir kez hesaplanıp kendisiyle çarpılır, $n$ tekse bir çarpma daha yapılır. Çarpmaları global bir sayaçla sayarız.
+
+```python
+mults = 0
+
+
+def power(a, n):
+    """a**n değerini n'yi ikiye bölerek hesaplar (n >= 0 tam sayı)."""
+    global mults
+    if n == 0:
+        return 1
+    half = power(a, n // 2)
+    mults += 1
+    result = half * half
+    if n % 2 == 1:
+        mults += 1
+        result *= a
+    return result
+
+
+print(power(3, 13), 3**13)
+for n in range(100, 1001, 300):
+    mults = 0
+    ok = power(3, n) == 3**n
+    print(f"n = {n:4}  çarpma sayısı: {mults:2}  doğru mu: {ok}")
+```
+
+Çıktı:
+
+```text
+1594323 1594323
+n =  100  çarpma sayısı: 10  doğru mu: True
+n =  400  çarpma sayısı: 12  doğru mu: True
+n =  700  çarpma sayısı: 16  doğru mu: True
+n = 1000  çarpma sayısı: 16  doğru mu: True
+```
+
+Doğrudan $a \cdot a \cdots a$ çarpımı $n - 1$ çarpma ister; $n = 1000$ için bu $999$ demektir. Bu yöntem ise en fazla $2(\lfloor \log_2 n \rfloor + 1)$ çarpma yapar ve $n = 1000$ için $16$ çarpmayla yetinir. Python'un `**` işleci de tam sayı kuvvetlerini aynı fikre dayanan bir yöntemle hesaplar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-e-serisi name="Euler Sayısının Serisi"}
+$e = \sum_{k=0}^{\infty} \dfrac{1}{k!}$ serisini, sıradaki terim $10^{-17}$'den küçük olana dek toplayınız ve sonucu `math.e` ile karşılaştırınız.
+
+::: {.cozum}
+Her terimi faktöriyeli baştan hesaplayarak bulmak gereksizdir. $\dfrac{1}{k!} = \dfrac{1}{(k-1)!} \cdot \dfrac{1}{k}$ olduğundan terimi her adımda $k$'ya bölmek yeter. Kaç terim gerektiğini bilmediğimiz için `while` kullanırız.
+
+```python
+import math
+
+total = 0.0
+term = 1.0          # 1/0! = 1
+k = 0
+while term > 1e-17:
+    total += term
+    k += 1
+    term /= k       # 1/k! = (1/(k-1)!) / k
+print("toplanan terim sayısı:", k)
+print("seri    :", total)
+print("math.e  :", math.e)
+print("fark    :", total - math.e)
+```
+
+Çıktı:
+
+```text
+toplanan terim sayısı: 19
+seri    : 2.7182818284590455
+math.e  : 2.718281828459045
+fark    : 4.440892098500626e-16
+```
+
+$k = 0, \dots, 18$ olmak üzere $19$ terim toplandı; $1/19! \approx 8{,}2 \cdot 10^{-18}$ eşiğin altında kaldığından eklenmedi. Fark yaklaşık $4{,}4 \cdot 10^{-16}$, yani son basamakta birkaç birimdir: terimler toplanırken yapılan yuvarlamalar birikir. $e$ sayısının tanımı için bkz. [Analiz 1](../analiz-1/monoton-diziler-ve-e-sayisi.html#def-e-sayisi). [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-kup-kok name="Newton Yöntemiyle Küp Kök"}
+$f(x) = x^3 - a$ fonksiyonuna Newton yöntemini uygulayarak $\sqrt[3]{a}$ değerini hesaplayan bir fonksiyon yazınız; başlangıç değeri, tolerans ve en fazla adım sayısı varsayılan değerli parametreler olsun. $\sqrt[3]{10}$'u hesaplayınız.
+
+::: {.cozum}
+$f'(x) = 3x^2$ olduğundan Newton adımı
+
+$$x_{k+1} = x_k - \frac{x_k^3 - a}{3x_k^2} = \frac{1}{3}\left(2x_k + \frac{a}{x_k^2}\right)$$
+
+olur. Fonksiyonun yapısı @exm-kon-newton-karekok'tekiyle aynıdır.
+
+```python
+def cbrt_newton(a, x0=1.0, tol=1e-14, max_iter=100):
+    """a sayısının küp kökü: x <- (2x + a/x^2) / 3."""
+    x = x0
+    for k in range(1, max_iter + 1):
+        x_new = (2*x + a / x**2) / 3
+        if abs(x_new - x) < tol:
+            return x_new, k
+        x = x_new
+    return x, max_iter
+
+
+root, steps = cbrt_newton(10)
+print(root, steps)
+print(root**3)
+print(cbrt_newton(10, x0=2.0))
+print(cbrt_newton(-27))
+```
+
+Çıktı:
+
+```text
+2.154434690031884 8
+10.000000000000002
+(2.154434690031884, 5)
+(-3.0, 9)
+```
+
+$\sqrt[3]{10} \approx 2{,}154434690031884$ sekiz adımda bulundu; küpü $10$'a son basamaktaki yuvarlama farkıyla eşittir. Başlangıç değeri `x0=2.0` ile köke yaklaştırılınca beş adım yetti. Fonksiyon negatif $a$ için de çalışır: $\sqrt[3]{-27} = -3$. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-collatz-en-uzun name="En Uzun Collatz Yolu"}
+$10000$'den küçük başlangıç değerleri arasında Collatz dizisi $1$'e en çok adımda ulaşanı bulunuz.
+
+::: {.cozum}
+@exm-kon-collatz'daki döngüyü, adım sayısını döndüren bir fonksiyona çeviririz; güncellemeyi koşullu ifadeyle tek satırda yazıyoruz. Sonra $n = 1, \dots, 9999$ için en büyük adım sayısını ve onu veren $n$'yi saklarız.
+
+```python
+def collatz_steps(n):
+    """n'den 1'e ulaşana dek atılan Collatz adımlarının sayısı."""
+    steps = 0
+    while n != 1:
+        n = n // 2 if n % 2 == 0 else 3*n + 1
+        steps += 1
+    return steps
+
+
+best_n, best_steps = 1, 0
+for n in range(1, 10000):
+    s = collatz_steps(n)
+    if s > best_steps:
+        best_n, best_steps = n, s
+print("en uzun yol:", best_n, "başlangıcından", best_steps, "adım")
+print("27 için:", collatz_steps(27))
+```
+
+Çıktı:
+
+```text
+en uzun yol: 6171 başlangıcından 261 adım
+27 için: 111
+```
+
+$6171$ başlangıcı $261$ adımla en uzun yoldur. Fonksiyonun $27$ için örnekteki $111$ adımı yeniden vermesi, iki yazımın tutarlı olduğunu gösteren bir sağlamadır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-hanoi name="Hanoi Kuleleri"}
+A, B, C adlı üç çubuktan A'da, en büyüğü en altta olmak üzere $n$ disk dizilidir. Her hamlede bir çubuğun en üstündeki disk başka bir çubuğa taşınır ve hiçbir disk kendisinden küçük bir diskin üstüne konmaz. $n = 3$ için diskleri A'dan C'ye taşıyan hamleleri özyinelemeyle yazdırınız; hamle sayısının $2^n - 1$ olduğunu birkaç $n$ için doğrulayınız.
+
+::: {.cozum}
+$n$ diski A'dan C'ye taşımak için önce üstteki $n - 1$ diski C'yi yardımcı kullanarak B'ye taşırız. Sonra en büyük diski A'dan C'ye götürür, en son $n - 1$ diski A'yı yardımcı kullanarak B'den C'ye taşırız. Taban durumu $n = 0$'dır: yapılacak hamle yoktur. Hamle sayısı $H_n$ için $H_0 = 0$ ve $H_n = 2H_{n-1} + 1$ olduğundan tümevarımla $H_n = 2^n - 1$ bulunur.
+
+```python
+moves = 0
+
+
+def hanoi(n, source, target, spare, show=True):
+    """n diski source'tan target'a, spare'i yardımcı kullanarak taşır."""
+    global moves
+    if n == 0:
+        return
+    hanoi(n - 1, source, spare, target, show)
+    moves += 1
+    if show:
+        print(f"disk {n}: {source} -> {target}")
+    hanoi(n - 1, spare, target, source, show)
+
+
+hanoi(3, "A", "C", "B")
+print("hamle sayısı:", moves)
+for n in range(1, 11, 3):
+    moves = 0
+    hanoi(n, "A", "C", "B", show=False)
+    print(f"n = {n:2}  hamle: {moves:4}  2^n - 1 = {2**n - 1}")
+```
+
+Çıktı:
+
+```text
+disk 1: A -> C
+disk 2: A -> B
+disk 1: C -> B
+disk 3: A -> C
+disk 1: B -> A
+disk 2: B -> C
+disk 1: A -> C
+hamle sayısı: 7
+n =  1  hamle:    1  2^n - 1 = 1
+n =  4  hamle:   15  2^n - 1 = 15
+n =  7  hamle:  127  2^n - 1 = 127
+n = 10  hamle: 1023  2^n - 1 = 1023
+```
+
+Fonksiyonun `show` parametresinin varsayılan değeri `True`'dur. Büyük $n$'lerde hamleleri yazdırmamak için `show=False` veriyoruz; sayaç yine her hamlede artar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kon-binom name="Pascal Kuralıyla Binom Katsayısı"}
+$\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}$ ve $\binom{n}{0} = \binom{n}{n} = 1$ kurallarıyla binom katsayısını hafızalı özyinelemeyle hesaplayıp $\binom{30}{15}$ değerini bulunuz.
+
+::: {.cozum}
+Kural doğrudan özyinelemeli bir fonksiyon verir. Hafızasız sürümde her taban durumu sonuca $1$ katkı verir; bu yüzden $\binom{30}{15}$ için en az $\binom{30}{15}$ kez taban durumuna inilirdi. `@cache` her $(n, k)$ çiftini bir kez hesaplatır.
+
+```python
+import math
+from functools import cache
+
+
+@cache
+def binom(n, k):
+    """C(n, k): Pascal kuralıyla özyineli hesap."""
+    if k == 0 or k == n:
+        return 1
+    return binom(n - 1, k - 1) + binom(n - 1, k)
+
+
+print(binom(30, 15), math.comb(30, 15))
+print(binom.cache_info())
+```
+
+Çıktı:
+
+```text
+155117520 155117520
+CacheInfo(hits=196, misses=255, maxsize=None, currsize=255)
+```
+
+Sonuç `math.comb` ile aynıdır. Depoda $255$ farklı $(n, k)$ çifti var; hafızasız sürümdeki çağrı sayısı ise $2\binom{30}{15} - 1 = 310235039$, yani yaklaşık $3 \cdot 10^8$ olurdu. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde programın akışını yöneten üç yapıyı (karar, sayısı belli tekrar ve koşula bağlı tekrar) ve hesapları adlandırıp yeniden kullanmamızı sağlayan fonksiyonları gördük. Şimdiye dek hep tek tek sayılarla çalıştık; Collatz dizisinin terimlerini ya da bulduğumuz asalları bir yerde saklamadık. Bir sonraki bölüm [Veri Yapıları ve Comprehension](veri-yapilari.qmd), sayı topluluklarını tutan listeleri, demetleri, sözlükleri ve kümeleri ele alıyor.
