@@ -16,7 +16,12 @@
       a Typst mat(...) whose augment lines reproduce the "|" column rules and
       the \hline row rules.
     * a few macros pandoc does not know (\diagup, \diagdown, \cfrac,
-      \hphantom).
+      \hphantom, \thinspace).
+    * decimal commas (0{,}6) — pandoc writes them as "0 \, 6", which Typst
+      sets as "0, 6"; they are glued back to "0,6".
+    * math in box titles (name="… $\phi(n)$" of Tanım, Teorem, Örnek, …) —
+      Quarto writes the title of a Typst theorem frame into a string, so
+      the math came out as raw Typst source; see the Theorem handler.
     * \dfrac, \dbinom and \displaystyle — pandoc's Typst writer drops the
       math style, so in inline math (and in table cells) the fractions,
       sums and integrals the notes deliberately set at display size came
@@ -48,6 +53,8 @@ local MACROS = {
   -- not parsed by pandoc either; the nearest forms it knows
   ["\\cfrac"] = "\\dfrac",
   ["\\hphantom"] = "\\phantom",
+  -- a thin space around cross-references ($\thinspace$@thm-…)
+  ["\\thinspace"] = "\\,",
 }
 
 local function fix_tex(tex)
@@ -295,10 +302,28 @@ end
 -- LaTeX -> Typst math source like typst_math_source, but keeping the
 -- display size of \dfrac, \dbinom and \displaystyle pieces and converting
 -- arrays to mat(...).
+-- Decimal commas. The notes write 0{,}6 so that TeX sets the comma as an
+-- ordinary symbol. Pandoc drops the braces and writes "0 \, 6", which Typst
+-- typesets as punctuation followed by a space ("0, 6"). The comma is carried
+-- through the conversion as a placeholder and put back as the text ","
+-- glued to its neighbours: in Typst math, whitespace between atoms is
+-- significant.
+local DECIMAL_KEY = "QDECIMALQ"
+
+local function protect_decimals(tex)
+  return (tex:gsub("{,}", "\\text{" .. DECIMAL_KEY .. "}"))
+end
+
+local function restore_decimals(out)
+  out = out:gsub('%s*upright%("' .. DECIMAL_KEY .. '"%)%s*', '","')
+  out = out:gsub('%s*"' .. DECIMAL_KEY .. '"%s*', '","')
+  return out
+end
+
 styled_to_typst = function(tex, display)
-  local replaced, pieces = cut_styled(tex)
+  local replaced, pieces = cut_styled(protect_decimals(tex))
   if not replaced then
-    replaced, pieces = tex, {}
+    replaced, pieces = protect_decimals(tex), {}
   end
   local out
   if replaced:find("\\begin{array}") then
@@ -310,7 +335,7 @@ styled_to_typst = function(tex, display)
     out = out:gsub('upright%("' .. key .. '"%)', function() return code end)
     out = out:gsub('"' .. key .. '"', function() return code end)
   end
-  return out
+  return restore_decimals(out)
 end
 
 local function has_styled(tex)
@@ -321,6 +346,29 @@ local function has_styled(tex)
 end
 
 -- ------------------------------------------------------------- filter
+
+-- Box titles. Quarto renders a crossref environment (Tanım, Teorem, Örnek,
+-- …) for Typst as
+--     #definition(title: "<title>")[ … ]
+-- and emits the title's inlines as Typst *markup* between those quotes.
+-- Inside a string literal that markup is never evaluated: math showed up
+-- as "$phi.alt \( n \)$" and every character pandoc escapes for markup
+-- (a leading "(", "#", …) kept its backslash. Closing the string and
+-- opening a content block around the inlines turns the argument into
+--     title: "" + [<title markup>] + ""
+-- which Typst evaluates as content, so the title is typeset like body text.
+-- Quarto's custom-node API delivers these environments as Theorem nodes
+-- (an ordinary Div handler never sees them); `name` holds the title.
+function Theorem(thm)
+  if not TYPST or thm.name == nil then return nil end
+  local name = quarto.utils.as_inlines(thm.name)
+  if name == nil or #name == 0 then return nil end
+  local wrapped = pandoc.Inlines({ pandoc.RawInline("typst", '" + [') })
+  wrapped:extend(name)
+  wrapped:insert(pandoc.RawInline("typst", '] + "'))
+  thm.name = wrapped
+  return thm
+end
 
 function Math(el)
   local tex = fix_tex(el.text)
@@ -351,7 +399,8 @@ function Math(el)
   -- In display math pandoc already sets fractions at display size, so only
   -- the binomials it cannot parse have to be rewritten there.
   local styled = has_styled(tex) and (not display or tex:find("\\[dt]binom") ~= nil)
-  if not tag and not has_array and not styled then
+  local has_decimal = tex:find("{,}", 1, true) ~= nil
+  if not tag and not has_array and not styled and not has_decimal then
     if tex ~= el.text then
       el.text = tex
       return el

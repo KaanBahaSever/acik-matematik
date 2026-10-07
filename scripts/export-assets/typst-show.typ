@@ -9,6 +9,17 @@
 // allowed anywhere in it, comments included).
 #import "@preview/orange-book:0.7.1": book, part, chapter, appendices
 
+// orange-book starts every chapter (its level-1 heading rule, which also
+// typesets the table of contents title) and every part on a recto page with
+// pagebreak(to: "odd"). Whenever the page before ends on an odd page an empty
+// page is inserted that carries only the running header and the footer: 5 to
+// 28 of them per book, the first one right before the first chapter. The
+// files are read on screen, not bound, so every odd-page break becomes an
+// ordinary break to the next page. The break is weak, so it never adds a
+// page when a new one has just started. The rule is set before book.with()
+// so that it also reaches the breaks the template emits in the front matter.
+#show pagebreak.where(to: "odd"): it => pagebreak(weak: true)
+
 #show: book.with(
 $if(title)$
   title: [$title$],
