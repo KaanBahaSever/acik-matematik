@@ -47,8 +47,8 @@ for path in sys.argv[1:]:
         if n >= 2:
             multi += 1
             nm = NAME.search(m.group(3))
-            print("  %s:%d  %s  [%s]  soru=%d" % (path.split("\\")[-1].split("/")[-1], i + 1,
-                                                 m.group(2), nm.group(1) if nm else "", n))
-    print("%s: kutu=%d, birden cok soru iceren=%d" % (path, total, multi))
+            print("  %s:%d  %s  [%s]  questions=%d" % (path.split("\\")[-1].split("/")[-1], i + 1,
+                                                      m.group(2), nm.group(1) if nm else "", n))
+    print("%s: boxes=%d, multi-question=%d" % (path, total, multi))
     bad += multi
 sys.exit(1 if bad else 0)

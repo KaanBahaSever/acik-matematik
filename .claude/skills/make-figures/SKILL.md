@@ -1,20 +1,20 @@
 ---
 name: make-figures
-description: Ders şekillerini (ders-grafik SVG) ekler, düzeltir, siler ya da yeniden üretir. Adımlar üretici betik, center_figures, PNG ile gözle kontrol ve .qmd kutusuna yerleştirmedir; diferansiyel geometri için etkileşimli 3B sahneleri de kapsar. Kullanıcı "grafik/şema ekle", "şu şekil yanlış/ortalı değil/çok büyük", "diyagram az" dediğinde ya da bir taslakta `<!-- FIGURE: … -->` yer tutucusu kaldığında kullan.
+description: Adds, fixes, deletes or regenerates course figures (ders-grafik SVG). The steps are the generator script, center_figures, a visual check via PNG and placement inside the .qmd box; also covers the interactive 3D scenes for differential geometry. Use when the user says "grafik/şema ekle" (add a figure/diagram), "şu şekil yanlış/ortalı değil/çok büyük" (this figure is wrong/off-center/too big) or "diyagram az" (too few diagrams), or when a `<!-- FIGURE: … -->` placeholder is left in a draft.
 ---
 
-# Şekil yordamı
+# Figure procedure
 
-## 1. Hazırlık
+## 1. Preparation
 
-- `scripts/_figures/` gitignore'dadır ve yeni bir worktree'de bulunmaz; önce ilgili üretici betiği çalıştır.
-- `center_figures.py` için `rsvg-convert` PATH'te, Pillow da kurulu olmalı.
+- `scripts/_figures/` is gitignored and does not exist in a new worktree; run the relevant generator script first.
+- `center_figures.py` needs `rsvg-convert` on PATH and Pillow installed.
 
-## 2. Betiği seç
+## 2. Pick the script
 
-Önekler:
+Prefixes:
 
-| Betik | Önek |
+| Script | Prefix |
 |---|---|
 | `analysis_figures.py` | `analysis-` |
 | `analysis2_figures.py` | `analysis2-` |
@@ -25,75 +25,75 @@ description: Ders şekillerini (ders-grafik SVG) ekler, düzeltir, siler ya da y
 | `finance_figures.py` | `finance-` |
 | `probability_figures.py` | `probability-` |
 | `topology_figures.py` | `topology-` |
-| `stochastic_figures.py` | `figA`…`figG` (ortalanmaz) |
+| `stochastic_figures.py` | `figA`…`figG` (not centered) |
 | `real_analysis_figures.py` | `real-` |
-| `analytic_figures/<anahtar>.py` | `analytic-<anahtar>-` |
-| `statistics_figures/<anahtar>.py` | `statistics-<anahtar>-` |
-| `diffgeo_figures_extra/<anahtar>.py` | `diffgeo-<anahtar>-` (bağlantı formlarından sonraki DG bölümleri; `diffgeo_figures.py`'ye yeni şekil eklenmez) |
+| `analytic_figures/<key>.py` | `analytic-<key>-` |
+| `statistics_figures/<key>.py` | `statistics-<key>-` |
+| `diffgeo_figures_extra/<key>.py` | `diffgeo-<key>-` (DG chapters after connection forms; no new figures go into `diffgeo_figures.py`) |
 
-Yeni bir ders için `scripts/<konu>_figures.py` dosyasını İngilizce yaz:
+For a new course, write `scripts/<topic>_figures.py` in English:
 
-- 2B için `svg_plot.py`, 3B için `svg_plot3.py` üzerine kur (Camera/Space; azimut 35°, yükseklik 22°).
-- Docstring doğru `dersler/<ders>` yolunu ve "figures go INSIDE the box they explain" kuralını söylemeli.
-- `complex_figures.py` ve `crypto_figures.py` docstring'lerindeki "always OUTSIDE boxes" cümlesi eskidir; uyma.
+- Build on `svg_plot.py` for 2D and `svg_plot3.py` for 3D (Camera/Space; azimuth 35°, elevation 22°).
+- The docstring must state the correct `dersler/<course>` path and the "figures go INSIDE the box they explain" rule.
+- The "always OUTSIDE boxes" sentence in the `complex_figures.py` and `crypto_figures.py` docstrings is outdated; ignore it.
 
-## 3. Şekli yaz
+## 3. Write the figure
 
-- Her şekil kendi `"# " + "="*60` bantlı bölümünde durur: `figure(W, H, panels, caption, css_class="ders-grafik" | WIDE, aria="...")`.
-- Renkler için `THEORY`, `BASE`, `PRACTICE`, `REMARK`, `TEXT`, `BG` sabitlerini kullan; sabit hex yazma.
-- `Plot.label(x, y, s, dx, dy, …)`: dx/dy pikseldir ve pozitif dy aşağı demektir.
-- `aria` metni yalnız ASCII olur ve `<`/`>` içermez (rsvg XML hatası verir). Altyazı Türkçedir.
-- Fonksiyon ve dağılım grafiklerinde eksenler etiketlidir; ızgara için `Plot.grid()` var.
+- Each figure sits in its own section banded by `"# " + "="*60`: `figure(W, H, panels, caption, css_class="ders-grafik" | WIDE, aria="...")`.
+- Use the constants `THEORY`, `BASE`, `PRACTICE`, `REMARK`, `TEXT`, `BG` for colors; do not hard-code hex values.
+- `Plot.label(x, y, s, dx, dy, …)`: dx/dy are in pixels and positive dy means down.
+- The `aria` text is ASCII only and contains no `<`/`>` (rsvg throws an XML error). The caption is Turkish.
+- Function and distribution plots have labeled axes; `Plot.grid()` exists for grids.
 
-## 4. Tuzaklar
+## 4. Pitfalls
 
-- **Kırpma:** `Plot` kırpma yapmaz. Sınırsız nesneleri (hiperdüzlem, yarı düzlem, koni, asimptot) panele kırp. Hazır yardımcılar: `analysis2_figures.py`'de `clipped()`, `convex_figures.py`'de `clip_seg`/`clip_poly`.
-- **Oran:** Gerçek daire ve Venn için x ve y ölçeği eşit olmalı (`YR = XR*PH/PW`).
-- **Yazı tipi glifleri:** rsvg yazı tipinde ∪ ∖ ∈ ⊂ ⊆ ⋯ ∅ ∧ ∨ ¬ ⇒ ∥ kutucuk çıkar; sözcük, ASCII ya da HTML varlığı kullan. ∩ ≤ ≥ ≠ − ∞ → ℝ ℕ √ π sorunsuzdur.
-- **Yazı tipi ailesi:** Üretilen SVG'ye asla `font-family` (özellikle Georgia) yazma; Typst derlemesi kilitlenmişti. Birleşik üst çizgiyi `export_figures.lua` zaten işler.
-- **Dolgu:** Opak dolgulu daire içeriği örter; yarı saydam dolgu kullan.
-- **Etiket yeri:** Eğik bir doğrunun yanına yatay etiket koyma; etiketi karşı tarafa ya da boş banda taşı.
+- **Clipping:** `Plot` does not clip. Clip unbounded objects (hyperplane, half-plane, cone, asymptote) to the panel. Ready-made helpers: `clipped()` in `analysis2_figures.py`, `clip_seg`/`clip_poly` in `convex_figures.py`.
+- **Aspect ratio:** True circles and Venn diagrams need equal x and y scales (`YR = XR*PH/PW`).
+- **Font glyphs:** In the rsvg font ∪ ∖ ∈ ⊂ ⊆ ⋯ ∅ ∧ ∨ ¬ ⇒ ∥ render as boxes; use a word, ASCII or an HTML entity. ∩ ≤ ≥ ≠ − ∞ → ℝ ℕ √ π are fine.
+- **Font family:** Never write `font-family` (especially Georgia) into the generated SVG; it once hung the Typst build. `export_figures.lua` already handles the combining overline.
+- **Fill:** An opaque fill covers the circle's content; use a semi-transparent fill.
+- **Label position:** Do not put a horizontal label beside a slanted line; move the label to the other side or into an empty band.
 
-## 5. Üret ve ortala
+## 5. Generate and center
 
 1. `python scripts/<x>_figures.py`
-2. Ardından HER seferinde `python scripts/center_figures.py "<önek>-*.md"`. Desen verilmezse yalnız `complex-*.md` işlenir. Kare şekillerin dar sütuna (24rem) düşmemesi gereken kitaplarda (ör. analitik-geometri) `--keep-width` ekle.
-3. `python scripts/check_figure_labels.py "scripts/_figures/<önek>-*.md"` sonucu `problems: 0` olmalı: çakışan etiketleri, noktayı örten etiketi, tuvalden taşan ve 10 px'ten küçük yazıyı bulur. Çizgi–etiket çakışmasını görmez; onu gözle kontrol et.
+2. Then, EVERY time, `python scripts/center_figures.py "<prefix>-*.md"`. Without a pattern only `complex-*.md` is processed. In books where square figures must not drop into the narrow column (24rem) (e.g. analitik-geometri), add `--keep-width`.
+3. `python scripts/check_figure_labels.py "scripts/_figures/<prefix>-*.md"` must report `problems: 0`. It finds overlapping labels, labels covering a point, text overflowing the canvas and text smaller than 10 px. It does not see line–label overlaps; check those by eye.
 
-center_figures viewBox'ı içeriğe 14 birim pay bırakarak kırpar. Oran ≥ 0,72 olan geniş olmayan şekle `ders-grafik-dar` ekler.
+center_figures crops the viewBox to the content with a 14-unit margin. It adds `ders-grafik-dar` to a non-wide figure whose aspect ratio is ≥ 0.72.
 
-## 6. Gözle kontrol et
+## 6. Check by eye
 
-- Yeni ya da değişen her şekli açık ve koyu temada `rsvg-convert` ile PNG'ye çevir ve Read ile incele.
-- Aranacaklar: etiket çakışması, kırpma, yanlış tarafı boyanmış yarı düzlem, viewBox şişmesi.
-- Şekildeki sayılar, aralıklar ve parametreler ait olduğu kutunun metniyle birebir aynı olmalı.
-- Kullanıcı yanlış bir şema bildirirse aynı türdeki bütün şekilleri kendi çözümleriyle karşılaştır.
+- Convert every new or changed figure to PNG with `rsvg-convert` in both light and dark theme and inspect it with Read.
+- Look for: overlapping labels, clipping, a half-plane shaded on the wrong side, viewBox bloat.
+- Numbers, intervals and parameters in the figure must match the text of its box exactly.
+- If the user reports a wrong diagram, compare every figure of the same kind against its own solution.
 
-## 7. Yerleştir
+## 7. Place
 
-- `scripts/_figures/<önek>-<ad>.md` içeriğini (```` ```{=html} ```` bloğu) .qmd'de açıkladığı kutunun İÇİNE, ilgili paragrafın hemen altına yapıştır.
-- Tanım kutusuna koyma, hemen altına koy. `##` başlığın hemen altına da koyma.
-- Güncellemede eski bloğu `aria-label` ile bul ve bloğun tamamını değiştir.
-- Gömülü SVG'yi elle düzeltme.
-- Karşılaştırma yaparken satır sonlarını normalleştir: üretici betikler Windows'ta CRLF yazar, .qmd dosyaları LF'tir.
-- Silme: .qmd bloğunu, betikteki bantlı bölümü ve `scripts/_figures` dosyasını birlikte kaldır.
+- Paste the contents of `scripts/_figures/<prefix>-<name>.md` (a ```` ```{=html} ```` block) INSIDE the box it explains in the .qmd, right below the relevant paragraph.
+- Do not put it in a definition box; put it right below the box. Do not put it right below a `##` heading either.
+- When updating, find the old block by its `aria-label` and replace the whole block.
+- Do not hand-edit the embedded SVG.
+- Normalize line endings when comparing: the generator scripts write CRLF on Windows, while .qmd files are LF.
+- Deleting: remove the .qmd block, the banded section in the script and the `scripts/_figures` file together.
 
-## 8. Seçim ve boyut
+## 8. Selection and size
 
-- Kavramı görselleştiren ya da ispat fikrini taşıyan şekil konur; teoremi yalnız resimle tekrar eden şekil konmaz.
-- Boyutlar:
+- Add a figure that visualizes a concept or carries the idea of a proof; do not add one that merely restates a theorem as a picture.
+- Sizes:
   - `.ders-grafik`: 30rem
-  - `.ders-grafik-genis` (WIDE, çok panelli): 39rem
+  - `.ders-grafik-genis` (WIDE, multi-panel): 39rem
   - `.ders-grafik-dar`: 24rem
-- Bu CSS değerleri bütün dersleri etkiler; değiştirirsen kullanıcıya söyle.
+- These CSS values affect every course; tell the user if you change them.
 
-## 9. Etkileşimli 3B (yalnız diferansiyel-geometri)
+## 9. Interactive 3D (diferansiyel-geometri only)
 
-- ```` ```{ojs} ```` hücresinde `//| echo: false` ve `import {…} from "../ojs/scene3d.js"` kullanılır. Plotly `plotly.js-dist-min@2.35.2` ile yüklenir.
-- Sahne `:::: {.content-visible when-format="html:js"}` içinde durur, `.cozum` içinde değil.
-- OJS değişkenleri sayfa genelidir; her sahne kendi önekini kullanır.
-- PDF ve EPUB için aynı yere durağan bir SVG de konur.
+- A ```` ```{ojs} ```` cell uses `//| echo: false` and `import {…} from "../ojs/scene3d.js"`. Plotly is loaded as `plotly.js-dist-min@2.35.2`.
+- The scene sits inside `:::: {.content-visible when-format="html:js"}`, not inside `.cozum`.
+- OJS variables are page-global; each scene uses its own prefix.
+- For PDF and EPUB a static SVG is also placed at the same spot.
 
-## 10. Doğrula
+## 10. Verify
 
-`python scripts/build.py <ders>` çalıştır. Ardından şekle `_site`'ta (kutu içinde ve ortalı mı) ve PDF'te bak.
+Run `python scripts/build.py <course>`. Then look at the figure in `_site` (inside the box and centered?) and in the PDF.

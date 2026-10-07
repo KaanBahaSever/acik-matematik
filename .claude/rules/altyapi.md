@@ -8,40 +8,40 @@ paths:
   - ".github/**"
 ---
 
-# Altyapı kuralları (CSS, betikler, CI)
+# Infrastructure rules (CSS, scripts, CI)
 
 ## CSS
 
-- Renkleri `:root` belirteçleriyle yaz ve koyu tema karşılığını da ver. Belirteçler: `--academic-bg`, `--academic-text`, `--color-theory`, `--color-base`, `--color-practice`, `--color-remark`.
-  - Aynı palet `scripts/export_figures.lua` ve `scripts/center_figures.py` içinde de var. Birini değiştirirsen üçünü birlikte güncelle.
-- Mobil taşma:
-  - Kaydırma kabı (`overflow-x: auto`) şunların üzerindedir: `p`, `dd`, `blockquote`, `figcaption`, `ol/ul`, `table`.
-  - `li`'ye asla konmaz, çünkü madde işareti kırpılır. `body`/`html`'e de asla konmaz, çünkü yapışkan kenar çubuğu bozulur.
-  - `mjx-container[display]` üzerindeki dolgu ve görünür ince kaydırma çubuğu kaldırılmaz. Dolgu yoksa formülün tepesi kesilir, çubuk yoksa taşma görünmez.
-- Lua filtrelerinin ürettiği sınıf adları CSS ile sözleşmedir: `.collapsible*`, `.downloads*`, `.curriculum`, `.landing*`, `.course-list`, `.catalog-back`, `.calculator`, `.calc-*`.
-- CSS ya da düzen değişikliğini ölçmeden teslim etme.
-  - Genişlikler: telefon (390), tablet (768), masaüstü (1280, 1920) ve ultra geniş (2560). Açık ve koyu temaya bak.
-  - Komut: `python scripts/check_layout.py dersler/<ders>/<sayfa>.html --widths 390,768,1280,1920,2560`. Betik taşma olsa da 0 döner; `SONUC` satırını oku.
-  - Görsel bir şikâyette kök sebebi önce ölçerek bul.
+- Write colors as `:root` tokens and also give their dark-theme counterparts. Tokens: `--academic-bg`, `--academic-text`, `--color-theory`, `--color-base`, `--color-practice`, `--color-remark`.
+  - The same palette also lives in `scripts/export_figures.lua` and `scripts/center_figures.py`. If you change one, update all three together.
+- Mobile overflow:
+  - The scroll container (`overflow-x: auto`) sits on: `p`, `dd`, `blockquote`, `figcaption`, `ol/ul`, `table`.
+  - It never goes on `li`, because the bullet gets clipped. It never goes on `body`/`html` either, because the sticky sidebar breaks.
+  - The padding and the visible thin scrollbar on `mjx-container[display]` are never removed. Without the padding the top of the formula is cut off; without the scrollbar the overflow is invisible.
+- The class names produced by the Lua filters are a contract with the CSS: `.collapsible*`, `.downloads*`, `.curriculum`, `.landing*`, `.course-list`, `.catalog-back`, `.calculator`, `.calc-*`.
+- Never deliver a CSS or layout change without measuring it.
+  - Widths: phone (390), tablet (768), desktop (1280, 1920) and ultra-wide (2560). Check both the light and the dark theme.
+  - Command: `python scripts/check_layout.py dersler/<course>/<page>.html --widths 390,768,1280,1920,2560`. The script returns 0 even when there is overflow; read the `RESULT` line.
+  - For a visual complaint, find the root cause by measuring first.
 
-## Derleme ve dışa aktarma
+## Build and export
 
-- Bir Lua filtresi ya da `_kitap-ortak.yml` değişikliği bütün kitapları yeniden derletir; önce tek kitapla dene.
-- `build.py` her çalışmanın sonunda `scripts/seo.py`'yi çağırır. Betik `_site/sitemap.xml`'i bütün sayfalarla yeniden yazar ve her sayfaya `rel="canonical"` ekler. Adresler Cloudflare'in sunduğu biçimdedir: `.html` yok, `index.html` yerine `/`. Quarto'nun kendi site haritası yalnız portalı kapsadığı için bu adım kaldırılmaz. Aynı betik her sayfanın başına "İçeriğe geç" bağlantısını koyar, Quarto'nun `href=""` araç çubuğu bağlantılarını `href="#" role="button"` yapar ve `_site/llms.txt`'yi ders listesinden üretir.
-- Kök `_headers` (HSTS) ve `_redirects` dosyalarını `build.py` `_site/` altına kopyalar; Cloudflare Pages ikisini de okur.
-- İndirilebilir dosyalar PDF (Typst) ve EPUB'dur; DOCX yoktur.
-  - Her PDF sayfasının altında site adresi ve CC BY-NC-SA 4.0 lisansı bulunur (`scripts/export-assets/footer.typ`). EPUB'da `dc:rights` tanımlıdır. Export'u değiştirirken bunları koru.
-  - Dosyalardaki "Bu sürüm" tarihi son commit'ten gelir.
-- `_site`'ı `python -m http.server` ile sunduysan iş bitince kapat; açık kalırsa derleme `WinError 32` ile düşer.
+- A change to a Lua filter or to `_kitap-ortak.yml` rebuilds every book; try it on a single book first.
+- `build.py` calls `scripts/seo.py` at the end of every run. The script rewrites `_site/sitemap.xml` with all pages and adds `rel="canonical"` to every page. URLs use the form Cloudflare serves: no `.html`, and `/` instead of `index.html`. This step is never removed, because Quarto's own sitemap covers only the portal. The same script puts an "İçeriğe geç" (skip to content) link at the top of every page, turns Quarto's `href=""` toolbar links into `href="#" role="button"` and generates `_site/llms.txt` from the course list.
+- `build.py` copies the root `_headers` (HSTS) and `_redirects` files into `_site/`; Cloudflare Pages reads both.
+- The downloadable files are PDF (Typst) and EPUB; there is no DOCX.
+  - The bottom of every PDF page carries the site URL and the CC BY-NC-SA 4.0 license (`scripts/export-assets/footer.typ`). The EPUB defines `dc:rights`. Keep these when changing the export.
+  - The "Bu sürüm" (this version) date in the files comes from the last commit.
+- If you served `_site` with `python -m http.server`, stop it when you are done; if it stays open, the build fails with `WinError 32`.
 
 ## CI
 
-- `.github/workflows/deploy.yml` self-hosted bir Windows runner'da çalışır.
-- Adımlar yalnız `shell: powershell` ile yazılır; bash ve kurulum adımı eklenmez.
-- Fork PR'larına karşı job düzeyindeki `if:` koruması ve `secrets.*` kullanımı olduğu gibi kalır. Sır değerleri asla yazdırılmaz.
-- Derleme sırasında kod yürüten hiçbir şey eklenmez.
+- `.github/workflows/deploy.yml` runs on a self-hosted Windows runner.
+- Steps are written only with `shell: powershell`; no bash and no setup step is added.
+- The job-level `if:` guard against fork PRs and the use of `secrets.*` stay as they are. Secret values are never printed.
+- Nothing that executes code during the build is added.
 
-## Depo düzeni
+## Repository layout
 
-- Depoya yalnız kalıcı ve belgelenmiş araçlar girer; tek seferlik betikler scratchpad'de kalır.
-- Yeni bir altyapı dosyası (Lua filtresi, betik) eklersen nedenini kullanıcıya açıkla.
+- Only permanent, documented tools enter the repository; one-off scripts stay in the scratchpad.
+- If you add a new infrastructure file (Lua filter, script), explain the reason to the user.

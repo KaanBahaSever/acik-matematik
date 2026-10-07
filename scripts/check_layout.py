@@ -59,25 +59,25 @@ function measure(doc, win, width) {
   // visible control (Quarto's secondary nav, a <details>, our own toggle) opens it.
   const toc = q("#TOC") || q("nav.toc-active") || q("#quarto-margin-sidebar nav");
   const tocBox = box(toc);
-  let reach = tocBox && tocBox.visible ? "gorunur" : "yok";
-  if (reach === "yok") {
+  let reach = tocBox && tocBox.visible ? "visible" : "none";
+  if (reach === "none") {
     const toggles = [".quarto-btn-toggle", "#quarto-back-to-top", ".quarto-secondary-nav-title",
                      "[data-bs-target='#quarto-secondary-nav']", ".quarto-toc-toggle",
                      "details.quarto-toc summary", "#quarto-toc-toggle"];
     for (const sel of toggles) {
       const el = q(sel);
       const b = box(el);
-      if (b && b.visible) { reach = "dugme:" + sel; break; }
+      if (b && b.visible) { reach = "toggle:" + sel; break; }
     }
   }
   // The mobile panel built by scripts/mobile-toc.html: it must be visible,
   // carry links, open, and every link must point at a heading that exists.
   var mt = q("details.mobile-toc");
-  var mtInfo = "yok";
+  var mtInfo = "none";
   if (mt) {
     var mb = box(mt);
     if (!mb.visible) {
-      mtInfo = "gizli";
+      mtInfo = "hidden";
     } else {
       // Quarto rewrites TOC hrefs to absolute URLs, so read the hash off the
       // end of whatever the link carries.
@@ -93,12 +93,12 @@ function measure(doc, win, width) {
         if (!id || !doc.getElementById(id)) broken++;
       });
       mt.open = false;
-      mtInfo = "panel " + links.length + " baglanti, acilinca " + Math.round(closedH) +
-               "->" + Math.round(openH) + "px" + (broken ? ", KIRIK " + broken : "");
+      mtInfo = "panel " + links.length + " links, opened " + Math.round(closedH) +
+               "->" + Math.round(openH) + "px" + (broken ? ", BROKEN " + broken : "");
     }
   }
-  if (reach === "yok" || reach.indexOf("dugme") === 0) {
-    if (mtInfo.indexOf("panel") === 0) reach = "mobil panel";
+  if (reach === "none" || reach.indexOf("toggle") === 0) {
+    if (mtInfo.indexOf("panel") === 0) reach = "mobile panel";
   }
   return {
     width, scrollW: de.scrollWidth, clientW: de.clientWidth, mobileToc: mtInfo,
@@ -142,9 +142,9 @@ def free_port():
 
 def fmt_box(b):
     if not b:
-        return "yok"
+        return "none"
     if not b["visible"]:
-        return "gizli(%s)" % b["display"]
+        return "hidden(%s)" % b["display"]
     return "%d..%d (%d)" % (b["l"], b["r"], b["w"])
 
 
@@ -188,7 +188,7 @@ def main():
         wrapper.unlink(missing_ok=True)
 
     if not rows:
-        print("OLCUM YOK (sayfa yuklenmedi mi?)")
+        print("NO MEASUREMENTS (did the page load?)")
         sys.exit(1)
     page = None
     bad = 0
@@ -196,9 +196,9 @@ def main():
         if r.get("page") != page:
             page = r["page"]
             print("\n== %s" % page)
-            print("  %-6s %-11s %-18s %-22s %-18s %s" % ("genis", "tasma", "sol menu", "icerik (bosluk)", "sag icindekiler", "TOC"))
+            print("  %-6s %-11s %-18s %-22s %-18s %s" % ("width", "overflow", "left sidebar", "content (gaps)", "right TOC", "TOC"))
         if "error" in r:
-            print("  %-6d HATA %s" % (r["width"], r["error"]))
+            print("  %-6d ERROR %s" % (r["width"], r["error"]))
             bad += 1
             continue
         overflow = r["scrollW"] - r["clientW"]
@@ -206,14 +206,14 @@ def main():
         gap_r = (r["clientW"] - r["content"]["r"]) if r["content"] else 0
         print("  %-6d %-11s %-18s %-22s %-18s %s" % (
             r["width"],
-            "yok" if overflow <= 1 else "VAR +%d" % overflow,
+            "none" if overflow <= 1 else "YES +%d" % overflow,
             fmt_box(r["sidebar"]),
-            (fmt_box(r["content"]) + "  %d|%d" % (gap_l, gap_r)) if r["content"] else "yok",
+            (fmt_box(r["content"]) + "  %d|%d" % (gap_l, gap_r)) if r["content"] else "none",
             fmt_box(r["margin"]),
-            r["tocReach"] + ("  [%s]" % r.get("mobileToc") if r.get("mobileToc", "yok") != "yok" else "")))
+            r["tocReach"] + ("  [%s]" % r.get("mobileToc") if r.get("mobileToc", "none") != "none" else "")))
         if overflow > 1:
             bad += 1
-    print("\nSONUC: %s" % ("SORUN VAR" if bad else "tasma yok"))
+    print("\nRESULT: %s" % ("PROBLEMS FOUND" if bad else "no overflow"))
     return 0
 
 

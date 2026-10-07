@@ -167,7 +167,7 @@ OUT["skytale-izgara"] = figure(
     aria="Izgara modeli: satir satir yazma ve sutun sutun okuma yonleri")
 
 # ############################################################################
-# PART: Zigzag ve Rota
+# PART: Zigzag and Route
 # ############################################################################
 
 """Figures for the rail-fence / route cipher chapter
@@ -367,7 +367,7 @@ OUT["zigzag-rota-spirali"] = figure(
     aria="Uc carpi dort tabloda saat yonunde ice kivrilan spiral okuma rotasi")
 
 # ############################################################################
-# PART: Bacon Şifreleme
+# PART: Bacon Cipher
 # ############################################################################
 
 """Block diagrams for the Bacon cipher chapter
@@ -506,7 +506,7 @@ OUT["bacon-gizleme"] = figure(
     aria="Kediler sut sever cumlesinde harf bicimlerinden a/b dizisi ve MAT cozumu")
 
 # ############################################################################
-# PART: Sonlu Cisimler
+# PART: Finite Fields
 # ############################################################################
 
 """Figures for the "Sonlu Cisimler (Galois Cisimleri)" chapter (kriptografi)."""
@@ -627,7 +627,7 @@ OUT["sonlu-carpma-akisi"] = figure(
     aria="Iki baytin polinom carpimi ve m(x) ile indirgeme akis semasi")
 
 # ############################################################################
-# PART: DES ve 3DES
+# PART: DES and 3DES
 # ############################################################################
 
 """Block/flow diagrams for the DES chapter (kriptografi/simetrik/blok-sifreler/des.qmd).

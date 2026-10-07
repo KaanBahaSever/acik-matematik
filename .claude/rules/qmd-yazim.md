@@ -4,97 +4,97 @@ paths:
   - "dersler/**/_quarto.yml"
 ---
 
-# .qmd yazım kuralları
+# .qmd authoring rules
 
-## Dosya ve frontmatter
+## Files and frontmatter
 
-- Dosya adı küçük harfli, tireli ve Türkçe karaktersiz bir slug'dır (`cekirdek-ve-goruntu.qmd`). Taşımada `git mv` kullan.
-- Frontmatter sırası `title` → `pagetitle` → `description`.
-  - `pagetitle` numarasızdır ve kitap adı içermez; sekme başlığı olarak görünür.
-  - `description` içeriği özetleyen, özgün ve SEO'ya uygun tek bir cümledir.
-- Yeni bölümü hem `_quarto.yml`'deki `chapters`/`part:` listesine hem de `index.qmd` müfredat listesine ekle; bağlantısız bölüm PDF ve EPUB'a girmez. Hiçbir bölüm "Giriş" adını taşımaz.
+- A file name is a lowercase, hyphenated slug without Turkish characters (`cekirdek-ve-goruntu.qmd`). Use `git mv` when moving a file.
+- The frontmatter order is `title` → `pagetitle` → `description`.
+  - `pagetitle` has no number and does not contain the book name; it shows as the tab title.
+  - `description` is a single original, SEO-friendly sentence that summarizes the content.
+- Add a new chapter both to the `chapters`/`part:` list in `_quarto.yml` and to the curriculum list in `index.qmd`; an unlinked chapter does not get into the PDF and EPUB. No chapter is titled "Giriş" (Introduction).
 
-## Kutular
+## Boxes
 
-- Önekler: `def`, `thm`, `lem`, `cor`, `prp`, `exm`, `exr`. Aksiyomlar `def-` kutusunda verilir. `rem`, `cnj` ve `alg` kullanılmaz.
-- Etiketler:
-  - Yalnız `[a-z0-9-]` içerir, sayıyla başlamaz ve kitap genelinde tekildir. Sayılar Teorisi 1 ile 2 aynı ad alanını paylaşır.
-  - Yeni kitaplarda biçim `<önek>-<bölüm-anahtarı>-<ad>` olur. Yeni etiket vermeden önce kitapta ara.
-  - `{#sec-…}` kimlikleri tamamen küçük harflidir.
-- Kutu adı (`name="…"`) rakam ve noktayla başlamaz; "24. …" öneki sessizce yutulur.
-- Başlıklara ve kutu adlarına elle numara yazma, Quarto numaralar. İstisna: müfredat sayfasındaki `## 1. Bölüm — …` alt ders başlıkları, çünkü export birim adları bunlardan üretilir.
-- İspat ve çözüm, ait olduğu kutunun İÇİNDE `::: {.ispat}` ya da `::: {.cozum}` olarak durur.
-  - Bu bloklar varsayılan olarak kapalıdır. `baslik="…"` özel başlık verir, `acik="true"` bloğu açık başlatır.
-  - Eski `callout collapse="true"` kalıbını yeni yazımda kullanma.
-- İki nokta derinliği kitaba göre değişir. Mevcut kitabı asla yeniden girintileme:
+- Prefixes: `def`, `thm`, `lem`, `cor`, `prp`, `exm`, `exr`. Axioms are given in a `def-` box. `rem`, `cnj` and `alg` are not used.
+- Labels:
+  - Contain only `[a-z0-9-]`, never start with a digit and are unique across the book. Sayılar Teorisi 1 and 2 share one namespace.
+  - In new books the form is `<prefix>-<chapter-key>-<name>`. Search the book before assigning a new label.
+  - `{#sec-…}` identifiers are entirely lowercase.
+- A box name (`name="…"`) never starts with a digit and a period; a "24. …" prefix is silently swallowed.
+- Never write numbers into headings or box names by hand; Quarto numbers them. Exception: the `## 1. Bölüm — …` sub-course headings on the curriculum page, because the export unit names are generated from them.
+- A proof or a solution sits INSIDE the box it belongs to, as `::: {.ispat}` or `::: {.cozum}`.
+  - These blocks are collapsed by default. `baslik="…"` gives a custom title, `acik="true"` starts the block expanded.
+  - Do not use the old `callout collapse="true"` pattern in new writing.
+- The colon depth varies by book. Never re-indent an existing book:
 
-  | Derinlik (dış / iç) | Kitaplar |
+  | Depth (outer / inner) | Books |
   |---|---|
   | 4 / 3 | analiz-1, analiz-2, diferansiyel-geometri, olasilik-teorisi, sayilar-teorisi, topoloji, diferansiyel-denklemler, finans-matematigi |
   | 3 / 3 | kompleks-analiz, lineer-cebir, soyut-cebir-1, matematigin-temelleri, kismi-diferansiyel-denklemler |
-  | tanım 4; ispatlı kutu 5 / 4 | konveks-analiz |
-  | içinde ispat ya da çözüm olmayan kutu 3; olan kutu 4 / 3 | yeni kitaplar |
+  | definition 4; box with a proof 5 / 4 | konveks-analiz |
+  | box with no proof or solution inside 3; box with one 4 / 3 | new books |
 
-- Her ispat ve çözüm bir `{.qed}` işaretiyle biter. Yeni yazımda `[$\blacksquare$]{.qed}` kullan. Mevcut `\boxtimes` işaretlerine ve konveks-analiz'in işaretsiz çözümlerine dokunma.
-- **Her `exm-` ya da `exr-` kutusu tek soru içerir.**
-  - (a)(b)(c) şıkları ayrı kutulara bölünür. Etiketler `-a`, `-b` gibi sonek alır, `name` değerleri farklı ve açıklayıcı olur, ortak kurulum her kutuda kısaca yinelenir.
-  - Her alıştırmanın adım adım bir `.cozum` bloğu vardır; tek satırlık "Yanıt:" yazılmaz.
-  - Kontrol: `python scripts/check_box_questions.py <dosyalar>`.
-- Bir tanım kutusu tek kavram içerir; birbirini tamamlayan ikilikler istisnadır.
-  - Atıf yapılan ya da alıştırmalarda kullanılan bir kavram düz metinde kalmaz, bir `def-` kutusuna alınır.
-  - Bir sınıflandırmada her tür kendi kutusunda olur.
-  - Tanımdan sonra "Yani …" diye başlayan sade bir açıklama gelir.
-- Callout'ları seyrek kullan (note, tip, warning, important).
-  - `.cozum`/`.ispat` bloklarının ve örnek kutularının içine callout koyma.
-  - Bir yöntem öğretilirken önce "X adımda …" başlıklı kısa bir `callout-tip` reçetesi, hemen ardından onu uygulayan çözümlü örnek gelir.
+- Every proof and solution ends with a `{.qed}` mark. In new writing use `[$\blacksquare$]{.qed}`. Do not touch the existing `\boxtimes` marks or the unmarked solutions of konveks-analiz.
+- **Every `exm-` or `exr-` box contains a single question.**
+  - Parts (a)(b)(c) are split into separate boxes. The labels take suffixes such as `-a`, `-b`, the `name` values are distinct and descriptive, and the shared setup is briefly repeated in each box.
+  - Every exercise has a step-by-step `.cozum` block; never write a one-line "Yanıt:" (Answer:).
+  - Check: `python scripts/check_box_questions.py <files>`.
+- A definition box holds a single concept; complementary pairs are the exception.
+  - A concept that is cited or used in exercises does not stay in plain text; it goes into a `def-` box.
+  - In a classification, each type gets its own box.
+  - A definition is followed by a plain explanation that starts with "Yani …".
+- Use callouts sparingly (note, tip, warning, important).
+  - Never put a callout inside `.cozum`/`.ispat` blocks or example boxes.
+  - When a method is taught, a short `callout-tip` recipe titled "X adımda …" (in X steps) comes first, immediately followed by a worked example that applies it.
 
-## Metin ve gösterim
+## Text and notation
 
-- Yeni yazımda bir `##` başlığın hemen altına önce bağlayıcı bir cümle gelir. Hiçbir kitapta başlığın hemen altına şekil konmaz. Mevcut bölümleri bu kural için yeniden yazma.
-- Bölüm, sonraki bölüme `[Ad](dosya.qmd)` bağlantısı veren kısa bir kapanışla biter.
-- Satır başındaki `19.`, `II.`, `(f)` gibi diziler kazara liste açar. Kapanış ayracını kaçır: `19\.`, `II\.`, `(f\)`. Açılış ayracını asla kaçırma, çünkü `\(` LaTeX'tir.
-- Atıf:
-  - Kitap içinde `@etiket` kullanılır.
-  - lineer-cebir ve soyut-cebir-1 `@` kullanmaz, yalnız dosya bağlantısı kullanır. Topoloji bölüm içinde `@`, bölümler arasında dosya bağlantısı kullanır.
-  - Kitaplar arasında `@` çalışmaz; biçim `bkz. [Analiz 1](../analiz-1/<bölüm>.html#etiket)` olur.
-  - Yeni yazımda `@sec-…'ndeki` gibi atfa bitişik ek yazma. Mevcut olanları toplu düzeltme.
-- Gösterim:
-  - Ondalık ayırıcı virgüldür: `$0{,}6$`.
-  - Boş küme `\varnothing`.
-  - Parçalı fonksiyonda `\text{diğer durumlarda}`.
-  - Yazımlar "rastgele" ve "keyfi".
-  - `\tag{n}` numaraları bölüm içinde 1'den sırayla artar.
-- Teknik tuzaklar:
-  - MathJax'ta olmayanlar: `\centernot`, `psmallmatrix`.
-  - Alt ve üst integral `\underline{I}(f)`, `\overline{I}(f)` diye yazılır; `\underline{\int}` Typst'i bozar.
-  - Pandoc'un tanımadığı yeni bir makro PDF'i durdurur. Karşılığını `scripts/export_math.lua` içindeki `MACROS` tablosuna ekle.
-- İngilizce kaynaklı kitaplarda terimin İngilizcesi ilk geçişte parantez içinde verilir. Türkçe kaynaklı kitaplarda kitabın mevcut alışkanlığına uy.
-- Mobil genişlik bütçesi:
-  - Satır içi formül en çok 16,5em, kutu içinde 14,5em.
-  - Görüntü formülü en çok 34em.
-  - Uzun hesabı `$$ … $$` ve `aligned` ile böl: satır sonu `\\[1mm]`, devam satırı `&\quad`. Bölerken adımları silme.
-  - Kontrol: `python scripts/check_math_width.py <ders>`.
-- Çözümler dersin o noktada öğrettiği yöntemle yapılır; daha ileri bir yöntem ancak ek yol olarak verilir. Σ içeren karmaşık ifadeler terim terim açılır. Zor bir problemden önce gerekirse kolaydan zora 2–3 ısınma sorusu çözülür.
+- In new writing, a `##` heading is immediately followed by a connecting sentence. In no book is a figure placed right below a heading. Do not rewrite existing chapters for this rule.
+- A chapter ends with a short closing that links to the next chapter with `[Name](file.qmd)`.
+- Sequences such as `19.`, `II.`, `(f)` at the start of a line accidentally open a list. Escape the closing delimiter: `19\.`, `II\.`, `(f\)`. Never escape the opening parenthesis, because `\(` is LaTeX.
+- Cross-references:
+  - Within a book, use `@label`.
+  - lineer-cebir and soyut-cebir-1 do not use `@`, only file links. Topoloji uses `@` within a chapter and file links between chapters.
+  - `@` does not work across books; the form is `bkz. [Analiz 1](../analiz-1/<chapter>.html#label)`.
+  - In new writing, never attach a suffix to a reference, as in `@sec-…'ndeki`. Do not bulk-fix existing ones.
+- Notation:
+  - The decimal separator is a comma: `$0{,}6$`.
+  - The empty set is `\varnothing`.
+  - In a piecewise function: `\text{diğer durumlarda}`.
+  - The spellings are "rastgele" and "keyfi".
+  - `\tag{n}` numbers increase sequentially from 1 within a chapter.
+- Technical pitfalls:
+  - Not available in MathJax: `\centernot`, `psmallmatrix`.
+  - Lower and upper integrals are written `\underline{I}(f)`, `\overline{I}(f)`; `\underline{\int}` breaks Typst.
+  - A new macro that Pandoc does not recognize halts the PDF. Add its equivalent to the `MACROS` table in `scripts/export_math.lua`.
+- In books based on English sources, the English term is given in parentheses at its first occurrence. In books based on Turkish sources, follow the book's existing habit.
+- Mobile width budget:
+  - An inline formula is at most 16.5em, 14.5em inside a box.
+  - A display formula is at most 34em.
+  - Split a long calculation with `$$ … $$` and `aligned`: line end `\\[1mm]`, continuation line `&\quad`. Do not delete steps when splitting.
+  - Check: `python scripts/check_math_width.py <course>`.
+- Solutions use the method the course teaches at that point; a more advanced method may be given only as an additional route. Complicated expressions containing Σ are expanded term by term. Before a hard problem, solve 2–3 warm-up questions from easy to hard if needed.
 
-## Şekiller
+## Figures
 
-- Şekil, açıkladığı teorem, ispat, örnek, çözüm ya da callout kutusunun İÇİNDE durur: ilgili paragrafın hemen altında ve ortalı. Tanım kutusunun içine değil, hemen altına konur. Bir çözümün farklı adımları ayrı şekillerdir.
-  - lineer-programlama'da tek şekilli bir çözümün şekli çözümün en başında durur (okur önce resmi görür). Alt problemleri ya da iterasyonları adım adım izleyen şekiller ilgili adımın yanında kalır.
-- Derleme sırasında yürütülen kod hücresi (python, r, Jupyter) yoktur. Şekiller `scripts/*_figures.py` ile üretilip `.qmd`'ye gömülür; ayrıntılar `make-figures` becerisinde. Tek istisna diferansiyel-geometri'deki, tarayıcıda çalışan OJS 3B sahneleridir.
-- Gömülü SVG elle düzeltilmez: üretici betik düzeltilir ve şekil yeniden üretilir.
+- A figure sits INSIDE the theorem, proof, example, solution or callout box it explains: right below the relevant paragraph, centered. It is never placed inside a definition box, but right below it. Different steps of a solution get separate figures.
+  - In lineer-programlama, the figure of a single-figure solution sits at the very start of the solution (the reader sees the picture first). Figures that follow subproblems or iterations step by step stay next to the relevant step.
+- There are no code cells executed at build time (python, r, Jupyter). Figures are produced by `scripts/*_figures.py` and embedded in the `.qmd`; the details are in the `make-figures` skill. The only exception is the browser-run OJS 3D scenes in diferansiyel-geometri.
+- An embedded SVG is never fixed by hand: fix the generator script and regenerate the figure.
 
-## Müfredat sayfası (`index.qmd`)
+## Curriculum page (`index.qmd`)
 
 - YAML:
   - `title: "# Müfredat ve Giriş {.unnumbered}"`
   - `pagetitle: "Müfredat ve Giriş"`
   - `description`
   - `number-sections: false`
-- Sayfada kısa bir giriş ve yalnız bağlantılardan oluşan bir liste bulunur.
-- `scripts/export.py` her `##` başlığını bir alt ders (ayrı PDF/EPUB) sayar.
-  - "Ders İçeriği", "İçindekiler", "Müfredat" ve "Konular" genel başlıklardır ve tek birim demektir.
-  - Alt ders olmayan içerik için `##` açma, callout kullan.
-- Sayfa başındaki tek satırlık `callout-note appearance="simple"` durum notu bir gelenektir, zorunlu değildir.
-- Şunlar eklenmez: "Notların kullanımı", sınav ya da notlandırma bilgisi, "yazım aşamasındaki başlıklar" grubu.
-- Kaynağın kapsamadığı müfredat başlıkları bazı derslerde bağlantısız kaldı, bazılarında silindi. Mevcutlara dokunma; yeni bir derste kullanıcıya sor.
-- İndirme panelini `downloads.lua` sayfanın sonuna kendisi ekler. Panele açıklama cümlesi ekleme.
+- The page holds a short introduction and a list made only of links.
+- `scripts/export.py` treats every `##` heading as a sub-course (a separate PDF/EPUB).
+  - "Ders İçeriği", "İçindekiler", "Müfredat" and "Konular" are generic headings and mean a single unit.
+  - Do not open a `##` for content that is not a sub-course; use a callout.
+- The one-line `callout-note appearance="simple"` status note at the top of the page is a tradition, not a requirement.
+- Never added: a "Notların kullanımı" (how to use the notes) section, exam or grading information, a "yazım aşamasındaki başlıklar" (topics being written) group.
+- Curriculum topics not covered by the source were left unlinked in some courses and deleted in others. Do not touch the existing ones; in a new course, ask the user.
+- `downloads.lua` appends the download panel to the end of the page by itself. Do not add an explanatory sentence to the panel.

@@ -1112,31 +1112,31 @@ body:not(.quarto-dark) .navbar .navbar-toggler-icon {
   border-color: var(--bs-border-color, #d9d5cd);
 }
 /* ==========================================================================
-   10. MOBİL DÜZEN
+   10. MOBILE LAYOUT
    --------------------------------------------------------------------------
-   Ana sorun: uzun görüntü formülleri, geniş tablolar ve kod blokları
-   sayfayı viewport'tan geniş hale getiriyordu. Sayfa genişleyince tüm
-   metin ekranın dışına taşıyor, satırlar kırpılmış gibi görünüyordu.
-   Çözüm: taşabilecek her öğeyi kendi içinde kaydırılabilir yapmak.
+   The main problem: long display formulas, wide tables and code blocks
+   made the page wider than the viewport. Once the page widened, all the
+   text ran off the screen and the lines looked clipped.
+   Fix: make every element that can overflow scroll within itself.
    ========================================================================== */
 
-/* Not: body'ye overflow-x:hidden VERİLMEZ. Verildiğinde ekrandan geniş
-   formüller kaydırılamadan kırpılıyor ve içerik okunamaz hale geliyor.
-   Bunun yerine taşabilecek her öğe kendi içinde kaydırılabilir yapılır. */
+/* Note: body is NOT given overflow-x:hidden. With it, formulas wider than
+   the screen are clipped instead of scrolling and the content becomes
+   unreadable. Instead, every element that can overflow scrolls by itself. */
 html,
 body {
   max-width: 100%;
 }
 
-/* Görüntü (display) formülleri kendi içinde kaysın.
+/* Display formulas scroll within themselves.
 
-   Yatay kaydırma açıldığı anda kutu bir "kaydırma kabı" olur ve tarayıcı,
-   kutunun dışına taşan her şeyi keser. MathJax'in bildirdiği kutu ise
-   formülün mürekkebine tam oturur: üs, şapka, kök çizgisi, integral işareti
-   gibi öğeler kutunun bir-iki piksel dışına çıkabildiği için formüllerin
-   ÜST tarafı kırpılmış görünüyordu. Aşağıdaki iç boşluk, kesme sınırını
-   mürekkepten uzaklaştırır. (overflow-x kaydırma iken overflow-y'nin
-   `visible` kalması CSS'te mümkün değildir; bu yüzden çözüm dolgudur.) */
+   As soon as horizontal scrolling is on, the box becomes a "scroll
+   container" and the browser clips everything that overflows it. The box
+   MathJax reports, however, fits the formula's ink exactly: exponents, hats,
+   radical bars and integral signs can stick out of it by a pixel or two, so
+   the TOP of formulas looked clipped. The padding below moves the clipping
+   edge away from the ink. (While overflow-x scrolls, CSS cannot keep
+   overflow-y `visible`; that is why the fix is padding.) */
 mjx-container[display="true"],
 .MathJax_Display,
 .math.display {
@@ -1144,15 +1144,15 @@ mjx-container[display="true"],
   overflow-y: hidden;
   max-width: 100%;
   padding-top: 0.3em;
-  padding-bottom: 0.4em;    /* kaydırma çubuğu formülü kesmesin */
+  padding-bottom: 0.4em;    /* keep the scrollbar off the formula */
 }
 
-/* Kapsayıcısına sığmayan formülün kaydırma çubuğu HER ZAMAN görünür olsun.
-   Windows'ta Chrome/Edge'in üzerine gelmeden görünmeyen (overlay) çubukları
-   yüzünden, sağı kaydırma kabında gizlenen bir formül "yarıda kesilmiş"
-   sanılıyordu. WebKit sözde-öğeleri tanımlanınca tarayıcı klasik, kalıcı
-   çubuğa döner; taşma yoksa hiçbir şey çizilmez. Renk her iki temada da
-   çalışan nötr bir gri. */
+/* The scrollbar of a formula that does not fit its container is ALWAYS
+   visible. Chrome/Edge on Windows use overlay bars that only show on hover,
+   so a formula whose right side sat hidden in the scroll container was
+   taken for one "cut off halfway". Once the WebKit pseudo-elements are
+   defined the browser returns to the classic, permanent bar; with no
+   overflow nothing is drawn. The colour is a neutral grey for both themes. */
 mjx-container[display="true"] {
   scrollbar-width: thin;                                /* Firefox */
   scrollbar-color: rgba(128, 128, 128, 0.55) transparent;
@@ -1171,9 +1171,9 @@ mjx-container[display="true"]::-webkit-scrollbar-thumb {
   border-radius: 3px;
 }
 
-/* MathJax, görüntü formüllerine min-width veriyor; bu değer kapsayıcıyı
-   ekrandan geniş yapıp TÜM sayfayı yatayda esnetiyordu. Asıl mobil taşma
-   sebebi buydu. */
+/* MathJax gives display formulas a min-width; that value made the container
+   wider than the screen and stretched the WHOLE page horizontally. This was
+   the real cause of the mobile overflow. */
 mjx-container[display="true"] {
   min-width: 0 !important;
 }
@@ -1278,7 +1278,7 @@ mjx-container:not([display="true"]) {
   max-width: 100%;
 }
 
-/* Tablolar ve kod blokları da kendi içinde kaysın */
+/* Tables and code blocks scroll within themselves too */
 #quarto-document-content table {
   display: block;
   width: fit-content;
@@ -1291,14 +1291,14 @@ mjx-container:not([display="true"]) {
   overflow-x: auto;
 }
 
-/* Uzun kelimeler ve adresler satırı taşırmasın */
+/* Long words and addresses must not overflow the line */
 #quarto-document-content,
 .sidebar-item-text,
 .collapsible-title {
   overflow-wrap: break-word;
 }
 
-/* Uzun bölüm başlıkları taşmasın */
+/* Long chapter headings must not overflow */
 #quarto-document-content h1,
 #quarto-document-content h2,
 #quarto-document-content h3,
@@ -1308,12 +1308,12 @@ mjx-container:not([display="true"]) {
 }
 
 @media (max-width: 991.98px) {
-  /* Geniş ekran için tanımlanan sabit genişlikler mobilde geçersiz */
+  /* Fixed widths defined for wide screens do not apply on mobile */
   #quarto-document-content {
     max-width: 100%;
   }
 
-  /* Sol menüdeki uzun ders/bölüm adları kutudan taşıyordu */
+  /* Long course/chapter names in the left menu overflowed their box */
   #quarto-sidebar .sidebar-item-text,
   #quarto-sidebar .chapter-title {
     white-space: normal;
@@ -1322,16 +1322,16 @@ mjx-container:not([display="true"]) {
 }
 
 @media (max-width: 575.98px) {
-  /* Numaralandırılmış ve madde işaretli listelerin girintisi mobilde
-     içeriği ekranın ortasına itiyordu; asgari girintiye çekildi. */
+  /* On mobile the indent of numbered and bulleted lists pushed the content
+     towards the middle of the screen; it is cut down to the minimum. */
   #quarto-document-content ol,
   #quarto-document-content ul {
     padding-left: 1.35em;
   }
 
-  /* Kutu içindeki listeler daha dar; yine de en geniş madde işareti
-     ("iii.", "10.") bu boşluğa sığmalı, çünkü liste artık kendi içinde
-     kayan bir kutudur ve işaret bu dolgunun dışına taşarsa kırpılır. */
+  /* Lists inside a box are narrower; still, the widest marker ("iii.",
+     "10.") must fit in this space, because the list is now a box that
+     scrolls by itself and a marker sticking out of this padding is clipped. */
   .theorem ol,
   .theorem ul,
   .callout-body ol,
@@ -1341,14 +1341,14 @@ mjx-container:not([display="true"]) {
     padding-left: 1.9em;
   }
 
-  /* Teorem/örnek kutularının iç boşluğu mobilde küçültülür */
+  /* The inner padding of theorem/example boxes shrinks on mobile */
   .theorem,
   .remark {
     padding: 0.85em 0.9em;
     margin: 1.2em 0;
   }
 
-  /* Callout kutuları da aynı oranda daralır */
+  /* Callout boxes narrow by the same amount */
   div.callout.callout-style-default > .callout-header {
     padding: 0.85em 0.9em 0 0.9em;
   }
@@ -1361,7 +1361,7 @@ mjx-container:not([display="true"]) {
     padding: 0.8em 0.9em;
   }
 
-  /* Bölüm başlıklarını biraz küçült, uzun başlıklar 4 satıra yayılmasın */
+  /* Shrink chapter headings a little so long ones do not run to 4 lines */
   #quarto-document-content h1,
   #title-block-header h1 {
     font-size: 1.6rem;
@@ -1372,7 +1372,7 @@ mjx-container:not([display="true"]) {
     font-size: 1.3rem;
   }
 
-  /* Gövde tipografisi mobilde bir tık küçük daha rahat okunuyor */
+  /* Body text reads more comfortably a notch smaller on mobile */
   body {
     font-size: 0.97rem;
   }
@@ -1466,11 +1466,11 @@ mjx-container:not([display="true"]) {
 }
 
 /* ==========================================================================
-   11. ÇOK BÖLÜMLÜ DERSLER (Cebir 1 / 2 / 3 gibi)
+   11. MULTI-PART COURSES (such as Cebir 1 / 2 / 3)
    --------------------------------------------------------------------------
-   Bir ders birden fazla alt derse ayrıldığında her alt ders _quarto.yml
-   içinde bir "part" olur. Sol menüde bu grup başlıkları, normal bölüm
-   satırlarından açıkça ayrılsın diye belirginleştirildi.
+   When a course is split into several sub-courses, each sub-course becomes
+   a "part" in _quarto.yml. In the left menu these group headings are made
+   prominent so that they stand clearly apart from the ordinary chapter rows.
    ========================================================================== */
 #quarto-sidebar .sidebar-item-section > .sidebar-item-container .menu-text {
   font-weight: 650;
@@ -1483,31 +1483,31 @@ mjx-container:not([display="true"]) {
   border-top: 1px solid var(--bs-border-color, #e6e2da);
 }
 
-/* İlk grup başlığının üstünde gereksiz çizgi olmasın */
+/* No needless rule above the first group heading */
 #quarto-sidebar .sidebar-item-section:first-of-type > .sidebar-item-container {
   border-top: none;
   margin-top: 0;
   padding-top: 0;
 }
 
-/* Grup içindeki bölümler biraz içeride ve daha sakin dursun */
+/* Chapters inside a group sit a little further in and look calmer */
 #quarto-sidebar .sidebar-item-section .sidebar-item .sidebar-item-text {
   font-weight: 400;
 }
 
 /* ==========================================================================
-   12. MÜFREDAT KUTUSU (DERS İÇERİĞİ)
+   12. CURRICULUM BOX ("Ders İçeriği")
    --------------------------------------------------------------------------
-   Kaynak dosyalarda müfredat iki farklı biçimde yazılmış:
+   In the .qmd files the curriculum is written in two different shapes:
 
-     A)  * **Grup adı**            B)  **Grup adı**
-           * konu                      * konu
-           * konu                      * konu
+     A)  * **Group name**          B)  **Group name**
+           * topic                     * topic
+           * topic                     * topic
 
-   scripts/collapsible.lua bu iki biçimi tek yapıya indirger ve ardışık
-   grupların tamamını tek bir <div class="curriculum"> içine alır. Bölüm
-   başlığı (## Sayılar Teorisi 1 ...) kutunun DIŞINDA kalır; kutunun
-   içinde ikinci bir çerçeve yoktur.
+   scripts/collapsible.lua reduces both shapes to a single structure and
+   wraps every run of consecutive groups in one <div class="curriculum">.
+   The section heading (## Sayılar Teorisi 1 ...) stays OUTSIDE the box;
+   there is no second frame inside the box.
    ========================================================================== */
 .curriculum {
   background-color: var(--curriculum-panel);
@@ -1517,7 +1517,7 @@ mjx-container:not([display="true"]) {
   margin: 1.5rem 0 2.4rem 0;
 }
 
-/* --- Grup etiketi --- */
+/* --- Group label --- */
 .curriculum > p {
   margin: 1.7em 0 0.5em 0;
 }
@@ -1534,7 +1534,7 @@ mjx-container:not([display="true"]) {
   letter-spacing: 0.01em;
 }
 
-/* --- Konu listesi --- */
+/* --- Topic list --- */
 .curriculum > ul {
   margin: 0;
   padding-left: 1.4em;
@@ -1554,7 +1554,7 @@ mjx-container:not([display="true"]) {
   font-size: 0.85em;
 }
 
-/* --- Hazır notlara giden bağlantılar: etiketten farklı renk, çizgisiz --- */
+/* --- Links to finished notes: a different colour from the label, no underline --- */
 #quarto-document-content .curriculum a:not(.btn):not(.catalog-back):not(.quarto-navigation-tool) {
   color: var(--color-theory);
   border-bottom: none;
@@ -1569,7 +1569,7 @@ mjx-container:not([display="true"]) {
   text-decoration: none;
 }
 
-/* --- Başlıktan hemen sonra gelen liste nefes alsın (ders metinleri) --- */
+/* --- A list right after a heading gets room to breathe (lecture texts) --- */
 #quarto-document-content h1 + ul,
 #quarto-document-content h2 + ul,
 #quarto-document-content h3 + ul,
@@ -1589,19 +1589,19 @@ mjx-container:not([display="true"]) {
 }
 
 /* ==========================================================================
-   13. KATLANIR BLOK İŞARETLERİ VE DERS KATALOĞU
+   13. COLLAPSIBLE BLOCK MARKERS AND COURSE CATALOG
    ========================================================================== */
 
-/* --- İspat/Çözüm işaretleri: bulundukları kutunun sembolüyle aynı ---
-   İspat blokları teorem kutusunun, çözümler örnek kutusunun içinde yer alır.
-   Kapalıyken kutu başlığındaki sembolün aynısı görünür; tıklanınca sembol
-   aşağıyı gösterecek biçimde döner.
+/* --- Proof/solution markers: the same symbol as the box they sit in ---
+   Proof blocks sit inside the theorem box, solutions inside the example box.
+   When closed they show the same symbol as the box title; when clicked the
+   symbol turns to point downwards.
 
-     İspat  : ▲  (teoremle aynı)  → açıkken ▼  (180°)
-     Çözüm  : ▷  (örnekle aynı)   → açıkken ▽  (90°)
+     Proof    : ▲  (same as theorem)  → open ▼  (180°)
+     Solution : ▷  (same as example)  → open ▽  (90°)
 
-   Blok türü scripts/collapsible.lua tarafından .collapsible--proof / .collapsible--solution
-   sınıfı olarak yazılır. */
+   scripts/collapsible.lua writes the block kind as the .collapsible--proof /
+   .collapsible--solution class. */
 .collapsible-title::before {
   content: "▲";
   transform: none;
@@ -1619,7 +1619,7 @@ mjx-container:not([display="true"]) {
   transform: rotate(90deg);
 }
 
-/* Başlık rengi bulunduğu kutunun başlık rengiyle aynı olsun. */
+/* The title takes the title colour of the box it sits in. */
 .theorem .collapsible-title {
   color: var(--color-theory);
 }
@@ -1635,16 +1635,16 @@ mjx-container:not([display="true"]) {
   color: var(--color-base);
 }
 
-/* --- 4) Ders kataloğunda ders adları biraz daha büyük --- */
+/* --- 4) Course names in the course catalog are a little larger --- */
 .course-list li {
   font-size: 1.3rem;
   margin-bottom: 0.55em !important;
 }
 
-/* --- Ders kataloğu bağlantıları: içerik bağlantı stilinden muaf ---
-   Bölüm 3c'deki kural #quarto-document-content ile başladığı için
-   .course-list'nden daha özgüldü ve katalog adlarını turkuaz + altı
-   çizili yapıyordu. Burada aynı özgüllükle geri alınıyor. */
+/* --- Course catalog links: exempt from the content link style ---
+   The rule in section 3c starts with #quarto-document-content, so it was
+   more specific than .course-list and made the catalog names teal and
+   underlined. It is undone here with the same specificity. */
 #quarto-document-content .course-list a:not(.btn):not(.catalog-back):not(.quarto-navigation-tool) {
   color: var(--academic-text);
   border-bottom: none;
@@ -1659,39 +1659,39 @@ mjx-container:not([display="true"]) {
 }
 
 /* ==========================================================================
-   15. DENKLEM BOŞLUKLARI
+   15. EQUATION SPACING
    --------------------------------------------------------------------------
-   Satır aralığının kendisi _kitap-ortak.yml içindeki `linestretch` ile
-   veriliyor. Burada yalnızca görüntü (display) formüllerinin çevresindeki
-   dikey boşluk ayarlanıyor: MathJax'in varsayılan 1em'lik payı, bir teorem/
-   tanım/örnek başlığının hemen ardından gelen formülü başlığa yapıştırıyordu.
+   The line spacing itself comes from `linestretch` in _kitap-ortak.yml.
+   Only the vertical space around display formulas is adjusted here:
+   MathJax's default 1em margin glued a formula that comes right after a
+   theorem/definition/example title to that title.
 
-   Formül kendi <p>'sinin tek çocuğu olduğu için üst/alt paylar paragrafla
-   birleşir (margin collapsing); tek noktadan ayar yapmak yeterli.
+   The formula is the only child of its own <p>, so its top/bottom margins
+   merge with the paragraph's (margin collapsing); one setting is enough.
    ========================================================================== */
-/* Not: kutunun kendisine 0.3em/0.4em dolgu verildiği için (bölüm 10),
-   paylar o kadar küçültülür; sayfadaki dikey ritim değişmez. */
+/* Note: the box itself gets 0.3em/0.4em of padding (section 10), so the
+   margins shrink by that much; the vertical rhythm of the page is unchanged. */
 mjx-container[display="true"],
 .math.display {
   margin-top: 1.2em !important;
   margin-bottom: 1.1em !important;
 }
 
-/* Kutunun ilk satırı formülse yukarıda fazladan boşluk oluşmasın */
+/* No extra space on top when the first line of a box is a formula */
 .theorem > p:first-child > mjx-container[display="true"],
 .callout-body > p:first-child > mjx-container[display="true"],
 .collapsible-body > p:first-child > mjx-container[display="true"] {
   margin-top: 0 !important;
 }
 
-/* Tablo hücrelerinde ve liste maddelerinde formül payı daha küçük olmalı */
+/* Formula margins must be smaller in table cells and list items */
 #quarto-document-content td mjx-container[display="true"],
 #quarto-document-content li > p:only-child > mjx-container[display="true"] {
   margin-top: 0.35em !important;
   margin-bottom: 0.25em !important;
 }
 
-/* Bölüm başlığından hemen sonra gelen formül de nefes alsın */
+/* A formula right after a section heading gets room to breathe too */
 #quarto-document-content h2 + p,
 #quarto-document-content h3 + p,
 #quarto-document-content h4 + p {
@@ -1699,13 +1699,13 @@ mjx-container[display="true"],
 }
 
 /* ==========================================================================
-   16. SAYFA BAŞLIĞI
+   16. PAGE TITLE
    --------------------------------------------------------------------------
-   Boşluk, başlığın KENDİ altına verilir; açıklama satırı ile gövde metni
-   arasına değil.
+   The space goes under the title ITSELF, not between the description line
+   and the body text.
 
-   Quarto'nun kendi kuralları burada oldukça özgül olduğu için aynı sınıfları
-   yazmak zorundayız:
+   Quarto's own rules are quite specific here, so the same classes have to
+   be written out:
      #title-block-header.quarto-title-block.default .quarto-title .title { margin-bottom: 0 }
      body.nav-sidebar #title-block-header { margin-block-end: 0 }
    ========================================================================== */
@@ -1718,14 +1718,14 @@ mjx-container[display="true"],
 }
 
 /* ==========================================================================
-   17. DERS İÇİ ÇİZİMLER
+   17. FIGURES IN THE LECTURE TEXTS
    --------------------------------------------------------------------------
-   Ham SVG olarak yazılan grafikler: serpilme diyagramları, zaman serileri,
-   dağılım çubukları, oyun teorisi alt zarfı… Renkler tema değişkenlerinden
-   geldiği için koyu temada da doğru görünürler.
+   Graphics written as raw SVG: scatter plots, time series, distribution
+   bars, the lower envelope of game theory… Their colours come from the
+   theme variables, so they also look right in the dark theme.
 
-   Çizimler derleme sırasında ÜRETİLMEZ; hazır SVG olarak gömülüdür. Bu
-   sayede kitapların derlenmesi Python/Jupyter gerektirmez.
+   The drawings are NOT generated during the build; they are embedded as
+   ready-made SVG, so building the books needs no Python/Jupyter.
    ========================================================================== */
 figure.ders-grafik,
 figure.oyun-grafik {
@@ -1733,7 +1733,7 @@ figure.oyun-grafik {
   max-width: 30rem;
 }
 
-/* Çok panelli çizimler (ör. korelasyon örnekleri) daha geniş yer ister */
+/* Multi-panel drawings (e.g. correlation examples) need more room */
 figure.ders-grafik-genis {
   max-width: 39rem;
 }

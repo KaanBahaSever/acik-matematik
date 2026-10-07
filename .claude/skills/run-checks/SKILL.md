@@ -1,108 +1,108 @@
 ---
 name: run-checks
-description: Bir .qmd, şekil, CSS ya da altyapı değişikliğinden sonra, teslimden ve commit'ten önce çalıştırılan denetim zinciri. Kapsamı yapısal kontroller, kutu ve formül denetimleri, derleme, derlenmiş HTML ve PDF taraması ve düzen ölçümüdür. Kullanıcı "kontrol et", "derle", "commit öncesi bak" dediğinde, bir hata düzeltmesini doğrularken ya da write-chapters, make-figures ve site-infra becerilerinin son adımında kullan.
+description: The check chain run after a .qmd, figure, CSS or infrastructure change, before delivery and before a commit. It covers structural checks, box and formula checks, the build, a scan of the built HTML and PDF, and layout measurement. Use when the user says "kontrol et" (check it), "derle" (build it) or "commit öncesi bak" (take a look before the commit), when verifying a bug fix, or as the last step of the write-chapters, make-figures and site-infra skills.
 ---
 
-# Teslim öncesi denetim
+# Pre-delivery checks
 
-Hedef şudur: yeni ya da değişen içerikte her denetim 0 sorun vermeli. Eski kitaplardaki bilinen pürüzler (aşağıda) bu işin kapsamı dışındadır; onları toplu düzeltme.
+The goal: every check reports 0 problems on new or changed content. Known blemishes in older books (listed below) are outside the scope of the job; do not bulk-fix them.
 
-## 1. Değişen dosyalarda yapısal kontrol
+## 1. Structural check on changed files
 
-Depoda yapısal denetçi yok. Değişen `.qmd` dosyalarında şunları kontrol et; gerekiyorsa scratchpad'de küçük bir betik yaz:
+The repo has no structural checker. Check the following in the changed `.qmd` files; write a small script in the scratchpad if needed:
 
-- **Fence dengesi:** Açılış ve kapanış kolon sayıları eşleşmeli. Açılış regex'i greedy olmalı: `^(:{3,})\s*\{(.*)\}\s*$`. `[^}]*` kalıbı `name="$5^{2n}$"` gibi adları kaçırır. ``` blokları atlanır.
-- **Etiketler:**
-  - Kitap genelinde yinelenen etiket olmamalı.
-  - `[a-z0-9-]` dışında karakter içeren etiket olmamalı.
-  - Çözümlenmeyen `@etiket` olmamalı.
-- **İspat ve çözüm blokları:**
-  - `.ispat`/`.cozum` bloğu bir kutunun içinde olmalı.
-  - Her blok bir `]{.qed}` işaretiyle bitmeli. konveks-analiz çözümleri bundan muaftır.
-- **Frontmatter:** `pagetitle:` eksik olmamalı.
-- **Şekiller:**
-  - Kalmış `FIGURE:` yer tutucusu olmamalı.
-  - `<!--FIG:ad-->` yorumu kalıcı bir çapadır. Yalnız arkasından bir ```` ```{=html} ```` `<figure>` bloğu gelmiyorsa hatadır.
-  - Tanım kutusunun içinde `<figure` olmamalı.
-  - `##` başlığın hemen altında şekil olmamalı.
-- **Dosya:** CRLF, BOM ve `$` dengesizliği olmamalı.
+- **Fence balance:** Opening and closing colon counts must match. The opening regex must be greedy: `^(:{3,})\s*\{(.*)\}\s*$`. The pattern `[^}]*` misses names like `name="$5^{2n}$"`. ``` blocks are skipped.
+- **Labels:**
+  - No label may be duplicated across the book.
+  - No label may contain characters outside `[a-z0-9-]`.
+  - No `@label` may be unresolved.
+- **Proof and solution blocks:**
+  - Every `.ispat`/`.cozum` block must be inside a box.
+  - Every block must end with a `]{.qed}` mark. konveks-analiz solutions are exempt.
+- **Frontmatter:** `pagetitle:` must not be missing.
+- **Figures:**
+  - No `FIGURE:` placeholder may be left over.
+  - A `<!--FIG:name-->` comment is a persistent anchor. It is an error only if no ```` ```{=html} ```` `<figure>` block follows it.
+  - No `<figure` may sit inside a definition box.
+  - No figure may sit right below a `##` heading.
+- **File:** No CRLF, no BOM and no unbalanced `$`.
 
-Bilinen eski etiket ihlalleri, `@` atıfları da güncellenmeden yeniden adlandırılmaz:
+Known old label violations; they are not renamed without also updating their `@` references:
 
 - `sec-nEx`, `def-nEx` (finans-matematigi)
 - `thm-koprü`, `thm-uA`, `thm-P-us-n` (raslanti-surecleri)
 - `cor-a-uzeri-N` (soyut-cebir-1)
 
-## 2. Kutu başına tek soru
+## 2. One question per box
 
-`python scripts/check_box_questions.py <dosyalar.qmd>` çıkış kodu 0 olmalı.
+`python scripts/check_box_questions.py <files.qmd>` must exit with code 0.
 
-Betiğin gerçek kör noktaları, bu yüzden şüpheli kutuları elle de oku:
+The script has real blind spots, so also read suspicious boxes by hand:
 
-- Numaralı `1.` maddelerini saymaz.
-- `.cozum baslik=…` ve `.ispat baslik=…` bloklarını bölmez.
-- Eski `callout collapse="true"` çözümlerini bölmez.
-- Adında `}` geçen kutuyu atlar.
-- Tek satırda yazılmış `**a)** … **b)**` şıklarını tek parça sayar.
+- It does not count numbered `1.` items.
+- It does not split `.cozum baslik=…` and `.ispat baslik=…` blocks.
+- It does not split old `callout collapse="true"` solutions.
+- It skips a box whose name contains `}`.
+- It counts `**a)** … **b)**` parts written on a single line as one piece.
 
-## 3. Formül genişliği
+## 3. Formula width
 
-`python scripts/check_math_width.py <ders> [--limit N]`
+`python scripts/check_math_width.py <course> [--limit N]`
 
-- Yeni ya da değişen formüller bütçe içinde olmalı: satır içi 16,5em, kutu içinde 14,5em, görüntü formülü 34em.
-- Betik her zaman 0 döner, bu yüzden çıktıyı oku.
-- Aşan formülleri `$$…$$` ve `aligned` ile böl.
+- New or changed formulas must stay within budget: inline 16.5em, inside a box 14.5em, display formula 34em.
+- The script always returns 0, so read its output.
+- Split overflowing formulas with `$$…$$` and `aligned`.
 
-## 4. Hızlı grep'ler
+## 4. Quick greps
 
-Hepsini `--include=*.qmd` ile, yalnız değişen dosyalarda çalıştır:
+Run all of them with `--include=*.qmd`, on the changed files only:
 
-- `grep -nE 'name="[0-9]+\.'` boş dönmeli.
-- `grep -niE 'sınav|vize|final|hoca|ödev|kaynakta|cevap anahtar'` boş dönmeli. Masum kullanımları elle ayıkla.
-- Yazım: yeni metinde `\emptyset`, `rasgele`, `keyfî` geçmemeli.
+- `grep -nE 'name="[0-9]+\.'` must return nothing.
+- `grep -niE 'sınav|vize|final|hoca|ödev|kaynakta|cevap anahtar'` must return nothing. Weed out innocent uses by hand.
+- Spelling: `\emptyset`, `rasgele`, `keyfî` must not appear in new text.
 
-## 5. Derle
+## 5. Build
 
-`python scripts/build.py <ders>` çalıştır. Uzun sürerse arka planda başlat ve bildirimi bekle. Yalnız HTML gerekiyorsa `--no-export` ekle.
+Run `python scripts/build.py <course>`. If it takes long, start it in the background and wait for the notification. Add `--no-export` if only HTML is needed.
 
-- Çıkış 1 render hatası, 2 export hatası ya da 25 MiB aşımı demektir.
-- PDF de gerekiyorsa ve kitap daha önce `--no-export` ile derlendiyse, ya da `scripts/export.py` veya `export-assets` değiştiyse, `--force` ekle. Yoksa değişmemiş kitap atlanır ve PDF hiç üretilmez.
-- `WinError 32` görürsen `_site`'ı tutan `http.server`'ı kapat ve yeniden çalıştır.
-- Portal adımındaki ara sıra görülen "failed to render" hatası çoğu zaman yeniden çalıştırınca geçer.
+- Exit 1 means a render error; 2 means an export error or a file over 25 MiB.
+- If the PDF is needed too and the book was previously built with `--no-export`, or if `scripts/export.py` or `export-assets` changed, add `--force`. Otherwise the unchanged book is skipped and no PDF is produced at all.
+- If you see `WinError 32`, close the `http.server` that holds `_site` and run again.
+- The occasional "failed to render" error in the portal step usually goes away on a rerun.
 
-## 6. Derlenmiş HTML'i tara
+## 6. Scan the built HTML
 
-Tarama `_site/dersler/<ders>/` altında yapılır, `_book` altında değil. Beklenen sayılar:
+Scan under `_site/dersler/<course>/`, not under `_book`. Expected counts:
 
-| Kontrol | Beklenen |
+| Check | Expected |
 |---|---|
-| Çözülmemiş `?@` ya da `?sec-` atıf | 0 |
-| `<ol start=` ve tek `<li>`'li `<ol>` (kazara liste) | 0 |
-| Ham `:::` kalıntısı | 0 |
-| Kırık göreli bağlantı | 0 |
+| Unresolved `?@` or `?sec-` reference | 0 |
+| `<ol start=` and `<ol>` with a single `<li>` (accidental list) | 0 |
+| Raw `:::` leftover | 0 |
+| Broken relative link | 0 |
 
-Sekme başlıkları numarasız olmalı.
+Tab titles must be unnumbered.
 
-## 7. PDF ve EPUB
+## 7. PDF and EPUB
 
-- `_export/<ders>/*.pdf` var olmalı ve 25 MiB'ın altında kalmalı.
-- Çok birimli derslerde her birim `dersler/<ders>/_downloads.json` içinde yer almalı.
-- İlgili sayfaları `pymupdf` ile PNG'ye render edip bak.
-- İki arama tuzağı:
-  - PDF'te şekil etiketi bölünmez boşlukludur (`Şekil\xa0N.M`).
-  - Typst'in "fi" bağlacı metin aramasını yanıltabilir.
+- `_export/<course>/*.pdf` must exist and stay under 25 MiB.
+- In multi-unit courses every unit must be listed in `dersler/<course>/_downloads.json`.
+- Render the relevant pages to PNG with `pymupdf` and look at them.
+- Two search traps:
+  - In the PDF the figure label uses a no-break space (`Şekil\xa0N.M`).
+  - Typst's "fi" ligature can mislead a text search.
 
-## 8. Düzen (CSS, şekil ya da yerleşim değiştiyse)
+## 8. Layout (if CSS, figures or placement changed)
 
-`python scripts/check_layout.py dersler/<ders>/<sayfa>.html --widths 390,768,1280,1920,2560` çalıştır ve `SONUC` satırını oku. Betik taşmada da 0 döner.
+Run `python scripts/check_layout.py dersler/<course>/<page>.html --widths 390,768,1280,1920,2560` and read the `RESULT` line. The script returns 0 even on overflow.
 
-Kendi ölçümün için:
+For your own measurements:
 
-- Probe ya da kopya HTML'i sayfanın kendi klasörüne yaz, yoksa göreli CSS yüklenmez ve taşma yanlışlıkla 0 çıkar. Dosyayı `finally` içinde sil.
-- `<details>` içini görmek için kopyada `<details open` kullan.
-- Başsız Chrome pencereyi ~485 px'in altına indirmez; dar genişlikleri iframe içinde ölç.
+- Write the probe or copied HTML into the page's own folder; otherwise the relative CSS does not load and overflow falsely comes out as 0. Delete the file in a `finally`.
+- Use `<details open` in the copy to see inside `<details>`.
+- Headless Chrome does not shrink the window below ~485 px; measure narrow widths inside an iframe.
 
-## 9. Raporla
+## 9. Report
 
-- Her denetimin sayısını ver: dosya, kutu, etiket, atıf, sorun, taşma, PDF sayfa sayısı.
-- Ölçmeden "temiz" deme. Yanlış yere yazılan probe ve sessizce başarısız olan sed/regex daha önce sahte 0 sonucu üretti.
+- Give the count for every check: files, boxes, labels, references, problems, overflows, PDF page count.
+- Do not call anything "clean" without measuring it. A probe written to the wrong place and a silently failing sed/regex have produced fake 0 results before.

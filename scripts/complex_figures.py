@@ -28,10 +28,10 @@ os.makedirs(OUT_DIR, exist_ok=True)
 OUT = {}
 
 # ############################################################################
-# PART: Kompleks Sayılar
+# PART: Complex Numbers
 # ############################################################################
 
-# ============================================================ vektörler-ve-modül
+# ============================================================ vektorler-ve-modul
 # ---- V1: parallelogram rule for sum and difference
 z1, z2 = (3.0, 1.0), (1.0, 2.0)
 s = (z1[0] + z2[0], z1[1] + z2[1])
@@ -131,7 +131,7 @@ OUT["cember"] = figure(
     "&#214;rnekteki |<em>z</em> &#8722; 1 + 3<em>i</em>| = 2 i&#231;in merkez 1 &#8722; 3<em>i</em>'dir; i&#351;aretlere dikkat.",
     aria="Merkezi 1-3i, yaricapi 2 olan cember")
 
-# ================================================================= üstel-form
+# ================================================================= ustel-form
 # ---- U1: polar form  z = r(cos θ + i sin θ)
 r, th = 2.5, math.atan2(1.5, 2.0)
 z = polar(r, th)
@@ -308,7 +308,7 @@ OUT["arg-toplamsal-degil"] = figure(
     "e&#351;itli&#287;i yine de bozulmaz.",
     aria="Esas argumanin toplamsal olmadigini gosteren ornek")
 
-# ==================================================================== kökler
+# ==================================================================== kokler
 p1 = cplane(24, 30, 250, (-3.4, 3.0), (-2.9, 3.0))
 p1.origin_axes()
 p1.circle(0, 0, 2, REMARK, 1.1, "4 3", opacity=0.6)
@@ -349,7 +349,7 @@ OUT["kokler"] = figure(
     css_class=WIDE, aria="Kup kokler ve birim kokleri cember uzerinde duzgun cokgen olusturur")
 OUT["arg-kumesi"] = OUT["arg-kumesi"].replace('<figure class="ders-grafik">', '<figure class="ders-grafik ders-grafik-genis">')
 
-# ================================================================== bölgeler
+# ================================================================== bolgeler
 # ---- B1: interior, boundary and exterior points of an open disk
 p = cplane(40, 24, 320, (-2.1, 2.7), (-1.95, 1.95))
 p.origin_axes()
@@ -394,7 +394,7 @@ OUT["halka-domen"] = figure(
     "birle&#351;tirilebilir. Do&#287;rudan bir do&#287;ru par&#231;as&#305; i&#231;teki deli&#287;e girebilirdi; k&#305;r&#305;k &#231;izgi bunu a&#351;ar.",
     aria="Halka bolgesinde iki noktayi birlestiren cokgensel yol")
 
-# ============================================================== cebirsel-yapı
+# ============================================================== cebirsel-yapi
 # ---- the complex plane: a number is a point, 1 and i are the unit points
 z = (2.0, 1.5)
 p = cplane(40, 24, 320, (-0.8, 3.6), (-0.7, 2.3))
@@ -417,7 +417,7 @@ OUT["kompleks-duzlem"] = figure(
     "<em>i</em> = (0, 1) sanal eksende birim uzakl&#305;ktaki noktalard&#305;r.",
     aria="Kompleks duzlem, z = x + iy noktasi, 1 ve i noktalari")
 
-# ================================================================== bölgeler
+# ================================================================== bolgeler
 # ---- 0 < |z| <= 1 is neither open nor closed
 p = cplane(40, 24, 320, (-1.7, 1.7), (-1.5, 1.5))
 p.origin_axes()
@@ -434,7 +434,7 @@ OUT["ne-acik-ne-kapali"] = figure(
     "de&#287;ildir, dolay&#305;s&#305;yla k&#252;me kapal&#305; da de&#287;ildir.",
     aria="Ne acik ne kapali kume: delinmis kapali birim disk")
 
-# ================================================================= üstel-form
+# ================================================================= ustel-form
 # ---- arg z on the number line: dots spaced 2π, the window (-π, π] catches exactly one
 p = Plot(30, 44, 340, 84, (-4.5, 4.5), (-1.2, 1.2))
 p.polygon([(-1, -0.45), (1, -0.45), (1, 0.45), (-1, 0.45)], THEORY, 0.12)
@@ -467,7 +467,7 @@ OUT["arg-sayi-dogrusu"] = figure(
     "Pencerenin sol ucu a&#231;&#305;k (&#8722;&#960; d&#305;&#351;ar&#305;da), sa&#287; ucu kapal&#305;d&#305;r (&#960; i&#231;eride).",
     aria="Arguman kumesi sayi dogrusunda ve esas arguman penceresi")
 
-# ====================================================== rezidü: tekil nokta türleri
+# ====================================================== rezidu/tekil-nokta-turleri
 # ---- the three types at a glance: which Laurent coefficients are nonzero
 p = Plot(146, 46, 350, 168, (-5.9, 2.9), (-0.35, 3.15))
 p.polygon([(-5.9, -0.35), (-0.5, -0.35), (-0.5, 3.15), (-5.9, 3.15)], PRACTICE, 0.07)
@@ -496,11 +496,11 @@ OUT["uc-tip"] = figure(
     css_class=WIDE, aria="Uc tekillik tipinin Laurent katsayilariyla karsilastirilmasi")
 
 # ############################################################################
-# PART: Analitik Fonksiyonlar
+# PART: Analytic Functions
 # ############################################################################
 
 # ############################################################################
-# PART: Analitik Fonksiyonlar
+# PART: Analytic Functions
 # ############################################################################
 
 
@@ -1006,11 +1006,11 @@ OUT["analitik-fonksiyonlar-yansima"] = figure(
     aria="Reel eksene gore simetrik domen; z ve eslenigi, eksende f reel")
 
 # ############################################################################
-# PART: Elemanter Fonksiyonlar
+# PART: Elementary Functions
 # ############################################################################
 
 # ############################################################################
-# PART: Elemanter Fonksiyonlar
+# PART: Elementary Functions
 # ############################################################################
 PHI, RHO, ALPHA, THETA_U, NOTIN = "&#966;", "&#961;", "&#945;", "&#920;", "&#8713;"
 SQRT, ARROW, MAPSTO = "&#8730;", "&#8594;", "&#8594;"
@@ -1021,7 +1021,7 @@ def esup(s):
     return "e" + sup(s)
 
 
-# ============================================================ üstel-fonksiyon
+# ============================================================ ustel-fonksiyon
 # ---- E1: w = e^z sends vertical lines to circles and horizontal lines to rays
 c1, c2 = 1.0, PI / 4
 pz = cplane(24, 30, 236, (-1.2, 2.6), (-1.2, 2.3))
@@ -1184,7 +1184,7 @@ OUT["elemanter-fonksiyonlar-log-esas-kesim"] = figure(
     "Dallanma noktas&#305; <em>z</em> = 0, kesimin ucudur.",
     aria="Esas dal: negatif reel eksen kesimi ve kesim uzerindeki 2 pi i sicramasi")
 
-# ============================================================ kompleks-üsler
+# ============================================================ kompleks-usler
 # ---- K1: Arg z2 + Arg z3 = −π lands outside (−π, π] — the source of the e^{2π} factor
 z2, z3, z23 = (1.0, -1.0), (-1.0, -1.0), (-2.0, 0.0)
 p = cplane(40, 24, 300, (-2.6, 1.9), (-1.55, 1.35))
@@ -1309,11 +1309,11 @@ OUT["elemanter-fonksiyonlar-hiperbolik-donme"] = figure(
     aria="sin z sifirlari reel eksende, sinh z sifirlari sanal eksende; z -> iz dondurmesi")
 
 # ############################################################################
-# PART: İntegraller
+# PART: Integrals
 # ############################################################################
 
 # ############################################################################
-# PART: İntegraller
+# PART: Integrals
 # ############################################################################
 
 
@@ -1324,7 +1324,7 @@ def _arc_head(p, r, a, color, width=1.9, ccw=True, cx=0.0, cy=0.0, da=0.12):
             color, width, head=8.0)
 
 
-# ============================================ reel-değişkenli-integraller
+# ============================================ reel-degiskenli-integraller
 # ---- I1: mean value theorem fails — w(t) = e^{it} returns to its start, its speed is never 0
 t = PI / 3
 w = polar(1, t)
@@ -1348,7 +1348,7 @@ OUT["integraller-omt-karsi-ornek"] = figure(
     "kompleks değerli fonksiyonlara taşınmaz.",
     aria="Birim cember uzerinde w(t) = e^(it): kiris sifir, hiz vektoru hic sifir degil")
 
-# ========================================================== yaylar-ve-çevreler
+# ==================================================================== cevreler
 # ---- Y1: the broken line 0 -> 1+i -> 2+i is a single (simple) arc with a corner
 p = cplane(40, 24, 320, (-0.45, 2.55), (-0.42, 1.5))
 p.origin_axes(xticks=(1, 2), yticks=(1,))
@@ -1431,8 +1431,8 @@ OUT["integraller-basit-kapali-cevre"] = figure(
     "ile sınırsız bir dış bölgeye ayırır.",
     aria="Dort duzgun yaydan olusan basit kapali cevre, koseler, ic ve dis bolge")
 
-# ========================================================= çevre-integralleri
-# ---- Ç1: the right half of |z| = 2 from -2i to 2i
+# ========================================================= cevre-integralleri
+# ---- C1: the right half of |z| = 2 from -2i to 2i
 p = cplane(60, 24, 280, (-2.7, 2.7), (-2.6, 2.6))
 p.origin_axes()
 p.circle(0, 0, 2, REMARK, 1.1, "4 3", opacity=0.6)
@@ -1456,7 +1456,7 @@ OUT["integraller-sag-yarim-cember"] = figure(
     "noktası −2<em>i</em>'den başlar, 2'den geçer ve 2<em>i</em>'de biter; dolaşım saat yönünün tersinedir.",
     aria="|z| = 2 cemberinin -2i'den 2i'ye sag yarisi")
 
-# ---- Ç2: same endpoints, two different paths — OAB broken line vs. the diagonal OB
+# ---- C2: same endpoints, two different paths — OAB broken line vs. the diagonal OB
 p = cplane(60, 24, 280, (-0.42, 1.6), (-0.34, 1.46))
 p.origin_axes()
 p.polygon([(0, 0), (0, 1), (1, 1)], THEORY, 0.08)
@@ -1482,10 +1482,10 @@ OUT["integraller-iki-yol"] = figure(
     "çevresi üzerindeki integraldir ve sıfır değildir.",
     aria="0'dan 1+i'ye iki yol: OAB kirik cizgisi ve OB kosegeni")
 
-# ---- Ç3: upper semicircle |z| = 3 whose starting point lies on the branch cut θ = 0
+# ---- C3: upper semicircle |z| = 3 whose starting point lies on the branch cut θ = 0
 p = cplane(30, 24, 340, (-3.7, 4.5), (-1.0, 3.6))
 p.origin_axes()
-p.line([(0, 0), (4.5, 0)], PRACTICE, 3.2, None, 0.35)          # dal kesimi: pozitif reel eksen
+p.line([(0, 0), (4.5, 0)], PRACTICE, 3.2, None, 0.35)          # branch cut: positive real axis
 p.arc(0, 0, 3, 0, PI, THEORY, 2.0)
 _arc_head(p, 3, PI / 2, THEORY, 2.0)
 hollow(p, (0, 0), TEXT)
@@ -1504,10 +1504,10 @@ OUT["integraller-dal-yarim-cember"] = figure(
     "limiti vardır; parçalı sürekli integrand integrali kurtarır.",
     aria="Ust yarim cember, pozitif reel eksendeki dal kesimi, baslangic noktasi kesim uzerinde")
 
-# ---- Ç4: full circle |z| = R against the cut of the principal branch (negative real axis)
+# ---- C4: full circle |z| = R against the cut of the principal branch (negative real axis)
 p = cplane(50, 24, 300, (-2.9, 2.9), (-2.6, 2.6))
 p.origin_axes()
-p.line([(-2.9, 0), (0, 0)], PRACTICE, 3.2, None, 0.35)         # Log kesimi
+p.line([(-2.9, 0), (0, 0)], PRACTICE, 3.2, None, 0.35)         # cut of Log
 p.circle(0, 0, 2, THEORY, 2.0)
 _arc_head(p, 2, PI / 2, THEORY, 2.0)
 _arc_head(p, 2, -PI / 2, THEORY, 2.0)
@@ -1526,8 +1526,8 @@ OUT["integraller-esas-dal-cember"] = figure(
     "tanımsızdır ve orada iki tek yanlı limiti vardır; parçalı süreklilik integral için yeterlidir.",
     aria="|z| = R cemberi ve esas dalin negatif reel eksendeki kesimi; kesim yolun uc noktasina deger")
 
-# ============================================================= üst-sınırlar
-# ---- Ü1: the quarter circle of |z| = 2 in the first quadrant, L = π
+# ============================================================= ust-sinirlar
+# ---- U1: the quarter circle of |z| = 2 in the first quadrant, L = π
 p = cplane(70, 24, 260, (-0.55, 2.7), (-0.5, 2.6))
 p.origin_axes()
 p.sector(0, 0, 2, 0, PI / 2, THEORY, 0.08)
@@ -1548,7 +1548,7 @@ OUT["integraller-ceyrek-cember"] = figure(
     "saat yönünün tersine. Uzunluğu tam çemberin dörtte biri, <em>L</em> = π; ML eşitsizliğindeki <em>L</em> budur.",
     aria="|z| = 2 cemberinin birinci ceyrekteki yayi, uzunlugu pi")
 
-# ---- Ü2: geometry of the reverse triangle inequality in the w = z³ plane
+# ---- U2: geometry of the reverse triangle inequality in the w = z³ plane
 p = cplane(60, 36, 280, (-9.6, 9.6), (-9.4, 9.4))
 p.text_px(p.x0 + p.w / 2, p.y0 - 14, "w = z³ düzlemi: |z| = 2 iken |w| = 8", TEXT, 11.5, "middle", True)   # clears "Im"
 p.origin_axes()
@@ -1571,7 +1571,7 @@ OUT["integraller-ters-ucgen"] = figure(
     "alınır. Ters yönlü üçgen eşitsizliği |<em>z</em>³ − 1| ≥ |<em>z</em>|³ − 1'in geometrik anlamı budur.",
     aria="w = z^3 duzleminde |w| = 8 cemberi ve 1 noktasinin cembere uzakligi en az 7")
 
-# ---- Ü3: the segment from i to 1; the point nearest to the origin is the midpoint, |z| ≥ 1/√2
+# ---- U3: the segment from i to 1; the point nearest to the origin is the midpoint, |z| ≥ 1/√2
 p = cplane(60, 24, 280, (-0.42, 1.55), (-0.42, 1.45))
 p.origin_axes()
 rr = 1 / math.sqrt(2)
@@ -1598,7 +1598,7 @@ OUT["integraller-dogru-parcasi-i-1"] = figure(
     "parça üzerinde |<em>z</em>| ≥ 1/√2 ve 1/|<em>z</em>|<sup>4</sup> ≤ 4 = <em>M</em> olur. Uzunluk <em>L</em> = √2.",
     aria="i'den 1'e dogru parcasi, orta noktasi ve baslangica en kisa uzaklik 1/sqrt(2)")
 
-# ============================================================== ters-türevler
+# ============================================================== ters-turevler
 # ---- T1: a closed contour C split at z1, z2 into two paths: C = C1 − C2
 p = cplane(40, 16, 320, (-3.5, 3.5), (-2.75, 2.75))
 D = [(x, 0.82 * y) for x, y in blob(0, 0, 2.9, [(0.22, 2, 0.4), (0.14, 3, 1.3)])]
@@ -1668,7 +1668,7 @@ OUT["integraller-iki-dal"] = figure(
 # ---- T3: a path above the real axis and the cut of the branch −π/2 < θ < 3π/2 (negative imaginary axis)
 p = cplane(40, 24, 320, (-3.7, 3.7), (-2.4, 2.8))
 p.origin_axes()
-p.line([(0, 0), (0, -2.4)], PRACTICE, 3.2, None, 0.35)         # f1 kesimi
+p.line([(0, 0), (0, -2.4)], PRACTICE, 3.2, None, 0.35)         # cut of f1
 c1 = [(-3 + 6 * k / 100, 2.0 * math.sin(PI * k / 100) + 0.6 * math.sin(2 * PI * k / 100)) for k in range(101)]
 c2 = [(-3 + 6 * k / 100, -1.1 * math.sin(PI * k / 100)) for k in range(101)]
 p.line(c2, BASE, 1.4, "2 4", 0.8)
@@ -1693,18 +1693,18 @@ OUT["integraller-karekok-dal"] = figure(
     aria="-3'ten 3'e ustten gecen yol ve negatif sanal eksendeki dal kesimi; alttan gecen yol kesimi keser")
 
 # ############################################################################
-# PART: Cauchy Teoremleri
+# PART: Cauchy Theorems
 # ############################################################################
 
 # ############################################################################
-# PART: Cauchy Teoremleri
+# PART: Cauchy Theorems
 # ############################################################################
-# Stil kararı: eksenlerin (Re/Im) bir anlam taşıdığı figürlerde (somut noktalar, çemberler,
-# dikdörtgen) origin_axes() çizilir; şematik çevre/blob figürlerinde (kare örtüsü, iç kenarlar,
-# ilmekler, kesikler, deformasyon, C_rho, d uzaklığı, komşuluk zinciri) eksen ÇİZİLMEZ —
-# koordinatların bir anlamı yoktur ve etiketlerle çakışırlar. Sonraki kısımlar da bu kurala uyar.
+# Style decision: figures whose axes (Re/Im) carry meaning (concrete points, circles, a
+# rectangle) draw origin_axes(); schematic contour/blob figures (square covering, inner edges,
+# loops, cuts, deformation, C_rho, the distance d, neighbourhood chain) draw NO axes —
+# their coordinates mean nothing and would clash with the labels. Later parts follow this rule too.
 
-# ---- küçük yardımcılar (yalnızca bu kısımda kullanılır) --------------------
+# ---- small helpers (used only in this part) -------------------------------
 def _sub(s, size=9):
     """Subscript inside an SVG <text>: 'C' + _sub('&#961;')."""
     # the zero-width space carries the baseline reset without eating the caller's own spaces (cf. svg_plot.sup)
@@ -1751,7 +1751,7 @@ def _circle_arrow(p, cx, cy, r, ang, color, width=1.8, ccw=True, head=8.0):
 
 
 # ============================================================ cauchy-goursat
-# ---- CG1: kare ve kısmi kare örtüsü (örtü lemması)
+# ---- CG1: covering by squares and partial squares (covering lemma)
 def _r_ortu(t):
     return 1.8 + 0.35 * math.cos(3 * t) + 0.15 * math.sin(2 * t)
 
@@ -1774,21 +1774,21 @@ for i in range(-4, 4):
         flags = [_ortu_icinde(x, y) for x, y in edge]
         cell = [(x0, y0), (x0 + h, y0), (x0 + h, y0 + h), (x0, y0 + h)]
         if all(flags):
-            p.polygon(cell, THEORY, 0.12)          # tam kare
+            p.polygon(cell, THEORY, 0.12)          # full square
         elif any(flags):
-            p.polygon(cell, REMARK, 0.24)          # kısmi kare (C ile kesilmiş, içte kalan parça)
+            p.polygon(cell, REMARK, 0.24)          # partial square (cut by C, the part that stays inside)
 for k in range(-4, 5):
     p.line([(k * h, -2.4), (k * h, 2.4)], BASE, 0.8, None, 0.6)
     p.line([(-2.4, k * h), (2.4, k * h)], BASE, 0.8, None, 0.6)
 p.add('</g>')
-# vurgulanan tam kare ve içindeki z_j
+# the highlighted full square and the z_j inside it
 p.polygon([(0, 0), (h, 0), (h, h), (0, h)], THEORY, 0.28, THEORY, 1.3)
 dot(p, (0.16, 0.3), TEXT, 3.4)
 p.label(0.16, 0.3, "z" + _sub("j"), 7, 4, TEXT, 12, "start", False, True)
 closed_curve(p, C_pts, PRACTICE, 2.0, arrow_at=30)
 p.label(*polar(_r_ortu(PI / 4), PI / 4), "C", 10, -6, PRACTICE, 13, "start", True, True)
 p.label(-0.9, -0.9, "R", 0, 4, TEXT, 13, "middle", True, True)
-# açıklama: renk anahtarı
+# legend: colour key
 for row, (col, op, txt) in enumerate(((THEORY, 0.12, "kare"), (REMARK, 0.24, "kısmi kare"))):
     lx, ly = p.X(1.45), p.Y(-1.55 - 0.42 * row)
     p.add(f'<rect x="{lx:.1f}" y="{ly - 10:.1f}" width="12" height="12" fill="{col}" fill-opacity="{op}" '
@@ -1802,16 +1802,16 @@ OUT["cauchy-teoremleri-kare-ortu"] = figure(
     "kısmi karenin sınırı, kare kenarlarının parçalarının yanı sıra <em>C</em>'nin yaylarını da içerir.",
     aria="Kapali egri C icindeki bolgenin kare ve kismi karelerle ortulmesi")
 
-# ---- CG2: komşu karelerin iç kenarları birbirini götürür
+# ---- CG2: the inner edges of adjacent squares cancel each other
 p1 = cplane(24, 30, 250, (-0.3, 2.3), (-0.3, 2.3))
 e = 0.08
 for i in range(2):
     for j in range(2):
         x0, y0, x1, y1 = i, j, i + 1, j + 1
-        edges = [((x0 + e, y0 + e), (x1 - e, y0 + e), j == 1),   # alt kenar (iç: j == 1)
-                 ((x1 - e, y0 + e), (x1 - e, y1 - e), i == 0),   # sağ kenar (iç: i == 0)
-                 ((x1 - e, y1 - e), (x0 + e, y1 - e), j == 0),   # üst kenar
-                 ((x0 + e, y1 - e), (x0 + e, y0 + e), i == 1)]   # sol kenar
+        edges = [((x0 + e, y0 + e), (x1 - e, y0 + e), j == 1),   # bottom edge (inner: j == 1)
+                 ((x1 - e, y0 + e), (x1 - e, y1 - e), i == 0),   # right edge (inner: i == 0)
+                 ((x1 - e, y1 - e), (x0 + e, y1 - e), j == 0),   # top edge
+                 ((x0 + e, y1 - e), (x0 + e, y0 + e), i == 1)]   # left edge
         for a, b, inner in edges:
             _mid_arrow(p1, a, b, PRACTICE if inner else THEORY, 1.6, 7.0)
 p1.line([(0, 0), (2, 0), (2, 2), (0, 2), (0, 0)], TEXT, 1.0, None, 0.35)
@@ -1841,7 +1841,7 @@ OUT["cauchy-teoremleri-ic-kenarlar"] = figure(
     "<em>C</em>'nin yayları kalır.",
     css_class=WIDE, aria="Dort komsu karenin ic kenarlarinin zit yonlerde katedilmesi ve dis sinirin kalmasi")
 
-# ---- CG3: Log(z + 2) dal kesimi ile birim çember
+# ---- CG3: the branch cut of Log(z + 2) and the unit circle
 p = cplane(40, 24, 320, (-3.7, 1.7), (-1.6, 1.6))
 disk_fill(p, 0, 0, 1, THEORY, 0.10)
 p.origin_axes(xticks=(-3,))
@@ -1849,7 +1849,7 @@ p.line([(-3.75, 0), (-2, 0)], REMARK, 3.4, None, 0.5)
 dot(p, (-2, 0), REMARK, 3.8)
 p.label(-2, 0, MINUS + "2", 0, 15, REMARK, 11.5, "middle", True)
 p.label(-2.85, 0, "dal kesimi: z " + LEQ + " " + MINUS + "2", 0, -9, REMARK, 10.5, "middle", False, True)
-# −2 ile diskin kenarı arasındaki boşluk
+# the gap between −2 and the edge of the disk
 p.line([(-2, 0.22), (-1, 0.22)], TEXT, 1.0, None, 0.6)
 p.line([(-2, 0.16), (-2, 0.28)], TEXT, 1.0, None, 0.6)
 p.line([(-1, 0.16), (-1, 0.28)], TEXT, 1.0, None, 0.6)
@@ -1867,7 +1867,7 @@ OUT["cauchy-teoremleri-log-dal-kesimi"] = figure(
     aria="Log(z+2) icin z=-2 noktasindan sola uzanan dal kesimi ve birim cember")
 
 # ============================================= basit-ve-cok-baglantili-domenler
-# ---- BD1: kendini kesen kapalı çevre dört basit ilmekten oluşur (gül eğrisi)
+# ---- BD1: a self-intersecting closed contour made of four simple loops (rose curve)
 def _rose(t):
     r = 1.6 * math.cos(2 * t)
     return (r * math.cos(t), r * math.sin(t))
@@ -1898,7 +1898,7 @@ OUT["cauchy-teoremleri-ilmekler"] = figure(
     "Cauchy-Goursat teoremi her birine ayrı ayrı uygulanır, integraller toplanır.",
     aria="Kendini kesen kapali egrinin dort basit kapali ilmege ayrilmasi")
 
-# ---- BD2: kesiklerle iki basit çevreye ayırma (çok bağlantılı domen teoremi)
+# ---- BD2: splitting into two simple contours by cuts (multiply connected domain theorem)
 def _r_dis(t):
     return 2.2 + 0.2 * math.cos(2 * t)
 
@@ -1947,7 +1947,7 @@ OUT["cauchy-teoremleri-kesikler"] = figure(
     "<em>C</em> ile negatif yönlü <em>C</em><sub>1</sub>, <em>C</em><sub>2</sub> kalır.",
     aria="Iki delikli bolgenin kesiklerle iki basit kapali cevreye ayrilmasi")
 
-# ---- BD3: yolun deformasyonu ilkesi
+# ---- BD3: the principle of deformation of paths
 C2_pts = blob(0, 0, 2.0, [(0.3, 3, -PI / 2)])
 z_s = (0.3, 0.2)
 p = cplane(40, 24, 320, (-2.8, 2.8), (-2.6, 2.6))
@@ -1976,7 +1976,7 @@ OUT["cauchy-teoremleri-deformasyon"] = figure(
     aria="Dis cevrenin tekil noktayi cevreleyen ic cembere deforme edilmesi")
 
 # ======================================================= cauchy-integral-formulu
-# ---- CIF1: z_0 çevresindeki C_rho çemberi ile C arasındaki bölge
+# ---- CIF1: the region between the circle C_rho around z_0 and C
 C_pts = blob(0, 0, 2.0, [(0.25, 3, 0.0)])
 z0 = (0.4, -0.3)
 p = cplane(40, 24, 320, (-2.8, 2.8), (-2.55, 2.55))
@@ -2001,7 +2001,7 @@ OUT["cauchy-teoremleri-c-rho"] = figure(
     "üzerinde |<em>f</em>(<em>z</em>) &#8722; <em>f</em>(<em>z</em><sub>0</sub>)| &lt; <em>&#949;</em> kalır.",
     aria="Cevre C icindeki z0 noktasi etrafinda kucuk C_rho cemberi ve aradaki halka")
 
-# ---- CIF2: d uzaklığı ve Δz'nin kaldığı disk (türev formülü ispatı)
+# ---- CIF2: the distance d and the disk that Δz stays in (proof of the derivative formula)
 def _r_C(t):
     return 2.0 + 0.25 * math.cos(3 * t)
 
@@ -2045,7 +2045,7 @@ OUT["cauchy-teoremleri-d-uzakligi"] = figure(
     "&#8805; <em>d</em> &#8722; |&#916;<em>z</em>| &gt; 0 olur ve payda hiçbir zaman sıfırlanmaz.",
     aria="z noktasinin C'ye uzakligi d ve z+dz'nin kaldigi disk")
 
-# ---- CIF3: çemberin içindeki ve dışındaki tekil noktalar (örnek z/((9 - z^2)(z + i)))
+# ---- CIF3: singular points inside and outside the circle (example z/((9 - z^2)(z + i)))
 p = cplane(40, 24, 320, (-3.9, 3.9), (-2.5, 2.5))
 disk_fill(p, 0, 0, 2, THEORY, 0.10)
 p.origin_axes(xticks=(-3, -1, 1, 3), yticks=(1,))
@@ -2067,7 +2067,7 @@ OUT["cauchy-teoremleri-tekil-noktalar"] = figure(
     aria="|z|=2 cemberi, disaridaki tekil noktalar +-3 ve icerideki z0=-i")
 
 # ================================================ liouville-ve-cebirin-temel-teoremi
-# ---- L1: birin küp kökleri
+# ---- L1: the cube roots of unity
 roots = [polar(1, 2 * PI * k / 3) for k in range(3)]
 p = cplane(40, 24, 320, (-1.9, 1.9), (-1.5, 1.5))
 p.origin_axes()
@@ -2091,7 +2091,7 @@ OUT["cauchy-teoremleri-kup-kokler"] = figure(
     "köklerinin eşlenik çift oluşturması bu simetridir.",
     aria="Birin uc kup koku birim cember uzerinde, z2 ve z3 eslenik")
 
-# ---- L2: düzlemin iki parçada sınırlanması (cebirin temel teoremi ispatı)
+# ---- L2: bounding the plane in two pieces (proof of the fundamental theorem of algebra)
 Rr = 1.6
 p = cplane(40, 24, 320, (-3.2, 3.2), (-2.9, 2.9))
 exterior_fill(p, 0, 0, Rr, PRACTICE, 0.07)
@@ -2115,14 +2115,14 @@ OUT["cauchy-teoremleri-iki-parca"] = figure(
     aria="Kapali disk |z| en fazla R ve disi: f her ikisinde ayri ayri sinirlidir")
 
 # ========================================================= maksimum-modul-ilkesi
-# ---- M1: çokgensel yol boyunca komşuluk zinciri
+# ---- M1: a chain of neighbourhoods along a polygonal path
 D_pts = blob(0, 0, 3.0, [(0.3, 2, 0.0), (0.2, 3, -PI / 2)])
 Lp = [(-1.8, -0.35), (-0.8, 0.9), (0.6, -0.3), (2, 0.8)]
 zs = [(-1.8, -0.35), (-1.3, 0.275), (-0.8, 0.9), (-0.1, 0.3), (0.6, -0.3), (1.3, 0.25), (2, 0.8)]
 dd = 1.0
 p = cplane(20, 24, 360, (-3.7, 3.7), (-3.2, 3.0))
 closed_curve(p, D_pts, BASE, 1.5, "6 4", BASE, 0.05)
-for k in (0, 1, 2, 6):                       # N0, N1 belirgin; N2 ve N_n soluk
+for k in (0, 1, 2, 6):                       # N0, N1 prominent; N2 and N_n faint
     zk, strong = zs[k], k in (0, 1)
     disk_fill(p, zk[0], zk[1], dd, THEORY, 0.07 if strong else 0.04)
     p.circle(*zk, dd, THEORY, 1.6 if strong else 1.0, opacity=0.95 if strong else 0.5)
@@ -2133,11 +2133,11 @@ p.points(zs[1:-1], TEXT, 3.2)
 dot(p, zs[0], TEXT, 4.0)
 dot(p, zs[-1], TEXT, 4.0)
 p.label(*zs[0], "z" + SUB0, -7, 14, TEXT, 12.5, "end", True, True)
-p.label(*zs[1], "z" + SUB1, 3, 18, TEXT, 12, "start", True, True)      # L'nin sağ altında, N0 yayının 3 px içinde kalır
-p.label(*zs[2], "z" + SUB2, -8, -6, TEXT, 12, "end", True, True)       # sol üstte: N1 çemberi z2'nin hemen üstünden geçer
+p.label(*zs[1], "z" + SUB1, 3, 18, TEXT, 12, "start", True, True)      # lower right of L, within 3 px of the N0 arc
+p.label(*zs[2], "z" + SUB2, -8, -6, TEXT, 12, "end", True, True)       # upper left: the N1 circle passes just above z2
 p.label(*zs[-1], "z&#8345; = P", 9, 4, TEXT, 12.5, "start", True, True)
 p.label(-2.55, -0.5, "N" + SUB0, 0, 4, THEORY, 12, "middle", True, True)
-p.label(-2.25, 1.15, "N" + SUB1, 0, 4, THEORY, 12, "middle", True, True)   # N1'in dışında, N2 yayından uzak
+p.label(-2.25, 1.15, "N" + SUB1, 0, 4, THEORY, 12, "middle", True, True)   # outside N1, away from the N2 arc
 p.label(-1.5, 2.0, "D", 0, 4, BASE, 13.5, "middle", True, True)
 OUT["cauchy-teoremleri-komsuluk-zinciri"] = figure(
     400, 372, [p],
@@ -2149,7 +2149,7 @@ OUT["cauchy-teoremleri-komsuluk-zinciri"] = figure(
     "bulunur. Çizimde yalnızca ilk komşuluklar ve sonuncusu gösterilmiştir.",
     aria="Cokgensel yol boyunca ust uste binen komsuluklar zinciri")
 
-# ---- M2: dikdörtgende |sin z| maksimumu
+# ---- M2: the maximum of |sin z| on a rectangle
 p = cplane(40, 24, 320, (-0.5, 3.7), (-0.55, 1.6))
 p.polygon([(0, 0), (PI, 0), (PI, 1), (0, 1)], THEORY, 0.11)
 p.origin_axes(xticks=(PI / 2, PI), yticks=(1,), xfmt=lambda v: "&#960;/2" if v < 2 else "&#960;")
@@ -2159,7 +2159,7 @@ p.label(0.55, 0.5, "R", 0, 4, THEORY, 13, "middle", True, True)
 dot(p, (PI / 2, 1), REMARK, 4.2)
 p.label(PI / 2, 1, "z = &#960;/2 + i", 0, -22, REMARK, 12, "middle", True)
 p.label(PI / 2, 1, "|sin z| = cosh 1 " + APPROX + " 1,54", 0, -8, REMARK, 11, "middle", False, True)
-p.points([(0, 0), (PI, 0)], PRACTICE, 3.6)      # köşeler R'ye aittir: dolu nokta (içi boş nokta = dışlanan nokta)
+p.points([(0, 0), (PI, 0)], PRACTICE, 3.6)      # the corners belong to R: filled dot (hollow dot = excluded point)
 p.label(0, 0, "|sin z| = 0", 6, 30, PRACTICE, 10.5, "start", False, True)
 p.label(PI, 0, "|sin z| = 0", 0, 30, PRACTICE, 10.5, "middle", False, True)
 OUT["cauchy-teoremleri-sin-dikdortgen"] = figure(
@@ -2170,11 +2170,11 @@ OUT["cauchy-teoremleri-sin-dikdortgen"] = figure(
     aria="0..pi, 0..1 dikdortgeninde |sin z| maksimumunun ust kenarda olmasi")
 
 # ############################################################################
-# PART: Seriler
+# PART: Series
 # ############################################################################
 
 # ############################################################################
-# PART: Seriler
+# PART: Series
 # ############################################################################
 
 # extra symbols used in this part
@@ -2440,12 +2440,12 @@ OUT["seriler-sinh-delinmis-disk"] = figure(
     aria="Delinmis disk 0 &lt; |z| &lt; pi: merkez 0 haric, sinir sinh z'nin sifirlari pi i ve -pi i'den gecer")
 
 # ############################################################################
-# PART: Rezidüler ve Kutuplar
+# PART: Residues and Poles
 # ############################################################################
 
 # ############################################################################
-# PART: Rezidü (ayrık tekil noktalar, rezidü teoremi, tekil nokta türleri,
-#       sıfırlar ve kutuplar, tekil noktalarda davranış)
+# PART: Residues (isolated singular points, residue theorem, types of singular points,
+#       zeros and poles, behaviour near singular points)
 # ############################################################################
 def circ_arrow(p, cx, cy, r, a, color, width=1.8, ccw=True, head=8.0):
     """Arrowhead ON a circle at angle a (radians); ccw=False gives clockwise."""
@@ -2459,7 +2459,7 @@ def cut(p, p0, p1, color=PRACTICE):
     p.line([p0, p1], color, 3.2, None, 0.35)
 
 
-# ================================================= ayrık-tekil-noktalar-ve-rezidü
+# ================================================= ayrik-tekil-noktalar-ve-rezidu
 # ---- R1: the singular points 1/n of 1/sin(pi/z) accumulate at the origin
 p = cplane(40, 24, 320, (-1.3, 1.3), (-0.62, 0.62))
 EPS = 0.3
@@ -2532,7 +2532,7 @@ OUT["rezidu-kaydirilmis-halka"] = figure(
     "Laurent serisinin ge&#231;erli oldu&#287;u en b&#252;y&#252;k delinmi&#351; disktir ve <em>C</em> onun i&#231;inde kal&#305;r.",
     aria="|z-2|=1 cemberi ve 0&lt;|z-2|&lt;2 halkasi; 0 noktasi halkanin sinirinda")
 
-# ======================================================== cauchy-rezidü-teoremi
+# ======================================================== cauchy-rezidu-teoremi
 # ---- R4: proof of the residue theorem — C minus the small circles C_k
 p = cplane(40, 24, 320, (-3.9, 3.9), (-2.7, 2.7))
 raw = blob(0, 0, 2.55, [(0.22, 2, 0.6), (0.12, 3, 2.2)])
@@ -2631,7 +2631,7 @@ OUT["rezidu-kupkokler-cember"] = figure(
     "&#8212; sonsuzdaki rezid&#252; &#8212; yeter.",
     aria="Birim cember uzerindeki uc kok, orijin ve |z|=3 cevresi")
 
-# ============================================================= tekil-nokta-türleri
+# ============================================================= tekil-nokta-turleri
 # ---- R7: the branch 0 < theta < 2 pi of log z is analytic at z = i
 p = cplane(40, 24, 320, (-1.6, 2.2), (-1.55, 1.55))
 p.origin_axes()
@@ -2656,7 +2656,7 @@ OUT["rezidu-log-dal-kutup"] = figure(
     "yani log <em>i</em> = <em>i</em>&#960;/2.",
     aria="Pozitif reel eksendeki dal kesimi, i ve -i noktalari, theta = pi/2 acisi")
 
-# ============================================================ sıfırlar-ve-kutuplar
+# ============================================================ sifirlar-ve-kutuplar
 # ---- R8: vanishing on a segment L forces f = 0 on the whole neighbourhood N_0
 p = cplane(40, 24, 320, (-2.5, 2.5), (-2.4, 2.4))
 p.origin_axes(opacity=0.3)
@@ -2732,7 +2732,7 @@ OUT["rezidu-z4-kokler"] = figure(
     "bunlardan a&#231;&#305;s&#305; &#960;/4 olan&#305;d&#305;r; di&#287;erleri <em>i</em> ile &#231;arp&#305;larak (90&#176; d&#246;nd&#252;r&#252;lerek) elde edilir.",
     aria="z^4+4=0 denkleminin dort koku kok 2 yaricapli cember uzerinde")
 
-# ======================================================= tekil-noktalarda-davranış
+# ======================================================= tekil-noktalarda-davranis
 # ---- R11: Casorati-Weierstrass — punctured delta-disk in the z-plane, epsilon-disk in the w-plane
 p1 = cplane(24, 30, 250, (-1.5, 1.5), (-1.5, 1.5))
 disk_fill(p1, 0, 0, 1, THEORY, 0.10)
@@ -2833,11 +2833,11 @@ OUT["rezidu-cos1z-yonler"] = figure(
     css_class=WIDE, aria="Orijine reel ve sanal eksen boyunca yaklasan oklar ve davranis ozeti")
 
 # ############################################################################
-# PART: Rezidü Uygulamaları
+# PART: Applications of Residues
 # ############################################################################
 
 # ############################################################################
-# PART: Uygulamalar (rezidü kuramının uygulamaları)
+# PART: Applications (applications of residue theory)
 # ############################################################################
 
 def _uyg_sub(s):

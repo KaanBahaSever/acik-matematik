@@ -322,19 +322,19 @@ def main():
     findings.sort(key=lambda d: d["em"] - d["budget"], reverse=True)
     inline = [d for d in findings if d["kind"] == "inline"]
     display = [d for d in findings if d["kind"] == "display"]
-    print("dosya: %d  satir ici formul: %d  goruntu formulu: %d"
+    print("files: %d  inline formulas: %d  display formulas: %d"
           % (len(files), counts["inline"], counts["display"]))
-    print("butceyi asan: satir ici %d (sayfayi genisletir), goruntu %d (kaydirilir)"
+    print("over budget: inline %d (widen the page), display %d (scroll)"
           % (len(inline), len(display)))
-    for kind, items in (("SATIR ICI", inline), ("GORUNTU", display)):
+    for kind, items in (("INLINE", inline), ("DISPLAY", display)):
         if not items:
             continue
         print("\n== %s ==" % kind)
         for d in (items if args.all else items[:args.limit]):
-            print("  %s:%d  %.1fem (butce %.1f)  %s"
+            print("  %s:%d  %.1fem (budget %.1f)  %s"
                   % (d["file"], d["line"], d["em"], d["budget"], d["tex"][:90]))
         if not args.all and len(items) > args.limit:
-            print("  ... %d tane daha" % (len(items) - args.limit))
+            print("  ... %d more" % (len(items) - args.limit))
     if args.json:
         pathlib.Path(args.json).write_text(json.dumps(findings, ensure_ascii=False, indent=1),
                                            encoding="utf-8")

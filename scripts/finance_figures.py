@@ -205,10 +205,10 @@ def bars(p, items, ymin, color=THEORY, half=0.36, fill=0.18, lab_size=9.5,
 
 
 # ############################################################################
-# PART 1 — Basit faiz (bölüm 1–5)
+# PART 1 — Simple interest (chapters 1–5)
 # ############################################################################
 
-# --- Genel zaman şeması -----------------------------------------------------
+# --- General time diagram ---------------------------------------------------
 p = tl_panel(30, 60, 400, 90, -0.15, 2.15)
 tline(p, 0, [0, 1, 2], ["Geçmişteki zaman", "Şimdiki zaman", "Gelecekteki zaman"], size=10.5, lab_dy=-11)
 span(p, 0, 1, "t yıl", dy=-52)
@@ -224,7 +224,7 @@ OUT["zaman-semasi"] = figure(
     "&#8220;çarp&#8221;, sola gitmek &#8220;böl&#8221; demektir.",
     aria="Basit faizde gecmis, simdi ve gelecek arasinda para tasima semasi")
 
-# --- Örnek 1.4 --------------------------------------------------------------
+# --- Example 1.4 ------------------------------------------------------------
 p = tl_panel(30, 50, 340, 70, -0.15, 1.15)
 tline(p, 0, [0, 1], ["bugün", "9 ay sonra"])
 amount(p, 0, "P = ?", color=PRACTICE, size=11.5)
@@ -237,7 +237,7 @@ OUT["ornek-14-simdiki-deger"] = figure(
     aria="9 ay sonraki 1500 TL nin bugunku degeri")
 
 
-# --- Örnek 1.5: iki odak noktası --------------------------------------------
+# --- Example 1.5: two focal dates -------------------------------------------
 def odak_panel(focus):
     q = tl_panel(34, 96, 420, 96, -0.4, 10.6)
     tline(q, 0, [0, 3, 5, 6, 10], ["0", "3", "5", "6", "10"])
@@ -272,7 +272,7 @@ OUT["ornek-15-odak6"] = figure(
     "değişince cevap da değişir.",
     aria="Ornek 1.5: odak noktasi 6. ay alinarak denk odemeler")
 
-# --- Örnek 1.6a: Tüccar Kuralı ----------------------------------------------
+# --- Example 1.6a: Merchant's Rule ------------------------------------------
 XS = [0, 1.55, 3.05, 3.75, 4.6]
 DATES = ["15.1.2011", "12.4.2011", "10.8.2011", "3.10.2011", "1.12.2011"]
 p = tl_panel(34, 128, 450, 100, -0.55, 5.3)
@@ -293,7 +293,7 @@ OUT["ornek-16-tuccar"] = figure(
     "bitiş tarihine taşınır ve orada eşitlenir. Ödeme yapılmayan aralarda faiz işlemeye devam eder.",
     aria="Ornek 1.6 Tuccar Kurali: tum odemeler bitis tarihine tasiniyor")
 
-# --- Örnek 1.6b: Amerikan Kuralı --------------------------------------------
+# --- Example 1.6b: United States Rule ---------------------------------------
 p = tl_panel(34, 96, 450, 104, -0.55, 5.3)
 tline(p, 0, XS, DATES, size=9.5)
 amount(p, 0, "1000", color=THEORY)
@@ -315,7 +315,7 @@ OUT["ornek-16-amerikan"] = figure(
     "birlikte ödenir.",
     aria="Ornek 1.6 Amerikan Kurali: borc taksitten taksite tasiniyor")
 
-# --- Faiz mi iskonto mu (Örnek 1.7) -----------------------------------------
+# --- Interest or discount? (Example 1.7) ------------------------------------
 p = Plot(64, 44, 320, 150, (0, 2.2), (0, 1180))
 p.add(f'<line x1="{p.X(0):.1f}" y1="{p.Y(0):.1f}" x2="{p.X(2.2):.1f}" y2="{p.Y(0):.1f}" '
       f'stroke="{TEXT}" stroke-width="1.1" opacity="0.45"/>')
@@ -336,7 +336,7 @@ OUT["faiz-vs-iskonto"] = figure(
     "pahalıdır &#8212; borçlunun eline daha az para geçer.",
     aria="Ayni yuzdeden faiz ve iskonto ile bulunan simdiki degerlerin karsilastirmasi")
 
-# --- Örnek 1.10: senet kırdırma ---------------------------------------------
+# --- Example 1.10: discounting a note ---------------------------------------
 p = tl_panel(34, 100, 420, 100, -0.45, 4.3)
 tline(p, 0, [0, 2.2, 3.9], ["11.5.2012", "2.7.2012", "9.8.2012"],
       sub=["senet imzalandı", "bankaya satıldı", "vade"], size=10)
@@ -355,10 +355,10 @@ OUT["ornek-110-senet"] = figure(
     aria="Senedin vade degeri ve iskonto edilerek bankaya satilmasi")
 
 # ############################################################################
-# PART 2 — Bileşik faiz (bölüm 6–8)
+# PART 2 — Compound interest (chapters 6–8)
 # ############################################################################
 
-# --- Basit faiz - bileşik faiz karşılaştırması ------------------------------
+# --- Simple interest vs. compound interest ----------------------------------
 p = Plot(60, 34, 330, 150, (0, 20), (0, 6000))
 p.axes(range(0, 21, 4), range(0, 6001, 1000), "yıl", "TL")
 p.grid(range(0, 21, 4), range(0, 6001, 1000))
@@ -376,7 +376,7 @@ OUT["basit-vs-bilesik"] = figure(
     "<strong>üstel</strong>dir. Fark kısa vadede küçük, uzun vadede belirleyicidir.",
     aria="Basit faiz dogrusu ile bilesik faiz ussel egrisinin karsilastirmasi")
 
-# --- Bileşik faizde değer taşıma --------------------------------------------
+# --- Moving values under compound interest ----------------------------------
 p = tl_panel(30, 60, 400, 90, -0.15, 2.15)
 tline(p, 0, [0, 1, 2], ["Geçmişteki zaman", "Şimdiki zaman", "Gelecekteki zaman"], lab_dy=-11)
 span(p, 0, 1, "n dönem", dy=-52)
@@ -391,7 +391,7 @@ OUT["bilesik-deger-semasi"] = figure(
     "(1 + <em>i</em>)<sup>&#8722;<em>n</em></sup> ile çarpmaktır.",
     aria="Bilesik faizde gecmis, simdi ve gelecek arasinda deger tasima")
 
-# --- X, Y, Z zinciri --------------------------------------------------------
+# --- The X, Y, Z chain ------------------------------------------------------
 p = tl_panel(34, 80, 400, 92, -0.45, 4.3)
 tline(p, 0, [0, 1.3, 2.1, 3.9], ["0", "n&#8321;", "n&#8322;", "n&#8323;"])
 amount(p, 1.3, "X", color=THEORY, size=12.5)
@@ -408,7 +408,7 @@ OUT["deger-denklik-xyz"] = figure(
     "bir odakta denk olan iki ödeme kümesi her tarihte denktir.",
     aria="X, Y ve Z degerlerinin ardisik tasinmasi ve tek adimda tasinmasi")
 
-# --- Örnek 1.15: m arttıkça S -----------------------------------------------
+# --- Example 1.15: S as m grows ---------------------------------------------
 p = Plot(70, 46, 320, 140, (0, 6.6), (30500, 33900))
 p.axes((), range(31000, 33501, 500), "", "TL")
 vals = [(0.6, 31058.48, "31.058", "m = 1"), (1.75, 32071.35, "32.071", "m = 2"),
@@ -427,7 +427,7 @@ OUT["esdeger-oranlar-m"] = figure(
     "10000<em>e</em><sup>1,2</sup> = 33.201,17 TL olan sürekli bileşik faiz sınırıdır.",
     aria="m buyudukce birikmis degerin artisi ve surekli bilesik faiz siniri")
 
-# --- Örnek 1.17b: pratik metod ileri ----------------------------------------
+# --- Example 1.17b: practical method, forward -------------------------------
 p = tl_panel(34, 76, 410, 92, -0.35, 4.4)
 tline(p, 0, [0, 3.4, 4.1], ["0", "11. dönem", "5 yıl 7 ay"], sub=["", "(5 yıl 6 ay)", ""], size=10)
 amount(p, 0, "1000", color=THEORY)
@@ -440,7 +440,7 @@ OUT["ornek-117-pratik"] = figure(
     "uygulanır (11 dönem = 5 yıl 6 ay), artan 1 aylık parça için ileriye doğru basit faiz eklenir.",
     aria="Kesirli donemde pratik metod: 11 donem bilesik, 1 ay basit faiz")
 
-# --- Örnek 1.18b: pratik metod geri -----------------------------------------
+# --- Example 1.18b: practical method, backward ------------------------------
 p = tl_panel(34, 92, 410, 96, -0.45, 4.5)
 tline(p, 0, [0, 0.85, 4.1], ["&#8722;5 ay", "0 (bugün)", "3 yıl 7 ay"], size=10)
 amount(p, 4.1, "2800", color=BASE)
@@ -454,7 +454,7 @@ OUT["ornek-118-pratik"] = figure(
     "basit faiz uygulanır (5 ay).",
     aria="Kesirli donemde geriye dogru pratik metod")
 
-# --- Örnek 1.23 -------------------------------------------------------------
+# --- Example 1.23 -----------------------------------------------------------
 p = tl_panel(34, 84, 410, 96, -0.35, 4.4)
 tline(p, 0, [0, 1.2, 2.8, 4.1], ["0", "36. dönem", "84. dönem", "120. dönem"],
       sub=["", "3 yıl", "7 yıl", "10 yıl"], size=10)
@@ -469,7 +469,7 @@ OUT["ornek-123-denklik"] = figure(
     "dönemdir. 7. yıldaki 2500 TL, 3. yıla 48 dönem geri, 10. yıla 36 dönem ileri taşınır.",
     aria="Ornek 1.23: 7. yildaki borcun 3. ve 10. yildaki denkleri")
 
-# --- Örnek 1.24 -------------------------------------------------------------
+# --- Example 1.24 -----------------------------------------------------------
 p = tl_panel(34, 108, 410, 100, -0.45, 4.4)
 tline(p, 0, [0, 1.4, 2.1, 4.0], ["0", "6. dönem", "8. dönem", "16. dönem"],
       sub=["bugün", "18 ay", "2 yıl", "4 yıl"], size=10)
@@ -490,7 +490,7 @@ OUT["ornek-124-denklik"] = figure(
 
 
 # ############################################################################
-# PART 3 — Anüiteler (bölüm 9–13)
+# PART 3 — Annuities (chapters 9–13)
 # ############################################################################
 
 def dots(p, x, y=0.0, dy=-11.0, color=TEXT, size=13):
@@ -512,7 +512,7 @@ def stream(p, xs, target, color=THEORY, rise0=26.0, drise=15.0, above=True,
         k += 1
 
 
-# --- Normal (dönem sonu) basit anüite ---------------------------------------
+# --- Ordinary (end-of-period) simple annuity --------------------------------
 p = tl_panel(40, 118, 420, 104, -0.6, 7.4)
 XS = [0, 1, 2, 3, 5, 6, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "3", "n &#8722; 2", "n &#8722; 1", "n"])
@@ -532,7 +532,7 @@ OUT["normal-anuite"] = figure(
     "arasında <em>S</em> = <em>A</em>(1 + <em>i</em>)<sup><em>n</em></sup> bağıntısı vardır.",
     aria="Normal basit anuitede odemelerin toplam degere ve iskontolu degere tasinmasi")
 
-# --- Örnek 2.1 --------------------------------------------------------------
+# --- Example 2.1 ------------------------------------------------------------
 p = tl_panel(40, 96, 380, 92, -0.5, 5.5)
 tline(p, 0, [0, 1, 2, 3, 4, 5], ["0", "1", "2", "3", "4", "5"])
 for x in range(1, 6):
@@ -546,7 +546,7 @@ OUT["ornek-21-anuite"] = figure(
     "<em>s</em><sub>5|0,09</sub> çarpanını verir.",
     aria="Ornek 2.1: bes yillik anuitenin toplam degeri")
 
-# --- Örnek 2.2 --------------------------------------------------------------
+# --- Example 2.2 ------------------------------------------------------------
 p = tl_panel(40, 100, 420, 96, -0.6, 5.5)
 XS = [0, 1, 2, 3, 4, 5]
 tline(p, 0, XS, ["Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım"], size=9.5)
@@ -562,7 +562,7 @@ OUT["ornek-22-anuite"] = figure(
     "değeridir.",
     aria="Ornek 2.2: odenmeyen taksitlerin Kasim ayina tasinmasi")
 
-# --- Örnek 2.3 --------------------------------------------------------------
+# --- Example 2.3 ------------------------------------------------------------
 p = tl_panel(40, 108, 430, 100, -0.7, 7.4)
 XS = [0, 1, 2, 3, 5.6, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "3", "16", "17"],
@@ -579,7 +579,7 @@ OUT["ornek-23-anuite"] = figure(
     "yapıldığı için &#8220;0. dönem&#8221; 1.12.1992&#8217;ye düşer.",
     aria="Ornek 2.3: uc ayda bir yapilan 17 odemenin toplam degeri")
 
-# --- Örnek 2.4: değişen faiz oranları ---------------------------------------
+# --- Example 2.4: changing interest rates -----------------------------------
 p = tl_panel(40, 128, 440, 104, -0.6, 10.6)
 tline(p, 0, list(range(11)), [str(k) for k in range(11)])
 for x in range(1, 11):
@@ -599,7 +599,7 @@ OUT["ornek-24-degisen-oran"] = figure(
     "taşınır. Üç bloğun 10. yıldaki değerleri toplanınca 15.521,97 TL bulunur.",
     aria="Ornek 2.4: uc farkli faiz orani altinda on yillik anuite")
 
-# --- Örnek 2.5 --------------------------------------------------------------
+# --- Example 2.5 ------------------------------------------------------------
 p = tl_panel(40, 100, 420, 96, -0.6, 10.6)
 tline(p, 0, list(range(11)), [str(k) for k in range(11)])
 for x in range(1, 11):
@@ -613,7 +613,7 @@ OUT["ornek-25-anuite"] = figure(
     "<em>R</em> = <em>S</em> / <em>s</em><sub>10|0,08</sub>.",
     aria="Ornek 2.5: hedeflenen birikim icin yillik taksitin bulunmasi")
 
-# --- Örnek 2.7: peşinatlı taksitli satış ------------------------------------
+# --- Example 2.7: instalment sale with a down payment -----------------------
 p = tl_panel(40, 104, 430, 100, -0.6, 7.4)
 XS = [0, 1, 2, 3, 5.6, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "3", "35", "36"])
@@ -630,7 +630,7 @@ OUT["ornek-27-pesinat"] = figure(
     "5048,07 TL&#8217;dir; aradaki fark ödenen faizdir.",
     aria="Ornek 2.7: pesinat ve 36 taksidin bugunku degeri")
 
-# --- Peşin anüite -----------------------------------------------------------
+# --- Annuity due ------------------------------------------------------------
 p = tl_panel(40, 122, 420, 104, -1.2, 7.4)
 XS = [-0.9, 0, 1, 2, 5, 6, 6.9]
 tline(p, 0, XS, ["&#8722;1", "0", "1", "2", "n &#8722; 2", "n &#8722; 1", "n"])
@@ -650,7 +650,7 @@ OUT["pesin-anuite"] = figure(
     "<em>S</em> = <em>S</em>&#8242;(1 + <em>i</em>).",
     aria="Pesin anuitede odemelerin donem basinda yapilmasi")
 
-# --- Örnek 2.8 --------------------------------------------------------------
+# --- Example 2.8 ------------------------------------------------------------
 p = tl_panel(40, 100, 420, 96, -0.7, 7.4)
 XS = [0, 1, 2, 3, 5.7, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "3", "59", "60"])
@@ -666,7 +666,7 @@ OUT["ornek-28-pesin"] = figure(
     "toplamı bir dönem daha faizlendirilir.",
     aria="Ornek 2.8: ay baslarinda yatirilan 60 odemenin bes yil sonundaki degeri")
 
-# --- Ertelenmiş anüite ------------------------------------------------------
+# --- Deferred annuity -------------------------------------------------------
 p = tl_panel(40, 116, 430, 104, -0.6, 8.4)
 XS = [0, 1, 2, 3.4, 4.4, 5.4, 7.9]
 tline(p, 0, XS, ["0", "1", "2", "k", "k+1", "k+2", "k+n"])
@@ -688,7 +688,7 @@ OUT["ertelenmis-anuite"] = figure(
     "<em>s</em><sub><em>n</em>|<em>i</em></sub>.",
     aria="Ertelenmis anuitede ilk odemenin k donem sonra baslamasi")
 
-# --- Örnek 2.9 --------------------------------------------------------------
+# --- Example 2.9 ------------------------------------------------------------
 p = tl_panel(40, 106, 430, 100, -0.6, 8.4)
 XS = [0, 1, 3.4, 4.4, 5.4, 7.9]
 tline(p, 0, XS, ["0", "1", "37", "38", "39", "45"],
@@ -707,7 +707,7 @@ OUT["ornek-29-ertelenmis"] = figure(
     "gereken anapara elde edilir.",
     aria="Ornek 2.9: 19 yas sonrasi baslayan sekiz odemeli ertelenmis anuite")
 
-# --- Örnek 2.10, 1. yöntem: farkı son ödemeye eklemek ------------------------
+# --- Example 2.10, method 1: add the difference to the last payment ----------
 p = tl_panel(40, 104, 420, 96, -0.6, 7.4)
 tline(p, 0, [0, 1, 2, 5.4, 6.5], ["0", "1", "2", "20", "21"])
 dots(p, 3.7, dy=-11, size=12)
@@ -722,7 +722,7 @@ OUT["ornek-210-yontem1"] = figure(
     "aradaki fark <em>X</em>, aynı tarihte son ödemenin üzerine eklenir.",
     aria="Ornek 2.10 birinci yontem: farkin son odemeye eklenmesi")
 
-# --- Örnek 2.10, 2. yöntem: bir dönem sonra küçük bir ödeme ------------------
+# --- Example 2.10, method 2: a small payment one period later ----------------
 p = tl_panel(40, 104, 420, 96, -0.6, 7.9)
 tline(p, 0, [0, 1, 2, 5.4, 6.5, 7.4], ["0", "1", "2", "20", "21", "22"])
 dots(p, 3.7, dy=-11, size=12)
@@ -740,7 +740,7 @@ OUT["ornek-210-yontem2"] = figure(
     "görerek 22. döneme taşınır. Eksik kalan tutar <em>Y</em> orada ödenir.",
     aria="Ornek 2.10 ikinci yontem: 21. donemde toplanip 22. doneme tasinan odemeler")
 
-# --- Örnek 2.11 -------------------------------------------------------------
+# --- Example 2.11 -----------------------------------------------------------
 p = tl_panel(40, 100, 420, 96, -0.6, 7.4)
 tline(p, 0, [0, 1, 2, 5.4, 6.5], ["0", "1", "2", "15", "16"])
 dots(p, 3.7, dy=-11, size=12)
@@ -755,7 +755,7 @@ OUT["ornek-211-son-odeme"] = figure(
     "geriye kalan küçük parça, 16. dönemde yapılacak tek bir ödemeye dönüştürülür.",
     aria="Ornek 2.11: 15 tam odeme ve 16. donemde kucuk son odeme")
 
-# --- Doğrusal interpolasyon -------------------------------------------------
+# --- Linear interpolation ---------------------------------------------------
 p = Plot(70, 40, 320, 140, (6.85, 8.15), (11.65, 12.08))
 p.axes([7, 7.5, 8], [11.7, 11.8, 11.9, 12.0], "j&#8322; (%)", "s")
 p.grid([7, 7.5, 8], [11.7, 11.8, 11.9, 12.0])
@@ -775,7 +775,7 @@ OUT["dogrusal-interpolasyon"] = figure(
     "bu doğru üzerinden okunur. Aralık dar tutulduğu için hata küçüktür.",
     aria="Iki nokta arasinda dogrusal interpolasyon ile faiz oraninin bulunmasi")
 
-# --- Örnek 2.13: genel anüite -----------------------------------------------
+# --- Example 2.13: general annuity ------------------------------------------
 p = tl_panel(40, 108, 430, 100, -0.6, 7.4)
 tline(p, 0, [0, 1, 2, 3, 5.6, 6.9], ["0", "1", "2", "3", "59", "60"], sub=["", "", "", "", "", "(ay)"], size=10)
 dots(p, 4.4, dy=-11, size=12)
@@ -795,7 +795,7 @@ OUT["ornek-213-genel-anuite"] = figure(
     "<em>j</em><sub>12</sub> oranını bulup problemi basit anüiteye çevirmektir.",
     aria="Ornek 2.13: aylik odemeler ve uc aylik faiz donemi olan genel anuite")
 
-# --- Daimi gelir ------------------------------------------------------------
+# --- Perpetuity -------------------------------------------------------------
 p = tl_panel(40, 92, 420, 96, -0.6, 7.6)
 tline(p, 0, [0, 1, 2, 3, 4, 5, 6], ["0", "1", "2", "3", "4", "5", "6"])
 for x in range(1, 7):
@@ -810,7 +810,7 @@ OUT["daimi-gelir"] = figure(
     "<em>R</em>/<em>i</em> sayısına yakınsar &#8212; yani &#8220;yalnızca faizini harcamak&#8221;.",
     aria="Daimi gelirde sonsuz odeme dizisinin iskontolu degeri")
 
-# --- Değişik (artan) ödemeli anüite -----------------------------------------
+# --- Annuity with varying (increasing) payments -----------------------------
 p = tl_panel(40, 108, 420, 104, -0.6, 7.4)
 XS = [0, 1, 2, 3, 5.6, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "3", "n &#8722; 1", "n"])
@@ -833,10 +833,10 @@ OUT["artan-anuite"] = figure(
 
 
 # ############################################################################
-# PART 4 — Amortisman (bölüm 14–15)
+# PART 4 — Amortization (chapters 14–15)
 # ############################################################################
 
-# --- Örnek 3.1: borcun taksitlerle amortismanı ------------------------------
+# --- Example 3.1: amortizing a debt by instalments --------------------------
 p = tl_panel(40, 100, 400, 96, -0.6, 6.5)
 tline(p, 0, list(range(7)), [str(k) for k in range(7)])
 for x in range(1, 6):
@@ -851,7 +851,7 @@ OUT["ornek-31-amortisman"] = figure(
     "<em>X</em>, yuvarlamadan doğan farkı kapatmak için ayrıca hesaplanır.",
     aria="Ornek 3.1: alti taksidin bugunku degerinin borca esitlenmesi")
 
-# --- Taksitin faiz / anapara ayrışması --------------------------------------
+# --- Splitting a payment into interest / principal --------------------------
 p = Plot(64, 40, 330, 150, (0.3, 6.7), (0, 1750))
 p.axes(range(1, 7), range(0, 1401, 400), "ödeme", "TL")
 rows = [(480.00, 817.89), (414.57, 883.32), (343.90, 953.99),
@@ -873,7 +873,7 @@ OUT["amortisman-bilesenleri"] = figure(
     "anaparadan düşen kısım büyür. Amortisman tablosunun anlattığı şey tam olarak bu kaymadır.",
     aria="Sabit taksitin faiz ve anapara bilesenlerinin donemden doneme degisimi")
 
-# --- Örnek 3.2: genel anüite biçiminde amortisman ---------------------------
+# --- Example 3.2: amortization as a general annuity -------------------------
 p = tl_panel(40, 106, 420, 100, -0.6, 8.5)
 tline(p, 0, list(range(9)), ["0", "1", "2", "3", "4", "5", "6", "7", "8"],
       sub=["", "3 ay", "6 ay", "9 ay", "1 yıl", "", "", "", "2 yıl"], size=10, sub_size=8.8)
@@ -891,7 +891,7 @@ OUT["ornek-32-amortisman"] = figure(
     "((1+<em>i</em>)<sup>4</sup> = (1,02)<sup>12</sup>), sonra her şey basit anüite gibi yürür.",
     aria="Ornek 3.2: uc aylik odemeler ve aylik faizle amortisman")
 
-# --- Kalan borç: iki yöntem -------------------------------------------------
+# --- Outstanding balance: two methods ---------------------------------------
 p = tl_panel(40, 128, 430, 104, -0.7, 8.5)
 XS = [0, 1, 2, 3.2, 4.2, 5.2, 7.9]
 tline(p, 0, XS, ["0", "1", "2", "k", "k+1", "k+2", "n"])
@@ -919,7 +919,7 @@ OUT["kalan-borc-yontemler"] = figure(
     "güne taşınmış değerini alarak). İkisi aynı sayıyı verir.",
     aria="Kalan borcun gecmise ve gelecege bakarak hesaplanmasi")
 
-# --- Örnek 3.3: ev kredisi --------------------------------------------------
+# --- Example 3.3: home loan -------------------------------------------------
 p = tl_panel(40, 106, 430, 100, -0.7, 8.4)
 XS = [0, 1, 2, 3.6, 6.2, 7.1, 8.0]
 tline(p, 0, XS, ["0", "1", "2", "7", "346", "347", "348"],
@@ -939,7 +939,7 @@ OUT["ornek-33-ev-kredisi"] = figure(
     "183,50 TL&#8217;dir &#8212; ödenen 3212,30 TL&#8217;nin geri kalanı faizdir.",
     aria="Ornek 3.3: 348 aylik ev kredisinin ilk yedi ayi")
 
-# --- Ev kredisinde kalan borç eğrisi ----------------------------------------
+# --- Outstanding balance curve of a home loan -------------------------------
 i33 = 5 / 600
 R33 = 458.9
 bal = [52000 * (1 + i33) ** k - R33 * (((1 + i33) ** k - 1) / i33) for k in range(0, 349)]
@@ -960,10 +960,10 @@ OUT["ev-kredisi-borc-egrisi"] = figure(
     aria="348 aylik kredide kalan borcun zamana gore azalisi")
 
 # ############################################################################
-# PART 5 — Tahviller (bölüm 16–17)
+# PART 5 — Bonds (chapters 16–17)
 # ############################################################################
 
-# --- Tahvilin nakit akışı ---------------------------------------------------
+# --- Cash flow of a bond ----------------------------------------------------
 p = tl_panel(40, 108, 420, 100, -0.6, 7.4)
 XS = [0, 1, 2, 5, 6, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "n &#8722; 2", "n &#8722; 1", "n"])
@@ -980,7 +980,7 @@ OUT["tahvil-nakit-akisi"] = figure(
     "bugüne taşınmış toplamıdır.",
     aria="Tahvilin kupon odemeleri ve vade degerinden olusan nakit akisi")
 
-# --- Örnek 4.2 --------------------------------------------------------------
+# --- Example 4.2 ------------------------------------------------------------
 p = tl_panel(40, 106, 430, 100, -0.7, 7.4)
 XS = [0, 1, 2, 5.3, 6.2, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "13", "14", "15"],
@@ -997,7 +997,7 @@ OUT["ornek-42-tahvil"] = figure(
     "5000 &#183; 0,0525 = 262,50 TL, vade değeri ise nominalin 1,03 katı olan 5150 TL&#8217;dir.",
     aria="Ornek 4.2: 15 donemlik kuponlu tahvilin alis fiyati")
 
-# --- Tahvil fiyatı - getiri eğrisi ve interpolasyon -------------------------
+# --- Bond price - yield curve and interpolation -----------------------------
 def bond_price(j):
     i = j / 2
     return 62.5 * (1 - (1 + i) ** -16) / i + 1060 * (1 + i) ** -16
@@ -1025,7 +1025,7 @@ OUT["tahvil-fiyat-getiri"] = figure(
     "aranan fiyata karşılık gelen oran okunur.",
     aria="Tahvil fiyati ile getiri orani arasindaki iliski ve interpolasyon")
 
-# --- Örnek 4.4 --------------------------------------------------------------
+# --- Example 4.4 ------------------------------------------------------------
 p = tl_panel(40, 102, 430, 100, -0.7, 7.4)
 XS = [0, 1, 2, 4, 5, 6.9]
 tline(p, 0, XS, ["0", "1", "2", "16", "17", "32"],
@@ -1048,10 +1048,10 @@ OUT["ornek-44-tahvil"] = figure(
     aria="Ornek 4.4: tahvilin alinip vadeden once satilmasi")
 
 # ############################################################################
-# PART 6 — Hayat anüiteleri ve sigortalar (bölüm 18–20)
+# PART 6 — Life annuities and insurance (chapters 18–20)
 # ############################################################################
 
-# --- Hayat tablosunun kavramları --------------------------------------------
+# --- Concepts of the life table ---------------------------------------------
 p = Plot(56, 44, 360, 140, (0, 4.4), (0, 1.15))
 boxes = ((0.1, 1.45, "&#8467;" + subs("x") + " kişi", "x yaşına erişenler", THEORY, 0.62, 1.0),
          (2.6, 1.45, "&#8467;" + subs("x+1") + " kişi", "x+1 yaşına erişenler", BASE, 0.62, 1.0),
@@ -1079,7 +1079,7 @@ OUT["hayat-tablosu-kavramlari"] = figure(
     "sayının &#8467;<sub><em>x</em></sub>&#8217;e oranıdır.",
     aria="Hayat tablosunda l_x, d_x, p_x ve q_x kavramlari")
 
-# --- nEx şeması -------------------------------------------------------------
+# --- nEx diagram ------------------------------------------------------------
 p = tl_panel(40, 92, 400, 92, -0.5, 5.4)
 tline(p, 0, [0, 1, 4, 5], ["x", "x+1", "x+n&#8722;1", "x+n"], sub=["(bugün)", "", "", ""], size=10.5)
 dots(p, 2.5, dy=-11, size=12)
@@ -1095,7 +1095,7 @@ OUT["nex-semasi"] = figure(
     "<sub><em>n</em></sub><em>p<sub>x</sub></em>.",
     aria="Hayatta olma halinde odenecek 1 TL nin iskontolu beklenen degeri")
 
-# --- Ömür boyu hayat anüitesi: dönem sonu / dönem başı ----------------------
+# --- Whole life annuity: end / start of period ------------------------------
 q1 = tl_panel(30, 92, 400, 88, -0.5, 6.6)
 tline(q1, 0, [0, 1, 3, 4, 5.6, 6.2], ["x", "x+1", "x+k", "x+k+1", "99", "100"], size=10)
 dots(q1, 2.0, dy=-11, size=12)
@@ -1123,7 +1123,7 @@ OUT["omur-boyu-anuite"] = figure(
     "100 yaşına erişmediği kabul edilmektedir.",
     aria="Omur boyu hayat anuitesinin donem sonu ve donem basi bicimleri", css_class=WIDE)
 
-# --- Geçici hayat anüitesi --------------------------------------------------
+# --- Temporary life annuity -------------------------------------------------
 q1 = tl_panel(30, 92, 400, 88, -0.5, 6.4)
 tline(q1, 0, [0, 1, 2, 4.6, 5.6], ["x", "x+1", "x+2", "x+n&#8722;1", "x+n"], size=10)
 dots(q1, 3.3, dy=-11, size=12)
@@ -1146,7 +1146,7 @@ OUT["gecici-anuite"] = figure(
     "ödeme kesin olduğu için ne iskonto edilir ne de olasılıkla çarpılır.",
     aria="Gecici hayat anuitesinin yil sonu ve yil basi bicimleri", css_class=WIDE)
 
-# --- Örnek 5.5: beş terimin ayrıştırılması ----------------------------------
+# --- Example 5.5: splitting into five terms ---------------------------------
 p = Plot(64, 44, 340, 140, (94.4, 100.9), (0, 172000))
 p.axes(range(95, 100), range(0, 150001, 50000), "yaş", "kişi",
        yfmt=lambda v: f"{v/1000:.0f}".replace(".", ",") + " bin")
@@ -1171,7 +1171,7 @@ OUT["ornek-55-hayat"] = figure(
     "iskonto edilmiş hâlidir &#8212; uzaktaki ödemelerin katkısı bu yüzden çok küçüktür.",
     aria="Ornek 5.5: omur boyu anuitedeki bes terimin buyuklugu")
 
-# --- Hayat sigortası şeması -------------------------------------------------
+# --- Life insurance diagram -------------------------------------------------
 p = tl_panel(40, 116, 420, 96, -0.5, 6.4)
 tline(p, 0, [0, 1, 2, 3, 5.6], ["x", "x+1", "x+2", "x+3", "x+n"], size=10.5)
 dots(p, 4.4, dy=-11, size=12)
@@ -1189,7 +1189,7 @@ OUT["hayat-sigortasi-semasi"] = figure(
     "(1+<em>i</em>)<sup>&#8722;(<em>t</em>+1)</sup> çarpanının çarpımıdır.",
     aria="n yillik hayat sigortasinin net tek priminin olusumu")
 
-# --- Örnek 6.1: beş terim ---------------------------------------------------
+# --- Example 6.1: five terms ------------------------------------------------
 p = Plot(64, 44, 340, 140, (94.4, 100.9), (0, 62000))
 p.axes(range(95, 100), range(0, 50001, 10000), "yaş", "kişi",
        yfmt=lambda v: f"{v/1000:.0f}" + " bin")
@@ -1215,7 +1215,7 @@ OUT["ornek-61-sigorta"] = figure(
     aria="Ornek 6.1: omur boyu hayat sigortasinin bes terimi")
 
 # ############################################################################
-# PART 7 — Hisse senetleri ve portföy (bölüm 21–24)
+# PART 7 — Stocks and portfolios (chapters 21–24)
 # ############################################################################
 
 def ss_panel(y0, mean, sd, k, inner, outer, title):
@@ -1245,7 +1245,7 @@ OUT["standart-sapma-bantlari"] = figure(
     "kaybetme&#8221; olasılığıdır &#8212; sırasıyla 1/6, 1/44 ve 1/740.",
     aria="Ortalama etrafinda bir, iki ve uc standart sapmalik bantlar", css_class=WIDE)
 
-# --- Örnek 7.8: Arçelik ------------------------------------------------------
+# --- Example 7.8: Arçelik ----------------------------------------------------
 p2 = Plot(40, 50, 400, 44, (183 - 3.6 * 240.93, 183 + 3.6 * 240.93), (-1, 1))
 tline(p2, 0, [183 - 3 * 240.93, 183 - 2 * 240.93, 183 - 240.93, 183, 183 + 240.93, 183 + 2 * 240.93, 183 + 3 * 240.93],
       ["&#8722;539,79", "&#8722;298,86", "&#8722;57,93", "183", "423,93", "664,86", "905,79"], arrow=False, size=9.5)
@@ -1261,7 +1261,7 @@ OUT["ornek-78-arcelik"] = figure(
     "kaybetme şansı 1/44&#8217;tür.",
     aria="Arcelik hissesinin ortalama getirisi etrafindaki standart sapma bantlari")
 
-# --- Risk - getiri grafikleri ------------------------------------------------
+# --- Risk - return charts ----------------------------------------------------
 def risk_return(y0, pts, xrange, yrange, xt, yt, labels=None, w=330, h=140, x0=70):
     q = Plot(x0, y0, w, h, xrange, yrange)
     q.axes(xt, yt, "RİSK (SS)", "GETİRİ")
@@ -1298,7 +1298,7 @@ OUT["risk-getiri-710"] = figure(
     "hem daha az getirilidir; kimse onları seçmez.",
     aria="Ornek 7.10 portfoylerinin risk getiri grafigi ve en az riskli portfoy")
 
-# --- Örnek 7.11: on beş portföyün dağılımı ----------------------------------
+# --- Example 7.11: distribution of fifteen portfolios -----------------------
 pts711 = [(3.09, 20, "%100A"), (9.45, 24, ""), (13.41, 21, ""), (18.13, 28, ""), (18.94, 25, ""),
           (24.89, 22, ""), (26.98, 32, "%25A+%75B"), (26.40, 29, ""), (29.95, 26, ""),
           (36.45, 23, ""), (35.87, 36, "%100B"), (34.57, 33, ""), (36.53, 30, ""),
@@ -1321,7 +1321,7 @@ OUT["risk-getiri-711"] = figure(
     "getiriyi verenler. Taralı bölge, %30&#8217;u aşmayan risk sınırını gösterir.",
     aria="Ornek 7.11 portfoylerinin risk getiri dagilimi")
 
-# --- Çeşitlendirme -----------------------------------------------------------
+# --- Diversification ---------------------------------------------------------
 p = Plot(64, 38, 340, 140, (0, 50), (0, 105))
 p.axes(range(0, 51, 10), range(0, 101, 20), "portföydeki hisse sayısı", "risk (%)")
 p.grid(range(0, 51, 10), range(0, 101, 20))
@@ -1339,7 +1339,7 @@ OUT["cesitlendirme"] = figure(
     "Bu yüzden 15&#8211;20 hisseden sonra yeni hisse eklemenin faydası küçüktür.",
     aria="Hisse sayisi arttikca portfoy riskinin azalisi ve piyasa riski tabani")
 
-# --- Alıştırma 7.6 grafikleri -----------------------------------------------
+# --- Exercise 7.6 charts ----------------------------------------------------
 pa = [(6.48, -3), (2.79, 0), (1.26, 3), (4.83, 6), (8.54, 9)]
 OUT["alistirma-761-risk-getiri"] = figure(
     450, 220,

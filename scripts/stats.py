@@ -261,7 +261,7 @@ def write_readme(root, rows, totals):
     readme = root / "README.md"
     text = read_text(readme)
     if text is None:
-        return "README.md okunamadı, atlandı"
+        return "README.md could not be read, skipped"
     updated, changes, missing = text, [], []
     for name, body in (("books", books_markdown(rows, root)),
                        ("metrics", metrics_markdown(totals, rows))):
@@ -271,14 +271,14 @@ def write_readme(root, rows, totals):
         elif changed:
             changes.append(name)
     if missing:
-        return "README.md güncellenmedi: %s işareti yok" % ", ".join(missing)
+        return "README.md not updated: missing marker(s) %s" % ", ".join(missing)
     if not changes:
-        return "README.md zaten güncel"
+        return "README.md already up to date"
     try:
         io.open(readme, "w", encoding="utf-8", newline="\n").write(updated)
     except OSError as exc:
-        return "README.md yazılamadı: %s" % exc
-    return "README.md güncellendi (%s)" % ", ".join(changes)
+        return "README.md could not be written: %s" % exc
+    return "README.md updated (%s)" % ", ".join(changes)
 
 
 def update_readme(root=None):
@@ -306,11 +306,11 @@ def main():
     default = here.parent if (here.parent / "dersler").is_dir() else pathlib.Path.cwd()
     root = pathlib.Path(args[0]).resolve() if args else default
     if not root.is_dir():
-        sys.exit("Dizin bulunamadi: %s" % root)
+        sys.exit("Directory not found: %s" % root)
 
     rows, totals, loose, unreadable = collect(root)
     if not rows and not totals:
-        sys.exit("Bu dizinde .qmd dosyasi yok: %s" % root)
+        sys.exit("No .qmd files in this directory: %s" % root)
 
     if "--csv" in flags:
         keys = ["kitap", "bolum", "mufredat"] + METRIC_KEYS + ["kelime", "karakter", "bayt"]
@@ -326,30 +326,30 @@ def main():
     # a book, so it is reported on its own line.
     books_only = [r for r in rows if not r.get("portal")]
     portal_pages = sum(r.get("bolum", 0) + r.get("mufredat", 0) for r in rows if r.get("portal")) + len(loose)
-    print("\nProje: %s\n" % root)
+    print("\nProject: %s\n" % root)
     print_table([
-        ("Kitap sayısı", len(books_only)),
-        ("Konu/Bölüm sayısı", sum(r.get("bolum", 0) for r in books_only)),
-        ("Müfredat sayfası", sum(r.get("mufredat", 0) for r in books_only)),
-        ("Portal sayfası", portal_pages),
-        ("Teorem sayısı", totals.get("teorem", 0)),
-        ("Lemma sayısı", totals.get("lemma", 0)),
-        ("İspat sayısı", totals.get("ispat", 0)),
-        ("Örnek/Soru sayısı", totals.get("ornek", 0)),
-        ("Çözüm sayısı", totals.get("cozum", 0)),
-        ("Tanım sayısı", totals.get("tanim", 0)),
-        ("Önerme/Sonuç sayısı", totals.get("onerme", 0)),
-        ("Şekil sayısı", totals.get("sekil", 0)),
-        ("Toplam kelime", "{:,}".format(totals.get("kelime", 0))),
-        ("Toplam karakter", "{:,}".format(totals.get("karakter", 0))),
-        ("Ham karakter (kod dahil)", "{:,}".format(totals.get("ham_karakter", 0))),
-        (".qmd kaynak boyutu", mb(totals.get("bayt", 0))),
-        ("Proje boyutu (çıktısız)", mb(dir_size(root))),
-        ("Toplam disk (her şey)", mb(dir_size(root, skip={".git"}))),
-    ], "METRİK")
+        ("Books", len(books_only)),
+        ("Chapters", sum(r.get("bolum", 0) for r in books_only)),
+        ("Curriculum pages", sum(r.get("mufredat", 0) for r in books_only)),
+        ("Portal pages", portal_pages),
+        ("Theorems", totals.get("teorem", 0)),
+        ("Lemmas", totals.get("lemma", 0)),
+        ("Proofs", totals.get("ispat", 0)),
+        ("Examples/exercises", totals.get("ornek", 0)),
+        ("Solutions", totals.get("cozum", 0)),
+        ("Definitions", totals.get("tanim", 0)),
+        ("Propositions/corollaries", totals.get("onerme", 0)),
+        ("Figures", totals.get("sekil", 0)),
+        ("Total words", "{:,}".format(totals.get("kelime", 0))),
+        ("Total characters", "{:,}".format(totals.get("karakter", 0))),
+        ("Raw characters (incl. code)", "{:,}".format(totals.get("ham_karakter", 0))),
+        (".qmd source size", mb(totals.get("bayt", 0))),
+        ("Project size (no build output)", mb(dir_size(root))),
+        ("Total disk (everything)", mb(dir_size(root, skip={".git"}))),
+    ], "METRIC")
 
     if "--per-book" in flags:
-        head = "%-30s %6s %7s %6s %6s %7s %10s" % ("kitap", "bölüm", "teorem", "lemma", "ispat", "örnek", "kelime")
+        head = "%-30s %6s %7s %6s %6s %7s %10s" % ("book", "chap", "theorem", "lemma", "proof", "example", "words")
         print("\n" + head)
         print("-" * len(head))
         for r in sorted(rows, key=lambda x: -x.get("kelime", 0)):
@@ -358,9 +358,9 @@ def main():
                      r.get("ispat", 0), r.get("ornek", 0), "{:,}".format(r.get("kelime", 0))))
 
     if loose:
-        print("\nHiçbir kitaba ait olmayan %d .qmd dosyası da sayıldı." % len(loose))
+        print("\nAlso counted %d .qmd file(s) that belong to no book." % len(loose))
     if unreadable:
-        print("\nOkunamayan %d dosya atlandı:" % len(unreadable))
+        print("\nSkipped %d unreadable file(s):" % len(unreadable))
         for f in unreadable[:10]:
             print("   ", f)
 

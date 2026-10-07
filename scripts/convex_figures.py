@@ -35,7 +35,7 @@ LEQ, GEQ, IN, NOTIN = "&#8804;", "&#8805;", "&#8712;", "&#8713;"
 INFTY, MINUS, CDOT, TIMES = "&#8734;", "&#8722;", "&#183;", "&#215;"
 LANG, RANG, PERP, LAMBDA = "&#10216;", "&#10217;", "&#8869;", "&#955;"
 ALPHA, THETA, EPS, DELTA = "&#945;", "&#952;", "&#949;", "&#948;"
-DELTA_CAP = "&#916;"      # öncü esas minörler metinde büyük delta ile yazılır
+DELTA_CAP = "&#916;"      # the text writes leading principal minors with a capital delta
 SUB0, SUB1, SUB2, SUB3, SUBN = "&#8320;", "&#8321;", "&#8322;", "&#8323;", "&#8345;"
 SUBK, SUBM, SUBI = "&#8342;", "&#8344;", "&#7522;"
 CUP, CAP, SUBSET, EMPTY = "&#8746;", "&#8745;", "&#8834;", "&#8709;"
@@ -159,8 +159,8 @@ def wedge(p, o, a0, a1, r, color=THEORY, fill_op=0.14, width=1.9, samples=48):
 def hyperline(p, a, b, color=THEORY, width=2.0, dash=None, opacity=1.0, pad=0.25):
     """The line (hyperplane in R^2) {x : <a,x> = b}, clipped to the panel."""
     n2 = a[0] ** 2 + a[1] ** 2
-    foot = (a[0] * b / n2, a[1] * b / n2)             # doğrunun orijine en yakın noktası
-    d = (-a[1] / math.sqrt(n2), a[0] / math.sqrt(n2))  # doğrultu vektörü
+    foot = (a[0] * b / n2, a[1] * b / n2)             # the point of the line nearest to the origin
+    d = (-a[1] / math.sqrt(n2), a[0] / math.sqrt(n2))  # direction vector
     box = _pbox(p, pad)
     span = 2 * ((box[2] - box[0]) + (box[3] - box[1]))
     pseg(p, (foot[0] - d[0] * span, foot[1] - d[1] * span),
@@ -188,7 +188,7 @@ def halfplane(p, a, b, side=-1, color=THEORY, fill_op=0.12, width=2.0, dash=None
         iq, ir = inside(q), inside(r)
         if iq:
             keep.append(q)
-        if iq != ir:                       # kenar sınır doğrusunu kesiyor
+        if iq != ir:                       # the edge crosses the boundary line
             vq, vr = val(q), val(r)
             t = vq / (vq - vr)
             keep.append((q[0] + t * (r[0] - q[0]), q[1] + t * (r[1] - q[1])))
@@ -268,10 +268,10 @@ def offset_polygon(pts, r, samples=14):
         q, s_ = pts[i], pts[(i + 1) % n]
         e = (s_[0] - q[0], s_[1] - q[1])
         ln = math.hypot(*e) or 1.0
-        nrm = (e[1] / ln, -e[0] / ln)                 # dışa doğru normal
+        nrm = (e[1] / ln, -e[0] / ln)                 # outward normal
         out.append((q[0] + r * nrm[0], q[1] + r * nrm[1]))
         out.append((s_[0] + r * nrm[0], s_[1] + r * nrm[1]))
-        # köşeyi yay ile yuvarla
+        # round the corner with an arc
         t = pts[(i + 2) % n]
         e2 = (t[0] - s_[0], t[1] - s_[1])
         ln2 = math.hypot(*e2) or 1.0
@@ -301,10 +301,10 @@ def radial_boundary(c, inside, rmax=8.0, samples=200, steps=40):
 
 
 # ############################################################################
-# PART 1 — Giriş  (R^n: iç çarpım, norm, topoloji, kompaktlık)
+# PART 1 — Introduction  (R^n: inner product, norm, topology, compactness)
 # ############################################################################
 
-# ================================================================ komşuluklar
+# ============================================================= neighbourhoods
 def _nb_panel(x0, title, dash, punctured):
     q = panel(x0, 50, 196, (-1.85, 1.85), (-1.85, 1.85))
     q.origin_axes(xlabel="", ylabel="", opacity=0.32)
@@ -330,7 +330,7 @@ OUT["komsuluklar"] = figure(
     "merkezin çıkarılmasıyla elde edilir; yığılma noktası tanımında tam olarak bu küme kullanılır.",
     css_class=WIDE, aria="Acik, kapali ve delinmis komsuluklar")
 
-# ================================================== iç, sınır ve dış noktalar
+# ===================================== interior, boundary and exterior points
 A_blob = blob(0.0, 0.05, 1.55, [(0.30, 2, 0.6), (0.18, 3, 2.1)])
 p = panel(40, 44, 330, (-2.9, 3.5), (-2.5, 2.5))
 region(p, A_blob, THEORY, 0.12, 2.0)
@@ -358,7 +358,7 @@ OUT["ic-sinir-dis"] = figure(
     "bd<em>A</em> tüm sınır noktalarının kümesidir.",
     aria="Ic, sinir ve dis noktalari")
 
-# ============================================== kapanış ve yığılma noktaları
+# ============================================ closure and accumulation points
 iso = (2.45, 1.15)
 p1 = panel(30, 48, 300, (-2.1, 3.35), (-2.1, 2.1))
 p1.origin_axes(xlabel="", ylabel="", opacity=0.28)
@@ -391,7 +391,7 @@ OUT["kapanis-yigilma"] = figure(
     "noktalarıdır.",
     css_class=WIDE, aria="Kapanis, yigilma noktalari ve sinir")
 
-# =========================================================== açık / kapalı / ne o ne bu
+# ==================================================== open / closed / neither
 q1 = panel(24, 50, 200, (-1.9, 1.9), (-1.9, 1.9))
 disk_fill(q1, 0, 0, 1.35, THEORY, 0.14)
 q1.circle(0, 0, 1.35, THEORY, 2.1, "5 4")
@@ -419,11 +419,11 @@ OUT["acik-kapali-kume"] = figure(
     "tanımlanan iki ayrı özelliktir.",
     css_class=WIDE, aria="Acik, kapali ve ne acik ne kapali kumeler")
 
-# ================================================================ A + B toplamı
-# A ile B ayrı ayrı, toplam ise onlardan hesaplanarak çizilir; şekildeki
-# paralelkenar ile yuvarlatılmış kare gerçekten çizili kümelerin toplamıdır.
+# ============================================================== the sum A + B
+# A and B are drawn on their own, while the sum is computed from them; the
+# parallelogram and the rounded square really are the sums of the drawn sets.
 
-# Panel 1: doğru parçası + doğru parçası = paralelkenar
+# Panel 1: segment + segment = parallelogram
 a0, a1 = (0.45, 0.90), (1.05, 2.25)                      # A
 b0, b1 = (1.10, 0.25), (2.50, 0.25)                      # B
 para = [(a0[0] + b0[0], a0[1] + b0[1]), (a1[0] + b0[0], a1[1] + b0[1]),
@@ -432,7 +432,7 @@ para = [(a0[0] + b0[0], a0[1] + b0[1]), (a1[0] + b0[0], a1[1] + b0[1]),
 p1 = panel(34, 54, 300, (-0.55, 4.15), (-0.55, 3.45))
 p1.origin_axes(xlabel="", ylabel="", opacity=0.28)
 p1.polygon(para, PRACTICE, 0.15, stroke="none")
-for k in range(1, 7):                                    # B'nin A boyunca ötelenmiş kopyaları
+for k in range(1, 7):                                    # copies of B translated along A
     t = k / 7.0
     o = (a0[0] + t * (a1[0] - a0[0]), a0[1] + t * (a1[1] - a0[1]))
     seg(p1, (o[0] + b0[0], o[1] + b0[1]), (o[0] + b1[0], o[1] + b1[1]), BASE, 1.0, None, 0.45)
@@ -444,7 +444,7 @@ p1.label(1.80, 0.25, "B", 0, 20, BASE, 13, "middle", True, True)
 p1.label(2.85, 2.50, "A + B", 0, -11, PRACTICE, 13, "middle", True, True)
 panel_title(p1, "doğru parçası + doğru parçası", TEXT, 11.5)
 
-# Panel 2: kare + disk = köşeleri yuvarlatılmış kare
+# Panel 2: square + disk = square with rounded corners
 sq = rect(0.25, 1.15, 1.15, 2.05)                        # A
 c, rr = (1.95, 0.45), 0.42                               # B = B(c, rr)
 sq_t = [(x + c[0], y + c[1]) for x, y in sq]             # A + c
@@ -455,7 +455,7 @@ for (cx, cy), ang in ((sq_t[1], -0.5 * PI), (sq_t[2], 0.0), (sq_t[3], 0.5 * PI),
 p2 = panel(382, 54, 300, (-0.55, 4.15), (-0.55, 3.45))
 p2.origin_axes(xlabel="", ylabel="", opacity=0.28)
 p2.polygon(rounded, PRACTICE, 0.15, stroke="none")
-for q in sq_t:                                           # köşelere oturan B kopyaları
+for q in sq_t:                                           # copies of B sitting on the corners
     p2.circle(q[0], q[1], rr, BASE, 1.1, None, "none", 0.55)
 p2.line(list(sq_t) + [sq_t[0]], THEORY, 1.3, "4 3", 0.75)
 p2.line(rounded + [rounded[0]], PRACTICE, 2.1)
@@ -475,7 +475,7 @@ OUT["kume-toplami"] = figure(
     "kadar her yöne kalınlaştırmak demektir.",
     css_class=WIDE, aria="Iki kumenin toplami: paralelkenar ve koseleri yuvarlatilmis kare")
 
-# ============================================================== kompaktlık
+# ================================================================ compactness
 q1 = panel(24, 52, 198, (-2.3, 2.3), (-2.3, 2.3))
 region(q1, blob(0, 0, 1.5, [(0.26, 3, 0.4)]), BASE, 0.15, 2.3)
 q1.text(0, -2.08, "kapalı ve sınırlı", BASE, 11.5, "middle", True)
@@ -504,7 +504,7 @@ OUT["kompakt-kume"] = figure(
     "değildir — her ikisinde de sınıra doğru giden bir dizi kurulabilir, oysa limit kümede yoktur.",
     css_class=WIDE, aria="Kompakt kume ile kompakt olmayan iki ornek")
 
-# ==================================================== Weierstrass varlık teoremi
+# ============================================== Weierstrass existence theorem
 def _wf(x):
     return 0.45 * (x - 1.1) ** 2 + 0.55
 
@@ -541,7 +541,7 @@ OUT["weierstrass-ekstremum"] = figure(
     "uç noktadadır ama o nokta kümede olmadığından ulaşılamaz: supremum vardır, maksimum yoktur.",
     css_class=WIDE, aria="Weierstrass teoremi: kapali ve acik aralikta ekstremumlar")
 
-# ============================================================ bağlantılı kümeler
+# ============================================================= connected sets
 p = Plot(44, 44, 520, 190, (-0.75, 4.85), (-0.55, 1.75))
 numline(p, 1.15, -0.55, 4.7, (0, 1, 2, 3, 4), ("0", "1", "2", "3", "4"))
 bracket(p, 0.0, 2.0, 1.15, THEORY, 3.6, True, True)
@@ -566,14 +566,14 @@ OUT["baglantili-kume"] = figure(
     "değmez: birleşim bağlantılı değildir.",
     aria="Baglantili ve baglantili olmayan birlesimler")
 
-# ================================================= yerel ve mutlak minimum
+# =================================================== local and global minimum
 def _mf(x):
     return 0.35 * x ** 4 - 1.6 * x ** 2 + 0.4 * x + 2.2
 
 
 _xs = [-2.1 + 4.2 * k / 2000 for k in range(2001)]
-_glob = min(_xs, key=_mf)                        # mutlak minimum
-_loc = min([x for x in _xs if x > 0.6], key=_mf)  # sağdaki yerel minimum
+_glob = min(_xs, key=_mf)                        # global minimum
+_loc = min([x for x in _xs if x > 0.6], key=_mf)  # the local minimum on the right
 
 p = Plot(52, 46, 420, 232, (-2.55, 2.55), (-0.9, 3.3))
 p.axes([-2, -1, 0, 1, 2], [0, 1, 2, 3], "x", "f(x)")
@@ -595,10 +595,10 @@ OUT["yerel-mutlak-minimum"] = figure(
 
 
 # ############################################################################
-# PART 2 — Afin Kümeler ve Konveks Kümeler
+# PART 2 — Affine Sets and Convex Sets
 # ############################################################################
 
-# ================================================ doğru ve afin kombinasyon
+# ================================================ line and affine combination
 xa, ya = (0.7, 0.75), (3.1, 2.15)
 
 
@@ -627,7 +627,7 @@ OUT["dogru-afin-kombinasyon"] = figure(
     "doğrulara, konveks kümeleri doğru parçalarına duyarlı yapan fark tam olarak budur.",
     aria="Afin kombinasyon dogruyu, konveks kombinasyon dogru parcasini verir")
 
-# ============================================ afin küme = alt uzayın ötelemesi
+# ======================================= affine set = translate of a subspace
 d_dir = (2.5, 0.95)
 x0_v = (-0.55, 1.85)
 p = panel(48, 46, 400, (-2.6, 3.4), (-1.9, 2.85))
@@ -655,13 +655,13 @@ OUT["afin-oteleme"] = figure(
     "L alt uzayının boyutu olarak tanımlanır.",
     aria="Afin kume bir alt uzayin otelemesidir")
 
-# ==================================================== hiperdüzlem ve yarı uzaylar
+# ================================================= hyperplane and half-spaces
 a_n, b_n = (1.0, 1.6), 1.6
 p = panel(48, 46, 400, (-2.4, 3.6), (-1.6, 2.6))
 halfplane(p, a_n, b_n, -1, THEORY, 0.13, 2.4)
 halfplane(p, a_n, b_n, +1, PRACTICE, 0.13, 0.0)
 p.origin_axes(xlabel="", ylabel="", opacity=0.3)
-foot_n = (0.0, 1.0)                                   # 0 + 1.6*1 = 1.6 -> H üzerinde
+foot_n = (0.0, 1.0)                                   # 0 + 1.6*1 = 1.6 -> on H
 p.arrow(foot_n, (foot_n[0] + 0.42 * a_n[0], foot_n[1] + 0.42 * a_n[1]), BASE, 2.4)
 p.points([foot_n], BASE, 3.6)
 p.label(foot_n[0] + 0.42 * a_n[0], foot_n[1] + 0.42 * a_n[1], "a", 7, -3, BASE, 13, "start", True, True)
@@ -676,7 +676,7 @@ OUT["hiperduzlem-yari-uzay"] = figure(
     "R<sup>n</sup> uzayında H'nin boyutu n " + MINUS + " 1'dir.",
     aria="Hiperduzlem ve belirledigi iki yari uzay")
 
-# ================================================== Örnek: x + 2y = 4 hiperdüzlemi
+# ========================================= Example: the hyperplane x + 2y = 4
 a_e = (1.0, 2.0)
 p = panel(56, 46, 418, (-4.6, 6.9), (-5.1, 3.3))
 p.grid([-4, -2, 0, 2, 4, 6], [-4, -2, 0, 2])
@@ -699,7 +699,7 @@ OUT["ornek-hiperduzlem"] = figure(
     "değiştirir, normali değiştirmez. Paralel hiperdüzlemler yalnızca sağ taraftaki b sayısıyla ayrılır.",
     aria="x + 2y = 4 hiperduzlemi ve paralelleri")
 
-# ============================================================ afin bağımsızlık
+# ======================================================== affine independence
 v0, v1, v2 = (0.55, 0.6), (2.95, 0.95), (1.65, 2.65)
 p1 = panel(36, 48, 292, (-0.35, 3.75), (-0.35, 3.15))
 p1.polygon([v0, v1, v2], THEORY, 0.10, stroke="none")
@@ -734,7 +734,7 @@ OUT["afin-bagimsizlik"] = figure(
     "olduğundan üç nokta bir doğru üzerindedir ve afin örtü yalnızca o doğrudur (boyut 1).",
     css_class=WIDE, aria="Afin bagimsiz ve afin bagimli nokta uculeri")
 
-# ================================================= konveks kombinasyon: üçgen
+# =============================================== convex combination: triangle
 u0, u1, u2 = (0.6, 0.6), (3.2, 1.0), (1.7, 2.8)
 z_in = (0.5 * u0[0] + 0.3 * u1[0] + 0.2 * u2[0], 0.5 * u0[1] + 0.3 * u1[1] + 0.2 * u2[1])
 w_out = (0.9 * u0[0] + 0.5 * u1[0] - 0.4 * u2[0], 0.9 * u0[1] + 0.5 * u1[1] - 0.4 * u2[1])
@@ -762,7 +762,7 @@ OUT["konveks-kombinasyon-ucgen"] = figure(
     "düşer.",
     aria="Konveks kombinasyon ucgeni, afin kombinasyon duzlemi tarar")
 
-# ================================================ konveks / yıldız biçimli / hiçbiri
+# ============================================= convex / star-shaped / neither
 hexa = [(2.0 + 1.45 * math.cos(PI / 6 + k * PI / 3), 1.5 + 1.45 * math.sin(PI / 6 + k * PI / 3))
         for k in range(6)]
 q1 = panel(26, 52, 202, (-0.55, 4.55), (-0.75, 3.75))
@@ -805,14 +805,14 @@ OUT["konveks-yildiz"] = figure(
     "Bir kümenin konveks olması, <strong>her</strong> noktasına göre yıldız biçimli olmasıyla aynı şeydir.",
     css_class=WIDE, aria="Konveks, yildiz bicimli ve hicbiri olmayan kumeler")
 
-# =============================================================== polihedral küme
+# ============================================================= polyhedral set
 poly = [(0.4, 0.3), (3.4, 0.5), (4.0, 2.1), (2.2, 3.2), (0.6, 2.2)]
 p = panel(50, 48, 400, (-1.3, 5.7), (-1.05, 4.4))
 p.origin_axes(xlabel="", ylabel="", opacity=0.28)
 for i in range(len(poly)):
     q, r = poly[i], poly[(i + 1) % len(poly)]
     e = (r[0] - q[0], r[1] - q[1])
-    a_i = (e[1], -e[0])                       # dışa doğru normal (köşeler saat yönünün tersinde)
+    a_i = (e[1], -e[0])                       # outward normal (vertices counter-clockwise)
     b_i = a_i[0] * q[0] + a_i[1] * q[1]
     hyperline(p, a_i, b_i, REMARK, 1.3, "6 5", 0.75)
     mid = ((q[0] + r[0]) / 2, (q[1] + r[1]) / 2)
@@ -830,7 +830,7 @@ OUT["polihedral-kume"] = figure(
     "kesişimleri de kapalı ve konvekstir.",
     aria="Polihedral kume yari uzaylarin kesisimi olarak")
 
-# ============================================ konveksliğin işlemler altında korunması
+# ======================================= convexity preserved under operations
 tri = [(0.35, 0.4), (2.75, 0.55), (1.45, 2.5)]
 p1 = panel(30, 52, 292, (-1.5, 4.0), (-1.6, 3.5))
 p1.origin_axes(xlabel="", ylabel="", opacity=0.28)
@@ -858,8 +858,8 @@ for sc, col, txt, size in ((0.55, BASE, "0,55 C", 11.5), (1.0, THEORY, "C", 13),
                           (1.75, PRACTICE, "1,75 C", 11.5)):
     pts = [(x * sc, y * sc) for x, y in base_blob]
     if sc < 1.0:
-        # En içteki etiket kümenin içine sığmaz; iki eğri arasındaki boşluğa,
-        # eğrilerin yatay olduğu tepe noktasının üstüne konur.
+        # The innermost label does not fit inside its set; it goes into the gap
+        # between two curves, above the top point where the curves are horizontal.
         tip = extreme(pts, 90 * DEG)
         p2.label(tip[0], tip[1], txt, 0, -9, col, size, "middle", True)
     else:
@@ -875,7 +875,7 @@ OUT["konveks-korunum"] = figure(
     "kümenin birleşimi genellikle konveks olmaz.",
     css_class=WIDE, aria="Konveks kumelerin toplami ve skaler kati")
 
-# ============================================== lineer dönüşüm altında görüntü
+# =================================================== image under a linear map
 T = ((1.15, 0.72), (0.38, 1.05))
 
 
@@ -907,7 +907,7 @@ OUT["lineer-goruntu"] = figure(
     "konveks kalır. Ters görüntü T<sup>&#8722;1</sup>(D) için de aynı sonuç geçerlidir.",
     css_class=WIDE, aria="Lineer donusum altinda konveks kumenin goruntusu")
 
-# ================================================ int C konvekstir (Teorem ispatı)
+# ===================================== int C is convex (proof of the theorem)
 C_blob = hull(blob(0.0, 0.0, 1.85, [(0.3, 2, 0.9), (0.16, 3, 2.4)]))
 xr, yr = (-1.05, -0.55), (0.95, 0.75)
 lam = 0.45
@@ -935,7 +935,7 @@ OUT["ic-nokta-konveks"] = figure(
     "bir iç noktadır.",
     aria="Ic noktalarin konveks kombinasyonu yine ic noktadir")
 
-# ===================================================================== konveks örtü
+# ================================================================ convex hull
 cloud = [(0.45, 0.55), (2.05, 0.3), (3.35, 1.05), (3.05, 2.55), (1.55, 3.1),
          (0.35, 2.05), (1.75, 1.5), (2.35, 1.95), (1.15, 1.15)]
 p1 = panel(34, 50, 282, (-0.35, 3.85), (-0.35, 3.5))
@@ -963,7 +963,7 @@ OUT["konveks-ortu"] = figure(
     "kombinasyonlarının kümesine eşittir.",
     css_class=WIDE, aria="Sonlu nokta kumesinin ve girintili bolgenin konveks ortusu")
 
-# ==================================================================== simpleksler
+# ================================================================== simplices
 q1 = panel(20, 56, 154, (-0.35, 3.35), (-0.35, 3.05))
 q1.points([(1.5, 1.35)], THEORY, 5.4)
 panel_title(q1, "0-simpleks", TEXT, 11.5)
@@ -999,7 +999,7 @@ OUT["simpleksler"] = figure(
     "konveks örtünün her noktası, köşeleri kümeden seçilen bir n-simpleksin içindedir.",
     css_class=WIDE, aria="Sifir, bir, iki ve uc boyutlu simpleksler")
 
-# =================================================================== köşe noktaları
+# ============================================================= extreme points
 pent = [(0.45, 0.6), (2.9, 0.4), (3.6, 2.2), (2.0, 3.3), (0.4, 2.35)]
 q1 = panel(24, 54, 200, (-0.4, 4.2), (-0.5, 3.75))
 region(q1, pent, THEORY, 0.14, 2.2)
@@ -1026,14 +1026,14 @@ OUT["kose-noktalari"] = figure(
     "noktalarının konveks örtüsüdür.",
     css_class=WIDE, aria="Politop, disk ve yari uzayda kose noktalari")
 
-# ================================================== en yakın nokta ve tekliği
+# =========================================== nearest point and its uniqueness
 C_np = hull(blob(-0.35, 0.0, 1.5, [(0.28, 2, 0.7), (0.15, 3, 2.0)]))
 y_np = (2.55, 1.55)
 z_np = min(C_np, key=lambda q: (q[0] - y_np[0]) ** 2 + (q[1] - y_np[1]) ** 2)
 a_np = (y_np[0] - z_np[0], y_np[1] - z_np[1])
 p1 = panel(30, 50, 300, (-2.4, 3.5), (-2.2, 2.8))
 region(p1, C_np, THEORY, 0.13, 2.1)
-# Panelin tepesine kadar uzatılırsa çizgi panel başlığının içinden geçiyor.
+# Extended to the top of the panel, the line would run through the panel title.
 d_np = (-a_np[1] / math.hypot(*a_np), a_np[0] / math.hypot(*a_np))
 pseg(p1, (z_np[0] - 2.0 * d_np[0], z_np[1] - 2.0 * d_np[1]),
      (z_np[0] + 2.0 * d_np[0], z_np[1] + 2.0 * d_np[1]), REMARK, 1.6, "6 5", 0.85)
@@ -1075,7 +1075,7 @@ OUT["en-yakin-nokta"] = figure(
     "ortaya çıkar. Solda z'den y'ye giden vektörün C'yi destekleyen doğruya dik olduğuna dikkat ediniz.",
     css_class=WIDE, aria="Konveks kumede en yakin noktanin tekligi")
 
-# ============================================================= destek hiperdüzlemi
+# ====================================================== supporting hyperplane
 S_sup = [(0.4, 0.55), (2.9, 0.35), (3.75, 2.0)] + circle_pts(2.3, 2.05, 1.6, 0.35, 2.5, 40)
 S_sup = hull(S_sup)
 p = panel(48, 48, 350, (-1.0, 5.1), (-1.0, 4.2))
@@ -1130,10 +1130,10 @@ OUT["destek-hiperduzlemi"] = figure(
 
 
 # ############################################################################
-# PART 3 — Ayırma Teoremleri ve Koniler
+# PART 3 — Separation Theorems and Cones
 # ############################################################################
 
-# ============================================================== iki kümeyi ayırma
+# ======================================================== separating two sets
 M_sep = hull(blob(-1.55, 0.15, 1.15, [(0.22, 3, 0.6), (0.14, 2, 1.9)]))
 N_sep = hull(blob(1.75, -0.05, 1.05, [(0.2, 2, 2.4), (0.13, 3, 0.3)]))
 p = panel(48, 48, 370, (-3.3, 3.3), (-2.1, 2.1))
@@ -1155,7 +1155,7 @@ OUT["ayirma-hiperduzlemi"] = figure(
     "konveks analizin dualite kuramı bu fikrin üzerine kurulur.",
     aria="Iki konveks kumeyi ayiran hiperduzlem")
 
-# ================================== Teorem: kapalı konveks kümeden bir noktayı ayırma
+# ======================= Theorem: separating a point from a closed convex set
 M_pt = hull(blob(-0.55, -0.1, 1.5, [(0.3, 2, 1.1), (0.16, 3, 2.6)]))
 x0_pt = (2.75, 1.5)
 y_pt = min(M_pt, key=lambda q: (q[0] - x0_pt[0]) ** 2 + (q[1] - x0_pt[1]) ** 2)
@@ -1183,7 +1183,7 @@ OUT["nokta-ayirma"] = figure(
     "yanda kalırken x" + SUB0 + ", " + EPS + SUB0 + " = &#8214;a&#8214;&#178; kadar öte yandadır.",
     aria="Kapali konveks kumeden bir noktanin kesin ayrilmasi")
 
-# ================================== kesin ayırma: kompaktlık neden gerekli
+# =============================== strict separation: why compactness is needed
 K1 = hull(blob(-1.9, 0.6, 0.95, [(0.18, 3, 0.9)]))
 K2 = hull(blob(2.0, -0.5, 1.05, [(0.2, 2, 1.7)]))
 p1 = panel(30, 50, 300, (-3.3, 3.5), (-2.5, 2.4))
@@ -1226,7 +1226,7 @@ OUT["kesin-ayirma-karsi-ornek"] = figure(
     "<strong>kesin</strong> ayrılamaz.",
     aria="Kesin ayrilamayan iki kapali konveks kume")
 
-# ======================================================================= koniler
+# ====================================================================== cones
 q1 = panel(24, 54, 200, (-2.4, 2.4), (-2.4, 2.4))
 q1.origin_axes(xlabel="", ylabel="", opacity=0.3)
 wedge(q1, (0, 0), 18 * DEG, 78 * DEG, 3.4, THEORY, 0.16, 2.2)
@@ -1257,7 +1257,7 @@ OUT["koniler"] = figure(
     "kombinasyonlarını içermesiyle aynı şeydir.",
     css_class=WIDE, aria="Konveks koni, konveks olmayan koni ve yari uzay")
 
-# ==================================================================== dual koni
+# ================================================================== dual cone
 a1_d, a2_d = 20 * DEG, 80 * DEG
 p = panel(52, 50, 360, (-2.7, 2.9), (-1.35, 2.9))
 p.origin_axes(xlabel="", ylabel="", opacity=0.3)
@@ -1281,10 +1281,10 @@ OUT["dual-koni"] = figure(
 
 
 # ############################################################################
-# PART 4 — Konveks Fonksiyonlar
+# PART 4 — Convex Functions
 # ############################################################################
 
-# ==================================================================== epigraf
+# =================================================================== epigraph
 def _ef(x):
     return 0.4 * x ** 2 + 0.3
 
@@ -1323,7 +1323,7 @@ OUT["epigraf"] = figure(
     "aynı şeydir.",
     css_class=WIDE, aria="Konveks ve konveks olmayan fonksiyonlarin epigraflari")
 
-# ======================================================== kiriş eşitsizliği
+# =========================================================== chord inequality
 def _kf(x):
     return 0.45 * x ** 2 + 0.35
 
@@ -1354,7 +1354,7 @@ OUT["kiris-esitsizligi"] = figure(
     "konvekslikte bu fark uç noktalar dışında hep pozitiftir.",
     aria="Konveks fonksiyonda kiris grafigin ustundedir")
 
-# ================================================= kesin konveks / konveks
+# =================================================== strictly convex / convex
 p1 = Plot(46, 46, 276, 200, (-2.4, 2.4), (-0.3, 2.7))
 p1.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
 p1.line(curve(lambda x: 0.42 * x ** 2 + 0.25, -2.2, 2.2), THEORY, 2.4)
@@ -1384,7 +1384,7 @@ OUT["kesin-konvekslik"] = figure(
     "istenen ek koşuldur.",
     css_class=WIDE, aria="Kesin konveks ve kesin olmayan konveks fonksiyon")
 
-# ==================================================== konvekslerin supremumu
+# =============================================== supremum of convex functions
 LINES = [(-1.45, -0.15), (-0.55, 0.55), (0.45, 0.75), (1.35, -0.05)]
 p = Plot(52, 46, 400, 240, (-2.0, 2.0), (-1.3, 2.6))
 p.axes([-1, 0, 1], [-1, 0, 1, 2], "x", "")
@@ -1401,7 +1401,7 @@ OUT["supremum-konveks"] = figure(
     "alttan destekleyen afin fonksiyonların supremumu olarak yazılabilir.",
     aria="Afin fonksiyonlarin supremumu konvekstir")
 
-# ============================================================== norm konvekstir
+# ========================================================= the norm is convex
 p1 = Plot(46, 46, 262, 196, (-2.4, 2.4), (-0.35, 2.5))
 p1.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
 p1.line(curve(abs, -2.2, 2.2, 400), THEORY, 2.6)
@@ -1428,9 +1428,9 @@ OUT["norm-konveks"] = figure(
     "yuvarının konveks olmasıdır — birim yuvar, normun 1 seviye kümesidir.",
     css_class=WIDE, aria="Norm konvekstir ve birim yuvarlari konvekstir")
 
-# ================================================= Hessian: pozitif tanımlı / eyer
+# ======================================== Hessian: positive definite / saddle
 def _qpd(x, y):
-    return x * x + 2 * x * y + 2 * y * y            # H = [[2, 2], [2, 4]], pozitif tanımlı
+    return x * x + 2 * x * y + 2 * y * y            # H = [[2, 2], [2, 4]], positive definite
 
 
 p1 = panel(34, 52, 268, (-2.9, 2.9), (-2.9, 2.9))
@@ -1450,7 +1450,7 @@ panel_title(p1, "pozitif tanımlı Hessian", TEXT, 11.5)
 
 
 def _qsad(x, y):
-    return y * y - x * y                            # H = [[0, -1], [-1, 2]], tanımsız
+    return y * y - x * y                            # H = [[0, -1], [-1, 2]], indefinite
 
 
 p2 = panel(376, 52, 268, (-2.9, 2.9), (-2.9, 2.9))
@@ -1476,7 +1476,7 @@ OUT["hessian-seviye"] = figure(
     "tanımsızdır: seviye eğrileri hiperbol, orijin ise ne minimum ne maksimum olan bir eyer noktasıdır.",
     css_class=WIDE, aria="Pozitif tanimli ve tanimsiz Hessian icin seviye egrileri")
 
-# =========================================== küpsel terim konveksliği bozar
+# ============================================== a cubic term breaks convexity
 def _cub(z):
     return z ** 3 - 3 * z
 
@@ -1498,13 +1498,13 @@ OUT["kubik-konveks-degil"] = figure(
     "olduğu bölgede pozitif yarı-tanımlı olmaktan çıkar.",
     aria="Kupsel terim konveksligi bozar")
 
-# ================================================================ seviye kümeleri
+# ================================================================= level sets
 def _lf(x):
     return 0.5 * x ** 2 - 0.4 * x + 0.3
 
 
 ALP = 1.2
-r_lo, r_hi = -1.0, 1.8                                # 0,5x² - 0,4x + 0,3 = 1,2 kökleri
+r_lo, r_hi = -1.0, 1.8                                # roots of 0.5x² - 0.4x + 0.3 = 1.2
 p1 = Plot(46, 46, 276, 206, (-2.3, 2.9), (-0.55, 2.6))
 p1.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
 p1.line([(-2.2, ALP), (2.8, ALP)], PRACTICE, 1.8, "5 4")
@@ -1540,7 +1540,7 @@ OUT["seviye-kumeleri"] = figure(
     "kuazikonveks denir.",
     css_class=WIDE, aria="Seviye kumeleri konveks ama fonksiyon konveks degil")
 
-# ================================================================== yönlü türev
+# ===================================================== directional derivative
 def _df(x):
     return 0.55 * x ** 2 + 0.3
 
@@ -1595,7 +1595,7 @@ OUT["subgradient"] = figure(
     "Kırılma noktasında ise kesikli doğruların hepsi işe yarar; subgradientler bir aralık oluşturur.",
     aria="Subgradient: grafigi alttan destekleyen afin fonksiyonlar")
 
-# ================================================== |x| fonksiyonunun subdiferansiyeli
+# ===================================================== subdifferential of |x|
 p1 = Plot(46, 48, 276, 200, (-2.2, 2.2), (-1.05, 2.35))
 p1.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
 for s in (-1.0, -0.6, -0.2, 0.2, 0.6, 1.0):
@@ -1624,7 +1624,7 @@ OUT["subdiferansiyel-mutlak-deger"] = figure(
     "çizilmiştir: sıfırın dışında tek nokta, sıfırda ise bütün bir aralık.",
     css_class=WIDE, aria="Mutlak deger fonksiyonunun subdiferansiyeli")
 
-# ============================================================== destek fonksiyonu
+# =========================================================== support function
 A_sup = hull(blob(0.0, 0.0, 1.35, [(0.3, 2, 0.8), (0.15, 3, 2.2)]))
 p = panel(52, 48, 360, (-2.4, 3.6), (-2.3, 2.4))
 p.origin_axes(xlabel="", ylabel="", opacity=0.3)
@@ -1648,7 +1648,7 @@ OUT["destek-fonksiyonu"] = figure(
     "zaman konveks ve pozitif homojendir.",
     aria="Destek fonksiyonu ve destekleyen hiperduzlem")
 
-# =========================================== indikatör ve pozitif homojen fonksiyon
+# ============================== indicator and positively homogeneous function
 p1 = Plot(46, 50, 276, 190, (-2.4, 2.4), (-0.5, 2.6))
 p1.axes([-2, -1, 0, 1, 2], [0, 1, 2], "x", "")
 p1.line([(-0.9, 0.0), (1.3, 0.0)], THEORY, 4.0)

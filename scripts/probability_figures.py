@@ -485,7 +485,7 @@ OUT["bayes-agac-uc-torba"] = figure(
 # Base-rate picture of the medical-test example: 10 000 people drawn as a 40 x 25 grid of squares,
 # each square 10 people. The 100 sick people (10 squares) are filled in PRACTICE; the 198 healthy
 # people with a false-positive test (about 20 squares) in light THEORY; everyone else stays empty.
-# Beside the grid: the counts and P(hasta | pozitif) = 99 / 297 = 1/3.
+# Beside the grid: the counts and P(sick | positive) = 99 / 297 = 1/3.
 COLS, ROWS = 40, 25
 p = Plot(14, 34, 280, 175, (0, COLS), (0, ROWS))        # 7 px per square in both directions
 

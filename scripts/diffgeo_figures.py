@@ -1126,7 +1126,7 @@ for Q, (t1, t2) in TABLE.items():
     assert vnorm(vsub(e1, vunit((Q[0], Q[1], 0.0)))) < 1e-12
     assert vnorm(vsub(e2, vcross((0.0, 0.0, 1.0), e1))) < 1e-12
     assert abs(math.hypot(Q[0], Q[1]) - R) < 1e-12
-    print("%-18s E1 = %-18s E2 = %-18s sayfada |E1| = %.2f, |E2| = %.2f, nokta = (%.2f, %.2f)" %
+    print("%-18s E1 = %-18s E2 = %-18s on page |E1| = %.2f, |E2| = %.2f, point = (%.2f, %.2f)" %
           (Q, t1, t2, math.dist(S.pt(vadd(Q, e1)), S.pt(Q)), math.dist(S.pt(vadd(Q, e2)), S.pt(Q)),
            S.pt(Q)[0], S.pt(Q)[1]))
 
@@ -5286,7 +5286,7 @@ OUT["form-yerel-ekstremum"] = figure(
 # Checked by hand at each of them: T . (radial direction) = 0 (T is tangent) and T . N = 0, with
 # N = -(radial direction) (N looks at the centre); see TANGENT_CHECK below, which asserts it.
 # Colours follow API.md rather than the wording of the draft note: the curve is THEORY, the unit
-# tangent T is PRACTICE ("teget vektorler ve oklar PRACTICE"), the second vector N is BASE.
+# tangent T is PRACTICE ("tangent vectors and arrows PRACTICE"), the second vector N is BASE.
 # Layout notes, after three rounds of looking at the raster:
 #  * At s = 0 both N and the radius lie along the x axis, so 1/kappa = 2 is written above the
 #    segment and N below it, in the gap between the tick labels 1 and 2.
@@ -6288,31 +6288,31 @@ print("  T x N - B        =", [round(c, 12) for c in vsub(vcross(T0, N0), B0)])
 
 h = 1e-5
 tangent = vunit(vsub(beta(h), beta(-h)))
-print("  egri tegeti(0) - T0 =", [round(c, 9) for c in vsub(tangent, T0)])
+print("  curve tangent(0) - T0 =", [round(c, 9) for c in vsub(tangent, T0)])
 acc = vscale(1.0 / (h * h), vsub(vadd(beta(h), beta(-h)), vscale(2.0, beta(0.0))))
-print("  egri ivmesi(0) = kappa0 N0 ?", [round(c, 6) for c in acc], " ivme . T0 =",
+print("  curve acceleration(0) = kappa0 N0 ?", [round(c, 6) for c in acc], " accel . T0 =",
       round(vdot(acc, T0), 9))
 
 for nm, v in (("T0", T0), ("N0", N0), ("B0", B0)):
     X, Y = S.pt(v)
-    print(f"  {nm}: sayfa boyu {math.hypot(X, Y) * P.w / (P.xmax - P.xmin):.1f} px, "
-          f"yon {math.degrees(math.atan2(Y, X)) % 360:.1f} derece")
+    print(f"  {nm}: page length {math.hypot(X, Y) * P.w / (P.xmax - P.xmin):.1f} px, "
+          f"direction {math.degrees(math.atan2(Y, X)) % 360:.1f} deg")
 XT, YT = S.pt(T0)
 XC, YC = S.pt(beta(0.02))
-print(f"  egrinin s=0 sayfa yonu {math.degrees(math.atan2(YC, XC)) % 360:.1f} derece "
-      f"(T0 ile fark {abs(math.degrees(math.atan2(YC, XC) - math.atan2(YT, XT))):.2f} derece)")
+print(f"  page direction of the curve at s=0 {math.degrees(math.atan2(YC, XC)) % 360:.1f} deg "
+      f"(difference from T0 {abs(math.degrees(math.atan2(YC, XC) - math.atan2(YT, XT))):.2f} deg)")
 XN, YN = S.pt(N0)
-print(f"  sayfada T0-N0 acisi {math.degrees(math.acos((XT * XN + YT * YN) / (math.hypot(XT, YT) * math.hypot(XN, YN)))):.1f} "
-      f"derece (uzayda 90)")
-print("  duzlem acikligi |n.d|: oskulator %.2f, rektifiyan %.2f, normal %.2f"
+print(f"  T0-N0 angle on the page {math.degrees(math.acos((XT * XN + YT * YN) / (math.hypot(XT, YT) * math.hypot(XN, YN)))):.1f} "
+      f"deg (90 in space)")
+print("  plane openness |n.d|: osculating %.2f, rectifying %.2f, normal %.2f"
       % (abs(vdot(B0, d)), abs(vdot(N0, d)), abs(vdot(T0, d))))
 
 pts = [S.pt(beta(SMIN + (SMAX - SMIN) * k / 400.0)) for k in range(401)]
 pts += [S.pt(q) for q in OSC + RECT + NORM + [T0, N0, B0]]
 xs, ys = [q[0] for q in pts], [q[1] for q in pts]
-print(f"  cizim X [{min(xs):.2f}, {max(xs):.2f}] Y [{min(ys):.2f}, {max(ys):.2f}]  "
+print(f"  drawing X [{min(xs):.2f}, {max(xs):.2f}] Y [{min(ys):.2f}, {max(ys):.2f}]  "
       f"panel X [{P.xmin}, {P.xmax}] Y [{P.ymin}, {P.ymax}]")
-print(f"  piksel/birim {P.w / (P.xmax - P.xmin):.1f}")
+print(f"  pixels/unit {P.w / (P.xmax - P.xmin):.1f}")
 
 OUT["frenet-uc-duzlem"] = figure(
     464, 326, [P],
@@ -8018,24 +8018,24 @@ print("  |T|, |N|, |B| =", [round(vnorm(v), 12) for v in (T2, N2, B2)])
 print("  T.N, N.B, T.B =", [round(vdot(a, b), 12) for a, b in ((T2, N2), (N2, B2), (T2, B2))])
 print("  T x N - B =", [round(c, 12) for c in vsub(vcross(T2, N2), B2)])
 tang = vunit(vsub(alpha(2.0001), alpha(1.9999)))
-print("  egri tegeti - T =", [round(c, 6) for c in vsub(tang, T2)])
+print("  curve tangent - T =", [round(c, 6) for c in vsub(tang, T2)])
 for nm, v in (("T", T2), ("N", N2), ("B", B2)):
     X, Y = S.pt(v)
-    print(f"  {nm}: sayfa boyu {L * math.hypot(X, Y):.2f}/4 birim, "
-          f"yon {math.degrees(math.atan2(Y, X)) % 360:.0f} derece")
+    print(f"  {nm}: page length {L * math.hypot(X, Y):.2f}/4 units, "
+          f"direction {math.degrees(math.atan2(Y, X)) % 360:.0f} deg")
 print(f"  patch |B.d| = {abs(vdot(B2, d)):.2f}")
 P2 = S.pt(A2)
 worst = min(((math.dist(S.pt(alpha(-4 + 8 * k / 2000.0)), P2), -4 + 8 * k / 2000.0)
              for k in range(2001) if abs(-4 + 8 * k / 2000.0 - 2) > 0.8))
-print(f"  alpha(2)'ye en yakin oteki egri noktasi: t = {worst[1]:.2f}, {worst[0]:.2f} birim "
-      f"({worst[0] * P.w / (P.xmax - P.xmin):.0f} px), derinlik {vdot(alpha(worst[1]), d):.1f} "
+print(f"  nearest other curve point to alpha(2): t = {worst[1]:.2f}, {worst[0]:.2f} units "
+      f"({worst[0] * P.w / (P.xmax - P.xmin):.0f} px), depth {vdot(alpha(worst[1]), d):.1f} "
       f"({vdot(A2, d):.1f})")
 xs, ys = [], []
 for k in range(801):
     X, Y = S.pt(alpha(-4 + 8 * k / 800.0))
     xs.append(X)
     ys.append(Y)
-print(f"  egri X [{min(xs):.1f}, {max(xs):.1f}]  Y [{min(ys):.1f}, {max(ys):.1f}]  "
+print(f"  curve X [{min(xs):.1f}, {max(xs):.1f}]  Y [{min(ys):.1f}, {max(ys):.1f}]  "
       f"panel X [{P.xmin}, {P.xmax}] Y [{P.ymin}, {P.ymax}]")
 
 OUT["keyfi-kubik-cati-t2"] = figure(
@@ -11832,4 +11832,4 @@ OUT["yonlu-yuzey-kesit"] = figure(
 for name, content in OUT.items():
     path = os.path.join(OUT_DIR, "diffgeo-%s.md" % name)
     io.open(path, "w", encoding="utf-8", newline="\n").write(content)
-    print("yazildi:", path)
+    print("written:", path)
