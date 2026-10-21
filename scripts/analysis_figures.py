@@ -1808,6 +1808,111 @@ OUT["monoton-tek-yonlu-limit"] = figure(
     aria="Artan fonksiyonda sol limit sol degerlerin supremumu, sag limit sag degerlerin infimumu; f(a) arada")
 
 
+# ============================================================ peano-yapilar
+PQW, PQH, PQR = 280, 160, 14      # panel size and node radius (pixels)
+p = Plot(0, 0, 2 * PQW, 2 * PQH, (0, 1), (0, 1))   # pixel canvas
+
+
+def pq_node(p, x, y, s, color=THEORY, size=11):
+    """A numbered node of a successor diagram."""
+    p.add(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{PQR}" fill="{color}" fill-opacity="0.12" stroke="{color}" stroke-width="1.4"/>')
+    p.text_px(x, y + 4, s, color, size, "middle", True)
+
+
+def pq_arrow(p, a, b, color=THEORY):
+    """Successor arrow from node centre a to node centre b, trimmed to the node borders."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    d = math.hypot(dx, dy)
+    ux, uy = dx / d, dy / d
+    g = PQR + 3
+    arrow_px(p, a[0] + ux * g, a[1] + uy * g, b[0] - ux * g, b[1] - uy * g, color, 1.5, 6.5)
+
+
+def pq_loop(p, x, y, color=REMARK):
+    """Arrow from a node back to itself, drawn as a loop above the node."""
+    s = (x - PQR * 0.5, y - PQR * 0.87)
+    e = (x + PQR * 0.5, y - PQR * 0.87)
+    c1, c2 = (x - 30, y - 56), (x + 30, y - 56)
+    p.add(f'<path d="M{s[0]:.1f},{s[1]:.1f} C{c1[0]:.1f},{c1[1]:.1f} {c2[0]:.1f},{c2[1]:.1f} {e[0]:.1f},{e[1]:.1f}" '
+          f'fill="none" stroke="{color}" stroke-width="1.5"/>')
+    dx, dy = e[0] - c2[0], e[1] - c2[1]
+    d = math.hypot(dx, dy)
+    ux, uy = dx / d, dy / d
+    px, py = -uy, ux
+    p.add(f'<polygon points="{e[0]:.1f},{e[1]:.1f} {e[0]-ux*6.5+px*2.7:.1f},{e[1]-uy*6.5+py*2.7:.1f} '
+          f'{e[0]-ux*6.5-px*2.7:.1f},{e[1]-uy*6.5-py*2.7:.1f}" fill="{color}"/>')
+
+
+PLUS_UP = sup("+")
+p.add(f'<g stroke="{TEXT}" stroke-width="1" opacity="0.2"><line x1="{PQW}" y1="12" x2="{PQW}" y2="{2 * PQH - 12}"/>'
+      f'<line x1="12" y1="{PQH}" x2="{2 * PQW - 12}" y2="{PQH}"/></g>')
+# (a) the natural numbers: a single chain that starts at 1
+p.text_px(PQW / 2, 34, "Doğal sayılar: (P1)&#8211;(P5) sağlanır", PRACTICE, 11, "middle", True)
+xs = [36, 92, 148, 204]
+for i, x in enumerate(xs):
+    pq_node(p, x, 96, str(i + 1), PRACTICE)
+    if i:
+        pq_arrow(p, (xs[i - 1], 96), (x, 96), PRACTICE)
+arrow_px(p, xs[-1] + PQR + 3, 96, 246, 96, PRACTICE, 1.5, 6.5)
+p.text_px(258, 100, ELLIP, PRACTICE, 13, "middle")
+# (b) (P3) fails: two arrows end at the same node
+X0 = PQW
+p.text_px(X0 + PQW / 2, 34, "(P3) bozulur: 2" + PLUS_UP + " = 3" + PLUS_UP + " = 3", REMARK, 11, "middle", True)
+nb = [(X0 + 60, 112), (X0 + 140, 112), (X0 + 220, 112)]
+for (x, y), s in zip(nb, "123"):
+    pq_node(p, x, y, s, THEORY)
+pq_arrow(p, nb[0], nb[1])
+pq_arrow(p, nb[1], nb[2], REMARK)
+pq_loop(p, nb[2][0], nb[2][1])
+# (c) (P4) fails: the counting returns to 1
+Y0 = PQH
+p.text_px(PQW / 2, Y0 + 34, "(P4) bozulur: 3" + PLUS_UP + " = 1", REMARK, 11, "middle", True)
+nc = [(70, Y0 + 124), (140, Y0 + 66), (210, Y0 + 124)]
+for (x, y), s in zip(nc, "123"):
+    pq_node(p, x, y, s, THEORY)
+pq_arrow(p, nc[0], nc[1])
+pq_arrow(p, nc[1], nc[2])
+pq_arrow(p, nc[2], nc[0], REMARK)
+# (d) (P5) fails: a second chain that 1 never reaches
+p.text_px(X0 + PQW / 2, Y0 + 34, "(P5) bozulur: 1'den ulaşılamayan bir kol", REMARK, 11, "middle", True)
+for row, (labels, col) in enumerate(((("1", "2", "3"), THEORY), (("1/2", "3/2", "5/2"), REMARK))):
+    y = Y0 + 72 + 56 * row
+    xs = [X0 + 40, X0 + 104, X0 + 168]
+    for i, (x, s) in enumerate(zip(xs, labels)):
+        pq_node(p, x, y, s, col, 11 if len(s) == 1 else 10)
+        if i:
+            pq_arrow(p, (xs[i - 1], y), (x, y), col)
+    arrow_px(p, xs[-1] + PQR + 3, y, xs[-1] + 56, y, col, 1.5, 6.5)
+    p.text_px(xs[-1] + 68, y + 4, ELLIP, col, 13, "middle")
+OUT["peano-yapilar"] = figure(
+    2 * PQW, 2 * PQH, [p],
+    "Ardıl oklarıyla dört yapı. Doğal sayılarda sayma 1'den başlar ve tek bir koldan sonsuza ilerler. "
+    "(P3) bozulursa iki ok aynı sayıya varır; (P4) bozulursa sayma başa döner; (P5) bozulursa 1'den "
+    "ardıl alarak hiç ulaşılamayan elemanlar kalır.",
+    css_class=WIDE,
+    aria="Peano aksiyomlari: dogal sayi zinciri ve P3, P4, P5 aksiyomlarindan birini bozan uc yapi")
+
+# ============================================================ sup-kesir-deger
+p = Plot(48, 30, 330, 170, (-5.2, 5.2), (-0.12, 1.25))
+p.axes((-4, -2, 0, 2, 4), (0, 0.5, 1), xlabel="x", ylabel="y", xfmt=mfmt, yfmt=lambda v: fmt(v).replace(".", ","))
+hline(p, 1, THEORY, 1.2, "5 4", 0.85)
+curve(p, lambda x: x * x / (1 + x * x), -5.2, 5.2, BASE, 2.0)
+p.line([(-5.2, 0), (-5.2, 0.999)], PRACTICE, 5, opacity=0.45)
+p.points([(-5.2, 0)], PRACTICE, 4)
+hollow(p, (-5.2, 1), PRACTICE, 4.2, 1.8)
+dot(p, (0, 0), PRACTICE, 4)
+p.label(0.55, 0, "f(0) = 0 = min A", 4, 4, PRACTICE, 11, "start", True)
+p.label(-5.2, 0.55, "A", 10, 4, PRACTICE, 11.5, "start", True, True)
+p.label(5.2, 1, "y = 1 = sup A", -2, -9, THEORY, 11, "end", True)
+p.label(2.6, 2.6 ** 2 / (1 + 2.6 ** 2), "y = x" + sup("2") + "/(1 + x" + sup("2") + ")", 4, 22, BASE, 11, "start", False, True)
+OUT["sup-kesir-deger"] = figure(
+    400, 230, [p],
+    "<em>f</em>(<em>x</em>) = <em>x</em><sup>2</sup>/(1 + <em>x</em><sup>2</sup>) fonksiyonunun grafiği. Değerler "
+    "kümesi <em>A</em> (düşey eksende kalın çizili) 0'dan başlar ve 1'e istenildiği kadar yaklaşır, ama 1'e hiç "
+    "ulaşmaz: min <em>A</em> = 0, sup <em>A</em> = 1 ve 1 &#8713; <em>A</em>.",
+    aria="x kare bolu 1 arti x kare grafigi: degerler 0 ile 1 arasinda, supremum 1 alinmaz, minimum 0")
+
+
 # ---------------------------------------------------------------------------
 for name, content in OUT.items():
     with io.open(os.path.join(OUT_DIR, "analysis-%s.md" % name), "w", encoding="utf-8") as f:
