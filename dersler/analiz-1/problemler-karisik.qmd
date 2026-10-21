@@ -1,0 +1,952 @@
+---
+title: "Küme Cebiri, Görüntüler ve Tümevarım Üzerine Problemler"
+pagetitle: "Küme Cebiri, Görüntüler ve Tümevarım Üzerine Problemler"
+description: "Tek önermeli bir doğruluk tablosu, kapsama ile tümleyen arasındaki denklikler, birleşim ve kesişimin birleşme, etkisiz eleman ve tek kuvvetlilik yasaları, boş kartezyen çarpım ve çarpımların kapsanması, indisli ailelerde De Morgan yasaları, görüntü ve ters görüntünün fark, tümleyen ve indisli ailelerle ilişkisi, bir toplam kümesinin infimumu ve tümevarımla geometrik toplam, doğal sayıların çarpımı ve ardışıklık üzerine çözümlü problemler."
+---
+
+Bu bölümdeki problemler kitabın ilk iki kısmına yayılır: önermeler mantığından başlayıp küme cebirine, kartezyen çarpıma, indisli ailelere, görüntü ve ters görüntüye uğrar; ardından bir toplam kümesinin infimumunu inceler ve tümevarımla biter. Sonuçların bir kısmı [Kümeler ve Küme İşlemleri](kumeler.qmd) ile [Fonksiyonlar](fonksiyonlar.qmd) bölümlerindeki teoremlerde zaten listelenmiştir; burada her birini doğrudan tanımlardan, kendi başına ispatlıyoruz. Amaç, "$x \in \dots$" biçimindeki ifadeleri önermelere çevirip [Önermeler Mantığı](onermeler-mantigi.qmd) ve [Niceleyiciler ve İspat Yöntemleri](niceleyiciler-ve-ispat-yontemleri.qmd) bölümlerinin yasalarıyla işlemeyi el alışkanlığı hâline getirmektir.
+
+Her problemi önce kendi başınıza deneyin, sonra çözümü açın. Çözümlerde her adımın dayandığı tanım ya da sonuç belirtilmiştir; infimumla ilgili araçlar [Üst Sınır, Supremum ve Tamlık Aksiyomu](supremum-infimum-ve-tamlik.qmd), tümevarımla ilgili olanlar [Doğal Sayılar ve Tümevarım](dogal-sayilar-ve-tumevarim.qmd) bölümündedir. Bir adım karanlık kaldığında önce bağlantısı verilen kutuya dönmek en hızlı yoldur.
+
+## Bir Doğruluk Tablosu
+
+İlk problem tek bir önermeden kurulmuş bir bileşik önermenin doğruluk tablosunu istiyor. Tablo, "ve" bağlacının aynı önermeyi iki kez yazmaya duyarsız olduğunu gösterecek; aynı olgu birazdan kümelerde $A \cap A = A$ eşitliği olarak karşımıza çıkacak.
+
+:::: {#exr-ps6-olumsuzun-kendisiyle-ve name="Bir Olumsuzlamanın Kendisiyle Birleşmesi"}
+$p$ bir önerme olsun.
+
+$$\neg p \wedge \neg p$$
+
+bileşik önermesinin doğruluk tablosunu kurunuz.
+
+::: {.cozum}
+**Satır sayısı.** Önerme yalnızca $p$'den kuruludur. $p$ iki değer (D ve Y) alabildiğinden tablo iki satırlıdır.
+
+**$\neg p$ sütunu.** @def-olumsuzlama gereği $\neg p$, $p$'nin zıt değerini alır: $p$ doğruyken yanlış, $p$ yanlışken doğrudur.
+
+**$\neg p \wedge \neg p$ sütunu.** @def-ve gereği bir "ve" önermesi, ancak ve ancak iki bileşeni de doğruyken doğrudur. Buradaki iki bileşen aynı önermedir, $\neg p$. Her satırda $\neg p$ sütunundaki değeri iki kez okuyup birleştirelim:
+
+- Birinci satırda $\neg p$ yanlıştır; Y ile Y'nin "ve"si Y'dir.
+- İkinci satırda $\neg p$ doğrudur; D ile D'nin "ve"si D'dir.
+
+| $p$ | $\neg p$ | $\neg p \wedge \neg p$ |
+|:---:|:---:|:---:|
+| D | Y | Y |
+| Y | D | D |
+
+**Tablonun söyledikleri.** Son sütun $\neg p$ sütunuyla birebir aynıdır. @def-mantiksal-denklik gereği
+
+$$\neg p \wedge \neg p \equiv \neg p$$
+
+olur. Bu, @thm-mantik-yasalari (4) maddesindeki özdeşlik yasası $q \wedge q \equiv q$'nun $q = \neg p$ için yazılmış hâlidir. Son sütunda hem D hem Y bulunduğundan önerme ne totolojidir ne de çelişkidir (@def-totoloji-celiski). Karşılaştırma için: $p \wedge \neg p$ önermesinin sütunu her satırda Y'dir, yani o bir çelişkidir. İki önerme aynı harflerle yazılır ama bambaşka şeyler söyler.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kapsama ve Tümleyen
+
+Sıradaki dört problem alt küme bağıntısını kesişim ve tümleyenle ilişkilendiriyor. Tümleyen içeren problemlerde kümeler bir $X$ evrensel kümesinin alt kümeleridir ve $S \subseteq X$ için $S^c = X \setminus S$ yazıyoruz (@def-fark-tumleyen). Bir $x \in X$ için "$x \in S^c$" ile "$x \notin S$" aynı şeydir; çözümlerde bu gözlemi sık sık kullanacağız.
+
+:::: {#exr-ps6-kesisimin-alt-kumeleri name="Kesişimin Alt Kümeleri"}
+$A$, $B$ ve $C$ kümeler olsun.
+
+$$(C \subseteq A \ \text{ ve } \ C \subseteq B) \iff C \subseteq A \cap B$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Bir "ancak ve ancak" önermesini iki yönde ispatlayacağız.
+
+**($\Rightarrow$ yönü)** $C \subseteq A$ ve $C \subseteq B$ olsun. $x \in C$ keyfi bir eleman olsun.
+
+- $C \subseteq A$ olduğundan @def-alt-kume gereği $x \in A$'dır.
+- $C \subseteq B$ olduğundan aynı gerekçeyle $x \in B$'dir.
+
+Hem $x \in A$ hem $x \in B$ olduğundan kesişimin tanımı (@def-kesisim-birlesim) gereği $x \in A \cap B$'dir. $x \in C$ keyfi seçildiğinden $C$'nin her elemanı $A \cap B$'dedir; yani $C \subseteq A \cap B$.
+
+**($\Leftarrow$ yönü)** $C \subseteq A \cap B$ olsun. @prp-kesisim-birlesim-icinde gereği $A \cap B \subseteq A$ ve $A \cap B \subseteq B$'dir. Alt küme bağıntısı geçişli olduğundan (@prp-alt-kume-temel (2)), $C \subseteq A \cap B \subseteq A$ zinciri $C \subseteq A$'yı, $C \subseteq A \cap B \subseteq B$ zinciri de $C \subseteq B$'yi verir.
+
+İki yön birlikte istenen denkliği verir. Sözle: hem $A$'nın hem $B$'nin içinde kalan kümeler, tam olarak $A \cap B$'nin içinde kalan kümelerdir. Başka bir deyişle $A \cap B$, iki kümenin de içinde kalan en büyük kümedir. ($\Rightarrow$) yönü, @thm-indisli-alt-kume (3) maddesinin iki kümeli bir aile için yazılmış hâlidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-tumleyenin-tumleyeni name="Tümleyenin Tümleyeni"}
+$X$ bir evrensel küme ve $A \subseteq X$ olsun.
+
+$$(A^c)^c = A$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+**İki küme de $X$'in içindedir.** $(A^c)^c = X \setminus A^c$ tanımı gereği $X$'in bir alt kümesidir; $A \subseteq X$ ise varsayımdır. Bu yüzden iki kümenin aynı elemanlara sahip olduğunu göstermek için yalnızca $X$'in elemanlarına bakmak yeterlidir.
+
+**Elemanlar üzerinde denklik zinciri.** $x \in X$ keyfi olsun. Giriş paragrafındaki gözlemi önce $S = A^c$, sonra $S = A$ için kullanalım:
+
+$$x \in (A^c)^c \iff x \notin A^c \iff \neg\,(x \notin A) \iff x \in A .$$
+
+Son adımda çift olumsuzlama yasası (@prp-cift-olumsuzlama) kullanıldı: "$x \notin A$ değildir" demek "$x \in A$" demektir.
+
+**Sonuç.** $X$'in her elemanı için "$x \in (A^c)^c$" ile "$x \in A$" önermeleri birlikte doğru, birlikte yanlıştır. Zincirin soldan sağa okunuşu $(A^c)^c \subseteq A$'yı, sağdan sola okunuşu $A \subseteq (A^c)^c$'yi verir; @def-alt-kume gereği $(A^c)^c = A$.
+
+Bu eşitlik, önermeler mantığındaki $\neg(\neg p) \equiv p$ yasasının kümelerdeki karşılığıdır: tümleyen almak "değil" demektir, iki kez tümleyen almak da iki kez "değil" demektir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-tumleyene-kapsanma name="Tümleyene Kapsanmanın Simetrisi"}
+$A$ ve $B$ bir $X$ evrensel kümesinin alt kümeleri olsun.
+
+$$A \subseteq B^c \iff B \subseteq A^c$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Fikir şudur: iki kapsama da "$A$ ile $B$'nin ortak elemanı yoktur" demektir. Önce $A \subseteq B^c$ önermesini bu biçime çevirelim, sonra simetriyi kullanalım.
+
+**Adım 1: $A \subseteq B^c \iff A \cap B = \varnothing$.** $A \subseteq X$ olduğundan $A$'nın her $x$ elemanı için "$x \in B^c$" ile "$x \notin B$" aynıdır. Buna göre
+
+$$A \subseteq B^c \iff \forall x\,\big(x \in A \Rightarrow x \notin B\big).$$
+
+@cor-kosullu-olumsuzlama gereği $\neg(p \Rightarrow \neg q) \equiv p \wedge \neg(\neg q)$'dur ve çift olumsuzlama yasasıyla (@prp-cift-olumsuzlama) sağ taraf $p \wedge q$'ya denktir. İki tarafın olumsuzlamasını alıp yine çift olumsuzlama yasasını kullanırsak $p \Rightarrow \neg q \equiv \neg(p \wedge q)$ elde ederiz. Bunu $p$: "$x \in A$", $q$: "$x \in B$" için uygulayıp ardından @thm-niceleyici-olumsuzlama (2) ile $\forall x\, \neg(\dots)$ ifadesini $\neg\, \exists x\, (\dots)$ biçimine çevirelim:
+
+$$
+\begin{aligned}
+\forall x\,\big(x \in A \Rightarrow x \notin B\big)
+&\iff \forall x\ \neg\big(x \in A \wedge x \in B\big) \\[1mm]
+&\iff \neg\,\big(\exists x,\ x \in A \wedge x \in B\big) \\[1mm]
+&\iff A \cap B = \varnothing .
+\end{aligned}
+$$
+
+Son adım kesişimin tanımıdır (@def-kesisim-birlesim): $A \cap B$'nin bir elemanının olmaması, hem $A$'da hem $B$'de bulunan bir $x$'in olmaması demektir.
+
+**Adım 2: Simetri.** Adım 1 her $A, B \subseteq X$ ikilisi için geçerlidir. Onu $A$ ile $B$'nin yerleri değişmiş olarak, yani $B$, $A$ ikilisine uygularsak
+
+$$B \subseteq A^c \iff B \cap A = \varnothing$$
+
+buluruz. Kesişim değişmelidir: "$x \in B$ ve $x \in A$" ile "$x \in A$ ve $x \in B$" aynı önermedir (@thm-mantik-yasalari (1)), dolayısıyla $B \cap A = A \cap B$.
+
+**Sonuç.** Her iki kapsama da aynı $A \cap B = \varnothing$ koşuluna denktir; dolayısıyla birbirlerine denktir:
+
+$$A \subseteq B^c \iff A \cap B = \varnothing \iff B \subseteq A^c .$$
+
+```{=html}
+<figure class="ders-grafik">
+<svg viewBox="5.0 5.0 380.0 230.0" role="img" aria-label="Venn diagram: two disjoint discs A and B inside a rectangle X, the region outside B shaded, disc A lying entirely in the shaded region">
+  <path d="M20.0,20.0 L370.0,20.0 L370.0,220.0 L20.0,220.0 Z M325.0,122.5 A57.5,57.5 0 1 0 210.0,122.5 A57.5,57.5 0 1 0 325.0,122.5 Z" fill="var(--color-base)" fill-opacity="0.13" fill-rule="evenodd" stroke="none"/>
+  <rect x="20.0" y="20.0" width="350.0" height="200.0" fill="none" stroke="var(--academic-text)" stroke-width="1.2" opacity="0.6"/>
+  <circle cx="122.5" cy="122.5" r="57.5" fill="var(--color-theory)" fill-opacity="0.16" stroke="none"/>
+  <circle cx="122.5" cy="122.5" r="57.5" fill="none" stroke="var(--color-theory)" stroke-width="1.7" opacity="1.0"/>
+  <circle cx="267.5" cy="122.5" r="57.5" fill="none" stroke="var(--color-practice)" stroke-width="1.7" opacity="1.0"/>
+  <text x="122.5" y="127.5" fill="var(--color-theory)" font-size="14" text-anchor="middle" font-weight="600"><tspan font-style="italic">A</tspan></text>
+  <text x="267.5" y="127.5" fill="var(--color-practice)" font-size="14" text-anchor="middle" font-weight="600"><tspan font-style="italic">B</tspan></text>
+  <text x="30.0" y="38.0" fill="var(--academic-text)" font-size="13" text-anchor="start" font-weight="600"><tspan font-style="italic">X</tspan></text>
+  <text x="195.0" y="46.5" fill="var(--color-base)" font-size="11.5" text-anchor="middle">gölgeli bölge: <tspan font-style="italic">B</tspan> dışı</text>
+</svg>
+<figcaption>Gölgeli bölge, <em>B</em>'nin <em>X</em>'e göre tümleyenidir. <em>A</em> ile <em>B</em> ayrık olduğu için <em>A</em> tamamen bu bölgenin içinde kalır; aynı nedenle <em>B</em> de <em>A</em>'nın tümleyeninin içindedir. İki kapsamanın da söylediği tek şey, <em>A</em> ile <em>B</em>'nin ortak elemanı olmamasıdır.</figcaption>
+</figure>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-kapsama-tumleyen-ters name="Kapsama Tümleyende Yön Değiştirir"}
+$A$ ve $B$ bir $X$ evrensel kümesinin alt kümeleri olsun.
+
+$$A \subseteq B \iff B^c \subseteq A^c$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Önceki iki problemin sonuçlarını art arda kullanacağız.
+
+**Adım 1: $B$ yerine $(B^c)^c$ yazmak.** @exr-ps6-tumleyenin-tumleyeni gereği $(B^c)^c = B$'dir. Dolayısıyla
+
+$$A \subseteq B \iff A \subseteq (B^c)^c .$$
+
+**Adım 2: Tümleyene kapsanmanın simetrisi.** @exr-ps6-tumleyene-kapsanma, $X$'in **her** iki alt kümesi için geçerlidir. Onu $A$ ve $C = B^c$ kümelerine uygulayalım ($B^c \subseteq X$ olduğundan bu meşrudur):
+
+$$A \subseteq C^c \iff C \subseteq A^c, \qquad \text{yani} \qquad A \subseteq (B^c)^c \iff B^c \subseteq A^c .$$
+
+**Sonuç.** İki denkliği birleştirince $A \subseteq B \iff B^c \subseteq A^c$ elde edilir.
+
+**İkinci yol: karşıt ters.** Aynı sonuç doğrudan mantıktan da çıkar. $A \subseteq X$ olduğundan $A \subseteq B$ önermesi "her $x \in X$ için $x \in A \Rightarrow x \in B$" demektir. @thm-mantik-yasalari (7) gereği bu gerektirme, karşıt tersi olan "$x \notin B \Rightarrow x \notin A$"ya denktir; $x \in X$ için bu da "$x \in B^c \Rightarrow x \in A^c$" demektir. Bu son gerektirmenin her $x \in X$ için doğru olması, $B^c \subseteq A^c$ olmasıdır. (Kitapta bu yol @thm-kume-ozellikleri (7) maddesinin ispatında izlenmiştir.)
+
+Sözle: bir küme büyüdükçe dışarıda kalan kısım küçülür. Kapsama, tümleyen alınınca yön değiştirir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Birleşim ve Kesişimin Cebirsel Yasaları
+
+Aşağıdaki yedi eşitlik, birleşim ve kesişimin sayılardaki toplama ve çarpmayı andıran kurallarıdır: birleşme özelliği, boş kümenin birleşimde etkisiz, kesişimde yutan eleman olması, bir kümenin tümleyeniyle kesişiminin boş olması ve tek kuvvetlilik. Her birinde iki yoldan biriyle ilerleyeceğiz: ya "$x \in \dots$" önermesini bağlaçlarla açıp temel mantık yasalarından (@thm-mantik-yasalari) uygun olanı uygulayacağız, ya da çift kapsama yöntemiyle iki alt küme ilişkisini ayrı ayrı göstereceğiz.
+
+:::: {#exr-ps6-birlesimin-birlesme name="Birleşimin Birleşme Özelliği"}
+$A$, $B$ ve $C$ kümeler olsun.
+
+$$A \cup (B \cup C) = (A \cup B) \cup C$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$x$ keyfi bir nesne olsun. Birleşimin tanımını (@def-kesisim-birlesim) her adımda bir kez uygulayarak "$x \in A \cup (B \cup C)$" önermesini açalım:
+
+$$
+\begin{aligned}
+x \in A \cup (B \cup C)
+&\iff x \in A \ \vee\ x \in B \cup C \\[1mm]
+&\iff x \in A \ \vee\ \big(x \in B \ \vee\ x \in C\big) \\[1mm]
+&\iff \big(x \in A \ \vee\ x \in B\big) \ \vee\ x \in C \\[1mm]
+&\iff x \in A \cup B \ \vee\ x \in C \\[1mm]
+&\iff x \in (A \cup B) \cup C .
+\end{aligned}
+$$
+
+Üçüncü satıra geçerken "veya" bağlacının birleşme yasası $p \vee (q \vee r) \equiv (p \vee q) \vee r$ (@thm-mantik-yasalari (2)) kullanıldı; diğer adımların hepsi birleşimin tanımıdır.
+
+Zincirin her halkası bir denklik olduğundan her $x$ için "$x \in A \cup (B \cup C)$" ile "$x \in (A \cup B) \cup C$" önermeleri aynı doğruluk değerini alır. Zinciri soldan sağa okumak bir kapsamayı, sağdan sola okumak öteki kapsamayı verir; @def-alt-kume gereği iki küme eşittir.
+
+Bu eşitlik sayesinde parantezlere gerek kalmaz ve kısaca $A \cup B \cup C$ yazılır: bu küme, üç kümeden en az birine ait olan elemanlardan oluşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-kesisimin-birlesme name="Kesişimin Birleşme Özelliği"}
+$A$, $B$ ve $C$ kümeler olsun.
+
+$$A \cap (B \cap C) = (A \cap B) \cap C$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Bu kez çift kapsama yöntemini kullanalım.
+
+**$A \cap (B \cap C) \subseteq (A \cap B) \cap C$.** $x \in A \cap (B \cap C)$ keyfi olsun. Kesişimin tanımı (@def-kesisim-birlesim) gereği $x \in A$ ve $x \in B \cap C$'dir; ikincisi yine tanım gereği $x \in B$ ve $x \in C$ demektir. Böylece $x$ üç kümenin üçüne de aittir. $x \in A$ ve $x \in B$ olduğundan $x \in A \cap B$; bununla birlikte $x \in C$ olduğundan $x \in (A \cap B) \cap C$.
+
+**$(A \cap B) \cap C \subseteq A \cap (B \cap C)$.** $x \in (A \cap B) \cap C$ keyfi olsun. Tanım gereği $x \in A \cap B$ ve $x \in C$; birincisi $x \in A$ ve $x \in B$ demektir. Yine $x$ üç kümenin üçüne de aittir. $x \in B$ ve $x \in C$ olduğundan $x \in B \cap C$; bununla birlikte $x \in A$ olduğundan $x \in A \cap (B \cap C)$.
+
+İki kapsama @def-alt-kume gereği eşitliği verir. İki yönde de aynı ara sonuca vardığımıza dikkat edin: her iki küme de "$x$, $A$'ya, $B$'ye ve $C$'ye aittir" koşuluyla tanımlanan kümedir. Bu yüzden parantezsiz $A \cap B \cap C$ yazımı anlamlıdır. Mantık dilinde kullanılan yasa, "ve" bağlacının birleşme yasası $p \wedge (q \wedge r) \equiv (p \wedge q) \wedge r$'dir (@thm-mantik-yasalari (2)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-bos-kumeyle-birlesim name="Boş Kümeyle Birleşim"}
+$A$ bir küme olsun.
+
+$$A \cup \varnothing = A$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Çift kapsama yapalım.
+
+**$A \subseteq A \cup \varnothing$.** @prp-kesisim-birlesim-icinde gereği her küme, başka bir kümeyle birleşiminin içindedir; özel olarak $A \subseteq A \cup \varnothing$.
+
+**$A \cup \varnothing \subseteq A$.** $x \in A \cup \varnothing$ keyfi olsun. Birleşimin tanımı gereği $x \in A$ ya da $x \in \varnothing$'dir. Boş kümenin hiç elemanı olmadığından (@def-bos-kume-evrensel) ikinci seçenek olanaksızdır. @def-veya tablosuna göre bileşenlerinden biri yanlış olan doğru bir "veya" önermesinde öteki bileşen doğru olmak zorundadır; dolayısıyla $x \in A$.
+
+İki kapsama @def-alt-kume gereği $A \cup \varnothing = A$ verir. Sayılardaki $a + 0 = a$ eşitliğine benzer biçimde, boş küme birleşim işleminin **etkisiz elemanıdır**.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-bos-kumeyle-kesisim name="Boş Kümeyle Kesişim"}
+$A$ bir küme olsun.
+
+$$A \cap \varnothing = \varnothing$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Yine çift kapsama yapalım; bu kez iki kapsama da kitaptaki iki temel sonuçtan doğrudan çıkıyor.
+
+**$A \cap \varnothing \subseteq \varnothing$.** @prp-kesisim-birlesim-icinde gereği iki kümenin kesişimi, her birinin içindedir: $A \cap B \subseteq B$. Bunu $B = \varnothing$ için yazınca $A \cap \varnothing \subseteq \varnothing$ bulunur.
+
+**$\varnothing \subseteq A \cap \varnothing$.** @prp-bos-kume-alt-kume gereği boş küme her kümenin, özel olarak $A \cap \varnothing$ kümesinin alt kümesidir.
+
+İki kapsama @def-alt-kume gereği eşitliği verir. Sayılardaki $a \cdot 0 = 0$ eşitliğine benzer biçimde, boş küme kesişim işleminin **yutan elemanıdır**: hangi kümeyle kesiştirilirse kesiştirilsin sonuç boş kümedir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-tumleyenle-kesisim name="Bir Kümenin Tümleyeniyle Kesişimi"}
+$X$ bir evrensel küme ve $A \subseteq X$ olsun.
+
+$$A \cap A^c = \varnothing$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$A \cap A^c$ kümesinin hiç elemanı olmadığını olmayana ergi ile gösterelim.
+
+$x \in A \cap A^c$ olan bir $x$ bulunduğunu varsayalım. Kesişimin tanımı gereği $x \in A$ ve $x \in A^c$'dir. Tümleyenin tanımı (@def-fark-tumleyen) gereği $x \in A^c = X \setminus A$ olması, $x \in X$ ve $x \notin A$ demektir. Böylece
+
+$$x \in A \quad \text{ve} \quad x \notin A$$
+
+önermelerinin ikisi birden doğru olur. Bu, $p \wedge \neg p$ biçiminde bir önermedir ve çelişmezlik ilkesi gereği hiçbir zaman doğru olamaz (@def-totoloji-celiski). Varsayımımız bir çelişkiye götürdü; demek ki $A \cap A^c$ kümesinin hiç elemanı yoktur.
+
+Elemanı olmayan bir küme boş kümedir ve boş küme tektir (@prp-bos-kume-alt-kume). Dolayısıyla $A \cap A^c = \varnothing$.
+
+Bu eşitlik, ilk problemin karşılaştırma notundaki $p \wedge \neg p$ çelişkisinin kümelerdeki karşılığıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-kendisiyle-kesisim name="Bir Kümenin Kendisiyle Kesişimi"}
+$A$ bir küme olsun.
+
+$$A \cap A = A$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$x$ keyfi bir nesne olsun. Kesişimin tanımı (@def-kesisim-birlesim) ve mantıktaki özdeşlik yasası $p \wedge p \equiv p$ (@thm-mantik-yasalari (4)) ile
+
+$$x \in A \cap A \iff \big(x \in A \ \wedge\ x \in A\big) \iff x \in A .$$
+
+Her $x$ için iki önerme aynı doğruluk değerini aldığından $A \cap A$ ile $A$ aynı elemanlardan oluşur; @def-alt-kume gereği $A \cap A = A$.
+
+Kullanılan yasa, @exr-ps6-olumsuzun-kendisiyle-ve kutusunda tabloyla gördüğümüz $\neg p \wedge \neg p \equiv \neg p$ denkliğiyle aynı yasadır; orada $q = \neg p$, burada "$x \in A$" önermesi için uygulanmıştır. Bir kümeyi kendisiyle kesiştirmek onu değiştirmez; bu özelliğe **tek kuvvetlilik** (idempotence) denir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-kendisiyle-birlesim name="Bir Kümenin Kendisiyle Birleşimi"}
+$A$ bir küme olsun.
+
+$$A \cup A = A$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Bu kez çift kapsama ile ilerleyelim.
+
+**$A \subseteq A \cup A$.** @prp-kesisim-birlesim-icinde gereği bir küme, başka herhangi bir kümeyle birleşiminin içindedir; ikinci kümeyi yine $A$ alırsak $A \subseteq A \cup A$.
+
+**$A \cup A \subseteq A$.** $x \in A \cup A$ keyfi olsun. Birleşimin tanımı gereği $x \in A$ ya da $x \in A$'dır. İki seçenek aynı olduğundan hangisi gerçekleşirse gerçekleşsin $x \in A$'dır.
+
+İki kapsama @def-alt-kume gereği $A \cup A = A$ verir. Mantık dilinde kullanılan yasa $p \vee p \equiv p$'dir (@thm-mantik-yasalari (4)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kartezyen Çarpım
+
+İki problem kartezyen çarpımın (@def-kartezyen-carpim) ne zaman boş olduğunu ve iki çarpımın ne zaman birbirinin içinde kaldığını soruyor. İkisinde de dikkat edilecek nokta boş kümedir: bir çarpanı boş olan çarpım, öteki çarpan ne olursa olsun boştur. Çözümlerde sıralı ikililerin eşitliğini de kullanacağız: $(a, b) = (c, d)$ ancak ve ancak $a = c$ ve $b = d$ ise.
+
+:::: {#exr-ps6-bos-carpim name="Boş Kartezyen Çarpım"}
+$X$ ve $Y$ kümeler olsun.
+
+$$X \times Y = \varnothing \iff \big(X = \varnothing \ \text{ veya } \ Y = \varnothing\big)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+**($\Leftarrow$ yönü)** $X = \varnothing$ ya da $Y = \varnothing$ olsun. $X \times Y$ kümesinde bir eleman bulunduğunu varsayalım. Kartezyen çarpımın tanımı gereği bu eleman $(a, b)$ biçiminde bir sıralı ikilidir ve $a \in X$, $b \in Y$'dir. $X = \varnothing$ ise $a \in X$ olanaksızdır; $Y = \varnothing$ ise $b \in Y$ olanaksızdır. Her iki durumda da çelişki elde edilir. Demek ki $X \times Y$'nin hiç elemanı yoktur ve boş küme tek olduğundan (@prp-bos-kume-alt-kume) $X \times Y = \varnothing$'dir.
+
+**($\Rightarrow$ yönü)** Bu yönü karşıt tersiyle ispatlayalım (@thm-mantik-yasalari (7)). "$X = \varnothing$ veya $Y = \varnothing$" önermesinin olumsuzlaması, De Morgan yasası (@thm-mantik-yasalari (6)) gereği "$X \neq \varnothing$ ve $Y \neq \varnothing$"dır. O hâlde göstermemiz gereken şudur:
+
+$$\big(X \neq \varnothing \ \text{ ve } \ Y \neq \varnothing\big) \Longrightarrow X \times Y \neq \varnothing .$$
+
+$X \neq \varnothing$ olduğundan bir $a \in X$, $Y \neq \varnothing$ olduğundan bir $b \in Y$ seçebiliriz. Tanım gereği $(a, b) \in X \times Y$'dir; yani $X \times Y$'nin en az bir elemanı vardır ve $X \times Y \neq \varnothing$.
+
+İki yön birlikte denkliği verir.
+
+**"Veya" yerine "ve" yazılamaz.** "$X \times Y = \varnothing$ ancak ve ancak $X = \varnothing$ **ve** $Y = \varnothing$" önermesi yanlıştır; yalnızca ($\Leftarrow$) yönü doğrudur. Karşıt örnek: $X = \varnothing$ ve $Y = \{1\}$ alalım. Yukarıdaki ($\Leftarrow$) yönü gereği $X \times Y = \varnothing$'dir, ama $Y \neq \varnothing$'dir. Çarpımın boş olması için çarpanlardan **birinin** boş olması yeter; ikisinin birden boş olması gerekmez.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-carpimlarin-kapsanmasi name="Kartezyen Çarpımların Kapsanması"}
+$A$ ve $B$ boş olmayan kümeler, $X$ ve $Y$ herhangi iki küme olsun.
+
+$$A \times B \subseteq X \times Y \iff \big(A \subseteq X \ \text{ ve } \ B \subseteq Y\big)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+**($\Leftarrow$ yönü)** $A \subseteq X$ ve $B \subseteq Y$ olsun. $A \times B$'nin keyfi bir elemanını alalım; tanım gereği bu eleman $(a, b)$ biçimindedir ve $a \in A$, $b \in B$'dir. $A \subseteq X$ olduğundan $a \in X$, $B \subseteq Y$ olduğundan $b \in Y$'dir. Dolayısıyla $(a, b) \in X \times Y$. Böylece $A \times B \subseteq X \times Y$. (Bu yönde $A$ ile $B$'nin boş olmaması kullanılmadı.)
+
+**($\Rightarrow$ yönü)** $A \times B \subseteq X \times Y$ olsun.
+
+*$A \subseteq X$ olduğunu gösterelim.* $a \in A$ keyfi olsun. $B$ boş olmadığından bir $b_0 \in B$ seçebiliriz. O zaman $(a, b_0) \in A \times B$ ve varsayım gereği $(a, b_0) \in X \times Y$'dir. Yani $(a, b_0) = (x, y)$ olacak biçimde $x \in X$, $y \in Y$ vardır. Sıralı ikililerin eşitliğinden $a = x$, dolayısıyla $a \in X$. $a$ keyfi seçildiğinden $A \subseteq X$.
+
+*$B \subseteq Y$ olduğunu gösterelim.* Aynı akıl yürütmeyi ikinci bileşen için yapalım. $b \in B$ keyfi olsun. $A$ boş olmadığından bir $a_0 \in A$ seçelim. $(a_0, b) \in A \times B \subseteq X \times Y$ olduğundan $(a_0, b) = (x, y)$ olan $x \in X$, $y \in Y$ vardır ve $b = y \in Y$. Demek ki $B \subseteq Y$.
+
+İki yön birlikte denkliği verir.
+
+**Boş olmama koşulu neden gerekli?** ($\Rightarrow$) yönünde $b_0$ ve $a_0$ elemanlarını seçebilmek için $A$ ile $B$'nin boş olmaması gerekti. Bu koşul atılırsa iddia yanlış olur. Karşıt örnek: $A = \varnothing$, $B = \{2\}$, $X = \{0\}$, $Y = \{1\}$ alalım. @exr-ps6-bos-carpim gereği $A \times B = \varnothing$'dir ve boş küme her kümenin alt kümesi olduğundan $A \times B \subseteq X \times Y$ sağlanır. Oysa $2 \notin Y$ olduğundan $B \not\subseteq Y$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İndisli Aileler
+
+Şimdi iki kümeden keyfi sayıda kümeye geçiyoruz. Bu kısımdaki üç problemde $\{A_i : i \in I\}$ bir indisli küme ailesidir (@def-indisli-aile; indis kümesi $I$ boş değildir). Kullanacağımız iki temel denklik şunlardır: $x \in \bigcap_{i \in I} A_i$ olması her $i \in I$ için $x \in A_i$ demektir; $x \in \bigcup_{i \in I} A_i$ olması ise en az bir $i \in I$ için $x \in A_i$ demektir.
+
+:::: {#exr-ps6-aile-kesisim-birlesim-arasi name="Her Küme Kesişim ile Birleşim Arasındadır"}
+$\{A_i : i \in I\}$ bir indisli küme ailesi ve $j \in I$ olsun.
+
+$$\bigcap_{i \in I} A_i \ \subseteq\ A_j \ \subseteq\ \bigcup_{i \in I} A_i$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+İki kapsamayı ayrı ayrı gösterelim.
+
+**Birinci kapsama.** $x \in \bigcap_{i \in I} A_i$ keyfi olsun. Genel kesişimin tanımı gereği **her** $i \in I$ için $x \in A_i$'dir. Bu tümel önerme, $I$'nın her elemanı için ayrı ayrı doğrudur; özel olarak $i = j$ için $x \in A_j$ elde edilir. Demek ki $\bigcap_{i \in I} A_i \subseteq A_j$.
+
+**İkinci kapsama.** $x \in A_j$ keyfi olsun. Genel birleşimin tanımı gereği $x \in \bigcup_{i \in I} A_i$ olması için $x \in A_{i_0}$ sağlayan **bir** $i_0 \in I$ bulmak yeter. $i_0 = j$ seçimi bu işi görür, çünkü $j \in I$ ve $x \in A_j$'dir. Demek ki $A_j \subseteq \bigcup_{i \in I} A_i$.
+
+İki kapsama birlikte istenen zinciri verir. Sözle: ailenin ortak kısmı her üyenin içinde, her üye de ailenin birleşiminin içindedir. $I = \{1, 2\}$ alınırsa tanıdık $A_1 \cap A_2 \subseteq A_1 \subseteq A_1 \cup A_2$ zinciri (@prp-kesisim-birlesim-icinde) geri gelir; genel sonuç @thm-indisli-alt-kume (1) maddesinde de kayıtlıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-aile-birlesim-tumleyeni name="Bir Ailenin Birleşiminin Tümleyeni"}
+$X$ bir evrensel küme ve $\{A_i : i \in I\}$, $X$'in alt kümelerinden oluşan bir indisli aile olsun. Tümleyenler $X$'e göre alınmak üzere
+
+$$\Big(\bigcup_{i \in I} A_i\Big)^c = \bigcap_{i \in I} A_i^c$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+**İki küme de $X$'in içindedir.** Sol taraf bir tümleyen olduğundan $X$'in alt kümesidir. Sağ taraf için @exr-ps6-aile-kesisim-birlesim-arasi gereği $\bigcap_{i} A_i^c \subseteq A_j^c \subseteq X$'tir (herhangi bir $j \in I$ için). Bu yüzden yalnızca $X$'in elemanlarına bakmak yeterlidir.
+
+**Denklik zinciri.** $x \in X$ keyfi olsun. Tümleyenin tanımı, genel birleşimin tanımı, niceleyicilerin olumsuzlanması (@thm-niceleyici-olumsuzlama (2)), yine tümleyenin tanımı ve son olarak genel kesişimin tanımını art arda uygulayalım:
+
+$$
+\begin{aligned}
+x \in \Big(\bigcup_{i \in I} A_i\Big)^c
+&\iff x \notin \bigcup_{i \in I} A_i \\[1mm]
+&\iff \neg\,\big(\exists i \in I,\ x \in A_i\big) \\[1mm]
+&\iff \forall i \in I,\ x \notin A_i \\[1mm]
+&\iff \forall i \in I,\ x \in A_i^c \\[1mm]
+&\iff x \in \bigcap_{i \in I} A_i^c .
+\end{aligned}
+$$
+
+Dördüncü satıra geçerken $x \in X$ olduğu kullanıldı: $X$'in bir elemanı için "$x \notin A_i$" ile "$x \in A_i^c$" aynıdır.
+
+**Sonuç.** $X$'in her elemanı için iki önerme aynı doğruluk değerini alır; zincirin iki yönde okunuşu iki kapsamayı verir ve iki küme eşittir. Sözle: birleşimde olmamak, ailenin **hiçbir** kümesinde olmamak, yani bütün tümleyenlerde birden bulunmak demektir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-aile-kesisim-tumleyeni name="Bir Ailenin Kesişiminin Tümleyeni"}
+$X$ bir evrensel küme ve $\{A_i : i \in I\}$, $X$'in alt kümelerinden oluşan bir indisli aile olsun. Tümleyenler $X$'e göre alınmak üzere
+
+$$\Big(\bigcap_{i \in I} A_i\Big)^c = \bigcup_{i \in I} A_i^c$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Bu eşitliği önceki iki problemden, elemanlara inmeden türetelim; ardından doğrudan bir yol da gösterelim.
+
+**Adım 1: Önceki problemi tümleyenler ailesinde kullanmak.** $\{A_i^c : i \in I\}$ de $X$'in alt kümelerinden oluşan bir indisli ailedir. @exr-ps6-aile-birlesim-tumleyeni bu aileye uygulanırsa
+
+$$\Big(\bigcup_{i \in I} A_i^c\Big)^c = \bigcap_{i \in I} \big(A_i^c\big)^c$$
+
+elde edilir. @exr-ps6-tumleyenin-tumleyeni gereği her $i$ için $(A_i^c)^c = A_i$ olduğundan sağ taraf $\bigcap_{i \in I} A_i$'dir:
+
+$$\Big(\bigcup_{i \in I} A_i^c\Big)^c = \bigcap_{i \in I} A_i .$$
+
+**Adım 2: İki tarafın tümleyenini almak.** Eşit iki kümenin tümleyenleri de eşittir. Adım 1'deki eşitliğin iki tarafının tümleyenini alalım:
+
+$$\bigg(\Big(\bigcup_{i \in I} A_i^c\Big)^c\bigg)^c = \Big(\bigcap_{i \in I} A_i\Big)^c .$$
+
+$\bigcup_{i} A_i^c$ kümesi $X$'in alt kümesidir (her $A_i^c \subseteq X$ olduğundan birleşimlerinin her elemanı $X$'tedir). Bu yüzden @exr-ps6-tumleyenin-tumleyeni sol tarafa uygulanabilir ve sol taraf $\bigcup_{i} A_i^c$'ye eşittir. Böylece istenen eşitlik çıkar.
+
+**Doğrudan yol.** $x \in X$ için, @thm-niceleyici-olumsuzlama (1) ile
+
+$$
+\begin{aligned}
+x \in \Big(\bigcap_{i \in I} A_i\Big)^c
+&\iff \neg\,\big(\forall i \in I,\ x \in A_i\big) \\[1mm]
+&\iff \exists i \in I,\ x \notin A_i \\[1mm]
+&\iff x \in \bigcup_{i \in I} A_i^c .
+\end{aligned}
+$$
+
+Sözle: kesişimde olmamak için tek bir kümeyi kaçırmak yeter; bu da en az bir tümleyende bulunmak demektir. Bu iki eşitlik, kitapta @thm-kume-de-morgan adıyla geçen genel De Morgan yasalarıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Görüntü ve Ters Görüntü
+
+Bu kısımda $f : X \to Y$ bir fonksiyon, $A_1, A_2 \subseteq X$ ve $B, B_1, B_2 \subseteq Y$'dir. İki tanımı (@def-goruntu-ters-goruntu) sürekli kullanacağız: $y \in f(A)$ demek "$y = f(a)$ olan bir $a \in A$ vardır" demek; $x \in f^{-1}(B)$ demek ise "$f(x) \in B$" demektir. Sonuçlar @thm-goruntu-ozellikleri listesinde de yer alıyor; burada her birini kendi başına ispatlıyoruz. Göreceğimiz gibi ters görüntü küme işlemlerine kusursuz uyar, görüntü ise farkta yalnızca tek yönlü bir kapsama verir.
+
+:::: {#exr-ps6-goruntu-kapsamayi-korur name="Görüntü Kapsamayı Korur"}
+$f : X \to Y$ bir fonksiyon ve $A_1, A_2 \subseteq X$ olsun. $A_1 \subseteq A_2$ ise
+
+$$f(A_1) \subseteq f(A_2)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$y \in f(A_1)$ keyfi olsun. Görüntünün tanımı gereği $y = f(a)$ olacak biçimde bir $a \in A_1$ vardır. $A_1 \subseteq A_2$ olduğundan bu $a$ elemanı $A_2$'ye de aittir. O hâlde $y = f(a)$ eşitliği, $y$'nin $A_2$'nin bir elemanının görüntüsü olduğunu söyler; yani $y \in f(A_2)$.
+
+$y$ keyfi seçildiğinden $f(A_1)$'in her elemanı $f(A_2)$'dedir: $f(A_1) \subseteq f(A_2)$. Sözle: küçük bir kümenin elemanlarının görüntüleri, onu kapsayan büyük kümenin görüntüleri arasında zaten bulunur.
+
+Tersi doğru değildir: $f(A_1) \subseteq f(A_2)$ olması $A_1 \subseteq A_2$'yi gerektirmez. $f : \mathbb{R} \to \mathbb{R}$, $f(x) = x^2$ için $A_1 = \{-1\}$ ve $A_2 = \{1\}$ alınırsa $f(A_1) = f(A_2) = \{1\}$ olur, ama $A_1 \not\subseteq A_2$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-goruntulerin-farki name="Görüntülerin Farkı"}
+$f : X \to Y$ bir fonksiyon ve $A_1, A_2 \subseteq X$ olsun.
+
+$$f(A_1) \setminus f(A_2) \subseteq f(A_1 \setminus A_2)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$y \in f(A_1) \setminus f(A_2)$ keyfi olsun. Farkın tanımı (@def-fark-tumleyen) gereği $y \in f(A_1)$ ve $y \notin f(A_2)$'dir.
+
+**Adım 1: $y$, $A_1$'in bir noktasının görüntüsüdür.** $y \in f(A_1)$ olduğundan görüntünün tanımı gereği $y = f(a)$ olacak biçimde bir $a \in A_1$ vardır.
+
+**Adım 2: Bu $a$ noktası $A_2$'de değildir.** Olmayana ergi ile: $a \in A_2$ olsaydı $y = f(a)$, $A_2$'nin bir elemanının görüntüsü olurdu, yani $y \in f(A_2)$ olurdu. Bu, $y \notin f(A_2)$ ile çelişir. Demek ki $a \notin A_2$.
+
+**Adım 3: Sonuç.** $a \in A_1$ ve $a \notin A_2$ olduğundan $a \in A_1 \setminus A_2$'dir. $y = f(a)$ olduğundan $y \in f(A_1 \setminus A_2)$.
+
+$y$ keyfi seçildiğinden istenen kapsama sağlanır.
+
+**Kapsama kesin olabilir.** Ters kapsama her fonksiyon için doğru değildir. $X = \{1, 2, 3\}$, $Y = \{u, v\}$ ve $f(1) = f(2) = u$, $f(3) = v$ olsun; $A_1 = \{1, 3\}$, $A_2 = \{2\}$ alalım. O zaman $f(A_1) = \{u, v\}$, $f(A_2) = \{u\}$ ve
+
+$$f(A_1) \setminus f(A_2) = \{v\}, \qquad f(A_1 \setminus A_2) = f(\{1, 3\}) = \{u, v\}.$$
+
+$u$, $A_1 \setminus A_2$'deki $1$'in görüntüsüdür; ama aynı $u$, $A_2$'deki $2$'nin de görüntüsü olduğundan görüntüler alındıktan sonra yapılan farkta kaybolur.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-dar">
+<svg viewBox="14.0 -9.0 324.0 241.5" role="img" aria-label="Arrow diagram of a function from X = {1, 2, 3} to Y = {u, v}: 1 and 2 go to u, 3 goes to v; A1 = {1, 3} and A2 = {2} are marked">
+  <ellipse cx="95.0" cy="120.0" rx="44.0" ry="98.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45"/>
+  <ellipse cx="285.0" cy="122.0" rx="38.0" ry="66.0" fill="none" stroke="var(--academic-text)" stroke-width="1.1" opacity="0.45"/>
+  <rect x="71.0" y="44.0" width="48.0" height="86.0" rx="14" fill="var(--color-theory)" fill-opacity="0.12" stroke="var(--color-theory)" stroke-width="1.3"/>
+  <rect x="71.0" y="158.0" width="48.0" height="38.0" rx="14" fill="var(--color-practice)" fill-opacity="0.12" stroke="var(--color-practice)" stroke-width="1.3"/>
+  <text x="45.0" y="92.0" fill="var(--color-theory)" font-size="13" text-anchor="end" font-weight="600"><tspan font-style="italic">A</tspan><tspan font-size="9" dy="4">1</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="45.0" y="182.0" fill="var(--color-practice)" font-size="13" text-anchor="end" font-weight="600"><tspan font-style="italic">A</tspan><tspan font-size="9" dy="4">2</tspan><tspan dy="-4">&#8203;</tspan></text>
+  <text x="95.0" y="14.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">X</tspan></text>
+  <text x="285.0" y="46.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">Y</tspan></text>
+  <line x1="106.9" y1="63.9" x2="267.6" y2="89.3" stroke="var(--color-theory)" stroke-width="1.6" stroke-linecap="round"/>
+  <polygon points="273.1,90.1 265.8,91.9 266.7,86.1" fill="var(--color-theory)"/>
+  <line x1="106.7" y1="114.5" x2="267.8" y2="148.4" stroke="var(--color-theory)" stroke-width="1.6" stroke-linecap="round"/>
+  <polygon points="273.3,149.5 265.8,151.0 267.0,145.2" fill="var(--color-theory)"/>
+  <line x1="105.9" y1="173.1" x2="269.0" y2="99.3" stroke="var(--color-practice)" stroke-width="1.6" stroke-linecap="round"/>
+  <polygon points="274.1,96.9 268.9,102.5 266.5,97.2" fill="var(--color-practice)"/>
+  <text x="95.0" y="66.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">1</text>
+  <text x="95.0" y="116.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">3</text>
+  <text x="95.0" y="182.5" fill="var(--academic-text)" font-size="13" text-anchor="middle">2</text>
+  <text x="285.0" y="96.5" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">u</tspan></text>
+  <text x="285.0" y="156.5" fill="var(--academic-text)" font-size="13" text-anchor="middle"><tspan font-style="italic">v</tspan></text>
+  <text x="190.0" y="24.0" fill="var(--academic-text)" font-size="13" text-anchor="middle" font-weight="600"><tspan font-style="italic">f</tspan></text>
+</svg>
+<figcaption><em>f</em>(1) = <em>f</em>(2) = <em>u</em> ve <em>f</em>(3) = <em>v</em>. <em>A</em><sub>1</sub> = {1, 3}, <em>A</em><sub>2</sub> = {2} için <em>f</em>(<em>A</em><sub>1</sub>) \ <em>f</em>(<em>A</em><sub>2</sub>) = {<em>v</em>} olur; oysa <em>A</em><sub>1</sub> \ <em>A</em><sub>2</sub> = {1, 3} ve görüntüsü {<em>u</em>, <em>v</em>}'dir. 1 ile 2 aynı görüntüyü paylaştığı için <em>u</em> farkta kaybolur.</figcaption>
+</figure>
+```
+
+Sorun, $f$'nin farklı iki noktayı aynı yere göndermesinden doğar. Bir sonraki problem, birebir fonksiyonlarda bu kaybın olmadığını gösteriyor.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-birebir-goruntu-farki name="Birebir Fonksiyonda Farkın Görüntüsü"}
+$f : X \to Y$ birebir bir fonksiyon ve $A_1, A_2 \subseteq X$ olsun.
+
+$$f(A_1) \setminus f(A_2) = f(A_1 \setminus A_2)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Eşitliği iki kapsama ile gösterelim.
+
+**($\subseteq$)** Bu kapsama her fonksiyon için doğrudur; @exr-ps6-goruntulerin-farki kutusunda ispatlandı. Birebirlik burada kullanılmaz.
+
+**($\supseteq$)** $y \in f(A_1 \setminus A_2)$ keyfi olsun. Görüntünün tanımı gereği $y = f(a)$ olacak biçimde bir $a \in A_1 \setminus A_2$ vardır; yani $a \in A_1$ ve $a \notin A_2$.
+
+- $a \in A_1$ olduğundan $y = f(a) \in f(A_1)$'dir.
+- $y \notin f(A_2)$ olduğunu olmayana ergi ile gösterelim. $y \in f(A_2)$ olsaydı $y = f(a')$ olacak biçimde bir $a' \in A_2$ bulunurdu. O zaman $f(a) = y = f(a')$ olurdu. $f$ birebir olduğundan (@def-birebir-orten) aynı değeri alan iki nokta eşittir: $a = a'$. Bu da $a \in A_2$ demektir ve $a \notin A_2$ ile çelişir.
+
+Böylece $y \in f(A_1)$ ve $y \notin f(A_2)$, yani $y \in f(A_1) \setminus f(A_2)$.
+
+İki kapsama @def-alt-kume gereği eşitliği verir. Önceki problemdeki karşıt örnekte eşitliği bozan şey $f(1) = f(2)$ olmasıydı; birebir bir fonksiyonda böyle bir çakışma olamaz. Bu sonuç @thm-birebir-orten-goruntu (2) maddesi olarak da kayıtlıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-ters-goruntu-kapsamayi-korur name="Ters Görüntü Kapsamayı Korur"}
+$f : X \to Y$ bir fonksiyon ve $B_1, B_2 \subseteq Y$ olsun. $B_1 \subseteq B_2$ ise
+
+$$f^{-1}(B_1) \subseteq f^{-1}(B_2)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$x \in f^{-1}(B_1)$ keyfi olsun. Ters görüntünün tanımı gereği bu, $f(x) \in B_1$ demektir. $B_1 \subseteq B_2$ olduğundan $f(x) \in B_2$'dir. Yine ters görüntünün tanımı gereği $f(x) \in B_2$ olması $x \in f^{-1}(B_2)$ demektir.
+
+$x$ keyfi seçildiğinden $f^{-1}(B_1) \subseteq f^{-1}(B_2)$. Sözle: görüntüsü küçük kümeye düşen her nokta, onu kapsayan büyük kümeye de düşer.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-ters-goruntu-tumleyen name="Tümleyenin Ters Görüntüsü"}
+$f : X \to Y$ bir fonksiyon ve $B \subseteq Y$ olsun.
+
+$$f^{-1}(Y \setminus B) = X \setminus f^{-1}(B)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+**İki küme de $X$'in içindedir.** Ters görüntü tanımı gereği $X$'in bir alt kümesidir; $X \setminus f^{-1}(B)$ de bir fark olarak $X$'in alt kümesidir. Bu yüzden yalnızca $X$'in elemanlarına bakmak yeterlidir.
+
+**Denklik zinciri.** $x \in X$ keyfi olsun. $f(x) \in Y$ olduğundan "$f(x) \in Y \setminus B$" ile "$f(x) \notin B$" aynı şeydir. Buna göre
+
+$$
+\begin{aligned}
+x \in f^{-1}(Y \setminus B)
+&\iff f(x) \in Y \setminus B \\[1mm]
+&\iff f(x) \notin B \\[1mm]
+&\iff x \notin f^{-1}(B) \\[1mm]
+&\iff x \in X \setminus f^{-1}(B).
+\end{aligned}
+$$
+
+Birinci ve üçüncü adımlar ters görüntünün tanımı, son adım ise $x \in X$ olduğu için farkın tanımıdır. Zincirin iki yönde okunuşu iki kapsamayı verir; iki küme eşittir.
+
+Sözle: görüntüsü $B$'nin dışına düşen noktalar, tam olarak görüntüsü $B$'ye düşmeyen noktalardır. Görüntü için böyle bir eşitlik genel olarak yoktur (bkz. @thm-goruntu-ozellikleri (5)); ters görüntünün tümleyenle bu kadar iyi anlaşması, ileride kapalı kümeleri açık kümelerin tümleyeni olarak incelerken çok işimize yarayacak.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-ters-goruntu-fark name="Farkın Ters Görüntüsü"}
+$f : X \to Y$ bir fonksiyon ve $B_1, B_2 \subseteq Y$ olsun.
+
+$$f^{-1}(B_1 \setminus B_2) = f^{-1}(B_1) \setminus f^{-1}(B_2)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$x$, $X$'in keyfi bir elemanı olsun (iki küme de $X$'in alt kümesidir). Ters görüntünün ve farkın tanımlarını art arda uygulayalım:
+
+$$
+\begin{aligned}
+x \in f^{-1}(B_1 \setminus B_2)
+&\iff f(x) \in B_1 \setminus B_2 \\[1mm]
+&\iff f(x) \in B_1 \ \wedge\ f(x) \notin B_2 \\[1mm]
+&\iff x \in f^{-1}(B_1) \ \wedge\ x \notin f^{-1}(B_2) \\[1mm]
+&\iff x \in f^{-1}(B_1) \setminus f^{-1}(B_2).
+\end{aligned}
+$$
+
+Üçüncü satıra geçerken iki ayrı denklik kullanıldı: ters görüntünün tanımı gereği "$f(x) \in B_1$" ile "$x \in f^{-1}(B_1)$" aynıdır; aynı tanımın olumsuzlaması da "$f(x) \notin B_2$" ile "$x \notin f^{-1}(B_2)$" önermelerini eşler. Zincirin her halkası bir denklik olduğundan iki küme eşittir.
+
+$B_1 = Y$ alınırsa $f^{-1}(Y) = X$ olduğundan (her $x$ için $f(x) \in Y$) bu eşitlik @exr-ps6-ters-goruntu-tumleyen kutusundaki eşitliğe dönüşür. Ters görüntünün farkla da kusursuz uyuştuğuna dikkat edin; görüntüde ise yalnızca @exr-ps6-goruntulerin-farki kutusundaki tek yönlü kapsama vardır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-ters-goruntunun-goruntusu name="Ters Görüntünün Görüntüsü"}
+$f : X \to Y$ bir fonksiyon ve $B \subseteq Y$ olsun.
+
+$$f\big(f^{-1}(B)\big) \subseteq B$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$y \in f\big(f^{-1}(B)\big)$ keyfi olsun.
+
+**Adım 1.** Görüntünün tanımı gereği $y = f(x)$ olacak biçimde bir $x \in f^{-1}(B)$ vardır.
+
+**Adım 2.** Ters görüntünün tanımı gereği $x \in f^{-1}(B)$ olması $f(x) \in B$ demektir.
+
+**Adım 3.** İki adımı birleştirince $y = f(x) \in B$ bulunur.
+
+$y$ keyfi seçildiğinden $f(f^{-1}(B))$'nin her elemanı $B$'dedir.
+
+**Kapsama kesin olabilir.** $f : \mathbb{R} \to \mathbb{R}$, her $x$ için $f(x) = 0$ olan sabit fonksiyon ve $B = \{0, 1\}$ olsun. Her $x$ için $f(x) = 0 \in B$ olduğundan $f^{-1}(B) = \mathbb{R}$'dir ve
+
+$$f\big(f^{-1}(B)\big) = f(\mathbb{R}) = \{0\} \subsetneq \{0, 1\} = B .$$
+
+$1 \in B$ değeri hiçbir noktanın görüntüsü olmadığından ters görüntüde onu veren bir nokta bulunmaz ve bu değer geri alınamaz. Genel olarak kaybolan elemanlar, $B$'nin $f$ tarafından hiç alınmayan elemanlarıdır; bu yüzden $f$ örten olduğunda kayıp yaşanmaz (@thm-birebir-orten-goruntu (4)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İndisli Ailelerde Görüntü ve Ters Görüntü
+
+Sıradaki dört problem, önceki kısımdaki birleşim ve kesişim kurallarını keyfi indisli ailelere taşıyor (karşılaştırınız: @thm-goruntu-indisli-aile). Bu kısımda $f : X \to Y$ bir fonksiyon, $\{A_i : i \in I\}$ $X$'in, $\{B_j : j \in J\}$ de $Y$'nin alt kümelerinden oluşan indisli ailelerdir; $I$ ve $J$ boş değildir.
+
+:::: {#exr-ps6-aile-birlesiminin-goruntusu name="Bir Ailenin Birleşiminin Görüntüsü"}
+$f : X \to Y$ bir fonksiyon ve $\{A_i : i \in I\}$, $X$'in alt kümelerinden oluşan bir indisli aile olsun.
+
+$$f\Big(\bigcup_{i \in I} A_i\Big) = \bigcup_{i \in I} f(A_i)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+Çift kapsama yapalım.
+
+**($\subseteq$)** $y \in f\big(\bigcup_{i} A_i\big)$ keyfi olsun. Görüntünün tanımı gereği $y = f(x)$ olacak biçimde bir $x \in \bigcup_{i} A_i$ vardır. Genel birleşimin tanımı gereği $x \in A_{i_0}$ olan bir $i_0 \in I$ vardır. O zaman $y = f(x)$, $A_{i_0}$'ın bir elemanının görüntüsüdür: $y \in f(A_{i_0})$. Bu da genel birleşimin tanımı gereği $y \in \bigcup_{i} f(A_i)$ demektir.
+
+**($\supseteq$)** $y \in \bigcup_{i} f(A_i)$ keyfi olsun. Genel birleşimin tanımı gereği $y \in f(A_{i_0})$ olan bir $i_0 \in I$ vardır; görüntünün tanımı gereği de $y = f(x)$ olan bir $x \in A_{i_0}$ vardır. @exr-ps6-aile-kesisim-birlesim-arasi gereği $A_{i_0} \subseteq \bigcup_{i} A_i$ olduğundan $x \in \bigcup_{i} A_i$'dir. Dolayısıyla $y = f(x) \in f\big(\bigcup_{i} A_i\big)$.
+
+İki kapsama @def-alt-kume gereği eşitliği verir. Sözle: bir noktanın birleşimin görüntüsünde olması için ailenin **bir** kümesinden gelmesi yeter; bu da o kümenin görüntüsünde olmak demektir. $I = \{1, 2\}$ alınırsa $f(A_1 \cup A_2) = f(A_1) \cup f(A_2)$ eşitliği elde edilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-aile-kesisiminin-goruntusu name="Bir Ailenin Kesişiminin Görüntüsü"}
+$f : X \to Y$ bir fonksiyon ve $\{A_i : i \in I\}$, $X$'in alt kümelerinden oluşan bir indisli aile olsun.
+
+$$f\Big(\bigcap_{i \in I} A_i\Big) \subseteq \bigcap_{i \in I} f(A_i)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$y \in f\big(\bigcap_{i} A_i\big)$ keyfi olsun. Görüntünün tanımı gereği $y = f(x)$ olacak biçimde bir $x \in \bigcap_{i} A_i$ vardır. Genel kesişimin tanımı gereği **her** $i \in I$ için $x \in A_i$'dir.
+
+Şimdi keyfi bir $i \in I$ alalım. $x \in A_i$ olduğundan $y = f(x)$, $A_i$'nin bir elemanının görüntüsüdür: $y \in f(A_i)$. $i$ keyfi seçildiğinden her $i \in I$ için $y \in f(A_i)$'dir; genel kesişimin tanımı gereği $y \in \bigcap_{i} f(A_i)$.
+
+$y$ keyfi seçildiğinden istenen kapsama sağlanır. Burada önemli olan, **aynı** $x$ noktasının bütün $A_i$'lerde bulunmasıdır; $y$'yi her $f(A_i)$'ye taşıyan hep bu tek noktadır.
+
+**Kapsama kesin olabilir.** Ters yönde bu ortaklık kaybolur: $y$'nin her $f(A_i)$'de bulunması, her $i$ için $A_i$'de görüntüsü $y$ olan **bir** noktanın bulunması demektir ve bu noktalar birbirinden farklı olabilir. $f : \mathbb{R} \to \mathbb{R}$, $f(x) = x^2$ ve $I = \{1, 2\}$ için $A_1 = \{-1\}$, $A_2 = \{1\}$ alalım. $A_1 \cap A_2 = \varnothing$ olduğundan $f(A_1 \cap A_2) = \varnothing$'dir; oysa $f(A_1) \cap f(A_2) = \{1\}$'dir. Birebir fonksiyonlarda farklı noktalar aynı değeri veremeyeceği için kapsama eşitliğe dönüşür (iki kümeli durum için bkz. @thm-birebir-orten-goruntu (1)).
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-aile-birlesiminin-ters-goruntusu name="Bir Ailenin Birleşiminin Ters Görüntüsü"}
+$f : X \to Y$ bir fonksiyon ve $\{B_j : j \in J\}$, $Y$'nin alt kümelerinden oluşan bir indisli aile olsun.
+
+$$f^{-1}\Big(\bigcup_{j \in J} B_j\Big) = \bigcup_{j \in J} f^{-1}(B_j)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$x \in X$ keyfi olsun (iki küme de $X$'in alt kümesidir). Ters görüntünün ve genel birleşimin tanımlarını art arda uygulayalım:
+
+$$
+\begin{aligned}
+x \in f^{-1}\Big(\bigcup_{j \in J} B_j\Big)
+&\iff f(x) \in \bigcup_{j \in J} B_j \\[1mm]
+&\iff \exists j \in J,\ f(x) \in B_j \\[1mm]
+&\iff \exists j \in J,\ x \in f^{-1}(B_j) \\[1mm]
+&\iff x \in \bigcup_{j \in J} f^{-1}(B_j).
+\end{aligned}
+$$
+
+Birinci ve üçüncü adımlar ters görüntünün, ikinci ve dördüncü adımlar genel birleşimin tanımıdır. Zincirin her halkası bir denklik olduğundan iki küme aynı elemanlardan oluşur ve eşittir.
+
+Görüntüde olduğu gibi ters görüntü de birleşimle tam uyuşur. Fark bir sonraki problemde ortaya çıkacak: ters görüntü kesişimle de tam uyuşur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-aile-kesisiminin-ters-goruntusu name="Bir Ailenin Kesişiminin Ters Görüntüsü"}
+$f : X \to Y$ bir fonksiyon ve $\{B_j : j \in J\}$, $Y$'nin alt kümelerinden oluşan bir indisli aile olsun.
+
+$$f^{-1}\Big(\bigcap_{j \in J} B_j\Big) = \bigcap_{j \in J} f^{-1}(B_j)$$
+
+olduğunu ispatlayınız.
+
+::: {.cozum}
+$x \in X$ keyfi olsun. Bu kez genel kesişimin tanımıyla ilerleyelim:
+
+$$
+\begin{aligned}
+x \in f^{-1}\Big(\bigcap_{j \in J} B_j\Big)
+&\iff f(x) \in \bigcap_{j \in J} B_j \\[1mm]
+&\iff \forall j \in J,\ f(x) \in B_j \\[1mm]
+&\iff \forall j \in J,\ x \in f^{-1}(B_j) \\[1mm]
+&\iff x \in \bigcap_{j \in J} f^{-1}(B_j).
+\end{aligned}
+$$
+
+Birinci ve üçüncü adımlar ters görüntünün, ikinci ve dördüncü adımlar genel kesişimin tanımıdır. Her halka bir denklik olduğundan iki küme eşittir.
+
+Görüntüde kesişim için yalnızca tek yönlü bir kapsama vardı (@exr-ps6-aile-kesisiminin-goruntusu); ters görüntüde ise tam eşitlik var. Nedeni şudur: ters görüntü tek bir $x$ noktasının tek bir $f(x)$ değerine bakar ve bu değerin her $B_j$'de olup olmadığını sorar. Görüntüde ise her $f(A_i)$ için görüntüsü $y$ olan ayrı bir nokta seçilebildiğinden "hepsinde ortak tek bir nokta" bilgisi kaybolur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Toplam Kümesinin İnfimumu
+
+Bir sonraki problem kümelerden reel sayılara geçiyor. Supremumun özelliklerinin dördüncü maddesi (@prp-supremum-ozellikleri), iki kümenin toplam kümesinin infimumunun infimumların toplamı olduğunu söyler; orada bu ifade yalnızca kısaca gerekçelendirilmişti. Şimdi onu @thm-infimum-epsilon ile adım adım ispatlıyoruz.
+
+:::: {#exr-ps6-toplam-kumesi-infimum name="Toplam Kümesinin İnfimumu"}
+$A, B \subseteq \mathbb{R}$ boş olmayan ve alttan sınırlı kümeler olsun ve
+
+$$A + B = \{a + b : a \in A,\ b \in B\}$$
+
+yazalım. $\inf(A + B) = \inf A + \inf B$ olduğunu ispatlayınız.
+
+::: {.cozum}
+**Hazırlık.** $A$ ve $B$ boş olmayan ve alttan sınırlı olduğundan @thm-infimum-varlik gereği $\alpha = \inf A$ ve $\beta = \inf B$ sayıları vardır. $A + B$ de boş değildir: $a_0 \in A$ ve $b_0 \in B$ seçilirse $a_0 + b_0 \in A + B$'dir. $\alpha + \beta$ sayısının infimum için epsilon ölçütündeki (@thm-infimum-epsilon) iki koşulu sağladığını göstereceğiz.
+
+**Adım 1: $\alpha + \beta$, $A + B$'nin bir alt sınırıdır.** $A + B$'nin keyfi bir elemanı $a + b$ biçimindedir; burada $a \in A$, $b \in B$'dir. İnfimumun **(I1)** koşulu (@def-supremum-infimum) gereği
+
+$$\alpha \le a \qquad \text{ve} \qquad \beta \le b .$$
+
+Bu iki eşitsizliği taraf tarafa toplayalım. En az biri kesin ise @prp-esitsizlik-toplama doğrudan $\alpha + \beta < a + b$ verir; ikisi de eşitlik ise $\alpha + \beta = a + b$'dir. Her durumda
+
+$$\alpha + \beta \le a + b .$$
+
+$A + B$'nin her elemanı $\alpha + \beta$'dan büyük ya da ona eşit olduğundan $\alpha + \beta$ bir alt sınırdır.
+
+**Adım 2: $\alpha + \beta$'nın biraz üstünde $A + B$'nin bir elemanı vardır.** $\varepsilon > 0$ verilsin. $\dfrac{\varepsilon}{2} > 0$ olduğundan epsilon ölçütünü (@thm-infimum-epsilon) önce $A$ kümesine, sonra $B$ kümesine $\dfrac{\varepsilon}{2}$ ile uygulayabiliriz:
+
+$$a < \alpha + \frac{\varepsilon}{2} \ \text{ olan bir } a \in A, \qquad b < \beta + \frac{\varepsilon}{2} \ \text{ olan bir } b \in B$$
+
+vardır. İki kesin eşitsizliği @prp-esitsizlik-toplama ile toplayalım:
+
+$$a + b < \alpha + \beta + \frac{\varepsilon}{2} + \frac{\varepsilon}{2} = (\alpha + \beta) + \varepsilon .$$
+
+$a + b \in A + B$ olduğundan, $A + B$'de $(\alpha + \beta) + \varepsilon$'dan küçük bir eleman bulduk.
+
+**Sonuç.** $\alpha + \beta$ hem bir alt sınırdır (Adım 1) hem de her $\varepsilon > 0$ için $\alpha + \beta + \varepsilon$'dan küçük bir eleman vardır (Adım 2). @thm-infimum-epsilon gereği
+
+$$\inf(A + B) = \alpha + \beta = \inf A + \inf B .$$
+
+**Bir sağlama.** $A = \{1, 3\}$ ve $B = \{-2, 5\}$ için dört toplam $1 + (-2) = -1$, $1 + 5 = 6$, $3 + (-2) = 1$ ve $3 + 5 = 8$'dir; yani $A + B = \{-1, 1, 6, 8\}$. $-1$ bu kümenin bir elemanıdır ve bütün elemanlardan küçük ya da onlara eşittir, dolayısıyla bir alt sınırdır; kümenin her alt sınırı da $-1$'den küçük ya da ona eşit olmak zorundadır, çünkü $-1$ kümededir. **(I1)** ve **(I2)** gereği $\inf(A + B) = -1$. Aynı gerekçeyle $\inf A = 1$ ve $\inf B = -2$'dir; gerçekten $1 + (-2) = -1$.
+
+Adım 2'deki $\dfrac{\varepsilon}{2}$ seçimi, iki yaklaşımın toplamının $\varepsilon$'u aşmaması içindir; iki küme yerine $n$ küme olsaydı $\dfrac{\varepsilon}{n}$ alırdık.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tümevarım
+
+Son üç problemin üçü de tümevarım ilkesiyle (@thm-tumevarim-ilkesi) çözülür: bir toplam formülü, doğal sayıların çarpma altında kapalılığı ve her doğal sayının bir sonrakinden küçük olması. Üçünde de önce $P(n)$ önermesini açıkça yazacak, sonra temel adımı ve tümevarım adımını ayrı ayrı denetleyeceğiz.
+
+:::: {#exr-ps6-geometrik-toplam-carpim name="Geometrik Toplamın Tümevarımla İspatı"}
+$r \neq 1$ bir reel sayı olsun. Her $n \in \mathbb{N}$ için
+
+$$1 + r + r^2 + \cdots + r^n = \frac{1 - r^{n+1}}{1 - r}$$
+
+olduğunu tümevarımla ispatlayınız.
+
+::: {.cozum}
+Kesirlerle uğraşmamak için önce paydayı karşıya atılmış biçimdeki eşitliği ispatlayacak, en sonda $1 - r$'ye böleceğiz. (Aynı formül, @exm-geometrik-toplam kutusunda doğrudan kesirli biçim üzerinde tümevarımla ispatlanmıştır; burada başka bir yol izliyoruz.)
+
+Kısaca $S_n = 1 + r + r^2 + \cdots + r^n$ yazalım. Kuvvetin özyineli tanımı (@def-ozyineli-tanimlar) gereği $r^{n+1} = r^n \cdot r$, toplam sembolünün tanımı gereği de $S_{n+1} = S_n + r^{n+1}$'dir; yani bir sonraki toplam, bir öncekine yeni terimin eklenmesiyle elde edilir. İspatlayacağımız önerme şudur:
+
+$$P(n): \quad (1 - r)\, S_n = 1 - r^{n+1}.$$
+
+**Temel adım ($n = 1$).** $S_1 = 1 + r$'dir. Dağılma aksiyomu (D) ile
+
+$$(1 - r)(1 + r) = 1 + r - r - r^2 = 1 - r^2 .$$
+
+Sağ taraf da $1 - r^{1+1} = 1 - r^2$ olduğundan $P(1)$ doğrudur.
+
+**Tümevarım adımı.** Bir $k \in \mathbb{N}$ için $P(k)$ doğru olsun: $(1 - r)\, S_k = 1 - r^{k+1}$. $S_{k+1} = S_k + r^{k+1}$ eşitliğini $(1 - r)$ ile çarpıp dağılma aksiyomunu uygulayalım:
+
+$$
+\begin{aligned}
+(1 - r)\, S_{k+1} &= (1 - r)\, S_k + (1 - r)\, r^{k+1} \\[1mm]
+&= \big(1 - r^{k+1}\big) + r^{k+1} - r^{k+1} \cdot r \\[1mm]
+&= 1 - r^{k+2}.
+\end{aligned}
+$$
+
+İkinci satırda tümevarım hipotezi, üçüncü satırda $-r^{k+1} + r^{k+1} = 0$ ve kuvvetin tanımı $r^{k+1} \cdot r = r^{k+2}$ kullanıldı. Elde edilen eşitlik tam olarak $P(k+1)$'dir. @thm-tumevarim-ilkesi gereği $P(n)$ her $n \in \mathbb{N}$ için doğrudur.
+
+**Bölme.** $r \neq 1$ olduğundan $1 - r \neq 0$'dır ve (M4) gereği $1 - r$'nin çarpma tersi vardır. $P(n)$ eşitliğinin iki tarafını $\dfrac{1}{1 - r}$ ile çarparsak
+
+$$S_n = 1 + r + \cdots + r^n = \frac{1 - r^{n+1}}{1 - r}$$
+
+bulunur.
+
+**Bir sağlama.** $r = -2$, $n = 3$ için sol taraf $1 - 2 + 4 - 8 = -5$, sağ taraf $\dfrac{1 - 16}{1 + 2} = \dfrac{-15}{3} = -5$'tir.
+
+$P(n)$ eşitliğinin $r = 1$ için de doğru olduğuna dikkat edin ($0 = 0$); bu yolun avantajı budur. Yalnızca son adımdaki bölme $r \neq 1$ koşulunu gerektirir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-dogal-sayilarin-carpimi name="Doğal Sayıların Çarpımı Doğal Sayıdır"}
+Her $m, n \in \mathbb{N}$ için $m \cdot n \in \mathbb{N}$ olduğunu tümevarımla ispatlayınız.
+
+::: {.cozum}
+Doğal sayılar kümesi, $1$'i içeren ve her elemanıyla birlikte onun bir fazlasını da içeren kümelerin en küçüğüdür (@def-dogal-sayilar, @prp-dogal-sayilar-en-kucuk-tumevarimsal). Çarpımı toplamaya indirgeyeceğimizden önce toplamayı ele alacağız. Her iki adımda $m \in \mathbb{N}$ sabit tutulur ve $n$ üzerinden tümevarım yapılır.
+
+**Adım 1: $m + n \in \mathbb{N}$.** $P(n)$: "$m + n \in \mathbb{N}$" olsun.
+
+- *Temel adım.* $m \in \mathbb{N}$ ve $\mathbb{N}$ tümevarımsal olduğundan $m + 1 \in \mathbb{N}$; $P(1)$ doğrudur.
+- *Tümevarım adımı.* $P(k)$ doğru olsun: $m + k \in \mathbb{N}$. $\mathbb{N}$ tümevarımsal olduğundan $(m + k) + 1 \in \mathbb{N}$'dir. Toplamanın birleşme aksiyomu (A2) ile $(m + k) + 1 = m + (k + 1)$; dolayısıyla $P(k+1)$ doğrudur.
+
+@thm-tumevarim-ilkesi gereği her $n \in \mathbb{N}$ için $m + n \in \mathbb{N}$. $m$ keyfi seçildiğinden iki doğal sayının toplamı her zaman doğal sayıdır.
+
+**Adım 2: $m \cdot n \in \mathbb{N}$.** $Q(n)$: "$m \cdot n \in \mathbb{N}$" olsun.
+
+- *Temel adım.* Çarpma birimi aksiyomu (M3) ile $m \cdot 1 = m \in \mathbb{N}$; $Q(1)$ doğrudur.
+- *Tümevarım adımı.* $Q(k)$ doğru olsun: $m \cdot k \in \mathbb{N}$. Dağılma aksiyomu (D) ve (M3) ile
+
+$$m \cdot (k + 1) = m \cdot k + m \cdot 1 = m \cdot k + m .$$
+
+Burada $m \cdot k \in \mathbb{N}$ (tümevarım hipotezi) ve $m \in \mathbb{N}$'dir; Adım 1 gereği iki doğal sayının toplamı doğal sayı olduğundan $m \cdot k + m \in \mathbb{N}$. Yani $Q(k+1)$ doğrudur.
+
+@thm-tumevarim-ilkesi gereği her $n \in \mathbb{N}$ için $m \cdot n \in \mathbb{N}$. $m \in \mathbb{N}$ keyfi seçildiğinden iddia her $m, n \in \mathbb{N}$ için doğrudur. (Aynı sonuç @prp-dogal-sayilar-kapali olarak da kayıtlıdır.)
+
+Çarpma için yaptığımız tümevarım adımı, toplamada kapalılığa dayandı. Bu tür "basamaklı" ispatlar doğal sayılarda çok yaygındır: önce daha basit işlem için bir sonuç kurulur, sonra o sonuç daha karmaşık işlemin tümevarım adımında kullanılır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-ps6-n-kucuk-n-arti-bir name="Her Doğal Sayı Bir Sonrakinden Küçüktür"}
+Her $n \in \mathbb{N}$ için $n < n + 1$ olduğunu tümevarımla ispatlayınız.
+
+::: {.cozum}
+$P(n)$: "$n < n + 1$" olsun.
+
+**Temel adım ($n = 1$).** @prp-sifir-bir gereği $0 < 1$'dir. Toplamayla uyum aksiyomu (O3) ile iki tarafa $1$ ekleyelim:
+
+$$0 + 1 < 1 + 1, \qquad \text{yani} \qquad 1 < 1 + 1 .$$
+
+Burada (A1) ve (A3) ile $0 + 1 = 1 + 0 = 1$ yazıldı. $P(1)$ doğrudur.
+
+**Tümevarım adımı.** Bir $k \in \mathbb{N}$ için $P(k)$ doğru olsun: $k < k + 1$. (O3) ile iki tarafa $1$ ekleyelim:
+
+$$k + 1 < (k + 1) + 1 .$$
+
+Bu tam olarak $P(k+1)$'dir: $k + 1$ sayısı, kendisinin bir fazlasından küçüktür.
+
+@thm-tumevarim-ilkesi gereği $P(n)$ her $n \in \mathbb{N}$ için doğrudur.
+
+**Tümevarımsız bir yol.** Aslında eşitsizlik yalnızca doğal sayılar için değil, her reel sayı için doğrudur ve tümevarım gerektirmez: $x \in \mathbb{R}$ ise $0 < 1$ eşitsizliğinin iki tarafına (O3) ile $x$ eklenirse $x < x + 1$ çıkar (@prp-sifir-bir ve (O3)). Burada tümevarımla verdiğimiz ispat, yöntemin en yalın biçimde nasıl işlediğini göstermek içindir: temel adımda ilk taş devrilir, tümevarım adımında her taş bir sonrakini devirir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Böylece mantıktan küme cebirine, görüntülerden infimuma ve tümevarıma uzanan problem turu tamamlandı. Sıradaki bölümde bu araçları birlikte kullanan seçilmiş problemlerle devam ediyoruz: [Kümeler, Fonksiyonlar ve Reel Sayılar Üzerine Problemler](soru-cozumu-1.qmd).
