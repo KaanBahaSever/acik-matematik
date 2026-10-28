@@ -12,7 +12,7 @@ An open-source, ad-free archive of Turkish notes for undergraduate mathematics c
 ## Detailed rules and procedures
 
 - The `.qmd` authoring rules are in `.claude/rules/qmd-yazim.md`. Read that file when working on course files.
-- The CSS, script and CI rules are in `.claude/rules/altyapi.md`.
+- The CSS, script and deployment rules are in `.claude/rules/altyapi.md`.
 - Skills:
   - `write-chapters`: writing chapters from a source
   - `run-checks`: pre-delivery checks
@@ -26,7 +26,7 @@ An open-source, ad-free archive of Turkish notes for undergraduate mathematics c
   - the course content: lecture text, headings, figure labels and everything else in the `.qmd` notes;
   - text visible on the site, including interface text;
   - messages and reports written to the user.
-- Everything else is English: this file, the rules, skills and agent definitions under `.claude/`, internal notes, code (Python, Lua, Typst, CSS class and variable names, embedded JS, CI steps), comments, console output and commit messages.
+- Everything else is English: this file, the rules, skills and agent definitions under `.claude/`, internal notes, code (Python, Lua, Typst, CSS class and variable names, embedded JS), comments, console output and commit messages.
 - Exceptions: README.md, and the Turkish file and directory names kept for SEO (`dersler/`, chapter slugs).
 - The `.qmd` authoring vocabulary stays Turkish and is never renamed (`.ispat`, `.cozum`, `baslik=`, `acik=`, `ders-grafik*`), because `scripts/collapsible.lua` reads these names.
 - New text uses no emoji. The site brand is the logo image `assets/logo.svg`, not an emoji. The only exceptions are the catalog group headings and README.md.
@@ -56,12 +56,13 @@ An open-source, ad-free archive of Turkish notes for undergraduate mathematics c
   - `styles/`, `assets/` and the figure scripts are not part of the fingerprint; when they change, the build only copies the files.
   - If `scripts/export.py` or `scripts/export-assets/` changed, or the book was previously built with `--no-export`, add `--force` to get the PDF.
 - Visual checks are done in `_site/`, not in `_book/`.
-- Apply the `run-checks` skill before delivery. CI runs no checks. `check_math_width.py` and `check_layout.py` return 0 even when they find problems, so read their output.
+- Apply the `run-checks` skill before delivery. The deployment runs no checks. `check_math_width.py` and `check_layout.py` return 0 even when they find problems, so read their output.
 - `scripts/stats.py` rewrites the `BOOKS` and `METRICS` regions of the README on every build; do not edit them by hand. If the book count in the diff differs from what you expect, do not commit.
 
 ## Git
 
 - Never run `git push`; the user publishes. Commit only when the user asks. When the work is done, report the uncommitted files.
+- There is no CI. A push to main is built and deployed on this machine by `scripts/deploy.py`, which the `pre-push` hook starts in the background (`python scripts/deploy.py --status` shows the outcome). Details are in `.claude/rules/altyapi.md`.
 - A commit message is a single plain line in English, in the imperative mood. Course work takes the Turkish course name as a prefix, e.g. `Diferansiyel Geometri: add the Frame Fields part (6 chapters)`. No body.
 - Commit messages, code comments and notes never mention where the content was compiled from: no PDF, page, handwritten note, instructor, exam, reading or transcription process.
 - If the URL of a published page is going to change, use `git mv` and add `aliases:` to the chapter or a book-level `_redirects`. Never delete existing redirects.

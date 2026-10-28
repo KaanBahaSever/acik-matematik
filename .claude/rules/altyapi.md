@@ -5,10 +5,9 @@ paths:
   - "assets/**"
   - "_quarto.yml"
   - "_kitap-ortak.yml"
-  - ".github/**"
 ---
 
-# Infrastructure rules (CSS, scripts, CI)
+# Infrastructure rules (CSS, scripts, deployment)
 
 ## CSS
 
@@ -34,11 +33,17 @@ paths:
   - The "Bu sürüm" (this version) date in the files comes from the last commit.
 - If you served `_site` with `python -m http.server`, stop it when you are done; if it stays open, the build fails with `WinError 32`.
 
-## CI
+## Deployment
 
-- `.github/workflows/deploy.yml` runs on a self-hosted Windows runner.
-- Steps are written only with `shell: powershell`; no bash and no setup step is added.
-- The job-level `if:` guard against fork PRs and the use of `secrets.*` stay as they are. Secret values are never printed.
+- There is no CI and no GitHub Actions. `scripts/deploy.py` builds the site on this machine and publishes it with `wrangler pages deploy`.
+  - The `pre-push` hook starts it in the background after every push to main. It is installed once with `python scripts/deploy.py --install-hook` and shared by every worktree. A manual run is `python scripts/deploy.py`.
+  - It builds in its own clone (`~/.acik-matematik/checkout`), never in a working tree, so only what is on main goes live. The clone keeps `_site`, the `_book` directories and `.build-cache.json`, so only the changed courses are rendered.
+  - State and logs live in `~/.acik-matematik/` (`state.json`, `logs/`), not in `%LOCALAPPDATA%`: the desktop app's MSIX virtualization redirects AppData writes into its private folder.
+  - `--status` shows what is live and whether a run is going on; `--wait` blocks until the run ends. The deployment shares the machine's memory with agents and local builds, so after a push that rebuilds many books, wait for it before heavy work.
+  - A push that touches only README, LICENCE, `docs/`, `.gitignore`, `CLAUDE.md` or `.claude/` is marked live without a deployment.
+  - The outcome arrives as a Windows notification; a failed run's log path appears in `--status`.
+- The script uses only the standard library. The Cloudflare token comes from the `CLOUDFLARE_API_TOKEN` user environment variable and is never printed or written to a file.
+- Wrangler is pinned (`WRANGLER_VERSION`); bump it deliberately.
 - Nothing that executes code during the build is added.
 
 ## Repository layout

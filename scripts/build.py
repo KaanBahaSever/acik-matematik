@@ -449,8 +449,8 @@ def main() -> None:
         print(f"   {len(skipped)} course(s) unchanged and left alone")
     if failures:
         # Every course must stay downloadable: fail the build (after finishing
-        # everything else) so CI shows the broken unit instead of deploying
-        # a site that silently lacks its files.
+        # everything else) so scripts/deploy.py stops at the broken unit
+        # instead of publishing a site that silently lacks its files.
         print("\033[1m! Failed exports:\033[0m " + ", ".join(failures))
         for item in failures:
             print(f"::error::export failed: {item}")

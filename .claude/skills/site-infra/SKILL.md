@@ -1,6 +1,6 @@
 ---
 name: site-infra
-description: Used for site design and infrastructure changes. Covers styles/global.css, the Lua filters (collapsible, downloads, export_*), the build.py and export.py pipeline, _kitap-ortak.yml and deploy.yml; includes the known pitfalls, the design language and verification at every width. Use when the user asks for or complains about something visual ("içerik çok geniş" (the content is too wide), "mobilde kayıyor" (it scrolls sideways on mobile), "formülün üstü kesik" (the top of the formula is cut off), "kutular tasarıma uymuyor" (the boxes do not fit the design)), or when a Lua filter, a build/export script or CI is about to be touched.
+description: Used for site design and infrastructure changes. Covers styles/global.css, the Lua filters (collapsible, downloads, export_*), the build.py and export.py pipeline, _kitap-ortak.yml and scripts/deploy.py; includes the known pitfalls, the design language and verification at every width. Use when the user asks for or complains about something visual ("içerik çok geniş" (the content is too wide), "mobilde kayıyor" (it scrolls sideways on mobile), "formülün üstü kesik" (the top of the formula is cut off), "kutular tasarıma uymuyor" (the boxes do not fit the design)), or when a Lua filter, a build/export script or the deployment is about to be touched.
 ---
 
 # Design and infrastructure procedure
@@ -86,10 +86,10 @@ General principle: plain and without animation. The catalog changes color only o
 - Debugging: `python scripts/export.py <course> --keep`, then `cd _export-src/<course> && quarto render --to typst`.
 - Known bug: `export_links.lua` also redirects in-book `../<subfolder>/x.qmd` links to the site. When fixing it, rewrite only links to sibling books, i.e. those that have a `dersler/<x>/_quarto.yml`.
 
-## 7. CI
+## 7. Deployment
 
-- Changes to `CLAUDE.md`, `.claude/**`, README and LICENCE do not trigger CI (`paths-ignore`).
-- See `altyapi.md` for the rules.
+- `scripts/deploy.py` builds and publishes on this machine after a push to main; see `altyapi.md` for the rules.
+- A push that touches only `CLAUDE.md`, `.claude/**`, README, LICENCE, `docs/` or `.gitignore` is not deployed.
 
 ## 8. Verify
 
