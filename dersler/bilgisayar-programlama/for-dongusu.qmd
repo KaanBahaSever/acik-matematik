@@ -1,0 +1,971 @@
+---
+title: "for Döngüsü ve Liste Üreteçleri"
+pagetitle: "for Döngüsü ve Liste Üreteçleri"
+description: "Python'da for döngüsüyle liste, demet, sözlük, metin ve range üzerinde dolaşmak; döngüyle toplam ve çarpım hesaplamak, break, continue ve pass, alt çizgi değişkeni, enumerate ve zip fonksiyonları, liste üreteçleri ve asal, mükemmel ve Armstrong sayıları gibi örnekler."
+---
+
+Bir listedeki notların ortalamasını `sum` ve `len` ile bulabiliyoruz; peki her notun yanına harf karşılığını yazmak, ya da $1$ ile $100$ arasındaki asal sayıları tek tek bulmak istersek? Bu tür işlerde aynı komutları her eleman için, ya da her sayı için yeniden çalıştırmak gerekir. Komutları otuz kez alt alta yazmak yerine Python'a "bunu her eleman için yap" deriz.
+
+Bir kod bloğunu tekrar tekrar çalıştıran yapılara **döngü** denir. Python'da iki döngü türü vardır: bir koleksiyonun elemanları üzerinde sırayla dolaşan `for` döngüsü ve bir koşul doğru olduğu sürece devam eden `while` döngüsü. Bu bölüm `for` döngüsünü ve onunla tek satırda liste oluşturmayı sağlayan liste üreteçlerini ele alıyor; `while` döngüsü bir sonraki bölümün konusu.
+
+## for Döngüsünün Yapısı
+
+`for` döngüsü bir koleksiyonun elemanlarını birer birer alır ve her biri için aynı kod bloğunu çalıştırır.
+
+::: {#def-for-for name="for Döngüsü"}
+```text
+for degisken in koleksiyon:
+    her eleman için çalışacak komutlar
+```
+yapısında `koleksiyon`un elemanları sırayla `degisken`e atanır ve her atamadan sonra girintili komutlar bir kez çalışır. Elemanlar bitince döngü sona erer ve program döngüden sonraki ilk girintisiz satırdan devam eder. Döngü bloğunun her bir çalışmasına bir **yineleme** (iteration), `degisken`e de **döngü değişkeni** denir.
+:::
+
+Yani `for isim in isimler:` satırı "isimler listesindeki her isim için" demektir. Döngü değişkeninin adını biz seçeriz; `isim` yerine `x` de yazılabilir, ama anlamlı bir ad kodu okunaklı yapar.
+
+```python
+isimler = ["Ali", "Ayşe", "Mehmet"]
+for isim in isimler:
+    print("Merhaba,", isim)
+print("Döngü bitti.")
+```
+
+Çıktı:
+
+```text
+Merhaba, Ali
+Merhaba, Ayşe
+Merhaba, Mehmet
+Döngü bitti.
+```
+
+Döngü üç kez çalıştı: önce `isim` `"Ali"` oldu, sonra `"Ayşe"`, sonra `"Mehmet"`. Son satır girintisiz olduğu için döngünün parçası değildir ve bir kez, döngü bittikten sonra çalıştı.
+
+### range ile for
+
+Bir işi belli bir sayıda tekrarlamak ya da ardışık sayılar üzerinde çalışmak için `for` döngüsü `range` fonksiyonuyla (@def-kol-range) birlikte kullanılır.
+
+```python
+for i in range(5):
+    print(i, end=" ")
+print()
+for i in range(2, 6):
+    print(i, end=" ")
+print()
+for i in range(0, 10, 2):
+    print(i, end=" ")
+print()
+for i in range(5, 0, -1):
+    print(i, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+0 1 2 3 4
+2 3 4 5
+0 2 4 6 8
+5 4 3 2 1
+```
+
+`end=" "` sayıların alt alta değil yan yana yazılmasını sağladı; her döngüden sonraki boş `print()` ise satırı bitirdi. `range(5, 0, -1)` $5$'ten geriye doğru sayar ve $0$'a varmadan durur.
+
+`range` ile yazılan bir döngü, bir işi belli bir sayıda tekrarlamanın da en kısa yoludur:
+
+```python
+for i in range(3):
+    print("Dikkat!")
+```
+
+Çıktı:
+
+```text
+Dikkat!
+Dikkat!
+Dikkat!
+```
+
+### Farklı Koleksiyonlar Üzerinde Döngü
+
+`for` döngüsü listelerin yanında demetler, kümeler, sözlükler ve metinler üzerinde de çalışır.
+
+Bir demet üzerinde dolaşmak listedeki gibidir. Bir metin üzerinde dolaşıldığında döngü değişkeni metnin karakterlerini sırayla alır.
+
+```python
+demet = (10, 20, 30)
+for eleman in demet:
+    print(eleman, end=" ")
+print()
+for harf in "Python":
+    print(harf, end="-")
+print()
+```
+
+Çıktı:
+
+```text
+10 20 30
+P-y-t-h-o-n-
+```
+
+Bir sözlük üzerinde doğrudan dolaşıldığında döngü değişkeni sözlüğün **anahtarlarını** alır. Sözlüğün `keys()`, `values()` ve `items()` metotları sırasıyla anahtarları, değerleri ve anahtar–değer çiftlerini verir; `items()` kullanıldığında döngüye iki değişken yazılır ve her çiftin anahtarı birincisine, değeri ikincisine atanır.
+
+```python
+sozluk = {"isim": "Ali", "yas": 25, "sehir": "İstanbul"}
+for anahtar in sozluk:
+    print(anahtar, end=" ")
+print()
+for deger in sozluk.values():
+    print(deger, end=" ")
+print()
+for anahtar, deger in sozluk.items():
+    print(anahtar, ":", deger)
+```
+
+Çıktı:
+
+```text
+isim yas sehir
+Ali 25 İstanbul
+isim : Ali
+yas : 25
+sehir : İstanbul
+```
+
+## Döngüyle Toplam ve Çarpım
+
+Döngülerin en sık kullanımlarından biri, bir değeri her yinelemede biraz daha güncelleyerek bir toplam ya da çarpım biriktirmektir.
+
+::: {#def-for-biriktirici name="Biriktirici Değişken"}
+Döngüden önce bir başlangıç değeri verilen ve her yinelemede birleşik atamayla (@def-dgs-birlesik-atama) güncellenen değişkene **biriktirici** (accumulator) denir. Toplam için başlangıç değeri $0$, çarpım için $1$ alınır.
+:::
+
+Yani biriktirici, döngü boyunca bir kumbara gibi çalışır: başta boştur, her yinelemede içine bir şey eklenir ve döngü bittiğinde sonucu taşır. Başlangıç değerleri toplamada ve çarpmada etkisiz eleman olan $0$ ve $1$'dir; çarpımın başlangıcı yanlışlıkla $0$ alınırsa sonuç her zaman $0$ çıkar.
+
+::: {.callout-tip title="Döngüyle toplam üç adımda"}
+1. Döngüden önce biriktiriciyi başlat: `toplam = 0` (çarpım için `carpim = 1`).
+2. Döngünün içinde her değeri biriktiriciye ekle: `toplam += deger` (çarpım için `carpim *= deger`).
+3. Döngü bittikten sonra, girintisiz bir satırda sonucu kullan.
+:::
+
+:::: {#exm-for-gauss-toplami name="Birden Yüze Kadar Sayıların Toplamı"}
+$1 + 2 + \cdots + 100$ toplamını bir `for` döngüsüyle hesaplayınız ve $\frac{n(n+1)}{2}$ formülüyle karşılaştırınız.
+
+::: {.cozum}
+Tarifin üç adımını uygularız. `range(1, 101)` $1$'den $100$'e kadar sayıları verir; $101$ dahil değildir.
+
+```python
+toplam = 0
+for i in range(1, 101):
+    toplam += i
+print(toplam)
+print(100 * 101 // 2)
+```
+
+Çıktı:
+
+```text
+5050
+5050
+```
+
+Formül $n = 100$ için $100 \cdot 101/2 = 5050$ verir ve döngünün sonucuyla aynıdır. `print(toplam)` satırı girintisiz yazıldığı için döngü bittikten sonra bir kez çalışır; girintili yazılsaydı her yinelemede ara toplamı yazar ve $100$ satırlık bir çıktı oluşurdu. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-for-faktoriyel name="Faktöriyel"}
+Bir `sayi` için $\text{sayi}!$ değerini bir `for` döngüsüyle hesaplayan, negatif sayılar için uyarı veren ve $0! = 1$ durumunu ayrıca yazan bir program yazınız. `sayi = 5` için deneyiniz.
+
+::: {.cozum}
+$n! = 1 \cdot 2 \cdots n$ bir çarpım olduğundan biriktiriciyi $1$ ile başlatırız. Negatif sayıların faktöriyeli tanımlı olmadığından önce bir `if-elif-else` ile durumları ayırırız:
+
+```python
+sayi = 5
+faktoriyel = 1
+if sayi < 0:
+    print("Negatif sayının faktöriyeli yoktur.")
+elif sayi == 0:
+    print("0! = 1")
+else:
+    for i in range(1, sayi + 1):
+        faktoriyel *= i
+    print(f"{sayi}! = {faktoriyel}")
+```
+
+Çıktı:
+
+```text
+5! = 120
+```
+
+`range(1, sayi + 1)` $1$'den `sayi`'ya kadar olan sayıları verir; bitiş hariç olduğu için `sayi + 1` yazdık. Döngü `else` bloğunun içinde olduğundan bir girinti daha içeride yazıldı. [$\blacksquare$]{.qed}
+:::
+::::
+
+Biriktirici yalnız sayı değil, bir liste de olabilir: boş bir listeyle başlanır ve her yinelemede `append` ile bir eleman eklenir.
+
+```python
+liste = [1, 2, 3, 4, 5]
+sonuc = []
+for eleman in liste:
+    sonuc.append(eleman * 2)
+print(sonuc)
+```
+
+Çıktı:
+
+```text
+[2, 4, 6, 8, 10]
+```
+
+`print` döngünün içine yazılsaydı, listenin her yinelemede nasıl büyüdüğü görülürdü:
+
+```python
+liste = [1, 2, 3, 4, 5]
+sonuc = []
+for eleman in liste:
+    sonuc.append(eleman ** 2)
+    print(sonuc)
+```
+
+Çıktı:
+
+```text
+[1]
+[1, 4]
+[1, 4, 9]
+[1, 4, 9, 16]
+[1, 4, 9, 16, 25]
+```
+
+::: {.callout-warning title="Biriktiriciyi sıfırlamayı unutmayın"}
+Bir biriktirici her hesaptan önce yeniden başlatılmalıdır. Aşağıdaki programda ikinci döngüden önce `sonuc = []` yazılmadığı için kareler, ilk döngünün bıraktığı listenin sonuna eklenir. Colab'da bir hücreyi `sonuc = []` satırı olmadan ikinci kez çalıştırmak da aynı hataya yol açar.
+
+```python
+liste = [1, 2, 3]
+sonuc = []
+for eleman in liste:
+    sonuc.append(eleman * 2)
+for eleman in liste:
+    sonuc.append(eleman ** 2)
+print(sonuc)
+```
+
+Çıktı:
+
+```text
+[2, 4, 6, 1, 4, 9]
+```
+:::
+
+## break, continue ve pass
+
+Bazen bir döngünün bütün elemanları dolaşmadan bitmesi ya da bazı elemanların atlanması istenir.
+
+::: {#def-for-break-continue name="break ve continue"}
+Döngünün içinde çalışan `break` komutu döngüyü hemen sonlandırır ve program döngüden sonraki ilk satırdan devam eder. `continue` komutu ise yalnız o anki yinelemenin geri kalanını atlar ve döngü bir sonraki elemanla devam eder.
+:::
+
+Yani `break` "dur, döngüden çık", `continue` ise "bu elemanı geç, sıradakine bak" demektir. İkisi de genellikle bir `if` koşulunun içinde kullanılır.
+
+```python
+for i in range(5):
+    if i == 3:
+        break
+    print(i, end=" ")
+print()
+for i in range(5):
+    if i == 3:
+        continue
+    print(i, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+0 1 2
+0 1 2 4
+```
+
+Birinci döngüde `i` $3$ olduğunda `break` döngüyü bitirdi; $3$ ve $4$ hiç yazılmadı. İkinci döngüde yalnız $3$ atlandı.
+
+:::: {#exm-for-ilk-negatif name="İlk Negatif Sayıda Durmak"}
+`sayilar = [1, 512, 6, -8, 3]` listesindeki sayıları sırayla yazan, ama ilk negatif sayıya gelince bir uyarı yazıp duran bir program yazınız. Aynı listede negatif sayıları atlayıp diğerlerini yazan programla karşılaştırınız.
+
+::: {.cozum}
+İlk program için negatif sayıyı bulunca `break` kullanırız:
+
+```python
+sayilar = [1, 512, 6, -8, 3]
+for x in sayilar:
+    if x < 0:
+        print("Negatif sayı bulundu!")
+        break
+    print(x)
+print("Buradan devam...")
+```
+
+Çıktı:
+
+```text
+1
+512
+6
+Negatif sayı bulundu!
+Buradan devam...
+```
+
+`-8`'de döngü bittiği için ondan sonra gelen `3` yazılmadı; program döngüden sonraki satırdan devam etti. İkinci programda `break` yerine `continue` kullanırız; bu kez yalnız `-8` atlanır:
+
+```python
+sayilar = [1, 512, 6, -8, 3]
+for x in sayilar:
+    if x < 0:
+        continue
+    print(x)
+```
+
+Çıktı:
+
+```text
+1
+512
+6
+3
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Python'da bir `for` bloğu boş bırakılamaz. Döngünün içine henüz bir şey yazılmayacaksa, [koşullu ifadelerde](kosullu-ifadeler.qmd) olduğu gibi `pass` (@def-kos-pass) yazılır:
+
+```python
+for x in [0, 512, 6, -8, 3]:
+    pass
+print("Buradan devam...")
+```
+
+Çıktı:
+
+```text
+Buradan devam...
+```
+
+### Kullanılmayan Döngü Değişkeni
+
+Bazı döngülerde döngü değişkeninin değerine hiç ihtiyaç duyulmaz; yalnız işin belli sayıda tekrarlanması istenir.
+
+::: {#def-for-alt-cizgi name="Alt Çizgi Değişkeni"}
+Değeri kullanılmayacak bir değişkene ad olarak tek bir alt çizgi `_` verilmesi Python'da yaygın bir alışkanlıktır. `_` sıradan bir değişken adıdır; okura "bu değeri kullanmıyorum" mesajını verir.
+:::
+
+Yani `for _ in range(3):` "üç kez tekrarla" demektir; döngü değişkeni `0`, `1`, `2` değerlerini yine alır ama programda kullanılmaz. Değişkene `i` adı verilseydi okur `i`'nin nerede kullanıldığını arardı.
+
+```python
+for _ in range(3):
+    print("Merhaba!")
+```
+
+Çıktı:
+
+```text
+Merhaba!
+Merhaba!
+Merhaba!
+```
+
+Alt çizgi, çoklu atamada istenmeyen değerleri atmak için de kullanılır. Çoklu atamada bir değişkenin önüne `*` konursa o değişken, diğer değişkenlere düşmeyen bütün değerleri bir liste olarak alır:
+
+```python
+x, *_, y = (1, 2, 3, 4, 5)
+print(x, y)
+print(_)
+ilk, *orta, son = [10, 20, 30, 40]
+print(ilk, orta, son)
+```
+
+Çıktı:
+
+```text
+1 5
+[2, 3, 4]
+10 [20, 30] 40
+```
+
+## enumerate ve zip
+
+Bir döngüde elemanların yanında indekslerine de ihtiyaç duyulduğunda ya da iki liste aynı anda dolaşılmak istendiğinde iki hazır fonksiyon işi kolaylaştırır.
+
+::: {#def-for-enumerate name="enumerate Fonksiyonu"}
+`enumerate(koleksiyon)` fonksiyonu koleksiyonun her elemanını, indeksiyle birlikte `(indeks, eleman)` çiftleri olarak verir. `for i, x in enumerate(koleksiyon):` döngüsünde `i` indeksi, `x` elemanı alır.
+:::
+
+Yani `enumerate`, elemanları numaralandırarak dolaşmanın yoludur.
+
+```python
+isimler = ["Ali", "Ayşe", "Mehmet"]
+for indeks, isim in enumerate(isimler):
+    print(indeks, isim)
+print(list(enumerate("abc")))
+```
+
+Çıktı:
+
+```text
+0 Ali
+1 Ayşe
+2 Mehmet
+[(0, 'a'), (1, 'b'), (2, 'c')]
+```
+
+::: {#def-for-zip name="zip Fonksiyonu"}
+`zip(liste1, liste2)` fonksiyonu iki koleksiyonun aynı sıradaki elemanlarını eşleyerek `(liste1[0], liste2[0])`, `(liste1[1], liste2[1])`, ... çiftlerini verir. Koleksiyonların uzunlukları farklıysa kısa olan bitince durur.
+:::
+
+Yani `zip` bir fermuar gibi iki listeyi diş diş birleştirir. İkiden fazla koleksiyon da verilebilir; o zaman üçlüler, dörtlüler oluşur.
+
+```python
+isimler = ["Ali", "Ayşe", "Mehmet"]
+yaslar = [25, 30, 35]
+print(list(zip(isimler, yaslar)))
+for isim, yas in zip(isimler, yaslar):
+    print(f"{isim} {yas} yaşında")
+print(list(zip([1, 2, 3, 4], ["a", "b"])))
+```
+
+Çıktı:
+
+```text
+[('Ali', 25), ('Ayşe', 30), ('Mehmet', 35)]
+Ali 25 yaşında
+Ayşe 30 yaşında
+Mehmet 35 yaşında
+[(1, 'a'), (2, 'b')]
+```
+
+## Liste Üreteçleri
+
+Bir döngüyle boş bir listeyi doldurmak o kadar sık yapılan bir iştir ki Python bunun için tek satırlık bir yazım sunar.
+
+::: {#def-for-uretec name="Liste Üreteci"}
+```text
+[ifade for degisken in koleksiyon]
+[ifade for degisken in koleksiyon if koşul]
+```
+yazımına **liste üreteci** (list comprehension) denir. Birinci yazım, koleksiyonun her elemanı için `ifade`'yi hesaplar ve sonuçlardan bir liste oluşturur. İkinci yazımda yalnız `koşul`u sağlayan elemanlar alınır.
+:::
+
+Yani `[x ** 2 for x in range(1, 6)]` liste üreteci,
+
+```text
+sonuc = []
+for x in range(1, 6):
+    sonuc.append(x ** 2)
+```
+
+döngüsünün yaptığı işi tek satırda yapar. Yazım, matematikteki küme gösterimine benzer: $\{x^2 : 1 \le x \le 5\}$ ya da $\{x : 0 \le x < 10,\ x \text{ çift}\}$.
+
+```python
+kareler = [x ** 2 for x in range(10)]
+print(kareler)
+ciftler = [x for x in range(10) if x % 2 == 0]
+print(ciftler)
+liste = [1, 2, 3, 4, 5]
+print([eleman * 2 for eleman in liste])
+print([x + x ** 2 for x in liste])
+print([1 / x for x in range(2, 7, 3)])
+print([(1 / 2) ** n for n in range(1, 6)])
+```
+
+Çıktı:
+
+```text
+[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+[0, 2, 4, 6, 8]
+[2, 4, 6, 8, 10]
+[2, 6, 12, 20, 30]
+[0.5, 0.2]
+[0.5, 0.25, 0.125, 0.0625, 0.03125]
+```
+
+Liste üreteciyle elde edilen liste sıradan bir listedir; indekslenebilir, dilimlenebilir, `sum` ya da `max` gibi fonksiyonlara verilebilir.
+
+```python
+liste2 = [2 ** x for x in range(1, 10)]
+print(liste2)
+print(sum(liste2), min(liste2), max(liste2))
+print(liste2[0], liste2[-1])
+liste = [1, 2, 4, 5]
+print(5 * liste)
+print([5 * x for x in liste])
+```
+
+Çıktı:
+
+```text
+[2, 4, 8, 16, 32, 64, 128, 256, 512]
+1022 2 512
+2 512
+[1, 2, 4, 5, 1, 2, 4, 5, 1, 2, 4, 5, 1, 2, 4, 5, 1, 2, 4, 5]
+[5, 10, 20, 25]
+```
+
+Son iki satır [Koleksiyonlar ve Listeler](koleksiyonlar-ve-listeler.qmd) bölümünde değindiğimiz farkı gösteriyor: `5 * liste` listeyi beş kez yan yana yazar, `[5 * x for x in liste]` ise her elemanı $5$ ile çarpar.
+
+İfadenin yerine bir koşullu ifade (@def-kos-uclu) de yazılabilir; bu durumda her eleman listeye girer ama koşula göre farklı bir değer alır.
+
+```python
+sayilar = [1, 2, 3, 4, 5]
+print(["çift" if x % 2 == 0 else "tek" for x in sayilar])
+print([x if x > 2 else 0 for x in sayilar])
+```
+
+Çıktı:
+
+```text
+['tek', 'çift', 'tek', 'çift', 'tek']
+[0, 0, 3, 4, 5]
+```
+
+Koşulun yeri anlamı değiştirir: sonda yazılan `if`, elemanı listeye alıp almamaya karar verir; başta yazılan `if ... else ...` ise her elemanın listeye hangi değerle gireceğini belirler.
+
+Bir liste üretecinde birden çok `for` da bulunabilir. Bu durumda sondaki `for`, öndekinin her değeri için baştan sona dolaşılır:
+
+```python
+print([(x, y) for x in range(1, 4) for y in range(1, 3)])
+print([(2 * x + 1, y ** 2) for x in range(1, 3) for y in range(1, 4)])
+```
+
+Çıktı:
+
+```text
+[(1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2)]
+[(3, 1), (3, 4), (3, 9), (5, 1), (5, 4), (5, 9)]
+```
+
+Liste üreteci köşeli parantez olmadan, doğrudan `sum`, `max`, `min`, `all` ya da `any` gibi bir fonksiyonun içine de yazılabilir: `sum(x ** 2 for x in range(1, 6))` kareler toplamı $55$'i verir. Bu yazımın adı **üreteç ifadesidir** ve [Demetler](demetler.qmd) bölümünde ayrıntılı olarak ele alınır.
+
+::: {.callout-note title="Döngü mü, liste üreteci mi?"}
+Bir kurala göre liste oluşturmak için liste üreteci daha kısa, daha okunaklı ve genellikle daha hızlıdır. Döngünün içinde birkaç adımlık bir iş yapılıyor, bir şey yazdırılıyor ya da `break` gerekiyorsa açık bir `for` döngüsü daha uygundur. Çok büyük sayı dizileri üzerinde hızlı hesap için ise NumPy kütüphanesinin dizileri kullanılır; bkz. [Python ile Bilimsel Hesaplama](../python-bilimsel/numpy-dizileri.html).
+:::
+
+## Örnekler
+
+`for` döngüsünü koşullu ifadelerle birlikte kullanarak sayılar üzerinde birkaç klasik problemi çözelim.
+
+:::: {#exm-for-cift-tek name="Listedeki Sayılar Çift mi, Tek mi?"}
+`sayilar = [10, 15, 20, 25, 30]` listesindeki her sayının çift mi tek mi olduğunu yazınız.
+
+::: {.cozum}
+Her sayı için `% 2` ile kalanı denetleriz. İki durum birbirinin tersi olduğundan `if-else` yeterlidir:
+
+```python
+sayilar = [10, 15, 20, 25, 30]
+for sayi in sayilar:
+    if sayi % 2 == 0:
+        print(f"{sayi} çift bir sayıdır.")
+    else:
+        print(f"{sayi} tek bir sayıdır.")
+```
+
+Çıktı:
+
+```text
+10 çift bir sayıdır.
+15 tek bir sayıdır.
+20 çift bir sayıdır.
+25 tek bir sayıdır.
+30 çift bir sayıdır.
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-for-harf-notlari name="Not Listesinin Harf Karşılıkları"}
+`notlar = [85, 72, 90, 60, 40, 77]` listesindeki her not için harf karşılığını yazınız: $85$ ve üstü A, $70$–$84$ B, $50$–$69$ C, $50$'nin altı D.
+
+::: {.cozum}
+[Koşullu İfadeler](kosullu-ifadeler.qmd) bölümündeki harf notu kurallarını (@exm-kos-harf-notu-sirasi) bir döngünün içine koyarız. `not` bir anahtar kelime olduğu için değişkene `not_` adını verdik:
+
+```python
+notlar = [85, 72, 90, 60, 40, 77]
+for not_ in notlar:
+    if not_ >= 85:
+        harf = "A"
+    elif not_ >= 70:
+        harf = "B"
+    elif not_ >= 50:
+        harf = "C"
+    else:
+        harf = "D"
+    print(f"{not_} - Harf notu: {harf}")
+```
+
+Çıktı:
+
+```text
+85 - Harf notu: A
+72 - Harf notu: B
+90 - Harf notu: A
+60 - Harf notu: C
+40 - Harf notu: D
+77 - Harf notu: B
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-for-asal-sayilar name="Yüze Kadar Asal Sayılar"}
+$2$ ile $100$ arasındaki asal sayıları bulunuz.
+
+::: {.cozum}
+Bir $n \ge 2$ sayısı, $1$ ve kendisinden başka pozitif böleni yoksa asaldır. Bir böleni varsa, o bölenlerden biri $\sqrt{n}$'den büyük değildir: $n = a \cdot b$ ve $a \le b$ ise $a^2 \le ab = n$ olur. Bu yüzden $n$'i yalnız $2$'den $\lfloor \sqrt{n} \rfloor$'e kadar olan sayılara bölmeyi denemek yeter.
+
+Her sayı için önce asal olduğunu varsayarız (`asal_mi = True`). İçteki döngü bölen adaylarını dener; bir bölen bulunursa varsayım yanlıştır, `asal_mi` `False` yapılır ve `break` ile içteki döngüden çıkılır. Bir döngünün içine başka bir döngü yazmayı bir sonraki bölümde ayrıntılı olarak göreceğiz.
+
+```python
+for sayi in range(2, 101):
+    asal_mi = True
+    for i in range(2, int(sayi ** 0.5) + 1):
+        if sayi % i == 0:
+            asal_mi = False
+            break
+    if asal_mi:
+        print(sayi, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97
+```
+
+`sayi ** 0.5` karekökü verir; `int` onu aşağı keser ve `range`'in bitişi hariç olduğu için $1$ eklenir. $2$ ve $3$ için `range(2, 2)` boştur: içteki döngü hiç çalışmaz ve sayılar asal kalır. Yüze kadar $25$ asal sayı vardır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Aynı asallık denemesi `all` fonksiyonu ve bir liste üreteciyle tek satırda da yazılabilir: $n$ asaldır ancak ve ancak $2 \le d \le \sqrt{n}$ olan bütün $d$'ler için $n \bmod d \neq 0$ ise.
+
+```python
+asallar = [n for n in range(2, 16)
+           if all(n % d != 0 for d in range(2, int(n ** 0.5) + 1))]
+print(asallar)
+```
+
+Çıktı:
+
+```text
+[2, 3, 5, 7, 11, 13]
+```
+
+Uzun bir satır, parantezlerin içinde olduğu sürece alt satıra bölünebilir; Python parantez kapanana kadar satırın sürdüğünü bilir.
+
+:::: {#exm-for-mukemmel-sayilar name="Mükemmel Sayılar"}
+Kendisi hariç pozitif bölenlerinin toplamı kendisine eşit olan sayılara **mükemmel sayı** denir: $6 = 1 + 2 + 3$ gibi. $10\,000$'den küçük mükemmel sayıları bulunuz.
+
+::: {.cozum}
+Bir $x$ sayısının kendisi hariç bölenleri, $1 \le i < x$ ve $x \bmod i = 0$ koşulunu sağlayan $i$'lerdir; bunların toplamı `sum(i for i in range(1, x) if x % i == 0)` ile hesaplanır. Bu toplamın $x$'e eşit olduğu sayıları bir liste üreteciyle seçeriz:
+
+```python
+mukemmel = [x for x in range(2, 10000)
+            if sum(i for i in range(1, x) if x % i == 0) == x]
+print(mukemmel)
+```
+
+Çıktı:
+
+```text
+[6, 28, 496, 8128]
+```
+
+Örneğin $28 = 1 + 2 + 4 + 7 + 14$'tür. Bu program her sayı için kendisinden küçük bütün sayıları denediğinden yaklaşık $5 \cdot 10^7$ bölme yapar ve birkaç saniye sürebilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-for-armstrong name="Üç Basamaklı Armstrong Sayıları"}
+Rakamlarının küpleri toplamı kendisine eşit olan üç basamaklı sayılara **Armstrong sayısı** denir: $153 = 1^3 + 5^3 + 3^3$ gibi. Bütün üç basamaklı Armstrong sayılarını bulunuz.
+
+::: {.cozum}
+Bir sayının rakamlarını almanın kolay bir yolu onu metne çevirip karakterleri üzerinde dolaşmaktır: `str(153)` `"153"` metnini verir, her karakter `int` ile yeniden rakama çevrilir.
+
+```python
+armstrong = [x for x in range(100, 1000)
+             if sum(int(r) ** 3 for r in str(x)) == x]
+print(armstrong)
+```
+
+Çıktı:
+
+```text
+[153, 370, 371, 407]
+```
+
+Örneğin $370 = 27 + 343 + 0$ ve $407 = 64 + 0 + 343$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-for-fibonacci name="Fibonacci Dizisi"}
+Her terimi kendinden önceki iki terimin toplamı olan $0, 1, 1, 2, 3, 5, \ldots$ dizisine **Fibonacci dizisi** denir. Dizinin ilk $10$ terimini bir liste olarak bulunuz.
+
+::: {.cozum}
+Listeyi ilk iki terimle başlatırız. Her yinelemede listenin son iki elemanı `fib[-1]` ve `fib[-2]` ile alınır, toplamları listenin sonuna eklenir. İlk iki terim hazır olduğundan $8$ yineleme yeter:
+
+```python
+fib = [0, 1]
+for _ in range(8):
+    fib.append(fib[-1] + fib[-2])
+print(fib)
+```
+
+Çıktı:
+
+```text
+[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+```
+
+Döngü değişkeni kullanılmadığı için `_` yazdık. Bu işi `[fib.append(...) for _ in range(8)]` gibi bir liste üreteciyle yapmak da mümkündür, ama önerilmez: liste üreteci bir liste **oluşturmak** içindir, bir listeyi değiştirmenin yan etkisi için değil. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Her alıştırmayı önce bir `for` döngüsüyle, uygun olanları sonra bir liste üreteciyle de çözmeyi deneyin.
+
+:::: {#exr-for-kareler-toplami name="Kareler Toplamı"}
+$1^2 + 2^2 + \cdots + 10^2$ toplamını bir döngüyle hesaplayınız ve $\frac{n(n+1)(2n+1)}{6}$ formülüyle karşılaştırınız.
+
+::: {.cozum}
+Biriktiriciyi $0$ ile başlatır, her $i$ için $i^2$'yi ekleriz. Formül $n = 10$ için $10 \cdot 11 \cdot 21/6 = 2310/6 = 385$ verir.
+
+```python
+toplam = 0
+for i in range(1, 11):
+    toplam += i ** 2
+print(toplam)
+print(10 * 11 * 21 // 6)
+print(sum(i ** 2 for i in range(1, 11)))
+```
+
+Çıktı:
+
+```text
+385
+385
+385
+```
+
+Son satır aynı toplamı bir üreteç ifadesiyle tek satırda hesaplar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-for-sesli-harfler name="Sesli Harfleri Saymak"}
+`"bilgisayar programlama"` metninde kaç sesli harf bulunduğunu bir döngüyle sayınız.
+
+::: {.cozum}
+Türkçenin sesli harflerini bir metinde toplarız: `"aeıioöuü"`. Metnin her karakteri için, karakter bu metinde varsa (`in`) sayacı bir artırırız. Sayaç da bir biriktiricidir ve $0$ ile başlar.
+
+```python
+metin = "bilgisayar programlama"
+sesliler = "aeıioöuü"
+sayac = 0
+for harf in metin:
+    if harf in sesliler:
+        sayac += 1
+print(sayac)
+```
+
+Çıktı:
+
+```text
+8
+```
+
+Sesliler tek tek sayılırsa: "bilgisayar" sözcüğünde i, i, a, a; "programlama" sözcüğünde o, a, a, a. Toplam $4 + 4 = 8$'dir. Boşluk ve sessiz harfler sayılmaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-for-en-buyuk name="max Kullanmadan En Büyük Eleman"}
+`liste = [23, 7, 41, 15, 41, 8]` listesinin en büyük elemanını ve ilk geçtiği indeksi `max` fonksiyonunu kullanmadan bulunuz.
+
+::: {.cozum}
+İlk elemanı geçici olarak en büyük kabul ederiz. Sonra elemanları indeksleriyle (`enumerate`) dolaşır, şimdiye kadarki en büyükten **büyük** bir eleman görünce en büyüğü ve indeksini güncelleriz. Eşit bir eleman güncelleme yapmadığı için ilk geçtiği indeks korunur.
+
+```python
+liste = [23, 7, 41, 15, 41, 8]
+en_buyuk = liste[0]
+yer = 0
+for i, x in enumerate(liste):
+    if x > en_buyuk:
+        en_buyuk = x
+        yer = i
+print(en_buyuk, yer)
+```
+
+Çıktı:
+
+```text
+41 2
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-for-bolenler name="Bir Sayının Bölenleri"}
+$36$'nın bütün pozitif bölenlerini bir liste üreteciyle bulunuz ve kaç tane olduklarını yazınız.
+
+::: {.cozum}
+$d$, $36$'yı bölüyorsa $36 \bmod d = 0$'dır. $1$'den $36$'ya kadar bütün $d$'leri deneriz:
+
+```python
+n = 36
+bolenler = [d for d in range(1, n + 1) if n % d == 0]
+print(bolenler)
+print(len(bolenler))
+```
+
+Çıktı:
+
+```text
+[1, 2, 3, 4, 6, 9, 12, 18, 36]
+9
+```
+
+$36 = 2^2 \cdot 3^2$ olduğundan bölen sayısı $(2 + 1)(2 + 1) = 9$'dur ve sonuçla uyuşur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-for-ters-metin name="Metni Tersine Çevirmek"}
+`"python"` metnini bir döngüyle tersine çeviriniz.
+
+::: {.cozum}
+Boş bir metinle başlarız; her harfi, o ana kadar elde edilen metnin **başına** ekleriz. Böylece ilk harf en sona kayar.
+
+```python
+metin = "python"
+ters = ""
+for harf in metin:
+    ters = harf + ters
+    print(ters)
+print(metin[::-1])
+```
+
+Çıktı:
+
+```text
+p
+yp
+typ
+htyp
+ohtyp
+nohtyp
+nohtyp
+```
+
+Döngünün içindeki `print`, metnin adım adım nasıl oluştuğunu gösteriyor. Son satır aynı sonucu metin dilimlemeyle verir: metinler de listeler gibi dilimlenebilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-for-pozitif-ortalama name="Pozitif Sayıların Ortalaması"}
+`sayilar = [4, -2, 7, 0, -5, 9]` listesindeki pozitif sayıların ortalamasını bulunuz.
+
+::: {.cozum}
+Önce pozitif sayıları bir liste üreteciyle seçeriz: $4, 7, 9$. Sıfır pozitif değildir. Ortalama $(4 + 7 + 9)/3 = 20/3 \approx 6{,}67$'dir.
+
+```python
+sayilar = [4, -2, 7, 0, -5, 9]
+pozitifler = [x for x in sayilar if x > 0]
+print(pozitifler)
+print(f"{sum(pozitifler) / len(pozitifler):.2f}")
+```
+
+Çıktı:
+
+```text
+[4, 7, 9]
+6.67
+```
+
+Listede hiç pozitif sayı olmasaydı `len(pozitifler)` sıfır olur ve bölme hata verirdi; gerçek bir programda bu durum önce bir `if` ile denetlenmelidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-for-carpim-tablosu name="Yedinin Çarpım Tablosu"}
+$7$'nin $1$'den $10$'a kadar çarpım tablosunu `7 x 1 = 7` biçiminde yazdırınız.
+
+::: {.cozum}
+`range(1, 11)` ile çarpanları dolaşır, her satırı bir f-string ile yazarız:
+
+```python
+for i in range(1, 11):
+    print(f"7 x {i} = {7 * i}")
+```
+
+Çıktı:
+
+```text
+7 x 1 = 7
+7 x 2 = 14
+7 x 3 = 21
+7 x 4 = 28
+7 x 5 = 35
+7 x 6 = 42
+7 x 7 = 49
+7 x 8 = 56
+7 x 9 = 63
+7 x 10 = 70
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-for-continue-metin name="Bir Metinde continue ve break"}
+Aşağıdaki iki programın çıktılarını bulunuz.
+
+```python
+for i in "zeynep":
+    if i == "e" or i == "y":
+        continue
+    print(i, end=" ")
+print()
+for i in "zeynep":
+    if i == "e" or i == "y":
+        break
+    print(i, end=" ")
+print()
+```
+
+::: {.cozum}
+"zeynep" metninin harfleri sırayla z, e, y, n, e, p'dir. Birinci döngüde `e` ve `y` harfleri `continue` ile atlanır; geriye z, n, p kalır. İkinci döngüde `break` ilk `e`'de döngüyü bitirir; bu yüzden yalnız z yazılır.
+
+```python
+for i in "zeynep":
+    if i == "e" or i == "y":
+        continue
+    print(i, end=" ")
+print()
+for i in "zeynep":
+    if i == "e" or i == "y":
+        break
+    print(i, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+z n p
+z
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde `for` döngüsüyle bir koleksiyonun bütün elemanları üzerinde işlem yapmayı ve liste üreteçleriyle tek satırda liste oluşturmayı öğrendik. Asal sayı örneğinde bir döngünün içine ikinci bir döngü yazdık; ayrıca `for` döngüsü, kaç kez çalışacağı önceden belli olan işler içindir. Bir sonraki bölüm [İç İçe Döngüler, while Döngüsü ve match-case](ic-ice-donguler-ve-while-dongusu.qmd), iç içe döngüleri ve bir koşul sağlandığı sürece süren `while` döngüsünü ele alıyor.

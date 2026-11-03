@@ -1,0 +1,749 @@
+---
+title: "Değişkenler, Veri Tipleri ve Atama"
+pagetitle: "Değişkenler, Veri Tipleri ve Atama"
+description: "Python'da değişken tanımlama ve atama; int, float, complex, str ve bool veri tipleri, type fonksiyonu, dinamik tip sistemi, tip dönüşümleri, çoklu atama ve takas, değişken adlandırma kuralları ve birleşik atama operatörleri."
+---
+
+Bir program çalışırken sayıları, metinleri ve ara sonuçları bir yerde tutmak zorundadır: bir öğrencinin adını, bir dairenin yarıçapını ya da bir toplamın o ana kadarki değerini. Bu değerleri adlandırıp saklamanın yolu **değişkenlerdir**.
+
+Bu bölümde değişkenlerin nasıl oluşturulduğunu, Python'ın hangi temel veri tiplerini tanıdığını ve bir değeri bir tipten başka bir tipe nasıl çevirebileceğimizi göreceğiz. Bölümün sonunda değişkenlere değer vermenin kısa yollarını ve değişkenlere ad verirken uyulması gereken kuralları öğreneceğiz.
+
+## Değişken ve Atama
+
+Bir değeri daha sonra kullanmak üzere saklamak için ona bir ad veririz; bu işlemin adı atamadır.
+
+::: {#def-dgs-degisken name="Değişken ve Atama"}
+Bir değere verilen ada **değişken** (variable) denir. `ad = değer` biçimindeki komuta **atama** (assignment) denir: `=` işareti, sağ taraftaki değeri hesaplar ve sol taraftaki ada bağlar.
+:::
+
+Yani `yas = 25` komutundan sonra `yas` adı $25$ değerini temsil eder; programın geri kalanında `yas` yazdığımız her yerde Python $25$'i kullanır. Atamada `=` işareti matematikteki eşitlik anlamına gelmez, "sağdakini soldakine ver" anlamına gelir. Bu yüzden `x = x + 1` matematikte çelişki olsa da Python'da anlamlı bir komuttur: `x`'in eski değerine $1$ eklenir ve sonuç yeniden `x`'e verilir.
+
+```python
+x = 10
+print(x)
+x = x + 1
+print(x)
+```
+
+Çıktı:
+
+```text
+10
+11
+```
+
+Bir değişkene yeni bir değer atandığında eski değer unutulur; `print` her zaman değişkenin o anki değerini yazar.
+
+## Temel Veri Tipleri
+
+Python her değerin bir **tipini** (type) bilir: bir tam sayı ile bir metin aynı biçimde saklanmaz ve aynı işlemlere girmez.
+
+::: {#def-dgs-int name="Tam Sayı: int"}
+Ondalık kısmı olmayan sayılara **tam sayı** denir ve Python'da tipleri `int`'tir: `25`, `-7`, `0` gibi.
+:::
+
+Yani `int` matematikteki $\mathbb{Z}$ kümesinin elemanlarını temsil eder. Python'da tam sayıların bir üst sınırı yoktur; bilgisayarın belleği yettiği sürece istediğimiz kadar büyük tam sayılarla hesap yapılabilir.
+
+::: {#def-dgs-float name="Ondalıklı Sayı: float"}
+Ondalık kısmı olan sayılara **ondalıklı sayı** ya da **kayan noktalı sayı** (floating-point number) denir ve tipleri `float`'tur: `5.9`, `-0.25`, `3.0` gibi. Ondalık ayırıcı olarak nokta kullanılır.
+:::
+
+Yani `3` bir `int`, `3.0` ise bir `float`'tur; ikisi aynı sayıyı gösterse de Python onları farklı tiplerde saklar.
+
+::: {#def-dgs-complex name="Karmaşık Sayı: complex"}
+Gerçel ve sanal kısmı olan sayılara **karmaşık sayı** denir ve tipleri `complex`'tir. Sanal birim $i$ yerine `j` harfi kullanılır: $3 + 4i$ sayısı `3 + 4j` diye yazılır. Bir `z` karmaşık sayısının gerçel kısmı `z.real`, sanal kısmı `z.imag` ile alınır.
+:::
+
+Yani karmaşık sayılarla Python'da doğrudan hesap yapılabilir; `j` harfi, önüne bir sayı yazıldığında sanal birim anlamına gelir.
+
+```python
+z = 3 + 4j
+print(z)
+print(z.real)   # gerçel kısım
+print(z.imag)   # sanal kısım
+```
+
+Çıktı:
+
+```text
+(3+4j)
+3.0
+4.0
+```
+
+Gerçel ve sanal kısımlar, `z` tam sayılarla yazılmış olsa bile `float` olarak verilir.
+
+::: {#def-dgs-str name="Metin: str"}
+Tek tırnak (`'...'`) ya da çift tırnak (`"..."`) arasına yazılan karakter dizilerine **metin** ya da **karakter dizisi** (string) denir ve tipleri `str`'dir.
+:::
+
+Yani `"Ali"` ile `'Ali'` aynı metindir; tırnağın türü yalnız metnin nerede başlayıp nerede bittiğini gösterir. Metin içinde rakam bulunsa bile tırnak içindeki bir değer sayı değil metindir: `"25"` bir `str`, `25` bir `int`'tir.
+
+::: {#def-dgs-bool name="Mantıksal Değer: bool"}
+Yalnız `True` (doğru) ve `False` (yanlış) değerlerinden birini alan tipe **mantıksal tip** (Boolean) denir ve adı `bool`'dur.
+:::
+
+Yani `bool` tipindeki bir değer bir sorunun yanıtı gibidir: "5, 3'ten küçük mü?" sorusunun yanıtı `5 < 3` ifadesinin değeridir ve bu değer `False`'tur. Mantıksal değerleri koşullu ifadelerde yoğun olarak kullanacağız. `True` ve `False` büyük harfle başlar; `true` yazmak hata verir.
+
+### type Fonksiyonu
+
+Bir değerin ya da değişkenin tipini öğrenmek için `type` fonksiyonu kullanılır.
+
+```python
+yas = 25
+boy = 1.75
+ad = "Ali"
+gecti_mi = 5 < 3
+print(type(yas))
+print(type(boy))
+print(type(ad))
+print(type(gecti_mi))
+print(type(2 / 3))
+print(gecti_mi)
+```
+
+Çıktı:
+
+```text
+<class 'int'>
+<class 'float'>
+<class 'str'>
+<class 'bool'>
+<class 'float'>
+False
+```
+
+`type`'ın yazdığı `<class 'int'>` ifadesi "bu değer `int` sınıfındandır" anlamına gelir. `2 / 3` bölümünün tipi `float`'tur: Python'da `/` ile bölmenin sonucu her zaman ondalıklı bir sayıdır.
+
+## Dinamik Tip Sistemi
+
+Birçok programlama dilinde bir değişkenin tipi baştan yazılır ve sonradan değiştirilemez; Python'da durum farklıdır.
+
+::: {#def-dgs-dinamik name="Dinamik Tip Sistemi"}
+Bir değişkenin tipinin, ona atanan değere göre program çalışırken belirlendiği ve değişkene sonradan başka tipte bir değer atanabildiği dillere **dinamik tipli** diller denir. Python dinamik tipli bir dildir.
+:::
+
+Yani Python'da `int x;` gibi bir tip bildirimi yoktur. Değişkenin tipi, o anda taşıdığı değerin tipidir; değer değişirse tip de değişebilir.
+
+```python
+x = 10        # x şimdi bir int
+print(type(x))
+x = "Merhaba" # x artık bir str
+print(x)
+print(type(x))
+```
+
+Çıktı:
+
+```text
+<class 'int'>
+Merhaba
+<class 'str'>
+```
+
+Bu esneklik kolaylık sağlar ama dikkat de ister: aynı adı farklı işler için kullanmak, programın ilerleyen bir yerinde değişkenin beklenmedik bir tipte olmasına yol açabilir.
+
+## Yorumlar, Çok Satırlı Metinler ve Noktalı Virgül
+
+Kodun okunabilirliğini artıran ve birkaç satırı bir arada yazmayı sağlayan birkaç kural vardır.
+
+Hazırlık bölümünde gördüğümüz gibi `#` işaretinden sonraki kısım bir yorumdur (@def-hzr-yorum). Yorum bir satırın başına ya da bir komutun yanına yazılabilir. Birden çok satıra yayılan bir metin ise üçlü tırnakla (`"""..."""` ya da `'''...'''`) yazılır; satır sonları metnin bir parçası olur.
+
+```python
+mesaj = """Bu metin
+üç satıra
+yayılıyor."""
+print(mesaj)
+```
+
+Çıktı:
+
+```text
+Bu metin
+üç satıra
+yayılıyor.
+```
+
+Python'da her komut genellikle kendi satırına yazılır ve satır sonuna noktalı virgül konmaz. Birkaç kısa komut aynı satıra yazılmak istenirse aralarına noktalı virgül (`;`) konur:
+
+```python
+x = 10; y = 20; z = 30
+print(x, y, z)
+x = x + 2; y = y + 3; z = z + 4
+print(x, y, z)
+```
+
+Çıktı:
+
+```text
+10 20 30
+12 23 34
+```
+
+`print`'e virgülle ayrılmış birkaç değer verildiğinde, değerler aralarında birer boşlukla aynı satıra yazılır.
+
+## Tip Dönüşümleri
+
+Bir değeri bir tipten başka bir tipe çevirmek için tipin adıyla aynı adı taşıyan fonksiyonlar kullanılır.
+
+::: {#def-dgs-donusum name="Tip Dönüşüm Fonksiyonları"}
+`int(x)`, `float(x)`, `complex(x)`, `str(x)` ve `bool(x)` fonksiyonları `x` değerini sırasıyla tam sayıya, ondalıklı sayıya, karmaşık sayıya, metne ve mantıksal değere çevirir. Bu işleme **tip dönüşümü** (type conversion) denir.
+:::
+
+Yani tip dönüşümü değerin kendisini değil, onun hangi biçimde saklandığını değiştirir. Dönüşümlerin her biri kendi kuralına göre çalışır.
+
+**Sayısal dönüşümler.** `int` bir ondalıklı sayının ondalık kısmını atar; yuvarlama yapmaz. `float` bir tam sayıyı ondalıklı biçime çevirir. `complex(a)` sanal kısmı sıfır olan bir karmaşık sayı, `complex(a, b)` ise $a + bi$ sayısını verir.
+
+```python
+print(int(5.9))       # ondalık kısım atılır
+print(int(-5.9))      # sıfıra doğru kesilir
+print(float(10))
+print(complex(5))
+print(complex(3, 4))
+```
+
+Çıktı:
+
+```text
+5
+-5
+10.0
+(5+0j)
+(3+4j)
+```
+
+`int(-5.9)` sonucunun `-6` değil `-5` olduğuna dikkat edin: `int` sayıyı her zaman sıfıra doğru keser. Bir karmaşık sayı ise `int` ya da `float` ile gerçel sayıya çevrilemez:
+
+```python
+z = complex(3, 4)
+print(float(z))
+```
+
+Çıktı:
+
+```text
+TypeError: float() argument must be a string or a real number, not 'complex'
+```
+
+**Metin dönüşümleri.** `str` bir değeri metne çevirir. Rakamlardan oluşan bir metin de `int` ya da `float` ile sayıya çevrilebilir. Metinler `+` ile birleştirilir; bir metinle bir sayı ise `+` ile toplanamaz.
+
+```python
+sayi_metni = str(100)
+print(sayi_metni, type(sayi_metni))
+print(sayi_metni + "2")      # iki metin yan yana eklenir
+print(int(sayi_metni) + 2)   # önce sayıya çevrilir, sonra toplanır
+print(float("2.5") * 2)
+```
+
+Çıktı:
+
+```text
+100 <class 'str'>
+1002
+102
+5.0
+```
+
+```python
+sayi_metni = str(100)
+print(sayi_metni + 2)
+```
+
+Çıktı:
+
+```text
+TypeError: can only concatenate str (not "int") to str
+```
+
+Hata mesajı, bir metnin yalnız başka bir metinle birleştirilebileceğini söyler. Bu hata türünü ve diğerlerini [Girdi ve Çıktı İşlemleri](girdi-ve-cikti-islemleri.qmd) bölümünde topluca göreceğiz.
+
+**Mantıksal dönüşüm.** `bool` bir değeri `True` ya da `False`'a çevirir. Kural basittir: sayılar için `0` ve `0.0`, metinler için boş metin `""` `False` olur; bunların dışındaki her değer `True` olur.
+
+```python
+print(bool(0), bool(0.0), bool(""))
+print(bool(5), bool(-2.3), bool("0"), bool("Ali"))
+```
+
+Çıktı:
+
+```text
+False False False
+True True True True
+```
+
+`bool("0")` sonucunun `True` olduğuna dikkat edin: `"0"` boş olmayan bir metindir; içinde sıfır rakamının yazılı olması sonucu değiştirmez.
+
+:::: {#exm-dgs-donusumler name="Bir Ondalıklı Sayının Dönüşümleri"}
+`a = 2/3` için `int(a)`, `float(a)`, `complex(a)` ve `bool(a)` değerlerini bulunuz.
+
+::: {.cozum}
+$2/3 = 0{,}666\ldots$ olduğundan `int(a)` ondalık kısmı atar ve $0$ verir. `a` zaten `float` olduğu için `float(a)` değeri değiştirmez. `complex(a)` sanal kısmı sıfır olan karmaşık sayıyı verir. `a` sıfırdan farklı olduğu için `bool(a)` `True`'dur.
+
+```python
+a = 2 / 3
+print(type(a))
+print(int(a))
+print(float(a))
+print(complex(a))
+print(bool(a))
+```
+
+Çıktı:
+
+```text
+<class 'float'>
+0
+0.6666666666666666
+(0.6666666666666666+0j)
+True
+```
+
+`float(a)` çıktısında, sonsuza dek sürmesi gereken $6$'lar on altıncı basamakta kesilmiştir: bilgisayar $2/3$'ü sonsuz basamakla değil, sınırlı bir duyarlıkla saklar. Bunun nedenlerine [Aritmetik İşlemler ve math Modülü](aritmetik-islemler-ve-math-modulu.qmd) bölümünde değineceğiz. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Atama Çeşitleri
+
+Basit atamanın yanında Python, birden çok değişkene aynı anda değer vermenin kısa yollarını da sunar.
+
+::: {#def-dgs-coklu-atama name="Çoklu Atama"}
+`a = b = c = 5` biçimindeki atama aynı değeri birden çok değişkene verir. `x, y, z = 1, 2, 3` biçimindeki atama ise sağdaki değerleri sırayla soldaki değişkenlere verir; buna **çoklu atama** (multiple assignment) denir. Çoklu atamada iki taraftaki eleman sayıları eşit olmalıdır.
+:::
+
+Yani `x, y, z = 1, 2, 3` komutu `x = 1`, `y = 2` ve `z = 3` komutlarını tek satırda yapar.
+
+```python
+a = b = c = 5
+print(a, b, c)
+x, y, z = 1, 2, 3
+print(x, y, z)
+print(2 + x - y + z)
+```
+
+Çıktı:
+
+```text
+5 5 5
+1 2 3
+4
+```
+
+Çoklu atamanın en kullanışlı uygulaması iki değişkenin değerlerini değiş tokuş etmektir.
+
+::: {#def-dgs-takas name="Takas"}
+İki değişkenin değerlerinin karşılıklı olarak yer değiştirmesine **takas** (swap) denir. Python'da `a, b = b, a` komutu `a` ve `b`'nin değerlerini takas eder.
+:::
+
+Yani sağ taraftaki `b, a` önce eski değerlerle hesaplanır, sonra bu değerler sırayla `a`'ya ve `b`'ye verilir. Birçok dilde takas için üçüncü bir geçici değişken gerekir; Python'da gerekmez.
+
+```python
+a = 5
+b = 10
+a, b = b, a
+print("a:", a, "- b:", b)
+```
+
+Çıktı:
+
+```text
+a: 10 - b: 5
+```
+
+:::: {#exm-dgs-yanlis-takas name="Ardışık Atamayla Takas Denemesi"}
+`a = 5` ve `b = 10` iken önce `a = b`, ardından `b = a` komutları çalıştırılırsa `a` ve `b`'nin son değerleri ne olur? Takas neden gerçekleşmez?
+
+::: {.cozum}
+İlk komut `a = b`, `a`'ya $10$ değerini verir; `a`'nın eski değeri olan $5$ bu anda kaybolur. İkinci komut `b = a`, `b`'ye `a`'nın yeni değeri olan $10$'u verir. Sonuçta iki değişken de $10$ olur:
+
+```python
+a = 5
+b = 10
+a = b
+b = a
+print(a, b)
+```
+
+Çıktı:
+
+```text
+10 10
+```
+
+Takasın olması için ya üçüncü bir değişken kullanılmalı (`gecici = a`, `a = b`, `b = gecici`) ya da `a, b = b, a` yazılmalıdır. Çoklu atamada sağ taraf tamamen hesaplandıktan sonra atama yapıldığından hiçbir değer kaybolmaz. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir değişkenin değeri başka bir değişkene de atanabilir. `b = a` komutundan sonra `b`, `a`'nın o anki değerini alır; sonra `a` değişse bile `b` eski değerini korur:
+
+```python
+a = 10
+b = a
+a = 20
+print("a:", a, "- b:", b)
+```
+
+Çıktı:
+
+```text
+a: 20 - b: 10
+```
+
+## Değişken Adlandırma Kuralları
+
+Değişkenlere istediğimiz adı veremeyiz; Python bazı kurallar koyar, bazı alışkanlıklar da kodun okunmasını kolaylaştırır.
+
+::: {#def-dgs-ad-kurallari name="Geçerli Değişken Adı"}
+Python'da geçerli bir değişken adı şu kurallara uyar:
+
+- harfle (`a-z`, `A-Z`) ya da alt çizgiyle (`_`) başlar, rakamla başlamaz;
+- yalnız harf, rakam ve alt çizgi içerir; boşluk ve `@`, `#`, `$`, `%`, `-` gibi özel karakterler içermez;
+- Python'ın **anahtar kelimelerinden** (keyword) biri değildir.
+:::
+
+Yani `ogrenci_adi`, `sayi2`, `_toplam` geçerli adlardır; `2sayi`, `ogrenci adi`, `fiyat$` ve `for` geçerli değildir. Python büyük ve küçük harfi ayırt eder: `myVar` ile `myvar` iki farklı değişkendir.
+
+Anahtar kelimeler, Python'ın kendi komutlarında kullandığı ve başka bir anlama verilemeyen sözcüklerdir. Güncel listeleri `keyword` modülünden alınabilir:
+
+```python
+import keyword
+print(keyword.kwlist)
+print(keyword.iskeyword("lambda"))
+print(keyword.iskeyword("x"))
+```
+
+Çıktı:
+
+```text
+['False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield']
+True
+False
+```
+
+`import keyword` komutu `keyword` adlı hazır modülü programa dahil eder; modülleri bir sonraki bölümde `math` modülüyle birlikte göreceğiz. Bir anahtar kelimeyi değişken adı olarak kullanmak yazım hatası verir:
+
+```python
+lambda = 3
+```
+
+Çıktı:
+
+```text
+SyntaxError: invalid syntax
+```
+
+Kurallara ek olarak iyi bir adın uyduğu bazı alışkanlıklar vardır:
+
+- Ad, değişkenin ne tuttuğunu anlatmalıdır: `a` yerine `ogrenci_adi`, `t` yerine `toplam`.
+- Birden çok sözcük alt çizgiyle bağlanır: `dogum_yili`.
+- Ad çok uzun olmamalıdır; Python'ın yazım kılavuzu bir kod satırının 79 karakteri geçmemesini önerir.
+- Python `ç, ğ, ı, ö, ş, ü` gibi Türkçe harfleri adlarda kabul eder, ama başka sistemlerle uyum için bunları kullanmamak daha iyidir.
+- `print`, `input`, `str`, `int`, `float`, `list`, `len`, `type` gibi hazır fonksiyonların adları anahtar kelime değildir ve değişken adı olarak kullanılabilir; ama kullanılırsa o fonksiyon programın geri kalanında çalışmaz.
+
+:::: {#exm-dgs-print-ezme name="Hazır Bir Fonksiyonun Adını Kullanmak"}
+Aşağıdaki program neden hata verir?
+
+```python
+print = 5
+print("Merhaba")
+```
+
+::: {.cozum}
+Birinci satır anahtar kelime olmayan `print` adına $5$ değerini atar; bu bir yazım hatası değildir ve Python itiraz etmez. Ama bu andan sonra `print` adı ekrana yazan fonksiyonu değil, $5$ sayısını gösterir. İkinci satırda $5$ sayısı bir fonksiyon gibi çağrılmaya çalışılır:
+
+```python
+print = 5
+print("Merhaba")
+```
+
+Çıktı:
+
+```text
+TypeError: 'int' object is not callable
+```
+
+Hata mesajı "`int` nesnesi çağrılabilir değildir" der. Colab'da bu durumda oturumu yeniden başlatmak `print`'i eski hâline getirir. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Birleşik Atama Operatörleri
+
+Bir değişkenin değerini bir işlemle güncellemek çok sık yapılan bir iştir; Python bunun için kısa bir yazım sunar.
+
+::: {#def-dgs-birlesik-atama name="Birleşik Atama Operatörü"}
+`x += a` komutu `x = x + a` anlamına gelir; benzer biçimde `x -= a`, `x *= a`, `x /= a`, `x //= a`, `x %= a` ve `x **= a` komutları sırasıyla çıkarma, çarpma, bölme, tam bölme, kalan ve üs alma işlemini yapıp sonucu yeniden `x`'e atar. Bunlara **birleşik atama operatörleri** (compound assignment operators) denir.
+:::
+
+Yani `x += 3` "x'i 3 artır", `x *= 2` "x'i iki katına çıkar" demektir. `/=` işleminin sonucu, `/` ile bölmede olduğu gibi her zaman `float`'tur.
+
+```python
+x = 5
+x += 3     # x = 5 + 3
+print("x:", x)
+x -= 4     # x = 8 - 4
+print("x:", x)
+x *= 6     # x = 4 * 6
+print("x:", x)
+x /= 2     # x = 24 / 2
+print("x:", x)
+```
+
+Çıktı:
+
+```text
+x: 8
+x: 4
+x: 24
+x: 12.0
+```
+
+Tam bölme `//`, kalan `%` ve üs alma `**` işlemlerini bir sonraki bölümde ayrıntılı olarak göreceğiz.
+
+:::: {#exm-dgs-birlesik-izleme name="Birleşik Atamaları Adım Adım İzlemek"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+i, j = 8, 2
+i /= j
+j *= i
+print(i)
+print(j)
+```
+
+::: {.cozum}
+Komutları sırayla izleyelim:
+
+- `i, j = 8, 2`: $i = 8$, $j = 2$.
+- `i /= j`: $i = 8/2 = 4{,}0$. Bölme sonucu `float` olduğundan `i` artık `4.0`'dır.
+- `j *= i`: $j = 2 \cdot 4{,}0 = 8{,}0$. Bir `int` ile bir `float` çarpıldığında sonuç `float` olur.
+
+```python
+i, j = 8, 2
+i /= j
+j *= i
+print(i)
+print(j)
+```
+
+Çıktı:
+
+```text
+4.0
+8.0
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Aşağıdaki alıştırmalarda önce sonucu kâğıt üzerinde bulun, sonra kodu çalıştırarak kontrol edin.
+
+:::: {#exr-dgs-tipler name="Değerlerin Tipleri"}
+`7`, `7.0`, `"7"`, `7 > 3` ve `7 + 0j` değerlerinin tiplerini bulunuz.
+
+::: {.cozum}
+`7` ondalık kısmı olmayan bir sayıdır, tipi `int`'tir. `7.0` ondalık noktası taşıdığı için `float`'tur. `"7"` tırnak içinde olduğundan metindir, `str`'dir. `7 > 3` bir karşılaştırmadır; değeri `True`'dur ve tipi `bool`'dur. `7 + 0j` sanal kısmı sıfır olsa da karmaşık sayı olarak yazılmıştır, `complex`'tir.
+
+```python
+print(type(7))
+print(type(7.0))
+print(type("7"))
+print(type(7 > 3))
+print(type(7 + 0j))
+```
+
+Çıktı:
+
+```text
+<class 'int'>
+<class 'float'>
+<class 'str'>
+<class 'bool'>
+<class 'complex'>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dgs-int-kesme name="int ile Kesmek"}
+`int(7.99)`, `int(-7.99)` ve `int("7")` değerlerini bulunuz. `int("7.5")` neden hata verir?
+
+::: {.cozum}
+`int` ondalıklı bir sayının ondalık kısmını atar ve sayıyı sıfıra doğru keser: `int(7.99)` $7$, `int(-7.99)` $-7$ olur. `int("7")` rakamdan oluşan metni tam sayıya çevirir ve $7$ verir.
+
+```python
+print(int(7.99))
+print(int(-7.99))
+print(int("7"))
+```
+
+Çıktı:
+
+```text
+7
+-7
+7
+```
+
+`"7.5"` metni bir tam sayıyı değil, ondalıklı bir sayıyı gösterir; `int` metinden doğrudan yalnız tam sayı yazımlarını okuyabilir:
+
+```python
+print(int("7.5"))
+```
+
+Çıktı:
+
+```text
+ValueError: invalid literal for int() with base 10: '7.5'
+```
+
+Böyle bir metni tam sayıya çevirmek için önce `float`, sonra `int` uygulanır: `int(float("7.5"))` $7$ verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dgs-bool-degerleri name="Hangileri True?"}
+`bool(1)`, `bool(-1)`, `bool(0.0)`, `bool(" ")` ve `bool("")` değerlerini bulunuz.
+
+::: {.cozum}
+Sayılarda yalnız sıfır `False` verir: `bool(1)` ve `bool(-1)` `True`, `bool(0.0)` `False`'tur. Metinlerde yalnız boş metin `False` verir. `" "` bir boşluk karakteri içerdiği için boş değildir ve `True` verir; `""` ise boştur ve `False` verir.
+
+```python
+print(bool(1), bool(-1), bool(0.0))
+print(bool(" "), bool(""))
+```
+
+Çıktı:
+
+```text
+True True False
+True False
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dgs-dongusel-takas name="Üç Değişkeni Döndürmek"}
+`a, b, c = 1, 2, 3` olsun. Tek bir atamayla `a`'ya `b`'nin, `b`'ye `c`'nin, `c`'ye de `a`'nın değerini veriniz; sonuç `2 3 1` olmalıdır.
+
+::: {.cozum}
+Takastaki gibi çoklu atama kullanırız. Sağ taraf önce eski değerlerle hesaplanır, sonra sırayla sol taraftaki değişkenlere verilir. `a`'ya `b`, `b`'ye `c`, `c`'ye `a` gideceği için sağ taraf `b, c, a` olmalıdır:
+
+```python
+a, b, c = 1, 2, 3
+a, b, c = b, c, a
+print(a, b, c)
+```
+
+Çıktı:
+
+```text
+2 3 1
+```
+
+Bunu ardışık atamalarla (`a = b`, `b = c`, `c = a`) yapmaya çalışsaydık `c = a` adımında `a` zaten değişmiş olurdu ve `c` de $2$ olurdu. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dgs-gecerli-adlar name="Geçerli Değişken Adları"}
+`toplam_1`, `1toplam`, `_sayac`, `ders adi`, `class`, `Class`, `not%` adlarından hangileri geçerli değişken adıdır?
+
+::: {.cozum}
+@def-dgs-ad-kurallari maddelerini tek tek uygulayalım:
+
+- `toplam_1`: harfle başlıyor, yalnız harf, rakam ve alt çizgi içeriyor. Geçerli.
+- `1toplam`: rakamla başlıyor. Geçersiz.
+- `_sayac`: alt çizgiyle başlıyor. Geçerli.
+- `ders adi`: boşluk içeriyor. Geçersiz.
+- `class`: bir anahtar kelime. Geçersiz.
+- `Class`: Python büyük harfi ayırt ettiği için bu ad `class` ile aynı değildir ve anahtar kelime değildir. Geçerli.
+- `not%`: `%` özel karakterini içeriyor. Geçersiz.
+
+`keyword.iskeyword` ile son iki kelime denetimini doğrulayabiliriz:
+
+```python
+import keyword
+print(keyword.iskeyword("class"), keyword.iskeyword("Class"))
+```
+
+Çıktı:
+
+```text
+True False
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dgs-birlesik-zincir name="Birleşik Atama Zinciri"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+x = 3
+x **= 2
+x -= 1
+x //= 3
+x *= x
+print(x)
+```
+
+::: {.cozum}
+Her satırdan sonra `x`'in değerini yazalım:
+
+- `x = 3`: $x = 3$.
+- `x **= 2`: $x = 3^2 = 9$.
+- `x -= 1`: $x = 9 - 1 = 8$.
+- `x //= 3`: $8$'in $3$'e bölümünün tam kısmı alınır, $x = 2$.
+- `x *= x`: $x = 2 \cdot 2 = 4$.
+
+```python
+x = 3
+x **= 2
+x -= 1
+x //= 3
+x *= x
+print(x)
+```
+
+Çıktı:
+
+```text
+4
+```
+
+Hiçbir adımda `/` kullanılmadığı için `x` baştan sona `int` olarak kalır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dgs-metin-sayi name="Metin mi, Sayı mı?"}
+`a = "4"` ve `b = 4` iken `a * 3`, `b * 3`, `a + str(b)` ve `int(a) + b` değerlerini bulunuz.
+
+::: {.cozum}
+Bir metin bir tam sayıyla çarpıldığında metin o kadar kez yan yana yazılır: `a * 3` `"444"` olur. `b * 3` sayıların çarpımıdır, $12$'dir. `a + str(b)` iki metni birleştirir ve `"44"` verir. `int(a) + b` önce `a`'yı sayıya çevirir, sonra toplar ve $8$ verir.
+
+```python
+a = "4"
+b = 4
+print(a * 3)
+print(b * 3)
+print(a + str(b))
+print(int(a) + b)
+```
+
+Çıktı:
+
+```text
+444
+12
+44
+8
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde verileri değişkenlerde saklamayı, Python'ın temel veri tiplerini ve tipler arasında dönüşümü gördük. Bir sonraki bölüm [Aritmetik İşlemler ve math Modülü](aritmetik-islemler-ve-math-modulu.qmd), bu değerlerle yapılan hesapları, işlem önceliğini ve hazır matematik fonksiyonlarını ele alıyor.

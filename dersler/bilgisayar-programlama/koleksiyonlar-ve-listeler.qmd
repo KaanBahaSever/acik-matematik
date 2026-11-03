@@ -1,0 +1,875 @@
+---
+title: "Koleksiyonlar ve Listeler"
+pagetitle: "Koleksiyonlar ve Listeler"
+description: "Python'da liste, demet, küme ve sözlük koleksiyonları ve aralarındaki dönüşümler; listelerde indeksleme, adımlı dilimleme, eleman ekleme ve silme, sıralama, kopyalama, in ile arama, sum, min, max, sorted gibi hazır fonksiyonlar ve range fonksiyonu."
+---
+
+Bir sınıftaki otuz öğrencinin notlarını saklamak için otuz ayrı değişken tanımlamak hem zahmetli hem de kullanışsızdır: notların ortalamasını almak ya da en yükseğini bulmak için otuz değişkeni tek tek yazmak gerekirdi. Bunun yerine bütün notları tek bir değişkende, sıralı bir dizi olarak tutmak isteriz.
+
+Birden çok değeri tek bir değişkende bir arada tutan veri tiplerine **koleksiyon** denir. Bu bölümde Python'ın dört temel koleksiyonunu tanıyacağız, sonra en çok kullanılanı olan **listeler** üzerinde ayrıntılı olarak duracağız: elemanlarına erişmeyi, liste parçaları almayı, eleman eklemeyi, silmeyi ve sıralamayı göreceğiz.
+
+## Dört Temel Koleksiyon
+
+Python'da birden çok değeri bir arada tutmak için dört temel koleksiyon vardır; aralarındaki fark, elemanların sıralı olup olmadığı, değiştirilip değiştirilemeyeceği ve tekrar edip edemeyeceğidir.
+
+::: {#def-kol-liste name="Liste"}
+Köşeli parantez içinde virgülle ayrılarak yazılan `[e1, e2, ...]` koleksiyonuna **liste** (list) denir. Listenin elemanları sıralıdır ve sıra numarasıyla erişilir; liste oluşturulduktan sonra elemanları değiştirilebilir, eleman eklenip çıkarılabilir; aynı eleman birden çok kez bulunabilir.
+:::
+
+Yani liste, sırası önemli ve içeriği zamanla değişebilen bir değerler dizisidir: bir alışveriş listesi gibi.
+
+::: {#def-kol-demet name="Demet"}
+Normal parantez içinde yazılan `(e1, e2, ...)` koleksiyonuna **demet** (tuple) denir. Demetin elemanları listedeki gibi sıralıdır ve sıra numarasıyla erişilir, aynı eleman birden çok kez bulunabilir; ama demet oluşturulduktan sonra **değiştirilemez**.
+:::
+
+Yani demet, değişmeyecek değerler için kullanılan "salt okunur" bir listedir: bir noktanın koordinatları ya da bir tarihin gün, ay ve yılı gibi. Demetleri [Demetler](demetler.qmd) bölümünde ayrıntılı göreceğiz.
+
+::: {#def-kol-kume name="Küme"}
+Süslü parantez içinde yazılan `{e1, e2, ...}` koleksiyonuna **küme** (set) denir. Kümede aynı eleman en fazla bir kez bulunur; elemanların bir sırası yoktur, bu yüzden sıra numarasıyla erişilemez. Kümeye eleman eklenip çıkarılabilir.
+:::
+
+Yani Python'daki küme matematikteki kümeye karşılık gelir: $\{1, 2, 2, 3\} = \{1, 2, 3\}$ olduğu gibi, Python da tekrar eden elemanları tek bir eleman olarak tutar.
+
+::: {#def-kol-sozluk name="Sözlük"}
+Süslü parantez içinde `{anahtar1: değer1, anahtar2: değer2, ...}` biçiminde yazılan koleksiyona **sözlük** (dictionary, dict) denir. Sözlükte her değere sıra numarasıyla değil, **anahtarıyla** erişilir: `sozluk[anahtar]`. Bir anahtar sözlükte en fazla bir kez bulunur; değerler değiştirilebilir, yeni anahtar–değer çiftleri eklenebilir.
+:::
+
+Yani sözlük, gerçek bir sözlük gibi çalışır: bir sözcüğe (anahtara) bakılır ve karşısındaki açıklama (değer) bulunur.
+
+| Koleksiyon | Yazım | Sıralı | Değiştirilebilir | Tekrar eden eleman |
+|:--|:-:|:-:|:-:|:-:|
+| liste | `[1, 2, 2]` | evet | evet | olabilir |
+| demet | `(1, 2, 2)` | evet | hayır | olabilir |
+| küme | `{1, 2}` | hayır | evet | olamaz |
+| sözlük | `{"a": 1}` | eklenme sırasıyla | evet | anahtar tekrar edemez |
+
+```python
+bir_liste = ["elma", "armut", "kiraz", "kiraz"]
+bir_demet = ("elma", "armut", "kiraz", "kiraz")
+bir_kume = {"elma", "armut", "kiraz", "kiraz"}
+bir_sozluk = {"tür": "elma", "kg": 32}
+print(bir_liste)
+print(bir_demet)
+print(len(bir_kume))
+print(bir_sozluk["tür"], bir_sozluk["kg"])
+```
+
+Çıktı:
+
+```text
+['elma', 'armut', 'kiraz', 'kiraz']
+('elma', 'armut', 'kiraz', 'kiraz')
+3
+elma 32
+```
+
+`len` fonksiyonu bir koleksiyondaki eleman sayısını verir. Kümeye `"kiraz"` iki kez yazıldığı hâlde küme yalnız üç eleman tutar. Kümenin elemanları sırasız olduğu için kümeyi yazdırdığımızda elemanların hangi sırayla görüneceği belli değildir; bu yüzden burada kümeyi değil uzunluğunu yazdırdık.
+
+Kümelere `add` ile eleman eklenir; zaten bulunan bir eleman eklenmeye çalışılırsa küme değişmez:
+
+```python
+kume = {3, 7, 9, 1, 8}
+kume.add(6)
+print(len(kume), 6 in kume)
+kume.add(3)
+print(len(kume))
+```
+
+Çıktı:
+
+```text
+6 True
+6
+```
+
+`6 in kume` ifadesi "6 kümenin elemanı mı?" sorusudur; `in` operatörünü aşağıda listelerle birlikte göreceğiz.
+
+### Koleksiyonlar Arası Dönüşüm
+
+Bir koleksiyon, tipin adını taşıyan fonksiyonla başka bir koleksiyon tipine çevrilebilir.
+
+`list(x)`, `tuple(x)` ve `set(x)` fonksiyonları `x` koleksiyonunun elemanlarından sırasıyla bir liste, bir demet ve bir küme oluşturur. `dict(x)` ise ikili demetlerden oluşan bir listeyi sözlüğe çevirir: her demetin birinci elemanı anahtar, ikinci elemanı değer olur. Bir metin de bir karakter dizisi olduğu için `list("abc")` her karakteri ayrı bir eleman yapar.
+
+```python
+sayilar = (1, 2, 3)
+print(type(sayilar))
+sayi_listesi = list(sayilar)
+print(sayi_listesi, type(sayi_listesi))
+print(tuple([1, 2, 3]))
+print(set([1, 2, 2, 3]))
+ciftler = [("isim", "Ali"), ("yas", 30)]
+print(dict(ciftler))
+print(list("Ali"))
+```
+
+Çıktı:
+
+```text
+<class 'tuple'>
+[1, 2, 3] <class 'list'>
+(1, 2, 3)
+{1, 2, 3}
+{'isim': 'Ali', 'yas': 30}
+['A', 'l', 'i']
+```
+
+`set([1, 2, 2, 3])` dönüşümü tekrar eden elemanları atar; bir listedeki farklı elemanları bulmanın kısa bir yoludur.
+
+### Metotlar ve dir Fonksiyonu
+
+Koleksiyonların her birinin, yalnız o tipe ait işlemleri yapan kendi fonksiyonları vardır.
+
+::: {#def-kol-metot name="Metot"}
+Belli bir tipteki bir değere ait olan ve `deger.metot_adi(...)` biçiminde, değerin adından sonra bir nokta konarak çağrılan fonksiyona **metot** (method) denir.
+:::
+
+Yani `kume.add(6)` yazımında `add`, kümelere ait bir metottur ve `kume` adlı kümeye uygulanır. `len(kume)` ise bir metot değil, her koleksiyonla kullanılabilen genel bir fonksiyondur.
+
+Bir tipin metotları `dir` ile listelenir. Listenin başındaki alt çizgili adları ayıklamak için aşağıdaki satırı kullanabiliriz; bu satırın nasıl çalıştığını [for Döngüsü ve Liste Üreteçleri](for-dongusu.qmd) bölümünde anlayacağız.
+
+```python
+print([ad for ad in dir(list) if not ad.startswith("_")])
+print([ad for ad in dir(tuple) if not ad.startswith("_")])
+print([ad for ad in dir(dict) if not ad.startswith("_")])
+```
+
+Çıktı:
+
+```text
+['append', 'clear', 'copy', 'count', 'extend', 'index', 'insert', 'pop', 'remove', 'reverse', 'sort']
+['count', 'index']
+['clear', 'copy', 'fromkeys', 'get', 'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values']
+```
+
+Demetlerin yalnız iki metodu vardır: `count` ve `index`. Bu, demetlerin değiştirilemez olmasının bir sonucudur; eleman ekleyen ya da silen bir metot demetlerde bulunmaz.
+
+## Listelerde İndeksleme
+
+Bir listenin her elemanının listedeki yerini gösteren bir sıra numarası vardır; elemanlara bu numarayla erişilir.
+
+::: {#def-kol-indeks name="İndeks"}
+Bir listede bir elemanın sıra numarasına o elemanın **indeksi** denir. İndeksler $0$'dan başlar: $n$ elemanlı bir listede ilk elemanın indeksi $0$, son elemanın indeksi $n - 1$'dir. Listenin sonundan saymak için **negatif indeksler** kullanılır: son elemanın indeksi $-1$, sondan ikincininki $-2$'dir. `liste[i]` yazımı `i` indeksli elemanı verir.
+:::
+
+Yani `meyve[0]` listenin birinci, `meyve[-1]` son elemanıdır. $n$ elemanlı bir listede `liste[-k]` ile `liste[n - k]` aynı elemandır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="-30.0 23.0 653.0 111.5" role="img" aria-label="Six boxes holding elma, armut, kiraz, portakal, muz, cilek; indices 0 to 5 above and minus 6 to minus 1 below">
+  <rect x="32.0" y="56.0" width="96.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="80.0" y="80.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">"elma"</text>
+  <text x="80.0" y="46.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">0</text>
+  <text x="80.0" y="118.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">&#8722;6</text>
+  <rect x="128.0" y="56.0" width="96.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="176.0" y="80.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">"armut"</text>
+  <text x="176.0" y="46.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">1</text>
+  <text x="176.0" y="118.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">&#8722;5</text>
+  <rect x="224.0" y="56.0" width="96.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="272.0" y="80.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">"kiraz"</text>
+  <text x="272.0" y="46.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">2</text>
+  <text x="272.0" y="118.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">&#8722;4</text>
+  <rect x="320.0" y="56.0" width="96.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="368.0" y="80.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">"portakal"</text>
+  <text x="368.0" y="46.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">3</text>
+  <text x="368.0" y="118.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">&#8722;3</text>
+  <rect x="416.0" y="56.0" width="96.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="464.0" y="80.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">"muz"</text>
+  <text x="464.0" y="46.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">4</text>
+  <text x="464.0" y="118.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">&#8722;2</text>
+  <rect x="512.0" y="56.0" width="96.0" height="40.0" rx="0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="560.0" y="80.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">"çilek"</text>
+  <text x="560.0" y="46.0" fill="var(--color-base)" font-size="13" text-anchor="middle" font-weight="600">5</text>
+  <text x="560.0" y="118.0" fill="var(--color-practice)" font-size="13" text-anchor="middle" font-weight="600">&#8722;1</text>
+  <text x="22.0" y="46.0" fill="var(--color-base)" font-size="11.5" text-anchor="end">indeks</text>
+  <text x="22.0" y="118.0" fill="var(--color-practice)" font-size="11.5" text-anchor="end">negatif</text>
+  <text x="22.0" y="80.5" fill="var(--academic-text)" font-size="11.5" text-anchor="end" font-weight="600">meyve</text>
+</svg>
+<figcaption>Altı elemanlı <code>meyve</code> listesinin indeksleri. Üstteki indeksler baştan 0'dan başlayarak, alttaki negatif indeksler sondan &#8722;1'den başlayarak sayılır; örneğin <code>meyve[2]</code> ve <code>meyve[-4]</code> aynı eleman olan <code>"kiraz"</code>'dır.</figcaption>
+</figure>
+```
+
+```python
+meyve = ["elma", "armut", "kiraz", "portakal", "muz", "çilek"]
+print(meyve[0])
+print(meyve[2])
+print(meyve[-1])
+print(meyve[-2])
+print(len(meyve))
+```
+
+Çıktı:
+
+```text
+elma
+kiraz
+çilek
+muz
+6
+```
+
+Listede olmayan bir indekse erişilmeye çalışılırsa `IndexError` oluşur. Altı elemanlı bir listede geçerli indeksler $0$'dan $5$'e ve $-1$'den $-6$'ya kadardır:
+
+```python
+meyve = ["elma", "armut", "kiraz", "portakal", "muz", "çilek"]
+print(meyve[6])
+```
+
+Çıktı:
+
+```text
+IndexError: list index out of range
+```
+
+Listeler değiştirilebilir olduğundan bir indekse yeni bir değer atanabilir:
+
+```python
+meyve = ["elma", "armut", "kiraz"]
+meyve[0] = "portakal"
+print(meyve)
+liste = [5, 9, 3, -8]
+liste[0] = liste[2] * 3
+liste[1] = liste[0] * 5
+print(liste)
+```
+
+Çıktı:
+
+```text
+['portakal', 'armut', 'kiraz']
+[9, 45, 3, -8]
+```
+
+İkinci örnekte önce `liste[0]` $3 \cdot 3 = 9$ olur; ardından `liste[1]`, `liste[0]`'ın **yeni** değeri kullanılarak $9 \cdot 5 = 45$ olarak hesaplanır.
+
+Klasik programlama dillerindeki dizilerden farklı olarak bir listenin elemanları aynı tipte olmak zorunda değildir. Bir listenin elemanı başka bir liste bile olabilir; buna **iç içe liste** denir.
+
+```python
+karisik = ["A", 0.1, [1, 2, 3], "Han", 0.54]
+print(karisik[2])
+print(karisik[2][0])
+print(len(karisik))
+```
+
+Çıktı:
+
+```text
+[1, 2, 3]
+1
+5
+```
+
+`karisik[2]` iç listenin kendisidir; `karisik[2][0]` ise iç listenin ilk elemanıdır. İç liste, dış listede tek bir eleman sayılır; bu yüzden `len(karisik)` $5$'tir.
+
+## Dilimleme
+
+Bir listenin tek bir elemanını değil, ardışık bir parçasını almak için dilimleme kullanılır.
+
+::: {#def-kol-dilim name="Dilimleme"}
+`liste[a:b]` yazımı, `liste`'nin indeksi `a`'dan başlayıp `b`'ye kadar olan elemanlarından yeni bir liste oluşturur; `a` indeksli eleman dahildir, `b` indeksli eleman **dahil değildir**. `a` yazılmazsa baştan, `b` yazılmazsa sona kadar alınır. `liste[a:b:c]` yazımında üçüncü sayı **adımdır**: `a`'dan başlanır ve her seferinde `c` indeks ilerlenerek `b`'ye varmadan durulur. Bu işleme **dilimleme** (slicing), elde edilen parçaya da **dilim** denir.
+:::
+
+Yani `liste[1:4]` indeksi $1$, $2$ ve $3$ olan elemanları verir; $4$ dahil değildir. Başlangıç dahil, bitiş hariç kuralı sayesinde `liste[a:b]` dilimindeki eleman sayısı tam olarak $b - a$'dır.
+
+```python
+listem = [10, 20, 30, 40, 50]
+print(listem[1:4])
+print(listem[:3])
+print(listem[3:])
+print(listem[:])
+print(listem[1:2])
+print(listem[3:1])
+```
+
+Çıktı:
+
+```text
+[20, 30, 40]
+[10, 20, 30]
+[40, 50]
+[10, 20, 30, 40, 50]
+[20]
+[]
+```
+
+`listem[:]` bütün listenin bir kopyasını verir. `listem[1:2]` tek elemanlı bir listedir; `listem[1]` ise elemanın kendisidir: biri `[20]`, diğeri `20`'dir. `listem[3:1]` boş listedir, çünkü başlangıç bitişten sonradır ve adım pozitiftir.
+
+Adım verildiğinde elemanlar atlanarak alınır. Adım negatifse liste sondan başa doğru dolaşılır; bu durumda başlangıç bitişten büyük olmalıdır. `liste[::-1]` listenin tersini verir.
+
+```python
+liste = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+print(liste[::2])
+print(liste[1::2])
+print(liste[1:8:3])
+print(liste[::-1])
+print(liste[7:2:-2])
+print(liste[-3:])
+print(liste[:-2])
+```
+
+Çıktı:
+
+```text
+[0, 2, 4, 6, 8]
+[1, 3, 5, 7, 9]
+[1, 4, 7]
+[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+[7, 5, 3]
+[7, 8, 9]
+[0, 1, 2, 3, 4, 5, 6, 7]
+```
+
+Bu listede her elemanın değeri kendi indeksine eşit olduğundan sonuçları okumak kolaydır. `liste[1:8:3]` dilimi $1$'den başlar, üçer ilerler: $1, 4, 7$; bir sonraki $10$ indeksi $8$'i geçtiği için durulur. `liste[7:2:-2]` $7$'den başlar ve ikişer geriye gider: $7, 5, 3$; bir sonraki $1$, bitiş olan $2$'yi geçtiği için alınmaz.
+
+:::: {#exm-kol-dilim-bulmaca name="Dilimleri Bulmak"}
+`harfler = ["a", "b", "c", "d", "e", "f", "g"]` listesinden aşağıdaki listeleri birer dilimle elde ediniz: `["c", "d", "e"]`, `["a", "c", "e", "g"]`, `["g", "f", "e"]`, `["f", "d", "b"]`.
+
+::: {.cozum}
+Önce indeksleri yazalım: `a` $0$, `b` $1$, `c` $2$, `d` $3$, `e` $4$, `f` $5$, `g` $6$.
+
+- `["c", "d", "e"]`: indeks $2$'den $4$'e kadar; bitiş hariç olduğu için `harfler[2:5]`.
+- `["a", "c", "e", "g"]`: baştan sona ikişer atlayarak: `harfler[::2]`.
+- `["g", "f", "e"]`: sondan başlayıp geriye üç eleman. Başlangıç $6$, adım $-1$ ve bitiş $3$ (hariç): `harfler[6:3:-1]`; ya da `harfler[:-4:-1]`.
+- `["f", "d", "b"]`: indeks $5$'ten başlayıp ikişer geriye: $5, 3, 1$. Bitişi yazmasak da olur: `harfler[5::-2]` $5, 3, 1$'i verir ve listenin başında durur.
+
+```python
+harfler = ["a", "b", "c", "d", "e", "f", "g"]
+print(harfler[2:5])
+print(harfler[::2])
+print(harfler[6:3:-1], harfler[:-4:-1])
+print(harfler[5::-2])
+```
+
+Çıktı:
+
+```text
+['c', 'd', 'e']
+['a', 'c', 'e', 'g']
+['g', 'f', 'e'] ['g', 'f', 'e']
+['f', 'd', 'b']
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Eleman Ekleme ve Silme
+
+Listeler değiştirilebilir olduğu için listeye eleman eklemenin ve listeden eleman çıkarmanın birkaç yolu vardır.
+
+| Komut | Yaptığı iş |
+|:--|:--|
+| `liste.append(x)` | `x`'i listenin sonuna tek bir eleman olarak ekler |
+| `liste.extend(diger)` | `diger` koleksiyonunun **elemanlarını** listenin sonuna ekler |
+| `liste.insert(i, x)` | `x`'i `i` indeksine yerleştirir, sonrakileri bir sağa kaydırır |
+| `liste.remove(x)` | değeri `x` olan **ilk** elemanı siler |
+| `liste.pop(i)` | `i` indeksli elemanı listeden çıkarır ve onu verir; `i` yazılmazsa son elemanı çıkarır |
+| `del liste[i]` | `i` indeksli elemanı siler; `del liste[a:b]` bir dilimi siler |
+| `liste.clear()` | bütün elemanları siler, liste boş kalır |
+
+```python
+listem = [1, 2, 3]
+listem.append(4)
+listem.append(125)
+print(listem)
+listem.extend([5, 6])
+print(listem)
+listem.insert(0, 99)
+print(listem)
+```
+
+Çıktı:
+
+```text
+[1, 2, 3, 4, 125]
+[1, 2, 3, 4, 125, 5, 6]
+[99, 1, 2, 3, 4, 125, 5, 6]
+```
+
+`append` ile `extend` arasındaki fark, bir liste eklendiğinde ortaya çıkar: `append` listeyi tek bir eleman olarak ekler ve iç içe bir liste oluşur; `extend` ise listenin elemanlarını tek tek ekler.
+
+```python
+list1 = [1, 2, 3]
+list1.append([4, 5, 6])
+print(list1, len(list1))
+list2 = [1, 2, 3]
+list2.extend([4, 5, 6])
+print(list2, len(list2))
+```
+
+Çıktı:
+
+```text
+[1, 2, 3, [4, 5, 6]] 4
+[1, 2, 3, 4, 5, 6] 6
+```
+
+Silme komutlarını bir listede sırayla deneyelim:
+
+```python
+listem = [1, 2, 3, 4, 5, 3]
+listem.remove(3)
+print(listem)
+cikan = listem.pop(1)
+print(cikan, listem)
+son = listem.pop()
+print(son, listem)
+del listem[0]
+print(listem)
+listem.clear()
+print(listem)
+```
+
+Çıktı:
+
+```text
+[1, 2, 4, 5, 3]
+2 [1, 4, 5, 3]
+3 [1, 4, 5]
+[4, 5]
+[]
+```
+
+`remove(3)` yalnız ilk `3`'ü sildi; sondaki `3` listede kaldı. `pop` çıkardığı elemanı verdiği için onu bir değişkende saklayabildik.
+
+::: {.callout-warning title="Liste metotları yeni bir liste vermez"}
+`append`, `extend`, `insert`, `remove`, `sort`, `reverse` ve `clear` gibi metotlar listenin **kendisini** değiştirir ve geriye bir değer vermez. Böyle bir metodun sonucu bir değişkene atanırsa o değişken, "değer yok" anlamına gelen `None` değerini alır:
+
+```python
+listem = [1, 2, 3]
+yeni = listem.append(4)
+print(yeni)
+print(listem)
+```
+
+Çıktı:
+
+```text
+None
+[1, 2, 3, 4]
+```
+:::
+
+## Diğer Liste İşlemleri
+
+Listelerle çalışırken sıralama, arama ve sayma gibi işlemlere de sık sık ihtiyaç duyulur.
+
+**Ters çevirme ve sıralama.** `liste.reverse()` listenin eleman sırasını tersine çevirir. `liste.sort()` listeyi küçükten büyüğe, `liste.sort(reverse=True)` büyükten küçüğe sıralar. Metinlerden oluşan bir liste alfabetik olarak, daha doğrusu karakterlerin bilgisayardaki sırasına göre sıralanır.
+
+```python
+listem = [10, 2, 30, 14, 5]
+listem.reverse()
+print(listem)
+listem.sort()
+print(listem)
+listem.sort(reverse=True)
+print(listem)
+```
+
+Çıktı:
+
+```text
+[5, 14, 30, 2, 10]
+[2, 5, 10, 14, 30]
+[30, 14, 10, 5, 2]
+```
+
+**Sayma ve arama.** `liste.count(x)` `x`'in listede kaç kez geçtiğini, `liste.index(x)` `x`'in ilk geçtiği yerin indeksini verir; `x` listede yoksa `index` hata verir. Bir değerin listede bulunup bulunmadığı ise `in` operatörüyle sorulur.
+
+::: {#def-kol-in name="in ve not in Operatörleri"}
+`x in koleksiyon` ifadesi, `x` koleksiyonun bir elemanıysa `True`, değilse `False` olur. `x not in koleksiyon` ifadesi bunun tersidir.
+:::
+
+Yani `in`, "elemanı mı?" sorusunun Python'daki karşılığıdır ve matematikteki $x \in A$ yazımına benzer. Listelerin yanında demetler, kümeler, metinler ve `range` nesneleriyle de kullanılır; sözlüklerde anahtarlar arasında arama yapar.
+
+```python
+listem = [10, 20, 30, 20, 40, 20]
+print(listem.count(20), listem.count(50))
+print(listem.index(30))
+print(20 in listem, 50 in listem, 50 not in listem)
+print("a" in "Ali", "A" in "Ali")
+```
+
+Çıktı:
+
+```text
+3 0
+2
+True False True
+False True
+```
+
+**Birleştirme ve çoğaltma.** İki liste `+` ile birleştirilebilir; bu işlem asıl listeleri değiştirmez, yeni bir liste oluşturur. Bir liste bir tam sayıyla çarpıldığında elemanları o kadar kez tekrarlanır.
+
+```python
+list1 = [1, 2, 3]
+list2 = [4, 5, 6]
+birlesik = list1 + list2
+print(birlesik)
+print(list1)
+print(3 * [0])
+print(2 * [1, 2])
+```
+
+Çıktı:
+
+```text
+[1, 2, 3, 4, 5, 6]
+[1, 2, 3]
+[0, 0, 0]
+[1, 2, 1, 2]
+```
+
+`3 * [0]` listenin elemanlarını $3$ ile çarpmaz; listeyi üç kez yan yana yazar. Elemanları çarpmanın yolunu bir sonraki bölümde liste üreteçleriyle göreceğiz.
+
+### Listeyi Kopyalamak
+
+Sayılarda `b = a` ataması `a`'nın değerini `b`'ye kopyalar ve sonra `a` değişse bile `b` etkilenmez. Listelerde durum farklıdır.
+
+```python
+a = [1, 2, 3]
+b = a
+b.append(4)
+print("a:", a)
+print("b:", b)
+```
+
+Çıktı:
+
+```text
+a: [1, 2, 3, 4]
+b: [1, 2, 3, 4]
+```
+
+`b.append(4)` komutu yalnız `b`'yi değiştirdiği hâlde `a` da değişti. Bunun nedeni, `b = a` atamasının listeyi kopyalamaması, aynı listeye ikinci bir ad vermesidir: `a` ve `b` bellekteki tek bir listeyi gösterir. Sayılarda bu fark görünmez, çünkü bir sayı yerinde değiştirilemez; `a = 20` gibi bir atama `a`'yı yeni bir değere bağlar.
+
+Bağımsız bir kopya için `copy` metodu ya da `[:]` dilimi kullanılır:
+
+```python
+a = [1, 2, 3]
+b = a.copy()
+c = a[:]
+b.append(4)
+c.append(5)
+print("a:", a)
+print("b:", b)
+print("c:", c)
+```
+
+Çıktı:
+
+```text
+a: [1, 2, 3]
+b: [1, 2, 3, 4]
+c: [1, 2, 3, 5]
+```
+
+## Listelerle Kullanılan Hazır Fonksiyonlar
+
+Python'ın hazır fonksiyonlarından birçoğu bir listeyi bütün olarak alıp tek bir sonuç verir.
+
+| Fonksiyon | Verdiği sonuç |
+|:--|:--|
+| `len(liste)` | eleman sayısı |
+| `sum(liste)` | elemanların toplamı |
+| `min(liste)`, `max(liste)` | en küçük ve en büyük eleman |
+| `sorted(liste)` | sıralanmış **yeni** bir liste; asıl liste değişmez |
+| `reversed(liste)` | elemanları ters sırada veren bir nesne; `list` ile listeye çevrilir |
+| `all(liste)` | bütün elemanlar doğru sayılıyorsa `True` |
+| `any(liste)` | en az bir eleman doğru sayılıyorsa `True` |
+
+```python
+notlar = [72, 85, 90, 64, 85]
+print(len(notlar), sum(notlar))
+print(min(notlar), max(notlar))
+print(sum(notlar) / len(notlar))
+print(sorted(notlar))
+print(notlar)
+print(list(reversed(notlar)))
+print(all([1, 2, 3]), all([1, 0, 3]), any([0, 0, 5]))
+```
+
+Çıktı:
+
+```text
+5 396
+64 90
+79.2
+[64, 72, 85, 85, 90]
+[72, 85, 90, 64, 85]
+[85, 64, 90, 85, 72]
+True False True
+```
+
+`sorted(notlar)` sıralanmış bir liste verdiği hâlde `notlar` değişmedi; `notlar.sort()` ise listenin kendisini sıralardı. `all([1, 0, 3])` `False`'tur, çünkü `0` yanlış sayılır.
+
+Birden çok listeyi eleman eleman eşleyen `zip` ve elemanları indeksleriyle birlikte veren `enumerate` fonksiyonlarını döngülerle birlikte kullanacağız.
+
+## range Fonksiyonu
+
+Belli bir aralıktaki tam sayıları sırayla vermek için `range` fonksiyonu kullanılır; döngülerin en sık kullanılan yardımcısıdır.
+
+::: {#def-kol-range name="range Fonksiyonu"}
+`range(baslangic, bitis, adim)` fonksiyonu `baslangic`'tan başlayıp her seferinde `adim` kadar artan ve `bitis`'e **varmadan** duran tam sayıları verir. `adim` yazılmazsa $1$ alınır; yalnız `range(bitis)` yazılırsa başlangıç $0$ alınır. Adım negatifse sayılar azalır.
+:::
+
+Yani `range` dilimlemeyle aynı kuralı izler: başlangıç dahil, bitiş hariçtir. `range(6)` $0, 1, 2, 3, 4, 5$ sayılarını verir; $6$ dahil değildir.
+
+`range` sayıları bir liste olarak saklamaz, gerektiğinde tek tek üretir; bu yüzden yazdırıldığında yalnız `range(0, 6)` görünür. Sayıları görmek için `list` ile listeye çevrilir.
+
+```python
+a = range(6)
+print(a)
+print(list(a))
+print(list(range(1, 6)))
+print(list(range(2, 10, 3)))
+print(list(range(10, 0, -2)))
+r = range(0, 20, 2)
+print(11 in r, 10 in r, r.index(10))
+```
+
+Çıktı:
+
+```text
+range(0, 6)
+[0, 1, 2, 3, 4, 5]
+[1, 2, 3, 4, 5]
+[2, 5, 8]
+[10, 8, 6, 4, 2]
+False True 5
+```
+
+`range(0, 20, 2)` çift sayıları verdiği için $11$ onun içinde değildir; $10$ ise altıncı sayıdır ve indeksi $5$'tir.
+
+### Liste Üreteçlerine Bir Bakış
+
+Bir kurala göre oluşturulan bir liste, `range` ile birlikte tek satırda yazılabilir. Örneğin $1$'den $5$'e kadar sayıların kareleri şöyle elde edilir:
+
+```python
+kareler = [x ** 2 for x in range(1, 6)]
+print(kareler)
+```
+
+Çıktı:
+
+```text
+[1, 4, 9, 16, 25]
+```
+
+Bu yazım matematikteki $\{x^2 : x = 1, 2, \ldots, 5\}$ gösterimine benzer ve **liste üreteci** (list comprehension) adını taşır. Liste üreteçlerini, dayandıkları `for` döngüsüyle birlikte bir sonraki bölümde ayrıntılı göreceğiz.
+
+## Alıştırmalar
+
+Her alıştırmada önce sonucu kâğıt üzerinde bulun, sonra kodu çalıştırarak kontrol edin.
+
+:::: {#exr-kol-indeks-hesabi name="Elemanlarla Hesap"}
+`liste = [5, 9, 3, -8]` için aşağıdaki programın çıktısını bulunuz.
+
+```python
+liste = [5, 9, 3, -8]
+liste[0] = liste[2] + liste[3]
+print(liste)
+liste[3] = liste[1] - liste[0]
+print(liste)
+```
+
+::: {.cozum}
+Birinci atamada `liste[0]` $3 + (-8) = -5$ olur ve liste `[-5, 9, 3, -8]` hâline gelir. İkinci atama `liste[0]`'ın yeni değerini kullanır: `liste[3]` $9 - (-5) = 14$ olur.
+
+```python
+liste = [5, 9, 3, -8]
+liste[0] = liste[2] + liste[3]
+print(liste)
+liste[3] = liste[1] - liste[0]
+print(liste)
+```
+
+Çıktı:
+
+```text
+[-5, 9, 3, -8]
+[-5, 9, 3, 14]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kol-negatif-indeks name="Negatif İndeksli Dilimler"}
+`liste = [10, 51, 66, 13, 48, 15]` için `liste[-1]`, `liste[-3:]`, `liste[-4:-1]` ve `liste[::-1]` değerlerini bulunuz.
+
+::: {.cozum}
+Negatif indeksleri yazalım: `15` $-1$, `48` $-2$, `13` $-3$, `66` $-4$, `51` $-5$, `10` $-6$.
+
+- `liste[-1]` son elemandır: `15`.
+- `liste[-3:]` indeks $-3$'ten sona kadardır: `[13, 48, 15]`.
+- `liste[-4:-1]` indeks $-4$'ten başlar, $-1$ hariçtir: `[66, 13, 48]`.
+- `liste[::-1]` listenin tersidir: `[15, 48, 13, 66, 51, 10]`.
+
+```python
+liste = [10, 51, 66, 13, 48, 15]
+print(liste[-1])
+print(liste[-3:])
+print(liste[-4:-1])
+print(liste[::-1])
+```
+
+Çıktı:
+
+```text
+15
+[13, 48, 15]
+[66, 13, 48]
+[15, 48, 13, 66, 51, 10]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kol-metot-izleme name="Metotları Adım Adım İzlemek"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayilar = [4, 1, 7]
+sayilar.append(3)
+sayilar.insert(1, 9)
+sayilar.remove(7)
+sayilar.sort()
+x = sayilar.pop()
+print(sayilar, x)
+```
+
+::: {.cozum}
+Her komuttan sonra listenin durumunu yazalım:
+
+- `append(3)`: `[4, 1, 7, 3]`.
+- `insert(1, 9)`: $9$ indeks $1$'e girer, sonrakiler kayar: `[4, 9, 1, 7, 3]`.
+- `remove(7)`: `[4, 9, 1, 3]`.
+- `sort()`: `[1, 3, 4, 9]`.
+- `pop()`: son eleman $9$ çıkarılır ve `x`'e atanır; liste `[1, 3, 4]` kalır.
+
+```python
+sayilar = [4, 1, 7]
+sayilar.append(3)
+sayilar.insert(1, 9)
+sayilar.remove(7)
+sayilar.sort()
+x = sayilar.pop()
+print(sayilar, x)
+```
+
+Çıktı:
+
+```text
+[1, 3, 4] 9
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kol-ortalama-ustu name="Ortalama, En Yüksek ve En Düşük"}
+`notlar = [45, 78, 92, 36, 67, 81, 53]` listesindeki notların ortalamasını virgülden sonra iki basamakla, en yüksek ve en düşük notu ve en yüksek notun listedeki indeksini bulunuz.
+
+::: {.cozum}
+Toplam $$45 + 78 + 92 + 36 + 67 + 81 + 53 = 452$$, eleman sayısı $7$'dir; ortalama $452/7 \approx 64{,}57$'dir. En yüksek not $92$, en düşük not $36$'dır. $92$ listenin üçüncü elemanıdır, indeksi $2$'dir.
+
+```python
+notlar = [45, 78, 92, 36, 67, 81, 53]
+ortalama = sum(notlar) / len(notlar)
+print(f"Ortalama: {ortalama:.2f}")
+print("En yüksek:", max(notlar), "- En düşük:", min(notlar))
+print("En yüksek notun indeksi:", notlar.index(max(notlar)))
+```
+
+Çıktı:
+
+```text
+Ortalama: 64.57
+En yüksek: 92 - En düşük: 36
+En yüksek notun indeksi: 2
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kol-farkli-elemanlar name="Farklı Elemanlar"}
+`liste = [3, 1, 3, 2, 1, 3, 5]` listesinde kaç farklı sayı vardır? Farklı sayıları küçükten büyüğe sıralı bir liste olarak yazdırınız.
+
+::: {.cozum}
+Listeyi kümeye çevirmek tekrar eden elemanları atar: geriye $1, 2, 3, 5$ kalır, yani $4$ farklı sayı vardır. Kümenin sırası olmadığı için sıralı bir liste elde etmek üzere `sorted` kullanırız; `sorted` her koleksiyonu alır ve bir liste verir.
+
+```python
+liste = [3, 1, 3, 2, 1, 3, 5]
+farkli = set(liste)
+print(len(farkli))
+print(sorted(farkli))
+```
+
+Çıktı:
+
+```text
+4
+[1, 2, 3, 5]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kol-range-listeleri name="range ile Listeler"}
+`range` kullanarak şu listeleri oluşturunuz: $5$'ten $50$'ye kadar (dahil) $5$'in katları; $20$'den $1$'e kadar (dahil) azalan tek sayılar.
+
+::: {.cozum}
+Birinci liste $5$'ten başlar ve $5$'er artar. $50$'nin dahil olması için bitiş $50$'den büyük olmalıdır; $51$ alalım. İkinci liste $19$'dan başlar ve $2$'şer azalır; $1$'in dahil olması için bitiş $1$'den küçük olmalıdır, $0$ alalım.
+
+```python
+print(list(range(5, 51, 5)))
+print(list(range(19, 0, -2)))
+```
+
+Çıktı:
+
+```text
+[5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+[19, 17, 15, 13, 11, 9, 7, 5, 3, 1]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kol-kopya-tuzagi name="Kopya mı, Aynı Liste mi?"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+a = [1, 2, 3]
+b = a
+c = a[:]
+a[0] = 100
+print(a, b, c)
+```
+
+::: {.cozum}
+`b = a` yeni bir liste oluşturmaz; `a` ve `b` aynı listeyi gösterir. `c = a[:]` ise elemanları kopyalayarak ayrı bir liste oluşturur. `a[0] = 100` atamasından sonra `a` ve `b` aynı değişmiş listeyi gösterir, `c` ise eski hâlinde kalır.
+
+```python
+a = [1, 2, 3]
+b = a
+c = a[:]
+a[0] = 100
+print(a, b, c)
+```
+
+Çıktı:
+
+```text
+[100, 2, 3] [100, 2, 3] [1, 2, 3]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde birçok değeri tek bir değişkende tutmayı ve listeleri değiştirmeyi öğrendik. Şimdiye kadar elemanlara hep tek tek, indeksleriyle eriştik. Bir sonraki bölüm [for Döngüsü ve Liste Üreteçleri](for-dongusu.qmd), bir listenin bütün elemanları üzerinde sırayla işlem yapmayı sağlayan döngüleri ele alıyor.

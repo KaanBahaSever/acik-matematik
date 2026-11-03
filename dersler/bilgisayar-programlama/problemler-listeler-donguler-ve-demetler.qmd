@@ -1,0 +1,1216 @@
+---
+title: "Problemler: Listeler, Döngüler ve Demetler"
+pagetitle: "Problemler: Listeler, Döngüler ve Demetler"
+description: "Çözümlü kod okuma problemleri: adımlı liste dilimleme, liste üreteçleriyle diziler, Pisagor üçlüleri ve palindromlar, koşullu döngüler, while döngülerini adım adım izleme, demet işlemleri, Collatz dizisi, kabarcık sıralaması ve iç içe toplamlar."
+---
+
+Bu bölüm, [Problemler: Tipler, İşlemler ve Koşullar](problemler-tipler-islemler-ve-kosullar.qmd) bölümündeki yöntemi listelere, döngülere ve demetlere uygular: her problem bir kod parçası verir ve çıktısını sorar. Problemlerin bir kısmı kısa bir hesabı adım adım izlemeyi, bir kısmı da bir liste üretecinin ya da bir döngünün hangi sayıları seçtiğini anlamayı gerektirir.
+
+Problemler [Koleksiyonlar ve Listeler](koleksiyonlar-ve-listeler.qmd), [for Döngüsü ve Liste Üreteçleri](for-dongusu.qmd), [İç İçe Döngüler, while Döngüsü ve match-case](ic-ice-donguler-ve-while-dongusu.qmd) ve [Demetler](demetler.qmd) bölümlerinin konularını kapsar. Uzun döngülerde değişkenlerin değerlerini bir tabloya yazmak işi çok kolaylaştırır.
+
+## Liste Dilimleme
+
+Bu kısımdaki bütün problemler `liste = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]` listesini kullanır; her elemanın değeri kendi indeksine eşit olduğundan dilimdeki sayılar doğrudan seçilen indeksleri gösterir.
+
+:::: {#exr-pr2-dilim-temel name="Başlangıç ve Bitiş"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+liste = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+print(liste[:2])
+print(liste[1:2])
+print(liste[5:2])
+print(liste[2:])
+print(liste[:-2])
+```
+
+::: {.cozum}
+Dilimde başlangıç dahil, bitiş hariçtir (@def-kol-dilim).
+
+- `liste[:2]`: indeks $0$ ve $1$.
+- `liste[1:2]`: yalnız indeks $1$; sonuç tek elemanlı bir listedir.
+- `liste[5:2]`: adım pozitifken başlangıç bitişten sonra olduğu için boş liste.
+- `liste[2:]`: indeks $2$'den sona kadar.
+- `liste[:-2]`: baştan, sondan ikinci elemana kadar; $-2$ indeksli $8$ hariçtir.
+
+Çıktı:
+
+```text
+[0, 1]
+[1]
+[]
+[2, 3, 4, 5, 6, 7, 8, 9]
+[0, 1, 2, 3, 4, 5, 6, 7]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-dilim-adim name="Pozitif ve Negatif Adım"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+liste = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+print(liste[::2])
+print(liste[1::2])
+print(liste[:5:2])
+print(liste[::-2])
+print(liste[5:1:-2])
+```
+
+::: {.cozum}
+- `liste[::2]`: baştan sona ikişer: $0, 2, 4, 6, 8$.
+- `liste[1::2]`: $1$'den başlayıp ikişer: $1, 3, 5, 7, 9$.
+- `liste[:5:2]`: baştan $5$'e kadar ($5$ hariç) ikişer: $0, 2, 4$.
+- `liste[::-2]`: adım negatif ve başlangıç yazılmadığı için sondan başlanır: $9, 7, 5, 3, 1$.
+- `liste[5:1:-2]`: $5$'ten geriye ikişer: $5, 3$; bir sonraki $1$, bitiş olduğu için alınmaz.
+
+Çıktı:
+
+```text
+[0, 2, 4, 6, 8]
+[1, 3, 5, 7, 9]
+[0, 2, 4]
+[9, 7, 5, 3, 1]
+[5, 3]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-dilim-karisik name="Farklı Adımlarla Dilimler"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+liste = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+print(liste[5:0:-1])
+print(liste[::3])
+print(liste[2:9:2])
+print(liste[3::4])
+print(liste[::] == liste[:])
+```
+
+::: {.cozum}
+- `liste[5:0:-1]`: $5$'ten geriye birer: $5, 4, 3, 2, 1$; bitiş olan $0$ alınmaz.
+- `liste[::3]`: üçer: $0, 3, 6, 9$.
+- `liste[2:9:2]`: $2$'den $9$'a kadar ikişer: $2, 4, 6, 8$.
+- `liste[3::4]`: $3$'ten dörder: $3, 7$; bir sonraki $11$ listenin dışındadır.
+- `liste[::]` ve `liste[:]` ikisi de listenin tam bir kopyasını verir; elemanları aynı olduğu için `==` `True` verir.
+
+Çıktı:
+
+```text
+[5, 4, 3, 2, 1]
+[0, 3, 6, 9]
+[2, 4, 6, 8]
+[3, 7]
+True
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Liste Üreteçleri
+
+Bu kısımda her liste üretecinin hangi değerleri dolaştığını, hangilerini seçtiğini ve seçtiklerine hangi işlemi uyguladığını ayrı ayrı belirleyin.
+
+:::: {#exr-pr2-diziler name="Dizilerin İlk Terimleri"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+from math import factorial
+print([factorial(x) for x in range(1, 7)])
+print([2 ** n for n in range(10)])
+print([1 / x ** 2 for x in range(1, 5)])
+```
+
+::: {.cozum}
+- Birinci liste $1!, 2!, \ldots, 6!$: $1, 2, 6, 24, 120, 720$.
+- İkinci liste $2^0, 2^1, \ldots, 2^9$: ilk terimi $1$, oranı $2$ olan geometrik dizinin ilk on terimi.
+- Üçüncü liste $1/1^2, 1/2^2, 1/3^2, 1/4^2$: $1{,}0$, $0{,}25$, $0{,}111\ldots$, $0{,}0625$. `/` kullanıldığı için terimler `float`'tur.
+
+`from math import factorial` satırı yalnız `factorial` adını dahil ettiğinden fonksiyon `math.` yazmadan çağrılabilir.
+
+Çıktı:
+
+```text
+[1, 2, 6, 24, 120, 720]
+[1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+[1.0, 0.25, 0.1111111111111111, 0.0625]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-aritmetik-dizi name="Genel Terimi Verilen Diziler"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+print([5 * n + 3 for n in range(10)])
+print([round(1 / (5 * n + 3), 3) for n in range(10)])
+```
+
+::: {.cozum}
+Birinci liste genel terimi $a_n = 5n + 3$ olan aritmetik dizinin $n = 0, 1, \ldots, 9$ için terimleridir: $3$'ten başlar ve $5$'er artar. İkinci liste bu terimlerin terslerini üç basamağa yuvarlar: $1/3 \approx 0{,}333$, $1/8 = 0{,}125$, $1/13 \approx 0{,}077$ gibi. `round` sondaki sıfırları yazmadığı için $1/33 \approx 0{,}0303$ terimi `0.03` olarak görünür.
+
+Çıktı:
+
+```text
+[3, 8, 13, 18, 23, 28, 33, 38, 43, 48]
+[0.333, 0.125, 0.077, 0.056, 0.043, 0.036, 0.03, 0.026, 0.023, 0.021]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-kosullu-secim name="Koşulla Seçilen Sayılar"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+print([x for x in range(50, 101) if x % 7 == 0])
+print([x for x in range(20) if x % 3 == 0])
+print([x for x in range(10) if x % 2 == 1])
+print([x for x in range(10) if x % 2 == 1 and x > 5])
+```
+
+::: {.cozum}
+- $50$ ile $100$ arasındaki $7$'nin katları: $56, 63, 70, 77, 84, 91, 98$.
+- $0$ ile $19$ arasındaki $3$'ün katları: $0, 3, 6, 9, 12, 15, 18$; $0$ da $3$'ün katıdır.
+- $0$ ile $9$ arasındaki tek sayılar: $1, 3, 5, 7, 9$.
+- Bunlardan $5$'ten büyük olanlar: $7, 9$.
+
+Çıktı:
+
+```text
+[56, 63, 70, 77, 84, 91, 98]
+[0, 3, 6, 9, 12, 15, 18]
+[1, 3, 5, 7, 9]
+[7, 9]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-isaret-etiketi name="İç İçe Koşullu İfade"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayilar = [-5, 10, -2, 0, 8]
+durum = ["p" if x > 0 else "n" if x < 0 else "s" for x in sayilar]
+print(durum)
+```
+
+::: {.cozum}
+Koşullu ifade iç içe yazılmıştır ve `"p" if x > 0 else ("n" if x < 0 else "s")` olarak okunur: sayı pozitifse `p`, negatifse `n`, ikisi de değilse, yani sıfırsa `s`. Sayılar sırasıyla negatif, pozitif, negatif, sıfır, pozitiftir.
+
+Çıktı:
+
+```text
+['n', 'p', 'n', 's', 'p']
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-pisagor name="Pisagor Üçlüleri"}
+Aşağıdaki program $a^2 + b^2 = c^2$ eşitliğini sağlayan ve bütün sayıları $20$'den küçük olan $(a, b, c)$ pozitif tam sayı üçlülerini bulur. Çıktısını bulunuz.
+
+```python
+pisagor = [(a, b, c) for a in range(1, 20)
+           for b in range(a, 20)
+           for c in range(b, 20)
+           if a ** 2 + b ** 2 == c ** 2]
+print(pisagor)
+```
+
+::: {.cozum}
+Üç `for` iç içe dolaşılır: önce `a`, sonra her `a` için `b`, sonra her `b` için `c`. `b`'nin `a`'dan, `c`'nin `b`'den başlaması $a \le b \le c$ sırasını sağlar; böylece $(3, 4, 5)$ ile $(4, 3, 5)$ gibi aynı üçlü iki kez sayılmaz. Bulunan üçlüler $(3, 4, 5)$, $(5, 12, 13)$, $(6, 8, 10)$, $(8, 15, 17)$ ve $(9, 12, 15)$'tir; örneğin $5^2 + 12^2 = 25 + 144 = 169 = 13^2$. Üçlüler `a`'ya, sonra `b`'ye göre sıralı çıkar.
+
+Çıktı:
+
+```text
+[(3, 4, 5), (5, 12, 13), (6, 8, 10), (8, 15, 17), (9, 12, 15)]
+```
+
+$(6, 8, 10)$ ve $(9, 12, 15)$, $(3, 4, 5)$'in $2$ ve $3$ katıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-cevre-altmis name="Çevresi 60 Olan Dik Üçgenler"}
+Aşağıdaki program kenarları tam sayı ve çevresi $60$ olan dik üçgenleri bulur. Çıktısını bulunuz.
+
+```python
+s10 = [(a, b, 60 - a - b) for a in range(1, 60) for b in range(a, 60)
+       if 60 - a - b > b and a ** 2 + b ** 2 == (60 - a - b) ** 2]
+print(s10)
+```
+
+::: {.cozum}
+Çevre $60$ olduğundan hipotenüs $c = 60 - a - b$ ile hesaplanır; böylece üç değil iki döngü yeter. `60 - a - b > b` koşulu hipotenüsün en uzun kenar olmasını sağlar. Bulunan üçlüler $(10, 24, 26)$ ve $(15, 20, 25)$'tir: $100 + 576 = 676 = 26^2$ ve $225 + 400 = 625 = 25^2$; ikisinin de çevresi $60$'tır.
+
+Çıktı:
+
+```text
+[(10, 24, 26), (15, 20, 25)]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-bolunme-duzlestirme name="Ortak Katlar ve Matris Düzleştirme"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+s1 = [n for n in range(1, 31) if n % 3 == 0 and n % 5 == 0]
+print(s1)
+matris = [[1, 2], [3, 4], [5, 6]]
+s3 = [x for satir in matris for x in satir]
+print(s3)
+```
+
+::: {.cozum}
+Hem $3$'e hem $5$'e bölünen sayılar $15$'in katlarıdır; $30$'a kadar $15$ ve $30$. İkinci liste üretecinde dıştaki `for` matrisin satırlarını, içteki `for` her satırın elemanlarını dolaşır; bütün elemanlar tek bir listede, satır satır sıralanır. Buna matrisi **düzleştirmek** denir.
+
+Çıktı:
+
+```text
+[15, 30]
+[1, 2, 3, 4, 5, 6]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-zar-rakam name="Zar Çiftleri ve Rakamlar Toplamı"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+s5 = [(z1, z2) for z1 in range(1, 7) for z2 in range(1, 7)
+      if z1 + z2 == 7]
+print(s5)
+s6 = [n for n in range(1, 100) if sum(int(r) for r in str(n)) == 10]
+print(s6)
+```
+
+::: {.cozum}
+Birinci liste iki zarın toplamı $7$ olan $6$ sonucunu verir: $(1, 6), (2, 5), \ldots, (6, 1)$. İkinci liste üretecinde her sayı metne çevrilir, her karakter yeniden rakama çevrilir ve rakamlar toplanır. $100$'den küçük ve rakamları toplamı $10$ olan sayılar $19, 28, 37, 46, 55, 64, 73, 82, 91$'dir; tek basamaklı hiçbir sayının rakam toplamı $10$ olamaz.
+
+Çıktı:
+
+```text
+[(1, 6), (2, 5), (3, 4), (4, 3), (5, 2), (6, 1)]
+[19, 28, 37, 46, 55, 64, 73, 82, 91]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-palindrom name="Palindrom Sayılar"}
+Tersten okunuşu da aynı olan sayılara **palindrom** denir: $121$ gibi. Aşağıdaki programın çıktısını bulunuz.
+
+```python
+s7 = [n for n in range(100, 201) if str(n) == str(n)[::-1]]
+print(s7)
+```
+
+::: {.cozum}
+`str(n)[::-1]` metni tersine çevirir; sayı, metni kendi tersine eşitse palindromdur. $100$ ile $200$ arasında üç basamaklı bir palindromun ilk ve son rakamı $1$ olmalıdır; ortadaki rakam $0$'dan $9$'a kadar herhangi biri olabilir. Bu yüzden on palindrom vardır: $101, 111, \ldots, 191$. $200$ palindrom değildir, çünkü tersi $002$'dir.
+
+Çıktı:
+
+```text
+[101, 111, 121, 131, 141, 151, 161, 171, 181, 191]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-elli name="İki Karenin Toplamı 50"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+s9 = [(x, y) for x in range(1, 8) for y in range(1, 8)
+      if x ** 2 + y ** 2 == 50]
+print(s9)
+```
+
+::: {.cozum}
+$x$ ve $y$ $1$'den $7$'ye kadar dolaşılır; $8^2 = 64 > 50$ olduğundan daha büyük değerlere gerek yoktur. $50 = 1 + 49 = 25 + 25 = 49 + 1$ olduğundan çiftler $(1, 7)$, $(5, 5)$ ve $(7, 1)$'dir. Sıra önemli olduğu için $(1, 7)$ ve $(7, 1)$ ayrı çiftlerdir.
+
+Çıktı:
+
+```text
+[(1, 7), (5, 5), (7, 1)]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-donusum-listeleri name="Bir Listenin Elemanlarını Dönüştürmek"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+fahrenheit = [32, 68, 100, 212]
+print([round((f - 32) * 5 / 9, 3) for f in fahrenheit])
+print([x ** 0.5 for x in [4, 9, 16, 25, 36]])
+print([abs(x) for x in [-5, 10, -3.14, 0, -8]])
+```
+
+::: {.cozum}
+Birinci liste $C = (F - 32) \cdot 5/9$ dönüşümünü uygular: $32 \,^\circ\mathrm{F} = 0 \,^\circ\mathrm{C}$, $68 \,^\circ\mathrm{F} = 20 \,^\circ\mathrm{C}$, $100 \,^\circ\mathrm{F} \approx 37{,}778 \,^\circ\mathrm{C}$, $212 \,^\circ\mathrm{F} = 100 \,^\circ\mathrm{C}$. İkinci liste kareköklerdir; `** 0.5` sonucu `float` verir. Üçüncü liste mutlak değerlerdir; `abs` tam sayıları tam sayı, ondalıklı sayıları ondalıklı bırakır.
+
+Çıktı:
+
+```text
+[0.0, 20.0, 37.778, 100.0]
+[2.0, 3.0, 4.0, 5.0, 6.0]
+[5, 10, 3.14, 0, 8]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Döngüler ve Koşullar
+
+Bu kısımda bir listenin her elemanı için hangi koşulun doğru çıktığını ve elemanın hangi listeye hangi değerle eklendiğini tek tek belirleyin.
+
+:::: {#exr-pr2-ust-alma name="İki Listeye Toplam ve Kuvvet"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+birinci = []
+ikinci = []
+for x in range(2, 7, 3):
+    for y in range(3, 13, 5):
+        birinci.append(x + y)
+        ikinci.append(x ** y)
+print("birinci:", birinci)
+print("ikinci:", ikinci)
+```
+
+::: {.cozum}
+`range(2, 7, 3)` $2$ ve $5$'i, `range(3, 13, 5)` $3$ ve $8$'i verir. Dört çift sırayla $(2, 3)$, $(2, 8)$, $(5, 3)$, $(5, 8)$'dir. Toplamlar $5, 10, 8, 13$; kuvvetler $2^3 = 8$, $2^8 = 256$, $5^3 = 125$ ve $5^8 = 390625$'tir.
+
+Çıktı:
+
+```text
+birinci: [5, 10, 8, 13]
+ikinci: [8, 256, 125, 390625]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-iki-liste-a name="İşarete Göre İki Liste"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayilar = [1, -5, 6, -8, 3]
+negatif = []
+pozitif = []
+for x in sayilar:
+    if x < 0:
+        negatif.append(x ** 2 + 1)
+    else:
+        pozitif.append(2 * x ** 2 + 1)
+print("pozitif:", pozitif)
+print("negatif:", negatif)
+```
+
+::: {.cozum}
+Negatif sayılar ($-5$, $-8$) için $x^2 + 1$ hesaplanır: $26$ ve $65$. Diğerleri ($1$, $6$, $3$) için $2x^2 + 1$ hesaplanır: $3$, $73$ ve $19$. Listelerin adları yalnız hangi sayıların nereye gittiğini anlatır; içlerindeki değerlerin hepsi pozitiftir.
+
+Çıktı:
+
+```text
+pozitif: [3, 73, 19]
+negatif: [26, 65]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-iki-liste-b name="Her Zaman Doğru Bir Koşul"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayilar = [1, -5, 6, -8, 3]
+negatif = []
+pozitif = []
+for x in sayilar:
+    if (2 * x ** 2 + 1 > 5) or (2 * x ** 2 + 1 < 45):
+        negatif.append(x ** 2 + 1)
+    else:
+        pozitif.append(2 * x ** 2 + 1)
+print("negatif:", negatif)
+print("pozitif:", pozitif)
+```
+
+::: {.cozum}
+Her sayı için $2x^2 + 1$ değerleri $3, 51, 73, 129, 19$'dur. Bir sayı ya $5$'ten büyüktür ya da $45$'ten küçüktür; her gerçel sayı bu iki koşuldan en az birini sağlar. Bu yüzden `or` ile bağlanmış koşul her eleman için doğrudur, bütün sayılar `negatif` listesine $x^2 + 1$ olarak girer ve `pozitif` boş kalır: $2, 26, 37, 65, 10$.
+
+Çıktı:
+
+```text
+negatif: [2, 26, 37, 65, 10]
+pozitif: []
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-iki-liste-c name="Bir Aralığa Düşen Değer"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayilar = [1, -5, 6, -8, 3]
+negatif = []
+pozitif = []
+for x in sayilar:
+    if (2 * x ** 2 + 1 > 5) and (2 * x ** 2 + 1 < 45):
+        negatif.append(x ** 2 + 1)
+        print(x)
+    else:
+        pozitif.append(2 * x ** 2 + 1)
+print("negatif:", negatif)
+print("pozitif:", pozitif)
+```
+
+::: {.cozum}
+Bu kez $2x^2 + 1$'in $5$ ile $45$ arasında olması gerekir. Değerler $3, 51, 73, 129, 19$'dur; yalnız $19$ (yani $x = 3$) bu aralıktadır. $x = 3$ yazılır ve $3^2 + 1 = 10$ `negatif`'e eklenir; diğerlerinin $2x^2 + 1$ değerleri `pozitif`'e eklenir.
+
+Çıktı:
+
+```text
+3
+negatif: [10]
+pozitif: [3, 51, 73, 129]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-uc-liste name="Üç Liste ve pass"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayilar = [1, -5, 6, -8, 3]
+birinci = []
+ikinci = []
+ucuncu = []
+for x in sayilar:
+    if (2 * x ** 2 > 5) and (2 * x ** 2 < 45):
+        birinci.append(x ** 2 + 1)
+    elif 2 * x ** 3 > 5:
+        ikinci.append(2 * x ** 2 + 1)
+    elif 2 * x ** 4 > 15:
+        ucuncu.append(x)
+    else:
+        pass
+        print("Vazgeçtim")
+birinci.sort()
+ikinci.sort()
+ucuncu.sort()
+print("birinci:", birinci)
+print("ikinci:", ikinci)
+print("ucuncu:", ucuncu)
+```
+
+::: {.cozum}
+Her sayı için koşulları sırayla deneyelim:
+
+- $x = 1$: $2x^2 = 2$, birinci koşul yanlış; $2x^3 = 2 > 5$ yanlış; $2x^4 = 2 > 15$ yanlış. `else` çalışır; `pass` hiçbir şey yapmaz ama sonraki `print` çalışır ve `Vazgeçtim` yazılır.
+- $x = -5$: $2x^2 = 50$, $45$'ten büyük; $2x^3 = -250$; $2x^4 = 1250 > 15$. `ucuncu`'ye $-5$ eklenir.
+- $x = 6$: $2x^2 = 72$; $2x^3 = 432 > 5$. `ikinci`'ye $2 \cdot 36 + 1 = 73$ eklenir.
+- $x = -8$: $2x^2 = 128$; $2x^3 = -1024$; $2x^4 = 8192 > 15$. `ucuncu`'ye $-8$ eklenir.
+- $x = 3$: $2x^2 = 18$, $5$ ile $45$ arasında. `birinci`'ye $10$ eklenir.
+
+Son olarak listeler sıralanır; `ucuncu` `[-8, -5]` olur.
+
+Çıktı:
+
+```text
+Vazgeçtim
+birinci: [10]
+ikinci: [73]
+ucuncu: [-8, -5]
+```
+
+`pass` bloğu boş bırakmamak için konur; ardından gelen komutların çalışmasını engellemez. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-kosullu-uretec name="Koşullu Liste Üreteçleri"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+print([x for x in range(10) if 2 * x ** 2 + 1 >= 30])
+liste = [-5, 3, -6, 1, 2, 9]
+print([x for x in liste if x ** 2 + 1 >= 15 or x + 5 > 15])
+print([x for x in liste if x ** 2 + 1 >= 15 and x + 5 > 15])
+print([x for x in liste if (x ** 2 + 1) // 2 == 1])
+print([x for x in liste if (x ** 2 + 1) % 2 == 1])
+```
+
+::: {.cozum}
+- $2x^2 + 1 \ge 30$ ancak $x^2 \ge 14{,}5$, yani $x \ge 4$ ise sağlanır: $4, 5, \ldots, 9$.
+- Listedeki sayılar için $x^2 + 1$ değerleri $26, 10, 37, 2, 5, 82$'dir. $x^2 + 1 \ge 15$ olanlar $-5$, $-6$ ve $9$'dur; $x + 5 > 15$ ise hiçbir sayı için doğru değildir. `or` ile sonuç $-5, -6, 9$'dur.
+- `and` ile iki koşulun birden sağlanması gerekir; ikinci koşul hiç sağlanmadığı için liste boştur.
+- $(x^2 + 1) \,//\, 2 = 1$ ancak $x^2 + 1$ değeri $2$ ya da $3$ ise doğrudur; yalnız $x = 1$ ($x^2 + 1 = 2$) sağlar.
+- $x^2 + 1$ tek ancak $x$ çift ise: $-6$ ve $2$.
+
+Çıktı:
+
+```text
+[4, 5, 6, 7, 8, 9]
+[-5, -6, 9]
+[]
+[1]
+[-6, 2]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-math-toplami name="math Fonksiyonlarıyla Bir Toplam"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+import math
+print(math.sqrt(25) + math.pow(2, 3) + math.fabs(-5.5))
+x = 3.7
+print(math.ceil(x) + math.floor(x))
+```
+
+::: {.cozum}
+$\sqrt{25} = 5{,}0$, $2^3 = 8{,}0$ ve $|-5{,}5| = 5{,}5$'tir; üçü de `float`'tur ve toplamları $18{,}5$'tir. $\lceil 3{,}7 \rceil = 4$, $\lfloor 3{,}7 \rfloor = 3$; ikisi de tam sayıdır ve toplamları $7$'dir.
+
+Çıktı:
+
+```text
+18.5
+7
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## while Döngüleri
+
+Bu kısımdaki her problemde, değişkenlerin her yinelemedeki değerlerini bir tabloya yazarak ilerleyin.
+
+:::: {#exr-pr2-fibonacci-benzeri name="Fibonacci Benzeri Bir Dizi"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+n = 5
+a, b = 3, 2
+sayac = 0
+while sayac < n:
+    a, b = b, a + b
+    sayac += 1
+    print("a:", a, ", b:", b)
+print(b)
+```
+
+::: {.cozum}
+Her adımda yeni `a` eski `b`, yeni `b` eski iki değerin toplamı olur; bu, Fibonacci dizisinin kuralıdır ama başlangıç değerleri farklıdır:
+
+| sayac | a | b |
+|:-:|:-:|:-:|
+| başta | 3 | 2 |
+| 1 | 2 | 5 |
+| 2 | 5 | 7 |
+| 3 | 7 | 12 |
+| 4 | 12 | 19 |
+| 5 | 19 | 31 |
+
+Çıktı:
+
+```text
+a: 2 , b: 5
+a: 5 , b: 7
+a: 7 , b: 12
+a: 12 , b: 19
+a: 19 , b: 31
+31
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-ara-toplamlar name="Ara Toplamların Ortalaması"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+N = 10
+X = N - (N % 3)
+T = 0
+sayac = 0
+Tlist = []
+while X > 0:
+    T = T + X
+    X = X - 3
+    sayac = sayac + 1
+    Tlist.append(T)
+    print("X:", X, ", T:", T, ", sayac:", sayac, ", Tlist:", Tlist)
+print("Ortalama =", sum(Tlist) / sayac)
+```
+
+::: {.cozum}
+$X$ başta $10 - 1 = 9$'dur ve $3$'er azalır. Her adımda $T$'ye o anki $X$ eklenir, sonra $X$ azaltılır:
+
+| adım | eklenen X | T | yeni X | Tlist |
+|:-:|:-:|:-:|:-:|:--|
+| 1 | 9 | 9 | 6 | [9] |
+| 2 | 6 | 15 | 3 | [9, 15] |
+| 3 | 3 | 18 | 0 | [9, 15, 18] |
+
+$X = 0$ olunca döngü biter. Ortalama, $3$'ün katlarının değil **ara toplamların** ortalamasıdır: $(9 + 15 + 18)/3 = 42/3 = 14{,}0$. $3$'ün katlarının ortalaması isteniyor olsaydı $T/\text{sayac} = 18/3 = 6{,}0$ hesaplanmalıydı.
+
+Çıktı:
+
+```text
+X: 6 , T: 9 , sayac: 1 , Tlist: [9]
+X: 3 , T: 15 , sayac: 2 , Tlist: [9, 15]
+X: 0 , T: 18 , sayac: 3 , Tlist: [9, 15, 18]
+Ortalama = 14.0
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-while-continue name="continue Öncesi Güncelleme"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+s = 7
+a = 1
+b = 3
+while s < 10:
+    s = s + 1
+    a = a + b
+    b = b + 2
+    print("s:", s, " a:", a, " b:", b)
+    if s == 8 or s == 5:
+        a = b - 2
+        b = b + 2
+        continue
+print("a =", a, " b =", b)
+```
+
+::: {.cozum}
+Adımları izleyelim:
+
+- Birinci yineleme: $s = 8$, $a = 1 + 3 = 4$, $b = 5$; bu değerler yazılır. $s = 8$ olduğu için `if` çalışır: $a = 5 - 2 = 3$, $b = 7$; `continue` döngünün başına döner.
+- İkinci yineleme: $s = 9$, $a = 3 + 7 = 10$, $b = 9$; yazılır. Koşul yanlıştır.
+- Üçüncü yineleme: $s = 10$, $a = 10 + 9 = 19$, $b = 11$; yazılır. Koşul yanlıştır. $10 < 10$ yanlış olduğundan döngü biter.
+
+`if` bloğundaki değişiklikler, `print`'ten sonra yapıldığı için yazdırılan satırlarda görünmez; ama bir sonraki yinelemenin hesabını etkiler. `continue` döngünün son satırı olduğundan burada hiçbir şeyi atlamaz.
+
+Çıktı:
+
+```text
+s: 8  a: 4  b: 5
+s: 9  a: 10  b: 9
+s: 10  a: 19  b: 11
+a = 19  b = 11
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-azalan-carpim name="Azalan Çarpanlarla Bir Liste"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+x = 1
+y = 1
+z = 5
+k = []
+while True:
+    y = y * z
+    k.append(y)
+    z -= 1
+    if z < x:
+        break
+print(k)
+print(sum(k))
+print(k[1] + k[3])
+```
+
+::: {.cozum}
+`y` sırayla $5$, $4$, $3$, $2$, $1$ ile çarpılır ve her ara çarpım listeye eklenir: $5$, $5 \cdot 4 = 20$, $20 \cdot 3 = 60$, $60 \cdot 2 = 120$, $120 \cdot 1 = 120$. `z` $0$ olduğunda $0 < 1$ doğru olur ve `break` döngüyü bitirir. Toplam $5 + 20 + 60 + 120 + 120 = 325$; `k[1] + k[3]` $20 + 120 = 140$'tır.
+
+Çıktı:
+
+```text
+[5, 20, 60, 120, 120]
+325
+140
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Demetler
+
+Bu kısımda dilimlerin ve işlemlerin sonucunun bir demet mi yoksa bir liste mi olduğuna dikkat edin.
+
+:::: {#exr-pr2-demet-dilim name="Demet Dilimleri"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+demet = (10, 51, 66, 13, 48, 15)
+print(demet[-3:])
+print(demet[::-1])
+print(demet[-4:-1])
+print(demet[2:6:3])
+print(demet[::2])
+```
+
+::: {.cozum}
+Demetler listelerle aynı kurallarla dilimlenir; sonuç yine bir demettir.
+
+- `demet[-3:]`: son üç eleman.
+- `demet[::-1]`: ters sıra.
+- `demet[-4:-1]`: indeks $-4$ (yani $2$) ile $-2$ (yani $4$) arası.
+- `demet[2:6:3]`: indeks $2$ ve $5$: $66$ ve $15$.
+- `demet[::2]`: indeks $0$, $2$, $4$: $10$, $66$, $48$.
+
+Çıktı:
+
+```text
+(13, 48, 15)
+(15, 48, 13, 66, 51, 10)
+(66, 13, 48)
+(66, 15)
+(10, 66, 48)
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-demet-tekrar name="Demeti ve Listeyi Çoğaltmak"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+t = (121, 352, 431, 245, 567)
+print(t[1:3])
+print(len(t))
+print(t * 2)
+print(list(t) * 2)
+```
+
+::: {.cozum}
+`t[1:3]` indeks $1$ ve $2$'deki elemanlardan bir demettir. `t * 2` demeti iki kez yan yana yazar ve bir demet verir; `list(t) * 2` aynı işi önce listeye çevirerek yapar ve bir liste verir. Çıktıdaki fark yalnız parantezlerin türündedir.
+
+Çıktı:
+
+```text
+(352, 431)
+5
+(121, 352, 431, 245, 567, 121, 352, 431, 245, 567)
+[121, 352, 431, 245, 567, 121, 352, 431, 245, 567]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-demet-paritesi name="Paketlenmiş Bir Demet"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+x = 3, 7, 10
+print("Demet:", x)
+for i in x:
+    if i % 2 == 0:
+        print(f"{i} çift")
+    else:
+        print(f"{i} tek")
+```
+
+::: {.cozum}
+Parantezsiz yazılan `3, 7, 10` bir demete paketlenir (@def-dmt-paketleme). Döngü elemanları sırayla alır: $3$ ve $7$ tek, $10$ çifttir.
+
+Çıktı:
+
+```text
+Demet: (3, 7, 10)
+3 tek
+7 tek
+10 çift
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Algoritmalar
+
+Bu kısımdaki programlar küçük ama tam birer algoritmadır; önce ne yaptıklarını anlamaya, sonra çıktılarını bulmaya çalışın.
+
+:::: {#exr-pr2-collatz name="En Uzun Collatz Zinciri"}
+Bir $n$ sayısı çiftse yarıya bölünür, tekse $3n + 1$ yapılır; bu kural $1$'e ulaşılana kadar tekrarlanır. Aşağıdaki program $1$'den $30$'a kadar başlangıç değerleri arasında $1$'e en çok adımda ulaşanı bulur. Ne yaptığını açıklayınız ve çıktısını bulunuz.
+
+```python
+en_uzun = 0
+en_iyi_sayi = 0
+for baslangic in range(1, 31):
+    n = baslangic
+    adim = 0
+    while n != 1:
+        if n % 2 == 0:
+            n //= 2
+        else:
+            n = 3 * n + 1
+        adim += 1
+    if adim > en_uzun:
+        en_uzun = adim
+        en_iyi_sayi = baslangic
+print(f"En uzun zincir: {en_iyi_sayi} sayısı, {en_uzun} adım")
+```
+
+::: {.cozum}
+Dıştaki `for` her başlangıç değerini dener. İçteki `while`, kaç adım süreceği önceden bilinmediği için kullanılmıştır: kural uygulanır ve `n` $1$ olana kadar adımlar sayılır. Örneğin $$6 \to 3 \to 10 \to 5 \to 16 \to 8 \to 4 \to 2 \to 1$$ zinciri $8$ adımdır. Her başlangıç değerinin adım sayısı şimdiye kadarki en büyük adım sayısıyla karşılaştırılır; daha büyükse en uzun zincir güncellenir.
+
+$27$'den başlayan zincir bu aralıktaki en uzun zincirdir: $9232$'ye kadar yükseldikten sonra $111$ adımda $1$'e iner.
+
+Çıktı:
+
+```text
+En uzun zincir: 27 sayısı, 111 adım
+```
+
+Her başlangıç değerinden bu kuralla sonunda $1$'e ulaşıldığı tahmin edilir; ama bu tahmin, **Collatz sanısı** adıyla bilinen, henüz kanıtlanmamış bir problemdir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-kabarcik name="Kabarcık Sıralaması"}
+Aşağıdaki program bir listeyi hazır `sort` metodunu kullanmadan sıralar. Nasıl çalıştığını açıklayınız ve listenin her turdan sonraki hâlini bulunuz.
+
+```python
+sayilar = [64, 34, 25, 12, 22, 11, 90]
+n = len(sayilar)
+degisti = True
+tur = 0
+while degisti:
+    degisti = False
+    for i in range(n - 1 - tur):
+        if sayilar[i] > sayilar[i + 1]:
+            sayilar[i], sayilar[i + 1] = sayilar[i + 1], sayilar[i]
+            degisti = True
+    tur += 1
+    print(tur, sayilar)
+print("Sıralı liste:", sayilar)
+```
+
+::: {.cozum}
+İçteki `for` yan yana duran iki elemanı karşılaştırır; soldaki büyükse ikisini takasla yer değiştirir. Bir tur boyunca en büyük eleman, suyun içindeki bir kabarcık gibi adım adım sağa taşınır ve sonunda listenin en sağına yerleşir. Bu yüzden yönteme **kabarcık sıralaması** (bubble sort) denir. Her turdan sonra sondaki bir eleman daha yerini bulduğu için içteki döngünün aralığı `tur` kadar kısalır.
+
+`degisti` değişkeni bir turda hiç takas yapılıp yapılmadığını tutar. Hiç takas yapılmayan bir tur, listenin sıralı olduğunu gösterir; o zaman `while` döngüsü biter. Burada beşinci turdan sonra liste sıralıdır; altıncı turda hiç takas yapılmaz ve döngü durur.
+
+Çıktı:
+
+```text
+1 [34, 25, 12, 22, 11, 64, 90]
+2 [25, 12, 22, 11, 34, 64, 90]
+3 [12, 22, 11, 25, 34, 64, 90]
+4 [12, 11, 22, 25, 34, 64, 90]
+5 [11, 12, 22, 25, 34, 64, 90]
+6 [11, 12, 22, 25, 34, 64, 90]
+Sıralı liste: [11, 12, 22, 25, 34, 64, 90]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-secmeli-siralama name="İç İçe for ile Sıralama"}
+Aşağıdaki programın çıktısını bulunuz ve dıştaki döngünün her adımda neyi garanti ettiğini açıklayınız.
+
+```python
+dizi = [5, 2, 9, 1]
+n = len(dizi)
+for i in range(n - 1):
+    for j in range(i + 1, n):
+        if dizi[i] > dizi[j]:
+            dizi[i], dizi[j] = dizi[j], dizi[i]
+    print(i, dizi)
+```
+
+::: {.cozum}
+Dıştaki döngü `i` indeksli yeri doldurur. İçteki döngü `i`'den sonraki bütün elemanları `dizi[i]` ile karşılaştırır ve daha küçük bir eleman bulduğunda takas eder; içteki döngü bittiğinde `i` indeksinde kalan elemanların en küçüğü bulunur.
+
+- `i = 0`: $5 > 2$ takas, $[2, 5, 9, 1]$; $2 > 9$ değil; $2 > 1$ takas, $[1, 5, 9, 2]$.
+- `i = 1`: $5 > 9$ değil; $5 > 2$ takas, $[1, 2, 9, 5]$.
+- `i = 2`: $9 > 5$ takas, $[1, 2, 5, 9]$.
+
+Çıktı:
+
+```text
+0 [1, 5, 9, 2]
+1 [1, 2, 9, 5]
+2 [1, 2, 5, 9]
+```
+
+Her `i` adımından sonra ilk `i + 1` eleman listenin en küçük `i + 1` elemanıdır ve sıralıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-kume-toplami name="Bir Kümeden Seçilenlerin Toplamı"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+rakamlar = {1, 5, 7, 9, 2, 4, 6, 8, 3, 0}
+secilenler = {1, 2, 3, 4, 5}
+print(sum(r for r in rakamlar if r in secilenler))
+print(sum(s for s in range(1, 101) if s % 2 == 0))
+sayilar = [-3, -2, -1, 0, 1, 2, 3, 4]
+print(sum(x * x for x in sayilar if x > 0))
+```
+
+::: {.cozum}
+Birinci satır `rakamlar` kümesinde olup `secilenler` kümesinde de bulunan sayıları toplar: $1 + 2 + 3 + 4 + 5 = 15$. Kümelerin sırasız olması toplamı etkilemez. İkinci satır $$2 + 4 + \cdots + 100 = 2(1 + 2 + \cdots + 50) = 2 \cdot 1275 = 2550$$'yi hesaplar. Üçüncü satır pozitif sayıların karelerini toplar: $1 + 4 + 9 + 16 = 30$.
+
+Çıktı:
+
+```text
+15
+2550
+30
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-ikinci-derece-kosul name="İkinci Dereceden Bir Koşul"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayilar = [-3, -2, -1, 0, 1, 2, 3, 4]
+print(sum(x * x for x in sayilar if x ** 2 - 5 * x > 0))
+print(max(x * x for x in sayilar if x ** 2 - 5 * x > 0))
+```
+
+::: {.cozum}
+$x^2 - 5x = x(x - 5) > 0$ eşitsizliği $x < 0$ ya da $x > 5$ için sağlanır. Listede $5$'ten büyük sayı olmadığından seçilen sayılar $-3, -2, -1$'dir. Karelerinin toplamı $9 + 4 + 1 = 14$, en büyüğü $9$'dur.
+
+Çıktı:
+
+```text
+14
+9
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-gecer-notlar name="Geçer Notların Ortalaması"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+notlar = [45, 78, 92, 36, 67, 81, 53, 29]
+gecer = [n for n in notlar if n >= 50]
+print(gecer)
+ortalama = sum(gecer) / len(gecer) if gecer else 0
+print(f"Geçer not ortalaması: {ortalama:.2f}")
+```
+
+::: {.cozum}
+$50$ ve üstündeki notlar $78, 92, 67, 81, 53$'tür. İkinci satırdaki koşullu ifade, liste boşsa sıfıra bölmemek için yazılmıştır: boş bir liste yanlış sayılır ve o durumda ortalama $0$ alınır. Burada liste boş değildir; ortalama $$(78 + 92 + 67 + 81 + 53)/5 = 371/5 = 74{,}2$$'dir.
+
+Çıktı:
+
+```text
+[78, 92, 67, 81, 53]
+Geçer not ortalaması: 74.20
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-derin-if-a name="Derin İç İçe Koşullar"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+x, y, z = 12, 5, 8
+toplam = x + y + z
+fark = x - y - z
+if toplam > 20:
+    print("Toplam 20'den büyük!")
+    if x > y:
+        print("x, y'den büyük")
+        carpim = x * y
+        if carpim % 2 == 0:
+            print(f"Çarpım çift: {carpim}")
+            if z > 0:
+                print("z pozitif")
+                sonuc = (x * y) - (y * z) + (x % z)
+                print(f"Matematiksel sonuç: {sonuc}")
+                if sonuc > 30:
+                    print("Sonuç 30'dan büyük")
+                else:
+                    print("Sonuç 30'dan küçük")
+        else:
+            print(f"Çarpım tek: {carpim}")
+elif toplam > 15:
+    print("Toplam 15-20 arası")
+else:
+    print("Toplam 15'ten küçük")
+    if fark < 0:
+        print("Fark negatif")
+```
+
+::: {.cozum}
+$\text{toplam} = 25 > 20$ olduğundan ilk kola girilir. $12 > 5$ doğrudur; çarpım $60$ çifttir; $z = 8 > 0$'dır. $$\text{sonuc} = 60 - 40 + (12 \bmod 8) = 60 - 40 + 4 = 24$$ bulunur ve $24 > 30$ yanlış olduğu için son `else` çalışır. Her koşul bir öncekinin içinde olduğu için girintiler her seviyede biraz daha sağa kayar.
+
+Çıktı:
+
+```text
+Toplam 20'den büyük!
+x, y'den büyük
+Çarpım çift: 60
+z pozitif
+Matematiksel sonuç: 24
+Sonuç 30'dan küçük
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-derin-if-b name="Aynı Koşullar, Farklı Değerler"}
+Bir önceki problemdeki programın ilk satırı `x, y, z = 2, 1, 8` olarak değiştirilirse çıktı ne olur?
+
+```python
+x, y, z = 2, 1, 8
+toplam = x + y + z
+fark = x - y - z
+if toplam > 20:
+    print("Toplam 20'den büyük!")
+elif toplam > 15:
+    print("Toplam 15-20 arası")
+else:
+    print("Toplam 15'ten küçük")
+    if fark < 0:
+        print("Fark negatif")
+```
+
+::: {.cozum}
+Bu kez $\text{toplam} = 11$'dir; ilk iki koşul yanlıştır ve `else` kolu çalışır. İlk koldaki iç içe koşullara hiç girilmediği için onları yukarıdaki kodda yazmadık; çıktıyı değiştirmezler. $\text{fark} = 2 - 1 - 8 = -7 < 0$ olduğundan ikinci mesaj da yazılır.
+
+Çıktı:
+
+```text
+Toplam 15'ten küçük
+Fark negatif
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İç İçe Toplamlar
+
+Bu kısımda matematikteki iki katlı toplamları iç içe döngülerle hesaplayacağız; dıştaki toplamın değişkeni dıştaki döngüye, içteki toplamın değişkeni içteki döngüye karşılık gelir.
+
+:::: {#exr-pr2-cift-toplam-a name="Sınırları Sabit Bir Çift Toplam"}
+$$
+\sum_{x=3}^{7} \sum_{y=1}^{3} (x^2 + y)
+$$
+toplamını iç içe döngülerle hesaplayınız ve elle doğrulayınız.
+
+```python
+toplam = 0
+for x in range(3, 8):
+    for y in range(1, 4):
+        toplam += x ** 2 + y
+print("Toplam:", toplam)
+print(sum(x ** 2 + y for x in range(3, 8) for y in range(1, 4)))
+```
+
+::: {.cozum}
+Üst sınırlar dahil olduğu için `range(3, 8)` ve `range(1, 4)` yazılır. Elle hesaplamak için içteki toplamı her $x$ için açalım: $$\sum_{y=1}^{3}(x^2 + y) = 3x^2 + (1 + 2 + 3) = 3x^2 + 6$$. Dıştaki toplam terim terim
+$$
+(3 \cdot 9 + 6) + (3 \cdot 16 + 6) + (3 \cdot 25 + 6) + (3 \cdot 36 + 6) + (3 \cdot 49 + 6)
+$$
+olur, yani $33 + 54 + 81 + 114 + 153 = 435$. Program aynı toplamı önce iç içe döngüyle, sonra iki `for`'lu bir üreteç ifadesiyle hesaplar.
+
+Çıktı:
+
+```text
+Toplam: 435
+435
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-pr2-cift-toplam-b name="İç Sınırı Dış Değişkene Bağlı Toplam"}
+$$
+\sum_{x=3}^{7} \sum_{y=1}^{x} (x^2 + y)
+$$
+toplamını iç içe döngülerle hesaplayınız ve elle doğrulayınız.
+
+```python
+toplam = 0
+for x in range(3, 8):
+    for y in range(1, x + 1):
+        toplam += x ** 2 + y
+print(toplam)
+print(sum(x ** 2 + y for x in range(3, 8) for y in range(1, x + 1)))
+```
+
+::: {.cozum}
+Bu kez içteki toplamın üst sınırı $x$'tir; içteki döngü `range(1, x + 1)` olur ve her $x$ için farklı sayıda terim toplanır. Elle: $$\sum_{y=1}^{x}(x^2 + y) = x \cdot x^2 + \frac{x(x+1)}{2} = x^3 + \frac{x(x+1)}{2}$$. Terimler
+
+- $x = 3$: $27 + 6 = 33$,
+- $x = 4$: $64 + 10 = 74$,
+- $x = 5$: $125 + 15 = 140$,
+- $x = 6$: $216 + 21 = 237$,
+- $x = 7$: $343 + 28 = 371$
+
+olur ve toplam $33 + 74 + 140 + 237 + 371 = 855$'tir.
+
+Çıktı:
+
+```text
+855
+855
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu problemlerle dersin ilk yarısının konularını tamamladık. Değişkenlerden döngülere kadar öğrendiğimiz araçlar, ilerleyen bölümlerde fonksiyonlar ve daha büyük programlar yazmanın temelini oluşturacak. Notların başına dönmek için [Hazırlık: Python ve Çalışma Ortamı](hazirlik-python-ve-calisma-ortami.qmd) bölümüne bakılabilir.

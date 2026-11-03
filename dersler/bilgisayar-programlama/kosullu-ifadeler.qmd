@@ -1,0 +1,871 @@
+---
+title: "Karşılaştırma, Mantık Operatörleri ve Koşullu İfadeler"
+pagetitle: "Karşılaştırma, Mantık Operatörleri ve Koşullu İfadeler"
+description: "Python'da karşılaştırma operatörleri ve mantıksal değerler, and, or ve not operatörleri, if, else ve elif ile karar yapıları, iç içe koşullar, tek satırda koşul yazımı ve pass ifadesi; mutlak değer, yaş kategorisi ve artık yıl gibi örneklerle."
+---
+
+Şimdiye kadar yazdığımız programlar her çalıştırıldığında aynı komutları aynı sırayla yürüttü. Oysa çoğu problem bir karar gerektirir: girilen sayı negatifse işaretini değiştir, not $50$'nin altındaysa "kaldı" yaz, yaş $18$'den küçükse "reşit değil" de. Programın bir koşula bağlı olarak farklı yollardan ilerlemesini sağlayan yapılara **koşullu ifadeler** ya da **karar yapıları** denir.
+
+Bir karar vermek için önce bir soru sormak gerekir. Bu bölümde soruları karşılaştırma ve mantık operatörleriyle nasıl soracağımızı, sonra `if`, `else` ve `elif` ile yanıtlara göre nasıl farklı işler yapacağımızı göreceğiz.
+
+## Karşılaştırma Operatörleri
+
+Bir koşul, değeri `True` ya da `False` olan bir ifadedir; bu tür ifadelerin en basitleri iki değeri karşılaştırarak elde edilir.
+
+[Değişkenler, Veri Tipleri ve Atama](degiskenler-ve-veri-tipleri.qmd) bölümünde mantıksal tip `bool`'u tanımıştık (@def-dgs-bool): yalnız `True` ve `False` değerlerini alır ve bir önermenin doğru mu yanlış mı olduğunu kodlar.
+
+::: {#def-kos-karsilastirma name="Karşılaştırma Operatörleri"}
+İki değeri karşılaştırıp sonucu `True` ya da `False` olarak veren operatörlere **karşılaştırma operatörleri** denir:
+
+| Operatör | Anlamı | Örnek | Sonuç |
+|:-:|:--|:-:|:-:|
+| `<` | küçük mü? | `2 < 3` | `True` |
+| `>` | büyük mü? | `2 > 3` | `False` |
+| `<=` | küçük ya da eşit mi? | `3 <= 3` | `True` |
+| `>=` | büyük ya da eşit mi? | `2 >= 3` | `False` |
+| `==` | eşit mi? | `2 == 3` | `False` |
+| `!=` | eşit değil mi? | `2 != 3` | `True` |
+:::
+
+Yani `a < b` yazmak Python'a "a, b'den küçük mü?" diye sormaktır; yanıt bir `bool` değeridir ve bir değişkende saklanabilir.
+
+```python
+a = 2
+b = 3
+print("a < b: " + str(a < b))
+print("a > b: " + str(a > b))
+print("a >= b: " + str(a >= b))
+print("a <= b: " + str(a <= b))
+print("a == b: " + str(a == b))
+print("a != b: " + str(a != b))
+c = 5 < 3
+print(c, type(c))
+```
+
+Çıktı:
+
+```text
+a < b: True
+a > b: False
+a >= b: False
+a <= b: True
+a == b: False
+a != b: True
+False <class 'bool'>
+```
+
+Bir `bool` değeri `+` ile bir metne eklenemeyeceği için önce `str` ile metne çevirdik; virgülle `print("a < b:", a < b)` yazmak da aynı sonucu verirdi.
+
+::: {.callout-warning title="= ile == farklıdır"}
+`=` bir **atama** operatörüdür: sağdaki değeri soldaki değişkene verir. `==` ise bir **karşılaştırma** operatörüdür: iki değerin eşit olup olmadığını sorar ve `True` ya da `False` verir. `if x = 5:` yazmak yazım hatasıdır; doğrusu `if x == 5:`'tir.
+:::
+
+Eşitlik operatörü değerlerin tipini de hesaba katar: metin olan `"2"` ile tam sayı olan `2` eşit değildir. Buna karşılık `2 == 2.0` `True`'dur, çünkü iki sayı aynı değeri gösterir.
+
+```python
+print("2" == 2)
+print("2" != 2)
+print(2 == 2.0)
+print("Evet" == "Evet", "Evet" == "evet")
+```
+
+Çıktı:
+
+```text
+False
+True
+True
+True False
+```
+
+Metinler karakter karakter karşılaştırılır; büyük ve küçük harf farklı karakterlerdir, bu yüzden `"Evet"` ile `"evet"` eşit değildir.
+
+::: {#def-kos-zincir name="Zincirleme Karşılaştırma"}
+`a < x < b` biçimindeki yazım `a < x and x < b` anlamına gelir; buna **zincirleme karşılaştırma** denir. Diğer karşılaştırma operatörleri de aynı biçimde zincirlenebilir.
+:::
+
+Yani matematikteki $13 \le y < 20$ yazımı Python'da aynen `13 <= y < 20` olarak yazılabilir.
+
+## Mantık Operatörleri
+
+Birden fazla koşulu birleştirmek ya da bir koşulu tersine çevirmek için mantık operatörleri kullanılır.
+
+::: {#def-kos-and name="and Operatörü"}
+`p and q` ifadesi, `p` ve `q`'nun **ikisi de** `True` ise `True`, en az biri `False` ise `False` olur.
+:::
+
+Yani `and` "ve" bağlacıdır: "sayı $5$'ten büyük **ve** $10$'dan küçük" koşulu, iki koşulun ikisi de sağlandığında doğrudur.
+
+::: {#def-kos-or name="or Operatörü"}
+`p or q` ifadesi, `p` ve `q`'dan **en az biri** `True` ise `True`, ikisi de `False` ise `False` olur.
+:::
+
+Yani `or` "veya" bağlacıdır: "sayı $10$ **veya** $20$" koşulu, sayı bu iki değerden birine eşitse doğrudur.
+
+::: {#def-kos-not name="not Operatörü"}
+`not p` ifadesi, `p` `True` ise `False`, `False` ise `True` olur.
+:::
+
+Yani `not` bir koşulu tersine çevirir: `not x < 5` ifadesi "x, 5'ten küçük değil" demektir ve `x >= 5` ile aynı anlama gelir.
+
+Üç operatörün bütün durumları bir **doğruluk tablosunda** özetlenir:
+
+| `p` | `q` | `p and q` | `p or q` | `not p` |
+|:-:|:-:|:-:|:-:|:-:|
+| `True` | `True` | `True` | `True` | `False` |
+| `True` | `False` | `False` | `True` | `False` |
+| `False` | `True` | `False` | `True` | `True` |
+| `False` | `False` | `False` | `False` | `True` |
+
+```python
+a = True
+b = False
+print(True and True, True and False, False and False)
+print(1 == 1 and 1 < 2)
+print(1 < 2 and 3 < 1)
+print(a or b, 1 < 2 or 3 < 1)
+print(not True, not 1 < 2, not b)
+```
+
+Çıktı:
+
+```text
+True False False
+True
+False
+True True
+False False True
+```
+
+Mantık operatörlerinin kendi aralarında da bir öncelik sırası vardır: önce `not`, sonra `and`, en son `or` uygulanır; karşılaştırmalar ise üçünden de önce yapılır. Bu yüzden `not 1 < 2` ifadesi `not (1 < 2)` olarak okunur. Öncelikten emin olunmayan yerlerde parantez kullanmak hem hatayı önler hem de okumayı kolaylaştırır.
+
+:::: {#exm-kos-oncelik name="Mantık Operatörlerinin Önceliği"}
+`True or False and False` ifadesinin değeri nedir? `(True or False) and False` ile aynı mıdır?
+
+::: {.cozum}
+`and`, `or`'dan önce uygulanır; ifade `True or (False and False)` olarak okunur. Parantez içi `False`'tur ve `True or False` sonucu `True` olur.
+
+İkinci ifadede parantez önce `or`'u yaptırır: `True or False` `True` olur ve `True and False` sonucu `False`'tur. İki ifade farklıdır.
+
+```python
+print(True or False and False)
+print((True or False) and False)
+```
+
+Çıktı:
+
+```text
+True
+False
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+### Kısa Devre ve Mantıksal Olmayan Değerler
+
+`and` ve `or` yalnız `True` ve `False` ile değil, her türlü değerle kullanılabilir; bu durumda verdikleri sonuç biraz şaşırtıcı olabilir.
+
+::: {#def-kos-kisa-devre name="Kısa Devre Değerlendirmesi"}
+`p or q` ifadesinde Python önce `p`'ye bakar: `p` doğru sayılan bir değerse sonucu `p` olarak verir ve `q`'ya hiç bakmaz; değilse sonucu `q` olarak verir. `p and q` ifadesinde `p` yanlış sayılan bir değerse sonuç `p`'dir, değilse `q`'dur. Sonucun ilk değere bakılarak belirlenip ikinci değere geçilmemesine **kısa devre** (short-circuit) denir.
+:::
+
+Yani `or` ve `and` her zaman iki değerden birini olduğu gibi verir; bu değer `True` ya da `False` olmak zorunda değildir. Bir değerin doğru ya da yanlış sayılması, onun `bool` ile dönüştürülmüş hâline bakılarak belirlenir: `0`, `0.0` ve `""` yanlış, diğerleri doğru sayılır.
+
+```python
+print(1 or 2)
+print(0 or 2)
+print(1 and 2)
+print(0 and 2)
+print("" or "boş metin")
+```
+
+Çıktı:
+
+```text
+1
+2
+2
+0
+boş metin
+```
+
+`1 or 2` ifadesinde `1` doğru sayıldığı için sonuç `1`'dir; Python `2`'ye hiç bakmaz. `0 and 2` ifadesinde `0` yanlış sayıldığı için sonuç `0`'dır.
+
+Kısa devrenin pratik bir faydası vardır: `b != 0 and a / b > 1` koşulunda `b` sıfırsa `and` ikinci kısma geçmez, bu yüzden sıfıra bölme hatası oluşmaz.
+
+## if Yapısı
+
+Bir koşul doğru olduğunda belli komutları çalıştırmak için `if` yapısı kullanılır.
+
+::: {#def-kos-if name="if Yapısı"}
+```text
+if koşul:
+    koşul doğruysa çalışacak komutlar
+```
+yapısında `koşul` `True` ise girintili komutlar çalışır; `False` ise atlanır ve program `if` bloğundan sonraki ilk girintisiz satırdan devam eder. Koşuldan sonra iki nokta (`:`) konur ve bloğa ait komutlar aynı miktarda girintiyle yazılır.
+:::
+
+Yani `if` bir "eğer" cümlesidir: "eğer sayı $5$'ten büyükse şunu yaz". Python bloğun nerede bittiğini girintilerden anlar; [Girdi ve Çıktı İşlemleri](girdi-ve-cikti-islemleri.qmd) bölümündeki `try-except` yapısında olduğu gibi girinti burada da anlamın bir parçasıdır.
+
+```python
+sayi = 10
+if sayi > 5:
+    print("Sayı 5'ten büyüktür.")
+    print("Bu satır da if bloğunun içinde.")
+print("Bu satır her durumda çalışır.")
+```
+
+Çıktı:
+
+```text
+Sayı 5'ten büyüktür.
+Bu satır da if bloğunun içinde.
+Bu satır her durumda çalışır.
+```
+
+Aynı program `sayi = 3` ile çalıştırılsaydı koşul `False` olur, girintili iki satır atlanır ve yalnız son satır yazılırdı.
+
+### else
+
+Koşul sağlanmadığında da bir şey yapılması isteniyorsa `if`'e bir `else` bloğu eklenir.
+
+::: {#def-kos-else name="if-else Yapısı"}
+```text
+if koşul:
+    koşul doğruysa çalışacak komutlar
+else:
+    koşul yanlışsa çalışacak komutlar
+```
+yapısında iki bloktan **tam olarak biri** çalışır. `else`'in kendine ait bir koşulu yoktur; `if` koşulu sağlanmadığında kendiliğinden çalışır.
+:::
+
+Yani `if-else` iki yol ayrımıdır: program ya birinci yoldan ya ikinci yoldan gider, ikisinden birden asla gitmez.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="20.0 -5.0 520.0 256.0" role="img" aria-label="Flow chart: the condition is tested; if true the if block runs, otherwise the else block runs; both paths join at the next line">
+  <line x1="280.0" y1="10.0" x2="280.0" y2="26.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="280.0,32.0 277.1,25.0 282.9,25.0" fill="var(--academic-text)" opacity="1.0"/>
+  <polygon points="280.0,32.0 372.0,74.0 280.0,116.0 188.0,74.0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="280.0" y="71.0" fill="var(--color-theory)" font-size="12.5" text-anchor="middle" font-weight="600">koşul</text>
+  <text x="280.0" y="87.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">doğru mu?</text>
+  <path d="M188.0,74.0 L110.0,74.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="110.0" y1="74.0" x2="110.0" y2="126.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="110.0,132.0 107.1,125.0 112.9,125.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="149.0" y="67.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Evet</text>
+  <path d="M372.0,74.0 L450.0,74.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="450.0" y1="74.0" x2="450.0" y2="126.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="450.0,132.0 447.1,125.0 452.9,125.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="411.0" y="67.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Hayır</text>
+  <rect x="35.0" y="132.0" width="150.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="110.0" y="154.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">if bloğu</text>
+  <rect x="375.0" y="132.0" width="150.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="450.0" y="154.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">else bloğu</text>
+  <path d="M110.0,168.0 L110.0,196.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M450.0,168.0 L450.0,196.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M110.0,196.0 L450.0,196.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="280.0" y1="196.0" x2="280.0" y2="202.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="280.0,208.0 277.1,201.0 282.9,201.0" fill="var(--academic-text)" opacity="1.0"/>
+  <rect x="145.0" y="208.0" width="270.0" height="28.0" rx="6" fill="var(--academic-text)" fill-opacity="0.06" stroke="var(--academic-text)" stroke-width="1.5"/>
+  <text x="280.0" y="226.5" fill="var(--academic-text)" font-size="12" text-anchor="middle">yapıdan sonraki ilk satır</text>
+</svg>
+<figcaption>Bir <code>if-else</code> yapısının akışı. Koşul doğruysa yalnız <code>if</code> bloğu, yanlışsa yalnız <code>else</code> bloğu çalışır; iki yol da yapıdan sonraki satırda birleşir.</figcaption>
+</figure>
+```
+
+```python
+sayi = 3
+if sayi > 5:
+    print("Sayı 5'ten büyüktür.")
+else:
+    print("Sayı 5'ten küçük ya da 5'e eşittir.")
+```
+
+Çıktı:
+
+```text
+Sayı 5'ten küçük ya da 5'e eşittir.
+```
+
+### elif
+
+İkiden fazla durum arasında seçim yapmak için `elif` (else if, "değilse eğer") kullanılır.
+
+::: {#def-kos-elif name="if-elif-else Yapısı"}
+```text
+if koşul1:
+    koşul1 doğruysa çalışacak komutlar
+elif koşul2:
+    koşul1 yanlış, koşul2 doğruysa çalışacak komutlar
+else:
+    bütün koşullar yanlışsa çalışacak komutlar
+```
+yapısında koşullar yukarıdan aşağıya sırayla denenir ve **doğru çıkan ilk koşulun** bloğu çalışır; geri kalan koşullara bakılmaz. Hiçbir koşul doğru değilse `else` bloğu çalışır. İstenildiği kadar `elif` yazılabilir; `else` isteğe bağlıdır.
+:::
+
+Yani `if-elif-else` çok kollu bir yol ayrımıdır ve en fazla bir kol seçilir. Koşulların yazılış sırası bu yüzden önemlidir.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="7.5 -1.0 627.5 300.0" role="img" aria-label="Flow chart: condition 1 is tested; if true the if block runs, otherwise condition 2 is tested; if true the elif block runs, otherwise the else block runs; all paths join">
+  <line x1="105.0" y1="14.0" x2="105.0" y2="47.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="105.0,53.0 102.1,46.0 107.9,46.0" fill="var(--academic-text)" opacity="1.0"/>
+  <polygon points="105.0,53.0 187.0,95.0 105.0,137.0 23.0,95.0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="105.0" y="92.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">koşul1</text>
+  <text x="105.0" y="108.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">doğru mu?</text>
+  <polygon points="330.0,53.0 412.0,95.0 330.0,137.0 248.0,95.0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="330.0" y="92.0" fill="var(--color-theory)" font-size="12" text-anchor="middle" font-weight="600">koşul2</text>
+  <text x="330.0" y="108.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">doğru mu?</text>
+  <line x1="187.0" y1="95.0" x2="242.4" y2="95.0" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="248.0,95.0 241.0,97.9 241.0,92.1" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="217.5" y="88.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Hayır</text>
+  <path d="M412.0,95.0 L545.0,95.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="545.0" y1="95.0" x2="545.0" y2="166.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="545.0,172.0 542.1,165.0 547.9,165.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="478.5" y="88.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Hayır</text>
+  <line x1="105.0" y1="137.0" x2="105.0" y2="166.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="105.0,172.0 102.1,165.0 107.9,165.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="112.0" y="158.5" fill="var(--academic-text)" font-size="11.5" text-anchor="start">Evet</text>
+  <line x1="330.0" y1="137.0" x2="330.0" y2="166.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.0,172.0 327.1,165.0 332.9,165.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="337.0" y="158.5" fill="var(--academic-text)" font-size="11.5" text-anchor="start">Evet</text>
+  <rect x="40.0" y="172.0" width="130.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="105.0" y="194.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">if bloğu</text>
+  <rect x="265.0" y="172.0" width="130.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="330.0" y="194.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">elif bloğu</text>
+  <rect x="480.0" y="172.0" width="130.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="545.0" y="194.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">else bloğu</text>
+  <line x1="105.0" y1="208.0" x2="105.0" y2="246.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="105.0,252.0 102.1,245.0 107.9,245.0" fill="var(--academic-text)" opacity="1.0"/>
+  <line x1="330.0" y1="208.0" x2="330.0" y2="246.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="330.0,252.0 327.1,245.0 332.9,245.0" fill="var(--academic-text)" opacity="1.0"/>
+  <line x1="545.0" y1="208.0" x2="545.0" y2="246.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="545.0,252.0 542.1,245.0 547.9,245.0" fill="var(--academic-text)" opacity="1.0"/>
+  <rect x="30.0" y="252.0" width="590.0" height="32.0" rx="6" fill="var(--academic-text)" fill-opacity="0.06" stroke="var(--academic-text)" stroke-width="1.5"/>
+  <text x="325.0" y="272.5" fill="var(--academic-text)" font-size="12.5" text-anchor="middle">yapıdan sonraki ilk satır</text>
+</svg>
+<figcaption>Bir <code>if-elif-else</code> yapısının akışı. Koşullar yazıldıkları sırayla denenir; doğru çıkan ilk koşulun bloğu çalışır ve geri kalanlara bakılmaz. Hiçbir koşul doğru değilse <code>else</code> bloğu çalışır.</figcaption>
+</figure>
+```
+
+```python
+sayi = 13
+if sayi > 10:
+    print("Sayı 10'dan büyüktür.")
+elif sayi > 5:
+    print("Sayı 5'ten büyüktür.")
+elif sayi == 5:
+    print("Sayı 5'e eşittir.")
+else:
+    print("Sayı 5'ten küçüktür.")
+```
+
+Çıktı:
+
+```text
+Sayı 10'dan büyüktür.
+```
+
+$13$ hem $10$'dan hem $5$'ten büyüktür; ama ilk koşul doğru çıktığı için yalnız ilk mesaj yazıldı ve `elif sayi > 5` koşuluna hiç bakılmadı.
+
+:::: {#exm-kos-harf-notu-sirasi name="Koşulların Sırası"}
+Bir notun harf karşılığı şöyle belirlensin: $85$ ve üstü A, $70$ ile $84$ arası B, $50$ ile $69$ arası C, $50$'nin altı D. Aşağıdaki program $90$ notu için neden yanlış sonuç verir? Nasıl düzeltilir?
+
+```python
+not_ = 90
+if not_ >= 50:
+    print("C")
+elif not_ >= 70:
+    print("B")
+elif not_ >= 85:
+    print("A")
+else:
+    print("D")
+```
+
+::: {.cozum}
+$90 \ge 50$ olduğu için ilk koşul doğru çıkar ve program `C` yazar; `elif`'lere hiç bakılmaz:
+
+```python
+not_ = 90
+if not_ >= 50:
+    print("C")
+elif not_ >= 70:
+    print("B")
+elif not_ >= 85:
+    print("A")
+else:
+    print("D")
+```
+
+Çıktı:
+
+```text
+C
+```
+
+Hata, en geniş koşulun en başa yazılmasıdır: $50$'den büyük her not ilk kola düşer. Koşulları en dar olandan başlayarak yazmak gerekir. Bir `elif`'e ulaşıldıysa önceki koşulların hepsi yanlış demektir; bu yüzden `elif not_ >= 70` satırına gelen bir notun $85$'ten küçük olduğu zaten bilinir ve ayrıca `not_ < 85` yazmaya gerek yoktur:
+
+```python
+not_ = 90
+if not_ >= 85:
+    print("A")
+elif not_ >= 70:
+    print("B")
+elif not_ >= 50:
+    print("C")
+else:
+    print("D")
+```
+
+Çıktı:
+
+```text
+A
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+
+## Koşullarda Mantık Operatörleri
+
+Bir karar birden fazla koşula bağlıysa koşullar `and`, `or` ve `not` ile birleştirilir.
+
+```python
+sayi = 15
+if sayi > 5 and sayi < 10:
+    print("Sayı 5 ile 10 arasındadır.")
+elif sayi == 10 or sayi == 20:
+    print("Sayı 10 ya da 20'dir.")
+elif not sayi < 5:
+    print("Sayı 5'ten küçük değildir.")
+```
+
+Çıktı:
+
+```text
+Sayı 5'ten küçük değildir.
+```
+
+$15$ için birinci koşul (`15 < 10` yanlış olduğundan) ve ikinci koşul sağlanmaz; üçüncü koşulda `15 < 5` yanlış olduğundan `not` onu doğruya çevirir ve son mesaj yazılır. Birinci koşul zincirleme karşılaştırmayla (@def-kos-zincir) `5 < sayi < 10` olarak da yazılabilirdi.
+
+## İç İçe Koşullar
+
+Bir koşulun bloğunun içine başka bir koşul yazılabilir; böylece ikinci soru yalnız birinci sorunun yanıtı belli bir yönde çıktığında sorulur.
+
+```python
+sayi = 15
+if sayi > 10:
+    print("Sayı 10'dan büyüktür.")
+    if sayi < 20:
+        print("Sayı 20'den küçüktür.")
+    else:
+        print("Sayı 20'ye eşit ya da 20'den büyüktür.")
+else:
+    print("Sayı 10 ya da daha küçüktür.")
+```
+
+Çıktı:
+
+```text
+Sayı 10'dan büyüktür.
+Sayı 20'den küçüktür.
+```
+
+İçteki `if-else` bir girinti daha içeride yazılır ve yalnız dıştaki koşul doğruysa çalışır. Hangi `else`'in hangi `if`'e ait olduğunu girintiler belirler: içteki `else` içteki `if` ile, dıştaki `else` dıştaki `if` ile aynı hizadadır.
+
+## Tek Satırda Koşul
+
+Bir değişkene bir koşula göre iki değerden birini atamak için `if-else` yapısının tek satırlık bir yazımı vardır.
+
+::: {#def-kos-uclu name="Koşullu İfade"}
+`a if koşul else b` ifadesinin değeri, `koşul` `True` ise `a`, `False` ise `b`'dir. Bu yazıma **koşullu ifade** ya da üç parçası olduğu için **üçlü operatör** (ternary operator) denir.
+:::
+
+Yani `sonuc = "Pozitif" if sayi > 0 else "Pozitif değil"` satırı dört satırlık bir `if-else` yapısının yaptığı işi tek satırda yapar. Koşullu ifade bir komut değil bir değerdir; bu yüzden bir atamanın sağ tarafında ya da bir `print`'in içinde kullanılabilir.
+
+```python
+sayi = 6
+sonuc = "Pozitif" if sayi > 0 else "Negatif ya da sıfır"
+print(sonuc)
+print("çift" if sayi % 2 == 0 else "tek")
+```
+
+Çıktı:
+
+```text
+Pozitif
+çift
+```
+
+Koşullu ifade, parçalı tanımlı fonksiyonları hesaplamak için de kullanışlıdır.
+
+:::: {#exm-kos-parcali name="Parçalı Tanımlı Bir Fonksiyon"}
+$$
+f(x) = \begin{cases} x^2 + 1, & x \ge 0, \\ -x^2 + 1, & x < 0 \end{cases}
+$$
+fonksiyonunun $x = 3$ ve $x = -2$ noktalarındaki değerlerini koşullu ifadeyle hesaplayınız.
+
+::: {.cozum}
+Tanımın iki kolunu koşullu ifadenin iki tarafına yazarız. $x = 3 \ge 0$ için birinci kol kullanılır: $f(3) = 9 + 1 = 10$. $x = -2 < 0$ için ikinci kol kullanılır: $f(-2) = -4 + 1 = -3$.
+
+```python
+x = 3
+f = x ** 2 + 1 if x >= 0 else -x ** 2 + 1
+print(f)
+x = -2
+f = x ** 2 + 1 if x >= 0 else -x ** 2 + 1
+print(f)
+```
+
+Çıktı:
+
+```text
+10
+-3
+```
+
+`-x ** 2` ifadesinde üs alma eksi işaretinden önce yapıldığı için $-(x^2)$ hesaplanır; $x = -2$ için bu $-4$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+## pass İfadesi
+
+Python'da bir bloğun içi boş bırakılamaz; henüz yazılmamış bir blok için yer tutucu olarak `pass` kullanılır.
+
+::: {#def-kos-pass name="pass İfadesi"}
+`pass` hiçbir şey yapmayan bir komuttur. Yazım kuralları gereği bir komut bulunması gereken ama yapılacak bir iş olmayan yerlerde kullanılır.
+:::
+
+Yani `pass`, "burayı sonra dolduracağım" demenin yoludur. Bir `if` bloğu tamamen boş bırakılırsa Python `IndentationError` verir; içine `pass` yazılınca program sorunsuz çalışır.
+
+```python
+sayi = 25
+if sayi > 5:
+    pass  # burası daha sonra yazılacak
+else:
+    print("Sayı 5 ya da daha küçük.")
+print("Program bitti.")
+```
+
+Çıktı:
+
+```text
+Program bitti.
+```
+
+## Çeşitli Örnekler
+
+Bu bölümde öğrendiklerimizi kullanıcıdan değer alan birkaç küçük programda birleştirelim.
+
+:::: {#exm-kos-mutlak-deger name="Mutlak Değer"}
+Kullanıcıdan bir sayı alıp mutlak değerini hazır `abs` fonksiyonunu kullanmadan hesaplayan bir program yazınız.
+
+::: {.cozum}
+Mutlak değerin tanımı $|x| = x$ ($x \ge 0$ ise) ve $|x| = -x$ ($x < 0$ ise) biçimindedir. Önce sonucu sayının kendisine eşitleriz; sayı negatifse işaretini değiştiririz. Kullanıcı $-9$ girsin:
+
+```python
+sayi = float(input("Bir sayı giriniz: "))
+mutlak = sayi
+if sayi < 0:
+    mutlak = -sayi
+print(f"{sayi} sayısının mutlak değeri {mutlak}")
+```
+
+Çıktı:
+
+```text
+Bir sayı giriniz: -9
+-9.0 sayısının mutlak değeri 9.0
+```
+
+Burada `else` bloğuna gerek yoktur: sayı negatif değilse `mutlak` zaten doğru değeri taşır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kos-yas-kategorisi name="Yaşa Göre Kategori"}
+Kullanıcının girdiği yaş $13$'ten küçükse "Çocuk", $13$–$17$ arasındaysa "Genç", $18$–$64$ arasındaysa "Yetişkin", $65$ ve üstündeyse "Yaşlı" yazan bir program yazınız.
+
+::: {.cozum}
+Dört kategori olduğundan bir `if`, iki `elif` ve bir `else` kullanırız. Koşullar sırayla denendiği için `elif yas < 18` satırına ulaşan bir yaşın $13$ ya da daha büyük olduğu zaten bilinir. Kullanıcı $15$ girsin:
+
+```python
+yas = int(input("Yaşınızı girin: "))
+if yas < 13:
+    print("Çocuk")
+elif yas < 18:
+    print("Genç")
+elif yas < 65:
+    print("Yetişkin")
+else:
+    print("Yaşlı")
+```
+
+Çıktı:
+
+```text
+Yaşınızı girin: 15
+Genç
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-kos-isaret name="Pozitif, Negatif ya da Sıfır"}
+Kullanıcının girdiği bir tam sayının pozitif, negatif ya da sıfır olduğunu yazan bir program yazınız. Üç ayrı `if` kullanan bir çözüm ile `if-elif-else` kullanan bir çözümü karşılaştırınız.
+
+::: {.cozum}
+Üç durumu üç ayrı `if` ile denetleyebiliriz. Kullanıcı $52$ girsin:
+
+```python
+a = int(input("Bir sayı giriniz: "))
+if a > 0:
+    print("Pozitif")
+if a == 0:
+    print("Sıfır")
+if a < 0:
+    print("Negatif")
+```
+
+Çıktı:
+
+```text
+Bir sayı giriniz: 52
+Pozitif
+```
+
+Bu program doğru sonuç verir, ama sayı pozitif bulunduktan sonra da diğer iki koşulu boşuna sınar. Üç durum birbirini dışladığı için `if-elif-else` daha uygundur: doğru koşul bulunur bulunmaz geri kalanlara bakılmaz, son durum için de koşul yazmaya gerek kalmaz.
+
+```python
+a = int(input("Bir sayı giriniz: "))
+if a > 0:
+    print("Pozitif")
+elif a == 0:
+    print("Sıfır")
+else:
+    print("Negatif")
+```
+
+Çıktı:
+
+```text
+Bir sayı giriniz: 52
+Pozitif
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Girdi alan alıştırmalarda farklı değerlerle programın bütün kollarını deneyin.
+
+:::: {#exr-kos-cift-tek name="Çift mi, Tek mi?"}
+Kullanıcının girdiği bir tam sayının çift mi tek mi olduğunu yazan bir program yazınız.
+
+::: {.cozum}
+Bir sayı ancak ve ancak $2$'ye bölümünden kalan $0$ ise çifttir. Kullanıcı $17$ girsin; $17 = 8 \cdot 2 + 1$ olduğundan kalan $1$'dir ve sayı tektir.
+
+```python
+n = int(input("Bir tam sayı girin: "))
+if n % 2 == 0:
+    print(n, "çift bir sayıdır.")
+else:
+    print(n, "tek bir sayıdır.")
+```
+
+Çıktı:
+
+```text
+Bir tam sayı girin: 17
+17 tek bir sayıdır.
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kos-en-buyuk name="Üç Sayının En Büyüğü"}
+`a = 7`, `b = 12` ve `c = 9` sayılarının en büyüğünü hazır `max` fonksiyonunu kullanmadan `if-elif-else` ile bulunuz.
+
+::: {.cozum}
+`a` diğer ikisinden büyük ya da onlara eşitse en büyük `a`'dır. Değilse en büyük ya `b` ya `c`'dir; bunu `b >= c` sorusu belirler.
+
+```python
+a = 7
+b = 12
+c = 9
+if a >= b and a >= c:
+    en_buyuk = a
+elif b >= c:
+    en_buyuk = b
+else:
+    en_buyuk = c
+print("En büyük:", en_buyuk)
+```
+
+Çıktı:
+
+```text
+En büyük: 12
+```
+
+`elif b >= c` satırına ulaşıldıysa `a`'nın en büyük olmadığı bilinir; geriye `b` ile `c`'yi karşılaştırmak kalır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kos-artik-yil name="Artık Yıl"}
+Bir yıl $4$'e bölünüyorsa artık yıldır; ama $100$'e bölünüp $400$'e bölünmeyen yıllar artık yıl değildir. Kullanıcının girdiği yılın artık yıl olup olmadığını yazan bir program yazınız ve $1900$ için deneyiniz.
+
+::: {.cozum}
+Kural tek bir koşulla yazılabilir: yıl $400$'e bölünüyorsa artık yıldır; ya da yıl $4$'e bölünüyor **ve** $100$'e bölünmüyorsa artık yıldır. $1900$ yılı $4$'e ve $100$'e bölünür ama $400$'e bölünmez ($1900 = 4 \cdot 400 + 300$); bu yüzden artık yıl değildir.
+
+```python
+yil = int(input("Yıl: "))
+if yil % 400 == 0 or (yil % 4 == 0 and yil % 100 != 0):
+    print(yil, "artık yıldır.")
+else:
+    print(yil, "artık yıl değildir.")
+```
+
+Çıktı:
+
+```text
+Yıl: 1900
+1900 artık yıl değildir.
+```
+
+Parantez burada zorunlu değildir, çünkü `and` zaten `or`'dan önce uygulanır; ama koşulun yapısını açıkça gösterdiği için yazılması iyidir. $2000$ yılı ise $400$'e bölündüğü için artık yıldır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kos-ikinci-derece name="İkinci Dereceden Denklemin Kök Sayısı"}
+$ax^2 + bx + c = 0$ ($a \neq 0$) denkleminin kaç gerçel kökü olduğunu diskriminant $\Delta = b^2 - 4ac$'nin işaretine göre bulan bir program yazınız. $x^2 - 6x + 9 = 0$ için deneyiniz.
+
+::: {.cozum}
+$\Delta > 0$ ise iki farklı gerçel kök, $\Delta = 0$ ise bir (çift) kök vardır, $\Delta < 0$ ise gerçel kök yoktur. $a = 1$, $b = -6$, $c = 9$ için $\Delta = 36 - 36 = 0$ olur; denklemin tek kökü $x = -b/(2a) = 3$'tür.
+
+```python
+a = 1
+b = -6
+c = 9
+delta = b ** 2 - 4 * a * c
+if delta > 0:
+    print("İki farklı gerçel kök var.")
+elif delta == 0:
+    print("Bir (çift) kök var:", -b / (2 * a))
+else:
+    print("Gerçel kök yok.")
+```
+
+Çıktı:
+
+```text
+Bir (çift) kök var: 3.0
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kos-ucgen name="Üçgen Olabilir mi?"}
+Kenar uzunlukları $3$, $4$ ve $8$ olan bir üçgen var mıdır? Üç kenar uzunluğu verildiğinde bunu söyleyen bir program yazınız.
+
+::: {.cozum}
+Üç pozitif uzunluğun bir üçgenin kenarları olması için her kenar diğer ikisinin toplamından küçük olmalıdır (üçgen eşitsizliği). Üç koşulun üçü de sağlanmalı, bu yüzden `and` ile bağlanır. $3 + 4 = 7 < 8$ olduğundan $a + b > c$ koşulu sağlanmaz ve üçgen yoktur.
+
+```python
+a = 3
+b = 4
+c = 8
+if a + b > c and a + c > b and b + c > a:
+    print("Bu uzunluklarla bir üçgen çizilebilir.")
+else:
+    print("Bu uzunluklarla üçgen çizilemez.")
+```
+
+Çıktı:
+
+```text
+Bu uzunluklarla üçgen çizilemez.
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kos-vki name="Vücut Kitle İndeksi"}
+Vücut kitle indeksi $\text{VKİ} = \dfrac{\text{kilo}}{\text{boy}^2}$ ile hesaplanır (kilo kilogram, boy metre cinsinden). VKİ $18{,}5$'ten küçükse "zayıf", $18{,}5$ ile $25$ arasındaysa "normal", $25$ ile $30$ arasındaysa "fazla kilolu", $30$ ve üstündeyse "obez" yazan bir program yazınız. Kullanıcı kilo olarak $70$, boy olarak $1{,}75$ girsin.
+
+::: {.cozum}
+$$\text{VKİ} = 70/1{,}75^2 = 70/3{,}0625 \approx 22{,}86$$ olur; bu değer $18{,}5$ ile $25$ arasında olduğundan "normal" kategorisindedir. Kategoriler küçükten büyüğe sıralı olduğu için koşulları da bu sırayla yazarız:
+
+```python
+kilo = float(input("Kilo (kg): "))
+boy = float(input("Boy (m): "))
+vki = kilo / boy ** 2
+if vki < 18.5:
+    kategori = "zayıf"
+elif vki < 25:
+    kategori = "normal"
+elif vki < 30:
+    kategori = "fazla kilolu"
+else:
+    kategori = "obez"
+print(f"VKİ = {vki:.2f}, kategori: {kategori}")
+```
+
+Çıktı:
+
+```text
+Kilo (kg): 70
+Boy (m): 1.75
+VKİ = 22.86, kategori: normal
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-kos-iki-ifade-esitligi name="İki Koşulun Eşitliği"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+if (2 > 1) == (5 < 10):
+    print("İfadeler aynıdır.")
+if (2 > 1) == (5 > 10):
+    print("İfadeler aynıdır.")
+else:
+    print("İfadeler farklıdır.")
+```
+
+::: {.cozum}
+Parantezler önce hesaplanır. Birinci `if`'te `2 > 1` ve `5 < 10` ikisi de `True`'dur; `True == True` doğru olduğundan ilk mesaj yazılır. İkinci `if`'te `2 > 1` `True`, `5 > 10` `False`'tur; `True == False` yanlış olduğundan `else` bloğu çalışır.
+
+```python
+if (2 > 1) == (5 < 10):
+    print("İfadeler aynıdır.")
+if (2 > 1) == (5 > 10):
+    print("İfadeler aynıdır.")
+else:
+    print("İfadeler farklıdır.")
+```
+
+Çıktı:
+
+```text
+İfadeler aynıdır.
+İfadeler farklıdır.
+```
+
+İki `if` birbirinden bağımsızdır; `else` yalnız ikinci `if`'e aittir. [$\blacksquare$]{.qed}
+:::
+::::
+
+Programlarımız artık karar verebiliyor. Ama her karar tek bir değer üzerinde ve yalnız bir kez veriliyor. Bir sonraki bölüm [Koleksiyonlar ve Listeler](koleksiyonlar-ve-listeler.qmd), birçok değeri tek bir değişkende bir arada tutan veri yapılarını tanıtıyor; ardından gelen bölümlerde bu değerlerin her biri üzerinde döngülerle işlem yapacağız.

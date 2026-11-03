@@ -1,0 +1,851 @@
+---
+title: "Girdi ve Çıktı İşlemleri"
+pagetitle: "Girdi ve Çıktı İşlemleri"
+description: "Python'da input ile kullanıcıdan değer almak ve sayıya çevirmek, try-except ile hatalı girdileri yakalamak, eval, print fonksiyonunun sep ve end parametreleri, f-string, format ve yüzde işaretiyle biçimli yazdırma, kaçış karakterleri ve sık karşılaşılan hata türleri."
+---
+
+Şimdiye kadar yazdığımız programlar hep aynı sayılarla çalıştı: bir dairenin alanını hesaplarken yarıçapı programın içine kendimiz yazdık. Gerçek bir program ise değerleri kullanıcıdan alır, onlarla hesap yapar ve sonucu okunaklı bir biçimde kullanıcıya gösterir. Bir programın dış dünyayla bu alışverişine **girdi** (input) ve **çıktı** (output) denir.
+
+Bu bölümde klavyeden değer almayı, alınan metni sayıya çevirmeyi ve kullanıcının yanlış bir değer girmesi hâlinde programın çökmesini önlemeyi göreceğiz. Ardından `print` fonksiyonunun inceliklerini, sonuçları istediğimiz biçimde yazdırmanın yollarını ve Python'ın hata mesajlarını okumayı öğreneceğiz.
+
+## Kullanıcıdan Değer Almak
+
+Python'da kullanıcıdan bir değer almanın en yaygın yolu `input` fonksiyonudur.
+
+::: {#def-gco-input name="input Fonksiyonu"}
+`input(mesaj)` fonksiyonu ekrana `mesaj` metnini yazar, kullanıcının bir şeyler yazıp Enter'a basmasını bekler ve yazılanı **her zaman bir metin** (`str`) olarak verir.
+:::
+
+Yani `input`'un içine yazılan metin kullanıcıya bir soru ya da talimattır; fonksiyonun verdiği değer ise kullanıcının yanıtıdır. Bu yanıt bir değişkene atanarak saklanır. Aşağıdaki çıktıda `Ulaş`, kullanıcının klavyeden yazdığı değerdir.
+
+```python
+isim = input("Lütfen adınızı girin: ")
+print("Merhaba, " + isim)
+```
+
+Çıktı:
+
+```text
+Lütfen adınızı girin: Ulaş
+Merhaba, Ulaş
+```
+
+Programda iki metni `+` ile birleştirdik.
+
+::: {#def-gco-birlestirme name="Metin Birleştirme"}
+İki metin arasındaki `+` operatörü, ikinci metni birincinin sonuna ekleyerek yeni bir metin oluşturur; buna **metin birleştirme** (concatenation) denir. `+` operatörünün iki yanındaki değerler metinse birleştirme, sayıysa toplama yapılır; bir metin ile bir sayı `+` ile birleştirilemez.
+:::
+
+Yani `"Hız Sınırı " + "80"` işlemi `"Hız Sınırı 80"` metnini verir; burada `"80"` bir sayı değil, iki karakterlik bir metindir. `+` metinlerin arasına kendiliğinden boşluk koymaz; boşluk isteniyorsa metinlerden birinin içine yazılmalıdır.
+
+```python
+birinci = "Hız Sınırı "
+ikinci = "80"
+print(birinci + ikinci)
+print(birinci + ikinci + "!")
+print(birinci + ikinci + "10")
+```
+
+Çıktı:
+
+```text
+Hız Sınırı 80
+Hız Sınırı 80!
+Hız Sınırı 8010
+```
+
+Son satırda `"80" + "10"` toplanmadı, yan yana yazıldı ve `8010` oluştu.
+
+### Sayı Olarak Değer Almak
+
+`input` her zaman metin verdiği için, kullanıcının girdiği bir sayıyla hesap yapmadan önce onu sayıya çevirmek gerekir.
+
+```python
+a = input("Kenar uzunluğu: ")
+alan = a * a
+print("Karenin alanı =", alan)
+```
+
+Çıktı:
+
+```text
+Kenar uzunluğu: 5
+TypeError: can't multiply sequence by non-int of type 'str'
+```
+
+Kullanıcı `5` yazdı ama `a` değişkeni `5` sayısını değil, `"5"` metnini tutuyor; iki metin çarpılamadığı için program `TypeError` hatasıyla durdu. Çözüm, `input`'un verdiği metni [Değişkenler, Veri Tipleri ve Atama](degiskenler-ve-veri-tipleri.qmd) bölümündeki tip dönüşüm fonksiyonlarıyla (@def-dgs-donusum) sayıya çevirmektir. Bunun için `input` çağrısı doğrudan `int` ya da `float` içine yazılır:
+
+```python
+yas = int(input("Lütfen yaşınızı girin: "))
+boy = float(input("Lütfen boyunuzu girin (örnek: 1.75): "))
+print("Yaşınız:", yas)
+print("Boyunuz:", boy)
+print("Gelecek yıl", yas + 1, "yaşında olacaksınız.")
+```
+
+Çıktı:
+
+```text
+Lütfen yaşınızı girin: 19
+Lütfen boyunuzu girin (örnek: 1.75): 1.56
+Yaşınız: 19
+Boyunuz: 1.56
+Gelecek yıl 20 yaşında olacaksınız.
+```
+
+`int(input(...))` yazımında önce içteki `input` çalışır ve bir metin verir; sonra dıştaki `int` bu metni tam sayıya çevirir. Ondalıklı sayı girilirken ayırıcı olarak virgül değil nokta kullanılmalıdır: `1,56` yazılırsa `float` onu okuyamaz.
+
+:::: {#exm-gco-iki-sayi-toplami name="İki Sayının Toplamı"}
+Kullanıcıdan iki sayı alıp toplamlarını yazan bir program yazınız. Sayılar `int`'e çevrilmezse ne olur?
+
+::: {.cozum}
+Önce dönüşüm yapmadan deneyelim. Kullanıcı `5` ve `6` girsin:
+
+```python
+A = input("1. sayıyı gir: ")
+B = input("2. sayıyı gir: ")
+T = A + B
+print("Toplam =", T)
+```
+
+Çıktı:
+
+```text
+1. sayıyı gir: 5
+2. sayıyı gir: 6
+Toplam = 56
+```
+
+`A` ve `B` metin olduğundan `+` toplama değil birleştirme yaptı ve `"5"` ile `"6"` yan yana yazılıp `56` oluştu. Hata mesajı çıkmadığı için bu tür bir yanlışlık fark edilmeden geçebilir. Değerleri `int`'e çevirince toplama yapılır:
+
+```python
+A = int(input("1. sayıyı gir: "))
+B = int(input("2. sayıyı gir: "))
+T = A + B
+print("Toplam =", T)
+```
+
+Çıktı:
+
+```text
+1. sayıyı gir: 5
+2. sayıyı gir: 6
+Toplam = 11
+```
+
+Ondalıklı sayılarla da çalışması isteniyorsa `int` yerine `float` kullanılır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Hatalı Girdileri Yakalamak
+
+Kullanıcı bir sayı yerine harf ya da boş bir değer girerse dönüşüm başarısız olur ve program durur.
+
+```python
+yas = int(input("Lütfen yaşınızı girin: "))
+print("Yaşınız:", yas)
+```
+
+Çıktı:
+
+```text
+Lütfen yaşınızı girin: 45.5
+ValueError: invalid literal for int() with base 10: '45.5'
+```
+
+`45.5` bir tam sayı yazımı olmadığından `int` onu okuyamadı ve `ValueError` hatası oluştu. Programın böyle durumlarda çökmesi yerine kullanıcıyı uyarması için hatayı yakalamak gerekir.
+
+::: {#def-gco-try name="try-except Yapısı"}
+Hata çıkabilecek komutlar `try:` satırının altına, bir hata oluşursa çalışacak komutlar da `except HataTuru:` satırının altına girintili olarak yazılır. `try` bloğundaki komutlarda `HataTuru` türünde bir hata oluşursa Python o komutta durur, programı sonlandırmaz ve `except` bloğuna geçer; hata oluşmazsa `except` bloğu atlanır.
+:::
+
+Yani `try-except`, "şunu dene; olmazsa şunu yap" demenin yoludur. Satır başındaki boşluklara **girinti** (indentation) denir ve Python hangi komutların `try`'a, hangilerinin `except`'e ait olduğunu bu girintilerden anlar. Girinti için genellikle dört boşluk kullanılır; Colab ve VS Code, iki noktayla biten bir satırdan sonra Enter'a basıldığında girintiyi kendiliğinden ekler.
+
+```python
+try:
+    yas = int(input("Lütfen yaşınızı girin: "))
+    print("Yaşınız:", yas)
+except ValueError:
+    print("Geçersiz giriş! Lütfen bir tam sayı girin.")
+```
+
+Çıktı:
+
+```text
+Lütfen yaşınızı girin: 45.5
+Geçersiz giriş! Lütfen bir tam sayı girin.
+```
+
+Bir `try` bloğundan sonra farklı hata türleri için birden çok `except` bloğu yazılabilir. Aşağıdaki programda kullanıcı sıfır girerse sıfıra bölme hatası (`ZeroDivisionError`), sayı olmayan bir şey girerse `ValueError` yakalanır.
+
+```python
+try:
+    sayi = int(input("Bir sayı girin: "))
+    sonuc = 10 / sayi
+    print("Sonuç:", sonuc)
+except ZeroDivisionError:
+    print("Hata: Bir sayıyı sıfıra bölemezsiniz!")
+except ValueError:
+    print("Hata: Lütfen geçerli bir tam sayı girin!")
+```
+
+Çıktı:
+
+```text
+Bir sayı girin: a
+Hata: Lütfen geçerli bir tam sayı girin!
+```
+
+Aynı program kullanıcı `0` girdiğinde ise şöyle çalışır:
+
+```python
+try:
+    sayi = int(input("Bir sayı girin: "))
+    sonuc = 10 / sayi
+    print("Sonuç:", sonuc)
+except ZeroDivisionError:
+    print("Hata: Bir sayıyı sıfıra bölemezsiniz!")
+except ValueError:
+    print("Hata: Lütfen geçerli bir tam sayı girin!")
+```
+
+Çıktı:
+
+```text
+Bir sayı girin: 0
+Hata: Bir sayıyı sıfıra bölemezsiniz!
+```
+
+Kullanıcı yanlış girdikçe soruyu yeniden soran bir program için döngülere ihtiyaç var; bunu [İç İçe Döngüler, while Döngüsü ve match-case](ic-ice-donguler-ve-while-dongusu.qmd) bölümünde yapacağız.
+
+### eval Fonksiyonu
+
+`input` ile alınan metni sayıya çevirmenin bir başka yolu `eval` fonksiyonudur.
+
+::: {#def-gco-eval name="eval Fonksiyonu"}
+`eval(metin)` fonksiyonu, kendisine verilen metni bir Python ifadesi olarak hesaplar ve sonucunu verir.
+:::
+
+Yani `eval("5.6")` `5.6` sayısını, `eval("2 + 3")` ise `5` sayısını verir. Kullanıcı tam sayı girerse `int`, ondalıklı sayı girerse `float` elde edilir; hangi tipte bir sayı geleceğini önceden bilmek gerekmez.
+
+```python
+a = eval(input("Kenar uzunluğu: "))
+alan = a * a
+print("Karenin alanı =", alan)
+print(type(a))
+```
+
+Çıktı:
+
+```text
+Kenar uzunluğu: 5.6
+Karenin alanı = 31.359999999999996
+<class 'float'>
+```
+
+$5{,}6^2 = 31{,}36$ olması gerekirken çıktıda görülen küçük fark, ondalıklı sayıların bilgisayarda yaklaşık saklanmasından kaynaklanır.
+
+::: {.callout-warning title="eval tehlikelidir"}
+`eval` kendisine verilen metni Python kodu olarak çalıştırır. Kullanıcı bir sayı yerine bilgisayardaki dosyaları silen bir komut yazarsa `eval` onu da çalıştırır. Bu yüzden kullanıcıdan gelen girdiyi `eval` ile değil, `int` ya da `float` ile çevirmek her zaman daha güvenlidir.
+:::
+
+## Ekrana Yazdırmak: print
+
+Sonuçları ekrana yazmak için kullandığımız `print` fonksiyonu, ilk bakışta göründüğünden daha esnektir.
+
+`print`'e virgülle ayrılmış birden çok değer verilebilir; bu değerler metin, sayı ya da ifade olabilir. `print` her değeri yazar, değerlerin arasına birer boşluk koyar ve en sonda yeni bir satıra geçer.
+
+```python
+isim = "Ahmet"
+yas = 30
+a = 5
+b = 10
+print("İsim:", isim)
+print("Yaş:", yas)
+print(a, "+", b, "=", a + b)
+print("Merhaba" + "Arkadaşlar")
+print("Merhaba", "Arkadaşlar")
+```
+
+Çıktı:
+
+```text
+İsim: Ahmet
+Yaş: 30
+5 + 10 = 15
+MerhabaArkadaşlar
+Merhaba Arkadaşlar
+```
+
+Son iki satırın farkına dikkat edin: `+` metinleri boşluksuz birleştirir, virgül ise `print`'in araya bir boşluk koymasını sağlar.
+
+::: {#def-gco-sep-end name="sep ve end Parametreleri"}
+`print` fonksiyonunun `sep` parametresi yazılan değerlerin arasına konacak metni, `end` parametresi de yazdırmanın sonuna eklenecek metni belirler. Varsayılan olarak `sep` bir boşluk (`" "`), `end` ise yeni satır karakteri (`"\n"`) olur.
+:::
+
+Yani `print("a", "b", sep="-")` değerlerin arasına boşluk yerine `-` koyar ve `a-b` yazar. `end` değiştirildiğinde `print` yazdıktan sonra yeni satıra geçmez; bir sonraki `print` aynı satırdan devam eder.
+
+```python
+print("Python", "programlama", "dili")
+print("Python", "programlama", "dili", sep="-")
+print("Python", "programlama", "dili", sep="$")
+print("Python", "programlama", "dili", sep="")
+print("Merhaba", end=", ")
+print("Dünya!")
+print("Python kullanmayı biliyor musun", end="?")
+```
+
+Çıktı:
+
+```text
+Python programlama dili
+Python-programlama-dili
+Python$programlama$dili
+Pythonprogramlamadili
+Merhaba, Dünya!
+Python kullanmayı biliyor musun?
+```
+
+İlk `print("Merhaba", end=", ")` satır sonunda yeni satıra geçmek yerine `, ` yazdı; bu yüzden `Dünya!` aynı satıra geldi. `sep` yalnız birden çok değer yazdırılırken etkilidir: `print("Python", sep="&&")` tek bir değer olduğu için yalnız `Python` yazar.
+
+## Biçimli Yazdırma
+
+Bir sonucu metnin içine yerleştirmek ya da ondalıklı bir sayının kaç basamağının yazılacağını belirlemek için biçimli yazdırma kullanılır; Python bunun için üç yol sunar.
+
+### f-string
+
+En yeni ve en okunaklı yol f-string'dir.
+
+::: {#def-gco-fstring name="f-string"}
+Tırnağın önüne `f` harfi konarak yazılan metne **f-string** denir. Bir f-string'in içinde süslü parantez `{ }` arasına yazılan her ifade hesaplanır ve değeri metnin o yerine yerleştirilir.
+:::
+
+Yani `f"{isim} {yas} yaşındadır."` metninde `{isim}` ve `{yas}` yerine değişkenlerin değerleri yazılır. `f` unutulursa süslü parantezler olduğu gibi yazılır.
+
+```python
+isim = "Ali"
+yas = 25
+print("{isim} {yas} yaşındadır.")
+print(f"{isim} {yas} yaşındadır.")
+print(f"{isim} gelecek yıl {yas + 1} yaşında olacak.")
+a = 5
+b = 10
+print(f"{a}+{b}=", a + b)
+print(f"{a}+{b}={a + b}")
+print(f"{a}+{b}=,a+b")
+```
+
+Çıktı:
+
+```text
+{isim} {yas} yaşındadır.
+Ali 25 yaşındadır.
+Ali gelecek yıl 26 yaşında olacak.
+5+10= 15
+5+10=15
+5+10=,a+b
+```
+
+Son satırda `a+b` süslü parantez içinde olmadığı için hesaplanmadı ve metin olarak yazıldı.
+
+Süslü parantezin içinde ifadeden sonra iki nokta ve bir **biçim belirteci** yazılabilir. En sık kullanılanı `:.nf` belirtecidir: değeri virgülden sonra `n` basamakla yazar.
+
+```python
+a = 10 / 3
+b = 2.5 * 4.8
+c = 7.123456
+print(f"a = {a:.3f}")
+print(f"b = {b:.3f}")
+print(f"c = {c:.3f}")
+print(f"a = {round(a, 3)}")
+print(f"b = {round(b, 3)}")
+```
+
+Çıktı:
+
+```text
+a = 3.333
+b = 12.000
+c = 7.123
+a = 3.333
+b = 12.0
+```
+
+`:.3f` ile `round(..., 3)` arasındaki farka dikkat edin: `round` bir sayı verir ve sondaki sıfırlar yazılmaz (`12.0`); `:.3f` ise sayıyı her zaman tam üç basamakla yazar (`12.000`). Tablo gibi hizalı çıktılarda `:.3f` tercih edilir.
+
+### format Metodu
+
+f-string'den önce yaygın olan yol, metnin `format` metodudur.
+
+`"... {} ... {} ...".format(d1, d2)` yazımında metindeki her `{}` sırayla `format`'a verilen değerlerle doldurulur. Süslü parantezin içine sıra numarası yazılarak değerlerin sırası değiştirilebilir; sıra numaraları $0$'dan başlar. Biçim belirteci yine iki noktadan sonra yazılır.
+
+```python
+import math
+isim = "Ali"
+yas = 30
+print("{}, {} yaşındadır.".format(isim, yas))
+print("{}, {} yaşındadır.".format(yas, isim))
+metin = "Girilen {}, {} ve {} sayılarının toplamı {}."
+print(metin.format(5, 6, 9, 5 + 6 + 9))
+print("PI = {0:.4f}".format(math.pi))
+print("{1} {0} {2:.2f}".format(10, "Python", 20))
+```
+
+Çıktı:
+
+```text
+Ali, 30 yaşındadır.
+30, Ali yaşındadır.
+Girilen 5, 6 ve 9 sayılarının toplamı 20.
+PI = 3.1416
+Python 10 20.00
+```
+
+İkinci satırda değerlerin sırası karıştırıldığı için anlamsız bir cümle çıktı: `format` değerleri adlarına göre değil, sırasına göre yerleştirir. Son satırda `{1}` ikinci değeri (`"Python"`), `{0}` birinci değeri (`10`), `{2:.2f}` üçüncü değeri iki basamakla (`20.00`) yazdı.
+
+### Yüzde İşaretiyle Biçimlendirme
+
+Python'ın en eski biçimlendirme yolu, C dilinden gelen `%` yazımıdır; eski kodlarda hâlâ sık görülür.
+
+Metnin içinde `%d` bir tam sayının, `%f` bir ondalıklı sayının, `%s` bir metnin yerini tutar; değerler metinden sonra `%` işaretiyle ve parantez içinde sırayla verilir. `%.2f` yazımı ondalıklı sayıyı iki basamakla yazar; yalnız `%f` yazılırsa altı basamak kullanılır.
+
+```python
+isim = "Ali"
+yas = 30
+print("%s %d yaşındadır." % (isim, yas))
+print("%d yaşında olan %s okula geldi." % (yas, isim))
+print("%d ile %d sayılarının toplamı %f" % (5, 3, 5 + 3))
+print("Ortalama: %.2f" % (17 / 3))
+```
+
+Çıktı:
+
+```text
+Ali 30 yaşındadır.
+30 yaşında olan Ali okula geldi.
+5 ile 3 sayılarının toplamı 8.000000
+Ortalama: 5.67
+```
+
+Bu üç yol aynı işi yapar. Yeni kod yazarken en okunaklı olan f-string önerilir.
+
+## Kaçış Karakterleri
+
+Bir metnin içine yeni satır ya da sekme gibi klavyeden doğrudan yazılamayan karakterler koymak için ters eğik çizgi kullanılır.
+
+::: {#def-gco-kacis name="Kaçış Karakteri"}
+Metin içinde ters eğik çizgiyle (`\`) başlayan ve tek bir özel karakteri temsil eden ikiliye **kaçış karakteri** (escape character) denir. En sık kullanılanlar şunlardır:
+
+| Yazım | Anlamı |
+|:-:|:--|
+| `\n` | yeni satır |
+| `\t` | sekme (tab) boşluğu |
+| `\\` | ters eğik çizginin kendisi |
+| `\'` | tek tırnak |
+| `\"` | çift tırnak |
+:::
+
+Yani `"Can\nEvi"` metni ekrana iki satır olarak yazılır. Ters eğik çizginin kendisini yazdırmak için onu iki kez yazmak gerekir, çünkü tek bir `\` sonraki karakterle birlikte bir kaçış karakteri olarak okunur.
+
+```python
+print("Matematik\nİstatistik")
+print("Matematik\tİstatistik")
+print("Matematik \\ İstatistik")
+print("p", "i", "t", "o", "n", sep="\n")
+```
+
+Çıktı:
+
+```text
+Matematik
+İstatistik
+Matematik	İstatistik
+Matematik \ İstatistik
+p
+i
+t
+o
+n
+```
+
+Tırnaklar için kural şudur: metin çift tırnakla yazılmışsa içinde tek tırnak serbestçe kullanılabilir, tek tırnakla yazılmışsa çift tırnak serbestçe kullanılabilir. Metni açan tırnakla aynı türden bir tırnak metnin içinde kullanılacaksa önüne `\` konur; yoksa Python metnin orada bittiğini sanır.
+
+```python
+print("Bursa'nın iskenderi meşhurdur.")
+print('Bursa\'nın iskenderi meşhurdur.')
+print('Merhaba, "Python" kullanıyorum.')
+print("Merhaba, \"Python\" kullanıyorum.")
+```
+
+Çıktı:
+
+```text
+Bursa'nın iskenderi meşhurdur.
+Bursa'nın iskenderi meşhurdur.
+Merhaba, "Python" kullanıyorum.
+Merhaba, "Python" kullanıyorum.
+```
+
+```python
+print('Bursa'nın iskenderi meşhurdur.')
+```
+
+Çıktı:
+
+```text
+SyntaxError: unterminated string literal (detected at line 1)
+```
+
+Bu satırda metin `'Bursa'` ile bitmiş sayılır; Python ardından gelen `nın iskenderi meşhurdur.'` kısmını anlamlandıramaz ve yazım hatası verir.
+
+## Hata Türleri
+
+Python bir hatayla karşılaştığında programı durdurur ve hatanın türünü ve nedenini söyleyen bir mesaj yazar; bu mesajı okuyabilmek, hatayı bulmanın en kısa yoludur.
+
+Colab ve IDLE hata mesajında hatanın bulunduğu satırı da gösterir ve yazım hatalarında hatalı yerin altına `^` işareti koyar. Mesajın son satırı hatanın türünü ve kısa bir açıklamasını içerir. Sık karşılaşılan hata türleri şunlardır:
+
+| Hata türü | Ne zaman oluşur |
+|:--|:--|
+| `SyntaxError` | kod Python'ın yazım kurallarına uymuyor: kapanmamış parantez ya da tırnak, eksik iki nokta |
+| `IndentationError` | girintiler kurala uymuyor |
+| `NameError` | tanımlanmamış bir ad kullanılıyor |
+| `TypeError` | bir işlem uygun olmayan tipte bir değere uygulanıyor: metin ile sayıyı toplamak |
+| `ValueError` | tipi doğru ama değeri uygunsuz bir argüman veriliyor: `int("abc")` |
+| `ZeroDivisionError` | bir sayı sıfıra bölünüyor |
+| `IndexError` | bir listede ya da metinde var olmayan bir sıra numarasına erişiliyor |
+| `KeyError` | bir sözlükte var olmayan bir anahtar kullanılıyor |
+| `AttributeError` | bir değerin sahip olmadığı bir özelliği ya da metodu kullanılıyor |
+| `ModuleNotFoundError` | `import` edilen modül bulunamıyor; `ImportError` türünün özel bir hâlidir |
+
+Listeleri ve sözlükleri ilerideki bölümlerde göreceğiz. Aşağıdaki kısa programlar bu hatalardan bazılarını gösteriyor:
+
+```python
+print(sayi)
+```
+
+Çıktı:
+
+```text
+NameError: name 'sayi' is not defined
+```
+
+```python
+print(10 / 0)
+```
+
+Çıktı:
+
+```text
+ZeroDivisionError: division by zero
+```
+
+```python
+print(int("abc"))
+```
+
+Çıktı:
+
+```text
+ValueError: invalid literal for int() with base 10: 'abc'
+```
+
+```python
+sayi = 5
+    print(sayi)
+```
+
+Çıktı:
+
+```text
+IndentationError: unexpected indent
+```
+
+```python
+import matematik
+```
+
+Çıktı:
+
+```text
+ModuleNotFoundError: No module named 'matematik'
+```
+
+```python
+isim = "Ali"
+print(isim[3])
+```
+
+Çıktı:
+
+```text
+IndexError: string index out of range
+```
+
+Son örnekte `isim[3]`, `"Ali"` metninin dördüncü karakterini ister; metinde üç karakter olduğu için `IndexError` oluştu. Sıra numaralarının neden $0$'dan başladığını listelerle birlikte göreceğiz.
+
+::: {.callout-tip title="Hata ayıklamak üç adımda"}
+1. Hata mesajının son satırını okuyun: hata türü sorunun ne olduğunu söyler.
+2. Mesajda gösterilen satıra gidin; yazım hatalarında `^` işaretinin hemen önüne de bakın.
+3. Neden hâlâ belli değilse, hatadan önceki satırlara `print` ekleyerek değişkenlerin o andaki değerlerini ve tiplerini yazdırın.
+:::
+
+:::: {#exm-gco-hata-ayiklama name="Bir Hatayı Adım Adım Bulmak"}
+Aşağıdaki program kullanıcıdan bir doğum yılı alıp yaşı hesaplamak istiyor ama hata veriyor. Hatayı bulunuz ve düzeltiniz.
+
+```python
+dogum_yili = input("Doğum yılınız: ")
+yas = 2026 - dogum_yili
+print("Yaşınız:", yas)
+```
+
+::: {.cozum}
+**Birinci adım.** Programı çalıştırıp mesajın son satırını okuyalım:
+
+```python
+dogum_yili = input("Doğum yılınız: ")
+yas = 2026 - dogum_yili
+print("Yaşınız:", yas)
+```
+
+Çıktı:
+
+```text
+Doğum yılınız: 2004
+TypeError: unsupported operand type(s) for -: 'int' and 'str'
+```
+
+Mesaj, bir `int` ile bir `str` arasında `-` işleminin yapılamadığını söylüyor.
+
+**İkinci adım.** Mesajda gösterilen satır `yas = 2026 - dogum_yili` satırıdır. Bu satırda `2026` bir `int` olduğuna göre `str` olan `dogum_yili` olmalıdır.
+
+**Üçüncü adım.** Tahminimizi `print(type(dogum_yili))` ekleyerek doğrulayabiliriz; `input` her zaman metin verdiği için `<class 'str'>` yazılır. Düzeltme, değeri `int`'e çevirmektir:
+
+```python
+dogum_yili = int(input("Doğum yılınız: "))
+yas = 2026 - dogum_yili
+print("Yaşınız:", yas)
+```
+
+Çıktı:
+
+```text
+Doğum yılınız: 2004
+Yaşınız: 22
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İletişim Pencereleri
+
+Bu derste girdi ve çıktı için hep metin satırlarını kullanıyoruz; Python'da düğmeli ve kutulu pencerelerle çalışmak da mümkündür.
+
+Python kurulumuyla birlikte gelen `tkinter` modülüyle pencereler, düğmeler ve giriş kutuları oluşturulabilir; `turtle` modülü de bir pencerede çizim yapmayı sağlar. `easygui` gibi kurulumla gelmeyen ve ayrıca yüklenen paketler de vardır. Bu modüller bir ekran penceresi açmaya ihtiyaç duyduğundan Colab'da doğrudan çalışmaz; IDLE ya da VS Code ile kendi bilgisayarımızda kullanılabilirler. Matematiksel hesap yapan programlarda pek tercih edilmezler.
+
+## Alıştırmalar
+
+Girdi alan alıştırmalarda çıktıdaki kullanıcı girdileri örnek olarak seçilmiştir; farklı değerlerle de deneyin.
+
+:::: {#exr-gco-sicaklik name="Santigrattan Fahrenhayta"}
+Kullanıcıdan santigrat cinsinden bir sıcaklık alıp $F = \frac{9}{5}C + 32$ formülüyle fahrenhayta çeviren bir program yazınız. Kullanıcı $36{,}6$ girdiğinde ne yazılır?
+
+::: {.cozum}
+Sıcaklık ondalıklı olabileceğinden `float` ile çeviririz. $C = 36{,}6$ için $$F = 1{,}8 \cdot 36{,}6 + 32 = 65{,}88 + 32 = 97{,}88$$'dir. Sonucu f-string ile iki basamakla yazdıralım:
+
+```python
+c = float(input("Sıcaklık (°C): "))
+f = 9 / 5 * c + 32
+print(f"{c} °C = {f:.2f} °F")
+```
+
+Çıktı:
+
+```text
+Sıcaklık (°C): 36.6
+36.6 °C = 97.88 °F
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gco-daire name="Dairenin Alanı ve Çevresi"}
+Kullanıcıdan bir yarıçap alıp dairenin alanını ve çevresini virgülden sonra üç basamakla yazan bir program yazınız. Kullanıcı $2{,}5$ girdiğinde ne yazılır?
+
+::: {.cozum}
+Alan $\pi r^2$, çevre $2\pi r$'dir. $r = 2{,}5$ için alan $6{,}25\pi \approx 19{,}635$, çevre $5\pi \approx 15{,}708$'dir. $\pi$ için `math.pi` kullanırız:
+
+```python
+import math
+r = float(input("Yarıçap: "))
+alan = math.pi * r ** 2
+cevre = 2 * math.pi * r
+print(f"Alan: {alan:.3f}")
+print(f"Çevre: {cevre:.3f}")
+```
+
+Çıktı:
+
+```text
+Yarıçap: 2.5
+Alan: 19.635
+Çevre: 15.708
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gco-tarih name="Tarihi Noktalarla Yazmak"}
+`gun = 4`, `ay = 11` ve `yil = 2026` değişkenlerini kullanarak ekrana `4.11.2026` yazdırınız: önce `sep` ile, sonra bir f-string ile.
+
+::: {.cozum}
+`print`'e üç değer verip ayırıcı olarak nokta seçersek değerler aralarında nokta ile yazılır. f-string'de ise noktaları metnin içine kendimiz yazarız:
+
+```python
+gun = 4
+ay = 11
+yil = 2026
+print(gun, ay, yil, sep=".")
+print(f"{gun}.{ay}.{yil}")
+```
+
+Çıktı:
+
+```text
+4.11.2026
+4.11.2026
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gco-kacis-cikti name="Kaçış Karakterlerinin Çıktısı"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+print("ab\'c")
+print("ab\"c")
+print("ab\\c")
+print("a\tb\nc")
+```
+
+::: {.cozum}
+`\'` tek tırnağı, `\"` çift tırnağı, `\\` ters eğik çizgiyi temsil eder; bu yüzden ilk üç satırda `ab'c`, `ab"c` ve `ab\c` yazılır. Dördüncü satırda `a` ile `b` arasına bir sekme boşluğu girer, `\n` ise `c`'yi bir alt satıra geçirir.
+
+```python
+print("ab\'c")
+print("ab\"c")
+print("ab\\c")
+print("a\tb\nc")
+```
+
+Çıktı:
+
+```text
+ab'c
+ab"c
+ab\c
+a	b
+c
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gco-bolme-guvenli name="Güvenli Bölme"}
+Kullanıcıdan iki sayı alıp birinciyi ikinciye bölen bir program yazınız. Kullanıcı sayı olmayan bir değer girerse ya da ikinci sayı sıfırsa program çökmeden uygun bir mesaj yazmalıdır. Kullanıcı `7` ve `0` girdiğinde ne yazılır?
+
+::: {.cozum}
+İki hata türü olabilir: dönüşüm başarısız olursa `ValueError`, bölen sıfırsa `ZeroDivisionError`. İkisi için ayrı `except` blokları yazarız:
+
+```python
+try:
+    a = float(input("Bölünen: "))
+    b = float(input("Bölen: "))
+    print(f"{a} / {b} = {a / b}")
+except ValueError:
+    print("Lütfen geçerli bir sayı girin.")
+except ZeroDivisionError:
+    print("Bölen sıfır olamaz.")
+```
+
+Çıktı:
+
+```text
+Bölünen: 7
+Bölen: 0
+Bölen sıfır olamaz.
+```
+
+`b` sıfır olduğu için `a / b` işleminde `ZeroDivisionError` oluştu; `print` çalışmadan ikinci `except` bloğuna geçildi. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gco-format-sirasi name="format ile Sıra Numaraları"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+print("{2}-{0}-{1}".format("a", "b", "c"))
+print("{0}{0}{1}".format("ha", "!"))
+print("{:.1f} ve {:.3f}".format(2 / 3, 2 / 3))
+```
+
+::: {.cozum}
+`{2}` üçüncü değeri, `{0}` birinciyi, `{1}` ikinciyi gösterir; birinci satırda `c-a-b` yazılır. İkinci satırda birinci değer iki kez kullanılır ve `haha!` yazılır. Üçüncü satırda $2/3 = 0{,}666\ldots$ önce bir, sonra üç basamakla yuvarlanarak yazılır: `0.7` ve `0.667`.
+
+```python
+print("{2}-{0}-{1}".format("a", "b", "c"))
+print("{0}{0}{1}".format("ha", "!"))
+print("{:.1f} ve {:.3f}".format(2 / 3, 2 / 3))
+```
+
+Çıktı:
+
+```text
+c-a-b
+haha!
+0.7 ve 0.667
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-gco-bilgi-karti name="Kullanıcı Bilgi Kartı"}
+Kullanıcıdan adını, yaşını ve boyunu alıp bunları başlıklı bir bilgi kartı olarak yazan bir program yazınız. Boy, virgülden sonra iki basamakla yazılsın.
+
+::: {.cozum}
+Ad metin olarak kalır, yaş `int`'e, boy `float`'a çevrilir. Kartın başlığından önce bir boş satır bırakmak için metnin başına `\n` koyarız:
+
+```python
+isim = input("Adınızı girin: ")
+yas = int(input("Yaşınızı girin: "))
+boy = float(input("Boyunuzu girin (örnek: 1.75): "))
+print("\nKullanıcı Bilgileri")
+print("Ad  :", isim)
+print("Yaş :", yas)
+print(f"Boy : {boy:.2f} m")
+```
+
+Çıktı:
+
+```text
+Adınızı girin: Zeynep
+Yaşınızı girin: 19
+Boyunuzu girin (örnek: 1.75): 1.68
+
+Kullanıcı Bilgileri
+Ad  : Zeynep
+Yaş : 19
+Boy : 1.68 m
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Artık programlarımız kullanıcıdan değer alıp sonuçları düzenli bir biçimde gösterebiliyor ve hatalı girdilere karşı kendini koruyabiliyor. Ama her girdiye hep aynı şekilde davranıyorlar. Bir sonraki bölüm [Karşılaştırma, Mantık Operatörleri ve Koşullu İfadeler](kosullu-ifadeler.qmd), programın bir koşula göre farklı yollardan ilerlemesini sağlayan karar yapılarını ele alıyor.

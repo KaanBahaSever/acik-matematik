@@ -1,0 +1,1083 @@
+---
+title: "İç İçe Döngüler, while Döngüsü ve match-case"
+pagetitle: "İç İçe Döngüler, while Döngüsü ve match-case"
+description: "Python'da iç içe for döngüleri, desen ve çarpım tablosu yazdırma, matrisler üzerinde dolaşma; while döngüsü, break ve continue, sonsuz döngü, sayı tahmin oyunu ve girdi doğrulama; match-case yapısı ve if-elif-else ile karşılaştırılması."
+---
+
+Bir önceki bölümde bir listenin elemanları üzerinde `for` döngüsüyle dolaştık. Bazı problemlerde ise iki şey birden dolaşılır: bir tablonun satırları ve her satırın sütunları, ya da bir sayı aralığı ve her sayının bölen adayları. Bunun için bir döngünün içine ikinci bir döngü yazılır.
+
+Bazı tekrarların sayısı ise önceden belli değildir: kullanıcı doğru sayıyı bulana kadar tahmin almak, ya da geçerli bir değer girene kadar soruyu yeniden sormak gibi. Bu tür işler için bir koşul doğru olduğu sürece dönen `while` döngüsü kullanılır. Bölümün sonunda, bir değişkenin değerine göre çok sayıda durum arasından seçim yapmayı kolaylaştıran `match-case` yapısını göreceğiz.
+
+## İç İçe Döngüler
+
+Bir döngünün bloğunun içine başka bir döngü yazılabilir; böylece dıştaki döngünün her yinelemesinde içteki döngü baştan sona bir kez çalışır.
+
+::: {#def-whl-ic-ice name="İç İçe Döngü"}
+```text
+for dis_degisken in dis_koleksiyon:
+    for ic_degisken in ic_koleksiyon:
+        içteki döngüde yapılacak işlemler
+```
+yapısına **iç içe döngü** (nested loop) denir. Dıştaki döngünün her yinelemesinde içteki döngü bütün elemanlarını dolaşır. Dıştaki döngü $m$, içteki döngü $n$ kez dönüyorsa içteki blok toplam $m \cdot n$ kez çalışır.
+:::
+
+Yani iç içe döngü bir saatin akrep ve yelkovanı gibi çalışır: yelkovan (içteki döngü) tam bir tur attığında akrep (dıştaki döngü) bir adım ilerler.
+
+```python
+for i in range(3):
+    for j in range(2):
+        print(f"Dış döngü: {i}, İç döngü: {j}")
+```
+
+Çıktı:
+
+```text
+Dış döngü: 0, İç döngü: 0
+Dış döngü: 0, İç döngü: 1
+Dış döngü: 1, İç döngü: 0
+Dış döngü: 1, İç döngü: 1
+Dış döngü: 2, İç döngü: 0
+Dış döngü: 2, İç döngü: 1
+```
+
+Dıştaki döngü $3$, içteki $2$ kez döndüğü için içteki `print` $3 \cdot 2 = 6$ kez çalıştı. `i` her değerini alırken `j` baştan başlayıp $0$ ve $1$ değerlerini aldı.
+
+İçteki döngünün aralığı, dıştaki döngünün değişkenine bağlı da olabilir. Aşağıdaki programda $i$. satırda $i + 1$ yıldız yazılır:
+
+```python
+for i in range(5):
+    for j in range(i + 1):
+        print("*", end=" ")
+    print()
+```
+
+Çıktı:
+
+```text
+*
+* *
+* * *
+* * * *
+* * * * *
+```
+
+İçteki döngü yıldızları `end=" "` ile aynı satıra yazar; dıştaki döngünün bloğundaki boş `print()` ise her satırın sonunda yeni satıra geçer. Girintiye dikkat edin: `print()` içteki döngünün değil, dıştaki döngünün içindedir.
+
+:::: {#exm-whl-carpim-tablosu name="Çarpım Tablosu"}
+$1$'den $5$'e kadar sayıların çarpım tablosunu hizalı bir tablo olarak yazdırınız.
+
+::: {.cozum}
+Dıştaki döngü satırları, içteki döngü sütunları dolaşır; $i$. satırın $j$. sütununa $i \cdot j$ yazılır. Sayıların hizalı durması için her çarpımı f-string'in `:4` biçim belirteciyle dört karakterlik bir alana sağa yaslı olarak yazarız:
+
+```python
+for i in range(1, 6):
+    for j in range(1, 6):
+        print(f"{i * j:4}", end="")
+    print()
+```
+
+Çıktı:
+
+```text
+   1   2   3   4   5
+   2   4   6   8  10
+   3   6   9  12  15
+   4   8  12  16  20
+   5  10  15  20  25
+```
+
+Tablo köşegene göre simetriktir, çünkü $i \cdot j = j \cdot i$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+### İç İçe Döngülerde break ve continue
+
+İç içe döngülerde `break` ve `continue` yalnız **içinde bulundukları** döngüyü etkiler.
+
+İçteki döngüde çalışan bir `break` yalnız içteki döngüyü bitirir; dıştaki döngü bir sonraki yinelemesiyle devam eder.
+
+```python
+for i in range(3):
+    for j in range(3):
+        if j == 1:
+            break
+        print(f"i: {i}, j: {j}")
+```
+
+Çıktı:
+
+```text
+i: 0, j: 0
+i: 1, j: 0
+i: 2, j: 0
+```
+
+Her `i` için içteki döngü `j = 0`'ı yazdı, `j = 1`'de bitti; ama dıştaki döngü durmadı. `continue` kullanılsaydı yalnız `j = 1` atlanırdı:
+
+```python
+for i in range(3):
+    for j in range(3):
+        if j == 1:
+            continue
+        print(f"i: {i}, j: {j}")
+```
+
+Çıktı:
+
+```text
+i: 0, j: 0
+i: 0, j: 2
+i: 1, j: 0
+i: 1, j: 2
+i: 2, j: 0
+i: 2, j: 2
+```
+
+### Matrisler Üzerinde Dolaşmak
+
+Elemanları da birer liste olan bir liste, satırları ve sütunları olan bir tabloyu, yani bir **matrisi** temsil eder; matrisin elemanları iç içe bir döngüyle dolaşılır.
+
+`matris = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]` listesinde `matris[0]` birinci satırdır, `matris[1][2]` ikinci satırın üçüncü elemanı, yani $6$'dır. Dıştaki döngü satırları, içteki döngü bir satırın elemanlarını dolaşır:
+
+```python
+matris = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+for satir in matris:
+    for eleman in satir:
+        print(eleman, end=" ")
+    print()
+print(matris[1][2])
+```
+
+Çıktı:
+
+```text
+1 2 3
+4 5 6
+7 8 9
+6
+```
+
+İçteki döngüye bir koşul eklenerek belli elemanlar seçilebilir; `enumerate` ise satır ve sütun numaralarını da verir.
+
+```python
+matris = [[1, 24, 3], [4, 5, 6], [7, 18, 9]]
+for i, satir in enumerate(matris):
+    for j, eleman in enumerate(satir):
+        if eleman % 2 == 0:
+            print(f"Satır {i}, sütun {j}: {eleman} çift bir sayıdır.")
+```
+
+Çıktı:
+
+```text
+Satır 0, sütun 1: 24 çift bir sayıdır.
+Satır 1, sütun 0: 4 çift bir sayıdır.
+Satır 1, sütun 2: 6 çift bir sayıdır.
+Satır 2, sütun 1: 18 çift bir sayıdır.
+```
+
+:::: {#exm-whl-iki-liste name="İki Listenin Bütün Çiftleri"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+birinci = []
+ikinci = []
+for x in [2, 3, 4]:
+    for y in [3, 4, 7]:
+        birinci.append(x + y)
+        ikinci.append(x * y)
+print("birinci:", birinci)
+print("ikinci:", ikinci)
+```
+
+::: {.cozum}
+Dıştaki döngünün her `x` değeri için `y` sırayla $3$, $4$, $7$ olur; toplam $3 \cdot 3 = 9$ çift vardır. `x = 2` için toplamlar $5, 6, 9$, çarpımlar $6, 8, 14$; `x = 3` için toplamlar $6, 7, 10$, çarpımlar $9, 12, 21$; `x = 4` için toplamlar $7, 8, 11$, çarpımlar $12, 16, 28$'dir.
+
+```python
+birinci = []
+ikinci = []
+for x in [2, 3, 4]:
+    for y in [3, 4, 7]:
+        birinci.append(x + y)
+        ikinci.append(x * y)
+print("birinci:", birinci)
+print("ikinci:", ikinci)
+```
+
+Çıktı:
+
+```text
+birinci: [5, 6, 9, 6, 7, 10, 7, 8, 11]
+ikinci: [6, 8, 14, 9, 12, 21, 12, 16, 28]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## while Döngüsü
+
+`for` döngüsü bir koleksiyonun elemanları bitince durur; `while` döngüsü ise bir koşul doğru olduğu sürece döner.
+
+::: {#def-whl-while name="while Döngüsü"}
+```text
+while koşul:
+    koşul doğru olduğu sürece çalışacak komutlar
+```
+yapısında önce `koşul` denetlenir. Koşul `True` ise girintili komutlar çalışır ve koşul yeniden denetlenir; bu, koşul `False` olana kadar sürer. Koşul ilk denetlemede `False` ise blok hiç çalışmaz.
+:::
+
+Yani `while` "koşul sağlandıkça tekrarla" demektir. Döngünün bir gün bitmesi için bloğun içinde koşulu eninde sonunda `False` yapacak bir değişiklik bulunmalıdır; genellikle bu, koşulda kullanılan bir sayacın artırılmasıdır.
+
+```{=html}
+<figure class="ders-grafik ders-grafik-genis">
+<svg viewBox="59.0 -5.0 491.0 249.5" role="img" aria-label="Flow chart: the condition is tested; if true the loop body runs and the flow returns to the test; if false the program continues after the loop">
+  <line x1="200.0" y1="10.0" x2="200.0" y2="30.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="200.0,36.0 197.1,29.0 202.9,29.0" fill="var(--academic-text)" opacity="1.0"/>
+  <polygon points="200.0,36.0 292.0,78.0 200.0,120.0 108.0,78.0" fill="var(--color-theory)" fill-opacity="0.08" stroke="var(--color-theory)" stroke-width="1.5"/>
+  <text x="200.0" y="75.0" fill="var(--color-theory)" font-size="12.5" text-anchor="middle" font-weight="600">koşul</text>
+  <text x="200.0" y="91.0" fill="var(--color-theory)" font-size="11.5" text-anchor="middle">doğru mu?</text>
+  <line x1="200.0" y1="120.0" x2="200.0" y2="148.4" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="200.0,154.0 197.1,147.0 202.9,147.0" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="207.0" y="141.0" fill="var(--academic-text)" font-size="11.5" text-anchor="start">Evet</text>
+  <rect x="115.0" y="154.0" width="170.0" height="36.0" rx="6" fill="var(--color-base)" fill-opacity="0.1" stroke="var(--color-base)" stroke-width="1.5"/>
+  <text x="200.0" y="176.5" fill="var(--color-base)" font-size="12.5" text-anchor="middle" font-weight="600">döngü bloğu</text>
+  <path d="M200.0,190.0 L200.0,212.0 L74.0,212.0 L74.0,78.0" fill="none" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="74.0" y1="78.0" x2="102.4" y2="78.0" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="108.0,78.0 101.0,80.9 101.0,75.1" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="80.0" y="228.0" fill="var(--academic-text)" font-size="11" text-anchor="start">yeniden denetle</text>
+  <line x1="292.0" y1="78.0" x2="369.4" y2="78.0" stroke="var(--academic-text)" stroke-width="1.4" opacity="1.0" stroke-linecap="round"/>
+  <polygon points="375.0,78.0 368.0,80.9 368.0,75.1" fill="var(--academic-text)" opacity="1.0"/>
+  <text x="333.5" y="71.0" fill="var(--academic-text)" font-size="11.5" text-anchor="middle">Hayır</text>
+  <rect x="375.0" y="55.0" width="160.0" height="46.0" rx="6" fill="var(--academic-text)" fill-opacity="0.06" stroke="var(--academic-text)" stroke-width="1.5"/>
+  <text x="455.0" y="75.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">döngüden sonraki</text>
+  <text x="455.0" y="91.0" fill="var(--academic-text)" font-size="12" text-anchor="middle">ilk satır</text>
+</svg>
+<figcaption>Bir <code>while</code> döngüsünün akışı. Koşul her yinelemeden önce yeniden denetlenir; doğru olduğu sürece blok çalışır ve akış koşula geri döner. Koşul yanlış çıktığında döngüden çıkılır.</figcaption>
+</figure>
+```
+
+```python
+sayi = 1
+while sayi <= 5:
+    print(sayi)
+    sayi += 1
+print("Döngüden sonra sayi =", sayi)
+```
+
+Çıktı:
+
+```text
+1
+2
+3
+4
+5
+Döngüden sonra sayi = 6
+```
+
+`sayi` $5$ iken blok son kez çalıştı ve `sayi`'yı $6$ yaptı. $6 \le 5$ yanlış olduğu için döngü bitti; döngüden sonra `sayi`'nın değeri $6$'dır.
+
+:::: {#exm-whl-sayac-izleme name="Bir while Döngüsünü İzlemek"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sayac = 0
+toplam = 0
+while sayac <= 10:
+    sayac = sayac + 2
+    print("sayac:", sayac)
+    toplam = toplam + sayac
+print("toplam:", toplam)
+```
+
+::: {.cozum}
+Koşul, sayaç **artırılmadan önce** denetlenir. `sayac` $0, 2, 4, 6, 8, 10$ iken koşul doğrudur ve blok çalışır; her seferinde önce `sayac` $2$ artar, sonra yazılır ve toplama eklenir. `sayac` $10$ iken blok son kez çalışır ve `sayac`'ı $12$ yapar; $12 \le 10$ yanlış olduğundan döngü biter. Toplam $2 + 4 + 6 + 8 + 10 + 12 = 42$'dir.
+
+```python
+sayac = 0
+toplam = 0
+while sayac <= 10:
+    sayac = sayac + 2
+    print("sayac:", sayac)
+    toplam = toplam + sayac
+print("toplam:", toplam)
+```
+
+Çıktı:
+
+```text
+sayac: 2
+sayac: 4
+sayac: 6
+sayac: 8
+sayac: 10
+sayac: 12
+toplam: 42
+```
+
+$12$'nin de yazılıp toplama eklenmesi şaşırtıcı görünebilir: koşul ancak bir sonraki denetlemede, yani blok bittikten sonra yeniden sorulur. [$\blacksquare$]{.qed}
+:::
+::::
+
+Bir `for` döngüsüyle yapılan her iş, sayacı kendimiz yöneterek bir `while` döngüsüyle de yapılabilir. $1$'den $100$'e kadar sayıların toplamı şöyle hesaplanır:
+
+```python
+toplam = 0
+i = 1
+while i <= 100:
+    toplam = toplam + i
+    i = i + 1
+print("Sayıların toplamı:", toplam)
+```
+
+Çıktı:
+
+```text
+Sayıların toplamı: 5050
+```
+
+Burada `for i in range(1, 101):` daha kısa ve hatasızdır; `while`, tekrar sayısının önceden bilinmediği işlerde gerçekten gerekir.
+
+::: {.callout-note title="for mu, while mı?"}
+Bir koleksiyonun elemanları ya da belli bir sayı aralığı dolaşılacaksa `for` kullanılır: tekrar sayısı baştan bellidir. Döngünün ne zaman biteceği çalışma sırasında ortaya çıkıyorsa, örneğin kullanıcının girdiğine ya da bir hesabın sonucuna bağlıysa, `while` kullanılır.
+:::
+
+### while Döngüsünde break ve continue
+
+`break` ve `continue` komutları `while` döngüsünde de `for` döngüsündeki (@def-for-break-continue) gibi çalışır.
+
+```python
+sayi = 1
+while sayi <= 10:
+    if sayi == 5:
+        break
+    print(sayi, end=" ")
+    sayi += 1
+print()
+sayi = 1
+while sayi < 10:
+    sayi += 1
+    if sayi % 2 != 0:
+        continue
+    print(sayi, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+1 2 3 4
+2 4 6 8 10
+```
+
+İkinci döngüde sayaç, `continue`'dan **önce** artırılıyor. Sayaç `continue`'dan sonra artırılsaydı, `continue` artırma satırını da atlardı ve sayaç bir daha hiç değişmezdi. Aşağıdaki programda bu yüzden $5$ için sayaç ayrıca artırılıyor:
+
+```python
+a = 0
+while a < 10:
+    if a == 5:
+        a += 1
+        continue
+    print(a, end=" ")
+    a += 1
+print()
+```
+
+Çıktı:
+
+```text
+0 1 2 3 4 6 7 8 9
+```
+
+`if` bloğundaki `a += 1` satırı silinirse `a` $5$'te takılır: koşul hep doğru kalır, `continue` her seferinde artırma satırını atlar ve döngü hiç bitmez.
+
+### Sonsuz Döngü
+
+Koşulu hiçbir zaman `False` olmayan bir döngü durmadan çalışır.
+
+::: {#def-whl-sonsuz name="Sonsuz Döngü"}
+Koşulu hiçbir zaman yanlış olmadığı için kendiliğinden bitmeyen döngüye **sonsuz döngü** denir. `while True:` yazımı bilerek kurulmuş bir sonsuz döngüdür ve ancak bloğun içindeki bir `break` ile sona erer.
+:::
+
+Yani sonsuz döngü bazen bir hatadır, bazen de bilinçli bir tercih: bitiş koşulu döngünün başında değil ortasında denetlenecekse `while True:` yazılır ve uygun yerde `break` kullanılır. Yanlışlıkla bir sonsuz döngü başlatılırsa Colab'da hücrenin solundaki durdurma düğmesine, VS Code'da terminalin durdurma düğmesine basılır ya da terminalde **Ctrl + C** tuşlanır.
+
+```python
+while True:
+    girdi = input("Çıkmak için 'exit' yazın: ")
+    if girdi.lower() == "exit":
+        print("Döngü sonlandırılıyor.")
+        break
+    print("Devam ediliyor...")
+```
+
+Çıktı:
+
+```text
+Çıkmak için 'exit' yazın: devam
+Devam ediliyor...
+Çıkmak için 'exit' yazın: Exit
+Döngü sonlandırılıyor.
+```
+
+`girdi.lower()` metni küçük harflere çevirir; böylece kullanıcı `EXIT` ya da `Exit` yazsa da döngü biter. Metinlerin buna benzer başka metotları da vardır: `upper()` bütün harfleri büyütür, `capitalize()` yalnız ilk harfi büyük yapar.
+
+:::: {#exm-whl-tahmin-oyunu name="Sayı Tahmin Oyunu"}
+Program $1$ ile $100$ arasında bir sayı tutsun. Kullanıcı sayıyı bulana kadar tahmin alsın; her yanlış tahminde "daha büyük" ya da "daha küçük" ipucu versin ve sonunda kaç tahminde bulunduğunu yazsın.
+
+::: {.cozum}
+Kullanıcının kaç tahmin yapacağı önceden bilinmediği için `while True:` ile bir sonsuz döngü kurarız ve doğru tahminde `break` ile çıkarız. Her tahminde bir sayaç artırılır. Tutulan sayı şimdilik sabit olarak $45$ seçildi; [Rastgele Sayılar](rastgele-sayilar-ve-random-modulu.qmd) bölümünde onu bilgisayara rastgele seçtireceğiz.
+
+```python
+tutulan = 45
+sayac = 0
+print("1-100 arası bir sayı tuttum, tahmin et!")
+while True:
+    sayac += 1
+    tahmin = int(input("Tahminin: "))
+    if tahmin > tutulan:
+        print("Daha küçük bir sayı girmelisin.")
+    elif tahmin < tutulan:
+        print("Daha büyük bir sayı girmelisin.")
+    else:
+        print("Tebrikler, tuttuğum sayıyı bildin!")
+        break
+print(f"{sayac} tahminde buldun.")
+```
+
+Çıktı:
+
+```text
+1-100 arası bir sayı tuttum, tahmin et!
+Tahminin: 50
+Daha küçük bir sayı girmelisin.
+Tahminin: 25
+Daha büyük bir sayı girmelisin.
+Tahminin: 37
+Daha büyük bir sayı girmelisin.
+Tahminin: 43
+Daha büyük bir sayı girmelisin.
+Tahminin: 46
+Daha küçük bir sayı girmelisin.
+Tahminin: 44
+Daha büyük bir sayı girmelisin.
+Tahminin: 45
+Tebrikler, tuttuğum sayıyı bildin!
+7 tahminde buldun.
+```
+
+Kullanıcı her seferinde kalan aralığın ortasındaki sayıyı tahmin ederse ($50$, $25$, $37$, ...), aralık her adımda yarıya iner ve $1$–$100$ arasındaki her sayı en çok $7$ tahminde bulunur, çünkü $2^7 = 128 \ge 100$'dür. [$\blacksquare$]{.qed}
+:::
+::::
+
+Aynı oyun bir koşullu `while` döngüsüyle de yazılabilir: döngü, tahmin tutulan sayıya eşit olmadığı sürece döner. Döngüye ilk kez girebilmek için tahmine başlangıçta, "henüz değer yok" anlamına gelen `None` değeri verilir.
+
+```python
+tutulan = 5
+tahmin = None
+deneme = 0
+while tahmin != tutulan:
+    tahmin = int(input("Tahmininiz: "))
+    deneme += 1
+    if tahmin < tutulan:
+        print("Daha yüksek bir sayı tahmin edin.")
+    elif tahmin > tutulan:
+        print("Daha düşük bir sayı tahmin edin.")
+print(f"Tebrikler! {deneme} denemede doğru tahmin ettiniz.")
+```
+
+Çıktı:
+
+```text
+Tahmininiz: 10
+Daha düşük bir sayı tahmin edin.
+Tahmininiz: 3
+Daha yüksek bir sayı tahmin edin.
+Tahmininiz: 5
+Tebrikler! 3 denemede doğru tahmin ettiniz.
+```
+
+### Geçerli Bir Girdi Alana Kadar Sormak
+
+[Girdi ve Çıktı İşlemleri](girdi-ve-cikti-islemleri.qmd) bölümünde `try-except` ile hatalı bir girdiyi yakalayıp bir uyarı yazmıştık; bir `while True` döngüsüyle birleştirildiğinde program, kullanıcı geçerli değerler girene kadar soruyu yeniden sorar.
+
+```python
+while True:
+    try:
+        a = float(input("1. sayıyı gir: "))
+        b = float(input("2. sayıyı gir: "))
+        print(f"Girdiğiniz sayılar: {a} ve {b}")
+        print("Toplam =", a + b)
+        break
+    except ValueError:
+        print("Hata: Lütfen geçerli bir sayı girin! Tekrar deneyin.")
+```
+
+Çıktı:
+
+```text
+1. sayıyı gir: a
+Hata: Lütfen geçerli bir sayı girin! Tekrar deneyin.
+1. sayıyı gir: 85
+2. sayıyı gir: b
+Hata: Lütfen geçerli bir sayı girin! Tekrar deneyin.
+1. sayıyı gir: 5
+2. sayıyı gir: 6
+Girdiğiniz sayılar: 5.0 ve 6.0
+Toplam = 11.0
+```
+
+`break`, iki dönüşüm de başarılı olduğunda çalışır. Bir dönüşüm hata verirse `break`'e hiç ulaşılmaz, `except` bloğu çalışır ve döngü baştan başlar.
+
+:::: {#exm-whl-not-ortalamasi name="Kullanıcının Girdiği Notların Ortalaması"}
+Kullanıcıdan, `q` yazana kadar not alan ve sonunda girilen notların ortalamasını yazan bir program yazınız.
+
+::: {.cozum}
+Kaç not girileceği bilinmediği için `while True:` kullanırız. Her girdi önce `q` ile karşılaştırılır; `q` değilse sayıya çevrilip toplama eklenir ve not sayısı bir artırılır. Hiç not girilmezse sıfıra bölmemek için sonda `adet`'i denetleriz.
+
+```python
+toplam = 0
+adet = 0
+while True:
+    girdi = input("Notu girin (çıkmak için q): ")
+    if girdi == "q":
+        break
+    toplam += float(girdi)
+    adet += 1
+if adet > 0:
+    print(f"Notların ortalaması: {toplam / adet:.2f}")
+else:
+    print("Hiç not girilmedi.")
+```
+
+Çıktı:
+
+```text
+Notu girin (çıkmak için q): 45
+Notu girin (çıkmak için q): 63.5
+Notu girin (çıkmak için q): 85
+Notu girin (çıkmak için q): 70.56
+Notu girin (çıkmak için q): q
+Notların ortalaması: 66.02
+```
+
+Girilen notların toplamı $45 + 63{,}5 + 85 + 70{,}56 = 264{,}06$, ortalaması $264{,}06/4 = 66{,}015 \approx 66{,}02$'dir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-whl-fibonacci name="while ile Fibonacci Dizisi"}
+Fibonacci dizisinin ilk $15$ terimini bir `while` döngüsüyle yazdırınız.
+
+::: {.cozum}
+Dizinin ardışık iki terimini `a` ve `b` değişkenlerinde tutarız. Her adımda `a`'yı yazarız ve takastaki (@def-dgs-takas) gibi bir çoklu atamayla `a, b = b, a + b` yaparız: yeni `a` eski `b`, yeni `b` ise eski iki terimin toplamı olur.
+
+```python
+n = 15
+a, b = 0, 1
+sayac = 0
+while sayac < n:
+    print(a, end=" ")
+    a, b = b, a + b
+    sayac += 1
+print()
+```
+
+Çıktı:
+
+```text
+0 1 1 2 3 5 8 13 21 34 55 89 144 233 377
+```
+
+`a, b = b, a + b` yerine `a = b` ve `b = a + b` diye iki ayrı satır yazılsaydı, ikinci satırdaki `a` zaten değişmiş olurdu ve dizi yanlış çıkardı. [$\blacksquare$]{.qed}
+:::
+::::
+
+## match-case Yapısı
+
+Bir değişkenin değerine göre çok sayıda durumdan birinin seçileceği programlarda uzun bir `if-elif-else` zinciri yazmak yerine `match-case` yapısı kullanılabilir.
+
+Haftanın gününü sıra numarasından bulan bir program `if-elif-else` ile şöyle yazılır:
+
+```python
+gun = 4
+if gun == 1:
+    print("Pazartesi")
+elif gun == 2:
+    print("Salı")
+elif gun == 3:
+    print("Çarşamba")
+elif gun == 4:
+    print("Perşembe")
+elif gun == 5:
+    print("Cuma")
+elif gun == 6:
+    print("Cumartesi")
+elif gun == 7:
+    print("Pazar")
+else:
+    print("Geçersiz gün numarası")
+```
+
+Çıktı:
+
+```text
+Perşembe
+```
+
+Her satırda `gun ==` yazmak hem uzun hem de hataya açıktır.
+
+::: {#def-whl-match name="match-case Yapısı"}
+```text
+match deger:
+    case secenek1:
+        deger secenek1 ise çalışacak komutlar
+    case secenek2:
+        deger secenek2 ise çalışacak komutlar
+    case _:
+        hiçbir seçenek tutmazsa çalışacak komutlar
+```
+yapısında `deger` sırayla `case` satırlarındaki seçeneklerle karşılaştırılır ve eşleşen **ilk** seçeneğin bloğu çalışır. `case _:` her değerle eşleşir ve `if-elif-else`'teki `else`'in görevini görür. Birden çok seçenek `|` ile birleştirilebilir: `case 6 | 7:`. Bu yapı Python 3.10 ile dile eklenmiştir.
+:::
+
+Yani `match-case`, "değer şuysa şunu, buysa bunu yap" listesidir. Burada `_`, alt çizgi değişkeninde (@def-for-alt-cizgi) olduğu gibi "ne olursa olsun" anlamına gelir.
+
+```python
+gun = 6
+match gun:
+    case 1:
+        print("Pazartesi")
+    case 2:
+        print("Salı")
+    case 3:
+        print("Çarşamba")
+    case 4:
+        print("Perşembe")
+    case 5:
+        print("Cuma")
+    case 6 | 7:
+        print("Hafta sonu")
+    case _:
+        print("Geçersiz gün numarası")
+```
+
+Çıktı:
+
+```text
+Hafta sonu
+```
+
+`match-case` değerleri yalnız eşitlik açısından karşılaştırır. "Yaş $13$'ten küçükse" gibi aralık koşulları için `if-elif-else` daha uygundur.
+
+:::: {#exm-whl-hava-durumu name="Hava Durumuna Göre Öneri"}
+Kullanıcıdan bugünkü hava durumunu (Güneşli, Yağmurlu, Karlı, Rüzgârlı) alıp bir giysi önerisi yazan bir program yazınız. Kullanıcı sözcüğü küçük harfle yazsa da program çalışmalıdır.
+
+::: {.cozum}
+Girdiyi `capitalize()` ile ilk harfi büyük, gerisi küçük olacak biçime getiririz; böylece `yağmurlu` ya da `YAĞMURLU` girdileri de `Yağmurlu` olur ve `case` seçenekleriyle eşleşir.
+
+```python
+hava = input("Bugünkü hava durumu nedir? ").capitalize()
+match hava:
+    case "Güneşli":
+        print("Güneş kremi sürmeyi unutmayın!")
+    case "Yağmurlu":
+        print("Şemsiye almayı unutmayın.")
+    case "Karlı":
+        print("Kalın bir mont giyin.")
+    case "Rüzgârlı":
+        print("Bir rüzgârlık almanız iyi olur.")
+    case _:
+        print("Geçersiz hava durumu girdiniz.")
+```
+
+Çıktı:
+
+```text
+Bugünkü hava durumu nedir? yağmurlu
+Şemsiye almayı unutmayın.
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Çeşitli Örnekler
+
+Aşağıdaki kısa programların çıktısını önce kâğıt üzerinde, değişkenlerin değerlerini adım adım izleyerek bulmaya çalışın.
+
+:::: {#exm-whl-kosullu-toplam name="Koşula Bağlı Güncelleme"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+a, b, toplam = 0, 5, 20
+while a < 5:
+    if a + b > 6:
+        toplam = a + b
+        toplam += 1
+    print(toplam)
+    a += 1
+```
+
+::: {.cozum}
+Döngü `a` $0$'dan $4$'e kadar beş kez çalışır. `a + b > 6` koşulu `a = 0` ($5$) ve `a = 1` ($6$) için yanlıştır; `toplam` değişmez ve $20$ yazılır. `a = 2, 3, 4` için koşul doğrudur: `toplam` önce `a + b`, sonra bir fazlası olur ve sırasıyla $8$, $9$, $10$ yazılır.
+
+```python
+a, b, toplam = 0, 5, 20
+while a < 5:
+    if a + b > 6:
+        toplam = a + b
+        toplam += 1
+    print(toplam)
+    a += 1
+```
+
+Çıktı:
+
+```text
+20
+20
+8
+9
+10
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-whl-tek-toplam name="Tek Sayıların Toplamı"}
+$1$'den $9$'a kadar tek sayıların toplamını bir `while` döngüsüyle hesaplayınız ve ara toplamları yazdırınız. Aynı toplamı `continue` kullanan bir döngüyle de bulunuz.
+
+::: {.cozum}
+`a`'yı $1$'den başlatıp her adımda $2$ artırırsak yalnız tek sayıları dolaşırız. Ara toplamlar $1$, $1 + 3 = 4$, $4 + 5 = 9$, $16$, $25$ olur; ardışık tek sayıların toplamlarının tam kare çıkması tesadüf değildir: $1 + 3 + \cdots + (2k - 1) = k^2$.
+
+```python
+toplam = 0
+a = 1
+while a < 10:
+    toplam = toplam + a
+    a = a + 2
+    print(toplam, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+1 4 9 16 25
+```
+
+İkinci yolda bütün sayıları dolaşır, çiftleri `continue` ile atlarız. Sayaç, `continue`'dan önce artırıldığı için döngü takılmaz:
+
+```python
+toplam = 0
+a = 0
+while a < 10:
+    a = a + 1
+    if a % 2 == 0:
+        continue
+    toplam = toplam + a
+print(toplam)
+```
+
+Çıktı:
+
+```text
+25
+```
+
+Aynı fikirle $1$'den $99$'a kadar tek sayıların toplamı $50^2 = 2500$ bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-whl-ucun-katlari name="Üçün Katlarının Ortalaması"}
+Kullanıcının girdiği bir $N$ sayısına kadar (dahil) $3$'e bölünebilen pozitif sayıların ortalamasını bulan bir program yazınız. $N = 16$ için ekrana $(3 + 6 + 9 + 12 + 15)/5 = 9{,}0$ yazılmalıdır.
+
+::: {.cozum}
+$N$'den büyük olmayan en büyük $3$ katı $X = N - (N \bmod 3)$'tür: $N = 16$ için $16 - 1 = 15$. Bu sayıdan başlayıp $3$'er azaltarak $0$'a kadar gideriz; her adımda sayıyı toplama ekler, sayacı artırırız.
+
+```python
+N = int(input("Bir sayı girin: "))
+X = N - (N % 3)
+T = 0
+sayac = 0
+while X > 0:
+    T = T + X
+    X = X - 3
+    sayac = sayac + 1
+print("Ortalama =", T / sayac)
+```
+
+Çıktı:
+
+```text
+Bir sayı girin: 16
+Ortalama = 9.0
+```
+
+Kullanıcı $1$ ya da $2$ girerse $X = 0$ olur, döngü hiç çalışmaz ve `sayac` $0$ kalır; bu durumda son satır sıfıra bölme hatası verir. Programı bu durumlara karşı korumak için son satırdan önce `sayac`'ın sıfır olup olmadığına bakan bir `if` eklenmelidir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-whl-faktoriyel name="while ile Faktöriyel"}
+Aşağıdaki program ne hesaplar? Çıktısını bulunuz.
+
+```python
+n = 5
+f = 1
+i = n
+while i >= 1:
+    f = f * i
+    i = i - 1
+print(f)
+```
+
+::: {.cozum}
+`i`, `n`'den başlayıp $1$'e kadar azalır ve her adımda `f` ile çarpılır: $f = 5 \cdot 4 \cdot 3 \cdot 2 \cdot 1 = 120$. Program $n! = 5!$ değerini, çarpanları büyükten küçüğe alarak hesaplar.
+
+```python
+n = 5
+f = 1
+i = n
+while i >= 1:
+    f = f * i
+    i = i - 1
+print(f)
+```
+
+Çıktı:
+
+```text
+120
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+`while` döngüsü kurarken her seferinde döngünün bitmesini sağlayan değişikliği bulun.
+
+:::: {#exr-whl-rakam-toplami name="Rakamlar Toplamı"}
+Bir pozitif tam sayının rakamlarının toplamını metne çevirmeden, `%` ve `//` kullanan bir `while` döngüsüyle bulunuz. $n = 2026$ için deneyiniz.
+
+::: {.cozum}
+Son rakam `n % 10` ile alınır, `n //= 10` ise son rakamı atar. Bu iki adımı `n` sıfır olana kadar tekrarlarız. $2026$ için sırayla $6$, $2$, $0$, $2$ rakamları alınır ve toplam $10$ olur.
+
+```python
+n = 2026
+toplam = 0
+while n > 0:
+    toplam += n % 10
+    n //= 10
+print(toplam)
+```
+
+Çıktı:
+
+```text
+10
+```
+
+Döngü her adımda `n`'yi küçülttüğü için mutlaka biter. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-whl-oklid name="Öklid Algoritmasıyla EBOB"}
+$a$ ve $b$ pozitif tam sayıları için $\operatorname{ebob}(a, b) = \operatorname{ebob}(b, a \bmod b)$ ve $\operatorname{ebob}(a, 0) = a$ eşitliklerini kullanarak $\operatorname{ebob}(252, 105)$ değerini bir `while` döngüsüyle bulunuz ve `math.gcd` ile karşılaştırınız.
+
+::: {.cozum}
+`b` sıfır olmadığı sürece `a, b = b, a % b` çoklu atamasını yaparız; `b` sıfır olduğunda EBOB `a`'dadır. Adımlar:
+
+- $(252, 105)$: $252 = 2 \cdot 105 + 42$, yeni çift $(105, 42)$.
+- $(105, 42)$: $105 = 2 \cdot 42 + 21$, yeni çift $(42, 21)$.
+- $(42, 21)$: $42 = 2 \cdot 21 + 0$, yeni çift $(21, 0)$.
+
+```python
+import math
+a, b = 252, 105
+while b != 0:
+    a, b = b, a % b
+    print(a, b)
+print("EBOB:", a, "- math.gcd:", math.gcd(252, 105))
+```
+
+Çıktı:
+
+```text
+105 42
+42 21
+21 0
+EBOB: 21 - math.gcd: 21
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-whl-ikinin-kuvveti name="Bini Aşan İlk İkinin Kuvveti"}
+$2^k \ge 1000$ olan en küçük $k$ doğal sayısını bir `while` döngüsüyle bulunuz.
+
+::: {.cozum}
+Kaç adım gerektiği önceden bilinmediği için `while` uygundur. `kuvvet`'i $1 = 2^0$ ile başlatır ve $1000$'den küçük olduğu sürece ikiyle çarpıp `k`'yı artırırız. $2^9 = 512 < 1000 \le 1024 = 2^{10}$ olduğundan $k = 10$ bulunmalıdır.
+
+```python
+k = 0
+kuvvet = 1
+while kuvvet < 1000:
+    kuvvet *= 2
+    k += 1
+print(k, kuvvet)
+```
+
+Çıktı:
+
+```text
+10 1024
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-whl-ters-sayi name="Sayıyı Tersine Çevirmek"}
+$n = 12345$ sayısının rakamlarını ters sırada yazarak elde edilen $54321$ sayısını bir `while` döngüsüyle bulunuz.
+
+::: {.cozum}
+Her adımda `n`'nin son rakamını alır ve `ters` sayısının sağına ekleriz: `ters = 10 * ters + son_rakam`. `ters` sırayla $5$, $54$, $543$, $5432$, $54321$ olur.
+
+```python
+n = 12345
+ters = 0
+while n > 0:
+    ters = 10 * ters + n % 10
+    n //= 10
+print(ters)
+```
+
+Çıktı:
+
+```text
+54321
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-whl-sayi-ucgeni name="Sayı Üçgeni"}
+İç içe iki döngüyle aşağıdaki deseni yazdırınız:
+
+```text
+1
+1 2
+1 2 3
+1 2 3 4
+```
+
+::: {.cozum}
+$i$. satırda ($i = 1, 2, 3, 4$) $1$'den $i$'ye kadar sayılar yazılır. Dıştaki döngü satır numarasını, içteki döngü o satırdaki sayıları dolaşır; içteki döngünün bitişi dıştaki döngünün değişkenine bağlıdır.
+
+```python
+for i in range(1, 5):
+    for j in range(1, i + 1):
+        print(j, end=" ")
+    print()
+```
+
+Çıktı:
+
+```text
+1
+1 2
+1 2 3
+1 2 3 4
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-whl-asal-while name="while ile Asallık Denemesi"}
+Aşağıdaki program ne yapar? Çıktısını bulunuz.
+
+```python
+for sayi in range(2, 21):
+    bolen = 2
+    asal = True
+    while bolen < sayi:
+        if sayi % bolen == 0:
+            asal = False
+            break
+        bolen += 1
+    if asal:
+        print(sayi, end=" ")
+print()
+```
+
+::: {.cozum}
+Dıştaki `for` $2$'den $20$'ye kadar sayıları dolaşır. Her sayı için içteki `while`, $2$'den sayının bir eksiğine kadar bölen adaylarını dener; bir bölen bulunursa `asal` `False` yapılır ve `break` yalnız içteki `while`'dan çıkar. Hiç bölen bulunmazsa sayı asaldır ve yazılır. Program $20$'ye kadar asal sayıları yazar: $2, 3, 5, 7, 11, 13, 17, 19$.
+
+```python
+for sayi in range(2, 21):
+    bolen = 2
+    asal = True
+    while bolen < sayi:
+        if sayi % bolen == 0:
+            asal = False
+            break
+        bolen += 1
+    if asal:
+        print(sayi, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+2 3 5 7 11 13 17 19
+```
+
+`sayi = 2` için `2 < 2` yanlış olduğundan `while` hiç çalışmaz ve $2$ asal kalır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-whl-match-not name="match-case ile Harf Notundan Puana"}
+Kullanıcının girdiği harf notunu (A, B, C, D, F) $4$'lük sistemdeki puanına çeviren bir program yazınız: A $4$, B $3$, C $2$, D $1$, F $0$. Küçük harf de kabul edilsin.
+
+::: {.cozum}
+Girdiyi `upper()` ile büyük harfe çevirir, `match-case` ile beş seçeneği ve geçersiz girdiyi ayırırız. Kullanıcı `b` girsin:
+
+```python
+harf = input("Harf notu: ").upper()
+match harf:
+    case "A":
+        puan = 4
+    case "B":
+        puan = 3
+    case "C":
+        puan = 2
+    case "D":
+        puan = 1
+    case "F":
+        puan = 0
+    case _:
+        puan = None
+if puan is None:
+    print("Geçersiz harf notu.")
+else:
+    print(f"{harf} notunun puanı: {puan}")
+```
+
+Çıktı:
+
+```text
+Harf notu: b
+B notunun puanı: 3
+```
+
+`puan is None` ifadesi, `puan`'ın "değer yok" anlamındaki `None` olup olmadığını sorar; `None` ile karşılaştırmada `==` yerine `is` kullanılması bir alışkanlıktır. [$\blacksquare$]{.qed}
+:::
+::::
+
+Döngü araçlarımız artık tamamlandı: `for` ile koleksiyonları, iç içe döngülerle tabloları, `while` ile sayısı belli olmayan tekrarları yönetebiliyoruz. Bir sonraki bölüm [Demetler](demetler.qmd), [Koleksiyonlar ve Listeler](koleksiyonlar-ve-listeler.qmd) bölümünde kısaca tanıdığımız değiştirilemez koleksiyonu ayrıntılı olarak ele alıyor.

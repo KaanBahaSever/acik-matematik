@@ -1,0 +1,569 @@
+---
+title: "Demetler"
+pagetitle: "Demetler"
+description: "Python'da demet (tuple) oluşturma, paketleme ve açma, tek elemanlı demet, indeksleme ve dilimleme, demetlerin değiştirilemezliği ve listeye çevirerek değiştirme, birleştirme, count ve index metotları, demet ile listenin karşılaştırılması ve üreteç ifadeleri."
+---
+
+[Koleksiyonlar ve Listeler](koleksiyonlar-ve-listeler.qmd) bölümünde demeti, elemanları sıralı ama değiştirilemeyen bir koleksiyon olarak tanımıştık (@def-kol-demet). İlk bakışta listenin yapabildiği her şeyi yapamayan, kısıtlı bir liste gibi görünür. Oysa bu kısıt bir güvencedir: bir noktanın koordinatlarını, bir tarihi ya da bir öğrencinin numarasıyla adını bir demette tuttuğumuzda, programın başka bir yerinde bu değerlerin yanlışlıkla değiştirilmeyeceğinden emin oluruz.
+
+Bu bölümde demet oluşturmanın yollarını, elemanlarına erişmeyi ve demetlerle yapılabilen işlemleri göreceğiz. Bölümün sonunda, demete çok benzeyen ama ondan farklı bir yapı olan üreteç ifadelerini tanıyacağız.
+
+## Demet Oluşturmak
+
+Bir demet, elemanları normal parantez içinde ve virgülle ayrılarak yazılarak oluşturulur.
+
+Listelerde olduğu gibi demetin elemanları farklı tiplerde olabilir ve aynı eleman birden çok kez bulunabilir. `tuple` fonksiyonu ise bir koleksiyonun ya da bir metnin elemanlarından bir demet oluşturur; bir metin verildiğinde her karakter ayrı bir eleman olur.
+
+```python
+demet1 = ("elma", "armut", "kiraz", "kiraz")
+demet2 = (1, 2, 3, 4, 5)
+demet3 = (1, "a", 3.5, 2.5)
+print(demet1)
+print(demet2)
+print(demet3)
+print(type(demet3))
+print(tuple("istatistik"))
+print(tuple(range(5)))
+print(tuple([1, 2, 3]))
+```
+
+Çıktı:
+
+```text
+('elma', 'armut', 'kiraz', 'kiraz')
+(1, 2, 3, 4, 5)
+(1, 'a', 3.5, 2.5)
+<class 'tuple'>
+('i', 's', 't', 'a', 't', 'i', 's', 't', 'i', 'k')
+(0, 1, 2, 3, 4)
+(1, 2, 3)
+```
+
+Demet oluşturan asıl işaret parantez değil virgüldür: parantezsiz yazılmış virgüllü bir değer dizisi de bir demettir.
+
+::: {#def-dmt-paketleme name="Paketleme ve Açma"}
+`x = 3, 7, 10` atamasında sağdaki değerler bir demette toplanır ve `x` bu demet olur; buna **demet paketleme** (packing) denir. `a, b, c = x` atamasında ise demetin elemanları sırayla değişkenlere dağıtılır; buna **demet açma** (unpacking) denir. Açmada değişken sayısı demetin eleman sayısına eşit olmalıdır.
+:::
+
+Yani [Değişkenler, Veri Tipleri ve Atama](degiskenler-ve-veri-tipleri.qmd) bölümünde gördüğümüz çoklu atama (@def-dgs-coklu-atama) aslında bir demet işlemidir: `x, y, z = 1, 2, 3` satırında sağ taraf bir demete paketlenir, sonra sol taraftaki değişkenlere açılır. Takas (@def-dgs-takas) da aynı yolla çalışır.
+
+```python
+x = 3, 7, 10
+print(x, type(x))
+a, b, c = x
+print(a, b, c)
+gun, ay, yil = (4, 11, 2026)
+print(f"{gun}.{ay}.{yil}")
+```
+
+Çıktı:
+
+```text
+(3, 7, 10) <class 'tuple'>
+3 7 10
+4.11.2026
+```
+
+### Tek Elemanlı ve Boş Demet
+
+Parantezler matematikte işlemleri gruplamak için de kullanıldığından tek elemanlı bir demet yazarken dikkat etmek gerekir.
+
+`('Ali')` yazımı bir demet değildir; parantez yalnız gruplama yapar ve değer `'Ali'` metninin kendisidir. Tek elemanlı bir demet için elemandan sonra bir virgül konur: `('Ali',)`. Hiç elemanı olmayan **boş demet** ise `()` diye yazılır.
+
+```python
+tek_demet = ("Ali",)
+bir_metin = ("Ali")
+print(tek_demet, type(tek_demet))
+print(bir_metin, type(bir_metin))
+print((5), (5,))
+bos = ()
+print(bos, len(bos))
+```
+
+Çıktı:
+
+```text
+('Ali',) <class 'tuple'>
+Ali <class 'str'>
+5 (5,)
+() 0
+```
+
+## Elemanlara Erişim ve Dilimleme
+
+Demetin elemanlarına, listelerde olduğu gibi indeksle (@def-kol-indeks) erişilir ve demetler aynı kurallarla dilimlenir (@def-kol-dilim).
+
+İlk elemanın indeksi $0$, son elemanın indeksi $-1$'dir. `demet[a:b:c]` yazımı `a`'dan başlayıp `b`'ye varmadan `c`'şer atlayarak elemanları alır; bir demetten alınan dilim de yine bir demettir.
+
+```python
+meyveler = ("elma", "armut", "kiraz", "kiraz")
+print(meyveler[0])
+print(meyveler[-1])
+print(meyveler[1:3])
+print(meyveler[1:4:2])
+print(meyveler[::2])
+print(meyveler[::-1])
+```
+
+Çıktı:
+
+```text
+elma
+kiraz
+('armut', 'kiraz')
+('armut', 'kiraz')
+('elma', 'kiraz')
+('kiraz', 'kiraz', 'armut', 'elma')
+```
+
+:::: {#exm-dmt-dilimler name="Bir Demetten Dilimler"}
+`sifre = ("sıfır", "bir", "iki", "üç", "dört", 7, 8)` demetinden `sifre[1:4]`, `sifre[2:]`, `sifre[:2]` ve `sifre[::2]` dilimlerini bulunuz.
+
+::: {.cozum}
+İndeksler $0$'dan $6$'ya kadardır: `"sıfır"` $0$, `"bir"` $1$, `"iki"` $2$, `"üç"` $3$, `"dört"` $4$, `7` $5$, `8` $6$.
+
+- `sifre[1:4]`: indeks $1$, $2$, $3$: `("bir", "iki", "üç")`.
+- `sifre[2:]`: indeks $2$'den sona kadar: `("iki", "üç", "dört", 7, 8)`.
+- `sifre[:2]`: baştan indeks $2$'ye kadar, $2$ hariç: `("sıfır", "bir")`.
+- `sifre[::2]`: indeks $0$, $2$, $4$, $6$: `("sıfır", "iki", "dört", 8)`.
+
+```python
+sifre = ("sıfır", "bir", "iki", "üç", "dört", 7, 8)
+print(sifre[1:4])
+print(sifre[2:])
+print(sifre[:2])
+print(sifre[::2])
+```
+
+Çıktı:
+
+```text
+('bir', 'iki', 'üç')
+('iki', 'üç', 'dört', 7, 8)
+('sıfır', 'bir')
+('sıfır', 'iki', 'dört', 8)
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Demetler Değiştirilemez
+
+Demetin listeden ayrıldığı tek ama önemli nokta, oluşturulduktan sonra değiştirilememesidir.
+
+::: {#def-dmt-degistirilemez name="Değiştirilemez Nesne"}
+Oluşturulduktan sonra içeriği değiştirilemeyen değerlere **değiştirilemez** (immutable) değerler denir. Demetler, metinler ve sayılar değiştirilemez; listeler, kümeler ve sözlükler **değiştirilebilir** (mutable) değerlerdir.
+:::
+
+Yani bir demetin bir elemanına yeni bir değer atanamaz, demete eleman eklenemez ve demetten eleman çıkarılamaz. Bunlardan biri denenirse Python hata verir:
+
+```python
+meyveler = ("elma", "armut", "kiraz")
+meyveler[0] = "portakal"
+```
+
+Çıktı:
+
+```text
+TypeError: 'tuple' object does not support item assignment
+```
+
+```python
+meyveler = ("elma", "armut", "kiraz")
+meyveler.append("muz")
+```
+
+Çıktı:
+
+```text
+AttributeError: 'tuple' object has no attribute 'append'
+```
+
+İkinci hata, demetlerin `append` diye bir metodu olmadığını söylüyor. Bir demette yine de değişiklik yapmak gerekirse demet önce `list` ile listeye çevrilir, liste değiştirilir ve sonuç `tuple` ile yeniden demete çevrilerek aynı ada atanır:
+
+```python
+meyveler = ("elma", "armut", "kiraz", "kiraz")
+liste = list(meyveler)
+liste[2] = "karpuz"
+liste.append("muz")
+meyveler = tuple(liste)
+print(meyveler)
+```
+
+Çıktı:
+
+```text
+('elma', 'armut', 'karpuz', 'kiraz', 'muz')
+```
+
+Burada eski demet değiştirilmedi; yeni bir demet oluşturuldu ve `meyveler` adı artık bu yeni demeti gösteriyor. Aynı biçimde `demet = demet + (4,)` gibi bir atama da eski demeti değiştirmez, yeni bir demet oluşturur.
+
+## Demetlerle İşlemler
+
+Demeti değiştirmeyen bütün liste işlemleri demetlerde de kullanılabilir.
+
+`for` döngüsü (@def-for-for) demetin elemanlarını sırayla dolaşır; `in` operatörü (@def-kol-in) bir değerin demette olup olmadığını sorar; `len` eleman sayısını verir. İki demet `+` ile birleştirilir, bir demet bir tam sayıyla çarpılırsa elemanları o kadar kez tekrarlanır. Sayılardan oluşan bir demetle `sum`, `min` ve `max` da kullanılabilir.
+
+```python
+isimler = ("Ali", "Zeynep", "Nadir")
+for x in isimler:
+    print(x, end=" ")
+print()
+if "Nadir" in isimler:
+    print("Nadir demette mevcuttur.")
+print(len(isimler))
+yaslar = (70, 40, 15)
+print(isimler + yaslar)
+print(yaslar * 2)
+print(sum(yaslar), min(yaslar), max(yaslar))
+```
+
+Çıktı:
+
+```text
+Ali Zeynep Nadir
+Nadir demette mevcuttur.
+3
+('Ali', 'Zeynep', 'Nadir', 70, 40, 15)
+(70, 40, 15, 70, 40, 15)
+125 15 70
+```
+
+`sorted` bir demeti de sıralar, ama sonucu her zaman bir **liste** olarak verir; demetin kendisi değişmez.
+
+```python
+sayilar = (5, 2, 9, 1)
+print(sorted(sayilar))
+print(tuple(sorted(sayilar)))
+print(sayilar)
+```
+
+Çıktı:
+
+```text
+[1, 2, 5, 9]
+(1, 2, 5, 9)
+(5, 2, 9, 1)
+```
+
+### count ve index Metotları
+
+Demetlerin yalnız iki metodu vardır ve ikisi de demeti değiştirmez.
+
+`demet.count(x)` `x`'in demette kaç kez geçtiğini, `demet.index(x)` ise `x`'in ilk geçtiği yerin indeksini verir; `x` demette yoksa `index` `ValueError` verir. Aynı iki metot metinlerde de vardır.
+
+```python
+canta = ("kalem", "silgi", "defter", "kitap", "kalem", "defter", "kalem")
+print(canta.count("kalem"), canta.count("defter"))
+meyveler = ("elma", "armut", "kiraz", "şeftali", "kiraz")
+print(meyveler.index("kiraz"))
+isim = "ArithmeticError"
+print(isim.index("r"), isim.count("r"))
+```
+
+Çıktı:
+
+```text
+3 2
+2
+1 4
+```
+
+`"ArithmeticError"` metninde `r` harfi ilk kez indeks $1$'de geçer ve toplam $4$ kez bulunur. Büyük ve küçük harfler farklı karakterler olduğu için metinde bir büyük `R` bulunsaydı sayılmazdı.
+
+### Demet mi, Liste mi?
+
+Hangi durumda demet, hangi durumda liste kullanılacağına koleksiyonun içeriğinin değişip değişmeyeceği karar verir.
+
+- **Liste:** eleman eklenip çıkarılacak ya da elemanlar değiştirilecekse. Bir sınıfın not listesi, bir alışveriş sepeti.
+- **Demet:** içerik baştan belliyse ve değişmemesi gerekiyorsa. Bir noktanın koordinatları `(3, 4)`, bir tarih `(4, 11, 2026)`, bir rengin kırmızı–yeşil–mavi bileşenleri `(255, 128, 0)`.
+
+Demetler değiştirilemez oldukları için bir sözlükte anahtar olarak kullanılabilir; listeler kullanılamaz. Ayrıca demetler, aynı elemanları taşıyan listelerden biraz daha az bellek kaplar.
+
+## Üreteç İfadeleri
+
+Liste üretecinin (@def-for-uretec) köşeli parantezleri normal parantezle değiştirilince bir demet üreteci elde edileceği düşünülebilir; ama Python'da öyle bir şey yoktur.
+
+::: {#def-dmt-uretec-ifadesi name="Üreteç İfadesi"}
+`(ifade for degisken in koleksiyon)` yazımına **üreteç ifadesi** (generator expression) denir. Üreteç ifadesi değerlerini bir koleksiyonda saklamaz; onları istendikçe tek tek üretir. Değerler bir kez üretildikten sonra tükenir: üreteç ikinci kez dolaşılmak istenirse hiçbir değer vermez.
+:::
+
+Yani `(x ** 2 for x in range(5))` bir demet değil, kareleri sırayla üreten bir nesnedir. `range` gibi, değerlerini hepsini birden bellekte tutmadan verir. Değerleri bir demette toplamak için üreteç `tuple`'a, bir listede toplamak için `list`'e verilir.
+
+```python
+kareler = (x ** 2 for x in range(5))
+print(type(kareler))
+print(tuple(kareler))
+print(tuple(kareler))
+```
+
+Çıktı:
+
+```text
+<class 'generator'>
+(0, 1, 4, 9, 16)
+()
+```
+
+İkinci `tuple(kareler)` boş bir demet verdi, çünkü üreteç ilk dönüşümde bütün değerlerini üretip tükenmişti. Aynı değerler yeniden gerekiyorsa üreteç ifadesi yeniden yazılır ya da sonuç baştan bir demette saklanır.
+
+:::: {#exm-dmt-tukenen-uretec name="Tükenen Bir Üreteç"}
+Aşağıdaki programın ikinci satırında neden yalnız küpler yazılır?
+
+```python
+demet1 = (x ** 2 for x in range(5))
+demet2 = (x ** 3 for x in range(5))
+print(tuple(demet1))
+print(tuple(demet1) + tuple(demet2))
+```
+
+::: {.cozum}
+`demet1` ve `demet2` birer demet değil, birer üreteçtir. Birinci `print` `demet1`'in bütün değerlerini üretir ve `(0, 1, 4, 9, 16)` yazar; bu noktada `demet1` tükenmiştir. İkinci `print`'te `tuple(demet1)` boş demet `()`'i verir; `() + (0, 1, 8, 27, 64)` toplamı yalnız küplerden oluşur.
+
+```python
+demet1 = (x ** 2 for x in range(5))
+demet2 = (x ** 3 for x in range(5))
+print(tuple(demet1))
+print(tuple(demet1) + tuple(demet2))
+```
+
+Çıktı:
+
+```text
+(0, 1, 4, 9, 16)
+(0, 1, 8, 27, 64)
+```
+
+Kareler ile küplerin birleşimi isteniyorsa değerler baştan demetlere çevrilip saklanmalıdır: `d1 = tuple(x ** 2 for x in range(5))`. Bir demet ne kadar kullanılırsa kullanılsın tükenmez. [$\blacksquare$]{.qed}
+:::
+::::
+
+Üreteç ifadesinin en kullanışlı olduğu yer, değerlerin yalnız bir kez gerektiği `sum`, `max`, `min`, `any` ve `all` gibi fonksiyonlardır. Böyle bir fonksiyona tek argüman olarak verildiğinde üretecin kendi parantezleri yazılmayabilir.
+
+```python
+print(sum(x ** 2 for x in range(1, 6)))
+print(max(x % 7 for x in range(20, 30)))
+sayilar = [-3, -2, -1, 0, 1, 2, 3, 4]
+print(sum(x * x for x in sayilar if x > 0))
+```
+
+Çıktı:
+
+```text
+55
+6
+30
+```
+
+Üreteç bir `for` döngüsüyle de dolaşılabilir; her yinelemede bir sonraki değer üretilir:
+
+```python
+for sayi in (x ** 2 for x in range(5)):
+    print(sayi, end=" ")
+print()
+```
+
+Çıktı:
+
+```text
+0 1 4 9 16
+```
+
+## Alıştırmalar
+
+Demetlerin değiştirilemediğini unutmadan, her alıştırmada sonucun tipine de dikkat edin.
+
+:::: {#exr-dmt-cikti name="Demet İşlemlerinin Çıktısı"}
+`t = (1, 12, -3, "a", 7.2)` için `t[1:3]`, `t[-3:-1]`, `len(t)`, `2 in t` ve `t.index(-3)` değerlerini bulunuz.
+
+::: {.cozum}
+İndeksler: `1` $0$, `12` $1$, `-3` $2$, `"a"` $3$, `7.2` $4$; negatif indekslerle `7.2` $-1$, `"a"` $-2$, `-3` $-3$'tür.
+
+- `t[1:3]`: indeks $1$ ve $2$: `(12, -3)`.
+- `t[-3:-1]`: indeks $-3$ ve $-2$: `(-3, 'a')`.
+- `len(t)`: $5$.
+- `2 in t`: demette `2` yoktur, `False`.
+- `t.index(-3)`: $2$.
+
+```python
+t = (1, 12, -3, "a", 7.2)
+print(t[1:3])
+print(t[-3:-1])
+print(len(t))
+print(2 in t)
+print(t.index(-3))
+```
+
+Çıktı:
+
+```text
+(12, -3)
+(-3, 'a')
+5
+False
+2
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dmt-uzaklik name="İki Nokta Arasındaki Uzaklık"}
+`A = (1, 2)` ve `B = (4, 6)` noktaları demetlerle verilsin. İki nokta arasındaki uzaklığı demet açmayla bulunuz.
+
+::: {.cozum}
+Demetleri açarak koordinatları ayrı değişkenlere alırız. Uzaklık $$\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2} = \sqrt{3^2 + 4^2} = \sqrt{25} = 5$$'tir.
+
+```python
+import math
+A = (1, 2)
+B = (4, 6)
+x1, y1 = A
+x2, y2 = B
+print(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
+```
+
+Çıktı:
+
+```text
+5.0
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dmt-degistir name="Bir Demette Eleman Değiştirmek"}
+`renk = (255, 128, 0)` demetinin ortadaki elemanını `64` yapınız.
+
+::: {.cozum}
+Demetler değiştirilemez; `renk[1] = 64` `TypeError` verir. Demeti listeye çevirir, listeyi değiştirir ve yeniden demete çeviririz. İkinci bir yol, dilimlerden yeni bir demet kurmaktır: ilk eleman, yeni değer ve son eleman birleştirilir.
+
+```python
+renk = (255, 128, 0)
+liste = list(renk)
+liste[1] = 64
+print(tuple(liste))
+print(renk[:1] + (64,) + renk[2:])
+```
+
+Çıktı:
+
+```text
+(255, 64, 0)
+(255, 64, 0)
+```
+
+İkinci yolda `(64,)` yazımındaki virgül zorunludur: `(64)` bir sayıdır ve bir demete `+` ile eklenemez. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dmt-harf-sayimi name="Bir İsmin Harfleri"}
+`isim = "Zeynep"` metnini bir demete çevirip `e` harfinin kaç kez geçtiğini ve ilk kez hangi indekste bulunduğunu bulunuz.
+
+::: {.cozum}
+`tuple(isim)` her harfi ayrı bir eleman yapar: `('Z', 'e', 'y', 'n', 'e', 'p')`. `e` harfi indeks $1$ ve $4$'te, yani iki kez geçer; ilk indeksi $1$'dir.
+
+```python
+isim = "Zeynep"
+harfler = tuple(isim)
+print(harfler)
+print(harfler.count("e"), harfler.index("e"))
+```
+
+Çıktı:
+
+```text
+('Z', 'e', 'y', 'n', 'e', 'p')
+2 1
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dmt-ortadakiler name="Baş ve Son Eleman"}
+`a, *_, b = 2, 7, 9, 8, 6` atamasından sonra `a + b` kaçtır? `_` neyi tutar?
+
+::: {.cozum}
+Sağ taraf `(2, 7, 9, 8, 6)` demetine paketlenir. Açmada `a` ilk elemanı, `b` son elemanı alır; yıldızlı `_` ise aradaki bütün elemanları bir liste olarak toplar. Böylece $a + b = 2 + 6 = 8$ ve `_` `[7, 9, 8]` olur.
+
+```python
+a, *_, b = 2, 7, 9, 8, 6
+print(a + b)
+print(_)
+```
+
+Çıktı:
+
+```text
+8
+[7, 9, 8]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dmt-uretecten-liste name="Üreteçten Liste"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+uretec = (2 * x ** 2 for x in range(5))
+liste = []
+for sayi in uretec:
+    liste.append(sayi)
+print(liste)
+print(list(uretec))
+```
+
+::: {.cozum}
+Üreteç $x = 0, 1, 2, 3, 4$ için $2x^2$ değerlerini, yani $0, 2, 8, 18, 32$'yi üretir; döngü bunları listeye ekler. Döngü bittiğinde üreteç tükenmiştir; `list(uretec)` bu yüzden boş liste verir.
+
+```python
+uretec = (2 * x ** 2 for x in range(5))
+liste = []
+for sayi in uretec:
+    liste.append(sayi)
+print(liste)
+print(list(uretec))
+```
+
+Çıktı:
+
+```text
+[0, 2, 8, 18, 32]
+[]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-dmt-donusumler name="Liste, Demet ve Küme"}
+`liste = [1, 5, 3, 9, 2, 5]` listesini bir demete ve bir kümeye çeviriniz. Hangisinin eleman sayısı farklıdır, neden?
+
+::: {.cozum}
+Demete dönüşüm elemanların sırasını ve tekrarlarını korur; eleman sayısı $6$ kalır. Küme tekrar eden elemanları tek bir eleman olarak tuttuğu için iki `5`'ten biri düşer ve eleman sayısı $5$ olur. Kümenin sırası olmadığından onu sıralı göstermek için `sorted` kullanırız.
+
+```python
+liste = [1, 5, 3, 9, 2, 5]
+demet = tuple(liste)
+kume = set(liste)
+print(demet, len(demet))
+print(sorted(kume), len(kume))
+```
+
+Çıktı:
+
+```text
+(1, 5, 3, 9, 2, 5) 6
+[1, 2, 3, 5, 9] 5
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümle birlikte Python'ın temel koleksiyonlarını ve döngülerini tamamladık. Bir sonraki bölüm [Rastgele Sayılar: random Modülü](rastgele-sayilar-ve-random-modulu.qmd), zar atmak, kura çekmek ya da bir listeyi karıştırmak gibi işler için bilgisayara rastgele sayılar ürettirmeyi ele alıyor.

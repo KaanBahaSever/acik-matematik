@@ -1,0 +1,858 @@
+---
+title: "Aritmetik İşlemler ve math Modülü"
+pagetitle: "Aritmetik İşlemler ve math Modülü"
+description: "Python'da toplama, çıkarma, çarpma, bölme, tam bölme, kalan ve üs alma operatörleri; işlem önceliği, ondalıklı sayılardaki yuvarlama hatası, min, max, abs, pow ve round fonksiyonları, math modülünün sabitleri ve fonksiyonları ile karmaşık sayılarla işlemler."
+---
+
+Bilgisayarın ilk ve en temel işi hesap yapmaktır. Python'ı açıp `2 + 3` yazdığımızda onu bir hesap makinesi gibi kullanmış oluruz; ama bu hesap makinesinin kendine özgü kuralları vardır. Bölmenin iki farklı türü vardır, işlemler belli bir öncelik sırasıyla yapılır ve ondalıklı sayılarla yapılan hesaplar her zaman tam olarak beklediğimiz sonucu vermez.
+
+Bu bölümde önce Python'ın aritmetik operatörlerini ve işlem önceliğini göreceğiz. Ardından hazır gelen matematik fonksiyonlarını ve karekökten logaritmaya, faktöriyelden en büyük ortak bölene kadar pek çok fonksiyon içeren `math` modülünü tanıyacağız.
+
+## Aritmetik Operatörler
+
+Python'da dört işlemin yanında tam bölme, kalan ve üs alma için de birer operatör vardır.
+
+| İşlem | Operatör | Örnek | Sonuç |
+|:--|:-:|:-:|:-:|
+| toplama | `+` | `5 + 3` | `8` |
+| çıkarma | `-` | `10 - 4` | `6` |
+| çarpma | `*` | `7 * 3` | `21` |
+| bölme | `/` | `15 / 2` | `7.5` |
+| tam bölme | `//` | `15 // 2` | `7` |
+| kalan (mod) | `%` | `15 % 4` | `3` |
+| üs alma | `**` | `2 ** 3` | `8` |
+
+```python
+print(5 + 3, 10 - 4, 7 * 3)
+print(15 / 2)
+print(15 // 2)
+print(15 % 4)
+print(2 ** 3)
+print(10 / 2)   # bölüm tam sayı olsa da sonuç float'tur
+```
+
+Çıktı:
+
+```text
+8 6 21
+7.5
+7
+3
+8
+5.0
+```
+
+`/` operatörü bölüm tam sayı olsa bile her zaman bir `float` verir; `10 / 2` sonucu `5` değil `5.0`'dır. Tam sayı sonucu isteniyorsa tam bölme kullanılır.
+
+::: {#def-art-tam-bolme name="Tam Bölme ve Kalan"}
+$a$ ve $b \neq 0$ sayıları için $a$'nın $b$'ye bölümünün aşağı yuvarlanmış değerine **tam bölüm** denir ve Python'da `a // b` ile hesaplanır. **Kalan** `a % b` ise
+$$
+a = (a \,//\, b) \cdot b + (a \,\%\, b)
+$$
+eşitliğini sağlayan sayıdır.
+:::
+
+Yani `15 // 4` işlemi $15/4 = 3{,}75$ sayısını aşağı yuvarlar ve $3$ verir; kalan da $15 - 3 \cdot 4 = 3$ olur. Pozitif sayılarda bu, ilkokulda öğrendiğimiz bölme işleminin bölümü ve kalanıdır. Bir sayının çift olup olmadığını anlamak için `n % 2` değerine, son basamağını bulmak için `n % 10` değerine bakmak gibi pek çok kullanımı vardır.
+
+Negatif sayılarda "aşağı yuvarlama" sözü önemlidir: $-7/2 = -3{,}5$ sayısı aşağı yuvarlanınca $-3$ değil $-4$ olur. Kalan da tanımdaki eşitlikten bulunur ve Python'da kalan her zaman bölenle aynı işaretlidir.
+
+```python
+print(-7 // 2, -7 % 2)    # -7 = (-4) * 2 + 1
+print(-8 // 3, -8 % 3)    # -8 = (-3) * 3 + 1
+print(7 // -2, 7 % -2)    # 7 = (-4) * (-2) + (-1)
+print(24 // 2.5)          # float ile tam bölmenin sonucu float'tur
+```
+
+Çıktı:
+
+```text
+-4 1
+-3 1
+-4 -1
+9.0
+```
+
+Son satırda $24/2{,}5 = 9{,}6$ aşağı yuvarlanır ve `9.0` bulunur; işlemdeki sayılardan biri `float` olduğu için sonuç da `float`'tur.
+
+::: {.callout-note title="Son sonucu gösteren alt çizgi"}
+Etkileşimli kabukta (IDLE ya da terminal) ve Colab'da, en son hesaplanıp ekranda gösterilen değer `_` adıyla tekrar kullanılabilir: `15 / 2` yazdıktan sonra `_ * 2` yazmak `15.0` verir. Bu özellik yalnız etkileşimli çalışmada geçerlidir; bir `.py` dosyasında `_` böyle bir anlam taşımaz, bu yüzden programlarda kullanılmamalıdır.
+:::
+
+## İşlem Önceliği
+
+Birden çok operatör içeren bir ifadede Python, matematikteki sıraya benzer bir öncelik sırası izler.
+
+::: {#def-art-oncelik name="İşlem Önceliği"}
+Python bir ifadeyi şu sırayla hesaplar:
+
+1. parantez içi `( )`,
+2. üs alma `**`,
+3. çarpma, bölme, tam bölme ve kalan `*`, `/`, `//`, `%`,
+4. toplama ve çıkarma `+`, `-`.
+
+Aynı öncelikteki işlemler soldan sağa yapılır; yalnız üs alma sağdan sola yapılır.
+:::
+
+Yani `3 + 5 * 2` ifadesinde önce çarpma yapılır ve sonuç $13$ olur; toplamanın önce yapılması isteniyorsa `(3 + 5) * 2` yazılır ve sonuç $16$ olur. Kâğıt üzerinde kesir çizgisinin yaptığı gruplama işini Python'da parantezler yapar.
+
+```python
+print(3 + 5 * 2)
+print((3 + 5) * 2)
+print(2 ** 3 ** 2)     # 2 ** (3 ** 2) = 2 ** 9
+print((2 ** 3) ** 2)   # 8 ** 2
+print(2 ** 2 * 2, 2 * 2 ** 2)
+print(-2 ** 2)         # -(2 ** 2)
+```
+
+Çıktı:
+
+```text
+13
+16
+512
+64
+8 8
+-4
+```
+
+`2 ** 3 ** 2` ifadesi $2^{3^2} = 2^9 = 512$ olarak hesaplanır, çünkü üs alma sağdan sola yapılır. `-2 ** 2` ifadesinde de üs alma eksi işaretinden önce gelir: sonuç $(-2)^2 = 4$ değil, $-(2^2) = -4$'tür.
+
+:::: {#exm-art-oncelik-adim name="Önceliği Adım Adım Uygulamak"}
+`5 - 6 / 2 * 3 - 1 + 7 * 6 / 3` ifadesinin değerini bulunuz.
+
+::: {.cozum}
+Önce çarpma ve bölmeler soldan sağa yapılır:
+
+- `6 / 2 * 3`: önce $6/2 = 3{,}0$, sonra $3{,}0 \cdot 3 = 9{,}0$.
+- `7 * 6 / 3`: önce $7 \cdot 6 = 42$, sonra $42/3 = 14{,}0$.
+
+İfade $5 - 9{,}0 - 1 + 14{,}0$ olur. Toplama ve çıkarmalar soldan sağa yapılınca $5 - 9{,}0 = -4{,}0$, $-4{,}0 - 1 = -5{,}0$ ve $-5{,}0 + 14{,}0 = 9{,}0$ bulunur.
+
+```python
+a = 5 - 6 / 2 * 3 - 1 + 7 * 6 / 3
+print(a)
+```
+
+Çıktı:
+
+```text
+9.0
+```
+
+Sonuç `9.0`'dır; ifadede `/` kullanıldığı için tam sayı değil ondalıklı sayı çıkar. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-art-mod-oncelik name="Kalan ve Üs İçeren Bir İfade"}
+`Y = 4 * 8 % 4 + 2 ** (2 * 2 + 2)` komutundan sonra `Y`'nin değeri nedir?
+
+::: {.cozum}
+Önce parantez içi hesaplanır: $2 \cdot 2 + 2 = 6$. Sonra üs alınır: $2^6 = 64$. Ardından aynı öncelikteki `*` ve `%` soldan sağa yapılır: $4 \cdot 8 = 32$ ve $32$'nin $4$'e bölümünden kalan $0$'dır. Son olarak toplama yapılır: $0 + 64 = 64$.
+
+```python
+Y = 4 * 8 % 4 + 2 ** (2 * 2 + 2)
+print(Y)
+```
+
+Çıktı:
+
+```text
+64
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Ondalıklı Sayılardaki Yuvarlama Hatası
+
+Tam sayılarla yapılan hesaplar her zaman tamdır; ondalıklı sayılarda ise küçük ama önemli bir pürüz vardır.
+
+```python
+a = 0.1 + 0.1
+b = 0.1 + 0.2
+print(a)
+print(b)
+print(b == 0.3)
+```
+
+Çıktı:
+
+```text
+0.2
+0.30000000000000004
+False
+```
+
+$0{,}1 + 0{,}2$ toplamının $0{,}3$ değil $0{,}30000000000000004$ çıkmasının nedeni, bilgisayarın sayıları ikilik tabanda saklamasıdır. $1/3$ sayısının onluk tabanda $0{,}333\ldots$ diye sonsuza dek sürmesi gibi, $0{,}1$ sayısı da ikilik tabanda sonsuza dek süren bir açılıma sahiptir. Bilgisayar bu açılımı belli bir basamakta keser; saklanan sayı $0{,}1$'e çok yakın ama ona eşit olmayan bir sayıdır. Bu küçük farklar işlemler sırasında birikir ve bazen çıktıda görünür.
+
+::: {.callout-warning title="Ondalıklı sayıları == ile karşılaştırmayın"}
+Yukarıdaki örnekte `0.1 + 0.2 == 0.3` sorusunun yanıtı `False`'tur. İki ondalıklı sayının eşitliğini sınamak yerine farklarının çok küçük olup olmadığına bakılır: `abs(b - 0.3) < 1e-9` gibi. Burada `1e-9`, $10^{-9}$ sayısının Python'daki yazılışıdır.
+:::
+
+## Hazır Matematik Fonksiyonları
+
+Python, hiçbir şey yüklemeden kullanılabilen birkaç hazır matematik fonksiyonuyla gelir.
+
+| Fonksiyon | Anlamı | Örnek | Sonuç |
+|:--|:--|:-:|:-:|
+| `min(a, b, ...)` | en küçük değer | `min(5, -23, 34)` | `-23` |
+| `max(a, b, ...)` | en büyük değer | `max(5, -23, 34)` | `34` |
+| `abs(x)` | mutlak değer | `abs(-4.78)` | `4.78` |
+| `pow(x, y)` | $x^y$ | `pow(2, 3)` | `8` |
+| `round(x, n)` | `x`'i `n` ondalık basamağa yuvarlar | `round(5.1234, 2)` | `5.12` |
+
+```python
+print(min(5, -23, 34))
+print(max(5, -23, 34))
+print(abs(-4.78))
+print(pow(2, 3), pow(2, -1))
+```
+
+Çıktı:
+
+```text
+-23
+34
+4.78
+8 0.5
+```
+
+`pow(2, 3)` işlemi `2 ** 3` ile aynıdır; tam sayılarla çağrıldığında sonuç da tam sayıdır. Üs negatifse sonuç ondalıklı olur: $2^{-1} = 0{,}5$.
+
+::: {#def-art-round name="round Fonksiyonu"}
+`round(x, n)` fonksiyonu `x` sayısını virgülden sonra `n` basamağa yuvarlar; `n` verilmezse en yakın tam sayıya yuvarlar ve sonucu `int` olarak verir. Sayı iki tam sayının tam ortasındaysa (örneğin $2{,}5$), `round` onu çift olan komşusuna yuvarlar.
+:::
+
+Yani `round(5.7)` $6$, `round(5.1234, 2)` $5{,}12$ olur. Tam ortadaki sayılar için kullanılan "çift olana yuvarla" kuralı, çok sayıda yuvarlama yapıldığında hataların hep aynı yöne birikmesini önler; bu yüzden `round(2.5)` $2$, `round(3.5)` ise $4$'tür.
+
+```python
+print(round(5.7))
+print(round(5.1234, 2))
+print(round(0.127885534, 4))
+print(round(0.127985534, 4))
+print(round(-0.127985534, 5))
+print(round(2.5), round(3.5))
+```
+
+Çıktı:
+
+```text
+6
+5.12
+0.1279
+0.128
+-0.12799
+2 4
+```
+
+Dördüncü satırda $0{,}127985534$ dört basamağa yuvarlanınca $0{,}1280$ olur; Python sondaki gereksiz sıfırı yazmaz ve `0.128` gösterir.
+
+Bir sayıyı tam sayıya indirmenin üç farklı yolu vardır ve negatif sayılarda farklı sonuç verirler: `int` sıfıra doğru keser, `round` en yakına yuvarlar, ileride göreceğimiz `math.floor` ise aşağı yuvarlar.
+
+## math Modülü
+
+Karekök, trigonometrik fonksiyonlar ya da logaritma gibi daha ileri işlemler Python'ın `math` modülündedir.
+
+::: {#def-art-modul name="Modül ve import"}
+Hazır fonksiyonları ve sabitleri bir arada tutan Python dosyasına **modül** (module) denir. Bir modülü programda kullanabilmek için önce `import modul_adi` komutuyla programa dahil etmek gerekir; ardından modüldeki bir fonksiyon `modul_adi.fonksiyon_adi(...)` biçiminde çağrılır.
+:::
+
+Yani `import math` komutundan sonra karekök fonksiyonu `math.sqrt` adıyla kullanılır. Bir modülün içinde neler bulunduğu `dir` fonksiyonuyla listelenebilir:
+
+```python
+import math
+print(dir(math))
+```
+
+Çıktı:
+
+```text
+['__doc__', '__loader__', '__name__', '__package__', '__spec__', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atan2', 'atanh', 'cbrt', 'ceil', 'comb', 'copysign', 'cos', 'cosh', 'degrees', 'dist', 'e', 'erf', 'erfc', 'exp', 'exp2', 'expm1', 'fabs', 'factorial', 'floor', 'fmod', 'frexp', 'fsum', 'gamma', 'gcd', 'hypot', 'inf', 'isclose', 'isfinite', 'isinf', 'isnan', 'isqrt', 'lcm', 'ldexp', 'lgamma', 'log', 'log10', 'log1p', 'log2', 'modf', 'nan', 'nextafter', 'perm', 'pi', 'pow', 'prod', 'radians', 'remainder', 'sin', 'sinh', 'sqrt', 'sumprod', 'tan', 'tanh', 'tau', 'trunc', 'ulp']
+```
+
+Listenin başındaki `__doc__` gibi alt çizgili adlar Python'ın iç işleyişi içindir; geri kalanlar kullanabileceğimiz fonksiyon ve sabitlerdir. Bir fonksiyonun ne yaptığını öğrenmek için `help(math.sqrt)` yazılabilir.
+
+Modüldeki adları başlarına `math.` yazmadan kullanmak için `from math import sqrt, pi` gibi bir komutla yalnız istenen adlar dahil edilebilir. `from math import *` komutu modüldeki bütün adları dahil eder; ama programdaki başka adlarla çakışabileceği için büyük programlarda önerilmez.
+
+```python
+from math import sqrt, pi
+print(sqrt(16))
+print(pi)
+```
+
+Çıktı:
+
+```text
+4.0
+3.141592653589793
+```
+
+### Sabitler
+
+`math` modülü sık kullanılan matematik sabitlerini hazır olarak verir.
+
+| Sabit | Anlamı | Değeri |
+|:--|:--|:--|
+| `math.pi` | $\pi$ | `3.141592653589793` |
+| `math.e` | Euler sayısı $e$ | `2.718281828459045` |
+| `math.tau` | $\tau = 2\pi$ | `6.283185307179586` |
+| `math.inf` | pozitif sonsuz | `inf` |
+| `math.nan` | sayı olmayan değer | `nan` |
+
+`math.inf` her sayıdan büyük kabul edilir; bir en küçük değer aramasına başlarken ilk değer olarak kullanışlıdır. `math.nan` (not a number) ise tanımsız bir sonucu temsil eder.
+
+### Kök, Üs ve Logaritma
+
+Kök, üs ve logaritma fonksiyonlarının sonucu her zaman `float`'tur.
+
+| Fonksiyon | Anlamı |
+|:--|:--|
+| `math.sqrt(x)` | $\sqrt{x}$ |
+| `math.pow(x, y)` | $x^y$, sonucu her zaman `float` |
+| `math.exp(x)` | $e^x$ |
+| `math.log(x)` | $\ln x$ |
+| `math.log(x, b)` | $\log_b x$ |
+| `math.log10(x)`, `math.log2(x)` | $\log_{10} x$, $\log_2 x$ |
+
+```python
+import math
+print(math.sqrt(16))
+print(math.pow(2, 3))
+print(math.exp(1), math.exp(0))
+print(math.log(100, 10), math.log2(8), math.log10(1000))
+print(math.log(math.e))
+```
+
+Çıktı:
+
+```text
+4.0
+8.0
+2.718281828459045 1.0
+2.0 3.0 3.0
+1.0
+```
+
+`math.pow(2, 3)` ile `2 ** 3` aynı sayıyı verir, ama `math.pow` sonucu her zaman `float` olarak verir. Negatif bir sayının karekökü gerçel sayı olmadığından `math.sqrt(-4)` hata verir:
+
+```python
+import math
+print(math.sqrt(-4))
+```
+
+Çıktı:
+
+```text
+ValueError: math domain error
+```
+
+"math domain error" hatası, fonksiyona tanım kümesinin dışında bir değer verildiğini söyler.
+
+### Yuvarlama Fonksiyonları
+
+`math` modülünde bir sayıyı tam sayıya indiren üç fonksiyon vardır.
+
+::: {#def-art-ceil-floor name="Tavan, Taban ve Kesme"}
+`math.ceil(x)` $x$'ten büyük ya da ona eşit en küçük tam sayıyı (**tavan**, $\lceil x \rceil$), `math.floor(x)` $x$'ten küçük ya da ona eşit en büyük tam sayıyı (**taban**, $\lfloor x \rfloor$), `math.trunc(x)` ise $x$'in ondalık kısmını atarak elde edilen tam sayıyı verir.
+:::
+
+Yani `ceil` yukarı, `floor` aşağı yuvarlar; `trunc` ise sayıyı sıfıra doğru keser ve `int` ile aynı işi yapar. Pozitif sayılarda `floor` ile `trunc` aynı sonucu verir; fark negatif sayılarda ortaya çıkar.
+
+```python
+import math
+x = 3.7
+print(math.ceil(x), math.floor(x), math.trunc(x))
+y = -3.7
+print(math.ceil(y), math.floor(y), math.trunc(y))
+```
+
+Çıktı:
+
+```text
+4 3 3
+-3 -4 -3
+```
+
+$-3{,}7$ sayısının tabanı $-4$'tür, çünkü $-4 \le -3{,}7$ ve aradaki tam sayı $-3$, $-3{,}7$'den büyüktür. Kesme ise ondalık kısmı atar ve $-3$ verir. Tam bölme `//` da sonucu `floor` gibi aşağı yuvarlar.
+
+### Trigonometrik Fonksiyonlar
+
+`math.sin(x)`, `math.cos(x)` ve `math.tan(x)` fonksiyonları $x$'i **radyan** cinsinden kabul eder.
+
+Derece cinsinden bir açıyla çalışırken önce radyana çevirmek gerekir. Bunun için ya $x \cdot \pi / 180$ hesaplanır ya da `math.radians(x)` kullanılır; ters yöndeki dönüşümü `math.degrees(x)` yapar. Modülde kotanjant fonksiyonu yoktur; $\cot x = 1/\tan x$ olarak hesaplanır.
+
+```python
+import math
+print(math.sin(30))                  # 30 radyanın sinüsü
+print(math.sin(30 * math.pi / 180))  # 30 derecenin sinüsü
+print(math.sin(math.radians(90)))
+print(math.cos(math.radians(60)))
+print(math.degrees(math.pi / 2))
+print(1 / math.tan(math.radians(45)))   # cot 45°
+```
+
+Çıktı:
+
+```text
+-0.9880316240928618
+0.49999999999999994
+1.0
+0.5000000000000001
+90.0
+1.0000000000000002
+```
+
+Birinci satırdaki `-0.988...` sonucu yanlış değildir; yalnız $30$ derecenin değil $30$ radyanın sinüsüdür. $\sin 30^\circ = 0{,}5$ olmasına karşın çıktı `0.49999999999999994` olur: bu, $\pi$ sayısının bilgisayarda sınırlı duyarlıkla saklanmasından kaynaklanan küçük bir yuvarlama hatasıdır.
+
+:::: {#exm-art-derece-karisikligi name="Radyana Çevirmeyi Unutmak"}
+Aşağıdaki programın son satırı neden $1$ yazmaz?
+
+```python
+import math
+aci = math.degrees(math.pi / 2)
+print(aci)
+print(math.sin(aci))
+```
+
+::: {.cozum}
+`math.degrees(math.pi / 2)` radyanı dereceye çevirir ve `aci` değişkenine $90{,}0$ değerini verir. Ama `math.sin` her zaman radyan bekler; `math.sin(aci)` bu yüzden $90^\circ$'nin değil, $90$ radyanın sinüsünü hesaplar:
+
+```python
+import math
+aci = math.degrees(math.pi / 2)
+print(aci)
+print(math.sin(aci))
+```
+
+Çıktı:
+
+```text
+90.0
+0.8939966636005579
+```
+
+Doğru sonuç için açı tekrar radyana çevrilmelidir: `math.sin(math.radians(aci))` $1{,}0$ verir. [$\blacksquare$]{.qed}
+:::
+::::
+
+### Kalanlar ve Mutlak Değer
+
+`math` modülünde kalan hesaplayan iki fonksiyon daha vardır; `%` operatöründen yalnız negatif sayılarda ve en yakın tam sayıyı kullanma biçiminde ayrılırlar.
+
+| İfade | Kural | $x = 7$, $y = 3$ | $x = 20$, $y = 3$ | $x = -7$, $y = 3$ |
+|:--|:--|:-:|:-:|:-:|
+| `x % y` | kalan bölenle aynı işaretli | `1` | `2` | `2` |
+| `math.fmod(x, y)` | kalan bölünenle aynı işaretli | `1.0` | `2.0` | `-1.0` |
+| `math.remainder(x, y)` | $x - n y$, $n$: $x/y$'ye en yakın tam sayı | `1.0` | `-1.0` | `-1.0` |
+
+`math.remainder` için $20/3 = 6{,}67$ sayısına en yakın tam sayı $n = 7$'dir ve kalan $20 - 7 \cdot 3 = -1$ olur. $-7/3 = -2{,}33$ için $n = -2$ ve kalan $-7 - (-2) \cdot 3 = -1$ bulunur. `math.fabs(x)` ise $|x|$ değerini her zaman `float` olarak verir.
+
+```python
+import math
+print(7 % 3, math.fmod(7, 3), math.remainder(7, 3))
+print(20 % 3, math.fmod(20, 3), math.remainder(20, 3))
+print(-7 % 3, math.fmod(-7, 3), math.remainder(-7, 3))
+print(math.fabs(-7.5), math.fabs(-7))
+```
+
+Çıktı:
+
+```text
+1 1.0 1.0
+2 2.0 -1.0
+2 -1.0 -1.0
+7.5 7.0
+```
+
+### Sayma ve Bölünebilme Fonksiyonları
+
+Kombinatorik ve sayılar teorisinde sık kullanılan fonksiyonlar tam sayılarla çalışır ve tam sayı verir.
+
+| Fonksiyon | Anlamı | Örnek | Sonuç |
+|:--|:--|:-:|:-:|
+| `math.factorial(n)` | $n! = 1 \cdot 2 \cdots n$ | `math.factorial(5)` | `120` |
+| `math.perm(n, k)` | $n$ elemandan $k$'lı sıralama sayısı $\frac{n!}{(n-k)!}$ | `math.perm(5, 3)` | `60` |
+| `math.comb(n, k)` | $n$ elemandan $k$'lı seçim sayısı $\binom{n}{k}$ | `math.comb(5, 3)` | `10` |
+| `math.gcd(a, b)` | en büyük ortak bölen | `math.gcd(48, 18)` | `6` |
+| `math.lcm(a, b)` | en küçük ortak kat | `math.lcm(4, 6)` | `12` |
+
+```python
+import math
+print(math.factorial(5))
+print(math.perm(5, 3), math.comb(5, 3))
+print(math.gcd(48, 18), math.lcm(4, 6))
+```
+
+Çıktı:
+
+```text
+120
+60 10
+6 12
+```
+
+$5$ kişiden $3$'ünü bir sıraya dizmenin $5 \cdot 4 \cdot 3 = 60$ yolu vardır; sıranın önemli olmadığı seçimlerde bu sayı $3! = 6$'ya bölünür ve $\binom{5}{3} = 10$ bulunur.
+
+### Toplam ve Çarpım
+
+`math.fsum` ve `math.prod`, köşeli parantez içinde yazılmış bir sayı listesinin elemanlarını toplar ve çarpar. Listeleri ileride ayrıntılı göreceğiz; şimdilik `[1.5, 2.5, 3.5]` yazımının üç sayıyı bir arada tuttuğunu bilmek yeter.
+
+`math.fsum`, sayıları tek tek `+` ile toplamaya göre daha duyarlı bir yöntem kullanır: ara toplamlardaki yuvarlama hatalarını takip eder ve sonucu olabildiğince doğru verir.
+
+```python
+import math
+print(math.fsum([1.5, 2.5, 3.5]))
+print(math.prod([1, 2, 3, 4]))
+print(0.1 + 0.1 + 0.1 + 0.1 + 0.1 + 0.1 + 0.1 + 0.1 + 0.1 + 0.1)
+print(math.fsum([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]))
+```
+
+Çıktı:
+
+```text
+7.5
+24
+0.9999999999999999
+1.0
+```
+
+On tane $0{,}1$'in toplamı $1$'dir. `+` ile soldan sağa toplarken her adımdaki küçük hata bir sonrakine aktarılır ve sonuç `0.9999999999999999` çıkar; `math.fsum` ise doğru sonucu verir. Python 3.12'den beri hazır `sum` fonksiyonu da ondalıklı sayıları benzer bir duyarlı yöntemle toplar.
+
+## Karmaşık Sayılarla İşlemler
+
+Karmaşık sayılarla dört işlem, matematikteki kurallarla doğrudan yapılır.
+
+$z_1 = 2 + 3i$ ve $z_2 = 1 + 4i$ için çarpım $$(2 + 3i)(1 + 4i) = 2 + 8i + 3i + 12i^2 = -10 + 11i$$ olur. `abs(z)` fonksiyonu karmaşık sayının modülünü, yani $|a + bi| = \sqrt{a^2 + b^2}$ değerini verir; `z.conjugate()` ise eşleniği $\overline{z} = a - bi$ değerini verir.
+
+```python
+z1 = 2 + 3j
+z2 = 1 + 4j
+print(z1 + z2)
+print(z1 - z2)
+print(z1 * z2)
+print(z1 / z2)
+print(abs(z2))
+print(z2.conjugate())
+print(z2 * z2)
+```
+
+Çıktı:
+
+```text
+(3+7j)
+(1-1j)
+(-10+11j)
+(0.8235294117647058-0.29411764705882354j)
+4.123105625617661
+(1-4j)
+(-15+8j)
+```
+
+$|z_2| = \sqrt{1^2 + 4^2} = \sqrt{17} \approx 4{,}1231$'dir. Bölme de eşlenikle genişletilerek doğrulanabilir:
+$$
+\frac{2 + 3i}{1 + 4i} = \frac{(2 + 3i)(1 - 4i)}{(1 + 4i)(1 - 4i)} = \frac{14 - 5i}{17} \approx 0{,}8235 - 0{,}2941\,i.
+$$
+
+## Çeşitli Örnekler
+
+Bu bölümde öğrendiklerimizi birkaç hesap üzerinde bir arada kullanalım.
+
+:::: {#exm-art-tam-bolme-kalan name="Toplamın Dörtte Biri ve Kalanı"}
+`t = 12 + 25 + 15` ve `x = t / 4 + t % 4` olmak üzere `x`'in değerini bulunuz.
+
+::: {.cozum}
+$t = 52$'dir. $52/4 = 13{,}0$ ve $52 = 13 \cdot 4 + 0$ olduğundan `t % 4` $0$'dır. Böylece $x = 13{,}0 + 0 = 13{,}0$ bulunur.
+
+```python
+t = 12 + 25 + 15
+x = t / 4 + t % 4
+print(x)
+```
+
+Çıktı:
+
+```text
+13.0
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-art-karisik-ifade name="Bütün Operatörler Bir Arada"}
+`a = 8` ve `b = 3` iken `a ** 2 - b * 4 + a // b - b % a` ifadesinin değerini bulunuz.
+
+::: {.cozum}
+Önce üs alınır: $8^2 = 64$. Sonra çarpma, tam bölme ve kalan hesaplanır: $3 \cdot 4 = 12$, $8 \,//\, 3 = 2$ ve $3 \,\%\, 8 = 3$; $3$, $8$'den küçük olduğu için $3 = 0 \cdot 8 + 3$ ve kalan $3$'ün kendisidir. Son olarak soldan sağa $64 - 12 + 2 - 3 = 51$ bulunur.
+
+```python
+a = 8
+b = 3
+sonuc = a ** 2 - b * 4 + a // b - b % a
+print(sonuc)
+```
+
+Çıktı:
+
+```text
+51
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-art-parantezli-tam-bolme name="Parantezli Bir Tam Bölme"}
+`x = 5` ve `y = 2` iken `(x + y) ** 2 // (x - y) + x * y % 3` ifadesinin değerini bulunuz.
+
+::: {.cozum}
+Parantezler önce hesaplanır: $x + y = 7$ ve $x - y = 3$. Sonra üs alınır: $7^2 = 49$. Ardından aynı öncelikteki işlemler soldan sağa yapılır: $49 \,//\, 3 = 16$, ayrıca $x \cdot y = 10$ ve $10 \,\%\, 3 = 1$. Sonuç $16 + 1 = 17$'dir.
+
+```python
+x = 5
+y = 2
+z = (x + y) ** 2 // (x - y) + x * y % 3
+print(z)
+```
+
+Çıktı:
+
+```text
+17
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-art-indirim name="İndirimli ve Vergili Fiyat"}
+Fiyatı $149{,}99$ TL olan bir üründen $7$ adet alınıyor. Toplam tutara $\%20$ indirim, indirimli tutara da $\%18$ vergi uygulanıyor. Ödenecek tutarı iki ondalık basamağa yuvarlayarak bulunuz.
+
+::: {.cozum}
+Toplam $149{,}99 \cdot 7 = 1049{,}93$ TL'dir. İndirim tutarı toplamın $\%20$'si, yani $1049{,}93 \cdot 20/100 = 209{,}986$ TL'dir; indirimli tutar $1049{,}93 - 209{,}986 = 839{,}944$ TL olur. Vergi $839{,}944 \cdot 18/100 = 151{,}18992$ TL'dir ve ödenecek tutar $$839{,}944 + 151{,}18992 = 991{,}13392 \approx 991{,}13$$ TL bulunur.
+
+```python
+fiyat = 149.99
+adet = 7
+toplam = fiyat * adet
+indirimli = toplam - toplam * 20 / 100
+vergi = indirimli * 18 / 100
+son_fiyat = indirimli + vergi
+print(round(son_fiyat, 2))
+```
+
+Çıktı:
+
+```text
+991.13
+```
+
+İndirimi hesaplarken `/` yerine `//` yazılsaydı `toplam * 20 // 100` işlemi $209{,}986$'yı aşağı yuvarlayıp $209{,}0$ yapardı ve sonuç bir lira kadar farklı çıkardı. Para hesaplarında tam bölme ancak bilerek kullanılmalıdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Alıştırmalar
+
+Her alıştırmada önce sonucu elle bulun, sonra kodu çalıştırarak doğrulayın.
+
+:::: {#exr-art-saniye name="Saniyeyi Saat, Dakika ve Saniyeye Ayırmak"}
+$10\,000$ saniyenin kaç saat, kaç dakika ve kaç saniye olduğunu `//` ve `%` kullanarak bulunuz.
+
+::: {.cozum}
+Bir saatte $3600$ saniye vardır. $10000 \,//\, 3600 = 2$ saat eder ve geriye $10000 \,\%\, 3600 = 2800$ saniye kalır. Bu kalanda $2800 \,//\, 60 = 46$ dakika vardır ve geriye $2800 \,\%\, 60 = 40$ saniye kalır. Sağlama: $$2 \cdot 3600 + 46 \cdot 60 + 40 = 7200 + 2760 + 40 = 10000$$.
+
+```python
+toplam_saniye = 10000
+saat = toplam_saniye // 3600
+kalan = toplam_saniye % 3600
+dakika = kalan // 60
+saniye = kalan % 60
+print(saat, "saat", dakika, "dakika", saniye, "saniye")
+```
+
+Çıktı:
+
+```text
+2 saat 46 dakika 40 saniye
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-art-basamaklar name="Üç Basamaklı Sayının Rakamları"}
+`n = 472` sayısının yüzler, onlar ve birler basamağını `//` ve `%` ile bulup rakamlarının toplamını hesaplayınız.
+
+::: {.cozum}
+Birler basamağı $10$'a bölümden kalandır: $472 \,\%\, 10 = 2$. Onlar basamağı için önce sayı $10$'a tam bölünür, $472 \,//\, 10 = 47$, sonra bunun birler basamağı alınır: $47 \,\%\, 10 = 7$. Yüzler basamağı $472 \,//\, 100 = 4$'tür. Rakamlar toplamı $4 + 7 + 2 = 13$'tür.
+
+```python
+n = 472
+yuzler = n // 100
+onlar = (n // 10) % 10
+birler = n % 10
+print(yuzler, onlar, birler)
+print(yuzler + onlar + birler)
+```
+
+Çıktı:
+
+```text
+4 7 2
+13
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-art-hipotenus name="Hipotenüs"}
+Dik kenarları $5$ ve $12$ olan dik üçgenin hipotenüsünü `math.sqrt` ile bulunuz.
+
+::: {.cozum}
+Pisagor teoremine göre hipotenüs $$c = \sqrt{a^2 + b^2} = \sqrt{25 + 144} = \sqrt{169} = 13$$'tür.
+
+```python
+import math
+a = 5
+b = 12
+c = math.sqrt(a ** 2 + b ** 2)
+print(c)
+```
+
+Çıktı:
+
+```text
+13.0
+```
+
+`math.sqrt` sonucu her zaman `float` verdiği için çıktı `13` değil `13.0`'dır. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-art-kombinasyon name="Faktöriyelle Kombinasyon"}
+$\binom{10}{3} = \dfrac{10!}{3! \, 7!}$ değerini `math.factorial` ile hesaplayıp `math.comb(10, 3)` ile karşılaştırınız.
+
+::: {.cozum}
+$10!/7! = 10 \cdot 9 \cdot 8 = 720$ ve $3! = 6$ olduğundan $\binom{10}{3} = 720/6 = 120$'dir. Python'da bölmeyi `//` ile yaparız; payın paydaya tam bölündüğünü bildiğimiz için sonuç kayıpsız bir tam sayı olur.
+
+```python
+import math
+pay = math.factorial(10)
+payda = math.factorial(3) * math.factorial(7)
+print(pay // payda)
+print(math.comb(10, 3))
+```
+
+Çıktı:
+
+```text
+120
+120
+```
+
+`/` kullanılsaydı sonuç `120.0` olurdu. Büyük sayılarda `/` ile bölme, sonuç tam sayı olsa bile `float`'a geçtiği için basamak kaybına yol açabilir. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-art-negatif-yuvarlama name="Negatif Sayıyı Tam Sayıya İndirmek"}
+$x = -2{,}5$ için `int(x)`, `round(x)`, `math.floor(x)`, `math.ceil(x)` ve `x // 1` değerlerini bulunuz.
+
+::: {.cozum}
+Kuralları tek tek uygulayalım:
+
+- `int(x)` sıfıra doğru keser: $-2$.
+- `round(x)`: $-2{,}5$, $-3$ ile $-2$'nin tam ortasındadır; çift olan komşu $-2$'dir.
+- `math.floor(x)` aşağı yuvarlar: $-3$.
+- `math.ceil(x)` yukarı yuvarlar: $-2$.
+- `x // 1` tam bölmedir ve aşağı yuvarlar; `x` `float` olduğu için sonuç `-3.0`'dır.
+
+```python
+import math
+x = -2.5
+print(int(x), round(x), math.floor(x), math.ceil(x), x // 1)
+```
+
+Çıktı:
+
+```text
+-2 -2 -3 -2 -3.0
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-art-bolme-esitligi name="Bölme Eşitliğini Doğrulamak"}
+$a = -17$ ve $b = 5$ için `a // b` ve `a % b` değerlerini bulunuz ve $a = (a \,//\, b) \cdot b + (a \,\%\, b)$ eşitliğini doğrulayınız.
+
+::: {.cozum}
+$-17/5 = -3{,}4$ sayısı aşağı yuvarlanınca $-4$ olur; bu yüzden `a // b` $-4$'tür. Kalan eşitlikten bulunur: $$-17 - (-4) \cdot 5 = -17 + 20 = 3$$. Kalan, bölen $5$ gibi pozitiftir. Doğrulama: $(-4) \cdot 5 + 3 = -20 + 3 = -17$.
+
+```python
+a = -17
+b = 5
+print(a // b, a % b)
+print((a // b) * b + a % b)
+```
+
+Çıktı:
+
+```text
+-4 3
+-17
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-art-oncelik-iki name="Kalan, Çarpma ve Parantez"}
+`Y = 4 % 8 * 4 + 2 * (2 ** 2 + 2)` komutundan sonra `Y`'nin değerini bulunuz.
+
+::: {.cozum}
+Önce parantez içi: $2^2 + 2 = 6$. Sonra aynı öncelikteki `%` ve `*` soldan sağa yapılır: $4 \,\%\, 8 = 4$, çünkü $4 = 0 \cdot 8 + 4$; ardından $4 \cdot 4 = 16$. Sağ tarafta $2 \cdot 6 = 12$'dir. Toplam $16 + 12 = 28$'dir.
+
+```python
+Y = 4 % 8 * 4 + 2 * (2 ** 2 + 2)
+print(Y)
+```
+
+Çıktı:
+
+```text
+28
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exr-art-karmasik-modul name="Karmaşık Sayının Modülü ve Tersi"}
+$z = 3 - 4i$ için $|z|$ ve $1/z$ değerlerini bulunuz.
+
+::: {.cozum}
+$|z| = \sqrt{3^2 + (-4)^2} = \sqrt{25} = 5$'tir. Ters, eşlenikle genişletilerek bulunur:
+$$
+\frac{1}{3 - 4i} = \frac{3 + 4i}{(3 - 4i)(3 + 4i)} = \frac{3 + 4i}{25} = 0{,}12 + 0{,}16\,i.
+$$
+
+```python
+z = 3 - 4j
+print(abs(z))
+print(1 / z)
+```
+
+Çıktı:
+
+```text
+5.0
+(0.12+0.16j)
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Bu bölümde Python'ı bir hesap makinesi olarak kullanmayı öğrendik: operatörler, işlem önceliği, yuvarlama ve `math` modülü artık elimizde. Şimdiye kadar bütün değerleri programın içine kendimiz yazdık. Bir sonraki bölüm [Girdi ve Çıktı İşlemleri](girdi-ve-cikti-islemleri.qmd), kullanıcıdan değer almayı ve sonuçları düzenli bir biçimde ekrana yazmayı ele alıyor.

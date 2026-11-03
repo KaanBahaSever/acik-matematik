@@ -13,13 +13,14 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 <!-- BOOKS-START -->
 
 <details>
-<summary><strong>Arşivdeki 33 ders</strong> — 25 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
+<summary><strong>Arşivdeki 34 ders</strong> — 26 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
 
 - [Analitik Geometri](https://acik-matematik.com/dersler/analitik-geometri/) — 23 bölüm, 569 örnek ve alıştırma
 - [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 46 bölüm, 733 örnek ve alıştırma
 - [Analiz 2: Türev ve İntegral](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
 - [Analiz 3: Fonksiyon Dizileri ve Seriler](https://acik-matematik.com/dersler/analiz-3/) — 21 bölüm, 291 örnek ve alıştırma
 - [Analiz 4: Çok Değişkenli Fonksiyonlar](https://acik-matematik.com/dersler/analiz-4/) — 21 bölüm, 497 örnek ve alıştırma
+- [Bilgisayar Programlama](https://acik-matematik.com/dersler/bilgisayar-programlama/) — 12 bölüm, 186 örnek ve alıştırma
 - [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 19 bölüm, 281 örnek ve alıştırma
 - [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 20 bölüm, 694 örnek ve alıştırma
 - [İntegral Calculus](https://acik-matematik.com/dersler/integral-calculus/) — 18 bölüm, 348 örnek ve alıştırma
@@ -59,18 +60,18 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 
 | İçerik | Sayı |
 |---|---:|
-| 📚 Kitap | **33** |
-| 📖 Konu/Bölüm | **567** |
+| 📚 Kitap | **34** |
+| 📖 Konu/Bölüm | **579** |
 | 📐 Teorem | **1.285** |
 | 🔹 Lemma | **141** |
-| 📝 Tanım | **1.719** |
+| 📝 Tanım | **1.786** |
 | ✅ İspat | **2.284** |
-| 🧮 Örnek ve alıştırma | **6.055** |
-| 💡 Çözüm | **5.762** |
-| 📊 Şekil | **1.775** |
-| ✍️ Kelime | **2.535.486** |
-| 🔤 Karakter | **17.898.515** |
-| 💾 Kaynak metin | **45,5 MB** |
+| 🧮 Örnek ve alıştırma | **6.241** |
+| 💡 Çözüm | **5.948** |
+| 📊 Şekil | **1.780** |
+| ✍️ Kelime | **2.564.845** |
+| 🔤 Karakter | **18.108.233** |
+| 💾 Kaynak metin | **45,8 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 
