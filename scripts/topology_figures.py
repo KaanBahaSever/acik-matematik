@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Generates the SVG figures used in the "Topoloji" chapters (dersler/olasilik-teorisi).
+Generates the SVG figures used in the "Topoloji" chapters (dersler/topoloji).
 
 Same authoring flow as scripts/analysis_figures.py: the figures are NOT produced
 at build time. Run this script, then
@@ -680,6 +680,91 @@ OUT["ic-ice-goruntu"] = figure(
     "<em>f</em><sup>&#8722;1</sup>(<em>f</em>(<em>A</em><sub>0</sub>)) kapsaması geçerlidir.",
     aria="Iki dikey sayi dogrusu: solda A uzerinde [0,1] koyu ve [-1,1] acik isaretli, sagda B uzerinde "
          "goruntu [2,5] koyu isaretli; -1/2 ve 1/2 noktalari ayni degere gidiyor")
+
+# ============================================================ karma-altuzay-simetrik
+# Y = [-1, 1] as a subspace of R and A = {x : 1/2 < |x| < 1} = (-1, -1/2) u (1/2, 1).
+# A is a union of two open intervals, so it is open in R, and A = Y n A is open in Y.
+W_F, H_F = 400, 190
+p = Plot(16, 0, 368, H_F, (-1.45, 1.45), (H_F, 0))
+Y_Y, Y_A, Y_LINE = 46, 92, 134            # the rows and the number line (pixel y)
+
+for xa, xb in ((-1, -0.5), (0.5, 1)):
+    rect(p, xa, xb, Y_Y - 10, Y_A + 8, PRACTICE, 0.09)
+for x in (-1, -0.5, 0.5, 1):
+    guide(p, [(x, Y_Y - 10), (x, Y_LINE)], PRACTICE, 0.45)
+
+p.arrow((-1.4, Y_LINE), (1.43, Y_LINE), TEXT, 1.2, 7.0, opacity=0.6)
+p.label(1.43, Y_LINE, "&#8477;", 0, -8, TEXT, 11.5, "end", True, False)
+for x, s in ((-1, MINUS_S + "1"), (-0.5, MINUS_S + "1/2"), (0, "0"), (0.5, "1/2"), (1, "1")):
+    p.line([(x, Y_LINE - 4), (x, Y_LINE + 4)], TEXT, 1.2)
+    p.label(x, Y_LINE, s, 0, 18, TEXT, 11, "middle", False, False)
+
+# top row: the subspace Y = [-1, 1], closed ends
+p.line([(-1, Y_Y), (1, Y_Y)], BASE, 3.2)
+dot(p, (-1, Y_Y), BASE, 4.0)
+dot(p, (1, Y_Y), BASE, 4.0)
+p.label(-1, Y_Y, "Y", -12, 4, BASE, 11.5, "end", True, True)
+
+# bottom row: A, two open intervals with hollow ends
+for xa, xb in ((-1, -0.5), (0.5, 1)):
+    p.line([(xa, Y_A), (xb, Y_A)], PRACTICE, 2.8)
+    hollow(p, (xa, Y_A), PRACTICE, 3.6, 1.6)
+    hollow(p, (xb, Y_A), PRACTICE, 3.6, 1.6)
+p.label(-1, Y_A, "A", -12, 4, PRACTICE, 11.5, "end", True, True)
+
+p.text_px(200, 178, "A, hem Y'de hem &#8477;'de açık", PRACTICE, 11.5, "middle", True, False)
+
+OUT["karma-altuzay-simetrik"] = figure(
+    W_F, H_F, [p],
+    "<em>Y</em> = [&#8722;1, 1] alt uzayı ve <em>A</em> = {<em>x</em> : 1/2 &lt; |<em>x</em>| &lt; 1} kümesi. "
+    "<em>A</em>, uçları dahil olmayan (&#8722;1, &#8722;1/2) ve (1/2, 1) aralıklarının birleşimidir: "
+    "&#8722;1 ve 1 uç noktaları <em>Y</em>'ye ait olduğu hâlde <em>A</em>'ya ait değildir. İki açık aralığın "
+    "birleşimi olarak <em>A</em>, &#8477;'de açıktır; <em>A</em> &#8838; <em>Y</em> olduğundan "
+    "<em>A</em> = <em>Y</em> &#8745; <em>A</em> yazılır ve <em>A</em>, <em>Y</em>'de de açıktır.",
+    aria="Sayi dogrusu uzerinde iki satir: ustte uclari dolu Y = [-1, 1], altta uclari bos iki aralik "
+         "(-1, -1/2) ve (1/2, 1) olan A")
+
+# ============================================================ karma-fark-kesisim-venn
+# A \ (B n C) for three sets: the part of A outside the common part of B and C.
+# Shade A, cut the lens B n C out with the page colour, then draw the outlines.
+R_K = 0.95
+CEN_K = {"A": (0.0, 0.42), "B": (-0.56, -0.48), "C": (0.56, -0.48)}
+PW_K, PH_K, XR_K = 260.0, 236.0, 1.78
+YR_K = XR_K * PH_K / PW_K       # equal scale on both axes
+
+
+def k_arc(c, a0, a1, n=60):
+    return [(c[0] + R_K * math.cos(a0 + (a1 - a0) * k / n), c[1] + R_K * math.sin(a0 + (a1 - a0) * k / n))
+            for k in range(n + 1)]
+
+
+def k_lens(c1, c2):
+    """The intersection of two equal circles centred at c1 and c2, as a polygon."""
+    d = math.hypot(c2[0] - c1[0], c2[1] - c1[1])
+    th = math.acos((d / 2) / R_K)
+    to2 = math.atan2(c2[1] - c1[1], c2[0] - c1[0])
+    return k_arc(c1, to2 - th, to2 + th) + k_arc(c2, to2 + math.pi - th, to2 + math.pi + th)
+
+
+p = Plot(20, 30, PW_K, PH_K, (-XR_K, XR_K), (-YR_K - 0.1, YR_K - 0.1))
+p.polygon(k_arc(CEN_K["A"], 0, 2 * math.pi), THEORY, 0.30)
+p.polygon(k_lens(CEN_K["B"], CEN_K["C"]), BG, 1.0)
+for name, c in CEN_K.items():
+    p.circle(c[0], c[1], R_K, TEXT, 1.4)
+p.label(0.0, 1.0, "A", 0, 0, TEXT, 12, "middle", True, True)
+p.label(-1.22, -1.02, "B", 0, 0, TEXT, 12, "middle", True, True)
+p.label(1.22, -1.02, "C", 0, 0, TEXT, 12, "middle", True, True)
+p.text_px(p.x0 + p.w / 2, p.y0 - 10, "A \\ (B &#8745; C)", TEXT, 12, "middle", False, True)
+
+OUT["karma-fark-kesisim-venn"] = figure(
+    300, 290, [p],
+    "<em>A</em> &#8726; (<em>B</em> &#8745; <em>C</em>) kümesi taralıdır: <em>A</em>'nın, <em>B</em> ile "
+    "<em>C</em>'nin ortak kısmına düşmeyen noktaları. Taralı bölge iki parçanın birleşimidir: <em>A</em>'nın "
+    "<em>B</em> dışında kalan kısmı <em>A</em> &#8726; <em>B</em> ve <em>C</em> dışında kalan kısmı "
+    "<em>A</em> &#8726; <em>C</em>. Yalnız üç dairenin ortak bölgesi taranmamıştır; orası hem <em>B</em>'de "
+    "hem <em>C</em>'de olduğundan iki farka da girmez.",
+    aria="Uc daireli Venn semasi: ustte A, altta B ve C; A dairesi taranmis, yalnizca B ve C'nin ortak "
+         "merceginin A icindeki parcasi taranmamis")
 
 # ============================================================ sira-araliklar-sayi-dogrusu
 # The four intervals with end points 1 and 3 on the real line, one per row:
