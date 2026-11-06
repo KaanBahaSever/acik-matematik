@@ -681,6 +681,76 @@ OUT["ic-ice-goruntu"] = figure(
     aria="Iki dikey sayi dogrusu: solda A uzerinde [0,1] koyu ve [-1,1] acik isaretli, sagda B uzerinde "
          "goruntu [2,5] koyu isaretli; -1/2 ve 1/2 noktalari ayni degere gidiyor")
 
+# ============================================================ kapanis-alt-uzayda-kapanis
+# Y = (0, 1] and A = (0, 1/2): the closure of A in R is [0, 1/2], its closure in Y is
+# [0, 1/2] n Y = (0, 1/2].  Four rows over one number line; data y = pixel y.
+W_F, H_F = 400, 262
+p = Plot(16, 0, 368, H_F, (-0.38, 1.3), (H_F, 0))
+Y_Y, Y_A, Y_CR, Y_CY, Y_LINE = 34, 80, 126, 172, 210
+
+
+def row(y, x0, x1, closed0, closed1, color, width=2.8):
+    p.line([(x0, y), (x1, y)], color, width)
+    for x, c in ((x0, closed0), (x1, closed1)):
+        (dot(p, (x, y), color, 4.0) if c else hollow(p, (x, y), color, 3.6, 1.6))
+
+
+for x in (0, 0.5):
+    guide(p, [(x, Y_Y - 10), (x, Y_LINE)], PRACTICE, 0.45)
+p.arrow((-0.34, Y_LINE), (1.27, Y_LINE), TEXT, 1.2, 7.0, opacity=0.6)
+p.label(1.27, Y_LINE, "&#8477;", 0, -8, TEXT, 11.5, "end", True, False)
+for x, s in ((0, "0"), (0.5, "1/2"), (1, "1")):
+    p.line([(x, Y_LINE - 4), (x, Y_LINE + 4)], TEXT, 1.2)
+    p.label(x, Y_LINE, s, 0, 18, TEXT, 11, "middle", False, False)
+
+row(Y_Y, 0, 1, False, True, BASE, 3.2)
+p.label(0, Y_Y, "Y = (0, 1]", -14, 4, BASE, 11, "end", True, False)
+row(Y_A, 0, 0.5, False, False, THEORY)
+p.label(0, Y_A, "A = (0, 1/2)", -14, 4, THEORY, 11, "end", True, False)
+row(Y_CR, 0, 0.5, True, True, PRACTICE)
+p.label(0, Y_CR, "&#8477;'de kapanış", -14, 4, PRACTICE, 10.5, "end", False, True)
+p.label(0.5, Y_CR, "[0, 1/2]", 14, 4, PRACTICE, 11, "start", True, False)
+row(Y_CY, 0, 0.5, False, True, PRACTICE)
+p.label(0, Y_CY, "Y'de kapanış", -14, 4, PRACTICE, 10.5, "end", False, True)
+p.label(0.5, Y_CY, "(0, 1/2]", 14, 4, PRACTICE, 11, "start", True, False)
+
+OUT["kapanis-alt-uzayda-kapanis"] = figure(
+    W_F, H_F, [p],
+    "<em>Y</em> = (0, 1] alt uzayında <em>A</em> = (0, 1/2) kümesinin kapanışı. &#8477;'de kapanış iki uç "
+    "noktayı da ekler ve [0, 1/2] olur. <em>Y</em>'deki kapanış bu kümenin <em>Y</em> ile kesişimidir: 0 noktası "
+    "<em>Y</em>'ye ait olmadığından düşer, geriye (0, 1/2] kalır.",
+    aria="Sayi dogrusu uzerinde dort satir: Y = (0, 1], A = (0, 1/2), R'deki kapanis [0, 1/2] ve "
+         "Y'deki kapanis (0, 1/2]; dolu noktalar dahil olan uclari gosteriyor")
+
+# ============================================================ kapanis-kapali-ceyrek
+# The closed first quadrant K = {x >= 0, y >= 0} in R^2 and its complement, the union
+# of the open half-planes (-inf, 0) x R and R x (-inf, 0).
+PW_Q, PH_Q = 300.0, 260.0
+p = Plot(20, 10, PW_Q, PH_Q, (-1.5, 1.5), (-1.3, 1.3))
+p.polygon([(-1.5, -1.3), (0, -1.3), (0, 1.3), (-1.5, 1.3)], PRACTICE, 0.13)
+p.polygon([(-1.5, -1.3), (1.5, -1.3), (1.5, 0), (-1.5, 0)], PRACTICE, 0.13)
+p.polygon([(0, 0), (1.5, 0), (1.5, 1.3), (0, 1.3)], THEORY, 0.22)
+p.arrow((-1.5, 0), (1.5, 0), TEXT, 1.0, 7.0, opacity=0.55)
+p.arrow((0, -1.3), (0, 1.3), TEXT, 1.0, 7.0, opacity=0.55)
+p.line([(0, 0), (1.42, 0)], THEORY, 2.4)
+p.line([(0, 0), (0, 1.22)], THEORY, 2.4)
+dot(p, (0, 0), THEORY, 3.6)
+p.label(1.5, 0, "x", -4, -8, TEXT, 11.5, "end", False, True)
+p.label(0, 1.3, "y", 9, 10, TEXT, 11.5, "start", False, True)
+p.label(0.75, 0.68, "K", 0, 0, THEORY, 13, "middle", True, True)
+p.label(0.75, 0.42, "kapalı", 0, 0, THEORY, 10.5, "middle", False, True)
+p.label(-0.75, 0.6, "(" + MINUS_S + "&#8734;, 0) &#215; &#8477;", 0, 0, PRACTICE, 11, "middle", True, False)
+p.label(0.75, -0.65, "&#8477; &#215; (" + MINUS_S + "&#8734;, 0)", 0, 0, PRACTICE, 11, "middle", True, False)
+
+OUT["kapanis-kapali-ceyrek"] = figure(
+    340, 280, [p],
+    "Düzlemde <em>K</em> = {(<em>x</em>, <em>y</em>) : <em>x</em> &#8805; 0 ve <em>y</em> &#8805; 0} kümesi. "
+    "Sınırındaki iki yarı eksen <em>K</em>'ya aittir. Tümleyeni, açık iki yarı düzlemin birleşimidir: solda "
+    "(&#8722;&#8734;, 0) &#215; &#8477;, altta &#8477; &#215; (&#8722;&#8734;, 0). Sol alt dörtte bir bölge "
+    "ikisine birden aittir. Tümleyen açık olduğundan <em>K</em> kapalıdır.",
+    aria="Koordinat duzleminde birinci ceyrek K koyu taranmis, sinirindaki yari eksenler kalin; sol yari duzlem "
+         "ve alt yari duzlem acik renkle taranmis")
+
 # ============================================================ karma-altuzay-simetrik
 # Y = [-1, 1] as a subspace of R and A = {x : 1/2 < |x| < 1} = (-1, -1/2) u (1/2, 1).
 # A is a union of two open intervals, so it is open in R, and A = Y n A is open in Y.

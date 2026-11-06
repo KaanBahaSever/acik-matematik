@@ -40,7 +40,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Sayılar Teorisi](https://acik-matematik.com/dersler/sayilar-teorisi/) — 32 bölüm, 232 örnek ve alıştırma
 - [Soyut Cebir 1: Gruplar](https://acik-matematik.com/dersler/soyut-cebir-1/) — 25 bölüm, 64 örnek ve alıştırma
 - [Temel Finans Matematiği](https://acik-matematik.com/dersler/finans-matematigi/) — 11 bölüm, 101 örnek ve alıştırma
-- [Topoloji](https://acik-matematik.com/dersler/topoloji/) — 12 bölüm, 82 örnek ve alıştırma
+- [Topoloji](https://acik-matematik.com/dersler/topoloji/) — 13 bölüm, 94 örnek ve alıştırma
 - Bilgisayarda Matematik Uygulamaları — müfredatı hazır, bölümleri yazılıyor
 - Eliptik Eğriler — müfredatı hazır, bölümleri yazılıyor
 - Fonksiyonel Analiz — müfredatı hazır, bölümleri yazılıyor
@@ -61,16 +61,16 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **34** |
-| 📖 Konu/Bölüm | **580** |
-| 📐 Teorem | **1.285** |
+| 📖 Konu/Bölüm | **581** |
+| 📐 Teorem | **1.289** |
 | 🔹 Lemma | **141** |
-| 📝 Tanım | **1.786** |
-| ✅ İspat | **2.284** |
-| 🧮 Örnek ve alıştırma | **6.249** |
-| 💡 Çözüm | **5.956** |
-| 📊 Şekil | **1.782** |
-| ✍️ Kelime | **2.567.807** |
-| 🔤 Karakter | **18.129.234** |
+| 📝 Tanım | **1.790** |
+| ✅ İspat | **2.290** |
+| 🧮 Örnek ve alıştırma | **6.261** |
+| 💡 Çözüm | **5.968** |
+| 📊 Şekil | **1.784** |
+| ✍️ Kelime | **2.572.171** |
+| 🔤 Karakter | **18.161.193** |
 | 💾 Kaynak metin | **45,9 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
