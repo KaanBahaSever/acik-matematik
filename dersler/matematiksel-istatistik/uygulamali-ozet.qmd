@@ -1,0 +1,695 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Matematiksel istatistik sorularını çözmek için ispatsız pratik reçeteler ve kopya kâğıdı: kesikli ve sürekli dağılım tabloları, moment üreten fonksiyonla dağılım tanıma, normal tablo ve kantiller, Poisson ve normal yaklaşım, merkezi limit teoremi, betimsel ölçüler, momentler ve en çok olabilirlik yöntemleri, yansızlık, hata kareler ortalaması ve etkinlik, ki-kare, t ve F tabloları, güven aralıkları, örneklem hacmi ve hipotez testleri."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık gelen sorular şunlardır: bir sayma probleminde doğru dağılımı seçip olasılık hesaplamak; normal tablodan olasılık ya da kantil okumak; örneklem ortalaması veya toplamı için merkezi limit teoremiyle olasılık bulmak; bir parametrenin tahmin edicisini momentler ya da en çok olabilirlik yöntemiyle bulup yansızlığını ve etkinliğini incelemek; uygun güven aralığını seçip kurmak; bir hipotezi test edip $p$ değerini ve testin gücünü hesaplamak. Sayfa her soru tipi için adım adım bir reçete, formül tablolarını, kısa yolları, sık yapılan hataları ve yeni sayılarla tam çözülmüş kısa örnekleri verir. Her kural, gerekçesinin bulunduğu tanıma, teoreme ya da bölüme bağlanır. Kantiller kitap boyunca olduğu gibi **sol kuyruk** gösterimiyle yazılır: $P(Z \le z_p) = p$; tablo değerleri [Tablolar](tablolar.qmd) sayfasındadır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, sorunun hangi kalıba girdiğini belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| Bir sayma deneyinde olasılık, beklenen değer | Modeli tanı: binom, hipergeometrik, geometrik, negatif binom, Poisson | @sec-ozt-kesikli |
+| Moment üreten fonksiyonu verilen değişkenin dağılımı | Hazır moment üreten fonksiyonlarla karşılaştır | @sec-ozt-surekli |
+| Normal olasılık, "en üstteki %10'a girmek için" | Standartlaştır, $A(z)$ ile yaz; tersine $x = \mu + z_p\sigma$ | @sec-ozt-normal-tablo |
+| Büyük $n$'li binom olasılığı | Poisson ya da süreklilik düzeltmeli normal yaklaşım | @sec-ozt-yaklasim |
+| Ortalama ya da toplam hakkında olasılık, kaç gözlem | Merkezi limit teoremi, Chebyshev eşitsizliği | @sec-ozt-mlt |
+| Ortalama, medyan, çeyreklik, varyans | Tanım ve kareler toplamı kısa yolu | @sec-ozt-betimsel |
+| Bir parametrenin tahmin edicisi | Momentler yöntemi ya da en çok olabilirlik | @sec-ozt-nokta-tahmini |
+| Yansız mı, hangisi daha iyi, tutarlı mı | $E(T)$, HKO, göreli etkinlik, $\operatorname{Var}(T_n) \to 0$ | @sec-ozt-ozellikler |
+| Bir istatistiğin dağılımı, $\chi^2$, $t$, $F$ tablo değeri | Pivot tablosu ve tablo okuma kuralları | @sec-ozt-orneklem-dagilimlari |
+| Güven aralığı, gereken örneklem hacmi | Parametre ve durumdan aralığı seç | @sec-ozt-guven |
+| Test, kritik bölge, $p$ değeri, güç | Beş adımlı test şeması | @sec-ozt-test |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt-yontem}
+
+## Kesikli Dağılımlar {#sec-ozt-kesikli}
+
+Kesikli bir olasılık sorusunda asıl iş, deneyin hangi modele uyduğunu görmektir; model bulununca olasılık, beklenen değer ve varyans tablodan okunur. Ayrıntılar [Bernoulli, Binom ve Çok Terimli](bernoulli-binom-ve-cok-terimli.qmd), [Hipergeometrik, Geometrik ve Negatif Binom](hipergeometrik-geometrik-ve-negatif-binom.qmd) ve [Poisson ve Kesikli Düzgün](poisson-ve-kesikli-duzgun.qmd) bölümlerindedir. Tabloda $q = 1 - p$'dir.
+
+| Model | Ne zaman | $P(X = x)$ | $E(X)$ | $\operatorname{Var}(X)$ |
+|:--|:--|:-:|:-:|:-:|
+| $\operatorname{Binom}(n, p)$ | $n$ bağımsız denemede başarı sayısı | $\binom{n}{x}p^x q^{n-x}$ | $np$ | $npq$ |
+| $\operatorname{HG}(N, a, n)$ | iadesiz çekilişte özellikli birim sayısı | $\binom{a}{x}\binom{N-a}{n-x}\big/\binom{N}{n}$ | $n\frac{a}{N}$ | $\frac{N-n}{N-1}\,n\frac{a}{N}\big(1 - \frac{a}{N}\big)$ |
+| $\operatorname{Geo}(p)$ | ilk başarıya kadar deneme sayısı, $x \ge 1$ | $q^{x-1}p$ | $\frac{1}{p}$ | $\frac{q}{p^2}$ |
+| $\operatorname{NB}(k, p)$ | $k$-ıncı başarıya kadar deneme sayısı, $x \ge k$ | $\binom{x-1}{k-1}q^{x-k}p^k$ | $\frac{k}{p}$ | $\frac{kq}{p^2}$ |
+| $\operatorname{Poisson}(\lambda)$ | birim zamanda ya da alanda olay sayısı | $\frac{e^{-\lambda}\lambda^x}{x!}$ | $\lambda$ | $\lambda$ |
+| Kesikli düzgün, $\{1, \ldots, n\}$ | eşit olasılıklı $n$ değer | $\frac{1}{n}$ | $\frac{n+1}{2}$ | $\frac{n^2 - 1}{12}$ |
+
+: Kesikli dağılımlar {#tbl-ozt-kesikli}
+
+Bernoulli dağılımı $n = 1$ olan binomdur. Hipergeometrik varyanstaki $\frac{N-n}{N-1}$ düzeltme faktörüdür (@def-hgn-duzeltme-faktoru); Poisson momentleri @thm-pkd-poisson-momentleri, kesikli düzgün momentleri @thm-pkd-kesikli-duzgun-momentleri içindedir.
+
+**Kısa yollar.**
+
+- "En az bir" sorusunda tümleyen alınır: $P(X \ge 1) = 1 - P(X = 0)$.
+- Geometrikte kuyruk $P(X > s) = q^s$'dir ve dağılım belleksizdir: $P(X > s \mid X > t) = P(X > s - t)$.
+- Poisson deneyinde $t$ uzunluklu aralıktaki olay sayısı $\operatorname{Poisson}(\lambda t)$ dağılımlıdır (@thm-pkd-poisson-deneyi-dagilimi): saatte $6$ gelişin $20$ dakikalık karşılığı $\lambda t = 2$'dir.
+- Kazanç ya da maliyet $K = a + bX$ biçimindeyse $E(K) = a + bE(X)$ ve $\operatorname{Var}(K) = b^2\operatorname{Var}(X)$; dağılımı yeniden kurmaya gerek yoktur.
+- Büyük bir kitleden küçük bir örneklem iadesiz çekiliyorsa hipergeometrik yerine $\operatorname{Binom}(n, a/N)$ kullanılabilir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Bu kitapta $\operatorname{Geo}(p)$ ve $\operatorname{NB}(k, p)$ **deneme** sayısını sayar. Soruda başarısızlık sayısı isteniyorsa $Y = X - k$ alınır.
+- "İadeli" binom, "iadesiz" hipergeometrik demektir; ikisi karıştırılırsa varyans yanlış çıkar.
+- Poisson parametresi aralığın uzunluğuyla orantılı değiştirilmeden kullanılmaz.
+:::
+
+:::: {#exm-ozt-negatif-binom name="Üçüncü İsabetin Altıncı Atışta Gelmesi"}
+Bir atıcı her atışta, öteki atışlardan bağımsız olarak, hedefi $0{,}4$ olasılıkla vuruyor. Üçüncü isabetin tam altıncı atışta gelmesi olasılığını bulunuz.
+
+::: {.cozum}
+$X$, üçüncü isabete kadar yapılan atış sayısı olsun. Sabit olan deneme sayısı değil başarı sayısı olduğundan model negatif binomdur: $X \sim \operatorname{NB}(3;\ 0{,}4)$ ve $q = 0{,}6$.
+
+$X = 6$ olması için altıncı atış isabet olmalı, ilk beş atışta da tam iki isabet bulunmalıdır:
+$$
+P(X = 6) = \binom{5}{2}(0{,}6)^{3}(0{,}4)^{3} = 10 \cdot 0{,}216 \cdot 0{,}064 = 0{,}13824 .
+$$
+Karşılaştırma için ortalama bekleme $E(X) = \frac{3}{0{,}4} = 7{,}5$ atıştır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Sürekli Dağılımlar ve Moment Üreten Fonksiyonlar {#sec-ozt-surekli}
+
+Sürekli dağılımlarda da tablo aynı işi görür; ayrıca moment üreten fonksiyon, bir değişkenin dağılımını tanımanın en kısa yoludur. Ayrıntılar [Önemli Sürekli Dağılımlar](onemli-surekli-dagilimlar.qmd) ve [Normal Dağılım](normal-dagilim.qmd) bölümlerindedir.
+
+| Dağılım | Yoğunluk | $E(X)$ | $\operatorname{Var}(X)$ |
+|:--|:-:|:-:|:-:|
+| $U(a, b)$ | $\frac{1}{b-a}$, $a \le x \le b$ | $\frac{a+b}{2}$ | $\frac{(b-a)^2}{12}$ |
+| $\operatorname{Gamma}(r, \alpha)$ | $\frac{\alpha^r}{\Gamma(r)}x^{r-1}e^{-\alpha x}$, $x > 0$ | $\frac{r}{\alpha}$ | $\frac{r}{\alpha^2}$ |
+| $\operatorname{Üstel}(\alpha) = \operatorname{Gamma}(1, \alpha)$ | $\alpha e^{-\alpha x}$, $x > 0$ | $\frac{1}{\alpha}$ | $\frac{1}{\alpha^2}$ |
+| $\operatorname{Beta}(\alpha, \beta)$ | $\frac{x^{\alpha-1}(1-x)^{\beta-1}}{B(\alpha, \beta)}$, $0 < x < 1$ | $\frac{\alpha}{\alpha+\beta}$ | $\frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta+1)}$ |
+| $\chi^2_\nu = \operatorname{Gamma}\big(\frac{\nu}{2}, \frac{1}{2}\big)$ | @def-odg-ki-kare-dagilimi | $\nu$ | $2\nu$ |
+| $N(\mu, \sigma^2)$ | $\frac{1}{\sigma\sqrt{2\pi}}e^{-(x-\mu)^2/(2\sigma^2)}$ | $\mu$ | $\sigma^2$ |
+
+: Sürekli dağılımlar {#tbl-ozt-surekli}
+
+Gamma momentleri @thm-osd-gamma-momentleri, beta momentleri @thm-osd-beta-momentleri, ki-kare momentleri @thm-odg-ki-kare-momentleri içindedir. Log-normal dağılımda $E(X) = e^{\mu + \sigma^2/2}$ ve $\operatorname{Var}(X) = e^{2\mu + \sigma^2}(e^{\sigma^2} - 1)$'dir (@thm-osd-log-normal-momentleri).
+
+| Moment üreten fonksiyon $M_X(t)$ | Dağılım |
+|:-:|:-:|
+| $(q + pe^t)^n$ | $\operatorname{Binom}(n, p)$ |
+| $\dfrac{pe^t}{1 - qe^t}$, ve bunun $k$-ıncı kuvveti | $\operatorname{Geo}(p)$, $\operatorname{NB}(k, p)$ |
+| $e^{\lambda(e^t - 1)}$ | $\operatorname{Poisson}(\lambda)$ |
+| $\left(\dfrac{\alpha}{\alpha - t}\right)^r$ | $\operatorname{Gamma}(r, \alpha)$ |
+| $(1 - 2t)^{-\nu/2}$ | $\chi^2_\nu$ |
+| $e^{\mu t + \sigma^2 t^2/2}$ | $N(\mu, \sigma^2)$ |
+
+: Dağılımı tanımak için moment üreten fonksiyonlar {#tbl-ozt-mgf}
+
+**Kısa yollar.**
+
+- Gamma integrali: $\int_0^\infty x^{r-1}e^{-\alpha x}\,dx = \frac{\Gamma(r)}{\alpha^r}$; ayrıca $\Gamma(n) = (n-1)!$, $\Gamma(p+1) = p\,\Gamma(p)$, $\Gamma\big(\frac12\big) = \sqrt\pi$ (@thm-osd-gamma-fonksiyonu-ozellikleri).
+- Beta integrali: $\int_0^1 x^{u-1}(1-x)^{v-1}\,dx = B(u, v)$ ve $B(u, v) = \frac{\Gamma(u)\Gamma(v)}{\Gamma(u+v)}$ (@thm-osd-beta-gamma-iliskisi). Momentler yönteminde çıkan $\int_0^1$ integrallerinin çoğu budur.
+- Toplamlar: bağımsız $\operatorname{Gamma}(r_i, \alpha)$'ların toplamı $\operatorname{Gamma}(\sum r_i, \alpha)$'dır (@thm-osd-gamma-toplami); özel olarak $n$ bağımsız $\operatorname{Üstel}(\alpha)$'nın toplamı $\operatorname{Gamma}(n, \alpha)$'dır. Bağımsız normallerin $\sum a_iX_i$ birleşimi $N\big(\sum a_i\mu_i, \sum a_i^2\sigma_i^2\big)$'dir (@cor-nor-dogrusal-birlesim).
+- Üstel kuyruk $P(X > t) = e^{-\alpha t}$'dir; üstel dağılım da belleksizdir.
+
+:::: {#exm-ozt-mgf-tanima name="Moment Üreten Fonksiyondan Dağılımı Tanımak"}
+$X$'in moment üreten fonksiyonu $t < 2$ için $M_X(t) = (1 - 0{,}5t)^{-6}$ ise $X$'in dağılımını, beklenen değerini ve varyansını bulunuz.
+
+::: {.cozum}
+Gamma biçimine getirmek için kesrin payını ve paydasını $2$ ile genişletelim:
+$$
+\frac{1}{1 - 0{,}5t} = \frac{2}{2 - t}, \qquad M_X(t) = \left(\frac{2}{2 - t}\right)^{6}.
+$$
+Bu, $r = 6$ ve $\alpha = 2$ için gamma dağılımının moment üreten fonksiyonudur (@thm-osd-gamma-mgf); teklik gereği $X \sim \operatorname{Gamma}(6, 2)$. Tablodan
+$$
+E(X) = \frac{r}{\alpha} = \frac{6}{2} = 3, \qquad \operatorname{Var}(X) = \frac{r}{\alpha^2} = \frac{6}{4} = 1{,}5 .
+$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Normal Tablo ve Kantiller {#sec-ozt-normal-tablo}
+
+[Standart normal tablosu](tablolar.qmd#sec-tablo-normal) $z \ge 0$ için $A(z) = P(0 \le Z \le z)$ alanını verir. Bütün normal olasılıklar standartlaştırmayla bu alanlara indirgenir.
+
+| İstenen ($z, a, b \ge 0$) | Tablo ile |
+|:-:|:-:|
+| $P(Z \le z)$ | $0{,}5 + A(z)$ |
+| $P(Z \ge z)$ ya da $P(Z \le -z)$ | $0{,}5 - A(z)$ |
+| $P(-z \le Z \le z)$ | $2A(z)$ |
+| $P(a \le Z \le b)$, $a \le b$ | $A(b) - A(a)$ |
+| $P(-a \le Z \le b)$ | $A(a) + A(b)$ |
+
+: Standart normal alan kuralları {#tbl-ozt-normal-alan}
+
+| $p$ | $0{,}90$ | $0{,}95$ | $0{,}975$ | $0{,}99$ | $0{,}995$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $z_p$ | $1{,}282$ | $1{,}645$ | $1{,}960$ | $2{,}326$ | $2{,}576$ |
+
+: Sık kullanılan standart normal kantiller {#tbl-ozt-z-kantil}
+
+::: {.callout-tip title="Üç adımda normal olasılık ve kantil"}
+1. **Standartlaştır.** $X \sim N(\mu, \sigma^2)$ için $z = \dfrac{x - \mu}{\sigma}$; $z$'yi iki ondalığa yuvarla.
+2. **Alanları $0$'dan başlat.** İstenen olasılığı @tbl-ozt-normal-alan ile $A(z)$ cinsinden yaz.
+3. **Ters soru (kantil).** $P(X \le x) = p$ isteniyorsa tabloda $A(z) = p - 0{,}5$ ara ve $x = \mu + z_p\,\sigma$ yaz. $p < 0{,}5$ ise $z_p = -z_{1-p}$'dir (@def-nor-standart-normal-kantili).
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $N(\mu, \sigma^2)$'deki ikinci parametre varyanstır; standartlaştırırken **standart sapmaya** bölünür: $N(70, 64)$ için $\sigma = 8$.
+- Tablo $P(Z \le z)$ değil $P(0 \le Z \le z)$ verir; $0{,}5$ eklemeyi ya da çıkarmayı unutmamak gerekir.
+:::
+
+:::: {#exm-ozt-normal-kantil name="En Üstteki Yüzde Ona Girmek İçin Gereken Puan"}
+Bir yarışmadaki puanlar $N(70, 64)$ dağılımına uyuyor. Puanı en yüksek olan %10'luk dilime girmek için en az kaç puan gerekir?
+
+::: {.cozum}
+$\sigma = \sqrt{64} = 8$'dir. Aranan $x$ için $P(X \ge x) = 0{,}10$, yani $P(X \le x) = 0{,}90$ olmalıdır; dolayısıyla $x = \mu + z_{0{,}90}\,\sigma$.
+
+[Tabloda](tablolar.qmd#sec-tablo-normal) $A(z) = 0{,}40$ aranır: $A(1{,}28) = 0{,}3997$ ve $A(1{,}29) = 0{,}4015$ olduğundan $z_{0{,}90} \approx 1{,}28$, daha kesin olarak $z_{0{,}90} = 1{,}282$. Buna göre
+$$
+x = 70 + 1{,}282 \cdot 8 = 80{,}256 .
+$$
+En yüksek %10'a girmek için yaklaşık $80{,}26$ puan gerekir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Binoma Poisson ve Normal Yaklaşım {#sec-ozt-yaklasim}
+
+Büyük $n$'li bir binom olasılığını terim terim toplamak yerine yaklaşık bir dağılımla hesaplamak çoğu zaman tek yoldur. Hangi yaklaşımın seçileceği $n$ ve $p$'ye bağlıdır.
+
+| Durum | Yaklaşım | Koşul |
+|:--|:-:|:-:|
+| $\operatorname{Binom}(n, p)$, $p$ küçük | $\operatorname{Poisson}(np)$ | $n \ge 50$, $p \le 0{,}05$ |
+| $\operatorname{Binom}(n, p)$ | $N(np, npq)$ ve süreklilik düzeltmesi | $np \ge 5$, $nq \ge 5$ |
+| $\operatorname{HG}(N, a, n)$, $N$ büyük | $\operatorname{Binom}(n, a/N)$ | $n$, $N$'ye göre küçük |
+| $\chi^2_\nu$ | $N(\nu, 2\nu)$ | $\nu > 30$ |
+| $t_\nu$ | $N(0, 1)$ | $\nu > 30$ |
+
+: Yaklaşım seçimi {#tbl-ozt-yaklasim}
+
+Normal yaklaşımın dayanağı De Moivre-Laplace teoremidir (@thm-nor-de-moivre-laplace); ki-kare yaklaşımı @prp-odg-ki-kare-normal-yaklasim, $t$ yaklaşımı @prp-ort-t-kantil-yakinsama içindedir.
+
+::: {.callout-tip title="Üç adımda süreklilik düzeltmesi"}
+1. **Olayı tam sayılarla yaz.** Katı eşitsizlikleri kaldır: $X > 275$ olayı $X \ge 276$, $X < 20$ olayı $X \le 19$'dur.
+2. **Uçları yarım birim dışa it.** $a \le X \le b$ olayı $a - 0{,}5 \le Y \le b + 0{,}5$ olur; $P(X = x)$ için $x \mp 0{,}5$ alınır (@def-nor-sureklilik-duzeltmesi).
+3. **$Y \sim N(np, npq)$ ile standartlaştır** ve normal tablodan oku.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Süreklilik düzeltmesi yalnız tam sayı değerli bir değişkene normal yaklaşım yapılırken kullanılır; Poisson yaklaşımında düzeltme yoktur.
+- $np$ ya da $nq$ $5$'ten küçükse normal yaklaşım kötüdür; kesin binom ya da Poisson tercih edilir.
+:::
+
+:::: {#exm-ozt-poisson-yaklasimi name="Hatalı Sayfa Sayısına Poisson Yaklaşımı"}
+Bir baskıda her sayfa, ötekilerden bağımsız olarak $0{,}002$ olasılıkla hatalı basılıyor. $1500$ sayfalık bir baskıda en az iki hatalı sayfa bulunması olasılığını Poisson yaklaşımıyla bulunuz.
+
+::: {.cozum}
+Hatalı sayfa sayısı $X \sim \operatorname{Binom}(1500;\ 0{,}002)$'dir. $n = 1500 \ge 50$ ve $p = 0{,}002 \le 0{,}05$ olduğundan $\lambda = np = 3$ ile Poisson yaklaşımı kullanılır. Tümleyenden
+$$
+\begin{aligned}
+P(X \ge 2) &= 1 - P(X = 0) - P(X = 1) \approx 1 - e^{-3}(1 + 3)\\[1mm]
+&= 1 - 4 \cdot 0{,}049787 \approx 1 - 0{,}19915 = 0{,}80085 .
+\end{aligned}
+$$
+Binom dağılımıyla kesin değer $0{,}80115$'tir; yaklaşımın hatası $0{,}0003$ kadardır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-sureklilik name="Yüz Denemede Başarı Sayısının Bir Aralıkta Olması"}
+$X \sim \operatorname{Binom}(100;\ 0{,}3)$ ise $P(25 \le X \le 35)$ olasılığını süreklilik düzeltmeli normal yaklaşımla bulunuz.
+
+::: {.cozum}
+$\mu = np = 30$, $\sigma^2 = npq = 21$, $\sigma \approx 4{,}583$; $np = 30$ ve $nq = 70$ olduğundan yaklaşım uygundur. $Y \sim N(30, 21)$ alıp uçları yarım birim dışa itelim:
+$$
+\begin{aligned}
+P(25 \le X \le 35) &\approx P(24{,}5 \le Y \le 35{,}5)\\[1mm]
+&= P\Big(\frac{-5{,}5}{4{,}583} \le Z \le \frac{5{,}5}{4{,}583}\Big) = P(-1{,}20 \le Z \le 1{,}20).
+\end{aligned}
+$$
+[Tablodan](tablolar.qmd#sec-tablo-normal) $A(1{,}20) = 0{,}3849$ olduğundan olasılık $2 \cdot 0{,}3849 = 0{,}7698$'dir. Kesin binom değeri $0{,}7704$'tür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Örneklem Ortalaması ve Merkezi Limit Teoremi {#sec-ozt-mlt}
+
+Örneklem ortalaması ya da toplamı hakkındaki her olasılık sorusu, önce bu istatistiğin beklenen değerini ve varyansını, sonra dağılımını bulmaktan ibarettir.
+
+| Durum | $E(\bar X)$ | $\operatorname{Var}(\bar X)$ | Dağılım |
+|:--|:-:|:-:|:-:|
+| Bağımsız gözlemler ya da iadeli çekiliş | $\mu$ | $\frac{\sigma^2}{n}$ | kitleye bağlı |
+| İadesiz çekiliş, $N$ birimlik kitle | $\mu$ | $\frac{N-n}{N-1}\cdot\frac{\sigma^2}{n}$ | kitleye bağlı |
+| Normal kitle | $\mu$ | $\frac{\sigma^2}{n}$ | tam $N(\mu, \sigma^2/n)$ |
+| Herhangi kitle, $n \ge 30$ | $\mu$ | $\frac{\sigma^2}{n}$ | yaklaşık $N(\mu, \sigma^2/n)$ |
+
+: Örneklem ortalamasının momentleri ve dağılımı {#tbl-ozt-ortalama}
+
+İadesiz çekiliş @thm-ois-iadesiz, standart hata $\sigma_{\bar X}$ @def-ois-standart-hata, merkezi limit teoremi @thm-ymt-mlt içindedir. Örneklem kitlenin %5'inden büyükse ($n/N > 0{,}05$) düzeltme çarpanı ihmal edilmez. Toplam $S_n = X_1 + \cdots + X_n$ için $S_n \approx N(n\mu, n\sigma^2)$ yazılır (@cor-ymt-mlt-toplam).
+
+::: {.callout-tip title="Dört adımda merkezi limit teoremiyle olasılık"}
+1. Tek gözlemin $\mu$ ve $\sigma^2$ değerlerini bul.
+2. Soru ortalama hakkındaysa $\bar X \approx N(\mu, \sigma^2/n)$, toplam hakkındaysa $S_n \approx N(n\mu, n\sigma^2)$ al.
+3. Sınırları standartlaştır: $z = \dfrac{\bar x - \mu}{\sigma/\sqrt n}$ ya da $z = \dfrac{s - n\mu}{\sigma\sqrt n}$.
+4. Normal tablodan oku; tam sayı değerli bir toplamın tek bir değeri soruluyorsa süreklilik düzeltmesi yap.
+:::
+
+**Kısa yollar.**
+
+- Dağılım hakkında hiçbir şey kullanmadan bir sınır gerekiyorsa Chebyshev eşitsizliği (@thm-ois-chebyshev-ortalama): $P\big(|\bar X - \mu| \ge \varepsilon\big) \le \dfrac{\sigma^2}{n\varepsilon^2}$.
+- "$P(|\bar X - \mu| < \varepsilon) \ge 1 - \alpha$ için kaç gözlem?" sorusunda merkezi limit teoremi $n \ge \big(z_{1-\alpha/2}\,\sigma/\varepsilon\big)^2$, Chebyshev ise $n \ge \sigma^2/(\alpha\varepsilon^2)$ verir. Chebyshev her dağılımda geçerlidir ama çok daha büyük $n$ ister.
+
+:::: {#exm-ozt-mlt-toplam name="Asansördeki Toplam Ağırlık"}
+Bir binadaki yolcuların ağırlığının ortalaması $75$ kg, standart sapması $12$ kg'dır. Asansöre rastgele binen $36$ yolcunun toplam ağırlığının $2800$ kg'ı aşma olasılığı yaklaşık nedir?
+
+::: {.cozum}
+Soru toplam hakkındadır. $n = 36$ olduğundan merkezi limit teoremiyle $S_{36} \approx N(n\mu, n\sigma^2)$ ve
+$$
+n\mu = 36 \cdot 75 = 2700, \qquad \sigma\sqrt n = 12 \cdot 6 = 72 .
+$$
+Standartlaştıralım:
+$$
+P(S_{36} > 2800) \approx P\Big(Z > \frac{2800 - 2700}{72}\Big) = P(Z > 1{,}39).
+$$
+[Tablodan](tablolar.qmd#sec-tablo-normal) $A(1{,}39) = 0{,}4177$ olduğundan olasılık $0{,}5 - 0{,}4177 = 0{,}0823$'tür. Yani yaklaşık her on iki asansör dolusundan biri $2800$ kg'ı aşar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Betimsel Ölçüler {#sec-ozt-betimsel}
+
+Betimsel sorularda iş, tanımı doğru uygulamak ve hesabı kısaltmaktır; tanımlar [İstatistiğe Giriş ve Betimsel Ölçüler](istatistige-giris.qmd) bölümündedir. $x_{(1)} \le \cdots \le x_{(n)}$ sıralı gözlemlerdir.
+
+| Ölçü | Formül | Tanım |
+|:--|:-:|:-:|
+| Medyan | $n$ tekse $x_{((n+1)/2)}$, çiftse ortadaki ikisinin ortalaması | @def-itg-medyan |
+| $P$. yüzdelik | konum $L_P = (n+1)\frac{P}{100}$; $L_P = k + d$ ise $x_{(k)} + d\big(x_{(k+1)} - x_{(k)}\big)$ | @def-itg-yuzdelik |
+| Çeyreklikler | $Q_1 = Y_{25}$, $Q_2 = Y_{50}$, $Q_3 = Y_{75}$ | @def-itg-ceyreklik |
+| Çeyrekler arası açıklık | $Q_3 - Q_1$ | @def-itg-ceyrekler-arasi-aciklik |
+| Örneklem varyansı | $s^2 = \frac{1}{n-1}\sum (x_i - \bar x)^2$ | @def-itg-orneklem-varyansi |
+| Değişim katsayısı | $\frac{s}{\bar x} \cdot 100\%$ | @def-itg-degisim-katsayisi |
+
+: Betimsel ölçüler {#tbl-ozt-betimsel}
+
+**Kısa yollar.**
+
+- Sapmaları tek tek hesaplamak yerine $\sum (x_i - \bar x)^2 = \sum x_i^2 - n\bar x^{\,2}$ kullanılır (@prp-itg-kareler-toplami).
+- Pozitif sayılarda harmonik, geometrik ve aritmetik ortalama $H \le G \le \bar x$ sıralamasındadır (@thm-itg-ortalama-esitsizligi).
+- Değişim katsayısı küçük olan küme daha homojendir; birimleri farklı kümeler yalnız bu ölçüyle karşılaştırılır.
+
+## Momentler Yöntemi ve En Çok Olabilirlik {#sec-ozt-nokta-tahmini}
+
+"Tahmin edicisini bulunuz" sorusunda iki yöntem vardır. Momentler yöntemi (@def-mom-momentler-yontemi) kitle momentlerini örneklem momentlerine eşitler; en çok olabilirlik yöntemi (@def-eco-tahmin-edicisi) gözlenen veriyi en olası kılan parametreyi seçer.
+
+::: {.callout-tip title="Momentler yöntemi üç adımda"}
+1. Parametre sayısı $m$ ise $E(X), \ldots, E(X^m)$'yi parametreler cinsinden hesapla.
+2. Her $E(X^k)$'yi $M_k = \frac1n\sum X_i^k$'ye eşitle ($M_1 = \bar X$).
+3. Sistemi parametreler için çöz.
+:::
+
+::: {.callout-tip title="En çok olabilirlik dört adımda"}
+1. $L(\theta) = \prod f(x_i;\theta)$'yı yazıp sadeleştir.
+2. $\ln L(\theta) = \sum \ln f(x_i;\theta)$'yı toplam olarak yaz (@prp-eco-log-olabilirlik).
+3. $\frac{d}{d\theta}\ln L = 0$ denklemini çöz.
+4. İkinci türevin negatif olduğunu göster, sonra $x_i$ yerine $X_i$ yaz.
+:::
+
+| Kitle | Momentler yöntemi | En çok olabilirlik |
+|:--|:-:|:-:|
+| $\operatorname{Bernoulli}(p)$, $\operatorname{Poisson}(\lambda)$ | $\bar X$ | $\bar X$ |
+| $\operatorname{Geo}(p)$ | $1/\bar X$ | $1/\bar X$ |
+| $\operatorname{Üstel}(\alpha)$ | $1/\bar X$ | $1/\bar X$ |
+| $\operatorname{Gamma}(r, \alpha)$, $r$ bilinen | $r/\bar X$ | $r/\bar X$ |
+| $N(\mu, \sigma^2)$ | $\bar X$ ve $\frac1n\sum (X_i - \bar X)^2$ | aynı |
+| $U(0, \theta)$ | $2\bar X$ | $\max X_i$ |
+
+: Hazır tahmin ediciler {#tbl-ozt-tahmin-ediciler}
+
+**Kısa yollar.**
+
+- Logaritma çarpımı toplama çevirir; $\theta$'ya bağlı olmayan terimler ($\ln x_i!$, $\ln\Gamma(r)$ gibi) türevde düşer.
+- Değişmezlik: $\hat\theta$ en çok olabilirlik tahmin edicisiyse $g(\theta)$'nın tahmin edicisi $g(\hat\theta)$'dır (@thm-eco-degismezlik). Örneğin normalde $\hat\sigma = \sqrt{\widehat{\sigma^2}}$.
+- İki parametreli gammada momentler yöntemi $\hat\alpha = \dfrac{\bar X}{M_2 - \bar X^2}$ ve $\hat r = \dfrac{\bar X^2}{M_2 - \bar X^2}$ verir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Değer kümesi $\theta$'ya bağlıysa ($U(0, \theta)$ gibi) türev sıfır olmaz; $L$'nin biçimine bakılır ve tahmin bir uç gözlem çıkar (@exm-eco-duzgun).
+- Momentler yöntemi veriyle çelişebilir: $\hat\theta = 3\bar X$ en büyük gözlemden küçük çıkabilir (@exm-mom-ucgen-celiski).
+- $E(X)$ ancak varsa kullanılabilir; momentin hangi parametre değerleri için sonlu olduğu denetlenmelidir.
+:::
+
+Aşağıdaki iki örnek aynı kitleyi kullanır: yoğunluğu $f(x;\theta) = \theta x^{-(\theta+1)}$, $x > 1$, $\theta > 0$ olan bir kitleden $1{,}2;\ 2{,}5;\ 1{,}6;\ 3{,}0;\ 1{,}1$ gözlemleri alınmıştır.
+
+:::: {#exm-ozt-moment-tahmini name="Kuyruklu Bir Yoğunlukta Moment Tahmini"}
+Yoğunluğu $f(x;\theta) = \theta x^{-(\theta+1)}$ ($x > 1$) olan kitleden alınan $1{,}2;\ 2{,}5;\ 1{,}6;\ 3{,}0;\ 1{,}1$ gözlemleriyle $\theta$'nın momentler yöntemiyle tahminini bulunuz ($\theta > 1$ kabul ediniz).
+
+::: {.cozum}
+**Adım 1.** $\theta > 1$ iken integral yakınsaktır ve
+$$
+E(X) = \int_1^\infty x \cdot \theta x^{-\theta-1}\,dx = \theta\int_1^\infty x^{-\theta}\,dx = \theta \cdot \frac{1}{\theta - 1} = \frac{\theta}{\theta - 1}.
+$$
+$\theta \le 1$ için bu integral ıraksaktır; yöntem ancak $\theta > 1$ iken uygulanabilir.
+
+**Adım 2 ve 3.** $\frac{\theta}{\theta - 1} = \bar X$ denklemi $\theta = \bar X\theta - \bar X$, yani $\theta(\bar X - 1) = \bar X$ verir:
+$$
+\hat\theta = \frac{\bar X}{\bar X - 1}.
+$$
+Gözlemlerin toplamı $9{,}4$ olduğundan $\bar x = 1{,}88$ ve $\hat\theta = \dfrac{1{,}88}{0{,}88} \approx 2{,}136$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-eco-tahmini name="Kuyruklu Bir Yoğunlukta En Çok Olabilirlik Tahmini"}
+Yoğunluğu $f(x;\theta) = \theta x^{-(\theta+1)}$ ($x > 1$, $\theta > 0$) olan kitleden alınan $1{,}2;\ 2{,}5;\ 1{,}6;\ 3{,}0;\ 1{,}1$ gözlemleriyle $\theta$'nın en çok olabilirlik tahminini bulunuz.
+
+::: {.cozum}
+**Olabilirlik ve logaritma.**
+$$
+L(\theta) = \theta^{n}\Big(\prod_{i=1}^{n} x_i\Big)^{-(\theta+1)}, \qquad \ln L(\theta) = n\ln\theta - (\theta + 1)\sum_{i=1}^{n}\ln x_i .
+$$
+
+**Türev.** $\dfrac{d}{d\theta}\ln L = \dfrac{n}{\theta} - \sum \ln x_i = 0$ denkleminden
+$$
+\hat\theta = \frac{n}{\sum_{i=1}^{n}\ln X_i}.
+$$
+Her $x_i > 1$ olduğundan payda pozitiftir. İkinci türev $-n/\theta^2 < 0$ olduğundan bu nokta mutlak en büyük değerdir.
+
+**Sayısal değer.** Gözlemlerin çarpımı
+$$
+1{,}2 \cdot 2{,}5 \cdot 1{,}6 \cdot 3{,}0 \cdot 1{,}1 = 15{,}84
+$$
+olduğundan $\sum \ln x_i = \ln 15{,}84 \approx 2{,}7625$ ve
+$$
+\hat\theta = \frac{5}{2{,}7625} \approx 1{,}810 .
+$$
+Momentler yöntemi aynı veriyle $2{,}136$ vermişti (@exm-ozt-moment-tahmini); iki yöntem genellikle farklı sonuç verir ve en çok olabilirlik $\theta > 1$ kısıtına ihtiyaç duymaz.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tahmin Edicilerin Özellikleri {#sec-ozt-ozellikler}
+
+Bir tahmin edicinin ne kadar iyi olduğu dört ölçütle sorulur; hepsi [Tahmin Edicilerin Özellikleri](tahmin-edicilerin-ozellikleri.qmd) bölümündedir.
+
+| Ölçüt | Koşul ya da formül | Tanım |
+|:--|:-:|:-:|
+| Yansızlık | $E(T) = \theta$ (her $\theta$ için) | @def-tep-yansiz-tahmin-edici |
+| Yanlılık | $E(T) - \theta$ | @def-tep-yanlilik |
+| Hata kareler ortalaması | $\operatorname{HKO} = \operatorname{Var}(T) + \text{Yanlılık}^2$ | @thm-tep-hko-ayrisim |
+| Göreli etkinlik | $e(T_1, T_2) = \operatorname{Var}(T_2)/\operatorname{Var}(T_1)$ | @def-tep-etkinlik |
+| Asimptotik yansızlık | $E(T_n) \to \theta$ | @def-tep-asimptotik-yansiz |
+| Tutarlılık (yeter koşul) | $E(T_n) \to \theta$ ve $\operatorname{Var}(T_n) \to 0$ | @cor-tep-tutarlilik-yeter-kosul |
+
+: Tahmin edici ölçütleri {#tbl-ozt-olcutler}
+
+| Hazır sonuç | Değer |
+|:--|:-:|
+| $E(\bar X)$, $\operatorname{Var}(\bar X)$ | $\mu$, $\sigma^2/n$ |
+| $E(S^2)$ (@thm-tep-orneklem-varyansi-yansiz) | $\sigma^2$ |
+| $E(\hat\sigma^2)$, $\hat\sigma^2 = \frac1n\sum (X_i - \bar X)^2$ (@cor-tep-n-ile-bolunen-varyans) | $\frac{n-1}{n}\sigma^2$ |
+| Normal kitlede $\operatorname{Var}(S^2)$ (@cor-odg-s-kare-momentleri) | $\frac{2\sigma^4}{n-1}$ |
+| $E(M_k)$ (@prp-tep-orneklem-momenti-yansiz) | $E(X^k)$ |
+
+: Sık kullanılan beklenen değer ve varyanslar {#tbl-ozt-hazir-momentler}
+
+::: {.callout-tip title="Üç adımda yansızlık sorusu"}
+1. $E(T)$'yi doğrusallıkla hesapla. Rastgele örneklemde $E(X_i^2) = \sigma^2 + \mu^2$ ve $i \ne j$ için $E(X_iX_j) = \mu^2$ kullanılır.
+2. $E(T)$'yi $\theta$ ile karşılaştır. Bilinmeyen bir $c$ varsa $E(T) = \theta$ denkleminden bulunur.
+3. $E(T) = a\theta + c$ çıkarsa $\dfrac{T - c}{a}$ yansızdır (@prp-tep-dogrusal-duzeltme).
+:::
+
+**Kısa yollar.**
+
+- $T = \sum a_iX_i$ biçimindeki tahmin ediciler $\sum a_i = 1$ ise $\mu$ için yansızdır ve $\operatorname{Var}(T) = \sigma^2\sum a_i^2$'dir; bunlar arasında en etkini $\bar X$'tir (@thm-tep-ortalama-en-etkin). Yani iki doğrusal yansız tahmin edicinin karşılaştırılması $\sum a_i^2$'leri karşılaştırmaktır.
+- HKO'su $0$'a giden tahmin edici tutarlıdır (@thm-tep-hko-tutarlilik); tutarlılık sorusu çoğu zaman yalnız $E(T_n)$ ve $\operatorname{Var}(T_n)$ hesabıdır.
+- Yansız bir tahmin edicinin HKO'su varyansıdır. Yanlı ama varyansı küçük bir tahmin edicinin HKO'su daha küçük olabilir.
+
+:::: {#exm-ozt-goreli-etkinlik name="İki Doğrusal Tahmin Edicinin Etkinliği"}
+$(X_1, X_2, X_3)$, ortalaması $\mu$ ve varyansı $\sigma^2$ olan bir kitleden alınmış bir rastgele örneklem ve $T_1 = \dfrac{X_1 + 2X_2 + X_3}{4}$ olsun. $T_1$'in $\mu$ için yansız olduğunu gösterip $\bar X$'in $T_1$'e göre göreli etkinliğini bulunuz.
+
+::: {.cozum}
+Katsayıların toplamı $\frac14 + \frac24 + \frac14 = 1$ olduğundan $E(T_1) = \mu$; $T_1$ yansızdır. Gözlemler bağımsız olduğundan
+$$
+\operatorname{Var}(T_1) = \frac{1 + 4 + 1}{16}\,\sigma^2 = \frac{3}{8}\sigma^2, \qquad \operatorname{Var}(\bar X) = \frac{\sigma^2}{3}.
+$$
+Göreli etkinlik
+$$
+e(\bar X, T_1) = \frac{\operatorname{Var}(T_1)}{\operatorname{Var}(\bar X)} = \frac{3/8}{1/3} = \frac{9}{8} = 1{,}125
+$$
+olup $1$'den büyüktür: $\bar X$ daha etkindir ve $T_1$'in varyansı $\bar X$'inkinin $1{,}125$ katıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-hko-karsilastirma name="İki Varyans Tahmin Edicisinin Hata Kareler Ortalaması"}
+$N(\mu, \sigma^2)$ kitlesinden $n = 10$ birimlik bir rastgele örneklem alınıyor. $\sigma^2$ için $S^2$ ile $\hat\sigma^2 = \frac{1}{10}\sum (X_i - \bar X)^2$ tahmin edicilerinden hangisinin hata kareler ortalaması daha küçüktür?
+
+::: {.cozum}
+**$S^2$.** Yansız olduğundan HKO varyansıdır: $\operatorname{HKO}(S^2) = \dfrac{2\sigma^4}{9} \approx 0{,}2222\,\sigma^4$.
+
+**$\hat\sigma^2$.** $\hat\sigma^2 = \frac{9}{10}S^2$ olduğundan $E(\hat\sigma^2) = 0{,}9\,\sigma^2$, yanlılık $-0{,}1\,\sigma^2$ ve
+$$
+\operatorname{Var}(\hat\sigma^2) = \Big(\frac{9}{10}\Big)^2\cdot\frac{2\sigma^4}{9} = 0{,}18\,\sigma^4 .
+$$
+HKO ayrışımından (@thm-tep-hko-ayrisim)
+$$
+\operatorname{HKO}(\hat\sigma^2) = 0{,}18\,\sigma^4 + (0{,}1\,\sigma^2)^2 = 0{,}19\,\sigma^4 .
+$$
+$0{,}19 < 0{,}2222$ olduğundan yanlı olan $\hat\sigma^2$'nin HKO'su daha küçüktür. Genel olarak $\operatorname{HKO}(\hat\sigma^2) = \frac{2n-1}{n^2}\sigma^4$'tür ve her $n \ge 2$ için $\frac{2\sigma^4}{n-1}$'den küçüktür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Örneklem Dağılımları ve Tablo Okuma {#sec-ozt-orneklem-dagilimlari}
+
+Güven aralıkları ve testler, içinde yalnız bilinmeyen parametreyi taşıyan ve dağılımı tam bilinen bir büyüklüğe dayanır. Normal kitle için bu büyüklükler şunlardır ([Örneklem Dağılımları](orneklem-dagilimlari.qmd)):
+
+| Büyüklük | Dağılım | Dayanak |
+|:-:|:-:|:-:|
+| $\dfrac{\bar X - \mu}{\sigma/\sqrt n}$ | $N(0, 1)$ | @cor-nor-dogrusal-birlesim |
+| $\dfrac{\bar X - \mu}{S/\sqrt n}$ | $t_{n-1}$ | @thm-odg-t-istatistigi |
+| $\dfrac{(n-1)S^2}{\sigma^2}$ | $\chi^2_{n-1}$ | @thm-odg-orneklem-varyansi |
+| $\sum \Big(\dfrac{X_i - \mu}{\sigma}\Big)^2$ | $\chi^2_n$ | @cor-odg-kareler-toplami |
+| $\dfrac{S_1^2/\sigma_1^2}{S_2^2/\sigma_2^2}$ | $F_{n_1-1,\,n_2-1}$ | @thm-vik-f-istatistigi |
+
+: Normal örneklemde pivot büyüklükler {#tbl-ozt-pivot}
+
+Tanımlar: $Z/\sqrt{V/\nu} \sim t_\nu$ (@def-odg-t-dagilimi), $\frac{U_1/\nu_1}{U_2/\nu_2} \sim F_{\nu_1,\nu_2}$ (@def-odg-f-dagilimi), $T^2 \sim F_{1,\nu}$ (@prp-odg-t-kare-f). Bağımsız ki-karelerin toplamında serbestlik dereceleri toplanır (@thm-odg-ki-kare-toplami).
+
+| Tablo | Verdiği değer | Sol kuyruk |
+|:--|:-:|:-:|
+| [$t$](tablolar.qmd#sec-tablo-t) | $t_{\nu,\,p}$ | $t_{\nu,\,1-p} = -t_{\nu,\,p}$ |
+| [$\chi^2$](tablolar.qmd#sec-tablo-ki-kare) | $\chi^2_{\nu,\,p}$, iki kuyruk da | ayrı ayrı okunur |
+| [$F$](tablolar.qmd#sec-tablo-f) | $F_{\nu_1,\nu_2,\,p}$, $p = 0{,}95;\ 0{,}975;\ 0{,}99$ | $F_{\nu_1,\nu_2,\,1-p} = 1/F_{\nu_2,\nu_1,\,p}$ |
+
+: Tablo okuma kuralları {#tbl-ozt-tablo-okuma}
+
+Örneğin $F_{12,8,\,0{,}95} = 3{,}28$ olduğundan $F_{8,12,\,0{,}05} = 1/3{,}28 \approx 0{,}305$'tir (@prp-odg-f-ters).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Bu kitapta alt indis **sol** kuyruktaki alandır: "sağında $0{,}05$ alan bırakan nokta" $t_{\nu,\,0{,}95}$'tir, $t_{\nu,\,0{,}05}$ değil.
+- $\chi^2$ simetrik değildir; $\chi^2_{\nu,\,\alpha/2}$, $-\chi^2_{\nu,\,1-\alpha/2}$'ye eşit değildir.
+- $F$'nin tersinde serbestlik dereceleri yer değiştirir; sütun $\nu_1$ (pay), satır $\nu_2$ (payda)'dır.
+- Serbestlik derecesi $S^2$ kullanıldığında $n - 1$, $\mu$ bilinip kareler toplamı kullanıldığında $n$'dir.
+:::
+
+## Güven Aralıkları {#sec-ozt-guven}
+
+Bir güven aralığı sorusunda iki karar verilir: hangi parametre ve hangi durum. Bu iki karar aralığı tümüyle belirler (@def-ort-guven-araligi). Simetrik aralıklar "nokta tahmini $\mp$ hata payı $E$" biçimindedir (@def-ort-hata-payi).
+
+| Parametre | Durum | Hata payı $E$ | Dayanak |
+|:--|:--|:-:|:-:|
+| $\mu$ | $\sigma$ bilinen (normal kitle ya da $n > 30$) | $z_{1-\alpha/2}\,\dfrac{\sigma}{\sqrt n}$ | @thm-ort-sigma-bilinen |
+| $\mu$ | normal kitle, $\sigma$ bilinmeyen | $t_{n-1,\,1-\alpha/2}\,\dfrac{S}{\sqrt n}$ | @thm-ort-sigma-bilinmeyen |
+| $\mu$ | $n > 30$, $\sigma$ bilinmeyen | $z_{1-\alpha/2}\,\dfrac{S}{\sqrt n}$ | [Ortalama](ortalama-icin-aralik-tahmini.qmd) |
+| $\mu_1 - \mu_2$ | varyanslar bilinen | $z_{1-\alpha/2}\sqrt{\dfrac{\sigma_1^2}{n_1} + \dfrac{\sigma_2^2}{n_2}}$ | @thm-vik-fark-z |
+| $\mu_1 - \mu_2$ | bilinmeyen, eşit | $t_{n_1+n_2-2,\,1-\alpha/2}\,S_p\sqrt{\dfrac{1}{n_1} + \dfrac{1}{n_2}}$ | @thm-vik-fark-havuzlu |
+| $\mu_1 - \mu_2$ | bilinmeyen, farklı | $t_{\nu,\,1-\alpha/2}\sqrt{\dfrac{S_1^2}{n_1} + \dfrac{S_2^2}{n_2}}$ | @thm-vik-fark-welch |
+| $p$ | $n\hat p \ge 5$, $n\hat q \ge 5$ | $z_{1-\alpha/2}\sqrt{\dfrac{\hat p\hat q}{n}}$ | @thm-ora-p-araligi |
+| $p_1 - p_2$ | $n_1$, $n_2$ büyük | $z_{1-\alpha/2}\sqrt{\dfrac{\hat p_1\hat q_1}{n_1} + \dfrac{\hat p_2\hat q_2}{n_2}}$ | @thm-ora-fark-araligi |
+
+: Simetrik güven aralıkları {#tbl-ozt-guven}
+
+Ortak varyans $S_p^2 = \dfrac{(n_1 - 1)S_1^2 + (n_2 - 1)S_2^2}{n_1 + n_2 - 2}$'dir (@def-vik-ortak-varyans). Welch aralığında $a_i = S_i^2/n_i$ olmak üzere
+$$
+\nu = \frac{(a_1 + a_2)^2}{\dfrac{a_1^2}{n_1 - 1} + \dfrac{a_2^2}{n_2 - 1}}
+$$
+alınır ve bir alt tam sayıya yuvarlanır. Varyans ve varyans oranı aralıkları simetrik değildir (@thm-vik-varyans-araligi, @thm-vik-varyans-orani):
+$$
+\frac{(n-1)S^2}{\chi^2_{n-1,\,1-\alpha/2}} \le \sigma^2 \le \frac{(n-1)S^2}{\chi^2_{n-1,\,\alpha/2}},
+$$
+$$
+\frac{S_1^2}{S_2^2}\cdot\frac{1}{F_{\nu_1,\nu_2,\,1-\alpha/2}} \le \frac{\sigma_1^2}{\sigma_2^2} \le \frac{S_1^2}{S_2^2}\,F_{\nu_2,\nu_1,\,1-\alpha/2} .
+$$
+Burada $\nu_i = n_i - 1$'dir; $\sigma$ ya da $\sigma_1/\sigma_2$ için sınırların karekökü alınır (@cor-vik-standart-sapma).
+
+::: {.callout-tip title="Dört adımda güven aralığı"}
+1. **Parametreyi belirle:** $\mu$, $\sigma^2$, $p$ ya da iki kitlenin farkı veya oranı.
+2. **Durumu belirle:** varyans biliniyor mu, örneklem büyük mü, kitle normal mi? İki ortalamada varyanslar bilinmiyor ve örneklemler küçükse önce $\sigma_1^2/\sigma_2^2$ aralığını kur: $1$'i içeriyorsa ortak varyanslı $t$, içermiyorsa Welch.
+3. **Kantili oku:** $1 - \alpha$'dan $\alpha/2$'yi bul, tablodan $1 - \alpha/2$ kantilini (varyansta iki kantili) al.
+4. **Sınırları hesapla ve yorumla:** aralık $\mu_0$'ı, $0$'ı ya da $1$'i içeriyor mu?
+:::
+
+| Hedef | Gereken en küçük $n$ |
+|:--|:-:|
+| $\mu$ için hata payı en çok $E_0$ | $n \ge \Big(\dfrac{z_{1-\alpha/2}\,\sigma}{E_0}\Big)^2$ |
+| $p$ için hata payı en çok $E_0$, ön tahmin $\hat p$ | $n \ge \dfrac{z_{1-\alpha/2}^2\,\hat p\hat q}{E_0^2}$ |
+| $p$ için hata payı en çok $E_0$, ön bilgi yok | $n \ge \dfrac{z_{1-\alpha/2}^2}{4E_0^2}$ |
+
+: Örneklem hacmi formülleri; $n$ hep yukarı yuvarlanır {#tbl-ozt-orneklem-hacmi}
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Varyans aralığında **büyük** kantil alt sınırın, **küçük** kantil üst sınırın paydasına gider.
+- Soruda $s$ verilmişse formüle $s^2$ yazılır; $s^2$ verilmişse karekök alınmadan kullanılır.
+- Örneklem hacmi her zaman yukarı yuvarlanır ($96{,}04 \to 97$); Welch serbestlik derecesi aşağı yuvarlanır.
+- Güven düzeyi, tek bir hesaplanmış aralığın $\theta$'yı içerme olasılığı değil, yöntemin uzun vadeli başarısıdır.
+:::
+
+:::: {#exm-ozt-varyans-araligi name="Dolum Hacimlerinin Standart Sapması İçin Aralık"}
+Bir dolum makinesinden rastgele seçilen $15$ şişenin hacimlerinin örneklem varyansı $s^2 = 2{,}4$ mL² bulunuyor. Hacimlerin normal dağıldığını kabul ederek $\sigma$ için %95 güven aralığını bulunuz.
+
+::: {.cozum}
+Önce $\sigma^2$ için aralık kurulur. $\nu = 14$ ve [$\chi^2$ tablosundan](tablolar.qmd#sec-tablo-ki-kare) $\chi^2_{14,\,0{,}025} = 5{,}63$, $\chi^2_{14,\,0{,}975} = 26{,}12$. $(n - 1)s^2 = 14 \cdot 2{,}4 = 33{,}6$ olduğundan
+$$
+\frac{33{,}6}{26{,}12} \le \sigma^2 \le \frac{33{,}6}{5{,}63}
+\quad\Longrightarrow\quad
+1{,}286 \le \sigma^2 \le 5{,}968 .
+$$
+Karekök kesin artan olduğundan sınırların karekökü alınır: $1{,}134 \le \sigma \le 2{,}443$ mL. Aralık $s = \sqrt{2{,}4} \approx 1{,}549$'a göre simetrik değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-havuzlu-aralik name="İki Gübrenin Ortalama Verim Farkı"}
+İki gübre karşılaştırılıyor. Birinci gübreyle $8$ parselin ortalama verimi $\bar x_1 = 24{,}3$, örneklem varyansı $s_1^2 = 4{,}1$; ikinci gübreyle $10$ parselin ortalaması $\bar x_2 = 21{,}9$, örneklem varyansı $s_2^2 = 5{,}3$'tür. Verimler normal, örneklemler bağımsızdır ve kitle varyansları bilinmiyor. $\mu_1 - \mu_2$ için %95 güven aralığını uygun yöntemi seçerek bulunuz.
+
+::: {.cozum}
+**Yöntem.** Varyanslar bilinmiyor ve örneklemler küçük; önce varyans oranına bakalım. [$F$ tablosundan](tablolar.qmd#sec-tablo-f-0975) $F_{7,9,\,0{,}975} = 4{,}20$, $F_{9,7,\,0{,}975} = 4{,}82$ ve $s_1^2/s_2^2 \approx 0{,}7736$ ile
+$$
+\frac{0{,}7736}{4{,}20} \approx 0{,}184 \le \frac{\sigma_1^2}{\sigma_2^2} \le 0{,}7736 \cdot 4{,}82 \approx 3{,}729 .
+$$
+Aralık $1$'i içerdiğinden varyanslar eşit kabul edilir ve ortak varyanslı $t$ aralığı kullanılır.
+
+**Ortak varyans.**
+$$
+s_p^2 = \frac{7 \cdot 4{,}1 + 9 \cdot 5{,}3}{16} = \frac{28{,}7 + 47{,}7}{16} = 4{,}775, \qquad s_p \approx 2{,}1852 .
+$$
+
+**Aralık.** $\sqrt{\frac18 + \frac{1}{10}} = \sqrt{0{,}225} \approx 0{,}4743$, dolayısıyla farkın tahmini standart sapması $2{,}1852 \cdot 0{,}4743 \approx 1{,}0365$'tir. [$t$ tablosundan](tablolar.qmd#sec-tablo-t) $t_{16,\,0{,}975} = 2{,}120$ ve hata payı $2{,}120 \cdot 1{,}0365 \approx 2{,}197$'dir. Nokta tahmini $24{,}3 - 21{,}9 = 2{,}4$ olduğundan
+$$
+0{,}203 \le \mu_1 - \mu_2 \le 4{,}597 .
+$$
+Aralık $0$'ı içermez: %95 güvenle birinci gübrenin ortalama verimi daha yüksektir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-oran-orneklem-hacmi name="Abonelik Oranı İçin Gereken Örneklem Hacmi"}
+Bir ilçedeki hanelerin internet aboneliği oranı $p$, %95 güvenle en çok $0{,}02$ hata payıyla tahmin edilecektir. Bir ön çalışmada oran $0{,}22$ bulunmuştur. En az kaç hane seçilmelidir?
+
+::: {.cozum}
+$z_{0{,}975} = 1{,}96$, $\hat p = 0{,}22$ ve $\hat q = 0{,}78$ ile @tbl-ozt-orneklem-hacmi formülü
+$$
+n \ge \frac{1{,}96^2 \cdot 0{,}22 \cdot 0{,}78}{0{,}02^2} = \frac{3{,}8416 \cdot 0{,}1716}{0{,}0004} \approx 1648{,}05
+$$
+verir; $n$ yukarı yuvarlanır ve en az $1649$ hane seçilir. Ön çalışma olmasaydı $\hat p\hat q \le \frac14$ sınırıyla $n \ge \frac{1{,}96^2}{4 \cdot 0{,}0004} = 2401$ gerekirdi.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Hipotez Testleri {#sec-ozt-test}
+
+Bir test sorusu her zaman aynı beş adımı izler ([Hipotez Testlerine Giriş](hipotez-testlerine-giris.qmd)). Kritik bölgenin büyüklüğü $\alpha$ ile, yeri karşı hipotezin yönüyle belirlenir.
+
+::: {.callout-tip title="Hipotez testi beş adımda"}
+1. **Hipotezleri kur.** $H_0 : \mu = \mu_0$; $H_1$'in yönünü sorunun iddiasından oku ($<$, $>$ ya da $\ne$).
+2. **$\alpha$'yı al.** Verilmemişse $\alpha = 0{,}05$.
+3. **İstatistiği seç.** $\sigma$ biliniyorsa $Z = \dfrac{\bar X - \mu_0}{\sigma/\sqrt n}$, bilinmiyorsa $T = \dfrac{\bar X - \mu_0}{S/\sqrt n}$ ($n - 1$ serbestlik derecesi).
+4. **Kritik bölgeyi yaz** (@tbl-ozt-test).
+5. **Karar ver** ve sonucu sorunun diliyle yaz: "reddedilmez", "kabul edilir" ile aynı şey değildir.
+:::
+
+| $H_1$ | $Z$ testi reddeder (@thm-hip-z-testi) | $t$ testi reddeder (@thm-hip-t-testi) | $p$ değeri (@def-hip-p-degeri) |
+|:-:|:-:|:-:|:-:|
+| $\mu > \mu_0$ | $Z > z_{1-\alpha}$ | $T > t_{n-1,\,1-\alpha}$ | $P(Z \ge z)$ |
+| $\mu < \mu_0$ | $Z < -z_{1-\alpha}$ | $T < -t_{n-1,\,1-\alpha}$ | $P(Z \le z)$ |
+| $\mu \ne \mu_0$ | $\lvert Z \rvert > z_{1-\alpha/2}$ | $\lvert T \rvert > t_{n-1,\,1-\alpha/2}$ | $2P(Z \ge \lvert z \rvert)$ |
+
+: Kritik bölgeler ve p değeri {#tbl-ozt-test}
+
+**Hatalar ve güç** (@def-hip-hata-turleri, @def-hip-guc-fonksiyonu): $\alpha = P(H_0 \text{ reddedilir} \mid H_0)$, $\beta = P(H_0 \text{ reddedilmez} \mid H_1)$, güç $1 - \beta$. $Z$ testinde $\delta = \dfrac{(\mu - \mu_0)\sqrt n}{\sigma}$ ile (@thm-hip-z-guc-fonksiyonu)
+$$
+\begin{aligned}
+H_1 : \mu > \mu_0 &: \quad \pi(\mu) = P(Z > z_{1-\alpha} - \delta),\\[1mm]
+H_1 : \mu < \mu_0 &: \quad \pi(\mu) = P(Z < -z_{1-\alpha} - \delta);
+\end{aligned}
+$$
+iki yönlü testte ise iki kuyruğun $z_{1-\alpha/2}$ ile yazılmış olasılıkları toplanır.
+
+**Kısa yollar.**
+
+- $p < \alpha$ ise $H_0$ reddedilir. $t$ testinde $p$, gözlenen $|t|$'nin arasına düştüğü iki tablo kantilinden sıkıştırılır.
+- İki yönlü $\alpha$ düzeyli test, $\mu_0$ %$100(1-\alpha)$ güven aralığının dışındaysa reddeder (@thm-hip-guven-araligi-ve-test); aralık elde varsa yeni hesap gerekmez.
+- Sağa yönlü $Z$ testinde $\mu$ noktasında gücün en az $1 - \beta$ olması $\delta \ge z_{1-\alpha} + z_{1-\beta}$, yani $n \ge \Big(\dfrac{(z_{1-\alpha} + z_{1-\beta})\,\sigma}{\mu - \mu_0}\Big)^2$ demektir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $H_1$'in yönü veriden değil sorunun iddiasından okunur.
+- İki yönlü testte $\alpha$ iki kuyruğa bölünür; tek yönlüde tamamı bir kuyruktadır.
+- Güç hesabında kritik değer $H_0$ altında bulunur, olasılık ise gerçek ortalama $\mu$ altında hesaplanır.
+:::
+
+:::: {#exm-ozt-t-testi name="Pil Ömrü İddiasının t Testi"}
+Bir üretici pillerinin ortalama ömrünün $50$ saat olduğunu söylüyor. Rastgele seçilen $16$ pilin ortalama ömrü $\bar x = 48{,}2$ saat, standart sapması $s = 3{,}6$ saat bulunuyor. Ömürlerin normal dağıldığını kabul ederek, $\alpha = 0{,}05$ düzeyinde ortalama ömrün $50$ saatten az olduğu söylenebilir mi? $p$ değeri hangi aralıktadır?
+
+::: {.cozum}
+**Hipotezler.** $H_0 : \mu = 50$, $H_1 : \mu < 50$ (sola yönlü).
+
+**İstatistik.** $\sigma$ bilinmediğinden $t$ testi: $S/\sqrt n = 3{,}6/4 = 0{,}9$ ve serbestlik derecesi $15$.
+
+**Kritik bölge.** [$t$ tablosundan](tablolar.qmd#sec-tablo-t) $t_{15,\,0{,}95} = 1{,}753$; $H_0$, $T < -1{,}753$ ise reddedilir.
+
+**Karar.** Gözlenen değer
+$$
+t = \frac{48{,}2 - 50}{0{,}9} = -2{,}00 < -1{,}753
+$$
+olduğundan $H_0$ reddedilir: %5 düzeyinde ortalama ömrün $50$ saatten az olduğu sonucuna varılır.
+
+**$p$ değeri.** $|t| = 2{,}00$, tabloda $t_{15,\,0{,}95} = 1{,}753$ ile $t_{15,\,0{,}975} = 2{,}131$ arasındadır; dolayısıyla $0{,}025 < p < 0{,}05$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-testin-gucu name="Sağa Yönlü Z Testinin Gücü"}
+$\sigma = 5$ olan normal bir kitleden $n = 25$ birimlik örneklemle $H_0 : \mu = 40$ hipotezi $H_1 : \mu > 40$'a karşı $\alpha = 0{,}05$ düzeyinde test ediliyor. Gerçek ortalama $\mu = 42{,}5$ ise testin gücü nedir?
+
+::: {.cozum}
+**Kritik bölge.** $\sigma/\sqrt n = 5/5 = 1$ ve $z_{0{,}95} = 1{,}645$ olduğundan $H_0$, $\bar X > 40 + 1{,}645 = 41{,}645$ ise reddedilir.
+
+**Güç.** $\mu = 42{,}5$ iken $\bar X \sim N(42{,}5;\ 1)$'dir:
+$$
+\pi(42{,}5) = P(\bar X > 41{,}645) = P\Big(Z > \frac{41{,}645 - 42{,}5}{1}\Big) = P(Z > -0{,}855).
+$$
+Simetriden bu $0{,}5 + A(0{,}855)$'tir. [Tabloda](tablolar.qmd#sec-tablo-normal) $A(0{,}85) = 0{,}3023$ ile $A(0{,}86) = 0{,}3051$ arasında ara değer alınırsa $A(0{,}855) \approx 0{,}3037$ ve
+$$
+\pi(42{,}5) \approx 0{,}8037, \qquad \beta \approx 0{,}1963 .
+$$
+Aynı sonuç güç formülünden de çıkar: $\delta = \frac{2{,}5 \cdot 5}{5} = 2{,}5$ ve $\pi = P(Z > 1{,}645 - 2{,}5)$. Gücü $0{,}90$'a çıkarmak için kısa yoldaki formül
+$$
+n \ge \Big(\frac{(1{,}645 + 1{,}282) \cdot 5}{2{,}5}\Big)^2 \approx 34{,}27,
+$$
+yani $n = 35$ verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Kitabın konularını bir arada kullanan çözümlü sorular [Alıştırmalar](alistirmalar.qmd) bölümünde, bütün tablo değerleri [Tablolar](tablolar.qmd) sayfasındadır.

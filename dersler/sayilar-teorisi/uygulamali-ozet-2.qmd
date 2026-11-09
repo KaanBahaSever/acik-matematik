@@ -1,0 +1,411 @@
+---
+title: "Uygulamalı Özet: Sayılar Teorisi 2"
+pagetitle: "Uygulamalı Özet: Sayılar Teorisi 2"
+description: "Sayılar Teorisi 2 sorularını çözmek için ispatsız pratik algoritmalar ve kopya kâğıdı: polinom kongrüanslarını asal kuvvetlere indirgeme ve çözümleri birleştirme, Hensel lemmasıyla kök yükseltme, Lagrange teoremi, mertebe, primitif kök ve indeksle kuvvet kongrüansları, Legendre sembolü, Euler kriteri, Gauss lemması, kuadratik resiprosite, ikinci dereceden kongrüanslar, Jacobi sembolü ve Diofant denklemleri."
+---
+
+Bu sayfa Sayılar Teorisi 2'nin yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık karşılaşılan sorular şunlardır: bileşik modüllü bir polinom kongrüansını çözmek, bir kökü $p$'den $p^s$'ye yükseltmek, bir sayının mertebesini ya da primitif kök olup olmadığını bulmak, $x^n \equiv a \pmod p$ denklemini indeksle çözmek ve $x^2 \equiv a \pmod p$ denkleminin çözülebilir olup olmadığına Legendre ya da Jacobi sembolüyle karar vermek. Sayfa her soru tipi için adım adım bir algoritma, kural tablolarını, kısa yolları, sık yapılan hataları ve yeni sayılarla tam çözülmüş kısa örnekleri verir. Lineer kongrüanslar ve Çin kalan teoremi gibi Sayılar Teorisi 1 araçları burada bilindiği varsayılarak kullanılır. Her kural, gerekçesinin bulunduğu teoreme ya da bölüme bağlanır; konuya baştan girmek için [Kongrüansların çözümleri](2/kongruans-cozumleri.qmd) bölümü iyi bir başlangıçtır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt2-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, modülün türüne (asal, asal kuvvet, bileşik) ve bilinmeyenin derecesine bakmaktır. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Kullanılacak yöntem | Bu sayfada |
+|:--|:--|:--|
+| $f(x) \equiv 0 \pmod m$, $m$ bileşik | Asal kuvvetlere indirgeme, çözümleri birleştirme | @sec-ozt2-polinom |
+| Çözüm sayısı, en fazla kaç çözüm | $N = N_1 \cdots N_k$; asal modülde Lagrange | @sec-ozt2-polinom |
+| $f(x) \equiv 0 \pmod{p^s}$ | Modülo $p$ çöz, kökleri basamak basamak yükselt | @sec-ozt2-hensel |
+| $\operatorname{ord}_m(a)$, primitif kök mü | Yalnız $\phi(m)$'nin bölenlerini dene | @sec-ozt2-mertebe |
+| $x^n \equiv a \pmod p$ | Çözülebilirlik testi, indeks, lineer kongrüans | @sec-ozt2-mertebe |
+| $a$ modülo $p$ KR mi, $x^2 \equiv a \pmod p$ çözülür mü | Legendre sembolü: çarpanlar, özel değerler, resiprosite | @sec-ozt2-legendre |
+| $a$ hangi asallarda KR | Resiprosite ve Çin kalan teoremi | @sec-ozt2-legendre |
+| $ax^2 + bx + c \equiv 0 \pmod p$ | Diskriminant, $y^2 \equiv d$, $x$'e dönüş | @sec-ozt2-ikinci-derece |
+| Büyük sayılarla sembol hesabı, bileşik modül | Jacobi sembolü | @sec-ozt2-jacobi |
+| $ax + by = c$ | Sadeleştir, Öklid, genel çözüm | @sec-ozt2-diofant |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt2-yontem}
+
+## Polinom Kongrüansları ve Asal Kuvvetlere İndirgeme {#sec-ozt2-polinom}
+
+$f(x) \equiv 0 \pmod m$ kongrüansının çözümleri modülo $m$ sınıflar hâlinde sayılır (@def-cozum-sayisi). Bileşik bir $m$ için problem, $m$'nin asal kuvvet çarpanlarına ayrılır (@thm-asal-kuvvetlere-indirgeme); ayrıntılar [Yüksek dereceden kongrüanslar](2/yuksek-dereceden-kongruanslar.qmd) bölümündedir.
+
+::: {.callout-tip title="Beş adımda $f(x) \equiv 0 \pmod m$"}
+1. **Ayır.** $m = p_1^{e_1} \cdots p_k^{e_k}$.
+2. **Parçaları çöz.** Her $p_i^{e_i}$ için katsayıları indirge ve çözümleri bul: küçük modülde dene, asal kuvvette kök yükselt (@sec-ozt2-hensel). Biri çözümsüzse asıl kongrüans da çözümsüzdür.
+3. **Say.** Çözüm sayısı $N = N_1 N_2 \cdots N_k$'dır (@thm-cozum-sayisi-carpimsal).
+4. **Birleştirme katsayıları.** Her $i$ için $\dfrac{m}{p_i^{e_i}}\, b_i \equiv 1 \pmod{p_i^{e_i}}$ denkleminden $b_i$'yi bul.
+5. **Birleştir.** Her $(a_1, \dots, a_k)$ seçimi için $x \equiv \sum_i \frac{m}{p_i^{e_i}}\, b_i\, a_i \pmod m$; sonuçları bir tabloda topla.
+:::
+
+| Durum | Kural | Dayanak |
+|:--|:--|:--|
+| Modül $p$ asal, derece $n$ | En fazla $n$ çözüm | @thm-lagrange |
+| Modül $p$ asal, $f(a) \equiv 0$ | $f(x) \equiv (x - a)\rho(x) \pmod p$ | @thm-carpan |
+| Modül $p$ asal, derece $\geq p$ | $x^p$ yerine $x$ yaz: $f$'yi $x^p - x$'e böl, kalanla çalış | @thm-derece-indirgeme |
+| Baş katsayı modüle bölünüyor | Kongrüansın derecesi düşer | @def-kongruans-derecesi |
+
+: Polinom kongrüanslarında kurallar {#tbl-ozt2-polinom}
+
+**Kısa yollar.**
+
+- Modülo $p$'de $0, \pm 1, \pm 2, \dots, \pm \frac{p-1}{2}$ temsilcilerini denemek hesabı küçültür.
+- Asal $p$ modülünde $x^2 + bx + c \equiv 0$ kongrüansının iki kökü varsa toplamları $-b$'ye kongrüdür (@thm-carpan); bir kök bulununca öteki hemen yazılır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Lagrange sınırı yalnız asal modülde geçerlidir: $x^2 - 1 \equiv 0 \pmod 8$ ikinci derecedir ama $4$ çözümü vardır (@exm-cozum-sayisi-mod8).
+- Birleştirmede bütün $(a_1, \dots, a_k)$ kombinasyonları alınır; çözüm sayısı $N_1 N_2 \cdots N_k$ tutmalıdır.
+:::
+
+:::: {#exm-ozt2-mod-91 name="Bileşik Modüllü İkinci Dereceden Kongrüans"}
+$x^2 + x + 1 \equiv 0 \pmod{91}$ kongrüansını çözünüz.
+
+::: {.cozum}
+$91 = 7 \cdot 13$ olduğundan iki alt kongrüans çözülür.
+
+**Modülo $7$.** Deneyerek $f(2) = 7$ ve $f(4) = 21$ bulunur: $x \equiv 2, 4 \pmod 7$. *(Kökler toplamı $6 \equiv -1$.)*
+
+**Modülo $13$.** $f(3) = 13$ ve $f(9) = 91$: $x \equiv 3, 9 \pmod{13}$. Çözüm sayısı $N = 2 \cdot 2 = 4$'tür.
+
+**Birleştirme katsayıları.** $\frac{91}{7} = 13 \equiv -1 \pmod 7$ olduğundan $b_1 \equiv -1$. $\frac{91}{13} = 7$ ve $7 \cdot 2 = 14 \equiv 1 \pmod{13}$ olduğundan $b_2 \equiv 2$. Buna göre
+$$x \equiv 13 \cdot (-1)\, a_1 + 7 \cdot 2\, a_2 = -13 a_1 + 14 a_2 \pmod{91}.$$
+
+| $a_1$ | $a_2$ | $-13a_1 + 14a_2$ | mod $91$ |
+|:-:|:-:|:-:|:-:|
+| $2$ | $3$ | $16$ | $16$ |
+| $2$ | $9$ | $100$ | $9$ |
+| $4$ | $3$ | $-10$ | $81$ |
+| $4$ | $9$ | $74$ | $74$ |
+
+Çözümler $x \equiv 9, 16, 74, 81 \pmod{91}$'dir. Sağlama: $9^2 + 9 + 1 = 91$ ve $16^2 + 16 + 1 = 273 = 3 \cdot 91$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kök Yükseltme ve Hensel Lemması {#sec-ozt2-hensel}
+
+Modülo $p^s$ çözümler, modülo $p$ çözümlerden basamak basamak elde edilir (@thm-yukseltme). Bir $b$ kökünün bir üst basamakta kaç kök vereceği $f'(b)$'ye bağlıdır (@thm-uc-durum). Ayrıntılar [Asal kuvvet modüllerde kök yükseltme](2/kok-yukseltme.qmd) bölümündedir.
+
+::: {.callout-tip title="Dört adımda $f(x) \equiv 0 \pmod{p^s}$"}
+1. **Taban.** $f(x) \equiv 0 \pmod p$'yi bir tam kalan sistemini deneyerek çöz. Çözüm yoksa dur.
+2. **Türev.** $f'(x)$'i hesapla.
+3. **Yükselt.** $\alpha = 1$'den başla. Her $b$ kökü için
+   $$\frac{f(b)}{p^\alpha} + f'(b)\, y \equiv 0 \pmod p$$
+   kongrüansını çöz; her $y$ çözümü $x \equiv b + y p^\alpha \pmod{p^{\alpha+1}}$ kökünü verir.
+4. **Tekrarla.** $\alpha = s - 1$ basamağına kadar sürdür.
+:::
+
+| Durum | $b$'den doğan kök sayısı | Yeni kökler |
+|:--|:-:|:--|
+| $p \nmid f'(b)$ | $1$ | $b + y_0 p^\alpha$, $y_0$ tek |
+| $p \mid f'(b)$, $p \nmid \frac{f(b)}{p^\alpha}$ | $0$ | Kök ölür |
+| $p \mid f'(b)$, $p \mid \frac{f(b)}{p^\alpha}$ | $p$ | $b, b + p^\alpha, \dots, b + (p-1)p^\alpha$ |
+
+: Yükseltmenin üç hâli {#tbl-ozt2-hensel}
+
+**Kısa yollar.**
+
+- $p \nmid f'(a)$ ise kök her basamakta tek türlü yükselir (Hensel lemması); bu durumda türev bir kez hesaplanıp modülo $p$ değeri her adımda yeniden kullanılır, çünkü $f'(b) \equiv f'(a) \pmod p$ kalır.
+- Yükseltme kongrüansı daima modülo $p$'dir; $y$ için yalnız $0, 1, \dots, p - 1$ denenir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $\alpha$. basamakta $f(b)$, $p$'ye değil $p^\alpha$'ya bölünür.
+- Bir basamakta doğan $p$ kökün her biri bir sonraki basamakta ayrı ayrı denetlenir; hepsinin yükseleceği varsayılmaz.
+:::
+
+:::: {#exm-ozt2-hensel-49 name="Basit Köklerin Yükseltilmesi"}
+$x^2 \equiv 2 \pmod{49}$ kongrüansını çözünüz.
+
+::: {.cozum}
+$f(x) = x^2 - 2$ ve $f'(x) = 2x$ olsun.
+
+**Modülo $7$.** $3^2 - 2 = 7$ ve $4^2 - 2 = 14$ olduğundan $x \equiv 3, 4 \pmod 7$. Lagrange teoremi gereği başka çözüm yoktur.
+
+**$b = 3$.** $\frac{f(3)}{7} = 1$ ve $f'(3) = 6$:
+$$1 + 6y \equiv 0 \pmod 7 \iff 6y \equiv 6 \iff y \equiv 1 \pmod 7.$$
+$x \equiv 3 + 7 \cdot 1 = 10 \pmod{49}$.
+
+**$b = 4$.** $\frac{f(4)}{7} = 2$ ve $f'(4) = 8 \equiv 1$:
+$$2 + y \equiv 0 \pmod 7 \iff y \equiv 5 \pmod 7.$$
+$x \equiv 4 + 7 \cdot 5 = 39 \pmod{49}$.
+
+İki kökte de $7 \nmid f'(b)$ olduğundan her biri tek kök verdi. Çözümler $x \equiv 10, 39 \pmod{49}$'dur. Sağlama: $10^2 - 2 = 98 = 2 \cdot 49$ ve $39^2 - 2 = 1519 = 31 \cdot 49$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt2-hensel-27 name="Türevin Modüle Bölündüğü Kökler"}
+$x^3 + 1 \equiv 0 \pmod{27}$ kongrüansını çözünüz.
+
+::: {.cozum}
+$f(x) = x^3 + 1$ ve $f'(x) = 3x^2$ olsun; her $b$ için $3 \mid f'(b)$'dir. Bu yüzden her basamakta yalnız $\frac{f(b)}{3^\alpha}$'nın $3$'e bölünüp bölünmediğine bakılır (@thm-uc-durum).
+
+**Modülo $3$.** $f(0) = 1$, $f(1) = 2$, $f(2) = 9$ olduğundan tek kök $x \equiv 2 \pmod 3$'tür.
+
+**Modülo $9$ ($\alpha = 1$).** $\frac{f(2)}{3} = 3 \equiv 0 \pmod 3$: üçüncü hâl, $3$ kök doğar:
+$$x \equiv 2, \ 5, \ 8 \pmod 9.$$
+
+**Modülo $27$ ($\alpha = 2$).** Her kök için $\frac{f(b)}{9}$'a bakalım:
+
+| $b$ | $f(b)$ | $f(b)/9$ | mod $3$ | Sonuç |
+|:-:|:-:|:-:|:-:|:--|
+| $2$ | $9$ | $1$ | $1$ | Ölür |
+| $5$ | $126$ | $14$ | $2$ | Ölür |
+| $8$ | $513$ | $57$ | $0$ | $3$ kök: $8, 17, 26$ |
+
+Çözümler $x \equiv 8, 17, 26 \pmod{27}$'dir. Sağlama: $17^3 + 1 = 4914 = 182 \cdot 27$ ve $26^3 + 1 = 17\,577 = 651 \cdot 27$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Mertebe, Primitif Kök ve İndeks {#sec-ozt2-mertebe}
+
+$\gcd(a, m) = 1$ iken $a^x \equiv 1 \pmod m$ yapan en küçük pozitif $x$, $a$'nın mertebesidir ve daima $\phi(m)$'yi böler (@def-mertebe, @thm-mertebe-boler). Mertebesi $\phi(m)$ olan sayı primitif köktür (@def-primitif-kok). Ayrıntılar [Mertebe, primitif kökler ve indeks](2/mertebe-primitif-kokler.qmd) bölümündedir.
+
+| Soru | Kural | Dayanak |
+|:--|:--|:--|
+| Mertebe adayları | Yalnız $\phi(m)$'nin bölenleri | @thm-mertebe-boler |
+| $a^j \equiv a^k$ ne zaman | $\operatorname{ord}_m(a) \mid j - k$ | @prp-uslerin-denkligi |
+| Kuvvetin mertebesi | $\operatorname{ord}_m(a^k) = \dfrac{h}{\gcd(h, k)}$ | @thm-kuvvetin-mertebesi |
+| Primitif kök var mı | Ancak $m = 2, 4, p^n, 2p^n$ ($p$ tek asal) | @thm-primitif-varlik |
+| Primitif kökün kuvvetleri | $g, g^2, \dots, g^{\phi(m)}$ asal kalanlar sistemi | @thm-primitif-ozellikler |
+| İndeks | $g^j \equiv b$, $1 \le j \le \phi(m)$ | @def-indeks |
+| $x^n \equiv a \pmod p$ | $d = \gcd(n, p-1)$; $a^{(p-1)/d} \equiv 1$ ise tam $d$ çözüm, değilse yok | @thm-n-kuvvet-kongruans |
+
+: Mertebe ve primitif kök kuralları {#tbl-ozt2-mertebe}
+
+**Kısa yollar.**
+
+- **Primitif kök testi.** $g$ sayısı modülo $p$ primitif köktür ancak ve ancak $p - 1$'in her $q$ asal böleni için $g^{(p-1)/q} \not\equiv 1 \pmod p$ ise. Gerekçe: mertebe $h$, $p - 1$'i böler (@thm-mertebe-boler); $h < p - 1$ ise $h$ bir $\frac{p-1}{q}$'yu böler ve o kuvvet $1$ olur.
+- Bir $g$ primitif kökü bulununca öbürleri $g^k$, $\gcd(k, \phi(m)) = 1$ biçimindedir (@thm-kuvvetin-mertebesi); sayıları $\phi(\phi(m))$'dir.
+- $x^2 \equiv a \pmod p$ için $n = 2$, $d = 2$ alınırsa test $a^{(p-1)/2} \equiv 1$ olur; bu Euler kriteridir (@sec-ozt2-legendre).
+
+::: {.callout-tip title="Beş adımda $x^n \equiv a \pmod p$"}
+1. **Test.** $d = \gcd(n, p - 1)$; $a^{(p-1)/d} \not\equiv 1$ ise çözüm yoktur; değilse tam $d$ çözüm vardır.
+2. **Primitif kök.** Yukarıdaki testle bir $g$ bul.
+3. **İndeks.** $g^j \equiv a$ olan $j$'yi bul; $x \equiv g^y$ yaz.
+4. **Lineer kongrüans.** $g^{ny} \equiv g^j$ olduğundan $ny \equiv j \pmod{p-1}$.
+5. **Geri dön.** $d$ tane $y$ çözümünü bul ve $x \equiv g^y$'yi hesapla.
+:::
+
+:::: {#exm-ozt2-primitif name="Bir Primitif Kökün Sınanması"}
+$2$ sayısının modülo $19$ primitif kök olduğunu gösteriniz.
+
+::: {.cozum}
+$\phi(19) = 18 = 2 \cdot 3^2$ olduğundan asal bölenler $2$ ve $3$'tür. Testteki üsler $\frac{18}{2} = 9$ ve $\frac{18}{3} = 6$'dır:
+$$
+\begin{aligned}
+2^6 &= 64 = 3 \cdot 19 + 7 \equiv 7 \pmod{19}, \\[1mm]
+2^9 &= 2^6 \cdot 2^3 \equiv 7 \cdot 8 = 56 \equiv -1 \pmod{19}.
+\end{aligned}
+$$
+İkisi de $1$'e denk olmadığından $\operatorname{ord}_{19}(2) = 18$'dir; $2$ bir primitif köktür. Modülo $19$ toplam $\phi(18) = 6$ primitif kök vardır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt2-kup name="İndeksle Bir Kübik Kongrüans"}
+$x^3 \equiv 7 \pmod{19}$ kongrüansını çözünüz.
+
+::: {.cozum}
+**Test.** $d = \gcd(3, 18) = 3$. $7^2 = 49 \equiv 11$ ve $7^3 \equiv 77 \equiv 1 \pmod{19}$ olduğundan $7^{18/3} = 7^6 \equiv 1$'dir. @thm-n-kuvvet-kongruans gereği tam $3$ çözüm vardır.
+
+**İndeks.** Önceki örnekte $2$'nin primitif kök olduğunu ve $2^6 \equiv 7$ olduğunu bulduk; $\operatorname{ind}_2(7) = 6$'dır. $x \equiv 2^y$ yazarsak
+$$2^{3y} \equiv 2^6 \pmod{19} \iff 3y \equiv 6 \pmod{18}.$$
+
+**Lineer kongrüans.** $3$'e bölersek $y \equiv 2 \pmod 6$, yani $y \in \{2, 8, 14\}$ olur.
+
+**Geri dönüş.** $2^2 = 4$; $2^8 = 2^6 \cdot 4 \equiv 28 \equiv 9$; $2^{14} = 2^8 \cdot 2^6 \equiv 9 \cdot 7 = 63 \equiv 6 \pmod{19}$. Çözümler
+$$x \equiv 4, \ 6, \ 9 \pmod{19}$$
+dur. Sağlama: $4^3 = 64 \equiv 7$, $6^3 = 216 = 11 \cdot 19 + 7$, $9^3 = 729 = 38 \cdot 19 + 7$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Legendre Sembolü ve Kuadratik Resiprosite {#sec-ozt2-legendre}
+
+$p$ tek asal ve $p \nmid a$ iken $\left( \frac{a}{p} \right) = 1$ olması, $a$'nın KR, yani $x^2 \equiv a \pmod p$'nin çözülebilir olması demektir (@def-legendre). Sembol hiçbir kare listelemeden hesaplanır; ayrıntılar [Legendre sembolü](2/legendre-sembolu.qmd), [Gauss lemması](2/gauss-lemmasi.qmd) ve [Kuadratik resiprosite](2/kuadratik-resiprosite.qmd) bölümlerindedir.
+
+| Kural | İfade | Dayanak |
+|:--|:--|:--|
+| Euler kriteri | $\left( \frac{a}{p} \right) \equiv a^{(p-1)/2} \pmod p$ | @thm-euler-kriteri |
+| Çarpımsallık | $\left( \frac{ab}{p} \right) = \left( \frac{a}{p} \right) \left( \frac{b}{p} \right)$ | @thm-euler-kriteri |
+| Periyodiklik | $a \equiv b \pmod p \implies \left( \frac{a}{p} \right) = \left( \frac{b}{p} \right)$ | @thm-euler-kriteri |
+| Kareler | $\left( \frac{a^2}{p} \right) = 1$ | @thm-euler-kriteri |
+| $-1$ | $\left( \frac{-1}{p} \right) = (-1)^{(p-1)/2}$ | @thm-euler-kriteri |
+| $2$ | $\left( \frac{2}{p} \right) = (-1)^{(p^2-1)/8}$ | @thm-karesel-karakter |
+| Gauss lemması | $\left( \frac{a}{p} \right) = (-1)^n$, $n$: $a, 2a, \dots, \frac{p-1}{2}a$ kalanlarından $\frac{p}{2}$'yi aşanların sayısı | @thm-gauss-lemmasi |
+| Resiprosite | $\left( \frac{p}{q} \right) \left( \frac{q}{p} \right) = (-1)^{\frac{p-1}{2} \cdot \frac{q-1}{2}}$ | @thm-kuadratik-resiprosite |
+
+: Legendre sembolünün kuralları {#tbl-ozt2-legendre}
+
+Resiprosite pratikte şöyle okunur: $p$ ve $q$'dan biri $1 \pmod 4$ ise $\left( \frac{p}{q} \right) = \left( \frac{q}{p} \right)$; ikisi de $3 \pmod 4$ ise $\left( \frac{p}{q} \right) = -\left( \frac{q}{p} \right)$.
+
+| $a$ | $\left( \frac{a}{p} \right) = 1$ ancak ve ancak | Gerekçe |
+|:-:|:--|:--|
+| $-1$ | $p \equiv 1 \pmod 4$ | @thm-euler-kriteri |
+| $2$ | $p \equiv \pm 1 \pmod 8$ | @thm-karesel-karakter |
+| $-2$ | $p \equiv 1, 3 \pmod 8$ | $-1$ ile $2$'nin çarpımı |
+| $3$ | $p \equiv \pm 1 \pmod{12}$ | @exm-3-hangi-asallarda-kr |
+| $-3$ | $p \equiv 1 \pmod 3$ | @exm-ozt2-eksi-uc |
+| $5$ | $p \equiv \pm 1 \pmod 5$ | $\left( \frac{5}{p} \right) = \left( \frac{p}{5} \right)$ |
+
+: Küçük sayıların karesel karakteri ($p > 5$ tek asal) {#tbl-ozt2-karakter}
+
+::: {.callout-tip title="Beş adımda $\left( \frac{a}{p} \right)$"}
+1. **İndirge.** $a$'yı modülo $p$ küçült; işine yarıyorsa negatif temsilci seç.
+2. **Kareleri at.** $a = k^2 a'$ ise $\left( \frac{a}{p} \right) = \left( \frac{a'}{p} \right)$.
+3. **Çarpanlara ayır.** $a' = \pm 2^e q_1 \cdots q_r$ yaz ve sembolü çarpanlara dağıt.
+4. **Özel değerler.** $-1$ ve $2$ için tablodaki kuralları kullan.
+5. **Takla attır.** Her tek asal $q_i$ için resiprositeyle $\left( \frac{p}{q_i} \right)$'ye geç, $p$'yi modülo $q_i$ indirge ve 1. adıma dön.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Resiprosite yalnız iki farklı tek asal için kullanılır; payda bileşikse Jacobi sembolüne geçilir (@sec-ozt2-jacobi).
+- Takla attırırken işaret her seferinde yeniden belirlenir; $\left( \frac{2}{p} \right)$ ve $\left( \frac{-1}{p} \right)$ resiprositeyle çevrilmez, kendi formülleriyle bulunur.
+:::
+
+:::: {#exm-ozt2-legendre name="Resiprositeyle Çözülebilirlik"}
+$x^2 \equiv 70 \pmod{101}$ kongrüansının çözülebilir olup olmadığını belirleyiniz.
+
+::: {.cozum}
+$101$ asaldır ve $70 = 2 \cdot 5 \cdot 7$'dir:
+$$\left( \frac{70}{101} \right) = \left( \frac{2}{101} \right) \left( \frac{5}{101} \right) \left( \frac{7}{101} \right).$$
+
+- $101 \equiv 5 \pmod 8$ olduğundan $\left( \frac{2}{101} \right) = -1$.
+- $101 \equiv 1 \pmod 4$ olduğundan resiprosite işaret değiştirmez: $\left( \frac{5}{101} \right) = \left( \frac{101}{5} \right) = \left( \frac{1}{5} \right) = 1$.
+- Yine $101 \equiv 1 \pmod 4$: $\left( \frac{7}{101} \right) = \left( \frac{101}{7} \right) = \left( \frac{3}{7} \right)$. $3$ ve $7$ ikisi de $3 \pmod 4$ olduğundan $\left( \frac{3}{7} \right) = -\left( \frac{7}{3} \right) = -\left( \frac{1}{3} \right) = -1$.
+
+Çarpım $(-1) \cdot 1 \cdot (-1) = 1$ olduğundan $70$ modülo $101$ bir KR'dir ve kongrüans çözülebilirdir. Gerçekten $26^2 = 676 = 6 \cdot 101 + 70$'tir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt2-eksi-uc name="Eksi Üç Hangi Asallarda Karedir?"}
+$p > 3$ tek asalları için $-3$ sayısının modülo $p$ bir KR olması için gerek ve yeter koşulun $p \equiv 1 \pmod 3$ olduğunu gösteriniz.
+
+::: {.cozum}
+Çarpımsallıktan $\left( \frac{-3}{p} \right) = \left( \frac{-1}{p} \right) \left( \frac{3}{p} \right)$'dir. Resiprositeden
+$$\left( \frac{3}{p} \right) = (-1)^{\frac{p-1}{2}} \left( \frac{p}{3} \right), \qquad \left( \frac{-1}{p} \right) = (-1)^{\frac{p-1}{2}}$$
+olduğundan iki işaret çarpılınca birbirini götürür:
+$$\left( \frac{-3}{p} \right) = (-1)^{p-1} \left( \frac{p}{3} \right) = \left( \frac{p}{3} \right).$$
+Modülo $3$ sıfırdan farklı tek kare $1$'dir; yani $\left( \frac{p}{3} \right) = 1 \iff p \equiv 1 \pmod 3$. Örneğin $7$ ve $13$ için $-3$ bir KR, $5$ ve $11$ için KNR'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt2-gauss name="Gauss Lemmasıyla Küçük Bir Sembol"}
+Gauss lemmasıyla $\left( \frac{3}{11} \right)$ değerini bulunuz.
+
+::: {.cozum}
+$\frac{p-1}{2} = 5$ olduğundan $3, 6, 9, 12, 15$ sayılarının modülo $11$ kalanlarına bakılır: $3, 6, 9, 1, 4$. Bunlardan $\frac{11}{2} = 5{,}5$'i aşanlar $6$ ve $9$'dur; $n = 2$. @thm-gauss-lemmasi gereği
+$$\left( \frac{3}{11} \right) = (-1)^2 = 1.$$
+Gerçekten $5^2 = 25 \equiv 3 \pmod{11}$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İkinci Dereceden Kongrüanslar {#sec-ozt2-ikinci-derece}
+
+$p$ tek asal ve $p \nmid a$ iken $ax^2 + bx + c \equiv 0 \pmod p$ kongrüansı, $y = 2ax + b$ dönüşümüyle $y^2 \equiv d \pmod p$'ye indirgenir; $d = b^2 - 4ac$ (@thm-kuadratik-indirgeme). Ayrıntılar [Kuadratik rezidü kavramı](2/rezidu-kavrami.qmd) bölümündedir.
+
+::: {.callout-tip title="Dört adımda $ax^2 + bx + c \equiv 0 \pmod p$"}
+1. **Diskriminant.** $d = b^2 - 4ac$'yi modülo $p$ indirge.
+2. **Karar.** $\left( \frac{d}{p} \right) = -1$ ise çözüm yok; $p \mid d$ ise tek çözüm; $\left( \frac{d}{p} \right) = 1$ ise iki çözüm.
+3. **Karekök.** $y^2 \equiv d$'nin $\pm y_0$ çözümlerini bul.
+4. **Geri dön.** $2ax \equiv \pm y_0 - b \pmod p$ lineer kongrüanslarını çöz.
+:::
+
+**Kısa yol.** $p \equiv 3 \pmod 4$ ve $\left( \frac{d}{p} \right) = 1$ ise $y_0 \equiv d^{(p+1)/4}$ bir kareköktür. Gerekçe: Euler kriteri gereği $d^{(p-1)/2} \equiv 1$ olduğundan $y_0^2 = d^{(p+1)/2} = d \cdot d^{(p-1)/2} \equiv d$ olur.
+
+:::: {#exm-ozt2-ikinci-derece name="Diskriminantla Çözüm"}
+$2x^2 + 3x + 5 \equiv 0 \pmod{19}$ kongrüansını çözünüz.
+
+::: {.cozum}
+**Diskriminant.** $d = 9 - 40 = -31 \equiv 7 \pmod{19}$.
+
+**Karar.** $7$ ve $19$ ikisi de $3 \pmod 4$ olduğundan
+$$\left( \frac{7}{19} \right) = -\left( \frac{19}{7} \right) = -\left( \frac{5}{7} \right) = -\left( \frac{7}{5} \right) = -\left( \frac{2}{5} \right) = 1.$$
+İki çözüm vardır.
+
+**Karekök.** $19 \equiv 3 \pmod 4$ olduğundan kısa yol kullanılır: $7^2 = 49 \equiv 11$, $7^4 \equiv 121 \equiv 7$, $7^5 \equiv 49 \equiv 11 \pmod{19}$. Demek ki $y \equiv \pm 11 \equiv \pm 8$; gerçekten $8^2 = 64 = 3 \cdot 19 + 7$.
+
+**Geri dönüş.** $y = 2ax + b = 4x + 3$:
+
+- $4x + 3 \equiv 8$: $4x \equiv 5 \equiv 24$, $x \equiv 6 \pmod{19}$.
+- $4x + 3 \equiv -8$: $4x \equiv -11 \equiv 8$, $x \equiv 2 \pmod{19}$.
+
+Çözümler $x \equiv 2, 6 \pmod{19}$'dur. Sağlama: $8 + 6 + 5 = 19$ ve $72 + 18 + 5 = 95 = 5 \cdot 19$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Jacobi Sembolü {#sec-ozt2-jacobi}
+
+$Q > 1$ tek sayıysa $\left( \frac{P}{Q} \right)$, $Q$'nun asal çarpanlarındaki Legendre sembollerinin çarpımıdır (@def-jacobi). Legendre sembolünün bütün hesap kuralları, payda tek olduğu sürece geçerlidir (@thm-jacobi-ozellikler, @thm-jacobi-ozel-degerler, @thm-jacobi-resiprosite). Ayrıntılar [Jacobi sembolü](2/jacobi-sembolu.qmd) bölümündedir.
+
+| Kural | İfade |
+|:--|:--|
+| Periyodiklik | $P \equiv P' \pmod Q \implies \left( \frac{P}{Q} \right) = \left( \frac{P'}{Q} \right)$ |
+| Özel değerler | $\left( \frac{-1}{Q} \right) = (-1)^{(Q-1)/2}$, $\left( \frac{2}{Q} \right) = (-1)^{(Q^2-1)/8}$ |
+| Resiprosite | $P, Q$ tek: $\left( \frac{P}{Q} \right) \left( \frac{Q}{P} \right) = (-1)^{\frac{P-1}{2} \cdot \frac{Q-1}{2}}$ |
+| Değer $-1$ | $x^2 \equiv P \pmod Q$ çözümsüz |
+| Değer $1$, $Q$ bileşik | Karar verilemez; her asal çarpanda Legendre sembolüne bak |
+
+: Jacobi sembolünün kuralları {#tbl-ozt2-jacobi}
+
+**Kısa yol.** Payda asal olsa bile Jacobi kuralları paydaki tek sayıyı çarpanlarına ayırmadan takla attırmaya izin verir; yalnız $2$'ler ve işaret ayrılır. Örneğin
+$$\left( \frac{35}{101} \right) = \left( \frac{101}{35} \right) = \left( \frac{31}{35} \right) = -\left( \frac{35}{31} \right) = -\left( \frac{4}{31} \right) = -1$$
+olduğundan $\left( \frac{70}{101} \right) = \left( \frac{2}{101} \right) \cdot (-1) = 1$ bulunur; yukarıdaki örnekle aynı sonuçtur.
+
+:::: {#exm-ozt2-jacobi-tuzak name="Jacobi Sembolü Birken Çözümsüzlük"}
+$\left( \frac{2}{15} \right) = 1$ olduğu hâlde $x^2 \equiv 2 \pmod{15}$ kongrüansının çözümsüz olduğunu gösteriniz.
+
+::: {.cozum}
+@thm-jacobi-ozel-degerler gereği
+$$\left( \frac{2}{15} \right) = (-1)^{(225-1)/8} = (-1)^{28} = 1$$
+dir. Tanımdan da aynı değer çıkar:
+$$\left( \frac{2}{15} \right) = \left( \frac{2}{3} \right) \left( \frac{2}{5} \right) = (-1)(-1) = 1.$$
+
+Ama $\left( \frac{2}{3} \right) = -1$ olduğundan $x^2 \equiv 2 \pmod 3$ çözümsüzdür. Modülo $15$ bir çözüm, modülo $3$ de çözüm olurdu; dolayısıyla $x^2 \equiv 2 \pmod{15}$ çözümsüzdür. Kural: çözüm için her asal çarpandaki Legendre sembolü ayrı ayrı $1$ olmalıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Diofant Denklemleri {#sec-ozt2-diofant}
+
+$ax + by = c$, $\gcd(a, b) \mid c$ ise çözülür; katsayılar $\gcd(a, b)$'ye bölündükten sonra $(x_0, y_0)$ bir çözümse bütün çözümler $x = x_0 + bt$, $y = y_0 - at$'dir (@thm-diofant-genel-cozum). Ayrıntılar [Doğrusal Diofant denklemleri](2/dogrusal-diofant.qmd) bölümündedir.
+
+::: {.callout-tip title="Dört adımda $ax + by = c$"}
+1. **Sadeleştir.** $g = \gcd(a, b)$; $g \nmid c$ ise çözüm yok. Varsa üç sayıyı $g$'ye böl.
+2. **Öklid.** Sadeleşmiş katsayılarla Öklid algoritmasını yürüt.
+3. **Erken dur.** $c$'yi bölen bir kalana ulaşınca algoritmayı kes, o kalanı geriye doğru yaz ve $c$'ye ölçekle.
+4. **Genel çözüm.** $x = x_0 + bt$, $y = y_0 - at$ (sadeleşmiş $a, b$ ile).
+:::
+
+:::: {#exm-ozt2-diofant name="Öklid Algoritmasını Erken Durdurmak"}
+$150x + 64y = 44$ denkleminin bütün tam sayı çözümlerini bulunuz.
+
+::: {.cozum}
+$\gcd(150, 64) = 2$ ve $2 \mid 44$ olduğundan denklem çözülür. $2$'ye bölelim: $75x + 32y = 22$.
+
+**Öklid ve erken durma.** İlk bölme $75 = 2 \cdot 32 + 11$'dir. Kalan $11$, $22$'yi böldüğünden algoritmayı burada keselim: $11 = 75 - 2 \cdot 32$. İki tarafı $2$ ile çarparsak
+$$75 \cdot 2 + 32 \cdot (-4) = 22$$
+bulunur; $x_0 = 2$, $y_0 = -4$.
+
+**Genel çözüm.** @thm-diofant-genel-cozum gereği
+$$x = 2 + 32t, \qquad y = -4 - 75t \qquad (t \in \mathbb{Z}).$$
+Sağlama: $t = 0$ için $300 - 256 = 44$; $t = 1$ için $(x, y) = (34, -79)$ ve $5100 - 5056 = 44$.
+
+[$\blacksquare$]{.qed}
+:::
+::::

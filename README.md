@@ -15,32 +15,32 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 <details>
 <summary><strong>Arşivdeki 34 ders</strong> — 26 tanesinin bölümleri yayında (listeyi açmak için tıklayın)</summary>
 
-- [Analitik Geometri](https://acik-matematik.com/dersler/analitik-geometri/) — 23 bölüm, 569 örnek ve alıştırma
-- [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 46 bölüm, 733 örnek ve alıştırma
-- [Analiz 2: Türev ve İntegral](https://acik-matematik.com/dersler/analiz-2/) — 44 bölüm, 324 örnek ve alıştırma
+- [Analitik Geometri](https://acik-matematik.com/dersler/analitik-geometri/) — 24 bölüm, 584 örnek ve alıştırma
+- [Analiz 1: Temeller](https://acik-matematik.com/dersler/analiz-1/) — 47 bölüm, 750 örnek ve alıştırma
+- [Analiz 2: Türev ve İntegral](https://acik-matematik.com/dersler/analiz-2/) — 45 bölüm, 345 örnek ve alıştırma
 - [Analiz 3: Fonksiyon Dizileri ve Seriler](https://acik-matematik.com/dersler/analiz-3/) — 21 bölüm, 291 örnek ve alıştırma
 - [Analiz 4: Çok Değişkenli Fonksiyonlar](https://acik-matematik.com/dersler/analiz-4/) — 21 bölüm, 497 örnek ve alıştırma
-- [Bilgisayar Programlama](https://acik-matematik.com/dersler/bilgisayar-programlama/) — 12 bölüm, 186 örnek ve alıştırma
-- [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 19 bölüm, 281 örnek ve alıştırma
-- [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 20 bölüm, 694 örnek ve alıştırma
-- [İntegral Calculus](https://acik-matematik.com/dersler/integral-calculus/) — 18 bölüm, 348 örnek ve alıştırma
-- [Kompleks Analiz](https://acik-matematik.com/dersler/kompleks-analiz/) — 45 bölüm, 173 örnek ve alıştırma
-- [Konveks Analiz](https://acik-matematik.com/dersler/konveks-analiz/) — 13 bölüm, 70 örnek ve alıştırma
-- [Kriptografi](https://acik-matematik.com/dersler/kriptografi/) — 25 bölüm, 34 örnek ve alıştırma
-- [Kısmi Diferansiyel Denklemler](https://acik-matematik.com/dersler/kismi-diferansiyel-denklemler/) — 17 bölüm, 59 örnek ve alıştırma
-- [Lineer Cebir](https://acik-matematik.com/dersler/lineer-cebir/) — 43 bölüm, 195 örnek ve alıştırma
+- [Bilgisayar Programlama](https://acik-matematik.com/dersler/bilgisayar-programlama/) — 13 bölüm, 199 örnek ve alıştırma
+- [Diferansiyel Denklemler](https://acik-matematik.com/dersler/diferansiyel-denklemler/) — 20 bölüm, 297 örnek ve alıştırma
+- [Diferansiyel Geometri](https://acik-matematik.com/dersler/diferansiyel-geometri/) — 21 bölüm, 706 örnek ve alıştırma
+- [İntegral Calculus](https://acik-matematik.com/dersler/integral-calculus/) — 19 bölüm, 364 örnek ve alıştırma
+- [Kompleks Analiz](https://acik-matematik.com/dersler/kompleks-analiz/) — 47 bölüm, 199 örnek ve alıştırma
+- [Konveks Analiz](https://acik-matematik.com/dersler/konveks-analiz/) — 14 bölüm, 87 örnek ve alıştırma
+- [Kriptografi](https://acik-matematik.com/dersler/kriptografi/) — 26 bölüm, 49 örnek ve alıştırma
+- [Kısmi Diferansiyel Denklemler](https://acik-matematik.com/dersler/kismi-diferansiyel-denklemler/) — 18 bölüm, 79 örnek ve alıştırma
+- [Lineer Cebir](https://acik-matematik.com/dersler/lineer-cebir/) — 45 bölüm, 216 örnek ve alıştırma
 - [Lineer Programlama](https://acik-matematik.com/dersler/lineer-programlama/) — 15 bölüm, 147 örnek ve alıştırma
-- [Matematiksel İstatistik](https://acik-matematik.com/dersler/matematiksel-istatistik/) — 18 bölüm, 263 örnek ve alıştırma
-- [Matematiğin Temelleri ve Mantık](https://acik-matematik.com/dersler/matematigin-temelleri/) — 19 bölüm, 106 örnek ve alıştırma
+- [Matematiksel İstatistik](https://acik-matematik.com/dersler/matematiksel-istatistik/) — 19 bölüm, 278 örnek ve alıştırma
+- [Matematiğin Temelleri ve Mantık](https://acik-matematik.com/dersler/matematigin-temelleri/) — 20 bölüm, 124 örnek ve alıştırma
 - [Nümerik Analiz](https://acik-matematik.com/dersler/numerik-analiz/) — 13 bölüm, 126 örnek ve alıştırma
-- [Olasılık Teorisi](https://acik-matematik.com/dersler/olasilik-teorisi/) — 23 bölüm, 154 örnek ve alıştırma
-- [Python ile Bilimsel Hesaplama](https://acik-matematik.com/dersler/python-bilimsel/) — 15 bölüm, 303 örnek ve alıştırma
-- [Raslantı Süreçleri](https://acik-matematik.com/dersler/raslanti-surecleri/) — 15 bölüm, 37 örnek ve alıştırma
-- [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 15 bölüm, 180 örnek ve alıştırma
-- [Sayılar Teorisi](https://acik-matematik.com/dersler/sayilar-teorisi/) — 32 bölüm, 232 örnek ve alıştırma
-- [Soyut Cebir 1: Gruplar](https://acik-matematik.com/dersler/soyut-cebir-1/) — 25 bölüm, 64 örnek ve alıştırma
-- [Temel Finans Matematiği](https://acik-matematik.com/dersler/finans-matematigi/) — 11 bölüm, 101 örnek ve alıştırma
-- [Topoloji](https://acik-matematik.com/dersler/topoloji/) — 13 bölüm, 94 örnek ve alıştırma
+- [Olasılık Teorisi](https://acik-matematik.com/dersler/olasilik-teorisi/) — 24 bölüm, 175 örnek ve alıştırma
+- [Python ile Bilimsel Hesaplama](https://acik-matematik.com/dersler/python-bilimsel/) — 16 bölüm, 315 örnek ve alıştırma
+- [Raslantı Süreçleri](https://acik-matematik.com/dersler/raslanti-surecleri/) — 16 bölüm, 53 örnek ve alıştırma
+- [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 16 bölüm, 192 örnek ve alıştırma
+- [Sayılar Teorisi](https://acik-matematik.com/dersler/sayilar-teorisi/) — 34 bölüm, 256 örnek ve alıştırma
+- [Soyut Cebir 1: Gruplar](https://acik-matematik.com/dersler/soyut-cebir-1/) — 26 bölüm, 78 örnek ve alıştırma
+- [Temel Finans Matematiği](https://acik-matematik.com/dersler/finans-matematigi/) — 12 bölüm, 119 örnek ve alıştırma
+- [Topoloji](https://acik-matematik.com/dersler/topoloji/) — 14 bölüm, 109 örnek ve alıştırma
 - Bilgisayarda Matematik Uygulamaları — müfredatı hazır, bölümleri yazılıyor
 - Eliptik Eğriler — müfredatı hazır, bölümleri yazılıyor
 - Fonksiyonel Analiz — müfredatı hazır, bölümleri yazılıyor
@@ -61,17 +61,17 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | İçerik | Sayı |
 |---|---:|
 | 📚 Kitap | **34** |
-| 📖 Konu/Bölüm | **581** |
+| 📖 Konu/Bölüm | **606** |
 | 📐 Teorem | **1.289** |
 | 🔹 Lemma | **141** |
 | 📝 Tanım | **1.790** |
 | ✅ İspat | **2.290** |
-| 🧮 Örnek ve alıştırma | **6.261** |
-| 💡 Çözüm | **5.968** |
+| 🧮 Örnek ve alıştırma | **6.635** |
+| 💡 Çözüm | **6.342** |
 | 📊 Şekil | **1.784** |
-| ✍️ Kelime | **2.572.171** |
-| 🔤 Karakter | **18.161.193** |
-| 💾 Kaynak metin | **45,9 MB** |
+| ✍️ Kelime | **2.709.298** |
+| 🔤 Karakter | **19.092.649** |
+| 💾 Kaynak metin | **46,9 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
 

@@ -1,0 +1,557 @@
+---
+title: "Uygulamalı Özet: İleri Konular"
+pagetitle: "Uygulamalı Özet: İleri Konular"
+description: "Kompleks analizin ileri sorularını çözmek için kısa yollar ve kopya kâğıdı: kapalı çevre integralleri için Cauchy-Goursat ve Cauchy integral formülü, maksimum modül ve Liouville, Taylor ve Laurent açılımları, tekil nokta sınıflandırması ve rezidü formülleri, rezidü teoremi ve sonsuzdaki rezidü, rasyonel, Fourier tipi ve trigonometrik reel integraller, girintili yollar, Rouché teoremiyle kök sayma ve ters Laplace dönüşümü."
+---
+
+Bu sayfa, kitabın [Cauchy-Goursat teoreminden](cauchy-teoremleri/cauchy-goursat.qmd) [ters Laplace dönüşümüne](uygulamalar/ters-laplace-donusumu.qmd) uzanan ikinci bölümünü ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık gelen sorular şunlardır: bir kapalı çevre integralini Cauchy integral formülüyle ya da rezidülerle hesaplamak, verilen bir halkada Laurent serisi yazmak, bir tekil noktanın türünü ve rezidüsünü bulmak, $\int_{-\infty}^{\infty}$ ya da $\int_0^{2\pi}$ biçimindeki bir reel integrali rezidülerle hesaplamak, bir polinomun bir diskteki kök sayısını Rouché teoremiyle belirlemek. Her soru tipi için adım adım bir yol, formül tabloları, kısa yollar, sık yapılan hatalar ve yeni sayılarla tam çözülmüş kısa örnekler verilir. Parametrizasyon, ML eşitsizliği ve elemanter fonksiyonlar için [Uygulamalı Özet: Temeller](uygulamali-ozet-1.qmd) sayfasına bakılabilir.
+
+## Soru Tipine Göre Yöntem {#sec-ozt2-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, hangi kalıba girdiğini ve hangi aracın en kısa yol olduğunu belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| $\int_C f(z)\,dz$, $C$ kapalı | Cauchy-Goursat, Cauchy integral formülü ya da rezidü teoremi | @sec-ozt2-kapali-cevre |
+| $\lvert f \rvert$'nin maksimumu, "sabittir" iddiası | Maksimum modül ilkesi, Liouville | @sec-ozt2-maksimum |
+| Taylor serisi ve yakınsaklık yarıçapı | Bilinen açılımlar, en yakın tekil nokta | @sec-ozt2-taylor |
+| Belirli bir halkada Laurent serisi | Kısmi kesirler ve iki yönlü geometrik seri | @sec-ozt2-laurent |
+| Tekil noktanın türü, rezidü | Sıfır mertebesi, $\varphi$ formülü, $p/q'$ | @sec-ozt2-rezidu |
+| Çok tekil noktalı kapalı çevre integrali | Rezidü teoremi ya da sonsuzdaki rezidü | @sec-ozt2-rezidu-teoremi |
+| $\int_{-\infty}^{\infty} \dfrac{p(x)}{q(x)}\,dx$ | Üst yarı düzlemdeki rezidüler | @sec-ozt2-has-olmayan |
+| $\int_{-\infty}^{\infty} f(x)\cos ax\,dx$ ya da $\sin ax$'li | $e^{iaz}$, Jordan lemması | @sec-ozt2-fourier |
+| Reel eksende kutbu olan integrand | Girintili yol, yarım rezidü | @sec-ozt2-girinti |
+| $\int_0^{2\pi} F(\sin\theta, \cos\theta)\,d\theta$ | $z = e^{i\theta}$, birim çember | @sec-ozt2-trigonometrik |
+| Bir bölgedeki kök sayısı | Rouché teoremi | @sec-ozt2-rouche |
+| $F(s)$'nin ters Laplace dönüşümü | $e^{st}F(s)$'nin rezidüleri toplamı | @sec-ozt2-laplace |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt2-yontem}
+
+## Kapalı Çevre İntegrali: Hangi Teorem? {#sec-ozt2-kapali-cevre}
+
+Kapalı bir çevre üzerindeki integralin değeri, çevrenin biçimine değil, **içinde hangi tekil noktaların kaldığına** bağlıdır (@thm-deformasyon). Bu yüzden her soru, paydanın sıfırlarını bulup içeride kalanları seçmekle başlar.
+
+| $C$'nin içinde ve üzerinde integrandın durumu | Sonuç | Dayanak |
+|:--|:--|:--|
+| Analitik | $0$ | @thm-cauchy-goursat |
+| $\dfrac{f(z)}{z - z_0}$, $f$ analitik, $z_0$ içeride | $2\pi i\, f(z_0)$ | @thm-cif |
+| $\dfrac{f(z)}{(z - z_0)^{n+1}}$, $f$ analitik | $\dfrac{2\pi i}{n!}\, f^{(n)}(z_0)$ | @thm-cif-turev |
+| İçeride sonlu sayıda tekil nokta | $2\pi i \sum \operatorname*{Rez}$ | @thm-rezidu-teoremi |
+
+: Kapalı çevre integralleri için karar tablosu {#tbl-ozt2-kapali}
+
+::: {.callout-tip title="Dört adımda kapalı çevre integrali"}
+1. **Tekil noktaları bul.** Paydanın sıfırlarını ve $\log$, $\tan$ gibi ifadelerin tanımsız olduğu noktaları yaz.
+2. **İçeride olanları seç.** $C$: $\lvert z - a \rvert = R$ ise $z_k$ içeridedir ancak ve ancak $\lvert z_k - a \rvert < R$. Çevre üzerinde tekil nokta varsa formüller uygulanamaz.
+3. **Biçime göre teoremi seç.** İçeride hiç yoksa sonuç $0$; tek nokta varsa integrandı $\dfrac{f(z)}{(z - z_0)^{n+1}}$ biçiminde yaz ve Cauchy integral formülünü uygula; birden çok nokta varsa rezidü teoremine geç (@sec-ozt2-rezidu-teoremi).
+4. **Türevi ve katsayıyı denetle.** Payda $(z - z_0)^{n+1}$ ise $n$. türev ve $n!$ gelir; $(z - z_0)^3$ için $f''$ ve $2!$.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Cauchy integral formülündeki $f$, tekil noktası **$C$'nin dışında kalan çarpanları da içerir**:$\dfrac{\sin z}{(z - 1)(z - 5)}$ için $f(z) = \dfrac{\sin z}{z - 5}$'tir.
+- Çevre negatif yönlüyse sonuç işaret değiştirir.
+:::
+
+::: {#exm-ozt2-cif name="Biri İçeride Biri Dışarıda İki Tekil Nokta"}
+$C$, pozitif yönlü $\lvert z \rvert = 3$ çemberi olmak üzere $\displaystyle\int_C \frac{\sin z}{(z - 1)(z - 5)}\,dz$ integralini hesaplayınız.
+
+::: {.cozum}
+Tekil noktalar $z = 1$ ve $z = 5$'tir; $\lvert 1 \rvert < 3$ olduğundan yalnız $z = 1$ içeridedir. $f(z) = \dfrac{\sin z}{z - 5}$, $\lvert z \rvert \le 3$ üzerinde analitiktir ve integrand $\dfrac{f(z)}{z - 1}$ biçimindedir. Cauchy integral formülüyle
+
+$$\int_C \frac{\sin z}{(z - 1)(z - 5)}\,dz = 2\pi i\, f(1) = 2\pi i \cdot \frac{\sin 1}{-4} = -\frac{\pi \sin 1}{2}\, i$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-ozt2-cif-turev name="Dördüncü Kuvvetten Payda"}
+$C$, pozitif yönlü $\lvert z \rvert = 2$ çemberi olmak üzere $\displaystyle\int_C \frac{e^{2z}}{(z + 1)^4}\,dz$ integralini hesaplayınız.
+
+::: {.cozum}
+Tek tekil nokta $z = -1$ içeridedir. Payda $(z + 1)^{3 + 1}$ olduğundan genişletilmiş formül $n = 3$ ile uygulanır; $f(z) = e^{2z}$ tamdır ve $f'''(z) = 8e^{2z}$:
+
+$$\int_C \frac{e^{2z}}{(z + 1)^4}\,dz = \frac{2\pi i}{3!}\, f'''(-1) = \frac{2\pi i}{6} \cdot 8e^{-2} = \frac{8\pi i}{3e^2}$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Maksimum Modül, Liouville ve Cauchy Eşitsizliği {#sec-ozt2-maksimum}
+
+Bu teoremler hesap yerine **iddia** soran sorularda kullanılır. Aşağıdaki tablo "şunu göstermek için şunu kullan" listesidir.
+
+| Gösterilecek | Kullanılacak araç |
+|:--|:--|
+| Tam ve sınırlı bir $f$ sabittir | Liouville (@thm-liouville) |
+| $n$. dereceden polinomun $n$ kökü vardır | Cebirin temel teoremi (@thm-cebir-temel, @thm-carpanlara) |
+| $\lvert f \rvert$'nin kapalı sınırlı bölgedeki maksimumu | Sınırda aranır (@thm-sinir-sonuc) |
+| $\operatorname{Re} f$'nin maksimumu | Yine sınırda (@thm-harmonik-maks) |
+| $\lvert f^{(n)}(z_0) \rvert$ için sınır | $\dfrac{n!\,M_R}{R^n}$ (@thm-cauchy-esitsizligi) |
+| Merkezdeki değer | Çember üzerindeki ortalama (@thm-gauss) |
+
+: Maksimum ve sınırlılık soruları için araçlar {#tbl-ozt2-maksimum}
+
+::: {.callout-tip title="Üç adımda modülün maksimumu"}
+1. $f$'nin bölgenin içinde analitik ve sabit olmadığını not et; maksimum sınırdadır.
+2. Sınırı parametrele ve $\lvert f \rvert^2$'yi tek bir reel parametreyle yaz.
+3. Reel fonksiyonun maksimumunu bul; eşitliğin sağlandığı noktaları belirt.
+:::
+
+**Kısa yol.** Üst sınır için önce üçgen eşitsizliği denenir; sınıra ulaşan bir nokta bulunursa maksimum odur ve parametrizasyona gerek kalmaz.
+
+::: {#exm-ozt2-maksimum name="Birim Diskte Bir Polinomun Maksimumu"}
+$\lvert z \rvert \le 1$ kapalı diskinde $\lvert z^2 - 2 \rvert$'nin maksimum değerini ve alındığı noktaları bulunuz.
+
+::: {.cozum}
+$z^2 - 2$ sabit olmayan bir polinomdur; maksimum $\lvert z \rvert = 1$ çemberindedir. $z = e^{i\theta}$ için
+
+$$\lvert e^{2i\theta} - 2 \rvert^2 = (\cos 2\theta - 2)^2 + \sin^2 2\theta = 5 - 4\cos 2\theta \le 9$$
+
+ve eşitlik $\cos 2\theta = -1$, yani $\theta = \pm\pi/2$ için sağlanır. Maksimum değer $3$'tür ve $z = \pm i$ noktalarında alınır: $\lvert (\pm i)^2 - 2 \rvert = \lvert -3 \rvert = 3$. Kısa yoldan da aynı sonuç çıkar: $\lvert z^2 - 2 \rvert \le \lvert z \rvert^2 + 2 \le 3$ ve $z = \pm i$ sınıra ulaşır.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Taylor Serileri {#sec-ozt2-taylor}
+
+$f$, $z_0$ merkezli bir diskte analitikse orada Taylor serisine eşittir (@thm-taylor) ve seri, $z_0$'dan $f$'nin **en yakın tekil noktasına** kadar olan diskte geçerlidir. Teklik sayesinde (@thm-taylor-teklik) katsayılar türev almadan, bilinen açılımlardan bulunur.
+
+| $f(z)$ | Maclaurin serisi | Geçerlilik |
+|:--|:--|:--|
+| $e^z$ | $\sum\limits_{n=0}^{\infty} \dfrac{z^n}{n!}$ | $\lvert z \rvert < \infty$ |
+| $\sin z$ | $\sum\limits_{n=0}^{\infty} (-1)^n \dfrac{z^{2n+1}}{(2n+1)!}$ | $\lvert z \rvert < \infty$ |
+| $\cos z$ | $\sum\limits_{n=0}^{\infty} (-1)^n \dfrac{z^{2n}}{(2n)!}$ | $\lvert z \rvert < \infty$ |
+| $\sinh z$ | $\sum\limits_{n=0}^{\infty} \dfrac{z^{2n+1}}{(2n+1)!}$ | $\lvert z \rvert < \infty$ |
+| $\cosh z$ | $\sum\limits_{n=0}^{\infty} \dfrac{z^{2n}}{(2n)!}$ | $\lvert z \rvert < \infty$ |
+| $\dfrac{1}{1 - z}$ | $\sum\limits_{n=0}^{\infty} z^n$ | $\lvert z \rvert < 1$ |
+| $\dfrac{1}{1 + z}$ | $\sum\limits_{n=0}^{\infty} (-1)^n z^n$ | $\lvert z \rvert < 1$ |
+| $\dfrac{1}{(1 - z)^2}$ | $\sum\limits_{n=0}^{\infty} (n + 1) z^n$ | $\lvert z \rvert < 1$ |
+
+: Temel Maclaurin açılımları {#tbl-ozt2-maclaurin}
+
+Son satır, $\dfrac{1}{1 - z}$ serisinin terim terime türetilmesiyle elde edilir (@thm-terim-turev).
+
+::: {.callout-tip title="Üç adımda Taylor serisi"}
+1. **Yarıçapı bul.** Tekil noktaları yaz; yarıçap, $z_0$'dan en yakın olanına uzaklıktır.
+2. **Bilinen açılıma benzet.** $z$ yerine $-z^2$, $z/a$, $iz$ gibi ifadeler koy; merkez $z_0$ ise ifadeyi $z - z_0$ cinsinden yaz.
+3. **İşle.** Bir polinomla çarp, terim terime türet ya da integralle; sonuç teklik gereği Taylor serisidir.
+:::
+
+**Kısa yol.** Merkezi kaydırılmış geometrik seri:
+
+$$\frac{1}{a - z} = \frac{1}{(a - z_0) - (z - z_0)} = \sum_{n=0}^{\infty} \frac{(z - z_0)^n}{(a - z_0)^{n+1}}$$
+
+Açılım $\lvert z - z_0 \rvert < \lvert a - z_0 \rvert$ diskinde geçerlidir.
+
+::: {#exm-ozt2-taylor name="Rasyonel Bir Fonksiyonun Maclaurin Serisi"}
+$f(z) = \dfrac{z}{4 + z^2}$ fonksiyonunun Maclaurin serisini ve geçerli olduğu diski bulunuz.
+
+::: {.cozum}
+Tekil noktalar $\pm 2i$'dir; orijine uzaklıkları $2$ olduğundan seri $\lvert z \rvert < 2$'de geçerlidir. $\lvert z \rvert < 2$ iken $\lvert z^2/4 \rvert < 1$ ve
+
+$$\frac{z}{4 + z^2} = \frac{z}{4} \cdot \frac{1}{1 + z^2/4} = \frac{z}{4}\sum_{n=0}^{\infty} (-1)^n \frac{z^{2n}}{4^n} = \sum_{n=0}^{\infty} (-1)^n \frac{z^{2n+1}}{4^{n+1}}$$
+
+İlk terimler: $\dfrac{z}{4} - \dfrac{z^3}{16} + \dfrac{z^5}{64} - \cdots$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Laurent Serileri {#sec-ozt2-laurent}
+
+Bir halkada analitik fonksiyon orada tek bir Laurent serisine sahiptir (@thm-laurent, @thm-laurent-teklik). "Hangi halka?" sorusu yanıtlanmadan açılım yazılamaz: aynı fonksiyonun her halkada başka bir serisi vardır.
+
+| Terim | $\lvert z \rvert < \lvert a \rvert$ iken | $\lvert z \rvert > \lvert a \rvert$ iken |
+|:--|:--|:--|
+| $\dfrac{1}{z - a}$ | $-\sum\limits_{n=0}^{\infty} \dfrac{z^n}{a^{n+1}}$ | $\sum\limits_{n=0}^{\infty} \dfrac{a^n}{z^{n+1}}$ |
+
+: Bir kesrin iki yönlü açılımı {#tbl-ozt2-laurent}
+
+::: {.callout-tip title="Dört adımda verilen halkada Laurent serisi"}
+1. **Halkaları çiz.** Tekil noktaların merkeze uzaklıkları düzlemi halkalara böler; istenen halkayı belirle.
+2. **Kısmi kesirlere ayır.**
+3. **Her kesri halkasına göre aç.** Tekil noktası merkeze halkadan daha uzak olan kesir ($\lvert z \rvert < \lvert a \rvert$) $z$'nin kuvvetleriyle, daha yakın olan kesir ($\lvert z \rvert > \lvert a \rvert$) $1/z$'nin kuvvetleriyle açılır.
+4. **Birleştir.** $\dfrac{1}{z - z_0}$'ın katsayısı $b_1$, halkadaki her pozitif yönlü kapalı çevre için $\int_C f\,dz = 2\pi i\, b_1$'i verir.
+:::
+
+Tek bir tekil noktanın delinmiş komşuluğunda ise bilinen açılımda değişken değiştirmek çoğu zaman yeter: örneğin $e^{1/z}$ için $e^w$ açılımında $w = 1/z$ konur.
+
+::: {#exm-ozt2-laurent name="Orta Halkada Laurent Serisi"}
+$f(z) = \dfrac{1}{(z - 1)(z - 3)}$ fonksiyonunun $1 < \lvert z \rvert < 3$ halkasındaki Laurent serisini bulunuz.
+
+::: {.cozum}
+Kısmi kesirler: $f(z) = \dfrac{1}{2}\left(\dfrac{1}{z - 3} - \dfrac{1}{z - 1}\right)$.
+
+Halkada $\lvert z \rvert < 3$ olduğundan birinci kesir $z$'nin kuvvetleriyle açılır:
+
+$$\frac{1}{z - 3} = -\frac{1}{3} \cdot \frac{1}{1 - z/3} = -\sum_{n=0}^{\infty} \frac{z^n}{3^{n+1}}$$
+
+$\lvert z \rvert > 1$ olduğundan ikinci kesir $1/z$'nin kuvvetleriyle açılır:
+
+$$\frac{1}{z - 1} = \frac{1}{z} \cdot \frac{1}{1 - 1/z} = \sum_{n=1}^{\infty} \frac{1}{z^n}$$
+
+Birleştirelim:
+
+$$f(z) = -\frac{1}{2}\sum_{n=1}^{\infty} \frac{1}{z^n} - \frac{1}{2}\sum_{n=0}^{\infty} \frac{z^n}{3^{n+1}} \qquad (1 < \lvert z \rvert < 3)$$
+
+Burada $b_1 = -\dfrac{1}{2}$'dir; dolayısıyla pozitif yönlü $\lvert z \rvert = 2$ çemberi üzerinde $\int_C f\,dz = -\pi i$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Tekil Noktanın Türü ve Rezidü Hesabı {#sec-ozt2-rezidu}
+
+Rezidü, Laurent açılımında $\dfrac{1}{z - z_0}$'ın katsayısıdır (@def-rezidu). Çoğu soruda açılımın tamamı gerekmez: tekil noktanın türü belirlenir ve uygun formül kullanılır.
+
+| Tür | Esas kısım | $\lim\limits_{z \to z_0} f(z)$ | Rezidü |
+|:--|:--|:--|:--|
+| Kaldırılabilir (@def-kaldirilabilir) | Yok | Sonlu | $0$ |
+| $m$. mertebeden kutup (@def-kutup) | $b_m$'de biter | $\infty$ (@thm-kutup-limit) | Aşağıdaki formüller |
+| Esaslı (@def-esasli) | Sonsuz terimli | Yok | Laurent serisinden $b_1$ |
+
+: Tekil noktaların üç türü {#tbl-ozt2-turler}
+
+| Durum | $\operatorname*{Rez}_{z = z_0} f(z)$ | Dayanak |
+|:--|:--|:--|
+| $f = \dfrac{\varphi(z)}{z - z_0}$, $\varphi(z_0) \ne 0$ | $\varphi(z_0)$ | @thm-kutup-rezidu |
+| $f = \dfrac{\varphi(z)}{(z - z_0)^m}$, $\varphi(z_0) \ne 0$, $m \ge 2$ | $\dfrac{\varphi^{(m-1)}(z_0)}{(m-1)!}$ | @thm-kutup-rezidu |
+| $f = \dfrac{p}{q}$, $p(z_0) \ne 0$, $q(z_0) = 0$, $q'(z_0) \ne 0$ | $\dfrac{p(z_0)}{q'(z_0)}$ | @thm-p-q |
+
+: Kutuplarda rezidü formülleri {#tbl-ozt2-rezidu}
+
+::: {.callout-tip title="Dört adımda tür ve rezidü"}
+1. **Sıfır mertebelerini bul.** Pay ve paydanın $z_0$'daki sıfır mertebelerini türev alarak ya da Maclaurin serisinin ilk sıfırdan farklı teriminden oku (@def-sifir-mertebe).
+2. **Türü belirle.** Payda mertebesi $m$, pay mertebesi $k$ ise: $k \ge m$ için kaldırılabilir, $k < m$ için $(m - k)$. mertebeden kutup (@thm-sifir-karakter, @thm-sifir-kutup).
+3. **Formülü seç.** Basit kutup ve transandant payda: $p/q'$. Rasyonel ifadede yüksek mertebe: $\varphi$ formülü.
+4. **Pay da sıfırlanıyorsa** ya da tekillik esaslıysa Laurent serisinin ilk birkaç terimini yaz ve $b_1$'i oku.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $\varphi$ formülü yalnız $\varphi(z_0) \ne 0$ iken geçerlidir; payın da sıfırlandığı yerde kutbun mertebesi paydanınkinden küçüktür.
+- $p/q'$ formülü yalnız basit kutuplar içindir.
+- Rezidü her zaman $b_1$'dir; esas kısmın en yüksek katsayısı $b_m$ ile karıştırılmaz.
+:::
+
+::: {#exm-ozt2-rezidu-laurent name="Payı da Sıfırlanan Bir Kesrin Rezidüsü"}
+$f(z) = \dfrac{1 - \cos z}{z^5}$ fonksiyonunun $z = 0$'daki tekilliğinin türünü ve rezidüsünü bulunuz.
+
+::: {.cozum}
+$\cos$ serisinden
+
+$$1 - \cos z = \frac{z^2}{2!} - \frac{z^4}{4!} + \frac{z^6}{6!} - \cdots$$
+
+payın orijinde ikinci mertebeden sıfırı vardır; payda beşinci mertebedendir. Dolayısıyla orijin $5 - 2 = 3$. mertebeden bir kutuptur. $z^5$'e bölelim ($0 < \lvert z \rvert < \infty$):
+
+$$f(z) = \frac{1}{2z^3} - \frac{1}{24z} + \frac{z}{720} - \cdots$$
+
+$\dfrac{1}{z}$'nin katsayısı rezidüdür:
+
+$$\operatorname*{Rez}_{z = 0} \frac{1 - \cos z}{z^5} = -\frac{1}{24}$$
+
+"$\varphi = 1 - \cos z$, $m = 5$" yazmak yanlış olurdu, çünkü $\varphi(0) = 0$'dır.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+::: {#exm-ozt2-rezidu-pq name="Üstel Paylı Bir Basit Kutup"}
+$f(z) = \dfrac{e^z}{z^2 + \pi^2}$ fonksiyonunun $z = \pi i$'deki rezidüsünü bulunuz.
+
+::: {.cozum}
+$p(z) = e^z$, $q(z) = z^2 + \pi^2$ olsun. $q(\pi i) = -\pi^2 + \pi^2 = 0$, $q'(z) = 2z$ ve $q'(\pi i) = 2\pi i \ne 0$, $p(\pi i) = e^{\pi i} = -1 \ne 0$. $p/q'$ formülüyle
+
+$$\operatorname*{Rez}_{z = \pi i} \frac{e^z}{z^2 + \pi^2} = \frac{e^{\pi i}}{2\pi i} = \frac{-1}{2\pi i} = \frac{i}{2\pi}$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Rezidü Teoremi ve Sonsuzdaki Rezidü {#sec-ozt2-rezidu-teoremi}
+
+$C$ pozitif yönlü basit kapalı bir çevre ve $f$, içerideki $z_1, \dots, z_n$ dışında $C$'nin içinde ve üzerinde analitikse $\int_C f\,dz = 2\pi i \sum_k \operatorname*{Rez}_{z = z_k} f(z)$'dir (@thm-rezidu-teoremi). Tekil noktaların **hepsi** $C$'nin içindeyse tek bir rezidü yeter (@thm-sonsuz-rezidu):
+
+$$\int_C f(z)\,dz = 2\pi i \operatorname*{Rez}_{z = 0}\left[\frac{1}{z^2}\, f\!\left(\frac{1}{z}\right)\right]$$
+
+::: {.callout-tip title="Üç adımda rezidü teoremi"}
+1. İçerideki tekil noktaları seç (@sec-ozt2-kapali-cevre).
+2. Her birinin rezidüsünü @tbl-ozt2-rezidu ile hesapla.
+3. Topla ve $2\pi i$ ile çarp. Tekil noktaların hepsi içerideyse sonucu sonsuzdaki rezidüyle denetle.
+:::
+
+**Kısa yol.** $f = p/q$ rasyonel ve $q$'nun derecesi $p$'ninkinden en az iki fazlaysa $\dfrac{1}{z^2} f\!\left(\dfrac{1}{z}\right)$ orijinde analitiktir; bütün kutupları çevreleyen her $C$ üzerinde $\int_C f\,dz = 0$'dır.
+
+::: {#exm-ozt2-rezidu-teoremi name="İki Yoldan Rezidü Teoremi"}
+$C$, pozitif yönlü $\lvert z \rvert = 3$ çemberi olmak üzere $\displaystyle\int_C \frac{z^2}{(z - 1)^2(z + 2)}\,dz$ integralini hesaplayınız.
+
+::: {.cozum}
+Tekil noktalar $z = 1$ (ikinci mertebeden kutup) ve $z = -2$ (basit kutup) olup ikisi de içeridedir.
+
+**$z = 1$.** $\varphi(z) = \dfrac{z^2}{z + 2}$, $\varphi(1) \ne 0$ ve $\varphi'(z) = \dfrac{z^2 + 4z}{(z + 2)^2}$; rezidü $\varphi'(1) = \dfrac{5}{9}$.
+
+**$z = -2$.** $\varphi(z) = \dfrac{z^2}{(z - 1)^2}$; rezidü $\varphi(-2) = \dfrac{4}{9}$.
+
+**Toplam.**
+
+$$\int_C \frac{z^2}{(z - 1)^2(z + 2)}\,dz = 2\pi i\left(\frac{5}{9} + \frac{4}{9}\right) = 2\pi i$$
+
+**Denetim.** İki nokta da içeride olduğundan
+
+$$\frac{1}{z^2}\, f\!\left(\frac{1}{z}\right) = \frac{1}{z(1 - z)^2(1 + 2z)}$$
+
+orijinde basit kutba sahiptir ve rezidüsü $\dfrac{1}{(1 - 0)^2(1 + 0)} = 1$'dir; integral yine $2\pi i$ çıkar.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Rasyonel Fonksiyonların Has Olmayan İntegralleri {#sec-ozt2-has-olmayan}
+
+$p$ ve $q$ reel katsayılı, ortak çarpansız, $q$'nun reel sıfırı yok ve $q$'nun derecesi $p$'ninkinden en az iki fazla olsun. Üst yarım çember üzerindeki integral ML eşitsizliğiyle söner ve ([has olmayan integrallerin hesaplanışı](uygulamalar/has-olmayan-integraller.qmd))
+
+$$\operatorname{P.V.}\int_{-\infty}^{\infty} \frac{p(x)}{q(x)}\,dx = 2\pi i \sum_{\operatorname{Im} z_k > 0} \operatorname*{Rez}_{z = z_k} \frac{p(z)}{q(z)}$$
+
+dir. İntegrand çiftse sol taraf gerçek integraldir ve $\int_0^{\infty}$ bunun yarısıdır (@thm-cift).
+
+::: {.callout-tip title="Beş adımda rasyonel integral"}
+1. **Koşulları denetle:** payda derecesi en az iki fazla, reel eksende kutup yok.
+2. **Üst yarı düzlemdeki kutupları bul:** yalnız $\operatorname{Im} z_k > 0$ olanlar alınır.
+3. **Rezidüleri hesapla:** basit kutupta $p/q'$, yüksek mertebede $\varphi$ formülü.
+4. **Yay integralini söndür:** $\lvert z \rvert = R$ üzerinde $\lvert f \rvert \le M_R$, $\lvert \int_{C_R} \rvert \le \pi R\, M_R \to 0$.
+5. **Sonucu yaz:** $2\pi i \sum \operatorname*{Rez}$; çift integrand için $\int_0^{\infty}$ yarısıdır.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Alt yarı düzlemdeki kutupların rezidüleri eklenmez.
+- Sonuç reel çıkmalıdır; sanal kısım kalıyorsa bir rezidü ya da işaret hatalıdır.
+- $\int_0^{\infty}$'yi yarıya bölmek yalnız çift integrandlarda geçerlidir.
+:::
+
+::: {#exm-ozt2-rasyonel name="İki Çarpanlı Paydanın İntegrali"}
+$\displaystyle\int_0^{\infty} \frac{dx}{(x^2 + 1)(x^2 + 4)}$ integralini hesaplayınız.
+
+::: {.cozum}
+Payda derecesi $4 \ge 0 + 2$ ve reel sıfır yok. $f(z) = \dfrac{1}{(z^2 + 1)(z^2 + 4)}$'ün üst yarı düzlemdeki kutupları $z = i$ ve $z = 2i$'dir; ikisi de basittir.
+
+$$\operatorname*{Rez}_{z = i} f = \frac{1}{2i\,(i^2 + 4)} = \frac{1}{6i}, \qquad \operatorname*{Rez}_{z = 2i} f = \frac{1}{\big((2i)^2 + 1\big)\, 4i} = -\frac{1}{12i}$$
+
+$C_R$ üzerinde $\lvert f \rvert \le \dfrac{1}{(R^2 - 1)(R^2 - 4)}$ olduğundan yay integrali en çok $\dfrac{\pi R}{(R^2 - 1)(R^2 - 4)} \to 0$'dır. Böylece
+
+$$\int_{-\infty}^{\infty} \frac{dx}{(x^2 + 1)(x^2 + 4)} = 2\pi i\left(\frac{1}{6i} - \frac{1}{12i}\right) = 2\pi i \cdot \frac{1}{12i} = \frac{\pi}{6}$$
+
+İntegrand çift olduğundan
+
+$$\int_0^{\infty} \frac{dx}{(x^2 + 1)(x^2 + 4)} = \frac{\pi}{12}$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Fourier İntegralleri ve Jordan Lemması {#sec-ozt2-fourier}
+
+$\cos az$ ve $\sin az$ üst yarı düzlemde sınırsızdır; bu yüzden integrand doğrudan kompleks düzleme taşınmaz. Onun yerine $e^{iaz}$ ($a > 0$) kullanılır: üst yarı düzlemde $\lvert e^{iaz} \rvert = e^{-ay} \le 1$'dir.
+
+::: {.callout-tip title="Dört adımda Fourier tipi integral"}
+1. **Üstele geç.** $f(x)\cos ax$ ya da $f(x)\sin ax$ yerine $f(z)\,e^{iaz}$ al ($a > 0$).
+2. **Rezidüleri topla.** $f$'nin üst yarı düzlemdeki kutuplarında $f(z)\,e^{iaz}$'nin rezidülerini bul.
+3. **Yayı söndür.** $f$'nin payda derecesi en az iki fazlaysa ML yeter; yalnız bir fazlaysa Jordan lemması kullanılır (@thm-jordan).
+4. **Reel ve sanal kısmı ayır.** $f(x)\,e^{iax}$'in esas değeri $2\pi i \sum \operatorname*{Rez}$'dir; reel kısım kosinüslü, sanal kısım sinüslü integraldir.
+:::
+
+::: {.callout-warning title="Sık yapılan hata"}
+$a < 0$ ise $e^{iaz}$ üst yarı düzlemde büyür; önce $\cos(-ax) = \cos ax$, $\sin(-ax) = -\sin ax$ ile $a$ pozitif yapılır.
+:::
+
+::: {#exm-ozt2-fourier name="Kaydırılmış Paydalı Bir Kosinüs İntegrali"}
+$\displaystyle\int_{-\infty}^{\infty} \frac{\cos 2x}{x^2 + 4x + 5}\,dx$ integralini hesaplayınız.
+
+::: {.cozum}
+$x^2 + 4x + 5 = 0$'ın kökleri $-2 \pm i$'dir; üst yarı düzlemde yalnız $z_1 = -2 + i$ vardır. $g(z) = \dfrac{e^{2iz}}{z^2 + 4z + 5}$ için $p/q'$ formülüyle
+
+$$\operatorname*{Rez}_{z = z_1} g = \frac{e^{2i(-2 + i)}}{2z_1 + 4} = \frac{e^{-2}\, e^{-4i}}{2i}$$
+
+Payda derecesi pay derecesinden iki fazla olduğundan yay integrali ML ile söner: $C_R$ üzerinde $\lvert g \rvert \le \dfrac{1}{R^2 - 4R - 5}$ ve $\pi R$ ile çarpımı sıfıra gider. Böylece
+
+$$\int_{-\infty}^{\infty} \frac{e^{2ix}}{x^2 + 4x + 5}\,dx = 2\pi i \cdot \frac{e^{-2}\, e^{-4i}}{2i} = \pi e^{-2}\big(\cos 4 - i\sin 4\big)$$
+
+Reel kısım alınırsa
+
+$$\int_{-\infty}^{\infty} \frac{\cos 2x}{x^2 + 4x + 5}\,dx = \frac{\pi \cos 4}{e^2} \approx -0{,}2779$$
+
+Aynı hesabın sanal kısmı sinüslü integrali verir:
+
+$$\int_{-\infty}^{\infty} \frac{\sin 2x}{x^2 + 4x + 5}\,dx = -\frac{\pi \sin 4}{e^2}$$
+
+İntegrand tek olmadığından bu integral sıfır değildir.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Girintili Yollar ve Dal Kesimi {#sec-ozt2-girinti}
+
+Reel eksen üzerindeki bir $x_0$ basit kutbu, yoldan küçük bir yarım çemberle atlanır. Saat yönünde dolaşılan bu $C_\rho$ yarım çemberi limitte $-\pi i\, B_0$ katkısı yapar; $B_0$, $x_0$'daki rezidüdür (@thm-girinti). Yani reel eksendeki basit kutup "yarım rezidü" sayılır.
+
+::: {.callout-tip title="Dört adımda girintili yol"}
+1. **Yolu kur.** $[-R, -\rho]$, $C_\rho$ (saat yönünde), $[\rho, R]$ ve $C_R$; $C_\rho$ kutbu dışarıda bırakır.
+2. **Rezidü teoremini yaz.** İçeride yalnız üst yarı düzlemdeki kutuplar kalır.
+3. **Limitleri al.** $\rho \to 0$: $\int_{C_\rho} \to -\pi i B_0$. $R \to \infty$: $\int_{C_R} \to 0$ (ML ya da Jordan).
+4. **Çöz.** Esas değer, üst yarı düzlemdeki rezidülerin toplamının $2\pi i$ katına $\pi i B_0$ eklenerek bulunur.
+:::
+
+Dal kesimi gerektiren integrallerde ($x^{-a}$, $\ln x$ içerenler) aynı mantık, kesimin iki yakası ve dallanma noktası etrafında küçük bir çemberle kurulur. Kitaptaki temel sonuç
+
+$$\int_0^{\infty} \frac{x^{-a}}{x + 1}\,dx = \frac{\pi}{\sin a\pi} \qquad (0 < a < 1)$$
+
+dir; kuruluşu [dal kesimi boyunca integrasyon](uygulamalar/dal-kesimi-boyunca-integrasyon.qmd) bölümündedir.
+
+::: {#exm-ozt2-girinti name="Orijinde ve Sanal Eksende Kutuplu Sinüs İntegrali"}
+$\displaystyle\int_{-\infty}^{\infty} \frac{\sin x}{x\,(x^2 + 1)}\,dx$ integralini hesaplayınız.
+
+::: {.cozum}
+$g(z) = \dfrac{e^{iz}}{z(z^2 + 1)}$ alalım. Reel eksende $z = 0$'da basit kutbu vardır; üst yarı düzlemde yalnız $z = i$ kutbu vardır.
+
+**Rezidüler.**
+
+$$B_0 = \operatorname*{Rez}_{z = 0} g = \frac{e^0}{0 + 1} = 1, \qquad \operatorname*{Rez}_{z = i} g = \frac{e^{-1}}{i \cdot 2i} = -\frac{1}{2e}$$
+
+**Yaylar.** $\int_{C_\rho} g\,dz \to -\pi i$. $C_R$ üzerinde $\lvert g \rvert \le \dfrac{1}{R(R^2 - 1)}$ olduğundan $\left\lvert \int_{C_R} g\,dz \right\rvert \le \dfrac{\pi}{R^2 - 1} \to 0$.
+
+**Sonuç.** Rezidü teoremi ve limitlerle
+
+$$\operatorname{P.V.}\int_{-\infty}^{\infty} \frac{e^{ix}}{x(x^2 + 1)}\,dx - \pi i = 2\pi i\left(-\frac{1}{2e}\right)$$
+
+yani esas değer $\pi i\left(1 - \dfrac{1}{e}\right)$'dir. Sanal kısım alınırsa ($\sin x / x$ orijinde sınırlı olduğundan bu gerçek bir integraldir)
+
+$$\int_{-\infty}^{\infty} \frac{\sin x}{x\,(x^2 + 1)}\,dx = \pi\left(1 - \frac{1}{e}\right) \approx 1{,}9859$$
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Sinüs ve Kosinüs İçeren Belirli İntegraller {#sec-ozt2-trigonometrik}
+
+$0$'dan $2\pi$'ye bir $\theta$ integrali, $z = e^{i\theta}$ ile pozitif yönlü birim çember $C$ üzerinde bir çevre integraline dönüşür ([sinüs ve kosinüs içeren belirli integraller](uygulamalar/trigonometrik-integraller.qmd)):
+
+$$\sin\theta = \frac{z - z^{-1}}{2i}, \qquad \cos\theta = \frac{z + z^{-1}}{2}, \qquad d\theta = \frac{dz}{iz}$$
+
+Kat açılar için $\cos n\theta = \dfrac{z^n + z^{-n}}{2}$ ve $\sin n\theta = \dfrac{z^n - z^{-n}}{2i}$ kullanılır.
+
+::: {.callout-tip title="Dört adımda trigonometrik integral"}
+1. **Yerine koy.** Üç dönüşümle integrandı $z$'nin rasyonel fonksiyonu yap; payı ve paydayı $z$'nin uygun kuvvetiyle çarparak sadeleştir.
+2. **Paydanın köklerini bul.** Çarpımları çoğu zaman $1$'dir: biri birim çemberin içinde, biri dışındadır.
+3. **İçeridekilerin rezidülerini al.** $\lvert z_k \rvert < 1$ olanlar.
+4. **$2\pi i \sum \operatorname*{Rez}$.** Sonuç reel olmalıdır.
+:::
+
+**Kısa yol.** $a > \lvert b \rvert$ için
+
+$$\int_0^{2\pi} \frac{d\theta}{a + b\cos\theta} = \int_0^{2\pi} \frac{d\theta}{a + b\sin\theta} = \frac{2\pi}{\sqrt{a^2 - b^2}}$$
+
+Kitaptaki $\int_0^{2\pi} \frac{d\theta}{1 + a\sin\theta} = \frac{2\pi}{\sqrt{1 - a^2}}$ sonucu bunun özel hâlidir (@exm-1-asin).
+
+::: {#exm-ozt2-trigonometrik name="Kosinüslü Paydanın Tam Tur İntegrali"}
+$\displaystyle\int_0^{2\pi} \frac{d\theta}{5 + 3\cos\theta}$ integralini hesaplayınız.
+
+::: {.cozum}
+Dönüşümlerle
+
+$$\frac{1}{5 + \frac{3}{2}\left(z + z^{-1}\right)} \cdot \frac{dz}{iz} = \frac{2\,dz}{i\,(3z^2 + 10z + 3)} = \frac{2\,dz}{3i\,(z + 3)\left(z + \frac{1}{3}\right)}$$
+
+Kökler $-3$ ve $-\dfrac{1}{3}$'tür; yalnız $-\dfrac{1}{3}$ birim çemberin içindedir. Rezidü
+
+$$\operatorname*{Rez}_{z = -1/3} \frac{2}{3i\,(z + 3)\left(z + \frac{1}{3}\right)} = \frac{2}{3i \cdot \frac{8}{3}} = \frac{1}{4i}$$
+
+ve
+
+$$\int_0^{2\pi} \frac{d\theta}{5 + 3\cos\theta} = 2\pi i \cdot \frac{1}{4i} = \frac{\pi}{2}$$
+
+Kısa yolla denetim: $\dfrac{2\pi}{\sqrt{25 - 9}} = \dfrac{2\pi}{4} = \dfrac{\pi}{2}$.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Argüman İlkesi ve Rouché Teoremi {#sec-ozt2-rouche}
+
+Argüman ilkesi, $C$ içindeki sıfır ve kutup sayılarının farkını $f(C)$ eğrisinin orijin etrafındaki dolanma sayısıyla verir: $\frac{1}{2\pi}\Delta_C \arg f(z) = Z - P$ (@thm-arguman). Kök sayma sorularında ise pratikte Rouché teoremi kullanılır: $C$ üzerinde $\lvert f \rvert > \lvert g \rvert$ ise $f$ ile $f + g$, $C$'nin içinde aynı sayıda sıfıra sahiptir (@thm-rouche).
+
+::: {.callout-tip title="Dört adımda Rouché ile kök sayma"}
+1. **Baskın terimi seç.** $\lvert z \rvert = R$ üzerinde modülü en büyük olan terim $f$, geri kalanlar $g$ olur. Terimlerin $\lvert z \rvert = R$'deki modüllerini tek tek yaz.
+2. **Eşitsizliği kanıtla.** $\lvert g \rvert \le$ modüller toplamı $< \lvert f \rvert$.
+3. **$f$'nin köklerini say.** $f = cz^n$ ise diskte $n$ kök vardır.
+4. **Halka için fark al.** $R_1 < \lvert z \rvert < R_2$ halkasındaki kök sayısı iki disk sayımının farkıdır; $\lvert z \rvert = R_1$ üzerinde $\lvert f \rvert > \lvert g \rvert$ olduğundan o çemberde kök yoktur.
+:::
+
+::: {.callout-warning title="Sık yapılan hata"}
+Eşitsizlik **çevrenin her noktasında** ve kesin olmalıdır. $\lvert g \rvert \le \lvert f \rvert$ ile eşitliğin bir noktada sağlanabildiği durumda teorem uygulanamaz.
+:::
+
+::: {#exm-ozt2-rouche name="Bir Halkadaki Kök Sayısı"}
+$z^5 + 6z^2 + 2 = 0$ denkleminin $1 < \lvert z \rvert < 2$ halkasında kaç kökü olduğunu bulunuz.
+
+::: {.cozum}
+**$\lvert z \rvert = 1$.** Terimlerin modülleri $1$, $6$, $2$'dir. $f = 6z^2$, $g = z^5 + 2$ alınırsa
+
+$$\lvert g \rvert \le 1 + 2 = 3 < 6 = \lvert f \rvert$$
+
+$6z^2$'nin $\lvert z \rvert < 1$'de iki kökü vardır (katlılıklarla); denklemin de iki kökü vardır ve $\lvert z \rvert = 1$ üzerinde kök yoktur.
+
+**$\lvert z \rvert = 2$.** Modüller $32$, $24$, $2$'dir. $f = z^5$, $g = 6z^2 + 2$ alınırsa
+
+$$\lvert g \rvert \le 24 + 2 = 26 < 32 = \lvert f \rvert$$
+
+ve denklemin $\lvert z \rvert < 2$'de beş kökü vardır.
+
+**Sonuç.** $1 < \lvert z \rvert < 2$ halkasında $5 - 2 = 3$ kök vardır.
+
+[$\blacksquare$]{.qed}
+:::
+:::
+
+## Ters Laplace Dönüşümü {#sec-ozt2-laplace}
+
+$F(s)$'nin sonlu sayıda tekil noktası varsa ve $F$ büyük yarım çemberlerde sıfıra gidiyorsa ters dönüşüm rezidülerin toplamıdır (@def-ters-laplace, @thm-sonlu-tekil):
+
+$$f(t) = \sum_{n=1}^{N} \operatorname*{Rez}_{s = s_n}\big[e^{st}F(s)\big] \qquad (t > 0)$$
+
+| Kutup | $e^{st}F(s)$'nin rezidüsü |
+|:--|:--|
+| Basit, $s_0$ | $e^{s_0 t}\operatorname*{Rez}_{s = s_0} F(s)$ |
+| Basit eşlenik çift $\alpha \pm i\beta$ | $2e^{\alpha t}\operatorname{Re}\big[e^{i\beta t}\operatorname*{Rez}_{s = s_0} F(s)\big]$ |
+| $m$. mertebe, $F = \dfrac{\varphi(s)}{(s - s_0)^m}$ | $\dfrac{1}{(m-1)!}\,\dfrac{d^{m-1}}{ds^{m-1}}\big[e^{st}\varphi(s)\big]_{s = s_0}$ |
+
+: Ters Laplace için rezidü kısayolları {#tbl-ozt2-laplace}
+
+Eşlenik çift satırı, $\overline{F(s)} = F(\bar{s})$ sağlanırken (reel katsayılı rasyonel $F$ için her zaman) geçerlidir. Son satır, $e^{st}\varphi(s)$'ye $\varphi$ rezidü formülünün uygulanmasıdır.
+
+::: {.callout-tip title="Üç adımda ters Laplace dönüşümü"}
+1. $F(s)$'nin kutuplarını ve mertebelerini bul.
+2. Her kutupta $e^{st}F(s)$'nin rezidüsünü tablodan hesapla; eşlenik çiftleri birlikte al.
+3. Topla; sonucu reel bir $f(t)$ olarak yaz ve küçük bir denetim yap (örneğin $f(0)$ ya da bilinen bir dönüşüm).
+:::
+
+::: {#exm-ozt2-laplace name="Çift Kutuplu Bir Dönüşüm"}
+$F(s) = \dfrac{1}{s^2(s + 1)}$ fonksiyonunun ters Laplace dönüşümünü bulunuz.
+
+::: {.cozum}
+Kutuplar: $s = 0$ (ikinci mertebe) ve $s = -1$ (basit).
+
+**$s = 0$.** $e^{st}F(s) = \dfrac{\varphi(s)}{s^2}$, $\varphi(s) = \dfrac{e^{st}}{s + 1}$. Rezidü
+
+$$\varphi'(0) = \left[\frac{t\,e^{st}(s + 1) - e^{st}}{(s + 1)^2}\right]_{s = 0} = t - 1$$
+
+**$s = -1$.** Basit kutup: $\dfrac{e^{st}}{s^2}\Big|_{s = -1} = e^{-t}$.
+
+**Sonuç.**
+
+$$f(t) = t - 1 + e^{-t} \qquad (t > 0)$$
+
+Denetim: $t$, $1$ ve $e^{-t}$'nin dönüşümleri $\dfrac{1}{s^2}$, $\dfrac{1}{s}$ ve $\dfrac{1}{s + 1}$'dir ve
+
+$$\frac{1}{s^2} - \frac{1}{s} + \frac{1}{s + 1} = \frac{(s + 1) - s(s + 1) + s^2}{s^2(s + 1)} = \frac{1}{s^2(s + 1)}$$
+
+[$\blacksquare$]{.qed}
+:::
+:::

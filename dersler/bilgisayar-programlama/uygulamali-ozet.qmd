@@ -1,0 +1,843 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Bilgisayar Programlama dersinin Python başvuru kâğıdı: kod izleyerek çıktı bulma, veri tipleri ve dönüşümler, işlem önceliği, tam bölme ve kalan, print ve f-string, koşullar ve kısa devre, indeksleme ve dilimleme, liste metotları ve kopyalama, for ve while döngüleri, liste üreteçleri, demetler, random modülü ve sık görülen hata mesajları."
+---
+
+Bu sayfa kitapta öğrenilen Python kurallarını, soru çözmeye dönük kısa bir başvuru kâğıdı olarak toplar. En sık karşılaşılan soru tipi, kısa bir programın çıktısını çalıştırmadan bulmaktır; onu bir kurala göre liste oluşturan, döngüyle toplam biriktiren ya da kullanıcıdan güvenli biçimde girdi alan kısa programlar yazmak izler. Sayfa her konu için yazım kalıplarını tablolarla, kodu izlemenin adımlarını, kısa yolları ve en sık düşülen tuzakları verir. Her kısım, yeni değerlerle yazılmış ve çıktısı tam olarak verilmiş çözümlü bir örnekle biter. Her kural, ayrıntısının bulunduğu tanıma ya da bölüme bağlanmıştır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, sorunun hangi konuya dokunduğunu ve hangi kuralların devreye gireceğini belirlemektir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| Bir programın çıktısı | Değişken tablosuyla satır satır izleme | @sec-ozt-izleme |
+| Bir değerin tipi, `int`, `float`, `str`, `bool` dönüşümleri | Dönüşüm kuralları tablosu | @sec-ozt-tipler |
+| Uzun bir aritmetik ifadenin değeri | Öncelik sırası; `//` ve `%` için bölme eşitliği | @sec-ozt-aritmetik |
+| `print`, `sep`, `end`, f-string, kaçış karakterleri | Varsayılan ayırıcıları tek tek yazmak | @sec-ozt-yazdirma |
+| Mantık ifadesi, `if-elif-else` zinciri | `not`, sonra `and`, sonra `or`; doğru çıkan ilk kol | @sec-ozt-kosullar |
+| İndeks ve dilim | İndeksleri yazmak; başlangıç dahil, bitiş hariç | @sec-ozt-dilim |
+| Metotlardan sonra bir listenin son hâli | Yerinde değiştiren metotlar `None` verir | @sec-ozt-liste |
+| `for`, `range`, `enumerate`, `zip`, toplam ve sayaç | Yineleme tablosu, biriktirici | @sec-ozt-for |
+| Bir kurala göre liste oluşturmak | Liste üreteci | @sec-ozt-uretec |
+| `while`, `break`, `continue` | Her denetlemeye bir satır ayıran tablo | @sec-ozt-while |
+| Demet, paketleme ve açma, üreteç ifadesi | Değiştirilemezlik, tükenen üreteç | @sec-ozt-demet |
+| Rastgele sayı, seçim, karıştırma | `random` fonksiyonları tablosu | @sec-ozt-random |
+| Güvenli girdi almak, bir hatayı bulmak | `while True` ile `try-except`; hata türleri tablosu | @sec-ozt-girdi-hata |
+
+## Kod İzleme: Bir Programın Çıktısını Bulmak {#sec-ozt-izleme}
+
+Çıktı sorularının hepsi aynı yöntemle çözülür: program, Python'ın yaptığı gibi yukarıdan aşağıya ve her satırı bir kez çalıştırarak kâğıt üzerinde izlenir.
+
+::: {.callout-tip title="Beş adımda bir programın çıktısını bulmak"}
+1. **Değişken tablosu kur.** Her değişkene bir sütun aç; her atamadan sonra yeni değeri tipiyle birlikte yaz: `7`, `7.0` ve `"7"` üç ayrı değerdir.
+2. **Önce sağ tarafı hesapla.** Atamanın sağ tarafı eski değerlerle tamamen hesaplanır, sonra sola yazılır; `a, b = b, a` bu yüzden takas yapar (@def-dgs-takas). Ardışık `a = b` ve `b = a` ise takas yapmaz; ikisi de `b`'nin eski değerini alır (@exm-dgs-yanlis-takas).
+3. **Tipi izle.** `/` her zaman `float` verir; `int` ile `float` arasındaki her işlemin sonucu `float`'tur; `input` her zaman `str` verir.
+4. **Döngüde her yinelemeye bir satır ayır.** Döngü değişkeninin, biriktiricinin ve koşulun o yinelemedeki değerini yaz; `break` gelince tabloyu kes, `continue` gelince satırın geri kalanını atla.
+5. **Çıktıyı biçimiyle yaz.** `print` değerleri birer boşlukla ayırır ve satırı bitirir. Tek başına yazdırılan bir metnin tırnakları görünmez; bir listenin ya da demetin içindeki metinler ise tırnaklı (`'a'`) görünür. Bir hata oluşursa program o satırda durur: o ana kadarki çıktılar kalır, ardından hata mesajının son satırı gelir.
+:::
+
+:::: {#exm-ozt-izleme name="Atamaları Bir Tabloyla İzlemek"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+x, y = 17, 5
+x %= y
+y = y * x - 1
+z = y / x
+x, y = y, x
+print(x, y, z)
+print(z * 2, type(z))
+```
+
+::: {.cozum}
+Her satırdan sonra değişkenlerin değerleri şöyledir:
+
+| Satır | `x` | `y` | `z` |
+|:--|:-:|:-:|:-:|
+| `x, y = 17, 5` | `17` | `5` | |
+| `x %= y` | `2` | `5` | |
+| `y = y * x - 1` | `2` | `9` | |
+| `z = y / x` | `2` | `9` | `4.5` |
+| `x, y = y, x` | `9` | `2` | `4.5` |
+
+$17 = 3 \cdot 5 + 2$ olduğundan `x %= y` satırı `x`'i $2$ yapar. `/` bölmesi $9/2 = 4{,}5$ sonucunu `float` olarak verir. Son atamada sağ taraf önce eski değerlerle `(9, 2)` olarak hesaplanır, sonra dağıtılır. `z * 2` bir `float` olduğu için `9.0` yazılır.
+
+Çıktı:
+
+```text
+9 2 4.5
+9.0 <class 'float'>
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tipler ve Dönüşümler {#sec-ozt-tipler}
+
+Python'da her değerin bir tipi vardır (@def-dgs-int, @def-dgs-float, @def-dgs-str, @def-dgs-bool) ve `type(x)` bu tipi `<class 'int'>` biçiminde verir. Tip dönüşüm fonksiyonları (@def-dgs-donusum) aşağıdaki kurallarla çalışır.
+
+| İfade | Sonuç | Kural |
+|:--|:--|:--|
+| `int(7.9)`, `int(-7.9)` | `7`, `-7` | sıfıra doğru keser, yuvarlamaz |
+| `int("42")` | `42` | rakamlardan oluşan metin sayıya çevrilir |
+| `int("4.2")` | `ValueError` | ondalıklı yazım `int`'e doğrudan çevrilmez |
+| `float(3)`, `float("2.5")` | `3.0`, `2.5` | |
+| `str(12) + "3"` | `'123'` | iki metin yan yana eklenir |
+| `"12" + 3` | `TypeError` | metin ile sayı `+` ile birleşmez |
+| `3 * "ab"` | `'ababab'` | metin ile tam sayının çarpımı tekrardır |
+| `bool(0)`, `bool(0.0)`, `bool("")` | `False` | sıfır ve boş metin yanlış sayılır |
+| `bool("0")`, `bool(-1)`, `bool(" ")` | `True` | geri kalan her değer doğru sayılır |
+| `complex(3, 4)` | `(3+4j)` | $3 + 4i$ |
+| `"2" == 2`, `2 == 2.0` | `False`, `True` | metin ile sayı eşit olmaz; sayılar değere göre karşılaştırılır |
+
+: Tip dönüşümlerinin kuralları {#tbl-ozt-donusum}
+
+**Kısa yollar.**
+
+- Ondalıklı yazılmış bir metni tam sayıya çevirmek için önce `float`, sonra `int` uygulanır: `int(float("4.2"))` $4$ verir.
+- Bir sayının rakamlarıyla çalışmak için sayı metne çevrilip harf harf dolaşılır: `sum(int(r) for r in str(n))` rakamlar toplamıdır.
+- Geçerli bir değişken adı harfle ya da `_` ile başlar, yalnız harf, rakam ve `_` içerir ve bir anahtar kelime olamaz (@def-dgs-ad-kurallari). `print`, `sum`, `list` gibi hazır adlar değişkene verilirse o fonksiyon programın geri kalanında çalışmaz.
+
+:::: {#exm-ozt-tipler name="Metin mi, Sayı mı?"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+a = "4"
+b = 2.5
+print(a * 3)
+print(int(a) * b)
+print(int(b) + int(a + "1"))
+print(bool(a == 4), str(b) + a)
+```
+
+::: {.cozum}
+`a` bir metin, `b` bir `float`'tur.
+
+- `a * 3`: metin üç kez yan yana yazılır: `444`.
+- `int(a) * b`: $4 \cdot 2{,}5 = 10{,}0$; bir `float` çarpan olduğu için sonuç `10.0`'dır.
+- `int(b) + int(a + "1")`: `int(2.5)` $2$'dir; `a + "1"` metni `"41"`'dir ve `int` onu $41$ yapar; toplam $43$.
+- `a == 4`: metin ile sayı eşit olmadığından `False`; `bool(False)` yine `False`'tur. `str(b) + a` ise `"2.5" + "4"` birleştirmesidir: `2.54`.
+
+Çıktı:
+
+```text
+444
+10.0
+43
+False 2.54
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Aritmetik ve İşlem Önceliği {#sec-ozt-aritmetik}
+
+Aritmetik sorularında hata çoğunlukla üç yerde yapılır: bölme türleri, negatif sayıların kalanı ve işlem sırası.
+
+| Operatör | Anlamı | Örnek | Sonuç | Not |
+|:-:|:--|:-:|:-:|:--|
+| `/` | bölme | `9 / 3` | `3.0` | sonuç her zaman `float` |
+| `//` | tam bölme | `-9 // 4` | `-3` | bölümü aşağı yuvarlar |
+| `%` | kalan | `-9 % 4` | `3` | kalan bölenle aynı işaretlidir |
+| `**` | üs alma | `2 ** -2` | `0.25` | sağdan sola hesaplanır |
+
+: Bölme ve üs operatörleri {#tbl-ozt-operatorler}
+
+Tam bölüm ile kalan her zaman $a = (a \,//\, b) \cdot b + (a \,\%\, b)$ eşitliğini sağlar (@def-art-tam-bolme). Örneğin $-9/4 = -2{,}25$ aşağı yuvarlanınca $-3$ olur ve kalan $-9 - (-3) \cdot 4 = 3$'tür.
+
+::: {.callout-tip title="Dört adımda uzun bir ifadeyi hesaplamak"}
+1. **Parantezler.** En içteki parantezden başla (@def-art-oncelik).
+2. **Üsler.** `**` işlemlerini sağdan sola yap: `2 ** 3 ** 2` $2^9 = 512$'dir. Başa yazılmış eksi işareti üsten sonra uygulanır: `-3 ** 2` $-9$'dur.
+3. **Çarpma grubu.** `*`, `/`, `//` ve `%` işlemlerini soldan sağa yap; her `//` ve `%` için yukarıdaki bölme eşitliğini kullan.
+4. **Toplama grubu.** `+` ve `-` işlemlerini soldan sağa yap. İşlemlerden birinde `float` varsa sonucu `float` olarak yaz.
+:::
+
+Bir sayıyı tam sayıya indirmenin dört yolu negatif sayılarda ve tam ortadaki sayılarda farklı sonuç verir (@def-art-round, @def-art-ceil-floor):
+
+| Fonksiyon | Kural | `2.5` | `-2.5` | `3.7` | `-3.7` |
+|:--|:--|:-:|:-:|:-:|:-:|
+| `int(x)`, `math.trunc(x)` | sıfıra doğru keser | `2` | `-2` | `3` | `-3` |
+| `math.floor(x)` | aşağı yuvarlar | `2` | `-3` | `3` | `-4` |
+| `math.ceil(x)` | yukarı yuvarlar | `3` | `-2` | `4` | `-3` |
+| `round(x)` | en yakına; tam ortadaysa çift olana | `2` | `-2` | `4` | `-4` |
+
+: Tam sayıya indirme fonksiyonları {#tbl-ozt-yuvarlama}
+
+**Kısa yollar.**
+
+- `n % 10` son basamağı verir, `n // 10` son basamağı atar; `n % 2 == 0` çiftliği, `a % b == 0` bölünebilmeyi sorar.
+- `math` fonksiyonları `import math` satırından sonra kullanılır: `math.sqrt`, `math.factorial`, `math.comb`, `math.gcd`, `math.pi`. Trigonometrik fonksiyonlar radyan alır: $30°$ için `math.sin(math.radians(30))` yazılır.
+- `0.1 + 0.2 == 0.3` `False` verir; ondalıklı sayılar `abs(a - b) < 1e-9` biçiminde karşılaştırılır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $(-3)^2$ için `(-3) ** 2` yazılır; `-3 ** 2` $-9$ verir.
+- `1 / 2 * x` $x/2$ demektir; $\frac{1}{2x}$ için `1 / (2 * x)` yazılır.
+- `10 / 2` sonucu `5` değil `5.0`'dır; tam sayı sonucu için `//` kullanılır.
+:::
+
+:::: {#exm-ozt-oncelik name="Kalan, Tam Bölme ve Üs Bir Arada"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+a = 3 + 2 ** 2 ** 2 // 5 % 4
+b = -17 // 5 + -17 % 5
+c = (8 - 2) / 4 * 2 ** -1
+print(a, b, c)
+```
+
+::: {.cozum}
+**`a`.** Üsler sağdan sola: `2 ** 2 ** 2` $= 2^4 = 16$. Ardından soldan sağa `16 // 5` $= 3$ ve `3 % 4` $= 3$; en son $3 + 3 = 6$.
+
+**`b`.** Eksi işaretleri $17$'lere aittir. $-17/5 = -3{,}4$ aşağı yuvarlanır: `-17 // 5` $= -4$. Kalan $-17 - (-4) \cdot 5 = 3$'tür. Toplam $-4 + 3 = -1$.
+
+**`c`.** Parantez $6$'dır; `6 / 4` $= 1{,}5$, `2 ** -1` $= 0{,}5$ ve çarpımları $0{,}75$'tir.
+
+Çıktı:
+
+```text
+6 -1 0.75
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Yazdırma ve Biçimlendirme {#sec-ozt-yazdirma}
+
+`print` sorularında en çok, değerlerin arasına ve satır sonuna nelerin yazıldığı sorulur.
+
+| Yazım | Çıktı | Kural |
+|:--|:--|:--|
+| `print("a", "b")` | `a b` | virgül araya bir boşluk koyar |
+| `print("a" + "b")` | `ab` | `+` metinleri boşluksuz birleştirir |
+| `print("a", "b", sep="-")` | `a-b` | `sep` değerlerin arasına yazılır (@def-gco-sep-end) |
+| `print("a", end="!")` | `a!`, satır bitmez | `end` sona yazılır; varsayılanı `"\n"` |
+| `f"{x:.2f}"`, `x = 2.5` iken | `2.50` | her zaman tam iki basamak (@def-gco-fstring) |
+| `round(2.5, 2)` | `2.5` | `round` bir sayı verir, sondaki sıfır yazılmaz |
+| `"{1}-{0}".format("a", "b")` | `b-a` | sıra numaraları $0$'dan başlar |
+| `"%d/%.1f" % (7, 3.14159)` | `7/3.1` | `%d` tam sayı, `%.1f` tek basamaklı ondalık, `%s` metin |
+
+: print ve biçimlendirme {#tbl-ozt-print}
+
+Kaçış karakterleri (@def-gco-kacis): `\n` yeni satır, `\t` sekme, `\\` ters eğik çizginin kendisi, `\'` ve `\"` tırnaklar. Çift tırnaklı bir metinde tek tırnak serbestçe kullanılır: `"Ali'nin"`.
+
+**Kısa yollar.** Değerleri yan yana yazmak için döngüde `print(i, end=" ")`, döngüden sonra satırı bitirmek için boş bir `print()` yazılır. Bir sonucu cümlenin içine yerleştirmenin en okunaklı yolu f-string'dir: `f"Toplam: {a + b}"`.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `print("Toplam: " + 5)` `TypeError` verir; `print("Toplam:", 5)` ya da f-string kullanılır.
+- `f` harfi unutulursa `"{x}"` süslü parantezleriyle olduğu gibi yazılır.
+- `sep` yalnız birden çok değer yazdırılırken etkilidir; tek bir değerde hiçbir şey değiştirmez.
+:::
+
+:::: {#exm-ozt-yazdirma name="sep, end ve f-string Bir Arada"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+a, b = 7, 3
+print(a, b, sep=" / ", end=" = ")
+print(f"{a / b:.3f}")
+print("Bölüm:", a // b, "kalan", a % b, sep="|")
+print("{0}{1}{0}".format("*", a * b))
+print("1\t2\n3\\4")
+```
+
+::: {.cozum}
+- İkinci satır `7` ile `3`'ün arasına ` / ` koyar ve sonuna yeni satır yerine ` = ` yazar; satır bitmediği için sonraki `print` aynı satırdan devam eder. $7/3 = 2{,}3333\ldots$ üç basamakla `2.333` olur.
+- Dördüncü satırda dört değerin arasına `|` konur: $7 \,//\, 3 = 2$ ve $7 \,\%\, 3 = 1$.
+- `format`'ta `{0}` iki kez `*`, `{1}` ise $21$ ile doldurulur.
+- Son satırda `\t` bir sekme, `\n` yeni satır, `\\` tek bir ters eğik çizgidir.
+
+Çıktı:
+
+```text
+7 / 3 = 2.333
+Bölüm:|2|kalan|1
+*21*
+1	2
+3\4
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Koşullar ve Mantık Operatörleri {#sec-ozt-kosullar}
+
+Karşılaştırmalar `True` ya da `False` verir (@def-kos-karsilastirma) ve matematikteki gibi zincirlenebilir: $13 \le y < 20$ için `13 <= y < 20` yazılır (@def-kos-zincir). Bir ifadede önce karşılaştırmalar, sonra `not`, sonra `and`, en son `or` uygulanır.
+
+`and` ve `or` sonucu her zaman iki değerden biri olarak verir; bu değer `True` ya da `False` olmak zorunda değildir (@def-kos-kisa-devre). Sonuç belli olunca ikinci değere hiç bakılmaz.
+
+| İfade | Sonuç | Neden |
+|:--|:-:|:--|
+| `3 or 5` | `3` | ilk değer doğru sayılır, ikinciye bakılmaz |
+| `0 or 5` | `5` | ilk değer yanlış sayılır, ikinci verilir |
+| `3 and 5` | `5` | ilk değer doğru sayılır, ikinci verilir |
+| `0 and 5` | `0` | ilk değer yanlış sayılır, ikinciye bakılmaz |
+| `"" or "boş"` | `boş` | boş metin yanlış sayılır |
+
+: Kısa devre değerlendirmesi {#tbl-ozt-kisa-devre}
+
+::: {.callout-tip title="Üç adımda bir koşul yapısını okumak"}
+1. **Zinciri sırayla dene.** `if-elif-else` zincirinde koşullar yukarıdan aşağıya denenir; doğru çıkan **ilk** kolun bloğu çalışır, geri kalanına bakılmaz (@def-kos-elif).
+2. **Önceki koşulları hatırla.** Bir `elif`'e gelindiyse önceki koşulların hepsi yanlıştır; bu bilgi koşulu kısaltır.
+3. **Ayrı `if`'leri ayrı say.** Alt alta yazılmış iki `if` birbirinden bağımsızdır: ikisi de denetlenir ve ikisi de çalışabilir. Birinci `if` bir değişkeni değiştirdiyse ikincisi yeni değere bakar.
+:::
+
+**Kısa yollar.**
+
+- İki değerden birini seçen tek satırlık yazım: `a if koşul else b` (@def-kos-uclu).
+- Bir değeri birçok sabitle karşılaştırırken `match-case` kullanılır; `case 6 | 7:` iki seçeneği birleştirir, `case _:` geri kalan her değeri yakalar (@def-whl-match).
+- İçi henüz yazılmamış bir blok `pass` ile doldurulur (@def-kos-pass).
+- `b != 0 and a / b > 1` koşulunda `b` sıfırsa kısa devre sayesinde bölme hiç yapılmaz.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `if x = 5:` yazım hatasıdır; karşılaştırma `==` ile yapılır.
+- `x == 1 or 2` her zaman doğru sayılır, çünkü `(x == 1) or 2` olarak okunur; doğrusu `x == 1 or x == 2`'dir.
+- Aralık koşullarında en geniş koşul başa yazılırsa bütün değerler ilk kola düşer; koşullar en dar olandan başlayarak yazılır (@exm-kos-harf-notu-sirasi).
+:::
+
+:::: {#exm-ozt-kosullar name="Bağımsız if ve Bir elif Zinciri"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+x = 12
+if x % 3 == 0:
+    x += 1
+if x > 10 and not x % 2 == 0:
+    x *= 2
+elif x > 5:
+    x -= 100
+else:
+    x = 0
+print(x, x > 20 or x // 0)
+```
+
+::: {.cozum}
+$12$, $3$'e bölündüğü için birinci `if` çalışır ve `x` $13$ olur. İkinci `if` bağımsızdır ve yeni değere bakar: $13 > 10$ doğrudur; $13 \,\%\, 2 = 1$ olduğundan `x % 2 == 0` yanlıştır ve `not` onu doğruya çevirir. Koşul doğru çıktığı için `x` $26$ olur; `elif` ve `else` kollarına bakılmaz.
+
+Son satırda $26 > 20$ doğrudur. `or` ilk değer doğru olduğu için `True`'yu verir ve `x // 0` kısmına hiç geçmez; bu yüzden sıfıra bölme hatası oluşmaz.
+
+Çıktı:
+
+```text
+26 True
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İndeksleme ve Dilimleme {#sec-ozt-dilim}
+
+$n$ elemanlı bir listede indeksler baştan $0, 1, \ldots, n - 1$, sondan $-1, -2, \ldots, -n$'dir (@def-kol-indeks). `s[a:b:c]` dilimi `a`'dan başlar, `c`'şer ilerler ve `b`'ye varmadan durur (@def-kol-dilim). Aynı kurallar metinlerde ve demetlerde de geçerlidir; bir metnin dilimi metin, bir demetin dilimi demettir.
+
+::: {.callout-tip title="Dört adımda bir dilimi okumak"}
+1. **İndeksleri yaz.** Elemanların altına indekslerini, gerekiyorsa negatif indekslerini yaz.
+2. **Adımın işaretine bak.** `c` yazılmazsa $1$'dir. `c > 0` ise soldan sağa, `c < 0` ise sağdan sola gidilir.
+3. **Boş uçları doldur.** `c > 0` iken boş `a` baş, boş `b` sondur. `c < 0` iken boş `a` son eleman, boş `b` ise başın da ötesidir.
+4. **Say.** `a`'dan başla, `c`'şer ilerle; `b`'ye varınca ya da onu geçince dur. `b` indeksli eleman alınmaz.
+:::
+
+| Dilim | Anlamı | `s = "algoritma"` için |
+|:--|:--|:--|
+| `s[:3]` | ilk üç eleman | `'alg'` |
+| `s[-3:]` | son üç eleman | `'tma'` |
+| `s[2:5]` | indeks $2, 3, 4$ | `'gor'` |
+| `s[::2]` | ikişer atlayarak | `'agrta'` |
+| `s[1::2]` | tek indeksliler | `'loim'` |
+| `s[::-1]` | ters sıra | `'amtirogla'` |
+| `s[6:1:-2]` | indeks $6, 4, 2$ | `'trg'` |
+| `s[:-1]` | son eleman hariç | `'algoritm'` |
+| `s[5:2]` | pozitif adımda başlangıç bitişten sonra | `''` |
+
+: Sık kullanılan dilimler {#tbl-ozt-dilim}
+
+**Kısa yollar.** Adım $1$ iken `s[a:b]` diliminde tam $b - a$ eleman vardır. $n$ elemanlı bir listede `s[-k]` ile `s[n - k]` aynı elemandır. `L[:]` listenin bağımsız bir kopyasıdır. Bir metnin palindrom olup olmadığı `s == s[::-1]` ile sorulur.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `L[1]` bir elemandır, `L[1:2]` ise tek elemanlı bir listedir: `20` ile `[20]` farklıdır.
+- Negatif adımda başlangıç bitişten büyük olmalıdır; `L[1:5:-1]` boş listedir.
+- `L[len(L)]` `IndexError` verir; son eleman `L[-1]`'dir. Dilimler ise sınırı aşsa da hata vermez: `"algoritma"[3:100]` `'oritma'`'dır.
+:::
+
+:::: {#exm-ozt-dilim name="Bir Listeden Dilimler"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+L = [4, 8, 15, 16, 23, 42]
+print(L[1:4], L[-2:], L[::3])
+print(L[4:0:-2], L[::-2])
+print(L[2] + L[-1], L[1:2] * 2)
+```
+
+::: {.cozum}
+İndeksler: `4` $0$, `8` $1$, `15` $2$, `16` $3$, `23` $4$, `42` $5$.
+
+- `L[1:4]`: indeks $1, 2, 3$. `L[-2:]`: son iki eleman. `L[::3]`: indeks $0, 3$.
+- `L[4:0:-2]`: $4$'ten başlayıp ikişer geri, $0$'a varmadan: indeks $4, 2$. `L[::-2]`: sondan başlayıp ikişer geri: indeks $5, 3, 1$.
+- `L[2] + L[-1]` $= 15 + 42 = 57$. `L[1:2]` `[8]` listesidir; bir listenin $2$ ile çarpımı onu iki kez yan yana yazar.
+
+Çıktı:
+
+```text
+[8, 15, 16] [23, 42] [4, 16]
+[23, 15] [42, 16, 8]
+57 [8, 8]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Liste Metotları ve Kopyalama {#sec-ozt-liste}
+
+Liste sorularında belirleyici soru, bir işlemin listenin kendisini mi değiştirdiği, yoksa yeni bir değer mi verdiğidir (@def-kol-metot).
+
+| Yazım | Listeyi değiştirir mi? | Verdiği değer |
+|:--|:--|:--|
+| `L.append(x)` | evet; `x` sona tek eleman olarak eklenir | `None` |
+| `L.extend(K)` | evet; `K`'nin elemanları tek tek eklenir | `None` |
+| `L.insert(i, x)` | evet; `x` indeks `i`'ye girer | `None` |
+| `L.remove(x)` | evet; değeri `x` olan ilk eleman silinir | `None` |
+| `L.pop(i)`, `L.pop()` | evet; indeks `i`'deki ya da son eleman çıkar | çıkan eleman |
+| `del L[i]`, `L.clear()` | evet | |
+| `L.sort()`, `L.reverse()` | evet | `None` |
+| `sorted(L)`, `list(reversed(L))` | hayır | yeni bir liste |
+| `L + K`, `3 * L` | hayır | yeni bir liste |
+| `L.count(x)`, `L.index(x)`, `x in L` | hayır | sayı, indeks, `bool` |
+
+: Liste işlemleri {#tbl-ozt-metotlar}
+
+Dört koleksiyonun farkı (@def-kol-liste, @def-kol-demet, @def-kol-kume, @def-kol-sozluk): liste `[1, 2]` sıralı ve değiştirilebilir; demet `(1, 2)` sıralı ama değiştirilemez; küme `{1, 2}` sırasızdır ve tekrar eden elemanı tutmaz; sözlük `{"a": 1}` değerlere anahtarla erişir. `set(L)` bir listedeki farklı elemanları bulmanın kısa yoludur.
+
+**Kopyalama.** `b = a` listeyi kopyalamaz, aynı listeye ikinci bir ad verir; `b` üzerinden yapılan her değişiklik `a`'da da görünür. Bağımsız bir kopya için `b = a.copy()` ya da `b = a[:]` yazılır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `L = L.sort()` listeyi kaybettirir: `sort` `None` verir ve `L` artık `None`'dır. Sıralı bir kopya isteniyorsa `sorted(L)` kullanılır.
+- `L.append([4, 5])` iç içe bir liste oluşturur; elemanları tek tek eklemek için `extend` kullanılır.
+- `3 * L` elemanları çarpmaz, listeyi tekrarlar; elemanları çarpmak için `[3 * x for x in L]` yazılır.
+- `remove` değere, `pop` ve `del` indekse göre siler. `L.index(x)` `x` listede yoksa hata verir; önce `x in L` ile sorulur (@def-kol-in).
+:::
+
+:::: {#exm-ozt-liste name="Metotlar ve Aynı Listeye İki Ad"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+a = [5, 1, 4]
+b = a
+c = a[:]
+b.append(2)
+c.extend([9, 9])
+x = a.pop(0)
+y = a.sort()
+print(a, b, c)
+print(x, y, c.count(9), sorted(c)[:2])
+```
+
+::: {.cozum}
+`b` ile `a` aynı listedir; `c` ise o anki hâlin bağımsız bir kopyasıdır: `[5, 1, 4]`.
+
+| Satır | `a` ve `b` | `c` |
+|:--|:--|:--|
+| `b.append(2)` | `[5, 1, 4, 2]` | `[5, 1, 4]` |
+| `c.extend([9, 9])` | `[5, 1, 4, 2]` | `[5, 1, 4, 9, 9]` |
+| `x = a.pop(0)` | `[1, 4, 2]` | `[5, 1, 4, 9, 9]` |
+| `y = a.sort()` | `[1, 2, 4]` | `[5, 1, 4, 9, 9]` |
+
+`pop(0)` çıkardığı $5$'i verir, bu yüzden `x` $5$'tir. `sort` listeyi yerinde sıralar ve `None` verir. `c`'de iki tane $9$ vardır; `sorted(c)` `[1, 4, 5, 9, 9]` listesidir ve ilk iki elemanı `[1, 4]`'tür.
+
+Çıktı:
+
+```text
+[1, 2, 4] [1, 2, 4] [5, 1, 4, 9, 9]
+5 None 2 [1, 4]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## for Döngüsü, range, enumerate ve zip {#sec-ozt-for}
+
+`for` döngüsü bir koleksiyonun elemanlarını sırayla döngü değişkenine atar ve her biri için bloğu bir kez çalıştırır (@def-for-for). `range(a, b, c)` `a`'dan başlayıp `c`'şer ilerleyen ve `b`'ye varmadan duran tam sayıları verir (@def-kol-range).
+
+| Çağrı | Verdiği sayılar |
+|:--|:--|
+| `range(5)` | $0, 1, 2, 3, 4$ |
+| `range(2, 6)` | $2, 3, 4, 5$ |
+| `range(1, 10, 3)` | $1, 4, 7$ |
+| `range(10, 0, -3)` | $10, 7, 4, 1$ |
+| `range(5, 1)` | hiç sayı yok |
+
+: range örnekleri {#tbl-ozt-range}
+
+| Döngü | Döngü değişkeninin aldığı değerler |
+|:--|:--|
+| `for x in L:` | elemanlar |
+| `for h in "abc":` | karakterler |
+| `for k in sozluk:` | anahtarlar; `sozluk.values()` değerleri, `sozluk.items()` anahtar–değer çiftlerini verir |
+| `for i, x in enumerate(L):` | indeks ve eleman (@def-for-enumerate) |
+| `for x, y in zip(L, K):` | aynı sıradaki çiftler; kısa olan bitince durur (@def-for-zip) |
+| `for _ in range(n):` | değer kullanılmaz; iş $n$ kez yapılır (@def-for-alt-cizgi) |
+
+: Ne üzerinde dolaşılır? {#tbl-ozt-dolasma}
+
+::: {.callout-tip title="Üç adımda toplam, çarpım ya da sayaç biriktirmek"}
+1. **Başlangıç değeri.** Döngüden önce biriktiriciye başlangıç değeri ver: toplam ve sayaç için `0`, çarpım için `1`, liste için `[]` (@def-for-biriktirici).
+2. **Güncelleme.** Döngünün içinde, gerekiyorsa bir `if` ile süzerek `toplam += x`, `carpim *= x`, `sayac += 1` ya da `liste.append(x)` yaz.
+3. **Sonuç.** Sonucu döngüden sonra, girintisiz bir satırda yazdır; ortalama gibi değerler de döngü bittikten sonra hesaplanır.
+:::
+
+`break` döngüyü hemen bitirir, `continue` yalnız o yinelemenin geri kalanını atlar (@def-for-break-continue). İç içe döngülerde ikisi de yalnız içinde bulundukları döngüyü etkiler (@def-whl-ic-ice).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Biriktiriciyi döngünün içinde başlatmak: her yinelemede sıfırlanır ve sonuçta yalnız son eleman kalır.
+- `range(1, n)` $n$'yi içermez; $1$'den $n$'ye kadar sayılar için `range(1, n + 1)` yazılır.
+- Döngü değişkenine döngünün içinde yeni bir değer atamak yalnız o yinelemeyi etkiler; sonraki yinelemede değişken yine sıradaki elemanı alır (@exr-pr1-dongu-degiskeni-ezme).
+- Döngüden sonra yazılması gereken `print`'i girintili yazmak, onu her yinelemede çalıştırır.
+:::
+
+:::: {#exm-ozt-for name="İç İçe Döngüde break"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+sonuc = []
+for i in range(1, 4):
+    for j in range(i, 5):
+        if (i + j) % 4 == 0:
+            break
+        sonuc.append(i * j)
+print(sonuc, len(sonuc))
+```
+
+::: {.cozum}
+Dıştaki döngü $i = 1, 2, 3$ değerlerini alır; içteki döngü her $i$ için $j = i, \ldots, 4$ değerlerini dener. `break` yalnız içteki döngüyü bitirir.
+
+| `i` | `j` | `(i + j) % 4` | Yapılan |
+|:-:|:-:|:-:|:--|
+| $1$ | $1$ | $2$ | $1$ eklenir |
+| $1$ | $2$ | $3$ | $2$ eklenir |
+| $1$ | $3$ | $0$ | `break` |
+| $2$ | $2$ | $0$ | `break` |
+| $3$ | $3$ | $2$ | $9$ eklenir |
+| $3$ | $4$ | $3$ | $12$ eklenir |
+
+$i = 2$ için içteki döngü ilk adımda bitti, ama dıştaki döngü $i = 3$ ile devam etti.
+
+Çıktı:
+
+```text
+[1, 2, 9, 12] 4
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Liste Üreteçleri {#sec-ozt-uretec}
+
+Boş bir listeyi bir döngüyle doldurmanın tek satırlık yazımı liste üretecidir (@def-for-uretec).
+
+| Yazım | Anlamı | Örnek | Sonuç |
+|:--|:--|:--|:--|
+| `[ifade for x in K]` | her eleman dönüştürülür | `[x ** 2 for x in range(4)]` | `[0, 1, 4, 9]` |
+| `[ifade for x in K if koşul]` | koşulu sağlayanlar alınır | `[x for x in range(10) if x % 4 == 1]` | `[1, 5, 9]` |
+| `[a if koşul else b for x in K]` | her eleman girer, değeri koşula bağlıdır | `[0 if x < 2 else x for x in range(4)]` | `[0, 0, 2, 3]` |
+| `[ifade for x in A for y in B]` | sondaki `for` içteki döngüdür | `[x * y for x in (1, 2) for y in (1, 10)]` | `[1, 10, 2, 20]` |
+| `sum(ifade for x in K)` | liste kurmadan toplar | `sum(x for x in range(5))` | `10` |
+
+: Liste üreteci kalıpları {#tbl-ozt-uretec}
+
+::: {.callout-tip title="Üç adımda bir döngüyü liste üretecine çevirmek"}
+1. `sonuc = []` satırını ve `for` satırını köşeli parantezin içine taşı.
+2. `append` içindeki ifadeyi parantezin başına yaz.
+3. Elemanı süzen bir `if` varsa sona; elemanın değerini seçen bir `if-else` varsa başa yaz.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Sondaki süzgeç `if`'i `else` almaz: `[x for x in L if x > 0 else 0]` `SyntaxError` verir. Her eleman bir değerle girecekse `[x if x > 0 else 0 for x in L]` yazılır.
+- Liste üreteci içinde `print` ya da `break` kullanılmaz; böyle işler için açık bir `for` döngüsü yazılır.
+:::
+
+:::: {#exm-ozt-uretec name="Süzen, Seçen ve Eşleyen Üreteçler"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+L = [3, -1, 4, -1, 5, -9]
+A = [x * x for x in L if x < 0]
+B = ["+" if x > 0 else "-" for x in L]
+C = [i for i, x in enumerate(L) if x == -1]
+D = [x + y for x, y in zip(L, L[1:])]
+print(A, sum(A))
+print(B)
+print(C, D)
+```
+
+::: {.cozum}
+- `A`: yalnız negatif elemanlar $-1, -1, -9$ alınır ve kareleri yazılır: `[1, 1, 81]`; toplamları $83$.
+- `B`: her eleman listeye girer; pozitifse `"+"`, değilse `"-"` olur.
+- `C`: `enumerate` indeksleri verir; $-1$, indeks $1$ ve $3$'tedir.
+- `D`: `L[1:]` listesi `L`'nin bir sola kaymış hâlidir; `zip` ardışık elemanları eşler ve kısa olan bitince durur. Çiftler $(3, -1)$, $(-1, 4)$, $(4, -1)$, $(-1, 5)$, $(5, -9)$, toplamları $2, 3, 3, 4, -4$'tür.
+
+Çıktı:
+
+```text
+[1, 1, 81] 83
+['+', '-', '+', '-', '+', '-']
+[1, 3] [2, 3, 3, 4, -4]
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## while Döngüsü {#sec-ozt-while}
+
+`while koşul:` bloğu, koşul her denetlendiğinde doğru çıktığı sürece tekrarlanır (@def-whl-while). Tekrar sayısı belliyse `for`, kaç tur döneceği önceden bilinmiyorsa `while` kullanılır; bitiş denetimi bloğun ortasında yapılacaksa `while True:` yazılır ve uygun yerde `break` ile çıkılır (@def-whl-sonsuz).
+
+::: {.callout-tip title="Dört adımda bir while döngüsünü izlemek"}
+1. **Tablo kur.** Her koşul denetlemesine bir satır ayır: koşulun değeri, değişkenler ve o turdaki çıktı.
+2. **Önce koşulu denetle.** Koşul yanlışsa döngüden çık; ilk denetlemede yanlışsa blok hiç çalışmaz.
+3. **Bloğu satır satır uygula.** `continue` gelince hemen koşula dön; `break` gelince döngüden çık.
+4. **Son değerleri yaz.** Döngüden sonra sayaç, koşulu bozan değerde kalır: `while i <= 5` döngüsü `i` $6$ iken biter.
+:::
+
+**Kısa yollar.**
+
+- Bir sayının rakamlarını sağdan sola ayırmak: `r = n % 10` ile rakamı al, `n //= 10` ile at; döngü `while n > 0:` ile kurulur (@exr-whl-rakam-toplami).
+- Öklid algoritması: `while b != 0: a, b = b, a % b` döngüsü bittiğinde `a` EBOB'dur (@exr-whl-oklid).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Koşuldaki değişkeni bloğun içinde güncellemeyi unutmak sonsuz döngü kurar.
+- Güncelleme `continue`'dan sonra yazılırsa `continue` onu da atlar ve döngü takılır; güncelleme `continue`'dan önce yapılmalıdır.
+- `<` ile `<=` arasındaki fark bir tur fark ettirir; son turu tabloda ayrıca denetleyin.
+:::
+
+:::: {#exm-ozt-while name="Rakamları Ayıran Bir while Döngüsü"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+n = 40723
+toplam = 0
+adim = 0
+while n > 0:
+    r = n % 10
+    n //= 10
+    if r == 0:
+        continue
+    toplam += r
+    adim += 1
+print(toplam, adim, n)
+```
+
+::: {.cozum}
+Her turda son rakam `r`'ye alınır ve `n`'den atılır; sıfır rakamı `continue` ile atlanır. `n` `continue`'dan önce güncellendiği için döngü takılmaz.
+
+| Denetleme | `n > 0` | `r` | Turdan sonra `n` | `toplam` | `adim` |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $1$ | `True` | $3$ | $4072$ | $3$ | $1$ |
+| $2$ | `True` | $2$ | $407$ | $5$ | $2$ |
+| $3$ | `True` | $7$ | $40$ | $12$ | $3$ |
+| $4$ | `True` | $0$ | $4$ | $12$ | $3$ |
+| $5$ | `True` | $4$ | $0$ | $16$ | $4$ |
+| $6$ | `False` | | | | |
+
+Çıktı:
+
+```text
+16 4 0
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Demetler ve Üreteç İfadeleri {#sec-ozt-demet}
+
+Demetler listeler gibi indekslenir ve dilimlenir; farkları, oluşturulduktan sonra değiştirilememeleridir (@def-dmt-degistirilemez).
+
+| Yazım | Sonuç | Kural |
+|:--|:--|:--|
+| `t = 3, 7` | `(3, 7)` | demeti parantez değil virgül oluşturur (@def-dmt-paketleme) |
+| `(5)`, `(5,)`, `()` | `5`, `(5,)`, `()` | tek elemanlı demette virgül şarttır |
+| `a, b = t` | `a = 3`, `b = 7` | açma; iki taraftaki sayılar eşit olmalıdır |
+| `ilk, *orta, son = [1, 2, 3, 4]` | `orta = [2, 3]` | yıldızlı değişken kalanları liste olarak alır |
+| `t[0] = 1` | `TypeError` | demetin elemanı değiştirilemez |
+| `t + (9,)`, `t * 2` | `(3, 7, 9)`, `(3, 7, 3, 7)` | yeni demet oluşur, eskisi değişmez |
+| `sorted((3, 1, 2))` | `[1, 2, 3]` | sıralamanın sonucu her zaman listedir |
+| `t.count(x)`, `t.index(x)` | sayı, indeks | demetin yalnız bu iki metodu vardır |
+| `(x * 2 for x in K)` | üreteç | değerleri bir kez üretir, sonra tükenir (@def-dmt-uretec-ifadesi) |
+
+: Demet kuralları {#tbl-ozt-demet}
+
+**Bir demeti değiştirmek.** Demet `list` ile listeye çevrilir, liste değiştirilir ve sonuç `tuple` ile yeniden demete çevrilip aynı ada atanır: `L = list(t)`, `L[0] = 1`, `t = tuple(L)`.
+
+:::: {#exm-ozt-demet name="Paketleme, Açma ve Tükenen Üreteç"}
+Aşağıdaki programın çıktısını bulunuz.
+
+```python
+t = 2, 5, 8
+a, *b = t
+t = t + (a,)
+g = (x * 10 for x in b)
+print(t, b, type(t))
+print(sum(g), sum(g))
+print(t.count(2), t.index(5), (a), (a,))
+```
+
+::: {.cozum}
+- `t = 2, 5, 8` virgüllerle bir demet paketler. `a, *b = t` açmasında `a` $2$'yi, yıldızlı `b` kalanları liste olarak alır: `[5, 8]`.
+- `t + (a,)` yeni bir demettir: `(2, 5, 8, 2)`; aynı ada atandığı için `t` artık bu demettir.
+- `g` bir üreteçtir. İlk `sum(g)` $50 + 80 = 130$'u verir ve üreteci tüketir; ikinci `sum(g)` hiç değer bulamaz ve $0$ verir.
+- `t`'de $2$ iki kez geçer; $5$'in indeksi $1$'dir. `(a)` yalnız bir gruplamadır ve $2$ sayısının kendisidir; `(a,)` ise tek elemanlı demettir.
+
+Çıktı:
+
+```text
+(2, 5, 8, 2) [5, 8] <class 'tuple'>
+130 0
+2 1 2 (2,)
+```
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## random Modülü {#sec-ozt-random}
+
+`random` modülü `import random` ile programa alınır; fonksiyonları `random.randint(...)` biçiminde çağrılır. Üretilen sayılar sözde rastgeledir ve aynı tohumla aynı dizi yeniden elde edilir (@def-rnd-tohum).
+
+| Çağrı | Verdiği değer | Uçlar ve tekrar |
+|:--|:--|:--|
+| `random.random()` | $[0, 1)$ aralığında bir `float` | $1$ dahil değil |
+| `random.uniform(a, b)` | $a$ ile $b$ arasında bir `float` | |
+| `random.randint(a, b)` | $a$ ile $b$ arasında bir tam sayı | **iki uç da dahil** |
+| `random.randrange(a, b, c)` | `range(a, b, c)` sayılarından biri | `b` dahil değil |
+| `random.choice(K)` | `K`'den bir eleman | |
+| `random.choices(K, k=n)` | `n` elemanlı bir liste | iadeli: tekrar olabilir (@def-rnd-iadeli) |
+| `random.sample(K, k)` | `k` farklı elemanlı bir liste | iadesiz: tekrar olmaz |
+| `random.shuffle(L)` | `None`; `L` yerinde karışır | |
+| `random.gauss(mu, sigma)` | normal dağılımdan bir `float` | |
+| `random.seed(a)` | tohumu belirler | aynı tohum, aynı dizi |
+
+: random fonksiyonları {#tbl-ozt-random}
+
+**Kısa yollar.** Zar: `random.randint(1, 6)`. Yazı tura: `random.choice(["Yazı", "Tura"])`. $0$ ile $100$ arasında rastgele bir çift sayı: `random.randrange(0, 101, 2)`. $n$ zar atışı: `[random.randint(1, 6) for _ in range(n)]`. Asıl listeyi bozmadan karışık bir kopya: `random.sample(L, len(L))`.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `random.randrange(1, 6)` $6$'yı hiçbir zaman vermez; zar için `randint(1, 6)` ya da `randrange(1, 7)` yazılır.
+- `L = random.shuffle(L)` listeyi kaybettirir, çünkü `shuffle` `None` verir.
+- `random.sample(L, k)` çağrısında `k`, `L`'nin eleman sayısından büyükse `ValueError` oluşur.
+:::
+
+:::: {#exm-ozt-random name="Hangi Değerler Gelebilir?"}
+`import random` satırından sonra `random.randint(2, 5)`, `random.randrange(2, 5)`, `random.randrange(10, 0, -3)`, `random.choice("ada")` ve `random.sample(range(1, 4), 2)` çağrılarının her biri hangi değerleri verebilir?
+
+::: {.cozum}
+Her çağrının olası değerleri, ilgili kuraldan okunur:
+
+- `randint(2, 5)`: iki uç da dahildir: $2, 3, 4, 5$.
+- `randrange(2, 5)`: `range(2, 5)` sayılarından biridir ve $5$ dahil değildir: $2, 3, 4$.
+- `randrange(10, 0, -3)`: `range(10, 0, -3)` sayıları $10, 7, 4, 1$'dir; bunlardan biri gelir.
+- `choice("ada")`: metnin karakterlerinden biri seçilir: `'a'` ya da `'d'`. `'a'` iki kez geçtiği için seçilme olasılığı $2/3$'tür.
+- `sample(range(1, 4), 2)`: $1, 2, 3$ sayılarından iki **farklı** sayı sırasıyla seçilir; olası listeler `[1, 2]`, `[2, 1]`, `[1, 3]`, `[3, 1]`, `[2, 3]`, `[3, 2]`'dir. `[2, 2]` gibi bir liste gelemez, çünkü seçim iadesizdir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Girdi Almak ve Hataları Bulmak {#sec-ozt-girdi-hata}
+
+`input` kullanıcının yazdığını her zaman metin olarak verir (@def-gco-input); sayıyla hesap yapmadan önce `int` ya da `float` ile çevrilir. Çevirme başarısız olabileceği için güvenli bir program hatayı `try-except` ile yakalar (@def-gco-try) ve `while True` ile soruyu geçerli bir değer gelene kadar yineler. Aşağıdaki çıktıda `on`, `-3` ve `12` kullanıcının yazdığı değerlerdir.
+
+```python
+while True:
+    try:
+        n = int(input("Pozitif bir tam sayı: "))
+        if n > 0:
+            break
+        print("Sayı pozitif olmalı.")
+    except ValueError:
+        print("Bu bir tam sayı değil.")
+print("Girilen:", n)
+```
+
+Çıktı:
+
+```text
+Pozitif bir tam sayı: on
+Bu bir tam sayı değil.
+Pozitif bir tam sayı: -3
+Sayı pozitif olmalı.
+Pozitif bir tam sayı: 12
+Girilen: 12
+```
+
+Bir hata oluştuğunda mesajın son satırı hatanın türünü söyler. Aşağıdaki tablo en sık görülen hataları, onlara yol açan tipik yazımla eşleştirir.
+
+| Tipik yazım | Hata | Düzeltme |
+|:--|:--|:--|
+| `print("Yaş: " + 20)` | `TypeError` | `print("Yaş:", 20)` ya da `str(20)` |
+| `int("3.5")`, `int("on")` | `ValueError` | `float(...)` ya da `try-except` |
+| `if x > 0` (iki nokta yok) | `SyntaxError` | `if x > 0:` |
+| `if`'ten sonra girintisiz satır | `IndentationError` | bloğu dört boşlukla girintilemek |
+| `print(toplm)` | `NameError` | adı düzeltmek; büyük ve küçük harf farklıdır |
+| `math.sqrt(9)`, `import` yok | `NameError` | önce `import math` |
+| `import Math` | `ModuleNotFoundError` | `import math` |
+| `L[len(L)]` | `IndexError` | son eleman `L[-1]` |
+| `sozluk["yok"]` | `KeyError` | anahtarı önce `in` ile sormak |
+| `(1, 2).append(3)` | `AttributeError` | demeti listeye çevirmek |
+| `t[0] = 5`, `t` bir demet | `TypeError` | yeni bir demet oluşturmak |
+| `x / 0`, `x % 0` | `ZeroDivisionError` | böleni önce denetlemek |
+
+: Sık görülen hata mesajları {#tbl-ozt-hatalar}
+
+Bir hatayı bulmak için önce mesajın son satırındaki hata türü okunur, sonra mesajın gösterdiği satıra gidilir; neden hâlâ belli değilse hatalı satırdan önce `print(type(x))` gibi satırlar eklenerek değişkenlerin değeri ve tipi yazdırılır (@exm-gco-hata-ayiklama).
+
+:::: {#exm-ozt-hata name="İndirimli Fiyat Programındaki Hatalar"}
+Aşağıdaki program kullanıcıdan bir fiyat alıp yüzde yirmi indirimli fiyatı yazmak istiyor. Kullanıcı `250` yazdığında program çalışmıyor. Hataları bulunuz ve programı düzeltiniz.
+
+```python
+fiyat = input("Fiyat: ")
+indirim = 0.2
+yeni = fiyat * (1 - indirim)
+print("İndirimli fiyat: " + yeni)
+```
+
+::: {.cozum}
+**Birinci hata.** Program çalıştırılınca şu çıktı alınır:
+
+Çıktı:
+
+```text
+Fiyat: 250
+TypeError: can't multiply sequence by non-int of type 'float'
+```
+
+Hata üçüncü satırdadır: `input` bir metin verdiği için `fiyat` `"250"` metnidir ve bir metin bir `float` ile çarpılamaz. Girdi `float(input("Fiyat: "))` ile sayıya çevrilir.
+
+**İkinci hata.** Bu düzeltmeden sonra hesap yapılır, ama dördüncü satır bu kez `TypeError: can only concatenate str (not "float") to str` hatasını verir: bir metin ile bir `float` `+` ile birleştirilemez. Sonucu cümleye f-string ile yerleştirir ve iki basamakla yazarız:
+
+```python
+fiyat = float(input("Fiyat: "))
+indirim = 0.2
+yeni = fiyat * (1 - indirim)
+print(f"İndirimli fiyat: {yeni:.2f}")
+```
+
+Çıktı:
+
+```text
+Fiyat: 250
+İndirimli fiyat: 200.00
+```
+
+$250 \cdot 0{,}8 = 200$ olduğundan sonuç doğrudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::

@@ -1,0 +1,713 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Konveks analiz sorularını çözmek için ispatsız kopya kâğıdı: ispat kalıpları, lineer dönüşümün matrisi, kapalılık ve kompaktlık, afin örtü ve hiperdüzlem denklemi, kümelerin konveksliği, göreli iç ve konveks örtü, Carathéodory ve Radon hesapları, dual koni, ayıran hiperdüzlem, konveks fonksiyon ölçütleri, Hessian ve esas minörler, yönlü türev, subdiferansiyel ve standart ters örnekler."
+---
+
+Bu sayfa kitabın sonuçlarını ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Konveks analiz sorularının çoğu iki kalıba girer: "şu küme ya da fonksiyon konveks midir, kapalı mıdır, koni midir?" diye soran **denetim soruları** ve "afin örtüyü, dual koniyi, ayıran hiperdüzlemi, subdiferansiyeli bulunuz" diyen **hesap soruları**. Bir de iddianın yanlış olduğu, beklenen cevabın bir **ters örnek** olduğu sorular vardır. Sayfa her tip için hangi aracın seçileceğini, adım adım bir reçeteyi, tabloları ve kısa ama tam çözülmüş örnekleri verir. En ayrıntılı reçeteler en sık karşılaşılan üç tipe ayrıldı: kümenin konveksliği, Hessian ile fonksiyonun konveksliği ve subdiferansiyel. Her kural, gerekçesinin bulunduğu tanıma ya da teoreme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Soruyu okuyunca ilk iş, hangi kalıba girdiğini ve en kısa yolun hangisi olduğunu belirlemektir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| "Şunu gösteriniz" türünden bir ispat | Tanımı açıp denetlenecek koşulu yaz | @sec-ozt-kaliplar |
+| Dönüşüm lineer mi, matrisi nedir | $L(0) = 0$ testi, sütunlar $L(e_i)$ | @sec-ozt-lineer |
+| Küme kapalı mı, kompakt mı | Dizisel ölçüt, sürekli fonksiyonun seviye kümesi, Heine-Borel | @sec-ozt-kompakt |
+| Afin örtü, boyut, hiperdüzlem denklemi | Fark vektörleri, normal vektör sistemi | @sec-ozt-afin |
+| Küme konveks mi | Konveks kümelerin kesişimi olarak yaz; değilse orta nokta | @sec-ozt-konveks-kume |
+| İç, göreli iç, konveks örtü | Önce $\operatorname{aff}(C)$ ve boyut; örtüde aday küme | @sec-ozt-ri-conv |
+| Daha az noktalı kombinasyon, Radon parçalanışı | $\sum \alpha_i x_i = 0$, $\sum \alpha_i = 0$ sistemi | @sec-ozt-sayilar |
+| Koni mi, dual koni nedir | $\lambda > 0$ ile çarpım; dualde üreteçleri denetle | @sec-ozt-koni |
+| Ayrılabilir mi, ayıran hiperdüzlem | Teorem tablosu; en yakın nokta ile normal | @sec-ozt-ayirma |
+| Fonksiyon konveks mi | İşlemler, tek değişkende $f''$, standart tablo | @sec-ozt-konveks-fonksiyon |
+| İki kez türevlenebilir fonksiyonda (kesin) konvekslik | Hessian ve esas minörler | @sec-ozt-hessian |
+| Yönlü türev, subgradient, subdiferansiyel | Limit tanımı; tek değişkende tek yanlı türevler | @sec-ozt-subdiferansiyel |
+| Bir iddianın yanlış olduğunu göstermek | Standart ters örnekler | @sec-ozt-ters-ornek |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt-yontem}
+
+## İspat Kalıpları {#sec-ozt-kaliplar}
+
+Bu derste "gösteriniz" diye başlayan soruların neredeyse hepsi tek bir tanımın açılmasıyla biter. Aşağıdaki tablo, neyi göstermek için neyi denetlemek gerektiğini toplar.
+
+| Göstermek istenen | Gösterilecek şey | Dayanak |
+|:--|:--|:--|
+| $A$ afin | $x, y \in A$, $\lambda \in \mathbb{R}$ için $(1 - \lambda)x + \lambda y \in A$; ya da $A = \{x : Ax = b\}$ | @def-afin-kume, @thm-afin-denklem-sistemi |
+| $A$ lineer alt uzay | $A$ afin ve $0 \in A$ | @cor-alt-uzay-orijin |
+| $C$ konveks | $x, y \in C$, $0 \le \lambda \le 1$ için $(1 - \lambda)x + \lambda y \in C$; ya da konveks kümelerin kesişimi | @def-konveks-kume, @thm-kesisim-konveks |
+| $C$ konveks değil | İki nokta ve kümenin dışında kalan bir ara noktası | @def-konveks-kume |
+| $P$ polihedral | Sonlu çok $\langle a_i, x \rangle \le b_i$ eşitsizliği | @def-polihedral |
+| $K$ koni | $\lambda > 0$, $x \in K$ için $\lambda x \in K$ | @def-koni |
+| $K$ konveks koni | $\lambda_1, \lambda_2 > 0$ için $\lambda_1 x_1 + \lambda_2 x_2 \in K$ | @thm-konveks-koni |
+| $A$ kapalı | $A$'dan alınan yakınsak dizinin limiti $A$'da | @def-kapali-kume, @exr-kapanis-ozellikleri |
+| $A$ kapalı değil | $A$'da olup limiti $A$'nın dışında kalan bir dizi | @def-kapanis |
+| $A$ kompakt | Kapalı ve sınırlı | @thm-heine-borel |
+| $f$ konveks | Kiriş eşitsizliği, konveks epigraf, Hessian ya da işlemler | @thm-kiris, @thm-hessian |
+| $f$ kesin konveks değil | $f$'nin doğrusal olduğu bir doğru parçası | @def-kesin-konveks |
+| $x^{*} \in \partial f(x_0)$ | Her $x$ için $f(x) - f(x_0) \ge \langle x^{*}, x - x_0 \rangle$ | @def-subgradient |
+| $H$, $M$ ile $N$'yi ayırır | $\langle a, m \rangle \le b \le \langle a, n \rangle$ | @def-ayirma |
+| $M$ ile $N$ kesin ayrılamaz | Uzaklığı sıfıra giden nokta çiftleri | @def-kesin-ayirma, @exr-ayirma-ornekleri |
+
+: Neyi göstermek için ne gösterilir {#tbl-ozt-kaliplar}
+
+**Kısa yollar.**
+
+- "Herhangi sayıda" kümenin kesişimi istendiğinde indis kümesinin sonsuz olması sorun değildir; kesişim teoremi her indis kümesi için geçerlidir (@thm-kesisim-konveks).
+- Bir eşitlik $\langle a, x \rangle = b$, iki eşitsizliğe ayrılır: $\langle a, x \rangle \le b$ ve $\langle -a, x \rangle \le -b$ (@exr-hiperduzlem-polihedral).
+- Koni olmak yalnız skalerle çarpmayla ilgilidir; koni sorularında konvekslik kullanılmaz (@exr-koni-korunum).
+
+## Lineer ve Afin Dönüşümler {#sec-ozt-lineer}
+
+Bir dönüşümün lineer olup olmadığı çoğu zaman bileşenlere bakarak anlaşılır; matris de taban vektörlerinin görüntülerinden okunur (@thm-lineer-matris).
+
+::: {.callout-tip title="Üç adımda lineerlik ve matris"}
+1. **Hızlı ret.** $L(0) \ne 0$ ise $L$ lineer değildir (@exr-lineer-sifir). Bileşenlerde $xy$, $x^2$ gibi ikinci dereceden bir terim varsa $L(2u) \ne 2L(u)$ olan bir $u$ ara.
+2. **Lineerlik.** Bileşenler birinci dereceden ve sabit terimsizse $L(\alpha u + \beta v) = \alpha L(u) + \beta L(v)$ eşitliğini yaz (@def-lineer-donusum).
+3. **Matris.** $j$. sütun $L(e_j)$'dir.
+:::
+
+**Kısa yollar.** Sabit terim içeren bir dönüşüm afindir: $F(x) = L(x) + F(0)$ (@thm-afin-yapisi). Her lineer fonksiyonel bir iç çarpımdır, $L(x) = \langle a, x \rangle$ ve $a = \big( L(e_1), \dots, L(e_n) \big)$'dir; her lineer dönüşüm süreklidir (@lem-lineer-surekli).
+
+::::: {#exm-ozt-lineer-matris name="Üç Değişkenli Bir Dönüşümün Matrisi"}
+$L : \mathbb{R}^3 \to \mathbb{R}^2$, $L(x, y, z) = (x + 2z,\ y - z)$ dönüşümünün lineer olduğunu gösterip matrisini bulunuz.
+
+:::: {.cozum}
+**Lineerlik.** $u = (x_1, y_1, z_1)$, $v = (x_2, y_2, z_2)$ ve $\alpha, \beta \in \mathbb{R}$ olsun. Birinci bileşen
+$$(\alpha x_1 + \beta x_2) + 2(\alpha z_1 + \beta z_2) = \alpha(x_1 + 2z_1) + \beta(x_2 + 2z_2)$$
+olur; ikinci bileşen için de aynı düzenleme yapılır. Dolayısıyla $L(\alpha u + \beta v) = \alpha L(u) + \beta L(v)$'dir.
+
+**Matris.** Taban vektörlerinin görüntüleri $L(e_1) = (1, 0)$, $L(e_2) = (0, 1)$, $L(e_3) = (2, -1)$'dir. Bunlar sütun olarak yazılır:
+$$A = \begin{pmatrix} 1 & 0 & 2 \\ 0 & 1 & -1 \end{pmatrix}.$$
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Kapalılık ve Kompaktlık {#sec-ozt-kompakt}
+
+Kapalılık için en kısa yol, kümeyi sürekli fonksiyonların $\{g \le 0\}$ ya da $\{g = 0\}$ biçimindeki kümelerinin kesişimi olarak yazmaktır; kompaktlık için buna sınırlılık eklenir (@thm-heine-borel).
+
+::: {.callout-tip title="Üç adımda kompaktlık"}
+1. **Kapalılık.** Her koşulu $g(x) \le 0$ biçiminde yaz; $g$ sürekliyse bu küme kapalıdır ve kapalı kümelerin kesişimi kapalıdır (@prp-acik-kapali-islem). Bir koşul kesin eşitsizlikse ($<$) kapalılık bozulabilir; o zaman sınırda bir limit noktası ara.
+2. **Sınırlılık.** Her bileşeni bir sabitle sınırla ve $\|x\| \le M$ yaz (@def-sinirlilik). Sınırsızlık için normu sonsuza giden bir dizi göster.
+3. **Karar.** Kapalı ve sınırlıysa kompakttır; biri eksikse değildir.
+:::
+
+| İşlem | Sonuç | Dayanak |
+|:--|:--|:--|
+| Herhangi sayıda kapalı kümenin kesişimi | kapalı | @prp-acik-kapali-islem |
+| Sonlu sayıda kapalı kümenin birleşimi | kapalı | @prp-acik-kapali-islem |
+| $A$ ya da $B$ açık ise $A + B$ | açık | @prp-toplam-topoloji |
+| $A$ kapalı, $B$ kompakt ise $A + B$ | kapalı | @prp-toplam-topoloji |
+| $A$, $B$ yalnız kapalı ise $A + B$ | kapalı olmayabilir | @exr-kapali-toplam |
+| $C$ kompakt ise $\operatorname{conv}(C)$ | kompakt | @thm-conv-kompakt |
+| Kompakt küme üzerinde sürekli $f$ | minimum ve maksimuma ulaşır | @thm-weierstrass |
+
+: Kapalılık ve kompaktlık işlemleri {#tbl-ozt-kapalilik}
+
+::::: {#exm-ozt-kompakt name="Elips ile Yarı Düzlemin Kesişimi"}
+$$K = \{(x, y) \in \mathbb{R}^2 : x^2 + 4y^2 \le 4,\ y \ge x\}$$
+kümesinin kompakt olduğunu gösteriniz.
+
+:::: {.cozum}
+**Kapalılık.** $g_1(x, y) = x^2 + 4y^2 - 4$ ve $g_2(x, y) = x - y$ süreklidir ve $K = \{g_1 \le 0\} \cap \{g_2 \le 0\}$'dır. İki kapalı kümenin kesişimi olduğundan $K$ kapalıdır.
+
+**Sınırlılık.** $K$'da $x^2 \le 4$ ve $4y^2 \le 4$, yani $y^2 \le 1$'dir. Dolayısıyla
+$$\|(x, y)\|^2 = x^2 + y^2 \le 4 + 1 = 5$$
+olur ve $K \subset \overline{B(0, \sqrt{5})}$'tir.
+
+Kapalı ve sınırlı olduğundan @thm-heine-borel gereği $K$ kompakttır.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Afin Kümeler, Boyut ve Hiperdüzlemler {#sec-ozt-afin}
+
+Sonlu bir nokta kümesinin afin örtüsü, noktaların bütün afin kombinasyonlarıdır (@thm-afin-ortu-kombinasyon). Boyut ve denklem ise fark vektörlerinden okunur.
+
+::: {.callout-tip title="Dört adımda afin örtü ve boyut"}
+1. **Fark vektörleri.** $v_1 - v_0, \dots, v_m - v_0$ vektörlerini yaz. Bunların gerdiği alt uzay $\operatorname{aff}\{v_0, \dots, v_m\}$'ye paraleldir (@lem-paralel-span).
+2. **Bağımsızlık.** Fark vektörleri lineer bağımsızsa noktalar afin bağımsızdır (@thm-afin-bagimsizlik) ve afin örtünün boyutu $m$'dir (@cor-afin-bagimsiz-boyut).
+3. **Normal.** Boyut $n - 1$ ise afin örtü bir hiperdüzlemdir. Normal $a$, her fark vektörüne dik olan sıfırdan farklı vektördür: $\langle a, v_i - v_0 \rangle = 0$ sistemini çöz.
+4. **Sağ taraf.** $b = \langle a, v_0 \rangle$; sonuç $\{x : \langle a, x \rangle = b\}$ (@thm-hiperduzlem-denklem).
+:::
+
+**Kısa yollar.**
+
+- Bir afin kümeden bir noktası çıkarılırsa paralel alt uzay kalır: $L = A - x_0$ (@thm-afin-oteleme). Hiperdüzlemde bu, sağ tarafı $0$ yapmaktır.
+- Normal vektör tek değildir; sıfırdan farklı her katı da normaldir, yeter ki $b$ de aynı sayıyla çarpılsın (@def-normal-vektor).
+- $b = 0$ ise hiperdüzlem orijinden geçer ve bir lineer alt uzaydır (@cor-alt-uzay-orijin).
+- $\mathbb{R}$'de hiperdüzlemler noktalar, $\mathbb{R}^2$'de doğrular, $\mathbb{R}^3$'te düzlemlerdir (@exr-hiperduzlemler).
+
+::::: {#exm-ozt-afin-ortu name="Üç Noktanın Afin Örtüsü"}
+$v_0 = (1, 0, 1)$, $v_1 = (2, 1, 1)$, $v_2 = (0, 1, 3)$ noktalarının afin örtüsünü bir hiperdüzlem denklemiyle yazınız ve boyutunu belirleyiniz.
+
+:::: {.cozum}
+**Fark vektörleri.** $v_1 - v_0 = (1, 1, 0)$ ve $v_2 - v_0 = (-1, 1, 2)$'dir. Biri ötekinin katı olmadığından lineer bağımsızdırlar; noktalar afin bağımsızdır ve afin örtünün boyutu $2$'dir. $\mathbb{R}^3$'te boyutu $2$ olan afin küme bir hiperdüzlemdir.
+
+**Normal.** $a = (a_1, a_2, a_3)$ için
+$$a_1 + a_2 = 0, \qquad -a_1 + a_2 + 2a_3 = 0$$
+sistemi $a_2 = -a_1$ ve $a_3 = a_1$ verir. $a_1 = 1$ ile $a = (1, -1, 1)$ olur.
+
+**Sağ taraf.** $b = \langle a, v_0 \rangle = 1 - 0 + 1 = 2$. Böylece
+$$\operatorname{aff}\{v_0, v_1, v_2\} = \{(x, y, z) : x - y + z = 2\}.$$
+Denetim: $v_1$ için $2 - 1 + 1 = 2$, $v_2$ için $0 - 1 + 3 = 2$.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Bir Kümenin Konveksliği {#sec-ozt-konveks-kume}
+
+Konvekslik sorusunun en kısa çözümü, kümeyi konveks olduğu bilinen kümelerin kesişimi ya da onlardan konveksliği koruyan bir işlemle elde edilen küme olarak yazmaktır. Tanıma ancak bu yol tıkanırsa gidilir.
+
+::: {.callout-tip title="Dört adımda kümenin konveksliği"}
+1. **Koşulları ayır.** Kümeyi tek tek koşulların kesişimi olarak yaz.
+2. **Her koşulu tanı.** Lineer koşul yarı uzay ya da hiperdüzlemdir (@exm-konveks-ornekler). $g(x) \le \alpha$ biçimindeki koşulda $g$ konveksse küme konvekstir (@lem-seviye-konveks).
+3. **Birleştir.** Konveks kümelerin kesişimi konvekstir (@thm-kesisim-konveks); işlemler için aşağıdaki tabloya bak.
+4. **Konveks değilse** kümede iki nokta seç ve orta noktalarının dışarıda kaldığını göster. Adaylar: simetrik iki nokta, iki ayrı parçadan birer nokta, sınırın "içe göçük" tarafındaki iki nokta.
+:::
+
+| İşlem | Konveksliği korur mu | Dayanak |
+|:--|:--|:--|
+| Kesişim (herhangi sayıda) | evet | @thm-kesisim-konveks |
+| Toplam $C_1 + C_2$, skaler kat $\alpha C$ | evet | @thm-toplam-konveks, @thm-skaler-konveks |
+| $\lambda_1 C_1 + \lambda_2 C_2$, özel olarak $C_1 - C_2$ | evet | @cor-lineer-birlesim |
+| Kartezyen çarpım | evet | @thm-kartezyen-konveks |
+| Lineer ya da afin görüntü, ters görüntü | evet | @thm-lineer-goruntu, @exr-ters-goruntu, @thm-afin-yapisi |
+| Kapanış ve iç | evet | @thm-kapanis-konveks, @thm-ic-konveks |
+| Birleşim | hayır | @exr-konveks-islemler |
+| Küme farkı $C_1 \setminus C_2$ | hayır | @exr-konveks-islemler |
+
+: Kümeler için konveksliği koruyan işlemler {#tbl-ozt-kume-islemler}
+
+| Küme | Konveks | Kapalı | Koni |
+|:--|:-:|:-:|:-:|
+| Hiperdüzlem, kapalı yarı uzay | evet | evet | $b = 0$ ise |
+| Açık yarı uzay | evet | hayır | $b = 0$ ise |
+| Polihedral küme $\{Ax \le b\}$ | evet | evet | $b = 0$ ise |
+| Kapalı yuvar $\overline{B(a, r)}$ | evet | evet | hayır |
+| Negatif olmayan orthant $\{x \ge 0\}$ | evet | evet | evet |
+| Pozitif orthant $\{x > 0\}$ | evet | hayır | evet |
+| $\{(x, t) : \|x\| \le t\}$ | evet | evet | evet |
+| $\{(x, y) : xy \ge 0\}$ | hayır | evet | evet |
+| $\{(x, y) : xy \ge 1\}$ | hayır | evet | hayır |
+| $\{(x, y) : x > 0,\ y \ge 1/x\}$ | evet | evet | hayır |
+
+: Standart kümelerin özellikleri {#tbl-ozt-standart-kumeler}
+
+Tablodaki satırların gerekçeleri: @exm-konveks-ornekler, @def-koni, @exr-norm-konisi, @exm-koni-mi, @exr-konveks-mi ve @exr-hiperbol-bolgesi.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Seviye kümesinin yönü önemlidir: $g$ konveksse $\{g \le \alpha\}$ konvekstir, $\{g \ge \alpha\}$ genellikle değildir.
+- Konvekslik ile kapalılık bağımsızdır. Açık bir yarı uzayla kesişen küme konveks kalır ama kapalı olmayabilir (@exr-kesisim-konveks-ornekler).
+- $C_1 - C_2$ yazılışı küme farkı değil, $C_1 + (-1)C_2$ toplamıdır.
+- Boş küme ve tek nokta kümesi konvekstir.
+:::
+
+::::: {#exm-ozt-konveks-kesisim name="Disk ile Yarı Düzlemin Kesişimi"}
+$$C = \{(x, y) \in \mathbb{R}^2 : x^2 + y^2 \le 4,\ x + 2y \ge 1\}$$
+kümesinin konveks olduğunu gösteriniz.
+
+:::: {.cozum}
+**Koşulları ayır.** $C = E \cap Y$ yazalım; burada $E = \{x^2 + y^2 \le 4\}$ ve $Y = \{x + 2y \ge 1\}$'dir.
+
+**Her koşulu tanı.** $g(x, y) = x^2 + y^2$ konvekstir: Hessian'ı $\operatorname{diag}(2, 2)$ pozitif tanımlıdır. $E = L_g(4)$ olduğundan @lem-seviye-konveks gereği $E$ konvekstir. $Y$ ise
+$$Y = \{(x, y) : \langle (-1, -2), (x, y) \rangle \le -1\}$$
+biçiminde bir kapalı yarı uzaydır.
+
+**Birleştir.** İki konveks kümenin kesişimi olduğundan $C$ konvekstir (@thm-kesisim-konveks). İki küme de kapalı olduğundan $C$ ayrıca kapalıdır.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+::::: {#exm-ozt-konveks-degil name="Parabolün Altındaki Bölge"}
+$D = \{(x, y) \in \mathbb{R}^2 : y \le x^2\}$ kümesinin konveks olmadığını gösteriniz.
+
+:::: {.cozum}
+$(-1, 1)$ ve $(1, 1)$ noktaları $D$'dedir, çünkü $1 \le (\mp 1)^2 = 1$'dir. Orta noktaları $(0, 1)$ için $1 \le 0^2$ yanlıştır; yani $(0, 1) \notin D$'dir. Bir doğru parçası kümeden çıktığından $D$ konveks değildir.
+
+Karşılaştırma için $\{y \ge x^2\}$ kümesi $x^2$'nin grafiküstü kümesidir ve konvekstir (@def-konveks-fonksiyon); fark eşitsizliğin yönündedir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Göreli İç ve Konveks Örtü {#sec-ozt-ri-conv}
+
+İç ve göreli iç sorularında her şey $\operatorname{aff}(C)$'nin boyutuna bağlıdır; konveks örtü sorularında ise bir aday küme tahmin edilip iki kapsama gösterilir.
+
+::: {.callout-tip title="Üç adımda iç ve göreli iç"}
+1. **Afin örtü.** $\operatorname{aff}(C)$'yi ve $\dim(C)$'yi bul (@def-konveks-boyut).
+2. **Tam boyut.** $\dim(C) = n$ ise $\operatorname{ri}(C) = \operatorname{int}(C)$'dir (@exr-goreli-ic-ozellikler).
+3. **Düşük boyut.** $\dim(C) < n$ ise $\operatorname{int}(C) = \varnothing$'dur. $\operatorname{ri}(C)$ için $C$'nin içine $\operatorname{aff}(C)$ içinden bak: sınırı at (@def-goreli-ic). Bir simplekste bu, bütün katsayıların kesin pozitif olduğu noktalardır.
+:::
+
+::: {.callout-tip title="Üç adımda konveks örtü"}
+1. **Aday.** $A$'yı kapsayan ve konveks olduğunu bildiğin bir $D$ kümesi tahmin et.
+2. **$\operatorname{conv}(A) \subseteq D$.** $D$ konveks ve $A \subseteq D$ ise bu kapsama kendiliğinden doğrudur, çünkü konveks örtü en küçük konveks kümedir (@def-konveks-ortu).
+3. **$D \subseteq \operatorname{conv}(A)$.** $D$'nin her noktasını $A$'nın noktalarının bir konveks kombinasyonu olarak yaz (@thm-conv-esitlik).
+:::
+
+**Kısa yollar.** Daima $\operatorname{int}(C) \subseteq \operatorname{ri}(C) \subseteq C \subseteq \overline{C}$'dir. Konveks örtü eklenen tek bir noktaya bile çok duyarlıdır (@exr-hiperbol-konveks-ortu). $A \subseteq B$ iken $\operatorname{ri}(A) \subseteq \operatorname{ri}(B)$ her zaman doğru değildir; afin örtüler aynıysa doğrudur (@exr-goreli-ic-ozellikler).
+
+::::: {#exm-ozt-goreli-ic-ucgen name="Uzaydaki Bir Üçgenin Göreli İçi"}
+$$C = \operatorname{conv}\{(1, 0, 0),\ (0, 1, 0),\ (0, 0, 1)\} \subset \mathbb{R}^3$$
+kümesi için $\operatorname{int}(C)$ ve $\operatorname{ri}(C)$ kümelerini belirleyiniz.
+
+:::: {.cozum}
+**Afin örtü.** @exm-afin-ortu-hesabi gereği $\operatorname{aff}(C)$, $x + y + z = 1$ düzlemidir ve $\dim(C) = 2 < 3$'tür.
+
+**İç.** Boyut $3$'ten küçük olduğundan $C$'nin her noktasının her komşuluğu düzlemin dışına taşar:
+$$\operatorname{int}(C) = \varnothing.$$
+
+**Göreli iç.** Üç nokta afin bağımsızdır, yani $C$ bir $2$-simplekstir (@def-simpleks). Bir noktanın katsayıları tam olarak koordinatlarıdır:
+$$(x, y, z) = x(1, 0, 0) + y(0, 1, 0) + z(0, 0, 1).$$
+Göreli iç, katsayıların hepsinin kesin pozitif olduğu noktalardır:
+$$\operatorname{ri}(C) = \{(x, y, z) : x + y + z = 1,\ x, y, z > 0\}.$$
+Kenarlardaki noktalarda bir koordinat sıfırdır ve bu noktalar göreli sınırdadır.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+::::: {#exm-ozt-parabol-ortu name="Parabolün Konveks Örtüsü"}
+$P = \{(t, t^2) : t \in \mathbb{R}\}$ parabolünün konveks örtüsünü belirleyiniz.
+
+:::: {.cozum}
+**Aday.** $D = \{(x, y) : y \ge x^2\}$ alalım. $D$, $x^2$ fonksiyonunun grafiküstü kümesidir; $x^2$ konveks olduğundan $D$ konvekstir (@def-konveks-fonksiyon). Ayrıca $P \subseteq D$'dir.
+
+**$\operatorname{conv}(P) \subseteq D$.** Konveks örtü $P$'yi kapsayan en küçük konveks küme olduğundan bu kapsama doğrudur.
+
+**$D \subseteq \operatorname{conv}(P)$.** $(x, y) \in D$ olsun. $y = x^2$ ise nokta zaten $P$'dedir. $y > x^2$ ise $s := \sqrt{y} > |x|$'tir ve $(-s, y)$, $(s, y)$ noktaları $P$'dedir. $\lambda := \dfrac{s + x}{2s} \in (0, 1)$ seçilirse
+$$(1 - \lambda)(-s, y) + \lambda (s, y) = \big( s(2\lambda - 1),\ y \big) = (x, y)$$
+olur. Örneğin $\big( \tfrac{1}{2}, \tfrac{9}{4} \big)$ için $s = \tfrac{3}{2}$ ve $\lambda = \tfrac{2}{3}$'tür.
+
+Sonuç olarak $\operatorname{conv}(P) = \{(x, y) : y \ge x^2\}$'dir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Carathéodory, Radon ve Helly {#sec-ozt-sayilar}
+
+Üç teoremin de özü aynıdır: $\mathbb{R}^n$'de çok sayıda nokta afin bağımsız olamaz. Önce sayıları ezberlemek işe yarar.
+
+| Teorem | $\mathbb{R}^n$'deki sayı | Söylediği | Dayanak |
+|:--|:-:|:--|:--|
+| Carathéodory | $n + 1$ | $\operatorname{conv}(A)$'nın her noktası en çok $n + 1$ noktanın konveks kombinasyonudur | @thm-caratheodory |
+| Radon | $n + 2$ | $n + 2$ nokta, konveks örtüleri kesişen iki ayrık parçaya bölünür | @thm-radon |
+| Helly | $n + 1$ | Her $n + 1$ tanesi kesişen sonlu konveks aile ortak bir noktaya sahiptir | @thm-helly |
+
+: Boyuta bağlı üç sayı {#tbl-ozt-sayilar}
+
+İki hesabın ortak ilk adımı, hepsi sıfır olmayan ve
+$$\sum_{i} \alpha_i x_i = 0, \qquad \sum_{i} \alpha_i = 0$$
+koşullarını sağlayan $\alpha_i$ sayılarını bulmaktır. Bu bir homojen lineer sistemdir.
+
+::: {.callout-tip title="Üç adımda Carathéodory indirgemesi"}
+1. $x = \sum \lambda_i x_i$ yazılışındaki noktalar için yukarıdaki $\alpha_i$'leri bul.
+2. $\alpha_i > 0$ olan indislerde $\lambda_i / \alpha_i$ oranlarının en küçüğünü $t_0$ al.
+3. Yeni katsayılar $\lambda_i - t_0 \alpha_i$'dir: hepsi $\ge 0$, toplamları $1$ ve en az biri $0$. Nokta sayısı bir azalır; gerekirse tekrarla.
+:::
+
+::: {.callout-tip title="Üç adımda Radon parçalanışı"}
+1. $n + 2$ nokta için yukarıdaki $\alpha_i$'leri bul.
+2. $C_1$: $\alpha_i \ge 0$ olan noktalar, $C_2$: $\alpha_i < 0$ olanlar. $\alpha := \sum_{\alpha_i \ge 0} \alpha_i$ olsun.
+3. Ortak nokta $\sum_{\alpha_i \ge 0} \dfrac{\alpha_i}{\alpha} x_i$'dir; aynı nokta $C_2$ tarafından da elde edilir.
+:::
+
+::::: {#exm-ozt-caratheodory name="Karenin Merkezini İki Köşeyle Yazmak"}
+Merkez $x = (1, 1)$, karenin köşelerinin eşit ağırlıklı ortalamasıdır:
+$$x = \tfrac{1}{4}(0, 0) + \tfrac{1}{4}(2, 0) + \tfrac{1}{4}(2, 2) + \tfrac{1}{4}(0, 2).$$
+Carathéodory indirgemesiyle $x$'i daha az köşenin konveks kombinasyonu olarak yazınız.
+
+:::: {.cozum}
+**Sistem.**
+$$\alpha_1(0, 0) + \alpha_2(2, 0) + \alpha_3(2, 2) + \alpha_4(0, 2) = 0$$
+ve $\sum \alpha_i = 0$ olsun. Bileşenler $2\alpha_2 + 2\alpha_3 = 0$ ve $2\alpha_3 + 2\alpha_4 = 0$ verir; buradan $\alpha_2 = \alpha_4 = -\alpha_3$ ve toplam koşulundan $\alpha_1 = \alpha_3$ çıkar. $\alpha_3 = 1$ ile
+$$(\alpha_1, \alpha_2, \alpha_3, \alpha_4) = (1, -1, 1, -1).$$
+
+**Oran.** Pozitif olanlar $\alpha_1$ ve $\alpha_3$'tür; oranlar $\tfrac{1/4}{1} = \tfrac{1}{4}$ ve $\tfrac{1}{4}$, dolayısıyla $t_0 = \tfrac{1}{4}$.
+
+**Yeni katsayılar.** $\lambda_i - \tfrac{1}{4}\alpha_i$ değerleri $0, \tfrac{1}{2}, 0, \tfrac{1}{2}$'dir:
+$$x = \tfrac{1}{2}(2, 0) + \tfrac{1}{2}(0, 2) = (1, 1).$$
+Teoremin izin verdiği $n + 1 = 3$ yerine iki köşe yetti; teorem yalnız bir üst sınır verir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+::::: {#exm-ozt-radon name="Dört Noktanın Radon Parçalanışı"}
+$\mathbb{R}^2$'de $x_1 = (0, 0)$, $x_2 = (2, 0)$, $x_3 = (2, 2)$, $x_4 = (0, 1)$ noktaları için bir Radon parçalanışı ve konveks örtülerin ortak bir noktasını bulunuz.
+
+:::: {.cozum}
+**Sistem.** Bileşenlerden $2\alpha_2 + 2\alpha_3 = 0$ ve $2\alpha_3 + \alpha_4 = 0$, yani $\alpha_2 = -\alpha_3$ ve $\alpha_4 = -2\alpha_3$ çıkar. Toplam koşulu $\alpha_1 - 2\alpha_3 = 0$ verir. $\alpha_3 = 1$ ile
+$$(\alpha_1, \alpha_2, \alpha_3, \alpha_4) = (2, -1, 1, -2).$$
+
+**Parçalanış.** $C_1 = \{x_1, x_3\}$, $C_2 = \{x_2, x_4\}$ ve $\alpha = 2 + 1 = 3$'tür.
+
+**Ortak nokta.**
+$$\tfrac{2}{3}(0, 0) + \tfrac{1}{3}(2, 2) = \big( \tfrac{2}{3}, \tfrac{2}{3} \big) = \tfrac{1}{3}(2, 0) + \tfrac{2}{3}(0, 1).$$
+Geometrik olarak bu nokta, dörtgenin iki köşegeninin kesim noktasıdır (@exm-radon-dort-nokta).
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Koniler ve Dual Koniler {#sec-ozt-koni}
+
+Koni sorusu tek bir koşulun, dual koni sorusu ise bir eşitsizlik ailesinin denetlenmesidir.
+
+::: {.callout-tip title="Dört adımda koni ve dual koni"}
+1. **Koni.** $\lambda > 0$ ve $x \in K$ için $\lambda x \in K$ olduğunu göster (@def-koni). Koni orijini içermek zorunda değildir.
+2. **Konveks koni.** $\lambda_1, \lambda_2 > 0$ için $\lambda_1 x_1 + \lambda_2 x_2 \in K$ göster; normlu koşullarda üçgen eşitsizliği işi bitirir (@thm-konveks-koni).
+3. **Dual için üreteçler.** $K$'nın her elemanını birkaç $u_j$ vektörünün negatif olmayan katsayılı toplamı olarak yaz. İç çarpım lineer olduğundan $x^{*} \in K^{*}$ olması için her $j$'de $\langle u_j, x^{*} \rangle \ge 0$ olması gerek ve yeter (@def-dual-koni).
+4. **Eşitsizlikleri çöz.** Sonuç kapalı ve konveks bir koni çıkmalıdır (@lem-dual-kapali-konveks).
+:::
+
+| $K$ | $K^{*}$ | Dayanak |
+|:--|:--|:--|
+| $\{0\}$ | $\mathbb{R}^n$ | @exr-dual-hesaplari |
+| $\mathbb{R}^n$ | $\{0\}$ | @exr-dual-hesaplari |
+| Negatif olmayan orthant $\{x \ge 0\}$ | kendisi (öz-dual) | @exm-dual-orthant |
+| Pozitif orthant $\{x > 0\}$ | $\{x \ge 0\}$ | @exr-dual-kapsama |
+| Herhangi bir $K$ | $(\overline{K})^{*}$ | @lem-dual-kapanis |
+
+: Standart dual koniler {#tbl-ozt-dual}
+
+**Kısa yollar.** Koni büyüdükçe duali küçülür. Dual her zaman $0$'ı içerir; bu yüzden açık bir koni dualini kapsayamaz (@exr-dual-kapsama). $X$ konveks değilse $\operatorname{cone}(X)$ konveks olmayabilir (@exr-konik-ortu-konveks).
+
+::::: {#exm-ozt-dual-aci name="Bir Açının Dual Konisi"}
+$K = \{(x, y) \in \mathbb{R}^2 : 0 \le y \le x\}$ konisinin dual konisini bulunuz.
+
+:::: {.cozum}
+**Üreteçler.** $(x, y) \in K$ ise
+$$(x, y) = (x - y)(1, 0) + y(1, 1)$$
+yazılır ve iki katsayı da negatif değildir. Ayrıca $(1, 0)$ ile $(1, 1)$ kümededir.
+
+**Koşullar.** $(a, b) \in K^{*}$ için gereken, üreteçlerde iç çarpımın negatif olmamasıdır:
+$$\langle (1, 0), (a, b) \rangle = a \ge 0, \qquad \langle (1, 1), (a, b) \rangle = a + b \ge 0.$$
+Bu iki koşul sağlanırsa her $(x, y) \in K$ için
+$$ax + by = (x - y)a + y(a + b) \ge 0$$
+olur. Dolayısıyla
+$$K^{*} = \{(a, b) : a \ge 0,\ a + b \ge 0\}.$$
+Bu, $(0, 1)$ ve $(1, -1)$ ışınları arasındaki kapalı açıdır; beklendiği gibi kapalı ve konveks bir konidir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Ayırma {#sec-ozt-ayirma}
+
+"Ayrılabilir mi?" sorusunda önce aşağıdaki tablodan hangi teoremin varsayımlarının sağlandığına bakılır. "Ayıran hiperdüzlemi bulunuz" sorusunda ise en yakın nokta normal vektörü verir.
+
+| Kümeler | Koşul | Sonuç | Dayanak |
+|:--|:--|:--|:--|
+| $x_0$ ve konveks $M$ | $x_0 \notin \overline{M}$ | kesin ayırma | @thm-nokta-kesin-ayirma |
+| $x_0$ ve konveks $M$ | $x_0 \notin M$ | ayırma | @thm-nokta-ayirma |
+| Konveks $M_1$, $M_2$ | ayrık | ayırma | @thm-iki-kume-ayirma |
+| Kompakt konveks $M_1$, kapalı konveks $M_2$ | ayrık | kesin ayırma | @thm-kesin-ayirma |
+| İki kapalı konveks küme, ikisi de sınırsız | ayrık | kesin olmayabilir | @exr-ayirma-ornekleri |
+
+: Ayırma teoremleri {#tbl-ozt-ayirma}
+
+::: {.callout-tip title="Dört adımda bir noktayı kümeden kesin ayırmak"}
+1. **En yakın nokta.** $\overline{M}$'nin $x_0$'a en yakın $y$ noktasını bul; kapalı konveks kümede vardır ve tektir (@thm-en-yakin-varlik, @thm-en-yakin-teklik).
+2. **Normal.** $a = x_0 - y$; yalnız doğrultusu önemli olduğundan sadeleştirilebilir.
+3. **Sınırlar.** $\beta = \sup_{x \in M} \langle a, x \rangle$ ve $\langle a, x_0 \rangle$ sayılarını hesapla; $\beta < \langle a, x_0 \rangle$ çıkmalıdır.
+4. **Hiperdüzlem.** Aradaki her $b$ için $\{\langle a, x \rangle = b\}$ kesin ayırır; $b = \beta$ ise kümeye değer ve bir destek hiperdüzlemidir (@def-destek-hiperduzlemi).
+:::
+
+::::: {#exm-ozt-ayirma-ucgen name="Bir Noktayı Üçgenden Ayırmak"}
+$$C = \{(x, y) : x \ge 0,\ y \ge 0,\ x + y \le 2\}$$
+üçgensel bölgesi ile $x_0 = (3, 2)$ noktasını kesin ayıran bir hiperdüzlem bulunuz.
+
+:::: {.cozum}
+**En yakın nokta.** $x_0$'dan $x + y = 2$ doğrusuna inilen dikmenin ayağı $(3, 2) - t(1, 1)$ biçimindedir ve $5 - 2t = 2$ koşulu $t = \tfrac{3}{2}$ verir: $y = \big( \tfrac{3}{2}, \tfrac{1}{2} \big)$. İki bileşeni de negatif olmadığından $y \in C$'dir.
+
+**Normal.** $a = x_0 - y = \big( \tfrac{3}{2}, \tfrac{3}{2} \big)$; doğrultusu yeterli olduğundan $a = (1, 1)$ alalım.
+
+**Sınırlar.** Her $(x, y) \in C$ için $\langle a, (x, y) \rangle = x + y \le 2$, öte yandan $\langle a, x_0 \rangle = 5$'tir.
+
+**Hiperdüzlem.** $b = \tfrac{7}{2}$ ve $\varepsilon_0 = \tfrac{3}{2}$ alınırsa her $(x, y) \in C$ için
+$$x + y \le 2 = b - \varepsilon_0, \qquad \langle a, x_0 \rangle = 5 \ge b$$
+olur. @def-kesin-ayirma gereği $H = \{(x, y) : x + y = \tfrac{7}{2}\}$ doğrusu $C$ ile $\{x_0\}$'ı kesin ayırır. $2 < b < 5$ olan her $b$ aynı işi görür; $b = 2$ doğrusu ise $C$'nin bir kenarını içerir ve destek hiperdüzlemidir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Kesin ayırma için kapalılık ve ayrıklık yetmez; kümelerden biri kompakt olmalıdır. Uzaklığı sıfıra giden noktalar varsa kesin ayırma yoktur (@exr-ayirma-ornekleri).
+- Ayırma tanımında $a \ne 0$ şarttır; $a = 0$ ile her eşitsizlik boş yere sağlanır.
+- $\mathbb{R}$'de hiperdüzlem bir noktadır; "ayıran doğru" aranmaz.
+:::
+
+## Konveks Fonksiyon mu? {#sec-ozt-konveks-fonksiyon}
+
+Fonksiyonun konveksliği için en kısa yol, onu bilinen konveks fonksiyonlardan konveksliği koruyan işlemlerle kurmaktır. Bu yol tıkanırsa tek değişkende $f''$, çok değişkende Hessian kullanılır (@sec-ozt-hessian).
+
+::: {.callout-tip title="Dört adımda yöntem seçimi"}
+1. **Yapıya bak.** Fonksiyon bir maksimum, negatif olmayan katsayılı toplam ya da artan konveks bir fonksiyonla bileşke mi? Öyleyse aşağıdaki işlem tablosunu uygula.
+2. **Tek değişken.** $f''(x) \ge 0$ ise konvekstir; $f'$ azalmayansa da aynı sonuç çıkar (@exr-parcali-subdiferansiyel).
+3. **İki kez türevlenebilir, çok değişken.** Hessian reçetesine geç (@thm-hessian).
+4. **Konveks değilse** bir doğru seç ve $g(t) = f(x + td)$ için kirişin grafiğin altına düştüğü iki nokta göster (@thm-kiris).
+:::
+
+| İşlem | Sonuç | Dayanak |
+|:--|:--|:--|
+| $\alpha_i \ge 0$ ile $\sum \alpha_i f_i$ | konveks | @thm-pozitif-kombinasyon |
+| $\sup_{i} f_i$, özel olarak $\max\{f_1, f_2\}$ | konveks | @thm-supremum-konveks |
+| Konkav fonksiyonların infimumu | konkav | @thm-supremum-konveks |
+| $T$ artan ve konveks, $f$ konveks: $T \circ f$ | konveks | @exr-bileske-konveks |
+| $T$ azalan ise $T \circ f$ | konveks olmayabilir | @exr-bileske-konveks |
+| Çarpım $f \cdot g$ | konveks olmayabilir | @exr-carpim-konveks |
+| $-f$ | konkav | @def-konveks-fonksiyon |
+
+: Fonksiyonlar için konveksliği koruyan işlemler {#tbl-ozt-fonksiyon-islemler}
+
+| $f$ | Küme | Konveks | Kesin konveks | Dayanak |
+|:--|:--|:-:|:-:|:--|
+| $\langle a, x \rangle + b$ | $\mathbb{R}^n$ | evet (konkav da) | hayır | @exr-afin-fonksiyon |
+| $\|x\|$ | $\mathbb{R}^n$ | evet | hayır | @exm-norm-konveks |
+| $\|x\|^p$, $p \ge 1$ | $\mathbb{R}^n$ | evet | $p = 2$ için evet | @exr-bileske-konveks |
+| $e^{\alpha x}$ | $\mathbb{R}$ | evet | $\alpha \ne 0$ ise | @exr-tek-degiskenli-konvekslik |
+| $-\ln x$, $-\sqrt{x}$ | $x > 0$ | evet | evet | @exr-konkav-mi |
+| $x^2 / y$ | $y > 0$ | evet | hayır | @exr-kuadratik-bolu-lineer |
+| $\ln(e^x + e^y)$ | $\mathbb{R}^2$ | evet | hayır | @exr-log-toplam-ustel |
+| $\rho(A, x)$, $A$ konveks | $\mathbb{R}^n$ | evet | | @exr-uzaklik-fonksiyonu |
+| $S(x, A)$, destek fonksiyonu | $\mathbb{R}^n$ | evet | | @def-destek-fonksiyonu |
+| $\delta(x, A)$, $A$ konveks | $\mathbb{R}^n$ | evet | | @def-indikator |
+| $x^3$ | $\mathbb{R}$ | hayır (kuazikonveks) | | @def-kuazikonveks |
+| $x e^y + y e^x$ | $\mathbb{R}^2$ | hayır | | @exr-ustel-carpim |
+
+: Standart fonksiyonlar {#tbl-ozt-standart-fonksiyonlar}
+
+**Kısa yollar.**
+
+- Kesin konveks fonksiyonun en fazla bir minimum noktası vardır (@prp-kesin-minimum).
+- Konveks fonksiyonun seviye kümeleri konvekstir, tersi doğru değildir: $x^3$ (@lem-seviye-konveks, @def-kuazikonveks).
+- $+\infty$ değeri alan fonksiyonda kiriş eşitsizliği yalnız $\operatorname{dom}(f)$ içindeki noktalar için denetlenir; bir uç dışarıdaysa sağ taraf $+\infty$'dur (@exr-tek-degiskenli-konvekslik).
+
+::::: {#exm-ozt-islemlerle-konveks name="Maksimum ve Üstelden Kurulan Bir Fonksiyon"}
+$f(x) = \max\{x^2,\ 2 - x\} + 3e^{-x}$ fonksiyonunun $\mathbb{R}$ üzerinde konveks olduğunu gösteriniz.
+
+:::: {.cozum}
+**Parçalar.** $x^2$ konvekstir, çünkü ikinci türevi $2 \ge 0$'dır. $2 - x$ afindir, dolayısıyla konvekstir (@exr-afin-fonksiyon). $e^{-x}$, $\alpha = -1$ için $e^{\alpha x}$ ailesindendir ve konvekstir (@exr-tek-degiskenli-konvekslik).
+
+**Maksimum.** $\max\{x^2, 2 - x\}$, iki konveks fonksiyonun noktasal maksimumudur ve @thm-supremum-konveks gereği konvekstir. Kırılma noktalarında türev aramaya gerek yoktur.
+
+**Toplam.** $f = 1 \cdot \max\{x^2, 2 - x\} + 3 \cdot e^{-x}$ katsayıları negatif olmayan bir toplamdır; @thm-pozitif-kombinasyon gereği $f$ konvekstir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Hessian ve Esas Minörler {#sec-ozt-hessian}
+
+Açık konveks bir kümede iki kez sürekli türevlenebilir $f$ için konvekslik, Hessian'ın her noktada pozitif yarı-tanımlı olmasına denktir; pozitif tanımlılık ise kesin konveksliği getirir (@thm-hessian). Hangi minörlere bakılacağı sorunun ne istediğine bağlıdır.
+
+| Aranan | Koşul | Bakılacak minörler | Sayı |
+|:--|:--|:--|:-:|
+| Kesin konveks (yeter koşul) | hepsi $> 0$ | öncü esas minörler $\Delta_1, \dots, \Delta_n$ | $n$ |
+| Konveks (gerek ve yeter) | hepsi $\ge 0$ | bütün esas minörler | $2^n - 1$ |
+| Konveks değil | bir esas minör $< 0$ (bir noktada bile) | herhangi biri | $1$ |
+
+: Hessian kriterinde minör seçimi {#tbl-ozt-hessian}
+
+$2 \times 2$ ve $3 \times 3$ simetrik matrislerde bütün esas minörler (@def-esas-minor):
+
+| Matris | Öncü esas minörler | Bütün esas minörler |
+|:-:|:--|:--|
+| $\begin{pmatrix} a & b \\ b & c \end{pmatrix}$ | $a$, $ac - b^2$ | $a$, $c$, $ac - b^2$ |
+| $\begin{pmatrix} a & b & c \\ b & d & e \\ c & e & f \end{pmatrix}$ | $a$, $ad - b^2$, $\det$ | $a$, $d$, $f$, $ad - b^2$, $af - c^2$, $df - e^2$, $\det$ |
+
+: Küçük matrislerde esas minörler {#tbl-ozt-minorler}
+
+::: {.callout-tip title="Beş adımda Hessian ile konvekslik"}
+1. **Küme.** Tanım kümesinin açık ve konveks olduğunu not et.
+2. **Hessian.** Birinci, sonra ikinci kısmi türevleri hesapla; $H(x)$'i yaz. Kuadratik formda $H$ sabittir.
+3. **Hızlı ret.** Köşegende negatif bir eleman ya da negatif bir $2 \times 2$ esas minör varsa (o noktada) konveks değildir. Tek bir noktada bozulma yeter.
+4. **Kesin konvekslik.** $\Delta_1, \dots, \Delta_n$ her noktada $> 0$ ise kesin konvekstir (@lem-sylvester); dur.
+5. **Konvekslik.** Öncü minörlerden biri $0$ ise bütün esas minörleri denetle. Hepsi $\ge 0$ ise konvekstir; kesin konveks olmadığını göstermek için $\langle d, Hd \rangle = 0$ olan bir $d \ne 0$ bul ve $f$'nin o doğrultuda doğrusal olduğunu göster.
+:::
+
+**Kısa yollar.**
+
+- Doğrusal terimler ve sabitler Hessian'a girmez; afin bir ek konveksliği değiştirmez.
+- Hessian bir değişkene bağlıysa sonuç bölgeye bağlıdır: minörlerin işaret koşullarını eşitsizlik olarak çöz (@exr-yarim-duzlemde-konveks).
+- Determinantı her yerde $0$ olan Hessian, fonksiyonun bir doğrultuda doğrusal olduğunu sezdirir; pozitif homojen fonksiyonlar böyledir (@exr-kuadratik-bolu-lineer).
+- Konkavlık için aynı reçete $-f$'ye uygulanır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Konveksliğe öncü minörlerle karar vermek. $\begin{pmatrix} 0 & 0 \\ 0 & -1 \end{pmatrix}$ matrisinde öncü minörler $0, 0$'dır ama $-1$ esas minörü negatiftir.
+- "$\Delta_2 = 0$, demek ki konveks değil" demek. Bu yalnız kesin konveksliğin bu yoldan çıkmadığını söyler (@exr-konveks-ama-kesin-degil).
+- "Pozitif tanımlı değil, demek ki kesin konveks değil" demek. $x^4$ kesin konvekstir ama $f''(0) = 0$'dır.
+- Sonucu kümeyi söylemeden yazmak: konvekslik hangi küme üzerinde sorulduğuna bağlıdır.
+:::
+
+::::: {#exm-ozt-hessian-kesin name="Kesin Konveks Bir Kuadratik Form"}
+$$f(x, y, z) = 2x^2 + y^2 + 3z^2 + 2xy - 2yz$$
+fonksiyonunun $\mathbb{R}^3$ üzerinde konveksliğini inceleyiniz.
+
+:::: {.cozum}
+**Hessian.** Birinci türevler $f_x = 4x + 2y$, $f_y = 2x + 2y - 2z$, $f_z = -2y + 6z$'dir. Buradan
+$$H = \begin{pmatrix} 4 & 2 & 0 \\ 2 & 2 & -2 \\ 0 & -2 & 6 \end{pmatrix}$$
+bulunur ve $H$ sabittir.
+
+**Öncü minörler.**
+$$\Delta_1 = 4, \qquad \Delta_2 = 4 \cdot 2 - 2^2 = 4,$$
+$$\Delta_3 = 4(12 - 4) - 2(12 - 0) + 0 = 32 - 24 = 8.$$
+
+Üçü de pozitif olduğundan $H$ pozitif tanımlıdır (@lem-sylvester) ve @thm-hessian gereği $f$, $\mathbb{R}^3$ üzerinde kesin konvekstir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+::::: {#exm-ozt-hessian-bolge name="Konveksliğin Bir Yarı Düzlemde Kaldığı Fonksiyon"}
+$f(x, y) = x^3 + 3xy + 3y^2$ fonksiyonunun Hessian'ının pozitif yarı-tanımlı olduğu bölgeyi bulunuz ve $f$'nin $\mathbb{R}^2$ üzerinde konveks olup olmadığını belirleyiniz.
+
+:::: {.cozum}
+**Hessian.** $f_x = 3x^2 + 3y$ ve $f_y = 3x + 6y$ olduğundan
+$$H(x, y) = \begin{pmatrix} 6x & 3 \\ 3 & 6 \end{pmatrix}.$$
+
+**Esas minörler.** $6x$, $6$ ve $\det H = 36x - 9$. Hepsinin negatif olmaması için
+$$6x \ge 0, \qquad 36x - 9 \ge 0 \iff x \ge \tfrac{1}{4}$$
+gerekir; ikisi birlikte $x \ge \tfrac{1}{4}$ verir.
+
+**Karar.** $x > \tfrac{1}{4}$ olan açık yarı düzlemde $\Delta_1 = 6x > 0$ ve $\Delta_2 = 36x - 9 > 0$ olduğundan $f$ orada kesin konvekstir; süreklilikle $x \ge \tfrac{1}{4}$ kapalı yarı düzleminde konvekstir. Örneğin orijinde $\det H(0, 0) = -9 < 0$ olduğundan $f$, $\mathbb{R}^2$ üzerinde konveks değildir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+::::: {#exm-ozt-hessian-yari name="Konveks Ama Kesin Konveks Olmayan Bir Kare"}
+$f(x, y) = (x + 2y)^2$ fonksiyonunun $\mathbb{R}^2$ üzerinde konveks, kesin konveks ya da konveks olmayan bir fonksiyon olduğunu belirleyiniz.
+
+:::: {.cozum}
+**Hessian.** $f = x^2 + 4xy + 4y^2$, $f_x = 2x + 4y$, $f_y = 4x + 8y$ olduğundan
+$$H = \begin{pmatrix} 2 & 4 \\ 4 & 8 \end{pmatrix}.$$
+
+**Sylvester denenir.** $\Delta_1 = 2 > 0$ ama $\Delta_2 = 16 - 16 = 0$; @lem-sylvester uygulanmaz.
+
+**Bütün esas minörler.** $2 \ge 0$, $8 \ge 0$, $\det H = 0 \ge 0$. Hessian pozitif yarı-tanımlıdır ve $f$ konvekstir.
+
+**Kesin değil.** $d = (2, -1)$ için $Hd = (4 - 4,\ 8 - 8) = (0, 0)$, yani $\langle d, Hd \rangle = 0$'dır. Nitekim $f(2t, -t) = (2t - 2t)^2 = 0$; $f$ bu doğru boyunca sabittir ve kiriş grafiğe oturur.
+
+**Sonuç:** $f$ konvekstir, kesin konveks değildir.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Yönlü Türev ve Subdiferansiyel {#sec-ozt-subdiferansiyel}
+
+Türevin olmadığı noktalarda subgradient onun yerini alır (@def-subgradient). Tek değişkende subdiferansiyel, tek yanlı türevlerin arasındaki kapalı aralıktır:
+$$\partial f(x_0) = \big[ f'_{-}(x_0),\ f'_{+}(x_0) \big]$$
+(@exr-tek-yanli-turevler).
+
+::: {.callout-tip title="Dört adımda tek değişkenli subdiferansiyel"}
+1. **Parçalı yaz.** Maksimum ya da mutlak değer varsa fonksiyonu parçalı yaz; parçaların eşitlendiği kırılma noktalarını bul (@exr-maksimum-subdiferansiyel).
+2. **Konvekslik.** Fonksiyonun konveks olduğunu işlemlerle ya da türevin azalmayan olmasıyla göster.
+3. **Tek yanlı türevler.** $x_0$'ın solundaki parçanın türevi $f'_{-}(x_0)$, sağındakinin türevi $f'_{+}(x_0)$'dır.
+4. **Sonuç.** $\partial f(x_0) = [f'_{-}(x_0), f'_{+}(x_0)]$. Türevlenebilir noktada bu tek noktalı $\{f'(x_0)\}$ kümesidir.
+:::
+
+| $f$ | Nokta | $\partial f$ | Dayanak |
+|:--|:-:|:-:|:--|
+| $\lvert x \rvert$ | $0$ | $[-1, 1]$ | @exm-subdiferansiyel-mutlak |
+| $\lvert x \rvert$ | $x > 0$ | $\{1\}$ | @exm-subdiferansiyel-mutlak |
+| $\lvert x \rvert$ | $x < 0$ | $\{-1\}$ | @exm-subdiferansiyel-mutlak |
+| $\max\{f_1, f_2\}$, $f_1(x_0) = f_2(x_0)$ | $x_0$ | $\operatorname{conv}\{f_1'(x_0), f_2'(x_0)\}$ | @exr-maksimum-subdiferansiyel |
+| Türevlenebilir konveks $f$ | $x_0$ | $\{f'(x_0)\}$ | @exr-tek-yanli-turevler |
+
+: Tek değişkende subdiferansiyel {#tbl-ozt-subdiferansiyel}
+
+**Yönlü türev.** $f'(x_0; d)$ için $f(x_0 + \lambda d)$ açılır, $f(x_0)$ çıkarılır, $\lambda$'ya bölünür ve $\lambda \downarrow 0$ limiti alınır (@def-yonlu-turev). Limit yalnız sağdandır. Tek değişkende $f'(x_0; 1) = f'_{+}(x_0)$ ve $f'(x_0; -1) = -f'_{-}(x_0)$'dır.
+
+**Kısa yollar.**
+
+- Her $g \in \partial f(x_0)$ için $f'(x_0; d) \ge \langle g, d \rangle$'dir (@exr-subgradient-yonlu-turev); bu, hesaplanan bir yönlü türevi denetlemenin hızlı yoludur.
+- Bir $x^{*}$'ın subgradient olduğunu göstermek için $f(x) - f(x_0) - \langle x^{*}, x - x_0 \rangle$ farkını bir tam kare ya da mutlak değer farkı gibi açıkça negatif olmayan bir ifadeye getirmek çoğu zaman yeter.
+- Tanımdan subdiferansiyel hesaplarken negatif sayıya bölünen eşitsizliğin yön değiştirdiği unutulmamalıdır.
+
+::::: {#exm-ozt-subdiferansiyel-max name="Bir Maksimum Fonksiyonunun Kırılma Noktası"}
+$f(x) = \max\{x^2,\ 2x\}$ fonksiyonu için $\partial f(2)$ kümesini belirleyiniz.
+
+:::: {.cozum}
+**Parçalı yaz.** $x^2 - 2x = x(x - 2)$ farkı $x < 0$ ve $x > 2$ için pozitif, $0 < x < 2$ için negatiftir. Dolayısıyla
+$$f(x) = \begin{cases} x^2, & x \le 0 \\ 2x, & 0 < x \le 2 \\ x^2, & x > 2. \end{cases}$$
+
+**Konvekslik.** İki konveks fonksiyonun maksimumu olduğundan $f$ konvekstir (@thm-supremum-konveks).
+
+**Tek yanlı türevler.** $x_0 = 2$'nin solunda $f = 2x$ olduğundan $f'_{-}(2) = 2$; sağında $f = x^2$ olduğundan $f'_{+}(2) = 2 \cdot 2 = 4$.
+
+**Sonuç.**
+$$\partial f(2) = [2, 4].$$
+Aynı yolla diğer kırılma noktasında $\partial f(0) = [0, 2]$ bulunur.
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+::::: {#exm-ozt-yonlu-turev name="Mutlak Değer İçeren Bir Yönlü Türev"}
+$f(x, y) = |x| + y^2$ fonksiyonunun $x_0 = (0, 1)$ noktasındaki $d = (-3, 2)$ yönündeki yönlü türevini hesaplayınız.
+
+:::: {.cozum}
+**Nokta.** $x_0 + \lambda d = (-3\lambda,\ 1 + 2\lambda)$ ve $f(x_0) = 0 + 1 = 1$'dir. $\lambda > 0$ için
+$$f(x_0 + \lambda d) = 3\lambda + (1 + 2\lambda)^2 = 1 + 7\lambda + 4\lambda^2.$$
+
+**Limit.**
+$$f'(x_0; d) = \lim_{\lambda \downarrow 0} \frac{7\lambda + 4\lambda^2}{\lambda} = \lim_{\lambda \downarrow 0} (7 + 4\lambda) = 7.$$
+
+**Denetim.** $g = (1, 2)$ bir subgradienttir, çünkü
+$$f(x, y) - 1 - \big( x + 2(y - 1) \big) = \big( |x| - x \big) + (y - 1)^2 \ge 0.$$
+Gerçekten $\langle g, d \rangle = -3 + 4 = 1 \le 7$'dir (@exr-subgradient-yonlu-turev).
+
+[$\blacksquare$]{.qed}
+::::
+:::::
+
+## Standart Ters Örnekler {#sec-ozt-ters-ornek}
+
+"Doğru mudur?" diye soran bir iddia yanlışsa tek bir ters örnek yeter. Aşağıdaki örnekler bu derste en sık işe yarayanlardır.
+
+| Yanlış iddia | Ters örnek | Dayanak |
+|:--|:--|:--|
+| Konveks kümelerin birleşimi konvekstir | $[0, 1] \cup [2, 3]$ | @exr-konveks-islemler |
+| Kapalı iki kümenin toplamı kapalıdır | $x$-ekseni ile $\{(s, 1/s) : s > 0\}$; toplam açık üst yarı düzlem | @exr-kapali-toplam |
+| Afin iki kümenin birleşimi afindir | İki koordinat ekseni | @exr-afin-islemler |
+| $A \subseteq B \Rightarrow \operatorname{ri}(A) \subseteq \operatorname{ri}(B)$ | $\{(1, 0)\}$ ve kapalı birim yuvar | @exr-goreli-ic-ozellikler |
+| Koni konvekstir | $\{(x, y) : xy \ge 0\}$ | @exm-koni-mi |
+| Bir koni kendi dualini kapsar | $\{x > 0,\ y > 0\}$; dual kapalı orthanttır | @exr-dual-kapsama |
+| Ayrık kapalı konveks kümeler kesin ayrılır | $y \ge 1/x$ ($x > 0$) ile $y \le 0$ | @exr-ayirma-ornekleri |
+| Konveks iki fonksiyonun çarpımı konvekstir | $x \cdot (-x) = -x^2$ | @exr-carpim-konveks |
+| Konveks fonksiyonla her konveks bileşke konvekstir | $T(t) = -t$, $f(x) = x^2$ | @exr-bileske-konveks |
+| Seviye kümeleri konveks olan fonksiyon konvekstir | $x^3$ | @def-kuazikonveks |
+| Kesin konveks fonksiyonun Hessian'ı pozitif tanımlıdır | $x^4$, $x = 0$ | @thm-hessian |
+| $\rho(A, \cdot)$ her $A$ için konvekstir | $A = \{-1, 1\}$, $x = 0$ | @exr-uzaklik-fonksiyonu |
+| $\operatorname{cone}(X)$ her $X$ için konvekstir | $X = \{(1, 0), (0, 1)\}$ | @exr-konik-ortu-konveks |
+
+: Standart ters örnekler {#tbl-ozt-ters-ornek}
+
+## Son Kontrol Listesi {#sec-ozt-kontrol}
+
+Bir çözümü bitirmeden önce şu soruları sor:
+
+1. Konveksliği hangi küme üzerinde sorulduğunu yazarak mı söyledin?
+2. Seviye kümesinde eşitsizliğin yönü ($g \le \alpha$) doğru mu, $g$ gerçekten konveks mi?
+3. Kapalılık için kesin eşitsizlikleri ($<$) ayrıca düşündün mü? Kompaktlık için sınırlılığı da gösterdin mi?
+4. Göreli içte önce $\operatorname{aff}(C)$'yi buldun mu? Boyut $n$'den küçükse iç boştur.
+5. Dual konide sonucun kapalı ve konveks bir koni çıktığını, $0$'ı içerdiğini denetledin mi?
+6. Ayırmada $a \ne 0$ mı? Kesin ayırma için kümelerden birinin kompakt olduğuna ya da $\varepsilon_0 > 0$ boşluğunu açıkça gösterdiğine baktın mı?
+7. Hessian'da konveksliğe öncü minörlerle değil, bütün esas minörlerle mi karar verdin? Kesin konveks olmadığını ayrı bir doğrultuyla gösterdin mi?
+8. Subdiferansiyelde fonksiyonun konveks olduğunu önce gösterdin mi? Tek yanlı türevleri doğru parçalardan aldın mı?
+9. Bir iddia yanlışsa ters örneğin varsayımların hepsini sağladığını kontrol ettin mi?
+
+Kuralların gerekçeleri ve daha fazla çözümlü problem için [Alıştırmalar ve Problemler](alistirmalar.qmd) bölümüne, ders içeriğinin tamamı için [Müfredat ve Giriş](index.qmd) sayfasına dönebilirsin.

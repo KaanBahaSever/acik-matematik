@@ -1,0 +1,1097 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Python ile bilimsel hesaplama için kısa başvuru kartı: sayı türleri ve veri yapıları, hata yakalama ve dosyalar, NumPy dizileri, broadcasting ve lineer cebir, Matplotlib, SymPy, SciPy ile kök bulma, optimizasyon, integral, interpolasyon ve diferansiyel denklemler, Monte Carlo ve pandas için kalıplar ve sık yapılan hatalar."
+---
+
+Bu sayfa kitaptaki araçları ispatsız ve kısa bir başvuru kartı olarak toplar. Bir işe başlarken önce aşağıdaki tablodan hangi fonksiyonun gerektiğini bul, sonra ilgili bölümdeki kalıbı kopyalayıp kendi verine uyarla. Her bölüm en çok kullanılan çağrıları bir tabloda, kısa ve çalıştırılmış bir kod örneğini çıktısıyla, ardından sık yapılan hataları ve bir iki çözümlü örneği verir. Kodlar kendi başına çalışır; her birinin içe aktarmaları kendi içindedir. Ayrıntı ve gerekçe için her kural kitaptaki tanıma ya da bölüme bağlanmıştır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir problemi okuyunca ilk iş, hangi kütüphanenin hangi fonksiyonunun o işi tek satırda yaptığını bulmaktır. Aşağıdaki tablo en sık karşılaşılan işleri araçlarla eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| Tam sayı, kesir ya da ondalık sayıyla kesin hesap | `int`, `Fraction`, `Decimal` | @sec-ozt-temeller |
+| Bir listeyi süzmek, dönüştürmek, saymak | comprehension, `zip`, `sorted(key=...)` | @sec-ozt-temeller |
+| Hatalı girdiyi yakalamak, dosya okumak ve yazmak | `try`/`except`, `with open(...)` | @sec-ozt-hatalar-dosyalar |
+| Vektör, matris ya da ızgara kurmak, parçasını seçmek | `np.array`, `linspace`, dilim, maske | @sec-ozt-numpy |
+| Döngüsüz satır ya da sütun hesabı | `axis=`, broadcasting, `np.where` | @sec-ozt-vektorizasyon |
+| $Ax = b$, determinant, rank, özdeğer, en küçük kareler | `np.linalg` | @sec-ozt-lineer-cebir |
+| Grafik, kontur, histogram, yüzey | `fig, ax = plt.subplots()` | @sec-ozt-matplotlib |
+| Kesin limit, türev, integral, seri, denklem | SymPy | @sec-ozt-sympy |
+| Bir denklemin kökleri, bir fonksiyonun minimumu | `brentq`, `fsolve`, `minimize` | @sec-ozt-kok-optimizasyon |
+| Sayısal türev, tablo ya da fonksiyon integrali | fark bölümü, `simpson`, `quad`, `dblquad` | @sec-ozt-turev-integral |
+| Polinom, interpolasyon, spline, eğri uydurma | `Polynomial`, `CubicSpline`, `curve_fit` | @sec-ozt-polinom-egri |
+| Başlangıç değer problemi, sistem, olay anı | `solve_ivp` | @sec-ozt-ode |
+| Simülasyonla olasılık ya da integral kestirmek | `default_rng`, ortalama ve standart hata | @sec-ozt-monte-carlo |
+| Tablo okumak, süzmek, gruplamak | pandas | @sec-ozt-pandas |
+
+: Soru kalıpları ve araçlar {#tbl-ozt-yontem}
+
+## Python Temelleri {#sec-ozt-temeller}
+
+Dilin temel nesneleri sayılar ve kaplardır; işlemlerin çoğu tek bir işleç ya da tek satırlık bir comprehension ile yazılır.
+
+| Yazım | Anlamı | Ayrıntı |
+|:--|:--|:--|
+| `a // b`, `a % b`, `divmod(a, b)` | $\lfloor a/b \rfloor$, kalan, ikisi birlikte | @def-gir-tam-bolme |
+| `a ** b` | üs alma (`^` başka bir işlemdir) | @def-gir-int |
+| `math.isclose(a, b, rel_tol=...)` | iki `float`'ı toleransla karşılaştır | @def-gir-isclose |
+| `Fraction(p, q)`, `Decimal("0.1")` | kesin kesir, ondalık hesap | @def-gir-fraction, @def-gir-decimal |
+| `3 + 4j`, `abs(z)`, `z.conjugate()` | karmaşık sayı | @def-gir-complex |
+| `f"{x:.4f}"`, `{x:.3e}`, `{x:>8.2f}`, `{x:.1%}` | biçimli yazdırma | @def-gir-fstring |
+| `[f(k) for k in it if koşul]`, `{k: v for ...}` | liste, sözlük comprehension | @def-ver-comprehension |
+| `a[i:j:k]`, `a[::-1]` | dilim, ters çevirme | @def-ver-dilim |
+| `zip(a, b)`, `enumerate(a)` | paralel ve indisli dolaşma | @def-ver-zip-enumerate |
+| `sorted(a, key=len)`, `max(a, key=f)` | anahtara göre sıralama, en büyük | @def-ver-sorted |
+| `d.get(k, 0)`, `A & B`, `A - B`, `A ^ B` | sözlükte varsayılan; kesişim, fark, simetrik fark (birleşim için dikey çizgi işleci) | @def-ver-sozluk, @def-ver-kume |
+| `lambda x: x**2`, `def f(x, tol=1e-10)` | kısa fonksiyon, varsayılan değer | @def-kon-lambda, @def-kon-varsayilan |
+
+: Sayılar, kaplar ve fonksiyonlar {#tbl-ozt-temeller}
+
+```python
+import math
+from fractions import Fraction
+
+print(7 // 2, -7 // 2, 7 % 3, -7 % 3, divmod(23, 4))
+print(2**100)
+print(0.1 + 0.2 == 0.3, math.isclose(0.1 + 0.2, 0.3))
+print(Fraction(1, 3) + Fraction(1, 6), 2 ^ 3, 2 ** 3)
+z = 3 + 4j
+print(abs(z), z.conjugate())
+x = math.pi
+print(f"{x:.4f} | {x:.3e} | {x:>8.2f} | {1/8:.1%} | {x = :.2f}")
+```
+
+Çıktı:
+
+```text
+3 -4 1 2 (5, 3)
+1267650600228229401496703205376
+False True
+1/2 1 8
+5.0 (3-4j)
+3.1416 | 3.142e+00 |     3.14 | 12.5% | x = 3.14
+```
+
+```python
+squares = [k**2 for k in range(1, 8)]
+odd = [k for k in squares if k % 2 == 1]
+cubes = {k: k**3 for k in range(1, 5)}
+print(squares[2:5], squares[::-1][:3], odd)
+print(cubes, cubes.get(9, 0))
+A, B = {1, 2, 3, 4}, {3, 4, 5}
+print(A | B, A & B, A - B, A ^ B)
+for i, (c, v) in enumerate(zip("abc", [10, 20, 30])):
+    print(i, c, v)
+words = ["pi", "e", "phi", "gamma"]
+print(sorted(words, key=len), max(words, key=len))
+```
+
+Çıktı:
+
+```text
+[9, 16, 25] [49, 36, 25] [1, 9, 25, 49]
+{1: 1, 2: 8, 3: 27, 4: 64} 0
+{1, 2, 3, 4, 5} {3, 4} {1, 2} {1, 2, 5}
+0 a 10
+1 b 20
+2 c 30
+['e', 'pi', 'phi', 'gamma'] gamma
+```
+
+**Kısa yollar.**
+
+- `a, b = b, a % b` eşzamanlı atamadır: sağ taraf önce bütünüyle hesaplanır. Öklid algoritması tek satırlık bir `while` döngüsüdür.
+- Bir fonksiyonun aynı argümanla tekrar tekrar çağrıldığı özyinelemede `functools.cache` hafızalama yapar (@def-kon-hafizalama).
+- `range(a, b)` ve dilimler sağ ucu içermez: `range(1, n + 1)` $1, \dots, n$'yi verir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `-7 // 2` sonucu `-3` değil `-4`'tür; `//` daima aşağı yuvarlar.
+- `0.1 + 0.2 == 0.3` yanlıştır. `float` karşılaştırmasında `==` değil `math.isclose` kullanılır.
+- `2 ^ 3` üs alma değildir, değeri `1`'dir; üs `**` ile alınır.
+- `print` değer döndürmez. Sonucu kullanılacak bir fonksiyon `return` ile bitmelidir.
+- `b = a` listeyi kopyalamaz, aynı listeye ikinci bir ad verir (@def-ver-takma-ad). Kopya için `a.copy()` yazılır. `[[0] * 3] * 2` de iki satırı aynı liste yapar; doğrusu `[[0] * 3 for _ in range(2)]`'dir.
+:::
+
+:::: {#exm-ozt-rakam-toplami name="Rakamları Toplamı On Olan Sayılar"}
+Rakamları toplamı $10$ olan üç basamaklı doğal sayıların kaç tane olduğunu bir comprehension ile bulunuz.
+
+::: {.cozum}
+**Kod.** Her sayıyı `str` ile rakamlarına ayırıp toplarız; koşulu sağlayanları bir listede toplarız.
+
+```python
+nums = [n for n in range(100, 1000)
+        if sum(int(d) for d in str(n)) == 10]
+print(len(nums), nums[:5], nums[-1])
+```
+
+Çıktı:
+
+```text
+54 [109, 118, 127, 136, 145] 910
+```
+
+**Sağlama.** Rakamlar $a \ge 1$, $b$, $c$ ise $a' = a - 1$ için $a' + b + c = 9$ denkleminin negatif olmayan çözümleri $\binom{11}{2} = 55$ tanedir. Bunlardan yalnız $a' = 9$, yani $a = 10$ olan çözüm geçersizdir; geriye $54$ sayı kalır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Hatalar, Dosyalar ve Sınıflar {#sec-ozt-hatalar-dosyalar}
+
+Bir programın kötü girdide anlamlı bir mesajla durması ve verisini dosyadan okuyabilmesi için üç kalıp yeter: `try` deyimi, `raise` ve `with open(...)`.
+
+| Kalıp | Ne zaman | Ayrıntı |
+|:--|:--|:--|
+| `try:` … `except ValueError as err:` … `else:` … `finally:` | beklenen bir hatayı yakalamak | @def-snf-try |
+| `raise ValueError("mesaj")` | geçersiz girdiyi bildirmek | @def-snf-raise |
+| `assert koşul, "mesaj"` | kendi kodunu denetlemek | @def-snf-assert |
+| `with open(ad, "w", encoding="utf-8") as f:` | dosyayı güvenle açıp kapatmak | @def-snf-metin-dosyasi |
+| `csv.writer(f)`, `csv.reader(f)` | CSV yazmak ve okumak | @def-snf-csv |
+| `@dataclass class P: x: float` | `__init__`, `__repr__`, `__eq__` hazır gelen sınıf | @def-snf-dataclass |
+| `def __add__(self, other):` | `+` işlecine anlam vermek | @def-snf-ozel-metot |
+
+: Hata yakalama, dosyalar ve sınıflar {#tbl-ozt-dosya}
+
+```python
+import csv
+
+def safe_sqrt(x):
+    if x < 0:
+        raise ValueError(f"negatif sayı: {x}")
+    return x ** 0.5
+
+for v in [9, -4, "a"]:
+    try:
+        r = safe_sqrt(v)
+    except ValueError as err:
+        print("ValueError:", err)
+    except TypeError:
+        print("TypeError: sayı değil")
+    else:
+        print("kök:", r)
+
+with open("kareler.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["n", "n2"])
+    w.writerows([n, n**2] for n in range(1, 4))
+
+with open("kareler.csv", encoding="utf-8") as f:
+    rows = list(csv.reader(f))
+print(rows)
+```
+
+Çıktı:
+
+```text
+kök: 3.0
+ValueError: negatif sayı: -4
+TypeError: sayı değil
+[['n', 'n2'], ['1', '1'], ['2', '4'], ['3', '9']]
+```
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `csv.reader` her alanı `str` olarak verir; çıktının son satırında sayılar tırnak içindedir. Hesaptan önce `int(...)` ya da `float(...)` ile çevir.
+- Yalın `except:` her hatayı, yazım yanlışlarını da yutar. Yalnız beklediğin türü yakala.
+- Türkçe karakterli dosyalarda `encoding="utf-8"` verilmezse Windows'ta okuma bozulabilir. CSV yazarken `newline=""` boş satırları önler.
+:::
+
+## NumPy Dizileri {#sec-ozt-numpy}
+
+Bilimsel hesabın temel nesnesi `ndarray`'dir (@def-npd-ndarray). Aşağıdaki tablo dizi kurmanın ve parça seçmenin bütün sık kalıplarını toplar.
+
+| Yazım | Sonuç | Ayrıntı |
+|:--|:--|:--|
+| `np.linspace(a, b, n)` | $a$'dan $b$'ye $n$ nokta, iki uç dahil | @def-npd-linspace |
+| `np.arange(a, b, h)` | $a, a + h, \dots$; $b$ dahil değil | @def-npd-arange |
+| `np.zeros((m, n))`, `np.ones(n)`, `np.eye(n, k=1)` | sıfır, bir, birim (ya da kaydırılmış) matris | @def-npd-ndarray |
+| `A.shape`, `A.ndim`, `A.dtype` | şekil, eksen sayısı, veri türü | @def-npd-sekil, @def-npd-dtype |
+| `A.reshape(3, 4)`, `A.ravel()`, `A.T` | yeniden şekillendirme, düzleştirme, transpoz | @def-npd-reshape |
+| `A[i, j]`, `A[i]`, `A[:, j]`, `A[1:3, ::2]` | eleman, satır, sütun, alt blok (görünüm) | @def-npd-dilim |
+| `A[[0, 2]]`, `A[np.ix_(r, c)]` | seçilen satırlar, alt matris (kopya) | @def-npd-fancy |
+| `A[A > 0]`, `A[(A > 1) & (A < 5)]` | koşulu sağlayan elemanlar | @def-npd-maske |
+| `np.concatenate`, `np.vstack`, `np.column_stack` | dizileri birleştirme | @def-npd-birlestirme |
+| `B = A.copy()` | bağımsız kopya | @def-npd-gorunum |
+
+: Dizi kurma ve indeksleme {#tbl-ozt-numpy}
+
+```python
+import numpy as np
+
+x = np.linspace(0, 1, 5)      # uçlar dahil, 5 nokta
+k = np.arange(0, 10, 3)       # 10 dahil değil
+A = np.arange(1, 13).reshape(3, 4)
+print(x, k)
+print(A.shape, A.ndim, A.dtype)
+print(A[1, 2], A[-1], A[:, 1])
+print(A[0:2, 1:3])
+print(A[np.ix_([0, 2], [0, 3])])
+print(A[A % 5 == 0], A[(A > 3) & (A < 7)])
+```
+
+Çıktı:
+
+```text
+[0.   0.25 0.5  0.75 1.  ] [0 3 6 9]
+(3, 4) 2 int64
+7 [ 9 10 11 12] [ 2  6 10]
+[[2 3]
+ [6 7]]
+[[ 1  4]
+ [ 9 12]]
+[ 5 10] [4 5 6]
+```
+
+**Kısa yollar.**
+
+- Köşegeninde $2$, hemen üstünde ve altında $-1$ olan $n \times n$ matris döngüsüz kurulur: `2 * np.eye(n) - np.eye(n, k=1) - np.eye(n, k=-1)`.
+- $(i, j)$ elemanı satır öncelikli sırada `A.ravel()[i * n + j]`'dir (@prp-npd-satir-oncelikli).
+- İki dizinin bellek paylaşıp paylaşmadığını `np.shares_memory(a, b)` söyler.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Ondalık adımla `arange` fazladan bir nokta verebilir; nokta sayısı belliyse `linspace` kullan.
+- Dilim bir **görünümdür**: dilimi değiştirmek asıl diziyi de değiştirir. Fancy ve boolean indeksleme ise kopya verir (@def-npd-gorunum).
+- Maskelerde `and`, `or`, `not` değil `&`, `|`, `~` yazılır ve her koşul paranteze alınır.
+- `int64` dizisine yazılan `2.9` sessizce `2` olur; `int64` taşması da sessizdir (@def-npd-dtype).
+:::
+
+```python
+import numpy as np
+
+A = np.zeros((2, 3))
+row = A[0]          # dilim: görünüm
+sel = A[[1]]        # fancy indeksleme: kopya
+row[:] = 7
+sel[:] = 9
+print(A)
+print(np.shares_memory(A, row), np.shares_memory(A, A[0].copy()))
+
+a = np.array([1, 2, 3])
+a[0] = 2.9          # int64 dizisine yazılan float kesilir
+print(a, a.dtype)
+```
+
+Çıktı:
+
+```text
+[[7. 7. 7.]
+ [0. 0. 0.]]
+True False
+[2 2 3] int64
+```
+
+## Vektörizasyon ve Broadcasting {#sec-ozt-vektorizasyon}
+
+Döngü yazmak yerine işlemi bütün diziye bir kerede uygularız: evrensel fonksiyonlar (@def-vek-ufunc) eleman eleman, indirgemeler bir eksen boyunca çalışır.
+
+| Yazım | Sonuç ($A$ şekli $(m, n)$) | Ayrıntı |
+|:--|:--|:--|
+| `A.sum()`, `A.mean()`, `A.max()` | tek sayı | @def-vek-axis |
+| `A.sum(axis=0)` | sütun toplamları, şekil $(n,)$ | @def-vek-axis |
+| `A.sum(axis=1)` | satır toplamları, şekil $(m,)$ | @def-vek-axis |
+| `A.max(axis=1, keepdims=True)` | şekil $(m, 1)$; `A` ile doğrudan işleme girer | @def-vek-axis |
+| `np.where(koşul, a, b)` | koşula göre eleman eleman seçim | @def-vek-where |
+| `np.cumsum(a)`, `np.diff(a)` | kısmi toplamlar, ardışık farklar | @def-vek-ufunc |
+| `x[:, None] - y[None, :]` | bütün $x_i - y_j$ farklarının tablosu | @def-vek-broadcasting |
+
+: İndirgeme ve seçim {#tbl-ozt-axis}
+
+::: {.callout-tip title="Üç adımda sonucun şeklini bulmak"}
+1. **Hizala.** İki şekli sağa yaslayarak alt alta yaz; kısa olanın soluna $1$'ler ekle.
+2. **Karşılaştır.** Her eksende uzunluklar ya eşit olmalı ya da biri $1$ olmalı; değilse işlem `ValueError` verir.
+3. **Büyüğü al.** Sonucun her eksendeki uzunluğu iki uzunluğun büyüğüdür (@def-vek-broadcasting).
+:::
+
+```python
+import numpy as np
+
+A = np.array([[1, 2, 3], [4, 5, 6]])
+print(A.sum(), A.sum(axis=0), A.sum(axis=1))
+print(A.max(axis=1, keepdims=True).shape)
+print(A - A.mean(axis=0))          # (2, 3) - (3,)
+col = np.array([[10], [20]])       # (2, 1)
+print(A + col)
+x = np.linspace(-2, 2, 5)
+print(np.where(x > 0, x, 0))
+print(np.cumsum([1, 2, 3, 4]), np.diff([1, 4, 9, 16]))
+```
+
+Çıktı:
+
+```text
+21 [5 7 9] [ 6 15]
+(2, 1)
+[[-1.5 -1.5 -1.5]
+ [ 1.5  1.5  1.5]]
+[[11 12 13]
+ [24 25 26]]
+[0. 0. 0. 1. 2.]
+[ 1  3  6 10] [3 5 7]
+```
+
+**Kısa yollar.** Sütunları ortalamadan çıkarmak `A - A.mean(axis=0)`, satırları ortalamadan çıkarmak `A - A.mean(axis=1, keepdims=True)` ile yapılır. Bir $f(x_i, y_j)$ tablosu için `x[:, None]` ile `y` yayılır; bu, iç içe iki döngünün yerini tutar.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `axis=0` "satırları topla" değil, satırlar boyunca, yani **sütun sütun** topla demektir.
+- $(2, 3)$ şekilli bir diziden satır ortalamalarını çıkarmak için `A - A.mean(axis=1)` yazmak hata verir: $(2, 3)$ ile $(2,)$ uyumsuzdur. `keepdims=True` ya da `[:, None]` gerekir.
+:::
+
+:::: {#exm-ozt-yayma-sekli name="Üç Eksenli Bir Toplamın Şekli"}
+Şekilleri $(5, 1, 3)$ ve $(4, 1)$ olan iki dizinin toplamının şeklini önceden bulunuz ve kodla doğrulayınız.
+
+::: {.cozum}
+**Hizala.** İkinci şeklin soluna bir $1$ eklenir: $(5, 1, 3)$ ile $(1, 4, 1)$.
+
+**Karşılaştır ve büyüğü al.** Sağdan sola: $3$ ile $1$ uyumludur, sonuç $3$; $1$ ile $4$ uyumludur, sonuç $4$; $5$ ile $1$ uyumludur, sonuç $5$. Toplamın şekli $(5, 4, 3)$'tür.
+
+```python
+import numpy as np
+
+a = np.ones((5, 1, 3))
+b = np.ones((4, 1))
+print((a + b).shape, np.broadcast_shapes((5, 1, 3), (4, 1)))
+try:
+    np.ones((2, 3)) + np.ones(2)
+except ValueError as err:
+    print("ValueError:", err)
+```
+
+Çıktı:
+
+```text
+(5, 4, 3) (5, 4, 3)
+ValueError: operands could not be broadcast together with shapes (2,3) (2,) 
+```
+
+Son satır karşılaştırma için eklendi: $(2, 3)$ ile $(2,)$ şekillerinin son eksenlerinde $3$ ile $2$ çatıştığı için toplam tanımsızdır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Cebir {#sec-ozt-lineer-cebir}
+
+Matematikte $AB$ yazılan her yerde kodda `A @ B` yazılır (@def-lin-matmul); geri kalan işlerin hepsi `np.linalg` modülündedir.
+
+| Matematik | Kod | Not |
+|:--|:--|:--|
+| $AB$, $Ax$, $u \cdot v$ | `A @ B`, `A @ x`, `u @ v` | `*` eleman eleman çarpar |
+| $Ax = b$ | `np.linalg.solve(A, b)` | `inv(A) @ b`'den hızlı ve doğru |
+| $A^{-1}$, $\det A$, $\operatorname{rank} A$ | `inv(A)`, `det(A)`, `matrix_rank(A)` | tekilliği `det` ile sınama |
+| $A^k$ | `np.linalg.matrix_power(A, k)` | `A**k` eleman eleman kuvvettir |
+| $\lVert x \rVert_2$, $\lVert A \rVert_1$, $\lVert A \rVert_\infty$ | `norm(x)`, `norm(A, 1)`, `norm(A, np.inf)` | @def-lin-dogal-norm |
+| $\kappa(A)$ | `np.linalg.cond(A)` | yaklaşık $\log_{10}\kappa$ basamak kaybolur (@def-lin-kosul-sayisi) |
+| özdeğer, özvektör | `w, V = eig(A)`; simetrikse `eigh(A)` | özvektörler `V`'nin **sütunlarıdır** |
+| en küçük kareler | `lstsq(M, y, rcond=None)` | @def-lin-en-kucuk-kareler |
+| $A = U \Sigma V^T$ | `U, s, Vt = np.linalg.svd(A)` | @def-lin-svd |
+
+: np.linalg başvuru tablosu {#tbl-ozt-linalg}
+
+::: {.callout-tip title="Üç adımda bir lineer sistem"}
+1. `A` ve `b`'yi `float` diziler olarak kur.
+2. `x = np.linalg.solve(A, b)` ile çöz.
+3. `np.allclose(A @ x, b)` ile sağla; şüphe varsa `cond(A)`'ya bak.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `A * v` hata vermez ama $Av$ değildir; broadcasting ile eleman eleman çarpar.
+- `det(A) == 0` sınaması kayan noktalı sayılarla anlamsızdır; `matrix_rank` ya da `cond` kullan.
+- `eig` gerçek bir matriste karmaşık özdeğer döndürebilir; simetrik matriste `eigh` gerçek ve artan sıralı özdeğer verir (@thm-lin-spektral).
+- Normal denklemleri $A^TA\hat x = A^Tb$ elle kurup çözmek basamak kaybettirir; `lstsq` kullan.
+:::
+
+:::: {#exm-ozt-lineer-sistem name="Simetrik Bir Sistem ve Özdeğerleri"}
+$$4x - 2y + z = 11, \qquad -2x + 4y - 2z = -16, \qquad x - 2y + 4z = 17$$
+sistemini çözünüz; katsayı matrisinin determinantını, rankını, koşul sayısını ve özdeğerlerini hesaplayınız.
+
+::: {.cozum}
+```python
+import numpy as np
+
+A = np.array([[4.0, -2.0, 1.0],
+              [-2.0, 4.0, -2.0],
+              [1.0, -2.0, 4.0]])
+b = np.array([11.0, -16.0, 17.0])
+x = np.linalg.solve(A, b)
+print(x, np.allclose(A @ x, b))
+print(np.linalg.det(A), np.linalg.matrix_rank(A), np.linalg.cond(A))
+w, V = np.linalg.eigh(A)
+print(w)
+print(np.allclose(A @ V[:, 2], w[2] * V[:, 2]))
+```
+
+Çıktı:
+
+```text
+[ 1. -2.  3.] True
+36.0 3 4.529210992451762
+[1.62771868 3.         7.37228132]
+True
+```
+
+**Yorum.** Çözüm $(x, y, z) = (1, -2, 3)$'tür. $\det A = 36 \ne 0$ ve rank $3$'tür. $A$ simetrik olduğundan `eigh` kullanıldı; özdeğerler $3$ ve $\lambda^2 - 9\lambda + 12 = 0$ denkleminin kökleri $\frac{9 \mp \sqrt{33}}{2}$'dir. Simetrik matriste 2-normundaki koşul sayısı en büyük ve en küçük özdeğerin oranıdır: $\kappa(A) = 7{,}3723 / 1{,}6277 \approx 4{,}53$. Matris iyi koşulludur. [$\blacksquare$]{.qed}
+:::
+::::
+
+**Doğru uydurma kalıbı.** $(t_i, y_i)$ verisine $y = a + bt$ uydurmak için tasarım matrisi `M = np.column_stack([np.ones_like(t), t])` kurulur ve `coef, res, rank, sv = np.linalg.lstsq(M, y, rcond=None)` çağrılır; `coef` dizisi $(a, b)$'dir. Örneğin $(0;\ 1{,}1)$, $(1;\ 2{,}9)$, $(2;\ 5{,}2)$, $(3;\ 6{,}8)$ verisi için $a = 1{,}09$, $b = 1{,}94$ ve artık kareleri toplamı $0{,}082$ çıkar.
+
+## Matplotlib ile Grafik {#sec-ozt-matplotlib}
+
+Her grafik aynı iskelete oturur: veri dizilerini hazırla, `fig, ax = plt.subplots()` ile tuval ve eksen kur (@def-mpl-figure-axes), `ax` üzerinden çiz, kaydet.
+
+| İstenen | Komut |
+|:--|:--|
+| eğri, kesikli çizgi, işaretçi | `ax.plot(x, y, "--", label="...")`, `ax.plot(x, y, "o")` |
+| eksen adı, başlık, lejant, ızgara | `ax.set_xlabel`, `ax.set_title`, `ax.legend()`, `ax.grid(True)` |
+| eksen sınırları, eşit ölçek | `ax.set_xlim(a, b)`, `ax.set_aspect("equal")` |
+| logaritmik eksen (@def-mpl-log-eksen) | `ax.semilogy(...)`, `ax.loglog(...)`, `ax.set_yscale("log")` |
+| alt grafikler | `fig, axs = plt.subplots(2, 2)`, sonra `axs[i, j].plot(...)` |
+| saçılım, histogram (@def-mpl-histogram) | `ax.scatter(x, y, s=..., c=...)`, `ax.hist(v, bins=30, density=True)` |
+| kontur (@def-mpl-meshgrid) | `X, Y = np.meshgrid(x, y)`, `ax.contour(X, Y, Z)`, `ax.contourf(...)` |
+| yüzey | `plt.subplots(subplot_kw={"projection": "3d"})`, `ax.plot_surface(X, Y, Z)` |
+| kaydetme | `fig.savefig("ad.png", dpi=150)` ya da `"ad.svg"`, `"ad.pdf"` |
+
+: Matplotlib komutları {#tbl-ozt-matplotlib}
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(0, 2 * np.pi, 400)
+fig, axs = plt.subplots(1, 2, figsize=(9, 3.5))
+axs[0].plot(x, np.sin(x), label="sin x")
+axs[0].plot(x, np.cos(x), "--", label="cos x")
+axs[0].set_xlabel("x")
+axs[0].legend()
+axs[0].grid(True)
+
+X, Y = np.meshgrid(np.linspace(-2, 2, 101), np.linspace(-2, 2, 101))
+cs = axs[1].contour(X, Y, X**2 - Y**2, levels=9)
+axs[1].clabel(cs)
+axs[1].set_aspect("equal")
+fig.tight_layout()
+fig.savefig("grafik.png", dpi=150)
+```
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `plot` noktaları sırayla doğru parçalarıyla birleştirir. Süreksizlik noktasında dikey bir çizgi belirir; orada değeri `np.nan` yap. Hızlı salınan bir fonksiyonda nokta sayısını artır.
+- Parametrik ve kutupsal eğrilerde `set_aspect("equal")` unutulursa çember elips görünür. Negatif yarıçap alan kutupsal eğriyi $x = r\cos\theta$, $y = r\sin\theta$ ile düzlemde çiz.
+- `meshgrid(x, y)` dizileri $(n, m)$ şeklindedir: satır indisi $y$'ye, sütun indisi $x$'e karşılık gelir.
+:::
+
+## SymPy ile Sembolik Hesap {#sec-ozt-sympy}
+
+Kesin sonuç gerektiğinde semboller tanımlanır (@def-sym-sembol) ve hesap SymPy fonksiyonlarıyla yapılır; sayısal hesaba geçmek için `lambdify` kullanılır.
+
+| İş | Kod |
+|:--|:--|
+| sembol, varsayım (@def-sym-varsayim) | `x = sp.symbols("x")`, `n = sp.symbols("n", positive=True, integer=True)` |
+| kesin sayı | `sp.Rational(1, 3)`, `sp.sqrt(8)`, `sp.pi`, `sp.E`, `sp.oo` |
+| sadeleştirme | `sp.simplify`, `sp.expand`, `sp.factor`, `sp.trigsimp` |
+| limit | `sp.limit(f, x, 0)`, tek yönlü: `sp.limit(f, x, 0, "+")` |
+| türev | `sp.diff(f, x)`, ikinci türev: `sp.diff(f, x, 2)` |
+| integral | `sp.integrate(f, x)`, belirli: `sp.integrate(f, (x, a, b))` |
+| Taylor serisi, toplam | `sp.series(f, x, 0, n).removeO()`, `sp.summation(a, (k, 1, sp.oo))` |
+| denklem | `sp.solve(f, x)`, `sp.solveset(f, x, sp.S.Reals)`, sayısal: `sp.nsolve(f, x, x0)` |
+| diferansiyel denklem | `sp.dsolve(sp.Eq(y(x).diff(x), y(x)), y(x), ics={y(0): 1})` |
+| matris | `M = sp.Matrix([[...]])`, `M.det()`, `M.inv()`, `M.eigenvals()` |
+| ondalık değer | `sp.N(expr, 20)`, `expr.evalf()` |
+| NumPy fonksiyonuna çevirme (@def-sym-lambdify) | `g = sp.lambdify(x, expr, "numpy")` |
+
+: SymPy komutları {#tbl-ozt-sympy}
+
+```python
+import sympy as sp
+
+x = sp.symbols("x")
+n = sp.symbols("n", positive=True, integer=True)
+print(sp.limit(sp.sin(x) / x, x, 0), sp.limit((1 + 1/n)**n, n, sp.oo))
+print(sp.diff(x**3 * sp.exp(-x), x))
+print(sp.integrate(1 / (1 + x**2), (x, 0, 1)))
+print(sp.series(sp.cos(x), x, 0, 6))
+print(sp.factor(x**3 - x), sp.expand((x + 1)**3))
+print(sp.solve(x**2 - 5*x + 6, x))
+print(sp.simplify(sp.sin(x)**2 + sp.cos(x)**2))
+g = sp.lambdify(x, sp.exp(-x**2), "numpy")
+print(g(0.5))
+```
+
+Çıktı:
+
+```text
+1 E
+-x**3*exp(-x) + 3*x**2*exp(-x)
+pi/4
+1 - x**2/2 + x**4/24 + O(x**6)
+x*(x - 1)*(x + 1) x**3 + 3*x**2 + 3*x + 1
+[2, 3]
+1
+0.7788007830714049
+```
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `x + 1/3` yazınca Python önce `1/3`'ü `float` yapar; kesin kesir için `sp.Rational(1, 3)` yaz.
+- Varsayımsız bir sembolde $\sqrt{x^2}$ sadeleşmez, çünkü $x$ negatif ya da karmaşık olabilir. `positive=True` gibi varsayımlar bu kuralları açar.
+- `==` yapısal eşitliği sınar (@def-sym-yapisal-esitlik); iki ifadenin matematiksel eşitliği için `sp.simplify(a - b) == 0` bakılır.
+- `math.sin(x)` bir sembolle çalışmaz; sembolik ifadelerde `sp.sin`, dizilerde `np.sin` kullanılır.
+:::
+
+:::: {#exm-ozt-sympy-maksimum name="Bir Fonksiyonun Mutlak Maksimumu"}
+$f(x) = x^2 e^{-x}$ fonksiyonunun $[0, \infty)$ aralığındaki en büyük değerini SymPy ile bulunuz.
+
+::: {.cozum}
+**Kritik noktalar.** $f'(x) = 0$ denklemini çözüp kritik noktalardaki değerlere ve sonsuzdaki limite bakarız. Sembolü `nonnegative=True` ile tanımlamak çözümleri aralığa sınırlar.
+
+```python
+import sympy as sp
+
+x = sp.symbols("x", nonnegative=True)
+f = x**2 * sp.exp(-x)
+crit = sp.solve(sp.diff(f, x), x)
+print(crit, [f.subs(x, c) for c in crit])
+print(sp.limit(f, x, sp.oo), sp.N(f.subs(x, 2)))
+```
+
+Çıktı:
+
+```text
+[0, 2] [0, 4*exp(-2)]
+0 0.541341132946451
+```
+
+**Sonuç.** $f'(x) = (2x - x^2)e^{-x}$ yalnız $x = 0$ ve $x = 2$'de sıfırdır. $f(0) = 0$, $f(2) = 4e^{-2}$ ve $x \to \infty$ iken $f(x) \to 0$ olduğundan en büyük değer $f(2) = 4e^{-2} \approx 0{,}5413$'tür. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Kök Bulma ve Optimizasyon {#sec-ozt-kok-optimizasyon}
+
+`scipy.optimize` modülündeki araçlar iki soruya yanıt verir: $f(x) = 0$ nerede ve $f$ nerede en küçük? Doğru aracı, elimizdeki bilgi (parantez, başlangıç noktası, türev) belirler.
+
+| Problem | Araç | Gereken |
+|:--|:--|:--|
+| tek değişkenli kök, parantez belli (@def-kok-parantez) | `brentq(f, a, b)` | $f(a) f(b) < 0$ |
+| tek değişkenli kök, yöntem seçerek | `root_scalar(f, method=..., bracket=... / x0=...)` | yönteme göre |
+| birçok başlangıçtan Newton | `newton(f, x0_dizisi, fprime=df)` | `x0` bir dizi |
+| denklem sistemi $F(\mathbf{x}) = 0$ | `fsolve(F, x0)` ya da `root(F, x0, jac=J)` | iyi bir `x0` |
+| tek değişkenli minimum | `minimize_scalar(f, bounds=(a, b), method="bounded")` | aralık |
+| çok değişkenli minimum | `minimize(f, x0, method="BFGS", jac=grad)` | `x0`, varsa gradyan |
+| kısıtlı minimum (@def-kok-kisitli-problem) | `minimize(..., method="SLSQP", bounds=..., constraints=...)` | `"ineq"` için $g \ge 0$ |
+
+: Kök bulma ve optimizasyon araçları {#tbl-ozt-kok}
+
+::: {.callout-tip title="Dört adımda bir denklemin bütün kökleri"}
+1. **Tara.** `x = np.linspace(a, b, n)` ızgarasında `y = f(x)` hesapla.
+2. **Ayır.** `i = np.nonzero(y[:-1] * y[1:] < 0)[0]` işaretin değiştiği hücreleri verir.
+3. **Daralt.** Her hücrede `brentq(f, x[k], x[k + 1])` çağır.
+4. **Sağla.** Her kökte $f(r)$'yi yazdır; kutup ya da süreksizlik varsa işaret değişimi kök demek değildir.
+:::
+
+:::: {#exm-ozt-kubik-kokler name="Bir Kübik Denklemin Üç Kökü"}
+$x^3 - 4x + 1 = 0$ denkleminin bütün reel köklerini bulunuz.
+
+::: {.cozum}
+**Tarama aralığı.** $|x| \ge 3$ için $|x^3| \ge 9|x| > |4x - 1|$ olduğundan bütün reel kökler $(-3, 3)$ içindedir. Bu aralığı $0{,}5$ adımla tarayıp her işaret değişiminde `brentq` çağırırız.
+
+```python
+import numpy as np
+from scipy.optimize import brentq
+
+def f(x):
+    return x**3 - 4*x + 1
+
+x = np.linspace(-3, 3, 13)
+y = f(x)
+i = np.nonzero(y[:-1] * y[1:] < 0)[0]
+roots = [brentq(f, x[k], x[k + 1]) for k in i]
+for r in roots:
+    print(f"{r:.12f}   f = {f(r):.1e}")
+print("toplam:", sum(roots), "çarpım:", np.prod(roots))
+```
+
+Çıktı:
+
+```text
+-2.114907541477   f = -1.8e-15
+0.254101688365   f = 0.0e+00
+1.860805853112   f = 0.0e+00
+toplam: -2.220446049250313e-16 çarpım: -1.0000000000000002
+```
+
+**Sağlama.** Kübik denklemin en çok üç kökü vardır ve üçü de bulundu. Vieta formüllerine göre köklerin toplamı $0$, çarpımı $-1$ olmalıdır; son satır bunu yuvarlama hatası düzeyinde doğrular. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-kisitli-maksimum name="Bir Kısıt Altında Çarpımın Maksimumu"}
+$x, y \ge 0$ ve $x + 2y \le 8$ koşulları altında $xy$ çarpımının en büyük değerini `minimize` ile bulunuz.
+
+::: {.cozum}
+**Problemi kurmak.** SciPy yalnız minimum arar; $xy$'nin maksimumu $-xy$'nin minimumudur. `"ineq"` kısıtı $g \ge 0$ demek olduğundan $x + 2y \le 8$ kısıtı $8 - x - 2y \ge 0$ biçiminde yazılır.
+
+```python
+from scipy.optimize import minimize
+
+def neg_area(v):
+    return -v[0] * v[1]          # maksimum için -f'yi küçült
+
+cons = [{"type": "ineq", "fun": lambda v: 8 - v[0] - 2 * v[1]}]
+res = minimize(neg_area, x0=[1.0, 1.0], method="SLSQP",
+               bounds=[(0, None), (0, None)], constraints=cons)
+print(res.success, res.x, -res.fun)
+```
+
+Çıktı:
+
+```text
+True [4.00000004 1.99999998] 8.00000000024745
+```
+
+**Sağlama.** Maksimum kısıt doğrusu üzerindedir: $x = 8 - 2y$ için $xy = 8y - 2y^2$ ve türevi $8 - 4y = 0$'dan $y = 2$, $x = 4$, en büyük değer $8$ bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- İşaret değişimi olmayan çift katlı kökler ve aynı hücreye düşen iki kök taramada kaçar; ızgarayı sıklaştır ve grafiğe bak.
+- Newton yöntemi yalnız köke yakın başlarsa yakınsar (@thm-kok-newton-karesel); güvenli yol parantezli `brentq`'dur.
+- `minimize` yerel minimum bulur; birkaç `x0`'dan başlatıp en iyisini seç.
+- `"ineq"` kısıtının yönünü ters yazmak hata vermez, başka bir problemi çözer.
+:::
+
+## Sayısal Türev ve İntegral {#sec-ozt-turev-integral}
+
+Türevde adım seçimi, integralde ise elde fonksiyon mu yoksa yalnız bir değer tablosu mu olduğu doğru aracı belirler.
+
+| Yöntem | Kod | Hata | Ayrıntı |
+|:--|:--|:--|:--|
+| ileri fark $D_h^{+} f(x)$ | `(f(x + h) - f(x)) / h` | $O(h)$, en iyi $h \approx 10^{-8}$ | @def-int-ileri-geri-fark |
+| merkezi fark $D_h f(x)$ | `(f(x + h) - f(x - h)) / (2 * h)` | $O(h^2)$, en iyi $h \approx 10^{-5}$ | @prp-int-toplam-hata |
+| ızgarada türev | `np.gradient(y, x)` | iç noktalarda $O(h^2)$ | @def-int-gradient |
+| bileşik yamuk $T_n$ | `np.trapezoid(y, x)` | $O(h^2)$ | @prp-int-bilesik-hata |
+| bileşik Simpson $S_n$ | `scipy.integrate.simpson(y, x=x)` | $O(h^4)$ | @def-int-trapezoid-simpson |
+| fonksiyon integrali | `val, err = quad(f, a, b)` | uyarlamalı; sınır `np.inf` olabilir | @def-int-quad |
+| iki katlı | `dblquad(lambda y, x: ..., a, b, g, h)` | iç değişken **önce** | @def-int-dblquad |
+| üç katlı | `tplquad(lambda z, y, x: ..., a, b, g, h, q, r)` | sıra $z, y, x$ | @def-int-tplquad |
+
+: Sayısal türev ve integral araçları {#tbl-ozt-integral}
+
+```python
+import numpy as np
+from scipy.integrate import quad, simpson
+
+f, x0 = np.exp, 1.0
+for h in [1e-2, 1e-5, 1e-8]:
+    fwd = (f(x0 + h) - f(x0)) / h
+    cen = (f(x0 + h) - f(x0 - h)) / (2 * h)
+    print(f"h = {h:.0e}: ileri hata {abs(fwd - np.e):.1e}, "
+          f"merkezi hata {abs(cen - np.e):.1e}")
+
+x = np.linspace(0, np.pi, 11)
+y = np.sin(x)
+print(np.trapezoid(y, x), simpson(y, x=x))
+val, err = quad(lambda t: np.exp(-t**2), 0, np.inf)
+print(val, err, np.sqrt(np.pi) / 2)
+```
+
+Çıktı:
+
+```text
+h = 1e-02: ileri hata 1.4e-02, merkezi hata 4.5e-05
+h = 1e-05: ileri hata 1.4e-05, merkezi hata 5.9e-11
+h = 1e-08: ileri hata 6.6e-09, merkezi hata 6.6e-09
+1.9835235375094544 2.0001095173150043
+0.8862269254527579 7.101318390472462e-09 0.8862269254527579
+```
+
+Tabloyu çıktı doğrular: merkezi farkta $h$ yüz kat küçülünce hata kabaca on bin kat küçülür, ama $h = 10^{-8}$'de yuvarlama hatası öne geçer. On alt aralıkla $\int_0^\pi \sin x\,dx = 2$ için yamuk kuralının hatası yaklaşık $0{,}017$, Simpson kuralınınki $0{,}0001$'dir.
+
+**Kısa yollar.** `quad` bir ikili döndürür; yalnız değer için `quad(f, a, b)[0]` yazılır. Aralığın içindeki bir tekil ya da kırık noktayı `points=[c]` ile bildir. $e^x - 1$ ve $\ln(1 + x)$ ifadeleri küçük $x$'te `np.expm1(x)` ve `np.log1p(x)` ile basamak kaybetmeden hesaplanır.
+
+:::: {#exm-ozt-dblquad-sirasi name="dblquad'da Argüman Sırası"}
+$0 \le x \le 1$ ve $0 \le y \le x$ eşitsizlikleriyle verilen $D$ bölgesinde $\iint_D x y^2\,dA$ integralini `dblquad` ile hesaplayınız ve integrandı `lambda x, y` sırasıyla yazmanın ne verdiğini gösteriniz.
+
+::: {.cozum}
+**Elle.** İç integral $\int_0^x x y^2\,dy = \frac{x^4}{3}$, dış integral $\int_0^1 \frac{x^4}{3}\,dx = \frac{1}{15}$'tir.
+
+```python
+from scipy.integrate import dblquad
+
+right, _ = dblquad(lambda y, x: x * y**2, 0, 1, 0, lambda x: x)
+wrong, _ = dblquad(lambda x, y: x * y**2, 0, 1, 0, lambda x: x)
+print(right, 1 / 15)
+print(wrong, 1 / 10)
+```
+
+Çıktı:
+
+```text
+0.06666666666666668 0.06666666666666667
+0.1 0.1
+```
+
+**Yorum.** `dblquad` integrandın ilk argümanını iç değişken $y$ olarak kullanır. `lambda x, y: x * y**2` yazılınca ilk argüman adı `x` olsa da iç değişkendir; hesaplanan integral
+$$\int_0^1 \!\! \int_0^x y\,x^2\,dy\,dx = \int_0^1 \frac{x^4}{2}\,dx = \frac{1}{10}$$
+olur. Hata mesajı çıkmaz, yalnız sonuç yanlıştır. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Polinomlar, İnterpolasyon ve Eğri Uydurma {#sec-ozt-polinom-egri}
+
+Polinom için `numpy.polynomial.Polynomial` (@def-egr-polynomial), noktalardan geçen bir eğri için interpolasyon ya da spline, gürültülü veri için en küçük kareler kullanılır.
+
+| İş | Kod | Not |
+|:--|:--|:--|
+| $c_0 + c_1x + c_2x^2$ | `p = Polynomial([c0, c1, c2])` | katsayılar **artan** sırada |
+| değer, kök, türev, integral | `p(x)`, `p.roots()`, `p.deriv()`, `p.integ()` | `np.polyval` ve `np.polyfit` azalan sıra ister |
+| $n + 1$ noktadan interpolasyon | `Polynomial.fit(x, y, deg=n).convert()` | tek polinom (@thm-egr-interpolasyon) |
+| en küçük kareler polinomu | `p = Polynomial.fit(x, y, deg)` | katsayılar için `p.convert().coef` |
+| kübik spline (@def-egr-kubik-spline) | `S = CubicSpline(x, y, bc_type=...)` | `S(t)`, `S(t, 1)`, `S.integrate(a, b)` |
+| parametreleri doğrusal olmayan model | `popt, pcov = curve_fit(model, t, y, p0=...)` | standart hata `np.sqrt(np.diag(pcov))` |
+| Çebişev düğümleri (@def-egr-cebisev) | `np.cos((2 * np.arange(n + 1) + 1) * np.pi / (2 * n + 2))` | Runge olayına karşı |
+
+: Polinom ve eğri uydurma araçları {#tbl-ozt-egri}
+
+```python
+import numpy as np
+from numpy.polynomial import Polynomial
+from scipy.interpolate import CubicSpline
+
+p = Polynomial([2, -3, 1])          # 2 - 3x + x^2: artan sıra
+print(p(4), np.polyval([1, -3, 2], 4))
+print(p.roots(), p.deriv(), p.integ())
+
+x = np.array([0.0, 1.0, 2.0, 3.0])
+S = CubicSpline(x, x**3)            # varsayılan: "not-a-knot"
+print(S(1.5), S(1.5, 1), S.integrate(0, 3))
+```
+
+Çıktı:
+
+```text
+6.0 6
+[1. 2.] -3.0 + 2.0 x 0.0 + 2.0 x - 1.5 x**2 + 0.33333333 x**3
+3.375000000000001 6.75 20.25
+```
+
+Varsayılan `"not-a-knot"` koşullu spline kübik polinomları tam verir: $1{,}5^3 = 3{,}375$, $3 \cdot 1{,}5^2 = 6{,}75$ ve $\int_0^3 x^3\,dx = 20{,}25$.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Aynı katsayı listesini `Polynomial`'a ve `np.polyval`'a vermek: biri artan, öteki azalan sıra okur ve hata mesajı çıkmaz.
+- `Polynomial.fit` sonucunun `coef` niteliği ölçeklenmiş değişkene göredir; alışılmış katsayılar için `convert()` gerekir.
+- Eşit aralıklı çok sayıda düğümde yüksek dereceli interpolasyon uçlarda salınır (@def-egr-runge); Çebişev düğümleri ya da spline kullan.
+- En küçük karelerde derece artırmak artıkları hep küçültür; dereceyi artık grafiğine (@def-egr-artik-grafigi) ya da test noktalarına göre seç. `curve_fit` için `p0` verilmezse yanlış yerel minimuma gidebilir.
+:::
+
+:::: {#exm-ozt-interpolasyon name="Üç Noktadan Geçen Parabol"}
+$(-1, 4)$, $(1, 2)$ ve $(2, 7)$ noktalarından geçen ikinci dereceden polinomu bulunuz.
+
+::: {.cozum}
+**Kod.** Üç noktaya derecesi $2$ olan bir polinom uydurmak tam interpolasyondur.
+
+```python
+import numpy as np
+from numpy.polynomial import Polynomial
+
+x = np.array([-1.0, 1.0, 2.0])
+y = np.array([4.0, 2.0, 7.0])
+p = Polynomial.fit(x, y, deg=len(x) - 1).convert()
+print(p.coef.round(12), round(p(0.5), 12))
+```
+
+Çıktı:
+
+```text
+[ 1. -1.  2.] 1.0
+```
+
+**Sağlama.** $p(x) = 1 - x + 2x^2$ için $p(-1) = 1 + 1 + 2 = 4$, $p(1) = 1 - 1 + 2 = 2$, $p(2) = 1 - 2 + 8 = 7$'dir. Ayrıca $p(0{,}5) = 1 - 0{,}5 + 0{,}5 = 1$. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Diferansiyel Denklemler {#sec-ozt-ode}
+
+Bir başlangıç değer problemi `solve_ivp` ile çözülür; yöntemin kendisini görmek için Euler (@def-ode-euler) ve RK4 (@def-ode-rk4) birkaç satırda yazılır.
+
+| Yöntem | Bir adım ($t_{i+1} = t_i + h$) | Global hata (@thm-ode-mertebe) |
+|:--|:--|:--|
+| Euler | $y_{i+1} = y_i + h\,f(t_i, y_i)$ | $O(h)$ |
+| RK4 | $y_{i+1} = y_i + \frac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4)$ | $O(h^4)$ |
+
+: Elle yazılan yöntemler {#tbl-ozt-euler-rk4}
+
+| `solve_ivp` parametresi ya da alanı | Anlamı |
+|:--|:--|
+| `fun(t, y)` | sağ taraf; önce zaman, sonra bilinmeyen vektörü |
+| `t_span=(t0, T)`, `y0=[...]` | aralık, başlangıç değeri (tek denklemde bile liste) |
+| `rtol`, `atol` | varsayılan `1e-3`, `1e-6`; gerçek işte sıkılaştır |
+| `method="RK45"` (varsayılan), `"DOP853"` | açık yöntemler |
+| `method="Radau"`, `"BDF"`, `"LSODA"` | katı denklemler için (@def-ode-kati) |
+| `t_eval=...`, `dense_output=True` | istenen anlarda değer, `sol.sol(t)` ile ara değer |
+| `events=g`, `g.terminal = True`, `g.direction = -1` | $g(t, y) = 0$ anını bulma, durma (@def-ode-olay) |
+| `sol.t`, `sol.y`, `sol.success`, `sol.t_events` | zamanlar, çözüm (her satır bir bilinmeyen), durum, olay anları |
+
+: solve_ivp başvuru tablosu {#tbl-ozt-solve-ivp}
+
+::: {.callout-tip title="Üç adımda yüksek mertebeden denklemi sisteme çevirmek"}
+1. $u_1 = y$, $u_2 = y'$, …, $u_m = y^{(m-1)}$ yeni bilinmeyenlerini tanımla (@def-ode-sistem).
+2. $u_1' = u_2$, …, $u_m' = g(t, u_1, \dots, u_m)$ sistemini `fun(t, u)` olarak yaz.
+3. `y0 = [y(t0), y'(t0), ...]` vektörünü kur; çözüm `sol.y[0]`'dadır.
+:::
+
+:::: {#exm-ozt-ikinci-mertebe name="İkinci Mertebeden Bir Başlangıç Değer Problemi"}
+$y'' + 4y = 0$, $y(0) = 0$, $y'(0) = 2$ problemini `solve_ivp` ile çözüp $y(\pi/4)$ değerini tam çözümle karşılaştırınız.
+
+::: {.cozum}
+**Sistem.** $u = (y, y')$ için $u_1' = u_2$, $u_2' = -4u_1$ ve $u(0) = (0, 2)$'dir. Tam çözüm $y = \sin 2t$'dir, dolayısıyla $y(\pi/4) = 1$ olmalıdır.
+
+```python
+import numpy as np
+from scipy.integrate import solve_ivp
+
+def rhs(t, u):
+    y, v = u                 # u = (y, y')
+    return [v, -4 * y]
+
+sol = solve_ivp(rhs, (0, np.pi / 4), [0.0, 2.0], rtol=1e-10, atol=1e-12)
+yT = sol.y[0, -1]
+print(sol.success, yT, abs(yT - 1))
+```
+
+Çıktı:
+
+```text
+True 0.9999999999811358 1.8864243500615885e-11
+```
+
+**Yorum.** Sıkı hata paylarıyla sonuç tam değere $2 \cdot 10^{-11}$ kadar yakındır. Varsayılan `rtol=1e-3` ile yalnız üç dört basamak beklenebilirdi. [$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-olay name="Yukarı Atılan Taşın Yere Düştüğü An"}
+$10$ m yükseklikten $20$ m/s hızla yukarı atılan bir taşın yüksekliği $y'' = -9{,}81$ denklemine uyar. Taşın yere düştüğü anı bir olay fonksiyonuyla bulunuz.
+
+::: {.cozum}
+**Kurulum.** $u = (y, v)$ ve $u' = (v, -g)$'dir. Olay fonksiyonu yüksekliğin kendisidir; `terminal = True` çözümü yere değince durdurur, `direction = -1` yalnız yukarıdan aşağı geçişi sayar.
+
+```python
+import numpy as np
+from scipy.integrate import solve_ivp
+
+g = 9.81
+
+def rhs(t, u):
+    return [u[1], -g]        # u = (yükseklik, hız)
+
+def ground(t, u):
+    return u[0]
+
+ground.terminal = True       # sıfır olunca dur
+ground.direction = -1        # yalnız yukarıdan aşağı geçişte
+
+sol = solve_ivp(rhs, (0, 10), [10.0, 20.0], events=ground,
+                rtol=1e-10, atol=1e-12)
+T = sol.t_events[0][0]
+print(sol.status, T, (20 + np.sqrt(20**2 + 2 * g * 10)) / g)
+```
+
+Çıktı:
+
+```text
+1 4.527747915136608 4.5277479151366045
+```
+
+**Sağlama.** Düşme anı, $10 + 20t - \frac{g}{2}t^2 = 0$ denkleminin pozitif köküdür:
+$$t = \frac{20 + \sqrt{400 + 2g \cdot 10}}{g} \approx 4{,}5277 \text{ s}.$$
+`status` değerinin $1$ olması çözümün bir terminal olayla durduğunu gösterir. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `solve_ivp` sağ tarafı `fun(t, y)` sırasıyla ister; eski `odeint` için yazılmış `fun(y, t)` sessizce yanlış sonuç verir.
+- `solve_ivp` başarısız olunca istisna fırlatmaz; `sol.success` ve `sol.message`'ı denetle.
+- `sol.y` dizisinin satırları bilinmeyenlerdir: $y$ değerleri `sol.y[0]`, son an `sol.y[:, -1]`'dir.
+- Açık yöntem çok küçük adımlar atıyor ve yavaşlıyorsa denklem katı olabilir; `Radau` ya da `BDF` dene.
+:::
+
+## Rastgele Sayılar ve Monte Carlo {#sec-ozt-monte-carlo}
+
+Bütün rastgelelik tohumu sabit bir üreteçten gelir: `rng = np.random.default_rng(tohum)` (@def-mcs-generator). Bir olasılık ya da beklenen değer, örneklem ortalamasıyla kestirilir (@def-mcs-kestirici).
+
+| İstenen | Kod | Dikkat |
+|:--|:--|:--|
+| $[0, 1)$'de düzgün | `rng.random(n)` | |
+| $[a, b)$'de düzgün | `rng.uniform(a, b, n)` | |
+| zar | `rng.integers(1, 7, n)` | üst sınır **dahil değil** |
+| $N(\mu, \sigma^2)$ | `rng.normal(mu, sigma, n)` | ikinci parametre $\sigma$ |
+| $\operatorname{Üstel}(\lambda)$ | `rng.exponential(1 / lam, n)` | parametre ortalama $1/\lambda$ |
+| sonlu dağılım | `rng.choice(degerler, n, p=olasiliklar)` | `replace=False` ile tekrarsız |
+| ters dönüşüm (@prp-mcs-ters-donusum) | `X = Finv(rng.random(n))` | $F^{-1}$ açıkça yazılabilmeli |
+| olasılık kestirimi | `p = (olay).mean()` | standart hata $\sqrt{p(1-p)/N}$ |
+| integral (@def-mcs-mc-integral) | `vol * f(U).mean()` | standart hata `vol * f(U).std(ddof=1) / np.sqrt(N)` |
+
+: Rastgele sayı ve Monte Carlo kalıpları {#tbl-ozt-monte-carlo}
+
+Monte Carlo hatası $1/\sqrt{N}$ hızıyla küçülür (@prp-mcs-hata): bir basamak daha doğruluk için $100$ kat fazla nokta gerekir. Sonuç her zaman "kestirim $\pm\ 1{,}96 \cdot$ standart hata" biçiminde bildirilir.
+
+```python
+import numpy as np
+
+rng = np.random.default_rng(11)
+N = 100_000
+vol = np.pi                          # [0, π] aralığının uzunluğu
+vals = np.sin(rng.uniform(0, np.pi, N))
+est = vol * vals.mean()
+se = vol * vals.std(ddof=1) / np.sqrt(N)
+print(f"{est:.4f} ± {1.96 * se:.4f}")
+```
+
+Çıktı:
+
+```text
+1.9985 ± 0.0060
+```
+
+Kod $\int_0^\pi \sin x\,dx = 2$ integralini kestirir; gerçek değer aralığın içindedir.
+
+:::: {#exm-ozt-uc-zar name="Üç Zarın Toplamının En Az On Beş Olması"}
+Üç zar atıldığında toplamın en az $15$ olma olasılığını $200\,000$ atışlık bir simülasyonla kestiriniz ve tam değerle karşılaştırınız.
+
+::: {.cozum}
+**Kod.** Atışları $(N, 3)$ şekilli bir dizide üretip satır toplamlarını alırız; olayın göstergesinin ortalaması olasılığın kestirimidir.
+
+```python
+import numpy as np
+
+rng = np.random.default_rng(7)
+N = 200_000
+s = rng.integers(1, 7, size=(N, 3)).sum(axis=1)
+p = (s >= 15).mean()
+se = np.sqrt(p * (1 - p) / N)
+print(f"kestirim = {p:.4f} ± {1.96 * se:.4f}, tam değer = {20 / 216:.4f}")
+```
+
+Çıktı:
+
+```text
+kestirim = 0.0929 ± 0.0013, tam değer = 0.0926
+```
+
+**Tam değer.** $216$ eşit olası sonuçtan toplamı $15$ olan $10$, $16$ olan $6$, $17$ olan $3$, $18$ olan $1$ tane vardır; olasılık $\frac{20}{216} = \frac{5}{54} \approx 0{,}0926$'dır ve kestirim aralığının içindedir. [$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Tohum verilmezse her çalıştırma farklı sonuç verir; eski `np.random.seed` ve `np.random.rand` yerine `default_rng` kullan.
+- `rng.integers(1, 6)` zar değildir, $6$'yı hiç üretmez.
+- Bir kestirimi standart hatasız vermek: tek başına bir sayı ne kadar güvenilir olduğunu söylemez.
+:::
+
+## Pandas ile Veri Analizi {#sec-ozt-pandas}
+
+Etiketli tablolarla çalışırken `Series` (@def-pdn-series) ve `DataFrame` (@def-pdn-dataframe) kullanılır; işlemlerin çoğu tek bir metot çağrısıdır.
+
+| İş | Kod | Ayrıntı |
+|:--|:--|:--|
+| Türkçe biçimli CSV okumak | `pd.read_csv(ad, sep=";", decimal=",", na_values="-")` | `parse_dates`, `date_format` |
+| ilk bakış | `df.head()`, `df.shape`, `df.dtypes`, `df.describe()` | |
+| etiketle ve konumla seçim | `df.loc[satır, sütun]`, `df.iloc[i, j]` | `loc` dilimi iki ucu içerir (@def-pdn-loc-iloc) |
+| koşulla seçim | `df[(df["x"] > 0) & (df["y"] < 5)]` | her koşul parantez içinde |
+| eksik değer (@def-pdn-eksik-deger) | `isna().sum()`, `dropna()`, `fillna(v)`, `interpolate()` | ortalamalar `NaN`'ı atlar |
+| sıklık, yüzdelik | `value_counts()`, `quantile(0.25)` | @def-pdn-quantile |
+| gruplama (@def-pdn-groupby) | `df.groupby("k")["v"].agg(["mean", "count"])` | `transform` aynı şekli korur |
+| birleştirme (@def-pdn-merge) | `pd.merge(a, b, on="k", how="left", indicator=True)` | |
+| zaman serisi | `s.resample("ME").mean()`, `s.rolling(7, center=True).mean()` | @def-pdn-hareketli-ortalama |
+
+: pandas başvuru tablosu {#tbl-ozt-pandas}
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({"grup": ["A", "B", "A", "B", "A"],
+                   "x": [2.0, 5.0, None, 7.0, 4.0]},
+                  index=[10, 20, 30, 40, 50])
+print(df.loc[20:40, "x"].tolist(), df.iloc[1:3]["x"].tolist())
+print(df["x"].isna().sum(), df["x"].mean(), df["x"].fillna(0).mean())
+print(df.groupby("grup")["x"].agg(["mean", "count"]))
+```
+
+Çıktı:
+
+```text
+[5.0, nan, 7.0] [5.0, nan]
+1 4.5 3.6
+      mean  count
+grup             
+A      3.0      2
+B      6.0      2
+```
+
+`loc[20:40]` üç satır, `iloc[1:3]` iki satır verdi. Ortalama eksik değeri atlar ($18/4 = 4{,}5$); eksik değer $0$ ile doldurulunca $18/5 = 3{,}6$ olur. `count` da eksik değeri saymaz.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- `s[0]` "ilk eleman" değil "etiketi 0 olan eleman"dır; konum için `s.iloc[0]` yaz.
+- `df[maske]["y"] = 0` zincirleme atamadır ve `df`'yi değiştirmez; doğrusu `df.loc[maske, "y"] = 0`'dır.
+- pandas'ın `std` metodu `ddof=1`, NumPy'ın `np.std` fonksiyonu `ddof=0` kullanır; aynı veride farklı sonuç verirler.
+- Eksik değer giren tamsayı sütunu `float64` olur; tamsayı kalması gerekiyorsa `dtype="Int64"` kullan.
+:::
+
+:::: {#exm-ozt-csv-gruplama name="Noktalı Virgüllü Bir Dosyadan Grup Ortalamaları"}
+Aşağıdaki veride alanlar noktalı virgülle ayrılmış, ondalıklar virgülle yazılmış ve ölçülemeyen değer `-` ile gösterilmiştir. Veriyi okuyup her istasyonun ortalama sıcaklığını bulunuz.
+
+```text
+istasyon;gün;sıcaklık
+Kars;1;-4,5
+Kars;2;-
+Kars;3;-2,5
+Rize;1;8,0
+Rize;2;9,5
+Rize;3;7,5
+```
+
+::: {.cozum}
+**Okuma.** `sep`, `decimal` ve `na_values` parametreleri dosyanın üç özelliğine karşılık gelir. Kodda veri bir dosya yerine `StringIO` ile okunuyor; gerçek bir dosyada yalnız dosya adı yazılır.
+
+```python
+from io import StringIO
+
+import pandas as pd
+
+text = """istasyon;gün;sıcaklık
+Kars;1;-4,5
+Kars;2;-
+Kars;3;-2,5
+Rize;1;8,0
+Rize;2;9,5
+Rize;3;7,5
+"""
+df = pd.read_csv(StringIO(text), sep=";", decimal=",", na_values="-")
+print(df.dtypes["sıcaklık"], df["sıcaklık"].isna().sum())
+print(df.groupby("istasyon")["sıcaklık"].agg(["mean", "count"]))
+```
+
+Çıktı:
+
+```text
+float64 1
+              mean  count
+istasyon                 
+Kars     -3.500000      2
+Rize      8.333333      3
+```
+
+**Sağlama.** Sütun `float64` türünde okundu, yani ondalık virgül doğru çözüldü; tek eksik değer Kars'ın ikinci günüdür. Kars için $\frac{-4{,}5 - 2{,}5}{2} = -3{,}5$, Rize için $\frac{8 + 9{,}5 + 7{,}5}{3} = \frac{25}{3} \approx 8{,}33$ bulunur. [$\blacksquare$]{.qed}
+:::
+::::
+
+## Son Kontrol Listesi {#sec-ozt-kontrol}
+
+Bir kodu bitmiş saymadan önce şu soruları sor:
+
+1. Sonucu bağımsız bir yolla sağladın mı: elle bir değer, bilinen bir formül, `np.allclose(A @ x, b)` ya da $f(r) \approx 0$?
+2. `float` sonuçları `==` ile değil toleransla karşılaştırdın mı?
+3. Bir diziyi değiştirirken onun bir görünüm mü kopya mı olduğunu biliyor musun?
+4. `axis` parametresini ve broadcasting sonucunun şeklini önceden kestirdin mi?
+5. `*` yerine `@`, `inv` yerine `solve`, `det == 0` yerine `cond` kullandın mı?
+6. Polinom katsayılarının sırası (artan ya da azalan) kullandığın fonksiyona uyuyor mu?
+7. `dblquad` ve `tplquad`'da iç değişkeni önce yazdın mı? `solve_ivp`'de `fun(t, y)` sırasını ve `sol.success` değerini denetledin mi?
+8. Hata paylarını (`rtol`, `atol`, `xtol`) gereken doğruluğa göre seçtin mi?
+9. Rastgele hesapta tohumu sabitledin mi ve sonucu standart hatasıyla verdin mi?
+10. pandas'ta eksik değerleri ve sütun türlerini okuduktan hemen sonra denetledin mi?
+
+Kuralların gerekçeleri ve daha çok çözümlü örnek için her bölümün alıştırmalarına, kitabın tamamı için [Müfredat ve Giriş](index.qmd) sayfasına dönebilirsin.

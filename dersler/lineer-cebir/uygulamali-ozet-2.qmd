@@ -1,0 +1,483 @@
+---
+title: "Uygulamalı Özet: Lineer Cebir 2"
+pagetitle: "Uygulamalı Özet: Lineer Cebir 2"
+description: "Lineer Cebir 2 sorularını çözmek için pratik reçeteler ve kopya kâğıdı: lineerlik sınaması, çekirdek, görüntü ve boyut teoremi, dönüşümü taban değerlerinden kurmak, operatör matrisi, geçiş matrisi ve koordinat dönüşümü, benzerlik değişmezleri, determinant hesabı, ek matrisle ters, Cramer kuralı, özdeğerler, köşegenleştirme, matris kuvvetleri ve Cayley-Hamilton teoremi."
+---
+
+Bu sayfa kitabın ikinci dönem yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Bu dönemin soruları üç büyük kalıba ayrılır: bir lineer dönüşümün çekirdeğini, görüntüsünü ve matrisini bulmak; taban değiştiğinde koordinatların ve matrisin nasıl değiştiğini hesaplamak; determinant, karakteristik polinom ve özvektörlerle bir matrisi köşegenleştirmek. Sayfa her soru tipi için adım adım bir reçete, formül ve ölçüt tablolarını, kısa yolları, sık yapılan hataları ve kısa ama tam çözümlü örnekleri verir. Her kural, gerekçesinin bulunduğu bölüme bağlanır. Hesapların çoğu birinci dönemin merdiven şekli tekniğine dayanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt2-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, hangi kalıba girdiğini belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| $F$ lineer mi? | Önce $F(0) = 0$, sonra $F(av + bw)$ | [Lineerlik](#sec-ozt2-lineerlik) |
+| $\operatorname{Ker}$, $\operatorname{Im}$, rank, Nullity | $F(e_i)$'ler satır; homojen sistem | [Çekirdek ve görüntü](#sec-ozt2-cekirdek) |
+| Taban değerlerinden $T(a, b, \dots)$, ters operatör | Vektörü taban cinsinden yaz | [Tabandan kurmak](#sec-ozt2-tabandan) |
+| $[T]_e$, $[T]_f$, $[T]_{C,B}$ | $j$. sütun $= [T(f_j)]_f$ | [Operatör matrisi](#sec-ozt2-matris) |
+| Geçiş matrisi, $[v]_f$'den $[v]_e$ | $P = M_e^{-1}M_f$, $[v]_e = P[v]_f$ | [Geçiş matrisi](#sec-ozt2-gecis) |
+| İki matris benzer mi? | İz, determinant, rank, $\Delta_A$ karşılaştır | [Benzerlik](#sec-ozt2-benzerlik) |
+| Determinant | Satır işlemiyle sıfır üret, sonra aç | [Determinant](#sec-ozt2-determinant) |
+| Ters matrisin kapalı formülü | $A^{-1} = \frac{1}{\lvert A \rvert}\operatorname{ek}A$ | [Ek matris](#sec-ozt2-ek-matris) |
+| Kare sistemin çözümü, parametreli homojen sistem | $x_i = \Delta_i / \Delta$; $\Delta = 0$ | [Cramer kuralı](#sec-ozt2-cramer) |
+| Özdeğer, özvektör, köşegenleştirme | $\Delta_A(t) = \lvert tI_n - A \rvert$, $(\lambda I_n - A)x = 0$ | [Özdeğerler](#sec-ozt2-ozdeger) |
+| $A^{n}$ | $A^{n} = PD^{n}P^{-1}$ | [Kuvvetler](#sec-ozt2-kuvvet) |
+| Polinomla $A^{-1}$ ya da $A^{k}$ | $\Delta_A(A) = 0$ | [Cayley-Hamilton](#sec-ozt2-cayley) |
+
+## Lineerlik Sınaması {#sec-ozt2-lineerlik}
+
+$F : V \to U$, her $a, b \in K$ ve $v, w \in V$ için $F(av + bw) = aF(v) + bF(w)$ sağlıyorsa lineerdir ([lineer dönüşümler](lineer-donusumler/lineer-donusumler.qmd)). Her lineer dönüşüm sıfırı sıfıra götürür.
+
+::: {.callout-tip title="Üç adımda lineerlik"}
+1. **Sıfır testi.** $F(0) \ne 0$ ise $F$ lineer değildir.
+2. **Bileşenlere bak.** Her bileşen değişkenlerin sabit katsayılı bir toplamıysa (örneğin $2x - y + 3z$), $F$ lineerdir; bunu $F(av + bw)$'yi açarak göster.
+3. **Karşı örnek.** Bir bileşende çarpım, kuvvet, mutlak değer ya da trigonometrik fonksiyon varsa somut sayılarla $F(2v) \ne 2F(v)$ ya da $F(v + w) \ne F(v) + F(w)$ göster.
+:::
+
+| Bileşende görülen | Örnek | Bozulan koşul |
+|:--|:--|:--|
+| Sabit terim | $(x + 1,\ y)$ | $F(0) \ne 0$ |
+| Değişkenlerin çarpımı | $(x + y,\ xy)$ | $F(2v) \ne 2F(v)$ |
+| Kare | $(x^{2},\ y)$ | $F(-v) \ne -F(v)$ |
+| Mutlak değer | $(\lvert x \rvert,\ y)$ | $F(-v) \ne -F(v)$ |
+| Matrisle çarpım | $v \mapsto Av$ | Lineerdir |
+
+: Lineerliği bozan ifadeler {#tbl-ozt2-lineerlik}
+
+:::: {#exm-ozt2-lineerlik name="Sıfır Testini Geçen Ama Lineer Olmayan Bir Dönüşüm"}
+$F : \mathbb{R}^{2} \to \mathbb{R}^{2}$, $F(x, y) = (x + y,\ xy)$ dönüşümünün lineer olmadığını gösteriniz.
+
+::: {.cozum}
+$F(0, 0) = (0, 0)$ olduğundan sıfır testi bir şey söylemez. Skalerle çarpmayı deneyelim: $v = (1, 1)$ ve $k = 2$ için
+$$F(2v) = F(2, 2) = (4,\ 4), \qquad 2F(v) = 2(2,\ 1) = (4,\ 2)$$
+$F(2v) \ne 2F(v)$ olduğundan $F$ lineer değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Çekirdek, Görüntü ve Boyut Teoremi {#sec-ozt2-cekirdek}
+
+$\operatorname{Ker} F = \{v : F(v) = 0\}$ ve $\operatorname{Im} F$ birer alt uzaydır ([çekirdek ve görüntü](lineer-donusumler/cekirdek-ve-goruntu.qmd)). $V$ sonlu boyutluysa boyut teoremi ([boyut teoremi, rank ve Nullity](lineer-donusumler/boyut-teoremi.qmd))
+
+$$\dim V = \operatorname{Nullity}(F) + \operatorname{rank}(F)$$
+
+verir; burada $\operatorname{Nullity}(F) = \dim(\operatorname{Ker} F)$, $\operatorname{rank}(F) = \dim(\operatorname{Im} F)$'dir.
+
+::: {.callout-tip title="Dört adımda çekirdek ve görüntü"}
+1. **Görüntü.** $F(e_1), \dots, F(e_n)$'yi hesapla, satır yazıp merdivene indir; sıfırdan farklı satırlar $\operatorname{Im} F$'nin tabanıdır.
+2. **Boyutlar.** $\operatorname{rank}(F) = r$ ise $\operatorname{Nullity}(F) = n - r$; yalnız boyut isteniyorsa burada dur.
+3. **Çekirdek.** $F(v) = 0$ homojen sistemini çöz; serbest değişkenlerden birine $1$, ötekilere $0$ ver.
+4. **Sağlama.** Çekirdek vektörlerini $F$'ye uygula ve $n = \operatorname{Nullity} + \operatorname{rank}$'ı denetle.
+:::
+
+| Bilgi | Sonuç |
+|:--|:--|
+| $\operatorname{Ker} F = \{0\}$ | $F$ bire birdir (singüler değildir) |
+| $\dim V > \dim U$ | $F : V \to U$ bire bir olamaz |
+| $\dim V < \dim U$ | $F$ örten olamaz, çünkü $\operatorname{rank}(F) \le \dim V$ |
+| $V$ sonlu boyutlu, $T \in A(V)$ | $T$ tersinir $\iff$ bire bir $\iff$ örten |
+| $F(v) = Av$ | $\operatorname{Im} F$, $A$'nın sütun uzayıdır; $\operatorname{rank}(F) = \operatorname{rank}(A)$ |
+
+: Boyut teoreminin sonuçları {#tbl-ozt2-boyut}
+
+Bu sonuçlar [singüler olmayan dönüşümler](lineer-donusumler/singuler-donusumler.qmd) ve [tersinir operatörler](operatorler/tersinir-operatorler.qmd) bölümlerindedir.
+
+:::: {#exm-ozt2-cekirdek name="Dört Boyuttan Üç Boyuta Bir Dönüşüm"}
+$T : \mathbb{R}^{4} \to \mathbb{R}^{3}$,
+
+$$T(x, y, z, t) = (x + y + z,\ y - z + t,\ x + 2y + t)$$
+
+dönüşümünün çekirdeğinin ve görüntüsünün birer tabanını bulunuz.
+
+::: {.cozum}
+**Görüntü.** $T(e_1) = (1, 0, 1)$, $T(e_2) = (1, 1, 2)$, $T(e_3) = (1, -1, 0)$, $T(e_4) = (0, 1, 1)$'dir:
+
+$$\begin{pmatrix} 1 & 0 & 1\\ 1 & 1 & 2\\ 1 & -1 & 0\\ 0 & 1 & 1\end{pmatrix}
+\overset{\substack{R_2 \to -R_1 + R_2\\ R_3 \to -R_1 + R_3}}{\sim}
+\begin{pmatrix} 1 & 0 & 1\\ 0 & 1 & 1\\ 0 & -1 & -1\\ 0 & 1 & 1\end{pmatrix}
+\overset{\substack{R_3 \to R_2 + R_3\\ R_4 \to -R_2 + R_4}}{\sim}
+\begin{pmatrix} 1 & 0 & 1\\ 0 & 1 & 1\\ 0 & 0 & 0\\ 0 & 0 & 0\end{pmatrix}$$
+
+$\big\{(1, 0, 1),\ (0, 1, 1)\big\}$, $\operatorname{Im} T$'nin bir tabanıdır; $\operatorname{rank}(T) = 2$, dolayısıyla $\operatorname{Nullity}(T) = 4 - 2 = 2$'dir.
+
+**Çekirdek.** $x + y + z = 0$, $y - z + t = 0$, $x + 2y + t = 0$ sisteminde üçüncü denklem ilk ikisinin toplamıdır. Serbest değişkenler $z$ ve $t$; $y = z - t$ ve $x = -y - z = -2z + t$:
+
+$$z = 1,\ t = 0: \ (-2, 1, 1, 0), \qquad z = 0,\ t = 1: \ (1, -1, 0, 1)$$
+
+Bu iki vektör $\operatorname{Ker} T$'nin bir tabanıdır. Sağlama: $T(-2, 1, 1, 0) = (0, 0, 0)$, $T(1, -1, 0, 1) = (0, 0, 0)$ ve $4 = 2 + 2$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Dönüşümü Taban Değerlerinden Kurmak {#sec-ozt2-tabandan}
+
+Bir lineer dönüşüm, bir tabanın vektörlerindeki değerleriyle tek türlü belirlenir ([koordinatlar ve izomorfizm](lineer-donusumler/koordinatlar-ve-izomorfizm.qmd)). Değerler keyfi seçilebilir; yeter ki verilen vektörler bir taban olsun.
+
+::: {.callout-tip title="Üç adımda tabandan formül"}
+1. Verilen vektörlerin bir taban olduğunu göster.
+2. Genel $(a, b, \dots)$'yi bu taban cinsinden yaz: katsayıları $a, b, \dots$ cinsinden bul.
+3. Lineerlikle bu katsayıları $T(v_1), T(v_2), \dots$ ile çarpıp topla; sonucu verilen değerlerde sağla.
+:::
+
+**Ters operatör.** $T(x, y) = (s, t)$ denklemi $x, y$ için çözülürse $T^{-1}(s, t)$ bulunur. Kısa yol: $\big[T^{-1}\big]_e = \big([T]_e\big)^{-1}$'dir ([operatör cebri ile matris cebri](matris-gosterimi/operator-cebri-izomorfizmi.qmd)). Örneğin aşağıdaki örnekteki $T$ için $[T]_e = \begin{pmatrix} 2 & 1\\ 3 & -2\end{pmatrix}$, $|[T]_e| = -7$ ve
+
+$$\big[T^{-1}\big]_e = \frac{1}{-7}\begin{pmatrix} -2 & -1\\ -3 & 2\end{pmatrix}, \qquad T^{-1}(s, t) = \Big(\frac{2s + t}{7},\ \frac{3s - 2t}{7}\Big)$$
+
+:::: {#exm-ozt2-tabandan name="İki Değerden Bir Operatör"}
+$T : \mathbb{R}^{2} \to \mathbb{R}^{2}$ lineer operatörü $T(1, 1) = (3, 1)$ ve $T(1, 2) = (4, -1)$ koşullarını sağlıyor. $T(a, b)$'yi bulunuz.
+
+::: {.cozum}
+$(1, 1)$ ve $(1, 2)$ birbirinin katı olmadığından bağımsızdır; $\dim \mathbb{R}^{2} = 2$ olduğundan bir tabandır.
+
+$(a, b) = x(1, 1) + y(1, 2)$ yazalım: $x + y = a$ ve $x + 2y = b$'den $y = b - a$, $x = 2a - b$ bulunur. Lineerlikle
+
+$$
+\begin{aligned}
+T(a, b) &= (2a - b)(3, 1) + (b - a)(4, -1)\\[1mm]
+&= (6a - 3b + 4b - 4a,\ 2a - b - b + a) = (2a + b,\ 3a - 2b)
+\end{aligned}
+$$
+
+Sağlama: $T(1, 1) = (3, 1)$ ve $T(1, 2) = (4, -1)$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Operatörün Matrisi {#sec-ozt2-matris}
+
+$e = \{e_1, \dots, e_n\}$ bir taban ve $T \in A(V)$ ise $[T]_e$'nin $j$. **sütunu**, $T(e_j)$'nin $e$ tabanındaki koordinatlarıdır ([bir operatörün matrisi](matris-gosterimi/operator-matrisi.qmd)). Temel eşitlik $[T]_e\,[v]_e = [T(v)]_e$'dir.
+
+| Durum | Matris |
+|:--|:--|
+| Standart taban, $T(x, y) = (ax + by,\ cx + dy)$ | Katsayı tablosu: $\begin{pmatrix} a & b\\ c & d\end{pmatrix}$ |
+| $K^{n}$'de standart olmayan $f$ tabanı | $[T]_f = M_f^{-1}\,[T]_e\,M_f$; $M_f$'nin sütunları $f_j$ |
+| $T : V \to U$, tabanlar $B$ ve $C$ | $[T]_{C,B}$, $(\dim U, \dim V)$ tipinde; $j$. sütun $[T(v_j)]_C$ |
+| Bileşke | $[S \circ T]_e = [S]_e\,[T]_e$ |
+| Ters | $[T^{-1}]_e = [T]_e^{-1}$ |
+| $\dim \operatorname{Hom}(V, U)$ | $\dim V \cdot \dim U$ |
+
+: Matris gösterimi kuralları {#tbl-ozt2-matris}
+
+Dikdörtgen gösterim ve bileşke için bkz. [iki uzay arasında matris gösterimi](matris-gosterimi/donusum-matrisi.qmd) ve [dönüşümlerin uzayı](operatorler/hom-uzayi.qmd).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $T(f_j)$'nin koordinatları **satır** değil **sütun** olarak yazılır; satır yazmak transpozeyi verir.
+- $[T]_f$ için $T(f_j)$, standart tabanda değil **$f$ tabanında** ifade edilir.
+- Taban vektörlerinin sırası değişirse matrisin satır ve sütunları da yer değiştirir.
+:::
+
+:::: {#exm-ozt2-matris name="Standart Olmayan Bir Tabanda Operatör Matrisi"}
+$T : \mathbb{R}^{2} \to \mathbb{R}^{2}$, $T(x, y) = (x + 2y,\ 3x - y)$ ve $f = \{f_1, f_2\}$, $f_1 = (1, 1)$, $f_2 = (1, 2)$ olsun. $[T]_f$'yi bulunuz.
+
+::: {.cozum}
+**Tanımdan.** $T(f_1) = (3, 2)$ ve $T(f_2) = (5, 1)$'dir. $(p, q) = x f_1 + y f_2$ sisteminden $x = 2p - q$, $y = q - p$:
+
+$$T(f_1) = 4f_1 - f_2, \qquad T(f_2) = 9f_1 - 4f_2 \qquad\Longrightarrow\qquad [T]_f = \begin{pmatrix} 4 & 9\\ -1 & -4\end{pmatrix}$$
+
+**Formülle.** $M_f = \begin{pmatrix} 1 & 1\\ 1 & 2\end{pmatrix}$, $M_f^{-1} = \begin{pmatrix} 2 & -1\\ -1 & 1\end{pmatrix}$ ve
+
+$$M_f^{-1}\,[T]_e\,M_f = \begin{pmatrix} 2 & -1\\ -1 & 1\end{pmatrix}\begin{pmatrix} 3 & 5\\ 2 & 1\end{pmatrix} = \begin{pmatrix} 4 & 9\\ -1 & -4\end{pmatrix}$$
+
+Burada ortadaki çarpım $[T]_e M_f$'nin sütunları tam olarak $T(f_1)$ ve $T(f_2)$'dir. Sağlama: iki matrisin izi $0$, determinantı $-7$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Geçiş Matrisi ve Koordinat Dönüşümü {#sec-ozt2-gecis}
+
+$e$'den $f$'ye geçiş matrisi $P$'nin $j$. sütunu $[f_j]_e$'dir ([taban değiştirme](matris-gosterimi/taban-degistirme.qmd), [problemler](matris-gosterimi/problemler.qmd)).
+
+| Formül | Anlamı |
+|:--|:--|
+| $P\,[v]_f = [v]_e$ | $f$ koordinatlarından $e$ koordinatlarına |
+| $[v]_f = P^{-1}\,[v]_e$ | Ters yön |
+| $[T]_f = P^{-1}\,[T]_e\,P$ | Operatör matrisinin değişimi |
+| $P = M_e^{-1}\,M_f$ ($K^{n}$'de) | İki taban da standart değilse |
+| $\big(M_e \mid M_f\big) \sim \big(I_n \mid P\big)$ | $M_e^{-1}$'i ayrıca hesaplamadan |
+| $e \to f \to g$: $P_1 P_2$ | Geçişlerin zincirlenmesi |
+
+: Taban değiştirme formülleri {#tbl-ozt2-gecis}
+
+**Akılda tutma kuralı.** $P$ "yeni tabanı eskinin dilinde" yazar: sütunlar **varılan** tabanın vektörleridir, koordinatları **çıkılan** tabana göre alınır. $e$ standart tabansa $P = M_f$'dir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $[v]_f = P\,[v]_e$ yazmak en yaygın hatadır; $P$, $f$ koordinatlarını $e$ koordinatlarına çevirir.
+- $P^{-1}[T]_eP$ ile $P[T]_eP^{-1}$ karıştırılmamalıdır; sağdaki $P$, $f$ koordinatlarını alıp $e$ koordinatlarına çevirir.
+:::
+
+:::: {#exm-ozt2-gecis name="İki Standart Olmayan Taban Arasında Koordinat"}
+$\mathbb{R}^{2}$'de $e_1 = (1, 1)$, $e_2 = (1, 2)$ ve $f_1 = (2, 1)$, $f_2 = (3, 4)$ olsun. $[v]_f = \begin{pmatrix} 1\\ -1\end{pmatrix}$ olan $v$ vektörünün $[v]_e$ koordinatlarını geçiş matrisiyle bulunuz.
+
+::: {.cozum}
+$\big(M_e \mid M_f\big)$'yi indirgeyelim:
+
+$$\left(\begin{array}{cc|cc} 1 & 1 & 2 & 3\\ 1 & 2 & 1 & 4\end{array}\right)
+\overset{R_2 \to -R_1 + R_2}{\sim}
+\left(\begin{array}{cc|cc} 1 & 1 & 2 & 3\\ 0 & 1 & -1 & 1\end{array}\right)
+\overset{R_1 \to -R_2 + R_1}{\sim}
+\left(\begin{array}{cc|cc} 1 & 0 & 3 & 2\\ 0 & 1 & -1 & 1\end{array}\right)$$
+
+$$P = \begin{pmatrix} 3 & 2\\ -1 & 1\end{pmatrix}, \qquad [v]_e = P\,[v]_f = \begin{pmatrix} 3 - 2\\ -1 - 1\end{pmatrix} = \begin{pmatrix} 1\\ -2\end{pmatrix}$$
+
+Sağlama: $v = f_1 - f_2 = (-1, -3)$ ve $e_1 - 2e_2 = (-1, -3)$. Ayrıca $P$'nin sütunları $f_1 = 3e_1 - e_2$ ve $f_2 = 2e_1 + e_2$ eşitliklerini verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Benzerlik Değişmezleri {#sec-ozt2-benzerlik}
+
+$B = P^{-1}AP$ olacak regüler bir $P$ varsa $A \sim B$'dir; bir operatörün farklı tabanlardaki matrisleri benzerdir ([benzerlik ve iz](matris-gosterimi/benzerlik.qmd)). Benzer matrislerde şunlar aynıdır:
+
+| Büyüklük | Gerekçe |
+|:--|:--|
+| Rank | Benzer matrislerin rankı eşittir |
+| İz | $\operatorname{iz}(AB) = \operatorname{iz}(BA)$ |
+| Determinant | $\lvert P^{-1}AP \rvert = \lvert A \rvert$ |
+| Karakteristik polinom ve özdeğerler | $\lvert tI_n - P^{-1}AP \rvert = \lvert tI_n - A \rvert$ |
+| Kuvvetler ve polinomlar | $(P^{-1}AP)^{m} = P^{-1}A^{m}P$ |
+
+: Benzerlikte korunan büyüklükler {#tbl-ozt2-benzerlik}
+
+**Kısa yol.** Bu büyüklüklerden biri farklıysa matrisler benzer **değildir**. Hepsinin aynı olması ise benzerlik için yetmez: $I_2$ ile $\begin{pmatrix} 1 & 1\\ 0 & 1\end{pmatrix}$'in izi, determinantı ve karakteristik polinomu aynıdır, ama $P^{-1}I_2P = I_2$ olduğundan $I_2$'ye benzer tek matris $I_2$'dir.
+
+## Determinant Hesabı {#sec-ozt2-determinant}
+
+Determinant, $|A| = \sum_{\sigma \in S_n} \operatorname{sgn}(\sigma)\,a_{1\sigma(1)} \cdots a_{n\sigma(n)}$ toplamıdır ([permütasyonlar](determinantlar/permutasyonlar.qmd), [determinant ve özellikleri](determinantlar/determinant.qmd)). İşaret, ters sayısından okunur: her sayının sağında kalan küçükleri say. Örneğin $31524$'te $3$'ün sağında $1, 2$; $5$'in sağında $2, 4$ vardır; ters sayısı $4$, permütasyon çift, $\operatorname{sgn} = +1$'dir.
+
+| İşlem ya da durum | Determinanta etkisi |
+|:--|:--|
+| İki satır (sütun) yer değiştirir | $-\lvert A \rvert$ |
+| Bir satır $c$ ile çarpılır | $c\,\lvert A \rvert$ |
+| Bir satıra başka satırın katı eklenir | Değişmez |
+| Sıfır satır ya da iki eşit satır | $0$ |
+| Üçgensel matris | Köşegen elemanlarının çarpımı |
+| $A^{t}$ | $\lvert A \rvert$; satır kuralları sütunlar için de geçerli |
+| $AB$, $A^{-1}$, $cA$ | $\lvert A \rvert\lvert B \rvert$, $\frac{1}{\lvert A \rvert}$, $c^{n}\lvert A \rvert$ |
+| Regülerlik | $A$ regüler $\iff \lvert A \rvert \ne 0$ |
+
+: Determinantın özellikleri {#tbl-ozt2-determinant}
+
+::: {.callout-tip title="Dört adımda determinant"}
+1. Sıfırı en çok olan satırı ya da sütunu, yoksa elemanı $1$ olanı seç.
+2. Satır (ya da sütun) işlemi $R_i \to kR_j + R_i$ ile o sütundaki diğer elemanları sıfırla; bu işlem determinantı değiştirmez.
+3. O sütuna göre aç: $|A| = a_{1j}A_{1j} + \cdots + a_{nj}A_{nj}$, işaretler $(-1)^{i+j}$ satranç tahtasından ([kofaktör açılımı](determinantlar/kofaktor-ve-ters.qmd)).
+4. $3 \times 3$'e inince birinci satıra göre aç; satır değişimi yaptıysan işareti çevirmeyi unutma.
+:::
+
+:::: {#exm-ozt2-determinant name="Sıfır Üretip Açarak Dördüncü Mertebe"}
+$$\begin{vmatrix} 1 & 2 & 0 & 1\\ 2 & 3 & 1 & 0\\ 0 & 1 & 2 & 1\\ 1 & 0 & 1 & 3\end{vmatrix}$$
+determinantını hesaplayınız.
+
+::: {.cozum}
+$a_{11} = 1$'i kullanarak birinci sütunu temizleyelim: $R_2 \to -2R_1 + R_2$, $R_4 \to -R_1 + R_4$. Bu işlemler determinantı değiştirmez:
+
+$$= \begin{vmatrix} 1 & 2 & 0 & 1\\ 0 & -1 & 1 & -2\\ 0 & 1 & 2 & 1\\ 0 & -2 & 1 & 2\end{vmatrix}
+= 1 \cdot \begin{vmatrix} -1 & 1 & -2\\ 1 & 2 & 1\\ -2 & 1 & 2\end{vmatrix}$$
+
+Birinci satıra göre açalım:
+
+$$
+\begin{aligned}
+&= -1\,(2 \cdot 2 - 1 \cdot 1) - 1\,\big(1 \cdot 2 - 1 \cdot (-2)\big) - 2\,\big(1 \cdot 1 - 2 \cdot (-2)\big)\\[1mm]
+&= -3 - 4 - 10 = -17
+\end{aligned}
+$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Ek Matrisle Ters {#sec-ozt2-ek-matris}
+
+$A_{ij} = (-1)^{i+j}|M_{ij}|$ kofaktörlerinden kurulan matrisin **transpozesi** $\operatorname{ek}A$'dır ve $|A| \ne 0$ ise $A^{-1} = \frac{1}{|A|}\operatorname{ek}A$'dır ([kofaktör açılımı ve ters matris](determinantlar/kofaktor-ve-ters.qmd)). İkinci mertebede:
+
+$$\begin{pmatrix} a & b\\ c & d\end{pmatrix}^{-1} = \frac{1}{ad - bc}\begin{pmatrix} d & -b\\ -c & a\end{pmatrix}$$
+
+::: {.callout-tip title="Dört adımda ek matrisle ters"}
+1. $|A|$'yı hesapla; sıfırsa ters yoktur.
+2. Dokuz kofaktörü işaret şablonuyla yaz.
+3. Kofaktörler matrisinin **transpozesini** al: $\operatorname{ek}A$'nın $(i, j)$ girdisi $A_{ji}$'dir.
+4. $|A|$'ya böl ve $A \cdot \operatorname{ek}A = |A|\,I_n$ ile bir satırı sağla.
+:::
+
+**Kısa yol.** Birinci satırın elemanlarını kendi kofaktörleriyle çarpıp toplamak $|A|$'yı verir; kofaktörleri zaten hesapladığın için determinant bedavaya gelir ve kofaktör hatalarını yakalar.
+
+:::: {#exm-ozt2-ek-matris name="Ek Matrisle Üçüncü Mertebeden Ters"}
+$A = \begin{pmatrix} 1 & 2 & 0\\ 0 & 1 & 3\\ 1 & 0 & 2\end{pmatrix}$ matrisinin tersini ek matris yardımıyla bulunuz.
+
+::: {.cozum}
+**Kofaktörler.**
+
+$$A_{11} = +(2 - 0) = 2, \qquad A_{12} = -(0 - 3) = 3, \qquad A_{13} = +(0 - 1) = -1$$
+
+$$A_{21} = -(4 - 0) = -4, \qquad A_{22} = +(2 - 0) = 2, \qquad A_{23} = -(0 - 2) = 2$$
+
+$$A_{31} = +(6 - 0) = 6, \qquad A_{32} = -(3 - 0) = -3, \qquad A_{33} = +(1 - 0) = 1$$
+
+**Determinant.** Birinci satıra göre:
+
+$$|A| = 1 \cdot 2 + 2 \cdot 3 + 0 \cdot (-1) = 8 \ne 0$$
+
+**Ters.** Kofaktörler matrisinin transpozesini alıp $8$'e bölelim:
+
+$$\operatorname{ek}A = \begin{pmatrix} 2 & -4 & 6\\ 3 & 2 & -3\\ -1 & 2 & 1\end{pmatrix}, \qquad
+A^{-1} = \frac{1}{8}\begin{pmatrix} 2 & -4 & 6\\ 3 & 2 & -3\\ -1 & 2 & 1\end{pmatrix}$$
+
+Sağlama: $A$'nın birinci satırı $(1, 2, 0)$ ile $\operatorname{ek}A$'nın sütunları çarpılırsa $2 + 6 = 8$, $-4 + 4 = 0$, $6 - 6 = 0$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Cramer Kuralı {#sec-ozt2-cramer}
+
+$n$ denklemli $n$ bilinmeyenli $Ax = b$ sisteminde $\Delta = |A| \ne 0$ ise çözüm tektir ve $x_i = \Delta_i / \Delta$'dır; $\Delta_i$, $A$'nın $i$. sütunu $b$ ile değiştirilerek bulunur ([Cramer kuralı ve operatörün determinantı](determinantlar/cramer-kurali.qmd)).
+
+| Durum | Sonuç |
+|:--|:--|
+| $\Delta \ne 0$ | Tek çözüm, $x_i = \Delta_i / \Delta$ |
+| $\Delta = 0$ | Ya çözüm yok ya sonsuz çözüm; [Gauss yöntemine](denklem-sistemleri/gauss-yontemi.qmd) dön |
+| Homojen, $\Delta \ne 0$ | Yalnız sıfır çözüm |
+| Homojen, $\Delta = 0$ | Sıfırdan farklı çözüm var |
+
+: Kare sistemlerde determinant ölçütü {#tbl-ozt2-cramer}
+
+**Kısa yol (parametreli homojen sistem).** "Hangi $k$ için sıfırdan farklı çözüm vardır?" sorusu $\Delta(k) = 0$ denklemidir; merdiven şekli gerekmez. Örneğin $kx + y + z = 0$, $x + ky + z = 0$, $x + y + kz = 0$ sisteminde bütün satırlar birinciye eklenip $(k + 2)$ dışarı alınırsa
+
+$$\Delta(k) = (k + 2)\begin{vmatrix} 1 & 1 & 1\\ 1 & k & 1\\ 1 & 1 & k\end{vmatrix} = (k + 2)\begin{vmatrix} 1 & 1 & 1\\ 0 & k - 1 & 0\\ 0 & 0 & k - 1\end{vmatrix} = (k + 2)(k - 1)^{2}$$
+
+bulunur; sıfırdan farklı çözüm yalnız $k = 1$ ve $k = -2$ için vardır.
+
+:::: {#exm-ozt2-cramer name="Cramer Kuralıyla Üç Bilinmeyen"}
+$2x + y - z = 1$, $x - y + 2z = 5$, $3x + 2y + z = 10$ sistemini Cramer kuralıyla çözünüz.
+
+::: {.cozum}
+Determinantları birinci satıra göre açalım:
+
+$$\Delta = \begin{vmatrix} 2 & 1 & -1\\ 1 & -1 & 2\\ 3 & 2 & 1\end{vmatrix} = 2(-1 - 4) - (1 - 6) - (2 + 3) = -10$$
+
+$$\Delta_1 = \begin{vmatrix} 1 & 1 & -1\\ 5 & -1 & 2\\ 10 & 2 & 1\end{vmatrix} = (-1 - 4) - (5 - 20) - (10 + 10) = -10$$
+
+$$\Delta_2 = \begin{vmatrix} 2 & 1 & -1\\ 1 & 5 & 2\\ 3 & 10 & 1\end{vmatrix} = 2(5 - 20) - (1 - 6) - (10 - 15) = -20$$
+
+$$\Delta_3 = \begin{vmatrix} 2 & 1 & 1\\ 1 & -1 & 5\\ 3 & 2 & 10\end{vmatrix} = 2(-10 - 10) - (10 - 15) + (2 + 3) = -30$$
+
+$\Delta \ne 0$ olduğundan çözüm tektir: $x = 1$, $y = 2$, $z = 3$. Sağlama: $2 + 2 - 3 = 1$, $1 - 2 + 6 = 5$, $3 + 4 + 3 = 10$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Özdeğerler ve Köşegenleştirme {#sec-ozt2-ozdeger}
+
+$\lambda$, $A$'nın bir özdeğeridir ancak ve ancak $\Delta_A(\lambda) = |\lambda I_n - A| = 0$'dır; $\lambda$'nın öz uzayı $V_\lambda$, $(\lambda I_n - A)x = 0$ sisteminin çözüm uzayıdır ([özdeğerler ve özvektörler](ozdegerler/ozdeger-ozvektor.qmd), [karakteristik polinom](ozdegerler/karakteristik-polinom.qmd)). $A$ köşegenleştirilebilirdir ancak ve ancak $n$ tane lineer bağımsız özvektörü vardır; o zaman bu özvektörler sütun yazılarak kurulan $P$ için $P^{-1}AP$ köşegendir ([köşegenleştirme](ozdegerler/kosegenlestirme.qmd)).
+
+::: {.callout-tip title="Beş adımda köşegenleştirme"}
+1. $\Delta_A(t) = |tI_n - A|$'yı hesapla ve çarpanlarına ayır.
+2. Sağla: köklerin toplamı $\operatorname{iz}(A)$, çarpımı $|A|$ olmalı.
+3. Her $\lambda$ için $(\lambda I_n - A)x = 0$'ı çöz, öz uzayın bir tabanını bul.
+4. Bulunan bağımsız özvektörleri say: toplam $n$ ise köşegenleşir, değilse köşegenleşmez.
+5. $P$'yi özvektörleri **sütun** yazarak kur; $D$'nin köşegeni aynı sırada özdeğerlerdir. $P^{-1}$ yerine $AP = PD$'yi sağla.
+:::
+
+| Durum | Kısa yol |
+|:--|:--|
+| $2 \times 2$ | $\Delta_A(t) = t^{2} - \operatorname{iz}(A)\,t + \lvert A \rvert$ |
+| Genel $n$ | $t^{n-1}$'in katsayısı $-\operatorname{iz}(A)$, sabit terim $(-1)^{n}\lvert A \rvert$ |
+| Üçgensel matris | Özdeğerler köşegen elemanlarıdır |
+| Satır toplamları hep $s$ | $s$ bir özdeğerdir, $(1, \dots, 1)$ özvektördür |
+| $0$ özdeğer | $\iff$ $A$ singüler |
+| $n$ farklı özdeğer | Hesapsız köşegenleşir |
+| $\lambda$, $A$'nın özdeğeri | $\lambda^{m}$, $A^{m}$'nin; $A$ regülerse $\frac{1}{\lambda}$, $A^{-1}$'in özdeğeri |
+
+: Özdeğer kısa yolları {#tbl-ozt2-ozdeger}
+
+Gerekçeler kısadır: satır toplamları $s$ ise $A(1, \dots, 1)^{t} = s(1, \dots, 1)^{t}$'dir; $Av = \lambda v$ ise $A^{m}v = \lambda^{m}v$ ve $v = \lambda A^{-1}v$'dir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Katlı bir kök, köşegenleşmeyi garanti etmez de engellemez de; karar öz uzayın boyutuyla verilir. Örneğin $\begin{pmatrix} 5 & -1\\ 4 & 1\end{pmatrix}$ için $\Delta(t) = (t - 3)^{2}$ ve $3I_2 - A = \begin{pmatrix} -2 & 1\\ -4 & 2\end{pmatrix}$ olduğundan öz uzay yalnız $y = 2x$ doğrusudur; matris köşegenleşmez.
+- Sıfır vektörü özvektör değildir; öz uzayın tabanı yazılırken sıfır çözüm atılır.
+- $D$'deki özdeğerlerin sırası $P$'nin sütunlarının sırasıyla aynı olmalıdır.
+:::
+
+:::: {#exm-ozt2-kosegen name="Katlı Özdeğerle Köşegenleştirme"}
+$A = \begin{pmatrix} 3 & 1 & 1\\ 1 & 3 & 1\\ 1 & 1 & 3\end{pmatrix}$ matrisini köşegenleştiriniz.
+
+::: {.cozum}
+**Karakteristik polinom.** $tI_3 - A$'da bütün satırları birinciye ekleyip $(t - 5)$'i dışarı alalım, sonra birinci satırı ötekilere ekleyelim:
+
+$$\Delta_A(t) = (t - 5)\begin{vmatrix} 1 & 1 & 1\\ -1 & t - 3 & -1\\ -1 & -1 & t - 3\end{vmatrix} = (t - 5)\begin{vmatrix} 1 & 1 & 1\\ 0 & t - 2 & 0\\ 0 & 0 & t - 2\end{vmatrix} = (t - 5)(t - 2)^{2}$$
+
+Sağlama: $5 + 2 + 2 = 9 = \operatorname{iz}(A)$ ve $5 \cdot 2 \cdot 2 = 20 = |A|$.
+
+**$\lambda = 2$.** $2I_3 - A$'nın bütün girdileri $-1$'dir; tek denklem $x + y + z = 0$, iki serbest değişken: $u = (-1, 1, 0)$, $v = (-1, 0, 1)$.
+
+**$\lambda = 5$.** Satır toplamları $5$ olduğundan $w = (1, 1, 1)$ bir özvektördür; $V_5$ bir boyutludur.
+
+Üç bağımsız özvektör bulundu; $A$ köşegenleşir:
+
+$$P = \begin{pmatrix} -1 & -1 & 1\\ 1 & 0 & 1\\ 0 & 1 & 1\end{pmatrix}, \qquad |P| = 3, \qquad P^{-1}AP = \begin{pmatrix} 2 & 0 & 0\\ 0 & 2 & 0\\ 0 & 0 & 5\end{pmatrix}$$
+
+Sağlama: $Au = (-2, 2, 0) = 2u$ ve $Aw = (5, 5, 5) = 5w$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Köşegenleştirmeyle Kuvvet {#sec-ozt2-kuvvet}
+
+$P^{-1}AP = D$ ise $A = PDP^{-1}$ ve $A^{n} = PD^{n}P^{-1}$'dir; köşegen matrisin kuvveti, köşegen elemanlarının kuvvetidir ([benzerlik ve iz](matris-gosterimi/benzerlik.qmd)). Sonucu $n = 1$ için $A$'yı vererek sağlamak hesap hatalarını yakalar.
+
+:::: {#exm-ozt2-kuvvet name="Bir Simetrik Matrisin Kuvvetleri"}
+$A = \begin{pmatrix} 1 & 2\\ 2 & 1\end{pmatrix}$ için $A^{n}$'yi bulunuz.
+
+::: {.cozum}
+$\Delta_A(t) = t^{2} - 2t - 3$'tür; kökleri $3$ ve $-1$'dir. $\lambda = 3$ için $3I_2 - A = \begin{pmatrix} 2 & -2\\ -2 & 2\end{pmatrix}$, özvektör $(1, 1)$; $\lambda = -1$ için $-I_2 - A = \begin{pmatrix} -2 & -2\\ -2 & -2\end{pmatrix}$, özvektör $(1, -1)$.
+
+$$P = \begin{pmatrix} 1 & 1\\ 1 & -1\end{pmatrix}, \qquad P^{-1} = \frac{1}{2}\begin{pmatrix} 1 & 1\\ 1 & -1\end{pmatrix}, \qquad D = \begin{pmatrix} 3 & 0\\ 0 & -1\end{pmatrix}$$
+
+$$A^{n} = PD^{n}P^{-1} = \begin{pmatrix} 3^{n} & (-1)^{n}\\ 3^{n} & -(-1)^{n}\end{pmatrix}\frac{1}{2}\begin{pmatrix} 1 & 1\\ 1 & -1\end{pmatrix}
+= \frac{1}{2}\begin{pmatrix} 3^{n} + (-1)^{n} & 3^{n} - (-1)^{n}\\ 3^{n} - (-1)^{n} & 3^{n} + (-1)^{n}\end{pmatrix}$$
+
+Sağlama: $n = 1$ için $\frac{1}{2}\begin{pmatrix} 2 & 4\\ 4 & 2\end{pmatrix} = A$; $n = 2$ için $\begin{pmatrix} 5 & 4\\ 4 & 5\end{pmatrix} = A^{2}$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Cayley-Hamilton Teoremi {#sec-ozt2-cayley}
+
+Her kare matris kendi karakteristik polinomunun köküdür: $\Delta_A(A) = 0$ ([karakteristik polinom ve Cayley-Hamilton teoremi](ozdegerler/karakteristik-polinom.qmd)). Karakteristik polinom
+
+$$\Delta_A(t) = t^{n} + c_{n-1}t^{n-1} + \cdots + c_1 t + c_0$$
+
+biçiminde yazılsın. $c_0 \ne 0$ ise $A$ regülerdir ve
+
+$$A^{-1} = -\frac{1}{c_0}\big(A^{n-1} + c_{n-1}A^{n-2} + \cdots + c_1 I_n\big)$$
+
+**Kısa yol (kuvvetler).** $\Delta_A(A) = 0$ eşitliği $A^{n}$'yi daha küçük kuvvetler cinsinden verir; bunu tekrar tekrar yerine koyarak her $A^{k}$, $I_n, A, \dots, A^{n-1}$'in bir kombinezonu olarak yazılır. Örneğin aşağıdaki matris için $A^{2} = 3A - I_2$ olduğundan
+$$A^{3} = 3A^{2} - A = 3(3A - I_2) - A = 8A - 3I_2 = \begin{pmatrix} 13 & 8\\ 8 & 5\end{pmatrix}$$
+
+:::: {#exm-ozt2-cayley name="Cayley-Hamilton ile İkinci Mertebeden Ters"}
+$A = \begin{pmatrix} 2 & 1\\ 1 & 1\end{pmatrix}$ matrisinin tersini Cayley-Hamilton teoremiyle bulunuz.
+
+::: {.cozum}
+$\operatorname{iz}(A) = 3$ ve $|A| = 1$ olduğundan $\Delta_A(t) = t^{2} - 3t + 1$'dir. Teorem gereği
+
+$$A^{2} - 3A + I_2 = 0 \quad\Longrightarrow\quad A(3I_2 - A) = I_2 \quad\Longrightarrow\quad A^{-1} = 3I_2 - A = \begin{pmatrix} 1 & -1\\ -1 & 2\end{pmatrix}$$
+
+Sağlama:
+
+$$\begin{pmatrix} 2 & 1\\ 1 & 1\end{pmatrix}\begin{pmatrix} 1 & -1\\ -1 & 2\end{pmatrix} = \begin{pmatrix} 2 - 1 & -2 + 2\\ 1 - 1 & -1 + 2\end{pmatrix} = I_2$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Matrisler, denklem sistemleri ve vektör uzayları için birinci dönemin özeti: [Uygulamalı Özet: Lineer Cebir 1](uygulamali-ozet-1.qmd).

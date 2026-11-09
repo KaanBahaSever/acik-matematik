@@ -1,0 +1,496 @@
+---
+title: "Uygulamalı Özet: Sayılar Teorisi 1"
+pagetitle: "Uygulamalı Özet: Sayılar Teorisi 1"
+description: "Sayılar Teorisi 1 sorularını çözmek için ispatsız pratik algoritmalar ve kopya kâğıdı: bölünebilme ispatları ve tümevarım, Öklid algoritması ve Bézout katsayıları, kanonik gösterimle bölen sayısı, EBOB ve EKOK, Diofant denklemleri, kongrüans hesabı ve bölünebilme kuralları, lineer kongrüanslar ve modüler ters, Çin kalan teoremi, Fermat, Euler ve Wilson teoremleriyle kalan hesabı ve Euler'in phi fonksiyonu."
+---
+
+Bu sayfa Sayılar Teorisi 1'in yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık karşılaşılan sorular şunlardır: "her $n$ için $m \mid f(n)$ olduğunu gösteriniz", iki sayının EBOB'unu ve Bézout katsayılarını bulmak, $ax + by = c$ denkleminin (pozitif) çözümleri, büyük bir kuvvetin ya da faktöriyelin kalanı, $ax \equiv b \pmod n$ denklemi ve bir kongrüans sistemi. Sayfa her soru tipi için adım adım bir algoritma, gerekli kural tablolarını, kısa yolları, sık yapılan hataları ve yeni sayılarla tam çözülmüş kısa örnekleri verir. En ayrıntılı algoritmalar en çok karşılaşılan dört tipe ayrıldı: Öklid algoritması, Diofant denklemi, lineer kongrüans ve büyük kuvvetin kalanı. Her kural, gerekçesinin bulunduğu teoreme ya da bölüme bağlanır; konuya baştan girmek için [Tam sayılarda bölünebilme](1/bolunebilme.qmd) bölümü iyi bir başlangıçtır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt1-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, sorunun hangi kalıba girdiğini ve hangi aracın en kısa yol olduğunu belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Kullanılacak yöntem | Bu sayfada |
+|:--|:--|:--|
+| Her $n$ için $m \mid f(n)$ ispatı | Modülü parçalama, ardışık çarpım, kalanlara göre durum ayırma, tümevarım | @sec-ozt1-bolunebilme |
+| $\gcd(a, b)$ ve $ax + by = \gcd(a, b)$ katsayıları | Öklid algoritması, geriye doğru yerine koyma | @sec-ozt1-ebob |
+| $n$'ye bağlı iki ifadenin EBOB'u | Kat çıkarma: $\gcd(a, b) = \gcd(a, b - ak)$ | @sec-ozt1-ebob |
+| Bölen sayısı, bölenler, üslerle EBOB ve EKOK | Kanonik gösterim | @sec-ozt1-asal-carpanlar |
+| Bir sayı asal mı, bir kök irrasyonel mi | $\sqrt{n}$'e kadar asallarla bölme; rasyonel kök tam sayıdır | @sec-ozt1-asal-carpanlar |
+| $ax + by = c$, pozitif ya da bir aralıktaki çözümler | $d \mid c$ denetimi, Bézout, genel çözüm, $t$ için eşitsizlik | @sec-ozt1-diofant |
+| Toplamın ya da kuvvetin kalanı, bölünebilme kuralları | Kongrüans kuralları, $\pm 1$'e denk küçük kuvvet | @sec-ozt1-kongruans |
+| $ax \equiv b \pmod n$, modüler ters | $d = \gcd(a, n)$ denetimi, $d$ tane çözüm | @sec-ozt1-lineer |
+| Kongrüans sistemi, "şu kalanları veren sayı" | Çin kalan teoremi ya da yerine koyma | @sec-ozt1-cin-kalan |
+| Büyük üslü kuvvetin kalanı, son rakamlar | Fermat ve Euler: üssü $\phi(n)$'ye göre indirgeme | @sec-ozt1-klasik |
+| $\phi(n)$ değeri, $\phi(n) = c$ denklemi | Çarpım formülü, $\phi(p^k) \mid \phi(n)$ | @sec-ozt1-klasik |
+| Faktöriyelin kalanı | Wilson teoremi | @sec-ozt1-klasik |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt1-yontem}
+
+## Bölünebilme İspatları {#sec-ozt1-bolunebilme}
+
+"Her $n$ tam sayısı için $m \mid f(n)$" biçimindeki sorular birkaç kalıpla çözülür; ayrıntılar [Tam sayılarda bölünebilme](1/bolunebilme.qmd), [Bölme algoritması](1/bolme-algoritmasi.qmd) ve [Tümevarım ve iyi sıralama prensibi](1/tumevarim.qmd) bölümlerindedir.
+
+::: {.callout-tip title="Dört adımda bölünebilme ispatı"}
+1. **Modülü parçala.** $m = m_1 m_2$ ve $\gcd(m_1, m_2) = 1$ ise $m_1 \mid f(n)$ ile $m_2 \mid f(n)$'yi ayrı ayrı göster; ikisi birlikte $m \mid f(n)$ verir (@thm-ortak-kat).
+2. **Çarpanlara ayır.** $f(n)$ içinde ardışık sayıların çarpımı varsa kullan: ardışık iki sayıdan biri $2$'ye, ardışık üç sayıdan biri $3$'e bölünür (@exm-ardisik-carpim). Gerekirse $f(n)$'e $m$'nin bir katını ekleyip çıkar.
+3. **Kalanlara göre durum ayır.** Küçük bir $m_i$ için $n \equiv 0, 1, \dots, m_i - 1 \pmod{m_i}$ durumlarının her birinde $f(n)$'i hesapla (@thm-bolme-algoritmasi, @thm-polinom-kongruans).
+4. **Üstel ifadede tümevarım.** $f(n) = a^n + \cdots$ ise $f(1)$'i denetle; sonra $f(n+1) - a f(n)$ farkının $m$ ile bölündüğünü göster (@thm-tumevarim).
+:::
+
+| Bilgi | Gerekçe |
+|:--|:--|
+| Bir tam kare modülo $3$ ve modülo $4$ yalnız $0$ ya da $1$'dir | @exm-kare-mod3, @exm-dorde-bolum-kare |
+| Tek bir sayının karesi modülo $8$ daima $1$'dir | @exm-tek-kare-mod8 |
+| Bir tam karenin son rakamı yalnız $0, 1, 4, 5, 6, 9$ olabilir | @exm-kare-son-rakam |
+| $n^3 - n = (n-1)n(n+1)$ daima $6$'ya bölünür | @exm-n-kup-eksi-n, @exm-alti-bolur |
+| Tek $a$ için $24 \mid a(a^2 - 1)$ | @exm-yirmidort-tek |
+| $2^n - 1 \mid 2^m - 1 \iff n \mid m$ | @exm-mersenne-bolunebilme |
+
+: Bölünebilme ispatlarında sık kullanılan bilgiler {#tbl-ozt1-bolunebilme}
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $2 \mid f(n)$ ve $4 \mid f(n)$ birlikte $8 \mid f(n)$ vermez; birleştirilen modüller aralarında asal olmalıdır.
+- Tümevarımda taban adımı atlanmaz; "$n$ için doğruysa $n+1$ için doğru" tek başına bir şey kanıtlamaz.
+- Durum ayırırken bütün kalanlar ele alınır; negatif $n$ de bu durumların içindedir, ayrıca ispat gerekmez.
+:::
+
+:::: {#exm-ozt1-alti-bolur name="Bir Kübik İfadenin Altıya Bölünmesi"}
+Her $n$ tam sayısı için $6 \mid n^3 + 5n$ olduğunu gösteriniz.
+
+::: {.cozum}
+$6n$ ekleyip çıkararak ifadeyi ardışık çarpıma getirelim:
+$$n^3 + 5n = (n^3 - n) + 6n = (n-1)\,n\,(n+1) + 6n.$$
+
+$(n-1)n(n+1)$ ardışık üç sayının çarpımıdır. Bu sayılardan biri çift olduğundan çarpım $2$'ye, biri $3$'ün katı olduğundan $3$'e bölünür. $\gcd(2, 3) = 1$ olduğundan @thm-ortak-kat gereği $6 \mid (n-1)n(n+1)$'dir.
+
+$6 \mid 6n$ de açık olduğundan iki terimin toplamı da $6$ ile bölünür: $6 \mid n^3 + 5n$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt1-tumevarim name="Üstel Bir İfadenin Dokuza Bölünmesi"}
+Her $n \geq 1$ tam sayısı için $9 \mid 4^n + 6n - 1$ olduğunu tümevarımla gösteriniz.
+
+::: {.cozum}
+$f(n) = 4^n + 6n - 1$ diyelim.
+
+**Taban adım.** $f(1) = 4 + 6 - 1 = 9$ ve $9 \mid 9$'dur.
+
+**Tümevarım adımı.** $9 \mid f(n)$ olsun. $4^{n+1} = 4 \cdot 4^n$ olduğundan $f(n+1) - 4f(n)$ farkını hesaplayalım:
+$$
+\begin{aligned}
+f(n+1) - 4 f(n) &= \left( 4^{n+1} + 6n + 5 \right) - \left( 4^{n+1} + 24n - 4 \right) \\[1mm]
+&= -18n + 9 = 9(1 - 2n).
+\end{aligned}
+$$
+Buradan $f(n+1) = 4 f(n) + 9(1 - 2n)$ olur. Sağdaki iki terim de $9$'a bölündüğünden $9 \mid f(n+1)$'dir. @thm-tumevarim gereği iddia her $n \geq 1$ için doğrudur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## EBOB, Öklid Algoritması ve Bézout Katsayıları {#sec-ozt1-ebob}
+
+$\gcd(a, b)$, sayıları çarpanlarına ayırmadan [Öklid algoritmasıyla](1/oklid-algoritmasi.qmd) bulunur. Algoritmanın tek dayanağı $\gcd(a, b) = \gcd(a, b - ak)$ eşitliğidir (@prp-ebob-degismezlik); sıfırdan farklı son kalan EBOB'dur (@thm-oklid-algoritmasi).
+
+::: {.callout-tip title="Dört adımda EBOB ve Bézout katsayıları"}
+1. **Böl.** Büyük sayıyı küçüğe böl, sonra böleni kalana böl; kalan $0$ olana kadar sürdür.
+2. **Oku.** Sıfırdan farklı son kalan $\gcd(a, b)$'dir.
+3. **Kalanları yalnız bırak.** Her satırı $r_i = r_{i-2} - q_i r_{i-1}$ biçiminde yaz.
+4. **Geriye doğru yerine koy.** En alttaki eşitlikten başla, her adımda bir kalanı bir üst satırdaki ifadesiyle değiştir. $a$ ile $b$'yi sayıya çevirme, yalnız katsayılarını topla. Sonunda $\gcd(a, b) = ax_0 + by_0$ çıkar (@thm-bezout).
+:::
+
+| Özellik | Kural | Dayanak |
+|:--|:--|:--|
+| Sıfır ve bölen | $\gcd(a, 0) = \lvert a \rvert$; $a \mid b$ ise $\gcd(a, b) = \lvert a \rvert$ | @prp-ebob-ozellikleri |
+| Ortak çarpan | $\gcd(ma, mb) = m \gcd(a, b)$, $m > 0$ | @prp-ebob-ozellikleri |
+| EBOB'a bölmek | $\gcd\left( \frac{a}{d}, \frac{b}{d} \right) = 1$, $d = \gcd(a, b)$ | @cor-sadelestirme |
+| Aralarında asallık | $\gcd(a, b) = 1 \iff$ bir $x, y$ için $ax + by = 1$ | @cor-aralarinda-asal-olcut |
+| Öklid lemması | $a \mid bc$ ve $\gcd(a, b) = 1$ ise $a \mid c$ | @thm-oklid-lemmasi |
+| EBOB ile EKOK | $\lvert ab \rvert = \gcd(a, b) \operatorname{lcm}(a, b)$ | @cor-ebob-ekok-mutlak |
+| Üç sayı | $\gcd(a, b, c) = \gcd(\gcd(a, b), c)$ | @prp-uc-sayi-ebob |
+
+: EBOB ve EKOK için kurallar {#tbl-ozt1-ebob}
+
+**Kısa yollar.**
+
+- $n$'ye bağlı iki ifadenin EBOB'u için $n$'yi yok eden bir doğrusal birleşim aranır: $d = \gcd(2n+1, 9n+4)$ ise $d \mid 2(9n+4) - 9(2n+1) = -1$, yani $d = 1$ (@exm-ebob-2a1-9a4).
+- $\gcd(a, a+n)$ daima $n$'yi böler (@exm-ebob-a-a-arti-n); ardışık sayılar bu yüzden aralarında asaldır.
+- EKOK, EBOB'dan bulunur: $\operatorname{lcm}(a, b) = \dfrac{ab}{\gcd(a, b)}$ ($a, b > 0$, @thm-ebob-ekok).
+
+:::: {#exm-ozt1-oklid name="$\gcd(391, 299)$ ve Bézout Katsayıları"}
+$\gcd(391, 299)$ sayısını bulunuz ve bu sayıyı $391x + 299y$ biçiminde yazınız.
+
+::: {.cozum}
+**Öklid algoritması.**
+$$
+\begin{aligned}
+391 &= 1 \cdot 299 + 92 \\
+299 &= 3 \cdot 92 + 23 \\
+92 &= 4 \cdot 23 + 0
+\end{aligned}
+$$
+Sıfırdan farklı son kalan $23$ olduğundan $\gcd(391, 299) = 23$'tür.
+
+**Geriye doğru yerine koyma.** Kalanları yalnız bırakalım: $92 = 391 - 299$ ve $23 = 299 - 3 \cdot 92$. Alttan başlayalım:
+$$
+\begin{aligned}
+23 &= 299 - 3 \cdot 92 \\[1mm]
+&= 299 - 3\left( 391 - 299 \right) \\[1mm]
+&= 391 \cdot (-3) + 299 \cdot 4.
+\end{aligned}
+$$
+Sağlama: $-1173 + 1196 = 23$. O hâlde $x = -3$, $y = 4$ alınabilir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt1-ebob-n name="Doğrusal İfadelerin EBOB'u"}
+Her $n$ tam sayısı için $\gcd(3n + 2, 5n + 3) = 1$ olduğunu gösteriniz.
+
+::: {.cozum}
+$d = \gcd(3n + 2, 5n + 3)$ olsun. $d$ iki sayıyı da böldüğünden her doğrusal birleşimlerini de böler. $n$'li terimleri yok etmek için birinciyi $5$, ikinciyi $3$ ile çarpıp çıkaralım:
+$$5(3n + 2) - 3(5n + 3) = 15n + 10 - 15n - 9 = 1.$$
+O hâlde $d \mid 1$ ve $d > 0$ olduğundan $d = 1$'dir. Aynı eşitlik @cor-aralarinda-asal-olcut ölçütünü doğrudan sağlar: $x = 5$, $y = -3$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Asal Çarpanlar, Bölenler ve Asallık {#sec-ozt1-asal-carpanlar}
+
+Kanonik gösterim $n = p_1^{k_1} \cdots p_r^{k_r}$ bir kez yazılınca bölenlerle ilgili hemen her soru üslerden okunur; ayrıntılar [Asal çarpanlardan bölenlere](1/bolenler.qmd) bölümündedir.
+
+| Soru | Formül | Dayanak |
+|:--|:--|:--|
+| Pozitif bölenler | $p_1^{m_1} \cdots p_r^{m_r}$, $0 \le m_i \le k_i$ | @thm-bolenler-kumesi |
+| Bölen sayısı | $\tau(n) = (k_1 + 1) \cdots (k_r + 1)$ | @cor-bolen-sayisi |
+| EBOB | Ortak asallar, küçük üsler: $\prod p_i^{\min\{k_i, l_i\}}$ | @thm-ebob-ekok-usler |
+| EKOK | Bütün asallar, büyük üsler: $\prod p_i^{\max\{k_i, l_i\}}$ | @thm-ebob-ekok-usler |
+| $a \mid b$ mi? | Her asalın $a$'daki üssü $b$'dekinden küçük ya da eşit | @prp-kuvvet-bolme |
+| Asallık | $\sqrt{n}$'e kadar hiçbir asal $n$'yi bölmüyorsa $n$ asaldır | @thm-eratosthenes |
+| $\sqrt[k]{a}$ rasyonel mi? | Rasyonelse tam sayıdır; $a$ tam $k$. kuvvet değilse irrasyoneldir | @thm-kok-rasyonel-tam, @cor-tam-kuvvet-degilse |
+
+: Kanonik gösterimden okunanlar {#tbl-ozt1-bolenler}
+
+**Kısa yollar.**
+
+- Asallık testinde yalnız asal bölenler denenir ve $p^2 > n$ olunca durulur. Örneğin $221$ için $15^2 > 221$ olduğundan $2, 3, 5, 7, 11, 13$ yeter; $221 = 13 \cdot 17$ bileşiktir.
+- $\sqrt{3} + \sqrt{7}$ gibi toplamlarda önce rasyonel olduğu varsayılır, kare alınıp tek bir kök yalnız bırakılır ve çelişkiye varılır (@exm-kok-uc-arti-yedi).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $\tau(n)$ hesabında üslere $1$ eklenmeden çarpılmaz: $\tau(2^4) = 5$'tir, $4$ değil.
+- EBOB'da yalnız iki sayıda da bulunan asallar alınır; EKOK'ta herhangi birinde bulunan her asal alınır.
+:::
+
+:::: {#exm-ozt1-ebob-ekok-us name="Üslerle EBOB ve EKOK"}
+$720$ ile $1050$ sayılarının EBOB'unu ve EKOK'unu kanonik gösterimleriyle bulunuz.
+
+::: {.cozum}
+Kanonik gösterimler
+$$720 = 2^4 \cdot 3^2 \cdot 5, \qquad 1050 = 2 \cdot 3 \cdot 5^2 \cdot 7$$
+dir. Eksik asalları sıfırıncı kuvvetle yazıp @thm-ebob-ekok-usler uygulayalım:
+$$
+\begin{aligned}
+\gcd(720, 1050) &= 2^1 \cdot 3^1 \cdot 5^1 \cdot 7^0 = 30, \\[1mm]
+\operatorname{lcm}(720, 1050) &= 2^4 \cdot 3^2 \cdot 5^2 \cdot 7 = 25\,200.
+\end{aligned}
+$$
+Sağlama: $30 \cdot 25\,200 = 756\,000$ ve $720 \cdot 1050 = 756\,000$. Ayrıca $\tau(720) = 5 \cdot 3 \cdot 2 = 30$'dur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Diofant Denklemleri {#sec-ozt1-diofant}
+
+$ax + by = c$ denklemi, EBOB'un $c$'yi bölüp bölmediğine göre ya hiç çözülemez ya da sonsuz çözümlüdür (@thm-diofant). Ayrıntılar [Diofant denklemleri](1/diofant.qmd) bölümündedir.
+
+::: {.callout-tip title="Beş adımda $ax + by = c$"}
+1. **Denetle.** $d = \gcd(a, b)$'yi Öklid algoritmasıyla bul. $d \nmid c$ ise denklem çözülemez; dur.
+2. **Bézout.** Geriye doğru yerine koyarak $ax_0' + by_0' = d$ yaz.
+3. **Ölçekle.** İki tarafı $\frac{c}{d}$ ile çarp: $x_0 = x_0' \frac{c}{d}$, $y_0 = y_0' \frac{c}{d}$ bir özel çözümdür.
+4. **Genel çözüm.** $t \in \mathbb{Z}$ için
+   $$x = x_0 + \frac{b}{d}\,t, \qquad y = y_0 - \frac{a}{d}\,t.$$
+5. **Kısıt.** "Pozitif çözüm" ya da "aralıktaki çözüm" isteniyorsa $x$ ve $y$ için eşitsizlikleri $t$ cinsinden çöz ve uygun tam $t$'leri say.
+:::
+
+**Kısa yollar.**
+
+- Bir özel çözüm kongrüansla da bulunur: $ax \equiv c \pmod b$ çözülür, $y$ denklemden çekilir (@lem-kongruans-diofant). Katsayılardan biri küçükse bu yol daha hızlıdır.
+- Önce bütün katsayıları $d$'ye bölmek sayıları küçültür; genel çözümün adımları da $b/d$ ve $a/d$ olur.
+- Sağlamayı iki $t$ değeri için yapmak, işaret hatasını hemen yakalar.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Genel çözümde $x$'e $b$ ile, $y$'ye $a$ ile orantılı terim eklenir ve işaretler zıttır; $a$ ile $b$ yer değiştirirse çözüm bozulur.
+- $d > 1$ iken $\frac{b}{d}$ yerine $b$ yazmak çözümlerin bir kısmını kaybettirir.
+:::
+
+:::: {#exm-ozt1-diofant name="Pozitif Çözümleri Saymak"}
+$7x + 11y = 200$ denkleminin bütün pozitif tam sayı çözümlerini bulunuz.
+
+::: {.cozum}
+**Denetim ve Bézout.** $11 = 1 \cdot 7 + 4$, $7 = 1 \cdot 4 + 3$, $4 = 1 \cdot 3 + 1$ olduğundan $\gcd(7, 11) = 1$ ve $1 \mid 200$'dür. Geriye doğru yerine koyalım:
+$$
+\begin{aligned}
+1 &= 4 - 3 = 4 - (7 - 4) = 2 \cdot 4 - 7 \\[1mm]
+&= 2(11 - 7) - 7 = 7 \cdot (-3) + 11 \cdot 2.
+\end{aligned}
+$$
+
+**Ölçekleme ve genel çözüm.** $200$ ile çarparsak $x_0 = -600$, $y_0 = 400$ bir özel çözümdür. @thm-diofant gereği
+$$x = -600 + 11t, \qquad y = 400 - 7t \qquad (t \in \mathbb{Z}).$$
+
+**Pozitiflik.** $x > 0 \iff t > \frac{600}{11} = 54{,}5\ldots$, yani $t \geq 55$. $y > 0 \iff t < \frac{400}{7} = 57{,}1\ldots$, yani $t \leq 57$.
+
+$t = 55, 56, 57$ için üç pozitif çözüm vardır:
+$$(x, y) = (5, 15), \quad (16, 8), \quad (27, 1).$$
+Sağlama: $35 + 165 = 200$, $112 + 88 = 200$, $189 + 11 = 200$.
+
+Kongrüans yoluyla: $7x \equiv 200 \equiv 2 \pmod{11}$ ve $7 \cdot 8 = 56 \equiv 1 \pmod{11}$ olduğundan $x \equiv 16 \equiv 5 \pmod{11}$ bulunur; en küçük pozitif çözüm $x = 5$, $y = 15$'tir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kongrüans Hesabı ve Bölünebilme Kuralları {#sec-ozt1-kongruans}
+
+Kongrüans, kalanlarla eşitlik gibi hesap yapmayı sağlar: toplama, çıkarma, çarpma ve kuvvet alma modülü korur (@thm-kongruans-ozellikleri). Bölmede ise dikkat gerekir. Ayrıntılar [Kongrüans kavramı](1/kongruans-kavrami.qmd) ve [Taban gösterimi ve bölünebilme kuralları](1/bolunebilme-kurallari.qmd) bölümlerindedir.
+
+| İşlem | Kural | Dayanak |
+|:--|:--|:--|
+| Toplama, çarpma | $a \equiv b$, $c \equiv d$ ise $a + c \equiv b + d$, $ac \equiv bd$ | @thm-kongruans-ozellikleri |
+| Polinom | $a \equiv b$ ise $P(a) \equiv P(b)$ | @thm-polinom-kongruans |
+| Sadeleştirme | $ca \equiv cb \pmod n \implies a \equiv b \pmod{n/d}$, $d = \gcd(c, n)$ | @thm-sadelestirme |
+| Asal çarpan | $\gcd(c, n) = 1$ ise $c$ doğrudan sadeleşir | @cor-sadelestirme-asal |
+| Kalan | $a \equiv b \pmod n \iff$ aynı kalan | @thm-kongruans-kalan |
+
+: Kongrüans hesabının kuralları {#tbl-ozt1-kongruans}
+
+| Bölen | Ölçüt | Dayanak |
+|:-:|:--|:--|
+| $2$, $5$ | Son rakam | @prp-iki-bes-bolunebilme |
+| $3$, $9$ | Rakamlar toplamı; kalan da aynıdır | @thm-dokuz-bolunebilme |
+| $11$ | Sağdan başlayarak $a_0 - a_1 + a_2 - \cdots$ | @thm-onbir-bolunebilme |
+| $7$, $11$, $13$ | Sağdan üçlü grupların dönüşümlü toplamı ($10^3 \equiv -1$) | @exr-yeni-kural |
+
+: Bölünebilme kuralları {#tbl-ozt1-kurallar}
+
+::: {.callout-tip title="Üç adımda bir kuvvetin kalanı"}
+1. **Tabanı küçült.** $a$'yı modülo $n$ en küçük mutlak değerli temsilciyle değiştir; $n - 1$ yerine $-1$ yaz.
+2. **$\pm 1$'e denk kuvvet ara.** $a^2, a^3, \dots$'ü sırayla hesapla; $a^k \equiv \pm 1$ çıkınca dur.
+3. **Üssü böl.** $N = kq + r$ ise $a^N = (a^k)^q a^r \equiv (\pm 1)^q a^r$. Kuvvet bulunamıyorsa üssü ikinin kuvvetlerine ayırıp ardışık kare al ya da Fermat ve Euler'e geç (@sec-ozt1-klasik).
+:::
+
+Örneğin $2^3 = 8 \equiv 1 \pmod 7$ ve $50 = 3 \cdot 16 + 2$ olduğundan $2^{50} \equiv 2^2 = 4 \pmod 7$'dir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Kongrüansta iki taraf bir sayıya bölünürken modül de değişebilir: $6x \equiv 6 \pmod 9$ denklemi $x \equiv 1 \pmod 3$ verir, $x \equiv 1 \pmod 9$ değil.
+- Üs modülo $n$ indirgenmez: $a \equiv b$ ise $a^k \equiv b^k$ doğrudur, ama $k \equiv l \pmod n$ olması $a^k \equiv a^l$ vermez.
+:::
+
+:::: {#exm-ozt1-onbir name="On Bire Bölümden Kalan"}
+$7\,654\,321$ sayısının $11$ ile bölümünden kalanı bulunuz.
+
+::: {.cozum}
+$10 \equiv -1 \pmod{11}$ olduğundan $10^k \equiv (-1)^k$'dir ve sayı, rakamlarının sağdan başlayarak dönüşümlü toplamına kongrüdür (@thm-onbir-bolunebilme):
+$$7\,654\,321 \equiv 1 - 2 + 3 - 4 + 5 - 6 + 7 = 4 \pmod{11}.$$
+Kalan $4$'tür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Kongrüanslar ve Modüler Ters {#sec-ozt1-lineer}
+
+$ax \equiv b \pmod n$ denklemi, $ax - ny = b$ Diofant denklemiyle aynıdır (@lem-kongruans-diofant). Çözülebilirlik ve çözüm sayısı tek bir sayıya, $d = \gcd(a, n)$'ye bağlıdır (@thm-lineer-kongruans). Ayrıntılar [Lineer kongrüans denklemleri](1/lineer-kongruanslar.qmd) bölümündedir.
+
+::: {.callout-tip title="Dört adımda $ax \equiv b \pmod n$"}
+1. **Denetle.** $d = \gcd(a, n)$. $d \nmid b$ ise çözüm yoktur; dur.
+2. **Sadeleştir.** $a$, $b$ ve $n$'yi $d$'ye böl: $a'x \equiv b' \pmod{n'}$, $\gcd(a', n') = 1$ (@thm-sadelestirme).
+3. **Tersle çöz.** $a'$'nın modülo $n'$ tersini bul ve $x_0 \equiv a'^{-1} b' \pmod{n'}$ al. Küçük sayılarda $b'$'ye $n'$'nin katlarını ekleyip $a'$'nın katı yapmak daha hızlıdır.
+4. **Bütün çözümler.** Modülo $n$ tam $d$ çözüm vardır:
+   $$x \equiv x_0 + k\,\frac{n}{d} \pmod n, \qquad k = 0, 1, \dots, d - 1.$$
+:::
+
+| Ters bulma yolu | Ne zaman | Dayanak |
+|:--|:--|:--|
+| Deneme | Modül küçükse | @def-carpimsal-ters |
+| Öklid algoritması | Her zaman: $ax + ny = 1$ ise $a^{-1} \equiv x$ | @prp-ters-varlik |
+| Euler | $a^{-1} \equiv a^{\phi(n) - 1}$ | @cor-euler-ters |
+| Fermat | $n = p$ asalsa $a^{-1} \equiv a^{p-2}$ | @exr-fermat-ters |
+
+: Modüler tersi bulmanın yolları {#tbl-ozt1-ters}
+
+Ters ancak $\gcd(a, n) = 1$ ise vardır (@prp-ters-varlik). Bu yüzden $U(\mathbb{Z}_n)$, $n$ ile aralarında asal kalanların sınıflarından oluşur ve $\phi(n)$ elemanlıdır (@def-birimler-kumesi, @thm-birimler-grubu). Bir $n$ elemanlı küme, elemanları ikişer ikişer kongrü değilse bir tam kalan sistemidir (@thm-tam-kalan-olcut).
+
+:::: {#exm-ozt1-lineer name="Altı Çözümlü Bir Lineer Kongrüans"}
+$18x \equiv 42 \pmod{30}$ denkleminin bütün çözümlerini bulunuz.
+
+::: {.cozum}
+**Denetim.** $d = \gcd(18, 30) = 6$ ve $6 \mid 42$ olduğundan denklem çözülebilir ve modülo $30$ tam $6$ çözümü vardır.
+
+**Sadeleştirme.** Üç sayıyı $6$'ya bölelim: $3x \equiv 7 \pmod 5$, yani $3x \equiv 2 \pmod 5$.
+
+**Çözüm.** Sağ tarafa $5$'in katlarını ekleyip $3$'ün katı yapalım: $2 \equiv 12 \pmod 5$. $3x \equiv 12$ ve $\gcd(3, 5) = 1$ olduğundan $x \equiv 4 \pmod 5$ olur.
+
+**Bütün çözümler.** $\frac{30}{6} = 5$ adımla:
+$$x \equiv 4, \ 9, \ 14, \ 19, \ 24, \ 29 \pmod{30}.$$
+Sağlama: $18 \cdot 4 - 42 = 30$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt1-ters name="Öklid Algoritmasıyla Modüler Ters"}
+$17$ sayısının modülo $60$ tersini bulunuz.
+
+::: {.cozum}
+Öklid algoritması: $60 = 3 \cdot 17 + 9$, $17 = 1 \cdot 9 + 8$, $9 = 1 \cdot 8 + 1$. Geriye doğru yerine koyalım:
+$$
+\begin{aligned}
+1 &= 9 - 8 = 9 - (17 - 9) = 2 \cdot 9 - 17 \\[1mm]
+&= 2(60 - 3 \cdot 17) - 17 = 60 \cdot 2 + 17 \cdot (-7).
+\end{aligned}
+$$
+Modülo $60$ okunursa $17 \cdot (-7) \equiv 1$, yani $17^{-1} \equiv -7 \equiv 53 \pmod{60}$'tır. Sağlama: $17 \cdot 53 = 901 = 15 \cdot 60 + 1$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Çin Kalan Teoremi {#sec-ozt1-cin-kalan}
+
+Modülleri ikişer ikişer aralarında asal olan bir sistemin, modüllerin çarpımına göre tek çözümü vardır (@thm-cin-kalan). Modüller aralarında asal değilse sistem $\gcd(n, m) \mid a - b$ koşuluyla çözülür ve çözüm $\operatorname{lcm}(n, m)$'ye göre tektir (@thm-crt-genel). Ayrıntılar [Çin kalan teoremi](1/cin-kalan-teoremi.qmd) bölümündedir.
+
+::: {.callout-tip title="Dört adımda $x \equiv a_i \pmod{n_i}$ sistemi"}
+1. **Hazırla.** Katsayılı denklemleri ($c x \equiv e$) önce $x \equiv a_i$ biçimine getir (@sec-ozt1-lineer); sağ tarafları küçült; modüllerin ikişer ikişer aralarında asal olduğunu denetle.
+2. **Çarp.** $n = n_1 \cdots n_r$ ve $N_i = n / n_i$.
+3. **Ters al.** Her $i$ için $N_i x_i \equiv 1 \pmod{n_i}$ çözümü $x_i$'yi bul; önce $N_i$'yi modülo $n_i$ küçült.
+4. **Topla.** $x_0 = a_1 N_1 x_1 + \cdots + a_r N_r x_r$ ve sonucu modülo $n$ indirge. Aralık istenmişse $x_0 + nk$ sayılarından aralığa düşenleri al.
+:::
+
+**Kısa yollar.**
+
+- İki denklemde yerine koyma daha hızlıdır: $x = a + nt$ yazılıp ikinci denklemde $t$ çözülür (@exm-euler-asal-degil).
+- Modüller aralarında asal değilse önce $\gcd(n, m) \mid a - b$ denetlenir; yerine koyma yolu bu durumda da doğrudan çalışır.
+- Büyük bir modülde kalan sorusu, modülü asal kuvvetlere ayırıp her parçada hesaplayıp sonucu bu teoremle birleştirerek çözülebilir.
+
+:::: {#exm-ozt1-cin-kalan name="Üç Denklemli Bir Sistem"}
+$x \equiv 3 \pmod 4$, $x \equiv 2 \pmod 5$, $x \equiv 4 \pmod 9$ sistemini çözünüz.
+
+::: {.cozum}
+$4$, $5$ ve $9$ ikişer ikişer aralarında asaldır; $n = 4 \cdot 5 \cdot 9 = 180$'dir.
+$$N_1 = \frac{180}{4} = 45, \qquad N_2 = \frac{180}{5} = 36, \qquad N_3 = \frac{180}{9} = 20.$$
+
+**Tersler.**
+
+- $45 \equiv 1 \pmod 4$ olduğundan $x_1 = 1$.
+- $36 \equiv 1 \pmod 5$ olduğundan $x_2 = 1$.
+- $20 \equiv 2 \pmod 9$ ve $2 \cdot 5 = 10 \equiv 1$ olduğundan $x_3 = 5$.
+
+**Toplam.**
+$$x_0 = 3 \cdot 45 \cdot 1 + 2 \cdot 36 \cdot 1 + 4 \cdot 20 \cdot 5 = 135 + 72 + 400 = 607.$$
+$607 - 3 \cdot 180 = 67$ olduğundan $x \equiv 67 \pmod{180}$'dir.
+
+Sağlama: $67 = 16 \cdot 4 + 3$, $67 = 13 \cdot 5 + 2$ ve $67 = 7 \cdot 9 + 4$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt1-ortak-bolen name="Aralarında Asal Olmayan Modüller"}
+$x \equiv 5 \pmod{12}$, $x \equiv 11 \pmod{18}$ sistemini çözünüz.
+
+::: {.cozum}
+$\gcd(12, 18) = 6$ ve $6 \mid 11 - 5$ olduğundan @thm-crt-genel gereği sistem çözülebilir ve çözüm $\operatorname{lcm}(12, 18) = 36$ modülüne göre tektir.
+
+$x = 5 + 12t$ yazıp ikinci denklemde yerine koyalım:
+$$5 + 12t \equiv 11 \pmod{18} \iff 12t \equiv 6 \pmod{18}.$$
+Üç sayıyı $6$'ya bölersek $2t \equiv 1 \equiv 4 \pmod 3$, yani $t \equiv 2 \pmod 3$ olur. $t = 2$ için $x = 29$ bulunur:
+$$x \equiv 29 \pmod{36}.$$
+Sağlama: $29 = 2 \cdot 12 + 5 = 1 \cdot 18 + 11$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Fermat, Euler ve Wilson Teoremleri {#sec-ozt1-klasik}
+
+Büyük üslü kuvvetlerin ve faktöriyellerin kalanları üç klasik teoremle hızla bulunur; ayrıntılar [Fermat teoremi](1/fermat-teoremi.qmd), [Euler'in $\phi$ fonksiyonu](1/euler-fonksiyonu.qmd), [Euler teoremi](1/euler-teoremi.qmd) ve [Wilson teoremi](1/wilson-teoremi.qmd) bölümlerindedir.
+
+| Teorem | İfade | Koşul | Dayanak |
+|:--|:--|:--|:--|
+| Fermat | $a^{p-1} \equiv 1 \pmod p$ | $p$ asal, $p \nmid a$ | @thm-fermat |
+| Fermat, kısıtsız | $a^p \equiv a \pmod p$ | $p$ asal, her $a$ | @cor-fermat-genel |
+| Euler | $a^{\phi(n)} \equiv 1 \pmod n$ | $\gcd(a, n) = 1$ | @thm-euler |
+| Wilson | $(p-1)! \equiv -1 \pmod p$ | $p$ asal | @thm-wilson |
+| Wilson'ın tersi | $(n-1)! \equiv -1 \pmod n$ ise $n$ asal | $n > 1$ | @thm-wilson-tersi |
+| $(n-2)!$ ölçütü | $n$ asal $\iff (n-2)! \equiv 1 \pmod n$ | $n > 1$ | @cor-wilson-n-eksi-iki |
+| Bileşik sayı | $(n-1)! \equiv 0 \pmod n$ | $n$ bileşik, $n \neq 4$ | @thm-bilesik-faktoriyel |
+
+: Klasik teoremler {#tbl-ozt1-klasik}
+
+| $n$ | $\phi(n)$ | Dayanak |
+|:-:|:--|:--|
+| $p$ asal | $p - 1$ | @prp-phi-asal |
+| $p^k$ | $p^k - p^{k-1}$ | @thm-phi-asal-kuvvet |
+| $mn$, $\gcd(m, n) = 1$ | $\phi(m)\,\phi(n)$ | @thm-phi-carpimsal |
+| $p_1^{k_1} \cdots p_r^{k_r}$ | $n \prod \left( 1 - \frac{1}{p_i} \right)$ | @thm-phi-formul |
+| $n > 2$ | Daima çift | @thm-phi-cift |
+| $d \mid n$ | $\phi(d) \mid \phi(n)$ | @thm-phi-bolen |
+
+: Euler'in $\phi$ fonksiyonu {#tbl-ozt1-phi}
+
+::: {.callout-tip title="Dört adımda $a^N \bmod n$"}
+1. **Koşul.** $\gcd(a, n) = 1$ mi? Değilse $n$'yi aralarında asal çarpanlara ayır, her parçada ayrı hesapla ve Çin kalan teoremiyle birleştir (@exm-euler-asal-degil).
+2. **$\phi(n)$.** Çarpım formülüyle hesapla; $n = p$ asalsa $\phi(p) = p - 1$.
+3. **Üssü indirge.** $N = \phi(n) q + r$ ise $a^N \equiv a^r \pmod n$. Daha küçük bir $k$ ile $a^k \equiv 1$ biliniyorsa $N$'yi $k$'ya göre indirge.
+4. **Kalan kuvveti hesapla.** $a^r$'yi ardışık kare alarak bul.
+:::
+
+**Kısa yollar.**
+
+- Son iki rakam modülo $100$, son rakam modülo $10$ hesabıdır; $\phi(100) = 40$, $\phi(10) = 4$.
+- Wilson'da sondan geriye sayılır: $p - 1 \equiv -1$, $p - 2 \equiv -2$, … Böylece $(p-1)!$'den istenen faktöriyele inilir.
+- $\phi(n) = c$ denkleminde önce $n$'yi bölebilecek asallar bulunur: $p^k \mid n$ ise $p^{k-1}(p - 1) \mid c$ olmalıdır (@thm-phi-bolen, @exm-phi-alti). $1$'den büyük tek bir $c$ için çözüm yoktur.
+- Bir $a$ için $a^n \not\equiv a \pmod n$ ise $n$ bileşiktir (@cor-fermat-genel). Tersi doğru değildir: $341 = 11 \cdot 31$ bileşik olduğu hâlde $2^{341} \equiv 2 \pmod{341}$'dir (@exm-341, @def-sozde-asal).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Euler teoremi $\gcd(a, n) = 1$ olmadan uygulanmaz.
+- Üs, modül $n$'ye göre değil $\phi(n)$'ye göre indirgenir.
+- Wilson teoremi yalnız asal modülde $-1$ verir; bileşik $n > 4$ için $(n-1)! \equiv 0$'dır.
+:::
+
+:::: {#exm-ozt1-son-iki-rakam name="Bir Kuvvetin Son İki Rakamı"}
+$7^{222}$ sayısının son iki rakamını bulunuz.
+
+::: {.cozum}
+Modülo $100$ kalan aranıyor; $\gcd(7, 100) = 1$'dir. @thm-phi-formul gereği $\phi(100) = 100 \cdot \frac{1}{2} \cdot \frac{4}{5} = 40$ ve $222 = 5 \cdot 40 + 22$ olduğundan @thm-euler gereği $7^{222} \equiv 7^{22} \pmod{100}$'dür.
+
+Daha küçük bir kuvvet de $1$'e denktir:
+$$7^2 = 49, \qquad 7^4 = 49^2 = 2401 \equiv 1 \pmod{100}.$$
+$22 = 4 \cdot 5 + 2$ olduğundan
+$$7^{222} \equiv 7^{22} = \left( 7^4 \right)^5 \cdot 7^2 \equiv 1 \cdot 49 = 49 \pmod{100}.$$
+Son iki rakam $49$'dur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt1-wilson name="Wilson Teoremiyle Faktöriyel Kalanı"}
+$20!$ sayısının $23$ ile bölümünden kalanı bulunuz.
+
+::: {.cozum}
+$23$ asal olduğundan @thm-wilson gereği $22! \equiv -1 \pmod{23}$'tür. $22 \equiv -1$ ve $21 \equiv -2$ olduğundan
+$$22! = 22 \cdot 21 \cdot 20! \equiv (-1)(-2)\, 20! = 2 \cdot 20! \pmod{23}.$$
+Buradan $2 \cdot 20! \equiv -1 \equiv 22 \pmod{23}$ olur. $\gcd(2, 23) = 1$ olduğundan iki taraf $2$ ile sadeleşir (@cor-sadelestirme-asal):
+$$20! \equiv 11 \pmod{23}.$$
+Kalan $11$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::

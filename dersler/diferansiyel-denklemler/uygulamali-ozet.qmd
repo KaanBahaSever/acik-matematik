@@ -1,0 +1,610 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Diferansiyel denklem sorularında yöntem seçimi ve adım adım reçeteler: sınıflandırma, varlık ve teklik, keyfi sabitlerin yok edilmesi, ayrılabilen, homojen, tam ve lineer denklemler, integrasyon çarpanı, Bernoulli ve Riccati denklemleri, mertebe indirgeme, Wronskiyen, sabit katsayılı denklemler, belirsiz katsayılar, parametrelerin değişimi ve Cauchy–Euler denklemi."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Bir diferansiyel denklem sorusunun yarısı denklemin türünü doğru tanımaktır; bu yüzden sayfa bir yöntem seçme tablosuyla başlar. Ardından her soru tipi için kısa bir reçete, gerekli formül tabloları, zaman kazandıran kısa yollar, sık yapılan hatalar ve yeni sayılarla tam çözülmüş kısa örnekler gelir. Her kural, gerekçesinin bulunduğu tanıma, teoreme ya da bölüme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Denklemi gördüğünüzde önce aşağıdaki tabloda hangi satıra girdiğine bakın. Birinci mertebe bir denklem birden çok satıra uyabilir; o zaman hesabı en kısa olanı seçin (ayrılabilen ve lineer genellikle en kısasıdır).
+
+| Soruda istenen ya da denklemin biçimi | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| Mertebe, lineerlik, katsayı türü | Tanımın üç koşulu | @sec-ozt-siniflandirma |
+| Çözümün var ve tek olduğu yer, en geniş aralık | Süreklilik koşulları | @sec-ozt-siniflandirma |
+| Bir eğri ailesinin denklemi | Türev alıp sabitleri yok et | @sec-ozt-yok-etme |
+| $y' = g(x)\,h(y)$ ya da $y' = f(ax + by + c)$ | Değişkenleri ayır | @sec-ozt-ayrilabilen |
+| $y' = g(y/x)$; $M$, $N$ aynı dereceden homojen | $y = ux$ | @sec-ozt-homojen |
+| $y' = \dfrac{a_1x + b_1y + c_1}{a_2x + b_2y + c_2}$ | Öteleme ya da $u = a_1x + b_1y$ | @sec-ozt-homojen |
+| $M\,dx + N\,dy = 0$ ve $M_y = N_x$ | Potansiyel fonksiyon | @sec-ozt-tam |
+| $M\,dx + N\,dy = 0$ ama $M_y \neq N_x$ | İntegrasyon çarpanı | @sec-ozt-tam |
+| $y' + p(x)\,y = q(x)$ | $\mu = e^{\int p\,dx}$ | @sec-ozt-lineer |
+| $y' + p(x)\,y = q(x)\,y^n$ | $v = y^{1-n}$ | @sec-ozt-bernoulli |
+| $y' = p\,y^2 + q\,y + r$ | $y = y_1 + \dfrac{1}{v}$ | @sec-ozt-bernoulli |
+| $y$ ya da $x$ içermeyen ikinci mertebe denklem | $p = y'$ | @sec-ozt-indirgeme |
+| Bir çözümü verilen lineer homojen denklem | $y = v\,y_1$ | @sec-ozt-indirgeme |
+| Lineer bağımsızlık, Wronskiyen, Abel formülü | $W(x_0) \neq 0$ | @sec-ozt-wronskiyen |
+| Sabit katsayılı homojen denklem | Karakteristik kökler | @sec-ozt-karakteristik |
+| Sağ taraf üstel, polinom, $\sin$, $\cos$ ve çarpımları | Belirsiz katsayılar | @sec-ozt-belirsiz |
+| Sağ taraf $\tan x$, $\sec x$, $\frac{1}{x}$, … ya da değişken katsayı | Parametrelerin değişimi | @sec-ozt-parametre |
+| $a_2x^2y'' + a_1xy' + a_0y = r(x)$ | $t = \ln x$ ya da $y = x^{\lambda}$ | @sec-ozt-euler |
+
+## Sınıflandırma ve Varlık–Teklik {#sec-ozt-siniflandirma}
+
+Sınıflandırma sorularında üç şey sorulur: mertebe, lineerlik ve katsayıların türü. Mertebe en yüksek türevin basamağıdır, üssü değil (@def-sinif-mertebe): $(y')^8$ terimi mertebeye $1$ katar. Lineerlikte yalnız bilinmeyene bakılır (@def-sinif-lineer-denklem).
+
+| Terim | Lineerliği bozar mı? |
+|:--|:--|
+| $y^2$, $y\,y'$, $(y')^2$, $\sqrt{y}$, $y'\,y''$ | Bozar: bilinmeyen birinci dereceden değil ya da çarpım var |
+| $\sin y$, $e^{y}$, $\ln y$, $y^{y'}$ | Bozar: bilinmeyenin aşkın fonksiyonu |
+| $x^3y''$, $e^{x}y'$, $\sin x$, $\cos^2 x$ | Bozmaz: katsayı ya da sağ taraf |
+
+Lineer bir denklemde $y^{(n)}$'nin katsayısına bölündükten sonra kalan katsayıların hepsi sabitse denklem sabit katsayılıdır (@def-sinif-katsayi-turu).
+
+**Varlık ve teklik.** İki teorem iki farklı sonuç verir:
+
+| Denklem | Koşul | Sonuç |
+|:--|:--|:--|
+| $y' = f(x, y)$, $y(x_0) = y_0$ | $f$ ile $\dfrac{\partial f}{\partial y}$, $(x_0, y_0)$'ı içeren bir bölgede sürekli | $x_0$'ın küçük bir komşuluğunda tek çözüm (@thm-bdp-varlik-teklik) |
+| $a_0y^{(n)} + \cdots + a_ny = b$ | $a_i$ ile $b$, $I$'da sürekli ve $a_0 \neq 0$ | $I$'nın tamamında tek çözüm (@thm-wronski-varlik-teklik) |
+
+**Kısa yol (lineer denklemde en geniş aralık).** Katsayıların ya da sağ tarafın tanımsız olduğu noktaları ve $a_0$'ın sıfırlandığı noktaları işaretleyin; $x_0$'ı içeren ve bu noktaların hiçbirini içermeyen en geniş açık aralık cevaptır. Örneğin $(x^2 - 4)\,y'' + \frac{1}{x}\,y = \ln(5 - x)$, $y(3) = 1$, $y'(3) = 0$ için kötü noktalar $x = \pm 2$, $x = 0$ ve $x \ge 5$'tir; cevap $(2, 5)$ aralığıdır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Hipotezler sağlanmıyorsa teorem susar; "çözüm yoktur" ya da "çözüm tek değildir" sonucu çıkmaz.
+- Birinci teorem yereldir: lineer olmayan bir denklem için en geniş aralığı vermez.
+- $\dfrac{\partial f}{\partial y}$ hesaplanırken denklem önce $y' = f(x, y)$ biçimine getirilir.
+:::
+
+:::: {#exm-ozt-teklik name="Teoremin Sustuğu Bir Başlangıç Noktası"}
+$\dfrac{dy}{dx} = \dfrac{y^{2/3}}{x - 1}$ denklemi için varlık ve teklik teoreminin hangi başlangıç noktalarında tek çözüm garanti ettiğini bulunuz. $y(3) = 0$ koşulunu sağlayan iki farklı çözüm gösteriniz.
+
+::: {.cozum}
+$f(x, y) = \dfrac{y^{2/3}}{x - 1}$ fonksiyonu $x \neq 1$ olan her yerde süreklidir (küp kök bütün gerçel sayılarda tanımlıdır). Kısmi türev
+
+$$\frac{\partial f}{\partial y} = \frac{2}{3\,y^{1/3}\,(x - 1)}$$
+
+ise $x \neq 1$ ve $y \neq 0$ olan yerde süreklidir. Teorem, $x_0 \neq 1$ ve $y_0 \neq 0$ olan her $(x_0, y_0)$ noktasında tek çözüm garanti eder.
+
+$(3, 0)$ noktası $y = 0$ doğrusu üzerindedir; teorem susar. Gerçekten $y \equiv 0$ bir çözümdür. Ayrıca $y \neq 0$ için değişkenler ayrılırsa
+
+$$y^{-2/3}\,dy = \frac{dx}{x - 1} \;\Longrightarrow\; 3\,y^{1/3} = \ln(x - 1) + c$$
+
+bulunur ve $y(3) = 0$ koşulu $c = -\ln 2$ verir:
+
+$$y = \left(\frac{1}{3}\ln\frac{x - 1}{2}\right)^{3}, \qquad x > 1.$$
+
+Bu fonksiyon da $(3, 0)$'dan geçer ve $y \equiv 0$'dan farklıdır; teklik bozulmuştur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Keyfi Sabitlerin Yok Edilmesi {#sec-ozt-yok-etme}
+
+Bir eğri ailesinin diferansiyel denklemini bulmak için aileyi türetip sabitleri düşürürüz. Esas sabit sayısı denklemin mertebesine eşittir (@thm-sabit-mertebe).
+
+::: {.callout-tip title="Üç adımda ailenin denklemi"}
+1. Esas keyfi sabitleri say; sayıları $n$ olsun.
+2. Bağıntının $x$'e göre $n$ kez türevini al (kapalı bağıntıda $y$'nin $x$'e bağlı olduğunu unutma).
+3. Elde edilen $n + 1$ bağıntıdan sabitleri çöz ya da çıkararak düşür; sabitsiz ve $y^{(n)}$ içeren denklem cevaptır.
+:::
+
+**Kısa yollar.**
+
+- Aile karakteristik köklerden geliyorsa türev almaya gerek yoktur. $y = c_1e^{2x} + c_2xe^{2x}$ ailesi $2$ çift katlı kökünden gelir: $(\lambda - 2)^2 = \lambda^2 - 4\lambda + 4$, yani $y'' - 4y' + 4y = 0$ (@sec-ozt-karakteristik).
+- $y = c_1x^{r_1} + c_2x^{r_2}$ ailesi bir Cauchy–Euler denkleminden gelir: $\lambda^2 + (a_1 - 1)\lambda + a_0 = (\lambda - r_1)(\lambda - r_2)$ eşitliğinden $a_1$ ve $a_0$ okunur. Örneğin $c_1x + c_2x^2$ için $\lambda^2 - 3\lambda + 2$, yani $x^2y'' - 2xy' + 2y = 0$ (@sec-ozt-euler).
+
+:::: {#exm-ozt-yok-etme name="Tek Sabitli Bir Ailenin Denklemi"}
+$y = c\,x^{3} + x$ eğri ailesinin diferansiyel denklemini bulunuz.
+
+::: {.cozum}
+Tek esas sabit vardır; bir kez türev alınır:
+
+$$y' = 3c\,x^{2} + 1.$$
+
+Aile bağıntısından $c = \dfrac{y - x}{x^{3}}$ ($x \neq 0$) çözülüp türevde yerine yazılırsa
+
+$$y' = \frac{3(y - x)}{x} + 1 \;\Longrightarrow\; x\,y' = 3y - 2x$$
+
+bulunur. Sağlama: $x\,y' = 3c\,x^{3} + x$ ve $3y - 2x = 3c\,x^{3} + x$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Ayrılabilen Denklemler {#sec-ozt-ayrilabilen}
+
+$y' = g(x)\,h(y)$ biçimindeki denklemde $x$'li ve $y$'li çarpanlar iki yakaya ayrılır (@thm-ayrilabilen-genel-cozum).
+
+::: {.callout-tip title="Dört adımda ayrılabilen denklem"}
+1. $h(y) = 0$ köklerini bul; her kök bir denge çözümüdür (@def-ayrilabilen-denge). Kenara yaz.
+2. $h(y) \neq 0$ bölgesinde ayır ve integralle: $\displaystyle\int \frac{dy}{h(y)} = \int g(x)\,dx + c$. Tek sabit yeter.
+3. Mümkünse $y$'yi yalnız bırak; denge çözümlerinin formüle girip girmediğine bak, girmiyorsa ayrıca yaz.
+4. Başlangıç koşulu varsa $c$'yi bul ve çözümün geçerli olduğu aralığı yaz.
+:::
+
+**Kısa yollar.**
+
+- $\ln|y| = F(x) + c$ çıktığında tek satırda $y = C\,e^{F(x)}$, $C \in \mathbb{R}$ yazılır; $C = 0$ denge çözümünü de taşır.
+- $y' = f(ax + by + c)$ biçiminde $u = ax + by + c$ konur; $u' = a + b\,f(u)$ ayrılabilendir. Örneğin $y' = (2x + y)^2 - 2$ için $u = 2x + y$, $u' = u^2$ olur ve $y = -2x - \frac{1}{x + c}$ bulunur. $u = 0$ denge çözümü $y = -2x$ doğrusunu verir; bu çözüm ailede yoktur.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $h(y)$'ye bölerken $h(y) = 0$ çözümlerini kaybetmek.
+- İki yakaya ayrı sabit yazmak; ikisi tek sabitte birleşir.
+- Açık çözümün tanımlı olduğu aralığı yazmamak (paydanın, logaritmanın, $\tan$'ın tanımsız olduğu yerler).
+:::
+
+:::: {#exm-ozt-ayrilabilen name="Tanjant Veren Bir Başlangıç Değer Problemi"}
+$\dfrac{dy}{dx} = 2x\,(1 + y^{2})$, $y(0) = 1$ problemini çözünüz ve çözümün geçerli olduğu en geniş aralığı bulunuz.
+
+::: {.cozum}
+$1 + y^{2}$ hiç sıfır olmadığından denge çözümü yoktur. Ayıralım:
+
+$$\int \frac{dy}{1 + y^{2}} = \int 2x\,dx \;\Longrightarrow\; \arctan y = x^{2} + c.$$
+
+$y(0) = 1$ için $\arctan 1 = \dfrac{\pi}{4} = c$. $\arctan$'ın değerleri $\left(-\frac{\pi}{2}, \frac{\pi}{2}\right)$'de olduğundan $x^{2} + \frac{\pi}{4} < \frac{\pi}{2}$ olmalıdır:
+
+$$y = \tan\!\left(x^{2} + \frac{\pi}{4}\right), \qquad |x| < \frac{\sqrt{\pi}}{2} \approx 0{,}886.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Homojen Denklemler {#sec-ozt-homojen}
+
+$y' = f(x, y)$ denkleminin homojen olup olmadığını anlamanın en hızlı yolu $f(\lambda x, \lambda y) = f(x, y)$ eşitliğine bakmaktır; $M\,dx + N\,dy = 0$ biçiminde $M$ ile $N$'nin aynı dereceden homojen olması yeter (@thm-homojen-olcut).
+
+::: {.callout-tip title="Dört adımda homojen denklem"}
+1. Denklemi $y' = g\!\left(\frac{y}{x}\right)$ biçimine getir (pay ve paydayı $x$'in uygun kuvvetine böl).
+2. $y = ux$, $y' = u + x\,u'$ koy; denklem $\dfrac{du}{g(u) - u} = \dfrac{dx}{x}$ olur (@thm-homojen-indirgeme).
+3. İntegralle; $g(u) = u$ köklerini ($y = u_0x$ doğruları) ayrıca denetle.
+4. $u = \frac{y}{x}$ yazarak geri dön.
+:::
+
+Pay ve payda doğrusal ama sabit terimli ise determinanta bakılır:
+
+| $\dfrac{dy}{dx} = \dfrac{a_1x + b_1y + c_1}{a_2x + b_2y + c_2}$ | Dönüşüm | Sonuç |
+|:--|:--|:--|
+| $a_1b_2 - a_2b_1 \neq 0$ | $x = X + h$, $y = Y + k$; $(h, k)$ iki doğrunun kesişimi | Homojen denklem (@thm-homojen-oteleme) |
+| $a_1b_2 - a_2b_1 = 0$ | $u = a_1x + b_1y$ | Ayrılabilen denklem (@thm-homojen-dejenere) |
+
+:::: {#exm-ozt-oteleme name="Öteleme ile Homojene İndirgeme"}
+$\dfrac{dy}{dx} = \dfrac{x + 2y - 4}{2x - y - 3}$ denklemini çözünüz.
+
+::: {.cozum}
+Determinant $1\cdot(-1) - 2\cdot 2 = -5 \neq 0$'dır. Kesişim noktası $h + 2k = 4$, $2h - k = 3$ sisteminden $h = 2$, $k = 1$'dir. $x = X + 2$, $y = Y + 1$ ile
+
+$$\frac{dY}{dX} = \frac{X + 2Y}{2X - Y} = \frac{1 + 2u}{2 - u}, \qquad Y = uX.$$
+
+$u + X u' = \dfrac{1 + 2u}{2 - u}$ eşitliğinden $X u' = \dfrac{1 + u^{2}}{2 - u}$, yani
+
+$$\frac{2 - u}{1 + u^{2}}\,du = \frac{dX}{X}.$$
+
+İntegralle
+
+$$2\arctan u - \frac{1}{2}\ln(1 + u^{2}) = \ln|X| + c$$
+
+bulunur. $\ln|X|$ sol yakaya alınıp logaritmalar birleştirilirse $2\arctan\frac{Y}{X} - \frac{1}{2}\ln(X^{2} + Y^{2}) = c$ olur. Özgün değişkenlerle genel çözüm:
+
+$$2\arctan\frac{y - 1}{x - 2} - \frac{1}{2}\ln\big[(x - 2)^{2} + (y - 1)^{2}\big] = c.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tam Denklemler ve İntegrasyon Çarpanı {#sec-ozt-tam}
+
+$M\,dx + N\,dy = 0$ denklemi dikdörtgensel bir bölgede $M_y = N_x$ ise tamdır (@thm-tam-olcut) ve çözümü $F(x, y) = c$'dir; burada $F_x = M$, $F_y = N$'dir.
+
+::: {.callout-tip title="Dört adımda tam denklem"}
+1. $M$ ile $N$'yi işaretleriyle oku; $M_y = N_x$'i denetle.
+2. $F = \int M\,\partial x + h(y)$ yaz ($y$ sabit tutulur).
+3. $F_y = N$ koşulundan $h'(y)$'yi bul; içinde $x$ kalıyorsa hesap hatalıdır.
+4. $h(y)$'yi integralle; çözüm $F(x, y) = c$. Başlangıç koşulu varsa $c$'yi yerine koyarak bul.
+:::
+
+**Kısa yol (gruplama).** Bazı terim çiftleri tanıdık tam diferansiyellerdir; bunları gören, potansiyeli doğrudan yazar:
+
+| Terim grubu | Tam diferansiyel |
+|:--|:--|
+| $y\,dx + x\,dy$ | $d(xy)$ |
+| $2x\,dx + 2y\,dy$ | $d(x^2 + y^2)$ |
+| $\dfrac{x\,dy - y\,dx}{x^2}$ | $d\!\left(\dfrac{y}{x}\right)$ |
+| $\dfrac{x\,dy - y\,dx}{x^2 + y^2}$ | $d\!\left(\arctan\dfrac{y}{x}\right)$ |
+
+**Tam değilse.** $M_y - N_x$ farkı bir kez hesaplanır ve sırayla şu oranlar denenir:
+
+| Varsayım | Oran | Aranan | Çarpan |
+|:--|:--|:--|:--|
+| $\mu = \mu(x)$ | $\dfrac{M_y - N_x}{N}$ | yalnız $x$'e bağlı | $e^{\int p(x)\,dx}$ (@thm-carpan-x-carpani) |
+| $\mu = \mu(y)$ | $\dfrac{N_x - M_y}{M}$ | yalnız $y$'ye bağlı | $e^{\int q(y)\,dy}$ (@thm-carpan-y-carpani) |
+| $\mu = \mu(x^2 + y^2)$ | $\dfrac{N_x - M_y}{2yM - 2xN}$ | yalnız $z = x^2 + y^2$'ye bağlı | $e^{\int r(z)\,dz}$ (@thm-carpan-z-carpani) |
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $M\,dx - N\,dy$ biçiminde verilen denklemde $N$'nin işaretini unutmak.
+- $\mu(y)$ oranında farkın işaretini çevirmemek: $N_x - M_y$ yazılır.
+- $\mu$'nün sıfır olduğu eğrileri (örneğin $\mu = y^2$ için $y = 0$) özgün denklemde ayrıca denetlememek.
+:::
+
+:::: {#exm-ozt-tam name="Başlangıç Koşullu Bir Tam Denklem"}
+$$(2xy + e^{x})\,dx + (x^{2} + \cos y)\,dy = 0, \qquad y(0) = 0$$
+
+problemini çözünüz.
+
+::: {.cozum}
+$M_y = 2x = N_x$; denklem tamdır.
+
+$$F = \int (2xy + e^{x})\,\partial x + h(y) = x^{2}y + e^{x} + h(y).$$
+
+$F_y = x^{2} + h'(y) = x^{2} + \cos y$ eşitliğinden $h'(y) = \cos y$, $h(y) = \sin y$. Genel çözüm $x^{2}y + e^{x} + \sin y = c$'dir; $(0, 0)$ noktası $c = 1$ verir:
+
+$$x^{2}y + e^{x} + \sin y = 1.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-carpan name="Yalnız y'ye Bağlı Çarpan"}
+$y\,dx + (3x - 2y^{2})\,dy = 0$ denklemini çözünüz.
+
+::: {.cozum}
+$M = y$, $N = 3x - 2y^{2}$; $M_y = 1$, $N_x = 3$ olup denklem tam değildir. $\dfrac{M_y - N_x}{N} = \dfrac{-2}{3x - 2y^{2}}$ iki değişkenlidir; öteki oran ise
+
+$$\frac{N_x - M_y}{M} = \frac{2}{y}$$
+
+yalnız $y$'ye bağlıdır. $\mu(y) = e^{\int 2/y\,dy} = y^{2}$. Çarpılmış denklem
+
+$$y^{3}\,dx + (3xy^{2} - 2y^{4})\,dy = 0$$
+
+tamdır ($3y^{2} = 3y^{2}$). $F = xy^{3} + h(y)$ ve $F_y = 3xy^{2} + h'(y)$ olduğundan $h'(y) = -2y^{4}$, $h(y) = -\frac{2}{5}y^{5}$:
+
+$$xy^{3} - \frac{2}{5}\,y^{5} = c.$$
+
+$\mu$'nün sıfırlandığı $y = 0$ doğrusu özgün denklemi sağlar ($dy = 0$, $M = 0$) ve $c = 0$ ile ailenin içindedir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Birinci Mertebe Lineer Denklemler {#sec-ozt-lineer}
+
+Standart biçimdeki $y' + p(x)\,y = q(x)$ denkleminin bütün çözümleri (@thm-lineer-cozum-formulu)
+
+$$y = \frac{1}{\mu(x)}\left[\int \mu(x)\,q(x)\,dx + c\right], \qquad \mu(x) = e^{\int p(x)\,dx}$$
+
+formülüyle verilir. Başlangıç koşulu verilmişse çözüm $p$ ile $q$'nun sürekli olduğu aralığın tamamında vardır ve tektir (@thm-lineer-bdp).
+
+::: {.callout-tip title="Dört adımda lineer denklem"}
+1. $y'$'nün katsayısını $1$ yap; $p$ ile $q$'yu oku, sürekli oldukları aralığı seç.
+2. $\mu = e^{\int p\,dx}$ hesapla (sabitsiz; mutlak değeri aralığa göre kaldır).
+3. Çarp: sol yaka $(\mu y)'$ olur. İntegralle ve sabiti ekle.
+4. $\mu$'ye böl (sabit de bölünür); başlangıç koşulu varsa $c$'yi bul.
+:::
+
+**Kısa yollar.**
+
+- $y'$'yü yalnız bırakınca denklem $y$'ye göre lineer çıkmıyorsa $\dfrac{dx}{dy}$'ye geçin: denklem $x$'e göre lineer olabilir (@def-lineer-x-e-gore). Örneğin $(x + y^{2})\,y' = y$ denklemi $\dfrac{dx}{dy} - \dfrac{x}{y} = y$ olur ve $x = y^{2} + c\,y$ bulunur.
+- Denklem $g'(y)\,y' + p(x)\,g(y) = q(x)$ biçimindeyse $u = g(y)$ koyun; $u' + p\,u = q$ lineerdir.
+
+:::: {#exm-ozt-lineer name="Bir Lineer Başlangıç Değer Problemi"}
+$x > 0$ için $x\,y' + 2y = 4x^{2}$, $y(1) = 2$ problemini çözünüz.
+
+::: {.cozum}
+Standart biçim $y' + \dfrac{2}{x}\,y = 4x$; $p$ ile $q$, $x > 0$'da süreklidir.
+
+$$\mu = e^{\int 2/x\,dx} = x^{2}, \qquad (x^{2}y)' = 4x^{3} \;\Longrightarrow\; x^{2}y = x^{4} + c.$$
+
+$y = x^{2} + \dfrac{c}{x^{2}}$ ve $y(1) = 1 + c = 2$ olduğundan $c = 1$:
+
+$$y = x^{2} + \frac{1}{x^{2}}, \qquad x > 0.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Bernoulli ve Riccati Denklemleri {#sec-ozt-bernoulli}
+
+İki denklem de uygun bir dönüşümle lineer denkleme iner; tek fark, Riccati denkleminde önce bir özel çözüm gerekmesidir.
+
+| Denklem | Dönüşüm | Lineer denklem | Ayrıca yazılan çözüm |
+|:--|:--|:--|:--|
+| $y' + p\,y = q\,y^{n}$, $n \neq 0, 1$ | $v = y^{1-n}$ | $v' + (1 - n)\,p\,v = (1 - n)\,q$ | $n > 0$ ise $y \equiv 0$ |
+| $y' = p\,y^{2} + q\,y + r$ | $y = y_1 + \dfrac{1}{v}$ | $v' + (2p\,y_1 + q)\,v = -p$ | $y_1$'in kendisi |
+
+Gerekçeler için bkz. @thm-bernoulli-indirgeme ve @thm-bernoulli-riccati-indirgeme.
+
+**Riccati için $y_1$ tahmini.** Katsayılar sabitse sabit bir $y_1 = a$ (kök: $p\,a^{2} + q\,a + r = 0$); $\frac{1}{x}$, $\frac{1}{x^{2}}$ terimleri varsa $y_1 = \frac{a}{x}$; polinom katsayılarda $y_1 = ax + b$; $e^{x}$ görünüyorsa $y_1 = a\,e^{x}$.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Bernoulli'de $(1 - n)$ çarpanını sağ tarafa da yazmayı unutmak.
+- $y \equiv 0$ (Bernoulli) ya da $y_1$ (Riccati) çözümünü sonuçta belirtmemek.
+- Riccati'de $p$, $y^{2}$'nin katsayısıdır; lineer denklemin sağ tarafı $-p$'dir.
+:::
+
+:::: {#exm-ozt-bernoulli name="Kuvveti İki Olan Bir Bernoulli Denklemi"}
+$x > 0$ için $y' + \dfrac{y}{x} = x^{2}y^{2}$ denklemini çözünüz.
+
+::: {.cozum}
+$n = 2 > 0$ olduğundan $y \equiv 0$ bir çözümdür. $y \neq 0$ için $v = y^{-1}$ ve
+
+$$v' + (1 - 2)\frac{1}{x}\,v = (1 - 2)\,x^{2} \;\Longrightarrow\; v' - \frac{v}{x} = -x^{2}.$$
+
+$\mu = e^{-\int dx/x} = \dfrac{1}{x}$ ile $\left(\dfrac{v}{x}\right)' = -x$, yani $\dfrac{v}{x} = -\dfrac{x^{2}}{2} + c$ ve $v = c\,x - \dfrac{x^{3}}{2}$. $y = \dfrac{1}{v}$ ve $C = 2c$ ile
+
+$$y = \frac{2}{C\,x - x^{3}}, \qquad \text{ayrıca } y \equiv 0.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-riccati name="Özel Çözümü Tahmin Edilen Bir Riccati Denklemi"}
+$x > 0$ için $y' = y^{2} - \dfrac{2}{x^{2}}$ denklemini çözünüz.
+
+::: {.cozum}
+$y_1 = \dfrac{a}{x}$ deneyelim: $-\dfrac{a}{x^{2}} = \dfrac{a^{2} - 2}{x^{2}}$, yani $a^{2} + a - 2 = 0$ ve $a = 1$ ya da $a = -2$. $y_1 = \dfrac{1}{x}$ alalım.
+
+$p = 1$, $q = 0$ olduğundan $v' + \dfrac{2}{x}\,v = -1$. $\mu = x^{2}$ ile
+
+$$(x^{2}v)' = -x^{2} \;\Longrightarrow\; v = \frac{c}{x^{2}} - \frac{x}{3} = \frac{C - x^{3}}{3x^{2}}, \quad C = 3c.$$
+
+$y = y_1 + \dfrac{1}{v}$ ile genel çözüm ve ayrıca $y_1$:
+
+$$y = \frac{1}{x} + \frac{3x^{2}}{C - x^{3}}, \qquad y = \frac{1}{x}.$$
+
+$C = 0$ öteki özel çözümü, $y = -\dfrac{2}{x}$'i verir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İkinci Mertebede Mertebe İndirgeme {#sec-ozt-indirgeme}
+
+Üç durumda ikinci mertebe bir denklem birinci mertebeye iner:
+
+| Durum | Koyma | Sonuç |
+|:--|:--|:--|
+| $y$ yok: $F(x, y', y'') = 0$ | $p = y'$, $y'' = p'$ | $x$ ile $p$ arasında birinci mertebe (@thm-indirgeme-y-icermeyen) |
+| $x$ yok: $F(y, y', y'') = 0$ | $p = y'$, $y'' = p\,\dfrac{dp}{dy}$ | $y$ ile $p$ arasında birinci mertebe (@thm-indirgeme-x-icermeyen) |
+| Lineer homojen, $y_1$ biliniyor | $y = v\,y_1$ | $y_2 = y_1 \displaystyle\int \frac{e^{-\int p\,dx}}{y_1^{2}}\,dx$ (@thm-indirgeme-ikinci-cozum) |
+
+**Kısa yol.** Başlangıç koşulları verilmişse $c_1$'i birinci mertebe denklemi çözer çözmez $y(x_0)$ ve $y'(x_0)$ ile belirleyin; ikinci integral çoğu zaman bu sayede kolaylaşır. $x$ içermeyen denklemde $p \equiv 0$, yani sabit çözümleri ayrıca denetleyin.
+
+::: {.callout-warning title="Formül standart biçim ister"}
+Mertebe indirgeme formülündeki $p$, $y''$'nün katsayısı $1$ yapıldıktan sonra $y'$'nün önünde kalan fonksiyondur.
+:::
+
+:::: {#exm-ozt-x-icermeyen name="x İçermeyen Bir Başlangıç Değer Problemi"}
+$2y'' = 3y^{2}$, $y(0) = 1$, $y'(0) = 1$ problemini çözünüz.
+
+::: {.cozum}
+$p = y'$, $y'' = p\,\dfrac{dp}{dy}$ ile $2p\,\dfrac{dp}{dy} = 3y^{2}$, yani $p^{2} = y^{3} + c_1$. $x = 0$'da $y = 1$, $p = 1$ olduğundan $c_1 = 0$ ve (işaret $p(0) = 1 > 0$'dan)
+
+$$\frac{dy}{dx} = y^{3/2} \;\Longrightarrow\; -2\,y^{-1/2} = x + c_2.$$
+
+$y(0) = 1$ için $c_2 = -2$; $y^{-1/2} = 1 - \dfrac{x}{2}$ ve
+
+$$y = \frac{4}{(2 - x)^{2}}, \qquad x < 2.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-indirgeme name="Üstel Çözümden İkinci Çözüm"}
+$y_1 = e^{x}$'in $x\,y'' - (x + 1)\,y' + y = 0$ denkleminin bir çözümü olduğunu kullanarak $x > 0$'da genel çözümü bulunuz.
+
+::: {.cozum}
+Sağlama: $x e^{x} - (x + 1)e^{x} + e^{x} = 0$. Standart biçimde $p(x) = -\dfrac{x + 1}{x} = -1 - \dfrac{1}{x}$, dolayısıyla
+
+$$e^{-\int p\,dx} = e^{x + \ln x} = x\,e^{x}.$$
+
+Formülle
+
+$$y_2 = e^{x}\int \frac{x\,e^{x}}{e^{2x}}\,dx = e^{x}\int x\,e^{-x}\,dx = -(x + 1).$$
+
+Sabit çarpan atılır: $y_2 = x + 1$. Genel çözüm $y = c_1e^{x} + c_2(x + 1)$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Wronskiyen, Bağımsızlık ve Abel Formülü {#sec-ozt-wronskiyen}
+
+Lineer bağımsızlık sorularında önce fonksiyonların keyfi fonksiyonlar mı yoksa bir lineer denklemin çözümleri mi olduğuna bakılır; ölçütün gücü buna bağlıdır.
+
+| Durum | Sonuç |
+|:--|:--|
+| Bir $x_0$'da $W(x_0) \neq 0$ | Bağımsız (@thm-wronski-bagimsizlik) |
+| Keyfi fonksiyonlar, $W \equiv 0$ | Ölçüt karar vermez; tanıma dön |
+| Aynı lineer homojen denklemin çözümleri | $W$ ya hiç sıfır olmaz ya özdeş sıfırdır; bağımsız $\iff$ $W \neq 0$ (@thm-wronski-cozum-wronskiyeni) |
+| İki fonksiyon | Bağımlı $\iff$ biri ötekinin sabit katı (@prp-ikinci-orantililik) |
+| $y'' + p\,y' + q\,y = 0$'ın iki çözümü | $W(x) = W(x_0)\,e^{-\int_{x_0}^{x} p(t)\,dt}$ (@thm-wronski-abel) |
+
+**Kısa yol (hazır Wronskiyenler).** Parametrelerin değişiminde sık gereken değerler:
+
+| $y_1$, $y_2$ | $W(y_1, y_2)$ |
+|:--|:--|
+| $e^{ax}$, $e^{bx}$ | $(b - a)\,e^{(a+b)x}$ |
+| $e^{ax}$, $x\,e^{ax}$ | $e^{2ax}$ |
+| $e^{\alpha x}\cos\beta x$, $e^{\alpha x}\sin\beta x$ | $\beta\,e^{2\alpha x}$ |
+| $x^{r_1}$, $x^{r_2}$ | $(r_2 - r_1)\,x^{r_1 + r_2 - 1}$ |
+| $x^{r}$, $x^{r}\ln x$ | $x^{2r - 1}$ |
+
+:::: {#exm-ozt-abel name="Çözmeden Wronskiyen"}
+$y_1$ ve $y_2$, $x > 0$'da $x\,y'' + 2y' + x\,y = 0$ denkleminin iki çözümü ve $W(y_1, y_2)(1) = 3$ olsun. $W(y_1, y_2)(x)$'i bulunuz.
+
+::: {.cozum}
+Standart biçimde $p(x) = \dfrac{2}{x}$. Abel formülüyle
+
+$$W(x) = 3\,e^{-\int_1^x 2/t\,dt} = 3\,e^{-2\ln x} = \frac{3}{x^{2}}.$$
+
+$W$ hiç sıfırlanmadığından $y_1$, $y_2$ bir temel çözüm kümesidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Sabit Katsayılı Homojen Denklemler {#sec-ozt-karakteristik}
+
+$y^{(k)}$ yerine $\lambda^{k}$ yazılarak karakteristik polinom $P(\lambda)$ kurulur; her kök genel çözüme katlılığı kadar fonksiyon katar (@thm-yuksek-sabit-katsayi; ikinci mertebe için @thm-karakteristik-farkli-kokler, @thm-karakteristik-katli-kok, @thm-karakteristik-kompleks-kokler).
+
+| Kök | Genel çözüme katkısı |
+|:--|:--|
+| Basit gerçel $r$ | $e^{rx}$ |
+| $k$ katlı gerçel $r$ | $e^{rx}$, $x\,e^{rx}$, …, $x^{k-1}e^{rx}$ |
+| Basit $\alpha \pm i\beta$ | $e^{\alpha x}\cos\beta x$, $e^{\alpha x}\sin\beta x$ |
+| $k$ katlı $\alpha \pm i\beta$ | $x^{j}e^{\alpha x}\cos\beta x$, $x^{j}e^{\alpha x}\sin\beta x$, $j = 0, \dots, k - 1$ |
+
+::: {.callout-tip title="Dört adımda karakteristik denklem"}
+1. $P(\lambda)$'yı yaz; ortak $\lambda^{m}$ çarpanını, gruplamayı ve tam kare ya da kare farkı özdeşliklerini dene.
+2. Olmazsa rasyonel kök adaylarını ($a_0$'ın bölenleri / $a_n$'nin bölenleri, @prp-yuksek-rasyonel-kok) dene; her kökle sentetik bölme yap ve aynı kökü bölümde yeniden dene.
+3. Kökleri katlılıklarıyla listele; katlılıkların toplamı mertebeye eşit olmalıdır.
+4. Tablodan katkıları yazıp topla. Başlangıç koşulu varsa $c_i$'ler için doğrusal sistemi çöz.
+:::
+
+**Kısa yol (tersine soru).** Genel çözüm ya da temel küme verilip denklem isteniyorsa kökleri okuyun ve $P(\lambda) = \prod (\lambda - r)^{k}$ çarpımını açın. Örneğin $e^{x}\cos 2x$, $e^{x}\sin 2x$ için kökler $1 \pm 2i$, $P(\lambda) = \lambda^{2} - 2\lambda + 5$ ve denklem $y'' - 2y' + 5y = 0$'dır.
+
+:::: {#exm-ozt-karakteristik name="Rasyonel Kökle Çarpanlara Ayrılan Bir Kübik"}
+$y''' - y'' - 8y' + 12y = 0$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+$P(\lambda) = \lambda^{3} - \lambda^{2} - 8\lambda + 12$. Adaylar $12$'nin bölenleridir; $P(2) = 8 - 4 - 16 + 12 = 0$. Sentetik bölme $P(\lambda) = (\lambda - 2)(\lambda^{2} + \lambda - 6)$ verir ve $\lambda^{2} + \lambda - 6 = (\lambda - 2)(\lambda + 3)$. Kökler $2$ (iki katlı) ve $-3$ (basit); katlılık toplamı $3$'tür:
+
+$$y = (c_1 + c_2x)\,e^{2x} + c_3\,e^{-3x}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Belirsiz Katsayılar {#sec-ozt-belirsiz}
+
+Sabit katsayılı denklemde sağ taraf üstel, polinom, $\sin$, $\cos$ ve bunların çarpımlarından oluşuyorsa özel çözüm sağ tarafa benzeyen bir deneme fonksiyonuyla bulunur (@def-belirsiz-deneme-fonksiyonu). Genel çözüm $y = y_h + y_p$'dir (@thm-belirsiz-genel-cozum, @thm-yho-genel-cozum); sağ taraf toplamsa her terim ayrı ele alınır (@thm-belirsiz-toplam).
+
+| $r(x)$ içindeki terim | Deneme fonksiyonu | Karşılık gelen sayı |
+|:--|:--|:-:|
+| $k\,e^{\alpha x}$ | $A\,e^{\alpha x}$ | $\alpha$ |
+| $n$. dereceden polinom | $S_n(x) = A_nx^{n} + \cdots + A_0$ | $0$ |
+| $k\cos\beta x$ ya da $k\sin\beta x$ | $A\cos\beta x + B\sin\beta x$ | $i\beta$ |
+| $k\,e^{\alpha x}\cos\beta x$ ya da $\sin$ | $e^{\alpha x}(A\cos\beta x + B\sin\beta x)$ | $\alpha + i\beta$ |
+| $k\,x^{n}e^{\alpha x}$ | $S_n(x)\,e^{\alpha x}$ | $\alpha$ |
+| $k\,x^{n}\cos\beta x$ ya da $\sin$ | $S_n(x)\cos\beta x + T_n(x)\sin\beta x$ | $i\beta$ |
+
+**Değiştirme kuralı** (@sec-belirsiz-degistirme). Karşılık gelen sayı karakteristik denklemin $s$ katlı kökü ise (kök değilse $s = 0$) o terimin denemesi $x^{s}$ ile çarpılır. Örneğin $y'' + 9y = x\cos 3x + e^{3x}$ için $3i$ basit kök, $3$ kök değildir:
+
+$$y_p = x\big[(A_1x + A_0)\cos 3x + (B_1x + B_0)\sin 3x\big] + C\,e^{3x}.$$
+
+**Kısa yol (üstel sağ taraf).** $P(D)\,y = k\,e^{\alpha x}$ ve $P(\lambda) = (\lambda - \alpha)^{s}\,Q(\lambda)$, $Q(\alpha) \neq 0$ ise (@thm-yho-ustel; ikinci mertebe için @thm-belirsiz-ustel)
+
+$$y_p = \frac{k}{s!\,Q(\alpha)}\,x^{s}e^{\alpha x}.$$
+
+Örneğin $y'' - 4y' + 4y = 6e^{2x}$ için $s = 2$, $Q \equiv 1$ ve hiç türev almadan $y_p = 3x^{2}e^{2x}$ bulunur.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Yalnız $\cos\beta x$ varken denemeye $\sin\beta x$'i koymamak; polinomun düşük kuvvetlerini atlamak.
+- Denemeyi $y_h$ ile karşılaştırmadan yerine koymak; çakışmada bütün sonuç $0$ çıkar.
+- Başlangıç koşullarını $y_h$'ye uygulamak; sabitler en son, $y = y_h + y_p$ üzerinden bulunur.
+:::
+
+:::: {#exm-ozt-belirsiz name="Polinom ve Rezonanslı Üstel Sağ Taraf"}
+$y'' + y' - 2y = 4x + 3e^{x}$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+$\lambda^{2} + \lambda - 2 = (\lambda - 1)(\lambda + 2)$; $y_h = c_1e^{x} + c_2e^{-2x}$.
+
+**$4x$ terimi.** $0$ kök değildir; $y_{p_1} = Ax + B$ için
+
+$$y_{p_1}'' + y_{p_1}' - 2y_{p_1} = -2Ax + (A - 2B) = 4x.$$
+
+$-2A = 4$ ve $A - 2B = 0$: $A = -2$, $B = -1$.
+
+**$3e^{x}$ terimi.** $1$ basit köktür ($s = 1$), $Q(\lambda) = \lambda + 2$, $Q(1) = 3$; kısa yolla $y_{p_2} = \dfrac{3}{3}\,x\,e^{x} = x\,e^{x}$.
+
+$$y = c_1e^{x} + c_2e^{-2x} - 2x - 1 + x\,e^{x}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Parametrelerin Değişimi {#sec-ozt-parametre}
+
+Sağ taraf deneme tablosunda yoksa ($\tan x$, $\sec x$, $\frac{1}{x}$, $\ln x$, kesirli üsteller) ya da katsayılar değişkense, homojen denklemin bir temel çözüm kümesi biliniyor olmak koşuluyla bu yöntem kullanılır (@thm-parametre-formul):
+
+$$u_1' = -\frac{r\,y_2}{W}, \qquad u_2' = \frac{r\,y_1}{W}, \qquad y_p = u_1y_1 + u_2y_2.$$
+
+$n$-inci mertebede $u_k' = \dfrac{W_k\,r}{W}$'dir; $W_k$, $W$'nin $k$-inci sütunu $(0, \dots, 0, 1)$ ile değiştirilerek bulunur (@thm-yho-cramer).
+
+::: {.callout-tip title="Dört adımda parametrelerin değişimi"}
+1. $y''$'nün katsayısına böl; $r(x)$'i bu standart biçimden oku.
+2. $y_1$, $y_2$ ve $W$'yi bul (hazır Wronskiyenler için @sec-ozt-wronskiyen).
+3. $u_1'$, $u_2'$'yü yaz ve sabitsiz integralle.
+4. $y_p = u_1y_1 + u_2y_2$; $y_h$ içinde kalan terimleri atabilirsin. $y = y_h + y_p$.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $a(x)\,y'' + \cdots = g(x)$ denkleminde $r = g$ almak; doğrusu $r = \dfrac{g}{a}$'dır.
+- $u_1'$ formülündeki eksi işaretini unutmak.
+:::
+
+:::: {#exm-ozt-parametre name="Katlı Kökte Arktanjant Veren Sağ Taraf"}
+$y'' - 4y' + 4y = \dfrac{e^{2x}}{1 + x^{2}}$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+$\lambda = 2$ çift katlı kök: $y_1 = e^{2x}$, $y_2 = x\,e^{2x}$, $W = e^{4x}$. Denklem zaten standart biçimdedir.
+
+$$u_1' = -\frac{x}{1 + x^{2}}, \qquad u_2' = \frac{1}{1 + x^{2}}.$$
+
+İntegrallerle $u_1 = -\frac{1}{2}\ln(1 + x^{2})$, $u_2 = \arctan x$. Buradan
+
+$$y_p = e^{2x}\left(x\arctan x - \frac{1}{2}\ln(1 + x^{2})\right),$$
+
+$$y = (c_1 + c_2x)\,e^{2x} + y_p.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Cauchy–Euler Denklemi {#sec-ozt-euler}
+
+Her $y^{(k)}$'nin önünde bir sabit çarpı $x^{k}$ varsa denklem Cauchy–Euler denklemidir (@def-euler-denklemi). $x > 0$'da $t = \ln x$ dönüşümü onu sabit katsayılı bir denkleme çevirir (@thm-euler-indirgeme).
+
+**Kısa yol.** Homojen kısımda $t$'ye geçmeden doğrudan $y = x^{\lambda}$ denenir; $a_2x^{2}y'' + a_1xy' + a_0y = 0$ için karakteristik denklem
+
+$$a_2\lambda(\lambda - 1) + a_1\lambda + a_0 = a_2\lambda^{2} + (a_1 - a_2)\lambda + a_0 = 0$$
+
+olur. Köklere göre çözümler (@thm-euler-ikinci-genel-cozum, yüksek mertebe için @cor-euler-yuksek):
+
+| Kök | Katkısı |
+|:--|:--|
+| Farklı gerçel $r_1$, $r_2$ | $x^{r_1}$, $x^{r_2}$ |
+| Çift katlı $r$ | $x^{r}$, $x^{r}\ln x$ |
+| $\alpha \pm i\beta$ | $x^{\alpha}\cos(\beta\ln x)$, $x^{\alpha}\sin(\beta\ln x)$ |
+| $m$ katlı $r$ | $x^{r}$, $x^{r}\ln x$, …, $x^{r}(\ln x)^{m-1}$ |
+
+Sağ taraf varsa $t$'ye geçilir: $x^{s} = e^{st}$, $\ln x = t$. Sonra sabit katsayılı denklem için belirsiz katsayılar ya da parametrelerin değişimi uygulanır ve sonuç $x$'e geri çevrilir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Karakteristik denklemi $a_2\lambda^{2} + a_1\lambda + a_0$ yazmak; $\lambda$'nın katsayısı $a_1 - a_2$'dir.
+- Parametrelerin değişiminde $x^{2}$'ye bölmeyi unutmak.
+:::
+
+:::: {#exm-ozt-euler name="Çift Katlı Kök ve Rezonanslı Sağ Taraf"}
+$x > 0$ için $x^{2}y'' + 3xy' + y = \dfrac{1}{x}$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+Karakteristik denklem $\lambda^{2} + (3 - 1)\lambda + 1 = (\lambda + 1)^{2} = 0$; $\lambda = -1$ çift katlı köktür ve
+
+$$y_h = \frac{c_1 + c_2\ln x}{x}.$$
+
+$t = \ln x$ ile denklem
+
+$$\frac{d^{2}y}{dt^{2}} + 2\,\frac{dy}{dt} + y = e^{-t}$$
+
+olur. $-1$ çift katlı kök olduğundan kısa yolla ($s = 2$, $Q \equiv 1$) $y_p = \dfrac{1}{2}\,t^{2}e^{-t}$. $x$'e dönersek
+
+$$y = \frac{c_1 + c_2\ln x}{x} + \frac{(\ln x)^{2}}{2x}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::

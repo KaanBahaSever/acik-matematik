@@ -1,0 +1,518 @@
+---
+title: "Uygulamalı Özet: Lineer Cebir 1"
+pagetitle: "Uygulamalı Özet: Lineer Cebir 1"
+description: "Lineer Cebir 1 sorularını çözmek için pratik reçeteler ve kopya kâğıdı: işlem özellikleri ve grup sınaması, satır işlemleri, Gauss yöntemi, parametreli sistemler, Gauss-Jordan ile ters matris, alt uzay ölçütü, lineer kombinezon ve bağımsızlık, taban ve boyut, toplam ve direkt toplam, rank ve çözüm uzayı."
+---
+
+Bu sayfa kitabın birinci dönem yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Bu dönemin sorularının neredeyse hepsi tek bir hesaba dayanır: bir matrisi elemanter satır işlemleriyle **merdiven şekline indirmek**. Denklem sistemini çözmek, tersi bulmak, bir vektörün bir kombinezon olup olmadığını sınamak, bağımsızlığa karar vermek, taban ve boyut bulmak, rank hesaplamak hep bu hesabın farklı okumalarıdır. Sayfa her soru tipi için adım adım bir reçete, gerekli ölçüt tablolarını, kısa yolları, sık yapılan hataları ve kısa ama tam çözümlü örnekleri verir. Her kural, gerekçesinin bulunduğu bölüme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt1-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, hangi kalıba girdiğini belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| İşlem asosyatif mi, birim ve ters var mı, yapı grup mu? | Aksiyomları sırayla sına | [Cebirsel yapılar](#sec-ozt1-yapilar) |
+| Sistemi çöz; çözüm yok, tek ya da sonsuz mu? | Genişletilmiş matrisi merdivene indir | [Gauss yöntemi](#sec-ozt1-gauss) |
+| Parametrenin hangi değerinde çözüm var, tek? | Son ayrıcalıklı elemanın sıfırlarını incele | [Parametreli sistemler](#sec-ozt1-parametre) |
+| Bir matrisin tersi, regüler mi? | $\big(A \mid I_n\big) \sim \big(I_n \mid A^{-1}\big)$ | [Ters matris](#sec-ozt1-ters) |
+| $W$ bir alt uzay mı? | $0_V \in W$ ve $kv + lw \in W$ | [Alt uzaylar](#sec-ozt1-alt-uzay) |
+| $v \in L(u_1, \dots, u_m)$ mi? | $u_j$'ler sütun, $v$ sağ taraf: sistem | [Kombinezon](#sec-ozt1-kombinezon) |
+| Vektörler bağımlı mı, bağımsız mı? | Vektörler satır: merdivende sıfır satır var mı? | [Bağımsızlık](#sec-ozt1-bagimsizlik) |
+| Gerilen uzayın tabanı, boyutu, tabana tamamlama | Satır olarak yaz, merdivenin sıfırdan farklı satırları | [Taban ve boyut](#sec-ozt1-taban) |
+| $U + W$, $U \cap W$, $V = U \oplus W$ mi? | Boyut formülü | [Toplamlar](#sec-ozt1-toplam) |
+| Rank, çözülebilirlik, çözüm uzayının tabanı | $\operatorname{rank}(A) = \operatorname{rank}(A, B)$, $\dim W = n - r$ | [Rank](#sec-ozt1-rank) |
+
+## Cebirsel Yapılar {#sec-ozt1-yapilar}
+
+Bir kümede tanımlı bir işlemin hangi yapıyı oluşturduğu sorusu, aksiyomların sırayla sınanmasıdır ([tek işlemli yapılar](cebirsel-yapilar/tek-islemli-yapilar.qmd), [halkalar ve cisimler](cebirsel-yapilar/iki-islemli-yapilar.qmd)).
+
+| Yapı | Gereken aksiyomlar |
+|:--|:--|
+| Yarı grup | Kapalılık, asosyatiflik |
+| Monoid | Yarı grup ve birim eleman |
+| Grup | Monoid ve her elemanın tersi |
+| Halka | $+$'ya göre komutatif grup, $\cdot$'ya göre yarı grup, iki yanlı dağılma |
+| Cisim | Halka ve $K \setminus \{0_K\}$ çarpmaya göre bir grup |
+| Tamlık bölgesi | Birimli komutatif ve sıfır bölensiz halka |
+
+: Tek ve iki işlemli yapılar {#tbl-ozt1-yapilar}
+
+::: {.callout-tip title="Dört adımda bir işlemi incelemek"}
+1. **Kapalılık.** $a \circ b$ her zaman kümede kalıyor mu? Kümeden çıkan tek bir örnek, kapalılığı bozar.
+2. **Asosyatiflik ve komutatiflik.** $(a \circ b) \circ c$ ile $a \circ (b \circ c)$'yi ayrı ayrı aç ve karşılaştır; eşit değilse bir sayısal karşı örnek ver.
+3. **Birim.** $e \circ a = a$ denklemini $e$ için çöz. Çıkan $e$, $a$'ya bağlıysa birim **yoktur**.
+4. **Ters.** $x \circ a = e$ denklemini $x$ için çöz; $x$'in kümede kaldığı $a$'ları ve tersi olmayan elemanları ayır.
+:::
+
+**Kısa yol.** $a \circ b$ ifadesi bir dönüşümle tanıdık bir işleme çevrilebiliyorsa (örneğin $a + b + ab = (1 + a)(1 + b) - 1$), asosyatiflik ve kapalılık o işlemden hazır gelir.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Komutatif olmayan bir işlemde birim için hem $e \circ a = a$ hem $a \circ e = a$ denetlenmelidir.
+- $\mathbb{N} = \{1, 2, 3, \dots\}$ alınır; $\langle \mathbb{N}, + \rangle$'nin birimi yoktur.
+- Cisimde $0$'ın çarpma tersi aranmaz; "her elemanın tersi" yalnız sıfırdan farklı elemanlar içindir.
+:::
+
+:::: {#exm-ozt1-islem name="Bir İşlemin Grup Oluşturup Oluşturmadığı"}
+$\mathbb{Q}$ kümesinde $a \circ b = a + b + ab$ işlemi tanımlanıyor. $\langle \mathbb{Q}, \circ \rangle$ bir grup mudur?
+
+::: {.cozum}
+**Kapalılık ve komutatiflik.** Rasyonel sayıların toplamı ve çarpımı rasyoneldir; $a + b + ab = b + a + ba$ olduğundan işlem komutatiftir.
+
+**Asosyatiflik.** İki tarafı açalım:
+
+$$
+\begin{aligned}
+(a \circ b) \circ c &= (a + b + ab) + c + (a + b + ab)c\\[1mm]
+&= a + b + c + ab + ac + bc + abc
+\end{aligned}
+$$
+
+$a \circ (b \circ c)$ açıldığında da aynı simetrik ifade çıkar; işlem asosyatiftir.
+
+**Birim.** $e \circ a = e + a + ea = a$ eşitliği $e(1 + a) = 0$ verir. Bunun her $a$ için sağlanması $e = 0$ demektir ve $0 \in \mathbb{Q}$'dur.
+
+**Ters.** $x \circ a = 0$ eşitliği $x(1 + a) = -a$ verir. $a \ne -1$ ise $x = -\dfrac{a}{1 + a} \in \mathbb{Q}$'dur. $a = -1$ için ise her $x$'te
+$$x \circ (-1) = x - 1 - x = -1 \ne 0$$
+olduğundan $-1$'in tersi yoktur.
+
+Sonuç: $\langle \mathbb{Q}, \circ \rangle$ komutatif bir monoiddir ama grup **değildir**. Kısa yoldaki $a \circ b = (1 + a)(1 + b) - 1$ yazılışı, $-1$'i çıkarınca kalan $\mathbb{Q} \setminus \{-1\}$'in bir grup olduğunu da gösterir: $a, b \ne -1$ ise $(1 + a)(1 + b) \ne 0$, yani $a \circ b \ne -1$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Satır İşlemleri ve Merdiven Şekli {#sec-ozt1-merdiven}
+
+Sayfanın geri kalanındaki her reçete aynı hesaba dayanır. Üç [elemanter satır işlemi](matrisler/merdiven-matrisler.qmd) vardır ve hiçbiri satır uzayını ya da çözüm kümesini değiştirmez:
+
+| İşlem | Gösterim | Geri alınışı |
+|:--|:--|:--|
+| İki satırı değiştir | $R_i \leftrightarrow R_j$ | Aynı işlem |
+| Bir satırı $k \ne 0$ ile çarp | $R_i \to kR_i$ | $R_i \to \frac{1}{k}R_i$ |
+| Bir satıra başka satırın katını ekle | $R_i \to kR_j + R_i$ | $R_i \to -kR_j + R_i$ |
+
+: Elemanter satır işlemleri {#tbl-ozt1-satir-islemleri}
+
+**Kısa yollar.**
+
+- Köşeye $1$ getirmek için önce satır değiştir; ilk sütunda $1$ olan satırı üste al.
+- Kesirden kaçınmak için iki işlemi birleştir: $R_2 \to -3R_1 + 2R_2$ (önce $2$ ile çarp, sonra $-3R_1$ ekle).
+- Merdiven şekli tek değildir, ama **satır kanonik şekli** (ayrıcalıklı elemanlar $1$, sütunlarının geri kalanı $0$) tektir. İki matrisin satır eşdeğer olup olmadığı kanonik şekilleri karşılaştırılarak anlaşılır ([satır uzayı](vektor-uzaylari/satir-uzayi.qmd)).
+
+## Gauss Yöntemi {#sec-ozt1-gauss}
+
+Bir sistemin çözümü, genişletilmiş matrisin merdiven şeklinden okunur ([Gauss yok etme yöntemi](denklem-sistemleri/gauss-yontemi.qmd)). $r$, merdivendeki sıfırdan farklı satır sayısı, $n$ bilinmeyen sayısıdır.
+
+| Merdiven şeklinde görülen | Sonuç | Rank dili |
+|:--|:--|:--|
+| $\big(0 \ \cdots \ 0 \mid b\big)$, $b \ne 0$ satırı | Çözüm yok | $\operatorname{rank}(A) < \operatorname{rank}(A, B)$ |
+| Böyle satır yok, $r = n$ | Tek çözüm | $\operatorname{rank}(A) = \operatorname{rank}(A, B) = n$ |
+| Böyle satır yok, $r < n$ | Sonsuz çözüm, $n - r$ serbest değişken | $\operatorname{rank}(A) = \operatorname{rank}(A, B) < n$ |
+
+: Çözüm sayısının merdivenden okunması {#tbl-ozt1-cozum-sayisi}
+
+::: {.callout-tip title="Beş adımda Gauss yöntemi"}
+1. Genişletilmiş matrisi $\big(A \mid B\big)$ yaz.
+2. Sütun sütun ilerleyerek ayrıcalıklı elemanların altını sıfırla.
+3. $\big(0 \ \cdots \ 0 \mid b\big)$, $b \ne 0$ satırı çıktıysa dur: çözüm yoktur.
+4. Sıfır satırları at; ayrıcalıklı eleman içermeyen sütunların değişkenleri serbesttir, her birine bir parametre ver.
+5. En alttaki denklemden başlayarak yukarı doğru yerine koy; sonucu bir denklemde sağla.
+:::
+
+**Homojen sistem** ($B = O$) her zaman sıfır çözümüne sahiptir. Bilinmeyen sayısı denklem sayısından fazlaysa ($n > m$) mutlaka triviyal olmayan çözüm vardır, çünkü $r \le m < n$ olur ([eşdeğer sistemler](denklem-sistemleri/esdeger-sistemler.qmd)).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Serbest değişken, ayrıcalıklı elemanın **bulunmadığı** sütunun değişkenidir; "son değişken" olmak zorunda değildir.
+- Bir satıra işlem yaparken sağ taraftaki sabit de değişir; homojen olmayan sistemde son sütun unutulmamalıdır.
+- Aynı adımda bir satırı hem değiştirip hem başka bir satırın hesabında eski hâliyle kullanmak hatalıdır; her adımda yalnız değişmeyen satırlar kullanılır.
+:::
+
+:::: {#exm-ozt1-gauss name="İki Serbest Değişkenli Bir Sistem"}
+$\mathbb{R}$ üzerinde
+
+$$
+\begin{aligned}
+x_1 + 2x_2 - x_3 + x_4 &= 3\\
+2x_1 + 4x_2 - x_3 + 3x_4 &= 8\\
+-x_1 - 2x_2 + 3x_3 + x_4 &= 1
+\end{aligned}
+$$
+
+sistemini çözünüz.
+
+::: {.cozum}
+Genişletilmiş matrisi indirgeyelim:
+
+$$\left(\begin{array}{cccc|c} 1 & 2 & -1 & 1 & 3\\ 2 & 4 & -1 & 3 & 8\\ -1 & -2 & 3 & 1 & 1\end{array}\right)
+\overset{\substack{R_2 \to -2R_1 + R_2\\ R_3 \to R_1 + R_3}}{\sim}
+\left(\begin{array}{cccc|c} 1 & 2 & -1 & 1 & 3\\ 0 & 0 & 1 & 1 & 2\\ 0 & 0 & 2 & 2 & 4\end{array}\right)$$
+
+$$\overset{R_3 \to -2R_2 + R_3}{\sim}
+\left(\begin{array}{cccc|c} 1 & 2 & -1 & 1 & 3\\ 0 & 0 & 1 & 1 & 2\\ 0 & 0 & 0 & 0 & 0\end{array}\right)$$
+
+Çözümsüzlük satırı yoktur; $r = 2 < n = 4$ olduğundan sonsuz çözüm vardır. Ayrıcalıklı elemanlar birinci ve üçüncü sütunlardadır; serbest değişkenler $x_2$ ve $x_4$'tür. $x_2 = s$, $x_4 = t$ alalım:
+
+$$x_3 = 2 - x_4 = 2 - t, \qquad x_1 = 3 - 2s + x_3 - x_4 = 5 - 2s - 2t$$
+
+Çözüm kümesi
+
+$$\big\{(5 - 2s - 2t,\ s,\ 2 - t,\ t) : s, t \in \mathbb{R}\big\}$$
+
+dir. Sağlama ($s = t = 0$, yani $(5, 0, 2, 0)$): $5 - 2 = 3$, $10 - 2 = 8$, $-5 + 6 = 1$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Parametreli Sistemler {#sec-ozt1-parametre}
+
+Katsayılarda bir parametre varsa merdivenin son satırı $p(a)\,x_n = q(a)$ biçimini alır ve tartışma bu satıra bakılarak yapılır ([parametreli sistemler](denklem-sistemleri/parametreli-sistemler.qmd)).
+
+| $p(a)$ | $q(a)$ | Sonuç |
+|:-:|:-:|:--|
+| $\ne 0$ | herhangi | Tek çözüm |
+| $0$ | $\ne 0$ | Çözüm yok |
+| $0$ | $0$ | Sonsuz çözüm |
+
+: Son satıra göre tartışma {#tbl-ozt1-parametre}
+
+::: {.callout-tip title="Dört adımda parametreli sistem"}
+1. Parametreyi içermeyen bir satırı ve sütunu öne al; parametreyi olabildiğince sona bırak.
+2. Merdiven şekline in; parametreli ifadeyle **bölme** yapma, çünkü o ifade sıfır olabilir. Gerekirse $R_3 \to -(a - 1)R_2 + R_3$ gibi çarparak ekle.
+3. Son satırdaki $p(a)$ ve $q(a)$'yı çarpanlarına ayır; $p(a) = 0$'ın kökleri kritik değerlerdir.
+4. Her kritik değeri sisteme ayrı ayrı yerleştir, kalan değerler için tek çözümü $a$ cinsinden yaz.
+:::
+
+:::: {#exm-ozt1-parametre name="Parametreye Göre Üç Durum"}
+$\mathbb{R}$ üzerinde
+
+$$x + y + z = 1, \qquad x + 2y + 3z = 2, \qquad x + 2y + (a^{2} - 1)z = a$$
+
+sisteminin çözümünü $a$'nın değerlerine göre inceleyiniz.
+
+::: {.cozum}
+$$\left(\begin{array}{ccc|c} 1 & 1 & 1 & 1\\ 1 & 2 & 3 & 2\\ 1 & 2 & a^{2} - 1 & a\end{array}\right)
+\overset{\substack{R_2 \to -R_1 + R_2\\ R_3 \to -R_1 + R_3}}{\sim}
+\left(\begin{array}{ccc|c} 1 & 1 & 1 & 1\\ 0 & 1 & 2 & 1\\ 0 & 1 & a^{2} - 2 & a - 1\end{array}\right)$$
+
+$$\overset{R_3 \to -R_2 + R_3}{\sim}
+\left(\begin{array}{ccc|c} 1 & 1 & 1 & 1\\ 0 & 1 & 2 & 1\\ 0 & 0 & (a - 2)(a + 2) & a - 2\end{array}\right)$$
+
+**$a = -2$ ise.** Son satır $0 = -4$ olur; **çözüm yoktur**.
+
+**$a = 2$ ise.** Son satır $0 = 0$ olur ve atılır; $r = 2 < 3$ olduğundan **sonsuz çözüm** vardır. $z = t$ alınırsa $y = 1 - 2t$ ve $x = 1 - y - z = t$:
+$$\big\{(t,\ 1 - 2t,\ t) : t \in \mathbb{R}\big\}$$
+
+**$a \ne \pm 2$ ise.** $r = n = 3$, **tek çözüm** vardır. Son satır $a - 2 \ne 0$ ile sadeleşir: $(a + 2)z = 1$, yani
+$$z = \frac{1}{a + 2}, \qquad y = 1 - 2z = \frac{a}{a + 2}, \qquad x = 1 - y - z = \frac{1}{a + 2}$$
+Sağlama ($a = 0$, yani $\big(\tfrac12, 0, \tfrac12\big)$): $\tfrac12 + \tfrac12 = 1$, $\tfrac12 + \tfrac32 = 2$, $\tfrac12 - \tfrac12 = 0$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Ters Matris {#sec-ozt1-ters}
+
+$A$ regülerdir ancak ve ancak $A \overset{\text{satır}}{\sim} I_n$'dir; tersi de aynı satır işlemleriyle bulunur ([elemanter matrisler ve ters hesabı](matrisler/elemanter-matrisler.qmd)).
+
+::: {.callout-tip title="Dört adımda Gauss-Jordan ile ters"}
+1. $n \times 2n$ tipindeki $\big(A \mid I_n\big)$ blok matrisini yaz.
+2. Sol bloku merdivene indir; sol blokta sıfır satır çıkarsa dur: $A$ singülerdir.
+3. Ayrıcalıklı elemanları $1$ yapıp yukarı doğru da temizle; sol blok $I_n$ olur.
+4. Sağ blok $A^{-1}$'dir. Sağlama için $AA^{-1}$'in bir satırını hesapla.
+:::
+
+| Kural | Ne işe yarar |
+|:--|:--|
+| $AB = I_n$ ise $B = A^{-1}$ | Kare matrislerde tek yönü denetlemek yeter |
+| $(AB)^{-1} = B^{-1}A^{-1}$ | Sıra ters döner |
+| $(AB)^{t} = B^{t}A^{t}$ | Transpozede de sıra ters döner |
+| Bir satırı ya da sütunu sıfır olan kare matris | Tersi yoktur |
+| $A \overset{\text{satır}}{\sim} B$ ise $B = PA$, $P$ regüler | $P$, işlemlerin elemanter matrislerinin çarpımıdır |
+
+: Ters ve transpoze kuralları {#tbl-ozt1-ters}
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Gauss-Jordan'da yalnız **satır** işlemi yapılır; sütun işlemi karıştırılırsa sağ blok ters olmaz.
+- $(AB)^{-1} = A^{-1}B^{-1}$ yazmak yanlıştır.
+:::
+
+:::: {#exm-ozt1-ters name="Gauss-Jordan ile Bir Ters"}
+$A = \begin{pmatrix} 1 & 1 & 0\\ 1 & 2 & 1\\ 0 & 1 & 2\end{pmatrix}$ $\mathbb{R}$-matrisinin tersini bulunuz.
+
+::: {.cozum}
+$$\left(\begin{array}{ccc|ccc} 1 & 1 & 0 & 1 & 0 & 0\\ 1 & 2 & 1 & 0 & 1 & 0\\ 0 & 1 & 2 & 0 & 0 & 1\end{array}\right)
+\overset{R_2 \to -R_1 + R_2}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 1 & 0 & 1 & 0 & 0\\ 0 & 1 & 1 & -1 & 1 & 0\\ 0 & 1 & 2 & 0 & 0 & 1\end{array}\right)$$
+
+$$\overset{R_3 \to -R_2 + R_3}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 1 & 0 & 1 & 0 & 0\\ 0 & 1 & 1 & -1 & 1 & 0\\ 0 & 0 & 1 & 1 & -1 & 1\end{array}\right)
+\overset{R_2 \to -R_3 + R_2}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 1 & 0 & 1 & 0 & 0\\ 0 & 1 & 0 & -2 & 2 & -1\\ 0 & 0 & 1 & 1 & -1 & 1\end{array}\right)$$
+
+$$\overset{R_1 \to -R_2 + R_1}{\sim}
+\left(\begin{array}{ccc|ccc} 1 & 0 & 0 & 3 & -2 & 1\\ 0 & 1 & 0 & -2 & 2 & -1\\ 0 & 0 & 1 & 1 & -1 & 1\end{array}\right)
+\qquad
+A^{-1} = \begin{pmatrix} 3 & -2 & 1\\ -2 & 2 & -1\\ 1 & -1 & 1\end{pmatrix}$$
+
+Sağlama: $A$'nın birinci satırı $(1, 1, 0)$ ile $A^{-1}$'in sütunları çarpılırsa $3 - 2 = 1$, $-2 + 2 = 0$, $1 - 1 = 0$ bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Alt Uzaylar {#sec-ozt1-alt-uzay}
+
+$\varnothing \ne W \subseteq V$ kümesinin alt uzay olması için her $k, l \in K$ ve $v, w \in W$ için $kv + lw \in W$ olması gerek ve yeter ([alt uzaylar](vektor-uzaylari/alt-uzaylar.qmd)).
+
+::: {.callout-tip title="Üç adımda alt uzay sınaması"}
+1. **Sıfır testi.** $0_V \in W$ mi? Değilse $W$ alt uzay değildir ve iş biter.
+2. **Kapalılık.** $W$'den genel iki eleman al, tanımlayan koşulu $kv + lw$ için yaz.
+3. **Karar.** Koşul sağlanıyorsa alt uzaydır; bozuluyorsa somut sayılarla bir karşı örnek ver.
+:::
+
+**Kısa yol.** Bileşenler arasında yalnız **homojen lineer denklemlerle** tanımlanan her küme (örneğin $\{(a, b, c) : a - 2b + c = 0\}$) bir homojen sistemin çözüm kümesidir, dolayısıyla alt uzaydır. Bir alt uzayın denklemi sabit terim, kare, çarpım ya da eşitsizlik içeremez.
+
+| Küme ($\mathbb{R}^{3}$'te) | Alt uzay mı? | Bozulan koşul |
+|:--|:-:|:--|
+| $a + b = 1$ | Hayır | $0_V \notin W$ |
+| $a \ge 0$ | Hayır | $(-1) \cdot (1, 0, 0) \notin W$ |
+| $ab = 0$ | Hayır | $(1, 0, 0) + (0, 1, 0) \notin W$ |
+| $a^{2} + b^{2} + c^{2} \le 1$ | Hayır | $2 \cdot (1, 0, 0) \notin W$ |
+| $a, b, c \in \mathbb{Q}$ | Hayır | $\sqrt{2} \cdot (1, 0, 0) \notin W$ |
+| $a = 2b$, $c = 0$ | Evet | Homojen lineer denklemler |
+
+: Standart örnekler ve karşı örnekler {#tbl-ozt1-alt-uzay}
+
+İki alt uzayın kesişimi alt uzaydır; birleşimi genellikle değildir.
+
+:::: {#exm-ozt1-alt-uzay name="Bir Düzlemin Alt Uzay Olması"}
+$$W = \big\{(x, y, z) \in \mathbb{R}^{3} : x - 2y + 3z = 0\big\}$$
+
+kümesinin $\mathbb{R}^{3}$'ün bir alt uzayı olduğunu gösteriniz.
+
+::: {.cozum}
+$0 - 0 + 0 = 0$ olduğundan $(0, 0, 0) \in W$ ve $W \ne \varnothing$'dir.
+
+$v = (x, y, z)$, $w = (x', y', z')$, $W$'de ve $k, l \in \mathbb{R}$ olsun. $kv + lw$ vektörünün bileşenleri $kx + lx'$, $ky + ly'$, $kz + lz'$'dir ve
+
+$$
+\begin{aligned}
+&(kx + lx') - 2(ky + ly') + 3(kz + lz')\\[1mm]
+&\quad = k(x - 2y + 3z) + l(x' - 2y' + 3z') = k \cdot 0 + l \cdot 0 = 0
+\end{aligned}
+$$
+
+olduğundan $kv + lw \in W$'dir. Tek koşullu ölçüt gereği $W$ bir alt uzaydır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Kombinezon ve Doğurma {#sec-ozt1-kombinezon}
+
+"$v$, $u_1, \dots, u_m$'nin bir lineer kombinezonu mu?" sorusu, bilinmeyenleri katsayılar olan bir sistemdir ([lineer kombinezonlar](vektor-uzaylari/lineer-kombinezon.qmd)).
+
+::: {.callout-tip title="Üç adımda kombinezon sınaması"}
+1. $u_1, \dots, u_m$'yi **sütun**, $v$'yi sağ taraf olarak yaz: $\big(u_1 \ \cdots \ u_m \mid v\big)$.
+2. Merdivene indir.
+3. Çözümsüzlük satırı çıkarsa $v \notin L(u_1, \dots, u_m)$; çıkmazsa katsayıları geri yerine koyarak bul.
+:::
+
+**$K^{n}$'i doğurur mu?** $u_1, \dots, u_m$ vektörleri satır yazılıp merdivene indirilir; sıfırdan farklı satır sayısı $n$ ise $K^{n}$'i doğururlar. $m < n$ ise doğuramazlar.
+
+:::: {#exm-ozt1-kombinezon name="Katsayıları Tek Olmayan Bir Kombinezon"}
+$v = (1, 4, 5)$ vektörü $u_1 = (1, 1, 2)$, $u_2 = (2, -1, 1)$, $u_3 = (0, 3, 3)$ vektörlerinin bir lineer kombinezonu mudur?
+
+::: {.cozum}
+$v = xu_1 + yu_2 + zu_3$ sistemini kuralım; $u_j$'ler sütundur:
+
+$$\left(\begin{array}{ccc|c} 1 & 2 & 0 & 1\\ 1 & -1 & 3 & 4\\ 2 & 1 & 3 & 5\end{array}\right)
+\overset{\substack{R_2 \to -R_1 + R_2\\ R_3 \to -2R_1 + R_3}}{\sim}
+\left(\begin{array}{ccc|c} 1 & 2 & 0 & 1\\ 0 & -3 & 3 & 3\\ 0 & -3 & 3 & 3\end{array}\right)
+\overset{R_3 \to -R_2 + R_3}{\sim}
+\left(\begin{array}{ccc|c} 1 & 2 & 0 & 1\\ 0 & -3 & 3 & 3\\ 0 & 0 & 0 & 0\end{array}\right)$$
+
+Çözümsüzlük satırı yoktur; $v \in L(u_1, u_2, u_3)$'tür. $z$ serbesttir: $y = z - 1$, $x = 1 - 2y = 3 - 2z$. Örneğin $z = 0$ için
+
+$$v = 3u_1 - u_2 = (3 - 2,\ 3 + 1,\ 6 - 1) = (1, 4, 5)$$
+
+Katsayıların tek olmaması, $u_1, u_2, u_3$'ün bağımlı olduğunu gösterir: gerçekten $u_3 = 2u_1 - u_2$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Bağımlılık ve Bağımsızlık {#sec-ozt1-bagimsizlik}
+
+Bağımsızlık bir homojen sistem sorusudur: $a_1v_1 + \cdots + a_mv_m = 0$ yalnız sıfır çözüme sahipse vektörler bağımsızdır ([lineer bağımsızlık](vektor-uzaylari/lineer-bagimsizlik.qmd)). Pratikte vektörler **satır** yazılır ve merdivene indirilir; sıfır satır çıkmazsa bağımsızdırlar.
+
+| Durum | Sonuç | Hesap gerekir mi? |
+|:--|:--|:-:|
+| Vektörlerden biri $0_V$ | Bağımlı | Hayır |
+| İki vektör eşit ya da biri ötekinin katı | Bağımlı | Hayır |
+| Tek bir $v \ne 0_V$ | Bağımsız | Hayır |
+| $n$ boyutlu uzayda $n + 1$ ya da daha çok vektör | Bağımlı | Hayır |
+| $n$ boyutlu uzayda tam $n$ vektör | Bağımsız $\iff$ taban | Evet |
+| Bağımlı bir küme içeren küme | Bağımlı | Hayır |
+| Bağımsız bir kümenin alt kümesi | Bağımsız | Hayır |
+
+: Hesapsız bağımlılık ölçütleri {#tbl-ozt1-bagimsizlik}
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Vektörleri satır yazıp merdivene inince elde edilen satırlar **yeni** vektörlerdir; bağımlılık bağıntısı aranıyorsa bunlar değil, katsayı sistemi çözülmelidir.
+- "Hiçbiri diğerinin katı değil" demek, üç ya da daha çok vektörde bağımsızlık için yetmez.
+:::
+
+:::: {#exm-ozt1-bagimsizlik name="Parametreye Bağlı Bağımlılık"}
+$\mathbb{R}^{3}$'te $u_1 = (1, 1, 1)$, $u_2 = (1, 2, 3)$, $u_3 = (1, 4, k)$ vektörleri hangi $k$ değeri için lineer bağımlıdır?
+
+::: {.cozum}
+Vektörleri satır yazıp indirgeyelim:
+
+$$\begin{pmatrix} 1 & 1 & 1\\ 1 & 2 & 3\\ 1 & 4 & k\end{pmatrix}
+\overset{\substack{R_2 \to -R_1 + R_2\\ R_3 \to -R_1 + R_3}}{\sim}
+\begin{pmatrix} 1 & 1 & 1\\ 0 & 1 & 2\\ 0 & 3 & k - 1\end{pmatrix}
+\overset{R_3 \to -3R_2 + R_3}{\sim}
+\begin{pmatrix} 1 & 1 & 1\\ 0 & 1 & 2\\ 0 & 0 & k - 7\end{pmatrix}$$
+
+$k \ne 7$ ise sıfır satır yoktur, vektörler bağımsızdır. $k = 7$ ise üçüncü satır sıfır olur ve vektörler **bağımlıdır**. Bağıntı katsayı sisteminden bulunur: $k = 7$ için
+
+$$2u_1 - 3u_2 + u_3 = (2 - 3 + 1,\ 2 - 6 + 4,\ 2 - 9 + 7) = (0, 0, 0)$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Taban ve Boyut {#sec-ozt1-taban}
+
+Taban, uzayı doğuran bağımsız kümedir; boyut, bir tabanın eleman sayısıdır ([taban ve boyut](vektor-uzaylari/taban-ve-boyut.qmd), [boyut teoremleri](vektor-uzaylari/boyut-teoremleri.qmd)).
+
+::: {.callout-tip title="Üç adımda taban bulma ve tamamlama"}
+1. Doğuran vektörleri **satır** yaz ve merdivene indir.
+2. Sıfırdan farklı satırlar gerilen uzayın bir tabanıdır; sayıları boyuttur.
+3. $K^{n}$'in tabanına tamamlamak için, ayrıcalıklı elemanı olmayan her sütuna o sütunda $1$ taşıyan standart vektörü ekle; merdiven yapısı korunduğundan yeni küme de bağımsızdır.
+:::
+
+| Uzay | Bir taban | Boyut |
+|:--|:--|:-:|
+| $K^{n}$ | $e_1, \dots, e_n$ | $n$ |
+| $\{0_V\}$ | $\varnothing$ | $0$ |
+| $AX = O$'ın çözüm uzayı, $A_{(m,n)}$ | Serbest değişkenlerden | $n - r$ |
+| $L(v_1, \dots, v_m)$ | Merdivenin sıfırdan farklı satırları | $\operatorname{rank}$ |
+
+: Sık kullanılan boyutlar {#tbl-ozt1-boyutlar}
+
+**Kısa yollar.**
+
+- $\dim V = n$ biliniyorsa $n$ elemanlı bir küme için **yalnız bağımsızlığı** ya da **yalnız doğurmayı** göstermek taban olması için yeter.
+- $W \subseteq V$ ve $\dim W = \dim V$ ise $W = V$'dir.
+- Homojen sistemle verilen bir alt uzayın tabanı, serbest değişkenlerden birine $1$, ötekilere $0$ verilerek bulunur ([rank](#sec-ozt1-rank)).
+
+:::: {#exm-ozt1-taban name="Taban Bulma ve Tamamlama"}
+$$W = L\big((1, 2, 0, 1),\ (2, 4, 1, 1),\ (1, 2, 1, 0)\big) \subseteq \mathbb{R}^{4}$$
+
+alt uzayının bir tabanını ve boyutunu bulunuz; bu tabanı $\mathbb{R}^{4}$'ün bir tabanına tamamlayınız.
+
+::: {.cozum}
+$$\begin{pmatrix} 1 & 2 & 0 & 1\\ 2 & 4 & 1 & 1\\ 1 & 2 & 1 & 0\end{pmatrix}
+\overset{\substack{R_2 \to -2R_1 + R_2\\ R_3 \to -R_1 + R_3}}{\sim}
+\begin{pmatrix} 1 & 2 & 0 & 1\\ 0 & 0 & 1 & -1\\ 0 & 0 & 1 & -1\end{pmatrix}
+\overset{R_3 \to -R_2 + R_3}{\sim}
+\begin{pmatrix} 1 & 2 & 0 & 1\\ 0 & 0 & 1 & -1\\ 0 & 0 & 0 & 0\end{pmatrix}$$
+
+$\big\{(1, 2, 0, 1),\ (0, 0, 1, -1)\big\}$, $W$'nin bir tabanıdır ve $\dim W = 2$'dir.
+
+Ayrıcalıklı elemanlar birinci ve üçüncü sütunlarda; ikinci ve dördüncü sütunlar boştur. $(0, 1, 0, 0)$ ve $(0, 0, 0, 1)$ eklenip satırlar sıralanırsa
+
+$$\begin{pmatrix} 1 & 2 & 0 & 1\\ 0 & 1 & 0 & 0\\ 0 & 0 & 1 & -1\\ 0 & 0 & 0 & 1\end{pmatrix}$$
+
+merdiven matrisi elde edilir; dört satır bağımsızdır ve $\dim \mathbb{R}^{4} = 4$ olduğundan $\mathbb{R}^{4}$'ün bir tabanıdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Toplam, Kesişim ve Direkt Toplam {#sec-ozt1-toplam}
+
+$U + W = \{u + w : u \in U, w \in W\}$ bir alt uzaydır ve iki uzayın doğuranlarının birleşimi tarafından gerilir ([toplamlar ve direkt toplam](vektor-uzaylari/toplamlar-ve-direkt-toplam.qmd)). Üç boyut birbirine bağlıdır:
+
+$$\dim(U + W) = \dim U + \dim W - \dim(U \cap W)$$
+
+| İstenen | Yöntem |
+|:--|:--|
+| $\dim(U + W)$ ve tabanı | Bütün doğuranları satır yazıp merdivene indir |
+| $\dim(U \cap W)$ | Boyut formülünden; taban gerekmiyorsa kesişimi hesaplama |
+| $U \cap W$'nin tabanı | İki uzayı denklemlerle yaz, denklemleri birleştirip homojen sistemi çöz |
+| $V = U \oplus W$ mi? | $U \cap W = \{0_V\}$ ve $\dim U + \dim W = \dim V$ |
+
+: Toplam ve kesişim soruları {#tbl-ozt1-toplam}
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $U \cap W = \{0_V\}$ tek başına $V = U \oplus W$ demek değildir; $U + W = V$ de gerekir.
+- $U \cup W$ genellikle bir alt uzay değildir; $U + W$ ile karıştırılmamalıdır.
+:::
+
+:::: {#exm-ozt1-direkt-toplam name="Bir Düzlem ile Bir Doğrunun Direkt Toplamı"}
+$$U = \big\{(a, b, c) \in \mathbb{R}^{3} : a + b - c = 0\big\}, \qquad W = L\big((1, 1, 1)\big)$$
+
+olsun. $\mathbb{R}^{3} = U \oplus W$ midir?
+
+::: {.cozum}
+**Boyutlar.** $U$ tek denklemli bir homojen sistemin çözüm uzayıdır; $n = 3$, $r = 1$ olduğundan $\dim U = 2$'dir. $(1, 1, 1) \ne 0$ olduğundan $\dim W = 1$'dir.
+
+**Kesişim.** $W$'nin elemanı $t(1, 1, 1)$ biçimindedir; $U$'da olması için $t + t - t = t = 0$ gerekir. Demek ki $U \cap W = \{0\}$'dır.
+
+**Toplam.** Boyut formülünden
+$$\dim(U + W) = 2 + 1 - 0 = 3 = \dim \mathbb{R}^{3}$$
+olduğundan $U + W = \mathbb{R}^{3}$'tür. İki koşul da sağlandığından $\mathbb{R}^{3} = U \oplus W$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Rank ve Çözüm Uzayı {#sec-ozt1-rank}
+
+$\operatorname{rank}(A)$, satır uzayının boyutudur ve sütun uzayının boyutuna eşittir; merdivendeki sıfırdan farklı satır sayısı olarak hesaplanır ([rank ve denklem sistemleri](vektor-uzaylari/rank.qmd)).
+
+| Soru | Ölçüt |
+|:--|:--|
+| $AX = B$'nin çözümü var mı? | $\operatorname{rank}(A) = \operatorname{rank}(A, B)$ |
+| Çözüm tek mi? | Ayrıca $\operatorname{rank}(A) = n$ |
+| $AX = O$'ın çözüm uzayının boyutu | $\dim W = n - r$ |
+| $n$. mertebeden $A$ regüler mi? | $\operatorname{rank}(A) = n$ |
+
+: Rank ölçütleri {#tbl-ozt1-rank}
+
+::: {.callout-tip title="Üç adımda çözüm uzayının tabanı"}
+1. Katsayılar matrisini merdivene indir; $r$'yi ve serbest değişkenleri belirle.
+2. $\dim W = n - r$ yaz.
+3. Serbest değişkenlerden birine $1$, ötekilere $0$ vererek $n - r$ çözüm üret; bunlar $W$'nin bir tabanıdır.
+:::
+
+:::: {#exm-ozt1-cozum-uzayi name="Dört Bilinmeyenli Homojen Sistemin Çözüm Uzayı"}
+$\mathbb{R}$ üzerinde
+
+$$x + y - z + 2t = 0, \qquad 2x + 3y + z + t = 0, \qquad x + 2y + 2z - t = 0$$
+
+sisteminin $W$ çözüm uzayının boyutunu ve bir tabanını bulunuz.
+
+::: {.cozum}
+$$\begin{pmatrix} 1 & 1 & -1 & 2\\ 2 & 3 & 1 & 1\\ 1 & 2 & 2 & -1\end{pmatrix}
+\overset{\substack{R_2 \to -2R_1 + R_2\\ R_3 \to -R_1 + R_3}}{\sim}
+\begin{pmatrix} 1 & 1 & -1 & 2\\ 0 & 1 & 3 & -3\\ 0 & 1 & 3 & -3\end{pmatrix}
+\overset{R_3 \to -R_2 + R_3}{\sim}
+\begin{pmatrix} 1 & 1 & -1 & 2\\ 0 & 1 & 3 & -3\\ 0 & 0 & 0 & 0\end{pmatrix}$$
+
+$r = 2$, $n = 4$ olduğundan $\dim W = 4 - 2 = 2$'dir. Serbest değişkenler $z$ ve $t$'dir; ikinci satırdan $y = -3z + 3t$, birinciden $x = -y + z - 2t = 4z - 5t$.
+
+$$z = 1,\ t = 0: \ w_1 = (4, -3, 1, 0), \qquad z = 0,\ t = 1: \ w_2 = (-5, 3, 0, 1)$$
+
+$\{w_1, w_2\}$, $W$'nin bir tabanıdır. Sağlama ($w_1$): $4 - 3 - 1 = 0$, $8 - 9 + 1 = 0$, $4 - 6 + 2 = 0$.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+Lineer dönüşümler, determinantlar ve özdeğerler için ikinci dönemin özeti: [Uygulamalı Özet: Lineer Cebir 2](uygulamali-ozet-2.qmd).

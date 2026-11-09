@@ -1,0 +1,664 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Raslantı süreçleri sorularını çözmek için kopya kâğıdı: Poisson süreci, birleştirme ve ayrıştırma, Erlang ve sayma-zaman denkliği, Markov zincirinde dağılım ve n adımlık geçiş, durumların sınıflandırılması, regülerlik, daimi durum, yutulma olasılıkları, en küçük kareler ve korelasyon, dönüştürülebilir modeller, hata ölçütleri, otokorelasyon, tabii model, hareketli ortalamalar, eyer noktası ve grafik yöntem."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık gelen sorular şunlardır: bir Poisson sürecinde belirli bir aralıktaki olay sayısının olasılığı, birleştirme ve ayrıştırmayla yeni oranlar; bir Markov zincirinde birkaç adım sonraki dağılım, durumların sınıflandırılması, daimi durum ve yutulma olasılıkları; verilere doğru ya da dönüştürülmüş bir eğri uydurmak; bir zaman serisi için tahmin yapıp hatasını ölçmek; bir ödemeler matrisinden oyunun çözümünü bulmak. Her soru tipi için adım adım bir tarif, formül tabloları, kısa yollar, sık yapılan hatalar ve kitaptakilerden farklı sayılarla kısa, tam çözümlü örnekler verilir. Her kural, gerekçesinin bulunduğu tanıma, teoreme ya da bölüme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Soruyu okuyunca ilk iş, hangi kalıba girdiğini belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| Bir aralıkta $n$ olay, "en az", "en çok" | $\lambda t$'yi bul, Poisson olasılığı ya da tümleyen | @sec-ozt-poisson |
+| $n$. olayın $t$'den önce olması | $\Pr\{T_n \le t\} = \Pr\{Y_t \ge n\}$ | @sec-ozt-poisson |
+| İki akış birlikte, olayların bir kısmı | Oranları topla ya da $p$ ile çarp | @sec-ozt-birlestirme |
+| $k$ adım sonra bir durumda olma | $p(k) = p(0)P^k$ ya da $P^k$'nin bir elemanı | @sec-ozt-n-adim |
+| Belirli bir yolun olasılığı | Başlangıç olasılığı çarpı tek adımlar | @sec-ozt-n-adim |
+| Geçici, tekrar eden, yutucu durumlar | Köşegen ve sütun taraması | @sec-ozt-siniflandirma |
+| Uzun dönem dağılımı, $\lim P^n$ | $\pi' = \pi' P$, $\sum \pi_j = 1$ | @sec-ozt-daimi |
+| Bir durumda yutulma olasılığı | Kanonik form, $N = (I - Q)^{-1}$, $B = NR$ | @sec-ozt-yutucu |
+| Verilere doğru uydurma, korelasyon | Normal denklemler, $\beta_1$, $\beta_0$, $r$ | @sec-ozt-regresyon |
+| $c e^{aX}$, $a_1 X^{a_2}$, $\frac{a_1 X}{b_1 + X}$ uydurma | Önce doğrusallaştır, sonra EKK | @sec-ozt-donusum |
+| MAD, MSE, MPE, MAPE, $r_k$ | Sütunlu tablo | @sec-ozt-hatalar |
+| Gelecek periyot tahmini | Tabii model ya da hareketli ortalama | @sec-ozt-tabii-hom |
+| Ödemeler matrisinde oyunun değeri | Maximin, minimax, eyer noktası | @sec-ozt-saf |
+| Eyer noktası yok, $2 \times n$ matris | Beklenen değer doğruları, alt zarf | @sec-ozt-grafik |
+
+## Poisson Süreciyle Olasılık Hesabı {#sec-ozt-poisson}
+
+Poisson sorularının hepsi doğru $\lambda t$ sayısını bulmaya dayanır. $\lambda$ oranlı bir Poisson sürecinde (@def-poisson-sureci) $Y_t$, $\lambda t$ ortalamalı Poisson dağılımına sahiptir; aralıktaki olay sayısı yalnız aralığın uzunluğuna bağlıdır ve ayrık aralıklar bağımsızdır.
+
+::: {.callout-tip title="Dört adımda Poisson sorusu"}
+1. **Birimi eşitle.** Oranı sorudaki zaman birimine çevir: "dakikada $1$" ise saatte $\lambda = 60$, "$18$ saatte bir" ise saatte $\lambda = \frac{1}{18}$.
+2. **Aralığı bul.** Hangi aralıkta kaç olay istendiğini yaz. Koşul ayrık bir aralığa aitse düşer; çakışıyorsa farkı al.
+3. **$\lambda t$'yi hesapla.** $t$, aralığın uzunluğudur, başladığı an değil.
+4. **Formülü uygula.** "En az", "daha fazla" gibi kuyruk olasılıklarında kısa olan tarafı topla, gerekirse $1$'den çıkar.
+:::
+
+| Sorulan | Formül | Gerekçe |
+|:--|:--|:--|
+| $\Pr\{Y_t = n\}$ | $\dfrac{e^{-\lambda t}(\lambda t)^n}{n!}$ | @def-poisson-sureci |
+| $\Pr\{Y_t \ge n\}$ | $1 - \sum_{k=0}^{n-1} \frac{e^{-\lambda t}(\lambda t)^k}{k!}$ | Tümleyen |
+| $\Pr\{Y_{a+s} - Y_a = n\}$ | $\Pr\{Y_s = n\}$ | Durağan artışlar |
+| $E(Y_t)$ | $\lambda t$ | @thm-poisson-beklenen |
+| $\Pr\{G_i \le x\}$, $E(G_i)$ | $1 - e^{-\lambda x}$, $\frac{1}{\lambda}$ | Üstel bekleme |
+| $\Pr\{T_n \le t\}$ | $\Pr\{Y_t \ge n\}$ | [Sayma–zaman denkliği](1-temeller/varis-sayma-erlang.qmd) |
+| $E(T_n)$ | $\frac{n}{\lambda}$ | @thm-erlang |
+
+: Poisson sorularında kullanılan ifadeler {#tbl-ozt-poisson}
+
+**Kısa yollar.**
+
+- İlk olay için bekleme: $\Pr\{G_1 \le x\} = 1 - \Pr\{Y_x = 0\}$, yani $1 - e^{-\lambda x}$'tir; Erlang formülü gerekmez.
+- "Hiç olay olmaması olasılığı en az $q$ olsun" türü sorularda $e^{-\lambda t} \ge q \iff \lambda t \le -\ln q$ yazılır ve eşitsizlik bu biçimde çözülür (@exm-baski-hatasi).
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Aralığın uzunluğu yerine bitiş anını $t$ almak: "saat $3$ ile $6$ arası" için $t = 3$'tür.
+- Zaten $t$ ile çarpılmış bir ortalamayı ($\lambda t$) yeniden $t$ ile çarpmak.
+- "$30$'dan fazla" için tek terim $\Pr\{Y = 30\}$'u hesaplamak; istenen bir kuyruk toplamıdır.
+:::
+
+:::: {#exm-ozt-poisson-kosul name="Koşulun Düştüğü Bir Sayma Sorusu"}
+Bir çağrı merkezine saatte $3$ oranında Poisson süreciyle çağrı gelmektedir. Saat $9$ ile $10$ arasında $2$ çağrı geldiği biliniyorsa, saat $9$ ile $11$ arasında toplam $5$ çağrı gelmesinin olasılığı nedir?
+
+::: {.cozum}
+Saat $9$'u $t = 0$ alalım. Toplam $5$ çağrı için $(1, 2]$ aralığında $5 - 2 = 3$ çağrı gelmelidir. Bu aralık $(0, 1]$ ile ayrık olduğundan koşul düşer. Aralığın uzunluğu $1$ saat, yani $\lambda t = 3$'tür:
+$$\Pr\{Y_2 - Y_1 = 3 \mid Y_1 = 2\} = \Pr\{Y_1 = 3\} = \frac{e^{-3}\, 3^3}{3!} = 4{,}5\, e^{-3} \approx 0{,}2240.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-erlang name="Dördüncü Çağrının Bir Saat İçinde Gelmesi"}
+Aynı çağrı merkezinde ($\lambda = 3$ çağrı/saat) mesai saat $9$'da başlamaktadır. Dördüncü çağrının saat $10$'dan önce gelmesinin olasılığı nedir?
+
+::: {.cozum}
+İstenen $\Pr\{T_4 \le 1\}$'dir. Sayma–zaman denkliğiyle bu, ilk saatte en az $4$ çağrı gelmesi olasılığına eşittir. $\lambda t = 3$ ile
+$$
+\begin{aligned}
+\Pr\{T_4 \le 1\} &= \Pr\{Y_1 \ge 4\} = 1 - e^{-3}\left(1 + 3 + \frac{3^2}{2!} + \frac{3^3}{3!}\right) \\[1mm]
+&= 1 - e^{-3}(1 + 3 + 4{,}5 + 4{,}5) = 1 - 13\, e^{-3} \\[1mm]
+&\approx 1 - 0{,}6472 = 0{,}3528.
+\end{aligned}
+$$
+Dördüncü çağrıya kadar beklenen süre ise $E(T_4) = \frac{4}{3}$ saat, yani $80$ dakikadır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Birleştirme ve Ayrıştırma {#sec-ozt-birlestirme}
+
+Birden çok akış ya da bir akışın alt türleri sorulduğunda iki teorem yeni bir Poisson süreci verir: bağımsız akışların oranları toplanır (@thm-birlestirme), $p$ olasılıkla seçilen olayların oranı $\lambda p$ olur ve seçilenlerle seçilmeyenler bağımsızdır (@thm-ayristirma).
+
+::: {.callout-tip title="Üç adımda birleştirme ve ayrıştırma"}
+1. **Oranları ortak birime getir** ve gerekiyorsa topla: $\lambda = \lambda_1 + \lambda_2 + \cdots$.
+2. **İstenen alt türün oranını bul:** $\lambda_A = \lambda p$. Birden çok basamak varsa oranlar art arda çarpılır.
+3. **Yeni süreçle Poisson sorusunu çöz** (@sec-ozt-poisson).
+:::
+
+| Durum | Sonuç |
+|:--|:--|
+| Bağımsız iki akış birlikte | $\lambda_1 + \lambda_2$ oranlı Poisson |
+| Olayların $p$ kadarı A tipi | A: $\lambda p$, B: $\lambda(1 - p)$, ikisi bağımsız |
+| A tipi sayısı $k$ biliniyor | $E(\text{toplam}) = k + \lambda(1 - p)t$ |
+| Toplam sayı $N$ biliniyor | A tipi sayısı binom: $\binom{N}{k} p^k (1 - p)^{N - k}$ |
+| Her tür farklı miktar taşıyor | $E = \sum (\text{miktar}) \cdot \lambda_i t$ |
+
+: Birleştirme ve ayrıştırmanın sonuçları {#tbl-ozt-birlestirme}
+
+Son iki satırın örnekleri @exm-otoyol ve @exm-dag-lokantasi içindedir.
+
+:::: {#exm-ozt-ayristirma name="İki Kapıdan Gelen Kişilerin Bir Kısmı"}
+Bir kütüphaneye ana kapıdan saatte $8$, yan kapıdan saatte $4$ kişi bağımsız Poisson süreçleriyle girmektedir. Girenlerin $\%25$'i kitap iade etmektedir. Yarım saatte en az iki iade işlemi yapılmasının olasılığı nedir?
+
+::: {.cozum}
+Birleştirmeyle toplam giriş oranı $\lambda = 8 + 4 = 12$, ayrıştırmayla iade oranı $12 \cdot 0{,}25 = 3$'tür. Yarım saat için bu sürecin ortalaması $3 \cdot 0{,}5 = 1{,}5$ olur. Tümleyenden:
+$$
+\begin{aligned}
+\Pr\{Y \ge 2\} &= 1 - e^{-1{,}5}\,(1 + 1{,}5) = 1 - 2{,}5 \cdot 0{,}2231 \\[1mm]
+&= 1 - 0{,}5578 = 0{,}4422.
+\end{aligned}
+$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-kosullu-beklenen name="İade Sayısı Bilinirken Giriş Sayısı"}
+Aynı kütüphanede (toplam giriş oranı saatte $12$, girenlerin $\%25$'i iade yapıyor) bir saatte $5$ iade işlemi yapıldığı biliniyor. O saatte kütüphaneye giren kişi sayısının beklenen değeri nedir?
+
+::: {.cozum}
+Giren kişiler, iade yapanlar ile yapmayanların toplamıdır. Ayrıştırma teoremine göre iade yapmayanlar $12 \cdot 0{,}75 = 9$ oranlı bir Poisson sürecidir ve iade yapanlardan bağımsızdır. Bu yüzden $5$ iade bilgisi, iade yapmayanların dağılımını değiştirmez:
+$$E(\text{giriş} \mid 5 \text{ iade}) = 5 + 9 \cdot 1 = 14.$$
+"$5$ kişi girenlerin $\%25$'i ise $20$ kişi girmiştir" diye oranla hesaplamak yanlıştır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Markov Zincirinde Çok Adımlı Geçişler {#sec-ozt-n-adim}
+
+Bir Markov zincirinde her şey geçiş matrisinden okunur. Önce $P$'nin bir SSM olduğu (@def-ssm) denetlenir: kare, elemanları negatif değil ve her satır toplamı $1$. Sonra sorunun başlangıcı kesin bir durum mu, yoksa bir dağılım mı verdiğine bakılır.
+
+| Soruda verilen | İstenen | Formül |
+|:--|:--|:--|
+| Başlangıç kesin: $X_0 = i$ | $P(X_k = j \mid X_0 = i)$ | $P^k$'nin $(i, j)$ elemanı (@thm-chapman-kolmogorov) |
+| Başlangıç dağılımı $p(0)$ | $P(X_k = j)$ | $p(k) = p(0)P^k$'nin $j$. bileşeni (@thm-dagilim-ilerletme) |
+| $p(0)$ ve bir yol | $P(X_0 = i_0, \dots, X_k = i_k)$ | $p_{i_0}(0)\, p_{i_0 i_1} \cdots p_{i_{k-1} i_k}$ |
+
+: Markov zincirinde çok adımlı olasılıklar {#tbl-ozt-n-adim}
+
+::: {.callout-tip title="Üç adımda dağılımı ilerletmek"}
+1. Başlangıç dağılımını **satır vektörü** olarak yaz: kesin başlangıçta ilgili bileşen $1$, diğerleri $0$'dır.
+2. Vektörü her adımda sağdan $P$ ile çarp: $p(1) = p(0)P$, $p(2) = p(1)P$, … Yalnız tek bir bileşen gerekiyorsa son adımda sadece o sütunla çarp.
+3. Her vektörün bileşen toplamının $1$ olduğunu denetle.
+:::
+
+**Kısa yollar.**
+
+- Yalnız bir dağılım isteniyorsa $P^k$'yi hesaplama; vektörü $k$ kez $P$ ile çarpmak daha az işlemdir.
+- Birden çok başlangıç için aynı $k$ soruluyorsa $P^k$'yi bir kez hesaplamak daha ucuzdur. Her satırın toplamı $1$ çıkmalıdır (@thm-P-us-n).
+- Yol olasılığında matris kuvveti gerekmez; bir önceki duruma bakmak yeter.
+
+:::: {#exm-ozt-dagilim name="İki Adım Sonra Üçüncü Durumda Olma"}
+$S = \{1, 2, 3\}$ durum uzaylı bir Markov zincirinin geçiş matrisi ve başlangıç dağılımı
+$$P = \begin{pmatrix} 0{,}5 & 0{,}4 & 0{,}1 \\ 0{,}2 & 0{,}6 & 0{,}2 \\ 0{,}3 & 0{,}3 & 0{,}4 \end{pmatrix}, \qquad p(0) = (0{,}4;\ 0{,}4;\ 0{,}2)$$
+olarak veriliyor. $P(X_2 = 3)$ olasılığını bulunuz.
+
+::: {.cozum}
+**Bir adım:** $p(1) = p(0)P$'nin bileşenleri sütun sütun:
+$$
+\begin{aligned}
+p_1(1) &= 0{,}4 \cdot 0{,}5 + 0{,}4 \cdot 0{,}2 + 0{,}2 \cdot 0{,}3 = 0{,}34, \\[1mm]
+p_2(1) &= 0{,}4 \cdot 0{,}4 + 0{,}4 \cdot 0{,}6 + 0{,}2 \cdot 0{,}3 = 0{,}46, \\[1mm]
+p_3(1) &= 0{,}4 \cdot 0{,}1 + 0{,}4 \cdot 0{,}2 + 0{,}2 \cdot 0{,}4 = 0{,}20.
+\end{aligned}
+$$
+Toplam $1$'dir. **İkinci adım:** yalnız üçüncü bileşen gerektiğinden $p(1)$ yalnız üçüncü sütunla çarpılır:
+$$P(X_2 = 3) = 0{,}34 \cdot 0{,}1 + 0{,}46 \cdot 0{,}2 + 0{,}20 \cdot 0{,}4 = 0{,}206.$$
+
+Aynı zincirde bir yolun olasılığı ise doğrudan çarpımdır:
+$$P(X_0 = 1, X_1 = 2, X_2 = 2, X_3 = 3) = 0{,}4 \cdot 0{,}4 \cdot 0{,}6 \cdot 0{,}2 = 0{,}0192.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Durumların Sınıflandırılması ve Regülerlik {#sec-ozt-siniflandirma}
+
+Uzun dönem sorularının hepsi durumların türünü bilmeyi gerektirir: geçici (@def-gecici), tekrar eden (@def-tekrar-eden) ya da yutucu (@def-yutucu). Hangi yöntemin uygulanacağı bu sınıflandırmaya göre seçilir.
+
+::: {.callout-tip title="Dört adımda sınıflandırma"}
+1. **Köşegeni tara.** $p_{ii} = 1$ olan her durum yutucudur.
+2. **Sütunları tara.** $j$ sütununda sıfırdan farklı elemanlar, $j$'ye ok gelen durumlardır. $j$'ye yalnız kendisinden ve geçici durumlardan ok geliyorsa $j$ geçicidir.
+3. **Çevrimleri bul.** Birbirine gidip dönülebilen ve dışarı çıkılamayan durumlar tekrar edendir.
+4. **$T$ ve $R$ kümelerini yaz.** $T \ne \varnothing$ ise geçici durumların satır ve sütunlarını silerek $P_R$'yi bul (@def-indirgenmis-matris) ve satır toplamlarını denetle.
+:::
+
+| Matristeki işaret | Sonuç | Gerekçe |
+|:--|:--|:--|
+| Esas köşegende $1$ | Yutucu durum var, $P$ regüler değil | @def-reguler |
+| Hiç sıfır eleman yok | $P$ regüler ($n = 1$) | @def-reguler |
+| $T \ne \varnothing$ | $P$ regüler değil; $P_R$ incelenir | @def-indirgenmis-matris |
+| Kuvvetler tekrar ediyor ($P^3 = P$) | Sıfırlar kalır, regüler değil | @exm-reguler |
+| Bir $P^n$'de hiç sıfır yok | Regüler | @def-reguler |
+
+: Matristen hızlı okuma {#tbl-ozt-siniflandirma}
+
+**Kısa yol.** Regülerlik için yalnız **sıfırların yerleri** önemlidir. $P^2$'nin $(i, j)$ elemanı, $i$'den bir ara durum üzerinden $j$'ye iki adımlık bir yol varsa pozitiftir; sayıları çarpmadan yalnız bu yolları aramak yeterlidir. Geçici bir durumun sütununda tekrar eden satırlar hep sıfır kalacağından geçici durumu olan bir zincir regüler olamaz.
+
+:::: {#exm-ozt-siniflandirma name="Beş Durumlu Bir Zincirin Uzun Dönemi"}
+$S = \{1, 2, 3, 4, 5\}$ durum uzaylı zincirin geçiş matrisi
+$$P = \begin{pmatrix}
+0{,}3 & 0{,}7 & 0 & 0 & 0 \\
+0 & 0 & 0{,}4 & 0 & 0{,}6 \\
+0 & 0 & 0{,}5 & 0{,}5 & 0 \\
+0 & 0 & 0{,}8 & 0{,}2 & 0 \\
+0 & 0 & 0{,}2 & 0{,}8 & 0
+\end{pmatrix}$$
+olarak veriliyor. Süreç uzun dönemde hangi durumlarda, hangi olasılıklarla bulunur?
+
+::: {.cozum}
+**Sınıflandırma.** Esas köşegende $1$ yoktur. Sütunlara bakalım:
+
+- $1$. sütunda yalnız $p_{11}$ vardır; $1$'e başka hiçbir durumdan dönülmez. $1$ geçicidir.
+- $2$. sütunda yalnız $p_{12}$ vardır; $2$'ye yalnız geçici $1$'den gelinir. $2$ geçicidir.
+- $5$. sütunda yalnız $p_{25}$ vardır; $5$'e yalnız geçici $2$'den gelinir. $5$ geçicidir.
+- $3 \to 4 \to 3$ çevrimi vardır ve $3$ ile $4$'ten başka bir yere gidilmez. İkisi tekrar edendir.
+
+$T = \{1, 2, 5\}$, $R = \{3, 4\}$ olduğundan $1$, $2$, $5$ numaralı satır ve sütunlar silinir:
+$$P_R = \begin{pmatrix} 0{,}5 & 0{,}5 \\ 0{,}8 & 0{,}2 \end{pmatrix}.$$
+Satır toplamları $1$'dir ve hiç sıfır olmadığından $P_R$ regülerdir.
+
+**Daimi durum.** $2 \times 2$ kısa yolunda (@sec-ozt-daimi) $\alpha = 0{,}5$, $\beta = 0{,}8$ olduğundan
+$$\pi' = \left(\frac{0{,}8}{1{,}3},\ \frac{0{,}5}{1{,}3}\right) = \left(\frac{8}{13},\ \frac{5}{13}\right) \approx (0{,}6154;\ 0{,}3846).$$
+Süreç uzun dönemde zamanının $\frac{8}{13}$'ünü $3$'te, $\frac{5}{13}$'ünü $4$'te geçirir; $1$, $2$ ve $5$'in uzun dönem olasılıkları sıfırdır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Daimi Durum Olasılıkları {#sec-ozt-daimi}
+
+Regüler bir zincirde $P^n$ satırları özdeş bir matrise yakınsar ve her satır daimi durum vektörü $\pi'$'dür (@thm-yakinsama). $\pi'$, $\pi' = \pi' P$ ve $\sum \pi_j = 1$ koşullarıyla bulunur (@def-daimi-durum).
+
+::: {.callout-tip title="Dört adımda daimi durum"}
+1. **Regülerliği göster.** Geçici durum varsa önce indirge (@sec-ozt-siniflandirma).
+2. **Denge denklemlerini kur.** $\pi' P = \pi'$ çarpımını sütun sütun aç: $j$. denklem $\sum_i \pi_i p_{ij} = \pi_j$'dir.
+3. **Bir denklemi at, normalizasyonu ekle.** Denklemlerden biri ötekilerden çıkar; yerine $\sum \pi_j = 1$ yazılır.
+4. **Çöz ve sağla.** En çok sıfır içeren sütunun denkleminden başla; bulunan $\pi'$ ile $\pi' P$'yi yeniden hesapla.
+:::
+
+**Kısa yollar.**
+
+- $2 \times 2$ matrisler için hazır sonuç (@exm-genel-2x2):
+  $$P = \begin{pmatrix} 1 - \alpha & \alpha \\ \beta & 1 - \beta \end{pmatrix} \implies \pi' = \left(\frac{\beta}{\alpha + \beta},\ \frac{\alpha}{\alpha + \beta}\right).$$
+  Örneğin $P = \begin{pmatrix} 0{,}7 & 0{,}3 \\ 0{,}4 & 0{,}6 \end{pmatrix}$ için $\alpha = 0{,}3$, $\beta = 0{,}4$ ve $\pi' = \left(\frac{4}{7}, \frac{3}{7}\right)$'dir.
+- $\lim P^n$ sorulduğunda ayrı hesap gerekmez: her satırı $\pi'$ olan matris yazılır.
+- Bütün bilinmeyenleri bir tanesi cinsinden yazıp en sonda normalizasyonu kullanmak, kesirlerle uğraşmayı azaltır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Denklemleri satırlardan kurmak. $\pi' P$'de $\pi_j$'nin denklemi $P$'nin $j$. **sütunundan** gelir.
+- Yutucu ya da indirgenebilir bir zincirde indirgemeden çözmeye çalışmak.
+:::
+
+:::: {#exm-ozt-daimi name="Sıfırları Olan Üç Durumlu Bir Zincir"}
+$$P = \begin{pmatrix} 0 & \tfrac12 & \tfrac12 \\[2pt] \tfrac12 & \tfrac12 & 0 \\[2pt] \tfrac14 & \tfrac14 & \tfrac12 \end{pmatrix}$$
+geçiş matrisli zincirin daimi durum olasılıklarını bulunuz.
+
+::: {.cozum}
+**Regülerlik.** $P^2$'yi hesaplayalım:
+$$P^2 = \begin{pmatrix} \tfrac38 & \tfrac38 & \tfrac14 \\[2pt] \tfrac14 & \tfrac12 & \tfrac14 \\[2pt] \tfrac14 & \tfrac38 & \tfrac38 \end{pmatrix}.$$
+Bütün elemanlar pozitif olduğundan $P$ regülerdir.
+
+**Denge denklemleri.** $\pi' = (\pi_1, \pi_2, \pi_3)$ için sütunlardan:
+$$
+\begin{aligned}
+\tfrac12 \pi_2 + \tfrac14 \pi_3 &= \pi_1, \\[1mm]
+\tfrac12 \pi_1 + \tfrac12 \pi_2 + \tfrac14 \pi_3 &= \pi_2, \\[1mm]
+\tfrac12 \pi_1 + \tfrac12 \pi_3 &= \pi_3.
+\end{aligned}
+$$
+Üçüncü denklemden $\pi_3 = \pi_1$'dir. Bunu birincide yerine koyarsak $\tfrac12 \pi_2 = \tfrac34 \pi_1$, yani $\pi_2 = \tfrac32 \pi_1$ bulunur. İkinci denklemi atıp normalizasyonu kullanalım:
+$$\pi_1 + \tfrac32 \pi_1 + \pi_1 = \tfrac72 \pi_1 = 1 \implies \pi' = \left(\frac27,\ \frac37,\ \frac27\right).$$
+
+**Sağlama.** $\pi' P$'nin ilk bileşeni $\frac37 \cdot \frac12 + \frac27 \cdot \frac14 = \frac{3}{14} + \frac{1}{14} = \frac27$'dir; öteki bileşenler de tutar.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Yutucu Zincirler {#sec-ozt-yutucu}
+
+Zincirde yutucu durumlar varsa uzun dönem sonucu başlangıca bağlıdır ve soru "hangi yutucu durumda biter?" biçimine dönüşür. Araçlar kanonik form (@thm-kanonik-form) ile temel matristir (@thm-temel-matris).
+
+::: {.callout-tip title="Dört adımda yutulma olasılığı"}
+1. **Sınıflandır.** $p_{ii} = 1$ olan durumlar yutucu, ötekiler geçicidir.
+2. **Kanonik forma getir.** Önce geçici, sonra yutucu durumlar; satırlar ve sütunlar **aynı sırayla** dizilir. Sol üst blok $Q$, sağ üst blok $R$'dir.
+3. **$N = (I - Q)^{-1}$'i bul.**
+4. **$B = NR$'yi hesapla.** $B$'nin satırı başlangıç (geçici) durumunu, sütunu bitiş (yutucu) durumunu gösterir.
+:::
+
+| Büyüklük | Anlamı | Sağlama |
+|:--|:--|:--|
+| $N = (I - Q)^{-1}$, $N_{ij}$ | $i$'den başlayınca yutulmadan önce $j$'de geçirilen ortalama adım | Elemanlar $\ge 0$ |
+| $N$'nin $i$. satır toplamı | $i$'den başlayınca yutulmaya kadar ortalama adım sayısı | |
+| $B = NR$, $B_{ij}$ | $i$'den başlayıp $j$ yutucusunda bitme olasılığı | Satır toplamı $1$ |
+
+: Temel matris ve yutulma matrisi {#tbl-ozt-yutucu}
+
+**Kısa yol.** Geçici durum sayısı iki ise ters doğrudan yazılır:
+$$\begin{pmatrix} a & b \\ c & d \end{pmatrix}^{-1} = \frac{1}{ad - bc}\begin{pmatrix} d & -b \\ -c & a \end{pmatrix}.$$
+
+:::: {#exm-ozt-yutucu name="Dört Durumlu Bir Zincirde Yutulma"}
+$S = \{0, 1, 2, 3\}$ durum uzaylı zincirin geçiş matrisi
+$$P = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0{,}4 & 0 & 0{,}6 & 0 \\ 0 & 0{,}4 & 0 & 0{,}6 \\ 0 & 0 & 0 & 1 \end{pmatrix}$$
+olarak veriliyor. $1$ durumunda başlayan sürecin $3$ durumunda yutulma olasılığını bulunuz.
+
+::: {.cozum}
+$p_{00} = p_{33} = 1$ olduğundan $0$ ve $3$ yutucu, $1$ ve $2$ geçicidir. Kanonik sıra $1, 2 \mid 0, 3$'tür:
+$$Q = \begin{pmatrix} 0 & 0{,}6 \\ 0{,}4 & 0 \end{pmatrix}, \qquad R = \begin{pmatrix} 0{,}4 & 0 \\ 0 & 0{,}6 \end{pmatrix}.$$
+Burada $Q$ ve $R$'nin satırları $1, 2$; $R$'nin sütunları $0, 3$ durumlarıdır. $I - Q$'nun determinantı $1 - 0{,}24 = 0{,}76$ olduğundan
+$$N = (I - Q)^{-1} = \frac{1}{0{,}76}\begin{pmatrix} 1 & 0{,}6 \\ 0{,}4 & 1 \end{pmatrix} = \frac{1}{19}\begin{pmatrix} 25 & 15 \\ 10 & 25 \end{pmatrix}$$
+ve
+$$B = NR = \frac{1}{19}\begin{pmatrix} 25 \cdot 0{,}4 & 15 \cdot 0{,}6 \\ 10 \cdot 0{,}4 & 25 \cdot 0{,}6 \end{pmatrix} = \frac{1}{19}\begin{pmatrix} 10 & 9 \\ 4 & 15 \end{pmatrix}.$$
+Aranan olasılık $B$'de $1$ durumunun satırı ile $3$ durumunun sütununun kesişimidir: $\frac{9}{19} \approx 0{,}4737$. Satır toplamı $\frac{10 + 9}{19} = 1$'dir. Ayrıca $N$'nin ilk satır toplamı $\frac{40}{19} \approx 2{,}11$ olduğundan $1$'den başlayan süreç ortalama $2{,}11$ adımda yutulur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## En Küçük Kareler Doğrusu ve Korelasyon {#sec-ozt-regresyon}
+
+$\hat{Y} = \beta_0 + \beta_1 X$ doğrusu, hata kareleri toplamını en küçük yapan doğrudur ve katsayıları Gauss normal denklemlerinden gelir (@thm-gauss-normal). İlişkinin gücünü Pearson katsayısı $r$ ölçer (@def-pearson).
+
+| Büyüklük | Sapmalarla | Ham toplamlarla |
+|:--|:--|:--|
+| $S_{xy}$ | $\sum (x_i - \bar{x})(y_i - \bar{y})$ | $\sum x_i y_i - n \bar{x} \bar{y}$ |
+| $S_{xx}$ | $\sum (x_i - \bar{x})^2$ | $\sum x_i^2 - n \bar{x}^2$ |
+| $S_{yy}$ | $\sum (y_i - \bar{y})^2$ | $\sum y_i^2 - n \bar{y}^2$ |
+| Eğim, kesişim | $\beta_1 = \frac{S_{xy}}{S_{xx}}$, $\beta_0 = \bar{y} - \beta_1 \bar{x}$ | |
+| Korelasyon | $r = \frac{S_{xy}}{\sqrt{S_{xx} S_{yy}}}$ | $-1 \le r \le 1$ |
+
+: Regresyon ve korelasyon formülleri {#tbl-ozt-regresyon}
+
+::: {.callout-tip title="Dört adımda regresyon doğrusu"}
+1. $x_i$, $y_i$, $x_i^2$, $x_i y_i$ (korelasyon da isteniyorsa $y_i^2$) sütunlarını kur ve topla.
+2. $S_{xy}$, $S_{xx}$ (ve $S_{yy}$) değerlerini ham toplamlardan hesapla.
+3. Önce $\beta_1$'i, sonra $\beta_0$'ı bul.
+4. İstenirse $r$'yi hesapla ve bir noktada tahmin yap: $\hat{Y}(x) = \beta_0 + \beta_1 x$.
+:::
+
+**Kısa yollar.** $\bar{x}$ ve $\bar{y}$ tam sayıysa sapmalarla çalışmak, değilse ham toplamlar daha kolaydır. $r$ ile $\beta_1$ her zaman aynı işaretlidir. Doğru $(\bar{x}, \bar{y})$ noktasından geçer; artıkların toplamı $0$ çıkmalıdır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $\sum x_i^2$ ile $\left(\sum x_i\right)^2$'yi karıştırmak.
+- Hazır $\beta_0$, $\beta_1$ formüllerini doğrusal olmayan bir modele uygulamak; o zaman model önce doğrusallaştırılır (@sec-ozt-donusum).
+:::
+
+:::: {#exm-ozt-regresyon name="Beş Gözleme Doğru ve Korelasyon"}
+$(1, 3)$, $(2, 3)$, $(4, 6)$, $(5, 7)$, $(8, 11)$ verileri için regresyon doğrusunu ve korelasyon katsayısını bulunuz.
+
+::: {.cozum}
+$n = 5$ için toplamlar $\sum x_i = 20$, $\sum y_i = 30$, $\sum x_i^2 = 110$, $\sum y_i^2 = 224$ ve
+$$\sum x_i y_i = 3 + 6 + 24 + 35 + 88 = 156$$
+olur. $\bar{x} = 4$, $\bar{y} = 6$ olduğundan
+$$
+\begin{aligned}
+S_{xy} &= 156 - 5 \cdot 4 \cdot 6 = 36, \\[1mm]
+S_{xx} &= 110 - 5 \cdot 16 = 30, \\[1mm]
+S_{yy} &= 224 - 5 \cdot 36 = 44.
+\end{aligned}
+$$
+Buradan
+$$\beta_1 = \frac{36}{30} = 1{,}2, \qquad \beta_0 = 6 - 1{,}2 \cdot 4 = 1{,}2, \qquad \hat{Y} = 1{,}2 + 1{,}2X$$
+ve
+$$r = \frac{36}{\sqrt{30 \cdot 44}} = \frac{36}{\sqrt{1320}} \approx 0{,}9909$$
+bulunur. Artıklar $0{,}6;\ -0{,}6;\ 0;\ -0{,}2;\ 0{,}2$ olup toplamları $0$'dır. İlişki artan yönlü ve çok güçlüdür.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Hâle Dönüştürülebilir Modeller {#sec-ozt-donusum}
+
+Eğrisel bir model, logaritma ya da ters alma ile $Y^{*} = A + B X^{*}$ biçimine getirilir; EKK yıldızlı değişkenlere uygulanır ve sonunda asıl katsayılara dönülür ([Dönüştürülebilir modeller](3-tahmin/donusturulebilir-modeller.qmd)).
+
+| Model | Doğrusal biçim | $Y^{*}$ | $X^{*}$ | Geri dönüş |
+|:--|:--|:-:|:-:|:--|
+| $Y = c\, e^{aX}$ | $\ln Y = \ln c + aX$ | $\ln Y$ | $X$ | $c = e^{c^{*}}$ |
+| $Y = a_1 X^{a_2}$ | $\log Y = \log a_1 + a_2 \log X$ | $\log Y$ | $\log X$ | $a_1 = 10^{a_1^{*}}$ |
+| $Y = \dfrac{a_1 X}{b_1 + X}$ | $\dfrac{1}{Y} = \dfrac{b_1}{a_1} \cdot \dfrac{1}{X} + \dfrac{1}{a_1}$ | $\frac{1}{Y}$ | $\frac{1}{X}$ | $a_1 = \frac{1}{D}$, $b_1 = C a_1$ |
+
+: Doğrusallaştırma tablosu {#tbl-ozt-donusum}
+
+::: {.callout-tip title="Dört adımda dönüştürülmüş model"}
+1. Modeli doğrusal biçime getir ve $Y^{*}$, $X^{*}$'ı belirle.
+2. Tabloya $X^{*}$, $Y^{*}$, $X^{*2}$, $X^{*} Y^{*}$ sütunlarını ekle ve topla.
+3. Normal denklemleri yıldızlı toplamlarla çöz (@sec-ozt-regresyon).
+4. Geçici katsayıları ters işlemle asıl sabitlere çevir ve bir gözlemde sağla.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Üslü modelde $X$'i dönüştürmeyi unutmak.
+- Logaritmanın tabanını değiştirmek: $\ln$ ile başlanırsa geri dönüş $e$ ile, $\log$ ile başlanırsa $10$ ile yapılır.
+- $c^{*}$'ı ($\ln c$'yi) $c$ diye sonuca yazmak.
+:::
+
+:::: {#exm-ozt-rasyonel name="Doymaya Giden Bir Eğri"}
+Aşağıdaki verilere $\hat{Y} = \dfrac{a_1 X}{b_1 + X}$ modelini en küçük kareler yöntemiyle uydurunuz.
+
+| $X$ | $1$ | $2$ | $4$ | $10$ |
+|:--|:-:|:-:|:-:|:-:|
+| $Y$ | $1{,}6$ | $2{,}5$ | $3{,}2$ | $4$ |
+
+::: {.cozum}
+$X^{*} = \frac{1}{X}$, $Y^{*} = \frac{1}{Y}$ ile model $Y^{*} = C X^{*} + D$ olur; $C = \frac{b_1}{a_1}$, $D = \frac{1}{a_1}$'dir.
+
+| $X^{*}$ | $Y^{*}$ | $X^{*2}$ | $X^{*} Y^{*}$ |
+|:-:|:-:|:-:|:-:|
+| $1$ | $0{,}625$ | $1$ | $0{,}625$ |
+| $0{,}5$ | $0{,}4$ | $0{,}25$ | $0{,}2$ |
+| $0{,}25$ | $0{,}3125$ | $0{,}0625$ | $0{,}078125$ |
+| $0{,}1$ | $0{,}25$ | $0{,}01$ | $0{,}025$ |
+| $\Sigma = 1{,}85$ | $\Sigma = 1{,}5875$ | $\Sigma = 1{,}3225$ | $\Sigma = 0{,}928125$ |
+
+$n = 4$ ile
+$$C = \frac{4 \cdot 0{,}928125 - 1{,}85 \cdot 1{,}5875}{4 \cdot 1{,}3225 - 1{,}85^2} = \frac{0{,}775625}{1{,}8675} \approx 0{,}41533,$$
+$$D = \frac{1{,}5875 - 0{,}41533 \cdot 1{,}85}{4} \approx 0{,}20479.$$
+Geri dönüşle $a_1 = \frac{1}{D} \approx 4{,}883$ ve $b_1 = C\, a_1 \approx 2{,}028$:
+$$\hat{Y} = \frac{4{,}883\, X}{2{,}028 + X}.$$
+Sağlama: $X = 10$ için $\hat{Y} \approx 4{,}06$, gözlenen $4$'e yakındır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tahmin Hataları ve Otokorelasyon {#sec-ozt-hatalar}
+
+Bir tahmin modelinin başarısı $e_t = Y_t - \hat{Y}_t$ hatalarıyla ölçülür (@def-mad, @def-mse, @def-mpe, @def-mape); serinin kendi geçmişiyle ilişkisi otokorelasyonla ölçülür (@def-otokorelasyon).
+
+| Ölçüt | Formül | Ne söyler |
+|:--|:--|:--|
+| MAD | $\frac{1}{m}\sum \lvert e_t \rvert$ | Ortalama sapma, birimi verininki |
+| MSE | $\frac{1}{m}\sum e_t^2$ | Büyük hataları ağır cezalandırır |
+| MPE | $\frac{1}{m}\sum \frac{e_t}{Y_t}$ | Yanlılık: $> 0$ eksik, $< 0$ fazla tahmin |
+| MAPE | $\frac{1}{m}\sum \left\lvert \frac{e_t}{Y_t} \right\rvert$ | Yüzde hata, en kolay yorum |
+| $r_k$ | $\dfrac{\sum_{t=k}^{n}(Y_t - \bar{Y})(Y_{t-k} - \bar{Y})}{\sum_{t=0}^{n}(Y_t - \bar{Y})^2}$ | $k$ gecikmeli doğrusal ilişki |
+
+: Hata ölçütleri ve otokorelasyon; $m$ hata sayısıdır {#tbl-ozt-hatalar}
+
+Serinin bütün değerleri için hata varsa ($t = 0, \dots, n$) $m = n + 1$'dir. Tabii modelde olduğu gibi ilk periyotlar için tahmin yoksa ortalama yalnız hesaplanabilen hatalar üzerinden alınır.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Hatayı $\hat{Y}_t - Y_t$ diye almak: MPE'nin işareti ters döner.
+- $r_k$'nın payını $t = 0$'dan başlatmak; pay $t = k$'dan, payda $t = 0$'dan başlar.
+- Oranları erken yuvarlamak; dört basamak tutup sonda yuvarlamak yeterlidir.
+:::
+
+:::: {#exm-ozt-hatalar name="Sabit Tabii Modelin Hata Ölçütleri"}
+$Y_0, \dots, Y_5$ serisi $20,\ 22,\ 21,\ 24,\ 23,\ 26$ olarak veriliyor. $\hat{Y}_t = Y_{t-1}$ sabit tabii modelinin MAD, MSE, MPE ve MAPE değerlerini hesaplayınız.
+
+::: {.cozum}
+Tahmin $t = 1, \dots, 5$ için vardır, yani $m = 5$ hata ortalanır:
+
+| $t$ | $Y_t$ | $\hat{Y}_t$ | $e_t$ | $e_t^2$ | $e_t / Y_t$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| $1$ | $22$ | $20$ | $2$ | $4$ | $0{,}0909$ |
+| $2$ | $21$ | $22$ | $-1$ | $1$ | $-0{,}0476$ |
+| $3$ | $24$ | $21$ | $3$ | $9$ | $0{,}1250$ |
+| $4$ | $23$ | $24$ | $-1$ | $1$ | $-0{,}0435$ |
+| $5$ | $26$ | $23$ | $3$ | $9$ | $0{,}1154$ |
+
+$\sum \lvert e_t \rvert = 10$, $\sum e_t^2 = 24$, $\sum \frac{e_t}{Y_t} = 0{,}2402$ ve $\sum \left\lvert \frac{e_t}{Y_t} \right\rvert = 0{,}4224$'tür:
+$$
+\begin{aligned}
+\mathrm{MAD} &= \tfrac{10}{5} = 2, & \mathrm{MSE} &= \tfrac{24}{5} = 4{,}8, \\[1mm]
+\mathrm{MPE} &\approx 0{,}0480, & \mathrm{MAPE} &\approx 0{,}0845.
+\end{aligned}
+$$
+MPE pozitiftir: artan bir seride sabit model ortalamada $\%4{,}8$ eksik tahmin yapar. MAPE'ye göre ortalama hata $\%8{,}45$'tir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-otokorelasyon name="Zikzak Bir Serinin Otokorelasyonu"}
+$Y_0, \dots, Y_4$ serisi $4,\ 7,\ 5,\ 8,\ 6$ olarak veriliyor. Birinci dereceden otokorelasyon katsayısı $r_1$'i hesaplayınız.
+
+::: {.cozum}
+$\bar{Y} = \frac{30}{5} = 6$ ve sapmalar $Y_t - \bar{Y}$: $-2,\ 1,\ -1,\ 2,\ 0$'dır. Payda
+$$\sum_{t=0}^{4} (Y_t - \bar{Y})^2 = 4 + 1 + 1 + 4 + 0 = 10,$$
+pay ($t = 1$'den başlayarak)
+$$(1)(-2) + (-1)(1) + (2)(-1) + (0)(2) = -5$$
+olduğundan $r_1 = \frac{-5}{10} = -0{,}5$'tir. Seri her adımda yön değiştirdiği için ardışık değerler ters yönlü ilişkilidir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tabii Model ve Hareketli Ortalamalar {#sec-ozt-tabii-hom}
+
+Gelecek periyot tahmininde ilk iş serinin trend ve mevsimsellik içerip içermediğine bakmaktır; formül buna göre seçilir ([Tabii model](4-zaman-serileri/tabii-model-trend-mevsimsellik.qmd), [Hareketli ortalamalar](4-zaman-serileri/hareketli-ortalamalar.qmd)).
+
+| Seri | Yöntem | Tahmin |
+|:--|:--|:--|
+| Trend yok, mevsim yok | Sabit tabii model (@def-sabit-tabii-model) | $\hat{Y}_{t+1} = Y_t$ |
+| Yalnız trend | Trendli tabii model (@def-trend-tabii-model) | $\hat{Y}_{t+1} = 2Y_t - Y_{t-1}$ |
+| Yalnız mevsim ($s = 4$) | Mevsimsel tabii model | $\hat{Y}_{t+1} = Y_{t-3}$ |
+| Trend ve mevsim ($s = 4$) | @def-trend-mevsim-tabii | $\hat{Y}_{t+1} = Y_{t-3} + \frac{Y_t - Y_{t-4}}{4}$ |
+| Gürültülü, trend yok | Tek katlı HOM (@def-tek-katli-hom) | $\hat{Y}_{t+1} = \mu_t$ |
+| Gürültülü, trend var | İki katlı HOM (@def-iki-katli-hom) | $\hat{Y}_{t+p} = a_t + p\, b_t$ |
+
+: Tahmin yönteminin seçimi {#tbl-ozt-tabii-hom}
+
+::: {.callout-tip title="Dört adımda iki katlı hareketli ortalama"}
+1. **Birinci ortalamalar:** $\mu_t$, son $n$ gözlemin ortalamasıdır; ilk kez $t = n$'de hesaplanır.
+2. **İkinci ortalama:** $\mu'_t$, son $n$ tane $\mu$'nün ortalamasıdır; ilk kez $t = 2n - 1$'de hesaplanır.
+3. **Katsayılar:** $a_t = 2\mu_t - \mu'_t$ ve $b_t = \frac{2}{n - 1}(\mu_t - \mu'_t)$; $n = 3$ için $b_t = \mu_t - \mu'_t$.
+4. **Tahmin:** son gözlem anı $t$ için $\hat{Y}_{t+p} = a_t + p\, b_t$.
+:::
+
+**Kısa yollar.**
+
+- Trendli tabii model $\hat{Y}_{t+1} = Y_t + (Y_t - Y_{t-1}) = 2Y_t - Y_{t-1}$ biçiminde tek çarpımla yazılır.
+- Trend ve mevsimli modelde ara farklar teleskopik olarak sadeleşir; yalnız $Y_{t-3}$, $Y_t$ ve $Y_{t-4}$ gerekir.
+- Hareketli ortalamalarda ara sonuçları kesir olarak tutmak ($\frac{110}{3}$ gibi) yuvarlama kaymasını önler.
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $\hat{Y}_{13}$ istenirken formülü $t = 13$'e göre kurmak; $t + 1 = 13$ olduğundan $t = 12$ alınır.
+- Hareketli ortalamaya gelecekteki $Y_{t+1}$'i katmak; ortalama $t$ anından geriye doğru $n$ terimdir.
+- Trendli bir seride tek katlı ortalamayla yetinmek; tahmin her zaman gerçeğin gerisinde kalır.
+:::
+
+:::: {#exm-ozt-trend-mevsim name="Çeyreklik Bir Seride Sonraki Çeyrek"}
+Üç yıllık çeyreklik ($s = 4$) satışlar hem mevsimsellik hem de artış göstermektedir:
+
+| Yıl | 1. çeyrek | 2. çeyrek | 3. çeyrek | 4. çeyrek |
+|:--|:-:|:-:|:-:|:-:|
+| 1. yıl | $30$ | $45$ | $38$ | $52$ |
+| 2. yıl | $34$ | $50$ | $41$ | $57$ |
+| 3. yıl | $37$ | $54$ | $46$ | $61$ |
+
+Tabii modelle dördüncü yılın ilk çeyreği ($t = 13$) için tahmin yapınız.
+
+::: {.cozum}
+$t + 1 = 13$ olduğundan $t = 12$ alınır. Gerekli değerler $Y_9 = 37$, $Y_{12} = 61$ ve $Y_8 = 57$'dir:
+$$\hat{Y}_{13} = Y_9 + \frac{Y_{12} - Y_8}{4} = 37 + \frac{61 - 57}{4} = 37 + 1 = 38.$$
+Yalnız mevsimsellik dikkate alınsaydı tahmin $Y_9 = 37$ olurdu; trend bunu bir birim yukarı taşır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-iki-katli name="Artan Bir Seride İki Katlı Ortalama"}
+$t = 1, \dots, 6$ için $Y_t$ değerleri $20,\ 24,\ 27,\ 33,\ 36,\ 41$ olarak veriliyor. $n = 3$ ile iki katlı hareketli ortalama kullanarak $\hat{Y}_7$ ve $\hat{Y}_8$ tahminlerini bulunuz.
+
+::: {.cozum}
+**Birinci ortalamalar:**
+$$
+\begin{aligned}
+\mu_4 &= \frac{24 + 27 + 33}{3} = 28, \qquad \mu_5 = \frac{27 + 33 + 36}{3} = 32, \\[1mm]
+\mu_6 &= \frac{33 + 36 + 41}{3} = \frac{110}{3}.
+\end{aligned}
+$$
+**İkinci ortalama** ($t = 6$):
+$$\mu'_6 = \frac{28 + 32 + \frac{110}{3}}{3} = \frac{290}{9} \approx 32{,}22.$$
+**Katsayılar** ($n = 3$):
+$$a_6 = 2 \cdot \frac{110}{3} - \frac{290}{9} = \frac{370}{9} \approx 41{,}11, \qquad b_6 = \frac{110}{3} - \frac{290}{9} = \frac{40}{9} \approx 4{,}44.$$
+**Tahminler:**
+$$\hat{Y}_7 = a_6 + b_6 = \frac{410}{9} \approx 45{,}56, \qquad \hat{Y}_8 = a_6 + 2b_6 = \frac{450}{9} = 50.$$
+Tek katlı yöntem $\hat{Y}_7 = \mu_6 \approx 36{,}67$ verirdi ve son gözlemin bile altında kalırdı.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Saf Stratejiler ve Eyer Noktası {#sec-ozt-saf}
+
+Ödemeler matrisi satır oyuncusu A'nın kazancıdır; A büyütmeye, B küçültmeye çalışır (@def-odemeler-matrisi). Her oyun sorusu, eyer noktası olup olmadığını denetlemekle başlar (@def-maximin-minimax, @thm-eyer).
+
+::: {.callout-tip title="Üç adımda oyunun tipi"}
+1. **Maximin:** her satırın en küçüğünü yaz; bunların en büyüğü $\underline{v}$'dir.
+2. **Minimax:** her sütunun en büyüğünü yaz; bunların en küçüğü $\overline{v}$'dir.
+3. **Karşılaştır:** $\underline{v} = \overline{v}$ ise oyun saf stratejilidir, değeri $v = \underline{v}$'dir; değilse karma stratejilidir ve $\underline{v} < v < \overline{v}$ olur (@sec-ozt-grafik).
+:::
+
+**Kısa yol.** Eyer noktası, **kendi satırının en küçüğü ve kendi sütununun en büyüğü** olan elemandır. Matriste böyle bir eleman aramak, iki tabloyu ayrı ayrı kurmaktan hızlıdır.
+
+:::: {#exm-ozt-eyer name="Üç Stratejili İki Oyuncu"}
+Ödemeler matrisi
+$$
+\begin{array}{c|ccc}
+ & B_1 & B_2 & B_3 \\ \hline
+A_1 & 3 & -2 & 4 \\
+A_2 & 5 & 2 & 3 \\
+A_3 & -1 & 1 & 0
+\end{array}
+$$
+olan oyunu çözünüz.
+
+::: {.cozum}
+Satır minimumları $-2$, $2$, $-1$ olduğundan $\underline{v} = 2$ ($A_2$); sütun maksimumları $5$, $2$, $4$ olduğundan $\overline{v} = 2$'dir ($B_2$). İki değer eşittir; oyun saf stratejilidir, eyer noktası $(A_2, B_2)$ ve oyunun değeri $v = 2$'dir. Gerçekten $a_{22} = 2$ hem ikinci satırın en küçüğü hem de ikinci sütunun en büyüğüdür. A her oyunda $2$ kazanır, B $2$ kaybeder.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Karma Strateji: Grafik Yöntem {#sec-ozt-grafik}
+
+Eyer noktası yoksa ve oyunculardan birinin yalnız iki stratejisi varsa grafik yöntem uygulanır (@def-grafik-uygulanabilirlik). $2 \times n$ matriste A'nın ilk stratejiyi $x_1$ olasılıkla oynadığı alınır ve B'nin her stratejisi için bir doğru kurulur (@thm-beklenen-deger-dogrusu).
+
+::: {.callout-tip title="Beş adımda grafik yöntem"}
+1. $\underline{v} \ne \overline{v}$ olduğunu göster.
+2. Her sütun için $E_j(A) = (a_{1j} - a_{2j})\,x_1 + a_{2j}$ doğrusunu yaz; doğru $x_1 = 0$'da $a_{2j}$, $x_1 = 1$'de $a_{1j}$ değerini alır.
+3. Her $x_1$ için doğruların en küçüğünü al; bu kırık çizgi **alt zarftır**.
+4. Alt zarfın en yüksek noktasını bul; orada bir artan ve bir azalan doğru kesişir (@def-optimum-nokta).
+5. İki doğruyu eşitleyip $x_1$'i, birinde yerine koyup $v$'yi bul. Sağlama: $\underline{v} \le v \le \overline{v}$.
+:::
+
+**Kısa yol.** Çizim yapılamıyorsa alt zarf, kesişim noktalarındaki ve uçlardaki $x_1$ değerlerinde doğruların en küçüğü alınarak bir tabloyla izlenebilir. $m \times 2$ matriste iki stratejili oyuncu B'dir; aynı kurgu B'nin olasılığıyla yapılır ve bu kez doğruların **üst zarfının en alçak noktası** aranır.
+
+::: {.callout-warning title="Sık yapılan hata"}
+Uçlarda en küçük olan iki doğruyu doğrudan kesiştirmek. Arada başka bir doğru alt zarfa girebilir; bu durumda bulunan nokta alt zarfın üzerinde kalır ve yanlıştır. Aşağıdaki örnek tam olarak bunu gösterir.
+:::
+
+:::: {#exm-ozt-grafik name="Alt Zarfı Üç Parçalı Bir Oyun"}
+Ödemeler matrisi
+$$
+\begin{array}{c|ccc}
+ & B_1 & B_2 & B_3 \\ \hline
+A_1 & 4 & 1 & 2 \\
+A_2 & 0 & 3 & 1
+\end{array}
+$$
+olan oyunu grafik yöntemle çözünüz.
+
+::: {.cozum}
+**Oyunun tipi.** Satır minimumları $1$ ve $0$ olduğundan $\underline{v} = 1$; sütun maksimumları $4$, $3$, $2$ olduğundan $\overline{v} = 2$'dir. Eşit olmadıklarından oyun karma stratejilidir.
+
+**Doğrular.**
+$$E_1(A) = 4x_1, \qquad E_2(A) = 3 - 2x_1, \qquad E_3(A) = x_1 + 1.$$
+
+**Alt zarf.** Kesişimler $E_1 = E_3$ için $x_1 = \frac13$, $E_3 = E_2$ için $x_1 = \frac23$'tür:
+
+| $x_1$ | $E_1(A)$ | $E_2(A)$ | $E_3(A)$ | En küçük |
+|:-:|:-:|:-:|:-:|:-:|
+| $0$ | $0$ | $3$ | $1$ | $0$ |
+| $\frac13$ | $\frac43$ | $\frac73$ | $\frac43$ | $\frac43$ |
+| $\frac12$ | $2$ | $2$ | $\frac32$ | $\frac32$ |
+| $\frac23$ | $\frac83$ | $\frac53$ | $\frac53$ | $\frac53$ |
+| $1$ | $4$ | $1$ | $2$ | $1$ |
+
+Alt zarf $[0, \frac13]$'te $E_1$, $[\frac13, \frac23]$'te $E_3$, $[\frac23, 1]$'de $E_2$'dir ve en yüksek noktası artan $E_3$ ile azalan $E_2$'nin kesişimidir:
+$$x_1 + 1 = 3 - 2x_1 \implies x_1 = \frac23, \qquad v = \frac23 + 1 = \frac53.$$
+
+**Sonuç.** A, birinci stratejisini $\frac23$, ikincisini $\frac13$ olasılıkla oynamalıdır; oyunun değeri $v = \frac53$'tür ve $1 \le \frac53 \le 2$ sağlanır. Uçlarda en küçük olan $E_1$ ile $E_2$ kesiştirilseydi $x_1 = \frac12$ ve $v = 2$ bulunurdu; ama bu noktada $E_3 = \frac32 < 2$ olduğundan o nokta alt zarfın üzerinde değildir.
+
+[$\blacksquare$]{.qed}
+:::
+::::

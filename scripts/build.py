@@ -76,6 +76,7 @@ SHARED_INPUTS = (
     ROOT / "scripts" / "export_links.lua",
     ROOT / "scripts" / "downloads.lua",
     ROOT / "scripts" / "mobile-toc.html",
+    ROOT / "scripts" / "theme-switch.html",
 )
 
 # The Windows console defaults to cp1252, which cannot print the Turkish
@@ -163,7 +164,8 @@ def portal_inputs() -> list[Path]:
     # dersler/soyut-cebir), rendered by the portal rather than as a book.
     hubs = sorted(d / "index.qmd" for d in COURSES.iterdir()
                   if d.is_dir() and not (d / "_quarto.yml").exists())
-    files = [ROOT / "_quarto.yml", ROOT / "index.qmd", COURSES / "index.qmd", *hubs]
+    files = [ROOT / "_quarto.yml", ROOT / "index.qmd", COURSES / "index.qmd",
+             ROOT / "scripts" / "theme-switch.html", *hubs]
     return [p for p in files if p.exists()]
 
 

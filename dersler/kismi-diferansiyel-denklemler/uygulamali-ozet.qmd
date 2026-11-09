@@ -1,0 +1,675 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Kısmi diferansiyel denklem sorularını çözmek için kısa yollar ve adım adım reçeteler: sınıflandırma, denklem kurma, doğrudan integrasyon, lineer denklemler, Lagrange yöntemi, Cauchy problemleri, uyumluluk, Charpit yöntemi ve özel durumlar, tam, genel ve tekil integraller, ikinci mertebeden denklemlerin tipi ve genel çözümü."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Uygulamada en sık karşılaşılan sorular şunlardır: kuazi-lineer bir denklemin genel çözümünü Lagrange yöntemiyle bulmak, verilen bir eğriden geçen integral yüzeyini bulmak, lineer olmayan bir denklemin tam integralini Charpit yöntemiyle ya da özel durumlarından biriyle bulmak ve ikinci mertebeden bir denklemin tipini belirleyip genel çözümünü yazmak. Bunların yanında sınıflandırma, bir aileden denklem kurma ve tekil integral soran kısa sorular da sık gelir. Her soru tipi için bir reçete, gerekli formül tabloları, kısa yollar, sık yapılan hatalar ve yeni sayılarla tam çözülmüş örnekler verilir. Her kural, gerekçesinin bulunduğu tanıma, teoreme ya da bölüme bağlanır. Boyunca $p = z_x$, $q = z_y$ kısaltmaları kullanılır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, denklemin hangi kalıba girdiğini belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| Mertebe, homojenlik, lineerlik sınıfı | En yüksek türeve ve katsayısına bak | @sec-ozt-siniflandirma |
+| Bir fonksiyonun çözüm olduğunu göstermek | Türevle, yerine koy | @sec-ozt-denklem-kurma |
+| Aileden sabit ya da fonksiyon yok ederek KDD | Türev al, çarp-çıkar ya da oranla | @sec-ozt-denklem-kurma |
+| $u_{xy} = G$, tek değişkene göre türevli denklem | Ardışık integral, ADD gibi çözme | @sec-ozt-dogrudan |
+| $Az_x + Bz_y + Cz = G$ | Hazır formül ya da karakteristik denklem | @sec-ozt-lineer |
+| $Pp + Qq = R$ genel çözümü | Lagrange yöntemi | @sec-ozt-lagrange |
+| Verilen eğriden geçen integral yüzeyi (kuazi-lineer) | İlk integraller + eğri koşulu | @sec-ozt-cauchy |
+| İki denklemin ortak çözümü | Uyumluluk parantezi $[f, g]$ | @sec-ozt-uyumlu |
+| $f(x, y, z, p, q) = 0$ tam integrali | Özel durum tablosu, olmazsa Charpit | @sec-ozt-charpit |
+| Genel ya da tekil integral | Zarf: $f_a = 0$ (ve $f_b = 0$) | @sec-ozt-integral-turleri |
+| Lineer olmayan denklemde eğriden geçen yüzey | Karakteristik şerit | @sec-ozt-nonlineer-cauchy |
+| İkinci mertebeden denklemin tipi | $\Delta = B^2 - 4AC$ | @sec-ozt-tip |
+| $Az_{xx} + Bz_{xy} + Cz_{yy} = G$ genel çözümü | $f(mx + y)$ denemesi + özel çözüm | @sec-ozt-deneme |
+| Alt mertebeli terimleri de olan sabit katsayılı denklem | Operatörü çarpanlara ayır | @sec-ozt-carpanlara |
+
+: Soru kalıpları ve yöntemler {#tbl-ozt-yontem}
+
+Birinci mertebeden bir denklemde karar sırası şudur:
+
+1. Yalnız bir değişkene göre türev varsa ya da sol taraf tek bir türevse: doğrudan integrasyon.
+2. $p$ ve $q$'da lineerse ve katsayılarda $z$ yoksa: lineer denklem (sabit katsayılıysa hazır formül).
+3. $p$ ve $q$'da lineer ama katsayılarda ya da sağ tarafta $z$ varsa: Lagrange yöntemi. Lagrange lineer denklemleri de çözer.
+4. $p$ ya da $q$ lineer değilse: önce dört özel durumdan birine sokmayı dene, olmazsa genel Charpit yöntemi.
+
+## Sınıflandırma ve Yardımcı Koşullar {#sec-ozt-siniflandirma}
+
+Sınıflandırma sorusunda üç ayrı soru cevaplanır: mertebe (@def-mertebe), homojenlik (@def-homojenlik) ve lineerlik sınıfı. Lineerlik sınıfları iç içedir: lineer $\subset$ yarı-lineer $\subset$ kuazi-lineer $\subset$ nonlineer. Cevap olarak her zaman denklemin girdiği en dar sınıf verilir.
+
+| Sınıf | En yüksek mertebeli türevler | Katsayıları | Örnek |
+|:--|:--|:--|:--|
+| Lineer (@def-lineer) | Birinci dereceden | Yalnız $x, y$ | $x u_{xx} + u_y = e^x$ |
+| Yarı-lineer (@def-yari-lineer) | Birinci dereceden | Yalnız $x, y$; alt mertebede $u^2$, $(u_x)^2$ gibi bir terim var | $u_{xx} + u_{yy} = u^3$ |
+| Kuazi-lineer (@def-kuazi-lineer) | Birinci dereceden | $u$ ya da daha düşük mertebeli türevler | $u\,u_{xx} + u_y = 0$ |
+| Nonlineer (@def-nonlineer) | Kuvvet, çarpım ya da fonksiyon içinde | (önemsiz) | $u_{xx}^2 + u_y = 0$ |
+
+: Lineerlik sınıfları {#tbl-ozt-siniflar}
+
+::: {.callout-tip title="Dört adımda sınıflandırma"}
+1. **Mertebe:** en yüksek türevin mertebesi. Türevin kuvveti mertebeyi değiştirmez.
+2. **Homojenlik:** $u$ ya da türevini içermeyen bir terim (sabit, $x^2$, $\sin y$) varsa homojen değil.
+3. **En yüksek mertebeli türevler doğrusal mı?** Kuvvetleri, çarpımları ya da $\sin(u_{xx})$ gibi görünüşleri varsa nonlineer.
+4. **Katsayılarına bak:** $u$ ya da alt mertebeli bir türev varsa kuazi-lineer; yalnız $x, y$ varsa alt mertebeli terimlere bak: hepsi doğrusalsa lineer, değilse yarı-lineer.
+:::
+
+:::: {#exm-ozt-siniflandirma name="Karma Bir Denklemin Sınıflandırılması"}
+$u_x\,u_{xx} + x\,u_{yy} + u = \cos y$ denklemini mertebe, homojenlik ve lineerlik bakımından sınıflandırınız.
+
+::: {.cozum}
+- **Mertebe:** en yüksek türevler $u_{xx}$ ve $u_{yy}$ olduğundan denklem ikinci mertebedendir.
+- **Homojenlik:** sağ taraftaki $\cos y$ terimi $u$ içermez; denklem homojen değildir.
+- **Lineerlik:** $u_{xx}$ ve $u_{yy}$ birinci derecedendir, yani denklem nonlineer değildir. $u_{xx}$'in katsayısı $u_x$, bir alt mertebeli türevdir; bu yüzden denklem yarı-lineer değil, **kuazi-lineerdir**.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $x\,u_{xx}$ gibi bağımsız değişkenle çarpım lineerliği bozmaz.
+- Birinci mertebeden bir denklemde $(u_x)^2$ en yüksek mertebeli türevin karesidir; denklem nonlineerdir (@exm-eikonal). İkinci mertebeden bir denklemde aynı terim yalnız yarı-lineerlik getirir.
+- Sağ taraftaki bir sabit de homojenliği bozar.
+:::
+
+**Yardımcı koşullar** (@def-sinir-turleri). $\partial u / \partial n$ dışa doğru normal türevdir.
+
+| Koşul | Sınırda belirlenen | Isı iletimindeki anlamı |
+|:--|:--|:--|
+| Başlangıç | $u(x, 0)$, $u_t(x, 0)$ | Başlangıç sıcaklığı ya da hızı |
+| Dirichlet | $u = g$ | Sınır sıcaklığı sabit tutuluyor |
+| Neumann | $\partial u / \partial n = g$ | Isı akısı belirli; $g = 0$ ise yalıtılmış |
+| Robin | $\alpha u + \beta\, \partial u / \partial n = g$ | Newton soğuma yasası |
+
+: Yardımcı koşulların türleri {#tbl-ozt-kosullar}
+
+Bir problem çözüm varsa, çözüm tekse ve çözüm veriye sürekli bağlıysa iyi konulmuştur (@def-iyi-konulmus). Biri bozulursa problem kötü konulmuştur.
+
+## Çözüm Doğrulama ve Denklem Kurma {#sec-ozt-denklem-kurma}
+
+"Gösteriniz" sorularında türevler alınır ve denklemde yerine konur (@exm-cozum-dogrulama); keyfi fonksiyonun türevleri için zincir kuralı unutulmaz. "Hangi denklemin çözümüdür" sorularında ise ailedeki sabitler ya da keyfi fonksiyon yok edilir ([Birinci mertebeden denklemlerin ortaya çıkışı](1-mertebe/denklem-kurma.qmd)).
+
+::: {.callout-tip title="Dört adımda yok ederek denklem kurma"}
+1. **Say.** İki keyfi sabit ya da bir keyfi fonksiyon varsa birinci mertebeden, iki keyfi fonksiyon varsa ikinci mertebeden bir denklem beklenir.
+2. **Türevle.** $z_x$ ve $z_y$'yi yaz. $z$ örtük verilmişse ($F(x, y, z) = 0$) türev alırken $z = z(x, y)$ olduğu unutulmaz.
+3. **Yok et.** Sabitleri $z_x, z_y$'den çekip aileye koy; $f'$'yü yok etmek için iki eşitliği uygun çarpanlarla çarpıp çıkar ya da taraf tarafa oranla.
+4. **Kalanı temizle.** Geriye $f$ kaldıysa onu baştaki aile eşitliğinden çek ve yerine koy (@exm-denklem-insasi).
+:::
+
+**Kısa yol: $F(u, v) = 0$ ailesi.** $F$ keyfi olmak üzere $F\big(u(x,y,z), v(x,y,z)\big) = 0$ ailesinin sağladığı denklem, Jacobianlarla doğrudan yazılır:
+$$P\,p + Q\,q = R, \qquad P = \frac{\partial(u,v)}{\partial(y,z)}, \quad Q = \frac{\partial(u,v)}{\partial(z,x)}, \quad R = \frac{\partial(u,v)}{\partial(x,y)}.$$
+Bu, Lagrange yönteminin (@thm-lagrange) tersidir: $u = c_1$ ve $v = c_2$, bulunan denklemin yardımcı sisteminin ilk integralleridir. Sonucun doğruluğu bu yoldan da sınanabilir.
+
+:::: {#exm-ozt-sabit-yoketme name="İki Sabitli Bir Düzlem Ailesi"}
+$a$ ve $b$ keyfi sabitler olmak üzere $z = ax + by + ab$ ailesinden sabitleri yok ederek bir KDD elde ediniz.
+
+::: {.cozum}
+Türevler $p = z_x = a$ ve $q = z_y = b$'dir. Sabitleri aile denkleminde yerine koyarsak
+$$z = x\,z_x + y\,z_y + z_x z_y$$
+bulunur. Bu, birinci mertebeden ve $p, q$'da lineer olmayan bir denklemdir; Clairaut tipindedir (@def-clairaut). Genel ve tekil integrali @sec-ozt-integral-turleri bölümünde bulunur.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-fonksiyon-yoketme name="Jacobian Kısa Yoluyla Fonksiyon Yok Etme"}
+$F$ keyfi, türevlenebilir bir fonksiyon olmak üzere $F(x + z, \; yz) = 0$ ailesinin sağladığı birinci mertebeden KDD'yi bulunuz.
+
+::: {.cozum}
+$u = x + z$ ve $v = yz$ için $u_x = 1$, $u_y = 0$, $u_z = 1$ ve $v_x = 0$, $v_y = z$, $v_z = y$'dir. Jacobianlar:
+$$P = \begin{vmatrix} u_y & u_z \\ v_y & v_z \end{vmatrix} = \begin{vmatrix} 0 & 1 \\ z & y \end{vmatrix} = -z, \qquad Q = \begin{vmatrix} u_z & u_x \\ v_z & v_x \end{vmatrix} = \begin{vmatrix} 1 & 1 \\ y & 0 \end{vmatrix} = -y,$$
+$$R = \begin{vmatrix} u_x & u_y \\ v_x & v_y \end{vmatrix} = \begin{vmatrix} 1 & 0 \\ 0 & z \end{vmatrix} = z.$$
+Denklem $-z\,p - y\,q = z$, yani
+$$z\,z_x + y\,z_y = -z$$
+olur. **Sağlama.** Yardımcı sistem $\frac{dx}{z} = \frac{dy}{y} = \frac{dz}{-z}$'dir. Birinci ve üçüncü orandan $dx = -dz$, yani $x + z = c_1$; ikinci ve üçüncü orandan $\frac{dy}{y} = -\frac{dz}{z}$, yani $yz = c_2$. İki ilk integral tam olarak $u$ ve $v$'dir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Doğrudan İntegrasyon ve ADD Gibi Çözme {#sec-ozt-dogrudan}
+
+Bu soru tipinde tek kural şudur: kısmi integralde integrasyon "sabiti", diğer değişkenlerin keyfi bir fonksiyonudur ([Doğrudan integrasyon ve ADD yaklaşımı](temeller/dogrudan-integrasyon.qmd)). Denklemin görünüşüne göre yol seçilir.
+
+| Denklemin görünüşü | Yapılacak | Kitapta |
+|:--|:--|:--|
+| Sol taraf tek bir türev: $u_{xy} = G$ | Ardışık kısmi integral | @exm-dogrudan-iki-katli |
+| Yalnız $x$'e göre türevler | $y$'yi parametre say, ADD çöz; $c_i \to c_i(y)$ | @exm-add-sabit-katsayili |
+| Bütün terimler $\partial_x(\ldots)$ biçiminde | Önce $x$'e göre integre et | @exm-once-integre |
+| Bütün terimlerde aynı türev ($u_y$) | $v = u_y$ de, $v$ için ADD çöz | @exm-ara-degisken |
+
+: Doğrudan integrasyonda yol seçimi {#tbl-ozt-dogrudan}
+
+:::: {#exm-ozt-ara-degisken name="Ortak Türevi Ara Değişken Yapma"}
+$u_{xy} - 2u_y = 4y$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+İki terimde de $u_y$ ortaktır; $v = u_y$ dersek $v_x - 2v = 4y$ olur. Bu, $x$'te birinci mertebeden lineer bir ADD'dir. İntegrasyon çarpanı $e^{-2x}$ ile
+$$\big(e^{-2x} v\big)_x = 4y\,e^{-2x} \implies e^{-2x} v = -2y\,e^{-2x} + f(y) \implies v = -2y + e^{2x} f(y).$$
+Şimdi $u_y = v$'yi $y$'ye göre integre edelim; $F(y) = \int f(y)\,dy$ ve keyfi $G(x)$ ile
+$$u(x, y) = -y^2 + e^{2x} F(y) + G(x).$$
+**Sağlama.** $u_y = -2y + e^{2x}F'(y)$ ve $u_{xy} = 2e^{2x}F'(y)$ olduğundan
+$$u_{xy} - 2u_y = 2e^{2x}F' + 4y - 2e^{2x}F' = 4y \;\checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $\int \cos(x - y)\,dy = -\sin(x - y)$, ama $\int \cos(x - y)\,dx = \sin(x - y)$.
+- Keyfi fonksiyonun önündeki üstel çarpanın değişkeni, integrasyon çarpanının değişkenidir: yukarıda $e^{2x}F(y)$, $e^{2y}$ değil.
+- $m$. mertebeden bir denklemin genel çözümünde genellikle $m$ keyfi fonksiyon bulunur; sayı tutmuyorsa bir integrasyon adımı unutulmuştur.
+:::
+
+## Birinci Mertebeden Lineer Denklemler {#sec-ozt-lineer}
+
+Lineer denklemde ana fikir, bir koordinat dönüşümüyle türevlerden birini yok etmektir. Sabit katsayılarda dönüşüm hazırdır; değişken katsayılarda karakteristik denklemden gelir.
+
+| Denklem | Sonuç | Kitapta |
+|:--|:--|:--|
+| $Az_x + Bz_y + Cz = 0$, sabit katsayılar, $A \neq 0$ | $z = e^{-\frac{C}{A}x}\, f(Bx - Ay)$ | @thm-sabit-katsayili |
+| $Az_x + Bz_y + Cz = e^{ax + by}$ | $z_p = \dfrac{e^{ax + by}}{Aa + Bb + C}$ | @thm-ustel-sag-taraf |
+| $A(x,y)z_x + B(x,y)z_y + C z = 0$ | $\frac{dy}{dx} = \frac{B}{A}$'nın çözümü $\varphi = c$ ise $\varepsilon = \varphi$, $\xi = x$ | @thm-karakteristik |
+
+: Birinci mertebeden lineer denklemler {#tbl-ozt-lineer}
+
+Payda $Aa + Bb + C = 0$ ise $e^{ax+by}$ homojen denklemin çözümüdür; bu durumda $z_p = \alpha\, x\, e^{ax+by}$ denenir. Genel çözüm her zaman $z = z_h + z_p$'dir.
+
+:::: {#exm-ozt-sabit-katsayili name="Üstel Sağ Taraflı Sabit Katsayılı Denklem"}
+$3z_x - z_y + 2z = e^{x+y}$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+$A = 3$, $B = -1$, $C = 2$'dir. Homojen çözüm @thm-sabit-katsayili ile
+$$z_h = e^{-\frac{2}{3}x} f(-x - 3y)$$
+olur; $f$ keyfi olduğundan argümanın işareti değiştirilebilir ve $z_h = e^{-\frac{2}{3}x} f(x + 3y)$ yazılır.
+
+Özel çözüm için $a = b = 1$ ile payda $Aa + Bb + C = 3 - 1 + 2 = 4 \neq 0$'dır; o hâlde $z_p = \frac{1}{4}e^{x+y}$. Genel çözüm
+$$z(x, y) = e^{-\frac{2}{3}x} f(x + 3y) + \frac{1}{4}e^{x+y}.$$
+**Sağlama.** $z_p$ için $3z_p - z_p + 2z_p = 4z_p = e^{x+y}$ ✓.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-tip title="Dört adımda değişken katsayılı lineer denklem"}
+1. **Karakteristik:** $\frac{dy}{dx} = \frac{B}{A}$ ADD'sini çöz, $\varphi(x, y) = c$ biçiminde yaz; $\varepsilon = \varphi$, $\xi = x$ al ve $J \neq 0$ olduğunu kontrol et.
+2. **Dönüştür:** denklem $A\,z_\xi + C z = 0$ olur; $x$ ve $y$'yi $\xi$, $\varepsilon$ cinsinden yaz.
+3. **ADD'yi çöz:** $\varepsilon$ sabit tutularak $\xi$'ye göre integre et; integrasyon sabiti $f(\varepsilon)$'dur.
+4. **Geri dön ve sağla.**
+:::
+
+:::: {#exm-ozt-degisken-katsayili name="Karakteristik Denklemle Lineer Denklem"}
+$x\,z_x + 2y\,z_y - y\,z = 0$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+$A = x$, $B = 2y$, $C = -y$'dir. Karakteristik denklem
+$$\frac{dy}{dx} = \frac{2y}{x} \implies \ln|y| = 2\ln|x| + \ln|c| \implies \frac{y}{x^2} = c$$
+olduğundan $\varepsilon = \dfrac{y}{x^2}$ ve $\xi = x$ seçilir; $J = \dfrac{1}{x^2} \neq 0$.
+
+$\xi = x$ için $A\xi_x + B\xi_y = x$ olduğundan denklem $x\,z_\xi - y\,z = 0$ olur. Yeni değişkenlerle $x = \xi$, $y = \varepsilon \xi^2$ yazılırsa
+$$\xi\,z_\xi = \varepsilon\,\xi^2 z \implies z_\xi = \varepsilon\,\xi\, z.$$
+$\varepsilon$ sabit tutularak integre edersek $\ln|z| = \frac{\varepsilon \xi^2}{2} + \text{sabit}$, yani $z = e^{\varepsilon \xi^2 / 2} f(\varepsilon)$. $\varepsilon\xi^2 = y$ olduğundan
+$$z(x, y) = e^{y/2}\, f\!\left(\frac{y}{x^2}\right).$$
+**Sağlama.** $w = y/x^2$ ile $z_x = -\frac{2y}{x^3} e^{y/2} f'$ ve $z_y = \frac{1}{2}z + \frac{1}{x^2}e^{y/2} f'$:
+$$x z_x + 2y z_y = -\frac{2y}{x^2}e^{y/2}f' + yz + \frac{2y}{x^2}e^{y/2}f' = yz \;\checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Kuazi-Lineer Denklemler: Lagrange Yöntemi {#sec-ozt-lagrange}
+
+$P\,z_x + Q\,z_y = R$ denkleminin genel çözümü, yardımcı sistemin iki bağımsız ilk integralinden kurulur (@thm-lagrange). Bu, kitabın en sık kullanılan aracıdır; Cauchy problemleri de buna dayanır.
+
+::: {.callout-tip title="Beş adımda Lagrange yöntemi"}
+1. **Kalıba getir:** $P, Q, R$'yi oku. Lineer denklemde $P = A$, $Q = B$, $R = G - Cz$'dir.
+2. **Yardımcı sistem:** $\dfrac{dx}{P} = \dfrac{dy}{Q} = \dfrac{dz}{R}$.
+3. **Birinci integral:** bir ortak çarpanın sadeleştiği iki oranı seç ve integre et: $u = c_1$.
+4. **İkinci integral:** aşağıdaki tablodaki tekniklerden biriyle $v = c_2$ bul.
+5. **Genel çözüm:** $F(u, v) = 0$. $v$, $z$'yi içeriyorsa açık biçim $v = f(u)$'dur.
+:::
+
+| Durum | Teknik | Kitapta |
+|:--|:--|:--|
+| Birinci integral bir değişkeni ötekine bağlıyor ($y = c_1 x$) | Kalan orana yerleştir, ADD çöz, sonra $c_1$'i geri yaz | @exm-lagrange-kure |
+| $P \pm Q$ ortak bir çarpana ayrılıyor | $\dfrac{dx \pm dy}{P \pm Q}$ oranını kullan | @exm-lagrange-carpim |
+| $\lambda P + \mu Q + \nu R = 0$ olacak çarpanlar var | $\lambda\,dx + \mu\,dy + \nu\,dz = 0$ tam diferansiyeli integre et | @exm-lagrange-uc-carpan |
+
+: İkinci ilk integrali bulma teknikleri {#tbl-ozt-lagrange}
+
+**Kısa yollar.**
+
+- İlk denenecek çarpanlar: $(1, 1, 1)$, $(x, y, z)$, $(y, x, -z)$, $(x, -y, \pm z)$. Payda sıfırsa sırasıyla $x + y + z$, $x^2 + y^2 + z^2$, $2xy - z^2$, $x^2 - y^2 \pm z^2$ sabittir.
+- Oran özelliği: $\frac{a}{b} = \frac{c}{d}$ ise $\frac{\lambda a + \mu c}{\lambda b + \mu d}$ de aynı orandır. Payda sıfırlanırsa pay da sıfırdır.
+- Lineer denklemde $z$ yalnız $dz/R$ oranında görünür; ikinci integral bir lineer ADD'den gelir.
+
+:::: {#exm-ozt-lagrange-carpan name="İki Çarpan Üçlüsüyle İki İlk İntegral"}
+$$z(x + y)\,z_x + z(x - y)\,z_y = x^2 + y^2$$
+denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+Yardımcı sistem:
+$$\frac{dx}{z(x+y)} = \frac{dy}{z(x-y)} = \frac{dz}{x^2 + y^2}$$
+**Birinci integral.** $(x, -y, -z)$ çarpanlarıyla payda
+$$xz(x+y) - yz(x-y) - z(x^2+y^2) = z\big(x^2 + xy - xy + y^2 - x^2 - y^2\big) = 0$$
+olur. O hâlde $x\,dx - y\,dy - z\,dz = 0$ ve $u = x^2 - y^2 - z^2 = c_1$.
+
+**İkinci integral.** $(y, x, -z)$ çarpanlarıyla payda
+$$yz(x+y) + xz(x-y) - z(x^2+y^2) = z\big(xy + y^2 + x^2 - xy - x^2 - y^2\big) = 0$$
+olur. O hâlde $y\,dx + x\,dy - z\,dz = 0$, yani $d(xy) = z\,dz$ ve $v = 2xy - z^2 = c_2$.
+
+**Bağımsızlık.** Orijin dışında
+$$\frac{\partial(u,v)}{\partial(x,y)} = \begin{vmatrix} 2x & -2y \\ 2y & 2x \end{vmatrix} = 4(x^2 + y^2) \neq 0.$$
+
+**Genel çözüm:**
+$$F\big(x^2 - y^2 - z^2, \; 2xy - z^2\big) = 0.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-lagrange-yerlestirme name="Birinci İntegrali Yerleştirerek"}
+$x\,z_x + y\,z_y = 2z + xy$ denkleminin genel çözümünü bulunuz ($x > 0$).
+
+::: {.cozum}
+Yardımcı sistem $\dfrac{dx}{x} = \dfrac{dy}{y} = \dfrac{dz}{2z + xy}$'dir.
+
+**Birinci integral.** İlk iki orandan $\ln y = \ln x + \ln c_1$, yani $u = \dfrac{y}{x} = c_1$.
+
+**İkinci integral.** $y = c_1 x$ yazıp birinci ve üçüncü oranı eşleyelim:
+$$\frac{dz}{dx} = \frac{2z + c_1 x^2}{x} \implies \frac{dz}{dx} - \frac{2}{x}z = c_1 x.$$
+Bu lineer bir ADD'dir. İntegrasyon çarpanı $x^{-2}$ ile
+$$\left(\frac{z}{x^2}\right)' = \frac{c_1}{x} \implies \frac{z}{x^2} = c_1 \ln x + c_2.$$
+$c_1 = y/x$ geri yazılırsa $v = \dfrac{z}{x^2} - \dfrac{y}{x}\ln x = c_2$.
+
+**Genel çözüm.** $v = f(u)$'dan
+$$z(x, y) = x^2 f\!\left(\frac{y}{x}\right) + xy\ln x.$$
+**Sağlama.** $z_x = 2xf - yf' + y\ln x + y$ ve $z_y = xf' + x\ln x$ olduğundan
+$$x z_x + y z_y = 2x^2 f + 2xy\ln x + xy = 2z + xy \;\checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- İkinci integralde birinci integralin sabiti ($c_1$) kalırsa, sonunda $u$ cinsinden geri yazılmalıdır; aksi hâlde $v$ gerçek bir ilk integral değildir.
+- $u$ ile $v$ fonksiyonel bağımsız olmalıdır: üç Jacobianın hepsi birden sıfır olmamalı.
+- Açık biçim $z = \ldots f(u)$ yazılırken $f$'nin argümanına $z$ içermeyen integral konur.
+:::
+
+## Kuazi-Lineer Denklemlerde Cauchy Problemi {#sec-ozt-cauchy}
+
+Verilen bir $\Gamma$ eğrisinden geçen integral yüzeyi (@def-cauchy), Lagrange'ın iki ilk integrali arasındaki bağıntının eğri üzerinden belirlenmesiyle bulunur. Önce veri parametrik biçime çevrilir.
+
+| Verinin biçimi | $\Gamma(s)$ |
+|:--|:--|
+| $z(x, 0) = h(x)$ | $(s, \; 0, \; h(s))$ |
+| $z(0, y) = h(y)$ | $(0, \; s, \; h(s))$ |
+| $z(x, x) = h(x)$ | $(s, \; s, \; h(s))$ |
+| "$z = 0$ düzleminde $y = x^2$ eğrisi" | $(s, \; s^2, \; 0)$ |
+
+: Cauchy verisini parametrelemek {#tbl-ozt-cauchy-veri}
+
+::: {.callout-tip title="Dört adımda verilen eğriden geçen yüzey"}
+1. **Parametrele:** $\Gamma(s) = (f(s), g(s), h(s))$.
+2. **İlk integraller:** Lagrange yöntemiyle $u = c_1$, $v = c_2$.
+3. **Eğri koşulu:** $c_1(s)$ ve $c_2(s)$'yi hesapla, $s$'yi yok ederek $\Phi(c_1, c_2) = 0$ bağıntısını bul.
+4. **Geri yaz ve sağla:** $c_1 \to u$, $c_2 \to v$; $z$'yi çek. Hem denklemi hem eğriyi kontrol et.
+:::
+
+:::: {#exm-ozt-cauchy-burgers name="Burgers Tipi Denklemde Başlangıç Verisi"}
+$z_x + z\,z_y = 0$ denkleminin $z(0, y) = y$ koşulunu sağlayan çözümünü bulunuz.
+
+::: {.cozum}
+Başlangıç eğrisi $\Gamma(s) = (0, s, s)$'dir. Yardımcı sistem $\dfrac{dx}{1} = \dfrac{dy}{z} = \dfrac{dz}{0}$'dır.
+
+**İlk integraller.** Son orandan $dz = 0$, yani $u = z = c_1$. Bunu ilk iki orana yerleştirirsek $dy = c_1\,dx$, yani $v = y - zx = c_2$.
+
+**Eğri koşulu.** $x = 0$, $y = s$, $z = s$ üzerinde $c_1 = s$ ve $c_2 = s - s \cdot 0 = s$'dir. Buradan $c_1 = c_2$ bağıntısı çıkar.
+
+**Geri yazalım.**
+$$z = y - zx \implies z(1 + x) = y \implies z(x, y) = \frac{y}{1 + x}.$$
+**Sağlama.** $z(0, y) = y$ ✓. Ayrıca $z_x = -\dfrac{y}{(1+x)^2}$ ve $z_y = \dfrac{1}{1+x}$ olduğundan
+$$z_x + z\,z_y = -\frac{y}{(1+x)^2} + \frac{y}{(1+x)^2} = 0 \;\checkmark$$
+Çözüm $x = -1$'de tanımsızdır; Cauchy probleminin çözümü eğrinin bir komşuluğunda vardır.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-cauchy-parabol name="Sözel Verilen Bir Eğriden Geçen Yüzey"}
+$x\,z_x + y\,z_y = z + 1$ denkleminin, $z = 0$ düzleminde $y = x^2$ eğrisinden geçen integral yüzeyini bulunuz.
+
+::: {.cozum}
+Başlangıç eğrisi $\Gamma(s) = (s, s^2, 0)$'dır. Yardımcı sistem $\dfrac{dx}{x} = \dfrac{dy}{y} = \dfrac{dz}{z + 1}$'dir.
+
+**İlk integraller.** İlk iki orandan $u = \dfrac{y}{x} = c_1$; birinci ve üçüncü orandan $\ln|z + 1| = \ln|x| + \text{sabit}$, yani $v = \dfrac{z + 1}{x} = c_2$.
+
+**Eğri koşulu.** $\Gamma$ üzerinde $c_1 = \dfrac{s^2}{s} = s$ ve $c_2 = \dfrac{0 + 1}{s} = \dfrac{1}{s}$'dir; o hâlde $c_1 c_2 = 1$.
+
+**Geri yazalım.**
+$$\frac{y}{x} \cdot \frac{z + 1}{x} = 1 \implies z(x, y) = \frac{x^2}{y} - 1.$$
+**Sağlama.** $y = x^2$ üzerinde $z = 1 - 1 = 0$ ✓. Ayrıca
+$$x z_x + y z_y = \frac{2x^2}{y} - \frac{x^2}{y} = \frac{x^2}{y} = z + 1 \;\checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $s$ yok edilmeden $c_1$ ve $c_2$ geri yazılmaz; önce aralarındaki bağıntı bulunur.
+- $c_1(s)$ ve $c_2(s)$ ikisi birden sabit çıkıyorsa $\Gamma$ bir karakteristik eğridir; bağıntı kurulamaz ve problemin tek çözümü yoktur.
+- Sonuç her zaman iki kez sınanır: denklem ve eğri.
+:::
+
+## Uyumlu Sistemler {#sec-ozt-uyumlu}
+
+İki birinci mertebeden denklemin ortak çözümü olup olmadığı uyumluluk parantezine bakılarak anlaşılır (@thm-uyumluluk). Charpit yöntemi bu kavrama dayanır.
+
+$$[f, g] = \frac{\partial(f,g)}{\partial(x,p)} + p\,\frac{\partial(f,g)}{\partial(z,p)} + \frac{\partial(f,g)}{\partial(y,q)} + q\,\frac{\partial(f,g)}{\partial(z,q)}, \qquad \frac{\partial(f,g)}{\partial(u,v)} = f_u g_v - f_v g_u.$$
+
+::: {.callout-tip title="Üç adımda uyumluluk ve ortak çözüm"}
+1. **Dört Jacobianı hesapla** ve $[f, g]$'yi topla; sonucu $f = 0$, $g = 0$ kullanarak sadeleştir. $[f, g] = 0$ ise sistem uyumludur.
+2. **$p$ ve $q$'yu çöz:** $p = p(x, y, z)$, $q = q(x, y, z)$.
+3. **İntegre et:** $dz = p\,dx + q\,dy$.
+:::
+
+**Kısa yol.** Denklemler zaten $p$ ve $q$ için çözülmüş verilmişse parantez yerine doğrudan tamlık koşulu sınanır ([Uyumlu sistemler](2-nonlineer/uyumlu-sistemler.qmd)):
+$$p_y + p_z\, q = q_x + q_z\, p.$$
+
+:::: {#exm-ozt-uyumlu name="Uyumluluk ve Ortak Çözüm"}
+$z_x = 2xz$ ve $z_y = 2yz$ denklemlerinin uyumlu olduğunu gösteriniz ve ortak çözümlerini bulunuz.
+
+::: {.cozum}
+$f = p - 2xz$, $g = q - 2yz$ olsun. Türevler $f_x = -2z$, $f_z = -2x$, $f_p = 1$, $f_y = f_q = 0$ ve $g_y = -2z$, $g_z = -2y$, $g_q = 1$, $g_x = g_p = 0$'dır. Jacobianlar:
+$$\frac{\partial(f,g)}{\partial(x,p)} = 0, \quad \frac{\partial(f,g)}{\partial(z,p)} = 2y, \quad \frac{\partial(f,g)}{\partial(y,q)} = 0, \quad \frac{\partial(f,g)}{\partial(z,q)} = -2x.$$
+O hâlde
+$$[f, g] = 2y\,p - 2x\,q = 2y \cdot 2xz - 2x \cdot 2yz = 0$$
+ve sistem uyumludur. (Kısa yoldan: $p_y + p_z q = 2x \cdot 2yz$ ve $q_x + q_z p = 2y \cdot 2xz$, ikisi de $4xyz$.)
+
+**Ortak çözüm.**
+$$dz = 2xz\,dx + 2yz\,dy \implies \frac{dz}{z} = d\big(x^2 + y^2\big) \implies z = c\,e^{x^2 + y^2}.$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Tam İntegral: Charpit Yöntemi ve Özel Durumlar {#sec-ozt-charpit}
+
+Lineer olmayan $f(x, y, z, p, q) = 0$ denkleminde amaç önce bir tam integral, yani iki sabitli bir çözüm ailesi bulmaktır (@def-tam-integral). İlk iş denklemin dört özel kalıptan birine girip girmediğine bakmaktır ([Charpit yönteminde özel durumlar](2-nonlineer/charpit-ozel-durumlar.qmd)).
+
+| Biçim | Nasıl tanınır | Uyumlu denklem | Tam integral |
+|:--|:--|:--|:--|
+| $f(p, q) = 0$ | $x, y, z$ yok | $p = a$ | $z = ax + Q(a)\,y + b$ |
+| $f(z, p, q) = 0$ | $x, y$ yok | $p = aq$ | $dz = q\,(a\,dx + dy)$ ayrılabilir |
+| $f_1(x, p) = f_2(y, q)$ | $z$ yok, ayrışıyor | $f_1 = f_2 = a$ | $z = \int p\,dx + \int q\,dy + b$ |
+| $z = px + qy + h(p, q)$ | Clairaut (@def-clairaut) | $p = a$, $q = b$ | $z = ax + by + h(a, b)$ |
+
+: Charpit yönteminin özel durumları {#tbl-ozt-ozel-durumlar}
+
+Hiçbiri uymuyorsa Charpit yardımcı sistemi (@thm-charpit) kurulur:
+$$\frac{dx}{f_p} = \frac{dy}{f_q} = \frac{dz}{p f_p + q f_q} = \frac{-dp}{f_x + p f_z} = \frac{-dq}{f_y + q f_z}.$$
+
+::: {.callout-tip title="Beş adımda Charpit yöntemi"}
+1. $f$'nin beş türevini yaz: $f_x, f_y, f_z, f_p, f_q$.
+2. Charpit sistemini kur; önce $dp$ ve $dq$ içeren oranlara bak.
+3. İçinde $p$ ya da $q$ bulunan bir ilk integral $g = a$ bul.
+4. $f = 0$ ve $g = a$'dan $p$ ile $q$'yu çöz.
+5. $dz = p\,dx + q\,dy$'yi integre et; ikinci sabit $b$ gelir.
+:::
+
+**Kısa yollar.**
+
+- $f_x + p f_z = 0$ ise $dp = 0$, yani $p = a$; $f_y + q f_z = 0$ ise $q = a$. Clairaut tipinde ikisi birden olur.
+- $f(z, p, q) = 0$ tipinde kök çıkmasın diye $p = a^2 q$ seçilebilir (@exm-zpq-ustel).
+- 5\. adımda $x$'li terimler kendiliğinden sadeleşmelidir; sadeleşmiyorsa bir işlem hatası vardır.
+
+:::: {#exm-ozt-ayrilabilir name="Ayrılabilir Bir Denklemin Tam İntegrali"}
+$z_x^2 + z_y^2 = x + y$ denkleminin bir tam integralini bulunuz.
+
+::: {.cozum}
+Denklem $p^2 - x = y - q^2$ biçiminde yazılırsa sol taraf yalnız $(x, p)$'ye, sağ taraf yalnız $(y, q)$'ya bağlıdır. Ortak değer $a$ olsun:
+$$p^2 - x = a \implies p = \sqrt{x + a}, \qquad y - q^2 = a \implies q = \sqrt{y - a}.$$
+Toplam diferansiyeli integre edelim:
+$$dz = \sqrt{x + a}\,dx + \sqrt{y - a}\,dy \implies z = \frac{2}{3}(x + a)^{3/2} + \frac{2}{3}(y - a)^{3/2} + b.$$
+**Sağlama.** $z_x = \sqrt{x + a}$ ve $z_y = \sqrt{y - a}$ olduğundan
+$$z_x^2 + z_y^2 = (x + a) + (y - a) = x + y \;\checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-charpit name="Genel Charpit Sistemiyle Tam İntegral"}
+$z = x\,z_x + z_y^2$ denkleminin bir tam integralini Charpit yöntemiyle bulunuz.
+
+::: {.cozum}
+$f = xp + q^2 - z = 0$ olsun. Türevler:
+$$f_x = p, \quad f_y = 0, \quad f_z = -1, \quad f_p = x, \quad f_q = 2q.$$
+Denklem dört özel kalıbın hiçbirine girmez ($x$ ve $z$ var, Clairaut değil). Charpit sistemi:
+$$\frac{dx}{x} = \frac{dy}{2q} = \frac{dz}{xp + 2q^2} = \frac{-dp}{p - p} = \frac{-dq}{-q}.$$
+**Uyumlu denklem.** Dördüncü oranın paydası $f_x + p f_z = 0$'dır; o hâlde $dp = 0$ ve $p = a$.
+
+**$q$'yu çöz.** $f = 0$'dan $q^2 = z - ax$, yani $q = \sqrt{z - ax}$.
+
+**İntegrasyon.**
+$$dz = a\,dx + \sqrt{z - ax}\,dy \implies \frac{d(z - ax)}{\sqrt{z - ax}} = dy \implies 2\sqrt{z - ax} = y + b.$$
+**Tam integral:**
+$$z = ax + \frac{(y + b)^2}{4}.$$
+**Sağlama.** $p = a$, $q = \frac{y + b}{2}$ için $xp + q^2 = ax + \frac{(y+b)^2}{4} = z$ ✓.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Genel ve Tekil İntegral {#sec-ozt-integral-turleri}
+
+Tam integral elde edildikten sonra genel ve tekil integral ondan zarf alınarak türetilir ([Tam, genel ve tekil integraller](2-nonlineer/integral-turleri.qmd)). $f(x, y, z, a, b) = 0$ tam integral olsun.
+
+| Tür | Nasıl bulunur | Kitapta |
+|:--|:--|:--|
+| Tam integral | İki sabitli herhangi bir çözüm ailesi | @def-tam-integral |
+| Genel integral | $b = \phi(a)$ koy; $f = 0$ ve $f_a = 0$'dan $a$'yı yok et | @def-genel-integral |
+| Tekil integral | $f = 0$, $f_a = 0$, $f_b = 0$'dan $a$ ve $b$'yi yok et | @def-tekil-integral |
+
+: İntegral türleri {#tbl-ozt-integral-turleri}
+
+**Kısa yol.** Clairaut tipinde ($z = ax + by + h(a, b)$) tekil integral için $f_a = 0$ ve $f_b = 0$ doğrudan $x = -h_a$ ve $y = -h_b$ verir; bunlardan $a, b$ çekilip tam integrale konur. Bulunan yüzey mutlaka denklemde sınanır.
+
+:::: {#exm-ozt-genel-integral name="Clairaut Denkleminin Bir Genel İntegrali"}
+$z = x\,z_x + y\,z_y + z_x z_y$ denkleminin $z = ax + by + ab$ tam integralinden $b = a$ seçimiyle elde edilen genel integrali bulunuz.
+
+::: {.cozum}
+$b = a$ ile $f = z - a(x + y) - a^2 = 0$ olur. Zarf koşulu:
+$$f_a = -(x + y) - 2a = 0 \implies a = -\frac{x + y}{2}.$$
+$f = 0$'da yerine koyalım:
+$$z = -\frac{(x+y)^2}{2} + \frac{(x+y)^2}{4} = -\frac{(x + y)^2}{4}.$$
+**Sağlama.** $p = q = -\frac{x+y}{2}$ için
+$$xp + yq + pq = -\frac{(x+y)^2}{2} + \frac{(x+y)^2}{4} = z \;\checkmark$$
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-tekil-integral name="Clairaut Denkleminin Tekil İntegrali"}
+$z = x\,z_x + y\,z_y + z_x z_y$ denkleminin tekil integralini bulunuz.
+
+::: {.cozum}
+Tam integral $f = z - ax - by - ab = 0$'dır (@exm-ozt-sabit-yoketme). Zarf koşulları:
+$$f_a = -x - b = 0 \implies b = -x, \qquad f_b = -y - a = 0 \implies a = -y.$$
+Tam integralde yerine koyalım:
+$$z = (-y)x + (-x)y + (-y)(-x) = -xy.$$
+**Sağlama.** $p = -y$, $q = -x$ için
+$$xp + yq + pq = -xy - xy + xy = -xy = z \;\checkmark$$
+$z = -xy$ hiçbir düzlemden elde edilemez; tekil integraldir.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## Lineer Olmayan Denklemlerde Cauchy Problemi {#sec-ozt-nonlineer-cauchy}
+
+Lineer olmayan denklemde eğriden geçen yüzey için karakteristik eğrilerle birlikte $p$ ve $q$ da taşınır (@thm-karakteristik-serit):
+$$x' = f_p, \quad y' = f_q, \quad z' = p f_p + q f_q, \quad p' = -(f_x + p f_z), \quad q' = -(f_y + q f_z).$$
+Eğri $\Gamma: (\alpha(v), \beta(v), \gamma(v))$ yalnız üç başlangıç değeri verir; eksik $p_0, q_0$ iki koşuldan gelir (@def-serit-kosullari):
+$$f(\alpha, \beta, \gamma, p_0, q_0) = 0, \qquad \alpha' p_0 + \beta' q_0 = \gamma'.$$
+
+::: {.callout-tip title="Beş adımda karakteristik şerit"}
+1. $f$'nin türevlerini yaz ve beş denklemli sistemi kur.
+2. Eğriyi parametrele; denklem koşulu ve şerit koşulundan $p_0(v)$, $q_0(v)$'yi bul. Birden çok kök varsa her biri ayrı bir çözüm verir.
+3. Sistemi çöz; eşit türevler ($x' = p'$ gibi) korunan büyüklükler verir.
+4. $t$ ve $v$'yi $x, y$ cinsinden çözüp $z$'de yerine koy.
+5. Hem denklemi hem eğriyi sına.
+:::
+
+:::: {#exm-ozt-serit name="Bir Parabolden Geçen Çözüm"}
+$z = z_x z_y$ denkleminin $x = v$, $y = 0$, $z = v^2$ eğrisinden geçen çözümünü bulunuz.
+
+::: {.cozum}
+$f = pq - z$ için $f_x = f_y = 0$, $f_z = -1$, $f_p = q$, $f_q = p$'dir. Sistem:
+$$x' = q, \quad y' = p, \quad z' = 2pq, \quad p' = p, \quad q' = q.$$
+**Başlangıç şeridi.** $\alpha' = 1$, $\beta' = 0$, $\gamma' = 2v$ olduğundan şerit koşulu $p_0 = 2v$ verir. Denklem koşulu $p_0 q_0 = v^2$'den $q_0 = \frac{v}{2}$ ($v \neq 0$).
+
+**Sistemi çözelim** ($t_0 = 0$). $p = 2v\,e^t$, $q = \frac{v}{2}e^t$ olup
+$$x = v + \frac{v}{2}\big(e^t - 1\big) = \frac{v}{2}\big(e^t + 1\big), \qquad y = 2v\big(e^t - 1\big).$$
+$z' = 2pq = 2v^2 e^{2t}$ ve $z(0) = v^2$ olduğundan $z = v^2 e^{2t}$.
+
+**Parametreleri yok edelim.**
+$$x + \frac{y}{4} = \frac{v}{2}\big(e^t + 1\big) + \frac{v}{2}\big(e^t - 1\big) = v\,e^t$$
+olduğundan
+$$z = \big(v e^t\big)^2 = \left(x + \frac{y}{4}\right)^2 = \frac{(4x + y)^2}{16}.$$
+**Sağlama.** $z_x = \frac{4x + y}{2}$ ve $z_y = \frac{4x + y}{8}$ olduğundan $z_x z_y = \frac{(4x+y)^2}{16} = z$ ✓. $y = 0$ için $z = x^2$ ✓.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İkinci Mertebeden Denklemin Tipi {#sec-ozt-tip}
+
+İkinci mertebeden bir denklemin tipi yalnız en yüksek mertebeli kısmına, $A z_{xx} + B z_{xy} + C z_{yy}$'ye bakılarak belirlenir (@def-tip-siniflandirma; kitapta katsayılar $a, b, c$ ile gösterilir). $\Delta = B^2 - 4AC$ ve $Am^2 + Bm + C = 0$ kök denklemidir.
+
+| $\Delta$ | Tip | Kökler | $Az_{xx} + Bz_{xy} + Cz_{yy} = 0$ genel çözümü | Prototip |
+|:-:|:-:|:--|:--|:--|
+| $> 0$ | Hiperbolik | $m_1 \neq m_2$ gerçel | $f(m_1 x + y) + g(m_2 x + y)$ | Dalga: $z_{xx} - z_{yy} = 0$ |
+| $< 0$ | Eliptik | Karmaşık eşlenik | $f(m_1 x + y) + g(m_2 x + y)$ | Laplace: $z_{xx} + z_{yy} = 0$ |
+| $= 0$ | Parabolik | Çakışık $m$ | $f(mx + y) + y\,g(mx + y)$ | Isı: $z_{xx} - z_y = 0$ |
+
+: İkinci mertebeden denklemlerin tipleri {#tbl-ozt-tipler}
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $B$, $z_{xy}$'nin katsayısının kendisidir; $\Delta = B^2 - 4AC$. Katsayıyı $2B$ diye yazan gösterimle karıştırılmamalıdır.
+- Isı denkleminde $z_y$ birinci mertebedendir; tipe katılmaz (@exm-uc-prototip).
+- Katsayılar değişkense $\Delta(x, y)$'nin işareti bölge bölge incelenir.
+:::
+
+:::: {#exm-ozt-tip name="Değişken Katsayılı Bir Denklemin Tipi"}
+$u_{xx} + 2x\,u_{xy} + u_{yy} = 0$ denkleminin tipini düzlemin her bölgesinde belirleyiniz.
+
+::: {.cozum}
+$A = 1$, $B = 2x$, $C = 1$ olduğundan
+$$\Delta = 4x^2 - 4 = 4(x - 1)(x + 1).$$
+- $|x| > 1$ iken $\Delta > 0$: denklem **hiperboliktir**.
+- $|x| < 1$ iken $\Delta < 0$: denklem **eliptiktir**.
+- $x = \pm 1$ doğrularında $\Delta = 0$: denklem **paraboliktir**.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İkinci Mertebe: $f(mx + y)$ Denemesi ve Özel Çözüm {#sec-ozt-deneme}
+
+Yalnız ikinci mertebeden türevler içeren sabit katsayılı denklemde homojen çözüm kök denkleminden okunur (@sec-ozt-tip), özel çözüm sağ tarafa uygun bir denemeyle bulunur. Genel çözüm her zaman $z = z_h + z_p$'dir (@thm-genel-cozum-yapisi).
+
+| $G(x, y)$ | Deneme | Katsayı |
+|:--|:--|:--|
+| $e^{ax + by}$ | $\kappa\,e^{ax + by}$ | $\kappa = 1/P(a, b)$, $P(a,b) \neq 0$ |
+| $\sin w$ ya da $\cos w$, $w = ax + by$, yalnız ikinci mertebe türevler | $\kappa\, G$ | $\kappa = -1/(Aa^2 + Bab + Cb^2)$ |
+| $\sin w$, $\cos w$; birinci mertebeden türev de var | $A_1 \sin w + B_1 \cos w$ | Katsayıları eşitle |
+| Yalnız $x$'in polinomu | $z_p = z_p(x)$ | $x$'te ADD gibi integre et |
+| $x$ ve $y$'nin polinomu | $\kappa_1 x^k + \kappa_2 y^k + \cdots$ | Katsayıları eşitle |
+
+: Özel çözüm için denemeler {#tbl-ozt-deneme}
+
+Burada $P$, operatör polinomudur: $D_x \to a$, $D_y \to b$ ([Sabit katsayılı denklemler](3-ikinci-mertebe/carpanlara-ayrilan-denklemler.qmd)). $P(a, b) = 0$ ise deneme $x$ ile çarpılır. Sağ taraf birkaç parçalıysa her parçaya ayrı deneme yapılıp sonuçlar toplanır (@thm-superpozisyon).
+
+::: {.callout-tip title="Dört adımda ikinci mertebeden denklem"}
+1. $A, B, C$'yi oku, $\Delta$ ile tipi belirle.
+2. $Am^2 + Bm + C = 0$'ın köklerinden $z_h$'yi yaz; çakışık kökte ikinci terim $y\,g(mx + y)$'dir.
+3. Tablodan $z_p$'yi bul.
+4. $z = z_h + z_p$ yaz ve $z_p$'yi denklemde sına.
+:::
+
+:::: {#exm-ozt-hiperbolik name="Üstel Sağ Taraflı Hiperbolik Denklem"}
+$u_{xx} - 3u_{xy} + 2u_{yy} = e^{x + 2y}$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+$A = 1$, $B = -3$, $C = 2$ için $\Delta = 9 - 8 = 1 > 0$: denklem hiperboliktir. Kök denklemi
+$$m^2 - 3m + 2 = (m - 1)(m - 2) = 0 \implies m_1 = 1, \quad m_2 = 2$$
+olduğundan $u_h = f(x + y) + g(2x + y)$.
+
+Özel çözüm için $a = 1$, $b = 2$ ile $P(1, 2) = 1 - 3 \cdot 2 + 2 \cdot 4 = 3 \neq 0$; o hâlde $u_p = \frac{1}{3}e^{x + 2y}$. Genel çözüm
+$$u(x, y) = f(x + y) + g(2x + y) + \frac{1}{3}e^{x + 2y}.$$
+**Sağlama.** $g(2x+y)$ için $u_{xx} = 4g''$, $u_{xy} = 2g''$, $u_{yy} = g''$ ve $4 - 6 + 2 = 0$ ✓.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-parabolik name="Sinüs Sağ Taraflı Parabolik Denklem"}
+$u_{xx} + 4u_{xy} + 4u_{yy} = \sin(x - y)$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+$A = 1$, $B = 4$, $C = 4$ için $\Delta = 16 - 16 = 0$: denklem paraboliktir. $m^2 + 4m + 4 = (m + 2)^2 = 0$'dan çakışık kök $m = -2$ ve
+$$u_h = f(y - 2x) + y\,g(y - 2x).$$
+Özel çözüm: yalnız ikinci mertebe türevler var ve $w = x - y$ için $a = 1$, $b = -1$:
+$$Aa^2 + Bab + Cb^2 = 1 - 4 + 4 = 1 \implies u_p = -\sin(x - y).$$
+Genel çözüm
+$$u(x, y) = f(y - 2x) + y\,g(y - 2x) - \sin(x - y).$$
+**Sağlama.** $u_p = -\sin w$ için $u_{xx} = \sin w$, $u_{xy} = -\sin w$, $u_{yy} = \sin w$; toplam $\sin w - 4\sin w + 4\sin w = \sin w$ ✓.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+## İkinci Mertebe: Operatörü Çarpanlara Ayırma {#sec-ozt-carpanlara}
+
+Denklemde $z_x, z_y, z$ terimleri de varsa operatör polinomu $P(x, y)$ birinci dereceden çarpanlara ayrılır (@thm-homojen-genel). Her çarpan birinci mertebeden lineer bir denklemdir.
+
+| Çarpan | Çözümü |
+|:--|:--|
+| $a D_x + b D_y + \alpha$, $a \neq 0$ | $e^{-\frac{\alpha}{a}x}\, f(bx - ay)$ |
+| $D_x \pm D_y$ | $f(x \mp y)$ |
+| Tekrarlı çarpan $L_1^2$ | $f(\ldots) + x\, g(\ldots)$, aynı üstel çarpanla |
+
+: Operatör çarpanlarının çözümleri {#tbl-ozt-carpanlar}
+
+Çarpanlara ayırırken tam kareye tamamlamak çoğu zaman işe yarar: $x^2 - y^2 + 2x + 1 = (x + 1)^2 - y^2$ (@exm-tam-kare-fark).
+
+:::: {#exm-ozt-carpanlara name="Alt Mertebeli Terimli Bir Denklem"}
+$z_{xx} - z_{yy} + z_x + z_y = 6e^{2x}$ denkleminin genel çözümünü bulunuz.
+
+::: {.cozum}
+**Homojen çözüm.** Operatör polinomu
+$$P(x, y) = x^2 - y^2 + x + y = (x + y)(x - y) + (x + y) = (x + y)(x - y + 1)$$
+olduğundan $L = (D_x + D_y)(D_x - D_y + 1)$'dir.
+
+- $D_x + D_y$ çarpanı ($a = b = 1$, $\alpha = 0$): $f_1(x - y)$.
+- $D_x - D_y + 1$ çarpanı ($a = 1$, $b = -1$, $\alpha = 1$): $e^{-x} f_2(-x - y)$, yani $e^{-x} f_2(x + y)$.
+
+$$z_h = f_1(x - y) + e^{-x} f_2(x + y)$$
+**Özel çözüm.** $G = 6e^{2x}$ için $a = 2$, $b = 0$ ve $P(2, 0) = 4 + 2 = 6 \neq 0$; o hâlde $z_p = \frac{6e^{2x}}{6} = e^{2x}$.
+
+**Genel çözüm:**
+$$z(x, y) = f_1(x - y) + e^{-x} f_2(x + y) + e^{2x}.$$
+**Sağlama.** $z_p = e^{2x}$ için $4e^{2x} - 0 + 2e^{2x} + 0 = 6e^{2x}$ ✓.
+
+[$\blacksquare$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Çarpanlara ayırma sabit katsayılar içindir: $L_1 L_2 = L_2 L_1$ eşitliği katsayılar sabit olduğu için geçerlidir (@thm-carpan-cozumleri).
+- Birinci mertebeden türev varken $\sin$ için tek terimli deneme yetmez; $\sin$ ve $\cos$ birlikte denenir.
+- $z_p$'ye keyfi fonksiyon eklenmez; keyfilik $z_h$'dedir.
+:::

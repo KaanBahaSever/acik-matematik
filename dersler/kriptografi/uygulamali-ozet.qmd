@@ -1,0 +1,650 @@
+---
+title: "Uygulamalı Özet"
+pagetitle: "Uygulamalı Özet"
+description: "Kriptografi sorularını çözmek için ispatsız pratik reçeteler ve kopya kâğıdı: mod 26 tersleri, Euler phi ve üs indirgeme, skytale, zigzag ve rota şifreleri, Bacon kodu, Sezar ve afin şifrelerinde anahtar bulma, permütasyon şifresi, Hill matrisinin tersi, Vigenère, XOR ve iki kez kullanılan şerit, LCG ve LFSR, GF(2^8) çarpması ve xtime, DES S-kutusu ve Feistel döngüsü, AES MixColumns, Diffie-Hellman, ElGamal, RSA, RSA imzası ve özet fonksiyonlarında ön-görüntü ve çakışma."
+---
+
+Bu sayfa kitabın yöntemlerini ispatsız, soru çözmeye dönük bir kopya kâğıdı olarak toplar. Kriptografi uygulamalarının büyük çoğunluğu üç kalıba girer: verilen bir anahtarla **şifrele ya da çöz**, bilinen bir açık metin–şifreli metin çiftinden **anahtarı bul**, bir sistemin **anahtar uzayını ya da zayıflığını** açıkla. Hesapların neredeyse hepsi de birkaç modüler aritmetik becerisine dayanır: ters bulmak, negatif kalanı düzeltmek, büyük bir üssü küçültmek. Bu yüzden sayfa önce bu araç kutusunu verir, ardından her şifre için adım adım bir reçete, formül tabloları, kısa yollar, sık yapılan hatalar ve yeni sayılarla tam çözülmüş kısa örnekler sunar. Her kural, ayrıntısının ve gerekçesinin bulunduğu tanıma, teoreme ya da bölüme bağlanır.
+
+## Soru Tipine Göre Yöntem {#sec-ozt-yontem-secimi}
+
+Bir soruyu okuyunca ilk iş, hangi şifrenin hangi işleminin istendiğini belirlemektir. Aşağıdaki tablo soru kalıplarını yöntemlerle eşleştirir.
+
+| Soruda istenen | Yöntem | Bu sayfada |
+|:--|:--|:--|
+| $a^{-1} \bmod n$, $\phi(n)$, büyük üslü bir kalan | $1 + kn$ denemesi, phi formülü, üssü $\phi(n)$'e göre indirgeme, ardışık kare alma | @sec-ozt-moduler |
+| Skytale, zigzag ya da rota ile şifrele veya çöz | Izgaraya bir yönde yaz, başka yönde oku; zigzagda ray uzunluğu muhasebesi | @sec-ozt-transpozisyon |
+| Bacon koduyla kodla, taşıyıcı metne gizle | Harf numarasını 5 haneli $a/b$ sayısı olarak yaz | @sec-ozt-bacon |
+| Sezar ya da afin ile şifrele, çöz, anahtarı bul | $ax + b \pmod{26}$; iki harf çiftinden denklem sistemi | @sec-ozt-afin |
+| Döngü gösterimli permütasyonla şifrele veya çöz | Döngüde bir sonraki eleman; ters için döngüyü geri oku | @sec-ozt-permutasyon |
+| Hill ile şifrele, ters matrisi bul, çöz | $\det K$ kontrolü, $K^{-1} \equiv (\det K)^{-1} \operatorname{adj}(K)$ | @sec-ozt-hill |
+| Vigenère ile şifrele veya çöz, anahtar uzunluğu | Anahtarı alta döngüsel yaz; Kasiski için tekrar aralıklarının ortak böleni | @sec-ozt-vigenere |
+| XOR, one-time pad, aynı şeridin iki kez kullanımı | $y_1 \oplus y_2 = x_1 \oplus x_2$ | @sec-ozt-xor |
+| LCG ya da LFSR ile anahtar akışı, periyot | Bağıntıyı tekrar edene kadar yürüt | @sec-ozt-akan |
+| $\mathrm{GF}(2^8)$'de toplama ve çarpma | XOR; xtime zinciri | @sec-ozt-gf |
+| DES S-kutusu, Feistel döngüsü, anahtar boyutları | Dış bitler satır, iç bitler sütun; $L_i = R_{i-1}$ | @sec-ozt-des |
+| AES durum matrisi, MixColumns baytı, sürümler | $s_{r,c} = \text{in}_{r+4c}$; satır $\{02\}\{03\}\{01\}\{01\}$ | @sec-ozt-aes |
+| Diffie-Hellman ortak anahtarı, ElGamal şifreleme ve çözme | $g^{ab}$; $c_1^{\,p-1-a}$ kısa yolu | @sec-ozt-dlp |
+| RSA anahtarı, şifreleme, çözme, imza | $ad \equiv 1 \pmod{\phi(n)}$; ardışık kare alma | @sec-ozt-rsa |
+| Basit özet fonksiyonunda ön-görüntü, çakışma, Merkle-Damgård | Doğrusal denkliği çöz; modül ekle; zinciri yürüt | @sec-ozt-hash |
+| Bir şifrenin ailesi, anahtar uzayı, zayıflığı | Karşılaştırma tablosu | @sec-ozt-kavram |
+
+## Modüler Aritmetik Araç Kutusu {#sec-ozt-moduler}
+
+Klasik şifrelerin de açık anahtarlı sistemlerin de bütün hesabı mod $n$'de yapılır (@def-modiler-denklik). Aşağıdaki dört beceri, sayfadaki örneklerin hepsinde kullanılır.
+
+**Negatif kalan.** Sonuç negatif çıkarsa modül eklenir: $-7 \equiv 19 \pmod{26}$. Tersine, hesabı küçültmek için büyük bir kalanın negatif temsilcisi kullanılabilir: $64 \equiv -13 \pmod{77}$, $81 \equiv -10 \pmod{91}$.
+
+**Çarpımsal ters** (@def-carpimsal-ters). $a^{-1} \bmod n$, ancak ve ancak $\gcd(a, n) = 1$ ise vardır. Küçük sayılarda en kısa yol şudur: $1, 1 + n, 1 + 2n, \dots$ sayılarından $a$'ya bölüneni bul; bölüm $a^{-1}$'dir. Örneğin $7 \cdot 15 = 105 = 1 + 4 \cdot 26$ olduğundan $7^{-1} \equiv 15 \pmod{26}$. Mod 26 tersleri sık geldiği için ezberlemeye değer:
+
+| $a$ | $1$ | $3$ | $5$ | $7$ | $9$ | $11$ | $15$ | $17$ | $19$ | $21$ | $23$ | $25$ |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| $a^{-1}$ | $1$ | $9$ | $21$ | $15$ | $3$ | $19$ | $7$ | $23$ | $11$ | $5$ | $17$ | $25$ |
+
+: $\mathbb{Z}_{26}$'da tersi olan 12 eleman ve tersleri {#tbl-ozt-ters-26}
+
+Tablo ikişerli eşleşir ($3 \leftrightarrow 9$, $5 \leftrightarrow 21$, $7 \leftrightarrow 15$, $11 \leftrightarrow 19$, $17 \leftrightarrow 23$); $1$ ile $25 \equiv -1$ kendi tersidir. Çift sayıların ve $13$'ün tersi yoktur.
+
+**Euler phi** (@def-euler-phi):
+
+| Durum | Formül | Örnek |
+|:--|:--|:--|
+| $p$ asal | $\phi(p) = p - 1$ | $\phi(13) = 12$ |
+| Asal kuvvet | $\phi(p^k) = p^k - p^{k-1}$ | $\phi(8) = 4$ |
+| $\gcd(m, n) = 1$ | $\phi(mn) = \phi(m)\,\phi(n)$ | $\phi(26) = 1 \cdot 12 = 12$ |
+| RSA modülü $n = pq$ | $\phi(n) = (p-1)(q-1)$ | $\phi(77) = 60$ |
+
+: Euler phi fonksiyonunun hesap kuralları {#tbl-ozt-phi}
+
+**Üs indirgeme.** $\gcd(a, n) = 1$ ise Euler-Fermat Teoremine (@thm-euler-fermat) göre $a^{\phi(n)} \equiv 1$ olduğundan üs $\phi(n)$'e göre küçültülür: $a^{x} \equiv a^{x \bmod \phi(n)} \pmod n$. Asal modülde bu, Fermat'nın küçük teoremidir (@thm-fermat-kucuk): üs $p - 1$'e göre küçülür.
+
+::: {.callout-tip title="Dört adımda ardışık kare alma ile $a^{e} \bmod n$"}
+1. Üssü ikinin kuvvetlerine ayır: örneğin $43 = 32 + 8 + 2 + 1$.
+2. $a, a^2, a^4, a^8, \dots$ kuvvetlerini her adımda bir öncekinin karesini alıp hemen mod $n$'e indirerek bul.
+3. Gereken kuvvetleri çarp; her çarpımdan sonra yine indir.
+4. Sayılar büyürse negatif temsilci kullan; $\pm 1$ çıkan bir kuvvet hesabı birden kısaltır.
+:::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Denklikte doğrudan bölme yapılmaz. $ac \equiv bc$ iken $c$ ancak $\gcd(c, n) = 1$ ise sadeleşir; aksi hâlde modül de $\gcd(c, n)$'ye bölünür.
+- Üsler mod $n$'e göre değil, mod $\phi(n)$'e göre küçültülür; tabanlar mod $n$'e göre.
+- Üs indirgemesi yalnız $\gcd(a, n) = 1$ iken geçerlidir.
+:::
+
+:::: {#exm-ozt-us-indirgeme name="Euler-Fermat ile Büyük Bir Üssü Küçültmek"}
+$3^{100} \bmod 14$ değerini bulunuz.
+
+::: {.cozum}
+$\gcd(3, 14) = 1$ ve $\phi(14) = \phi(2)\,\phi(7) = 1 \cdot 6 = 6$'dır. $100 = 16 \cdot 6 + 4$ olduğundan
+$$3^{100} = \big(3^{6}\big)^{16} \cdot 3^{4} \equiv 1^{16} \cdot 3^4 = 81 \pmod{14}.$$
+$81 = 5 \cdot 14 + 11$ olduğundan $3^{100} \equiv 11 \pmod{14}$'tür.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## Yer Değiştirme Şifreleri: Skytale, Zigzag, Rota {#sec-ozt-transpozisyon}
+
+Bu ailede harfler değişmez, yalnızca yerleri değişir (@def-transpozisyon); şifreli metin açık metnin bir anagramıdır. Bu yüzden bir şifreli metnin harf sıklıkları dilin olağan sıklıklarıyla örtüşüyorsa, karşıdaki şifrenin bir yer değiştirme şifresi olduğu hemen anlaşılır.
+
+| Şifre | Şifreleme | Çözme | Anahtar uzayı |
+|:--|:--|:--|:--|
+| Skytale ($m$ satır) | $m \times n$ ızgaraya satır satır yaz, sütun sütun oku | $m$'li grupları sütunlara yerleştir, satır satır oku | $N$'nin bölenleri kadar |
+| Zigzag ($k$ ray, @def-zigzag) | Harfleri $1, 2, \dots, k, k-1, \dots, 2$ raylarına dağıt, rayları sırayla oku | Ray uzunluklarını hesapla, böl, dalgayı yeniden yürü | $2 \le k \le N - 1$ |
+| Rota (@def-rota) | Satır satır yaz, anlaşılan rotayla oku | Rotayla yerleştir, satır satır oku | Birkaç yüz |
+
+: Yer değiştirme şifrelerinin özeti ($N$: harf sayısı) {#tbl-ozt-transpozisyon}
+
+**Kısa yollar.**
+
+- Skytale'de ızgara tam dolmalıdır: $N$ harf $m$'ye bölünmüyorsa sona dolgu (`X`) eklenir.
+- Skytale'yi çözmek, aynı işlemi $n = N/m$ satırla yapmaktır. Örneğin $m = 3$ ile elde edilen 15 harflik bir metin, $5$ satırlı skytale ile şifrelenince açık metne döner.
+- Zigzagda desenin periyodu $2(k-1)$'dir. Her tam dalga uç raylara birer, aradaki raylara ikişer harf bırakır.
+- Spiral rotada şifreli metnin başı, açık metnin ilk satırını olduğu gibi verir.
+
+::: {.callout-tip title="Dört adımda zigzag çözme"}
+1. $N = q \cdot 2(k-1) + r$ bölmesini yap.
+2. Tam dalgalardan uç raylara $q$, ara raylara $2q$ harf düşer.
+3. Artakalan $r$ adım desenin başından yürünür ($1, 2, \dots, k, k-1, \dots$) ve uğranan her raya birer harf eklenir. Toplamın $N$ olduğunu sına.
+4. Şifreli metni bu uzunluklarda dilimle ve dalgayı yürüyerek her adımda sırası gelen rayın ilk kullanılmamış harfini al.
+:::
+
+:::: {#exm-ozt-zigzag-coz name="Dört Raylı Zigzag Şifresini Çözmek"}
+$k = 4$ raylı zigzag şifresiyle elde edilmiş `YOIATPTVRNLNAIAR` şifreli metnini çözünüz.
+
+::: {.cozum}
+$N = 16$ ve periyot $2(4-1) = 6$'dır; $16 = 2 \cdot 6 + 4$, yani $q = 2$, $r = 4$.
+
+Tam dalgalardan raylara $2, 4, 4, 2$ harf düşer. Artakalan $4$ adım $1, 2, 3, 4$ raylarına uğrar ve her birine birer harf ekler. Ray uzunlukları $3, 5, 5, 3$ olur; toplam $16$'dır.
+
+Şifreli metni bu uzunluklarda dilimleyelim: `YOI` | `ATPTV` | `RNLNA` | `IAR`. Dalgayı yürüyüp her adımda sıradaki harfi alalım:
+
+```
+ray sırası:  1 2 3 4 3 2 1 2 3 4 3 2 1 2 3 4
+alınan harf: Y A R I N T O P L A N T I V A R
+```
+
+Açık metin **YARIN TOPLANTI VAR**'dır.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hata"}
+Zigzag şifreli metni raylara eşit parçalarla bölünmez: ara raylar uç raylardan yaklaşık iki kat fazla harf taşır. Ayrıntı için [Zigzag ve Rota Şifrelemesi](klasik-kriptografi-1/zigzag-rota.qmd) bölümüne bakılabilir.
+:::
+
+## Bacon Kodu {#sec-ozt-bacon}
+
+Bacon kodu (@def-bacon-kodu) bir şifre değil, sabit bir kodlama ile steganografinin birleşimidir; anahtarı yoktur. Kodlamanın kısa yolu şudur: harfin numarasını (A için $0$, Z için $25$) beş haneli ikili sayı olarak yaz, $0$ yerine $a$, $1$ yerine $b$ koy. Örneğin M $= 12 = 01100_2$ olduğundan M $= abbaa$'dır; tersine $abbab = 01101_2 = 13$ olduğundan bu kod N'dir. Tablo için @tbl-bacon-kodlar kullanılır.
+
+- **Kapasite:** $t$ harflik gizli mesaj için taşıyıcı metinde en az $5t$ harf gerekir; boşluklar sayılmaz.
+- **Neden beş:** $2^4 = 16 < 26 \le 32 = 2^5$.
+- **Gizleme:** $a$'ya denk gelen harf bir biçimde, $b$'ye denk gelen harf öbür biçimde yazılır; kelime sınırlarının beşli gruplarla örtüşmesi gerekmez.
+
+## Sezar ve Afin Şifreleri {#sec-ozt-afin}
+
+İki şifrenin ikisi de harfleri @tbl-harf-sayi ile $\mathbb{Z}_{26}$'ya çevirip her harfe aynı kuralı uygular. Sezar, afin şifrenin $a = 1$ özel hâlidir.
+
+| | Sezar (@def-sezar-model) | Afin (@def-afin-model) |
+|:--|:--|:--|
+| Anahtar | $k \in \mathbb{Z}_{26}$ | $(a, b)$, $\gcd(a, 26) = 1$ |
+| Şifreleme | $y \equiv x + k$ | $y \equiv ax + b$ |
+| Çözme | $x \equiv y - k$ | $x \equiv a^{-1}(y - b)$ |
+| Anahtar uzayı | $26$ (etkili $25$) | $\phi(26) \cdot 26 = 312$ |
+| Bir harf çifti yeter mi? | Evet: $k \equiv y - x$ | Hayır, iki çift gerekir |
+
+: Sezar ve afin şifrelerinin formülleri (hepsi mod 26) {#tbl-ozt-sezar-afin}
+
+::: {.callout-tip title="Dört adımda afin anahtarı bulma"}
+1. Bilinen iki çiftten $ax_1 + b \equiv y_1$ ve $ax_2 + b \equiv y_2$ denkliklerini yaz.
+2. Taraf tarafa çıkar: $a(x_1 - x_2) \equiv y_1 - y_2 \pmod{26}$.
+3. $d = \gcd(x_1 - x_2, 26)$ olsun. $d = 1$ ise $(x_1 - x_2)^{-1}$ ile çarp. $d = 2$ ise denkliğin tamamını $2$'ye bölüp mod $13$'te çöz; mod 26'da çıkan iki adaydan çift olanı ($\gcd(a, 26) \ne 1$) at.
+4. $a$'yı bir denklemde yerine koyup $b$'yi bul; üçüncü bir harfle sağlama yap.
+:::
+
+**Kısa yol.** Açık metinde `A` ($x = 0$) varsa onun şifreli karşılığı doğrudan $b$'yi verir.
+
+:::: {#exm-ozt-afin-anahtar name="Bilinen Açık Metinden Afin Anahtarı"}
+Afin şifreyle elde edilmiş `GKCJK` şifreli metninin açık metninin `SAKLA` olduğu bilinmektedir. Kullanılan $(a, b)$ anahtarını bulunuz.
+
+::: {.cozum}
+A $(0) \to$ K $(10)$ eşleşmesinden $a \cdot 0 + b \equiv 10$, yani $b = 10$'dur.
+
+S $(18) \to$ G $(6)$ eşleşmesinden
+$$18a + 10 \equiv 6 \pmod{26} \implies 18a \equiv -4 \equiv 22 \pmod{26}.$$
+$\gcd(18, 26) = 2$ ve $2 \mid 22$ olduğundan denklik $2$'ye bölünür: $9a \equiv 11 \pmod{13}$. $9 \cdot 3 = 27 \equiv 1 \pmod{13}$ olduğundan $9^{-1} \equiv 3$ ve
+$$a \equiv 3 \cdot 11 = 33 \equiv 7 \pmod{13}.$$
+Mod 26'da adaylar $a = 7$ ve $a = 20$'dir; $\gcd(20, 26) = 2$ olduğundan $20$ atılır ve $a = 7$ kalır.
+
+**Sağlama.** K $(10)$: $7 \cdot 10 + 10 = 80 \equiv 2 \to$ C; L $(11)$: $77 + 10 = 87 \equiv 9 \to$ J. İkisi de şifreli metinle örtüşür. Anahtar $(a, b) = (7, 10)$'dur.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- Çözmede $a$'ya bölünmez, $a^{-1}$ ile çarpılır; sıra da önce $y - b$, sonra çarpmadır.
+- $\gcd(a, 26) \ne 1$ olan bir $a$ birebir olmayan bir şifre verir; örneğin $a = 2$ iken A ile N aynı harfe gider.
+- Anahtar bulurken $x_1 - x_2$ çift çıkarsa iki aday vardır; birini atmadan cevap verilmez.
+:::
+
+## Permütasyon (Yerine Koyma) Şifresi {#sec-ozt-permutasyon}
+
+Anahtar, $\mathbb{Z}_{26}$ üzerinde bir $\pi \in S_{26}$ permütasyonudur (@def-permutasyon-kriptosistem). Döngü gösteriminde üç kural yeter:
+
+- **Şifreleme:** $\pi(x)$, döngüde $x$'ten hemen sonra gelen elemandır; döngünün son elemanı ilk elemana gider.
+- **Sabit eleman:** Hiçbir döngüde geçmeyen eleman kendine gider.
+- **Çözme:** $\pi^{-1}$, her döngüyü sondan başa yazmakla elde edilir; yani $\pi^{-1}(y)$, döngüde $y$'den hemen **önce** gelen elemandır.
+
+Anahtar uzayı $|S_{26}| = 26! \approx 4{,}03 \times 10^{26}$'dır; buna karşın şifre harf sıklıklarını koruduğu için frekans analiziyle kırılır. Büyük anahtar uzayı tek başına güvenlik demek değildir.
+
+## Hill Şifresi {#sec-ozt-hill}
+
+Hill şifresi harfleri $n$'li bloklar hâlinde sütun vektörü olarak alır ve $y \equiv Kx \pmod{26}$ ile şifreler (@def-hill-model). Bir harfin şifresi bloğun öbür harflerine bağlı olduğundan tek harf sıklıkları bozulur.
+
+::: {.callout-tip title="Dört adımda $2 \times 2$ Hill çözme"}
+1. **Anahtarı denetle.** $\det K = ad - bc$'yi mod 26'da indir; $2$'ye ya da $13$'e bölünüyorsa anahtar geçersizdir.
+2. **Determinantın tersini bul.** @tbl-ozt-ters-26'dan $(\det K)^{-1}$'i oku.
+3. **Ters matrisi kur.** $\operatorname{adj}\begin{pmatrix} a & b \\ c & d \end{pmatrix} = \begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$ ve $K^{-1} \equiv (\det K)^{-1} \operatorname{adj}(K)$; girdileri mod 26'da indir. $K K^{-1} \equiv I$ sağlamasını yap.
+4. **Blokları çarp.** Şifreli metni ikişerli bloklara ayır, her bloğu $K^{-1}$ ile çarp ve mod 26'da indir.
+:::
+
+:::: {#exm-ozt-hill-coz name="Hill Şifresinde Ters Matris ve Çözme"}
+$K = \begin{pmatrix} 2 & 3 \\ 1 & 4 \end{pmatrix}$ anahtarıyla Hill şifresinden geçirilmiş `YWQS` şifreli metnini çözünüz.
+
+::: {.cozum}
+$\det K = 8 - 3 = 5$ ve $\gcd(5, 26) = 1$; anahtar geçerlidir. @tbl-ozt-ters-26'ya göre $5^{-1} \equiv 21$'dir. Buradan
+$$K^{-1} \equiv 21 \begin{pmatrix} 4 & -3 \\ -1 & 2 \end{pmatrix} = \begin{pmatrix} 84 & -63 \\ -21 & 42 \end{pmatrix} \equiv \begin{pmatrix} 6 & 15 \\ 5 & 16 \end{pmatrix} \pmod{26}.$$
+Sağlama: $K K^{-1} = \begin{pmatrix} 27 & 78 \\ 26 & 79 \end{pmatrix} \equiv I \pmod{26}$.
+
+Bloklar YW $= (24, 22)$ ve QS $= (16, 18)$'dir:
+$$K^{-1}\begin{pmatrix} 24 \\ 22 \end{pmatrix} = \begin{pmatrix} 474 \\ 472 \end{pmatrix} \equiv \begin{pmatrix} 6 \\ 4 \end{pmatrix}, \qquad K^{-1}\begin{pmatrix} 16 \\ 18 \end{pmatrix} = \begin{pmatrix} 366 \\ 368 \end{pmatrix} \equiv \begin{pmatrix} 2 \\ 4 \end{pmatrix}.$$
+$(6, 4) = $ GE ve $(2, 4) = $ CE olduğundan açık metin `GECE`'dir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $\det K$ tek ama $13$'ün katıysa da ters yoktur; yalnız "tek mi?" diye bakmak yetmez.
+- $\operatorname{adj}$'de köşegen elemanlar yer değiştirir, köşegen dışındakiler yalnız işaret değiştirir.
+- Mesajın harf sayısı tekse son blok dolgu harfiyle tamamlanır.
+:::
+
+## Vigenère Şifresi {#sec-ozt-vigenere}
+
+Vigenère, $m$ harflik anahtar kelimeyle her konuma ayrı bir Sezar kaydırması uygular: $y_i \equiv x_i + k_{i \bmod m}$ (@def-vigenere-model). Pratikte anahtar açık metnin altına döngüsel olarak yazılır ve harfler alt alta toplanır ya da çıkarılır. Anahtar uzayı $26^m$'dir.
+
+**Kasiski fikri.** Açık metindeki aynı harf öbeği, anahtarın aynı konumuna denk gelirse aynı şifreli öbeği verir. Şifreli metinde tekrar eden öbeklerin aralarındaki uzaklıklar $m$'nin katlarıdır; bu uzaklıkların ortak bölenleri $m$ için adaydır. $m$ bulununca metin $m$ ayrı Sezar şifresine ayrılır.
+
+:::: {#exm-ozt-vigenere name="Vigenère ile Şifreleme ve Tekrarın İzi"}
+`ANAHTAR` açık metnini $K = \texttt{SIR}$ anahtarıyla Vigenère şifresinden geçiriniz.
+
+::: {.cozum}
+Anahtarı döngüsel olarak alta yazıp mod 26'da toplayalım:
+
+| Konum $i$ | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+|:--|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Açık metin | A $(0)$ | N $(13)$ | A $(0)$ | H $(7)$ | T $(19)$ | A $(0)$ | R $(17)$ |
+| Anahtar | S $(18)$ | I $(8)$ | R $(17)$ | S $(18)$ | I $(8)$ | R $(17)$ | S $(18)$ |
+| Toplam | $18$ | $21$ | $17$ | $25$ | $27 \equiv 1$ | $17$ | $35 \equiv 9$ |
+| Şifreli | S | V | R | Z | B | R | J |
+
+Şifreli metin `SVRZBRJ`'dir. 2 ve 5 numaralı konumlardaki iki `A`, aralarındaki uzaklık $3 = m$ olduğu için anahtarın aynı harfine (R) denk geldi ve ikisi de `R` oldu. Buna karşılık 0 numaralı konumdaki `A`, `S`'ye gitti. Kasiski yönteminin yakaladığı iz, tekrarın bu biçimde anahtar uzunluğunun katlarında oluşmasıdır.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## XOR ve One-Time Pad {#sec-ozt-xor}
+
+Bit dizilerinde şifreleme $C = P \oplus K$, çözme yine $P = C \oplus K$'dir; çünkü $K \oplus K = 0$ ve $A \oplus 0 = A$'dır (@tbl-xor). Aynı devre hem şifreler hem çözer.
+
+| Özellik | Kural | Soruda kullanımı |
+|:--|:--|:--|
+| Birim | $A \oplus 0 = A$ | Anahtarı sıfır olan bit değişmez |
+| Kendini yok etme | $A \oplus A = 0$ | Çözme, iki kez kullanılan şerit |
+| Değişme, birleşme | $A \oplus B = B \oplus A$ | XOR'lar istenen sırada gruplanır |
+| Anahtarı geri bulma | $K = P \oplus C$ | Bilinen açık metinden anahtar |
+
+: XOR'un kriptografide kullanılan özellikleri {#tbl-ozt-xor}
+
+One-time pad (@def-otp) kusursuz gizlidir (@thm-kusursuz-gizlilik), ancak üç koşul birlikte sağlanırsa: anahtar gerçekten rastgele, en az mesaj kadar uzun ve tek kullanımlık olmalıdır. Üçüncü koşul bozulursa
+$$y_1 \oplus y_2 = x_1 \oplus x_2$$
+olur ve anahtar ortadan kalkar (@exm-two-time-pad).
+
+:::: {#exm-ozt-iki-kez-serit name="Aynı Şeritle Şifrelenmiş İkinci Mesajı Bulmak"}
+Aynı $K$ anahtarıyla şifrelenmiş iki bayt $y_1 = 10100111$ ve $y_2 = 01010001$ ele geçirilmiştir. Birinci açık metnin $x_1 = 11001010$ olduğu bilindiğine göre $x_2$'yi bulunuz.
+
+::: {.cozum}
+$y_1 \oplus y_2 = x_1 \oplus x_2$ olduğundan $x_2 = y_1 \oplus y_2 \oplus x_1$'dir:
+
+```
+y1      :  1 0 1 0 0 1 1 1
+y2      :  0 1 0 1 0 0 0 1
+y1 ⊕ y2 :  1 1 1 1 0 1 1 0
+x1      :  1 1 0 0 1 0 1 0
+x2      :  0 0 1 1 1 1 0 0
+```
+
+$x_2 = 00111100$'dır. Üstelik $K = y_1 \oplus x_1 = 01101101$ de ortaya çıkar; bu anahtarla atılan her mesaj artık okunabilir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## Akan Şifreler: LCG ve LFSR {#sec-ozt-akan}
+
+Akan şifre, kısa bir kök anahtardan sözde rastgele bir anahtar akışı üretip açık metinle XOR'lar (@def-akan-sifre). İki üretecin formülü ve sınırları şunlardır:
+
+| Üreteç | Bağıntı | En büyük periyot | Zayıflık |
+|:--|:--|:--|:--|
+| LCG | $S_\tau \equiv a S_{\tau-1} + c \pmod m$ | $m$ | Doğrusal, periyot $m$ ile sınırlı |
+| LFSR ($L$ bit) | $z_\tau \equiv c_1 z_{\tau-1} + \dots + c_L z_{\tau-L} \pmod 2$ | $2^L - 1$ | $2L$ bit akış, Berlekamp-Massey ile üreteci verir |
+
+: Anahtar akışı üreteçleri {#tbl-ozt-akan}
+
+Mesaj periyottan uzunsa akış kendini tekrar eder ve iki kez kullanılan şerit zafiyeti doğar. Akan şifrede tek bitlik bir iletim hatası yalnız o biti bozar, ama kaybolan bir bit senkronu kaydırır.
+
+:::: {#exm-ozt-lfsr name="Üç Bitlik Bir LFSR'nin Periyodu"}
+$z_1 = 1$, $z_2 = 0$, $z_3 = 0$ başlangıç değerleri ve $z_\tau \equiv z_{\tau-2} + z_{\tau-3} \pmod 2$ bağıntısıyla üretilen anahtar akışının periyodunu bulunuz.
+
+::: {.cozum}
+Her $z_\tau$ için iki ve üç adım gerideki bitler toplanır; bir adım gerideki bit ($c_1 = 0$) katılmaz. Örneğin $z_4 = z_2 + z_1 = 0 + 1 = 1$, $z_5 = z_3 + z_2 = 0$. Bağıntıyı sırayla uygulayalım:
+
+| $\tau$ | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|:--|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Toplanan | | | | $z_2 + z_1$ | $z_3 + z_2$ | $z_4 + z_3$ | $z_5 + z_4$ | $z_6 + z_5$ | $z_7 + z_6$ | $z_8 + z_7$ |
+| $z_\tau$ | 1 | 0 | 0 | 1 | 0 | 1 | 1 | 1 | 0 | 0 |
+
+$(z_8, z_9, z_{10}) = (1, 0, 0) = (z_1, z_2, z_3)$ olduğundan akış buradan sonra kendini tekrar eder: `1001011` `1001011` … Periyot $7 = 2^3 - 1$'dir, yani üç bitlik bir LFSR'nin ulaşabileceği en büyük periyot.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## Sonlu Cisim $\mathrm{GF}(2^8)$ Hesapları {#sec-ozt-gf}
+
+AES'in bütün bayt aritmetiği $\mathrm{GF}(2^8)$'de, $m(x) = x^8 + x^4 + x^3 + x + 1 = \{11B\}$ modülünde yapılır (@def-cisim, @def-indirgenemez). Hex ile ikili arasında geçiş için yarım bayt tablosu yeter:
+
+| Hex | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| İkili | 0000 | 0001 | 0010 | 0011 | 0100 | 0101 | 0110 | 0111 |
+| **Hex** | **8** | **9** | **A** | **B** | **C** | **D** | **E** | **F** |
+| İkili | 1000 | 1001 | 1010 | 1011 | 1100 | 1101 | 1110 | 1111 |
+
+: Yarım bayt (hex basamağı) ile ikili gösterim {#tbl-ozt-hex}
+
+| İşlem | Kural |
+|:--|:--|
+| Toplama = çıkarma | Bit bit XOR: $\{57\} \oplus \{83\} = \{D4\}$ |
+| $\{02\}$ ile çarpma (xtime) | Bir bit sola kaydır; taşan bit $1$ ise at ve $\{1B\}$ ile XOR'la |
+| $\{03\}$ ile çarpma | $\operatorname{xtime}(b) \oplus b$ |
+| Keyfi çarpan | Çarpanı ikinin kuvvetlerine ayır, xtime zincirinin gereken halkalarını XOR'la |
+
+: $\mathrm{GF}(2^8)$'de işlem kuralları {#tbl-ozt-gf}
+
+:::: {#exm-ozt-xtime name="xtime Zinciriyle Bir Çarpım"}
+$\mathrm{GF}(2^8)$'de $\{B6\} \cdot \{05\}$ çarpımını hesaplayınız.
+
+::: {.cozum}
+$\{05\} = \{04\} \oplus \{01\}$ olduğundan çarpım $\{B6\} \cdot \{04\}$ ile $\{B6\}$'nın XOR'udur.
+
+- $\{B6\} \cdot \{02\}$: $10110110$ kaydırılınca $1\,01101100$; taşma var; $01101100 \oplus 00011011$ işlemi $01110111 = \{77\}$ verir.
+- $\{B6\} \cdot \{04\} = \{77\} \cdot \{02\}$: $01110111$ kaydırılınca $11101110 = \{EE\}$; taşma yok.
+
+Son olarak
+$$\{EE\} \oplus \{B6\} = 11101110 \oplus 10110110 = 01011000 = \{58\}.$$
+Sonuç $\{B6\} \cdot \{05\} = \{58\}$'dir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+::: {.callout-warning title="Sık yapılan hata"}
+$\mathrm{GF}(2^8)$ çarpması mod 256 çarpması değildir; $\mathbb{Z}_{256}$ cisim bile değildir. Taşma olduğunda $\{1B\}$ ile XOR unutulmamalıdır.
+:::
+
+## DES ve Feistel Yapısı {#sec-ozt-des}
+
+DES sorularının çoğu ya sayısal bir parametre, ya bir S-kutusu okuması ya da Feistel döngüsünün geri sarılması üzerinedir. Bölümün ayrıntısı [DES ve Feistel Ağı](simetrik/blok-sifreler/des.qmd) sayfasındadır.
+
+| Büyüklük | Değer |
+|:--|:--|
+| Blok | 64 bit, iki 32 bitlik yarı $L$, $R$ |
+| Anahtar | 64 bit girdi, 8 eşlik biti atılınca 56 bit (PC-1, @tbl-pc1) |
+| Döngü ve alt anahtar | 16 döngü, her biri 48 bitlik $K_i$ (PC-2, @tbl-pc2) |
+| Sola kaydırma | 1, 2, 9, 16. döngülerde 1 bit, diğerlerinde 2 bit; toplam $4 + 24 = 28$ |
+| $f$ fonksiyonu | E: 32 → 48 (@tbl-e-genisletme), $\oplus K_i$, 8 S-kutusu: 6 → 4, P: 32 → 32 (@tbl-p-perm) |
+| Kaba kuvvet | $2^{56} \approx 7{,}2 \cdot 10^{16}$ |
+| 2DES | Ortada buluşma: $2^{57}$ işlem (beklenen $2^{112}$ değil) |
+| 3DES (E-D-E) | Üç bağımsız anahtarla efektif $\approx 2^{112}$; $K_1 = K_2 = K_3$ ise tek DES |
+
+: DES'in sayısal parametreleri {#tbl-ozt-des}
+
+Toplam kaydırma $28$ bit, yani bir yarının tam uzunluğu olduğundan 16. döngünün sonunda $C_{16} = C_0$ ve $D_{16} = D_0$ olur.
+
+**Feistel kuralı ve tersi** (@thm-feistel-tersinir):
+$$
+\begin{aligned}
+\text{ileri:}\quad & L_i = R_{i-1}, & R_i &= L_{i-1} \oplus f(R_{i-1}, K_i) \\[1mm]
+\text{geri:}\quad & R_{i-1} = L_i, & L_{i-1} &= R_i \oplus f(L_i, K_i)
+\end{aligned}
+$$
+$f$'nin tersi hiç gerekmez; çözme aynı devredir, alt anahtarlar $K_{16}, \dots, K_1$ sırasıyla verilir.
+
+**S-kutusu okuma.** $b_1 b_2 b_3 b_4 b_5 b_6$ girdisinde satır $= b_1 b_6$ ($0$–$3$), sütun $= b_2 b_3 b_4 b_5$ ($0$–$15$); kesişimdeki sayı 4 bit olarak yazılır. Örneğin $S_1$'e (@tbl-s1) $101100$ girerse satır $10_2 = 2$, sütun $0110_2 = 6$'dır ve çıktı $2 = 0010$'dır.
+
+:::: {#exm-ozt-feistel name="Küçük Bir Feistel Ağını İleri ve Geri Çalıştırmak"}
+4 bitlik yarılarla çalışan iki döngülük bir Feistel ağında $f(R, K) = R \wedge K$ (bit bit VE) alınıyor. Bu $f$ tersinir değildir. $L_0 = 1011$, $R_0 = 0110$, $K_1 = 1100$, $K_2 = 1010$ için $(L_2, R_2)$'yi bulunuz ve ters formüllerle $(L_0, R_0)$'a geri dönüldüğünü gösteriniz.
+
+::: {.cozum}
+**İleri.**
+
+- 1\. döngü: $f(R_0, K_1) = 0110 \wedge 1100 = 0100$; $L_1 = 0110$, $R_1 = 1011 \oplus 0100 = 1111$.
+- 2\. döngü: $f(R_1, K_2) = 1111 \wedge 1010 = 1010$; $L_2 = 1111$, $R_2 = 0110 \oplus 1010 = 1100$.
+
+Çıktı $(L_2, R_2) = (1111, 1100)$'dır.
+
+**Geri** (anahtarlar ters sırada):
+
+- $K_2$ ile: $R_1 = L_2 = 1111$, $L_1 = R_2 \oplus f(L_2, K_2)$, yani $1100 \oplus 1010 = 0110$.
+- $K_1$ ile: $R_0 = L_1 = 0110$, $L_0 = R_1 \oplus f(L_1, K_1)$, yani $1111 \oplus 0100 = 1011$.
+
+Başlangıçtaki $(1011, 0110)$ çiftine dönüldü. $f$ yalnızca ileri yönde hesaplandı; tersinir olmaması hiç sorun çıkarmadı.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## AES {#sec-ozt-aes}
+
+AES bir Feistel ağı değil, SPN'dir: her döngüde bloğun tamamı dönüşür ve her adımın kendi tersi vardır. Ayrıntı [AES ve SPN Yapısı](simetrik/blok-sifreler/aes.qmd) sayfasındadır.
+
+| Sürüm | Anahtar | $N_k$ | $N_r$ | Tur anahtarı | Anahtar genişletmede kelime |
+|:--|:-:|:-:|:-:|:-:|:-:|
+| AES-128 | 128 bit | 4 | 10 | 11 | 44 |
+| AES-192 | 192 bit | 6 | 12 | 13 | 52 |
+| AES-256 | 256 bit | 8 | 14 | 15 | 60 |
+
+: AES sürümleri; blok her zaman 128 bittir {#tbl-ozt-aes}
+
+- **Akış:** AddRoundKey; $N_r - 1$ kez SubBytes, ShiftRows, MixColumns, AddRoundKey; son döngüde MixColumns yoktur.
+- **Durum matrisi** (@def-durum-matrisi): $s_{r,c} = \text{in}_{r + 4c}$. Tersine $\text{in}_k$, $r = k \bmod 4$ satırında ve $c = \lfloor k/4 \rfloor$ sütunundadır; örneğin $\text{in}_{14}$, $s_{2,3}$'tedir.
+- **ShiftRows:** $r$. satır $r$ bayt sola döner.
+- **MixColumns:** yeni sütunun ilk baytı $s'_0 = \{02\} s_0 \oplus \{03\} s_1 \oplus s_2 \oplus s_3$; sonraki satırlarda katsayılar birer sağa kayar.
+- **Shannon karşılığı:** SubBytes karışıklık, ShiftRows ile MixColumns yayılma, AddRoundKey anahtarın tek giriş noktasıdır.
+- **Çözme:** InvSubBytes, InvShiftRows (sağa), InvMixColumns ve AddRoundKey, ters sırada ve tur anahtarları sondan başa.
+
+:::: {#exm-ozt-mixcolumns name="Bir Sütunun İlk Baytını Karıştırmak"}
+MixColumns'a giren bir sütun $(\{C9\}, \{7A\}, \{63\}, \{B0\})$'dır. Yeni sütunun ilk baytı $s'_0$'ı hesaplayınız.
+
+::: {.cozum}
+Matrisin ilk satırına göre
+$$s'_0 = \{02\} \cdot \{C9\} \oplus \{03\} \cdot \{7A\} \oplus \{63\} \oplus \{B0\}.$$
+
+- $\{02\} \cdot \{C9\}$: $11001001$ kaydırılınca $1\,10010010$; taşma var; $10010010 \oplus 00011011$ işlemi $10001001 = \{89\}$ verir.
+- $\{03\} \cdot \{7A\}$: $01111010$ kaydırılınca $11110100 = \{F4\}$; taşma yok. $\{F4\} \oplus \{7A\} = \{8E\}$.
+
+XOR zinciri:
+$$\{89\} \oplus \{8E\} = \{07\}, \quad \{07\} \oplus \{63\} = \{64\}, \quad \{64\} \oplus \{B0\} = \{D4\}.$$
+Sonuç $s'_0 = \{D4\}$'tür.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## Diffie-Hellman ve ElGamal {#sec-ozt-dlp}
+
+İki sistem de ayrık logaritma probleminin zorluğuna dayanır: $g$ ve $g^a \bmod p$ bilinirken $a$'yı bulmak pratikte imkânsızdır. Hesaplarda üsler Fermat gereği mod $p - 1$'e göre küçültülebilir.
+
+| | Diffie-Hellman | ElGamal (@def-elgamal-fonksiyonlari) |
+|:--|:--|:--|
+| Açık bilgi | $p$, $g$, $A \equiv g^a$, $B \equiv g^b$ | $(p, g, y)$, $y \equiv g^a$ |
+| Gizli bilgi | $a$, $b$ | $a$; gönderici için geçici $k$ |
+| Hesap | $K \equiv B^a \equiv A^b \equiv g^{ab}$ | $c_1 \equiv g^k$, $c_2 \equiv m\,y^k$ |
+| Geri dönüş | | $m \equiv c_2\,(c_1^{\,a})^{-1}$ |
+| Tipik tuzak | Kimlik doğrulama yok: ortadaki adam | Aynı $k$ iki kez kullanılırsa $c_2/c_2' = m/m'$ |
+
+: Diffie-Hellman ve ElGamal formülleri (hepsi mod $p$) {#tbl-ozt-dlp}
+
+**Kısa yollar.**
+
+- **Ortak anahtarın sağlaması.** $K \equiv g^{ab}$ ve $ab$ mod $p - 1$'e göre küçültülür. Bu sağlama yalnız soruyu çözen içindir; Eve $a$ ve $b$'yi bilmez.
+- **ElGamal'de ters almadan çözme.** $c_1^{\,p-1} \equiv 1$ olduğundan $(c_1^{\,a})^{-1} \equiv c_1^{\,p-1-a} \pmod p$'dir. Ayrıca $c_1^{\,a} \equiv y^k$ olmalıdır; bu, hesabın sağlamasıdır.
+- ElGamal şifrelemesinde $\gcd(k, p-1) = 1$ koşulu yoktur; o koşul imza şemasına aittir.
+
+:::: {#exm-ozt-dh name="Diffie-Hellman Ortak Anahtarı"}
+$p = 19$, $g = 2$, Alice'in gizli sayısı $a = 5$, Bob'unki $b = 7$ olduğuna göre açık değerleri ve ortak anahtarı bulunuz.
+
+::: {.cozum}
+$A \equiv 2^5 = 32 \equiv 13$ ve $B \equiv 2^7 = 128 \equiv 14 \pmod{19}$.
+
+**Alice:** $14^2 = 196 \equiv 6$, $14^4 \equiv 36 \equiv 17$, $14^5 \equiv 17 \cdot 14 = 238 \equiv 10$.
+
+**Bob:** $13^2 = 169 \equiv -2$, $13^4 \equiv 4$ ve $13^7 \equiv 4 \cdot (-2) \cdot 13 = -104$; $-104 + 114 = 10$ olduğundan $13^7 \equiv 10$.
+
+İkisi de $K = 10$'u bulur. **Sağlama:** $ab = 35 \equiv 17 \pmod{18}$ ve $2^{18} \equiv 1$ olduğundan $2^{35} \equiv 2^{17} \equiv 2^{-1} \equiv 10 \pmod{19}$, çünkü $2 \cdot 10 = 20 \equiv 1$.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-elgamal name="ElGamal ile Şifreleme ve Kısa Yoldan Çözme"}
+$p = 23$, $g = 5$ ve alıcının gizli anahtarı $a = 6$'dır. Gönderici $m = 10$ mesajını $k = 3$ geçici anahtarıyla şifreliyor. $(c_1, c_2)$ çiftini bulunuz ve şifreli metni çözünüz.
+
+::: {.cozum}
+**Açık anahtar.** $5^2 = 25 \equiv 2$ olduğundan $y \equiv 5^6 = (5^2)^3 \equiv 2^3 = 8 \pmod{23}$.
+
+**Şifreleme.** $c_1 \equiv 5^3 = 125 \equiv 10$; $y^3 = 512 \equiv 6$ olduğundan $c_2 \equiv 10 \cdot 6 = 60 \equiv 14$. Şifreli metin $(10, 14)$'tür.
+
+**Çözme.** $(c_1^{\,6})^{-1} \equiv c_1^{\,23 - 1 - 6} = 10^{16}$ hesaplanır. Ardışık kare alma ile
+$$10^2 = 100 \equiv 8, \quad 10^4 \equiv 64 \equiv 18, \quad 10^8 \equiv 324 \equiv 2, \quad 10^{16} \equiv 4 \pmod{23}.$$
+Buradan $m \equiv 14 \cdot 4 = 56 \equiv 10 \pmod{23}$ elde edilir. **Sağlama:** $c_1^{\,6} \equiv 18 \cdot 8 = 144 \equiv 6 = y^3$ ve $6 \cdot 4 = 24 \equiv 1$.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## RSA ve RSA İmzası {#sec-ozt-rsa}
+
+Bu kitapta RSA'nın açık üssü $a$, gizli üssü $d$ ile gösterilir (@def-rsa-fonksiyonlari). Şifreleme alıcının açık anahtarıyla, imza göndericinin gizli anahtarıyla yapılır (@def-rsa-imza).
+
+::: {.callout-tip title="Beş adımda RSA anahtar üretimi"}
+1. $n = pq$ ve $\phi(n) = (p-1)(q-1)$'i hesapla.
+2. $\gcd(a, \phi(n)) = 1$ olduğunu denetle.
+3. $1 + k\,\phi(n)$ sayılarından $a$'ya bölüneni bul; $d = \dfrac{1 + k\,\phi(n)}{a}$.
+4. Açık anahtar $(a, n)$, gizli anahtar $(d, n)$.
+5. Hesapları ardışık kare alma ile yap (@sec-ozt-moduler).
+:::
+
+| İşlem | Kim yapar | Formül |
+|:--|:--|:--|
+| Şifreleme | Gönderici, alıcının açık anahtarıyla | $c \equiv m^a \pmod n$ |
+| Çözme | Alıcı, kendi gizli anahtarıyla | $m \equiv c^d \pmod n$ |
+| İmzalama | Gönderici, kendi gizli anahtarıyla | $s \equiv h^d \pmod n$, $h = H(m)$ |
+| Doğrulama | Herkes, göndericinin açık anahtarıyla | $s^a \equiv H(m)$ ise geçerli |
+
+: RSA'da anahtarların kullanım yönü {#tbl-ozt-rsa}
+
+::: {.callout-warning title="Sık yapılan hatalar"}
+- $d$, mod $n$'de değil mod $\phi(n)$'de $a$'nın tersidir.
+- İmzalamada açık anahtar kullanılmaz; açık anahtarla "imzalanan" bir değeri herkes üretebilir.
+- Ham mesaj değil, özeti imzalanır (önce özetle, sonra imzala); ham RSA imzası çarpımsaldır.
+- Mesaj $0 \le m < n$ olmalıdır.
+:::
+
+:::: {#exm-ozt-rsa name="Küçük Asallarla RSA Şifreleme ve Çözme"}
+$p = 5$, $q = 17$ ve $a = 5$ için gizli üssü bulunuz, $m = 8$ mesajını şifreleyiniz ve şifreli metni çözerek $m$'ye dönüldüğünü gösteriniz.
+
+::: {.cozum}
+$n = 85$, $\phi(n) = 4 \cdot 16 = 64$ ve $\gcd(5, 64) = 1$'dir. $1 + 64 = 65 = 5 \cdot 13$ olduğundan $d = 13$'tür.
+
+**Şifreleme.** $8^2 = 64$, $8^4 \equiv 64^2 = 4096 \equiv 16$ ve $8^5 \equiv 16 \cdot 8 = 128 \equiv 43$. Şifreli metin $c = 43$'tür.
+
+**Çözme.** $13 = 8 + 4 + 1$ olduğundan $43^{8}$, $43^{4}$ ve $43$ gerekir:
+$$43^2 = 1849 \equiv 64, \quad 43^4 \equiv 64^2 \equiv 16, \quad 43^8 \equiv 16^2 = 256 \equiv 1 \pmod{85}.$$
+$43^8 \equiv 1$ çıktığı için hesap kısalır:
+$$43^{13} \equiv 1 \cdot 16 \cdot 43 = 688 = 8 \cdot 85 + 8 \equiv 8 \pmod{85}.$$
+Açık metin $m = 8$'e dönüldü.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+:::: {#exm-ozt-rsa-imza name="Bir Özet Değerini RSA ile İmzalayıp Doğrulamak"}
+Göndericinin RSA parametreleri $p = 7$, $q = 13$, $a = 5$'tir. Özeti $H(m) = 10$ olan bir belgenin imzasını hesaplayınız ve alıcının imzayı nasıl doğruladığını gösteriniz.
+
+::: {.cozum}
+$n = 91$, $\phi(n) = 72$ ve $\gcd(5, 72) = 1$'dir. $1 + 2 \cdot 72 = 145 = 5 \cdot 29$ olduğundan $d = 29$'dur.
+
+**İmza.** $s \equiv 10^{29}$ ve $29 = 16 + 8 + 4 + 1$'dir. Negatif temsilcilerle:
+$$10^2 = 100 \equiv 9, \quad 10^4 \equiv 81 \equiv -10, \quad 10^8 \equiv 100 \equiv 9, \quad 10^{16} \equiv -10 \pmod{91}.$$
+Buradan
+$$10^{29} \equiv (-10) \cdot 9 \cdot (-10) \cdot 10 = 9000 = 98 \cdot 91 + 82 \equiv 82,$$
+yani $s = 82$'dir.
+
+**Doğrulama.** Alıcı $(a, n) = (5, 91)$ ile $s^5$'i hesaplar. $82 \equiv -9$ alınırsa $(-9)^2 = 81 \equiv -10$, $(-9)^4 \equiv 100 \equiv 9$ ve
+$$82^5 \equiv 9 \cdot (-9) = -81 \equiv 10 \pmod{91}.$$
+Çıkan $10$, belgenin özetiyle aynıdır; imza geçerlidir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## Özet (Hash) Fonksiyonları {#sec-ozt-hash}
+
+Bir kriptografik özet fonksiyonu (@def-hash-fonksiyonu) her uzunluktaki mesajı sabit uzunlukta bir özete götürür. Üç direnç kriteri, "elde ne var, ne aranıyor" sorusuyla ayrılır:
+
+| Kriter | Verilen | Bulunması zor olan |
+|:--|:--|:--|
+| Ön-görüntü direnci | Yalnız $h$ | $H(m) = h$ olan bir $m$ |
+| İkinci ön-görüntü direnci | Belirli bir $m_1$ | $H(m_2) = H(m_1)$ olan $m_2 \ne m_1$ |
+| Çakışma direnci | Hiçbir şey | $H(m_1) = H(m_2)$ olan herhangi $m_1 \ne m_2$ |
+
+: Özet fonksiyonlarının üç direnç kriteri {#tbl-ozt-hash}
+
+**Oyuncak fonksiyonlarda kısa yollar.**
+
+- $H(x) \equiv ux + v \pmod q$ ise ön-görüntü, $ux \equiv h - v$ doğrusal denkliğini çözmektir.
+- Böyle bir fonksiyonda $x$ ile $x + q$ her zaman çakışır.
+- Merkle-Damgård zincirinde $h_0$'dan başlayıp $h_i = f(h_{i-1}, m_i)$ adımları yürütülür; son durum özettir. Kısa bir mesajın son durumu, uzun bir mesajın bir ara durumuna ya da son durumuna eşitse farklı uzunlukta iki mesaj çakışır. Dolguya uzunluğun yazılması bunu engellemek içindir.
+
+:::: {#exm-ozt-md-cakisma name="Merkle-Damgård Zincirinde Farklı Uzunlukta Çakışma"}
+Harfleri @tbl-harf-sayi ile sayıya çeviren, $h_0 = 2$ ve $f(h, m) = (5h + m) \bmod 26$ kullanan bir Merkle-Damgård özet fonksiyonu veriliyor. $H(\texttt{KOD})$'yi hesaplayınız ve `KOD` ile çakışan iki harfli bir mesaj bulunuz.
+
+::: {.cozum}
+**Zincir.** K $= 10$, O $= 14$, D $= 3$:
+$$h_1 = 5 \cdot 2 + 10 = 20, \quad h_2 = 5 \cdot 20 + 14 = 114 \equiv 10, \quad h_3 = 5 \cdot 10 + 3 = 53 \equiv 1.$$
+$H(\texttt{KOD}) = 1$, yani B'dir.
+
+**Çakışma.** İki harfli $xy$ mesajı için
+$$H(xy) = 5(5 \cdot 2 + x) + y = 50 + 5x + y \equiv 24 + 5x + y \pmod{26}$$
+olur. $24 + 5x + y \equiv 1$, yani $5x + y \equiv 3$ gerekir. $x = 0$ seçilirse $y = 3$, yani `AD` bulunur. Sağlama: $h_1 = 10 + 0 = 10$, $h_2 = 50 + 3 = 53 \equiv 1$. `AD` ile `KOD` farklı uzunlukta iki mesajdır ve aynı özeti verir.
+
+[$\boxtimes$]{.qed}
+:::
+::::
+
+## Kavramsal Sorular İçin Karşılaştırma {#sec-ozt-kavram}
+
+"Hangi aileden?", "anahtar uzayı nedir?", "nasıl kırılır?" sorularının cevabı çoğunlukla aşağıdaki tablodadır. Shannon sütunu @tbl-shannon-analiz ile uyumludur.
+
+| Sistem | Aile | Anahtar uzayı | Kırılma yolu ya da zayıflık |
+|:--|:--|:--|:--|
+| Skytale, zigzag, rota | Yer değiştirme | Bir avuç, $\approx N - 2$, birkaç yüz | Kaba kuvvet; harf sıklıkları korunur |
+| Sezar | Tek alfabeli yerine koyma | $26$ | Kaba kuvvet |
+| Afin | Tek alfabeli yerine koyma | $312$ | Kaba kuvvet, frekans analizi, iki harf çifti |
+| Permütasyon | Tek alfabeli yerine koyma | $26!$ | Frekans analizi |
+| Vigenère | Çok alfabeli | $26^m$ | Kasiski ile $m$, sonra $m$ Sezar |
+| Hill | Blok, doğrusal | Tersinir matrisler | Yayılma var, doğrusallık zayıflıktır |
+| One-time pad | XOR | $2^n$ | Kırılamaz; şerit tekrar kullanılırsa çöker |
+| DES | Feistel | $2^{56}$ | Kaba kuvvet |
+| AES | SPN | $2^{128}$, $2^{192}$, $2^{256}$ | Pratik saldırı bilinmiyor |
+| Diffie-Hellman, ElGamal | Açık anahtar | | Ayrık logaritma; DH'de ortadaki adam |
+| RSA | Açık anahtar | | Çarpanlara ayırma; $p$, $q$ ya da $\phi(n)$ sızarsa $d$ bulunur |
+
+: Kitaptaki sistemlerin karşılaştırması {#tbl-ozt-karsilastirma}
+
+**Tek cümlelik ilkeler.**
+
+- **Kerckhoffs** (@def-kerckhoffs-prensibi): güvenlik algoritmanın değil, yalnızca anahtarın gizliliğine dayanmalıdır.
+- **Karışıklık:** anahtar ile şifreli metin arasındaki ilişkiyi karmaşıklaştırır; yerine koyma, S-kutusu.
+- **Yayılma:** açık metnin istatistiğini şifreli metnin tamamına dağıtır; yer değiştirme, P-kutusu, MixColumns.
+- **Çığ etkisi:** tek bit değişince şifreli metnin bitlerinin yaklaşık yarısı değişir.
+- **Asimetrik kriptografi** (@def-asimetrik-kriptosistem): anahtar dağıtım problemini açık ve gizli anahtar çiftiyle çözer.
+
+## Son Kontrol Listesi {#sec-ozt-kontrol}
+
+Bir çözümü bitirmeden önce şu soruları sor:
+
+1. Harfleri @tbl-harf-sayi ile A $= 0$'dan başlayarak mı çevirdin?
+2. Her ara sonucu mod $n$'e indirdin mi? Negatif çıkan kalanları düzelttin mi?
+3. Ters alırken $\gcd = 1$ koşulunu denetledin mi? Afinde $a$, Hill'de $\det K$, RSA'da $a$ ile $\phi(n)$ için.
+4. Üsleri doğru modüle göre mi küçülttün: RSA'da $\phi(n)$, Diffie-Hellman ve ElGamal'de $p - 1$?
+5. Zigzag çözerken ray uzunluklarının toplamının $N$ olduğunu, skytale'de ızgaranın tam dolduğunu denetledin mi?
+6. $\mathrm{GF}(2^8)$'de her taşmada $\{1B\}$ ile XOR'ladın mı?
+7. Bulduğun anahtarı ya da açık metni geri şifreleyerek sağladın mı?
+
+Kuralların gerekçeleri ve daha fazla çözümlü örnek için ilgili bölümlere, ders içeriğinin tamamı için [Müfredat ve Giriş](index.qmd) sayfasına dönebilirsin.
