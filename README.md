@@ -36,7 +36,7 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 - [Olasılık Teorisi](https://acik-matematik.com/dersler/olasilik-teorisi/) — 24 bölüm, 175 örnek ve alıştırma
 - [Python ile Bilimsel Hesaplama](https://acik-matematik.com/dersler/python-bilimsel/) — 16 bölüm, 315 örnek ve alıştırma
 - [Raslantı Süreçleri](https://acik-matematik.com/dersler/raslanti-surecleri/) — 16 bölüm, 53 örnek ve alıştırma
-- [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 16 bölüm, 192 örnek ve alıştırma
+- [Reel Analiz](https://acik-matematik.com/dersler/reel-analiz/) — 16 bölüm, 200 örnek ve alıştırma
 - [Sayılar Teorisi](https://acik-matematik.com/dersler/sayilar-teorisi/) — 34 bölüm, 256 örnek ve alıştırma
 - [Soyut Cebir 1: Gruplar](https://acik-matematik.com/dersler/soyut-cebir-1/) — 26 bölüm, 78 örnek ve alıştırma
 - [Temel Finans Matematiği](https://acik-matematik.com/dersler/finans-matematigi/) — 12 bölüm, 119 örnek ve alıştırma
@@ -66,11 +66,11 @@ Bütün notlar [Quarto](https://quarto.org) ile üretilir; her ders web'de okuna
 | 🔹 Lemma | **141** |
 | 📝 Tanım | **1.790** |
 | ✅ İspat | **2.290** |
-| 🧮 Örnek ve alıştırma | **6.635** |
-| 💡 Çözüm | **6.342** |
+| 🧮 Örnek ve alıştırma | **6.643** |
+| 💡 Çözüm | **6.350** |
 | 📊 Şekil | **1.784** |
-| ✍️ Kelime | **2.709.325** |
-| 🔤 Karakter | **19.092.843** |
+| ✍️ Kelime | **2.710.743** |
+| 🔤 Karakter | **19.103.109** |
 | 💾 Kaynak metin | **46,9 MB** |
 
 <sub>Bu tablo her derlemede `scripts/stats.py` tarafından güncellenir.</sub>
