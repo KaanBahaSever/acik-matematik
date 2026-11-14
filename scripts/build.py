@@ -77,6 +77,7 @@ SHARED_INPUTS = (
     ROOT / "scripts" / "downloads.lua",
     ROOT / "scripts" / "mobile-toc.html",
     ROOT / "scripts" / "theme-switch.html",
+    ROOT / "scripts" / "sidebar-toggle.html",
 )
 
 # The Windows console defaults to cp1252, which cannot print the Turkish

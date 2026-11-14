@@ -1,0 +1,98 @@
+<!-- ===========================================================================
+     Collapsible side panels (desktop, 992px and up).
+
+     A book page has the chapter menu on the left and the "Bu Sayfada" outline
+     on the right, and neither could be closed. Quarto's own reader mode hides
+     both at once behind an unlabelled icon and forgets the choice on the next
+     page. This adds one small button to each panel that hides it, and a fixed
+     button at the screen edge that brings it back. The two panels are
+     independent and the choice is remembered (localStorage keys "am-nav" and
+     "am-toc", value "0" = hidden).
+
+     The state is a class on <html> (am-nav-hidden / am-toc-hidden). A short
+     script in the page head (see _kitap-ortak.yml) sets it before the first
+     paint, so a hidden panel does not flash on every page load; the page grid
+     in styles/global.css gives the freed column back to the text.
+
+     Pulled in by every book through _kitap-ortak.yml (include-after-body).
+     Styles: "COLLAPSIBLE SIDE PANELS" in styles/global.css.
+     =========================================================================== -->
+<script>
+(function () {
+  "use strict";
+
+  var root = document.documentElement;
+
+  function icon(dividerX) {
+    return '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">' +
+      '<rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+      '<path d="M' + dividerX + ' 3v10" stroke="currentColor" stroke-width="1.3"/></svg>';
+  }
+
+  var PANELS = [
+    {
+      name: "nav", cls: "am-nav-hidden", key: "am-nav", target: "quarto-sidebar", icon: icon(6),
+      hide: "Ders menüsünü gizle", show: "Ders menüsünü göster",
+      slot: function () {
+        return document.querySelector("#quarto-sidebar .sidebar-tools-main") ||
+          document.querySelector("#quarto-sidebar .sidebar-title");
+      }
+    },
+    {
+      name: "toc", cls: "am-toc-hidden", key: "am-toc", target: "quarto-margin-sidebar", icon: icon(10),
+      hide: "Bu Sayfada panelini gizle", show: "Bu Sayfada panelini göster",
+      slot: function () {
+        return document.querySelector("#quarto-margin-sidebar #TOC > #toc-title");
+      }
+    }
+  ];
+
+  function button(panel, kind) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "panel-toggle panel-toggle-" + kind;
+    b.setAttribute("data-panel", panel.name);
+    b.setAttribute("aria-controls", panel.target);
+    b.setAttribute("aria-label", kind === "close" ? panel.hide : panel.show);
+    b.setAttribute("title", kind === "close" ? panel.hide : panel.show);
+    b.innerHTML = panel.icon;
+    return b;
+  }
+
+  function setup(panel) {
+    var slot = panel.slot();
+    if (!slot || !document.getElementById(panel.target)) return;
+
+    var close = button(panel, "close");
+    var open = button(panel, "open");
+
+    function apply(hidden, moveFocus) {
+      root.classList.toggle(panel.cls, hidden);
+      close.setAttribute("aria-expanded", hidden ? "false" : "true");
+      open.setAttribute("aria-expanded", hidden ? "false" : "true");
+      try {
+        if (hidden) localStorage.setItem(panel.key, "0");
+        else localStorage.removeItem(panel.key);
+      } catch (e) { /* private mode: the choice just is not remembered */ }
+      if (moveFocus) (hidden ? open : close).focus();
+    }
+
+    close.addEventListener("click", function () { apply(true, true); });
+    open.addEventListener("click", function () { apply(false, true); });
+
+    slot.appendChild(close);
+    document.body.appendChild(open);
+    apply(root.classList.contains(panel.cls), false);
+  }
+
+  function init() {
+    PANELS.forEach(setup);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
